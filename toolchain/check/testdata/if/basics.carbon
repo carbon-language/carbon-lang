@@ -117,15 +117,15 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %If.type: type = fn_type @If [concrete]
 // CHECK:STDOUT:   %If: %If.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [concrete = constants.%If] {
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc8: type = type_literal bool [concrete = bool]
@@ -162,15 +162,15 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %If.type: type = fn_type @If [concrete]
 // CHECK:STDOUT:   %If: %If.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [concrete = constants.%If] {
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = type_literal bool [concrete = bool]

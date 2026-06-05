@@ -183,9 +183,9 @@ interface Y(T:! type) {
 fn MakeIntLiteral() -> type = "int_literal.make_type";
 alias IntLiteral = MakeIntLiteral();
 
-// CHECK:STDERR: fail_todo_early_concrete_impls.carbon:[[@LINE+4]]:56: error: cannot convert type `Core.IntLiteral` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_todo_early_concrete_impls.carbon:[[@LINE+4]]:54: error: cannot convert type `IntLiteral` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
 // CHECK:STDERR: fn F(_:! Z where IntLiteral impls Y(.Self) and .Z1 = IntLiteral.(Y(.Self).Y1)) {}
-// CHECK:STDERR:                                                        ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                                      ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(_:! Z where IntLiteral impls Y(.Self) and .Z1 = IntLiteral.(Y(.Self).Y1)) {}
 

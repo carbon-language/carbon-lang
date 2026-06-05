@@ -80,15 +80,15 @@ let a: i32 = Div(1, 0);
 let b: i32 = Div(0, 0);
 
 // IntLiteral allows "overflow" by widening its representation, but not overflow to infinity.
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:28: error: division by zero [CompileTimeDivisionByZero]
+// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:26: error: division by zero [CompileTimeDivisionByZero]
 // CHECK:STDERR: let c: Core.IntLiteral = DivLit(1, 0);
-// CHECK:STDERR:                            ^~~~~~~~~~~~
+// CHECK:STDERR:                          ^~~~~~~~~~~~
 // CHECK:STDERR:
 let c: Core.IntLiteral = DivLit(1, 0);
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:28: error: division by zero [CompileTimeDivisionByZero]
+// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:26: error: division by zero [CompileTimeDivisionByZero]
 // CHECK:STDERR: let d: Core.IntLiteral = DivLit(0, 0);
-// CHECK:STDERR:                            ^~~~~~~~~~~~
+// CHECK:STDERR:                          ^~~~~~~~~~~~
 // CHECK:STDERR:
 let d: Core.IntLiteral = DivLit(0, 0);
 

@@ -57,7 +57,7 @@ fn F(a: Core.IntLiteral) -> Core.IntLiteral {
   // CHECK:STDERR:          ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE-6]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR: fn Complement(a: Core.IntLiteral) -> Core.IntLiteral = "int.complement";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   return Complement(a);
 }

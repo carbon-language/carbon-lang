@@ -568,11 +568,11 @@ fn F(c: Core.Optional(C*)) -> Core.Optional(C*) {
 // CHECK:STDOUT: !205 = !{!206}
 // CHECK:STDOUT: !206 = !DILocalVariable(arg: 1, scope: !204, type: !7)
 // CHECK:STDOUT: !207 = !DILocation(line: 58, column: 36, scope: !204)
-// CHECK:STDOUT: !208 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a7c16f707f533a23:Copy.Core.5bd8d5767580997a", scope: null, file: !209, line: 19, type: !97, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !210)
+// CHECK:STDOUT: !208 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a7c16f707f533a23:Copy.Core.5bd8d5767580997a", scope: null, file: !209, line: 23, type: !97, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !210)
 // CHECK:STDOUT: !209 = !DIFile(filename: "{{.*}}/prelude/copy.carbon", directory: "")
 // CHECK:STDOUT: !210 = !{!211}
 // CHECK:STDOUT: !211 = !DILocalVariable(arg: 1, scope: !208, type: !7)
-// CHECK:STDOUT: !212 = !DILocation(line: 19, column: 33, scope: !208)
+// CHECK:STDOUT: !212 = !DILocation(line: 23, column: 33, scope: !208)
 // CHECK:STDOUT: ; ModuleID = 'copy.carbon'
 // CHECK:STDOUT: source_filename = "copy.carbon"
 // CHECK:STDOUT:

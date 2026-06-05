@@ -122,32 +122,25 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT: --- identity_literal.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %FloatLiteral.type: type = fn_type @FloatLiteral [concrete]
-// CHECK:STDOUT:   %FloatLiteral: %FloatLiteral.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.dab: type = pattern_type Core.FloatLiteral [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type Core.FloatLiteral [concrete]
 // CHECK:STDOUT:   %FloatLiteralToFloatLiteral.type: type = fn_type @FloatLiteralToFloatLiteral [concrete]
 // CHECK:STDOUT:   %FloatLiteralToFloatLiteral: %FloatLiteralToFloatLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.FloatLiteral: %FloatLiteral.type = import_ref Main//literal, FloatLiteral, loaded [concrete = constants.%FloatLiteral]
+// CHECK:STDOUT:   %Main.FloatLiteral: type = import_ref Main//literal, FloatLiteral, loaded [concrete = Core.FloatLiteral]
 // CHECK:STDOUT:   %Main.FloatLiteralToFloatLiteral: %FloatLiteralToFloatLiteral.type = import_ref Main//literal, FloatLiteralToFloatLiteral, loaded [concrete = constants.%FloatLiteralToFloatLiteral]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type.dab = value_binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type = value_binding_pattern f [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc6_21.1: type = splice_block %.loc6_21.3 [concrete = Core.FloatLiteral] {
-// CHECK:STDOUT:     %FloatLiteral.ref: %FloatLiteral.type = name_ref FloatLiteral, imports.%Main.FloatLiteral [concrete = constants.%FloatLiteral]
-// CHECK:STDOUT:     %FloatLiteral.call: init type = call %FloatLiteral.ref() [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:     %.loc6_21.2: type = value_of_initializer %FloatLiteral.call [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:     %.loc6_21.3: type = converted %FloatLiteral.call, %.loc6_21.2 [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc6_55.1: Core.FloatLiteral = value_of_initializer @__global_init.%FloatLiteralToFloatLiteral.call [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc6_55.2: Core.FloatLiteral = converted @__global_init.%FloatLiteralToFloatLiteral.call, %.loc6_55.1 [concrete = constants.%float]
-// CHECK:STDOUT:   %f: Core.FloatLiteral = value_binding f, %.loc6_55.2
+// CHECK:STDOUT:   %FloatLiteral.ref: type = name_ref FloatLiteral, imports.%Main.FloatLiteral [concrete = Core.FloatLiteral]
+// CHECK:STDOUT:   %.loc6_53.1: Core.FloatLiteral = value_of_initializer @__global_init.%FloatLiteralToFloatLiteral.call [concrete = constants.%float]
+// CHECK:STDOUT:   %.loc6_53.2: Core.FloatLiteral = converted @__global_init.%FloatLiteralToFloatLiteral.call, %.loc6_53.1 [concrete = constants.%float]
+// CHECK:STDOUT:   %f: Core.FloatLiteral = value_binding f, %.loc6_53.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -593,11 +593,9 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: --- fail_adapt_builtin.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
-// CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %.805: Core.Form = init_form type [concrete]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
+// CHECK:STDOUT:   %.805: Core.Form = init_form type [concrete]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %MakeInt.type: type = fn_type @MakeInt [concrete]
 // CHECK:STDOUT:   %MakeInt: %MakeInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IntAdapter: type = class_type @IntAdapter [concrete]
@@ -621,7 +619,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.IntLiteral: %IntLiteral.type = import_ref Core//prelude/parts/int_literal, IntLiteral, loaded [concrete = constants.%IntLiteral]
+// CHECK:STDOUT:   %Core.IntLiteral: type = import_ref Core//prelude/parts/int_literal, IntLiteral, loaded [concrete = Core.IntLiteral]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -637,17 +635,14 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     %N.param_patt: %pattern_type.dc0 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = at_binding_pattern N, %N.param_patt [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc4_37.1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc4_35.1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_37.1: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.loc4_37.2: Core.Form = init_form %.loc4_37.1 [concrete = constants.%.805]
+// CHECK:STDOUT:     %.loc4_35.1: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc4_35.2: Core.Form = init_form %.loc4_35.1 [concrete = constants.%.805]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param call_param0
-// CHECK:STDOUT:     %.loc4_31.1: type = splice_block %.loc4_31.3 [concrete = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc4_19: type = splice_block %IntLiteral.ref [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = constants.%IntLiteral]
-// CHECK:STDOUT:       %IntLiteral.call: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_31.2: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_31.3: type = converted %IntLiteral.call, %.loc4_31.2 [concrete = Core.IntLiteral]
+// CHECK:STDOUT:       %IntLiteral.ref: type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N: Core.IntLiteral = value_binding N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param1

@@ -36,7 +36,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_unsized.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.right_shift_assign" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.right_shift_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.right_shift_assign";
 

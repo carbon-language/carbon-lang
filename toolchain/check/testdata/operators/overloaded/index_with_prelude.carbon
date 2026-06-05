@@ -290,8 +290,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.generic: %IndexWith.type.df6 = struct_value () [concrete]
 // CHECK:STDOUT:   %SubscriptType: type = symbolic_binding SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %IndexWith.assoc_type.e15: type = assoc_entity_type @IndexWith, @IndexWith(%SubscriptType) [symbolic]
-// CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
-// CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.type.385: type = facet_type <@IndexWith, @IndexWith(Core.IntLiteral)> [concrete]
 // CHECK:STDOUT:   %.Self: %IndexWith.type.385 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %IndexWith.assoc_type.ecd: type = assoc_entity_type @IndexWith, @IndexWith(Core.IntLiteral) [concrete]
@@ -326,7 +324,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Core.IndexWith: %IndexWith.type.df6 = import_ref Core//prelude/operators/index, IndexWith, loaded [concrete = constants.%IndexWith.generic]
 // CHECK:STDOUT:   %Core.import_ref.bc6: @IndexWith.WithSelf.%IndexWith.assoc_type (%IndexWith.assoc_type.e15) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.WithSelf.%assoc0 (constants.%assoc0.a4e)]
 // CHECK:STDOUT:   %Core.import_ref.fc2: type = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [concrete = %ElementType]
-// CHECK:STDOUT:   %Core.IntLiteral: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [concrete = constants.%IntLiteral]
+// CHECK:STDOUT:   %Core.IntLiteral: type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [concrete = Core.IntLiteral]
 // CHECK:STDOUT:   %Core.import_ref.6b6 = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %ElementType: type = assoc_const_decl @ElementType [concrete] {}
 // CHECK:STDOUT: }
@@ -348,22 +346,19 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %Core.ref.loc8_16: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %IndexWith.ref: %IndexWith.type.df6 = name_ref IndexWith, imports.%Core.IndexWith [concrete = constants.%IndexWith.generic]
 // CHECK:STDOUT:     %Core.ref.loc8_31: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = constants.%IntLiteral]
-// CHECK:STDOUT:     %IntLiteral.call: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc8_48.1: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc8_48.2: type = converted %IntLiteral.call, %.loc8_48.1 [concrete = Core.IntLiteral]
+// CHECK:STDOUT:     %IntLiteral.ref: type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(Core.IntLiteral)> [concrete = constants.%IndexWith.type.385]
 // CHECK:STDOUT:     %.Self: %IndexWith.type.385 = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %IndexWith.type.385 = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:     %.loc8_56.1: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:     %.loc8_56.2: %IndexWith.assoc_type.ecd = specific_constant imports.%Core.import_ref.bc6, @IndexWith.WithSelf(Core.IntLiteral, constants.%.Self) [concrete = constants.%assoc0.abe]
-// CHECK:STDOUT:     %ElementType.ref: %IndexWith.assoc_type.ecd = name_ref ElementType, %.loc8_56.2 [concrete = constants.%assoc0.abe]
+// CHECK:STDOUT:     %.loc8_54.1: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %.loc8_54.2: %IndexWith.assoc_type.ecd = specific_constant imports.%Core.import_ref.bc6, @IndexWith.WithSelf(Core.IntLiteral, constants.%.Self) [concrete = constants.%assoc0.abe]
+// CHECK:STDOUT:     %ElementType.ref: %IndexWith.assoc_type.ecd = name_ref ElementType, %.loc8_54.2 [concrete = constants.%assoc0.abe]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.abf, element0 [symbolic_self = constants.%impl.elem0.c76]
-// CHECK:STDOUT:     %C.ref.loc8_71: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc8_50: type = where_expr [concrete = constants.%IndexWith_where.type] {
+// CHECK:STDOUT:     %C.ref.loc8_69: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc8_48: type = where_expr [concrete = constants.%IndexWith_where.type] {
 // CHECK:STDOUT:       requirement_base_facet_type %IndexWith.type
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %C.ref.loc8_71
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %C.ref.loc8_69
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
@@ -391,7 +386,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %e: %C = value_binding e, %.loc15_15.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @tuple.type.as.IndexWith.impl: %.loc8_11.2 as %.loc8_50 {
+// CHECK:STDOUT: impl @tuple.type.as.IndexWith.impl: %.loc8_11.2 as %.loc8_48 {
 // CHECK:STDOUT:   %tuple.type.as.IndexWith.impl.At.decl: %tuple.type.as.IndexWith.impl.At.type = fn_decl @tuple.type.as.IndexWith.impl.At [concrete = constants.%tuple.type.as.IndexWith.impl.At] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.8b4 = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: %pattern_type.8b4 = at_binding_pattern self, %self.param_patt [concrete]
@@ -401,17 +396,14 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc9_61: Core.Form = init_form %C.ref [concrete = constants.%.a44]
+// CHECK:STDOUT:     %.loc9_59: Core.Form = init_form %C.ref [concrete = constants.%.a44]
 // CHECK:STDOUT:     %self.param: %tuple.type.748 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @tuple.type.as.IndexWith.impl.%.loc8_11.2 [concrete = constants.%tuple.type.748]
 // CHECK:STDOUT:     %self: %tuple.type.748 = value_binding self, %self.param
 // CHECK:STDOUT:     %subscript.param: Core.IntLiteral = value_param call_param1
-// CHECK:STDOUT:     %.loc9_55.1: type = splice_block %.loc9_55.3 [concrete = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc9_43: type = splice_block %IntLiteral.ref [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = constants.%IntLiteral]
-// CHECK:STDOUT:       %IntLiteral.call: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc9_55.2: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc9_55.3: type = converted %IntLiteral.call, %.loc9_55.2 [concrete = Core.IntLiteral]
+// CHECK:STDOUT:       %IntLiteral.ref: type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %subscript: Core.IntLiteral = value_binding subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
@@ -424,7 +416,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .At = %tuple.type.as.IndexWith.impl.At.decl
-// CHECK:STDOUT:   extend %.loc8_50
+// CHECK:STDOUT:   extend %.loc8_48
 // CHECK:STDOUT:   witness = %IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

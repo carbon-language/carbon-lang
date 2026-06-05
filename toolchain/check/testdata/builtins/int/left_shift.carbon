@@ -149,14 +149,14 @@ let negative: i32 = LeftShift(1, -1);
 // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let negative_zero: i32 = LeftShift(0, -1);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:39: error: shift distance negative in `1 << -1` [CompileTimeShiftNegative]
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:37: error: shift distance negative in `1 << -1` [CompileTimeShiftNegative]
 // CHECK:STDERR: let negative_lit: Core.IntLiteral = LeftShiftLit(1, -1);
-// CHECK:STDERR:                                       ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                     ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let negative_lit: Core.IntLiteral = LeftShiftLit(1, -1);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:44: error: shift distance negative in `0 << -1` [CompileTimeShiftNegative]
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:42: error: shift distance negative in `0 << -1` [CompileTimeShiftNegative]
 // CHECK:STDERR: let negative_lit_zero: Core.IntLiteral = LeftShiftLit(0, -1);
-// CHECK:STDERR:                                            ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                          ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let negative_lit_zero: Core.IntLiteral = LeftShiftLit(0, -1);
 
@@ -194,17 +194,17 @@ var an_i32: i32 = 34;
 // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE-10]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR: fn LeftShiftByLit(a: i32, b: Core.IntLiteral) -> i32 = "int.left_shift";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let bad1: i32 = LeftShiftByLit(an_i32, a_lit);
 
 // TODO: This could be valid because we don't actually need the return value at runtime.
-// CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE+7]]:31: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE+7]]:29: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: let bad2: Core.IntLiteral = LeftShiftOfLit(a_lit, an_i32);
-// CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE-19]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR: fn LeftShiftOfLit(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.left_shift";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let bad2: Core.IntLiteral = LeftShiftOfLit(a_lit, an_i32);
 
@@ -214,17 +214,17 @@ let bad2: Core.IntLiteral = LeftShiftOfLit(a_lit, an_i32);
 // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE-30]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR: fn LeftShiftByLit(a: i32, b: Core.IntLiteral) -> i32 = "int.left_shift";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let bad3: i32 = LeftShiftByLit(an_i32, 12);
 
 // TODO: This could be valid because we don't actually need the return value at runtime.
-// CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE+7]]:31: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE+7]]:29: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: let bad4: Core.IntLiteral = LeftShiftOfLit(12, an_i32);
-// CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE-39]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR: fn LeftShiftOfLit(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.left_shift";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let bad4: Core.IntLiteral = LeftShiftOfLit(12, an_i32);
 

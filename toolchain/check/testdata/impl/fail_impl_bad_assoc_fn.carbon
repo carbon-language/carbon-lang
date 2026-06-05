@@ -272,8 +272,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %I.WithSelf.F.6d6: %I.WithSelf.F.type.751 = struct_value () [concrete]
 // CHECK:STDOUT:   %FExtraParam: type = class_type @FExtraParam [concrete]
 // CHECK:STDOUT:   %I.impl_witness.99e: <witness> = impl_witness @FExtraParam.as.I.impl.%I.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %FExtraParam.as.I.impl.F.type.ec7b0b.1: type = fn_type @FExtraParam.as.I.impl.F.loc69_18.1 [concrete]
 // CHECK:STDOUT:   %FExtraParam.as.I.impl.F.ef9801.1: %FExtraParam.as.I.impl.F.type.ec7b0b.1 = struct_value () [concrete]
@@ -435,7 +433,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = constants.%Bool]
+// CHECK:STDOUT:   %Core.Bool: type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = bool]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }

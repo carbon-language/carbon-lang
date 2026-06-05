@@ -86,7 +86,7 @@ fn Test(n: Core.IntLiteral) {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-8]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR: fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Eq(n, 1);
   // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
@@ -94,7 +94,7 @@ fn Test(n: Core.IntLiteral) {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-16]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR: fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Eq(1, n);
   // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
@@ -102,7 +102,7 @@ fn Test(n: Core.IntLiteral) {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-24]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR: fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Eq(n, n);
 }

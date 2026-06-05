@@ -127,9 +127,9 @@ let literal_overflow: i32 = ConvertFloatLiteralToI32(2147483648.0);
 let giant_literal_overflow: i32 = ConvertFloatLiteralToI32(1.0e1000000);
 
 //
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:64: error: floating-point value 10*10^9999999 too large to convert: result would be an integer whose width is greater than the maximum supported width of 8388608 [RealLiteralTooLargeForUnsizedInt]
+// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:62: error: floating-point value 10*10^9999999 too large to convert: result would be an integer whose width is greater than the maximum supported width of 8388608 [RealLiteralTooLargeForUnsizedInt]
 // CHECK:STDERR: let giant_literal_to_int_literal_overflow: Core.IntLiteral = ConvertFloatLiteralToIntLiteral(1.0e10000000);
-// CHECK:STDERR:                                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let giant_literal_to_int_literal_overflow: Core.IntLiteral = ConvertFloatLiteralToIntLiteral(1.0e10000000);
 
@@ -142,9 +142,9 @@ let giant_exponent_literal_overflow: i32 = ConvertFloatLiteralToI32(1.0e10000000
 
 //
 //
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:73: error: floating-point value 10*10^999999999999999999999999999999999 too large to convert: result would be an integer whose width is greater than the maximum supported width of 8388608 [RealLiteralTooLargeForUnsizedInt]
+// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:71: error: floating-point value 10*10^999999999999999999999999999999999 too large to convert: result would be an integer whose width is greater than the maximum supported width of 8388608 [RealLiteralTooLargeForUnsizedInt]
 // CHECK:STDERR: let giant_exponent_literal_to_int_literal_overflow: Core.IntLiteral = ConvertFloatLiteralToIntLiteral(1.0e1000000000000000000000000000000000);
-// CHECK:STDERR:                                                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                                                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let giant_exponent_literal_to_int_literal_overflow: Core.IntLiteral = ConvertFloatLiteralToIntLiteral(1.0e1000000000000000000000000000000000);
 
@@ -268,8 +268,6 @@ let inf_val: i32 = ConvertF64ToI32(Div(1.0, 0.0));
 // CHECK:STDOUT:   %ConvertFloatLiteralToI32: %ConvertFloatLiteralToI32.type = struct_value () [concrete]
 // CHECK:STDOUT:   %float.bab60c.2: Core.FloatLiteral = float_literal_value 21474836480e-1 [concrete]
 // CHECK:STDOUT:   %float.53d: Core.FloatLiteral = float_literal_value 10e999999 [concrete]
-// CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
-// CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ConvertFloatLiteralToIntLiteral.type: type = fn_type @ConvertFloatLiteralToIntLiteral [concrete]
 // CHECK:STDOUT:   %ConvertFloatLiteralToIntLiteral: %ConvertFloatLiteralToIntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %float.ef09: Core.FloatLiteral = float_literal_value 10e9999999 [concrete]
@@ -306,7 +304,7 @@ let inf_val: i32 = ConvertF64ToI32(Div(1.0, 0.0));
 // CHECK:STDOUT:   %Core.import_ref.c4c: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.063) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.d4f)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.c4c), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Core.UInt: %UInt.type = import_ref Core//prelude/parts/uint, UInt, loaded [concrete = constants.%UInt.generic]
-// CHECK:STDOUT:   %Core.IntLiteral: %IntLiteral.type = import_ref Core//prelude/parts/int_literal, IntLiteral, loaded [concrete = constants.%IntLiteral]
+// CHECK:STDOUT:   %Core.IntLiteral: type = import_ref Core//prelude/parts/int_literal, IntLiteral, loaded [concrete = Core.IntLiteral]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -348,16 +346,13 @@ let inf_val: i32 = ConvertF64ToI32(Div(1.0, 0.0));
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %giant_literal_to_int_literal_overflow.patt: %pattern_type.dc0 = value_binding_pattern giant_literal_to_int_literal_overflow [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc40_60.1: type = splice_block %.loc40_60.3 [concrete = Core.IntLiteral] {
+// CHECK:STDOUT:   %.loc40_48: type = splice_block %IntLiteral.ref.loc40 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:     %Core.ref.loc40: <namespace> = name_ref Core, imports.%Core.048aa3.1 [concrete = imports.%Core.048aa3.1]
-// CHECK:STDOUT:     %IntLiteral.ref.loc40: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = constants.%IntLiteral]
-// CHECK:STDOUT:     %IntLiteral.call.loc40: init type = call %IntLiteral.ref.loc40() [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc40_60.2: type = value_of_initializer %IntLiteral.call.loc40 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc40_60.3: type = converted %IntLiteral.call.loc40, %.loc40_60.2 [concrete = Core.IntLiteral]
+// CHECK:STDOUT:     %IntLiteral.ref.loc40: type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc40_108.1: Core.IntLiteral = value_of_initializer @__global_init.%ConvertFloatLiteralToIntLiteral.call.loc40 [concrete = <error>]
-// CHECK:STDOUT:   %.loc40_108.2: Core.IntLiteral = converted @__global_init.%ConvertFloatLiteralToIntLiteral.call.loc40, %.loc40_108.1 [concrete = <error>]
-// CHECK:STDOUT:   %giant_literal_to_int_literal_overflow: Core.IntLiteral = value_binding giant_literal_to_int_literal_overflow, %.loc40_108.2 [concrete = <error>]
+// CHECK:STDOUT:   %.loc40_106.1: Core.IntLiteral = value_of_initializer @__global_init.%ConvertFloatLiteralToIntLiteral.call.loc40 [concrete = <error>]
+// CHECK:STDOUT:   %.loc40_106.2: Core.IntLiteral = converted @__global_init.%ConvertFloatLiteralToIntLiteral.call.loc40, %.loc40_106.1 [concrete = <error>]
+// CHECK:STDOUT:   %giant_literal_to_int_literal_overflow: Core.IntLiteral = value_binding giant_literal_to_int_literal_overflow, %.loc40_106.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %giant_exponent_literal_overflow.patt: %pattern_type.6b6 = value_binding_pattern giant_exponent_literal_overflow [concrete]
 // CHECK:STDOUT:   }
@@ -368,16 +363,13 @@ let inf_val: i32 = ConvertF64ToI32(Div(1.0, 0.0));
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %giant_exponent_literal_to_int_literal_overflow.patt: %pattern_type.dc0 = value_binding_pattern giant_exponent_literal_to_int_literal_overflow [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc55_69.1: type = splice_block %.loc55_69.3 [concrete = Core.IntLiteral] {
+// CHECK:STDOUT:   %.loc55_57: type = splice_block %IntLiteral.ref.loc55 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:     %Core.ref.loc55: <namespace> = name_ref Core, imports.%Core.048aa3.1 [concrete = imports.%Core.048aa3.1]
-// CHECK:STDOUT:     %IntLiteral.ref.loc55: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = constants.%IntLiteral]
-// CHECK:STDOUT:     %IntLiteral.call.loc55: init type = call %IntLiteral.ref.loc55() [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc55_69.2: type = value_of_initializer %IntLiteral.call.loc55 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc55_69.3: type = converted %IntLiteral.call.loc55, %.loc55_69.2 [concrete = Core.IntLiteral]
+// CHECK:STDOUT:     %IntLiteral.ref.loc55: type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc55_143.1: Core.IntLiteral = value_of_initializer @__global_init.%ConvertFloatLiteralToIntLiteral.call.loc55 [concrete = <error>]
-// CHECK:STDOUT:   %.loc55_143.2: Core.IntLiteral = converted @__global_init.%ConvertFloatLiteralToIntLiteral.call.loc55, %.loc55_143.1 [concrete = <error>]
-// CHECK:STDOUT:   %giant_exponent_literal_to_int_literal_overflow: Core.IntLiteral = value_binding giant_exponent_literal_to_int_literal_overflow, %.loc55_143.2 [concrete = <error>]
+// CHECK:STDOUT:   %.loc55_141.1: Core.IntLiteral = value_of_initializer @__global_init.%ConvertFloatLiteralToIntLiteral.call.loc55 [concrete = <error>]
+// CHECK:STDOUT:   %.loc55_141.2: Core.IntLiteral = converted @__global_init.%ConvertFloatLiteralToIntLiteral.call.loc55, %.loc55_141.1 [concrete = <error>]
+// CHECK:STDOUT:   %giant_exponent_literal_to_int_literal_overflow: Core.IntLiteral = value_binding giant_exponent_literal_to_int_literal_overflow, %.loc55_141.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %literal_overflow_large_mantissa.patt: %pattern_type.6b6 = value_binding_pattern literal_overflow_large_mantissa [concrete]
 // CHECK:STDOUT:   }

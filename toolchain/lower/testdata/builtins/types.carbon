@@ -60,10 +60,10 @@ fn Uses() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "types.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Uses", linkageName: "_CUses.Main", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Uses", linkageName: "_CUses.Main", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 29, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 30, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 31, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 28, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 31, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 32, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 33, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 30, column: 1, scope: !4)

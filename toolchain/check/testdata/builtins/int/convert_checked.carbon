@@ -237,7 +237,7 @@ let not_constant: i32 = 0;
 // CHECK:STDERR: let convert_not_constant_narrow: i16 = Int32ToInt16(not_constant);
 // CHECK:STDERR:                                        ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_not_constant.carbon:[[@LINE-7]]:1: in import [InImport]
-// CHECK:STDERR: int_ops.carbon:18:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: int_ops.carbon:19:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR: fn Int32ToInt16(a: i32) -> i16 = "int.convert_checked";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -247,7 +247,7 @@ let convert_not_constant_narrow: i16 = Int32ToInt16(not_constant);
 // CHECK:STDERR: let convert_not_constant_same: i32 = Int32ToInt32(not_constant);
 // CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_not_constant.carbon:[[@LINE-17]]:1: in import [InImport]
-// CHECK:STDERR: int_ops.carbon:10:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: int_ops.carbon:11:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR: fn Int32ToInt32(a: i32) -> i32 = "int.convert_checked";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -257,7 +257,7 @@ let convert_not_constant_same: i32 = Int32ToInt32(not_constant);
 // CHECK:STDERR: let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDERR:                                       ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_not_constant.carbon:[[@LINE-27]]:1: in import [InImport]
-// CHECK:STDERR: int_ops.carbon:26:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: int_ops.carbon:27:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR: fn Int32ToInt64(a: i32) -> i64 = "int.convert_checked";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

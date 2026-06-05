@@ -29,13 +29,13 @@ import library "builtin";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char.convert_checked" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn ToCharBarResultU16(c: CharLiteral) -> UInt(16) = "char.convert_checked";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn ToCharBarResultU16(c: CharLiteral) -> UInt(16) = "char.convert_checked";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char.convert_checked" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn ToCharBadResultU9(c: CharLiteral) -> UInt(9) = "char.convert_checked";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn ToCharBadResultU9(c: CharLiteral) -> UInt(9) = "char.convert_checked";
 
@@ -55,9 +55,9 @@ let c: CharLiteral = 'a';
 // CHECK:STDERR: let d: UInt(8) = ToChar(c);
 // CHECK:STDERR:                  ^~~~~~~~~
 // CHECK:STDERR: fail_runtime_call.carbon:[[@LINE-6]]:1: in import [InImport]
-// CHECK:STDERR: builtin.carbon:8:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: builtin.carbon:10:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR: fn ToChar(c: CharLiteral) -> UInt(8) = "char.convert_checked";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let d: UInt(8) = ToChar(c);
 
