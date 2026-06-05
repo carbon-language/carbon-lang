@@ -86,17 +86,9 @@ static auto LookupClassFieldByStructField(
   return std::nullopt;
 }
 
-// TODO: dedup (from export.cpp)
-static auto ExportFieldToCpp(const File& sem_ir, SemIR::InstId field_inst_id)
-    -> clang::FieldDecl* {
-  // Get the exported `clang::FieldDecl`.
-  if (const auto* clang_decl = sem_ir.clang_decls().Lookup(field_inst_id)) {
-    return cast<clang::FieldDecl>(clang_decl->decl());
-  }
-  return nullptr;
-}
-
-// TODO: dedup (from export.cpp)
+// Get the field offset for each field in a class.
+//
+// Returns true on success, false if any error occurs.
 static auto CalculateCppFieldOffsets(
     const File& sem_ir, SemIR::ClassId class_id,
     llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets) -> bool {
@@ -116,10 +108,13 @@ static auto CalculateCppFieldOffsets(
     auto class_field =
         LookupClassFieldByStructField(sem_ir, class_scope, struct_field);
     if (class_field) {
-      auto* cpp_field_decl = ExportFieldToCpp(sem_ir, class_field->inst_id);
-      if (!cpp_field_decl) {
+      const auto* clang_decl =
+          sem_ir.clang_decls().Lookup(class_field->inst_id);
+      if (!clang_decl) {
         return false;
       }
+
+      auto* cpp_field_decl = cast<clang::FieldDecl>(clang_decl->decl());
       field_offsets.insert(
           {cpp_field_decl, class_layout.FieldOffset(field_layout).bits()});
     }
