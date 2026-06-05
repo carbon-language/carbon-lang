@@ -314,42 +314,6 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
   return nullptr;
 }
 
-auto CalculateCppFieldOffsets(
-    Context& context, SemIR::ClassId class_id,
-    llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets) -> bool {
-  auto class_info = context.classes().Get(class_id);
-  const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-
-  auto class_layout = SemIR::ObjectLayout::Empty();
-  for (const auto& struct_field : GetStructTypeFields(context, class_info)) {
-    auto field_type_id = context.sem_ir().types().GetTypeIdForTypeInstId(
-        struct_field.type_inst_id);
-    auto field_layout = context.sem_ir()
-                            .types()
-                            .GetCompleteTypeInfo(field_type_id)
-                            .object_layout;
-
-    // Use the field's name to look up the corresponding entry in the
-    // class. If it's a `FieldDecl`, write out the offset of the
-    // corresponding `clang::FieldDecl`.
-    auto class_field =
-        LookupClassFieldByStructField(context, class_scope, struct_field);
-    if (class_field) {
-      auto* cpp_field_decl =
-          ExportFieldToCpp(context, class_field->inst_id, class_field->inst);
-      if (!cpp_field_decl) {
-        return false;
-      }
-      field_offsets.insert(
-          {cpp_field_decl, class_layout.FieldOffset(field_layout).bits()});
-    }
-
-    class_layout.AppendField(field_layout);
-  }
-
-  return true;
-}
-
 namespace {
 struct FunctionInfo {
   struct Param {
