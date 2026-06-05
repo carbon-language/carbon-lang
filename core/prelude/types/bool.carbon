@@ -4,4 +4,6 @@
 
 package Core library "prelude/types/bool";
 
-fn Bool() -> type = "bool.make_type";
+private fn MakeBool() -> type = "bool.make_type";
+alias Bool = MakeBool();
+

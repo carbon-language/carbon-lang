@@ -6,7 +6,8 @@
 
 package Core library "prelude/parts/int_literal";
 
-fn IntLiteral() -> type = "int_literal.make_type";
+private fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
 
 // Negate.
 
@@ -15,6 +16,6 @@ interface Negate {
   fn Op[self: Self]() -> Result;
 }
 
-impl IntLiteral() as Negate where .Result = Self {
+impl IntLiteral as Negate where .Result = Self {
   fn Op[self: Self]() -> Self = "int.snegate";
 }

@@ -12,28 +12,32 @@ interface Copy {
   fn Op[self: Self]() -> Self;
 }
 
-private fn Bool() -> type = "bool.make_type";
-private fn CharLiteral() -> type = "char_literal.make_type";
-private fn FloatLiteral() -> type = "float_literal.make_type";
-private fn IntLiteral() -> type = "int_literal.make_type";
+private fn MakeBool() -> type = "bool.make_type";
+private alias Bool = MakeBool();
+private fn MakeCharLiteral() -> type = "char_literal.make_type";
+private alias CharLiteral = MakeCharLiteral();
+private fn MakeFloatLiteral() -> type = "float_literal.make_type";
+private alias FloatLiteral = MakeFloatLiteral();
+private fn MakeIntLiteral() -> type = "int_literal.make_type";
+private alias IntLiteral = MakeIntLiteral();
 
 impl forall [T:! Copy] const T as Copy {
   fn Op[self: Self]() -> Self { return (self as T).(Copy.Op)() as const T; }
 }
 
-impl Bool() as Copy {
+impl Bool as Copy {
   fn Op[self: Self]() -> Self = "primitive_copy";
 }
 
-impl CharLiteral() as Copy {
+impl CharLiteral as Copy {
   fn Op[self: Self]() -> Self = "primitive_copy";
 }
 
-impl FloatLiteral() as Copy {
+impl FloatLiteral as Copy {
   fn Op[self: Self]() -> Self = "primitive_copy";
 }
 
-impl IntLiteral() as Copy {
+impl IntLiteral as Copy {
   fn Op[self: Self]() -> Self = "primitive_copy";
 }
 

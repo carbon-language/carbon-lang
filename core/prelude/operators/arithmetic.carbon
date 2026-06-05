@@ -92,26 +92,26 @@ interface ModAssignWith(Other:! type) {
 
 // Operations for IntLiteral. These need to be here because IntLiteral has no
 // associated library of its own.
-impl IntLiteral() as AddWith(Self) where .Result = Self {
+impl IntLiteral as AddWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.sadd";
 }
 
-impl IntLiteral() as DivWith(Self) where .Result = Self {
+impl IntLiteral as DivWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.sdiv";
 }
 
-impl IntLiteral() as ModWith(Self) where .Result = Self {
+impl IntLiteral as ModWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.smod";
 }
 
-impl IntLiteral() as MulWith(Self) where .Result = Self {
+impl IntLiteral as MulWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.smul";
 }
 
-impl IntLiteral() as Negate where .Result = Self {
+impl IntLiteral as Negate where .Result = Self {
   fn Op[self: Self]() -> Self = "int.snegate";
 }
 
-impl IntLiteral() as SubWith(Self) where .Result = Self {
+impl IntLiteral as SubWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.ssub";
 }
