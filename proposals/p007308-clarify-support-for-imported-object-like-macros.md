@@ -6,16 +6,14 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-[Pull request](https://github.com/carbon-language/carbon-lang/pull/####)
+[Pull request](https://github.com/carbon-language/carbon-lang/pull/7308)
 
 <!-- toc -->
 
 ## Table of contents
 
--   [TODO: Initial proposal setup](#todo-initial-proposal-setup)
 -   [Abstract](#abstract)
 -   [Problem](#problem)
--   [Background](#background)
 -   [Proposal](#proposal)
 -   [Details](#details)
 -   [Rationale](#rationale)
@@ -23,31 +21,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## TODO: Initial proposal setup
-
-> TIP: Run `./new_proposal.py "TITLE"` to do new proposal setup.
-
-1. Copy this template to `new.md`, and create a commit.
-2. Create a GitHub pull request, to get a pull request number.
-    - Add the `proposal draft` label to the pull request.
-3. Rename `new.md` to `/proposals/p####.md`, where `####` should be the pull
-   request number.
-4. Update the title of the proposal (the `TODO` on line 1).
-5. Update the link to the pull request (the `####` on line 11).
-6. Delete this section.
-
-TODOs indicate where content should be updated for a proposal. See
-[Carbon Governance and Evolution](/docs/project/evolution.md) for more details.
-
 ## Abstract
 
 This proposal clarifies some unclear aspects of the interop support for
 object-like macros. In particular:
-- Carbon supports importing an object-like macro if its definition can
-  be evaluated as a constant expression, without further restrictions on that
-  definition.
-- When importing the result of that evaluation, C++ lvalues are imported as
-  references, and rvalues are imported as values.
+
+-   Carbon supports importing an object-like macro if its definition can be
+    evaluated as a constant expression, without further restrictions on that
+    definition.
+-   When importing the result of that evaluation, C++ lvalues are imported as
+    references, and rvalues are imported as values.
 
 ## Problem
 
@@ -61,18 +44,17 @@ function calls, among other things).
 
 In addition, p006676 states that if the constant value refers to a named
 constant, it is imported as an alias rather than a value, but it's not entirely
-clear what counts as a named constant, or what the alias/value distinction
-means (particularly when applied to C++ rvalues like enumerators). Here again,
-the proposal text doesn't fully reflect the design intent, which was that the
-expression category of the imported constant reflects the C++ value category
-of the constant expression.
+clear what counts as a named constant, or what the alias/value distinction means
+(particularly when applied to C++ rvalues like enumerators). Here again, the
+proposal text doesn't fully reflect the design intent, which was that the
+expression category of the imported constant reflects the C++ value category of
+the constant expression.
 
 ## Proposal
 
-This proposal rephrases the design of this feature to avoid the impression of
-an allow-list. It also replaces the discussion of named constants with
-a statement that lvalues are imported as references, and rvalues are imported as
-values.
+This proposal rephrases the design of this feature to avoid the impression of an
+allow-list. It also replaces the discussion of named constants with a statement
+that lvalues are imported as references, and rvalues are imported as values.
 
 ## Details
 
@@ -82,8 +64,8 @@ proposal.
 ## Rationale
 
 This proposal advances the
-[Community and culture](/docs/project/goals.md#community-and-culture) goal,
-by ensuring that the design choices we made for this feature are clearly
+[Community and culture](/docs/project/goals.md#community-and-culture) goal, by
+ensuring that the design choices we made for this feature are clearly
 documented, and that the actual design (as adopted by the evolution process)
 matches the design as understood by the leads and the team.
 
