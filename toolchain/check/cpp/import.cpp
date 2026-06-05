@@ -440,7 +440,7 @@ static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
 // Returns whether `decl` already mapped to an instruction.
 static auto IsClangDeclImported(Context& context, SemIR::ClangDeclKey key)
     -> bool {
-  return context.clang_decls().Lookup(key).has_value();
+  return context.clang_decls().LookupId(key).has_value();
 }
 
 // If `decl` already mapped to an instruction, returns that instruction.
@@ -448,7 +448,7 @@ static auto IsClangDeclImported(Context& context, SemIR::ClangDeclKey key)
 static auto LookupClangDeclInstId(Context& context, SemIR::ClangDeclKey key)
     -> SemIR::InstId {
   const auto& clang_decls = context.clang_decls();
-  if (auto context_clang_decl_id = clang_decls.Lookup(key);
+  if (auto context_clang_decl_id = clang_decls.LookupId(key);
       context_clang_decl_id.has_value()) {
     return clang_decls.Get(context_clang_decl_id).inst_id;
   }

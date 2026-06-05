@@ -509,7 +509,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   auto* decl = cast<clang::Decl>(
       const_cast<clang::DeclContext*>(decl_context->getPrimaryContext()));
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
-  auto decl_id = context_->clang_decls().Lookup(key);
+  auto decl_id = context_->clang_decls().LookupId(key);
   CARBON_CHECK(
       decl_id.has_value(),
       "The DeclContext should already be associated with a Carbon InstId.");
@@ -590,7 +590,7 @@ static auto GetAsCarbonOwnedClass(Context& context,
 
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
       const_cast<clang::TagDecl*>(tag_decl->getFirstDecl()));
-  auto clang_decl_id = context.clang_decls().Lookup(key);
+  auto clang_decl_id = context.clang_decls().LookupId(key);
   if (!clang_decl_id.has_value()) {
     return std::nullopt;
   }

@@ -215,7 +215,7 @@ class ClangDeclStore {
   auto Get(ClangDeclId id) const -> const ClangDecl& { return values_.Get(id); }
 
   // Looks up a `ClangDeclId` by `ClangDeclKey`.
-  auto Lookup(ClangDeclKey key) const -> ClangDeclId;
+  auto LookupId(ClangDeclKey key) const -> ClangDeclId;
 
   // Looks up a `ClangDecl` by `InstId`. Returns nullptr if not found.
   auto Lookup(InstId inst_id) const -> const ClangDecl*;

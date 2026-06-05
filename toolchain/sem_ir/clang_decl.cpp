@@ -94,7 +94,7 @@ auto ClangDeclStore::AddVar(ClangDecl value, InstId pattern_id) -> ClangDeclId {
   return id;
 }
 
-auto ClangDeclStore::Lookup(ClangDeclKey key) const -> ClangDeclId {
+auto ClangDeclStore::LookupId(ClangDeclKey key) const -> ClangDeclId {
   return values_.Lookup(key);
 }
 
