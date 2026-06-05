@@ -3452,13 +3452,10 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
                         const SemIR::Function& function,
                         SemIR::SpecificId specific_id,
                         SemIR::InstBlockId args_id) -> SemIR::ConstantId {
-  auto clang_decl_id = outer_eval_context.sem_ir().clang_decls().Lookup(
+  const auto* clang_decl = outer_eval_context.sem_ir().clang_decls().Lookup(
       function.first_decl_id());
-  if (clang_decl_id.has_value() && outer_eval_context.sem_ir()
-                                       .clang_decls()
-                                       .Get(clang_decl_id)
-                                       .is_imported) {
-    return EvalCppCall(outer_eval_context.context(), loc_id, clang_decl_id,
+  if (clang_decl && clang_decl->is_imported) {
+    return EvalCppCall(outer_eval_context.context(), loc_id, *clang_decl,
                        args_id);
   } else if (function.body_block_ids.empty()) {
     // TODO: Diagnose this.

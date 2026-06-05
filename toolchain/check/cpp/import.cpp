@@ -2637,10 +2637,9 @@ auto GetAsClangVarDecl(Context& context, SemIR::InstId inst_id)
     -> clang::VarDecl* {
   if (const auto& var_storage =
           context.insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
-    auto clang_decl_id = context.clang_decls().Lookup(var_storage->pattern_id);
-    if (clang_decl_id.has_value()) {
-      return cast<clang::VarDecl>(
-          context.clang_decls().Get(clang_decl_id).key.decl);
+    if (const auto* clang_decl =
+            context.clang_decls().Lookup(var_storage->pattern_id)) {
+      return cast<clang::VarDecl>(clang_decl->key.decl);
     }
   }
 

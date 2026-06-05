@@ -351,15 +351,13 @@ auto FileContext::GetOrCreateLLVMFunction(
   // decl_id so it doesn't fall out naturally from the handling below)
   if (function_id != sem_ir().global_ctor_id()) {
     const auto& function = sem_ir().functions().Get(function_id);
-    auto clang_decl_id =
-        sem_ir().clang_decls().Lookup(function.first_decl_id());
-    if (clang_decl_id.has_value()) {
-      const auto& clang_decl = sem_ir().clang_decls().Get(clang_decl_id);
-      if (clang_decl.is_imported) {
+    if (const auto* clang_decl =
+            sem_ir().clang_decls().Lookup(function.first_decl_id())) {
+      if (clang_decl->is_imported) {
         CARBON_CHECK(!specific_id.has_value(),
                      "Specific functions cannot have C++ definitions");
         return HandleReferencedCppFunction(
-            clang_decl.key.decl->getAsFunction());
+            clang_decl->key.decl->getAsFunction());
       }
     }
   }
@@ -720,11 +718,10 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
   // happens when a Carbon variable is exported and used from C++; code
   // generation for the C++ code may have already created an
   // llvm::GlobalVariable.
-  auto clang_decl_id = sem_ir().clang_decls().Lookup(var_storage.pattern_id);
-  if (clang_decl_id.has_value()) {
-    auto* decl = sem_ir().clang_decls().Get(clang_decl_id).key.decl;
+  if (const auto* clang_decl =
+          sem_ir().clang_decls().Lookup(var_storage.pattern_id)) {
     auto* constant = cpp_code_generator_->GetAddrOfGlobal(
-        CreateGlobalDecl(cast<clang::NamedDecl>(decl)),
+        CreateGlobalDecl(cast<clang::NamedDecl>(clang_decl->key.decl)),
         /*isForDefinition=*/false);
     if (constant) {
       return constant;

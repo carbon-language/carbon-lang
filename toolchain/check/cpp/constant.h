@@ -31,7 +31,7 @@ auto EvalCppVarDecl(Context& context, SemIR::LocId loc_id,
 // Attempt to evaluate a call to a C++ constexpr/consteval function as a
 // Carbon constant.
 auto EvalCppCall(Context& context, SemIR::LocId loc_id,
-                 SemIR::ClangDeclId clang_decl_id, SemIR::InstBlockId args_id)
+                 const SemIR::ClangDecl& clang_decl, SemIR::InstBlockId args_id)
     -> SemIR::ConstantId;
 
 // If the callee is a C++ thunk, modify `call` to directly call the

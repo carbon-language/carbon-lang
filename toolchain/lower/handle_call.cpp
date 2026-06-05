@@ -637,10 +637,9 @@ static auto HandleVirtualCall(FunctionContext& context,
   auto* pointer_type =
       llvm::PointerType::get(context.llvm_context(), /* address space */ 0);
   llvm::Value* virtual_fn;
-  auto clang_decl_id =
+  const auto* clang_decl =
       context.sem_ir().clang_decls().Lookup(function.first_decl_id());
-  if (clang_decl_id.has_value() &&
-      context.sem_ir().clang_decls().Get(clang_decl_id).is_imported) {
+  if (clang_decl && clang_decl->is_imported) {
     // Use absolute vtables for clang interop - the itanium vtable contains
     // function pointers.
     auto* virtual_function_pointer_address = context.builder().CreateGEP(

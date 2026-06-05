@@ -98,11 +98,11 @@ auto ClangDeclStore::Lookup(ClangDeclKey key) const -> ClangDeclId {
   return values_.Lookup(key);
 }
 
-auto ClangDeclStore::Lookup(InstId inst_id) const -> ClangDeclId {
+auto ClangDeclStore::Lookup(InstId inst_id) const -> const ClangDecl* {
   if (auto result = inst_id_to_clang_decl_id_.Lookup(inst_id)) {
-    return result.value();
+    return &Get(result.value());
   }
-  return ClangDeclId::None;
+  return nullptr;
 }
 
 auto ClangDeclStore::OutputYaml() const -> Yaml::OutputMapping {

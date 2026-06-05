@@ -447,10 +447,9 @@ auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
     SemIR::InstId target_inst_id, SemIR::FunctionId function_id)
     -> clang::FunctionDecl* {
   SemIR::Function& function = context_->functions().Get(function_id);
-  auto clang_decl_id = context_->clang_decls().Lookup(function.first_decl_id());
-  if (clang_decl_id.has_value()) {
-    return cast<clang::FunctionDecl>(
-        context_->clang_decls().Get(clang_decl_id).key.decl);
+  if (const auto* clang_decl =
+          context_->clang_decls().Lookup(function.first_decl_id())) {
+    return cast<clang::FunctionDecl>(clang_decl->key.decl);
   }
 
   auto* clang_function_decl =
