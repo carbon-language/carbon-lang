@@ -24,6 +24,7 @@
 #include "toolchain/driver/clang_runner.h"
 #include "toolchain/driver/compile_driver.h"
 #include "toolchain/driver/driver_subcommand.h"
+#include "toolchain/driver/link_driver.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
 #include "toolchain/parse/parse.h"
@@ -35,30 +36,8 @@ namespace Carbon {
 
 auto BuildSubcommandOptions::Build(CommandLine::CommandBuilder& b) -> void {
   compile_options.BuildForBuildSubcommand(b);
-  b.AddStringOption(
-      {
-          .name = "output",
-          .short_name = "o",
-          .value_name = "FILE",
-          .help = R"""(
-The file name for the output binary. If none is specified `build` will use the
-name of the first provided input file.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&output_filename); });
-  b.AddStringPositionalArg(
-      {
-          .name = "EXTRA_CLANG_LINK_ARGS",
-          .help = R"""(
-Extra arguments to pass to Clang when forming the link command. This is
-primarily useful for expanding `LDFLAGS` or other baseline linking flags in a
-build system.
+  link_options.BuildForBuildSubcommand(b);
 
-These can also be used to pass object files to the link in the event your build
-system mixes object files and linker flags.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Append(&extra_clang_link_args); });
   b.AddFlag(
       {
           .name = "use-temp-dir",
@@ -141,85 +120,28 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return compile_result;
   }
 
-  // We've successfully compiled the inputs files, time to link them.
-  llvm::SmallVector<llvm::StringRef> clang_link_args;
-
-  // We link using a C++ mode of the driver.
-  clang_link_args.push_back("--driver-mode=g++");
-
-  // Pass the target down to Clang to pick up the correct defaults.
-  std::string target_arg =
-      llvm::formatv("--target={0}",
-                    options_.compile_options.codegen_options->target)
-          .str();
-  clang_link_args.push_back(target_arg);
+  // Compute the needed LinkOptions for the LinkDriver from the output of the
+  // compilation process.
+  options_.link_options.codegen_options =
+      options_.compile_options.codegen_options;
 
   llvm::SmallString<256> output_filename;
-  if (!options_.output_filename.empty()) {
-    clang_link_args.push_back("-o");
-    clang_link_args.push_back(options_.output_filename);
-  } else {
+  if (options_.link_options.output_filename.empty()) {
     output_filename = llvm::sys::path::filename(
         compile_driver.units()[compile_driver.first_input_index()]
             ->input_filename());
     llvm::sys::path::replace_extension(output_filename, "");
-    clang_link_args.push_back("-o");
-    clang_link_args.push_back(output_filename);
+    options_.link_options.output_filename = output_filename;
   }
 
-  // Note that we append any extra Clang args before our object filenames. This
-  // allows us to propagate object filenames that collide with Clang flags using
-  // `--` before the filenames. While in theory, this could create a problem in
-  // the presence of mixtures of object files in the two lists and the order
-  // being dependent, we don't expect that in practice.
-  clang_link_args.append(options_.extra_clang_link_args.begin(),
-                         options_.extra_clang_link_args.end());
-  clang_link_args.push_back("--");
   auto input_builder = [&](const std::unique_ptr<CompilationUnit>& unit) {
     return unit->output_filename();
   };
-  append_range(clang_link_args,
+  append_range(options_.link_options.object_filenames,
                llvm::map_range(compile_driver.units(), input_builder));
 
-  CARBON_VLOG_TO(driver_env.vlog_stream,
-                 "*** Build Clang link call with these arguments:\n");
-  for (auto a : clang_link_args) {
-    CARBON_VLOG_TO(driver_env.vlog_stream, "    '{0}',\n", a);
-  }
-
-  ClangRunner runner(driver_env.installation, driver_env.fs,
-                     driver_env.vlog_stream);
-  // Don't run Clang when fuzzing, it is known to not be reliable under fuzzing
-  // due to many unfixed issues.
-  if (TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "clang")) {
-    return {.success = false};
-  }
-
-  // Question: We're including some runtime stuff during compilation, is this
-  // redundant?
-  ErrorOr<bool> run_result =
-      driver_env.prebuilt_runtimes
-          ? runner.RunWithPrebuiltRuntimes(clang_link_args,
-                                           *driver_env.prebuilt_runtimes,
-                                           driver_env.enable_leaking)
-      : driver_env.build_runtimes_on_demand
-          ? runner.Run(clang_link_args, driver_env.runtimes_cache,
-                       *driver_env.thread_pool, driver_env.enable_leaking)
-          : runner.RunWithNoRuntimes(clang_link_args,
-                                     driver_env.enable_leaking);
-
-  if (!run_result.ok()) {
-    // This is not a Clang failure, but a failure to even run Clang, so we need
-    // to diagnose it here.
-    CARBON_DIAGNOSTIC(BuildFailureRunningClangToLink, Error,
-                      "failure running `clang` to perform linking: {0}",
-                      std::string);
-    driver_env.emitter.Emit(BuildFailureRunningClangToLink,
-                            run_result.error().message());
-  }
-
-  // Successfully ran Clang to perform the link, return its result.
-  return {.success = *run_result};
+  auto link_driver = LinkDriver(&options_.link_options);
+  return link_driver.Link(driver_env);
 }
 
 }  // namespace Carbon

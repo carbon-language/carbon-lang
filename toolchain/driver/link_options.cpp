@@ -64,6 +64,18 @@ legacy parsing logic.
 
 auto LinkOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b)
     -> void {
+  b.AddStringOption(
+      {
+          .name = "output",
+          .short_name = "o",
+          .value_name = "FILE",
+          .help = R"""(
+The file name for the output binary. If none is specified, `build` will use the
+name of the first provided input file.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&output_filename); });
+
   BuildSharedOptions(b, this);
 }
 
