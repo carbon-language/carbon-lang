@@ -7,11 +7,13 @@
 #include <optional>
 
 #include "llvm/Support/Casting.h"
+#include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
@@ -208,9 +210,19 @@ static auto LookupClassFieldByStructField(
   return std::nullopt;
 }
 
+static auto SetCppClassMemberAccess(const SemIR::NameScope& class_scope,
+                                    SemIR::NameId member_name_id,
+                                    clang::Decl* member) -> void {
+  auto entry_id = class_scope.Lookup(member_name_id);
+  CARBON_CHECK(entry_id.has_value());
+  const auto& entry = class_scope.GetEntry(*entry_id);
+  member->setAccess(MapToCppAccess(entry.result.access_kind()));
+}
+
 // Creates a `clang::FieldDecl` for a Carbon class field. Returns
 // nullptr if an error occurs.
 static auto CreateCppFieldDecl(Context& context,
+                               const SemIR::NameScope& class_scope,
                                clang::CXXRecordDecl* record_decl,
                                SemIR::InstId field_inst_id,
                                const SemIR::FieldDecl& field_decl)
@@ -238,7 +250,9 @@ static auto CreateCppFieldDecl(Context& context,
       /*IdLoc=*/clang_loc, identifier_info, cpp_type, /*TInfo=*/nullptr,
       /*BW=*/nullptr,
       /*Mutable=*/true, clang::ICIS_NoInit);
-  cpp_field_decl->setAccess(clang::AS_public);
+
+  SetCppClassMemberAccess(class_scope, field_decl.name_id, cpp_field_decl);
+
   record_decl->addHiddenDecl(cpp_field_decl);
 
   return cpp_field_decl;
@@ -265,9 +279,9 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
       continue;
     }
 
-    auto* cpp_field_decl =
-        CreateCppFieldDecl(context, cast<clang::CXXRecordDecl>(decl_context),
-                           class_field->inst_id, class_field->inst);
+    auto* cpp_field_decl = CreateCppFieldDecl(
+        context, class_scope, cast<clang::CXXRecordDecl>(decl_context),
+        class_field->inst_id, class_field->inst);
     if (!cpp_field_decl) {
       continue;
     }
@@ -953,8 +967,9 @@ auto ExportVarToCpp(Context& context, SemIR::InstId inst_id,
   auto entity_name_id = GetFirstBindingNameFromPatternId(
       context.sem_ir(), var_storage.pattern_id);
   const auto& entity_name = context.entity_names().Get(entity_name_id);
-  auto scope_inst = context.insts().Get(
-      context.name_scopes().Get(entity_name.parent_scope_id).inst_id());
+  const auto& name_scope =
+      context.name_scopes().Get(entity_name.parent_scope_id);
+  auto scope_inst = context.insts().Get(name_scope.inst_id());
   CARBON_CHECK(scope_inst.Is<SemIR::Namespace>() ||
                scope_inst.Is<SemIR::ClassDecl>());
 
@@ -986,8 +1001,7 @@ auto ExportVarToCpp(Context& context, SemIR::InstId inst_id,
       var_storage.pattern_id);
 
   if (scope_inst.Is<SemIR::ClassDecl>()) {
-    // TODO: Map Carbon access to C++ access.
-    var_decl->setAccess(clang::AS_public);
+    SetCppClassMemberAccess(name_scope, entity_name.name_id, var_decl);
   }
 
   // Set the Carbon mangled variable name.
