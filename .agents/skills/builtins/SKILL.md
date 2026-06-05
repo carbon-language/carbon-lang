@@ -98,8 +98,8 @@ Inside
       lowering of these is illegal (e.g. `IntConvertFloatChecked`).
     - **Runtime Primitives**: Return
       `AnyLiteralTypes(sem_ir, arg_ids, return_type_id)` to enforce that
-      expressions involving unsized literal values (like `IntLiteral()` or
-      `FloatLiteral()`) are evaluated exclusively at compile-time (as they lack
+      expressions involving unsized literal values (like `IntLiteral` or
+      `FloatLiteral`) are evaluated exclusively at compile-time (as they lack
       runtime representation).
 
 ---
@@ -204,8 +204,8 @@ builtins under [core/prelude/](../../../core/prelude/):
 -   **Strict Orphan Rule Compliance**: Carbon's orphan rules prohibit
     implementing interfaces where neither the type nor the interface is locally
     defined in the backing source module.
-    -   **Literal Conversions**: Literal types (like `FloatLiteral()`,
-        `IntLiteral()`) do not have backing Carbon source files. Therefore, an
+    -   **Literal Conversions**: Literal types (like `FloatLiteral`,
+        `IntLiteral`) do not have backing Carbon source files. Therefore, an
         `impl` of `UnsafeAs` (which is defined in `as.carbon`) between two
         literal types must reside inside `as.carbon` itself.
     -   **Sized Conversions**: Implementations targeting sized primitives (e.g.
