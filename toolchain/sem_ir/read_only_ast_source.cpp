@@ -130,7 +130,6 @@ static auto CalculateCppFieldOffsets(
   return true;
 }
 
-// TODO: dedup (from generate_ast.cpp)
 auto ReadOnlyASTSource::layoutRecordType(
     const clang::RecordDecl* record_decl, uint64_t& size, uint64_t& alignment,
     llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets,
