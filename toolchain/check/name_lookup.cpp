@@ -215,22 +215,18 @@ static auto DiagnoseInvalidQualifiedNameAccess(
       context.types().GetTypeIdForTypeConstantId(access_info.constant_id);
 
   if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
-    auto class_type = context.constant_values().TryGetInstAs<SemIR::ClassType>(
+    // TODO: Do we need to support parent access for entities other than
+    // classes?
+    auto class_type = context.constant_values().GetInstAs<SemIR::ClassType>(
         access_info.constant_id);
-    if (!class_type) {
-      // TODO: Do we need to support parent access for entities other than
-      // classes?
-      CARBON_FATAL("Expected class type for parent access");
-    }
-
-    const auto& class_info = context.classes().Get(class_type->class_id);
+    const auto& class_info = context.classes().Get(class_type.class_id);
 
     if (auto base_type_id =
-            class_info.GetBaseType(context.sem_ir(), class_type->specific_id);
+            class_info.GetBaseType(context.sem_ir(), class_type.specific_id);
         base_type_id.has_value()) {
       scope_type_id = base_type_id;
     } else if (auto adapted_type_id = class_info.GetAdaptedType(
-                   context.sem_ir(), class_type->specific_id);
+                   context.sem_ir(), class_type.specific_id);
                adapted_type_id.has_value()) {
       scope_type_id = adapted_type_id;
     } else {
