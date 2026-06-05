@@ -3,12 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -45,6 +47,27 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
   auto entity_name_id = context.entity_names().Add(
       {.name_id = name_context.name_id_for_new_inst(),
        .parent_scope_id = name_context.parent_scope_id});
+
+  switch (SemIR::GetExprCategory(context.sem_ir(), expr_id)) {
+    case SemIR::ExprCategory::Value:
+    case SemIR::ExprCategory::EphemeralRef:
+    case SemIR::ExprCategory::DurableRef:
+    case SemIR::ExprCategory::NotExpr:
+    case SemIR::ExprCategory::Error:
+      // An alias can refer to a value, a reference, or a non-expression name
+      // such as a function or namespace.
+      break;
+    case SemIR::ExprCategory::ReprInitializing:
+    case SemIR::ExprCategory::InPlaceInitializing:
+    case SemIR::ExprCategory::Mixed:
+    case SemIR::ExprCategory::Dependent:
+    case SemIR::ExprCategory::RefTagged:
+    case SemIR::ExprCategory::Pattern:
+      // For any other kind of expression, convert to a value or reference.
+      // TODO: Should we allow or require `ref` tagging for reference aliases?
+      expr_id = ConvertToValueOrRefExpr(context, expr_id);
+      break;
+  }
 
   if (!context.constant_values().Get(expr_id).is_constant()) {
     CARBON_DIAGNOSTIC(AliasRequiresConstantValue, Error,
