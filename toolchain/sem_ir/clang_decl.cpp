@@ -87,10 +87,10 @@ auto ClangDeclStore::Add(ClangDecl value) -> ClangDeclId {
   return id;
 }
 
-auto ClangDeclStore::AddVar(ClangDecl value, InstId inst_id) -> ClangDeclId {
+auto ClangDeclStore::AddVar(ClangDecl value, InstId pattern_id) -> ClangDeclId {
   CARBON_CHECK(isa<clang::VarDecl>(value.key.decl));
   auto id = values_.Add(value);
-  inst_id_to_clang_decl_id_.Insert(inst_id, id);
+  inst_id_to_clang_decl_id_.Insert(pattern_id, id);
   return id;
 }
 
