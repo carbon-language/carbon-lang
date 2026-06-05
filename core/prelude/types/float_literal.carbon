@@ -6,4 +6,3 @@ package Core library "prelude/types/float_literal";
 
 private fn MakeFloatLiteral() -> type = "float_literal.make_type";
 alias FloatLiteral = MakeFloatLiteral();
-

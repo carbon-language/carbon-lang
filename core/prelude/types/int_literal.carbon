@@ -6,4 +6,3 @@ package Core library "prelude/types/int_literal";
 
 private fn MakeIntLiteral() -> type = "int_literal.make_type";
 alias IntLiteral = MakeIntLiteral();
-

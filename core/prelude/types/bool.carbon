@@ -6,4 +6,3 @@ package Core library "prelude/types/bool";
 
 private fn MakeBool() -> type = "bool.make_type";
 alias Bool = MakeBool();
-

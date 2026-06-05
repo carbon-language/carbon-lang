@@ -6,4 +6,3 @@ package Core library "prelude/types/form";
 
 private fn MakeForm() -> type = "form.make_type";
 alias Form = MakeForm();
-
