@@ -23,3 +23,17 @@ int F() {
   return Carbon::C::x;
 }
 ''';
+
+// --- fail_static_private.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class C {
+  private static var x: i32 = 123;
+}
+
+inline Cpp '''
+int F() {
+  return Carbon::C::x;
+}
+''';

@@ -138,3 +138,22 @@ class A {
 inline Cpp '''
 Carbon::A x;
 ''';
+
+// --- fail_private_field.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class C {
+  fn Make() -> C {
+    return {.x = 123};
+  }
+
+  private var x: i32;
+}
+
+inline Cpp '''
+int F() {
+  auto c = Carbon::C::Make();
+  return c.x;
+}
+''';
