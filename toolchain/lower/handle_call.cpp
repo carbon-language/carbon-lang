@@ -574,8 +574,20 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
 
-    case SemIR::BuiltinFunctionKind::CharConvertChecked:
+    case SemIR::BuiltinFunctionKind::CharLiteralAdd:
+    case SemIR::BuiltinFunctionKind::CharLiteralConvertChar:
+    case SemIR::BuiltinFunctionKind::CharLiteralConvertInt:
+    case SemIR::BuiltinFunctionKind::CharLiteralEq:
+    case SemIR::BuiltinFunctionKind::CharLiteralGreater:
+    case SemIR::BuiltinFunctionKind::CharLiteralGreaterEq:
+    case SemIR::BuiltinFunctionKind::CharLiteralLess:
+    case SemIR::BuiltinFunctionKind::CharLiteralLessEq:
+    case SemIR::BuiltinFunctionKind::CharLiteralNeq:
+    case SemIR::BuiltinFunctionKind::CharLiteralSubChar:
+    case SemIR::BuiltinFunctionKind::CharLiteralSubInt:
     case SemIR::BuiltinFunctionKind::FloatConvertChecked:
+    case SemIR::BuiltinFunctionKind::IntAddCharLiteral:
+    case SemIR::BuiltinFunctionKind::IntConvertCharLiteral:
     case SemIR::BuiltinFunctionKind::IntConvertChecked:
     case SemIR::BuiltinFunctionKind::IntConvertFloatChecked: {
       // TODO: Check this statically.

@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/ids.h"
 
+#include "llvm/ADT/APInt.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/NativeFormatting.h"
 #include "toolchain/base/value_ids.h"
@@ -84,6 +85,18 @@ auto CharId::Print(llvm::raw_ostream& out) const -> void {
   // choice.
   out << "U+";
   llvm::write_hex(out, index, llvm::HexPrintStyle::Upper, 4);
+}
+
+auto CharId::ForCodePoint(const llvm::APInt& code_point)
+    -> std::optional<CharId> {
+  if (code_point.isNegative() || code_point.ugt(0x10FFFF)) {
+    return std::nullopt;
+  }
+  uint64_t value = code_point.getZExtValue();
+  if (value >= 0xD800 && value <= 0xDFFF) {
+    return std::nullopt;
+  }
+  return CharId(value);
 }
 
 auto IntKind::Print(llvm::raw_ostream& out) const -> void {
