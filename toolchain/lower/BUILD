@@ -81,6 +81,7 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst_namer",
         "//toolchain/sem_ir:mangler",
+        "//toolchain/sem_ir:read_only_ast_source",
         "//toolchain/sem_ir:stringify",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//clang:ast",

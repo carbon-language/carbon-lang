@@ -12,6 +12,7 @@
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/inst_namer.h"
+#include "toolchain/sem_ir/read_only_ast_source.h"
 
 namespace Carbon::Lower {
 
@@ -66,6 +67,18 @@ auto Context::LowerPendingDefinitions() -> void {
 }
 
 auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
+  for (auto& file_context : file_contexts_.values()) {
+    if (file_context && file_context->cpp_file()) {
+      auto& ast = const_cast<clang::ASTContext&>(
+          file_context->cpp_file()->ast_context());
+
+      llvm::IntrusiveRefCntPtr<clang::ExternalSemaSource> carbon_source =
+          llvm::makeIntrusiveRefCnt<SemIR::ReadOnlyASTSource>(
+              file_context->sem_ir());
+      ast.setExternalSource(std::move(carbon_source));
+    }
+  }
+
   LowerPendingDefinitions();
 
   for (auto& file_context : file_contexts_.values()) {
