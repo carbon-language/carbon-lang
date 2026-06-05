@@ -41,6 +41,7 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/cpp_file.h"
+#include "toolchain/sem_ir/read_only_ast_source.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -323,9 +324,10 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
 };
 
 // Provides clang AST nodes representing Carbon SemIR entities.
-class CarbonExternalASTSource : public clang::ExternalSemaSource {
+class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
  public:
-  explicit CarbonExternalASTSource(Context* context) : context_(context) {}
+  explicit CarbonExternalASTSource(Context* context)
+      : ReadOnlyASTSource(context->sem_ir()), context_(context) {}
 
   auto StartTranslationUnit(clang::ASTConsumer* consumer) -> void override;
 
@@ -748,37 +750,11 @@ auto CarbonExternalASTSource::layoutRecordType(
   // general.
   CompleteTypeOrCheckFail(*context_, class_type_id);
 
-  // Set the overall size and alignment. We round up the size to an integer
-  // number of bytes in order to avoid surprising Clang too much.
-  auto layout = context_->sem_ir()
-                    .types()
-                    .GetCompleteTypeInfo(class_type_id)
-                    .object_layout;
-  size = layout.size.bytes() * 8;
-  alignment = layout.alignment.bits();
+  auto& class_info = context_->classes().Get(class_type.class_id);
+  ExportAllFieldsToCpp(*context_, class_info);
 
-  // Fill in `field_offsets`.
-  CalculateCppFieldOffsets(*context_, class_type.class_id, field_offsets);
-
-  // Add offset for base class, if any.
-  if (const auto* class_decl = dyn_cast<clang::CXXRecordDecl>(record_decl);
-      class_decl && !class_decl->bases().empty()) {
-    CARBON_CHECK(class_decl->getNumBases() == 1,
-                 "Carbon class with multiple bases");
-    const auto& base = *class_decl->bases_begin();
-    // TODO: If this class introduced a vptr, the base will be at an offset of
-    // `sizeof(void*)`, not 0.
-    base_offsets.insert(
-        {base.getType()->getAsCXXRecordDecl()->getCanonicalDecl(),
-         clang::CharUnits::Zero()});
-
-    // TODO: Support deriving from a C++ class with virtual bases.
-    CARBON_CHECK(class_decl->getNumVBases() == 0,
-                 "Carbon class with multiple bases");
-    static_cast<void>(vbase_offsets);
-  }
-
-  return true;
+  return ReadOnlyASTSource::layoutRecordType(
+      record_decl, size, alignment, field_offsets, base_offsets, vbase_offsets);
 }
 
 // Parses a sequence of top-level declarations and forms a corresponding
