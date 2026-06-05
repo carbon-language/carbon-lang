@@ -198,7 +198,7 @@ class ClangDeclStore {
 
   // Same as `Add`, but for `VarStorage` that maps to a
   // `clang::VarDecl`. When looking up via `InstId`, the pattern's
-  // `InstId` must be used instead of the `InstId` corresponding to the
+  // `InstId` must be used instead of the `InstId` `value.inst_id` corresponding to the
   // `VarStorage`.
   //
   // The pattern's `InstId` is used because it provides a more stable
