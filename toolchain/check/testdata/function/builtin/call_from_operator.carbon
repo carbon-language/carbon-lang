@@ -16,8 +16,9 @@
 
 package Core;
 
-fn IntLiteral() -> type = "int_literal.make_type";
-fn Int(N: IntLiteral()) -> type = "int.make_type_signed";
+fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
+fn Int(N: IntLiteral) -> type = "int.make_type_signed";
 
 interface AddWith(T:! type) {
   fn Op[self: Self](other: Self) -> Self;
@@ -35,16 +36,16 @@ impl i32 as AddWith(i32) {
   fn Op[self: Self](other: Self) -> Self = "int.sadd";
 }
 
-impl IntLiteral() as As(i32) {
+impl IntLiteral as As(i32) {
   fn Convert[self: Self]() -> i32 = "int.convert_checked";
 }
 
-impl IntLiteral() as ImplicitAs(i32) {
+impl IntLiteral as ImplicitAs(i32) {
   fn Convert[self: Self]() -> i32 = "int.convert_checked";
 }
 
-impl i32 as ImplicitAs(IntLiteral()) {
-  fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
+impl i32 as ImplicitAs(IntLiteral) {
+  fn Convert[self: Self]() -> IntLiteral = "int.convert_checked";
 }
 
 // --- user.carbon
@@ -501,7 +502,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @IntLiteral() -> out %return.param: type = "int_literal.make_type";
+// CHECK:STDOUT: fn @IntLiteral -> out %return.param: type = "int_literal.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%N.param: Core.IntLiteral) -> out %return.param: type = "int.make_type_signed";
 // CHECK:STDOUT:

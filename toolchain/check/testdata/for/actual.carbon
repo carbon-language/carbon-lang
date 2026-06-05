@@ -15,7 +15,7 @@
 
 library "lib";
 
-class IntRange(N:! Core.IntLiteral()) {
+class IntRange(N:! Core.IntLiteral) {
   fn Make(start: Core.Int(N), end: Core.Int(N)) -> Self {
     return {.start = start, .end = end};
   }
@@ -45,7 +45,7 @@ fn Range(end: i32) -> IntRange(32) {
 
 import library "lib";
 
-fn Read(y:! Core.IntLiteral()) {
+fn Read(y:! Core.IntLiteral) {
   var unused x: IntRange(32) = Range(y);
 }
 

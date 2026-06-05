@@ -147,7 +147,7 @@ var b: i32 = 0;
 // CHECK:STDERR: var c: i32 = a.(b);
 // CHECK:STDERR:                 ^
 // CHECK:STDERR: min_prelude/parts/int.carbon:27:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR:   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
+// CHECK:STDERR:   fn Convert[self: Self]() -> IntLiteral = "int.convert_checked";
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+4]]:14: error: tuple index must be a constant [TupleIndexNotConstant]

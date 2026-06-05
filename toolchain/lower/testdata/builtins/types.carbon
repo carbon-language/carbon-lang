@@ -10,16 +10,18 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/builtins/types.carbon
 
-fn IntLiteral() -> type = "int_literal.make_type";
-fn FloatLiteral() -> type = "float_literal.make_type";
-fn Int(size: IntLiteral()) -> type = "int.make_type_signed";
-fn Float(size: IntLiteral()) -> type = "float.make_type";
+fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
+fn MakeFloatLiteral() -> type = "float_literal.make_type";
+alias FloatLiteral = MakeFloatLiteral();
+fn Int(size: IntLiteral) -> type = "int.make_type_signed";
+fn Float(size: IntLiteral) -> type = "float.make_type";
 fn Bool() -> type = "bool.make_type";
-fn AsI32(n: IntLiteral()) -> Int(32) = "int.convert_checked";
-fn AsF16(f: FloatLiteral()) -> Float(16) = "float.convert_checked";
-fn AsF32(f: FloatLiteral()) -> Float(32) = "float.convert_checked";
-fn AsF64(f: FloatLiteral()) -> Float(64) = "float.convert_checked";
-fn AsF128(f: FloatLiteral()) -> Float(128) = "float.convert_checked";
+fn AsI32(n: IntLiteral) -> Int(32) = "int.convert_checked";
+fn AsF16(f: FloatLiteral) -> Float(16) = "float.convert_checked";
+fn AsF32(f: FloatLiteral) -> Float(32) = "float.convert_checked";
+fn AsF64(f: FloatLiteral) -> Float(64) = "float.convert_checked";
+fn AsF128(f: FloatLiteral) -> Float(128) = "float.convert_checked";
 
 fn IntParam(i: Int(32));
 fn FloatParam(e: Float(16), f: Float(32), g: Float(64), h: Float(128));

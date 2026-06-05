@@ -61,7 +61,7 @@ fn F() -> Core.Char {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! Core.CharLiteral();
+  let value:! Core.CharLiteral;
 }
 
 class C {}
@@ -73,7 +73,7 @@ impl C as I where .value = 'a' {}
 library "[[@TEST_NAME]]";
 import library "char_literal";
 
-fn F() -> Core.CharLiteral() {
+fn F() -> Core.CharLiteral {
   //@dump-sem-ir-begin
   return (C as I).value;
   //@dump-sem-ir-end
@@ -107,7 +107,7 @@ fn F() -> f64 {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! Core.FloatLiteral();
+  let value:! Core.FloatLiteral;
 }
 
 class C {}
@@ -119,7 +119,7 @@ impl C as I where .value = 0.1 {}
 library "[[@TEST_NAME]]";
 import library "float_literal";
 
-fn F() -> Core.FloatLiteral() {
+fn F() -> Core.FloatLiteral {
   //@dump-sem-ir-begin
   return (C as I).value;
   //@dump-sem-ir-end
@@ -153,7 +153,7 @@ fn F() -> i32 {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! Core.IntLiteral();
+  let value:! Core.IntLiteral;
 }
 
 class C {}
@@ -165,7 +165,7 @@ impl C as I where .value = 7 {}
 library "[[@TEST_NAME]]";
 import library "int_literal";
 
-fn F() -> Core.IntLiteral() {
+fn F() -> Core.IntLiteral {
   //@dump-sem-ir-begin
   return (C as I).value;
   //@dump-sem-ir-end

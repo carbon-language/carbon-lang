@@ -14,7 +14,8 @@
 
 library "[[@TEST_NAME]]";
 
-fn Form() -> type = "form.make_type";
+fn MakeForm() -> type = "form.make_type";
+alias Form = MakeForm();
 
 // --- use_types.carbon
 
@@ -23,7 +24,7 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 //@dump-sem-ir-begin
-let f: Form() = form(var ());
+let f: Form = form(var ());
 //@dump-sem-ir-end
 
 // CHECK:STDOUT: --- use_types.carbon

@@ -60,7 +60,7 @@ fn F(x:? form(ref ()));
 // --- fail_param_form_not_constant.carbon
 library "[[@TEST_NAME]]";
 
-fn F() -> Core.Form();
+fn F() -> Core.Form;
 // CHECK:STDERR: fail_param_form_not_constant.carbon:[[@LINE+4]]:10: error: cannot evaluate form expression [FormExprEvaluationFailure]
 // CHECK:STDERR: fn G(x:? F());
 // CHECK:STDERR:          ^~~
@@ -109,10 +109,10 @@ fn G() {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_form_generic_param.carbon:[[@LINE+4]]:26: error: semantics TODO: `Support symbolic form bindings` [SemanticsTodo]
-// CHECK:STDERR: fn F(Form:! Core.Form(), x:? Form);
+// CHECK:STDERR: fn F(Form:! Core.Form, x:? Form);
 // CHECK:STDERR:                          ^~~~~~~~
 // CHECK:STDERR:
-fn F(Form:! Core.Form(), x:? Form);
+fn F(Form:! Core.Form, x:? Form);
 
 fn G() {
   var x: i32;
@@ -135,7 +135,7 @@ library "[[@TEST_NAME]]";
 
 // TODO: this code should fail for a different reason, but right now we don't
 // have a way to write correct code that reaches the TODO we're exercising here.
-fn F(Form:! Core.Form()) {
+fn F(Form:! Core.Form) {
   // CHECK:STDERR: fail_todo_local_symbolic_form_binding.carbon:[[@LINE+4]]:7: error: semantics TODO: `Support symbolic form bindings` [SemanticsTodo]
   // CHECK:STDERR:   let y:? Form = 0;
   // CHECK:STDERR:       ^~~~~~~~
@@ -203,7 +203,7 @@ fn F() ->? ref i32;
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-fn F(Form:! Core.Form()) ->? Form;
+fn F(Form:! Core.Form) ->? Form;
 //@dump-sem-ir-end
 
 // CHECK:STDOUT: --- ref_form_param.carbon

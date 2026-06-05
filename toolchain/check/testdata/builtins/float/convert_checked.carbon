@@ -14,9 +14,10 @@
 
 library "[[@TEST_NAME]]";
 
-fn FloatLiteral() -> type = "float_literal.make_type";
+fn MakeFloatLiteral() -> type = "float_literal.make_type";
+alias FloatLiteral = MakeFloatLiteral();
 
-fn FloatLiteralToFloatLiteral(a: FloatLiteral()) -> FloatLiteral() =
+fn FloatLiteralToFloatLiteral(a: FloatLiteral) -> FloatLiteral =
     "float.convert_checked";
 
 // --- identity_literal.carbon
@@ -25,7 +26,7 @@ library "[[@TEST_NAME]]";
 import library "literal";
 
 //@dump-sem-ir-begin
-let f: FloatLiteral() = FloatLiteralToFloatLiteral(1.0);
+let f: FloatLiteral = FloatLiteralToFloatLiteral(1.0);
 //@dump-sem-ir-end
 
 // --- f64.carbon
@@ -34,8 +35,8 @@ library "[[@TEST_NAME]]";
 export import library "literal";
 
 fn Float64ToFloat64(a: f64) -> f64 = "float.convert_checked";
-fn Float64ToFloatLiteral(a: f64) -> FloatLiteral() = "float.convert_checked";
-fn FloatLiteralToFloat64(a: FloatLiteral()) -> f64 = "float.convert_checked";
+fn Float64ToFloatLiteral(a: f64) -> FloatLiteral = "float.convert_checked";
+fn FloatLiteralToFloat64(a: FloatLiteral) -> f64 = "float.convert_checked";
 
 // --- f32.carbon
 
@@ -43,8 +44,8 @@ library "[[@TEST_NAME]]";
 export import library "literal";
 
 fn Float32ToFloat32(a: f32) -> f32 = "float.convert_checked";
-fn Float32ToFloatLiteral(a: f32) -> FloatLiteral() = "float.convert_checked";
-fn FloatLiteralToFloat32(a: FloatLiteral()) -> f32 = "float.convert_checked";
+fn Float32ToFloatLiteral(a: f32) -> FloatLiteral = "float.convert_checked";
+fn FloatLiteralToFloat32(a: FloatLiteral) -> f32 = "float.convert_checked";
 
 fn Float32ToFloat64(a: f32) -> f64 = "float.convert_checked";
 fn Float64ToFloat32(a: f64) -> f32 = "float.convert_checked";

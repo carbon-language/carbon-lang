@@ -95,7 +95,7 @@ fn Call() -> i32 {
   // The conversion from 2 to IntLiteral here relies on having the
   // constant value available, so is only possible if the thunk is
   // inlined.
-  return i32.(Add(Core.IntLiteral()).Op)
+  return i32.(Add(Core.IntLiteral).Op)
   //@dump-sem-ir-begin
         (a, 2)
   //@dump-sem-ir-end

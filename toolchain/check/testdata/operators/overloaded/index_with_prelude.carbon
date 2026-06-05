@@ -38,8 +38,8 @@ class C {
   adapt ();
 }
 
-impl (C, C) as Core.IndexWith(Core.IntLiteral()) where .ElementType = C {
-  fn At[self: Self](unused subscript: Core.IntLiteral()) -> C {
+impl (C, C) as Core.IndexWith(Core.IntLiteral) where .ElementType = C {
+  fn At[self: Self](unused subscript: Core.IntLiteral) -> C {
     return self.0;
   }
 }

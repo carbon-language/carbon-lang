@@ -17,11 +17,12 @@
 package Core library "[[@TEST_NAME]]";
 
 
-fn IntLiteral() -> type = "int_literal.make_type";
-fn Int(N: IntLiteral()) -> type = "int.make_type_signed";
+fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
+fn Int(N: IntLiteral) -> type = "int.make_type_signed";
 
-fn AsI32(a: IntLiteral()) -> i32 = "int.convert_checked";
-fn AsIntLiteral(a: i32) -> IntLiteral() = "int.convert_checked";
+fn AsI32(a: IntLiteral) -> i32 = "int.convert_checked";
+fn AsIntLiteral(a: i32) -> IntLiteral = "int.convert_checked";
 
 fn TestAdd(a: i32, b: i32) -> i32 = "int.sadd";
 
@@ -147,7 +148,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @IntLiteral() -> out %return.param: type = "int_literal.make_type";
+// CHECK:STDOUT: fn @IntLiteral -> out %return.param: type = "int_literal.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%N.param: Core.IntLiteral) -> out %return.param: type = "int.make_type_signed";
 // CHECK:STDOUT:

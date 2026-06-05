@@ -15,8 +15,8 @@ library "[[@TEST_NAME]]";
 
 fn ConvertI32ToF64(a: i32) -> f64 = "int.convert_float";
 fn ConvertU32ToF64(a: u32) -> f64 = "int.convert_float";
-fn ConvertIntLiteralToF64(a: Core.IntLiteral()) -> f64 = "int.convert_float";
-fn ConvertIntLiteralToFloatLiteral(a: Core.IntLiteral()) -> Core.FloatLiteral() = "int.convert_float";
+fn ConvertIntLiteralToF64(a: Core.IntLiteral) -> f64 = "int.convert_float";
+fn ConvertIntLiteralToFloatLiteral(a: Core.IntLiteral) -> Core.FloatLiteral = "int.convert_float";
 
 fn Negate(a: f64) -> f64 = "float.negate";
 

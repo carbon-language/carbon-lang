@@ -16,10 +16,11 @@
 
 library "[[@TEST_NAME]]";
 
-fn IntLiteral() -> type = "int_literal.make_type";
+fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
 
 class MyIntLiteral {
-  adapt IntLiteral();
+  adapt IntLiteral;
 }
 
 fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
@@ -207,7 +208,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   .Make = %MyInt32.Make.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @IntLiteral() -> out %return.param: type = "int_literal.make_type";
+// CHECK:STDOUT: fn @IntLiteral -> out %return.param: type = "int_literal.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%N.param: %MyIntLiteral) -> out %return.param: type = "int.make_type_signed";
 // CHECK:STDOUT:

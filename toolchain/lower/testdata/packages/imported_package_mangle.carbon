@@ -23,7 +23,7 @@ impl array(C, 1) as I {
   fn F() {}
 }
 
-impl forall [N:! Core.IntLiteral()] array(C, N) as I {
+impl forall [N:! Core.IntLiteral] array(C, N) as I {
   fn F() {}
 }
 
@@ -55,7 +55,7 @@ impl array(C, 1) as I {
   fn F() {}
 }
 
-impl forall [N:! Core.IntLiteral()] array(C, N) as I {
+impl forall [N:! Core.IntLiteral] array(C, N) as I {
   fn F() {}
 }
 
@@ -63,7 +63,7 @@ impl array(C, 1) as A.I {
   fn F() {}
 }
 
-impl forall [N:! Core.IntLiteral()] array(C, N) as A.I {
+impl forall [N:! Core.IntLiteral] array(C, N) as A.I {
   fn F() {}
 }
 
@@ -71,7 +71,7 @@ impl array(A.C, 1) as I {
   fn F() {}
 }
 
-impl forall [N:! Core.IntLiteral()] array(A.C, N) as I {
+impl forall [N:! Core.IntLiteral] array(A.C, N) as I {
   fn F() {}
 }
 

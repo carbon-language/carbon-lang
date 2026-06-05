@@ -14,7 +14,8 @@
 
 library "[[@TEST_NAME]]";
 
-fn FloatLiteral() -> type = "float_literal.make_type";
+fn MakeFloatLiteral() -> type = "float_literal.make_type";
+alias FloatLiteral = MakeFloatLiteral();
 
 // --- use_types.carbon
 
@@ -23,7 +24,7 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 //@dump-sem-ir-begin
-let f: FloatLiteral() = 1.0;
+let f: FloatLiteral = 1.0;
 //@dump-sem-ir-end
 
 // CHECK:STDOUT: --- use_types.carbon

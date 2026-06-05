@@ -13,8 +13,8 @@
 // --- int_to_float_checked.carbon
 library "[[@TEST_NAME]]";
 
-fn ConvertIntLiteralToFloatLiteral(a: Core.IntLiteral()) -> Core.FloatLiteral() = "int.convert_float_checked";
-fn ConvertIntLiteralToF32(a: Core.IntLiteral()) -> f32 = "int.convert_float_checked";
+fn ConvertIntLiteralToFloatLiteral(a: Core.IntLiteral) -> Core.FloatLiteral = "int.convert_float_checked";
+fn ConvertIntLiteralToF32(a: Core.IntLiteral) -> f32 = "int.convert_float_checked";
 
 class Expect[T:! type](N:! T) {}
 fn Test[T:! type](N:! T) -> Expect(N) { return {}; }

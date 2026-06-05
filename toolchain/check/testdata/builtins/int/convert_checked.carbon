@@ -17,14 +17,15 @@ library "[[@TEST_NAME]]";
 fn NegateI32(a: i32) -> i32 = "int.snegate";
 fn SubI32(a: i32, b: i32) -> i32 = "int.ssub";
 fn AddU32(a: u32, b: u32) -> u32 = "int.uadd";
-fn IntLiteral() -> type = "int_literal.make_type";
+fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
 
 // Size preserving
 fn Int32ToInt32(a: i32) -> i32 = "int.convert_checked";
 fn Int32ToUint32(a: i32) -> u32 = "int.convert_checked";
 fn Uint32ToInt32(a: u32) -> i32 = "int.convert_checked";
 fn Uint32ToUint32(a: u32) -> u32 = "int.convert_checked";
-fn IntLiteralToIntLiteral(a: IntLiteral()) -> IntLiteral() =
+fn IntLiteralToIntLiteral(a: IntLiteral) -> IntLiteral =
     "int.convert_checked";
 
 // Narrowing
@@ -32,16 +33,16 @@ fn Int32ToInt16(a: i32) -> i16 = "int.convert_checked";
 fn Int32ToUint16(a: i32) -> u16 = "int.convert_checked";
 fn Uint32ToInt16(a: u32) -> i16 = "int.convert_checked";
 fn Uint32ToUint16(a: u32) -> u16 = "int.convert_checked";
-fn IntLiteralToInt16(a: IntLiteral()) -> i16 = "int.convert_checked";
-fn IntLiteralToUint16(a: IntLiteral()) -> u16 = "int.convert_checked";
+fn IntLiteralToInt16(a: IntLiteral) -> i16 = "int.convert_checked";
+fn IntLiteralToUint16(a: IntLiteral) -> u16 = "int.convert_checked";
 
 // Widening
 fn Int32ToInt64(a: i32) -> i64 = "int.convert_checked";
 fn Int32ToUint64(a: i32) -> u64 = "int.convert_checked";
 fn Uint32ToInt64(a: u32) -> i64 = "int.convert_checked";
 fn Uint32ToUint64(a: u32) -> u64 = "int.convert_checked";
-fn Int32ToIntLiteral(a: i32) -> IntLiteral() = "int.convert_checked";
-fn Uint32ToUintLiteral(a: u32) -> IntLiteral() = "int.convert_checked";
+fn Int32ToIntLiteral(a: i32) -> IntLiteral = "int.convert_checked";
+fn Uint32ToUintLiteral(a: u32) -> IntLiteral = "int.convert_checked";
 
 // --- runtime_call.carbon
 
@@ -62,7 +63,7 @@ import library "int_ops";
 let a: i32 = Int32ToInt32(0);
 let b: i32 = Int32ToInt32(0x7FFF_FFFF);
 let c: i32 = Int32ToInt32(SubI32(NegateI32(0x7FFF_FFFF), 1));
-let d: IntLiteral() = IntLiteralToIntLiteral(Int32ToIntLiteral(NegateI32(1)));
+let d: IntLiteral = IntLiteralToIntLiteral(Int32ToIntLiteral(NegateI32(1)));
 
 // --- same_size.carbon
 

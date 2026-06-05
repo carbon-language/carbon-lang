@@ -127,7 +127,7 @@ fn F(a: TupleAdapter) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-fn MakeInt(N: Core.IntLiteral()) -> type = "int.make_type_signed";
+fn MakeInt(N: Core.IntLiteral) -> type = "int.make_type_signed";
 
 class IntAdapter {
   extend adapt MakeInt(32);

@@ -20,18 +20,19 @@ interface Add {
   fn Op[self: Self](other: Self) -> Self;
 }
 
-fn IntLiteral() -> type = "int_literal.make_type";
-fn Int(n: IntLiteral()) -> type = "int.make_type_signed";
+fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
+fn Int(n: IntLiteral) -> type = "int.make_type_signed";
 
-class MyInt(N:! IntLiteral()) {
+class MyInt(N:! IntLiteral) {
   adapt Int(N);
 }
 
-impl forall [N:! IntLiteral()] MyInt(N) as Add {
+impl forall [N:! IntLiteral] MyInt(N) as Add {
   fn Op[self: Self](other: Self) -> Self = "int.sadd";
 }
 
-fn Double[N:! IntLiteral()](x: MyInt(N)) -> MyInt(N) {
+fn Double[N:! IntLiteral](x: MyInt(N)) -> MyInt(N) {
   return x.(Add.Op)(x);
 }
 
@@ -49,19 +50,20 @@ fn CallImportedDouble(n: MyInt(64)) -> MyInt(64) {
 
 library "[[@TEST_NAME]]";
 
-fn IntLiteral() -> type = "int_literal.make_type";
-fn Int(n: IntLiteral()) -> type = "int.make_type_signed";
-fn ToLiteral(n: Int(32)) -> IntLiteral() = "int.convert_checked";
-fn FromLiteral(n: IntLiteral()) -> Int(32) = "int.convert_checked";
+fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
+fn Int(n: IntLiteral) -> type = "int.make_type_signed";
+fn ToLiteral(n: Int(32)) -> IntLiteral = "int.convert_checked";
+fn FromLiteral(n: IntLiteral) -> Int(32) = "int.convert_checked";
 
 fn Make(N:! Int(32)) -> Int(ToLiteral(N)) { return Make(N); }
 
 class OtherInt {
   adapt Int(32);
-  fn ToLiteral[self: Self]() -> IntLiteral();
+  fn ToLiteral[self: Self]() -> IntLiteral;
 };
 
-fn OtherInt.ToLiteral[self: Self]() -> IntLiteral() = "int.convert_checked";
+fn OtherInt.ToLiteral[self: Self]() -> IntLiteral = "int.convert_checked";
 
 fn MakeFromClass(N:! OtherInt) -> Int(N.ToLiteral()) { return MakeFromClass(N); }
 
@@ -337,7 +339,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   fn(%self.param: @Add.WithSelf.Op.%Self.as_type.loc5_15.1 (%Self.as_type), %other.param: @Add.WithSelf.Op.%Self.as_type.loc5_15.1 (%Self.as_type)) -> out %return.param: @Add.WithSelf.Op.%Self.as_type.loc5_15.1 (%Self.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @IntLiteral() -> out %return.param: type = "int_literal.make_type";
+// CHECK:STDOUT: fn @IntLiteral -> out %return.param: type = "int_literal.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%n.param: Core.IntLiteral) -> out %return.param: type = "int.make_type_signed";
 // CHECK:STDOUT:
@@ -1010,7 +1012,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   .ToLiteral = %OtherInt.ToLiteral.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @IntLiteral() -> out %return.param: type = "int_literal.make_type";
+// CHECK:STDOUT: fn @IntLiteral -> out %return.param: type = "int_literal.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%n.param: Core.IntLiteral) -> out %return.param: type = "int.make_type_signed";
 // CHECK:STDOUT:

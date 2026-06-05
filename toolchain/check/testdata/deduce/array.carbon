@@ -31,7 +31,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-fn F[N:! Core.IntLiteral()](unused a: array(C, N)) -> i32 { return N; }
+fn F[N:! Core.IntLiteral](unused a: array(C, N)) -> i32 { return N; }
 
 fn G() -> i32 {
   var a: array(C, 3) = ({}, {}, {});
@@ -44,7 +44,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-fn F[T:! type, N:! Core.IntLiteral()](unused a: array(T, N)) {}
+fn F[T:! type, N:! Core.IntLiteral](unused a: array(T, N)) {}
 
 fn G() {
   var a: array(C, 3) = ({}, {}, {});
@@ -82,7 +82,7 @@ library "[[@TEST_NAME]]";
 class C {}
 class D {}
 
-fn F[N:! Core.IntLiteral()](unused a: array(C, N)) -> i32 { return N; }
+fn F[N:! Core.IntLiteral](unused a: array(C, N)) -> i32 { return N; }
 
 fn G() -> i32 {
   // TODO: We succeed at deducing N here but fail to convert. Is this the right behavior?
@@ -94,7 +94,7 @@ fn G() -> i32 {
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-11]]:36: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn F[N:! Core.IntLiteral()](unused a: array(C, N)) -> i32 { return N; }
+  // CHECK:STDERR: fn F[N:! Core.IntLiteral](unused a: array(C, N)) -> i32 { return N; }
   // CHECK:STDERR:                                    ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   return F(a);

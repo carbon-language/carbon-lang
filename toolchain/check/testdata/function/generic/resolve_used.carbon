@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-fn ErrorIfNIsZero(N:! Core.IntLiteral()) {
+fn ErrorIfNIsZero(N:! Core.IntLiteral) {
   // Check that we resolve the definition of a used specific function by
   // ensuring we produce an error when doing so. Notionally this error is
   // produced as a result of instantiating the `Core.Int` template, although

@@ -14,7 +14,7 @@
 
 // --- fail_derived_to_base.carbon
 
-fn Int(N: Core.IntLiteral()) -> type = "int.make_type_signed";
+fn Int(N: Core.IntLiteral) -> type = "int.make_type_signed";
 
 base class B {}
 

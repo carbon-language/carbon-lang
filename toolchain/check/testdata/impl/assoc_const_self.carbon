@@ -65,7 +65,7 @@ impl C as I where .V = () {}
 
 library "[[@TEST_NAME]]";
 
-interface I(N:! Core.IntLiteral()) {
+interface I(N:! Core.IntLiteral) {
   let V:! array(Self, N);
 }
 

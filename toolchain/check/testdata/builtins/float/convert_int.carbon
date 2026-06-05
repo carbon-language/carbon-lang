@@ -15,10 +15,10 @@ library "[[@TEST_NAME]]";
 
 fn ConvertF64ToI32(a: f64) -> i32 = "float.convert_int";
 fn ConvertF64ToU32(a: f64) -> u32 = "float.convert_int";
-fn ConvertFloatLiteralToI32(a: Core.FloatLiteral()) -> i32 = "float.convert_int";
-fn ConvertFloatLiteralToU32(a: Core.FloatLiteral()) -> u32 = "float.convert_int";
-fn ConvertFloatLiteralToIntLiteral(a: Core.FloatLiteral()) -> Core.IntLiteral() = "float.convert_int";
-fn ConvertF64ToIntLiteral(a: f64) -> Core.IntLiteral() = "float.convert_int";
+fn ConvertFloatLiteralToI32(a: Core.FloatLiteral) -> i32 = "float.convert_int";
+fn ConvertFloatLiteralToU32(a: Core.FloatLiteral) -> u32 = "float.convert_int";
+fn ConvertFloatLiteralToIntLiteral(a: Core.FloatLiteral) -> Core.IntLiteral = "float.convert_int";
+fn ConvertF64ToIntLiteral(a: f64) -> Core.IntLiteral = "float.convert_int";
 
 fn Negate(a: f64) -> f64 = "float.negate";
 fn Div(a: f64, b: f64) -> f64 = "float.div";
@@ -128,10 +128,10 @@ let giant_literal_overflow: i32 = ConvertFloatLiteralToI32(1.0e1000000);
 
 //
 // CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:64: error: floating-point value 10*10^9999999 too large to convert: result would be an integer whose width is greater than the maximum supported width of 8388608 [RealLiteralTooLargeForUnsizedInt]
-// CHECK:STDERR: let giant_literal_to_int_literal_overflow: Core.IntLiteral() = ConvertFloatLiteralToIntLiteral(1.0e10000000);
+// CHECK:STDERR: let giant_literal_to_int_literal_overflow: Core.IntLiteral = ConvertFloatLiteralToIntLiteral(1.0e10000000);
 // CHECK:STDERR:                                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-let giant_literal_to_int_literal_overflow: Core.IntLiteral() = ConvertFloatLiteralToIntLiteral(1.0e10000000);
+let giant_literal_to_int_literal_overflow: Core.IntLiteral = ConvertFloatLiteralToIntLiteral(1.0e10000000);
 
 //
 // CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:44: error: floating-point value 10*10^999999999999999999999999999999999 too large for integer type `i32` [RealLiteralTooLargeForIntType]
@@ -143,10 +143,10 @@ let giant_exponent_literal_overflow: i32 = ConvertFloatLiteralToI32(1.0e10000000
 //
 //
 // CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:73: error: floating-point value 10*10^999999999999999999999999999999999 too large to convert: result would be an integer whose width is greater than the maximum supported width of 8388608 [RealLiteralTooLargeForUnsizedInt]
-// CHECK:STDERR: let giant_exponent_literal_to_int_literal_overflow: Core.IntLiteral() = ConvertFloatLiteralToIntLiteral(1.0e1000000000000000000000000000000000);
+// CHECK:STDERR: let giant_exponent_literal_to_int_literal_overflow: Core.IntLiteral = ConvertFloatLiteralToIntLiteral(1.0e1000000000000000000000000000000000);
 // CHECK:STDERR:                                                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-let giant_exponent_literal_to_int_literal_overflow: Core.IntLiteral() = ConvertFloatLiteralToIntLiteral(1.0e1000000000000000000000000000000000);
+let giant_exponent_literal_to_int_literal_overflow: Core.IntLiteral = ConvertFloatLiteralToIntLiteral(1.0e1000000000000000000000000000000000);
 
 //
 // CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:44: error: floating-point value 2147483648*10^0 too large for integer type `i32` [RealLiteralTooLargeForIntType]

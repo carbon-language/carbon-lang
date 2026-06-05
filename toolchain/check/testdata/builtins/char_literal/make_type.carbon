@@ -14,7 +14,8 @@
 
 library "[[@TEST_NAME]]";
 
-fn CharLiteral() -> type = "char_literal.make_type";
+fn MakeCharLiteral() -> type = "char_literal.make_type";
+alias CharLiteral = MakeCharLiteral();
 
 // --- use_types.carbon
 
@@ -23,9 +24,9 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 //@dump-sem-ir-begin
-let ascii_x: CharLiteral() = 'x';
-let not_7_bit: CharLiteral() = '\u{80}';
-let not_8_bit: CharLiteral() = '\u{1E15}';
+let ascii_x: CharLiteral = 'x';
+let not_7_bit: CharLiteral = '\u{80}';
+let not_8_bit: CharLiteral = '\u{1E15}';
 //@dump-sem-ir-end
 
 // CHECK:STDOUT: --- use_types.carbon

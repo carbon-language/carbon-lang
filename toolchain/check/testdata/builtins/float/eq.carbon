@@ -43,10 +43,10 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.eq" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Eq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.eq";
+// CHECK:STDERR: fn Eq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.eq";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Eq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.eq";
+fn Eq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.eq";
 
 // CHECK:STDOUT: --- float_eq.carbon
 // CHECK:STDOUT:

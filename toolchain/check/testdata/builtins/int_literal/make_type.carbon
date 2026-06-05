@@ -14,7 +14,8 @@
 
 library "[[@TEST_NAME]]";
 
-fn IntLiteral() -> type = "int_literal.make_type";
+fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
 
 // --- use_types.carbon
 
@@ -22,4 +23,4 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-var i: IntLiteral();
+var i: IntLiteral;
