@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Target/TargetMachine.h"
 #include "toolchain/diagnostics/sorting_consumer.h"
 #include "toolchain/driver/compile_options.h"
 #include "toolchain/driver/driver_env.h"
@@ -220,16 +221,31 @@ class MultiUnitCache {
   std::optional<TreeAndSubtreesGettersStore> tree_and_subtrees_getters_;
 };
 
+// Helper class to compile C++ and Carbon input files. Used by the `build` and
+// `compile` subcommands.
 class CompileDriver {
  public:
   explicit CompileDriver(CompileOptions* options);
 
+  // Configure the toolchain to compile all input files and dependencies.
+  // The `map_input` function maps an input file name to an output static
+  // object name.
+  // Returns `false` on configuration error.
   auto Initialize(
       DriverEnv& driver_env,
       llvm::function_ref<auto(llvm::StringRef)->std::string> map_input) -> bool;
+
+  // Performs the compilation process on each input specified in the
+  // `CompileOptions` provided at construction time.
   auto Compile(DriverEnv& driver_env) -> DriverResult;
 
+  // Returns the index in the `units()` array of the first input file
+  // specified by the user on the command line. This may not be the first
+  // element in the array due to dependency prepends.
   auto first_input_index() -> size_t { return input_filenames_index_; }
+
+  // Provides read-only access to the array of CompilationUnits, useful for
+  // subsequent processing of the compiled output products.
   auto units() -> llvm::ArrayRef<std::unique_ptr<CompilationUnit>> {
     return units_;
   }

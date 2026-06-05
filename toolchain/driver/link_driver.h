@@ -12,9 +12,14 @@
 
 namespace Carbon {
 
+// Helper class to link object files into an output binary using `clang`. Used
+// by the `build` and `link` subcommands.
 class LinkDriver {
  public:
   explicit LinkDriver(LinkOptions* options);
+
+  // Link the input binaries to the output binary with the configuration
+  // specified in the `LinkOptions` provided at construction time.
   auto Link(DriverEnv& driver_env) -> DriverResult;
 
  private:

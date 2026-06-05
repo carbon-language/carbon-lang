@@ -5,11 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_DRIVER_BUILD_SUBCOMMAND_H_
 #define CARBON_TOOLCHAIN_DRIVER_BUILD_SUBCOMMAND_H_
 
-#include <string>
-
 #include "common/command_line.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
 #include "toolchain/driver/compile_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"

@@ -6,31 +6,11 @@
 
 #include <filesystem>
 
-#include "common/command_line.h"
 #include "common/filesystem.h"
-#include "common/hashing.h"
-#include "common/pretty_stack_trace_function.h"
-#include "common/vlog.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
-#include "llvm/MC/TargetRegistry.h"
-#include "llvm/Passes/OptimizationLevel.h"
-#include "llvm/Passes/PassBuilder.h"
-#include "llvm/Passes/StandardInstrumentations.h"
-#include "llvm/Target/TargetMachine.h"
-#include "toolchain/check/check.h"
-#include "toolchain/codegen/codegen.h"
-#include "toolchain/diagnostics/sorting_consumer.h"
-#include "toolchain/driver/clang_runner.h"
+#include "llvm/ADT/SmallString.h"
 #include "toolchain/driver/compile_driver.h"
-#include "toolchain/driver/driver_subcommand.h"
 #include "toolchain/driver/link_driver.h"
-#include "toolchain/lex/lex.h"
-#include "toolchain/lower/lower.h"
-#include "toolchain/parse/parse.h"
-#include "toolchain/parse/tree_and_subtrees.h"
-#include "toolchain/sem_ir/ids.h"
-#include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
 
