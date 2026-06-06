@@ -47,6 +47,22 @@ fn F(unused U:! type, V:! Core.Destroy where {} impls Core.ImplicitAs(.Self)) {
   C(V).Create({});
 }
 
+// --- fail_invalid_type.carbon
+
+library "[[@TEST_NAME]]";
+
+class A {};
+
+// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+4]]:10: error: name `DoesNotExist` not found [NameNotFound]
+// CHECK:STDERR: fn F[T:! DoesNotExist](unused x: T) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~
+// CHECK:STDERR:
+fn F[T:! DoesNotExist](unused x: T) {}
+
+fn Call(a: A) {
+  F(a);
+}
+
 // CHECK:STDOUT: --- fail_incompatible_deduce.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -507,4 +523,86 @@ fn F(unused U:! type, V:! Core.Destroy where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.235
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_invalid_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %Call.type: type = fn_type @Call [concrete]
+// CHECK:STDOUT:   %Call: %Call.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .DoesNotExist = <poisoned>
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .Call = %Call.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %T.patt: <error> = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern [concrete]
+// CHECK:STDOUT:     %x.patt: <error> = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %DoesNotExist.ref: <error> = name_ref DoesNotExist, <error> [concrete = <error>]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T: <error> = symbolic_binding T, 0 [concrete = <error>]
+// CHECK:STDOUT:     %x.param: <error> = value_param call_param0
+// CHECK:STDOUT:     %T.ref: <error> = name_ref T, %T [concrete = <error>]
+// CHECK:STDOUT:     %x: <error> = value_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %a.param: %A = value_param call_param0
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %a: %A = value_binding a, %a.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F(%T: <error>) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%x.param: <error>) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Call(%a.param: %A) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(<error>) {}
 // CHECK:STDOUT:
