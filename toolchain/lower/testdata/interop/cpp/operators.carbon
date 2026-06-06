@@ -74,6 +74,47 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
   CheckOrderedWith(x, y);
 }
 
+// --- builtin_operators.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+inline Cpp '''
+struct A {
+  operator int() const;
+};
+struct B {
+  operator int() const;
+};
+''';
+
+fn Eq(a: Cpp.A, b: Cpp.B) -> bool {
+  return a == b;
+}
+
+fn Neq(a: Cpp.A, b: Cpp.B) -> bool {
+  return a != b;
+}
+
+fn Less(a: Cpp.A, b: Cpp.B) -> bool {
+  return a < b;
+}
+
+fn LessEq(a: Cpp.A, b: Cpp.B) -> bool {
+  return a <= b;
+}
+
+fn Greater(a: Cpp.A, b: Cpp.B) -> bool {
+  return a > b;
+}
+
+fn GreaterEq(a: Cpp.A, b: Cpp.B) -> bool {
+  return a >= b;
+}
+
+// TODO: Add more operators.
+// TODO: Test conversion to floating-point type.
+
 // CHECK:STDOUT: ; ModuleID = 'eq_with.carbon'
 // CHECK:STDOUT: source_filename = "eq_with.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -619,3 +660,156 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: !58 = !DILocation(line: 26, column: 1, scope: !50)
 // CHECK:STDOUT: !59 = !{!60, !8, i64 0}
 // CHECK:STDOUT: !60 = !{!"_ZTS1A", !8, i64 0}
+// CHECK:STDOUT: ; ModuleID = 'builtin_operators.carbon'
+// CHECK:STDOUT: source_filename = "builtin_operators.carbon"
+// CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+// CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CEq.Main(ptr %a, ptr %b) #0 !dbg !11 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %__carbon_thunk.call.loc15_10 = call i32 @_ZNK1AcviEv.carbon_thunk._(ptr %a), !dbg !18
+// CHECK:STDOUT:   %__carbon_thunk.call.loc15_15 = call i32 @_ZNK1BcviEv.carbon_thunk._(ptr %b), !dbg !19
+// CHECK:STDOUT:   %Equal.call = icmp eq i32 %__carbon_thunk.call.loc15_10, %__carbon_thunk.call.loc15_15, !dbg !18
+// CHECK:STDOUT:   ret i1 %Equal.call, !dbg !20
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define internal noundef i32 @_ZNK1AcviEv.carbon_thunk._(ptr noundef nonnull align 1 dereferenceable(1) %this) #1 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %this.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !21
+// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !tbaa !21, !nonnull !24
+// CHECK:STDOUT:   %call = call noundef i32 @_ZNK1AcviEv(ptr noundef nonnull align 1 dereferenceable(1) %0)
+// CHECK:STDOUT:   ret i32 %call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define internal noundef i32 @_ZNK1BcviEv.carbon_thunk._(ptr noundef nonnull align 1 dereferenceable(1) %this) #1 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %this.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !25
+// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !tbaa !25, !nonnull !24
+// CHECK:STDOUT:   %call = call noundef i32 @_ZNK1BcviEv(ptr noundef nonnull align 1 dereferenceable(1) %0)
+// CHECK:STDOUT:   ret i32 %call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CNeq.Main(ptr %a, ptr %b) #0 !dbg !27 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %__carbon_thunk.call.loc19_10 = call i32 @_ZNK1AcviEv.carbon_thunk._(ptr %a), !dbg !31
+// CHECK:STDOUT:   %__carbon_thunk.call.loc19_15 = call i32 @_ZNK1BcviEv.carbon_thunk._(ptr %b), !dbg !32
+// CHECK:STDOUT:   %NotEqual.call = icmp ne i32 %__carbon_thunk.call.loc19_10, %__carbon_thunk.call.loc19_15, !dbg !31
+// CHECK:STDOUT:   ret i1 %NotEqual.call, !dbg !33
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CLess.Main(ptr %a, ptr %b) #0 !dbg !34 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %__carbon_thunk.call.loc23_10 = call i32 @_ZNK1AcviEv.carbon_thunk._(ptr %a), !dbg !38
+// CHECK:STDOUT:   %__carbon_thunk.call.loc23_14 = call i32 @_ZNK1BcviEv.carbon_thunk._(ptr %b), !dbg !39
+// CHECK:STDOUT:   %Less.call = icmp slt i32 %__carbon_thunk.call.loc23_10, %__carbon_thunk.call.loc23_14, !dbg !38
+// CHECK:STDOUT:   ret i1 %Less.call, !dbg !40
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CLessEq.Main(ptr %a, ptr %b) #0 !dbg !41 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %__carbon_thunk.call.loc27_10 = call i32 @_ZNK1AcviEv.carbon_thunk._(ptr %a), !dbg !45
+// CHECK:STDOUT:   %__carbon_thunk.call.loc27_15 = call i32 @_ZNK1BcviEv.carbon_thunk._(ptr %b), !dbg !46
+// CHECK:STDOUT:   %LessOrEquivalent.call = icmp sle i32 %__carbon_thunk.call.loc27_10, %__carbon_thunk.call.loc27_15, !dbg !45
+// CHECK:STDOUT:   ret i1 %LessOrEquivalent.call, !dbg !47
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CGreater.Main(ptr %a, ptr %b) #0 !dbg !48 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %__carbon_thunk.call.loc31_10 = call i32 @_ZNK1AcviEv.carbon_thunk._(ptr %a), !dbg !52
+// CHECK:STDOUT:   %__carbon_thunk.call.loc31_14 = call i32 @_ZNK1BcviEv.carbon_thunk._(ptr %b), !dbg !53
+// CHECK:STDOUT:   %Greater.call = icmp sgt i32 %__carbon_thunk.call.loc31_10, %__carbon_thunk.call.loc31_14, !dbg !52
+// CHECK:STDOUT:   ret i1 %Greater.call, !dbg !54
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CGreaterEq.Main(ptr %a, ptr %b) #0 !dbg !55 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %__carbon_thunk.call.loc35_10 = call i32 @_ZNK1AcviEv.carbon_thunk._(ptr %a), !dbg !59
+// CHECK:STDOUT:   %__carbon_thunk.call.loc35_15 = call i32 @_ZNK1BcviEv.carbon_thunk._(ptr %b), !dbg !60
+// CHECK:STDOUT:   %GreaterOrEquivalent.call = icmp sge i32 %__carbon_thunk.call.loc35_10, %__carbon_thunk.call.loc35_15, !dbg !59
+// CHECK:STDOUT:   ret i1 %GreaterOrEquivalent.call, !dbg !61
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare noundef i32 @_ZNK1AcviEv(ptr noundef nonnull align 1 dereferenceable(1)) #2
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare noundef i32 @_ZNK1BcviEv(ptr noundef nonnull align 1 dereferenceable(1)) #2
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !6 = !DIFile(filename: "builtin_operators.carbon", directory: "")
+// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
+// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Eq", linkageName: "_CEq.Main", scope: null, file: !6, line: 14, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !15)
+// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
+// CHECK:STDOUT: !13 = !{!14, !14, !14}
+// CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !15 = !{!16, !17}
+// CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
+// CHECK:STDOUT: !17 = !DILocalVariable(arg: 2, scope: !11, type: !14)
+// CHECK:STDOUT: !18 = !DILocation(line: 15, column: 10, scope: !11)
+// CHECK:STDOUT: !19 = !DILocation(line: 15, column: 15, scope: !11)
+// CHECK:STDOUT: !20 = !DILocation(line: 15, column: 3, scope: !11)
+// CHECK:STDOUT: !21 = !{!22, !22, i64 0}
+// CHECK:STDOUT: !22 = !{!"p1 _ZTS1A", !23, i64 0}
+// CHECK:STDOUT: !23 = !{!"any pointer", !9, i64 0}
+// CHECK:STDOUT: !24 = !{}
+// CHECK:STDOUT: !25 = !{!26, !26, i64 0}
+// CHECK:STDOUT: !26 = !{!"p1 _ZTS1B", !23, i64 0}
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Neq", linkageName: "_CNeq.Main", scope: null, file: !6, line: 18, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
+// CHECK:STDOUT: !28 = !{!29, !30}
+// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !27, type: !14)
+// CHECK:STDOUT: !30 = !DILocalVariable(arg: 2, scope: !27, type: !14)
+// CHECK:STDOUT: !31 = !DILocation(line: 19, column: 10, scope: !27)
+// CHECK:STDOUT: !32 = !DILocation(line: 19, column: 15, scope: !27)
+// CHECK:STDOUT: !33 = !DILocation(line: 19, column: 3, scope: !27)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "Less", linkageName: "_CLess.Main", scope: null, file: !6, line: 22, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !35)
+// CHECK:STDOUT: !35 = !{!36, !37}
+// CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !34, type: !14)
+// CHECK:STDOUT: !37 = !DILocalVariable(arg: 2, scope: !34, type: !14)
+// CHECK:STDOUT: !38 = !DILocation(line: 23, column: 10, scope: !34)
+// CHECK:STDOUT: !39 = !DILocation(line: 23, column: 14, scope: !34)
+// CHECK:STDOUT: !40 = !DILocation(line: 23, column: 3, scope: !34)
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "LessEq", linkageName: "_CLessEq.Main", scope: null, file: !6, line: 26, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !42)
+// CHECK:STDOUT: !42 = !{!43, !44}
+// CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !41, type: !14)
+// CHECK:STDOUT: !44 = !DILocalVariable(arg: 2, scope: !41, type: !14)
+// CHECK:STDOUT: !45 = !DILocation(line: 27, column: 10, scope: !41)
+// CHECK:STDOUT: !46 = !DILocation(line: 27, column: 15, scope: !41)
+// CHECK:STDOUT: !47 = !DILocation(line: 27, column: 3, scope: !41)
+// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "Greater", linkageName: "_CGreater.Main", scope: null, file: !6, line: 30, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !49)
+// CHECK:STDOUT: !49 = !{!50, !51}
+// CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !48, type: !14)
+// CHECK:STDOUT: !51 = !DILocalVariable(arg: 2, scope: !48, type: !14)
+// CHECK:STDOUT: !52 = !DILocation(line: 31, column: 10, scope: !48)
+// CHECK:STDOUT: !53 = !DILocation(line: 31, column: 14, scope: !48)
+// CHECK:STDOUT: !54 = !DILocation(line: 31, column: 3, scope: !48)
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "GreaterEq", linkageName: "_CGreaterEq.Main", scope: null, file: !6, line: 34, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !56)
+// CHECK:STDOUT: !56 = !{!57, !58}
+// CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !55, type: !14)
+// CHECK:STDOUT: !58 = !DILocalVariable(arg: 2, scope: !55, type: !14)
+// CHECK:STDOUT: !59 = !DILocation(line: 35, column: 10, scope: !55)
+// CHECK:STDOUT: !60 = !DILocation(line: 35, column: 15, scope: !55)
+// CHECK:STDOUT: !61 = !DILocation(line: 35, column: 3, scope: !55)
