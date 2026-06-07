@@ -85,6 +85,7 @@ cc_library(
     srcs = [
         "associated_constant.cpp",
         "builtin_function_kind.cpp",
+        "bundle.cpp",
         "class.cpp",
         "constant.cpp",
         "core_interface.cpp",
