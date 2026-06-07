@@ -18,13 +18,20 @@ interface Y(T:! Y2) {}
 // TODO: The error should be that Self does not implement Y2, not that it can't
 // be identified. We should allow identifying `Self`.
 //
-// CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE+10]]:37: error: facet type `W` can not be identified [ImplLookupInUnidentifiedFacetType]
+// CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE+17]]:37: error: facet type of value `Self` can not be identified [ImplLookupInUnidentifiedFacetTypeOfQuerySelf]
 // CHECK:STDERR: constraint W { extend require impls Y(Self); }
 // CHECK:STDERR:                                     ^~~~~~~
-// CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE+7]]:1: note: constraint is currently being defined [NamedConstraintIncompleteWithinDefinition]
+// CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE+14]]:1: note: constraint is currently being defined [NamedConstraintIncompleteWithinDefinition]
 // CHECK:STDERR: constraint W { extend require impls Y(Self); }
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE-10]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+// CHECK:STDERR: interface Y(T:! Y2) {}
+// CHECK:STDERR:             ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE+7]]:37: error: cannot convert type `Self` that implements `W` into type implementing `Y2` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: constraint W { extend require impls Y(Self); }
+// CHECK:STDERR:                                     ^~~~~~~
+// CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE-17]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: interface Y(T:! Y2) {}
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
@@ -38,13 +45,20 @@ interface Y(T:! Y2) {}
 constraint W {
   // TODO: This should allow the next line to work, as Self should be known to impl Y2.
   require impls Y2;
-  // CHECK:STDERR: fail_todo_self_meets_constraint.carbon:[[@LINE+10]]:24: error: facet type `W` can not be identified [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR: fail_todo_self_meets_constraint.carbon:[[@LINE+17]]:24: error: facet type of value `Self` can not be identified [ImplLookupInUnidentifiedFacetTypeOfQuerySelf]
   // CHECK:STDERR:   extend require impls Y(Self);
   // CHECK:STDERR:                        ^~~~~~~
   // CHECK:STDERR: fail_todo_self_meets_constraint.carbon:[[@LINE-6]]:1: note: constraint is currently being defined [NamedConstraintIncompleteWithinDefinition]
   // CHECK:STDERR: constraint W {
   // CHECK:STDERR: ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_self_meets_constraint.carbon:[[@LINE-10]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: interface Y(T:! Y2) {}
+  // CHECK:STDERR:             ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_self_meets_constraint.carbon:[[@LINE+7]]:24: error: cannot convert type `Self` that implements `W` into type implementing `Y2` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   extend require impls Y(Self);
+  // CHECK:STDERR:                        ^~~~~~~
+  // CHECK:STDERR: fail_todo_self_meets_constraint.carbon:[[@LINE-17]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: interface Y(T:! Y2) {}
   // CHECK:STDERR:             ^
   // CHECK:STDERR:
