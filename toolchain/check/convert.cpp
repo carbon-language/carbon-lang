@@ -22,6 +22,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/observe.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/pending_block.h"
@@ -2010,6 +2011,42 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // incomplete, but a conversion would have been possible or would have behaved
   // differently if it were complete?
   TryToCompleteType(context, context.insts().Get(expr_id).type_id(), loc_id);
+
+  // Check visible `observe` declarations for an explicit equivalence
+  // between
+  // the source and target canonical types.
+  auto observe_ids = GetObserveIds(context);
+  auto expr_type_id = context.insts().GetAttachedType(expr_id);
+  auto expr_type_inst_id = expr_type_id != SemIR::TypeType::TypeId
+                               ? context.types().GetTypeInstId(expr_type_id)
+                               : expr_id;
+  auto target_type_inst_id = sem_ir.types().GetTypeInstId(target.type_id);
+  if (context.constant_values()
+          .GetConstantInstId(expr_type_inst_id)
+          .has_value() &&
+      context.constant_values()
+          .GetConstantInstId(target_type_inst_id)
+          .has_value()) {
+    auto expr_canonical_value_id =
+        GetCanonicalFacetOrTypeValue(context, expr_type_inst_id);
+    auto expr_canonical_type_id =
+        context.insts().GetAttachedType(expr_canonical_value_id);
+    auto target_canonical_type_id = context.insts().GetAttachedType(
+        GetCanonicalFacetOrTypeValue(context, target_type_inst_id));
+    if (target_canonical_type_id == SemIR::TypeType::TypeId) {
+      target_canonical_type_id = target.type_id;
+    }
+    for (auto observe_id : observe_ids) {
+      auto [observe_operand_canonical_ids, _] =
+          UnpackObserveDecl(context, observe_id);
+      if (CheckObserveOperandsForEquivalance(
+              context, observe_operand_canonical_ids, expr_canonical_type_id,
+              target_canonical_type_id)) {
+        return AddInst<SemIR::AsCompatible>(
+            context, loc_id, {.type_id = target.type_id, .source_id = expr_id});
+      }
+    }
+  }
 
   // Check whether any builtin conversion applies.
   expr_id = PerformBuiltinConversion(context, loc_id, expr_id, target);
