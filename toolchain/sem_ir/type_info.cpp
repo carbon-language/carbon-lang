@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "clang/AST/ASTContext.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/file.h"
 

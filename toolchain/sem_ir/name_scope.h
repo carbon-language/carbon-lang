@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 
-#include "clang/AST/DeclBase.h"
 #include "common/map.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/ids.h"

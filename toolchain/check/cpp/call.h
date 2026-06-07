@@ -8,6 +8,11 @@
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 
+namespace clang {
+class TemplateArgumentListInfo;
+class TemplateDecl;
+}  // namespace clang
+
 namespace Carbon::Check {
 
 // Converts a call argument list into a Clang template argument list for a given

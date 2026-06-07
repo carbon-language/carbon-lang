@@ -7,6 +7,10 @@
 
 #include "toolchain/check/context.h"
 
+namespace clang {
+class MacroInfo;
+}  // namespace clang
+
 namespace Carbon::Check {
 
 // Tries to evaluate the given macro. The macro will be evaluated as a
