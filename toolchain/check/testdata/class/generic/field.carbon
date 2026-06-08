@@ -261,9 +261,9 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc13_31.1, %T.as_type.loc13_31.1 [symbolic = %Class.elem (constants.%Class.elem.ecafe7.1)]
 // CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type %T.as_type.loc13_31.1 [symbolic = %require_complete.loc14 (constants.%require_complete.77e193.1)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc13_7.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.e9f10f.2)]
-// CHECK:STDOUT:   %.loc14_11.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc13_7.1 [symbolic = %.loc14_11.3 (constants.%.e16121.1)]
+// CHECK:STDOUT:   %.loc14_11.4: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc13_7.1 [symbolic = %.loc14_11.4 (constants.%.e16121.1)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_7.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2ddaf7.1)]
-// CHECK:STDOUT:   %impl.elem0.loc14_11.2: @G.%.loc14_11.3 (%.e16121.1) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.41e7eb.1)]
+// CHECK:STDOUT:   %impl.elem0.loc14_11.2: @G.%.loc14_11.4 (%.e16121.1) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.41e7eb.1)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_11.2: <specific function> = specific_impl_function %impl.elem0.loc14_11.2, @Copy.WithSelf.Op(%T.loc13_7.1) [symbolic = %specific_impl_fn.loc14_11.2 (constants.%specific_impl_fn.7ecd07.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%c.param: @G.%Class.loc13_31.1 (%Class.fd471f.1)) -> out %return.param: @G.%T.as_type.loc13_31.1 (%T.as_type) {
@@ -272,8 +272,9 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:     %x.ref: @G.%Class.elem (%Class.elem.ecafe7.1) = name_ref x, @Class.%.loc6 [concrete = @Class.%.loc6]
 // CHECK:STDOUT:     %.loc14_11.1: ref @G.%T.as_type.loc13_31.1 (%T.as_type) = class_element_access %c.ref, element0
 // CHECK:STDOUT:     %.loc14_11.2: @G.%T.as_type.loc13_31.1 (%T.as_type) = acquire_value %.loc14_11.1
-// CHECK:STDOUT:     %impl.elem0.loc14_11.1: @G.%.loc14_11.3 (%.e16121.1) = impl_witness_access constants.%Copy.lookup_impl_witness.2ddaf7.1, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.41e7eb.1)]
+// CHECK:STDOUT:     %impl.elem0.loc14_11.1: @G.%.loc14_11.4 (%.e16121.1) = impl_witness_access constants.%Copy.lookup_impl_witness.2ddaf7.1, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.41e7eb.1)]
 // CHECK:STDOUT:     %bound_method.loc14_11.1: <bound method> = bound_method %.loc14_11.2, %impl.elem0.loc14_11.1
+// CHECK:STDOUT:     %.loc14_11.3: %Copy.type = converted constants.%T.as_type, constants.%T.f49 [symbolic = %T.loc13_7.1 (constants.%T.f49)]
 // CHECK:STDOUT:     %specific_impl_fn.loc14_11.1: <specific function> = specific_impl_function %impl.elem0.loc14_11.1, @Copy.WithSelf.Op(constants.%T.f49) [symbolic = %specific_impl_fn.loc14_11.2 (constants.%specific_impl_fn.7ecd07.1)]
 // CHECK:STDOUT:     %bound_method.loc14_11.2: <bound method> = bound_method %.loc14_11.2, %specific_impl_fn.loc14_11.1
 // CHECK:STDOUT:     %.loc13_37.1: ref @G.%T.as_type.loc13_31.1 (%T.as_type) = splice_block %return.param {}
@@ -295,9 +296,9 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc17_31.1, %U.as_type.loc17_31.1 [symbolic = %Class.elem (constants.%Class.elem.ecafe7.2)]
 // CHECK:STDOUT:   %require_complete.loc18: <witness> = require_complete_type %U.as_type.loc17_31.1 [symbolic = %require_complete.loc18 (constants.%require_complete.77e193.2)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%U.loc17_7.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.e9f10f.3)]
-// CHECK:STDOUT:   %.loc18_11.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %U.loc17_7.1 [symbolic = %.loc18_11.3 (constants.%.e16121.2)]
+// CHECK:STDOUT:   %.loc18_11.4: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %U.loc17_7.1 [symbolic = %.loc18_11.4 (constants.%.e16121.2)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc17_7.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2ddaf7.2)]
-// CHECK:STDOUT:   %impl.elem0.loc18_11.2: @H.%.loc18_11.3 (%.e16121.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.41e7eb.2)]
+// CHECK:STDOUT:   %impl.elem0.loc18_11.2: @H.%.loc18_11.4 (%.e16121.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.41e7eb.2)]
 // CHECK:STDOUT:   %specific_impl_fn.loc18_11.2: <specific function> = specific_impl_function %impl.elem0.loc18_11.2, @Copy.WithSelf.Op(%U.loc17_7.1) [symbolic = %specific_impl_fn.loc18_11.2 (constants.%specific_impl_fn.7ecd07.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%c.param: @H.%Class.loc17_31.1 (%Class.fd471f.2)) -> out %return.param: @H.%U.as_type.loc17_31.1 (%U.as_type.09c) {
@@ -306,8 +307,9 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:     %x.ref: @H.%Class.elem (%Class.elem.ecafe7.2) = name_ref x, @Class.%.loc6 [concrete = @Class.%.loc6]
 // CHECK:STDOUT:     %.loc18_11.1: ref @H.%U.as_type.loc17_31.1 (%U.as_type.09c) = class_element_access %c.ref, element0
 // CHECK:STDOUT:     %.loc18_11.2: @H.%U.as_type.loc17_31.1 (%U.as_type.09c) = acquire_value %.loc18_11.1
-// CHECK:STDOUT:     %impl.elem0.loc18_11.1: @H.%.loc18_11.3 (%.e16121.2) = impl_witness_access constants.%Copy.lookup_impl_witness.2ddaf7.2, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.41e7eb.2)]
+// CHECK:STDOUT:     %impl.elem0.loc18_11.1: @H.%.loc18_11.4 (%.e16121.2) = impl_witness_access constants.%Copy.lookup_impl_witness.2ddaf7.2, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.41e7eb.2)]
 // CHECK:STDOUT:     %bound_method.loc18_11.1: <bound method> = bound_method %.loc18_11.2, %impl.elem0.loc18_11.1
+// CHECK:STDOUT:     %.loc18_11.3: %Copy.type = converted constants.%U.as_type.09c, constants.%U.f49 [symbolic = %U.loc17_7.1 (constants.%U.f49)]
 // CHECK:STDOUT:     %specific_impl_fn.loc18_11.1: <specific function> = specific_impl_function %impl.elem0.loc18_11.1, @Copy.WithSelf.Op(constants.%U.f49) [symbolic = %specific_impl_fn.loc18_11.2 (constants.%specific_impl_fn.7ecd07.2)]
 // CHECK:STDOUT:     %bound_method.loc18_11.2: <bound method> = bound_method %.loc18_11.2, %specific_impl_fn.loc18_11.1
 // CHECK:STDOUT:     %.loc17_37.1: ref @H.%U.as_type.loc17_31.1 (%U.as_type.09c) = splice_block %return.param {}

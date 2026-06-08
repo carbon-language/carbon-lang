@@ -265,17 +265,18 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc9_14: <witness> = require_complete_type %Inner [symbolic = %require_complete.loc9_14 (constants.%require_complete.93b)]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Outer.F.%T.as_type.loc9_11.1 (%T.as_type)} [symbolic = %struct_type.n (constants.%struct_type.n.fa5)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.e9f10f.2)]
-// CHECK:STDOUT:   %.loc9_38: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T [symbolic = %.loc9_38 (constants.%.e16)]
+// CHECK:STDOUT:   %.loc9_38.2: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T [symbolic = %.loc9_38.2 (constants.%.e16)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2dd)]
-// CHECK:STDOUT:   %impl.elem0.loc9_38.2: @Outer.F.%.loc9_38 (%.e16) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_38.2 (constants.%impl.elem0.41e)]
+// CHECK:STDOUT:   %impl.elem0.loc9_38.2: @Outer.F.%.loc9_38.2 (%.e16) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_38.2 (constants.%impl.elem0.41e)]
 // CHECK:STDOUT:   %specific_impl_fn.loc9_38.2: <specific function> = specific_impl_function %impl.elem0.loc9_38.2, @Copy.WithSelf.Op(%T) [symbolic = %specific_impl_fn.loc9_38.2 (constants.%specific_impl_fn.7ec)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%n.param: @Outer.F.%T.as_type.loc9_11.1 (%T.as_type)) -> out %return.param: @Outer.F.%Inner (%Inner.c8f) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %n.ref: @Outer.F.%T.as_type.loc9_11.1 (%T.as_type) = name_ref n, %n
 // CHECK:STDOUT:     %.loc9_39.1: @Outer.F.%struct_type.n (%struct_type.n.fa5) = struct_literal (%n.ref)
-// CHECK:STDOUT:     %impl.elem0.loc9_38.1: @Outer.F.%.loc9_38 (%.e16) = impl_witness_access constants.%Copy.lookup_impl_witness.2dd, element0 [symbolic = %impl.elem0.loc9_38.2 (constants.%impl.elem0.41e)]
+// CHECK:STDOUT:     %impl.elem0.loc9_38.1: @Outer.F.%.loc9_38.2 (%.e16) = impl_witness_access constants.%Copy.lookup_impl_witness.2dd, element0 [symbolic = %impl.elem0.loc9_38.2 (constants.%impl.elem0.41e)]
 // CHECK:STDOUT:     %bound_method.loc9_38.1: <bound method> = bound_method %n.ref, %impl.elem0.loc9_38.1
+// CHECK:STDOUT:     %.loc9_38.1: %Copy.type = converted constants.%T.as_type, constants.%T.f49 [symbolic = %T (constants.%T.f49)]
 // CHECK:STDOUT:     %specific_impl_fn.loc9_38.1: <specific function> = specific_impl_function %impl.elem0.loc9_38.1, @Copy.WithSelf.Op(constants.%T.f49) [symbolic = %specific_impl_fn.loc9_38.2 (constants.%specific_impl_fn.7ec)]
 // CHECK:STDOUT:     %bound_method.loc9_38.2: <bound method> = bound_method %n.ref, %specific_impl_fn.loc9_38.1
 // CHECK:STDOUT:     %.loc9_39.2: ref @Outer.F.%T.as_type.loc9_11.1 (%T.as_type) = class_element_access %return.param, element0
@@ -418,7 +419,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc9_14 => constants.%complete_type.edf
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.c7a
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.7e2
-// CHECK:STDOUT:   %.loc9_38 => constants.%.604
+// CHECK:STDOUT:   %.loc9_38.2 => constants.%.604
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.1a4
 // CHECK:STDOUT:   %impl.elem0.loc9_38.2 => constants.%Int.as.Copy.impl.Op.ce7
 // CHECK:STDOUT:   %specific_impl_fn.loc9_38.2 => constants.%Int.as.Copy.impl.Op.specific_fn

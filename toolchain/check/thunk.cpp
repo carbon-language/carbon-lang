@@ -300,8 +300,8 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::InstId callee_id) -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
-  auto [args_vec, ignored_call_args] = ThunkPatternMatch(
-      context, function.self_param_id, param_pattern_ids, call_arg_ids);
+  auto [args_vec, ignored_call_args] =
+      ThunkPatternMatch(context, param_pattern_ids, call_arg_ids);
   llvm::ArrayRef<SemIR::InstId> args = args_vec;
 
   // If we have a self parameter, form `self.<callee_id>` if needed.

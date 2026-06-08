@@ -596,14 +596,18 @@ auto DeduceGenericCallArguments(
 
   // Prepare to perform deduction of the parameters against the explicit
   // arguments. When `self` is provided as the method-call receiver it is
-  // excluded here; otherwise it is deduced from the first explicit argument
-  // like any other parameter.
-  // TODO: Deduce the type of `self` from the receiver when it is provided that
-  // way.
+  // prepended to the explicit argument list to match the leading `self` parameter
+  // pattern.
+  std::array<SemIR::InstId, 1> self_array = {self_id};
+  llvm::ArrayRef<SemIR::InstId> self_refs(self_array);
+  if (!self_id.has_value()) {
+    self_refs = {};
+  }
   deduction.AddAll(
-      SemIR::CallArgParamPatterns(context.sem_ir(), param_patterns_id,
-                                  self_id.has_value()),
-      arg_ids, /*want_value=*/false);
+      context.inst_blocks().GetOrEmpty(param_patterns_id),
+      llvm::ArrayRef<SemIR::InstId>(
+          llvm::to_vector<8>(llvm::concat<const SemIR::InstId>(self_refs, arg_ids))),
+      /*want_value=*/false);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
     return SemIR::SpecificId::None;

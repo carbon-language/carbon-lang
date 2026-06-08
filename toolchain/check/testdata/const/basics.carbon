@@ -237,6 +237,8 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %p.ref: %const.ba2 = name_ref p, %p
 // CHECK:STDOUT:   %impl.elem0: %.790 = impl_witness_access constants.%Copy.impl_witness.ca1, element0 [concrete = constants.%const.as.Copy.impl.Op.00c]
 // CHECK:STDOUT:   %bound_method.loc11_10.1: <bound method> = bound_method %p.ref, %impl.elem0
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value constants.%ptr.6be, (constants.%Copy.impl_witness.881) [concrete = constants.%Copy.facet.d5e]
+// CHECK:STDOUT:   %.loc11: %Copy.type = converted constants.%ptr.6be, %Copy.facet [concrete = constants.%Copy.facet.d5e]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @const.as.Copy.impl.Op(constants.%Copy.facet.d5e) [concrete = constants.%const.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_10.2: <bound method> = bound_method %p.ref, %specific_fn
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.call: init %const.ba2 = call %bound_method.loc11_10.2(%p.ref)

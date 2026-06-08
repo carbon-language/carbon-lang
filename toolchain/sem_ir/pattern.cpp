@@ -42,31 +42,7 @@ auto IsSelfPattern(const File& sem_ir, InstId pattern_id) -> bool {
   return name_id == NameId::SelfValue;
 }
 
-auto ParamPatternsWithoutSelf(const File& sem_ir,
-                              llvm::ArrayRef<InstId> param_patterns)
-    -> llvm::ArrayRef<InstId> {
-  if (!param_patterns.empty() &&
-      IsSelfPattern(sem_ir, param_patterns.front())) {
-    return param_patterns.drop_front();
-  }
-  return param_patterns;
-}
 
-auto ParamPatternsWithoutSelf(const File& sem_ir, InstBlockId param_patterns_id)
-    -> llvm::ArrayRef<InstId> {
-  return ParamPatternsWithoutSelf(
-      sem_ir, sem_ir.inst_blocks().GetOrEmpty(param_patterns_id));
-}
-
-auto CallArgParamPatterns(const File& sem_ir, InstBlockId param_patterns_id,
-                          bool self_provided_as_receiver)
-    -> llvm::ArrayRef<InstId> {
-  auto param_patterns = sem_ir.inst_blocks().GetOrEmpty(param_patterns_id);
-  if (self_provided_as_receiver) {
-    return ParamPatternsWithoutSelf(sem_ir, param_patterns);
-  }
-  return param_patterns;
-}
 
 auto GetFirstBindingNameFromPatternId(const File& sem_ir, InstId pattern_id)
     -> EntityNameId {

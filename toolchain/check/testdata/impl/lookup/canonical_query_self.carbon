@@ -362,6 +362,8 @@ fn G() {
 // CHECK:STDOUT:     %JJ.ref: %J.assoc_type = name_ref JJ, @J.WithSelf.%assoc0 [concrete = constants.%assoc0.95e]
 // CHECK:STDOUT:     %impl.elem0.loc26_69.1: @F.%.loc26_69 (%.289) = impl_witness_access constants.%J.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc26_69.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc26_69: <bound method> = bound_method %t.ref, %impl.elem0.loc26_69.1
+// CHECK:STDOUT:     %J.facet.loc26_73: %J.type = facet_value constants.%T.as_type, (constants.%J.lookup_impl_witness) [symbolic = %J.facet.loc26_33.2 (constants.%J.facet.ce2)]
+// CHECK:STDOUT:     %.loc26_73: %J.type = converted constants.%T.as_type, %J.facet.loc26_73 [symbolic = %J.facet.loc26_33.2 (constants.%J.facet.ce2)]
 // CHECK:STDOUT:     %specific_impl_fn.loc26_69.1: <specific function> = specific_impl_function %impl.elem0.loc26_69.1, @J.WithSelf.JJ(constants.%J.facet.ce2) [symbolic = %specific_impl_fn.loc26_69.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc26_73: <bound method> = bound_method %t.ref, %specific_impl_fn.loc26_69.1
 // CHECK:STDOUT:     %J.WithSelf.JJ.call: init %empty_tuple.type = call %bound_method.loc26_73(%t.ref)

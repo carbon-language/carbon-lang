@@ -21,6 +21,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/expr_info.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/pattern.h"
 
@@ -978,7 +979,7 @@ auto CalleePatternMatch(Context& context,
           .param_ranges = {implicit_end, explicit_end, return_end}};
 }
 
-auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
+auto ThunkPatternMatch(Context& context,
                        llvm::ArrayRef<SemIR::InstId> param_pattern_ids,
                        llvm::ArrayRef<SemIR::InstId> outer_call_args)
     -> ThunkPatternMatchResults {
@@ -986,20 +987,7 @@ auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
   MatchContext match(context);
 
   llvm::SmallVector<SemIR::InstId> inner_args;
-  inner_args.reserve(outer_call_args.size() + 1);
-
-  // A thunk always forwards `self` as the receiver, so when the function has a
-  // `self` parameter we match it here and exclude it from the explicit
-  // parameter loop below (mirroring `CallerPatternMatch`).
-  if (self_pattern_id.has_value()) {
-    inner_args.push_back(match.MatchWithResult(
-        &state,
-        {.pattern_id = self_pattern_id,
-         .work = MatchContext::PreWork{.scrutinee_id = SemIR::InstId::None},
-         .allow_unmarked_ref = true}));
-    param_pattern_ids =
-        SemIR::ParamPatternsWithoutSelf(context.sem_ir(), param_pattern_ids);
-  }
+  inner_args.reserve(outer_call_args.size());
 
   for (SemIR::InstId inst_id : param_pattern_ids) {
     inner_args.push_back(match.MatchWithResult(
@@ -1040,24 +1028,23 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
   CallerState state = {.callee_specific_id = specific_id};
   MatchContext match(context);
 
-  // When `self` is provided as the method-call receiver, match it against the
-  // receiver here and exclude it from the explicit arguments below. Without a
-  // receiver, `self` is matched as the first explicit argument instead.
-  bool self_provided_as_receiver = self_arg_id.has_value();
-  if (self_pattern_id.has_value() && self_provided_as_receiver) {
-    match.Match(&state,
-                {.pattern_id = self_pattern_id,
-                 .work = MatchContext::PreWork{.scrutinee_id = self_arg_id},
-                 .allow_unmarked_ref = true});
+  // When we have a seperate `self_arg_id`, we concatenate that onto the front
+  // of the arg_refs to match against the first parameter.
+  std::array<SemIR::InstId, 1> self_arg_array = {self_arg_id};
+  llvm::ArrayRef<SemIR::InstId> self_arg_refs(self_arg_array);
+  if (!self_arg_id.has_value()) {
+    self_arg_refs = {};
+  } else {
+    CARBON_CHECK(self_pattern_id.has_value());
   }
 
-  for (auto [arg_id, param_pattern_id] : llvm::zip_equal(
-           arg_refs,
-           SemIR::CallArgParamPatterns(context.sem_ir(), param_patterns_id,
-                                       self_provided_as_receiver))) {
-    match.Match(&state, {.pattern_id = param_pattern_id,
-                         .work = MatchContext::PreWork{.scrutinee_id = arg_id},
-                         .allow_unmarked_ref = is_desugared});
+  for (const auto& [arg_id, param_pattern_id] : llvm::zip_equal(
+           llvm::concat<const SemIR::InstId>(self_arg_refs, arg_refs),
+           context.inst_blocks().GetOrEmpty(param_patterns_id))) {
+    match.Match(&state,
+                {.pattern_id = param_pattern_id,
+                 .work = MatchContext::PreWork{.scrutinee_id = arg_id},
+                 .allow_unmarked_ref = arg_id == self_arg_id || is_desugared});
   }
 
   // Track the return storage, if present.

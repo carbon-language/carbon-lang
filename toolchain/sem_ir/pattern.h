@@ -14,26 +14,6 @@ namespace Carbon::SemIR {
 // `self: Foo` or `ref self: Self`.
 auto IsSelfPattern(const File& sem_ir, InstId pattern_id) -> bool;
 
-// Returns the given parameter patterns with a leading `self` parameter removed,
-// or the patterns unchanged if the first one is not `self`.
-auto ParamPatternsWithoutSelf(const File& sem_ir,
-                              llvm::ArrayRef<InstId> param_patterns)
-    -> llvm::ArrayRef<InstId>;
-// As above, given the parameter patterns as an `InstBlockId`.
-auto ParamPatternsWithoutSelf(const File& sem_ir, InstBlockId param_patterns_id)
-    -> llvm::ArrayRef<InstId>;
-
-// Returns the parameter patterns matched against a call's explicit arguments.
-//
-// `self` is a method's first parameter. A method call `obj.M(args)` provides
-// `obj` as the receiver, binding it to `self`; `self_provided_as_receiver` is
-// then true and the leading `self` parameter is excluded here. A method may
-// also be called as an ordinary function, `Type.M(obj, args)`, with no
-// receiver; `self` is then passed as the first explicit argument and is
-// included.
-auto CallArgParamPatterns(const File& sem_ir, InstBlockId param_patterns_id,
-                          bool self_provided_as_receiver)
-    -> llvm::ArrayRef<InstId>;
 
 // If `pattern_id` introduces any name bindings, this returns the `EntityNameId`
 // of the lexically-first such binding. Otherwise, returns `None`.

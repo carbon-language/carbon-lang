@@ -2213,14 +2213,10 @@ auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
                      SemIR::InstId return_arg_id, const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id, bool is_desugared)
     -> SemIR::InstBlockId {
-  // The caller should have ensured this callee has the right arity. A leading
-  // `self` parameter is excluded from the explicit arguments only when it is
-  // provided as the method-call receiver.
-  CARBON_CHECK(arg_refs.size() ==
-               SemIR::CallArgParamPatterns(context.sem_ir(),
-                                           callee.param_patterns_id,
-                                           self_id.has_value())
-                   .size());
+  // The caller should have ensured this callee has the right arity.
+  CARBON_CHECK(
+      (self_id.has_value() ? 1 : 0) + arg_refs.size() ==
+      context.inst_blocks().GetOrEmpty(callee.param_patterns_id).size());
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
                             callee.param_patterns_id, callee.return_pattern_id,
