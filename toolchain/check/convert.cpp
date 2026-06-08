@@ -2012,8 +2012,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // differently if it were complete?
   TryToCompleteType(context, context.insts().Get(expr_id).type_id(), loc_id);
 
-  // Check visible `observe` declarations for an explicit equivalence
-  // between
+  // Check visible `observe` declarations for an explicit equivalence between
   // the source and target canonical types.
   auto observe_ids = GetObserveIds(context);
   auto expr_type_id = context.insts().GetAttachedType(expr_id);
