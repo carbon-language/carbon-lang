@@ -25,6 +25,8 @@ let a: IntLiteral = SubCharCharToIntLiteral('b', 'a');
 let b: i32 = SubCharCharToI32('b', 'a');
 let c: IntLiteral = SubCharCharToIntLiteral('a', 'b');
 let d: i32 = SubCharCharToI32('a', 'b');
+let max: i32 = SubCharCharToI32('\u{10FFFF}', '\u{0}');
+let min: i32 = SubCharCharToI32('\u{0}', '\u{10FFFF}');
 //@dump-sem-ir-end
 
 // CHECK:STDOUT: --- sub_char.carbon
@@ -44,6 +46,10 @@ let d: i32 = SubCharCharToI32('a', 'b');
 // CHECK:STDOUT:   %int_1.0c6: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_-1.638: Core.IntLiteral = int_value -1 [concrete]
 // CHECK:STDOUT:   %int_-1.4ef: %i32 = int_value -1 [concrete]
+// CHECK:STDOUT:   %.914: Core.CharLiteral = char_value U+10FFFF [concrete]
+// CHECK:STDOUT:   %.dc9: Core.CharLiteral = char_value U+0000 [concrete]
+// CHECK:STDOUT:   %int_1114111: %i32 = int_value 1114111 [concrete]
+// CHECK:STDOUT:   %int_-1114111: %i32 = int_value -1114111 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -75,6 +81,20 @@ let d: i32 = SubCharCharToI32('a', 'b');
 // CHECK:STDOUT:   %.loc27_39.1: %i32 = value_of_initializer @__global_init.%SubCharCharToI32.call.loc27 [concrete = constants.%int_-1.4ef]
 // CHECK:STDOUT:   %.loc27_39.2: %i32 = converted @__global_init.%SubCharCharToI32.call.loc27, %.loc27_39.1 [concrete = constants.%int_-1.4ef]
 // CHECK:STDOUT:   %d: %i32 = value_binding d, %.loc27_39.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %max.patt: %pattern_type.6b6 = value_binding_pattern max [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc28: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc28_54.1: %i32 = value_of_initializer @__global_init.%SubCharCharToI32.call.loc28 [concrete = constants.%int_1114111]
+// CHECK:STDOUT:   %.loc28_54.2: %i32 = converted @__global_init.%SubCharCharToI32.call.loc28, %.loc28_54.1 [concrete = constants.%int_1114111]
+// CHECK:STDOUT:   %max: %i32 = value_binding max, %.loc28_54.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %min.patt: %pattern_type.6b6 = value_binding_pattern min [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc29: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc29_54.1: %i32 = value_of_initializer @__global_init.%SubCharCharToI32.call.loc29 [concrete = constants.%int_-1114111]
+// CHECK:STDOUT:   %.loc29_54.2: %i32 = converted @__global_init.%SubCharCharToI32.call.loc29, %.loc29_54.1 [concrete = constants.%int_-1114111]
+// CHECK:STDOUT:   %min: %i32 = value_binding min, %.loc29_54.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -95,6 +115,14 @@ let d: i32 = SubCharCharToI32('a', 'b');
 // CHECK:STDOUT:   %.loc27_31: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %.loc27_36: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
 // CHECK:STDOUT:   %SubCharCharToI32.call.loc27: init %i32 = call %SubCharCharToI32.ref.loc27(%.loc27_31, %.loc27_36) [concrete = constants.%int_-1.4ef]
+// CHECK:STDOUT:   %SubCharCharToI32.ref.loc28: %SubCharCharToI32.type = name_ref SubCharCharToI32, file.%SubCharCharToI32.decl [concrete = constants.%SubCharCharToI32]
+// CHECK:STDOUT:   %.loc28_33: Core.CharLiteral = char_value U+10FFFF [concrete = constants.%.914]
+// CHECK:STDOUT:   %.loc28_47: Core.CharLiteral = char_value U+0000 [concrete = constants.%.dc9]
+// CHECK:STDOUT:   %SubCharCharToI32.call.loc28: init %i32 = call %SubCharCharToI32.ref.loc28(%.loc28_33, %.loc28_47) [concrete = constants.%int_1114111]
+// CHECK:STDOUT:   %SubCharCharToI32.ref.loc29: %SubCharCharToI32.type = name_ref SubCharCharToI32, file.%SubCharCharToI32.decl [concrete = constants.%SubCharCharToI32]
+// CHECK:STDOUT:   %.loc29_33: Core.CharLiteral = char_value U+0000 [concrete = constants.%.dc9]
+// CHECK:STDOUT:   %.loc29_42: Core.CharLiteral = char_value U+10FFFF [concrete = constants.%.914]
+// CHECK:STDOUT:   %SubCharCharToI32.call.loc29: init %i32 = call %SubCharCharToI32.ref.loc29(%.loc29_33, %.loc29_42) [concrete = constants.%int_-1114111]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
