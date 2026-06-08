@@ -53,22 +53,16 @@ fn G() {
 // CHECK:STDOUT:   %tuple.04d: %tuple.type.ff9 = tuple_value (%i32, %i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.555: type = tuple_type (%i32, %i32, %i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.777: type = pattern_type %tuple.type.555 [concrete]
+// CHECK:STDOUT:   %w.patt: %pattern_type.777 = value_binding_pattern w [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.777 = value_binding_pattern w [concrete]
+// CHECK:STDOUT:     %w.patt: %pattern_type.777 = value_binding_pattern w [concrete = constants.%w.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.ref: ref %tuple.type.555 = name_ref v, %v
-// CHECK:STDOUT:   %.loc8_24.1: type = splice_block %.loc8_24.3 [concrete = constants.%tuple.type.555] {
-// CHECK:STDOUT:     %i32.loc8_11: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc8_16: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc8_21: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc8_24.2: %tuple.type.ff9 = tuple_literal (%i32.loc8_11, %i32.loc8_16, %i32.loc8_21) [concrete = constants.%tuple.04d]
-// CHECK:STDOUT:     %.loc8_24.3: type = converted %.loc8_24.2, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple.elem0.loc8: ref %i32 = tuple_access %v.ref, element0
 // CHECK:STDOUT:   %.loc8_28.1: %i32 = acquire_value %tuple.elem0.loc8
 // CHECK:STDOUT:   %tuple.elem1.loc8: ref %i32 = tuple_access %v.ref, element1
@@ -77,6 +71,13 @@ fn G() {
 // CHECK:STDOUT:   %.loc8_28.3: %i32 = acquire_value %tuple.elem2.loc8
 // CHECK:STDOUT:   %tuple: %tuple.type.555 = tuple_value (%.loc8_28.1, %.loc8_28.2, %.loc8_28.3)
 // CHECK:STDOUT:   %.loc8_28.4: %tuple.type.555 = converted %v.ref, %tuple
+// CHECK:STDOUT:   %.loc8_24.1: type = splice_block %.loc8_24.3 [concrete = constants.%tuple.type.555] {
+// CHECK:STDOUT:     %i32.loc8_11: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc8_16: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc8_21: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc8_24.2: %tuple.type.ff9 = tuple_literal (%i32.loc8_11, %i32.loc8_16, %i32.loc8_21) [concrete = constants.%tuple.04d]
+// CHECK:STDOUT:     %.loc8_24.3: type = converted %.loc8_24.2, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w: %tuple.type.555 = value_binding w, %.loc8_28.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

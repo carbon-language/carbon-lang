@@ -1120,14 +1120,14 @@ fn Use() {
 // CHECK:STDOUT: define void @"_CF:thunk:Base.Main:Derived.Main"(ptr sret({}) %return, ptr %self, ptr %n) #1 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc17_58.2.temp = alloca {}, align 1, !dbg !16
-// CHECK:STDOUT:   %.loc12_33.1.temp = alloca {}, align 1, !dbg !17
+// CHECK:STDOUT:   %.loc12_33.2.temp = alloca {}, align 1, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_58.2.temp), !dbg !16
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_33.1.temp), !dbg !17
-// CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.a3bb440f6426a7d6.Core"(ptr %.loc12_33.1.temp, ptr %n), !dbg !17
-// CHECK:STDOUT:   call void @_CF.Derived.Main(ptr %.loc17_58.2.temp, ptr %self, ptr %.loc12_33.1.temp), !dbg !16
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_33.2.temp), !dbg !17
+// CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.a3bb440f6426a7d6.Core"(ptr %.loc12_33.2.temp, ptr %n), !dbg !17
+// CHECK:STDOUT:   call void @_CF.Derived.Main(ptr %.loc17_58.2.temp, ptr %self, ptr %.loc12_33.2.temp), !dbg !16
 // CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.a3bb440f6426a7d6.Core"(ptr %return, ptr %.loc17_58.2.temp), !dbg !16
 // CHECK:STDOUT:   call void @"_COp.419398171642b7b7:core.Destroy.Core"(ptr %.loc17_58.2.temp), !dbg !16
-// CHECK:STDOUT:   call void @"_COp.41ca6508118965ec:core.Destroy.Core"(ptr %.loc12_33.1.temp), !dbg !17
+// CHECK:STDOUT:   call void @"_COp.41ca6508118965ec:core.Destroy.Core"(ptr %.loc12_33.2.temp), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

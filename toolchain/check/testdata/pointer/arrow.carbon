@@ -32,6 +32,8 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %self.param_patt: %pattern_type.98b = value_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt: %pattern_type.98b = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   %C.Member.type: type = fn_type @C.Member [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.Member: %C.Member.type = struct_value () [concrete]
@@ -40,6 +42,8 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %ptr.6b6 [concrete]
 // CHECK:STDOUT:   %struct_type.field: type = struct_type {.field: %ptr.6b6} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.field [concrete]
+// CHECK:STDOUT:   %ptr.param_patt: %pattern_type.fcb = value_param_pattern [concrete]
+// CHECK:STDOUT:   %ptr.patt: %pattern_type.fcb = at_binding_pattern ptr, %ptr.param_patt [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -60,8 +64,8 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %ptr.param_patt: %pattern_type.fcb = value_param_pattern [concrete]
-// CHECK:STDOUT:     %ptr.patt: %pattern_type.fcb = at_binding_pattern ptr, %ptr.param_patt [concrete]
+// CHECK:STDOUT:     %ptr.param_patt: %pattern_type.fcb = value_param_pattern [concrete = constants.%ptr.param_patt]
+// CHECK:STDOUT:     %ptr.patt: %pattern_type.fcb = at_binding_pattern ptr, %ptr.param_patt [concrete = constants.%ptr.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ptr.param: %ptr.6b6 = value_param call_param0
 // CHECK:STDOUT:     %.loc20: type = splice_block %ptr.loc20_14 [concrete = constants.%ptr.6b6] {
@@ -74,8 +78,8 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %C.Member.decl: %C.Member.type = fn_decl @C.Member [concrete = constants.%C.Member] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.98b = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.98b = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.98b = value_param_pattern [concrete = constants.%self.param_patt]
+// CHECK:STDOUT:     %self.patt: %pattern_type.98b = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]

@@ -28,6 +28,7 @@ interface I {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F: %I.WithSelf.F.type = struct_value () [symbolic]
@@ -52,7 +53,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F)] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 1 [concrete]
+// CHECK:STDOUT:     %T.patt.loc16_9.1: %pattern_type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc16_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_12.1: type = splice_block %.loc16_12.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -65,7 +66,7 @@ interface I {
 // CHECK:STDOUT:     %assoc1: %I.assoc_type = assoc_entity element1, @I.WithSelf.%U [concrete = constants.%assoc1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.WithSelf.G.decl: @I.WithSelf.%I.WithSelf.G.type (%I.WithSelf.G.type) = fn_decl @I.WithSelf.G [symbolic = @I.WithSelf.%I.WithSelf.G (constants.%I.WithSelf.G)] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 1 [concrete]
+// CHECK:STDOUT:     %T.patt.loc20_9.1: %pattern_type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc20_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc20_12.1: type = splice_block %.loc20_12.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -86,12 +87,14 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%Self: %I.type, %T.loc16_9.2: type) {
+// CHECK:STDOUT:   %T.patt.loc16_9.2: %pattern_type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc16_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc16_9.1: type = symbolic_binding T, 1 [symbolic = %T.loc16_9.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.G(@I.%Self: %I.type, %T.loc20_9.2: type) {
+// CHECK:STDOUT:   %T.patt.loc20_9.2: %pattern_type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc20_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc20_9.1: type = symbolic_binding T, 1 [symbolic = %T.loc20_9.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
@@ -100,10 +103,12 @@ interface I {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%Self, constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc16_9.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc16_9.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.G(constants.%Self, constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc20_9.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc20_9.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

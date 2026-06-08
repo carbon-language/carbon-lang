@@ -300,9 +300,9 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.dbe0a954f4d47a23"(i8 %self) #0 !dbg !196 {
-// CHECK:STDOUT:   %1 = call i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.b906c5940adce8f0"(i8 %self), !dbg !202
-// CHECK:STDOUT:   ret i16 %1, !dbg !202
+// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.dbe0a954f4d47a23"(i8 %0) #0 !dbg !196 {
+// CHECK:STDOUT:   %2 = call i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.b906c5940adce8f0"(i8 %0), !dbg !202
+// CHECK:STDOUT:   ret i16 %2, !dbg !202
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -312,9 +312,9 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.691b43fb97812586"(i8 %self) #0 !dbg !209 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.dbd6eca082a732b7"(i8 %self), !dbg !214
-// CHECK:STDOUT:   ret i32 %1, !dbg !214
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.691b43fb97812586"(i8 %0) #0 !dbg !209 {
+// CHECK:STDOUT:   %2 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.dbd6eca082a732b7"(i8 %0), !dbg !214
+// CHECK:STDOUT:   ret i32 %2, !dbg !214
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -324,15 +324,15 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.48e83ee0f3ef2ee8"(i8 %self) #0 !dbg !221 {
-// CHECK:STDOUT:   %1 = call i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.dc14f658d346b3e8"(i8 %self), !dbg !226
-// CHECK:STDOUT:   ret i16 %1, !dbg !226
+// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.48e83ee0f3ef2ee8"(i8 %0) #0 !dbg !221 {
+// CHECK:STDOUT:   %2 = call i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.dc14f658d346b3e8"(i8 %0), !dbg !226
+// CHECK:STDOUT:   ret i16 %2, !dbg !226
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.8da8ddbe24cfd39a"(i8 %self) #0 !dbg !227 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.b26071071fee62b9"(i8 %self), !dbg !232
-// CHECK:STDOUT:   ret i32 %1, !dbg !232
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.8da8ddbe24cfd39a"(i8 %0) #0 !dbg !227 {
+// CHECK:STDOUT:   %2 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.b26071071fee62b9"(i8 %0), !dbg !232
+// CHECK:STDOUT:   ret i32 %2, !dbg !232
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -342,163 +342,163 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_COp.Char.Core:SubWith.7c3e388e0087434a.Core.ab8531ca840d1501"(i8 %self, i8 %other) #0 !dbg !239 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.db6d5218df1134ee"(i8 %self), !dbg !245
-// CHECK:STDOUT:   %2 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.db6d5218df1134ee"(i8 %other), !dbg !246
-// CHECK:STDOUT:   %3 = sub i32 %1, %2, !dbg !247
-// CHECK:STDOUT:   ret i32 %3, !dbg !248
+// CHECK:STDOUT: define linkonce_odr i32 @"_COp.Char.Core:SubWith.7c3e388e0087434a.Core.ab8531ca840d1501"(i8 %0, i8 %1) #0 !dbg !239 {
+// CHECK:STDOUT:   %3 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.db6d5218df1134ee"(i8 %0), !dbg !245
+// CHECK:STDOUT:   %4 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.db6d5218df1134ee"(i8 %1), !dbg !246
+// CHECK:STDOUT:   %5 = sub i32 %3, %4, !dbg !247
+// CHECK:STDOUT:   ret i32 %5, !dbg !248
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_COp.b27934686504f96c:SubWith.295cf9b677564c5c.Core.ab8531ca840d1501"(i8 %self, i8 %other) #0 !dbg !249 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.db6d5218df1134ee"(i8 %self), !dbg !253
-// CHECK:STDOUT:   %2 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.db6d5218df1134ee"(i8 %other), !dbg !254
-// CHECK:STDOUT:   %3 = sub i32 %1, %2, !dbg !255
-// CHECK:STDOUT:   ret i32 %3, !dbg !256
+// CHECK:STDOUT: define linkonce_odr i32 @"_COp.b27934686504f96c:SubWith.295cf9b677564c5c.Core.ab8531ca840d1501"(i8 %0, i8 %1) #0 !dbg !249 {
+// CHECK:STDOUT:   %3 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.db6d5218df1134ee"(i8 %0), !dbg !253
+// CHECK:STDOUT:   %4 = call i32 @"_CConvert.Char.Core:As.5d7343568c0b5715.Core.db6d5218df1134ee"(i8 %1), !dbg !254
+// CHECK:STDOUT:   %5 = sub i32 %3, %4, !dbg !255
+// CHECK:STDOUT:   ret i32 %5, !dbg !256
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:AddWith.d9344a06b22b3b94.Core.852ed75bdc952b41"(i8 %self, i8 %other) #0 !dbg !257 {
-// CHECK:STDOUT:   %1 = add i8 %self, %other, !dbg !263
-// CHECK:STDOUT:   ret i8 %1, !dbg !264
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:AddWith.d9344a06b22b3b94.Core.852ed75bdc952b41"(i8 %0, i8 %1) #0 !dbg !257 {
+// CHECK:STDOUT:   %3 = add i8 %0, %1, !dbg !263
+// CHECK:STDOUT:   ret i8 %3, !dbg !264
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.fdd9948a9ef8c6e5:AddWith.295cf9b677564c5c.Core.852ed75bdc952b41"(i8 %self, i8 %other) #0 !dbg !265 {
-// CHECK:STDOUT:   %1 = add i8 %self, %other, !dbg !271
-// CHECK:STDOUT:   ret i8 %1, !dbg !272
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.fdd9948a9ef8c6e5:AddWith.295cf9b677564c5c.Core.852ed75bdc952b41"(i8 %0, i8 %1) #0 !dbg !265 {
+// CHECK:STDOUT:   %3 = add i8 %0, %1, !dbg !271
+// CHECK:STDOUT:   ret i8 %3, !dbg !272
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:SubWith.d9344a06b22b3b94.Core.852ed75bdc952b41"(i8 %self, i8 %other) #0 !dbg !273 {
-// CHECK:STDOUT:   %1 = sub i8 %self, %other, !dbg !277
-// CHECK:STDOUT:   ret i8 %1, !dbg !278
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:SubWith.d9344a06b22b3b94.Core.852ed75bdc952b41"(i8 %0, i8 %1) #0 !dbg !273 {
+// CHECK:STDOUT:   %3 = sub i8 %0, %1, !dbg !277
+// CHECK:STDOUT:   ret i8 %3, !dbg !278
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:AddWith.d9344a06b22b3b94.Core.4de33f895b808f69"(i8 %self, i16 %other) #0 !dbg !279 {
-// CHECK:STDOUT:   %1 = trunc i16 %other to i8, !dbg !285
-// CHECK:STDOUT:   %2 = add i8 %self, %1, !dbg !286
-// CHECK:STDOUT:   ret i8 %2, !dbg !287
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:AddWith.d9344a06b22b3b94.Core.4de33f895b808f69"(i8 %0, i16 %1) #0 !dbg !279 {
+// CHECK:STDOUT:   %3 = trunc i16 %1 to i8, !dbg !285
+// CHECK:STDOUT:   %4 = add i8 %0, %3, !dbg !286
+// CHECK:STDOUT:   ret i8 %4, !dbg !287
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.fdd9948a9ef8c6e5:AddWith.295cf9b677564c5c.Core.4de33f895b808f69"(i16 %self, i8 %other) #0 !dbg !288 {
-// CHECK:STDOUT:   %1 = trunc i16 %self to i8, !dbg !294
-// CHECK:STDOUT:   %2 = add i8 %1, %other, !dbg !295
-// CHECK:STDOUT:   ret i8 %2, !dbg !296
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.fdd9948a9ef8c6e5:AddWith.295cf9b677564c5c.Core.4de33f895b808f69"(i16 %0, i8 %1) #0 !dbg !288 {
+// CHECK:STDOUT:   %3 = trunc i16 %0 to i8, !dbg !294
+// CHECK:STDOUT:   %4 = add i8 %3, %1, !dbg !295
+// CHECK:STDOUT:   ret i8 %4, !dbg !296
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:SubWith.d9344a06b22b3b94.Core.4de33f895b808f69"(i8 %self, i16 %other) #0 !dbg !297 {
-// CHECK:STDOUT:   %1 = trunc i16 %other to i8, !dbg !301
-// CHECK:STDOUT:   %2 = sub i8 %self, %1, !dbg !302
-// CHECK:STDOUT:   ret i8 %2, !dbg !303
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:SubWith.d9344a06b22b3b94.Core.4de33f895b808f69"(i8 %0, i16 %1) #0 !dbg !297 {
+// CHECK:STDOUT:   %3 = trunc i16 %1 to i8, !dbg !301
+// CHECK:STDOUT:   %4 = sub i8 %0, %3, !dbg !302
+// CHECK:STDOUT:   ret i8 %4, !dbg !303
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:AddWith.d9344a06b22b3b94.Core.ae42bf297a1ee9b6"(i8 %self, i32 %other) #0 !dbg !304 {
-// CHECK:STDOUT:   %1 = trunc i32 %other to i8, !dbg !310
-// CHECK:STDOUT:   %2 = add i8 %self, %1, !dbg !311
-// CHECK:STDOUT:   ret i8 %2, !dbg !312
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:AddWith.d9344a06b22b3b94.Core.ae42bf297a1ee9b6"(i8 %0, i32 %1) #0 !dbg !304 {
+// CHECK:STDOUT:   %3 = trunc i32 %1 to i8, !dbg !310
+// CHECK:STDOUT:   %4 = add i8 %0, %3, !dbg !311
+// CHECK:STDOUT:   ret i8 %4, !dbg !312
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.fdd9948a9ef8c6e5:AddWith.295cf9b677564c5c.Core.ae42bf297a1ee9b6"(i32 %self, i8 %other) #0 !dbg !313 {
-// CHECK:STDOUT:   %1 = trunc i32 %self to i8, !dbg !319
-// CHECK:STDOUT:   %2 = add i8 %1, %other, !dbg !320
-// CHECK:STDOUT:   ret i8 %2, !dbg !321
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.fdd9948a9ef8c6e5:AddWith.295cf9b677564c5c.Core.ae42bf297a1ee9b6"(i32 %0, i8 %1) #0 !dbg !313 {
+// CHECK:STDOUT:   %3 = trunc i32 %0 to i8, !dbg !319
+// CHECK:STDOUT:   %4 = add i8 %3, %1, !dbg !320
+// CHECK:STDOUT:   ret i8 %4, !dbg !321
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:SubWith.d9344a06b22b3b94.Core.ae42bf297a1ee9b6"(i8 %self, i32 %other) #0 !dbg !322 {
-// CHECK:STDOUT:   %1 = trunc i32 %other to i8, !dbg !326
-// CHECK:STDOUT:   %2 = sub i8 %self, %1, !dbg !327
-// CHECK:STDOUT:   ret i8 %2, !dbg !328
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:SubWith.d9344a06b22b3b94.Core.ae42bf297a1ee9b6"(i8 %0, i32 %1) #0 !dbg !322 {
+// CHECK:STDOUT:   %3 = trunc i32 %1 to i8, !dbg !326
+// CHECK:STDOUT:   %4 = sub i8 %0, %3, !dbg !327
+// CHECK:STDOUT:   ret i8 %4, !dbg !328
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:AddWith.d9344a06b22b3b94.Core.3ff23939bf07ad5f"(i8 %self, i8 %other) #0 !dbg !329 {
-// CHECK:STDOUT:   %1 = add i8 %self, %other, !dbg !335
-// CHECK:STDOUT:   ret i8 %1, !dbg !336
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:AddWith.d9344a06b22b3b94.Core.3ff23939bf07ad5f"(i8 %0, i8 %1) #0 !dbg !329 {
+// CHECK:STDOUT:   %3 = add i8 %0, %1, !dbg !335
+// CHECK:STDOUT:   ret i8 %3, !dbg !336
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.fdd9948a9ef8c6e5:AddWith.295cf9b677564c5c.Core.3ff23939bf07ad5f"(i8 %self, i8 %other) #0 !dbg !337 {
-// CHECK:STDOUT:   %1 = add i8 %self, %other, !dbg !341
-// CHECK:STDOUT:   ret i8 %1, !dbg !342
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.fdd9948a9ef8c6e5:AddWith.295cf9b677564c5c.Core.3ff23939bf07ad5f"(i8 %0, i8 %1) #0 !dbg !337 {
+// CHECK:STDOUT:   %3 = add i8 %0, %1, !dbg !341
+// CHECK:STDOUT:   ret i8 %3, !dbg !342
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:SubWith.d9344a06b22b3b94.Core.3ff23939bf07ad5f"(i8 %self, i8 %other) #0 !dbg !343 {
-// CHECK:STDOUT:   %1 = sub i8 %self, %other, !dbg !347
-// CHECK:STDOUT:   ret i8 %1, !dbg !348
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:SubWith.d9344a06b22b3b94.Core.3ff23939bf07ad5f"(i8 %0, i8 %1) #0 !dbg !343 {
+// CHECK:STDOUT:   %3 = sub i8 %0, %1, !dbg !347
+// CHECK:STDOUT:   ret i8 %3, !dbg !348
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:AddWith.d9344a06b22b3b94.Core.a374c478e4368fa7"(i8 %self, i16 %other) #0 !dbg !349 {
-// CHECK:STDOUT:   %1 = trunc i16 %other to i8, !dbg !355
-// CHECK:STDOUT:   %2 = add i8 %self, %1, !dbg !356
-// CHECK:STDOUT:   ret i8 %2, !dbg !357
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:AddWith.d9344a06b22b3b94.Core.a374c478e4368fa7"(i8 %0, i16 %1) #0 !dbg !349 {
+// CHECK:STDOUT:   %3 = trunc i16 %1 to i8, !dbg !355
+// CHECK:STDOUT:   %4 = add i8 %0, %3, !dbg !356
+// CHECK:STDOUT:   ret i8 %4, !dbg !357
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.fdd9948a9ef8c6e5:AddWith.295cf9b677564c5c.Core.a374c478e4368fa7"(i16 %self, i8 %other) #0 !dbg !358 {
-// CHECK:STDOUT:   %1 = trunc i16 %self to i8, !dbg !364
-// CHECK:STDOUT:   %2 = add i8 %1, %other, !dbg !365
-// CHECK:STDOUT:   ret i8 %2, !dbg !366
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.fdd9948a9ef8c6e5:AddWith.295cf9b677564c5c.Core.a374c478e4368fa7"(i16 %0, i8 %1) #0 !dbg !358 {
+// CHECK:STDOUT:   %3 = trunc i16 %0 to i8, !dbg !364
+// CHECK:STDOUT:   %4 = add i8 %3, %1, !dbg !365
+// CHECK:STDOUT:   ret i8 %4, !dbg !366
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:SubWith.d9344a06b22b3b94.Core.a374c478e4368fa7"(i8 %self, i16 %other) #0 !dbg !367 {
-// CHECK:STDOUT:   %1 = trunc i16 %other to i8, !dbg !371
-// CHECK:STDOUT:   %2 = sub i8 %self, %1, !dbg !372
-// CHECK:STDOUT:   ret i8 %2, !dbg !373
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:SubWith.d9344a06b22b3b94.Core.a374c478e4368fa7"(i8 %0, i16 %1) #0 !dbg !367 {
+// CHECK:STDOUT:   %3 = trunc i16 %1 to i8, !dbg !371
+// CHECK:STDOUT:   %4 = sub i8 %0, %3, !dbg !372
+// CHECK:STDOUT:   ret i8 %4, !dbg !373
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:AddWith.d9344a06b22b3b94.Core.bca5dfe49de51c76"(i8 %self, i32 %other) #0 !dbg !374 {
-// CHECK:STDOUT:   %1 = trunc i32 %other to i8, !dbg !380
-// CHECK:STDOUT:   %2 = add i8 %self, %1, !dbg !381
-// CHECK:STDOUT:   ret i8 %2, !dbg !382
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:AddWith.d9344a06b22b3b94.Core.bca5dfe49de51c76"(i8 %0, i32 %1) #0 !dbg !374 {
+// CHECK:STDOUT:   %3 = trunc i32 %1 to i8, !dbg !380
+// CHECK:STDOUT:   %4 = add i8 %0, %3, !dbg !381
+// CHECK:STDOUT:   ret i8 %4, !dbg !382
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.fdd9948a9ef8c6e5:AddWith.295cf9b677564c5c.Core.bca5dfe49de51c76"(i32 %self, i8 %other) #0 !dbg !383 {
-// CHECK:STDOUT:   %1 = trunc i32 %self to i8, !dbg !389
-// CHECK:STDOUT:   %2 = add i8 %1, %other, !dbg !390
-// CHECK:STDOUT:   ret i8 %2, !dbg !391
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.fdd9948a9ef8c6e5:AddWith.295cf9b677564c5c.Core.bca5dfe49de51c76"(i32 %0, i8 %1) #0 !dbg !383 {
+// CHECK:STDOUT:   %3 = trunc i32 %0 to i8, !dbg !389
+// CHECK:STDOUT:   %4 = add i8 %3, %1, !dbg !390
+// CHECK:STDOUT:   ret i8 %4, !dbg !391
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:SubWith.d9344a06b22b3b94.Core.bca5dfe49de51c76"(i8 %self, i32 %other) #0 !dbg !392 {
-// CHECK:STDOUT:   %1 = trunc i32 %other to i8, !dbg !396
-// CHECK:STDOUT:   %2 = sub i8 %self, %1, !dbg !397
-// CHECK:STDOUT:   ret i8 %2, !dbg !398
+// CHECK:STDOUT: define linkonce_odr i8 @"_COp.Char.Core:SubWith.d9344a06b22b3b94.Core.bca5dfe49de51c76"(i8 %0, i32 %1) #0 !dbg !392 {
+// CHECK:STDOUT:   %3 = trunc i32 %1 to i8, !dbg !396
+// CHECK:STDOUT:   %4 = sub i8 %0, %3, !dbg !397
+// CHECK:STDOUT:   ret i8 %4, !dbg !398
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.b906c5940adce8f0"(i8 %self) #0 !dbg !399 {
-// CHECK:STDOUT:   %1 = call i16 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.c3acaf94968d88d2"(i8 %self), !dbg !403
-// CHECK:STDOUT:   ret i16 %1, !dbg !404
+// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.b906c5940adce8f0"(i8 %0) #0 !dbg !399 {
+// CHECK:STDOUT:   %2 = call i16 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.c3acaf94968d88d2"(i8 %0), !dbg !403
+// CHECK:STDOUT:   ret i16 %2, !dbg !404
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.dbd6eca082a732b7"(i8 %self) #0 !dbg !405 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.d93106ca8c7912cd"(i8 %self), !dbg !408
-// CHECK:STDOUT:   ret i32 %1, !dbg !409
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.dbd6eca082a732b7"(i8 %0) #0 !dbg !405 {
+// CHECK:STDOUT:   %2 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.d93106ca8c7912cd"(i8 %0), !dbg !408
+// CHECK:STDOUT:   ret i32 %2, !dbg !409
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.dc14f658d346b3e8"(i8 %self) #0 !dbg !410 {
-// CHECK:STDOUT:   %1 = call i16 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.8d84eea89906cfec"(i8 %self), !dbg !413
-// CHECK:STDOUT:   ret i16 %1, !dbg !414
+// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.dc14f658d346b3e8"(i8 %0) #0 !dbg !410 {
+// CHECK:STDOUT:   %2 = call i16 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.8d84eea89906cfec"(i8 %0), !dbg !413
+// CHECK:STDOUT:   ret i16 %2, !dbg !414
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.b26071071fee62b9"(i8 %self) #0 !dbg !415 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1d53f86bcab954ee"(i8 %self), !dbg !418
-// CHECK:STDOUT:   ret i32 %1, !dbg !419
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.b26071071fee62b9"(i8 %0) #0 !dbg !415 {
+// CHECK:STDOUT:   %2 = call i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1d53f86bcab954ee"(i8 %0), !dbg !418
+// CHECK:STDOUT:   ret i32 %2, !dbg !419
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -508,36 +508,36 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.c3acaf94968d88d2"(i8 %from) #0 !dbg !424 {
-// CHECK:STDOUT:   %1 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %from), !dbg !427
-// CHECK:STDOUT:   %2 = zext i8 %1 to i16, !dbg !428
-// CHECK:STDOUT:   ret i16 %2, !dbg !429
+// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.c3acaf94968d88d2"(i8 %0) #0 !dbg !424 {
+// CHECK:STDOUT:   %2 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %0), !dbg !427
+// CHECK:STDOUT:   %3 = zext i8 %2 to i16, !dbg !428
+// CHECK:STDOUT:   ret i16 %3, !dbg !429
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.d93106ca8c7912cd"(i8 %from) #0 !dbg !430 {
-// CHECK:STDOUT:   %1 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %from), !dbg !433
-// CHECK:STDOUT:   %2 = zext i8 %1 to i32, !dbg !434
-// CHECK:STDOUT:   ret i32 %2, !dbg !435
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.d93106ca8c7912cd"(i8 %0) #0 !dbg !430 {
+// CHECK:STDOUT:   %2 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %0), !dbg !433
+// CHECK:STDOUT:   %3 = zext i8 %2 to i32, !dbg !434
+// CHECK:STDOUT:   ret i32 %3, !dbg !435
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.8d84eea89906cfec"(i8 %from) #0 !dbg !436 {
-// CHECK:STDOUT:   %1 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %from), !dbg !439
-// CHECK:STDOUT:   %2 = zext i8 %1 to i16, !dbg !440
-// CHECK:STDOUT:   ret i16 %2, !dbg !441
+// CHECK:STDOUT: define linkonce_odr i16 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.8d84eea89906cfec"(i8 %0) #0 !dbg !436 {
+// CHECK:STDOUT:   %2 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %0), !dbg !439
+// CHECK:STDOUT:   %3 = zext i8 %2 to i16, !dbg !440
+// CHECK:STDOUT:   ret i16 %3, !dbg !441
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1d53f86bcab954ee"(i8 %from) #0 !dbg !442 {
-// CHECK:STDOUT:   %1 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %from), !dbg !445
-// CHECK:STDOUT:   %2 = zext i8 %1 to i32, !dbg !446
-// CHECK:STDOUT:   ret i32 %2, !dbg !447
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1d53f86bcab954ee"(i8 %0) #0 !dbg !442 {
+// CHECK:STDOUT:   %2 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %0), !dbg !445
+// CHECK:STDOUT:   %3 = zext i8 %2 to i32, !dbg !446
+// CHECK:STDOUT:   ret i32 %3, !dbg !447
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %self) #0 !dbg !448 {
-// CHECK:STDOUT:   ret i8 %self, !dbg !453
+// CHECK:STDOUT: define linkonce_odr i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %0) #0 !dbg !448 {
+// CHECK:STDOUT:   ret i8 %0, !dbg !453
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives

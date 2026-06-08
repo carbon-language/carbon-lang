@@ -80,12 +80,18 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %pattern_type.e81: type = pattern_type %Copy.type [concrete]
+// CHECK:STDOUT:   %T.patt.fe6: %pattern_type.e81 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.f84: %Copy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.f84 [symbolic]
 // CHECK:STDOUT:   %Derived.e87: type = class_type @Derived, @Derived(%T.as_type) [symbolic]
 // CHECK:STDOUT:   %pattern_type.ebc: type = pattern_type %Derived.e87 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.203: %pattern_type.ebc = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.c37: %pattern_type.ebc = at_binding_pattern x, %x.param_patt.203 [symbolic]
 // CHECK:STDOUT:   %.1ce700.2: Core.Form = init_form %T.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.2c66b4.2: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %return.param_patt.bf4475.2: %pattern_type.2c66b4.2 = out_param_pattern [symbolic]
+// CHECK:STDOUT:   %return.patt.f44: %pattern_type.2c66b4.2 = return_slot_pattern %return.param_patt.bf4475.2, %T.as_type [symbolic]
 // CHECK:STDOUT:   %Base.146: type = class_type @Base, @Base(%T.as_type) [symbolic]
 // CHECK:STDOUT:   %require_complete.0fb: <witness> = require_complete_type %Base.146 [symbolic]
 // CHECK:STDOUT:   %require_complete.d83: <witness> = require_complete_type %T.as_type [symbolic]
@@ -161,20 +167,30 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessDerived(constants.%T.f84) {
+// CHECK:STDOUT:   %T.patt.loc13_19.2 => constants.%T.patt.fe6
 // CHECK:STDOUT:   %T.loc13_19.1 => constants.%T.f84
 // CHECK:STDOUT:   %T.as_type.loc13_45.1 => constants.%T.as_type
 // CHECK:STDOUT:   %Derived.loc13_45.1 => constants.%Derived.e87
 // CHECK:STDOUT:   %pattern_type.loc13_34 => constants.%pattern_type.ebc
+// CHECK:STDOUT:   %x.param_patt.loc13_34.2 => constants.%x.param_patt.203
+// CHECK:STDOUT:   %x.patt.loc13_34.2 => constants.%x.patt.c37
 // CHECK:STDOUT:   %.loc13_51.2 => constants.%.1ce700.2
 // CHECK:STDOUT:   %pattern_type.loc13_51 => constants.%pattern_type.2c66b4.2
+// CHECK:STDOUT:   %return.param_patt.loc13_51.2 => constants.%return.param_patt.bf4475.2
+// CHECK:STDOUT:   %return.patt.loc13_48.2 => constants.%return.patt.f44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessBase(constants.%T.f84) {
+// CHECK:STDOUT:   %T.patt.loc19_16.2 => constants.%T.patt.fe6
 // CHECK:STDOUT:   %T.loc19_16.1 => constants.%T.f84
 // CHECK:STDOUT:   %T.as_type.loc19_42.1 => constants.%T.as_type
 // CHECK:STDOUT:   %Derived.loc19_42.1 => constants.%Derived.e87
 // CHECK:STDOUT:   %pattern_type.loc19_31 => constants.%pattern_type.ebc
+// CHECK:STDOUT:   %x.param_patt.loc19_31.2 => constants.%x.param_patt.203
+// CHECK:STDOUT:   %x.patt.loc19_31.2 => constants.%x.patt.c37
 // CHECK:STDOUT:   %.loc19_48.2 => constants.%.1ce700.2
 // CHECK:STDOUT:   %pattern_type.loc19_48 => constants.%pattern_type.2c66b4.2
+// CHECK:STDOUT:   %return.param_patt.loc19_48.2 => constants.%return.param_patt.bf4475.2
+// CHECK:STDOUT:   %return.patt.loc19_45.2 => constants.%return.patt.f44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

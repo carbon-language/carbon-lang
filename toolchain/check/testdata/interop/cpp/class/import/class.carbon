@@ -258,6 +258,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %bar.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:   %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -272,8 +274,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete = constants.%bar.param_patt]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete = constants.%bar.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -293,6 +295,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %bar.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:   %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -307,8 +311,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete = constants.%bar.param_patt]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete = constants.%bar.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -328,6 +332,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %bar.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:   %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -342,8 +348,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete = constants.%bar.param_patt]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete = constants.%bar.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -393,6 +399,9 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr.227: type = ptr_type %Bar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.227 [concrete]
+// CHECK:STDOUT:   %bar.patt: %pattern_type = value_binding_pattern bar [concrete]
+// CHECK:STDOUT:   %foo.patt: %pattern_type = ref_binding_pattern foo [concrete]
+// CHECK:STDOUT:   %foo.var_patt: %pattern_type = var_pattern %foo.patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -401,25 +410,25 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
-// CHECK:STDOUT:   %foo.patt: %pattern_type = ref_binding_pattern foo [concrete]
-// CHECK:STDOUT:   %foo.var_patt: %pattern_type = var_pattern %foo.patt [concrete]
+// CHECK:STDOUT:   %foo.patt: %pattern_type = ref_binding_pattern foo [concrete = constants.%foo.patt]
+// CHECK:STDOUT:   %foo.var_patt: %pattern_type = var_pattern %foo.patt [concrete = constants.%foo.var_patt]
 // CHECK:STDOUT:   %foo.var: ref %ptr.227 = var %foo.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete = constants.%bar.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Bar.ref.loc8_33: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:   %foo.ref: ref %ptr.227 = name_ref foo, imports.%foo.var [concrete = imports.%foo.var]
+// CHECK:STDOUT:   %.loc8_37: %ptr.227 = acquire_value %foo.ref
 // CHECK:STDOUT:   %.loc8_26: type = splice_block %ptr [concrete = constants.%ptr.227] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Bar.ref.loc8_22: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc8_22 [concrete = constants.%ptr.227]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_37: %ptr.227 = acquire_value %foo.ref
 // CHECK:STDOUT:   %bar: %ptr.227 = value_binding bar, %.loc8_37
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -430,8 +439,11 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr.227: type = ptr_type %Bar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.227 [concrete]
+// CHECK:STDOUT:   %bar.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:   %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT:   %foo_bar.patt: %pattern_type = value_binding_pattern foo_bar [concrete]
 // CHECK:STDOUT:   %Bar.elem: type = unbound_element_type %Bar, %ptr.227 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -445,8 +457,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete = constants.%bar.param_patt]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete = constants.%bar.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr.227 = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr.227] {
@@ -461,18 +473,18 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr.227) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %foo_bar.patt: %pattern_type = value_binding_pattern foo_bar [concrete]
+// CHECK:STDOUT:     %foo_bar.patt: %pattern_type = value_binding_pattern foo_bar [concrete = constants.%foo_bar.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar.ref: %ptr.227 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc8_37.1: ref %Bar = deref %bar.ref
 // CHECK:STDOUT:   %foo.ref: %Bar.elem = name_ref foo, @Bar.%.1 [concrete = @Bar.%.1]
 // CHECK:STDOUT:   %.loc8_37.2: ref %ptr.227 = class_element_access %.loc8_37.1, element0
+// CHECK:STDOUT:   %.loc8_37.3: %ptr.227 = acquire_value %.loc8_37.2
 // CHECK:STDOUT:   %.loc8_30: type = splice_block %ptr.loc8 [concrete = constants.%ptr.227] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Bar.ref.loc8: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:     %ptr.loc8: type = ptr_type %Bar.ref.loc8 [concrete = constants.%ptr.227]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_37.3: %ptr.227 = acquire_value %.loc8_37.2
 // CHECK:STDOUT:   %foo_bar: %ptr.227 = value_binding foo_bar, %.loc8_37.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -483,6 +495,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr.227: type = ptr_type %Bar [concrete]
 // CHECK:STDOUT:   %pattern_type.1b6: type = pattern_type %ptr.227 [concrete]
+// CHECK:STDOUT:   %bar.param_patt: %pattern_type.1b6 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %bar.patt: %pattern_type.1b6 = at_binding_pattern bar, %bar.param_patt [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
@@ -508,8 +522,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type.1b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %bar.patt: %pattern_type.1b6 = at_binding_pattern bar, %bar.param_patt [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type.1b6 = value_param_pattern [concrete = constants.%bar.param_patt]
+// CHECK:STDOUT:     %bar.patt: %pattern_type.1b6 = at_binding_pattern bar, %bar.param_patt [concrete = constants.%bar.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr.227 = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr.227] {
@@ -600,6 +614,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %bar.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:   %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -617,8 +633,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete = constants.%bar.param_patt]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete = constants.%bar.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {

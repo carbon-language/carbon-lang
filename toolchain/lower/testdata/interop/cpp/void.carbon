@@ -142,90 +142,90 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.538322f9fda4254f:ImplicitAs.a276ba298c70ba87.Core.52f71e11dc373f9a"(ptr %self) #0 !dbg !54 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.9fdaf39d07a1dc4e:OptionalAs.24b7347a93330e68.Core.258ff42e9fd73c28"(ptr %self), !dbg !60
-// CHECK:STDOUT:   ret ptr %1, !dbg !61
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.538322f9fda4254f:ImplicitAs.a276ba298c70ba87.Core.52f71e11dc373f9a"(ptr %0) #0 !dbg !54 {
+// CHECK:STDOUT:   %2 = call ptr @"_CConvert.9fdaf39d07a1dc4e:OptionalAs.24b7347a93330e68.Core.258ff42e9fd73c28"(ptr %0), !dbg !60
+// CHECK:STDOUT:   ret ptr %2, !dbg !61
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.538322f9fda4254f:ImplicitAs.a276ba298c70ba87.Core.ed3bde3932287ced"(ptr %self) #0 !dbg !62 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.d62727437df45535:OptionalAs.1dac4564233fecd1.Core.ff6ab29b5872c34c"(ptr %self), !dbg !65
-// CHECK:STDOUT:   ret ptr %1, !dbg !66
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.538322f9fda4254f:ImplicitAs.a276ba298c70ba87.Core.ed3bde3932287ced"(ptr %0) #0 !dbg !62 {
+// CHECK:STDOUT:   %2 = call ptr @"_CConvert.d62727437df45535:OptionalAs.1dac4564233fecd1.Core.ff6ab29b5872c34c"(ptr %0), !dbg !65
+// CHECK:STDOUT:   ret ptr %2, !dbg !66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.538322f9fda4254f:ImplicitAs.a276ba298c70ba87.Core.0dc2e35b064d71e9"(ptr %self) #0 !dbg !67 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.d62727437df45535:OptionalAs.1dac4564233fecd1.Core.e316e6328124c0b3"(ptr %self), !dbg !70
-// CHECK:STDOUT:   ret ptr %1, !dbg !71
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.538322f9fda4254f:ImplicitAs.a276ba298c70ba87.Core.0dc2e35b064d71e9"(ptr %0) #0 !dbg !67 {
+// CHECK:STDOUT:   %2 = call ptr @"_CConvert.d62727437df45535:OptionalAs.1dac4564233fecd1.Core.e316e6328124c0b3"(ptr %0), !dbg !70
+// CHECK:STDOUT:   ret ptr %2, !dbg !71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.9fdaf39d07a1dc4e:OptionalAs.24b7347a93330e68.Core.258ff42e9fd73c28"(ptr %self) #0 !dbg !72 {
-// CHECK:STDOUT:   %1 = call ptr @_CSome.Optional.Core.258ff42e9fd73c28(ptr %self), !dbg !75
-// CHECK:STDOUT:   ret ptr %1, !dbg !76
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.9fdaf39d07a1dc4e:OptionalAs.24b7347a93330e68.Core.258ff42e9fd73c28"(ptr %0) #0 !dbg !72 {
+// CHECK:STDOUT:   %2 = call ptr @_CSome.Optional.Core.258ff42e9fd73c28(ptr %0), !dbg !75
+// CHECK:STDOUT:   ret ptr %2, !dbg !76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.d62727437df45535:OptionalAs.1dac4564233fecd1.Core.ff6ab29b5872c34c"(ptr %self) #0 !dbg !77 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.d62727437df45535:OptionalAs.1dac4564233fecd1.Core.ff6ab29b5872c34c"(ptr %0) #0 !dbg !77 {
 // CHECK:STDOUT:   %temp = alloca ptr, align 8, !dbg !80
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !80
-// CHECK:STDOUT:   store ptr %self, ptr %temp, align 8, !dbg !80
-// CHECK:STDOUT:   %1 = load ptr, ptr %temp, align 8, !dbg !80
-// CHECK:STDOUT:   %2 = call ptr @_CSome.Optional.Core.258ff42e9fd73c28(ptr %1), !dbg !81
-// CHECK:STDOUT:   ret ptr %2, !dbg !82
+// CHECK:STDOUT:   store ptr %0, ptr %temp, align 8, !dbg !80
+// CHECK:STDOUT:   %2 = load ptr, ptr %temp, align 8, !dbg !80
+// CHECK:STDOUT:   %3 = call ptr @_CSome.Optional.Core.258ff42e9fd73c28(ptr %2), !dbg !81
+// CHECK:STDOUT:   ret ptr %3, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.d62727437df45535:OptionalAs.1dac4564233fecd1.Core.e316e6328124c0b3"(ptr %self) #0 !dbg !83 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.d62727437df45535:OptionalAs.1dac4564233fecd1.Core.e316e6328124c0b3"(ptr %0) #0 !dbg !83 {
 // CHECK:STDOUT:   %temp = alloca ptr, align 8, !dbg !86
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !86
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert:thunk:ImplicitAs.d035546bf1a99743.Core:e8f8f92d3d08d149:ImplicitAs.01c4a560c986e7d1.Core.84588f41d61dafba"(ptr %self), !dbg !86
-// CHECK:STDOUT:   store ptr %1, ptr %temp, align 8, !dbg !86
-// CHECK:STDOUT:   %2 = load ptr, ptr %temp, align 8, !dbg !86
-// CHECK:STDOUT:   %3 = call ptr @_CSome.Optional.Core.e5c5bc28e9d686cf(ptr %2), !dbg !87
-// CHECK:STDOUT:   ret ptr %3, !dbg !88
+// CHECK:STDOUT:   %2 = call ptr @"_CConvert:thunk:ImplicitAs.d035546bf1a99743.Core:e8f8f92d3d08d149:ImplicitAs.01c4a560c986e7d1.Core.84588f41d61dafba"(ptr %0), !dbg !86
+// CHECK:STDOUT:   store ptr %2, ptr %temp, align 8, !dbg !86
+// CHECK:STDOUT:   %3 = load ptr, ptr %temp, align 8, !dbg !86
+// CHECK:STDOUT:   %4 = call ptr @_CSome.Optional.Core.e5c5bc28e9d686cf(ptr %3), !dbg !87
+// CHECK:STDOUT:   ret ptr %4, !dbg !88
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CSome.Optional.Core.258ff42e9fd73c28(ptr %value) #0 !dbg !89 {
-// CHECK:STDOUT:   %1 = call ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.7a595a06c724a271"(ptr %value), !dbg !92
-// CHECK:STDOUT:   ret ptr %1, !dbg !93
+// CHECK:STDOUT: define linkonce_odr ptr @_CSome.Optional.Core.258ff42e9fd73c28(ptr %0) #0 !dbg !89 {
+// CHECK:STDOUT:   %2 = call ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.7a595a06c724a271"(ptr %0), !dbg !92
+// CHECK:STDOUT:   ret ptr %2, !dbg !93
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert:thunk:ImplicitAs.d035546bf1a99743.Core:e8f8f92d3d08d149:ImplicitAs.01c4a560c986e7d1.Core.84588f41d61dafba"(ptr %self) #3 !dbg !94 {
-// CHECK:STDOUT:   ret ptr %self, !dbg !98
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert:thunk:ImplicitAs.d035546bf1a99743.Core:e8f8f92d3d08d149:ImplicitAs.01c4a560c986e7d1.Core.84588f41d61dafba"(ptr %0) #3 !dbg !94 {
+// CHECK:STDOUT:   ret ptr %0, !dbg !98
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CSome.Optional.Core.e5c5bc28e9d686cf(ptr %value) #0 !dbg !99 {
-// CHECK:STDOUT:   %1 = call ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.8f1054b47505c137"(ptr %value), !dbg !102
-// CHECK:STDOUT:   ret ptr %1, !dbg !103
+// CHECK:STDOUT: define linkonce_odr ptr @_CSome.Optional.Core.e5c5bc28e9d686cf(ptr %0) #0 !dbg !99 {
+// CHECK:STDOUT:   %2 = call ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.8f1054b47505c137"(ptr %0), !dbg !102
+// CHECK:STDOUT:   ret ptr %2, !dbg !103
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.7a595a06c724a271"(ptr %self) #0 !dbg !104 {
-// CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !107
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !107
-// CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !107
-// CHECK:STDOUT:   store ptr %self, ptr %1, align 8, !dbg !108
-// CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !109
-// CHECK:STDOUT:   call void @"_COp.125695b29f2cf97c:core.Destroy.Core"(ptr %1), !dbg !107
-// CHECK:STDOUT:   ret ptr %2, !dbg !110
+// CHECK:STDOUT: define linkonce_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.7a595a06c724a271"(ptr %0) #0 !dbg !104 {
+// CHECK:STDOUT:   %2 = alloca ptr, align 8, !dbg !107
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %2), !dbg !107
+// CHECK:STDOUT:   store ptr poison, ptr %2, align 8, !dbg !107
+// CHECK:STDOUT:   store ptr %0, ptr %2, align 8, !dbg !108
+// CHECK:STDOUT:   %3 = load ptr, ptr %2, align 8, !dbg !109
+// CHECK:STDOUT:   call void @"_COp.125695b29f2cf97c:core.Destroy.Core"(ptr %2), !dbg !107
+// CHECK:STDOUT:   ret ptr %3, !dbg !110
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.8f1054b47505c137"(ptr %self) #0 !dbg !111 {
-// CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !114
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !114
-// CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !114
-// CHECK:STDOUT:   store ptr %self, ptr %1, align 8, !dbg !115
-// CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !116
-// CHECK:STDOUT:   call void @"_COp.b8b38d4701ca7f8c:core.Destroy.Core"(ptr %1), !dbg !114
-// CHECK:STDOUT:   ret ptr %2, !dbg !117
+// CHECK:STDOUT: define linkonce_odr ptr @"_CSome.e8f8f92d3d08d149:OptionalStorage.Core.8f1054b47505c137"(ptr %0) #0 !dbg !111 {
+// CHECK:STDOUT:   %2 = alloca ptr, align 8, !dbg !114
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %2), !dbg !114
+// CHECK:STDOUT:   store ptr poison, ptr %2, align 8, !dbg !114
+// CHECK:STDOUT:   store ptr %0, ptr %2, align 8, !dbg !115
+// CHECK:STDOUT:   %3 = load ptr, ptr %2, align 8, !dbg !116
+// CHECK:STDOUT:   call void @"_COp.b8b38d4701ca7f8c:core.Destroy.Core"(ptr %2), !dbg !114
+// CHECK:STDOUT:   ret ptr %3, !dbg !117
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives

@@ -73,6 +73,7 @@ let invalid: f64 = ConvertIntLiteralToFloatLiteral(-1) as f64;
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.fb7: type = pattern_type %f64.dc1 [concrete]
+// CHECK:STDOUT:   %overflow.patt: %pattern_type.fb7 = value_binding_pattern overflow [concrete]
 // CHECK:STDOUT:   %ConvertIntLiteralToF64.type: type = fn_type @ConvertIntLiteralToF64 [concrete]
 // CHECK:STDOUT:   %ConvertIntLiteralToF64: %ConvertIntLiteralToF64.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000: Core.IntLiteral = int_value 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 [concrete]
@@ -84,11 +85,11 @@ let invalid: f64 = ConvertIntLiteralToFloatLiteral(-1) as f64;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %overflow.patt: %pattern_type.fb7 = value_binding_pattern overflow [concrete]
+// CHECK:STDOUT:     %overflow.patt: %pattern_type.fb7 = value_binding_pattern overflow [concrete = constants.%overflow.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %.loc9_354.1: %f64.dc1 = value_of_initializer @__global_init.%ConvertIntLiteralToF64.call [concrete = <error>]
 // CHECK:STDOUT:   %.loc9_354.2: %f64.dc1 = converted @__global_init.%ConvertIntLiteralToF64.call, %.loc9_354.1 [concrete = <error>]
+// CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %overflow: %f64.dc1 = value_binding overflow, %.loc9_354.2 [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,6 +107,7 @@ let invalid: f64 = ConvertIntLiteralToFloatLiteral(-1) as f64;
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.fb7: type = pattern_type %f64.dc1 [concrete]
+// CHECK:STDOUT:   %invalid.patt: %pattern_type.fb7 = value_binding_pattern invalid [concrete]
 // CHECK:STDOUT:   %ConvertIntLiteralToFloatLiteral.type: type = fn_type @ConvertIntLiteralToFloatLiteral [concrete]
 // CHECK:STDOUT:   %ConvertIntLiteralToFloatLiteral: %ConvertIntLiteralToFloatLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
@@ -142,7 +144,7 @@ let invalid: f64 = ConvertIntLiteralToFloatLiteral(-1) as f64;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %invalid.patt: %pattern_type.fb7 = value_binding_pattern invalid [concrete]
+// CHECK:STDOUT:     %invalid.patt: %pattern_type.fb7 = value_binding_pattern invalid [concrete = constants.%invalid.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %invalid: %f64.dc1 = value_binding invalid, @__global_init.%.loc9_56.2 [concrete = <error>]

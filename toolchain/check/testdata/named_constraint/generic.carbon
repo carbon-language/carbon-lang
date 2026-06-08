@@ -81,6 +81,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %GenericType.type.d1d: type = generic_named_constaint_type @GenericType [concrete]
 // CHECK:STDOUT:   %empty_struct.b7e: %GenericType.type.d1d = struct_value () [concrete]
@@ -89,6 +90,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.cb6: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.5d7: type = pattern_type %Z.type [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type.5d7 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: %Z.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %GenericZ.type.c42: type = generic_named_constaint_type @GenericZ [concrete]
 // CHECK:STDOUT:   %empty_struct.a73: %GenericZ.type.c42 = struct_value () [concrete]
@@ -108,7 +110,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:     .ForwardDeclaredGeneric = %ForwardDeclaredGeneric.decl.loc9
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GenericType.decl: %GenericType.type.d1d = constraint_decl @GenericType [concrete = constants.%empty_struct.b7e] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc4_25.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_25.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_28.1: type = splice_block %.loc4_28.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -118,7 +120,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
 // CHECK:STDOUT:   %GenericZ.decl: %GenericZ.type.c42 = constraint_decl @GenericZ [concrete = constants.%empty_struct.a73] {
-// CHECK:STDOUT:     %U.patt: %pattern_type.5d7 = symbolic_binding_pattern U, 0 [concrete]
+// CHECK:STDOUT:     %U.patt.loc7_22.1: %pattern_type.5d7 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc7_22.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7: type = splice_block %Z.ref [concrete = constants.%Z.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -127,7 +129,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:     %U.loc7_22.2: %Z.type = symbolic_binding U, 0 [symbolic = %U.loc7_22.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.decl.loc9: %ForwardDeclaredGeneric.type.650 = constraint_decl @ForwardDeclaredGeneric [concrete = constants.%empty_struct.43d] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc9_36.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_36.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_39.1: type = splice_block %.loc9_39.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.loc9: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -136,7 +138,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:     %T.loc9_36.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_36.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.decl.loc10: %ForwardDeclaredGeneric.type.650 = constraint_decl @ForwardDeclaredGeneric [concrete = constants.%empty_struct.43d] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc9_36.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_36.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_39.1: type = splice_block %.loc10_39.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.loc10: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -158,6 +160,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic constraint @GenericType(%T.loc4_25.2: type) {
+// CHECK:STDOUT:   %T.patt.loc4_25.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_25.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc4_25.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_25.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -176,6 +179,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic constraint @GenericZ(%U.loc7_22.2: %Z.type) {
+// CHECK:STDOUT:   %U.patt.loc7_22.2: %pattern_type.5d7 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc7_22.2 (constants.%U.patt)]
 // CHECK:STDOUT:   %U.loc7_22.1: %Z.type = symbolic_binding U, 0 [symbolic = %U.loc7_22.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -194,6 +198,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic constraint @ForwardDeclaredGeneric(%T.loc9_36.2: type) {
+// CHECK:STDOUT:   %T.patt.loc9_36.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_36.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc9_36.1: type = symbolic_binding T, 0 [symbolic = %T.loc9_36.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -212,6 +217,7 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericType(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc4_25.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -220,12 +226,14 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.cb6) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericZ(constants.%U) {
+// CHECK:STDOUT:   %U.patt.loc7_22.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc7_22.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericZ.WithSelf(constants.%U, constants.%Self.22bbf7.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclaredGeneric(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc9_36.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc9_36.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

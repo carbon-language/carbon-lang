@@ -174,6 +174,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %t.patt: %pattern_type = value_binding_pattern t [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.type.b6b: type = tuple_type (%empty_struct_type, %empty_struct_type) [concrete]
@@ -182,7 +183,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: %pattern_type = value_binding_pattern t [concrete]
+// CHECK:STDOUT:     %t.patt: %pattern_type = value_binding_pattern t [concrete = constants.%t.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   %t: type = value_binding t, @__global_init.%.loc5_24.3
@@ -212,8 +213,11 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%X, %X) [concrete]
 // CHECK:STDOUT:   %tuple.type.359: type = tuple_type (%X, %X) [concrete]
 // CHECK:STDOUT:   %pattern_type.3ee: type = pattern_type %tuple.type.359 [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.3ee = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc13_40.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.3ee = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt: %pattern_type.3ee = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc20 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -221,7 +225,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT: fn @Let() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3ee = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.3ee = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.ref.loc13_27: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc13_32.1: ref %X = temporary_storage
@@ -234,18 +238,18 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %X.ref.loc13_50: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc13_51.1: %tuple.type.24b = tuple_literal (%X.ref.loc13_47, %X.ref.loc13_50) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %.loc13_51.2: type = converted %.loc13_51.1, constants.%tuple.type.359 [concrete = constants.%tuple.type.359]
-// CHECK:STDOUT:   %.loc13_22.1: type = splice_block %.loc13_22.3 [concrete = constants.%tuple.type.359] {
-// CHECK:STDOUT:     %X.ref.loc13_18: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %X.ref.loc13_21: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %.loc13_22.2: %tuple.type.24b = tuple_literal (%X.ref.loc13_18, %X.ref.loc13_21) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc13_22.3: type = converted %.loc13_22.2, constants.%tuple.type.359 [concrete = constants.%tuple.type.359]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_32.2: ref %X = temporary %.loc13_32.1, %Make.call.loc13_32
 // CHECK:STDOUT:   %.loc13_32.3: %X = acquire_value %.loc13_32.2
 // CHECK:STDOUT:   %.loc13_40.2: ref %X = temporary %.loc13_40.1, %Make.call.loc13_40
 // CHECK:STDOUT:   %.loc13_40.3: %X = acquire_value %.loc13_40.2
 // CHECK:STDOUT:   %tuple: %tuple.type.359 = tuple_value (%.loc13_32.3, %.loc13_40.3)
 // CHECK:STDOUT:   %.loc13_41.2: %tuple.type.359 = converted %.loc13_41.1, %tuple
+// CHECK:STDOUT:   %.loc13_22.1: type = splice_block %.loc13_22.3 [concrete = constants.%tuple.type.359] {
+// CHECK:STDOUT:     %X.ref.loc13_18: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %X.ref.loc13_21: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %.loc13_22.2: %tuple.type.24b = tuple_literal (%X.ref.loc13_18, %X.ref.loc13_21) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc13_22.3: type = converted %.loc13_22.2, constants.%tuple.type.359 [concrete = constants.%tuple.type.359]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %tuple.type.359 = value_binding a, %.loc13_41.2
 // CHECK:STDOUT:   %Destroy.Op.bound.loc13_40: <bound method> = bound_method %.loc13_40.2, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc13_40: init %empty_tuple.type = call %Destroy.Op.bound.loc13_40(%.loc13_40.2)
@@ -264,8 +268,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT: fn @Var() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.3ee = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.3ee = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.3ee = ref_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.3ee = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %tuple.type.359 = var %b.var_patt
 // CHECK:STDOUT:   %Make.ref.loc20_27: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
@@ -306,10 +310,14 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %m.patt: %pattern_type.6cb = value_binding_pattern m [concrete]
 // CHECK:STDOUT:   %ptr.db8: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %pattern_type.990: type = pattern_type %ptr.db8 [concrete]
+// CHECK:STDOUT:   %q.patt: %pattern_type.990 = value_binding_pattern q [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.6cb = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type.6cb = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc24_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -317,7 +325,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT: fn @Value(%n.param: %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %m.patt: %pattern_type.6cb = value_binding_pattern m [concrete]
+// CHECK:STDOUT:     %m.patt: %pattern_type.6cb = value_binding_pattern m [concrete = constants.%m.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.ref: %X = name_ref n, %n
 // CHECK:STDOUT:   %X.ref.loc10_26: type = name_ref X, file.%X.decl [concrete = constants.%X]
@@ -329,7 +337,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT: fn @Reference(%p.param: %ptr.db8) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %q.patt: %pattern_type.990 = value_binding_pattern q [concrete]
+// CHECK:STDOUT:     %q.patt: %pattern_type.990 = value_binding_pattern q [concrete = constants.%q.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %ptr.db8 = name_ref p, %p
 // CHECK:STDOUT:   %.loc16_24: ref %X = deref %p.ref
@@ -346,8 +354,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT: fn @Initializing() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.6cb = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.6cb = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6cb = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.6cb = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %X = var %x.var_patt
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
@@ -386,6 +394,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %X.as.As.impl.Convert: %X.as.As.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet.9dc: %As.type.f20 = facet_value %X, (%As.impl_witness.915) [concrete]
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.f49: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%Y, %As.facet.9dc) [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type.7ab = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   %.db2: type = fn_type_with_self_type %As.WithSelf.Convert.type.f49, %As.facet.9dc [concrete]
 // CHECK:STDOUT:   %X.as.As.impl.Convert.bound: <bound method> = bound_method %X.val, %X.as.As.impl.Convert [concrete]
 // CHECK:STDOUT:   %.650: ref %X = temporary invalid, %X.val [concrete]
@@ -393,11 +402,11 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ab = value_binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ab = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Y.ref: type = name_ref Y, %Y.decl [concrete = constants.%Y]
 // CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary @__global_init.%.loc19_29.1, @__global_init.%.loc19_29.2
 // CHECK:STDOUT:   %.loc19_29.2: %Y = acquire_value %.loc19_29.1
+// CHECK:STDOUT:   %Y.ref: type = name_ref Y, %Y.decl [concrete = constants.%Y]
 // CHECK:STDOUT:   %n: %Y = value_binding n, %.loc19_29.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

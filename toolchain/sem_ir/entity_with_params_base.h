@@ -105,10 +105,13 @@ struct EntityWithParamsBase {
 
   // A block containing, for each implicit parameter, a reference to the
   // instruction in the entity's pattern block that depends on all other
-  // pattern insts pertaining to that parameter.
+  // pattern insts pertaining to that parameter. `Empty` is used as a sentinel
+  // to indicate that parameter patterns exist, but are not yet known.
   InstBlockId implicit_param_patterns_id;
   // A block containing, for each element of the explicit parameter list tuple
-  // pattern, a reference to the root pattern inst for that element.
+  // pattern, a reference to the root pattern inst for that element. `Empty` is
+  // used as a sentinel to indicate that parameter patterns exist, but are not
+  // yet known.
   InstBlockId param_patterns_id;
 
   // True if declarations are `extern`.

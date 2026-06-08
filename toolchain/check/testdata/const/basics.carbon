@@ -135,7 +135,11 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %ptr.77f: type = ptr_type %const.13f [concrete]
 // CHECK:STDOUT:   %ptr.0c8: type = ptr_type %ptr.77f [concrete]
 // CHECK:STDOUT:   %pattern_type.803: type = pattern_type %ptr.0c8 [concrete]
+// CHECK:STDOUT:   %p.param_patt.a04: %pattern_type.803 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %p.patt.b92: %pattern_type.803 = at_binding_pattern p, %p.param_patt.a04 [concrete]
 // CHECK:STDOUT:   %.5f5: Core.Form = init_form %ptr.0c8 [concrete]
+// CHECK:STDOUT:   %return.param_patt.934: %pattern_type.803 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.895: %pattern_type.803 = return_slot_pattern %return.param_patt.934, %ptr.0c8 [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -155,7 +159,11 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %ptr.6b6: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %const.0f8: type = const_type %ptr.6b6 [concrete]
 // CHECK:STDOUT:   %pattern_type.76c: type = pattern_type %const.0f8 [concrete]
+// CHECK:STDOUT:   %p.param_patt.eb7: %pattern_type.76c = value_param_pattern [concrete]
+// CHECK:STDOUT:   %p.patt.168: %pattern_type.76c = at_binding_pattern p, %p.param_patt.eb7 [concrete]
 // CHECK:STDOUT:   %.fdf: Core.Form = init_form %const.0f8 [concrete]
+// CHECK:STDOUT:   %return.param_patt.7d8: %pattern_type.76c = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.973: %pattern_type.76c = return_slot_pattern %return.param_patt.7d8, %const.0f8 [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.65f: <witness> = impl_witness imports.%Copy.impl_witness_table.4f1, @ptr.as.Copy.impl(%C) [concrete]
@@ -178,10 +186,10 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.803 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %p.patt: %pattern_type.803 = at_binding_pattern p, %p.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.803 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.803 = return_slot_pattern %return.param_patt, %ptr.loc6_31 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.803 = value_param_pattern [concrete = constants.%p.param_patt.a04]
+// CHECK:STDOUT:     %p.patt: %pattern_type.803 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.b92]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.803 = out_param_pattern [concrete = constants.%return.param_patt.934]
+// CHECK:STDOUT:     %return.patt: %pattern_type.803 = return_slot_pattern %return.param_patt, %ptr.loc6_31 [concrete = constants.%return.patt.895]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc6_29: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %const.loc6_23: type = const_type %C.ref.loc6_29 [concrete = constants.%const.13f]
@@ -200,10 +208,10 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:     %return: ref %ptr.0c8 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.76c = value_param_pattern [concrete]
-// CHECK:STDOUT:     %p.patt: %pattern_type.76c = at_binding_pattern p, %p.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.76c = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.76c = return_slot_pattern %return.param_patt, %const.loc10_24 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.76c = value_param_pattern [concrete = constants.%p.param_patt.eb7]
+// CHECK:STDOUT:     %p.patt: %pattern_type.76c = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.168]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.76c = out_param_pattern [concrete = constants.%return.param_patt.7d8]
+// CHECK:STDOUT:     %return.patt: %pattern_type.76c = return_slot_pattern %return.param_patt, %const.loc10_24 [concrete = constants.%return.patt.973]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc10_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc10_32: type = ptr_type %C.ref.loc10_31 [concrete = constants.%ptr.6b6]
@@ -251,7 +259,11 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %ptr.77f: type = ptr_type %const.13f [concrete]
 // CHECK:STDOUT:   %ptr.0c8: type = ptr_type %ptr.77f [concrete]
 // CHECK:STDOUT:   %pattern_type.803: type = pattern_type %ptr.0c8 [concrete]
+// CHECK:STDOUT:   %p.param_patt: %pattern_type.803 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type.803 = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %.5f5: Core.Form = init_form %ptr.0c8 [concrete]
+// CHECK:STDOUT:   %return.param_patt.934: %pattern_type.803 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.895: %pattern_type.803 = return_slot_pattern %return.param_patt.934, %ptr.0c8 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -274,10 +286,10 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.803 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %p.patt: %pattern_type.803 = at_binding_pattern p, %p.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.803 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.803 = return_slot_pattern %return.param_patt, %ptr.loc11_39 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.803 = value_param_pattern [concrete = constants.%p.param_patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.803 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.803 = out_param_pattern [concrete = constants.%return.param_patt.934]
+// CHECK:STDOUT:     %return.patt: %pattern_type.803 = return_slot_pattern %return.param_patt, %ptr.loc11_39 [concrete = constants.%return.patt.895]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc11_36: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %const.loc11_30: type = const_type %C.ref.loc11_36 [concrete = constants.%const.13f]

@@ -56,12 +56,16 @@ fn F() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Color: type = class_type @Color [concrete]
 // CHECK:STDOUT:   %pattern_type.732: type = pattern_type %Color [concrete]
+// CHECK:STDOUT:   %col.patt: %pattern_type.732 = value_binding_pattern col [concrete]
 // CHECK:STDOUT:   %int_0.59e: %Color = int_value 0 [concrete]
+// CHECK:STDOUT:   %colb.patt: %pattern_type.732 = value_binding_pattern colb [concrete]
 // CHECK:STDOUT:   %int_1.b76: %Color = int_value 1 [concrete]
 // CHECK:STDOUT:   %Zoo: type = class_type @Zoo [concrete]
 // CHECK:STDOUT:   %Animal: type = class_type @Animal [concrete]
 // CHECK:STDOUT:   %pattern_type.8cd: type = pattern_type %Animal [concrete]
+// CHECK:STDOUT:   %pet.patt: %pattern_type.8cd = value_binding_pattern pet [concrete]
 // CHECK:STDOUT:   %int_0.648: %Animal = int_value 0 [concrete]
+// CHECK:STDOUT:   %pet2.patt: %pattern_type.8cd = value_binding_pattern pet2 [concrete]
 // CHECK:STDOUT:   %int_1.e7b: %Animal = int_value 1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,7 +93,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %col.patt: %pattern_type.732 = value_binding_pattern col [concrete]
+// CHECK:STDOUT:     %col.patt: %pattern_type.732 = value_binding_pattern col [concrete = constants.%col.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc18_32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Color.ref.loc18_35: type = name_ref Color, imports.%Color.decl [concrete = constants.%Color]
@@ -100,7 +104,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %col: %Color = value_binding col, %Red.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %colb.patt: %pattern_type.732 = value_binding_pattern colb [concrete]
+// CHECK:STDOUT:     %colb.patt: %pattern_type.732 = value_binding_pattern colb [concrete = constants.%colb.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc19_33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Blue.ref: %Color = name_ref Blue, imports.%int_1.b76 [concrete = constants.%int_1.b76]
@@ -110,7 +114,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %colb: %Color = value_binding colb, %Blue.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pet.patt: %pattern_type.8cd = value_binding_pattern pet [concrete]
+// CHECK:STDOUT:     %pet.patt: %pattern_type.8cd = value_binding_pattern pet [concrete = constants.%pet.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc20_37: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Zoo.ref.loc20_40: type = name_ref Zoo, imports.%Zoo.decl [concrete = constants.%Zoo]
@@ -123,7 +127,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pet: %Animal = value_binding pet, %Cat.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pet2.patt: %pattern_type.8cd = value_binding_pattern pet2 [concrete]
+// CHECK:STDOUT:     %pet2.patt: %pattern_type.8cd = value_binding_pattern pet2 [concrete = constants.%pet2.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc21_38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Dog.ref: %Animal = name_ref Dog, imports.%int_1.e7b [concrete = constants.%int_1.e7b]

@@ -88,15 +88,15 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CGenericF.Main.084a2801e0f5d754({} %x) #0 !dbg !9 {
-// CHECK:STDOUT:   %1 = alloca i32, align 4, !dbg !17
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !17
-// CHECK:STDOUT:   %2 = call i32 @"_COp.Foo.Main:Copy.Core"(i32 0), !dbg !18
-// CHECK:STDOUT:   store i32 %2, ptr %1, align 4, !dbg !17
-// CHECK:STDOUT:   %3 = load i32, ptr %1, align 4, !dbg !19
-// CHECK:STDOUT:   %4 = call i32 @"_COp.Foo.Main:Copy.Core"(i32 %3), !dbg !19
-// CHECK:STDOUT:   call void @"_COp.7a21de4d15dcb5df:core.Destroy.Core"(ptr %1), !dbg !17
-// CHECK:STDOUT:   ret i32 %4, !dbg !20
+// CHECK:STDOUT: define linkonce_odr i32 @_CGenericF.Main.084a2801e0f5d754({} %0) #0 !dbg !9 {
+// CHECK:STDOUT:   %2 = alloca i32, align 4, !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %2), !dbg !17
+// CHECK:STDOUT:   %3 = call i32 @"_COp.Foo.Main:Copy.Core"(i32 0), !dbg !18
+// CHECK:STDOUT:   store i32 %3, ptr %2, align 4, !dbg !17
+// CHECK:STDOUT:   %4 = load i32, ptr %2, align 4, !dbg !19
+// CHECK:STDOUT:   %5 = call i32 @"_COp.Foo.Main:Copy.Core"(i32 %4), !dbg !19
+// CHECK:STDOUT:   call void @"_COp.7a21de4d15dcb5df:core.Destroy.Core"(ptr %2), !dbg !17
+// CHECK:STDOUT:   ret i32 %5, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @"_COp.Foo.Main:Copy.Core"(i32)

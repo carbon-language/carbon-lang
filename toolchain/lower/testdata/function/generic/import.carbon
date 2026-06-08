@@ -133,11 +133,11 @@ fn Call() -> i32 {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CDirectGeneric.Main.84588f41d61dafba(ptr %y) #0 !dbg !20 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CDirectGeneric.Main.84588f41d61dafba(ptr %0) #0 !dbg !20 {
 // CHECK:STDOUT:   call void @_CDirectDeclared.Main(), !dbg !27
 // CHECK:STDOUT:   call void @_CDirectDefined.Main(), !dbg !28
-// CHECK:STDOUT:   %1 = call ptr @_CIndirectGeneric.Main.84588f41d61dafba(ptr %y), !dbg !29
-// CHECK:STDOUT:   ret ptr %1, !dbg !30
+// CHECK:STDOUT:   %2 = call ptr @_CIndirectGeneric.Main.84588f41d61dafba(ptr %0), !dbg !29
+// CHECK:STDOUT:   ret ptr %2, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CDirectDeclared.Main()
@@ -145,10 +145,10 @@ fn Call() -> i32 {
 // CHECK:STDOUT: declare void @_CDirectDefined.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CIndirectGeneric.Main.84588f41d61dafba(ptr %x) #0 !dbg !31 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CIndirectGeneric.Main.84588f41d61dafba(ptr %0) #0 !dbg !31 {
 // CHECK:STDOUT:   call void @_CIndirectDeclared.Main(), !dbg !35
 // CHECK:STDOUT:   call void @_CIndirectDefined.Main(), !dbg !36
-// CHECK:STDOUT:   ret ptr %x, !dbg !37
+// CHECK:STDOUT:   ret ptr %0, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CIndirectDeclared.Main()

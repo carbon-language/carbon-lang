@@ -198,13 +198,14 @@ class DeductionContext {
   auto MakeSpecific() -> SemIR::SpecificId;
 
  private:
-  auto NoteInitializingParam(SemIR::InstId param_id, auto& builder) -> void {
+  auto NoteInitializingParam(SemIR::InstId param_id, SemIR::LocId loc_id,
+                             auto& builder) -> void {
     if (auto param = context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(
             param_id)) {
       CARBON_DIAGNOSTIC(InitializingGenericParam, Note,
                         "initializing generic parameter `{0}` declared here",
                         SemIR::NameId);
-      builder.Note(param_id, InitializingGenericParam,
+      builder.Note(loc_id, InitializingGenericParam,
                    context().entity_names().Get(param->entity_name_id).name_id);
     } else {
       NoteGenericHere(context(), generic_id_, builder);
@@ -279,7 +280,14 @@ DeductionContext::DeductionContext(Context* context, SemIR::LocId loc_id,
 auto DeductionContext::Deduce() -> bool {
   while (!worklist_.Done()) {
     auto [param_id, arg_id, want_value] = worklist_.PopNext();
+    SemIR::LocId param_loc_id(param_id);
 
+    if (context().insts().Is<SemIR::ImportRefLoaded>(param_id)) {
+      param_id = context().constant_values().GetConstantInstId(param_id);
+    }
+    if (param_id == SemIR::ErrorInst::InstId) {
+      return false;
+    }
     // TODO: Bail out if there's nothing to deduce: if we're not in a pattern
     // and the parameter doesn't have a symbolic constant value.
 
@@ -317,7 +325,7 @@ auto DeductionContext::Deduce() -> bool {
       Diagnostics::AnnotationScope annotate_diagnostics(
           &context().emitter(), [&](auto& builder) {
             if (diagnose_) {
-              NoteInitializingParam(param_id, builder);
+              NoteInitializingParam(param_id, param_loc_id, builder);
             }
           });
       // `want_value` is only set within types and the arguments for symbolic
@@ -366,7 +374,7 @@ auto DeductionContext::Deduce() -> bool {
                               "compile-time constant");
             auto diag =
                 context().emitter().Build(loc_id_, CompTimeArgumentNotConstant);
-            NoteInitializingParam(param_id, diag);
+            NoteInitializingParam(param_id, param_loc_id, diag);
             diag.Emit();
           }
           return false;
@@ -527,7 +535,8 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       Diagnostics::AnnotationScope annotate_diagnostics(
           &context().emitter(), [&](auto& builder) {
             if (diagnose_) {
-              NoteInitializingParam(binding_id, builder);
+              NoteInitializingParam(binding_id, SemIR::LocId(binding_id),
+                                    builder);
             }
           });
       auto converted_arg_id =

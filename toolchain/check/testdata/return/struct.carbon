@@ -26,6 +26,8 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %struct_type.a.a92: type = struct_type {.a: %i32} [concrete]
 // CHECK:STDOUT:   %.a89: Core.Form = init_form %struct_type.a.a92 [concrete]
 // CHECK:STDOUT:   %pattern_type.506: type = pattern_type %struct_type.a.a92 [concrete]
+// CHECK:STDOUT:   %return.param_patt.ba6: %pattern_type.506 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.99f: %pattern_type.506 = return_slot_pattern %return.param_patt.ba6, %struct_type.a.a92 [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
@@ -70,8 +72,8 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.506 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.506 = return_slot_pattern %return.param_patt, %struct_type.a [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.506 = out_param_pattern [concrete = constants.%return.param_patt.ba6]
+// CHECK:STDOUT:     %return.patt: %pattern_type.506 = return_slot_pattern %return.param_patt, %struct_type.a [concrete = constants.%return.patt.99f]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.a92]

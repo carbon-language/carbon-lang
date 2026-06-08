@@ -63,6 +63,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %tuple.b59: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.e55: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.394: type = pattern_type %tuple.type.e55 [concrete]
+// CHECK:STDOUT:   %tuple_copy.patt: %pattern_type.394 = ref_binding_pattern tuple_copy [concrete]
+// CHECK:STDOUT:   %tuple_copy.var_patt: %pattern_type.394 = var_pattern %tuple_copy.patt [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %tuple.type.f94: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
@@ -103,6 +105,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %bound_method.03a: <bound method> = bound_method %int_2.295, %Int.as.Copy.impl.Op.specific_fn [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.c: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [concrete]
 // CHECK:STDOUT:   %pattern_type.9c3: type = pattern_type %struct_type.a.b.c [concrete]
+// CHECK:STDOUT:   %struct_copy.patt: %pattern_type.9c3 = ref_binding_pattern struct_copy [concrete]
+// CHECK:STDOUT:   %struct_copy.var_patt: %pattern_type.9c3 = var_pattern %struct_copy.patt [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct_type.c.b.a: type = struct_type {.c: Core.IntLiteral, .b: Core.IntLiteral, .a: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.c75: %struct_type.c.b.a = struct_value (%int_3.1ba, %int_2.ecc, %int_1.5b8) [concrete]
@@ -119,6 +123,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %struct.11a: %struct_type.a.b.c = struct_value (%int_1.0c6, %int_2.295, %int_3.410) [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_1.5b8, %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.97e: type = pattern_type %array_type [concrete]
+// CHECK:STDOUT:   %tuple_index.patt: %pattern_type.97e = ref_binding_pattern tuple_index [concrete]
+// CHECK:STDOUT:   %tuple_index.var_patt: %pattern_type.97e = var_pattern %tuple_index.patt [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %tuple.type.985: type = tuple_type (Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %tuple.4f2: %tuple.type.985 = tuple_value (%int_0.5c6) [concrete]
@@ -131,6 +137,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %bound_method.6e0: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.3c0: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%int_0.3c0) [concrete]
+// CHECK:STDOUT:   %struct_access.patt: %pattern_type.97e = ref_binding_pattern struct_access [concrete]
+// CHECK:STDOUT:   %struct_access.var_patt: %pattern_type.97e = var_pattern %struct_access.patt [concrete]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.a81: %struct_type.a.b = struct_value (%int_3.1ba, %int_1.5b8) [concrete]
 // CHECK:STDOUT: }
@@ -144,8 +152,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %tuple_copy.patt: %pattern_type.394 = ref_binding_pattern tuple_copy [concrete]
-// CHECK:STDOUT:     %tuple_copy.var_patt: %pattern_type.394 = var_pattern %tuple_copy.patt [concrete]
+// CHECK:STDOUT:     %tuple_copy.patt: %pattern_type.394 = ref_binding_pattern tuple_copy [concrete = constants.%tuple_copy.patt]
+// CHECK:STDOUT:     %tuple_copy.var_patt: %pattern_type.394 = var_pattern %tuple_copy.patt [concrete = constants.%tuple_copy.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple_copy.var: ref %tuple.type.e55 = var %tuple_copy.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4_26.1: type = splice_block %.loc4_26.3 [concrete = constants.%tuple.type.e55] {
@@ -156,8 +164,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple_copy: ref %tuple.type.e55 = ref_binding tuple_copy, %tuple_copy.var [concrete = %tuple_copy.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %struct_copy.patt: %pattern_type.9c3 = ref_binding_pattern struct_copy [concrete]
-// CHECK:STDOUT:     %struct_copy.var_patt: %pattern_type.9c3 = var_pattern %struct_copy.patt [concrete]
+// CHECK:STDOUT:     %struct_copy.patt: %pattern_type.9c3 = ref_binding_pattern struct_copy [concrete = constants.%struct_copy.patt]
+// CHECK:STDOUT:     %struct_copy.var_patt: %pattern_type.9c3 = var_pattern %struct_copy.patt [concrete = constants.%struct_copy.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %struct_copy.var: ref %struct_type.a.b.c = var %struct_copy.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6: type = splice_block %struct_type.a.b.c [concrete = constants.%struct_type.a.b.c] {
@@ -168,8 +176,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %struct_copy: ref %struct_type.a.b.c = ref_binding struct_copy, %struct_copy.var [concrete = %struct_copy.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %tuple_index.patt: %pattern_type.97e = ref_binding_pattern tuple_index [concrete]
-// CHECK:STDOUT:     %tuple_index.var_patt: %pattern_type.97e = var_pattern %tuple_index.patt [concrete]
+// CHECK:STDOUT:     %tuple_index.patt: %pattern_type.97e = ref_binding_pattern tuple_index [concrete = constants.%tuple_index.patt]
+// CHECK:STDOUT:     %tuple_index.var_patt: %pattern_type.97e = var_pattern %tuple_index.patt [concrete = constants.%tuple_index.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple_index.var: ref %array_type = var %tuple_index.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8: type = splice_block %array_type.loc8 [concrete = constants.%array_type] {
@@ -179,8 +187,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple_index: ref %array_type = ref_binding tuple_index, %tuple_index.var [concrete = %tuple_index.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %struct_access.patt: %pattern_type.97e = ref_binding_pattern struct_access [concrete]
-// CHECK:STDOUT:     %struct_access.var_patt: %pattern_type.97e = var_pattern %struct_access.patt [concrete]
+// CHECK:STDOUT:     %struct_access.patt: %pattern_type.97e = ref_binding_pattern struct_access [concrete = constants.%struct_access.patt]
+// CHECK:STDOUT:     %struct_access.var_patt: %pattern_type.97e = var_pattern %struct_access.patt [concrete = constants.%struct_access.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %struct_access.var: ref %array_type = var %struct_access.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10: type = splice_block %array_type.loc10 [concrete = constants.%array_type] {
@@ -353,6 +361,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %array_type.d27: type = array_type %int_1.5b8, %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.97e: type = pattern_type %array_type.d27 [concrete]
+// CHECK:STDOUT:   %array_index.patt: %pattern_type.97e = ref_binding_pattern array_index [concrete]
+// CHECK:STDOUT:   %array_index.var_patt: %pattern_type.97e = var_pattern %array_index.patt [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %tuple.type.985: type = tuple_type (Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %tuple.4f2: %tuple.type.985 = tuple_value (%int_0) [concrete]
@@ -402,8 +412,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %array_index.patt: %pattern_type.97e = ref_binding_pattern array_index [concrete]
-// CHECK:STDOUT:     %array_index.var_patt: %pattern_type.97e = var_pattern %array_index.patt [concrete]
+// CHECK:STDOUT:     %array_index.patt: %pattern_type.97e = ref_binding_pattern array_index [concrete = constants.%array_index.patt]
+// CHECK:STDOUT:     %array_index.var_patt: %pattern_type.97e = var_pattern %array_index.patt [concrete = constants.%array_index.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %array_index.var: ref %array_type.d27 = var %array_index.var_patt [concrete]
 // CHECK:STDOUT:   %.loc9: type = splice_block %array_type [concrete = constants.%array_type.d27] {
@@ -485,6 +495,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.429: type = pattern_type %Destroy.type [concrete]
+// CHECK:STDOUT:   %T.patt.351: %pattern_type.429 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.0e7: %Destroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %T.as_type.700: type = facet_access_type %T.0e7 [symbolic]
@@ -495,6 +507,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %tuple.type.cd5: type = tuple_type (%ptr.b37, %const) [symbolic]
 // CHECK:STDOUT:   %require_complete.3b6: <witness> = require_complete_type %tuple.type.cd5 [symbolic]
 // CHECK:STDOUT:   %pattern_type.02b: type = pattern_type %tuple.type.cd5 [symbolic]
+// CHECK:STDOUT:   %u.patt: %pattern_type.02b = ref_binding_pattern u [symbolic]
+// CHECK:STDOUT:   %u.var_patt: %pattern_type.02b = var_pattern %u.patt [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness.2ab: <witness> = lookup_impl_witness %tuple.type.cd5, @DefaultOrUnformed [symbolic]
 // CHECK:STDOUT:   %.f98: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%tuple.type.cd5) [symbolic]
@@ -506,6 +520,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T.as_type.700} [symbolic]
 // CHECK:STDOUT:   %require_complete.f8e: <witness> = require_complete_type %struct_type.a [symbolic]
 // CHECK:STDOUT:   %pattern_type.915: type = pattern_type %struct_type.a [symbolic]
+// CHECK:STDOUT:   %v.patt: %pattern_type.915 = ref_binding_pattern v [symbolic]
+// CHECK:STDOUT:   %v.var_patt: %pattern_type.915 = var_pattern %v.patt [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness.53f: <witness> = lookup_impl_witness %struct_type.a, @DefaultOrUnformed [symbolic]
 // CHECK:STDOUT:   %.b78: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%struct_type.a) [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.103: %DefaultOrUnformed.type = facet_value %struct_type.a, (%DefaultOrUnformed.lookup_impl_witness.53f) [symbolic]
@@ -517,6 +533,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %array_type.50f: type = array_type %int_5, %T.as_type.700 [symbolic]
 // CHECK:STDOUT:   %require_complete.f3e: <witness> = require_complete_type %array_type.50f [symbolic]
 // CHECK:STDOUT:   %pattern_type.78a: type = pattern_type %array_type.50f [symbolic]
+// CHECK:STDOUT:   %w.patt: %pattern_type.78a = ref_binding_pattern w [symbolic]
+// CHECK:STDOUT:   %w.var_patt: %pattern_type.78a = var_pattern %w.patt [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness.1fb: <witness> = lookup_impl_witness %array_type.50f, @DefaultOrUnformed [symbolic]
 // CHECK:STDOUT:   %.376: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%array_type.50f) [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.d60: %DefaultOrUnformed.type = facet_value %array_type.50f, (%DefaultOrUnformed.lookup_impl_witness.1fb) [symbolic]
@@ -544,6 +562,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %specific_impl_fn.96b: <specific function> = specific_impl_function %impl.elem0.667, @Destroy.WithSelf.Op(%Destroy.facet.7ba) [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %N.patt.38a: %pattern_type.6b6 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %N.37f: %i32 = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.7cb: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
 // CHECK:STDOUT:   %From: Core.IntLiteral = symbolic_binding From, 0 [symbolic]
@@ -562,6 +582,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %array_type.359: type = array_type %Int.as.ImplicitAs.impl.Convert.call, %i32 [symbolic]
 // CHECK:STDOUT:   %require_complete.f47: <witness> = require_complete_type %array_type.359 [symbolic]
 // CHECK:STDOUT:   %pattern_type.486: type = pattern_type %array_type.359 [symbolic]
+// CHECK:STDOUT:   %k.patt: %pattern_type.486 = ref_binding_pattern k [symbolic]
+// CHECK:STDOUT:   %k.var_patt: %pattern_type.486 = var_pattern %k.patt [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness.5c0: <witness> = lookup_impl_witness %array_type.359, @DefaultOrUnformed [symbolic]
 // CHECK:STDOUT:   %.63b: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%array_type.359) [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.b1c: %DefaultOrUnformed.type = facet_value %array_type.359, (%DefaultOrUnformed.lookup_impl_witness.5c0) [symbolic]
@@ -593,6 +615,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%ptr.loc6_19.2, %const.loc6_22.2) [symbolic = %tuple.type (constants.%tuple.type.cd5)]
 // CHECK:STDOUT:   %require_complete.loc6: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc6 (constants.%require_complete.3b6)]
 // CHECK:STDOUT:   %pattern_type.loc6: type = pattern_type %tuple.type [symbolic = %pattern_type.loc6 (constants.%pattern_type.02b)]
+// CHECK:STDOUT:   %u.patt.loc6_15.2: @F.%pattern_type.loc6 (%pattern_type.02b) = ref_binding_pattern u [symbolic = %u.patt.loc6_15.2 (constants.%u.patt)]
+// CHECK:STDOUT:   %u.var_patt.loc6_3.2: @F.%pattern_type.loc6 (%pattern_type.02b) = var_pattern %u.patt.loc6_15.2 [symbolic = %u.var_patt.loc6_3.2 (constants.%u.var_patt)]
 // CHECK:STDOUT:   %.loc6_30.3: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%tuple.type) [symbolic = %.loc6_30.3 (constants.%.f98)]
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness.loc6: <witness> = lookup_impl_witness %tuple.type, @DefaultOrUnformed [symbolic = %DefaultOrUnformed.lookup_impl_witness.loc6 (constants.%DefaultOrUnformed.lookup_impl_witness.2ab)]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc6_30.2: %DefaultOrUnformed.type = facet_value %tuple.type, (%DefaultOrUnformed.lookup_impl_witness.loc6) [symbolic = %DefaultOrUnformed.facet.loc6_30.2 (constants.%DefaultOrUnformed.facet.c98)]
@@ -603,6 +627,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %struct_type.a.loc7_23.2: type = struct_type {.a: @F.%T.as_type.loc6_19.2 (%T.as_type.700)} [symbolic = %struct_type.a.loc7_23.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:   %require_complete.loc7: <witness> = require_complete_type %struct_type.a.loc7_23.2 [symbolic = %require_complete.loc7 (constants.%require_complete.f8e)]
 // CHECK:STDOUT:   %pattern_type.loc7: type = pattern_type %struct_type.a.loc7_23.2 [symbolic = %pattern_type.loc7 (constants.%pattern_type.915)]
+// CHECK:STDOUT:   %v.patt.loc7_15.2: @F.%pattern_type.loc7 (%pattern_type.915) = ref_binding_pattern v [symbolic = %v.patt.loc7_15.2 (constants.%v.patt)]
+// CHECK:STDOUT:   %v.var_patt.loc7_3.2: @F.%pattern_type.loc7 (%pattern_type.915) = var_pattern %v.patt.loc7_15.2 [symbolic = %v.var_patt.loc7_3.2 (constants.%v.var_patt)]
 // CHECK:STDOUT:   %.loc7_24.3: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%struct_type.a.loc7_23.2) [symbolic = %.loc7_24.3 (constants.%.b78)]
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness.loc7: <witness> = lookup_impl_witness %struct_type.a.loc7_23.2, @DefaultOrUnformed [symbolic = %DefaultOrUnformed.lookup_impl_witness.loc7 (constants.%DefaultOrUnformed.lookup_impl_witness.53f)]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc7_24.2: %DefaultOrUnformed.type = facet_value %struct_type.a.loc7_23.2, (%DefaultOrUnformed.lookup_impl_witness.loc7) [symbolic = %DefaultOrUnformed.facet.loc7_24.2 (constants.%DefaultOrUnformed.facet.103)]
@@ -613,6 +639,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %array_type.loc8_27.2: type = array_type constants.%int_5, %T.as_type.loc6_19.2 [symbolic = %array_type.loc8_27.2 (constants.%array_type.50f)]
 // CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type %array_type.loc8_27.2 [symbolic = %require_complete.loc8 (constants.%require_complete.f3e)]
 // CHECK:STDOUT:   %pattern_type.loc8: type = pattern_type %array_type.loc8_27.2 [symbolic = %pattern_type.loc8 (constants.%pattern_type.78a)]
+// CHECK:STDOUT:   %w.patt.loc8_15.2: @F.%pattern_type.loc8 (%pattern_type.78a) = ref_binding_pattern w [symbolic = %w.patt.loc8_15.2 (constants.%w.patt)]
+// CHECK:STDOUT:   %w.var_patt.loc8_3.2: @F.%pattern_type.loc8 (%pattern_type.78a) = var_pattern %w.patt.loc8_15.2 [symbolic = %w.var_patt.loc8_3.2 (constants.%w.var_patt)]
 // CHECK:STDOUT:   %.loc8_28.3: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%array_type.loc8_27.2) [symbolic = %.loc8_28.3 (constants.%.376)]
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness.loc8: <witness> = lookup_impl_witness %array_type.loc8_27.2, @DefaultOrUnformed [symbolic = %DefaultOrUnformed.lookup_impl_witness.loc8 (constants.%DefaultOrUnformed.lookup_impl_witness.1fb)]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8_28.2: %DefaultOrUnformed.type = facet_value %array_type.loc8_27.2, (%DefaultOrUnformed.lookup_impl_witness.loc8) [symbolic = %DefaultOrUnformed.facet.loc8_28.2 (constants.%DefaultOrUnformed.facet.d60)]
@@ -642,10 +670,10 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %u.patt: @F.%pattern_type.loc6 (%pattern_type.02b) = ref_binding_pattern u [concrete]
-// CHECK:STDOUT:       %u.var_patt: @F.%pattern_type.loc6 (%pattern_type.02b) = var_pattern %u.patt [concrete]
+// CHECK:STDOUT:       %u.patt.loc6_15.1: @F.%pattern_type.loc6 (%pattern_type.02b) = ref_binding_pattern u [symbolic = %u.patt.loc6_15.2 (constants.%u.patt)]
+// CHECK:STDOUT:       %u.var_patt.loc6_3.1: @F.%pattern_type.loc6 (%pattern_type.02b) = var_pattern %u.patt.loc6_15.1 [symbolic = %u.var_patt.loc6_3.2 (constants.%u.var_patt)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %u.var: ref @F.%tuple.type (%tuple.type.cd5) = var %u.var_patt
+// CHECK:STDOUT:     %u.var: ref @F.%tuple.type (%tuple.type.cd5) = var %u.var_patt.loc6_3.1
 // CHECK:STDOUT:     %DefaultOrUnformed.facet.loc6_30.1: %DefaultOrUnformed.type = facet_value constants.%tuple.type.cd5, (constants.%DefaultOrUnformed.lookup_impl_witness.2ab) [symbolic = %DefaultOrUnformed.facet.loc6_30.2 (constants.%DefaultOrUnformed.facet.c98)]
 // CHECK:STDOUT:     %.loc6_30.1: %DefaultOrUnformed.type = converted constants.%tuple.type.cd5, %DefaultOrUnformed.facet.loc6_30.1 [symbolic = %DefaultOrUnformed.facet.loc6_30.2 (constants.%DefaultOrUnformed.facet.c98)]
 // CHECK:STDOUT:     %as_type.loc6: type = facet_access_type %.loc6_30.1 [symbolic = %tuple.type (constants.%tuple.type.cd5)]
@@ -669,10 +697,10 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u: ref @F.%tuple.type (%tuple.type.cd5) = ref_binding u, %u.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %v.patt: @F.%pattern_type.loc7 (%pattern_type.915) = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:       %v.var_patt: @F.%pattern_type.loc7 (%pattern_type.915) = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:       %v.patt.loc7_15.1: @F.%pattern_type.loc7 (%pattern_type.915) = ref_binding_pattern v [symbolic = %v.patt.loc7_15.2 (constants.%v.patt)]
+// CHECK:STDOUT:       %v.var_patt.loc7_3.1: @F.%pattern_type.loc7 (%pattern_type.915) = var_pattern %v.patt.loc7_15.1 [symbolic = %v.var_patt.loc7_3.2 (constants.%v.var_patt)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v.var: ref @F.%struct_type.a.loc7_23.2 (%struct_type.a) = var %v.var_patt
+// CHECK:STDOUT:     %v.var: ref @F.%struct_type.a.loc7_23.2 (%struct_type.a) = var %v.var_patt.loc7_3.1
 // CHECK:STDOUT:     %DefaultOrUnformed.facet.loc7_24.1: %DefaultOrUnformed.type = facet_value constants.%struct_type.a, (constants.%DefaultOrUnformed.lookup_impl_witness.53f) [symbolic = %DefaultOrUnformed.facet.loc7_24.2 (constants.%DefaultOrUnformed.facet.103)]
 // CHECK:STDOUT:     %.loc7_24.1: %DefaultOrUnformed.type = converted constants.%struct_type.a, %DefaultOrUnformed.facet.loc7_24.1 [symbolic = %DefaultOrUnformed.facet.loc7_24.2 (constants.%DefaultOrUnformed.facet.103)]
 // CHECK:STDOUT:     %as_type.loc7: type = facet_access_type %.loc7_24.1 [symbolic = %struct_type.a.loc7_23.2 (constants.%struct_type.a)]
@@ -689,10 +717,10 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @F.%struct_type.a.loc7_23.2 (%struct_type.a) = ref_binding v, %v.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %w.patt: @F.%pattern_type.loc8 (%pattern_type.78a) = ref_binding_pattern w [concrete]
-// CHECK:STDOUT:       %w.var_patt: @F.%pattern_type.loc8 (%pattern_type.78a) = var_pattern %w.patt [concrete]
+// CHECK:STDOUT:       %w.patt.loc8_15.1: @F.%pattern_type.loc8 (%pattern_type.78a) = ref_binding_pattern w [symbolic = %w.patt.loc8_15.2 (constants.%w.patt)]
+// CHECK:STDOUT:       %w.var_patt.loc8_3.1: @F.%pattern_type.loc8 (%pattern_type.78a) = var_pattern %w.patt.loc8_15.1 [symbolic = %w.var_patt.loc8_3.2 (constants.%w.var_patt)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %w.var: ref @F.%array_type.loc8_27.2 (%array_type.50f) = var %w.var_patt
+// CHECK:STDOUT:     %w.var: ref @F.%array_type.loc8_27.2 (%array_type.50f) = var %w.var_patt.loc8_3.1
 // CHECK:STDOUT:     %DefaultOrUnformed.facet.loc8_28.1: %DefaultOrUnformed.type = facet_value constants.%array_type.50f, (constants.%DefaultOrUnformed.lookup_impl_witness.1fb) [symbolic = %DefaultOrUnformed.facet.loc8_28.2 (constants.%DefaultOrUnformed.facet.d60)]
 // CHECK:STDOUT:     %.loc8_28.1: %DefaultOrUnformed.type = converted constants.%array_type.50f, %DefaultOrUnformed.facet.loc8_28.1 [symbolic = %DefaultOrUnformed.facet.loc8_28.2 (constants.%DefaultOrUnformed.facet.d60)]
 // CHECK:STDOUT:     %as_type.loc8: type = facet_access_type %.loc8_28.1 [symbolic = %array_type.loc8_27.2 (constants.%array_type.50f)]
@@ -739,6 +767,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %array_type.loc14_29.2: type = array_type %Int.as.ImplicitAs.impl.Convert.call.loc14_28.2, constants.%i32 [symbolic = %array_type.loc14_29.2 (constants.%array_type.359)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc14_29.2 [symbolic = %require_complete (constants.%require_complete.f47)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %array_type.loc14_29.2 [symbolic = %pattern_type (constants.%pattern_type.486)]
+// CHECK:STDOUT:   %k.patt.loc14_15.2: @G.%pattern_type (%pattern_type.486) = ref_binding_pattern k [symbolic = %k.patt.loc14_15.2 (constants.%k.patt)]
+// CHECK:STDOUT:   %k.var_patt.loc14_3.2: @G.%pattern_type (%pattern_type.486) = var_pattern %k.patt.loc14_15.2 [symbolic = %k.var_patt.loc14_3.2 (constants.%k.var_patt)]
 // CHECK:STDOUT:   %.loc14_30.3: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%array_type.loc14_29.2) [symbolic = %.loc14_30.3 (constants.%.63b)]
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness: <witness> = lookup_impl_witness %array_type.loc14_29.2, @DefaultOrUnformed [symbolic = %DefaultOrUnformed.lookup_impl_witness (constants.%DefaultOrUnformed.lookup_impl_witness.5c0)]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc14_30.2: %DefaultOrUnformed.type = facet_value %array_type.loc14_29.2, (%DefaultOrUnformed.lookup_impl_witness) [symbolic = %DefaultOrUnformed.facet.loc14_30.2 (constants.%DefaultOrUnformed.facet.b1c)]
@@ -756,10 +786,10 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %k.patt: @G.%pattern_type (%pattern_type.486) = ref_binding_pattern k [concrete]
-// CHECK:STDOUT:       %k.var_patt: @G.%pattern_type (%pattern_type.486) = var_pattern %k.patt [concrete]
+// CHECK:STDOUT:       %k.patt.loc14_15.1: @G.%pattern_type (%pattern_type.486) = ref_binding_pattern k [symbolic = %k.patt.loc14_15.2 (constants.%k.patt)]
+// CHECK:STDOUT:       %k.var_patt.loc14_3.1: @G.%pattern_type (%pattern_type.486) = var_pattern %k.patt.loc14_15.1 [symbolic = %k.var_patt.loc14_3.2 (constants.%k.var_patt)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %k.var: ref @G.%array_type.loc14_29.2 (%array_type.359) = var %k.var_patt
+// CHECK:STDOUT:     %k.var: ref @G.%array_type.loc14_29.2 (%array_type.359) = var %k.var_patt.loc14_3.1
 // CHECK:STDOUT:     %DefaultOrUnformed.facet.loc14_30.1: %DefaultOrUnformed.type = facet_value constants.%array_type.359, (constants.%DefaultOrUnformed.lookup_impl_witness.5c0) [symbolic = %DefaultOrUnformed.facet.loc14_30.2 (constants.%DefaultOrUnformed.facet.b1c)]
 // CHECK:STDOUT:     %.loc14_30.1: %DefaultOrUnformed.type = converted constants.%array_type.359, %DefaultOrUnformed.facet.loc14_30.1 [symbolic = %DefaultOrUnformed.facet.loc14_30.2 (constants.%DefaultOrUnformed.facet.b1c)]
 // CHECK:STDOUT:     %as_type: type = facet_access_type %.loc14_30.1 [symbolic = %array_type.loc14_29.2 (constants.%array_type.359)]
@@ -792,10 +822,12 @@ fn G(N:! i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.0e7) {
+// CHECK:STDOUT:   %T.patt.loc4_7.2 => constants.%T.patt.351
 // CHECK:STDOUT:   %T.loc4_7.1 => constants.%T.0e7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%N.37f) {
+// CHECK:STDOUT:   %N.patt.loc12_7.2 => constants.%N.patt.38a
 // CHECK:STDOUT:   %N.loc12_7.1 => constants.%N.37f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

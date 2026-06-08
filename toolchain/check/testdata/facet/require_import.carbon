@@ -61,6 +61,8 @@ fn F(B:! Y) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Z.type.924: type = facet_type <@Z, @Z(%T)> [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Self.d5d: %Z.type.924 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Z.assoc_type.496: type = assoc_entity_type @Z, @Z(%T) [symbolic]
 // CHECK:STDOUT:   %Z.WithSelf.F.type.bc1: type = fn_type @Z.WithSelf.F, @Z.WithSelf(%T, %Self.d5d) [symbolic]
@@ -69,6 +71,7 @@ fn F(B:! Y) {
 // CHECK:STDOUT:   %Self.c0a: %Z.type.ecd906.1 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %require_complete.55f146.1: <witness> = require_complete_type %Z.type.ecd906.1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type %X.type [concrete]
+// CHECK:STDOUT:   %A.patt: %pattern_type.9a5 = symbolic_binding_pattern A, 0 [symbolic]
 // CHECK:STDOUT:   %A: %X.type = symbolic_binding A, 0 [symbolic]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
 // CHECK:STDOUT:   %Self.95b: %Y.type = symbolic_binding Self, 0 [symbolic]
@@ -76,6 +79,7 @@ fn F(B:! Y) {
 // CHECK:STDOUT:   %Z.type.abb: type = facet_type <@Z, @Z(%Self.as_type.917)> [symbolic]
 // CHECK:STDOUT:   %Self.87c: %Z.type.abb = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.cfb: type = pattern_type %Y.type [concrete]
+// CHECK:STDOUT:   %B.patt: %pattern_type.cfb = symbolic_binding_pattern B, 1 [symbolic]
 // CHECK:STDOUT:   %B: %Y.type = symbolic_binding B, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -130,8 +134,8 @@ fn F(B:! Y) {
 // CHECK:STDOUT:   %default.import.loc2_17.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_17.2 = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %A.patt: %pattern_type.9a5 = symbolic_binding_pattern A, 0 [concrete]
-// CHECK:STDOUT:     %B.patt: %pattern_type.cfb = symbolic_binding_pattern B, 1 [concrete]
+// CHECK:STDOUT:     %A.patt.loc4_7.1: %pattern_type.9a5 = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc4_7.2 (constants.%A.patt)]
+// CHECK:STDOUT:     %B.patt.loc4_21.1: %pattern_type.cfb = symbolic_binding_pattern B, 1 [symbolic = %B.patt.loc4_21.2 (constants.%B.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_10: type = splice_block %X.ref [concrete = constants.%X.type] {
 // CHECK:STDOUT:       %.Self.loc4_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -147,6 +151,7 @@ fn F(B:! Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Z(imports.%Main.import_ref.b3bc94.3: type) [from "a.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -204,7 +209,9 @@ fn F(B:! Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%A.loc4_7.2: %X.type, %B.loc4_21.2: %Y.type) {
+// CHECK:STDOUT:   %A.patt.loc4_7.2: %pattern_type.9a5 = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc4_7.2 (constants.%A.patt)]
 // CHECK:STDOUT:   %A.loc4_7.1: %X.type = symbolic_binding A, 0 [symbolic = %A.loc4_7.1 (constants.%A)]
+// CHECK:STDOUT:   %B.patt.loc4_21.2: %pattern_type.cfb = symbolic_binding_pattern B, 1 [symbolic = %B.patt.loc4_21.2 (constants.%B.patt)]
 // CHECK:STDOUT:   %B.loc4_21.1: %Y.type = symbolic_binding B, 1 [symbolic = %B.loc4_21.1 (constants.%B)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -234,6 +241,7 @@ fn F(B:! Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%T) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -242,6 +250,7 @@ fn F(B:! Y) {
 // CHECK:STDOUT: specific @Z.WithSelf.F(constants.%T, constants.%Self.d5d) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%Self.as_type.190) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%Self.as_type.190
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -264,6 +273,7 @@ fn F(B:! Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%Self.as_type.917) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%Self.as_type.917
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -280,7 +290,9 @@ fn F(B:! Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%A, constants.%B) {
+// CHECK:STDOUT:   %A.patt.loc4_7.2 => constants.%A.patt
 // CHECK:STDOUT:   %A.loc4_7.1 => constants.%A
+// CHECK:STDOUT:   %B.patt.loc4_21.2 => constants.%B.patt
 // CHECK:STDOUT:   %B.loc4_21.1 => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -293,6 +305,7 @@ fn F(B:! Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%A.as_type) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%A.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

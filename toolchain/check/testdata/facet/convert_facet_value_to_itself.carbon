@@ -33,10 +33,12 @@ fn F() {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Animal.type [concrete]
+// CHECK:STDOUT:   %T.patt.e44e2f.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.443025.1: %Animal.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %FeedAnimal.type: type = fn_type @FeedAnimal [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %FeedAnimal: %FeedAnimal.type = struct_value () [concrete]
+// CHECK:STDOUT:   %T.patt.e44e2f.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.443025.2: %Animal.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %HandleAnimal.type: type = fn_type @HandleAnimal [concrete]
 // CHECK:STDOUT:   %HandleAnimal: %HandleAnimal.type = struct_value () [concrete]
@@ -71,7 +73,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %FeedAnimal.decl: %FeedAnimal.type = fn_decl @FeedAnimal [concrete = constants.%FeedAnimal] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc17_23.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc17_23.2 (constants.%T.patt.e44e2f.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -80,7 +82,7 @@ fn F() {
 // CHECK:STDOUT:     %T.loc17_23.2: %Animal.type = symbolic_binding T, 0 [symbolic = %T.loc17_23.1 (constants.%T.443025.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleAnimal.decl: %HandleAnimal.type = fn_decl @HandleAnimal [concrete = constants.%HandleAnimal] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc19_18.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_18.2 (constants.%T.patt.e44e2f.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc19: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -125,6 +127,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @FeedAnimal(%T.loc17_23.2: %Animal.type) {
+// CHECK:STDOUT:   %T.patt.loc17_23.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc17_23.2 (constants.%T.patt.e44e2f.1)]
 // CHECK:STDOUT:   %T.loc17_23.1: %Animal.type = symbolic_binding T, 0 [symbolic = %T.loc17_23.1 (constants.%T.443025.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -136,6 +139,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HandleAnimal(%T.loc19_18.2: %Animal.type) {
+// CHECK:STDOUT:   %T.patt.loc19_18.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_18.2 (constants.%T.patt.e44e2f.2)]
 // CHECK:STDOUT:   %T.loc19_18.1: %Animal.type = symbolic_binding T, 0 [symbolic = %T.loc19_18.1 (constants.%T.443025.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -167,14 +171,17 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedAnimal(constants.%T.443025.1) {
+// CHECK:STDOUT:   %T.patt.loc17_23.2 => constants.%T.patt.e44e2f.1
 // CHECK:STDOUT:   %T.loc17_23.1 => constants.%T.443025.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%T.443025.2) {
+// CHECK:STDOUT:   %T.patt.loc19_18.2 => constants.%T.patt.e44e2f.2
 // CHECK:STDOUT:   %T.loc19_18.1 => constants.%T.443025.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedAnimal(constants.%T.443025.2) {
+// CHECK:STDOUT:   %T.patt.loc17_23.2 => constants.%T.patt.e44e2f.1
 // CHECK:STDOUT:   %T.loc17_23.1 => constants.%T.443025.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -185,6 +192,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%Animal.facet) {
+// CHECK:STDOUT:   %T.patt.loc19_18.2 => constants.%T.patt.e44e2f.2
 // CHECK:STDOUT:   %T.loc19_18.1 => constants.%Animal.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -192,6 +200,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedAnimal(constants.%Animal.facet) {
+// CHECK:STDOUT:   %T.patt.loc17_23.2 => constants.%T.patt.e44e2f.1
 // CHECK:STDOUT:   %T.loc17_23.1 => constants.%Animal.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

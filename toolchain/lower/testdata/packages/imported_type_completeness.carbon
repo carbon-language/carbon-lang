@@ -296,18 +296,18 @@ fn CallF() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.9522ff908e97e267(ptr %t) #0 !dbg !26 {
-// CHECK:STDOUT:   %1 = alloca { ptr }, align 8, !dbg !29
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !29
-// CHECK:STDOUT:   %vptr = getelementptr inbounds nuw { ptr }, ptr %1, i32 0, i32 0, !dbg !30
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %1, ptr align 8 @C.val.9ff.anon, i64 8, i1 false), !dbg !29
-// CHECK:STDOUT:   %vtable = load ptr, ptr %1, align 8, !dbg !31
-// CHECK:STDOUT:   %2 = call ptr @llvm.load.relative.i32(ptr %vtable, i32 0), !dbg !31
-// CHECK:STDOUT:   %3 = call i11 %2(ptr %1), !dbg !31
-// CHECK:STDOUT:   %vtable1 = load ptr, ptr %1, align 8, !dbg !32
-// CHECK:STDOUT:   %4 = call ptr @llvm.load.relative.i32(ptr %vtable1, i32 4), !dbg !32
-// CHECK:STDOUT:   %5 = call i12 %4(ptr %1, ptr %t), !dbg !32
-// CHECK:STDOUT:   call void @"_COp.749982fce5080bfe:core.Destroy.Core"(ptr %1), !dbg !29
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.9522ff908e97e267(ptr %0) #0 !dbg !26 {
+// CHECK:STDOUT:   %2 = alloca { ptr }, align 8, !dbg !29
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %2), !dbg !29
+// CHECK:STDOUT:   %vptr = getelementptr inbounds nuw { ptr }, ptr %2, i32 0, i32 0, !dbg !30
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %2, ptr align 8 @C.val.9ff.anon, i64 8, i1 false), !dbg !29
+// CHECK:STDOUT:   %vtable = load ptr, ptr %2, align 8, !dbg !31
+// CHECK:STDOUT:   %3 = call ptr @llvm.load.relative.i32(ptr %vtable, i32 0), !dbg !31
+// CHECK:STDOUT:   %4 = call i11 %3(ptr %2), !dbg !31
+// CHECK:STDOUT:   %vtable1 = load ptr, ptr %2, align 8, !dbg !32
+// CHECK:STDOUT:   %5 = call ptr @llvm.load.relative.i32(ptr %vtable1, i32 4), !dbg !32
+// CHECK:STDOUT:   %6 = call i12 %5(ptr %2, ptr %0), !dbg !32
+// CHECK:STDOUT:   call void @"_COp.749982fce5080bfe:core.Destroy.Core"(ptr %2), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -315,7 +315,7 @@ fn CallF() {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i11 @_CF.C.Main.9522ff908e97e267(ptr %self) #0 !dbg !34 {
+// CHECK:STDOUT: define linkonce_odr i11 @_CF.C.Main.9522ff908e97e267(ptr %0) #0 !dbg !34 {
 // CHECK:STDOUT:   ret i11 11, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -323,7 +323,7 @@ fn CallF() {
 // CHECK:STDOUT: declare ptr @llvm.load.relative.i32(ptr, i32) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i12 @_CG.C.Main.9522ff908e97e267(ptr %self, ptr %t) #0 !dbg !42 {
+// CHECK:STDOUT: define linkonce_odr i12 @_CG.C.Main.9522ff908e97e267(ptr %0, ptr %1) #0 !dbg !42 {
 // CHECK:STDOUT:   ret i12 12, !dbg !49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

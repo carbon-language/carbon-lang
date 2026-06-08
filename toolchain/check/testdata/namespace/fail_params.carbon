@@ -54,6 +54,8 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   %F.19f: %F.type.14e = struct_value () [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67db0b.2: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.eb3: type = fn_type @F.loc48 [concrete]
@@ -110,6 +112,7 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc48(%T.loc48_14.3: type) {
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc48_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc48_14.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:   %T.loc48_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc48_14.2 (constants.%T.67db0b.2)]
 // CHECK:STDOUT:
@@ -122,6 +125,7 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc48(constants.%T.67db0b.2) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T.loc48_14.1 => constants.%T.67db0b.2
 // CHECK:STDOUT:   %T.loc48_14.2 => constants.%T.67db0b.2
 // CHECK:STDOUT: }

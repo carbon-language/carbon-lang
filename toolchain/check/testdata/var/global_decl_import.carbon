@@ -35,15 +35,15 @@ fn G() -> {.v: ()} {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.v [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %.267: ref %empty_tuple.type = struct_access imports.%x.var, element0 [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.v = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.x: ref %struct_type.v = import_ref Main//decl, x, loaded [concrete = %x.var]
-// CHECK:STDOUT:   %x.patt: %pattern_type = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:   %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
-// CHECK:STDOUT:   %x.var: ref %struct_type.v = var %x.var_patt [concrete]
+// CHECK:STDOUT:   %x.var: ref %struct_type.v = var constants.%x.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %struct_type.v {

@@ -22,7 +22,11 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %ptr.7ee: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.8c5: type = pattern_type %ptr.7ee [concrete]
+// CHECK:STDOUT:   %p.param_patt: %pattern_type.8c5 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type.8c5 = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %.90e: Core.Form = init_form %ptr.7ee [concrete]
+// CHECK:STDOUT:   %return.param_patt.14e: %pattern_type.8c5 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.7b1: %pattern_type.8c5 = return_slot_pattern %return.param_patt.14e, %ptr.7ee [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -58,10 +62,10 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.8c5 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %p.patt: %pattern_type.8c5 = at_binding_pattern p, %p.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.8c5 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.8c5 = return_slot_pattern %return.param_patt, %ptr.loc17_25 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.8c5 = value_param_pattern [concrete = constants.%p.param_patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.8c5 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.8c5 = out_param_pattern [concrete = constants.%return.param_patt.14e]
+// CHECK:STDOUT:     %return.patt: %pattern_type.8c5 = return_slot_pattern %return.param_patt, %ptr.loc17_25 [concrete = constants.%return.patt.7b1]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc17_20: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:     %ptr.loc17_25: type = ptr_type %Class.ref.loc17_20 [concrete = constants.%ptr.7ee]
