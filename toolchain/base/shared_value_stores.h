@@ -50,21 +50,7 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   }
 
   auto OutputYaml(std::optional<llvm::StringRef> filename = std::nullopt) const
-      -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&, filename](Yaml::OutputMapping::Map map) {
-      if (filename) {
-        map.Add("filename", *filename);
-      }
-      map.Add("shared_values",
-              Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                map.Add("ints", ints_.OutputYaml());
-                map.Add("reals", reals_.OutputYaml());
-                map.Add("floats", floats_.OutputYaml());
-                map.Add("identifiers", identifiers_.OutputYaml());
-                map.Add("strings", string_literals_.OutputYaml());
-              }));
-    });
-  }
+      -> Yaml::OutputMapping;
 
   // Collects memory usage for the various shared stores.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const

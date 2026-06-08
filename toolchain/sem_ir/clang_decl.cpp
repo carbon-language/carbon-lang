@@ -57,6 +57,21 @@ auto ClangDeclSignature::Print(llvm::raw_ostream& out) const -> void {
   out << "}";
 }
 
+auto ClangDeclKey::ForFunctionDecl(clang::FunctionDecl* decl,
+                                   ClangDeclSignatureId signature_id)
+    -> ClangDeclKey {
+  return ClangDeclKey(decl, signature_id, UncheckedTag());
+}
+
+auto ClangDeclKey::ForNonFunctionDecl(clang::Decl* decl) -> ClangDeclKey {
+  CARBON_CHECK(!isa<clang::FunctionDecl>(decl));
+  return ClangDeclKey(decl, ClangDeclSignatureId::None, UncheckedTag());
+}
+
+ClangDeclKey::ClangDeclKey(clang::Decl* decl, ClangDeclSignatureId signature_id,
+                           UncheckedTag /*_*/)
+    : decl(decl->getCanonicalDecl()), signature_id(signature_id) {}
+
 auto ClangDeclKey::Print(llvm::raw_ostream& out) const -> void {
   RawStringOstream decl_stream;
   auto policy = decl->getASTContext().getPrintingPolicy();

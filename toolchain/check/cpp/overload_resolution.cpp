@@ -290,12 +290,15 @@ auto PerformCppOverloadResolution(
   clang::SourceLocation loc = GetCppLocation(context, loc_id);
 
   // Add candidate functions from the name lookup.
+  const auto& rewrite_info = overload_set.operator_rewrite_info;
   clang::OverloadCandidateSet candidate_set(
       loc,
-      overload_set.operator_rewrite_info.OriginalOperator
+      rewrite_info.original_operator
           ? clang::OverloadCandidateSet::CandidateSetKind::CSK_Operator
           : clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal,
-      overload_set.operator_rewrite_info);
+      clang::OverloadCandidateSet::OperatorRewriteInfo(
+          rewrite_info.original_operator, rewrite_info.op_loc,
+          rewrite_info.allow_rewritten_candidates));
 
   AddOverloadCandidates(context, candidate_set,
                         overload_set.candidate_functions, template_arg_ids,

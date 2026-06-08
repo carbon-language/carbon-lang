@@ -5,6 +5,8 @@
 #include "toolchain/check/cpp/context.h"
 
 #include "clang/AST/Mangle.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Parse/Parser.h"
 
 namespace Carbon::Check {
 

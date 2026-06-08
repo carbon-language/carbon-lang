@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CPP_OVERLOAD_RESOLUTION_H_
 #define CARBON_TOOLCHAIN_CHECK_CPP_OVERLOAD_RESOLUTION_H_
 
+#include "clang/Sema/Overload.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"

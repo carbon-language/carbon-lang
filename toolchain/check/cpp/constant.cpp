@@ -4,6 +4,8 @@
 
 #include "toolchain/check/cpp/constant.h"
 
+#include "clang/Basic/DiagnosticSema.h"
+#include "clang/Sema/Sema.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"

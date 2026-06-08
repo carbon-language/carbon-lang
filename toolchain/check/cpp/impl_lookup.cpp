@@ -5,7 +5,9 @@
 #include "toolchain/check/cpp/impl_lookup.h"
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"

@@ -130,28 +130,15 @@ class BundleStore {
   // CacheDebugKind was previously called for that bundle; otherwise they will
   // be depicted as AnyRawIds, and may be conflated with other bundles that have
   // the same untyped ID (and hence the same numeric field values).
-  auto OutputYaml() const -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-      for (auto bundle_id : store_.ids()) {
-        AddYamlMapEntry(map, bundle_id);
-      }
-    });
-  }
+  auto OutputYaml() const -> Yaml::OutputMapping;
 
   // Equivalent to OutputYaml, but the resulting mapping will contain only
   // the given bundle.
-  auto OutputBundleYaml(RawBundleId bundle_id) const -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([this, bundle_id](Yaml::OutputMapping::Map map) {
-      AddYamlMapEntry(map, bundle_id);
-    });
-  }
+  auto OutputBundleYaml(RawBundleId bundle_id) const -> Yaml::OutputMapping;
 
   // Adds the store's memory usage to mem_usage.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
-      -> void {
-    store_.CollectMemUsage(mem_usage, label);
-    bundle_kind_cache_.CollectMemUsage(mem_usage, label);
-  }
+      -> void;
 
   // The number of stored bundles.
   auto size() const -> size_t { return store_.size(); }
@@ -234,16 +221,7 @@ class BundleStore {
     return out.TakeStr();
   }
 
-  auto BundleString(RawBundleId bundle_id) const -> std::string {
-    RawStringOstream out;
-    llvm::ListSeparator sep;
-    out << "{";
-    for (auto [i, raw_id] : llvm::enumerate(store_.Get(bundle_id))) {
-      PrintBundleField(out, sep, i, raw_id);
-    }
-    out << "}";
-    return out.TakeStr();
-  }
+  auto BundleString(RawBundleId bundle_id) const -> std::string;
 
   template <typename IdT>
     requires Internal::IsIdKindType<IdT>
@@ -253,37 +231,14 @@ class BundleStore {
 
   // Adds an entry for `bundle_id` to `map`.
   auto AddYamlMapEntry(Yaml::OutputMapping::Map& map,
-                       RawBundleId bundle_id) const -> void {
-    auto kind_set = bundle_kind_cache_.GetWithDefault(bundle_id, IdKindSet{});
-    if (kind_set.empty()) {
-      map.Add(PrintToString(bundle_id),
-              Yaml::OutputScalar(BundleString(bundle_id)));
-    } else if (kind_set.size() == 1) {
-      IdAndKind typed_bundle_id(*kind_set.begin(), bundle_id.index);
-      auto bundle_string = typed_bundle_id.Dispatch<std::string>(
-          [this](auto id) { return BundleString(id); });
-      map.Add(PrintToString(bundle_id), Yaml::OutputScalar(bundle_string));
-    } else {
-      map.Add(PrintToString(bundle_id), YamlBundleMap(bundle_id, kind_set));
-    }
-  }
+                       RawBundleId bundle_id) const -> void;
 
   // Returns a YAML mapping with an entry for each ID kind in `kinds`,
   // consisting of the string representation of the given bundle, interpreted as
   // a bundle of that kind. All entries in `kinds` must be specializations of
   // `BundleId`.
   auto YamlBundleMap(RawBundleId bundle_id, const IdKindSet& kinds) const
-      -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-      for (auto [i, id_kind] : llvm::enumerate(kinds)) {
-        IdAndKind typed_bundle_id(id_kind, bundle_id.index);
-        // TODO: make this a YAML sequence instead of a map.
-        map.Add(llvm::itostr(i),
-                typed_bundle_id.Dispatch<std::string>(
-                    [this](auto id) { return BundleString(id); }));
-      }
-    });
-  }
+      -> Yaml::OutputMapping;
 
   // The bundles in the store, represented as blocks of `AnyRawId`s.
   //
