@@ -143,11 +143,7 @@ auto GetEnclosingAggregate(FunctionContext& context,
   if (offset == 0) {
     return element_addr;
   }
-  std::array<llvm::Value*, 2> indices = {
-      llvm::ConstantInt::get(context.llvm_context(), llvm::APInt()),
-      llvm::ConstantInt::get(context.llvm_context(), -offset)};
-  return context.builder().CreateGEP(context.GetType(object_repr), element_addr,
-                                     indices);
+  CARBON_FATAL("TODO: emit a getelementptr with a negative offset");
 }
 
 auto EmitAggregateValueRepr(FunctionContext& context,
