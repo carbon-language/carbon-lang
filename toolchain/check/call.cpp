@@ -263,13 +263,12 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {
       // If we're about to form a direct call to a thunk, inline it.
-      auto callee_inst_id =
-          context.sem_ir().thunks().Get(callee.thunk_id()).callee_id;
-      LoadImportRef(context, callee_inst_id);
+      const auto& thunk_info = context.sem_ir().thunks().Get(callee.thunk_id());
+      LoadImportRef(context, thunk_info.callee_id);
 
       // Name the thunk target within the enclosing scope of the thunk.
       auto thunk_ref_id =
-          BuildNameRef(context, loc_id, callee.name_id, callee_inst_id,
+          BuildNameRef(context, loc_id, callee.name_id, thunk_info.callee_id,
                        callee_function.enclosing_specific_id);
 
       auto param_pattern_ids =
@@ -279,9 +278,10 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
 
       // This recurses back into `PerformCall`. However, we never form a thunk
       // to a thunk, so we only recurse once.
-      return PerformThunkCall(
-          context, loc_id, callee_function.function_id, param_pattern_ids,
-          context.inst_blocks().Get(converted_args_id), thunk_ref_id);
+      return PerformThunkCall(context, loc_id, callee_function.function_id,
+                              param_pattern_ids,
+                              context.inst_blocks().Get(converted_args_id),
+                              thunk_ref_id, thunk_info.override_self_type_id);
     }
 
     case SemIR::Function::SpecialFunctionKind::HasCppThunk: {

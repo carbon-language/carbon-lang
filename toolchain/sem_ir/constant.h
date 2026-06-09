@@ -268,22 +268,7 @@ class ConstantValueStore {
   auto enumerate() const -> auto { return values_.enumerate(); }
 
   // Outputs assigned constant values, and all symbolic constants.
-  auto OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&, include_singletons](
-                                   Yaml::OutputMapping::Map map) {
-      map.Add("values", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                for (auto [id, value] : values_.enumerate()) {
-                  if (!include_singletons && IsSingletonInstId(id)) {
-                    continue;
-                  }
-                  if (!value.has_value() || value.is_constant()) {
-                    map.Add(PrintToString(id), Yaml::OutputScalar(value));
-                  }
-                }
-              }));
-      map.Add("symbolic_constants", symbolic_constants_.OutputYaml());
-    });
-  }
+  auto OutputYaml(bool include_singletons) const -> Yaml::OutputMapping;
 
   // The tag used in ConstantIds for concrete constants.
   using ConcreteIdTagType = IdTag<SemIR::ConstantId, Tag<SemIR::CheckIRId>>;

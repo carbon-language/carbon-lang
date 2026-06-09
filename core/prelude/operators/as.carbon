@@ -64,13 +64,13 @@ impl forall [T:! type, U:! type] T* as UnsafeAs(U*) {
 }
 
 // Integer literals can be implicitly converted to floating-point literals.
-impl IntLiteral() as ImplicitAs(FloatLiteral()) {
-  fn Convert[self: Self]() -> FloatLiteral() = "int.convert_float_checked";
+impl IntLiteral as ImplicitAs(FloatLiteral) {
+  fn Convert[self: Self]() -> FloatLiteral = "int.convert_float_checked";
 }
 
 // Floating-point literals can be explicitly cast to integer literals.
-impl FloatLiteral() as UnsafeAs(IntLiteral()) {
-  fn Convert[self: Self]() -> IntLiteral() = "float.convert_int";
+impl FloatLiteral as UnsafeAs(IntLiteral) {
+  fn Convert[self: Self]() -> IntLiteral = "float.convert_int";
 }
 
 interface IntFitsIn(Dest:! type) {}

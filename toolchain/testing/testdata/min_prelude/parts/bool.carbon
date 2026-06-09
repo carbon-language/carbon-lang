@@ -10,4 +10,5 @@ package Core library "prelude/parts/bool";
 
 export import library "prelude/parts/copy";
 
-fn Bool() -> type = "bool.make_type";
+private fn MakeBool() -> type = "bool.make_type";
+alias Bool = MakeBool();

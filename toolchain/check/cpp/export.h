@@ -9,6 +9,11 @@
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 
+namespace clang {
+class CXXDestructorDecl;
+class CXXRecordDecl;
+}  // namespace clang
+
 namespace Carbon::Check {
 
 // Exports a Carbon name scope into C++ as a namespace or class, or returns the
@@ -68,7 +73,7 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
 //
 // Returns nullptr if the variable could not be exported an an error was
 // diagnosed.
-auto ExportVarToCpp(Context& context, SemIR::LocId loc_id,
+auto ExportVarToCpp(Context& context, SemIR::InstId inst_id,
                     SemIR::VarStorage var_storage) -> clang::VarDecl*;
 
 }  // namespace Carbon::Check

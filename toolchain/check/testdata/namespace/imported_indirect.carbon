@@ -123,7 +123,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %.fb7: Core.Form = init_form %C [concrete]
+// CHECK:STDOUT:   %.46c: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -157,7 +157,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: <namespace> = name_ref A, imports.%A [concrete = imports.%A]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Same.C [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc7: Core.Form = init_form %C.ref [concrete = constants.%.fb7]
+// CHECK:STDOUT:     %.loc7: Core.Form = init_form %C.ref [concrete = constants.%.46c]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }

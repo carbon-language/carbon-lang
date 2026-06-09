@@ -929,10 +929,19 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
       is_partial ? nullptr : &dest_type);
 }
 
-// An inheritance path is a sequence of `BaseDecl`s and corresponding base types
-// in order from derived to base.
-using InheritancePath =
-    llvm::SmallVector<std::pair<SemIR::InstId, SemIR::TypeId>>;
+// Represents an edge in the inheritance graph, created by a `base` declaration.
+struct InheritanceEdge {
+  // The class type of the class containing the `base` declaration.
+  SemIR::TypeId derived_type_id;
+  // The `base` declaration itself.
+  SemIR::InstId base_decl_id;
+  // The type of the `base` declaration.
+  SemIR::TypeId base_type_id;
+};
+
+// An inheritance path is a sequence of `InheritanceEdge`s, in order from
+// derived to base.
+using InheritancePath = llvm::SmallVector<InheritanceEdge>;
 
 // Computes the inheritance path from class `derived_id` to class `base_id`.
 // Returns nullopt if `derived_id` is not a class derived from `base_id`.
@@ -964,7 +973,9 @@ static auto ComputeInheritancePath(Context& context, SemIR::LocId loc_id,
       result = std::nullopt;
       break;
     }
-    result->push_back({derived_class.base_id, base_type_id});
+    result->push_back({.derived_type_id = derived_id,
+                       .base_decl_id = derived_class.base_id,
+                       .base_type_id = base_type_id});
     derived_id = base_type_id;
   }
   return result;
@@ -985,7 +996,7 @@ static auto ConvertDerivedToBase(Context& context, SemIR::LocId loc_id,
                    .second;
 
   // Add a series of `.base` accesses.
-  for (auto [base_id, base_type_id] : path) {
+  for (auto [_, base_id, base_type_id] : path) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(base_id);
     value_id = AddInst<SemIR::ClassElementAccess>(
         context, loc_id,
@@ -2358,6 +2369,66 @@ auto DiscardExpr(Context& context, SemIR::InstId expr_id) -> void {
           {.kind = ConversionTarget::Discarded, .type_id = expr.type_id()});
 
   // TODO: This will eventually need to do some "do not discard" analysis.
+}
+
+auto UnsafeUndoConvert(Context& context, SemIR::LocId loc_id,
+                       SemIR::InstId expr_id, SemIR::TypeId type_id)
+    -> SemIR::InstId {
+  auto source_type_id = context.insts().Get(expr_id).type_id();
+  // Preserve type qualifiers.
+  auto quals =
+      context.types().GetUnqualifiedTypeAndQualifiers(source_type_id).second;
+  auto path = ComputeInheritancePath(context, loc_id, type_id, source_type_id);
+  CARBON_CHECK(path.has_value(),
+               "only derived-to-base conversions can currently be undone");
+
+  if (path->empty()) {
+    // No-op conversion.
+    return expr_id;
+  }
+
+  auto source_category = SemIR::GetExprCategory(context.sem_ir(), expr_id);
+  switch (source_category) {
+    case SemIR::ExprCategory::NotExpr:
+    case SemIR::ExprCategory::Error:
+    case SemIR::ExprCategory::Pattern:
+    case SemIR::ExprCategory::ReprInitializing:
+    case SemIR::ExprCategory::InPlaceInitializing:
+    case SemIR::ExprCategory::Mixed:
+    case SemIR::ExprCategory::Dependent:
+    case SemIR::ExprCategory::RefTagged:
+      CARBON_FATAL("Unsupported category {0} for base-to-derived conversion",
+                   source_category);
+    case SemIR::ExprCategory::EphemeralRef:
+    case SemIR::ExprCategory::DurableRef:
+      break;
+    case SemIR::ExprCategory::Value:
+      if (auto ref_expr_id = TryMakeValueAsRef(context, expr_id);
+          ref_expr_id.has_value()) {
+        expr_id = ref_expr_id;
+      } else {
+        CARBON_FATAL("Types must have pointer value-representation");
+      }
+      break;
+  }
+
+  auto result_id = expr_id;
+  for (auto edge : llvm::reverse(*path)) {
+    auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(edge.base_decl_id);
+    result_id = AddInst<SemIR::EnclosingClassAccess>(
+        context, loc_id,
+        {.type_id = GetQualifiedType(context, edge.derived_type_id, quals),
+         .element_id = result_id,
+         .index = base_decl.index});
+  }
+
+  if (source_category == SemIR::ExprCategory::Value) {
+    result_id = AddInst<SemIR::AcquireValue>(
+        context, loc_id,
+        {.type_id = GetQualifiedType(context, type_id, quals),
+         .value_id = result_id});
+  }
+  return result_id;
 }
 
 }  // namespace Carbon::Check

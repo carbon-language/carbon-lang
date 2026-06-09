@@ -265,6 +265,13 @@ auto ReturnExprAsForm(Context& context, SemIR::LocId loc_id,
 // Handles an expression whose result value is unused.
 auto DiscardExpr(Context& context, SemIR::InstId expr_id) -> void;
 
+// Given that `expr_id` is the result of a conversion from an expression of
+// type `type_id`, this undoes that conversion. Currently, this only supports
+// the case where the original conversion was a derived-to-base conversion.
+auto UnsafeUndoConvert(Context& context, SemIR::LocId loc_id,
+                       SemIR::InstId expr_id, SemIR::TypeId type_id)
+    -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CONVERT_H_

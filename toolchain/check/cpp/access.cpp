@@ -4,6 +4,8 @@
 
 #include "toolchain/check/cpp/access.h"
 
+#include "clang/AST/Decl.h"
+
 namespace Carbon::Check {
 
 static auto CalculateEffectiveAccess(clang::DeclAccessPair access_pair)

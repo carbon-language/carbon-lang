@@ -71,16 +71,11 @@ auto CheckFunctionReturnTypeMatches(Context& context,
 //
 // `check_syntax` is false if the redeclaration can be called via a thunk with
 // implicit conversions from the original declaration.
-//
-// If `self_type_override_id` is specified, the self type is checked against
-// that type instead of the type from `prev_function`. This is used to check
-// virtual function overrides.
-auto CheckFunctionTypeMatches(
-    Context& context, const SemIR::Function& new_function,
-    const SemIR::Function& prev_function, SemIR::SpecificId prev_specific_id,
-    bool check_syntax,
-    SemIR::TypeId self_type_override_id = SemIR::TypeId::None,
-    bool diagnose = true) -> bool;
+auto CheckFunctionTypeMatches(Context& context,
+                              const SemIR::Function& new_function,
+                              const SemIR::Function& prev_function,
+                              SemIR::SpecificId prev_specific_id,
+                              bool check_syntax, bool diagnose = true) -> bool;
 
 inline auto CheckFunctionTypeMatches(Context& context,
                                      const SemIR::Function& new_function,

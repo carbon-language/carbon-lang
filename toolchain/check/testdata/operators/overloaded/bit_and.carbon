@@ -44,40 +44,40 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %BitAndWith.type.82e: type = facet_type <@BitAndWith, @BitAndWith(%C)> [concrete]
+// CHECK:STDOUT:   %BitAndWith.type.8cc: type = facet_type <@BitAndWith, @BitAndWith(%C)> [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness @C.as.BitAndWith.impl.%BitAndWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.BitAndWith.impl.Op.type: type = fn_type @C.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitAndWith.impl.Op: %C.as.BitAndWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.82e = facet_value %C, (%BitAndWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.ed7: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(%C, %BitAndWith.facet) [concrete]
-// CHECK:STDOUT:   %BitAndAssignWith.type.99a: type = facet_type <@BitAndAssignWith, @BitAndAssignWith(%C)> [concrete]
+// CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.8cc = facet_value %C, (%BitAndWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.a71: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(%C, %BitAndWith.facet) [concrete]
+// CHECK:STDOUT:   %BitAndAssignWith.type.491: type = facet_type <@BitAndAssignWith, @BitAndAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.impl_witness: <witness> = impl_witness @C.as.BitAndAssignWith.impl.%BitAndAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.BitAndAssignWith.impl.Op.type: type = fn_type @C.as.BitAndAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitAndAssignWith.impl.Op: %C.as.BitAndAssignWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %BitAndAssignWith.facet: %BitAndAssignWith.type.99a = facet_value %C, (%BitAndAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitAndAssignWith.WithSelf.Op.type.2b2: type = fn_type @BitAndAssignWith.WithSelf.Op, @BitAndAssignWith.WithSelf(%C, %BitAndAssignWith.facet) [concrete]
-// CHECK:STDOUT:   %.243: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.ed7, %BitAndWith.facet [concrete]
-// CHECK:STDOUT:   %ptr.9a8: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %.cb5: type = fn_type_with_self_type %BitAndAssignWith.WithSelf.Op.type.2b2, %BitAndAssignWith.facet [concrete]
+// CHECK:STDOUT:   %BitAndAssignWith.facet: %BitAndAssignWith.type.491 = facet_value %C, (%BitAndAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %BitAndAssignWith.WithSelf.Op.type.8fc: type = fn_type @BitAndAssignWith.WithSelf.Op, @BitAndAssignWith.WithSelf(%C, %BitAndAssignWith.facet) [concrete]
+// CHECK:STDOUT:   %.663: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.a71, %BitAndWith.facet [concrete]
+// CHECK:STDOUT:   %ptr.00e: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %.4b9: type = fn_type_with_self_type %BitAndAssignWith.WithSelf.Op.type.8fc, %BitAndAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param: %C, %b.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.243 = impl_witness_access constants.%BitAndWith.impl_witness, element1 [concrete = constants.%C.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1: %.663 = impl_witness_access constants.%BitAndWith.impl_witness, element1 [concrete = constants.%C.as.BitAndWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.BitAndWith.impl.Op.call: init %C to %.loc30_26.1 = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %C.as.BitAndWith.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestAssign(%a.param: %ptr.9a8, %b.param: %C) {
+// CHECK:STDOUT: fn @TestAssign(%a.param: %ptr.00e, %b.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: %ptr.9a8 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref: %ptr.00e = name_ref a, %a
 // CHECK:STDOUT:   %.loc38: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.cb5 = impl_witness_access constants.%BitAndAssignWith.impl_witness, element0 [concrete = constants.%C.as.BitAndAssignWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.4b9 = impl_witness_access constants.%BitAndAssignWith.impl_witness, element0 [concrete = constants.%C.as.BitAndAssignWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
 // CHECK:STDOUT:   %C.as.BitAndAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc38, %b.ref)
 // CHECK:STDOUT:   <elided>

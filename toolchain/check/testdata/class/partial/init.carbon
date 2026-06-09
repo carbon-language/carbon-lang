@@ -33,11 +33,11 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
-// CHECK:STDOUT:   %.9bb: type = partial_type %Base [concrete]
+// CHECK:STDOUT:   %.edf: type = partial_type %Base [concrete]
 // CHECK:STDOUT:   %Base.Make.type: type = fn_type @Base.Make [concrete]
 // CHECK:STDOUT:   %Base.Make: %Base.Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %struct_type.base.b54: type = struct_type {.base: %.9bb} [concrete]
+// CHECK:STDOUT:   %struct_type.base.343: type = struct_type {.base: %.edf} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -56,9 +56,9 @@ class Derived {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %Make.ref: %Base.Make.type = name_ref Make, @Base.%Base.Make.decl [concrete = constants.%Base.Make]
-// CHECK:STDOUT:   %.loc14_32.1: ref %.9bb = class_element_access %return.param, element0
-// CHECK:STDOUT:   %Base.Make.call: init %.9bb to %.loc14_32.1 = call %Make.ref()
-// CHECK:STDOUT:   %.loc14_32.2: %struct_type.base.b54 = struct_literal (%Base.Make.call)
+// CHECK:STDOUT:   %.loc14_32.1: ref %.edf = class_element_access %return.param, element0
+// CHECK:STDOUT:   %Base.Make.call: init %.edf to %.loc14_32.1 = call %Make.ref()
+// CHECK:STDOUT:   %.loc14_32.2: %struct_type.base.343 = struct_literal (%Base.Make.call)
 // CHECK:STDOUT:   %.loc14_32.3: init %Base = as_compatible %Base.Make.call
 // CHECK:STDOUT:   %.loc14_32.4: init %Derived to %return.param = class_init (%.loc14_32.3)
 // CHECK:STDOUT:   %.loc14_33: init %Derived = converted %.loc14_32.2, %.loc14_32.4

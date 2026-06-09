@@ -14,8 +14,9 @@
 
 library "[[@TEST_NAME]]";
 
-fn IntLiteral() -> type = "int_literal.make_type";
-fn UInt(n: IntLiteral()) -> type = "int.make_type_unsigned";
+fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
+fn UInt(n: IntLiteral) -> type = "int.make_type_unsigned";
 
 // --- use_types.carbon
 
@@ -23,7 +24,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn Copy[N:! IntLiteral()](x: UInt(N)) -> UInt(N) = "primitive_copy";
+fn Copy[N:! IntLiteral](x: UInt(N)) -> UInt(N) = "primitive_copy";
 
 fn F(n: UInt(64)) ->
     //@dump-sem-ir-begin
@@ -41,7 +42,7 @@ fn G(n: UInt(13)) ->
   return Copy(n);
 }
 
-fn Symbolic(N:! IntLiteral(), x: UInt(N)) -> UInt(N)
+fn Symbolic(N:! IntLiteral, x: UInt(N)) -> UInt(N)
     {
   return Copy(x);
 }

@@ -12,7 +12,8 @@ import library "prelude/types/uint";
 import library "prelude/types/int";
 import library "prelude/types/int_literal";
 
-fn CharLiteral() -> type = "char_literal.make_type";
+private fn MakeCharLiteral() -> type = "char_literal.make_type";
+alias CharLiteral = MakeCharLiteral();
 
 // TODO: Provide operations for `CharLiteral`.
 
@@ -28,16 +29,16 @@ impl Char as Copy {
 
 // Conversions.
 
-impl CharLiteral() as ImplicitAs(Char) {
+impl CharLiteral as ImplicitAs(Char) {
   fn Convert[self: Self]() -> Char = "char.convert_checked";
 }
 
 // TODO: Remove these once ImplicitAs extends As.
-impl CharLiteral() as As(Char) {
+impl CharLiteral as As(Char) {
   fn Convert[self: Self]() -> Char = "char.convert_checked";
 }
 
-impl forall [From:! IntLiteral()] UInt(From) as As(Char) {
+impl forall [From:! IntLiteral] UInt(From) as As(Char) {
   fn Convert[self: Self]() -> Char = "int.convert_char";
 }
 
@@ -90,8 +91,8 @@ impl forall [T:! ImplicitAs(Char)] T as OrderedWith(Char) {
 
 private interface AnyInt {}
 
-impl forall [N:! IntLiteral()] Int(N) as AnyInt {}
-impl forall [N:! IntLiteral()] UInt(N) as AnyInt {}
+impl forall [N:! IntLiteral] Int(N) as AnyInt {}
+impl forall [N:! IntLiteral] UInt(N) as AnyInt {}
 
 impl forall [T:! AnyInt & As(u8)]
     Char as AddWith(T) where .Result = Char {

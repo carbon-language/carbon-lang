@@ -83,7 +83,11 @@ def _compute_clang_resource_dir(repository_ctx, clang):
     ).stdout
 
     # The only line printed is this path.
-    return output.splitlines()[0]
+    dir_path = repository_ctx.path(output.splitlines()[0])
+
+    # Canonicalize the path to help ensure string matching succeeds
+    # even with clang installs returning a non-canonical path.
+    return str(dir_path.realpath)
 
 def _compute_mac_os_sysroot(repository_ctx):
     """Runs `xcrun` to extract the correct sysroot."""

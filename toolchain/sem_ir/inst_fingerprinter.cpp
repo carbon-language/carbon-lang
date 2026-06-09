@@ -360,25 +360,11 @@ struct Worklist {
     }
   }
 
-  auto AddPackage(const SemIR::File* file) -> void {
-    llvm::SaveAndRestore in_file(sem_ir, file);
-    Add(file->package_id());
-  }
-
   auto AddPackage(NameScopeId name_scope_id) -> void {
-    if (name_scope_id == NameScopeId::Package) {
-      AddPackage(sem_ir);
-      return;
-    }
-
-    const auto& scope = sem_ir->name_scopes().Get(name_scope_id);
-    CARBON_CHECK(scope.is_imported_package());
-    if (!scope.import_ir_scopes().empty()) {
-      auto import_ir_id = scope.import_ir_scopes().front().first;
-      AddPackage(sem_ir->import_irs().Get(import_ir_id).sem_ir);
-    } else {
-      AddInvalid();
-    }
+    CARBON_CHECK(sem_ir->name_scopes().IsPackage(name_scope_id));
+    Add(name_scope_id == NameScopeId::Package
+            ? NameId::ForPackageName(sem_ir->package_id())
+            : sem_ir->name_scopes().Get(name_scope_id).name_id());
   }
 
   auto Add(NameScopeId name_scope_id) -> void {
@@ -388,9 +374,12 @@ struct Worklist {
     }
 
     // If this is the current package or an imported package, add the package
-    // and library name.
+    // name.
     if (sem_ir->name_scopes().IsPackage(name_scope_id)) {
       AddPackage(name_scope_id);
+      // Add a placeholder parent scope to match the fingerprinting we'd use for
+      // a non-package scope.
+      AddString("<package root>");
       return;
     }
 
@@ -575,15 +564,7 @@ struct Worklist {
   }
 
   auto Add(PackageNameId package_id) -> void {
-    if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
-      // Add a marker to prevent collisions between user package names and
-      // special package names, and to delimit `NameScopeId` fingerprints.
-      AddString("<package>");
-      AddString(sem_ir->identifiers().Get(ident_id));
-    } else {
-      AddString("<special package>");
-      AddString(package_id.AsSpecialName());
-    }
+    Add(NameId::ForPackageName(package_id));
   }
 
   auto Add(LibraryNameId lib_name_id) -> void {
@@ -612,8 +593,9 @@ struct Worklist {
     // TODO: Is the ImportIRId for an ImportRef always the same IR for the same
     // entity (eg, always the owning IR, or always the first-declaring IR)?
     const auto* file = sem_ir->import_irs().Get(ir_id).sem_ir;
-    AddPackage(file);
-    AddLibrary(file);
+    llvm::SaveAndRestore in_file(sem_ir, file);
+    AddPackage(NameScopeId::Package);
+    Add(file->library_id());
   }
 
   auto Add(ImportIRInstId ir_inst_id) -> void {

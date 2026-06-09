@@ -192,8 +192,12 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   }
 
   // Clang should emit C++ function declarations for us.
-  CARBON_CHECK(!function.clang_decl_id.has_value(),
-               "Shouldn't mangle C++ function");
+  if (function_id != sem_ir().global_ctor_id()) {
+    const auto* clang_decl =
+        sem_ir().clang_decls().Lookup(function.first_decl_id());
+    CARBON_CHECK(!clang_decl || !clang_decl->is_imported,
+                 "Shouldn't mangle C++ function");
+  }
 
   RawStringOstream os;
   os << "_C";
@@ -271,11 +275,9 @@ auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
     return std::string();
   }
 
-  CARBON_CHECK(!sem_ir()
-                    .cpp_global_vars()
-                    .Lookup({.entity_name_id = var_name_id})
-                    .has_value(),
-               "Mangling a C++ variable");
+  if (const auto* clang_decl = sem_ir().clang_decls().Lookup(pattern_id)) {
+    CARBON_CHECK(!clang_decl->is_imported, "Mangling a C++ variable");
+  }
 
   RawStringOstream os;
   os << "_C";

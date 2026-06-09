@@ -5,17 +5,36 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CPP_OVERLOAD_SET_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CPP_OVERLOAD_SET_H_
 
-#include "clang/AST/Decl.h"
 #include "clang/AST/UnresolvedSet.h"
-#include "clang/Sema/Overload.h"
+#include "clang/Basic/OperatorKinds.h"
+#include "clang/Basic/SourceLocation.h"
 #include "common/ostream.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/ids.h"
+
+namespace clang {
+class CXXRecordDecl;
+}  // namespace clang
 
 namespace Carbon::SemIR {
 
 // An overloaded C++ function.
 struct CppOverloadSet : public Printable<CppOverloadSet> {
+  // Information about operator rewrites to consider when adding operator
+  // functions to a candidate set.
+  //
+  // This mirrors `clang::OverloadCandidateSet::OperatorRewriteInfo` so that
+  // this header doesn't need `clang/Sema/Overload.h`; the use sites construct
+  // the Clang type from these fields.
+  struct OperatorRewriteInfo {
+    // The original operator as written in the source.
+    clang::OverloadedOperatorKind original_operator = clang::OO_None;
+    // The source location of the operator.
+    clang::SourceLocation op_loc;
+    // Whether we should include rewritten candidates in the overload set.
+    bool allow_rewritten_candidates = false;
+  };
+
   // The function's name.
   NameId name_id;
 
@@ -32,7 +51,7 @@ struct CppOverloadSet : public Printable<CppOverloadSet> {
 
   /// Information about operator rewrites to consider when adding operator
   /// functions to a candidate set.
-  clang::OverloadCandidateSet::OperatorRewriteInfo operator_rewrite_info;
+  OperatorRewriteInfo operator_rewrite_info;
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "name: " << name_id << ", parent_scope: " << parent_scope_id;

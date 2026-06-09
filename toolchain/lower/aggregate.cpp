@@ -124,6 +124,28 @@ auto GetAggregateElement(FunctionContext& context, SemIR::InstId aggr_inst_id,
   }
 }
 
+auto GetEnclosingAggregate(FunctionContext& context,
+                           FunctionContext::TypeInFile aggr_type,
+                           SemIR::InstId element_id, SemIR::ElementIndex index)
+    -> llvm::Value* {
+  auto object_repr = FunctionContext::TypeInFile{
+      .file = aggr_type.file,
+      .type_id = aggr_type.file->types().GetObjectRepr(aggr_type.type_id)};
+  auto* llvm_object_type =
+      llvm::cast<llvm::StructType>(context.GetType(object_repr));
+  const auto* object_layout =
+      context.llvm_module().getDataLayout().getStructLayout(llvm_object_type);
+  llvm::APInt offset(
+      64, object_layout->getElementOffset(GetElementIndex(object_repr, index)),
+      /*isSigned=*/true);
+
+  auto* element_addr = context.GetValue(element_id);
+  if (offset == 0) {
+    return element_addr;
+  }
+  CARBON_FATAL("TODO: emit a getelementptr with a negative offset");
+}
+
 auto EmitAggregateValueRepr(FunctionContext& context,
                             SemIR::InstId value_inst_id,
                             SemIR::InstBlockId refs_id) -> llvm::Value* {

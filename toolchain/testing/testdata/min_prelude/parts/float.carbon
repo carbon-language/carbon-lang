@@ -16,21 +16,21 @@ export import library "prelude/parts/copy";
 export import library "prelude/parts/float_literal";
 export import library "prelude/parts/int_literal";
 
-private fn MakeFloat(size: IntLiteral()) -> type = "float.make_type";
+private fn MakeFloat(size: IntLiteral) -> type = "float.make_type";
 
-class Float(N:! IntLiteral()) {
+class Float(N:! IntLiteral) {
   adapt MakeFloat(N);
 }
 
-impl forall [N:! IntLiteral()] Float(N) as Copy {
+impl forall [N:! IntLiteral] Float(N) as Copy {
   fn Op[self: Self]() -> Self = "primitive_copy";
 }
 
-impl forall [To:! IntLiteral()] FloatLiteral() as ImplicitAs(Float(To)) {
+impl forall [To:! IntLiteral] FloatLiteral as ImplicitAs(Float(To)) {
   fn Convert[self: Self]() -> Float(To) = "float.convert_checked";
 }
 
 // TODO: Remove this once ImplicitAs extends As.
-impl forall [To:! IntLiteral()] FloatLiteral() as As(Float(To)) {
+impl forall [To:! IntLiteral] FloatLiteral as As(Float(To)) {
   fn Convert[self: Self]() -> Float(To) = "float.convert_checked";
 }

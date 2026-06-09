@@ -823,7 +823,7 @@ static auto IsLiteralType(const File& sem_ir, TypeId type_id) -> bool {
 // runtime value of such a type may not have a value available for the builtin
 // to use. For example, given:
 //
-// var n: Core.IntLiteral() = 123;
+// var n: Core.IntLiteral = 123;
 //
 // we would be unable to lower a runtime operation such as `(1 as i32) << n`
 // because the runtime representation of `n` doesn't track its value at all.

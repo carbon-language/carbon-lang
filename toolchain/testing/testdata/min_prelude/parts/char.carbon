@@ -10,12 +10,13 @@ package Core library "prelude/parts/char";
 
 import library "prelude/parts/uint";
 
-fn CharLiteral() -> type = "char_literal.make_type";
+private fn MakeCharLiteral() -> type = "char_literal.make_type";
+alias CharLiteral = MakeCharLiteral();
 
 class Char {
   adapt u8;
 }
 
-impl CharLiteral() as ImplicitAs(Char) {
+impl CharLiteral as ImplicitAs(Char) {
   fn Convert[self: Self]() -> Char = "char.convert_checked";
 }

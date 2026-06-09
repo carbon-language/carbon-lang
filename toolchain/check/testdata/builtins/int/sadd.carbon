@@ -35,10 +35,10 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-fn Add(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.sadd";
+fn Add(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.sadd";
 
-class Expect(N:! Core.IntLiteral()) {}
-fn Test(N:! Core.IntLiteral()) -> Expect(N) { return {}; }
+class Expect(N:! Core.IntLiteral) {}
+fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Add(0, 0)) as Expect(0);
@@ -128,25 +128,25 @@ var bad_call: array(i32, JustRight(1, 2, 3));
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_mixed_add.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedAdd1(a: i32, b: Core.IntLiteral()) -> i32 = "int.sadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn MixedAdd1(a: i32, b: Core.IntLiteral) -> i32 = "int.sadd";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn MixedAdd1(a: i32, b: Core.IntLiteral()) -> i32 = "int.sadd";
+fn MixedAdd1(a: i32, b: Core.IntLiteral) -> i32 = "int.sadd";
 // CHECK:STDERR: fail_mixed_add.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedAdd2(a: Core.IntLiteral(), b: i32) -> i32 = "int.sadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn MixedAdd2(a: Core.IntLiteral, b: i32) -> i32 = "int.sadd";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn MixedAdd2(a: Core.IntLiteral(), b: i32) -> i32 = "int.sadd";
+fn MixedAdd2(a: Core.IntLiteral, b: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: fail_mixed_add.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedAdd3(a: i32, b: Core.IntLiteral()) -> Core.IntLiteral() = "int.sadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn MixedAdd3(a: i32, b: Core.IntLiteral) -> Core.IntLiteral = "int.sadd";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn MixedAdd3(a: i32, b: Core.IntLiteral()) -> Core.IntLiteral() = "int.sadd";
+fn MixedAdd3(a: i32, b: Core.IntLiteral) -> Core.IntLiteral = "int.sadd";
 // CHECK:STDERR: fail_mixed_add.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedAdd4(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.sadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn MixedAdd4(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.sadd";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn MixedAdd4(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.sadd";
+fn MixedAdd4(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.sadd";
 
 // --- fail_overflow.carbon
 

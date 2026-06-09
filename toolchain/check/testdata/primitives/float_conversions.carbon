@@ -21,8 +21,8 @@ library "[[@TEST_NAME]]";
 
 let _: f32 = 1.25;
 
-let _: Core.FloatLiteral() = 42;
-let _: Core.IntLiteral() = 42.0 unsafe as Core.IntLiteral();
+let _: Core.FloatLiteral = 42;
+let _: Core.IntLiteral = 42.0 unsafe as Core.IntLiteral;
 
 // --- int_to_float.carbon
 library "[[@TEST_NAME]]";
@@ -83,7 +83,7 @@ fn F() {
   Test(-(1.99 as f64) unsafe as i8) as Expect(-1 as i8);
 
   // Float literal to int literal.
-  Test(123.45 unsafe as Core.IntLiteral()) as Expect(123);
+  Test(123.45 unsafe as Core.IntLiteral) as Expect(123);
 }
 
 // --- fail_float_as_int.carbon

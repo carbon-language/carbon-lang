@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
 
+#include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/DiagnosticRenderer.h"
 
 namespace Carbon::SemIR {

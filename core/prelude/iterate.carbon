@@ -17,7 +17,7 @@ interface Iterate {
   fn Next[self: Self](cursor: CursorType*) -> Optional(ElementType);
 }
 
-impl forall [T:! Copy & Destroy, N:! IntLiteral()]
+impl forall [T:! Copy & Destroy, N:! IntLiteral]
     array(T, N) as Iterate
     where .ElementType = T and .CursorType = i32 {
   fn NewCursor[unused self: Self]() -> i32 { return 0; }

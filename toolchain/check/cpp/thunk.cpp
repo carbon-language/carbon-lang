@@ -245,14 +245,19 @@ struct CalleeFunctionInfo {
 
 auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
     -> bool {
-  if (!function.clang_decl_id.has_value()) {
+  const auto* clang_decl =
+      context.clang_decls().Lookup(function.first_decl_id());
+  if (!clang_decl) {
     return false;
   }
 
-  const auto& decl_info = context.clang_decls().Get(function.clang_decl_id);
+  if (!clang_decl->is_imported) {
+    return false;
+  }
+
   const auto& signature =
-      context.clang_decl_signatures().Get(decl_info.key.signature_id);
-  auto* decl = cast<clang::FunctionDecl>(decl_info.key.decl);
+      context.clang_decl_signatures().Get(clang_decl->key.signature_id);
+  auto* decl = cast<clang::FunctionDecl>(clang_decl->decl());
   if (signature.kind != SemIR::ClangDeclSignature::Normal ||
       signature.num_params != static_cast<int>(decl->getNumNonObjectParams())) {
     // We require a thunk if the number of parameters we want isn't all of them.
@@ -646,7 +651,7 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
 auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
     -> clang::FunctionDecl* {
   auto clang_decl_key =
-      context.clang_decls().Get(callee_function.clang_decl_id).key;
+      context.clang_decls().Lookup(callee_function.first_decl_id())->key;
   clang::FunctionDecl* callee_function_decl =
       clang_decl_key.decl->getAsFunction();
   CARBON_CHECK(callee_function_decl);

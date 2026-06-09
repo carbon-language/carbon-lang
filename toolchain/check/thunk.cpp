@@ -100,10 +100,8 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
 // Makes a copy of the given pattern instruction, substituting values from a
 // specific as needed. The resulting pattern behaves like a newly-created
 // pattern, so is suitable for running `CalleePatternMatch` against.
-static auto ClonePattern(
-    Context& context, SemIR::SpecificId specific_id, SemIR::InstId pattern_id,
-    SemIR::TypeId self_type_override_id = SemIR::TypeId::None)
-    -> SemIR::InstId {
+static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
+                         SemIR::InstId pattern_id) -> SemIR::InstId {
   if (!pattern_id.has_value()) {
     return SemIR::InstId::None;
   }
@@ -126,11 +124,6 @@ static auto ClonePattern(
   auto new_pattern_id = SemIR::InstId::None;
   if (auto binding = pattern.TryAs<SemIR::AnyBindingPattern>()) {
     auto type_id = get_type(pattern_id);
-    if (self_type_override_id.has_value() &&
-        context.entity_names().Get(binding->entity_name_id).name_id ==
-            SemIR::NameId::SelfValue) {
-      type_id = GetPatternType(context, self_type_override_id);
-    }
     new_pattern_id =
         CloneBindingPattern(context, pattern_id, *binding, type_id);
   } else if (auto return_slot = pattern.TryAs<SemIR::ReturnSlotPattern>()) {
@@ -178,16 +171,14 @@ static auto ClonePattern(
 }
 
 static auto ClonePatternBlock(Context& context, SemIR::SpecificId specific_id,
-                              SemIR::InstBlockId inst_block_id,
-                              SemIR::TypeId self_type_override_id =
-                                  SemIR::TypeId::None) -> SemIR::InstBlockId {
+                              SemIR::InstBlockId inst_block_id)
+    -> SemIR::InstBlockId {
   if (!inst_block_id.has_value()) {
     return SemIR::InstBlockId::None;
   }
   return context.inst_blocks().Transform(
       inst_block_id, [&](SemIR::InstId inst_id) {
-        return ClonePattern(context, specific_id, inst_id,
-                            self_type_override_id);
+        return ClonePattern(context, specific_id, inst_id);
       });
 }
 
@@ -217,7 +208,6 @@ static auto CloneTypeInstId(Context& context, SemIR::SpecificId specific_id,
 static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
                               SemIR::FunctionId signature_id,
                               SemIR::SpecificId signature_specific_id,
-                              SemIR::TypeId signature_self_type_override_id,
                               SemIR::FunctionId callee_id)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
   StartGenericDecl(context);
@@ -227,8 +217,7 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
   // Clone the signature.
   context.pattern_block_stack().Push();
   auto implicit_param_patterns_id = ClonePatternBlock(
-      context, signature_specific_id, signature.implicit_param_patterns_id,
-      signature_self_type_override_id);
+      context, signature_specific_id, signature.implicit_param_patterns_id);
   auto param_patterns_id = ClonePatternBlock(context, signature_specific_id,
                                              signature.param_patterns_id);
   auto return_pattern_id =
@@ -293,12 +282,18 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::FunctionId function_id,
                       llvm::ArrayRef<SemIR::InstId> param_pattern_ids,
                       llvm::ArrayRef<SemIR::InstId> call_arg_ids,
-                      SemIR::InstId callee_id) -> SemIR::InstId {
+                      SemIR::InstId callee_id,
+                      SemIR::TypeId override_self_type_id) -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
   auto [args_vec, ignored_call_args] = ThunkPatternMatch(
       context, function.self_param_id, param_pattern_ids, call_arg_ids);
   llvm::ArrayRef<SemIR::InstId> args = args_vec;
+
+  if (override_self_type_id.has_value()) {
+    args_vec.front() = UnsafeUndoConvert(context, loc_id, args_vec.front(),
+                                         override_self_type_id);
+  }
 
   // If we have a self parameter, form `self.<callee_id>` if needed.
   // When calling a C++ constructor to implement `Copy`, or calling a C++
@@ -318,11 +313,15 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
 }
 
 // Build a call to a function that forwards the arguments of the enclosing
-// function, for use when constructing a thunk.
+// function, for use when constructing a thunk. `param_pattern_ids` contains the
+// parameter patterns of `function_id`. If `override_self_type_id` is not
+// `None`, `callee_id` refers to a virtual function override declared in the
+// given type.
 static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
                            SemIR::InstId callee_id,
                            llvm::ArrayRef<SemIR::InstId> param_pattern_ids,
-                           llvm::ArrayRef<SemIR::InstId> call_arg_ids)
+                           llvm::ArrayRef<SemIR::InstId> call_arg_ids,
+                           SemIR::TypeId override_self_type_id)
     -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
@@ -334,7 +333,7 @@ static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
                            callee_type.specific_id);
 
   return PerformThunkCall(context, loc_id, function_id, param_pattern_ids,
-                          call_arg_ids, callee_id);
+                          call_arg_ids, callee_id, override_self_type_id);
 }
 
 static auto StartThunkFunctionDefinition(Context& context,
@@ -359,7 +358,8 @@ static auto BuildThunkDefinition(Context& context,
                                  SemIR::FunctionId signature_id,
                                  SemIR::FunctionId function_id,
                                  SemIR::InstId thunk_id,
-                                 SemIR::InstId callee_id) -> void {
+                                 SemIR::InstId callee_id,
+                                 SemIR::TypeId override_self_type_id) -> void {
   // TODO: Improve the diagnostics produced here. Specifically, it would likely
   // be better for the primary error message to be that we tried to produce a
   // thunk because of a type mismatch, but couldn't, with notes explaining
@@ -386,8 +386,9 @@ static auto BuildThunkDefinition(Context& context,
   }
   auto call_param_ids = context.inst_blocks().Get(function.call_params_id);
 
-  auto call_id = BuildThunkCall(context, function_id, callee_id,
-                                param_pattern_ids, call_param_ids);
+  auto call_id =
+      BuildThunkCall(context, function_id, callee_id, param_pattern_ids,
+                     call_param_ids, override_self_type_id);
   if (HasDeclaredReturnType(context, function_id)) {
     BuildReturnWithExpr(context, SemIR::LocId(callee_id), call_id);
   } else {
@@ -425,7 +426,8 @@ auto BuildThunkDefinitionForExport(Context& context,
   }
 
   auto call_id = BuildThunkCall(context, thunk_function_id, callee_id,
-                                param_pattern_ids, call_param_ids);
+                                param_pattern_ids, call_param_ids,
+                                /*override_self_type_id=*/SemIR::TypeId::None);
   if (thunk_has_return_param) {
     auto out_param_id =
         context.inst_blocks().Get(thunk_function.call_params_id).back();
@@ -453,16 +455,16 @@ auto BuildThunkDefinition(Context& context,
   context.scope_stack().Restore(std::move(task.scope));
 
   BuildThunkDefinition(context, task.info.signature_id, task.info.function_id,
-                       task.info.decl_id, task.info.callee_id);
+                       task.info.decl_id, task.info.callee_id,
+                       task.info.override_self_type_id);
 
   context.scope_stack().Pop();
 }
 
 auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                 SemIR::SpecificId signature_specific_id,
-                SemIR::TypeId signature_self_type_override_id,
-                SemIR::InstId callee_id, bool defer_definition)
-    -> SemIR::InstId {
+                SemIR::TypeId override_self_type_id, SemIR::InstId callee_id,
+                bool defer_definition) -> SemIR::InstId {
   auto callee = SemIR::GetCalleeAsFunction(context.sem_ir(), callee_id);
 
   // Check whether we can use the given function without a thunk.
@@ -473,8 +475,7 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
       CheckFunctionTypeMatches(
           context, context.functions().Get(callee.function_id),
           context.functions().Get(signature_id), signature_specific_id,
-          /*check_syntax=*/false, signature_self_type_override_id,
-          /*diagnose=*/false)) {
+          /*check_syntax=*/false, /*diagnose=*/false)) {
     return callee_id;
   }
 
@@ -504,14 +505,15 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // We can't use the function directly. Build a thunk.
   // TODO: Check for and diagnose obvious reasons why this will fail, such as
   // arity mismatch, before trying to build the thunk.
-  auto [function_id, thunk_inst_id] = CloneFunctionDecl(
-      context, SemIR::LocId(callee_id), signature_id, signature_specific_id,
-      signature_self_type_override_id, callee.function_id);
+  auto [function_id, thunk_inst_id] =
+      CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
+                        signature_specific_id, callee.function_id);
 
-  auto thunk_id =
-      context.sem_ir().thunks().Add({.callee_id = callee_id,
-                                     .signature_id = signature_id,
-                                     .specific_id = signature_specific_id});
+  auto thunk_id = context.sem_ir().thunks().Add(
+      {.callee_id = callee_id,
+       .signature_id = signature_id,
+       .specific_id = signature_specific_id,
+       .override_self_type_id = override_self_type_id});
 
   // Track that this function is a thunk.
   context.functions().Get(function_id).SetThunk(thunk_id);
@@ -526,10 +528,11 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                      .function_id = function_id,
                      .decl_id = thunk_inst_id,
                      .callee_id = callee_id,
+                     .override_self_type_id = override_self_type_id,
                  });
   } else {
     BuildThunkDefinition(context, signature_id, function_id, thunk_inst_id,
-                         callee_id);
+                         callee_id, override_self_type_id);
     context.scope_stack().Pop();
   }
 

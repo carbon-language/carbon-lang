@@ -82,27 +82,27 @@ interface RightShiftAssignWith(Other:! type) {
 
 // Operations for IntLiteral. These need to be here because IntLiteral has no
 // associated library of its own.
-impl IntLiteral() as BitAndWith(Self) where .Result = Self {
+impl IntLiteral as BitAndWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.and";
 }
 
-impl IntLiteral() as BitComplement where .Result = Self {
+impl IntLiteral as BitComplement where .Result = Self {
   fn Op[self: Self]() -> Self = "int.complement";
 }
 
-impl IntLiteral() as BitOrWith(Self) where .Result = Self {
+impl IntLiteral as BitOrWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.or";
 }
 
-impl IntLiteral() as BitXorWith(Self) where .Result = Self {
+impl IntLiteral as BitXorWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.xor";
 }
 
-impl IntLiteral() as LeftShiftWith(Self) where .Result = Self {
+impl IntLiteral as LeftShiftWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.left_shift";
 }
 
-impl IntLiteral() as RightShiftWith(Self) where .Result = Self {
+impl IntLiteral as RightShiftWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.right_shift";
 }
 

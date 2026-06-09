@@ -256,30 +256,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
     return complete_types_;
   }
 
-  auto OutputYaml() const -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-      for (auto type_id : complete_types_) {
-        auto info = GetCompleteTypeInfo(type_id);
-        map.Add(PrintToString(type_id),
-                Yaml::OutputMapping([&](Yaml::OutputMapping::Map map2) {
-                  map2.Add("value_repr", Yaml::OutputScalar(info.value_repr));
-                  map2.Add(
-                      "object_layout",
-                      Yaml::OutputMapping([&](Yaml::OutputMapping::Map map3) {
-                        map3.Add("size",
-                                 Yaml::OutputScalar(info.object_layout.size));
-                        map3.Add(
-                            "alignment",
-                            Yaml::OutputScalar(info.object_layout.alignment));
-                      }));
-                  if (info.abstract_class_id.has_value()) {
-                    map2.Add("abstract_class_id",
-                             Yaml::OutputScalar(info.abstract_class_id));
-                  }
-                }));
-      }
-    });
-  }
+  auto OutputYaml() const -> Yaml::OutputMapping;
 
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {

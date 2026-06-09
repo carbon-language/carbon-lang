@@ -10,16 +10,18 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/builtins/types.carbon
 
-fn IntLiteral() -> type = "int_literal.make_type";
-fn FloatLiteral() -> type = "float_literal.make_type";
-fn Int(size: IntLiteral()) -> type = "int.make_type_signed";
-fn Float(size: IntLiteral()) -> type = "float.make_type";
+fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
+fn MakeFloatLiteral() -> type = "float_literal.make_type";
+alias FloatLiteral = MakeFloatLiteral();
+fn Int(size: IntLiteral) -> type = "int.make_type_signed";
+fn Float(size: IntLiteral) -> type = "float.make_type";
 fn Bool() -> type = "bool.make_type";
-fn AsI32(n: IntLiteral()) -> Int(32) = "int.convert_checked";
-fn AsF16(f: FloatLiteral()) -> Float(16) = "float.convert_checked";
-fn AsF32(f: FloatLiteral()) -> Float(32) = "float.convert_checked";
-fn AsF64(f: FloatLiteral()) -> Float(64) = "float.convert_checked";
-fn AsF128(f: FloatLiteral()) -> Float(128) = "float.convert_checked";
+fn AsI32(n: IntLiteral) -> Int(32) = "int.convert_checked";
+fn AsF16(f: FloatLiteral) -> Float(16) = "float.convert_checked";
+fn AsF32(f: FloatLiteral) -> Float(32) = "float.convert_checked";
+fn AsF64(f: FloatLiteral) -> Float(64) = "float.convert_checked";
+fn AsF128(f: FloatLiteral) -> Float(128) = "float.convert_checked";
 
 fn IntParam(i: Int(32));
 fn FloatParam(e: Float(16), f: Float(32), g: Float(64), h: Float(128));
@@ -58,10 +60,10 @@ fn Uses() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "types.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Uses", linkageName: "_CUses.Main", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Uses", linkageName: "_CUses.Main", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 29, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 30, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 31, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 28, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 31, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 32, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 33, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 30, column: 1, scope: !4)
