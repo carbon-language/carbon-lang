@@ -2067,7 +2067,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         });
 
     // Pull a value directly out of the initializer if possible and wanted.
+    // TODO: Should this be done as part of category conversion instead?
     if (expr_id != SemIR::ErrorInst::InstId &&
+        SemIR::GetExprCategory(sem_ir, expr_id) ==
+            SemIR::ExprCategory::ReprInitializing &&
         CanUseValueOfInitializer(sem_ir, target.type_id, target.kind)) {
       expr_id = AddInst<SemIR::ValueOfInitializer>(
           context, loc_id, {.type_id = target.type_id, .init_id = expr_id});
