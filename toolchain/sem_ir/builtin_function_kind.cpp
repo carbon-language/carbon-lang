@@ -922,23 +922,27 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
                                          llvm::ArrayRef<InstId> arg_ids,
                                          TypeId return_type_id) const -> bool {
   switch (*this) {
-    case CharLiteralConvertChar:
-    case CharLiteralConvertInt:
-    case IntConvertCharLiteral:
-    case CharLiteralEq:
-    case CharLiteralNeq:
-    case CharLiteralLess:
-    case CharLiteralLessEq:
-    case CharLiteralGreater:
-    case CharLiteralGreaterEq:
-    case CharLiteralAdd:
-    case IntAddCharLiteral:
-    case CharLiteralSubInt:
-    case CharLiteralSubChar:
     case FloatConvertChecked:
     case IntConvertChecked:
     case IntConvertFloatChecked:
       // Checked conversions are compile-time only.
+      return true;
+
+    case CharLiteralAdd:
+    case CharLiteralConvertChar:
+    case CharLiteralConvertInt:
+    case CharLiteralEq:
+    case CharLiteralGreater:
+    case CharLiteralGreaterEq:
+    case CharLiteralLess:
+    case CharLiteralLessEq:
+    case CharLiteralNeq:
+    case CharLiteralSubChar:
+    case CharLiteralSubInt:
+    case IntAddCharLiteral:
+    case IntConvertCharLiteral:
+      // These operations always involve a literal type.
+      // See AnyLiteralTypes comment for explanation.
       return true;
 
     case FloatConvert:

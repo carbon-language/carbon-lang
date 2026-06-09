@@ -1170,7 +1170,10 @@ static auto PerformCharLiteralConvertInt(Context& context, SemIR::LocId loc_id,
   unsigned int width = context.ints().Get(bit_width_id).getZExtValue();
 
   int32_t code_point = arg.value.index;
-  if (llvm::Log2_32(code_point) + 1 > width - is_signed) {
+  // Determine the bit width of the code point value. Log2_32(0) is -1, so this
+  // correctly computes a width of 0 for U+0000.
+  unsigned code_point_bit_width = llvm::Log2_32(code_point) + 1;
+  if (code_point_bit_width > width - is_signed) {
     DiagnoseCharTooLargeForType(context, loc_id, arg.value, dest_type_id);
     return SemIR::ErrorInst::ConstantId;
   }
