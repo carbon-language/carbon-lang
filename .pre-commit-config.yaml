@@ -49,7 +49,7 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.13
+    rev: 0c7b6c989466a93942def1f84baf36ddfcd60c83 # frozen: v0.15.14
     hooks:
       - id: ruff-check
         args: [--fix]
@@ -62,7 +62,7 @@ repos:
         entry: ty check --no-progress
         language: python
         additional_dependencies:
-          - ty
+          - ty==0.0.46
           - rich
           - 'gql>=2.0.0,<3.0.0'
           - PyGitHub
