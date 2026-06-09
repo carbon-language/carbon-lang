@@ -124,26 +124,30 @@ auto GetAggregateElement(FunctionContext& context, SemIR::InstId aggr_inst_id,
   }
 }
 
-auto GetElementOffset(FunctionContext& context,
-                      FunctionContext::TypeInFile aggr_type,
-                      SemIR::ElementIndex index) -> llvm::APInt {
+auto GetEnclosingAggregate(FunctionContext& context,
+                           FunctionContext::TypeInFile aggr_type,
+                           SemIR::InstId element_id, SemIR::ElementIndex index)
+    -> llvm::Value* {
   auto object_repr = FunctionContext::TypeInFile{
       .file = aggr_type.file,
       .type_id = aggr_type.file->types().GetObjectRepr(aggr_type.type_id)};
-  auto* ptr_type =
-      llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
-  auto* dummy_aggr = llvm::ConstantPointerNull::get(ptr_type);
-  auto* dummy_gep = context.builder().CreateStructGEP(
-      context.GetType(object_repr), dummy_aggr,
-      GetElementIndex(object_repr, index));
+  auto* llvm_object_type =
+      llvm::cast<llvm::StructType>(context.GetType(object_repr));
+  const auto* object_layout =
+      context.llvm_module().getDataLayout().getStructLayout(llvm_object_type);
+  llvm::APInt offset(
+      64, object_layout->getElementOffset(GetElementIndex(object_repr, index)),
+      /*isSigned=*/true);
 
-  const auto& data_layout = context.llvm_module().getDataLayout();
-  llvm::APInt offset(data_layout.getIndexTypeSizeInBits(ptr_type), /*val=*/0,
-                     /*isSigned=*/true);
-  dummy_gep->stripAndAccumulateConstantOffsets(
-      context.llvm_module().getDataLayout(), offset,
-      /*AllowNonInbounds=*/false);
-  return offset;
+  auto* element_addr = context.GetValue(element_id);
+  if (offset == 0) {
+    return element_addr;
+  }
+  std::array<llvm::Value*, 2> indices = {
+      llvm::ConstantInt::get(context.llvm_context(), llvm::APInt()),
+      llvm::ConstantInt::get(context.llvm_context(), -offset)};
+  return context.builder().CreateGEP(context.GetType(object_repr), element_addr,
+                                     indices);
 }
 
 auto EmitAggregateValueRepr(FunctionContext& context,

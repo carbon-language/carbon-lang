@@ -51,22 +51,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::EnclosingClassAccess inst) -> void {
   auto aggr_type = context.GetTypeIdOfInst(inst_id);
-  llvm::APInt offset = GetElementOffset(context, aggr_type, inst.index);
-  auto* element_addr = context.GetValue(inst.element_id);
-  if (offset == 0) {
-    context.SetLocal(inst_id, element_addr);
-    return;
-  }
-  auto* i64_type = llvm::IntegerType::getInt64Ty(context.llvm_context());
-  auto* element_addr_int =
-      context.builder().CreatePtrToInt(element_addr, i64_type);
-  auto* offset_int = llvm::ConstantExpr::getIntegerValue(i64_type, offset);
-  auto* aggr_addr_int =
-      context.builder().CreateSub(element_addr_int, offset_int);
-  auto* ptr_type =
-      llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
-  context.SetLocal(inst_id,
-                   context.builder().CreateIntToPtr(aggr_addr_int, ptr_type));
+  context.SetLocal(inst_id, GetEnclosingAggregate(context, aggr_type,
+                                                  inst.element_id, inst.index));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
