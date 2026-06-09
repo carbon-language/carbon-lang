@@ -16,8 +16,11 @@
 #include "clang/AST/UnresolvedSet.h"
 #include "clang/AST/VTableBuilder.h"
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Lex/MacroInfo.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Overload.h"
+#include "clang/Sema/Sema.h"
 #include "common/check.h"
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
@@ -2375,7 +2378,7 @@ auto ImportCppOverloadSet(
     Context& context, SemIR::LocId loc_id, SemIR::NameScopeId scope_id,
     SemIR::NameId name_id, clang::CXXRecordDecl* naming_class,
     clang::UnresolvedSet<4>&& overload_set,
-    clang::OverloadCandidateSet::OperatorRewriteInfo operator_rewrite_info)
+    SemIR::CppOverloadSet::OperatorRewriteInfo operator_rewrite_info)
     -> SemIR::InstId {
   SemIR::CppOverloadSetId overload_set_id = context.cpp_overload_sets().Add(
       SemIR::CppOverloadSet{.name_id = name_id,

@@ -11,7 +11,9 @@
 
 #include "clang/AST/Type.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Sema.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"

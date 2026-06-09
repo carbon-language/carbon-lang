@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_
 #define CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_
 
+#include "clang/AST/Type.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
@@ -15,6 +16,12 @@
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/ids.h"
+
+namespace clang {
+class CompilerInvocation;
+class IdentifierInfo;
+class VarDecl;
+}  // namespace clang
 
 namespace Carbon::Check {
 
@@ -84,7 +91,7 @@ auto ImportCppOverloadSet(
     Context& context, SemIR::LocId loc_id, SemIR::NameScopeId scope_id,
     SemIR::NameId name_id, clang::CXXRecordDecl* naming_class,
     clang::UnresolvedSet<4>&& overload_set,
-    clang::OverloadCandidateSet::OperatorRewriteInfo operator_rewrite_info)
+    SemIR::CppOverloadSet::OperatorRewriteInfo operator_rewrite_info)
     -> SemIR::InstId;
 
 // Looks up the given name in the Clang AST generated when importing C++ code

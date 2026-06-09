@@ -6,6 +6,8 @@
 
 #include <optional>
 
+#include "clang/AST/ASTConsumer.h"
+#include "clang/Sema/Sema.h"
 #include "llvm/Support/Casting.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/import.h"

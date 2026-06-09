@@ -9,6 +9,11 @@
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 
+namespace clang {
+class CXXDestructorDecl;
+class CXXRecordDecl;
+}  // namespace clang
+
 namespace Carbon::Check {
 
 // Exports a Carbon name scope into C++ as a namespace or class, or returns the

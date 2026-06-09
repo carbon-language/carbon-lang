@@ -4,6 +4,7 @@
 
 #include "toolchain/lower/context.h"
 
+#include "clang/Basic/SourceManager.h"
 #include "common/check.h"
 #include "common/growing_range.h"
 #include "common/raw_string_ostream.h"

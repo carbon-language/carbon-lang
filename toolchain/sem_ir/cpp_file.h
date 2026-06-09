@@ -7,16 +7,20 @@
 
 #include <memory>
 
-#include "clang/AST/Mangle.h"
-#include "clang/Basic/CodeGenOptions.h"
-#include "clang/Basic/Diagnostic.h"
-#include "clang/CodeGen/ModuleBuilder.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Lex/PreprocessorOptions.h"
-#include "common/check.h"
-#include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/IR/Module.h"
-#include "llvm/Support/FileSystem.h"
+namespace clang {
+class ASTContext;
+class CodeGenerator;
+class CompilerInstance;
+class DiagnosticOptions;
+class DiagnosticsEngine;
+class LangOptions;
+class MangleContext;
+class SourceManager;
+}  // namespace clang
+
+namespace llvm {
+class LLVMContext;
+}  // namespace llvm
 
 namespace Carbon::SemIR {
 
@@ -25,46 +29,29 @@ namespace Carbon::SemIR {
 class CppFile {
  public:
   explicit CppFile(std::unique_ptr<clang::CompilerInstance> clang,
-                   llvm::LLVMContext* llvm_context)
-      : clang_(std::move(clang)), llvm_context_(llvm_context) {}
+                   llvm::LLVMContext* llvm_context);
+  ~CppFile();
 
   // Access to compilation options.
-  auto diagnostic_options() const -> const clang::DiagnosticOptions& {
-    return clang_->getDiagnostics().getDiagnosticOptions();
-  }
-  auto lang_options() const -> const clang::LangOptions& {
-    return clang_->getLangOpts();
-  }
+  auto diagnostic_options() const -> const clang::DiagnosticOptions&;
+  auto lang_options() const -> const clang::LangOptions&;
 
   // Access to Clang's compilation environment.
-  auto source_manager() -> clang::SourceManager& {
-    return clang_->getSourceManager();
-  }
-  auto source_manager() const -> const clang::SourceManager& {
-    return clang_->getSourceManager();
-  }
+  auto source_manager() -> clang::SourceManager&;
+  auto source_manager() const -> const clang::SourceManager&;
   // TODO: This doesn't really belong here, but is currently used by lowering
   // because Clang's code generation may produce diagnostics.
-  auto diagnostics() const -> clang::DiagnosticsEngine& {
-    return clang_->getDiagnostics();
-  }
+  auto diagnostics() const -> clang::DiagnosticsEngine&;
 
   // Access to layers of Clang's C++ representation.
-  auto ast_context() -> clang::ASTContext& { return clang_->getASTContext(); }
-  auto ast_context() const -> const clang::ASTContext& {
-    return clang_->getASTContext();
-  }
+  auto ast_context() -> clang::ASTContext&;
+  auto ast_context() const -> const clang::ASTContext&;
 
   // Creates the mangle context for this file's C++ AST. Must be called once the
   // AST context is available (after the frontend begins the source file) and
   // before `mangle_context()` is used.
-  auto CreateMangleContext() -> void {
-    CARBON_CHECK(!mangle_context_);
-    mangle_context_.reset(ast_context().createMangleContext());
-  }
-  auto mangle_context() const -> clang::MangleContext& {
-    return *mangle_context_;
-  }
+  auto CreateMangleContext() -> void;
+  auto mangle_context() const -> clang::MangleContext&;
 
   auto llvm_context() const -> llvm::LLVMContext* { return llvm_context_; }
   auto SetCodeGenerator(clang::CodeGenerator* code_generator) -> void {
