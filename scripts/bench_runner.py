@@ -73,7 +73,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional, override
+from typing import Any, Optional, override
 
 import numpy as np  # type: ignore
 import scipy as sp  # type: ignore
@@ -687,7 +687,7 @@ def run_benchmark_binary(
     specific_args: list[str],
     num_runs: int,
     console: Console,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Runs a benchmark binary multiple times and collects results.
 
     The results are parsed out of the JSON output from each run, and returned as
@@ -741,7 +741,7 @@ def run_benchmark_binary(
 def print_run_context(
     console: Console,
     num_runs: int,
-    exp_runs: list[dict],
+    exp_runs: list[dict[str, Any]],
     has_baseline: bool,
 ) -> None:
     """Prints the context from the benchmark runs.
@@ -778,8 +778,8 @@ def print_run_context(
 def get_benchmark_names_and_metrics(
     console: Console,
     parsed_args: argparse.Namespace,
-    exp_runs: list[dict],
-    base_runs: list[dict],
+    exp_runs: list[dict[str, Any]],
+    base_runs: list[dict[str, Any]],
 ) -> tuple[list[str], list[str]]:
     """Extracts benchmark names and metrics from benchmark run results.
 
@@ -853,8 +853,8 @@ def get_benchmark_names_and_metrics(
 def collect_benchmark_metrics(
     benchmark_names: list[str],
     metrics: list[str],
-    exp_runs: list[dict],
-    base_runs: list[dict],
+    exp_runs: list[dict[str, Any]],
+    base_runs: list[dict[str, Any]],
     comp_mapping: ComparableBenchmarkMapping,
 ) -> dict[str, dict[str, BenchmarkRunMetrics]]:
     """Collects and organizes all benchmark metrics from raw run data.
@@ -1071,7 +1071,7 @@ def main() -> None:
     # Run the benchmark(s) and collect the results into a data structure for
     # processing.
     num_runs = parsed_args.runs
-    base_runs: list[dict] = []
+    base_runs: list[dict[str, Any]] = []
     has_baseline = bool(parsed_args.base_benchmark)
     if has_baseline:
         base_runs = run_benchmark_binary(
