@@ -5,6 +5,8 @@
 package Core library "prelude/operators/as";
 
 import library "prelude/copy";
+import library "prelude/types/int_literal";
+import library "prelude/types/float_literal";
 
 interface UnsafeAs(Dest:! type) {
   fn Convert(self) -> Dest;
@@ -61,4 +63,15 @@ impl forall [T:! type, U:! type] T* as UnsafeAs(U*) {
   fn Convert(self) -> U* = "pointer.unsafe_convert";
 }
 
+// Integer literals can be implicitly converted to floating-point literals.
+impl IntLiteral as ImplicitAs(FloatLiteral) {
+  fn Convert(self) -> FloatLiteral = "int.convert_float_checked";
+}
+
+// Floating-point literals can be explicitly cast to integer literals.
+impl FloatLiteral as UnsafeAs(IntLiteral) {
+  fn Convert(self) -> IntLiteral = "float.convert_int";
+}
+
 interface IntFitsIn(Dest:! type) {}
+interface FloatFitsIn(Src:! type) {}

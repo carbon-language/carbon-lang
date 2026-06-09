@@ -6,17 +6,22 @@
 
 #include <optional>
 
+#include "clang/AST/ASTConsumer.h"
+#include "clang/Sema/Sema.h"
 #include "llvm/Support/Casting.h"
+#include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/mangler.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 #include "toolchain/sem_ir/vtable.h"
 
@@ -35,7 +40,7 @@ static auto GetClangDeclContextForScope(Context& context,
   if (!clang_decl_context_id.has_value()) {
     return nullptr;
   }
-  auto* decl = context.clang_decls().Get(clang_decl_context_id).key.decl;
+  auto* decl = context.clang_decls().Get(clang_decl_context_id).decl();
   return cast<clang::DeclContext>(decl);
 }
 
@@ -134,11 +139,9 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
   // If this class was produced by importing a C++ declaration or has
   // already been exported to C++, return the corresponding Clang declaration.
   // That could either be a CXXRecordDecl or an EnumDecl.
-  if (auto clang_decl_id =
-          context.clang_decls().Lookup(class_info.first_decl_id());
-      clang_decl_id.has_value()) {
-    return cast<clang::TagDecl>(
-        context.clang_decls().Get(clang_decl_id).key.decl);
+  if (const auto* clang_decl =
+          context.clang_decls().Lookup(class_info.first_decl_id())) {
+    return cast<clang::TagDecl>(clang_decl->decl());
   }
 
   auto* identifier_info = GetClangIdentifierInfo(context, class_info.name_id);
@@ -207,9 +210,19 @@ static auto LookupClassFieldByStructField(
   return std::nullopt;
 }
 
+static auto SetCppClassMemberAccess(const SemIR::NameScope& class_scope,
+                                    SemIR::NameId member_name_id,
+                                    clang::Decl* member) -> void {
+  auto entry_id = class_scope.Lookup(member_name_id);
+  CARBON_CHECK(entry_id.has_value());
+  const auto& entry = class_scope.GetEntry(*entry_id);
+  member->setAccess(MapToCppAccess(entry.result.access_kind()));
+}
+
 // Creates a `clang::FieldDecl` for a Carbon class field. Returns
 // nullptr if an error occurs.
 static auto CreateCppFieldDecl(Context& context,
+                               const SemIR::NameScope& class_scope,
                                clang::CXXRecordDecl* record_decl,
                                SemIR::InstId field_inst_id,
                                const SemIR::FieldDecl& field_decl)
@@ -237,7 +250,9 @@ static auto CreateCppFieldDecl(Context& context,
       /*IdLoc=*/clang_loc, identifier_info, cpp_type, /*TInfo=*/nullptr,
       /*BW=*/nullptr,
       /*Mutable=*/true, clang::ICIS_NoInit);
-  cpp_field_decl->setAccess(clang::AS_public);
+
+  SetCppClassMemberAccess(class_scope, field_decl.name_id, cpp_field_decl);
+
   record_decl->addHiddenDecl(cpp_field_decl);
 
   return cpp_field_decl;
@@ -264,9 +279,9 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
       continue;
     }
 
-    auto* cpp_field_decl =
-        CreateCppFieldDecl(context, cast<clang::CXXRecordDecl>(decl_context),
-                           class_field->inst_id, class_field->inst);
+    auto* cpp_field_decl = CreateCppFieldDecl(
+        context, class_scope, cast<clang::CXXRecordDecl>(decl_context),
+        class_field->inst_id, class_field->inst);
     if (!cpp_field_decl) {
       continue;
     }
@@ -293,12 +308,10 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
   ExportAllFieldsToCpp(context, class_info);
 
   // Get the exported `clang::FieldDecl`.
-  auto clang_decl_id = context.clang_decls().Lookup(field_inst_id);
-  if (clang_decl_id == SemIR::ClangDeclId::None) {
-    return nullptr;
+  if (const auto* clang_decl = context.clang_decls().Lookup(field_inst_id)) {
+    return cast<clang::FieldDecl>(clang_decl->decl());
   }
-  return cast<clang::FieldDecl>(
-      context.clang_decls().Get(clang_decl_id).key.decl);
+  return nullptr;
 }
 
 auto CalculateCppFieldOffsets(
@@ -934,6 +947,67 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
   sema.ActOnFinishFunctionBody(cpp_destructor_decl, call.get());
 
   return cpp_destructor_decl;
+}
+
+auto ExportVarToCpp(Context& context, SemIR::InstId inst_id,
+                    SemIR::VarStorage var_storage) -> clang::VarDecl* {
+  // Check if the variable was already exported and return the existing
+  // `VarDecl` if so. Note that the `pattern_id` is used as the key
+  // rather than the `InstId` for the `VarStorage`.
+  if (const auto* clang_decl =
+          context.clang_decls().Lookup(var_storage.pattern_id)) {
+    return cast<clang::VarDecl>(clang_decl->decl());
+  }
+
+  // Look up the entity name and check the scope.
+  auto entity_name_id = GetFirstBindingNameFromPatternId(
+      context.sem_ir(), var_storage.pattern_id);
+  const auto& entity_name = context.entity_names().Get(entity_name_id);
+  const auto& name_scope =
+      context.name_scopes().Get(entity_name.parent_scope_id);
+  auto scope_inst = context.insts().Get(name_scope.inst_id());
+  CARBON_CHECK(scope_inst.Is<SemIR::Namespace>() ||
+               scope_inst.Is<SemIR::ClassDecl>());
+
+  // Map the parent scope into the C++ AST.
+  SemIR::LocId loc_id(inst_id);
+  auto* decl_context =
+      ExportNameScopeToCpp(context, loc_id, entity_name.parent_scope_id);
+  if (!decl_context) {
+    return nullptr;
+  }
+
+  // Map the type.
+  auto cpp_type = MapToCppType(context, var_storage.type_id);
+  if (cpp_type.isNull()) {
+    context.TODO(loc_id, "failed to map Carbon type to C++");
+    return nullptr;
+  }
+
+  // Create the `clang::VarDecl` and add it to `clang_decls()`.
+  auto clang_loc = GetCppLocation(context, loc_id);
+  auto* identifier_info = GetClangIdentifierInfo(context, entity_name.name_id);
+  auto* var_decl = clang::VarDecl::Create(
+      context.ast_context(), decl_context,
+      /*StartLoc=*/clang_loc, /*IdLoc=*/clang_loc, identifier_info, cpp_type,
+      /*TInfo=*/nullptr, clang::SC_Extern);
+  context.clang_decls().AddVar(
+      {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(var_decl),
+       .inst_id = inst_id},
+      var_storage.pattern_id);
+
+  if (scope_inst.Is<SemIR::ClassDecl>()) {
+    SetCppClassMemberAccess(name_scope, entity_name.name_id, var_decl);
+  }
+
+  // Set the Carbon mangled variable name.
+  SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
+                   context.mangle_string_fingerprint());
+  std::string mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);
+  var_decl->addAttr(
+      clang::AsmLabelAttr::Create(context.ast_context(), mangled_name));
+
+  return var_decl;
 }
 
 }  // namespace Carbon::Check

@@ -14,8 +14,9 @@
 
 library "[[@TEST_NAME]]";
 
-fn IntLiteral() -> type = "int_literal.make_type";
-fn Int(n: IntLiteral()) -> type = "int.make_type_signed";
+fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
+fn Int(n: IntLiteral) -> type = "int.make_type_signed";
 
 // --- use_types.carbon
 
@@ -23,7 +24,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn Copy[N:! IntLiteral()](x: Int(N)) -> Int(N) = "primitive_copy";
+fn Copy[N:! IntLiteral](x: Int(N)) -> Int(N) = "primitive_copy";
 
 fn F(n: Int(64)) ->
     //@dump-sem-ir-begin
@@ -41,7 +42,7 @@ fn G(n: Int(13)) ->
   return Copy(n);
 }
 
-fn Symbolic(N:! IntLiteral(), x: Int(N)) -> Int(N) {
+fn Symbolic(N:! IntLiteral, x: Int(N)) -> Int(N) {
   return Copy(x);
 }
 
@@ -82,7 +83,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn Negate(a: IntLiteral()) -> IntLiteral() = "int.snegate";
+fn Negate(a: IntLiteral) -> IntLiteral = "int.snegate";
 
 // CHECK:STDERR: fail_negative_size.carbon:[[@LINE+4]]:8: error: integer type width of -1 is not positive [IntWidthNotPositive]
 // CHECK:STDERR: var n: Int(Negate(1));

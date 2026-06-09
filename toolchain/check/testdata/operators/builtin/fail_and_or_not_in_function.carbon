@@ -95,10 +95,10 @@ fn F() {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.f49: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.f49) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.cd0: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.31b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.cd0, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.638: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.638) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.8b3: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.524: type = fn_type_with_self_type %Copy.WithSelf.Op.type.8b3, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -118,7 +118,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc6: type = block_arg !if.expr.result
-// CHECK:STDOUT:   %impl.elem0: %.31b = impl_witness_access constants.%Copy.impl_witness.f49, element0 [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.524 = impl_witness_access constants.%Copy.impl_witness.638, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6, %impl.elem0
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
@@ -134,10 +134,10 @@ fn F() {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.f49: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.f49) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.cd0: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.31b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.cd0, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.638: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.638) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.8b3: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.524: type = fn_type_with_self_type %Copy.WithSelf.Op.type.8b3, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -157,7 +157,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc6: type = block_arg !if.expr.result
-// CHECK:STDOUT:   %impl.elem0: %.31b = impl_witness_access constants.%Copy.impl_witness.f49, element0 [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.524 = impl_witness_access constants.%Copy.impl_witness.638, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6, %impl.elem0
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call

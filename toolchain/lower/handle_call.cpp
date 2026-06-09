@@ -431,6 +431,33 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                                         IsSignedInt(context, arg_ids[0])));
       return;
     }
+    case SemIR::BuiltinFunctionKind::IntConvertFloat: {
+      auto* operand = context.GetValue(arg_ids[0]);
+      auto* dest_type = context.GetTypeOfInst(inst_id);
+      bool is_signed = IsSignedInt(context, arg_ids[0]);
+      context.SetLocal(
+          inst_id, is_signed
+                       ? context.builder().CreateSIToFP(operand, dest_type)
+                       : context.builder().CreateUIToFP(operand, dest_type));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::FloatConvert: {
+      auto* operand = context.GetValue(arg_ids[0]);
+      auto* dest_type = context.GetTypeOfInst(inst_id);
+      context.SetLocal(inst_id,
+                       context.builder().CreateFPCast(operand, dest_type));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::FloatConvertInt: {
+      auto* operand = context.GetValue(arg_ids[0]);
+      auto* dest_type = context.GetTypeOfInst(inst_id);
+      bool is_signed = IsSignedInt(context, inst_id);
+      context.SetLocal(
+          inst_id, is_signed
+                       ? context.builder().CreateFPToSI(operand, dest_type)
+                       : context.builder().CreateFPToUI(operand, dest_type));
+      return;
+    }
 
     case SemIR::BuiltinFunctionKind::IntSNegate: {
       // Lower `-x` as `0 - x`.
@@ -549,7 +576,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
 
     case SemIR::BuiltinFunctionKind::CharConvertChecked:
     case SemIR::BuiltinFunctionKind::FloatConvertChecked:
-    case SemIR::BuiltinFunctionKind::IntConvertChecked: {
+    case SemIR::BuiltinFunctionKind::IntConvertChecked:
+    case SemIR::BuiltinFunctionKind::IntConvertFloatChecked: {
       // TODO: Check this statically.
       CARBON_CHECK(builtin_kind.IsCompTimeOnly(
           context.sem_ir(), arg_ids,
@@ -609,7 +637,9 @@ static auto HandleVirtualCall(FunctionContext& context,
   auto* pointer_type =
       llvm::PointerType::get(context.llvm_context(), /* address space */ 0);
   llvm::Value* virtual_fn;
-  if (function.clang_decl_id.has_value()) {
+  const auto* clang_decl =
+      context.sem_ir().clang_decls().Lookup(function.first_decl_id());
+  if (clang_decl && clang_decl->is_imported) {
     // Use absolute vtables for clang interop - the itanium vtable contains
     // function pointers.
     auto* virtual_function_pointer_address = context.builder().CreateGEP(

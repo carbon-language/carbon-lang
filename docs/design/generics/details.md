@@ -310,6 +310,9 @@ Assert(p1.Scale(2.0) == p2);
 Assert(p1.Add(p1) == p2);
 ```
 
+For more on how `extend` affects member access, see
+[member access](../expressions/member_access.md#extend).
+
 Without `extend`, those methods may only be accessed with
 [qualified member names and compound member access](#qualified-member-names-and-compound-member-access):
 
@@ -505,6 +508,9 @@ class Player {
 ```
 
 ### Avoiding name collisions
+
+> **TODO:** This has changed. Now you can always extend, but conflicting names
+> may only be found by qualified name lookup.
 
 To avoid name collisions, you can't extend implementations of two interfaces
 that have a name in common:
@@ -1041,6 +1047,8 @@ var s: String = "string";
 var p_s: String = Identity(&s);
 ```
 
+The facet type `type` is associated with an empty scope and is complete.
+
 In general, the declarations in `constraint` definition match a subset of the
 declarations in an `interface`. These named constraints can be used with checked
 generics, as opposed to templates, and only include required interfaces and
@@ -1251,6 +1259,10 @@ Note that the expressions `A & B` and `A where .Self impls B` have the same
 requirements, and so you would be able to switch a function declaration between
 them without affecting callers.
 
+The scope of a facet type formed by a `&` operator extends the scopes of both of
+its operands. The scope of the resulting facet type is complete if every scope
+it extends is complete.
+
 **Alternatives considered:** See
 [Carbon: Access to interface methods](https://docs.google.com/document/d/17IXDdu384x1t9RimQ01bhx4-nWzs4ZEeke4eO6ImQNc/edit?resourcekey=0-Fe44R-0DhQBlw0gs2ujNJA).
 
@@ -1347,6 +1359,8 @@ fn DoHashAndEquals[T:! Hashable](x: T) {
 > **TODO:** Update this section as needed to reflect the fact that an impl of an
 > interface doesn't impl the interfaces it extends, as adopted in
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
+> Should link to
+> [`extend` in member access](../expressions/member_access.md#extend).
 
 When implementing an interface, we allow implementing the aliased names as well.
 In the case of `Hashable` above, this includes all the members of `Equatable`,
@@ -1864,7 +1878,9 @@ Frequently we expect that the adapter type will want to preserve most or all of
 the API of the original type. The two most common cases expected are adding and
 replacing an interface implementation. Users would indicate that an adapter
 starts from the original type's existing API by using the `extend` keyword
-before `adapt`:
+before `adapt`, which
+[extends member access to lookup names in the adapted class](../expressions/member_access.md#extend)
+along with `impl` lookup:
 
 ```carbon
 class Song {
@@ -1898,8 +1914,10 @@ functions can be cast to the corresponding type with `SongByArtist` substituted
 in for `Song`.
 
 Unlike the similar `class B { extend base: A; }` notation,
-`class B { extend adapt A; }` is permitted even if `A` is a final class. Also,
-there is no implicit conversion from `B` to `A`, matching `adapt` without
+`class B { extend adapt A; }` is permitted even if `A` is a final class. Like
+other `extend` declarations, it requires the target `A` to be complete, or if
+`A` is a generic parameter, requires the type of the parameter to be complete.
+Also, there is no implicit conversion from `B` to `A`, matching `adapt` without
 `extend` but unlike class extension.
 
 To avoid or resolve name conflicts between interfaces, an `impl` may be declared
@@ -2650,6 +2668,11 @@ discussed later in this section. In addition, it can introduce relationships
 between different type variables, such as that a member of one is equal to a
 member of another. The `where` operator is not associative, so a type expression
 using multiple must use round parens `(`...`)` to specify grouping.
+
+The scope of a facet type formed by a `where` declaration
+[extends](../expressions/member_access.md#extend) the scope of its first
+operand, and the resulting facet type is complete if that scope it extends is
+complete.
 
 > **Comparison with other languages:** Both Swift and Rust use `where` clauses
 > on declarations instead of in the expression syntax. These happen after the
@@ -5379,31 +5402,14 @@ An incomplete `C` cannot be used in the following contexts:
 -   ❌ `T:! C` ... `T.X`
 -   ❌ `T:! C where `...
 -   ❌ `class `...` { extend impl as C; }`
-    -   The names of `C` are added to the class, and so those names need to be
-        known.
+-   ❌ `interface `...` { extend require impls C; }` or
+    `constraint `...` { extend require impls C; }`
+    -   An `extend` declaration requires the target scope to be complete. See
+        [`extend` in member access](../expressions/member_access.md#extend).
 -   ❌ `T:! C` ... `T impls A` where `A` is an interface or named constraint
     different from `C`
     -   Need to see the definition of `C` to see if it implies `A`.
 -   ❌ `impl` ... `as C {` ... `}`
-
-> **Future work:** It is currently undecided whether an interface needs to be
-> complete to be extended, as in:
->
-> ```carbon
-> interface I { extend C; }
-> ```
->
-> There are three different approaches being considered:
->
-> -   If we detect name collisions between the members of the interface `I` and
->     `C` when the interface `I` is defined, then we need `C` to be complete.
-> -   If we instead only generate errors on ambiguous use of members with the
->     same name, as we do with `A & B`, then we don't need to require `C` to be
->     complete.
-> -   Another option, being discussed in
->     [#2745](https://github.com/carbon-language/carbon-lang/issues/2745), is
->     that names in interface `I` shadow the names in any interface being
->     extended, then `C` would not be required to be complete.
 
 ### Declaring implementations
 

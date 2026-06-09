@@ -7,11 +7,15 @@
 
 #include <concepts>
 
-#include "clang/AST/Decl.h"
 #include "common/hashtable_key_context.h"
 #include "common/ostream.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/sem_ir/ids.h"
+
+namespace clang {
+class Decl;
+class FunctionDecl;
+}  // namespace clang
 
 namespace Carbon::SemIR {
 
@@ -126,16 +130,11 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
   // count is required.
   static auto ForFunctionDecl(clang::FunctionDecl* decl,
                               ClangDeclSignatureId signature_id)
-      -> ClangDeclKey {
-    return ClangDeclKey(decl, signature_id, UncheckedTag());
-  }
+      -> ClangDeclKey;
 
   // Factory function for clang declaration that is dynamically known to not be
   // a function declaration.
-  static auto ForNonFunctionDecl(clang::Decl* decl) -> ClangDeclKey {
-    CARBON_CHECK(!isa<clang::FunctionDecl>(decl));
-    return ClangDeclKey(decl, ClangDeclSignatureId::None, UncheckedTag());
-  }
+  static auto ForNonFunctionDecl(clang::Decl* decl) -> ClangDeclKey;
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
@@ -163,8 +162,7 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
     explicit UncheckedTag() = default;
   };
   ClangDeclKey(clang::Decl* decl, ClangDeclSignatureId signature_id,
-               UncheckedTag /*_*/)
-      : decl(decl->getCanonicalDecl()), signature_id(signature_id) {}
+               UncheckedTag /*_*/);
 };
 
 // A Clang declaration mapped to a Carbon instruction.
@@ -180,6 +178,13 @@ struct ClangDecl : public Printable<ClangDecl> {
   // The instruction the Clang declaration is mapped to.
   InstId inst_id;
 
+  // True if this declaration originated from C++. False if this declaration was
+  // created by exporting some Carbon declaration to C++.
+  bool is_imported = false;
+
+  // Get the `clang::Decl` pointer.
+  auto decl() const -> clang::Decl* { return key.decl; }
+
   auto GetAsKey() const -> ClangDeclKey { return key; }
 };
 
@@ -192,14 +197,26 @@ class ClangDeclStore {
   // Adds a `ClangDecl`, returning an ID to reference it.
   auto Add(ClangDecl value) -> ClangDeclId;
 
+  // Same as `Add`, but for `VarStorage` that maps to a `clang::VarDecl`.
+  //
+  // When looking up via `InstId`, the pattern's `InstId` must be used
+  // instead of the `InstId` corresponding to the `VarStorage`. Note however
+  // that the `value.inst_id` is still the `VarStorage` `InstId`.
+  //
+  // The pattern's `InstId` is used because it provides a more stable
+  // lookup key than the `VarStorage` `InstId`. For example, a call to
+  // `Convert` may cause a new `VarStorage` instruction to be created,
+  // but the pattern will remain the same.
+  auto AddVar(ClangDecl value, InstId pattern_id) -> ClangDeclId;
+
   // Looks up a `ClangDecl` by `ClangDeclId`.
   auto Get(ClangDeclId id) const -> const ClangDecl& { return values_.Get(id); }
 
   // Looks up a `ClangDeclId` by `ClangDeclKey`.
-  auto Lookup(ClangDeclKey key) const -> ClangDeclId;
+  auto LookupId(ClangDeclKey key) const -> ClangDeclId;
 
-  // Looks up a `ClangDeclId` by `InstId`.
-  auto Lookup(InstId inst_id) const -> ClangDeclId;
+  // Looks up a `ClangDecl` by `InstId`. Returns nullptr if not found.
+  auto Lookup(InstId inst_id) const -> const ClangDecl*;
 
   auto OutputYaml() const -> Yaml::OutputMapping;
 

@@ -14,7 +14,6 @@ namespace Carbon::SemIR {
 // `self: Foo` or `ref self: Self`.
 auto IsSelfPattern(const File& sem_ir, InstId pattern_id) -> bool;
 
-
 // If `pattern_id` introduces any name bindings, this returns the `EntityNameId`
 // of the lexically-first such binding. Otherwise, returns `None`.
 auto GetFirstBindingNameFromPatternId(const File& sem_ir, InstId pattern_id)

@@ -4,6 +4,8 @@
 
 #include "toolchain/check/cpp/constant.h"
 
+#include "clang/Basic/DiagnosticSema.h"
+#include "clang/Sema/Sema.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
@@ -219,13 +221,11 @@ static auto ConvertArgToExpr(Context& context, SemIR::InstId arg_inst_id,
 }
 
 auto EvalCppCall(Context& context, SemIR::LocId loc_id,
-                 SemIR::ClangDeclId clang_decl_id, SemIR::InstBlockId args_id)
+                 const SemIR::ClangDecl& clang_decl, SemIR::InstBlockId args_id)
     -> SemIR::ConstantId {
   const auto& args = context.inst_blocks().Get(args_id);
 
-  auto* decl = context.clang_decls().Get(clang_decl_id).GetAsKey().decl;
-
-  auto* function_decl = cast<clang::FunctionDecl>(decl);
+  auto* function_decl = cast<clang::FunctionDecl>(clang_decl.decl());
 
   // Create expr for the function declaration.
   auto* decl_ref_expr = clang::DeclRefExpr::Create(
@@ -303,11 +303,10 @@ auto MaybeModifyCppThunkCallForConstEval(Context& context, SemIR::Call* call)
             .GetAs<SemIR::FunctionDecl>(thunk_callee_inst_id)
             .function_id);
 
-    function_decl =
-        cast<clang::FunctionDecl>(context.clang_decls()
-                                      .Get(thunk_callee_function.clang_decl_id)
-                                      .GetAsKey()
-                                      .decl);
+    function_decl = cast<clang::FunctionDecl>(
+        context.clang_decls()
+            .Lookup(thunk_callee_function.first_decl_id())
+            ->decl());
 
     if (!(function_decl->isConstexpr() || function_decl->isConsteval())) {
       return;

@@ -19,7 +19,7 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'struct_param.carbon'
 // CHECK:STDOUT: source_filename = "struct_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct.bcc.loc16_34.6 = internal constant { i32, i32 } { i32 2, i32 3 }
+// CHECK:STDOUT: @struct.e3f.loc16_34.6 = internal constant { i32, i32 } { i32 2, i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main({ i32 } %_, ptr %_1) #0 !dbg !4 {
@@ -30,7 +30,7 @@ fn Main() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main({ i32 } { i32 1 }, ptr @struct.bcc.loc16_34.6), !dbg !15
+// CHECK:STDOUT:   call void @_CF.Main({ i32 } { i32 1 }, ptr @struct.e3f.loc16_34.6), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -93,14 +93,14 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
-// CHECK:STDOUT:   %.8f0: Core.Form = init_form %C [concrete]
-// CHECK:STDOUT:   %pattern_type.0d5: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %.a44: Core.Form = init_form %C [concrete]
+// CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %ReturnCUnused.type: type = fn_type @ReturnCUnused [concrete]
 // CHECK:STDOUT:   %ReturnCUnused: %ReturnCUnused.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ReturnCUsed.type: type = fn_type @ReturnCUsed [concrete]
 // CHECK:STDOUT:   %ReturnCUsed: %ReturnCUsed.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.f19: Core.Form = init_form %D [concrete]
-// CHECK:STDOUT:   %pattern_type.f1a: type = pattern_type %D [concrete]
+// CHECK:STDOUT:   %.592: Core.Form = init_form %D [concrete]
+// CHECK:STDOUT:   %pattern_type.d8d: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %ReturnDUnused.type: type = fn_type @ReturnDUnused [concrete]
 // CHECK:STDOUT:   %ReturnDUnused: %ReturnDUnused.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ReturnDUsed.type: type = fn_type @ReturnDUsed [concrete]
@@ -133,38 +133,38 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %D.decl.loc5: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %ReturnCUnused.decl: %ReturnCUnused.type = fn_decl @ReturnCUnused [concrete = constants.%ReturnCUnused] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.0d5 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.0d5 = return_slot_pattern %return.param_patt, %C.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98b = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc7: Core.Form = init_form %C.ref [concrete = constants.%.8f0]
+// CHECK:STDOUT:     %.loc7: Core.Form = init_form %C.ref [concrete = constants.%.a44]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReturnCUsed.decl: %ReturnCUsed.type = fn_decl @ReturnCUsed [concrete = constants.%ReturnCUsed] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.0d5 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.0d5 = return_slot_pattern %return.param_patt, %C.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98b = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc8: Core.Form = init_form %C.ref [concrete = constants.%.8f0]
+// CHECK:STDOUT:     %.loc8: Core.Form = init_form %C.ref [concrete = constants.%.a44]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReturnDUnused.decl: %ReturnDUnused.type = fn_decl @ReturnDUnused [concrete = constants.%ReturnDUnused] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.f1a = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.f1a = return_slot_pattern %return.param_patt, %D.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.d8d = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.d8d = return_slot_pattern %return.param_patt, %D.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc5 [concrete = constants.%D]
-// CHECK:STDOUT:     %.loc9: Core.Form = init_form %D.ref [concrete = constants.%.f19]
+// CHECK:STDOUT:     %.loc9: Core.Form = init_form %D.ref [concrete = constants.%.592]
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param0
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReturnDUsed.decl: %ReturnDUsed.type = fn_decl @ReturnDUsed [concrete = constants.%ReturnDUsed] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.f1a = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.f1a = return_slot_pattern %return.param_patt, %D.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.d8d = out_param_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.d8d = return_slot_pattern %return.param_patt, %D.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc5 [concrete = constants.%D]
-// CHECK:STDOUT:     %.loc10: Core.Form = init_form %D.ref [concrete = constants.%.f19]
+// CHECK:STDOUT:     %.loc10: Core.Form = init_form %D.ref [concrete = constants.%.592]
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param0
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -217,8 +217,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %ReturnDUsed.type: type = fn_type @ReturnDUsed [concrete]
 // CHECK:STDOUT:   %ReturnDUsed: %ReturnDUsed.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.790b3b.2: type = fn_type @Destroy.Op.loc34_15.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.2dd605.2: %Destroy.Op.type.790b3b.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc34_15.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -235,7 +235,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//incomplete_return, loc37_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.c42 = import_ref Main//incomplete_return, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//incomplete_return, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -262,7 +262,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c42
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.54a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFAndGIncomplete() {
@@ -279,9 +279,9 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %.loc34_15.1: ref %D = temporary_storage
 // CHECK:STDOUT:   %ReturnDUsed.call: init %D to %.loc34_15.1 = call %ReturnDUsed.ref()
 // CHECK:STDOUT:   %.loc34_15.2: ref %D = temporary %.loc34_15.1, %ReturnDUsed.call
-// CHECK:STDOUT:   %Destroy.Op.bound.loc34: <bound method> = bound_method %.loc34_15.2, constants.%Destroy.Op.2dd605.2
+// CHECK:STDOUT:   %Destroy.Op.bound.loc34: <bound method> = bound_method %.loc34_15.2, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc34: init %empty_tuple.type = call %Destroy.Op.bound.loc34(%.loc34_15.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc33: <bound method> = bound_method %.loc33_17.2, constants.%Destroy.Op.2dd605.2
+// CHECK:STDOUT:   %Destroy.Op.bound.loc33: <bound method> = bound_method %.loc33_17.2, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc33: init %empty_tuple.type = call %Destroy.Op.bound.loc33(%.loc33_17.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

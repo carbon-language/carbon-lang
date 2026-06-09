@@ -14,11 +14,13 @@
 
 library "[[@TEST_NAME]]";
 
-fn CharLiteral() -> type = "char_literal.make_type";
-fn IntLiteral() -> type = "int_literal.make_type";
-fn UInt(n: IntLiteral()) -> type = "int.make_type_unsigned";
+fn MakeCharLiteral() -> type = "char_literal.make_type";
+alias CharLiteral = MakeCharLiteral();
+fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
+fn UInt(n: IntLiteral) -> type = "int.make_type_unsigned";
 
-fn ToChar(c: CharLiteral()) -> UInt(8) = "char.convert_checked";
+fn ToChar(c: CharLiteral) -> UInt(8) = "char.convert_checked";
 
 // --- fail_bad_decl.carbon
 
@@ -26,16 +28,16 @@ library "[[@TEST_NAME]]";
 import library "builtin";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char.convert_checked" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn ToCharBarResultU16(c: CharLiteral()) -> UInt(16) = "char.convert_checked";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn ToCharBarResultU16(c: CharLiteral()) -> UInt(16) = "char.convert_checked";
-
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char.convert_checked" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn ToCharBadResultU9(c: CharLiteral()) -> UInt(9) = "char.convert_checked";
+// CHECK:STDERR: fn ToCharBarResultU16(c: CharLiteral) -> UInt(16) = "char.convert_checked";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn ToCharBadResultU9(c: CharLiteral()) -> UInt(9) = "char.convert_checked";
+fn ToCharBarResultU16(c: CharLiteral) -> UInt(16) = "char.convert_checked";
+
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char.convert_checked" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn ToCharBadResultU9(c: CharLiteral) -> UInt(9) = "char.convert_checked";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn ToCharBadResultU9(c: CharLiteral) -> UInt(9) = "char.convert_checked";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char.convert_checked" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn ToCharNoParam() -> UInt(8) = "char.convert_checked";
@@ -48,14 +50,14 @@ fn ToCharNoParam() -> UInt(8) = "char.convert_checked";
 library "[[@TEST_NAME]]";
 import library "builtin";
 
-let c: CharLiteral() = 'a';
+let c: CharLiteral = 'a';
 // CHECK:STDERR: fail_runtime_call.carbon:[[@LINE+8]]:18: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: let d: UInt(8) = ToChar(c);
 // CHECK:STDERR:                  ^~~~~~~~~
 // CHECK:STDERR: fail_runtime_call.carbon:[[@LINE-6]]:1: in import [InImport]
-// CHECK:STDERR: builtin.carbon:8:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn ToChar(c: CharLiteral()) -> UInt(8) = "char.convert_checked";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: builtin.carbon:10:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: fn ToChar(c: CharLiteral) -> UInt(8) = "char.convert_checked";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let d: UInt(8) = ToChar(c);
 

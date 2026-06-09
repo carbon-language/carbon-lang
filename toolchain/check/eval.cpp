@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "common/raw_string_ostream.h"
+#include "llvm/ADT/APFloat.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/kind_switch.h"
@@ -385,6 +386,14 @@ static auto MakeBoolResult(Context& context, SemIR::TypeId bool_type_id,
       Phase::Concrete);
 }
 
+// Converts an IntId value into a ConstantId.
+static auto MakeIntResult(Context& context, SemIR::TypeId type_id, IntId int_id)
+    -> SemIR::ConstantId {
+  return MakeConstantResult(
+      context, SemIR::IntValue{.type_id = type_id, .int_id = int_id},
+      Phase::Concrete);
+}
+
 // Converts an APInt value into a ConstantId.
 static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
                           bool is_signed, llvm::APInt value)
@@ -392,9 +401,7 @@ static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
   CARBON_CHECK(is_signed == context.types().IsSignedInt(type_id));
   auto result = is_signed ? context.ints().AddSigned(std::move(value))
                           : context.ints().AddUnsigned(std::move(value));
-  return MakeConstantResult(
-      context, SemIR::IntValue{.type_id = type_id, .int_id = result},
-      Phase::Concrete);
+  return MakeIntResult(context, type_id, result);
 }
 
 // Converts an APFloat value into a ConstantId.
@@ -1141,7 +1148,8 @@ static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
   }
 
   llvm::APInt int_val(8, arg.value.index, /*isSigned=*/false);
-  return MakeIntResult(context, dest_type_id, /*is_signed=*/false, int_val);
+  return MakeIntResult(context, dest_type_id, /*is_signed=*/false,
+                       std::move(int_val));
 }
 
 // Forms a constant int type as an evaluation result. Requires that width_id is
@@ -1172,6 +1180,15 @@ static auto MakeFloatTypeResult(Context& context, SemIR::LocId loc_id,
   return MakeConstantResult(context, result, phase);
 }
 
+// Get an integer at a suitable bit-width: either `bit_width_id` if it has a
+// value, or the canonical width from the value store if not.
+static auto GetIntAtSuitableWidth(Context& context, IntId int_id,
+                                  IntId bit_width_id) -> llvm::APInt {
+  return bit_width_id.has_value()
+             ? context.ints().GetAtWidth(int_id, bit_width_id)
+             : context.ints().Get(int_id);
+}
+
 // Performs a conversion between integer types, truncating if the value doesn't
 // fit in the destination type.
 static auto PerformIntConvert(Context& context, SemIR::InstId arg_id,
@@ -1189,7 +1206,8 @@ static auto PerformIntConvert(Context& context, SemIR::InstId arg_id,
     arg_val =
         src_is_signed ? arg_val.sextOrTrunc(width) : arg_val.zextOrTrunc(width);
   }
-  return MakeIntResult(context, dest_type_id, dest_is_signed, arg_val);
+  return MakeIntResult(context, dest_type_id, dest_is_signed,
+                       std::move(arg_val));
 }
 
 // Performs a conversion between integer types, diagnosing if the value doesn't
@@ -1227,16 +1245,47 @@ static auto PerformCheckedIntConvert(Context& context, SemIR::LocId loc_id,
                            dest_type_id);
   }
 
-  return MakeConstantResult(
-      context, SemIR::IntValue{.type_id = dest_type_id, .int_id = arg.int_id},
-      Phase::Concrete);
+  return MakeIntResult(context, dest_type_id, arg.int_id);
+}
+
+// Convert a real value to an APFloat.
+static auto RealToAPFloat(Context& context, RealId real_id,
+                          const llvm::fltSemantics& semantics,
+                          llvm::APFloat::opStatus* status = nullptr)
+    -> llvm::APFloat {
+  auto real_value = context.sem_ir().reals().Get(real_id);
+
+  // Convert the real value to a string.
+  llvm::SmallString<64> str;
+  real_value.mantissa.toString(str, real_value.is_decimal ? 10 : 16,
+                               /*signed=*/false, /*formatAsCLiteral=*/true);
+  str += real_value.is_decimal ? "e" : "p";
+  real_value.exponent.toStringSigned(str);
+
+  // Convert the string to an APFloat.
+  // TODO: The implementation of this conversion effectively converts back to
+  // APInts, but unfortunately the conversion from integer mantissa and
+  // exponent in IEEEFloat::roundSignificandWithExponent is not part of the
+  // public API.
+  llvm::APFloat result(semantics);
+  auto res_status =
+      result.convertFromString(str, llvm::APFloat::rmNearestTiesToEven);
+  if (auto error = res_status.takeError()) {
+    // The literal we create should always successfully parse.
+    CARBON_FATAL("Float literal parsing failed: {0}",
+                 toString(std::move(error)));
+  }
+  if (status) {
+    *status = res_status.get();
+  }
+  return result;
 }
 
 // Performs a conversion between floating-point types, diagnosing if the value
-// doesn't fit in the destination type.
-static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
-                                       SemIR::InstId arg_id,
-                                       SemIR::TypeId dest_type_id)
+// doesn't fit in the destination type when check_overflow is true.
+static auto PerformFloatConvert(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId arg_id,
+                                SemIR::TypeId dest_type_id, bool check_overflow)
     -> SemIR::ConstantId {
   auto dest_type_object_rep_id = context.types().GetObjectRepr(dest_type_id);
   CARBON_CHECK(dest_type_object_rep_id.has_value(),
@@ -1263,29 +1312,11 @@ static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
     // TODO: Implement Carbon's actual implicit conversion rules for
     // floating-point constants, as per the design
     // docs/design/expressions/implicit_conversions.md
-    auto real_value = context.sem_ir().reals().Get(literal->real_id);
-
-    // Convert the real value to a string.
-    llvm::SmallString<64> str;
-    real_value.mantissa.toString(str, real_value.is_decimal ? 10 : 16,
-                                 /*signed=*/false, /*formatAsCLiteral=*/true);
-    str += real_value.is_decimal ? "e" : "p";
-    real_value.exponent.toStringSigned(str);
-
-    // Convert the string to an APFloat.
-    llvm::APFloat result(dest_float_type->float_kind.Semantics());
-    // TODO: The implementation of this conversion effectively converts back to
-    // APInts, but unfortunately the conversion from integer mantissa and
-    // exponent in IEEEFloat::roundSignificandWithExponent is not part of the
-    // public API.
-    auto status =
-        result.convertFromString(str, llvm::APFloat::rmNearestTiesToEven);
-    if (auto error = status.takeError()) {
-      // The literal we create should always successfully parse.
-      CARBON_FATAL("Float literal parsing failed: {0}",
-                   toString(std::move(error)));
-    }
-    if (status.get() & llvm::APFloat::opOverflow) {
+    llvm::APFloat::opStatus status;
+    llvm::APFloat result =
+        RealToAPFloat(context, literal->real_id,
+                      dest_float_type->float_kind.Semantics(), &status);
+    if (check_overflow && (status & llvm::APFloat::opOverflow)) {
       CARBON_DIAGNOSTIC(FloatLiteralTooLargeForType, Error,
                         "value {0} too large for floating-point type {1}",
                         RealId, SemIR::TypeId);
@@ -1307,7 +1338,7 @@ static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
   bool loses_info;
   auto status = result.convert(dest_float_type->float_kind.Semantics(),
                                llvm::APFloat::rmNearestTiesToEven, &loses_info);
-  if (status & llvm::APFloat::opOverflow) {
+  if (check_overflow && (status & llvm::APFloat::opOverflow)) {
     CARBON_DIAGNOSTIC(FloatTooLargeForType, Error,
                       "value {0} too large for floating-point type {1}",
                       llvm::APFloat, SemIR::TypeId);
@@ -1319,20 +1350,289 @@ static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
   return MakeFloatResult(context, dest_type_id, std::move(result));
 }
 
+// Performs a conversion from integer type to a floating-point type, optionally
+// checking for exactness.
+static auto PerformIntToFloatConvert(Context& context, SemIR::LocId loc_id,
+                                     SemIR::InstId arg_id,
+                                     SemIR::TypeId dest_type_id,
+                                     bool require_exact) -> SemIR::ConstantId {
+  auto arg = context.insts().GetAs<SemIR::IntValue>(arg_id);
+  auto [src_is_signed, bit_width_id] =
+      context.sem_ir().types().GetIntTypeInfo(arg.type_id);
+  llvm::APInt op_val = GetIntAtSuitableWidth(context, arg.int_id, bit_width_id);
+
+  auto dest_type_object_rep_id = context.types().GetObjectRepr(dest_type_id);
+  CARBON_CHECK(dest_type_object_rep_id.has_value(),
+               "Conversion to incomplete type");
+  auto dest_float_type =
+      context.types().TryGetAs<SemIR::FloatType>(dest_type_object_rep_id);
+
+  if (!dest_float_type) {
+    // Target is Core.FloatLiteral, which is always exact.
+    llvm::APInt mantissa = op_val;
+    if (src_is_signed && op_val.isNegative()) {
+      // FloatLiteral can only represent positive real values. Negative
+      // literals are parsed as Negate(FloatLiteralValue).
+      context.TODO(loc_id, "negative float literal conversion");
+      return SemIR::ErrorInst::ConstantId;
+    }
+    auto real_id = context.reals().Add(
+        Real{.mantissa = mantissa,
+             .exponent = llvm::APInt(32, 0, /*isSigned=*/true),
+             .is_decimal = true});
+    return MakeConstantResult(
+        context,
+        SemIR::FloatLiteralValue{.type_id = dest_type_id, .real_id = real_id},
+        Phase::Concrete);
+  }
+
+  llvm::APFloat ap_float(dest_float_type->float_kind.Semantics());
+  auto status = ap_float.convertFromAPInt(op_val, src_is_signed,
+                                          llvm::APFloat::rmNearestTiesToEven);
+  if (status & llvm::APFloat::opOverflow) {
+    CARBON_DIAGNOSTIC(IntTooLargeForFloatType, Error,
+                      "integer value {0} too large for floating-point type {1}",
+                      TypedInt, SemIR::TypeId);
+    context.emitter().Emit(loc_id, IntTooLargeForFloatType,
+                           {.type = arg.type_id, .value = op_val},
+                           dest_type_id);
+    return SemIR::ErrorInst::ConstantId;
+  }
+  if (require_exact && (status & llvm::APFloat::opInexact)) {
+    CARBON_DIAGNOSTIC(IntLossyConversionToFloat, Error,
+                      "integer value {0} cannot be represented exactly in "
+                      "floating-point type {1}",
+                      TypedInt, SemIR::TypeId);
+    context.emitter().Emit(loc_id, IntLossyConversionToFloat,
+                           {.type = arg.type_id, .value = op_val},
+                           dest_type_id);
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return MakeFloatResult(context, dest_type_id, std::move(ap_float));
+}
+
+// Diagnoses that the real literal is too large for the destination type.
+static auto DiagnoseRealLiteralTooLarge(Context& context, SemIR::LocId loc_id,
+                                        RealId real_id,
+                                        SemIR::TypeId dest_type_id)
+    -> SemIR::ConstantId {
+  CARBON_DIAGNOSTIC(RealLiteralTooLargeForIntType, Error,
+                    "floating-point value {0} too large for integer type {1}",
+                    RealId, SemIR::TypeId);
+  context.emitter().Emit(loc_id, RealLiteralTooLargeForIntType, real_id,
+                         dest_type_id);
+  return SemIR::ErrorInst::ConstantId;
+}
+
+namespace {
+struct BitWidthBounds {
+  uint64_t lower_bound;
+  uint64_t upper_bound;
+};
+}  // namespace
+
+// Computes a strict lower bound and upper bound on the bit-width of a real
+// literal value when converted to an integer, rounding towards zero.
+static auto EstimateRealLiteralBitWidth(const Real& real_val)
+    -> BitWidthBounds {
+  const llvm::APInt& mantissa = real_val.mantissa;
+  const llvm::APInt& exponent = real_val.exponent;
+
+  if (mantissa.isZero() ||
+      (exponent.isNegative() && exponent.abs().getActiveBits() > 64)) {
+    // If the result is definitely less than one, it rounds to zero.
+    return {.lower_bound = 0, .upper_bound = 0};
+  }
+
+  // Check if the exponent is extremely large, indicating an immediate overflow.
+  // We return the maximum possible bit width since the mathematically evaluated
+  // value has at least 2^64 bits.
+  if (!exponent.isNegative() && exponent.getActiveBits() > 64) {
+    return {.lower_bound = static_cast<uint64_t>(-1),
+            .upper_bound = static_cast<uint64_t>(-1)};
+  }
+
+  uint64_t abs_exponent = exponent.abs().getZExtValue();
+  uint64_t scale_min = abs_exponent;
+  uint64_t scale_max = abs_exponent;
+  if (real_val.is_decimal) {
+    // 10^4 = 10000 > 8192 = 2^13, so each decimal digit changes the size by
+    // at least 13/4 bits (safe lower-bound scaling).
+    scale_min = (abs_exponent * 13) / 4;
+    // 10^3 = 1000 < 1024 = 2^10, so each decimal digit changes the size by
+    // less than 10/3 bits (safe upper-bound scaling).
+    scale_max = (abs_exponent * 10 + 2) / 3;
+  }
+
+  uint64_t lower_bound = mantissa.getActiveBits();
+  uint64_t upper_bound = mantissa.getActiveBits();
+
+  if (exponent.isNegative()) {
+    // A negative exponent decreases the result size.
+    lower_bound = (lower_bound > scale_max) ? (lower_bound - scale_max) : 0;
+    upper_bound = (upper_bound > scale_min) ? (upper_bound - scale_min) : 0;
+  } else {
+    // A positive exponent increases the result size.
+    lower_bound += scale_min;
+    upper_bound += scale_max;
+  }
+
+  return {.lower_bound = lower_bound, .upper_bound = upper_bound};
+}
+
+// Converts an unsized RealId (floating-point literal) to an integer.
+static auto ConvertRealLiteralToInt(Context& context, SemIR::LocId loc_id,
+                                    RealId real_id, SemIR::TypeId dest_type_id,
+                                    bool dest_is_signed, IntId bit_width_id)
+    -> SemIR::ConstantId {
+  const auto& real_val = context.reals().Get(real_id);
+  const llvm::APInt& mantissa = real_val.mantissa;
+  const llvm::APInt& exponent = real_val.exponent;
+
+  auto bounds = EstimateRealLiteralBitWidth(real_val);
+  if (bounds.upper_bound == 0) {
+    // The result fits in 0 bits, so must be 0.
+    return MakeIntResult(context, dest_type_id, context.ints().Add(0));
+  }
+
+  // Sized bounds check: prevent constructing an APInt with a huge number of
+  // digits if it's way larger than the destination type.
+  if (bit_width_id.has_value()) {
+    if (context.ints().Get(bit_width_id).ult(bounds.lower_bound)) {
+      return DiagnoseRealLiteralTooLarge(context, loc_id, real_id,
+                                         dest_type_id);
+    }
+  } else if (bounds.lower_bound > IntStore::MaxIntWidth) {
+    CARBON_DIAGNOSTIC(
+        RealLiteralTooLargeForUnsizedInt, Error,
+        "floating-point value {0} too large to convert: result would be an "
+        "integer whose width is greater than the maximum supported width of "
+        "{1}",
+        RealId, int);
+    context.emitter().Emit(loc_id, RealLiteralTooLargeForUnsizedInt, real_id,
+                           IntStore::MaxIntWidth);
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  // Compute an upper bound on the bit width of base^exponent.
+  unsigned abs_exponent = exponent.abs().getZExtValue();
+  unsigned exponent_upper_bound =
+      real_val.is_decimal ? ((abs_exponent * 10 + 2) / 3) : abs_exponent;
+
+  // If the exponent is positive, base^exponent cannot be larger than the result
+  // size. If it's negative, base^exponent can't be *much* larger than the
+  // mantissa or we'd have computed a lower bound of 0 bits and bailed out.
+  CARBON_CHECK(
+      exponent_upper_bound <=
+      std::max<unsigned>(mantissa.getActiveBits() * 2, bounds.upper_bound));
+
+  // Compute a bit-width in which we can safely compute the result. We need
+  // enough space to store the mantissa, base^exponent, the result and a sign
+  // bit, and the number 10 (4 bits).
+  unsigned calc_width =
+      std::max({mantissa.getActiveBits(), exponent_upper_bound,
+                static_cast<unsigned>(bounds.upper_bound + 1), 4U});
+
+  // Compute the integer result.
+  llvm::APInt integer_val = mantissa.zextOrTrunc(calc_width);
+  if (!real_val.is_decimal) {
+    // Binary exponent (mantissa * 2^exponent).
+    if (!exponent.isNegative()) {
+      integer_val <<= abs_exponent;
+    } else {
+      integer_val.lshrInPlace(abs_exponent);
+    }
+  } else {
+    // Decimal exponent (mantissa * 10^exponent).
+    llvm::APInt ten(calc_width, 10);
+    llvm::APInt ten_pow = llvm::APIntOps::pow(ten, abs_exponent);
+    if (!exponent.isNegative()) {
+      integer_val *= ten_pow;
+    } else {
+      integer_val = integer_val.udiv(ten_pow);
+    }
+  }
+
+  // If the target type is sized, check the final value fits in the type.
+  if (bit_width_id.has_value()) {
+    unsigned dest_width = context.ints().Get(bit_width_id).getZExtValue();
+    if (integer_val.getActiveBits() > dest_width - dest_is_signed) {
+      return DiagnoseRealLiteralTooLarge(context, loc_id, real_id,
+                                         dest_type_id);
+    }
+  }
+
+  return MakeIntResult(context, dest_type_id, dest_is_signed,
+                       std::move(integer_val));
+}
+
+// Converts a sized FloatId to an integer.
+static auto ConvertFloatValueToInt(Context& context, SemIR::LocId loc_id,
+                                   FloatId float_id, SemIR::TypeId dest_type_id,
+                                   bool dest_is_signed, IntId bit_width_id)
+    -> SemIR::ConstantId {
+  llvm::APFloat float_val = context.floats().Get(float_id);
+
+  if (float_val.isNaN()) {
+    CARBON_DIAGNOSTIC(FloatNaNConvertedToInt, Error,
+                      "cannot convert NaN to integer type {0}", SemIR::TypeId);
+    context.emitter().Emit(loc_id, FloatNaNConvertedToInt, dest_type_id);
+    return SemIR::ErrorInst::ConstantId;
+  }
+  if (float_val.isInfinity()) {
+    CARBON_DIAGNOSTIC(FloatInfinityConvertedToInt, Error,
+                      "cannot convert infinity to integer type {0}",
+                      SemIR::TypeId);
+    context.emitter().Emit(loc_id, FloatInfinityConvertedToInt, dest_type_id);
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  int exp = float_val.isZero() ? 0 : llvm::ilogb(float_val);
+  unsigned target_width = bit_width_id.has_value()
+                              ? context.ints().Get(bit_width_id).getZExtValue()
+                              : std::max(64, exp + 2);
+
+  llvm::APSInt result(target_width, !dest_is_signed);
+  bool is_exact;
+  auto status = float_val.convertToInteger(result, llvm::APFloat::rmTowardZero,
+                                           &is_exact);
+  if (status & (llvm::APFloat::opOverflow | llvm::APFloat::opInvalidOp)) {
+    CARBON_DIAGNOSTIC(FloatTooLargeForIntType, Error,
+                      "floating-point value {0} too large for integer type {1}",
+                      llvm::APFloat, SemIR::TypeId);
+    context.emitter().Emit(loc_id, FloatTooLargeForIntType, float_val,
+                           dest_type_id);
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  return MakeIntResult(context, dest_type_id, dest_is_signed,
+                       std::move(result));
+}
+
+// Performs a conversion from a floating-point type to an integer type.
+static auto PerformFloatToIntConvert(Context& context, SemIR::LocId loc_id,
+                                     SemIR::InstId arg_id,
+                                     SemIR::TypeId dest_type_id)
+    -> SemIR::ConstantId {
+  auto [dest_is_signed, bit_width_id] =
+      context.sem_ir().types().GetIntTypeInfo(dest_type_id);
+
+  if (auto literal =
+          context.insts().TryGetAs<SemIR::FloatLiteralValue>(arg_id)) {
+    return ConvertRealLiteralToInt(context, loc_id, literal->real_id,
+                                   dest_type_id, dest_is_signed, bit_width_id);
+  }
+
+  auto arg = context.insts().GetAs<SemIR::FloatValue>(arg_id);
+  return ConvertFloatValueToInt(context, loc_id, arg.float_id, dest_type_id,
+                                dest_is_signed, bit_width_id);
+}
+
 // Issues a diagnostic for a compile-time division by zero.
 static auto DiagnoseDivisionByZero(Context& context, SemIR::LocId loc_id)
     -> void {
   CARBON_DIAGNOSTIC(CompileTimeDivisionByZero, Error, "division by zero");
   context.emitter().Emit(loc_id, CompileTimeDivisionByZero);
-}
-
-// Get an integer at a suitable bit-width: either `bit_width_id` if it has a
-// value, or the canonical width from the value store if not.
-static auto GetIntAtSuitableWidth(Context& context, IntId int_id,
-                                  IntId bit_width_id) -> llvm::APInt {
-  return bit_width_id.has_value()
-             ? context.ints().GetAtWidth(int_id, bit_width_id)
-             : context.ints().Get(int_id);
 }
 
 // Performs a builtin unary integer -> integer operation.
@@ -1883,12 +2183,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
       auto char_value =
           static_cast<uint8_t>(string_value[index_val.getZExtValue()]);
-
-      auto int_id = eval_context.ints().Add(
-          llvm::APSInt(llvm::APInt(32, char_value), /*isUnsigned=*/false));
-      return MakeConstantResult(
-          eval_context.context(),
-          SemIR::IntValue{.type_id = call.type_id, .int_id = int_id}, phase);
+      return MakeIntResult(eval_context.context(), call.type_id,
+                           /*is_signed=*/false, llvm::APInt(32, char_value));
     }
 
     case SemIR::BuiltinFunctionKind::MakeUninitialized:
@@ -2022,6 +2318,20 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       return PerformCheckedIntConvert(context, loc_id, arg_ids[0],
                                       call.type_id);
     }
+    case SemIR::BuiltinFunctionKind::IntConvertFloat: {
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformIntToFloatConvert(context, loc_id, arg_ids[0], call.type_id,
+                                      /*require_exact=*/false);
+    }
+    case SemIR::BuiltinFunctionKind::IntConvertFloatChecked: {
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformIntToFloatConvert(context, loc_id, arg_ids[0], call.type_id,
+                                      /*require_exact=*/true);
+    }
 
     // Unary integer -> integer operations.
     case SemIR::BuiltinFunctionKind::IntSNegate:
@@ -2080,12 +2390,26 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     }
 
     // Floating-point conversions.
+    case SemIR::BuiltinFunctionKind::FloatConvert: {
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformFloatConvert(context, loc_id, arg_ids[0], call.type_id,
+                                 /*check_overflow=*/false);
+    }
     case SemIR::BuiltinFunctionKind::FloatConvertChecked: {
       if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);
       }
-      return PerformCheckedFloatConvert(context, loc_id, arg_ids[0],
-                                        call.type_id);
+      return PerformFloatConvert(context, loc_id, arg_ids[0], call.type_id,
+                                 /*check_overflow=*/true);
+    }
+    case SemIR::BuiltinFunctionKind::FloatConvertInt: {
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformFloatToIntConvert(context, loc_id, arg_ids[0],
+                                      call.type_id);
     }
 
     // Unary float -> float operations.
@@ -3128,9 +3452,11 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
                         const SemIR::Function& function,
                         SemIR::SpecificId specific_id,
                         SemIR::InstBlockId args_id) -> SemIR::ConstantId {
-  if (function.clang_decl_id != SemIR::ClangDeclId::None) {
-    return EvalCppCall(outer_eval_context.context(), loc_id,
-                       function.clang_decl_id, args_id);
+  const auto* clang_decl = outer_eval_context.sem_ir().clang_decls().Lookup(
+      function.first_decl_id());
+  if (clang_decl && clang_decl->is_imported) {
+    return EvalCppCall(outer_eval_context.context(), loc_id, *clang_decl,
+                       args_id);
   } else if (function.body_block_ids.empty()) {
     // TODO: Diagnose this.
     return SemIR::ConstantId::NotConstant;

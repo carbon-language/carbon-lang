@@ -276,6 +276,30 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::ReturnExpr inst) -> void {
+  auto expr_cat = SemIR::GetExprCategory(context.sem_ir(), inst.expr_id);
+  switch (expr_cat) {
+    case SemIR::ExprCategory::EphemeralRef:
+    case SemIR::ExprCategory::DurableRef:
+      // Reference return.
+      context.builder().CreateRet(context.GetValue(inst.expr_id));
+      return;
+
+    case SemIR::ExprCategory::Value:
+      // Return of a `returned var`.
+    case SemIR::ExprCategory::ReprInitializing:
+    case SemIR::ExprCategory::InPlaceInitializing:
+      // Initializing return.
+      break;
+
+    case SemIR::ExprCategory::Mixed:
+    case SemIR::ExprCategory::RefTagged:
+    case SemIR::ExprCategory::NotExpr:
+    case SemIR::ExprCategory::Error:
+    case SemIR::ExprCategory::Pattern:
+    case SemIR::ExprCategory::Dependent:
+      CARBON_FATAL("Unexpected category for `return` expression");
+  }
+
   auto result_type = context.GetTypeIdOfInst(inst.expr_id);
   switch (context.GetInitRepr(result_type).kind) {
     case SemIR::InitRepr::None:
@@ -293,23 +317,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
       return;
     case SemIR::InitRepr::ByCopy: {
       auto* value = context.GetValue(inst.expr_id);
-      switch (SemIR::GetExprCategory(context.sem_ir(), inst.expr_id)) {
-        case SemIR::ExprCategory::Value:
-        case SemIR::ExprCategory::ReprInitializing:
-        case SemIR::ExprCategory::EphemeralRef:
-        case SemIR::ExprCategory::DurableRef:
-          break;
-        case SemIR::ExprCategory::InPlaceInitializing:
-          value =
-              context.builder().CreateLoad(context.GetType(result_type), value);
-          break;
-        case SemIR::ExprCategory::Mixed:
-        case SemIR::ExprCategory::RefTagged:
-        case SemIR::ExprCategory::NotExpr:
-        case SemIR::ExprCategory::Error:
-        case SemIR::ExprCategory::Pattern:
-        case SemIR::ExprCategory::Dependent:
-          CARBON_FATAL("Unexpected category for `return` expression");
+      if (expr_cat == SemIR::ExprCategory::InPlaceInitializing) {
+        value =
+            context.builder().CreateLoad(context.GetType(result_type), value);
       }
       context.builder().CreateRet(value);
       return;

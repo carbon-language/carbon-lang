@@ -30,10 +30,10 @@ fn RuntimeCallIsValid(a: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-fn Complement(a: Core.IntLiteral()) -> Core.IntLiteral() = "int.complement";
+fn Complement(a: Core.IntLiteral) -> Core.IntLiteral = "int.complement";
 
-class Expect(N:! Core.IntLiteral()) {}
-fn Test(N:! Core.IntLiteral()) -> Expect(N) { return {}; }
+class Expect(N:! Core.IntLiteral) {}
+fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Complement(0)) as Expect(-1);
@@ -49,15 +49,15 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-fn Complement(a: Core.IntLiteral()) -> Core.IntLiteral() = "int.complement";
+fn Complement(a: Core.IntLiteral) -> Core.IntLiteral = "int.complement";
 
-fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
+fn F(a: Core.IntLiteral) -> Core.IntLiteral {
   // CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE+7]]:10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
   // CHECK:STDERR:   return Complement(a);
   // CHECK:STDERR:          ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE-6]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR: fn Complement(a: Core.IntLiteral()) -> Core.IntLiteral() = "int.complement";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Complement(a: Core.IntLiteral) -> Core.IntLiteral = "int.complement";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   return Complement(a);
 }

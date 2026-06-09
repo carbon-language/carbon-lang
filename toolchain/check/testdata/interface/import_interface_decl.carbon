@@ -55,9 +55,9 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.B = import_ref Main//b, B, unloaded
-// CHECK:STDOUT:   %Main.import_ref.f95 = import_ref Main//b, loc2_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c07 = import_ref Main//b, loc2_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//b, loc7_7, loaded [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %Main.import_ref.7eb: type = import_ref Main//b, loc7_12, loaded [concrete = constants.%B.type]
+// CHECK:STDOUT:   %Main.import_ref.21a: type = import_ref Main//b, loc7_12, loaded [concrete = constants.%B.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -70,13 +70,13 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B [from "fail_b.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.f95
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c07
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.B.impl: imports.%Main.import_ref.e5c as imports.%Main.import_ref.7eb [from "fail_b.carbon"];
+// CHECK:STDOUT: impl @empty_tuple.type.as.B.impl: imports.%Main.import_ref.e5c as imports.%Main.import_ref.21a [from "fail_b.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:

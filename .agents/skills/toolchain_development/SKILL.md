@@ -100,9 +100,9 @@ When declaring and emitting errors, ensure semantic wording matches the exact
 context:
 
 -   **Semantic Precision**: Do not reference "types" when raising errors for
-    unsized expressions like `IntLiteral()` or `FloatLiteral()`. For example,
-    use `RealLiteralTooLargeForUnsizedInt` instead of a diagnostic referencing
-    an "integer type".
+    unsized expressions like `IntLiteral` or `FloatLiteral`. For example, use
+    `RealLiteralTooLargeForUnsizedInt` instead of a diagnostic referencing an
+    "integer type".
 -   **Wording Consistency**: Before declaring a new diagnostic in
     [kind.def](../../../toolchain/diagnostics/kind.def), search for existing
     diagnostics in the targeted implementation files (for example, other uses of

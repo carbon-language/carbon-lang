@@ -435,6 +435,9 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
     case CARBON_KIND(SemIR::FieldDecl field_decl): {
       return ExportFieldToCpp(*context_, target_inst_id, field_decl);
     }
+    case CARBON_KIND(SemIR::VarStorage var_storage): {
+      return ExportVarToCpp(*context_, target_inst_id, var_storage);
+    }
     default:
       return nullptr;
   }
@@ -443,14 +446,33 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
 auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
     SemIR::InstId target_inst_id, SemIR::FunctionId function_id)
     -> clang::FunctionDecl* {
-  const SemIR::Function& function = context_->functions().Get(function_id);
-  if (function.clang_decl_id.has_value()) {
-    return cast<clang::FunctionDecl>(
-        context_->clang_decls().Get(function.clang_decl_id).key.decl);
+  SemIR::Function& function = context_->functions().Get(function_id);
+  if (const auto* clang_decl =
+          context_->clang_decls().Lookup(function.first_decl_id())) {
+    return cast<clang::FunctionDecl>(clang_decl->decl());
   }
 
-  return ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id),
-                             function_id);
+  auto* clang_function_decl =
+      ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id), function_id);
+
+  if (!clang_function_decl) {
+    return nullptr;
+  }
+
+  SemIR::ClangDeclSignature thunk_signature;
+  thunk_signature.kind = SemIR::ClangDeclSignature::Normal;
+  thunk_signature.num_params =
+      static_cast<int32_t>(clang_function_decl->getNumParams());
+  thunk_signature.passing_modes.assign(
+      thunk_signature.num_params,
+      SemIR::ClangDeclSignature::PassingMode::ByValue);
+  context_->clang_decls().Add(
+      {.key = SemIR::ClangDeclKey::ForFunctionDecl(
+           clang_function_decl,
+           context_->clang_decl_signatures().Add(std::move(thunk_signature))),
+       .inst_id = function.first_decl_id()});
+
+  return clang_function_decl;
 }
 
 auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
@@ -487,7 +509,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   auto* decl = cast<clang::Decl>(
       const_cast<clang::DeclContext*>(decl_context->getPrimaryContext()));
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
-  auto decl_id = context_->clang_decls().Lookup(key);
+  auto decl_id = context_->clang_decls().LookupId(key);
   CARBON_CHECK(
       decl_id.has_value(),
       "The DeclContext should already be associated with a Carbon InstId.");
@@ -568,7 +590,7 @@ static auto GetAsCarbonOwnedClass(Context& context,
 
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
       const_cast<clang::TagDecl*>(tag_decl->getFirstDecl()));
-  auto clang_decl_id = context.clang_decls().Lookup(key);
+  auto clang_decl_id = context.clang_decls().LookupId(key);
   if (!clang_decl_id.has_value()) {
     return std::nullopt;
   }

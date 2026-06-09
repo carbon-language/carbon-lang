@@ -30,7 +30,7 @@ fn G(x: Cpp.X, n: i32) -> i32 {
   return x.arr[n];
 }
 
-// --- fail_todo_export_variable.carbon
+// --- export_variable.carbon
 library "[[@TEST_NAME]]";
 
 import Cpp;
@@ -39,10 +39,6 @@ var arr: array(i32, 5);
 
 inline Cpp '''
 int F(int n) {
-  // CHECK:STDERR: fail_todo_export_variable.carbon:[[@LINE+4]]:18: error: no member named 'arr' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    13 |   return Carbon::arr[n];
-  // CHECK:STDERR:       |                  ^~~
-  // CHECK:STDERR:
   return Carbon::arr[n];
 }
 ''';

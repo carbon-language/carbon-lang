@@ -33,7 +33,7 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   // This looks for a Destroy witness for an IntLiteralType.
-  Core.IntLiteral() as Core.Destroy;
+  Core.IntLiteral as Core.Destroy;
 }
 
 // --- destroy_int_type.carbon
@@ -48,7 +48,7 @@ fn F() {
 // --- destroy_symbolic_int_type.carbon
 library "[[@TEST_NAME]]";
 
-fn F(N:! Core.IntLiteral()) {
+fn F(N:! Core.IntLiteral) {
   // This looks for a Destroy witness for a class type that adapts IntType with a
   // symbolic type.
   Core.Int(N) as Core.Destroy;

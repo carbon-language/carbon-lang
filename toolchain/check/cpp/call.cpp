@@ -140,7 +140,7 @@ static auto ConvertArgToTemplateArg(
             context.types().TryGetAs<SemIR::CppTemplateNameType>(
                 inst.type_id())) {
       clang::TemplateName name(cast<clang::TemplateDecl>(
-          context.clang_decls().Get(template_name_type->decl_id).key.decl));
+          context.clang_decls().Get(template_name_type->decl_id).decl()));
       return clang::TemplateArgumentLoc(
           context.ast_context(), clang::TemplateArgument(name),
           /*TemplateKWLoc=*/clang::SourceLocation(),
@@ -346,7 +346,7 @@ auto PerformCallToCppTemplateName(Context& context, SemIR::LocId loc_id,
                                   llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
   auto* template_decl = dyn_cast<clang::TemplateDecl>(
-      context.clang_decls().Get(template_decl_id).key.decl);
+      context.clang_decls().Get(template_decl_id).decl());
   auto loc = GetCppLocation(context, loc_id);
 
   // Form a template argument list for this template.

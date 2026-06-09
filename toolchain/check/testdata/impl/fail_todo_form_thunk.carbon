@@ -12,7 +12,7 @@
 
 interface I {
   let T:! type;
-  let Fm:! Core.Form();
+  let Fm:! Core.Form;
   // CHECK:STDERR: fail_todo_form_thunk.carbon:[[@LINE+4]]:8: error: semantics TODO: `Support symbolic form bindings` [SemanticsTodo]
   // CHECK:STDERR:   fn F(x:? Fm, y: T);
   // CHECK:STDERR:        ^~~~~~

@@ -42,8 +42,6 @@ auto IsSelfPattern(const File& sem_ir, InstId pattern_id) -> bool {
   return name_id == NameId::SelfValue;
 }
 
-
-
 auto GetFirstBindingNameFromPatternId(const File& sem_ir, InstId pattern_id)
     -> EntityNameId {
   llvm::SmallVector<InstId> work_list = {pattern_id};

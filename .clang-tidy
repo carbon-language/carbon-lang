@@ -121,6 +121,10 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.NamespaceCase
     value: CamelCase
+  # Headers re-open LLVM and Clang namespaces to forward-declare their types,
+  # which is much cheaper to compile than including their headers.
+  - key: readability-identifier-naming.NamespaceIgnoredRegexp
+    value: '^(clang|llvm)$'
   - key: readability-identifier-naming.StructCase
     value: CamelCase
   - key: readability-identifier-naming.TemplateParameterCase

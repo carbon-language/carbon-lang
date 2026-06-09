@@ -8,11 +8,17 @@
 #include <memory>
 
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/FrontendAction.h"
-#include "clang/Parse/Parser.h"
 #include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
+
+namespace clang {
+class ASTContext;
+class CompilerInstance;
+class FunctionDecl;
+class MangleContext;
+class Parser;
+class Sema;
+}  // namespace clang
 
 namespace Carbon::Check {
 

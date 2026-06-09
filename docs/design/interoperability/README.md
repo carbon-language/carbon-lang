@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [TODO: Importing C++ code (inline)](#todo-importing-c-code-inline)
     -   [Accessing built-in C++ entities (file-less)](#accessing-built-in-c-entities-file-less)
     -   [The `Cpp` package](#the-cpp-package)
-    -   [TODO: Importing C++ macros](#todo-importing-c-macros)
+    -   [Importing C++ macros](#importing-c-macros)
 -   [Calling C++ code from Carbon](#calling-c-code-from-carbon)
     -   [Function call syntax and semantics](#function-call-syntax-and-semantics)
     -   [TODO: Overload resolution](#todo-overload-resolution)
@@ -170,7 +170,12 @@ namespaces) are contained in the `Cpp` package.
 The `Cpp.` prefix makes the _origin_ of every symbol explicit and unambiguous.
 It ensures that C++ entities cannot collide with Carbon code.
 
-### TODO: Importing C++ macros
+### Importing C++ macros
+
+An object-like C/C++ macro that evaluates to a constant expression is imported
+from C++ as a constant in Carbon.
+
+See [Importing C/C++ macros](macros.md) for details.
 
 ## Calling C++ code from Carbon
 

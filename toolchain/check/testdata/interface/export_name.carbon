@@ -78,7 +78,7 @@ fn UseEmpty(unused i: I) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//base, I, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.396 = import_ref Main//base, loc4_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.223 = import_ref Main//base, loc4_13, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -91,7 +91,7 @@ fn UseEmpty(unused i: I) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.396
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.223
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -111,7 +111,7 @@ fn UseEmpty(unused i: I) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//export, I, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.37f = import_ref Main//export, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.30a = import_ref Main//export, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -132,7 +132,7 @@ fn UseEmpty(unused i: I) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "export.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.37f
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.30a
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:

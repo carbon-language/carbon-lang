@@ -5,7 +5,9 @@
 #include "toolchain/check/cpp/impl_lookup.h"
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
@@ -64,7 +66,7 @@ static auto TypeAsTagDecl(Context& context,
     return nullptr;
   }
 
-  return dyn_cast<clang::TagDecl>(context.clang_decls().Get(decl_id).key.decl);
+  return dyn_cast<clang::TagDecl>(context.clang_decls().Get(decl_id).decl());
 }
 
 // If the given type is a C++ class type, returns the corresponding class
@@ -606,8 +608,9 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
       return BuildCppRangeForIterateWitness(
           context, loc_id, query_self_const_id, query_specific_interface_id);
 
-    // IntFitsIn is for Carbon integer types only.
+    // *FitsIn are implemented only by Carbon primitive types.
     case SemIR::CoreInterface::IntFitsIn:
+    case SemIR::CoreInterface::FloatFitsIn:
       return SemIR::InstId::None;
 
     case SemIR::CoreInterface::Unknown:

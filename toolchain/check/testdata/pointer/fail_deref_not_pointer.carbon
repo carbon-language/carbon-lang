@@ -53,7 +53,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.104: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Deref.type: type = fn_type @Deref [concrete]
 // CHECK:STDOUT:   %Deref: %Deref.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -77,8 +77,8 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Deref.decl: %Deref.type = fn_decl @Deref [concrete = constants.%Deref] {
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.104 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %n.patt: %pattern_type.104 = at_binding_pattern n, %n.param_patt [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = at_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]

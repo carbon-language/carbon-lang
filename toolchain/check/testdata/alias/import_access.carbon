@@ -97,7 +97,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %Test.C = import_ref Test//def, C, unloaded
 // CHECK:STDOUT:   %Test.A: type = import_ref Test//def, A, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Test.import_ref.8f2: <witness> = import_ref Test//def, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Test.import_ref.50c = import_ref Test//def, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Test.import_ref.fcf = import_ref Test//def, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -121,7 +121,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   complete_type_witness = imports.%Test.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Test.import_ref.50c
+// CHECK:STDOUT:   .Self = imports.%Test.import_ref.fcf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

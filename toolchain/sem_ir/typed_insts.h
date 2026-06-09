@@ -1706,6 +1706,14 @@ struct Return {
 //
 // If `expr_id` is an initializer, this consumes it. If `dest_id` is not `None`
 // and `expr_id` has a storage argument, the storage argument must be `dest_id`.
+//
+// The interpretation of the `ReturnExpr` depends on the category of `expr_id`:
+//
+// * If it is an initializing expression, we're performing a normal
+//   by-initialization return.
+// * If it is a reference, we're performing a `ref` return.
+// * If it is a value expression, we're performing a `return var;`, and it's the
+//   value of the returned variable.
 struct ReturnExpr {
   static constexpr auto Kind = InstKind::ReturnExpr.Define<Parse::NodeId>(
       {.ir_name = "return",

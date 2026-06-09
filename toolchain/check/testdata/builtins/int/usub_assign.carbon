@@ -27,10 +27,10 @@ fn Call(ref a: i32, b: i32) {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_unsized.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.usub_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Builtin(ref a: Core.IntLiteral(), b: Core.IntLiteral()) = "int.usub_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.usub_assign";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Builtin(ref a: Core.IntLiteral(), b: Core.IntLiteral()) = "int.usub_assign";
+fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.usub_assign";
 
 // --- fail_bad_decl.carbon
 

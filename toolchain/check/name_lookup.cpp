@@ -209,26 +209,26 @@ static auto DiagnoseInvalidQualifiedNameAccess(
     Context& context, SemIR::LocId loc_id, SemIR::LocId member_loc_id,
     SemIR::NameId name_id, SemIR::AccessKind access_kind, bool is_parent_access,
     AccessInfo access_info) -> void {
-  auto class_type = context.constant_values().TryGetInstAs<SemIR::ClassType>(
-      access_info.constant_id);
-  if (!class_type) {
-    return;
-  }
-
-  // TODO: Support scoped entities other than just classes.
-  const auto& class_info = context.classes().Get(class_type->class_id);
-
-  auto parent_type_id = class_info.self_type_id;
+  // TODO: Will an access scope always be a type? Should we support access
+  // within `impl` scopes?
+  auto scope_type_id =
+      context.types().GetTypeIdForTypeConstantId(access_info.constant_id);
 
   if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
+    // TODO: Do we need to support parent access for entities other than
+    // classes?
+    auto class_type = context.constant_values().GetInstAs<SemIR::ClassType>(
+        access_info.constant_id);
+    const auto& class_info = context.classes().Get(class_type.class_id);
+
     if (auto base_type_id =
-            class_info.GetBaseType(context.sem_ir(), class_type->specific_id);
+            class_info.GetBaseType(context.sem_ir(), class_type.specific_id);
         base_type_id.has_value()) {
-      parent_type_id = base_type_id;
+      scope_type_id = base_type_id;
     } else if (auto adapted_type_id = class_info.GetAdaptedType(
-                   context.sem_ir(), class_type->specific_id);
+                   context.sem_ir(), class_type.specific_id);
                adapted_type_id.has_value()) {
-      parent_type_id = adapted_type_id;
+      scope_type_id = adapted_type_id;
     } else {
       CARBON_FATAL("Expected parent for parent access");
     }
@@ -241,16 +241,20 @@ static auto DiagnoseInvalidQualifiedNameAccess(
   CARBON_DIAGNOSTIC(ClassMemberDeclaration, Note, "declared here");
   context.emitter()
       .Build(loc_id, ClassInvalidMemberAccess,
-             access_kind == SemIR::AccessKind::Private, name_id, parent_type_id)
+             access_kind == SemIR::AccessKind::Private, name_id, scope_type_id)
       .Note(member_loc_id, ClassMemberDeclaration)
       .Emit();
 }
 
 // Returns whether the access is prohibited by the access modifiers.
-static auto IsAccessProhibited(std::optional<AccessInfo> access_info,
+static auto IsAccessProhibited(Context& context,
+                               std::optional<AccessInfo> access_info,
                                SemIR::AccessKind access_kind,
                                bool is_parent_access) -> bool {
-  if (!access_info) {
+  // Namespace members are always available within the current library;
+  // filtering of private names happens in import, not here.
+  if (!access_info || context.constant_values().InstIs<SemIR::Namespace>(
+                          access_info->constant_id)) {
     return false;
   }
 
@@ -272,7 +276,7 @@ auto CheckAccess(Context& context, SemIR::LocId loc_id,
                  SemIR::LocId member_loc_id, SemIR::NameId name_id,
                  SemIR::AccessKind access_kind, bool is_parent_access,
                  AccessInfo access_info) -> void {
-  if (IsAccessProhibited(access_info, access_kind, is_parent_access)) {
+  if (IsAccessProhibited(context, access_info, access_kind, is_parent_access)) {
     DiagnoseInvalidQualifiedNameAccess(context, loc_id, member_loc_id, name_id,
                                        access_kind, is_parent_access,
                                        access_info);
@@ -519,7 +523,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
     }
 
     auto is_access_prohibited =
-        IsAccessProhibited(access_info, access_kind, is_parent_access);
+        IsAccessProhibited(context, access_info, access_kind, is_parent_access);
 
     // Keep track of prohibited accesses, this will be useful for reporting
     // multiple prohibited accesses if we can't find a suitable lookup.

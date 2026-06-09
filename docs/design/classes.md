@@ -799,12 +799,16 @@ class GraphNode {
 // `GraphNode` is first complete here.
 ```
 
-**Open question:** What is specifically allowed and forbidden with an incomplete
-type has not yet been decided.
+An incomplete type cannot be used as the target of an `extend` declaration (such
+as `extend base: T` or `extend adapt T`), as the target type must be complete to
+allow name lookup into it.
 
 > **TODO:** Document that qualified names can be looked up in an incomplete
 > type, as adopted in
 > [#5087: Qualified lookup into types being defined](/proposals/p005087-qualified-lookup-into-types-being-defined.md).
+
+**Open question:** What else is specifically allowed and forbidden with an
+incomplete type has not yet been decided.
 
 ### `Self`
 
@@ -1228,6 +1232,19 @@ class FinalDerived {
 }
 // ❌ Forbidden: class Illegal { extend base: FinalDerived; ... }
 // may not extend `FinalDerived` since not declared `base` or `abstract`.
+```
+
+An `extend base` declaration requires the specified base class to be complete at
+the point where the declaration is written, to allow name lookup to search into
+the base class.
+
+```
+base class Incomplete;
+
+class InvalidDerived {
+  // ❌ Forbidden: `Incomplete` is not complete.
+  extend base: Incomplete;
+}
 ```
 
 An _[abstract class](https://en.wikipedia.org/wiki/Abstract_type)_ or _abstract

@@ -28,8 +28,8 @@ fn G() {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.aa9: Core.Form = ref_form %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.104: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %.512: Core.Form = ref_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -53,12 +53,12 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %.loc4_11.1: %pattern_type.104 = ref_return_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.104 = return_slot_pattern %.loc4_11.1, %i32 [concrete]
+// CHECK:STDOUT:     %.loc4_11.1: %pattern_type.6b6 = ref_return_pattern [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %.loc4_11.1, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc4_11.2: type = ref_tag %i32
-// CHECK:STDOUT:     %.loc4_11.3: Core.Form = ref_form %i32 [concrete = constants.%.aa9]
+// CHECK:STDOUT:     %.loc4_11.3: Core.Form = ref_form %i32 [concrete = constants.%.512]
 // CHECK:STDOUT:     %.loc4_11.4: ref %i32 = ref_return
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %.loc4_11.4
 // CHECK:STDOUT:   }
@@ -70,7 +70,7 @@ fn G() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.104 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: ref %i32 = call %F.ref()

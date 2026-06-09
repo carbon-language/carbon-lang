@@ -55,7 +55,7 @@ def _is_cmake_true(value: str) -> bool:
 def _substitute_variables(text: str, defines: Dict[str, str]) -> str:
     """Substitutes @VAR@ and ${VAR} style variables in a string."""
 
-    def repl(m: re.Match) -> str:
+    def repl(m: re.Match[str]) -> str:
         return defines.get(str(m.group(1)), "")
 
     return re.sub(

@@ -180,13 +180,14 @@ interface Y(T:! type) {
 }
 
 // A concrete type that is not a class, tuple, or struct.
-fn IntLiteral() -> type = "int_literal.make_type";
+fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();
 
-// CHECK:STDERR: fail_todo_early_concrete_impls.carbon:[[@LINE+4]]:56: error: cannot convert type `Core.IntLiteral` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn F(_:! Z where IntLiteral() impls Y(.Self) and .Z1 = IntLiteral().(Y(.Self).Y1)) {}
-// CHECK:STDERR:                                                        ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_early_concrete_impls.carbon:[[@LINE+4]]:54: error: cannot convert type `IntLiteral` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fn F(_:! Z where IntLiteral impls Y(.Self) and .Z1 = IntLiteral.(Y(.Self).Y1)) {}
+// CHECK:STDERR:                                                      ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(_:! Z where IntLiteral() impls Y(.Self) and .Z1 = IntLiteral().(Y(.Self).Y1)) {}
+fn F(_:! Z where IntLiteral impls Y(.Self) and .Z1 = IntLiteral.(Y(.Self).Y1)) {}
 
 // --- early_impl_named_constraint.carbon
 library "[[@TEST_NAME]]";

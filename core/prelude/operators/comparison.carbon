@@ -40,12 +40,12 @@ impl bool as EqWith(Self) {
 
 // Operations for IntLiteral. These need to be here because IntLiteral has no
 // associated library of its own.
-impl IntLiteral() as EqWith(Self) {
+impl IntLiteral as EqWith(Self) {
   fn Equal(self, other: Self) -> bool = "int.eq";
   fn NotEqual(self, other: Self) -> bool = "int.neq";
 }
 
-impl IntLiteral() as OrderedWith(Self) {
+impl IntLiteral as OrderedWith(Self) {
   // TODO: fn Compare
   fn Less(self, other: Self) -> bool = "int.less";
   fn LessOrEquivalent(self, other: Self) -> bool = "int.less_eq";

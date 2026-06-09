@@ -4,5 +4,5 @@
 
 package Core library "prelude/types/form";
 
-// TODO: this should be a concrete constant, not a function.
-fn Form() -> type = "form.make_type";
+private fn MakeForm() -> type = "form.make_type";
+alias Form = MakeForm();

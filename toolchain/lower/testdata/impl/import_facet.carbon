@@ -85,21 +85,21 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: ; ModuleID = 'd.carbon'
 // CHECK:STDOUT: source_filename = "d.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.aa7.anon = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.506.anon = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CF.Main(ptr %d) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc5_21.1.temp = alloca {}, align 1, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc5_21.1.temp), !dbg !10
-// CHECK:STDOUT:   call void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.5e5386123d4b6287"(ptr %.loc5_21.1.temp, ptr %d), !dbg !10
-// CHECK:STDOUT:   %C.GetC.call = call ptr @_CGetC.C.Main.8eadad4626f26136(ptr %.loc5_21.1.temp), !dbg !10
-// CHECK:STDOUT:   call void @"_COp.5c8b738fa9da18b0:core.Destroy.Core"(ptr %.loc5_21.1.temp), !dbg !10
+// CHECK:STDOUT:   call void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.84588f41d61dafba"(ptr %.loc5_21.1.temp, ptr %d), !dbg !10
+// CHECK:STDOUT:   %C.GetC.call = call ptr @_CGetC.C.Main.4d89da762a733471(ptr %.loc5_21.1.temp), !dbg !10
+// CHECK:STDOUT:   call void @"_COp.589d3e688fca3583:core.Destroy.Core"(ptr %.loc5_21.1.temp), !dbg !10
 // CHECK:STDOUT:   ret ptr %C.GetC.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.5c8b738fa9da18b0:core.Destroy.Core"(ptr %self) #0 !dbg !12 {
+// CHECK:STDOUT: define weak_odr void @"_COp.589d3e688fca3583:core.Destroy.Core"(ptr %self) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
@@ -108,13 +108,13 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.5e5386123d4b6287"(ptr sret({}) %return, ptr %self) #0 !dbg !18 {
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.aa7.anon, i64 0, i1 false), !dbg !22
+// CHECK:STDOUT: define linkonce_odr void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.84588f41d61dafba"(ptr sret({}) %return, ptr %self) #0 !dbg !18 {
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.506.anon, i64 0, i1 false), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CGetC.C.Main.8eadad4626f26136(ptr %self) #0 !dbg !23 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CGetC.C.Main.4d89da762a733471(ptr %self) #0 !dbg !23 {
 // CHECK:STDOUT:   %1 = alloca ptr, align 8, !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !27
 // CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !27
@@ -143,18 +143,18 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 5, column: 10, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 5, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5c8b738fa9da18b0:core.Destroy.Core", scope: null, file: !3, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp.589d3e688fca3583:core.Destroy.Core", scope: null, file: !3, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null, !7}
 // CHECK:STDOUT: !15 = !{!16}
 // CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !12, type: !7)
 // CHECK:STDOUT: !17 = !DILocation(line: 5, column: 10, scope: !12)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "GetI", linkageName: "_CGetI.D.eb057aa32837c84e.Main:I.Main.5e5386123d4b6287", scope: null, file: !19, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !20)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "GetI", linkageName: "_CGetI.D.eb057aa32837c84e.Main:I.Main.84588f41d61dafba", scope: null, file: !19, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !20)
 // CHECK:STDOUT: !19 = !DIFile(filename: "c.carbon", directory: "")
 // CHECK:STDOUT: !20 = !{!21}
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !18, type: !7)
 // CHECK:STDOUT: !22 = !DILocation(line: 7, column: 7, scope: !18)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "GetC", linkageName: "_CGetC.C.Main.8eadad4626f26136", scope: null, file: !24, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !25)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "GetC", linkageName: "_CGetC.C.Main.4d89da762a733471", scope: null, file: !24, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !25)
 // CHECK:STDOUT: !24 = !DIFile(filename: "a.carbon", directory: "")
 // CHECK:STDOUT: !25 = !{!26}
 // CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !23, type: !7)

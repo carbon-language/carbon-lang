@@ -14,7 +14,8 @@
 
 library "[[@TEST_NAME]]";
 
-fn FloatLiteral() -> type = "float_literal.make_type";
+fn MakeFloatLiteral() -> type = "float_literal.make_type";
+alias FloatLiteral = MakeFloatLiteral();
 
 // --- use_types.carbon
 
@@ -23,32 +24,25 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 //@dump-sem-ir-begin
-let f: FloatLiteral() = 1.0;
+let f: FloatLiteral = 1.0;
 //@dump-sem-ir-end
 
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %FloatLiteral.type: type = fn_type @FloatLiteral [concrete]
-// CHECK:STDOUT:   %FloatLiteral: %FloatLiteral.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.dab: type = pattern_type Core.FloatLiteral [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type Core.FloatLiteral [concrete]
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.FloatLiteral: %FloatLiteral.type = import_ref Main//types, FloatLiteral, loaded [concrete = constants.%FloatLiteral]
+// CHECK:STDOUT:   %Main.FloatLiteral: type = import_ref Main//types, FloatLiteral, loaded [concrete = Core.FloatLiteral]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type.dab = value_binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type = value_binding_pattern f [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_21.1: type = splice_block %.loc7_21.3 [concrete = Core.FloatLiteral] {
-// CHECK:STDOUT:     %FloatLiteral.ref: %FloatLiteral.type = name_ref FloatLiteral, imports.%Main.FloatLiteral [concrete = constants.%FloatLiteral]
-// CHECK:STDOUT:     %FloatLiteral.call: init type = call %FloatLiteral.ref() [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:     %.loc7_21.2: type = value_of_initializer %FloatLiteral.call [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:     %.loc7_21.3: type = converted %FloatLiteral.call, %.loc7_21.2 [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %FloatLiteral.ref: type = name_ref FloatLiteral, imports.%Main.FloatLiteral [concrete = Core.FloatLiteral]
 // CHECK:STDOUT:   %f: Core.FloatLiteral = value_binding f, @__global_init.%float
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
