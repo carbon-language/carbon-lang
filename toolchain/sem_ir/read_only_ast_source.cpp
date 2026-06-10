@@ -52,27 +52,6 @@ static auto GetAsCarbonOwnedClass(const File& sem_ir,
   return std::make_pair(class_type_id, *class_type);
 }
 
-// TODO: dedup (from export.cpp)
-static auto GetStructTypeFields(const File& sem_ir,
-                                const SemIR::Class& class_info)
-    -> llvm::ArrayRef<SemIR::StructTypeField> {
-  if (class_info.adapt_id.has_value()) {
-    // The representation of an adapter won't necessarily be a
-    // struct. Return an empty array since adapters can't declare
-    // fields.
-    return {};
-  }
-
-  auto object_repr_type_id =
-      class_info.GetObjectRepr(sem_ir, SemIR::SpecificId::None);
-  if (object_repr_type_id == SemIR::ErrorInst::TypeId) {
-    return {};
-  }
-  auto struct_type =
-      sem_ir.types().GetAs<SemIR::StructType>(object_repr_type_id);
-  return sem_ir.struct_type_fields().Get(struct_type.fields_id);
-}
-
 // Get the field offset for each field in a class.
 //
 // Returns true on success, false if any error occurs.
@@ -83,7 +62,7 @@ static auto CalculateCppFieldOffsets(
   const auto& class_scope = sem_ir.name_scopes().Get(class_info.scope_id);
 
   auto class_layout = SemIR::ObjectLayout::Empty();
-  for (const auto& struct_field : GetStructTypeFields(sem_ir, class_info)) {
+  for (const auto& struct_field : class_info.GetStructTypeFields(sem_ir)) {
     auto field_type_id =
         sem_ir.types().GetTypeIdForTypeInstId(struct_field.type_inst_id);
     auto field_layout =
