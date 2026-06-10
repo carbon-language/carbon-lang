@@ -141,7 +141,7 @@ fn Return(a: Abstract) -> Abstract {
   return a;
 }
 
-// --- fail_todo_access_abstract_subobject.carbon
+// --- access_abstract_subobject.carbon
 library "[[@TEST_NAME]]";
 
 abstract class Abstract {
@@ -155,13 +155,6 @@ class Derived {
 }
 
 fn Access(d: Derived) -> {} {
-  // CHECK:STDERR: fail_todo_access_abstract_subobject.carbon:[[@LINE+7]]:10: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
-  // CHECK:STDERR:   return d.base.a;
-  // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_todo_access_abstract_subobject.carbon:[[@LINE-14]]:1: note: class was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   return d.base.a;
 }
 
@@ -727,7 +720,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_access_abstract_subobject.carbon
+// CHECK:STDOUT: --- access_abstract_subobject.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
@@ -815,9 +808,15 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %base.ref: %Derived.elem.ce6 = name_ref base, @Derived.%.loc8 [concrete = @Derived.%.loc8]
-// CHECK:STDOUT:   %.loc21: ref %Abstract = class_element_access %d.ref, element0
-// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %.loc14_11.1: ref %Abstract = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc14_11.2: %Abstract = acquire_value %.loc14_11.1
+// CHECK:STDOUT:   %a.ref: %Abstract.elem = name_ref a, @Abstract.%.loc4 [concrete = @Abstract.%.loc4]
+// CHECK:STDOUT:   %.loc14_16.1: ref %empty_struct_type = class_element_access %.loc14_11.2, element0
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc14_16.2: %empty_struct_type = converted %.loc14_16.1, %empty_struct [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc14_16.3: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc14_18: init %empty_struct_type = converted %.loc14_16.2, %.loc14_16.3 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   return %.loc14_18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_let_temporary_struct_literal.carbon

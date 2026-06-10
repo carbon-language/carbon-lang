@@ -1953,42 +1953,59 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
   auto original_inner_expr_id = expr_id;
 
-  // TODO: Allow abstract but complete types if the conversion is just a
+  auto incomplete_diagnostic = [&](auto& builder) {
+    CARBON_CHECK(!target.is_initializer(),
+                 "Initialization of incomplete types is expected to be "
+                 "caught elsewhere.");
+    CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Context,
+                      "forming value of incomplete type {0}", SemIR::TypeId);
+    CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Context,
+                      "invalid use of incomplete type {0}", SemIR::TypeId);
+    builder.Context(loc_id,
+                    target.kind == ConversionTarget::Value
+                        ? IncompleteTypeInValueConversion
+                        : IncompleteTypeInConversion,
+                    target.type_id);
+  };
+
+  // Allow abstract but complete types if the conversion is just a
   // same-type value acqisition.
+  bool require_concrete =
+      target.kind != ConversionTarget::Value ||
+      target.type_id != context.insts().Get(expr_id).type_id() ||
+      // TODO: relax this restriction.
+      !context.insts().Is<SemIR::ClassElementAccess>(expr_id);
+
   // TODO: Push this check down to the points where we perform operations that
   // need the type to be complete.
   if (ConversionNeedsCompleteTarget(context, expr_id, target)) {
-    if (target.diagnose) {
-      if (!RequireConcreteType(
-              context, target.type_id, loc_id,
-              [&](auto& builder) {
-                CARBON_CHECK(
-                    !target.is_initializer(),
-                    "Initialization of incomplete types is expected to be "
-                    "caught elsewhere.");
-                CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Context,
-                                  "forming value of incomplete type {0}",
-                                  SemIR::TypeId);
-                CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Context,
-                                  "invalid use of incomplete type {0}",
-                                  SemIR::TypeId);
-                builder.Context(loc_id,
-                                target.kind == ConversionTarget::Value
-                                    ? IncompleteTypeInValueConversion
-                                    : IncompleteTypeInConversion,
-                                target.type_id);
-              },
-              [&](auto& builder) {
-                CARBON_DIAGNOSTIC(AbstractTypeInInit, Context,
-                                  "initialization of abstract type {0}",
-                                  SemIR::TypeId);
-                builder.Context(loc_id, AbstractTypeInInit, target.type_id);
-              })) {
-        return SemIR::ErrorInst::InstId;
+    if (require_concrete) {
+      if (target.diagnose) {
+        if (!RequireConcreteType(
+                context, target.type_id, loc_id, incomplete_diagnostic,
+                [&](auto& builder) {
+                  CARBON_DIAGNOSTIC(AbstractTypeInInit, Context,
+                                    "initialization of abstract type {0}",
+                                    SemIR::TypeId);
+                  builder.Context(loc_id, AbstractTypeInInit, target.type_id);
+                })) {
+          return SemIR::ErrorInst::InstId;
+        }
+      } else {
+        if (!TryIsConcreteType(context, target.type_id, loc_id)) {
+          return SemIR::ErrorInst::InstId;
+        }
       }
     } else {
-      if (!TryIsConcreteType(context, target.type_id, loc_id)) {
-        return SemIR::ErrorInst::InstId;
+      if (target.diagnose) {
+        if (!RequireCompleteType(context, target.type_id, loc_id,
+                                 incomplete_diagnostic)) {
+          return SemIR::ErrorInst::InstId;
+        }
+      } else {
+        if (!TryToCompleteType(context, target.type_id, loc_id)) {
+          return SemIR::ErrorInst::InstId;
+        }
       }
     }
   }
