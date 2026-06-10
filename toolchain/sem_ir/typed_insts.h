@@ -623,6 +623,20 @@ struct Deref {
   InstId pointer_id;
 };
 
+// A reference to the class instance which has `element_id` at index `index`.
+struct EnclosingClassAccess {
+  static constexpr auto Kind =
+      // This is created from other insts, not from a node.
+      InstKind::EnclosingClassAccess.Define<Parse::NodeId>(
+          {.ir_name = "enclosing_class_access",
+           .expr_category = ComputedExprCategory::SameAsFirstOperand,
+           .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  InstId element_id;
+  ElementIndex index;
+};
+
 // Used when a semantic error has been detected, and a SemIR InstId is still
 // required. For example, when there is a type checking issue, this will be used
 // in the type_id. It's typically used as a cue that semantic checking doesn't

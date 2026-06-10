@@ -101,6 +101,10 @@ fn Widgets.GrowSomeCogs() {
 }
 ```
 
+Note that `.` is used consistently for member access, whether it is applied to
+an object, type, or namespace. This is in contrast to C++, which uses `::` for
+types and namespaces.
+
 Pointer member access expressions are those using a `->` instead of a `.` and
 their semantics are exactly what would result from first dereferencing the
 expression preceding the `->` and then forming a member access expression using

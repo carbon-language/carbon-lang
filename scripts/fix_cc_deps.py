@@ -113,7 +113,10 @@ def remap_file(label: str) -> str:
     return EXTERNAL_REPOS[repo].remap(path)
 
 
-def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> set[str]:
+def get_bazel_list(
+    list_child: ElementTree.Element,  # ty: ignore[missing-type-argument]
+    is_file: bool,
+) -> set[str]:
     """Returns the contents of a bazel list.
 
     The return will normally be the full label, unless `is_file` is set, in

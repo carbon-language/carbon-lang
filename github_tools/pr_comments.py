@@ -129,7 +129,7 @@ class _Comment:
         self.body = body
 
     @staticmethod
-    def from_raw_comment(raw_comment: dict) -> "_Comment":
+    def from_raw_comment(raw_comment: dict[str, Any]) -> "_Comment":
         """Creates the comment from a raw comment dict."""
         return _Comment(
             raw_comment["author"]["login"],
@@ -176,7 +176,7 @@ class _Comment:
 class _PRComment(_Comment):
     """A comment on the top-level PR."""
 
-    def __init__(self, raw_comment: dict):
+    def __init__(self, raw_comment: dict[str, Any]):
         super().__init__(
             raw_comment["author"]["login"],
             raw_comment["createdAt"],
@@ -195,7 +195,7 @@ class _PRComment(_Comment):
 class _Thread:
     """A review thread on a line of code."""
 
-    def __init__(self, parsed_args: argparse.Namespace, thread: dict):
+    def __init__(self, parsed_args: argparse.Namespace, thread: dict[str, Any]):
         self.is_resolved: bool = thread["isResolved"]
 
         comments = thread["comments"]["nodes"]
@@ -347,7 +347,7 @@ def _query(
 def _accumulate_pr_comment(
     parsed_args: argparse.Namespace,
     comments: list[_PRComment],
-    raw_comment: dict,
+    raw_comment: dict[str, Any],
 ) -> None:
     """Collects top-level comments and reviews."""
     # Elide reviews that have no top-level comment body.
@@ -358,7 +358,7 @@ def _accumulate_pr_comment(
 def _accumulate_thread(
     parsed_args: argparse.Namespace,
     threads_by_path: dict[str, list[_Thread]],
-    raw_thread: dict,
+    raw_thread: dict[str, Any],
 ) -> None:
     """Adds threads to threads_by_path for later sorting."""
     thread = _Thread(parsed_args, raw_thread)
@@ -387,10 +387,10 @@ def _accumulate_thread(
 
 def _paginate(
     field_name: str,
-    accumulator: Callable[[argparse.Namespace, Any, dict], None],
+    accumulator: Callable[[argparse.Namespace, Any, dict[str, Any]], None],
     parsed_args: argparse.Namespace,
     client: github_helpers.Client,
-    main_result: dict,
+    main_result: dict[str, Any],
     output: Any,
 ) -> None:
     """Paginates through the given field_name, accumulating results."""
