@@ -5,12 +5,19 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 
+#include <optional>
+
 #include "common/map.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/struct_type_field.h"
 
 namespace Carbon::SemIR {
+
+class File;
+class NameScope;
 
 // Class-specific fields.
 struct ClassFields {
@@ -132,6 +139,11 @@ struct Class : public EntityWithParamsBase,
 };
 
 using ClassStore = ValueStore<ClassId, Class, Tag<CheckIRId>>;
+
+auto LookupClassFieldByStructField(const File& sem_ir,
+                                   const NameScope& class_scope,
+                                   const StructTypeField& struct_field)
+    -> std::optional<InstStore::GetAsWithIdResult<SemIR::FieldDecl>>;
 
 }  // namespace Carbon::SemIR
 
