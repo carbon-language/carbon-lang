@@ -136,6 +136,10 @@ struct Class : public EntityWithParamsBase,
   // Gets the object representation for this class. Returns `None` if the class
   // is not yet defined.
   auto GetObjectRepr(const File& file, SpecificId specific_id) const -> TypeId;
+
+  // Get the `StructTypeField`s from a class's object repr.
+  auto GetStructTypeFields(const File& sem_ir) const
+      -> llvm::ArrayRef<SemIR::StructTypeField>;
 };
 
 using ClassStore = ValueStore<ClassId, Class, Tag<CheckIRId>>;

@@ -51,6 +51,24 @@ auto Class::GetObjectRepr(const File& file, SpecificId specific_id) const
           .object_repr_type_inst_id);
 }
 
+auto Class::GetStructTypeFields(const File& sem_ir) const
+    -> llvm::ArrayRef<SemIR::StructTypeField> {
+  if (adapt_id.has_value()) {
+    // The representation of an adapter won't necessarily be a
+    // struct. Return an empty array since adapters can't declare
+    // fields.
+    return {};
+  }
+
+  auto object_repr_type_id = GetObjectRepr(sem_ir, SemIR::SpecificId::None);
+  if (object_repr_type_id == SemIR::ErrorInst::TypeId) {
+    return {};
+  }
+  auto struct_type =
+      sem_ir.types().GetAs<SemIR::StructType>(object_repr_type_id);
+  return sem_ir.struct_type_fields().Get(struct_type.fields_id);
+}
+
 auto LookupClassFieldByStructField(const File& sem_ir,
                                    const SemIR::NameScope& class_scope,
                                    const SemIR::StructTypeField& struct_field)
