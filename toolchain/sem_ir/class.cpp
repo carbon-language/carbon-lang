@@ -51,6 +51,18 @@ auto Class::GetObjectRepr(const File& file, SpecificId specific_id) const
           .object_repr_type_inst_id);
 }
 
+auto LookupClassFieldByStructField(const File& sem_ir,
+                                   const SemIR::NameScope& class_scope,
+                                   const SemIR::StructTypeField& struct_field)
+    -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
+  if (auto entry_id = class_scope.Lookup(struct_field.name_id)) {
+    auto field_inst_id =
+        class_scope.GetEntry(*entry_id).result.target_inst_id();
+    return sem_ir.insts().TryGetAsWithId<SemIR::FieldDecl>(field_inst_id);
+  }
+  return std::nullopt;
+}
+
 }  // namespace Carbon::SemIR
 
 namespace Carbon {

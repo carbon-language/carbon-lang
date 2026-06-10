@@ -198,18 +198,6 @@ static auto GetStructTypeFields(Context& context,
   return context.struct_type_fields().Get(struct_type.fields_id);
 }
 
-static auto LookupClassFieldByStructField(
-    const Context& context, const SemIR::NameScope& class_scope,
-    const SemIR::StructTypeField& struct_field)
-    -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
-  if (auto entry_id = class_scope.Lookup(struct_field.name_id)) {
-    auto field_inst_id =
-        class_scope.GetEntry(*entry_id).result.target_inst_id();
-    return context.insts().TryGetAsWithId<SemIR::FieldDecl>(field_inst_id);
-  }
-  return std::nullopt;
-}
-
 static auto SetCppClassMemberAccess(const SemIR::NameScope& class_scope,
                                     SemIR::NameId member_name_id,
                                     clang::Decl* member) -> void {
@@ -266,8 +254,8 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
   const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
 
   for (const auto& struct_field : GetStructTypeFields(context, class_info)) {
-    auto class_field =
-        LookupClassFieldByStructField(context, class_scope, struct_field);
+    auto class_field = LookupClassFieldByStructField(context.sem_ir(),
+                                                     class_scope, struct_field);
     if (!class_field) {
       continue;
     }

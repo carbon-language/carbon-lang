@@ -73,19 +73,6 @@ static auto GetStructTypeFields(const File& sem_ir,
   return sem_ir.struct_type_fields().Get(struct_type.fields_id);
 }
 
-// TODO: dedup (from export.cpp)
-static auto LookupClassFieldByStructField(
-    const File& sem_ir, const SemIR::NameScope& class_scope,
-    const SemIR::StructTypeField& struct_field)
-    -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
-  if (auto entry_id = class_scope.Lookup(struct_field.name_id)) {
-    auto field_inst_id =
-        class_scope.GetEntry(*entry_id).result.target_inst_id();
-    return sem_ir.insts().TryGetAsWithId<SemIR::FieldDecl>(field_inst_id);
-  }
-  return std::nullopt;
-}
-
 // Get the field offset for each field in a class.
 //
 // Returns true on success, false if any error occurs.
