@@ -13,15 +13,15 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/method/method.carbon
 
 class Class {
-  fn F[self: Self]() -> i32;
-  fn G[ref self: Self]() -> i32;
+  fn F(self) -> i32;
+  fn G(ref self) -> i32;
 
   alias A = F;
 
   var k: i32;
 }
 
-fn Class.F[self: Self]() -> i32 {
+fn Class.F(self) -> i32 {
   return self.k;
 }
 

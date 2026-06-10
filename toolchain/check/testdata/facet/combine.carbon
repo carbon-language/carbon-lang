@@ -43,13 +43,13 @@ library "[[@TEST_NAME]]";
 
 interface A {}
 interface B {
-  fn BB[self: Self]();
+  fn BB(self);
 }
 
 class C {}
 impl C as A {}
 impl C as B {
-  fn BB[unused self: Self]() {}
+  fn BB(unused self) {}
 }
 
 fn G[T:! A & B](unused t: T) {}

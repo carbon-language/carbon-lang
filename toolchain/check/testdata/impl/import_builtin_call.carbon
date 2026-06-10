@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 import library "int_literal";
 
 interface Add {
-  fn Op[self: Self](other: Self) -> Self;
+  fn Op(self, other: Self) -> Self;
 }
 
 fn Int(n: IntLiteral) -> type = "int.make_type_signed";
@@ -34,7 +34,7 @@ class MyInt(N:! IntLiteral) {
 }
 
 impl forall [N:! IntLiteral] MyInt(N) as Add {
-  fn Op[self: Self](other: Self) -> Self = "int.sadd";
+  fn Op(self, other: Self) -> Self = "int.sadd";
 }
 
 fn Double[N:! IntLiteral](x: MyInt(N)) -> MyInt(N) {
@@ -67,10 +67,10 @@ fn Make(N:! Int(32)) -> Int(ToLiteral(N)) { return Make(N); }
 
 class OtherInt {
   adapt Int(32);
-  fn ToLiteral[self: Self]() -> IntLiteral;
+  fn ToLiteral(self) -> IntLiteral;
 };
 
-fn OtherInt.ToLiteral[self: Self]() -> IntLiteral = "int.convert_checked";
+fn OtherInt.ToLiteral(self) -> IntLiteral = "int.convert_checked";
 
 fn MakeFromClass(N:! OtherInt) -> Int(N.ToLiteral()) { return MakeFromClass(N); }
 
@@ -84,6 +84,7 @@ import library "convert_symbolic";
 var m: Int(64) = Make(FromLiteral(64));
 var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 //@dump-sem-ir-end
+
 
 // CHECK:STDOUT: --- use_generic_impl.carbon
 // CHECK:STDOUT:

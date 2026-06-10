@@ -34,7 +34,7 @@ class C {}
 class D {}
 class E {}
 
-interface I(T:! type) { fn F[self: Self](); }
+interface I(T:! type) { fn F(self); }
 interface J(T:! type) {}
 
 impl D as J(E) {}
@@ -42,7 +42,7 @@ impl D as J(E) {}
 // The type of `T` is not `.Self`-dependent, because `.Self` appears after
 // `where`.
 impl forall [T:! type where D impls J(.Self)] C as I(T) {
-  fn F[unused self: Self]() {}
+  fn F(unused self) {}
 }
 
 fn F(a: C) {

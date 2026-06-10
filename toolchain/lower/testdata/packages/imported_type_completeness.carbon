@@ -53,8 +53,8 @@ library "[[@TEST_NAME]]";
 
 base class C(T:! type) {
   // Require Core.Int(11) and Core.Int(12) to be complete.
-  virtual fn F[unused self: Self]() -> Core.Int(11) { return 11; }
-  virtual fn G[unused self: Self](unused t: T) -> Core.Int(12) { return 12; }
+  virtual fn F(unused self) -> Core.Int(11) { return 11; }
+  virtual fn G(unused self, unused t: T) -> Core.Int(12) { return 12; }
 }
 
 // --- use_without_completion_in_vtable.carbon
@@ -378,7 +378,7 @@ fn CallF() {
 // CHECK:STDOUT: !38 = !DIBasicType(name: "int", size: 11, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !39 = !{!40}
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !34, type: !13)
-// CHECK:STDOUT: !41 = !DILocation(line: 6, column: 55, scope: !34)
+// CHECK:STDOUT: !41 = !DILocation(line: 6, column: 47, scope: !34)
 // CHECK:STDOUT: !42 = distinct !DISubprogram(name: "G", linkageName: "_CG.C.Main.9522ff908e97e267", scope: null, file: !35, line: 7, type: !43, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !46)
 // CHECK:STDOUT: !43 = !DISubroutineType(types: !44)
 // CHECK:STDOUT: !44 = !{!45, !13, !13}
@@ -386,4 +386,4 @@ fn CallF() {
 // CHECK:STDOUT: !46 = !{!47, !48}
 // CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !42, type: !13)
 // CHECK:STDOUT: !48 = !DILocalVariable(arg: 2, scope: !42, type: !13)
-// CHECK:STDOUT: !49 = !DILocation(line: 7, column: 66, scope: !42)
+// CHECK:STDOUT: !49 = !DILocation(line: 7, column: 60, scope: !42)

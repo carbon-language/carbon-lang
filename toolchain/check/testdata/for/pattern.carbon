@@ -18,10 +18,10 @@ class EmptyRange(T:! Core.Copy) {
   fn Make() -> Self { return {}; }
 
   impl as Core.Iterate where .CursorType = {} and .ElementType = T {
-    fn NewCursor[unused self: Self]() -> {} {
+    fn NewCursor(unused self) -> {} {
       return {};
     }
-    fn Next[unused self: Self](unused cursor: {}*) -> Core.Optional(T) {
+    fn Next(unused self, unused cursor: {}*) -> Core.Optional(T) {
       return Core.Optional(T).None();
     }
   }
@@ -29,7 +29,7 @@ class EmptyRange(T:! Core.Copy) {
 
 class C {
   impl as Core.Copy {
-    fn Op[unused self: Self]() -> Self { return {}; }
+    fn Op(unused self) -> Self { return {}; }
   }
 }
 
@@ -117,6 +117,7 @@ fn Run() {
   }
 }
 
+
 // CHECK:STDOUT: --- value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -184,14 +185,14 @@ fn Run() {
 // CHECK:STDOUT:   %Main.EmptyRange: %EmptyRange.type = import_ref Main//empty_range, EmptyRange, loaded [concrete = constants.%EmptyRange.generic]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//empty_range, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.a9e: @EmptyRange.%EmptyRange.Make.type (%EmptyRange.Make.type.140) = import_ref Main//empty_range, loc5_21, loaded [symbolic = @EmptyRange.%EmptyRange.Make (constants.%EmptyRange.Make.0de)]
-// CHECK:STDOUT:   %Main.import_ref.341: %C.as.Copy.impl.Op.type = import_ref Main//empty_range, loc19_40, loaded [concrete = constants.%C.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Main.import_ref.341: %C.as.Copy.impl.Op.type = import_ref Main//empty_range, loc19_32, loaded [concrete = constants.%C.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.506 = impl_witness_table (%Main.import_ref.341), @C.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.1db: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.224) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.c4f)]
 // CHECK:STDOUT:   %Core.import_ref.73b: @Optional.%Optional.Get.type (%Optional.Get.type.e1b) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.20c)]
 // CHECK:STDOUT:   %Main.import_ref.71a = import_ref Main//empty_range, loc7_68, unloaded
 // CHECK:STDOUT:   %Main.import_ref.999 = import_ref Main//empty_range, loc7_68, unloaded
-// CHECK:STDOUT:   %Main.import_ref.19c: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.647) = import_ref Main//empty_range, loc8_45, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.9e2)]
-// CHECK:STDOUT:   %Main.import_ref.ee4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.cfe) = import_ref Main//empty_range, loc11_72, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.0c8)]
+// CHECK:STDOUT:   %Main.import_ref.19c: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.647) = import_ref Main//empty_range, loc8_37, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.9e2)]
+// CHECK:STDOUT:   %Main.import_ref.ee4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.cfe) = import_ref Main//empty_range, loc11_66, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.0c8)]
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.19c, %Main.import_ref.ee4), @EmptyRange.as.Iterate.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -364,14 +365,14 @@ fn Run() {
 // CHECK:STDOUT:   %Main.EmptyRange: %EmptyRange.type = import_ref Main//empty_range, EmptyRange, loaded [concrete = constants.%EmptyRange.generic]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//empty_range, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.a9e: @EmptyRange.%EmptyRange.Make.type (%EmptyRange.Make.type.140) = import_ref Main//empty_range, loc5_21, loaded [symbolic = @EmptyRange.%EmptyRange.Make (constants.%EmptyRange.Make.0de)]
-// CHECK:STDOUT:   %Main.import_ref.341: %C.as.Copy.impl.Op.type = import_ref Main//empty_range, loc19_40, loaded [concrete = constants.%C.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Main.import_ref.341: %C.as.Copy.impl.Op.type = import_ref Main//empty_range, loc19_32, loaded [concrete = constants.%C.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.506 = impl_witness_table (%Main.import_ref.341), @C.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.1db: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.224) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.c4f)]
 // CHECK:STDOUT:   %Core.import_ref.73b: @Optional.%Optional.Get.type (%Optional.Get.type.e1b) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.20c)]
 // CHECK:STDOUT:   %Main.import_ref.71a = import_ref Main//empty_range, loc7_68, unloaded
 // CHECK:STDOUT:   %Main.import_ref.999 = import_ref Main//empty_range, loc7_68, unloaded
-// CHECK:STDOUT:   %Main.import_ref.19c: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.647) = import_ref Main//empty_range, loc8_45, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.9e2)]
-// CHECK:STDOUT:   %Main.import_ref.ee4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.cfe) = import_ref Main//empty_range, loc11_72, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.0c8)]
+// CHECK:STDOUT:   %Main.import_ref.19c: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.647) = import_ref Main//empty_range, loc8_37, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.9e2)]
+// CHECK:STDOUT:   %Main.import_ref.ee4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.cfe) = import_ref Main//empty_range, loc11_66, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.0c8)]
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.19c, %Main.import_ref.ee4), @EmptyRange.as.Iterate.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -560,8 +561,8 @@ fn Run() {
 // CHECK:STDOUT:   %Core.import_ref.73b: @Optional.%Optional.Get.type (%Optional.Get.type.e1b) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.20c)]
 // CHECK:STDOUT:   %Main.import_ref.71a = import_ref Main//empty_range, loc7_68, unloaded
 // CHECK:STDOUT:   %Main.import_ref.999 = import_ref Main//empty_range, loc7_68, unloaded
-// CHECK:STDOUT:   %Main.import_ref.19c: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.647) = import_ref Main//empty_range, loc8_45, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.9e2)]
-// CHECK:STDOUT:   %Main.import_ref.ee4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.cfe) = import_ref Main//empty_range, loc11_72, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.0c8)]
+// CHECK:STDOUT:   %Main.import_ref.19c: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.647) = import_ref Main//empty_range, loc8_37, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.9e2)]
+// CHECK:STDOUT:   %Main.import_ref.ee4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.cfe) = import_ref Main//empty_range, loc11_66, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.0c8)]
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.19c, %Main.import_ref.ee4), @EmptyRange.as.Iterate.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -754,14 +755,14 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.a9e: @EmptyRange.%EmptyRange.Make.type (%EmptyRange.Make.type.140) = import_ref Main//empty_range, loc5_21, loaded [symbolic = @EmptyRange.%EmptyRange.Make (constants.%EmptyRange.Make.0de)]
 // CHECK:STDOUT:   %Core.import_ref.44a: @tuple.type.as.Copy.impl.9bd.%tuple.type.as.Copy.impl.Op.type (%tuple.type.as.Copy.impl.Op.type.3ed) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @tuple.type.as.Copy.impl.9bd.%tuple.type.as.Copy.impl.Op (constants.%tuple.type.as.Copy.impl.Op.0f8)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.828 = impl_witness_table (%Core.import_ref.44a), @tuple.type.as.Copy.impl.9bd [concrete]
-// CHECK:STDOUT:   %Main.import_ref.341: %C.as.Copy.impl.Op.type = import_ref Main//empty_range, loc19_40, loaded [concrete = constants.%C.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Main.import_ref.341: %C.as.Copy.impl.Op.type = import_ref Main//empty_range, loc19_32, loaded [concrete = constants.%C.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.506 = impl_witness_table (%Main.import_ref.341), @C.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.1db: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.224) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.c4f)]
 // CHECK:STDOUT:   %Core.import_ref.73b: @Optional.%Optional.Get.type (%Optional.Get.type.e1b) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.20c)]
 // CHECK:STDOUT:   %Main.import_ref.71a = import_ref Main//empty_range, loc7_68, unloaded
 // CHECK:STDOUT:   %Main.import_ref.999 = import_ref Main//empty_range, loc7_68, unloaded
-// CHECK:STDOUT:   %Main.import_ref.19c: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.647) = import_ref Main//empty_range, loc8_45, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.9e2)]
-// CHECK:STDOUT:   %Main.import_ref.ee4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.cfe) = import_ref Main//empty_range, loc11_72, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.0c8)]
+// CHECK:STDOUT:   %Main.import_ref.19c: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.647) = import_ref Main//empty_range, loc8_37, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.9e2)]
+// CHECK:STDOUT:   %Main.import_ref.ee4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.cfe) = import_ref Main//empty_range, loc11_66, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.0c8)]
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.19c, %Main.import_ref.ee4), @EmptyRange.as.Iterate.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

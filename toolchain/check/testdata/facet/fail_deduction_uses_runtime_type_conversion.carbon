@@ -21,7 +21,7 @@ class RuntimeConvertTo {}
 
 impl RuntimeConvertFrom as Core.ImplicitAs(RuntimeConvertTo) {
   // Runtime conversion function
-  fn Convert[unused self: Self]() -> RuntimeConvertTo { return {}; }
+  fn Convert(unused self) -> RuntimeConvertTo { return {}; }
 }
 
 fn F[T:! (type, )](unused A:! T.0, unused x: HoldsType(T)) {}
@@ -39,6 +39,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
   // CHECK:STDERR:
   F(from, holds_to);
 }
+
 
 // CHECK:STDOUT: --- fail_deduction_uses_runtime_type_conversion.carbon
 // CHECK:STDOUT:
@@ -192,7 +193,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:     %return.patt: %pattern_type.c10 = return_slot_pattern %return.param_patt, %RuntimeConvertTo.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [concrete = constants.%RuntimeConvertTo]
-// CHECK:STDOUT:     %.loc24_38: Core.Form = init_form %RuntimeConvertTo.ref [concrete = constants.%.aac]
+// CHECK:STDOUT:     %.loc24_30: Core.Form = init_form %RuntimeConvertTo.ref [concrete = constants.%.aac]
 // CHECK:STDOUT:     %self.param: %RuntimeConvertFrom = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @RuntimeConvertFrom.as.ImplicitAs.impl.%RuntimeConvertFrom.ref [concrete = constants.%RuntimeConvertFrom]
 // CHECK:STDOUT:     %self: %RuntimeConvertFrom = value_binding self, %self.param
@@ -241,10 +242,10 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeConvertFrom.as.ImplicitAs.impl.Convert(%self.param: %RuntimeConvertFrom) -> out %return.param: %RuntimeConvertTo {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24_65.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc24_65.2: init %RuntimeConvertTo to %return.param = class_init () [concrete = constants.%RuntimeConvertTo.val]
-// CHECK:STDOUT:   %.loc24_66: init %RuntimeConvertTo = converted %.loc24_65.1, %.loc24_65.2 [concrete = constants.%RuntimeConvertTo.val]
-// CHECK:STDOUT:   return %.loc24_66 to %return.param
+// CHECK:STDOUT:   %.loc24_57.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc24_57.2: init %RuntimeConvertTo to %return.param = class_init () [concrete = constants.%RuntimeConvertTo.val]
+// CHECK:STDOUT:   %.loc24_58: init %RuntimeConvertTo = converted %.loc24_57.1, %.loc24_57.2 [concrete = constants.%RuntimeConvertTo.val]
+// CHECK:STDOUT:   return %.loc24_58 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc27_7.2: %tuple.type, %A.loc27_28.2: @F.%tuple.elem0.loc27_32.1 (%tuple.elem0)) {

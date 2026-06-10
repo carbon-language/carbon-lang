@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/type_representation.carbon
 
 interface Copy {
-  fn Op[self: Self]() -> Self;
+  fn Op(self) -> Self;
 }
 
 fn F[T:! Copy & Core.Destroy](a: T) -> T {
@@ -20,7 +20,7 @@ fn F[T:! Copy & Core.Destroy](a: T) -> T {
 }
 
 impl i32 as Copy {
-  fn Op[self: i32]() -> i32 {
+  fn Op(self: i32) -> i32 {
     return self;
   }
 }
@@ -34,7 +34,7 @@ class X {
   var b: i32;
 
   impl as Copy {
-    fn Op[self: X]() -> X {
+    fn Op(self: X) -> X {
       return {.a = self.a, .b = self.b};
     }
   }
@@ -45,7 +45,7 @@ fn F_X(a: X) -> X {
 }
 
 impl () as Copy {
-  fn Op[unused self: ()]() -> () {
+  fn Op(unused self: ()) -> () {
     return ();
   }
 }
@@ -55,7 +55,7 @@ fn F_empty_tuple(a: ()) -> () {
 }
 
 impl (i32, i32) as Copy {
-  fn Op[self: (i32, i32)]() -> (i32, i32) {
+  fn Op(self: (i32, i32)) -> (i32, i32) {
     return self;
   }
 }
@@ -65,7 +65,7 @@ fn F_two_tuple(a: (i32, i32)) -> (i32, i32) {
 }
 
 impl ((i32, i32), X) as Copy {
-  fn Op[self: ((i32, i32), X)]() -> ((i32, i32), X) {
+  fn Op(self: ((i32, i32), X)) -> ((i32, i32), X) {
     return (self.0.(Copy.Op)(), self.1.(Copy.Op)());
   }
 }

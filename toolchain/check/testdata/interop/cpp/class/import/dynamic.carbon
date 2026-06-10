@@ -39,7 +39,7 @@ auto Use(Base& b) -> int {
 
 base class Derived {
   extend base: Cpp.Base;
-  virtual fn other_func[unused self: Self]() -> i32 {
+  virtual fn other_func(unused self) -> i32 {
     return 3;
   }
 }

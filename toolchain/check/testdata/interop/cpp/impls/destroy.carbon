@@ -200,6 +200,30 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
   return p;
 }
 
+// --- fail_no_destroy.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "types.h";
+
+class AdaptNoDestroy {
+  adapt Cpp.DeletedDestructor;
+}
+
+fn Make() -> AdaptNoDestroy;
+
+fn F() {
+  // CHECK:STDERR: fail_no_destroy.carbon:[[@LINE+8]]:3: error: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR:    21 |   var _: AdaptNoDestroy = Make();
+  // CHECK:STDERR:       |   ^
+  // CHECK:STDERR: fail_no_destroy.carbon:[[@LINE-12]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./types.h:23:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]
+  // CHECK:STDERR:    23 |   ~DeletedDestructor() = delete;
+  // CHECK:STDERR:       |   ^
+  // CHECK:STDERR:
+  var _: AdaptNoDestroy = Make();
+}
+
 // CHECK:STDOUT: --- destroy_destroyable.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

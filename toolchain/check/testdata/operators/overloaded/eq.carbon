@@ -19,8 +19,8 @@ package User;
 class C {};
 
 impl C as Core.EqWith(C) {
-  fn Equal[self: C](other: C) -> bool;
-  fn NotEqual[self: C](other: C) -> bool;
+  fn Equal(self: C, other: C) -> bool;
+  fn NotEqual(self: C, other: C) -> bool;
 }
 
 fn TestEqual(a: C, b: C) -> bool {
@@ -61,8 +61,8 @@ class C {};
 class D {};
 
 impl C as Core.EqWith(C) {
-  fn Equal[self: C](other: C) -> bool;
-  fn NotEqual[self: C](other: C) -> bool;
+  fn Equal(self: C, other: C) -> bool;
+  fn NotEqual(self: C, other: C) -> bool;
 }
 
 fn TestRhsBad(a: C, b: D) -> bool {

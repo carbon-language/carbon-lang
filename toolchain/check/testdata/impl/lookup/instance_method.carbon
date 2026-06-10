@@ -15,18 +15,19 @@
 class C;
 
 interface I {
-  fn F[self: Self]() -> i32;
+  fn F(self) -> i32;
 }
 
 class C {
   extend impl as I {
-    fn F[self: Self]() -> i32;
+    fn F(self) -> i32;
   }
 }
 
 fn F(c: C) -> i32 {
   return c.F();
 }
+
 
 // CHECK:STDOUT: --- instance_method.carbon
 // CHECK:STDOUT:
@@ -112,14 +113,14 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc18_25: Core.Form = init_form %i32 [concrete = constants.%.795]
-// CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.as_type.loc18_14.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc18_14.1: type = splice_block %.loc18_14.2 [symbolic = %Self.as_type.loc18_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %.loc18_17: Core.Form = init_form %i32 [concrete = constants.%.795]
+// CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.as_type.loc18_8.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc18_8.1: type = splice_block %.loc18_8.2 [symbolic = %Self.as_type.loc18_8.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc18_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc18_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc18_14.2: type = converted %Self.ref, %Self.as_type.loc18_14.2 [symbolic = %Self.as_type.loc18_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc18_8.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc18_8.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc18_8.2: type = converted %Self.ref, %Self.as_type.loc18_8.2 [symbolic = %Self.as_type.loc18_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc18_14.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc18_8.1 (%Self.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -174,10 +175,10 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc18_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc18_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc18_14.1 [symbolic = %pattern_type (constants.%pattern_type.c60)]
+// CHECK:STDOUT:   %Self.as_type.loc18_8.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc18_8.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc18_8.1 [symbolic = %pattern_type (constants.%pattern_type.c60)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.as_type.loc18_14.1 (%Self.as_type)) -> out %return.param: %i32;
+// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.as_type.loc18_8.1 (%Self.as_type)) -> out %return.param: %i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.I.impl.F(%self.param: %C) -> out %return.param: %i32;
@@ -201,7 +202,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc18_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc18_8.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -214,7 +215,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet) {
 // CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %Self.as_type.loc18_14.1 => constants.%C
+// CHECK:STDOUT:   %Self.as_type.loc18_8.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.98b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/call/fail_runtime_implicit_param.carbon
 
-// CHECK:STDERR: fail_runtime_implicit_param.carbon:[[@LINE+4]]:6: error: implicit parameters of functions must be constant or `self` [ImplictParamMustBeConstant]
+// CHECK:STDERR: fail_runtime_implicit_param.carbon:[[@LINE+4]]:6: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
 // CHECK:STDERR: fn F[s: ()]();
 // CHECK:STDERR:      ^~~~~
 // CHECK:STDERR:

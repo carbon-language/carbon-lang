@@ -12,7 +12,7 @@
 
 class CharLike {
   impl as Core.ImplicitAs(char) {
-    fn Convert[unused self: Self]() -> char { return 'x'; }
+    fn Convert(unused self) -> char { return 'x'; }
   }
 }
 
@@ -264,7 +264,7 @@ fn AddSubInt8() {
 // CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !9 = !{!10}
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
-// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 47, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 39, scope: !4)
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Main", scope: null, file: !3, line: 21, type: !13, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null}
@@ -402,4 +402,4 @@ fn AddSubInt8() {
 // CHECK:STDOUT: !146 = !{!7, !7}
 // CHECK:STDOUT: !147 = !{!148}
 // CHECK:STDOUT: !148 = !DILocalVariable(arg: 1, scope: !144, type: !7)
-// CHECK:STDOUT: !149 = !DILocation(line: 60, column: 37, scope: !144)
+// CHECK:STDOUT: !149 = !DILocation(line: 60, column: 29, scope: !144)

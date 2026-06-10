@@ -184,6 +184,17 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn F(unused x: i32);
 
+// --- fail_unused_self_decl.carbon
+library "[[@TEST_NAME]]";
+
+class C {
+  // CHECK:STDERR: fail_unused_self_decl.carbon:[[@LINE+4]]:15: error: `unused` modifier without a definition [UnusedModifierWithoutDefinition]
+  // CHECK:STDERR:   fn F(unused self);
+  // CHECK:STDERR:               ^~~~
+  // CHECK:STDERR:
+  fn F(unused self);
+}
+
 // --- fail_unused_implicit_param_decl.carbon
 library "[[@TEST_NAME]]";
 
@@ -197,6 +208,10 @@ library "[[@TEST_NAME]]";
 fn F[unused T:! type]();
 
 class C {
+  // CHECK:STDERR: fail_unused_implicit_param_decl.carbon:[[@LINE+8]]:15: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+  // CHECK:STDERR:   fn G[unused self: Self]();
+  // CHECK:STDERR:               ^~~~~~~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_unused_implicit_param_decl.carbon:[[@LINE+4]]:15: error: `unused` modifier without a definition [UnusedModifierWithoutDefinition]
   // CHECK:STDERR:   fn G[unused self: Self]();
   // CHECK:STDERR:               ^~~~~~~~~~

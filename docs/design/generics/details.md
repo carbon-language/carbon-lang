@@ -6630,7 +6630,7 @@ example, this `Set(T)` type may be compared to anything implementing the
 
 ```carbon
 class Set(T:! Ordered) {
-  fn Less[U:! Container with .ElementType = T, self: Self](u: U) -> bool;
+  fn Less[U:! Container with .ElementType = T](self, u: U) -> bool;
   // ...
 }
 ```
@@ -6648,7 +6648,7 @@ its elements implement the `Ordered` interface:
 ```carbon
 class DynArray(T:! type) {
   // `DynArray(T)` has a `Sort()` method if `T impls Ordered`.
-  fn Sort[C:! Ordered, ref self: DynArray(C)]();
+  fn Sort[C:! Ordered](ref self: DynArray(C));
 }
 ```
 

@@ -46,7 +46,7 @@ import Cpp library "abstract.h";
 
 class C {
   extend base: Cpp.A;
-  override fn f[unused ref self: Self]() {}
+  override fn f(unused ref self) {}
 }
 
 // --- fail_impl_mismatch_member.carbon
@@ -58,10 +58,10 @@ import Cpp library "abstract.h";
 class C {
   extend base: Cpp.A;
   // CHECK:STDERR: fail_impl_mismatch_member.carbon:[[@LINE+4]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
-  // CHECK:STDERR:   override fn invalid[unused ref self: Self]() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn invalid(unused ref self) {}
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn invalid[unused ref self: Self]() {}
+  override fn invalid(unused ref self) {}
 }
 
 // --- abstract_final.h

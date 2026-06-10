@@ -43,7 +43,7 @@ fn Use(T:! I) -> T {
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn Copy[self: Self]() -> Self;
+  fn Copy(self) -> Self;
 }
 
 //@dump-sem-ir-begin
@@ -71,7 +71,7 @@ fn Use[T:! I](x: T){
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn Copy[self: Self]() -> Self;
+  fn Copy(self) -> Self;
 }
 
 fn UseIndirect[T:! I](x: T) -> T {
@@ -196,7 +196,7 @@ library "[[@TEST_NAME]]";
 
 interface I {
   let X:! type;
-  fn G[self: Self]() -> X*;
+  fn G(self) -> X*;
 }
 
 fn F(U:! I where .X = .Self, v: U) {
@@ -416,6 +416,7 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
   V.(Z(V).Z1).(Y.Y1).(X.X1) as W;
 }
 
+
 // CHECK:STDOUT: --- access_assoc_fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -570,17 +571,18 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc9_18.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %I.WithSelf.Copy.type: type = fn_type @I.WithSelf.Copy, @I.WithSelf(%T.loc9_9.1) [symbolic = %I.WithSelf.Copy.type (constants.%I.WithSelf.Copy.type.54f)]
-// CHECK:STDOUT:   %.loc10: type = fn_type_with_self_type %I.WithSelf.Copy.type, %T.loc9_9.1 [symbolic = %.loc10 (constants.%.c06)]
+// CHECK:STDOUT:   %.loc10_11: type = fn_type_with_self_type %I.WithSelf.Copy.type, %T.loc9_9.1 [symbolic = %.loc10_11 (constants.%.c06)]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc9_9.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc10_11.2: @Use.%.loc10 (%.c06) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_11.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %impl.elem0.loc10_11.2: @Use.%.loc10_11 (%.c06) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc10_11.2: <specific function> = specific_impl_function %impl.elem0.loc10_11.2, @I.WithSelf.Copy(%T.loc9_9.1) [symbolic = %specific_impl_fn.loc10_11.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @Use.%T.as_type.loc9_18.1 (%T.as_type)) -> out %return.param: @Use.%T.as_type.loc9_18.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Use.%T.as_type.loc9_18.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %Copy.ref: %I.assoc_type = name_ref Copy, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc10_11.1: @Use.%.loc10 (%.c06) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_11.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc10_11.1: @Use.%.loc10_11 (%.c06) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc10_11: <bound method> = bound_method %x.ref, %impl.elem0.loc10_11.1
+// CHECK:STDOUT:     %.loc10_17: %I.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc9_9.1 (constants.%T)]
 // CHECK:STDOUT:     %specific_impl_fn.loc10_11.1: <specific function> = specific_impl_function %impl.elem0.loc10_11.1, @I.WithSelf.Copy(constants.%T) [symbolic = %specific_impl_fn.loc10_11.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc10_17: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_11.1
 // CHECK:STDOUT:     %.loc9_24.1: ref @Use.%T.as_type.loc9_18.1 (%T.as_type) = splice_block %return.param {}
@@ -678,6 +680,7 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT:     %Copy.ref: %I.assoc_type = name_ref Copy, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0.loc10_14.1: @UseIndirect.%.loc10_14.2 (%.c06) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_14.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc10_11: <bound method> = bound_method %x.ref, %impl.elem0.loc10_14.1
+// CHECK:STDOUT:     %.loc10_21: %I.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc8_17.1 (constants.%T)]
 // CHECK:STDOUT:     %specific_impl_fn.loc10_14.1: <specific function> = specific_impl_function %impl.elem0.loc10_14.1, @I.WithSelf.Copy(constants.%T) [symbolic = %specific_impl_fn.loc10_14.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc10_21: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_14.1
 // CHECK:STDOUT:     <elided>

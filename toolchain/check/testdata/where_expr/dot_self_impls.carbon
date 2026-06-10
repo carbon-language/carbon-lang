@@ -15,12 +15,12 @@ library "[[@TEST_NAME]]";
 
 interface I {
   fn FNonInstance();
-  fn FSelf[self: Self]();
+  fn FSelf(self);
 }
 
 interface J {
   fn GNonInstance();
-  fn GSelf[self: Self]();
+  fn GSelf(self);
 }
 
 fn INotJ[T:! I where .Self impls J](x: T) {
@@ -119,12 +119,12 @@ library "[[@TEST_NAME]]";
 
 interface I {
   fn FNonInstance();
-  fn FSelf[self: Self]();
+  fn FSelf(self);
 }
 
 interface J {
   fn GNonInstance();
-  fn GSelf[self: Self]();
+  fn GSelf(self);
 }
 
 fn INotJ[T:! I where .Self impls J](x: T) {

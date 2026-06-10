@@ -29,7 +29,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class C {
-  fn M[self: Self]();
+  fn M(self);
 }
 
 inline Cpp '''
@@ -44,7 +44,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class C {
-  fn M[self: Self]();
+  fn M(self);
 }
 
 inline Cpp '''
@@ -58,7 +58,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class C {
-  fn M[ref self: Self]();
+  fn M(ref self);
 }
 
 inline Cpp '''
@@ -73,7 +73,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class C {
-  fn M[ref self: Self]();
+  fn M(ref self);
 }
 
 inline Cpp '''
@@ -81,9 +81,9 @@ void F() {
   // CHECK:STDERR: fail_ref_method_rvalue.carbon:[[@LINE+7]]:3: error: 'this' argument to member function 'M' is an rvalue, but function has non-const lvalue ref-qualifier [CppInteropParseError]
   // CHECK:STDERR:    17 |   Carbon::C().M();
   // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_ref_method_rvalue.carbon:[[@LINE-8]]:25: note: 'M' declared here [CppInteropParseNote]
-  // CHECK:STDERR:     5 |   fn M[ref self: Self]();
-  // CHECK:STDERR:       |                         ^
+  // CHECK:STDERR: fail_ref_method_rvalue.carbon:[[@LINE-8]]:17: note: 'M' declared here [CppInteropParseNote]
+  // CHECK:STDERR:     5 |   fn M(ref self);
+  // CHECK:STDERR:       |                 ^
   // CHECK:STDERR:
   Carbon::C().M();
 }

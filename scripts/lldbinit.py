@@ -149,5 +149,54 @@ Example usage:
         print_dump(context, expr)
 
 
+# Returns true if sbtype is a Carbon ID type (i.e. is derived from
+# `Carbon::AnyIdBase`).
+def is_carbon_id(sbtype: lldb.SBType, internal_dict: Any) -> bool:
+    for base in sbtype.get_bases_array():
+        if "Carbon::AnyIdBase" in base.GetName():
+            return True
+        if is_carbon_id(base.type, internal_dict):
+            return True
+    return False
+
+
+# Formats a Carbon ID value to roughly match its format in raw SemIR, without
+# calling any user code.
+def format_carbon_id(
+    valobj: lldb.SBValue, internal_dict: Any, options: Any
+) -> str:
+    # TODO: It would be safer and more efficient to get these by traversing the
+    # member graph using the Python API, rather than by evaluating C++
+    # expressions. However, that doesn't seem to work in this case
+    # (`SBTypeStaticField.GetConstantValue` seems to be broken), and even if it
+    # did, it would be fairly verbose and probably more brittle.
+    label = valobj.EvaluateExpression("Label.Data")
+    label_size = valobj.EvaluateExpression("Label.Length")
+    if label and label_size:
+        # Clamp the read size, to limit the impact of memory corruption.
+        # 40 chars should be enough for any legitimate ID label.
+        read_size = min(label_size.GetValueAsUnsigned(), 40)
+        label_data = valobj.process.ReadMemory(
+            label.GetValueAsAddress(), read_size, lldb.SBError()
+        )
+        label_str = label_data.decode("utf-8")
+    else:
+        label_str = "<unknown id>"
+
+    index_int = valobj.GetChildMemberWithName("index").GetValueAsUnsigned()
+    if index_int == 0xFFFFFFFF:
+        # We can't handle all the special cases that ID printing does, but we
+        # can at least handle the most common one.
+        index_str = "<none>"
+    else:
+        index_str = f"{index_int:X}"
+
+    return f"{label_str}{index_str}"
+
+
 def __lldb_init_module(debugger: Any, internal_dict: Any) -> None:
     RunCommand("command script add -f lldbinit.cmd_dump dump")
+    RunCommand(
+        "type summary add --python-function lldbinit.format_carbon_id"
+        + " --recognizer-function lldbinit.is_carbon_id"
+    )

@@ -27,8 +27,8 @@ class Optional(T:! Copy) {
     return {.has_value = true, .value = value};
   }
 
-  fn HasValue[self: Self]() -> bool { return self.has_value; }
-  fn Get[self: Self]() -> T { return self.value; }
+  fn HasValue(self) -> bool { return self.has_value; }
+  fn Get(self) -> T { return self.value; }
 
   var has_value: bool;
   var value: T;

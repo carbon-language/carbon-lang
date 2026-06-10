@@ -23,7 +23,7 @@ class Digits {
     return var;
   }
 
-  fn Print[self: Self](max_depth: i32) {
+  fn Print(self, max_depth: i32) {
     for (digit: i32 in Core.Range(10)) {
       Core.PrintChar(((digit + 0x30) as u8) as char);
       Core.PrintChar(':');

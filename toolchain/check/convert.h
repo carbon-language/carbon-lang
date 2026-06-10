@@ -209,8 +209,7 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 // argument values for runtime parameters. `is_desugared` indicates that this
 // call was produced by desugaring, not written as a function call in user code,
 // so arguments to `ref` parameters aren't required to have `ref` tags.
-auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
-                     SemIR::InstId self_id,
+auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_arg_id, const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id, bool is_desugared)
@@ -264,6 +263,13 @@ auto ReturnExprAsForm(Context& context, SemIR::LocId loc_id,
 
 // Handles an expression whose result value is unused.
 auto DiscardExpr(Context& context, SemIR::InstId expr_id) -> void;
+
+// Given that `expr_id` is the result of a conversion from an expression of
+// type `type_id`, this undoes that conversion. Currently, this only supports
+// the case where the original conversion was a derived-to-base conversion.
+auto UnsafeUndoConvert(Context& context, SemIR::LocId loc_id,
+                       SemIR::InstId expr_id, SemIR::TypeId type_id)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

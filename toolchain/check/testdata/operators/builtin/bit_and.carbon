@@ -51,7 +51,7 @@ library "[[@TEST_NAME]]";
 
 class J { adapt {}; }
 impl J as Core.BitAndWith(J) where .Result = J {
-  fn Op[unused self: Self](unused other: Self) -> Self { return {} as J; }
+  fn Op(unused self, unused other: Self) -> Self { return {} as J; }
 }
 
 fn F() {

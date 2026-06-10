@@ -9,8 +9,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/interface/self_ref.carbon
 
 interface Foo {
-  fn Sub[ref self: Self](b: Self) -> Self;
-  fn Sub[ref self: foo](b: Self) -> Self;
+  fn Sub(ref self, b: Self) -> Self;
+  fn Sub(ref self: foo, b: Self) -> Self;
 }
 
 // CHECK:STDOUT: - filename: self_ref.carbon
@@ -21,36 +21,33 @@ interface Foo {
 // CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Sub'},
-// CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:               {kind: 'SelfValueName', text: 'self'},
 // CHECK:STDOUT:             {kind: 'RefBindingName', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:           {kind: 'SelfBindingPattern', text: 'self', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
 // CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 9},
 // CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 16},
+// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 14},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Sub'},
-// CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:               {kind: 'SelfValueName', text: 'self'},
 // CHECK:STDOUT:             {kind: 'RefBindingName', text: 'ref', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'foo'},
 // CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
 // CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 10},
 // CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 16},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 36},
+// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 15},
+// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 33},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

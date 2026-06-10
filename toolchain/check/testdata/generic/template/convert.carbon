@@ -28,7 +28,7 @@ fn Test1(n: i32) -> i32 {
 class C {
   var n: i32;
   impl as Core.ImplicitAs(i32) {
-    fn Convert[self: Self]() -> i32 { return self.n; }
+    fn Convert(self) -> i32 { return self.n; }
   }
 }
 
@@ -60,6 +60,7 @@ fn Test(d: D) -> i32 {
   // CHECK:STDERR:
   return F(d);
 }
+
 
 // CHECK:STDOUT: --- convert.carbon
 // CHECK:STDOUT:
@@ -214,7 +215,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc16_33: Core.Form = init_form %i32 [concrete = constants.%.795]
+// CHECK:STDOUT:     %.loc16_25: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param
@@ -289,13 +290,13 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %C = name_ref self, %self
 // CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%.loc14 [concrete = @C.%.loc14]
-// CHECK:STDOUT:   %.loc16_50.1: ref %i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc16_50.2: %i32 = acquire_value %.loc16_50.1
+// CHECK:STDOUT:   %.loc16_42.1: ref %i32 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc16_42.2: %i32 = acquire_value %.loc16_42.1
 // CHECK:STDOUT:   %impl.elem0: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
-// CHECK:STDOUT:   %bound_method.loc16_50.1: <bound method> = bound_method %.loc16_50.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc16_42.1: <bound method> = bound_method %.loc16_42.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc16_50.2: <bound method> = bound_method %.loc16_50.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc16_50.2(%.loc16_50.2)
+// CHECK:STDOUT:   %bound_method.loc16_42.2: <bound method> = bound_method %.loc16_42.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc16_42.2(%.loc16_42.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

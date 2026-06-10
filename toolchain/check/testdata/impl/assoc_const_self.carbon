@@ -52,7 +52,7 @@ interface I {
 class C {}
 
 impl () as Core.ImplicitAs(C) {
-  fn Convert[unused self: ()]() -> C { return {}; }
+  fn Convert(unused self: ()) -> C { return {}; }
 }
 
 // CHECK:STDERR: fail_assoc_const_not_constant_after_conversion.carbon:[[@LINE+4]]:11: error: associated constant V given value `()` that is not constant after conversion to `C` [AssociatedConstantNotConstantAfterConversion]
@@ -99,6 +99,7 @@ fn CallF() {
   // CHECK:STDERR:
   F({});
 }
+
 
 // CHECK:STDOUT: --- assoc_const_self.carbon
 // CHECK:STDOUT:
@@ -500,7 +501,7 @@ fn CallF() {
 // CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc11_36: Core.Form = init_form %C.ref [concrete = constants.%.a44]
+// CHECK:STDOUT:     %.loc11_34: Core.Form = init_form %C.ref [concrete = constants.%.a44]
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc11_28.1: type = splice_block %.loc11_28.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc11_28.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -547,10 +548,10 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @empty_tuple.type.as.ImplicitAs.impl.Convert(%self.param: %empty_tuple.type) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_48.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc11_48.2: init %C to %return.param = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc11_49: init %C = converted %.loc11_48.1, %.loc11_48.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   return %.loc11_49 to %return.param
+// CHECK:STDOUT:   %.loc11_46.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc11_46.2: init %C to %return.param = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc11_47: init %C = converted %.loc11_46.1, %.loc11_46.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   return %.loc11_47 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self.37e) {

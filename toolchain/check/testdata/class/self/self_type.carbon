@@ -13,7 +13,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/self/self_type.carbon
 
 class Class {
-  fn F[self: Self]() -> i32;
+  fn F(self) -> i32;
   fn Make() -> Self {
     returned var s: Self;
     s = {.p = &s};
@@ -22,7 +22,7 @@ class Class {
   var p: Self*;
 }
 
-fn Class.F[self: Self]() -> i32 {
+fn Class.F(self) -> i32 {
   return (*self.p).F();
 }
 

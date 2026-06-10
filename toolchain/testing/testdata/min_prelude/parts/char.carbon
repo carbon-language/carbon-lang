@@ -18,5 +18,5 @@ class Char {
 }
 
 impl CharLiteral as ImplicitAs(Char) {
-  fn Convert[self: Self]() -> Char = "char_literal.convert_char";
+  fn Convert(self) -> Char = "char_literal.convert_char";
 }

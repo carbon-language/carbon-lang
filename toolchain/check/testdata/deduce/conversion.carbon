@@ -33,7 +33,7 @@ library "[[@TEST_NAME]]";
 class A {}
 class B {}
 impl A as Core.ImplicitAs(type) {
-  eval fn Convert[unused self: A]() -> type { return B; }
+  eval fn Convert(unused self) -> type { return B; }
 }
 
 fn F(unused T:! type) {}
@@ -53,7 +53,7 @@ library "[[@TEST_NAME]]";
 class A {}
 class B {}
 impl A as Core.ImplicitAs(B) {
-  fn Convert[self: A]() -> B;
+  fn Convert(self) -> B;
 }
 
 fn F(unused T:! type, unused b: B) {}
@@ -65,6 +65,7 @@ fn G(a: A) {
   F((), a);
   //@dump-sem-ir-end
 }
+
 
 // CHECK:STDOUT: --- need_conversion.carbon
 // CHECK:STDOUT:
@@ -101,11 +102,11 @@ fn G(a: A) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.5f1: type = facet_type <@ImplicitAs, @ImplicitAs(type)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness @A.as.ImplicitAs.impl.%ImplicitAs.impl_witness_table [concrete]
-// CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.type.572c06.1: type = fn_type @A.as.ImplicitAs.impl.Convert.loc7_45.1 [concrete]
+// CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.type.572c06.1: type = fn_type @A.as.ImplicitAs.impl.Convert.loc7_40.1 [concrete]
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.dbe75c.1: %A.as.ImplicitAs.impl.Convert.type.572c06.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.5f1 = facet_value %A, (%ImplicitAs.impl_witness) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.51c: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(type, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.type.572c06.2: type = fn_type @A.as.ImplicitAs.impl.Convert.loc7_45.2 [concrete]
+// CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.type.572c06.2: type = fn_type @A.as.ImplicitAs.impl.Convert.loc7_40.2 [concrete]
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.dbe75c.2: %A.as.ImplicitAs.impl.Convert.type.572c06.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -133,7 +134,7 @@ fn G(a: A) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc16_8.1, %impl.elem0 [concrete = constants.%A.as.ImplicitAs.impl.Convert.bound.5ecf75.1]
 // CHECK:STDOUT:   %.loc16_8.2: ref %A = temporary %.loc16_6.2, %.loc16_8.1 [concrete = constants.%.367]
 // CHECK:STDOUT:   %.loc16_8.3: %A = acquire_value %.loc16_8.2 [concrete = constants.%A.val]
-// CHECK:STDOUT:   %Convert.ref: %A.as.ImplicitAs.impl.Convert.type.572c06.1 = name_ref Convert, @A.as.ImplicitAs.impl.%A.as.ImplicitAs.impl.Convert.decl.loc7_45.1 [concrete = constants.%A.as.ImplicitAs.impl.Convert.dbe75c.1]
+// CHECK:STDOUT:   %Convert.ref: %A.as.ImplicitAs.impl.Convert.type.572c06.1 = name_ref Convert, @A.as.ImplicitAs.impl.%A.as.ImplicitAs.impl.Convert.decl.loc7_40.1 [concrete = constants.%A.as.ImplicitAs.impl.Convert.dbe75c.1]
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %.loc16_8.3, %Convert.ref [concrete = constants.%A.as.ImplicitAs.impl.Convert.bound.5ecf75.2]
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.call: init type = call %A.as.ImplicitAs.impl.Convert.bound(%.loc16_8.3) [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc16_12.1: type = value_of_initializer %A.as.ImplicitAs.impl.Convert.call [concrete = constants.%B]

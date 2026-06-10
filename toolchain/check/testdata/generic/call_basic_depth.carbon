@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/generic/call_basic_depth.carbon
 
 class C {
-  fn Cfn[unused self: Self, T:! type](unused x: T) {
+  fn Cfn[T:! type](unused self, unused x: T) {
   }
 }
 
@@ -45,15 +45,16 @@ fn M() {
   //@dump-sem-ir-end
 }
 
+
 // CHECK:STDOUT: --- call_basic_depth.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %C.Cfn.type: type = fn_type @C.Cfn [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]

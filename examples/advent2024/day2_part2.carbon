@@ -12,7 +12,7 @@ import library "io_utils";
 // A three-element sliding window of recent levels.
 class Window {
   fn Make() -> Window { return {.data = (0,0,0), .size = 0}; }
-  fn Add[ref self: Self](n: i32) {
+  fn Add(ref self, n: i32) {
     self.data[2] = self.data[1];
     self.data[1] = self.data[0];
     self.data[0] = n;
@@ -36,7 +36,7 @@ class ReportState {
             .removable_double_bad_edge = false};
   }
 
-  fn OnAdd[ref self: Self](window: Window) {
+  fn OnAdd(ref self, window: Window) {
     if (window.size < 2) {
       return;
     }
@@ -75,7 +75,7 @@ class ReportState {
     }
   }
 
-  fn OnFinish[ref self: Self](window: Window) {
+  fn OnFinish(ref self, window: Window) {
     if (window.size >= 2 and
         not IsSafe(window.data[1], window.data[0], self.increasing)) {
       // We have a removable single bad edge if the last edge is unsafe.
@@ -83,7 +83,7 @@ class ReportState {
     }
   }
 
-  fn IsSafeWithRemoval[self: Self]() -> bool {
+  fn IsSafeWithRemoval(self) -> bool {
     return self.bad_edges == 0 or
            (self.bad_edges == 1 and self.removable_single_bad_edge) or
            (self.bad_edges == 2 and self.removable_double_bad_edge);

@@ -15,7 +15,7 @@ class IntWrapper {
 }
 
 impl IntWrapper as Core.ImplicitAs(i32) {
-  fn Convert[self: Self]() -> i32 { return self.n; }
+  fn Convert(self) -> i32 { return self.n; }
 }
 
 fn Consume(_: i32) {}
@@ -33,9 +33,9 @@ fn DoIt() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.IntWrapper.Main:ImplicitAs.84588f41d61dafba.Core"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_48.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc18_48.2 = load i32, ptr %.loc18_48.1.n, align 4, !dbg !11
-// CHECK:STDOUT:   ret i32 %.loc18_48.2, !dbg !12
+// CHECK:STDOUT:   %.loc18_40.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc18_40.2 = load i32, ptr %.loc18_40.1.n, align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 %.loc18_40.2, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -98,8 +98,8 @@ fn DoIt() {
 // CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !9 = !{!10}
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
-// CHECK:STDOUT: !11 = !DILocation(line: 18, column: 44, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 18, column: 37, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 18, column: 36, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 18, column: 29, scope: !4)
 // CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Consume", linkageName: "_CConsume.Main", scope: null, file: !3, line: 21, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !16)
 // CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
 // CHECK:STDOUT: !15 = !{null, !7}

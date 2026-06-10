@@ -34,8 +34,8 @@ library "[[@TEST_NAME]]";
 
 class TrivialRange {
   impl as Core.Iterate where .CursorType = () and .ElementType = () {
-    fn NewCursor[unused self: Self]() {}
-    fn Next[unused self: Self](unused cursor: ()*) -> Core.Optional(()) {
+    fn NewCursor(unused self) {}
+    fn Next(unused self, unused cursor: ()*) -> Core.Optional(()) {
       return Core.Optional(()).None();
     }
   }
@@ -53,6 +53,7 @@ fn Run() {
   //@dump-sem-ir-end
 }
 
+
 // CHECK:STDOUT: --- trivial.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -69,7 +70,7 @@ fn Run() {
 // CHECK:STDOUT:   %Copy.impl_witness.77e: <witness> = impl_witness imports.%Copy.impl_witness_table.938 [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %empty_tuple.type, (%Copy.impl_witness.77e) [concrete]
 // CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @TrivialRange.as.Iterate.impl.%Iterate.impl_witness_table [concrete]
-// CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.type.de32c1.1: type = fn_type @TrivialRange.as.Iterate.impl.NewCursor.loc6_39.1 [concrete]
+// CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.type.de32c1.1: type = fn_type @TrivialRange.as.Iterate.impl.NewCursor.loc6_31.1 [concrete]
 // CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.93de00.1: %TrivialRange.as.Iterate.impl.NewCursor.type.de32c1.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Optional.21a: type = class_type @Optional, @Optional(%Copy.facet) [concrete]
@@ -79,7 +80,7 @@ fn Run() {
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type.b66: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet) [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.4f6: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet) [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.type.de32c1.2: type = fn_type @TrivialRange.as.Iterate.impl.NewCursor.loc6_39.2 [concrete]
+// CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.type.de32c1.2: type = fn_type @TrivialRange.as.Iterate.impl.NewCursor.loc6_31.2 [concrete]
 // CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.93de00.2: %TrivialRange.as.Iterate.impl.NewCursor.type.de32c1.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %Optional.HasValue.type.650: type = fn_type @Optional.HasValue, @Optional(%Copy.facet) [concrete]
@@ -133,7 +134,7 @@ fn Run() {
 // CHECK:STDOUT:   %impl.elem2: %.46f = impl_witness_access constants.%Iterate.impl_witness, element2 [concrete = constants.%TrivialRange.as.Iterate.impl.NewCursor.93de00.2]
 // CHECK:STDOUT:   %bound_method.loc18_35.1: <bound method> = bound_method %.loc18_20.2, %impl.elem2 [concrete = constants.%TrivialRange.as.Iterate.impl.NewCursor.bound.464]
 // CHECK:STDOUT:   %.loc18_20.3: %TrivialRange = acquire_value %.loc18_20.2 [concrete = constants.%TrivialRange.val]
-// CHECK:STDOUT:   %NewCursor.ref: %TrivialRange.as.Iterate.impl.NewCursor.type.de32c1.1 = name_ref NewCursor, @TrivialRange.as.Iterate.impl.%TrivialRange.as.Iterate.impl.NewCursor.decl.loc6_39.1 [concrete = constants.%TrivialRange.as.Iterate.impl.NewCursor.93de00.1]
+// CHECK:STDOUT:   %NewCursor.ref: %TrivialRange.as.Iterate.impl.NewCursor.type.de32c1.1 = name_ref NewCursor, @TrivialRange.as.Iterate.impl.%TrivialRange.as.Iterate.impl.NewCursor.decl.loc6_31.1 [concrete = constants.%TrivialRange.as.Iterate.impl.NewCursor.93de00.1]
 // CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.bound: <bound method> = bound_method %.loc18_20.3, %NewCursor.ref [concrete = constants.%TrivialRange.as.Iterate.impl.NewCursor.bound.410]
 // CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.call: init %empty_tuple.type = call %TrivialRange.as.Iterate.impl.NewCursor.bound(%.loc18_20.3)
 // CHECK:STDOUT:   %var: ref %empty_tuple.type = var invalid

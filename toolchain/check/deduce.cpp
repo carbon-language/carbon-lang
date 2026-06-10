@@ -14,6 +14,7 @@
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -178,6 +179,12 @@ class DeductionContext {
   auto AddAll(SemIR::InstBlockId param, llvm::ArrayRef<SemIR::InstId> arg,
               bool want_value) -> void {
     worklist_.AddAll(param, arg, want_value);
+  }
+
+  template <typename ElementId>
+  auto AddAll(llvm::ArrayRef<ElementId> params, llvm::ArrayRef<ElementId> args,
+              bool want_value) -> void {
+    worklist_.AddAll(params, args, want_value);
   }
 
   template <typename ParamT, typename ArgT>
@@ -581,17 +588,24 @@ auto DeduceGenericCallArguments(
     Context& context, SemIR::LocId loc_id, SemIR::GenericId generic_id,
     SemIR::SpecificId enclosing_specific_id,
     [[maybe_unused]] SemIR::InstBlockId implicit_param_patterns_id,
-    SemIR::InstBlockId param_patterns_id,
-    [[maybe_unused]] SemIR::InstId self_id,
+    SemIR::InstBlockId param_patterns_id, SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::SpecificId {
   DeductionContext deduction(&context, loc_id, generic_id,
                              enclosing_specific_id,
                              /*diagnose=*/true);
 
-  // Prepare to perform deduction of the explicit parameters against their
-  // arguments.
-  // TODO: Also perform deduction for type of self.
-  deduction.AddAll(param_patterns_id, arg_ids, /*want_value=*/false);
+  // Prepare to perform deduction of the parameters against the explicit
+  // arguments. When `self` is provided as the method-call receiver it is
+  // prepended to the explicit argument list to match the leading `self`
+  // parameter pattern.
+  llvm::ArrayRef<SemIR::InstId> self_refs = {};
+  if (self_id.has_value()) {
+    self_refs = self_id;
+  }
+  deduction.AddAll(context.inst_blocks().GetOrEmpty(param_patterns_id),
+                   llvm::ArrayRef<SemIR::InstId>(llvm::to_vector<8>(
+                       llvm::concat<const SemIR::InstId>(self_refs, arg_ids))),
+                   /*want_value=*/false);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
     return SemIR::SpecificId::None;
