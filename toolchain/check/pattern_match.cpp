@@ -1030,11 +1030,9 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
 
   // When we have a seperate `self_arg_id`, we concatenate that onto the front
   // of the arg_refs to match against the first parameter.
-  std::array<SemIR::InstId, 1> self_arg_array = {self_arg_id};
-  llvm::ArrayRef<SemIR::InstId> self_arg_refs(self_arg_array);
-  if (!self_arg_id.has_value()) {
-    self_arg_refs = {};
-  } else {
+  llvm::ArrayRef<SemIR::InstId> self_arg_refs = {};
+  if (self_arg_id.has_value()) {
+    self_arg_refs = self_arg_id;
     CARBON_CHECK(self_pattern_id.has_value());
   }
 

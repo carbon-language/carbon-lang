@@ -598,10 +598,9 @@ auto DeduceGenericCallArguments(
   // arguments. When `self` is provided as the method-call receiver it is
   // prepended to the explicit argument list to match the leading `self`
   // parameter pattern.
-  std::array<SemIR::InstId, 1> self_array = {self_id};
-  llvm::ArrayRef<SemIR::InstId> self_refs(self_array);
-  if (!self_id.has_value()) {
-    self_refs = {};
+  llvm::ArrayRef<SemIR::InstId> self_refs = {};
+  if (self_id.has_value()) {
+    self_refs = self_id;
   }
   deduction.AddAll(context.inst_blocks().GetOrEmpty(param_patterns_id),
                    llvm::ArrayRef<SemIR::InstId>(llvm::to_vector<8>(
