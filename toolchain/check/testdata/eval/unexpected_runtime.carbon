@@ -37,13 +37,13 @@ interface Z {
 }
 
 class D {
-  // CHECK:STDERR: fail_unexpected_runtime_rewrite_lhs.carbon:[[@LINE+8]]:18: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   extend impl as Z where x = () {}
-  // CHECK:STDERR:                  ^~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_unexpected_runtime_rewrite_lhs.carbon:[[@LINE+4]]:28: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
+  // CHECK:STDERR: fail_unexpected_runtime_rewrite_lhs.carbon:[[@LINE+8]]:28: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
   // CHECK:STDERR:   extend impl as Z where x = () {}
   // CHECK:STDERR:                            ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_unexpected_runtime_rewrite_lhs.carbon:[[@LINE+4]]:26: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   extend impl as Z where x = () {}
+  // CHECK:STDERR:                          ^~~
   // CHECK:STDERR:
   extend impl as Z where x = () {}
 }

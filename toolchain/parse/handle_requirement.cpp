@@ -18,11 +18,14 @@ auto HandleRequirementBegin(Context& context) -> void {
       context.PositionKind(static_cast<Lookahead>(2)) ==
           Lex::TokenKind::Equal) {
     auto period = context.Consume();
-    context.AddNode(NodeKind::IdentifierNameNotBeforeSignature,
-                    context.Consume(),
+    auto name = context.Consume();
+    auto equal = context.Consume();
+    context.AddNode(NodeKind::IdentifierNameNotBeforeSignature, name,
                     /*has_error=*/false);
     context.AddNode(NodeKind::DesignatorExpr, period, /*has_error=*/false);
-    state.token = context.Consume();
+    state.token = equal;
+    context.AddNode(NodeKind::RequirementEqualOperand, state.token,
+                    /*has_error=*/false);
     context.PushState(state, StateKind::RequirementOperatorFinish);
   } else {
     context.PushState(StateKind::RequirementOperator);
@@ -36,7 +39,14 @@ auto HandleRequirementOperator(Context& context) -> void {
   switch (context.PositionKind()) {
     // Accept either `impls` or `==`
     case Lex::TokenKind::Impls:
+      state.token = context.Consume();
+      context.AddNode(NodeKind::RequirementImplsOperand, state.token,
+                      /*has_error=*/false);
+      break;
     case Lex::TokenKind::EqualEqual:
+      state.token = context.Consume();
+      context.AddNode(NodeKind::RequirementEqualEqualOperand, state.token,
+                      /*has_error=*/false);
       break;
 
     // Reject `=` since correct usage is consumed in `HandleRequirementBegin`.
@@ -48,6 +58,9 @@ auto HandleRequirementOperator(Context& context) -> void {
         context.emitter().Emit(*context.position(),
                                RequirementEqualAfterNonDesignator);
       }
+      state.token = context.Consume();
+      context.AddNode(NodeKind::RequirementEqualOperand, state.token,
+                      /*has_error=*/true);
       context.ReturnErrorOnState();
       return;
     }
@@ -63,7 +76,6 @@ auto HandleRequirementOperator(Context& context) -> void {
       return;
     }
   }
-  state.token = context.Consume();
   context.PushState(state, StateKind::RequirementOperatorFinish);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }

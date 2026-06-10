@@ -533,6 +533,9 @@ class NodeStack {
       case Parse::NodeKind::RequirementAnd:
       case Parse::NodeKind::RequirementEqual:
       case Parse::NodeKind::RequirementEqualEqual:
+      case Parse::NodeKind::RequirementEqualEqualOperand:
+      case Parse::NodeKind::RequirementEqualOperand:
+      case Parse::NodeKind::RequirementImplsOperand:
       case Parse::NodeKind::RequirementImpls:
       case Parse::NodeKind::StructLiteralComma:
       case Parse::NodeKind::StructFieldDesignator:

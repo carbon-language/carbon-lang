@@ -120,6 +120,22 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   return true;
 }
 
+auto HandleParseNode(Context& /*context*/,
+                     Parse::RequirementEqualOperandId /*node_id*/) -> bool {
+  return true;
+}
+
+auto HandleParseNode(Context& /*context*/,
+                     Parse::RequirementEqualEqualOperandId /*node_id*/)
+    -> bool {
+  return true;
+}
+
+auto HandleParseNode(Context& /*context*/,
+                     Parse::RequirementImplsOperandId /*node_id*/) -> bool {
+  return true;
+}
+
 // Returns whether a designator (`.Self` or `.MemberName`) is present in
 // `inst_id`.
 static auto FindDesignator(Context& context, SemIR::ConstantId const_id)

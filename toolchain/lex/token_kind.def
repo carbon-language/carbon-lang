@@ -51,6 +51,10 @@ CARBON_TOKEN(Error)
 #define CARBON_TOKEN_WITH_VIRTUAL_NODE(Name) Name
 #endif
 
+#ifndef CARBON_TOKEN_WITH_TWO_VIRTUAL_NODES
+#define CARBON_TOKEN_WITH_TWO_VIRTUAL_NODES(Name) Name
+#endif
+
 // Note that symbols need to be ordered from longest to shortest to effectively
 // provide max-munch lexing.
 
@@ -229,7 +233,7 @@ CARBON_KEYWORD_TOKEN(Unsafe,              "unsafe")
 CARBON_KEYWORD_TOKEN(Unused,              "unused")
 CARBON_KEYWORD_TOKEN(Virtual,             "virtual")
 CARBON_KEYWORD_TOKEN(Val,                 "val")
-CARBON_TOKEN_WITH_VIRTUAL_NODE(
+CARBON_TOKEN_WITH_TWO_VIRTUAL_NODES(
   CARBON_KEYWORD_TOKEN(Where,             "where"))
 CARBON_KEYWORD_TOKEN(While,               "while")
 
@@ -250,3 +254,4 @@ CARBON_TOKEN(FileEnd)
 
 #undef CARBON_TOKEN
 #undef CARBON_TOKEN_WITH_VIRTUAL_NODE
+#undef CARBON_TOKEN_WITH_TWO_VIRTUAL_NODES

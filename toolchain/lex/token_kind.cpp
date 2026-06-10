@@ -75,7 +75,8 @@ constexpr llvm::StringLiteral TokenKind::FixedSpelling[] = {
 
 constexpr int8_t TokenKind::ExpectedParseTreeSize[] = {
 #define CARBON_TOKEN(Name) 1,
-#define CARBON_TOKEN_WITH_VIRTUAL_NODE(size) 2,
+#define CARBON_TOKEN_WITH_VIRTUAL_NODE(Name) 2,
+#define CARBON_TOKEN_WITH_TWO_VIRTUAL_NODES(Name) 3,
 #include "toolchain/lex/token_kind.def"
 };
 

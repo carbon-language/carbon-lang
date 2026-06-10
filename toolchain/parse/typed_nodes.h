@@ -1300,26 +1300,53 @@ struct DesignatorExpr {
   NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfTypeName> name;
 };
 
+struct RequirementEqualOperand {
+  static constexpr auto Kind =
+      NodeKind::RequirementEqualOperand.Define({.child_count = 1});
+  DesignatorExprId lhs;
+  // This is a virtual token. The `=` token is owned by the RequirementEqual
+  // node.
+  Lex::EqualTokenIndex token;
+};
+
 struct RequirementEqual {
   static constexpr auto Kind = NodeKind::RequirementEqual.Define(
       {.category = NodeCategory::Requirement, .child_count = 2});
-  DesignatorExprId lhs;
+  RequirementEqualOperandId start;
   Lex::EqualTokenIndex token;
   AnyExprId rhs;
+};
+
+struct RequirementEqualEqualOperand {
+  static constexpr auto Kind =
+      NodeKind::RequirementEqualEqualOperand.Define({.child_count = 1});
+  AnyExprId lhs;
+  // This is a virtual token. The `==` token is owned by the
+  // RequirementEqualEqual node.
+  Lex::EqualEqualTokenIndex token;
 };
 
 struct RequirementEqualEqual {
   static constexpr auto Kind = NodeKind::RequirementEqualEqual.Define(
       {.category = NodeCategory::Requirement, .child_count = 2});
-  AnyExprId lhs;
+  RequirementEqualEqualOperandId start;
   Lex::EqualEqualTokenIndex token;
   AnyExprId rhs;
+};
+
+struct RequirementImplsOperand {
+  static constexpr auto Kind =
+      NodeKind::RequirementImplsOperand.Define({.child_count = 1});
+  AnyExprId lhs;
+  // This is a virtual token. The `impls` token is owned by the RequirementImpls
+  // node.
+  Lex::ImplsTokenIndex token;
 };
 
 struct RequirementImpls {
   static constexpr auto Kind = NodeKind::RequirementImpls.Define(
       {.category = NodeCategory::Requirement, .child_count = 2});
-  AnyExprId lhs;
+  RequirementImplsOperandId start;
   Lex::ImplsTokenIndex token;
   AnyExprId rhs;
 };
