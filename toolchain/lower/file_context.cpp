@@ -549,6 +549,12 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
                "Attempting to emit definition of inexact function: {0}",
                *function_info->llvm_function);
 
+  // If the function has already been lowered from another FileContext, don't
+  // try to lower it again.
+  if (!function_info->llvm_function->isDeclaration()) {
+    return;
+  }
+
   // TODO: Build CoreWitness functions when they're called instead of when
   // they're defined. That should allow LinkOnceODRLinkage.
   if (declaration_function.special_function_kind ==
