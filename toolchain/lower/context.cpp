@@ -67,10 +67,20 @@ auto Context::LowerPendingDefinitions() -> void {
 }
 
 auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
+  std::vector<llvm::IntrusiveRefCntPtr<clang::ExternalASTSource>> old_sources;
+
   for (auto& file_context : file_contexts_.values()) {
     if (file_context && file_context->cpp_file()) {
       auto& ast = const_cast<clang::ASTContext&>(
           file_context->cpp_file()->ast_context());
+
+      // Keep a reference to the old ExternalASTSource to prevent it
+      // from being freed. This is needed because the old source gets
+      // cached in DeclLinks, and if it's freed then attempting to
+      // update the LazyGenerationalUpdatePtr will crash.
+      //
+      // TODO: this is a hack, find a better way.
+      old_sources.push_back(ast.getExternalSourcePtr());
 
       llvm::IntrusiveRefCntPtr<clang::ExternalSemaSource> carbon_source =
           llvm::makeIntrusiveRefCnt<SemIR::ReadOnlyASTSource>(
