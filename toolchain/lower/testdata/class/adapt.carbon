@@ -110,9 +110,15 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.d8149a936c4ca850:core.Destroy.Core"(ptr %self) #0 !dbg !40 {
+// CHECK:STDOUT: define weak_odr void @"_COp.c0f3aeca38cdfaa6:core.Destroy.Core"(ptr %self) #0 !dbg !40 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !43
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.d8149a936c4ca850:core.Destroy.Core"(ptr %self) #0 !dbg !44 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -167,10 +173,14 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !37 = !{!38}
 // CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !34, type: !7)
 // CHECK:STDOUT: !39 = !DILocation(line: 27, column: 3, scope: !34)
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d8149a936c4ca850:core.Destroy.Core", scope: null, file: !3, line: 27, type: !35, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !41)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Op", linkageName: "_COp.c0f3aeca38cdfaa6:core.Destroy.Core", scope: null, file: !3, line: 27, type: !35, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !41)
 // CHECK:STDOUT: !41 = !{!42}
 // CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !40, type: !7)
 // CHECK:STDOUT: !43 = !DILocation(line: 27, column: 3, scope: !40)
+// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d8149a936c4ca850:core.Destroy.Core", scope: null, file: !3, line: 27, type: !35, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !45)
+// CHECK:STDOUT: !45 = !{!46}
+// CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !44, type: !7)
+// CHECK:STDOUT: !47 = !DILocation(line: 27, column: 3, scope: !44)
 // CHECK:STDOUT: ; ModuleID = 'adapt_int.carbon'
 // CHECK:STDOUT: source_filename = "adapt_int.carbon"
 // CHECK:STDOUT:

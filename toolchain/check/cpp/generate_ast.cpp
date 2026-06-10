@@ -697,10 +697,26 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
         continue;
       }
 
-      auto callee_function =
-          GetCalleeAsFunction(context_->sem_ir(), vtable_entry_id);
-      const SemIR::Function& function =
-          context_->functions().Get(callee_function.function_id);
+      // The Carbon vtable entry for a function override is a thunk, which wraps
+      // the function declaration to expose the signature of the overridden
+      // virtual function. Here we want to generate a C++ method declaration for
+      // the override, so we need to look through the thunk wrapping.
+      const auto [callee_function, function] =
+          [&]() -> std::pair<SemIR::CalleeFunction, const SemIR::Function&> {
+        auto vtable_callee_function =
+            GetCalleeAsFunction(context_->sem_ir(), vtable_entry_id);
+        const SemIR::Function& vtable_function =
+            context_->functions().Get(vtable_callee_function.function_id);
+        if (!vtable_function.thunk_id().has_value()) {
+          return {vtable_callee_function, vtable_function};
+        }
+        auto vtable_thunk =
+            context_->sem_ir().thunks().Get(vtable_function.thunk_id());
+        auto callee_function =
+            GetCalleeAsFunction(context_->sem_ir(), vtable_thunk.callee_id);
+        return {callee_function,
+                context_->functions().Get(callee_function.function_id)};
+      }();
 
       // If this is a member of a base class, nothing to do here.
       if (function.parent_scope_id != class_info.scope_id) {
