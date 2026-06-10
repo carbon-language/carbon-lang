@@ -577,54 +577,6 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   }
 }
 
-// If this declaration declares a class type that is "owned" by Carbon, and not
-// imported from C++, returns the corresponding type ID and `ClassType`.
-// Otherwise returns `nullopt`.
-static auto GetAsCarbonOwnedClass(Context& context,
-                                  const clang::TagDecl* tag_decl)
-    -> std::optional<std::pair<SemIR::TypeId, SemIR::ClassType>> {
-  // Quickly check whether we could possibly own this class.
-  // TODO: Once we multiplex with the ASTReader, handle
-  // ASTReader::completeVisibleDeclsMap setting this to `false`.
-  if (!tag_decl->hasExternalVisibleStorage()) {
-    return std::nullopt;
-  }
-
-  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
-      const_cast<clang::TagDecl*>(tag_decl->getFirstDecl()));
-  auto clang_decl_id = context.clang_decls().LookupId(key);
-  if (!clang_decl_id.has_value()) {
-    return std::nullopt;
-  }
-
-  auto inst_id = context.clang_decls().Get(clang_decl_id).inst_id;
-  auto const_id = context.constant_values().Get(inst_id);
-  if (!const_id.has_value()) {
-    return std::nullopt;
-  }
-
-  auto class_type =
-      context.constant_values().TryGetInstAs<SemIR::ClassType>(const_id);
-  if (!class_type) {
-    return std::nullopt;
-  }
-
-  // Determine whether this class was imported from C++.
-  // TODO: This currently can't happen, because only Carbon classes have
-  // external lexical storage, but will happen once we support importing C++
-  // classes from AST files. Add a test once that is supported.
-  // TODO: Consider setting `extern_library_id` on classes imported from C++ to
-  // indicate the current file does not own them.
-  const auto& class_info = context.classes().Get(class_type->class_id);
-  if (class_info.parent_scope_id.has_value() &&
-      context.name_scopes().Get(class_info.parent_scope_id).is_cpp_scope()) {
-    return std::nullopt;
-  }
-
-  auto class_type_id = context.types().GetTypeIdForTypeConstantId(const_id);
-  return std::make_pair(class_type_id, *class_type);
-}
-
 auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
   auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
   if (!class_decl) {
@@ -633,7 +585,8 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
     return;
   }
 
-  auto carbon_class_info = GetAsCarbonOwnedClass(*context_, tag_decl);
+  auto carbon_class_info =
+      SemIR::GetAsCarbonOwnedClass(context_->sem_ir(), tag_decl);
   if (!carbon_class_info) {
     return;
   }
@@ -738,7 +691,8 @@ auto CarbonExternalASTSource::layoutRecordType(
     llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>& base_offsets,
     llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>&
         vbase_offsets) -> bool {
-  auto carbon_class_info = GetAsCarbonOwnedClass(*context_, record_decl);
+  auto carbon_class_info =
+      SemIR::GetAsCarbonOwnedClass(context_->sem_ir(), record_decl);
   if (!carbon_class_info) {
     return false;
   }

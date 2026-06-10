@@ -14,6 +14,10 @@
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/struct_type_field.h"
 
+namespace clang {
+class TagDecl;
+}
+
 namespace Carbon::SemIR {
 
 class File;
@@ -143,6 +147,12 @@ struct Class : public EntityWithParamsBase,
 };
 
 using ClassStore = ValueStore<ClassId, Class, Tag<CheckIRId>>;
+
+// If this declaration declares a class type that is "owned" by Carbon, and not
+// imported from C++, returns the corresponding type ID and `ClassType`.
+// Otherwise returns `nullopt`.
+auto GetAsCarbonOwnedClass(const File& sem_ir, const clang::TagDecl* tag_decl)
+    -> std::optional<std::pair<SemIR::TypeId, SemIR::ClassType>>;
 
 auto LookupClassFieldByStructField(const File& sem_ir,
                                    const NameScope& class_scope,
