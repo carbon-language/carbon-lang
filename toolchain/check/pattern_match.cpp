@@ -1028,7 +1028,7 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
   CallerState state = {.callee_specific_id = specific_id};
   MatchContext match(context);
 
-  // When we have a seperate `self_arg_id`, we concatenate that onto the front
+  // When we have a separate `self_arg_id`, we concatenate that onto the front
   // of the arg_refs to match against the first parameter.
   llvm::ArrayRef<SemIR::InstId> self_arg_refs = {};
   if (self_arg_id.has_value()) {
