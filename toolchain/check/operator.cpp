@@ -81,10 +81,7 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
         return IsCppClassType(context, arg_id);
       })) {
     op_fn_id = LookupCppOperator(context, loc_id, op, {operand_id});
-
-    // If C++ operator lookup found a non-method operator, call it with one call
-    // argument. Otherwise fall through to call it with a self argument.
-    if (op_fn_id.has_value() && !IsCppOperatorMethod(context, op_fn_id)) {
+    if (op_fn_id.has_value()) {
       return PerformCall(context, loc_id, op_fn_id, {operand_id},
                          /*is_desugared=*/true);
     }
@@ -133,11 +130,7 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
         return IsCppClassType(context, arg_id);
       })) {
     op_fn_id = LookupCppOperator(context, loc_id, op, {lhs_id, rhs_id});
-
-    // If C++ operator lookup found a non-method operator, call it with two call
-    // arguments. Otherwise fall through to call it with a self argument and one
-    // call argument.
-    if (op_fn_id.has_value() && !IsCppOperatorMethod(context, op_fn_id)) {
+    if (op_fn_id.has_value()) {
       return PerformCall(context, loc_id, op_fn_id, {lhs_id, rhs_id},
                          /*is_desugared=*/true);
     }
