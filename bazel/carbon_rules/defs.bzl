@@ -26,6 +26,7 @@ def _carbon_binary_impl(ctx):
     # Pass any C++ flags from our dependencies onto Carbon.
     dep_flags = []
     dep_hdrs = []
+    dep_api_files = []
     dep_link_inputs = []
     for dep in ctx.attr.deps:
         if CcInfo in dep:
@@ -46,16 +47,17 @@ def _carbon_binary_impl(ctx):
                     dep_link_inputs += lib.objects
         if DefaultInfo in dep:
             dep_link_inputs += dep[DefaultInfo].files.to_list()
+        if CarbonLibraryInfo in dep:
+            carbon_info = dep[CarbonLibraryInfo]
+            dep_link_inputs += carbon_info.objs.to_list()
+            dep_api_files.append(carbon_info.api)
 
     # Add the dependencies' link flags and inputs to the link flags.
     link_flags += [dep.path for dep in dep_link_inputs]
 
     # Build object files for the prelude and for the binary itself.
     # TODO: Eventually the prelude should be build as a separate `carbon_library`.
-    srcs_and_flags = [
-        #    (ctx.files.prelude_srcs, ["--no-prelude-import"]),
-        (ctx.files.srcs, dep_flags),
-    ]
+    srcs_and_flags = [(ctx.files.srcs, dep_flags)]
 
     objs = []
     for (srcs, extra_flags) in srcs_and_flags:
@@ -76,7 +78,7 @@ def _carbon_binary_impl(ctx):
                 src.short_path.removeprefix(ctx.label.package).removesuffix(src.extension),
             ))
             objs.append(out)
-            srcs_reordered = [s for s in srcs if s != src] + [src]
+            srcs_reordered = dep_api_files + [s for s in srcs if s != src] + [src]
             ctx.actions.run(
                 outputs = [out],
                 inputs = depset(direct = srcs_reordered, transitive = dep_hdrs),
@@ -128,10 +130,83 @@ def _carbon_binary_impl(ctx):
     )
     return [DefaultInfo(files = depset([bin]), executable = bin)]
 
+CarbonLibraryInfo = provider(
+    doc = "Contains information about a compiled Carbon library.",
+    fields = {
+        "api": "The api source file to provide to library consumers.",
+        "objs": "A depset of one or more compiled library files, including impl and api.",
+    },
+)
+
+def _carbon_library_impl(ctx):
+    toolchain_driver = ctx.executable.internal_exec_toolchain_driver
+    toolchain_data = ctx.files.internal_exec_toolchain_data
+
+    # If the exec driver isn't provided, that means we're trying to use a target
+    # config toolchain, likely to avoid build overhead of two configs.
+    if toolchain_driver == None:
+        toolchain_driver = ctx.executable.internal_target_toolchain_driver
+        toolchain_data = ctx.files.internal_target_toolchain_data
+
+    # Pass any C++ flags from our dependencies onto Carbon.
+    dep_flags = []
+    dep_hdrs = []
+    dep_api_srcs = []
+    for dep in ctx.attr.deps:
+        if CcInfo in dep:
+            cc_info = dep[CcInfo]
+
+            # TODO: We should reuse the feature-based flag generation in
+            # bazel/cc_toolchains here.
+            dep_flags += ["--clang-arg=-D{0}".format(define) for define in cc_info.compilation_context.defines.to_list()]
+            dep_flags += ["--clang-arg=-I{0}".format(path) for path in cc_info.compilation_context.includes.to_list()]
+            dep_flags += ["--clang-arg=-iquote{0}".format(path) for path in cc_info.compilation_context.quote_includes.to_list()]
+            dep_flags += ["--clang-arg=-isystem{0}".format(path) for path in cc_info.compilation_context.system_includes.to_list()]
+            dep_hdrs.append(cc_info.compilation_context.headers)
+        if CarbonLibraryInfo in dep:
+            carbon_info = dep[CarbonLibraryInfo]
+            dep_api_srcs.append(carbon_info.api)
+
+    # Build object files for the library impls and api file
+    srcs_and_flags = [(ctx.files.impls + ctx.files.api, dep_flags)]
+
+    objs = []
+    for (srcs, extra_flags) in srcs_and_flags:
+        for src in srcs:
+            # Build each source file. For now, we pass all sources to each compile
+            # because we don't have visibility into dependencies and have no way to
+            # specify multiple output files. Object code for each input is written
+            # into the output file in turn, so the final carbon source file
+            # specified ends up determining the contents of the object file.
+            #
+            # TODO: This is a hack; replace with something better once the toolchain
+            # supports doing so.
+            #
+            # TODO: Switch to the `prefix` based rule similar to linking when
+            # the prelude moves there.
+            out = ctx.actions.declare_file("_objs/{0}/{1}o".format(
+                ctx.label.name,
+                src.short_path.removeprefix(ctx.label.package).removesuffix(src.extension),
+            ))
+            objs.append(out)
+            srcs_reordered = dep_api_srcs + [s for s in srcs if s != src] + [src]
+            ctx.actions.run(
+                outputs = [out],
+                inputs = depset(direct = srcs_reordered, transitive = dep_hdrs),
+                executable = toolchain_driver,
+                tools = depset(toolchain_data),
+                arguments = ["compile", "--output=" + out.path, "--output-last-input-only"] +
+                            [s.path for s in srcs_reordered] + extra_flags + ctx.attr.flags,
+                mnemonic = "CarbonCompile",
+                progress_message = "Compiling " + src.short_path,
+            )
+
+    return [CarbonLibraryInfo(api = ctx.files.api[0], objs = depset(objs))]
+
 _carbon_binary_internal = rule(
     implementation = _carbon_binary_impl,
     attrs = {
-        "deps": attr.label_list(allow_files = True, providers = [[CcInfo]]),
+        "deps": attr.label_list(allow_files = True, providers = [[CcInfo], [DefaultInfo], [CarbonLibraryInfo]]),
         "flags": attr.string_list(),
 
         # The exec config toolchain attributes. These will be `None` when using
@@ -175,6 +250,89 @@ _carbon_binary_internal = rule(
     fragments = ["cpp"],
 )
 
+_carbon_library_internal = rule(
+    implementation = _carbon_library_impl,
+    attrs = {
+        "deps": attr.label_list(allow_files = True),
+        "flags": attr.string_list(),
+
+        # The exec config toolchain attributes. These will be `None` when using
+        # the target config and populated when using the exec config. We have to
+        # use duplicate attributes here and below to have different `cfg`
+        # settings, as that isn't `select`-able, and we'll use `select`s when
+        # populating these.
+        "internal_exec_prebuilt_runtimes": attr.label(
+            cfg = "exec",
+        ),
+        "internal_exec_toolchain_data": attr.label(
+            cfg = "exec",
+        ),
+        "internal_exec_toolchain_driver": attr.label(
+            allow_single_file = True,
+            executable = True,
+            cfg = "exec",
+        ),
+
+        # The target config toolchain attributes. These will be 'None' when
+        # using the exec config and populated when using the target config. We
+        # have to use duplicate attributes here and below to have different
+        # `cfg` settings, as that isn't `select`-able, and we'll use `select`s
+        # when populating these.
+        "internal_target_prebuilt_runtimes": attr.label(
+            cfg = "target",
+        ),
+        "internal_target_toolchain_data": attr.label(
+            cfg = "target",
+        ),
+        "internal_target_toolchain_driver": attr.label(
+            allow_single_file = True,
+            executable = True,
+            cfg = "target",
+        ),
+        "prelude_srcs": attr.label_list(allow_files = [".carbon"]),
+        "api": attr.label(allow_single_file = True),
+        "impls": attr.label_list(allow_files = [".carbon"]),
+        "_cc_toolchain": attr.label(default = "//toolchain/install:carbon_stage1_cc_toolchain"),
+    },
+    executable = False,
+    fragments = ["cpp"],
+)
+
+# We synthesize two sets of attributes from mirrored `select`s here
+# because we want to select on an internal property of these attributes
+# but that isn't `select`-able. Instead, we have both attributes and
+# `select` which one we use.
+_select_internal_exec_toolchain_driver = select({
+    Label("//bazel/carbon_rules:use_target_config_carbon_rules_config"): None,
+    "//conditions:default": Label("//toolchain/install:carbon-busybox"),
+})
+_select_internal_exec_toolchain_data = select({
+    Label("//bazel/carbon_rules:use_target_config_carbon_rules_config"): None,
+    "//conditions:default": Label("//toolchain/install:install_data"),
+})
+_select_internal_exec_prebuilt_runtimes = select({
+    Label("//bazel/carbon_rules:use_target_config_carbon_rules_config"): None,
+    "//conditions:default": Label("//toolchain/install:built_runtimes"),
+})
+_select_internal_target_toolchain_driver = select({
+    Label(
+        "//bazel/carbon_rules:use_target_config_carbon_rules_config",
+    ): Label("//toolchain/install:carbon-busybox"),
+    "//conditions:default": None,
+})
+_select_internal_target_toolchain_data = select({
+    Label(
+        "//bazel/carbon_rules:use_target_config_carbon_rules_config",
+    ): Label("//toolchain/install:install_data"),
+    "//conditions:default": None,
+})
+_select_internal_target_prebuilt_runtimes = select({
+    Label(
+        "//bazel/carbon_rules:use_target_config_carbon_rules_config",
+    ): Label("//toolchain/install:built_runtimes"),
+    "//conditions:default": None,
+})
+
 def carbon_binary(name, srcs, deps = [], flags = [], tags = []):
     """Compiles a Carbon binary.
 
@@ -189,42 +347,42 @@ def carbon_binary(name, srcs, deps = [], flags = [], tags = []):
         name = name,
         srcs = srcs,
         prelude_srcs = [Label("//core:prelude_files")],
+        deps = deps + [Label("//core:io"), Label("//core:range")],
+        flags = flags,
+        tags = tags,
+        internal_exec_toolchain_driver = _select_internal_exec_toolchain_driver,
+        internal_exec_toolchain_data = _select_internal_exec_toolchain_data,
+        internal_exec_prebuilt_runtimes = _select_internal_exec_prebuilt_runtimes,
+        internal_target_toolchain_driver = _select_internal_target_toolchain_driver,
+        internal_target_toolchain_data = _select_internal_target_toolchain_data,
+        internal_target_prebuilt_runtimes = _select_internal_target_prebuilt_runtimes,
+    )
+
+def carbon_library(name, api, impls = [], deps = [], flags = [], tags = [], visibility = []):
+    """Compiles a Carbon library.
+
+    Args:
+      name: The name of the build target.
+      api: Name of a single api file.
+      impls: List of zero or more implementation files.
+      deps: List of dependencies.
+      flags: Extra flags to pass to the Carbon compile command.
+      tags: Tags to apply to the rule.
+      visibility: Visibility rules for the library.
+    """
+    _carbon_library_internal(
+        name = name,
+        api = api,
+        impls = impls,
+        prelude_srcs = [Label("//core:prelude_files")],
         deps = deps,
         flags = flags,
         tags = tags,
-
-        # We synthesize two sets of attributes from mirrored `select`s here
-        # because we want to select on an internal property of these attributes
-        # but that isn't `select`-able. Instead, we have both attributes and
-        # `select` which one we use.
-        internal_exec_toolchain_driver = select({
-            Label("//bazel/carbon_rules:use_target_config_carbon_rules_config"): None,
-            "//conditions:default": Label("//toolchain/install:carbon-busybox"),
-        }),
-        internal_exec_toolchain_data = select({
-            Label("//bazel/carbon_rules:use_target_config_carbon_rules_config"): None,
-            "//conditions:default": Label("//toolchain/install:install_data"),
-        }),
-        internal_exec_prebuilt_runtimes = select({
-            Label("//bazel/carbon_rules:use_target_config_carbon_rules_config"): None,
-            "//conditions:default": Label("//toolchain/install:built_runtimes"),
-        }),
-        internal_target_toolchain_driver = select({
-            Label(
-                "//bazel/carbon_rules:use_target_config_carbon_rules_config",
-            ): Label("//toolchain/install:carbon-busybox"),
-            "//conditions:default": None,
-        }),
-        internal_target_toolchain_data = select({
-            Label(
-                "//bazel/carbon_rules:use_target_config_carbon_rules_config",
-            ): Label("//toolchain/install:install_data"),
-            "//conditions:default": None,
-        }),
-        internal_target_prebuilt_runtimes = select({
-            Label(
-                "//bazel/carbon_rules:use_target_config_carbon_rules_config",
-            ): Label("//toolchain/install:built_runtimes"),
-            "//conditions:default": None,
-        }),
+        visibility = visibility,
+        internal_exec_toolchain_driver = _select_internal_exec_toolchain_driver,
+        internal_exec_toolchain_data = _select_internal_exec_toolchain_data,
+        internal_exec_prebuilt_runtimes = _select_internal_exec_prebuilt_runtimes,
+        internal_target_toolchain_driver = _select_internal_target_toolchain_driver,
+        internal_target_toolchain_data = _select_internal_target_toolchain_data,
+        internal_target_prebuilt_runtimes = _select_internal_target_prebuilt_runtimes,
     )
