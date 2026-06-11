@@ -197,9 +197,9 @@ argument produce `char` results.
 
 -   **Addition:** The sum of a character and an integer produces a character.
 -   **Subtraction:**
-    -   The difference of two characters produces an `i32`. This is preferred
-        even for `char` to be consistent with the range needed to represent the
-        difference of two `Core.CharLiteral` values.
+    -   The difference of two `char` values produces an `i32`.
+    -   The difference of two `Core.CharLiteral` values produces a
+        `Core.IntLiteral`.
     -   A character minus an integer produces a character, much like adding a
         character to a negative integer.
 
@@ -308,6 +308,7 @@ to give the semantics described above.
 -   [Use different precedence groups for division and multiplication](/proposals/p001083-arithmetic-expressions.md#use-different-precedence-groups-for-division-and-multiplication)
 -   [Use the same precedence group for modulo and multiplication](/proposals/p001083-arithmetic-expressions.md#use-the-same-precedence-group-for-modulo-and-multiplication)
 -   [Use a different spelling for modulo](/proposals/p001083-arithmetic-expressions.md#use-a-different-spelling-for-modulo)
+-   [Use `i32` or similar as the result type for `CharLiteral` difference](/proposals/p007314-charliteral-difference-should-be-an-intliteral.md#use-a-fixed-result-type)
 
 ## References
 
@@ -317,3 +318,5 @@ to give the semantics described above.
     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
 -   Proposal
     [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)
+-   Proposal
+    [#7314: `CharLiteral` difference should be an `IntLiteral`](https://github.com/carbon-language/carbon-lang/pull/7314)

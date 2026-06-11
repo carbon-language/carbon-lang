@@ -12,7 +12,7 @@
 
 class C {
   impl as Core.Copy {
-    fn Op[unused self: Self]() -> Self { return {}; }
+    fn Op(unused self) -> Self { return {}; }
   }
 }
 
@@ -43,12 +43,12 @@ fn M() {
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_basic.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_basic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc15_51 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc15_43 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.C.Main:Copy.Core"(ptr sret({}) %return, ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.loc15_51, i64 0, i1 false), !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.loc15_43, i64 0, i1 false), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -78,7 +78,7 @@ fn M() {
 // CHECK:STDOUT:   %.loc37_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !26
 // CHECK:STDOUT:   %F.call.loc37 = call ptr @_CF.Main.2621742a01881e29(ptr %.loc37_5, i32 0), !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !18
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc15_51, i64 0, i1 false), !dbg !18
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc15_43, i64 0, i1 false), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc40_9.2.temp), !dbg !19
 // CHECK:STDOUT:   call void @_CF.Main.4d597ec621e4ba00(ptr %.loc40_9.2.temp, ptr %c.var, i32 0), !dbg !19
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %.loc40_9.2.temp), !dbg !19
@@ -195,7 +195,7 @@ fn M() {
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
-// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 42, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 34, scope: !4)
 // CHECK:STDOUT: !11 = distinct !DISubprogram(name: "M", linkageName: "_CM.Main", scope: null, file: !3, line: 28, type: !12, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}

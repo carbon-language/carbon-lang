@@ -19,15 +19,15 @@ base class Base {
 class Derived {
   extend base: Base;
 
-  fn SelfBase[self: Base]() -> i32;
-  fn RefSelfBase[ref self: Base]();
+  fn SelfBase(self: Base) -> i32;
+  fn RefSelfBase(ref self: Base);
 }
 
-fn Derived.SelfBase[self: Base]() -> i32 {
+fn Derived.SelfBase(self: Base) -> i32 {
   return self.a;
 }
 
-fn Derived.RefSelfBase[ref self: Base]() {
+fn Derived.RefSelfBase(ref self: Base) {
   self.a = 1;
 }
 

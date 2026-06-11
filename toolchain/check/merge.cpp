@@ -206,8 +206,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                              SemIR::InstId orig_new_param_pattern_id,
                              SemIR::InstId orig_prev_param_pattern_id,
                              SemIR::SpecificId prev_specific_id, bool diagnose,
-                             bool check_syntax,
-                             SemIR::TypeId self_type_override_id) -> bool {
+                             bool check_syntax) -> bool {
   CARBON_DIAGNOSTIC(
       RedeclParamPrevious, Note,
       "previous declaration's corresponding {0:implicit |}parameter here",
@@ -304,15 +303,6 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                                 .Get(prev_any_binding_pattern.entity_name_id)
                                 .name_id;
 
-        // If this is the self parameter, and we have a type override for it,
-        // check against that type instead.
-        if (new_name_id == SemIR::NameId::SelfValue &&
-            prev_name_id == SemIR::NameId::SelfValue &&
-            self_type_override_id.has_value()) {
-          check_type = false;
-          check_for_type_mismatch_with(self_type_override_id);
-        }
-
         if (new_any_binding_pattern.kind ==
             SemIR::WrapperBindingPattern::Kind) {
           // The subpattern handling will take care of checking for type
@@ -347,14 +337,16 @@ static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc_id,
                               SemIR::InstBlockId prev_param_patterns_id,
                               bool is_implicit_param,
                               SemIR::SpecificId prev_specific_id, bool diagnose,
-                              bool check_syntax,
-                              SemIR::TypeId self_type_override_id) -> bool {
+                              bool check_syntax) -> bool {
   // This will often occur for empty params.
   if (new_param_patterns_id == prev_param_patterns_id) {
     return true;
   }
 
-  // If exactly one of the parameter lists was present, they differ.
+  // If exactly one of the parameter lists was present, they differ. An absent
+  // parameter list (`None`) and a present-but-empty one (`Empty`) are
+  // intentionally treated as different, following the syntactic redeclaration
+  // matching design.
   if (new_param_patterns_id.has_value() != prev_param_patterns_id.has_value()) {
     if (!diagnose) {
       return false;
@@ -406,8 +398,7 @@ static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc_id,
        llvm::enumerate(new_param_pattern_ids, prev_param_pattern_ids)) {
     if (!CheckRedeclParam(context, is_implicit_param, index,
                           new_param_pattern_id, prev_param_pattern_id,
-                          prev_specific_id, diagnose, check_syntax,
-                          self_type_override_id)) {
+                          prev_specific_id, diagnose, check_syntax)) {
       return false;
     }
   }
@@ -482,6 +473,13 @@ static auto CheckRedeclParamSyntax(Context& context,
       prev_node_kind = context.parse_tree().node_kind(prev_node_id);
     }
     if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
+      // The `self` parameter's type must be spelled the same way (`self` vs.
+      // `self: Self`) in a redeclaration as in the previous declaration. This
+      // is not a special case: like any other parameter-type spelling
+      // difference (e.g. `self: Self` vs. `self: C`), it falls through to the
+      // generic "syntax differs" diagnostic below, following the token-based
+      // redeclaration matching rule from proposal #3763.
+      //
       // Skip difference if it is `Self as` vs. `as` in an `impl` declaration.
       // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p003763.md#redeclarations
       if (new_node_kind == Parse::NodeKind::ImplDefaultSelfAs &&
@@ -530,8 +528,7 @@ static auto CheckRedeclParamSyntax(Context& context,
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
                             SemIR::SpecificId prev_specific_id, bool diagnose,
-                            bool check_syntax,
-                            SemIR::TypeId self_type_override_id) -> bool {
+                            bool check_syntax) -> bool {
   if (EntityHasParamError(context, new_entity) ||
       EntityHasParamError(context, prev_entity)) {
     return false;
@@ -539,17 +536,15 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
   if (!CheckRedeclParams(
           context, new_entity.loc_id, new_entity.implicit_param_patterns_id,
           prev_entity.loc_id, prev_entity.implicit_param_patterns_id,
-          /*is_implicit_param=*/true, prev_specific_id, diagnose, check_syntax,
-          self_type_override_id)) {
+          /*is_implicit_param=*/true, prev_specific_id, diagnose,
+          check_syntax)) {
     return false;
   }
-  // Don't forward `self_type_override_id` here because it's extra cost, and
-  // `self` is only allowed in implicit params.
   if (!CheckRedeclParams(context, new_entity.loc_id,
                          new_entity.param_patterns_id, prev_entity.loc_id,
                          prev_entity.param_patterns_id,
                          /*is_implicit_param=*/false, prev_specific_id,
-                         diagnose, check_syntax, SemIR::TypeId::None)) {
+                         diagnose, check_syntax)) {
     return false;
   }
   if (check_syntax &&

@@ -19,7 +19,7 @@ package User;
 class C {};
 
 impl C as Core.Negate where .Result = C {
-  fn Op[unused self: C]() -> C {
+  fn Op(unused self: C) -> C {
     return {};
   }
 }

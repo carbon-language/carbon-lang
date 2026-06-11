@@ -21,7 +21,7 @@ class ElementType {}
 class SubscriptType {}
 
 impl C as Core.IndexWith(SubscriptType) where .ElementType = ElementType {
-  fn At[unused self: Self](unused subscript: SubscriptType) -> ElementType {
+  fn At(unused self, unused subscript: SubscriptType) -> ElementType {
     return {};
   }
 }
@@ -39,7 +39,7 @@ class C {
 }
 
 impl (C, C) as Core.IndexWith(Core.IntLiteral) where .ElementType = C {
-  fn At[self: Self](unused subscript: Core.IntLiteral) -> C {
+  fn At(self, unused subscript: Core.IntLiteral) -> C {
     return self.0;
   }
 }
@@ -56,7 +56,7 @@ class ElementType {}
 class SubscriptType {}
 
 impl C as Core.IndexWith(SubscriptType) where .ElementType = ElementType {
-  fn At[unused self: Self](unused subscript: SubscriptType) -> ElementType {
+  fn At(unused self, unused subscript: SubscriptType) -> ElementType {
     return {};
   }
 }
@@ -80,6 +80,7 @@ let c: C = {};
 // CHECK:STDERR:              ^~~~
 // CHECK:STDERR:
 let x: i32 = c[0];
+
 
 
 // CHECK:STDOUT: --- overloaded_index.carbon
@@ -206,10 +207,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.patt: %pattern_type.67c = return_slot_pattern %return.param_patt, %ElementType.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %IndexWith.facet: %IndexWith.type.d74 = facet_value @C.as.IndexWith.impl.%C.ref, (constants.%IndexWith.impl_witness) [concrete = constants.%IndexWith.facet]
-// CHECK:STDOUT:     %.loc9_64.1: %IndexWith.type.d74 = converted @C.as.IndexWith.impl.%C.ref, %IndexWith.facet [concrete = constants.%IndexWith.facet]
+// CHECK:STDOUT:     %.loc9_58.1: %IndexWith.type.d74 = converted @C.as.IndexWith.impl.%C.ref, %IndexWith.facet [concrete = constants.%IndexWith.facet]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.impl_witness, element0 [concrete = constants.%ElementType]
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, %impl.elem0 [concrete = constants.%ElementType]
-// CHECK:STDOUT:     %.loc9_64.2: Core.Form = init_form %ElementType.ref [concrete = constants.%.4d0]
+// CHECK:STDOUT:     %.loc9_58.2: Core.Form = init_form %ElementType.ref [concrete = constants.%.4d0]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.IndexWith.impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param
@@ -396,12 +397,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc9_59: Core.Form = init_form %C.ref [concrete = constants.%.a44]
+// CHECK:STDOUT:     %.loc9_53: Core.Form = init_form %C.ref [concrete = constants.%.a44]
 // CHECK:STDOUT:     %self.param: %tuple.type.748 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @tuple.type.as.IndexWith.impl.%.loc8_11.2 [concrete = constants.%tuple.type.748]
 // CHECK:STDOUT:     %self: %tuple.type.748 = value_binding self, %self.param
 // CHECK:STDOUT:     %subscript.param: Core.IntLiteral = value_param call_param1
-// CHECK:STDOUT:     %.loc9_43: type = splice_block %IntLiteral.ref [concrete = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc9_37: type = splice_block %IntLiteral.ref [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
@@ -572,10 +573,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.patt: %pattern_type.67c = return_slot_pattern %return.param_patt, %ElementType.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %IndexWith.facet: %IndexWith.type.d74 = facet_value @C.as.IndexWith.impl.%C.ref, (constants.%IndexWith.impl_witness) [concrete = constants.%IndexWith.facet]
-// CHECK:STDOUT:     %.loc9_64.1: %IndexWith.type.d74 = converted @C.as.IndexWith.impl.%C.ref, %IndexWith.facet [concrete = constants.%IndexWith.facet]
+// CHECK:STDOUT:     %.loc9_58.1: %IndexWith.type.d74 = converted @C.as.IndexWith.impl.%C.ref, %IndexWith.facet [concrete = constants.%IndexWith.facet]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.impl_witness, element0 [concrete = constants.%ElementType]
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, %impl.elem0 [concrete = constants.%ElementType]
-// CHECK:STDOUT:     %.loc9_64.2: Core.Form = init_form %ElementType.ref [concrete = constants.%.4d0]
+// CHECK:STDOUT:     %.loc9_58.2: Core.Form = init_form %ElementType.ref [concrete = constants.%.4d0]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.IndexWith.impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param

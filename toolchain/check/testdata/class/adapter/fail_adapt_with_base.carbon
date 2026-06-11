@@ -11,13 +11,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/adapter/fail_adapt_with_base.carbon
 class Simple {};
 base class AdaptWithVirtual {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
   // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+7]]:3: error: adapter with virtual function [AdaptWithVirtual]
   // CHECK:STDERR:   adapt Simple;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE-4]]:3: note: first virtual function declaration is here [AdaptWithVirtualHere]
-  // CHECK:STDERR:   virtual fn F[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F(self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   adapt Simple;
 }

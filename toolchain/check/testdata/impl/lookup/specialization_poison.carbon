@@ -15,11 +15,11 @@ library "[[@TEST_NAME]]";
 
 interface I {
   let T:! type;
-  fn F[self: Self]() -> T;
+  fn F(self) -> T;
 }
 
 impl forall [U:! type] U as I where .T = () {
-  fn F[unused self: Self]() -> () { return (); }
+  fn F(unused self) -> () { return (); }
 }
 
 // CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+3]]:25: error: found `impl` that would change the result of an earlier use of `C* as I` [PoisonedImplLookupConcreteResult]
@@ -44,7 +44,7 @@ fn G(p: C*) -> () {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C* as I where .T = C {
-  fn F[self: Self]() -> C { return *self; }
+  fn F(self) -> C { return *self; }
 }
 
 // --- fail_final_poisoned_concrete_query_in_generic.carbon
@@ -80,13 +80,13 @@ library "[[@TEST_NAME]]";
 
 interface I {
   let T:! type;
-  fn F[self: Self]() -> T;
+  fn F(self) -> T;
 }
 
 class C(U:! type) {}
 
 impl forall [U:! type] C(U) as I where .T = () {
-  fn F[unused self: Self]() -> () { return (); }
+  fn F(unused self) -> () { return (); }
 }
 
 fn G(c: C(())) -> () {
@@ -105,7 +105,7 @@ fn G(c: C(())) -> () {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C(()) as I where .T = {} {
-  fn F[unused self: Self]() -> {} { return {}; }
+  fn F(unused self) -> {} { return {}; }
 }
 
 // --- fail_final_poisoned_concrete_query_nested_type_in_interface.carbon
@@ -113,11 +113,11 @@ library "[[@TEST_NAME]]";
 
 interface I(U:! type) {
   let T:! type;
-  fn F[self: Self]() -> T;
+  fn F(self) -> T;
 }
 
 impl forall [U:! type] U as I(U) where .T = () {
-  fn F[unused self: Self]() -> () { return (); }
+  fn F(unused self) -> () { return (); }
 }
 
 class C {}
@@ -138,7 +138,7 @@ fn G(c: C) -> () {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C as I(C) where .T = {} {
-  fn F[unused self: Self]() -> {} { return {}; }
+  fn F(unused self) -> {} { return {}; }
 }
 
 // --- todo_fail_final_poisoned_by_generic_query.carbon
@@ -146,11 +146,11 @@ library "[[@TEST_NAME]]";
 
 interface I {
   let T:! type;
-  fn F[self: Self]() -> T;
+  fn F(self) -> T;
 }
 
 impl forall [U:! type] U as I where .T = () {
-  fn F[unused self: Self]() -> () { return (); }
+  fn F(unused self) -> () { return (); }
 }
 
 fn H[W:! type](v: W) -> W.(I.T) {
@@ -166,7 +166,7 @@ fn G[X:! type](p: X*) -> (X*).(I.T) {
 // constant from the `impl` which was treated as a symbolic, but this would
 // change it to be a concrete type.
 final impl forall [V:! Core.Copy] V* as I where .T = V {
-  fn F[self: Self]() -> V { return *self; }
+  fn F(self) -> V { return *self; }
 }
 
 // --- fail_todo_poisoned_concrete_lookup_from_eval_fn.carbon

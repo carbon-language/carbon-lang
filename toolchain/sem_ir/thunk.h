@@ -10,12 +10,20 @@
 
 namespace Carbon::SemIR {
 
-// Metadata tracking information about a thunk's signature, callee, and specific
-// generic parameters.
+// Metadata about a thunk.
 struct ThunkInfo {
+  // The callee wrapped by the thunk.
   InstId callee_id;
+
+  // The signature of the thunk.
   FunctionId signature_id = FunctionId::None;
+
+  // If `signature_id` is generic, the specific that this thunk is for.
   SpecificId specific_id = SpecificId::None;
+
+  // If this is a thunk for a virtual function override, the type of the
+  // `self` parameter of the override.
+  TypeId override_self_type_id = TypeId::None;
 };
 
 using ThunkStore = ValueStore<ThunkId, ThunkInfo, Tag<CheckIRId>>;

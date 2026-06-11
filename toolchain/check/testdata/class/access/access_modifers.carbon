@@ -92,7 +92,7 @@ library "[[@TEST_NAME]]";
 class Circle {
   private var radius: i32;
 
-  fn GetRadius[self: Self]() -> i32 {
+  fn GetRadius(self) -> i32 {
     return self.radius;
   }
 
@@ -100,7 +100,7 @@ class Circle {
     return 0;
   }
 
-  fn Compute[self: Self]() -> i32 {
+  fn Compute(self) -> i32 {
     return self.SomeInternalFunction();
   }
 }

@@ -355,7 +355,7 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: !73 = !{!8, !8}
 // CHECK:STDOUT: !74 = !{!75}
 // CHECK:STDOUT: !75 = !DILocalVariable(arg: 1, scope: !71, type: !8)
-// CHECK:STDOUT: !76 = !DILocation(line: 58, column: 36, scope: !71)
+// CHECK:STDOUT: !76 = !DILocation(line: 58, column: 28, scope: !71)
 // CHECK:STDOUT: !77 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.d93106ca8c7912cd", scope: null, file: !50, line: 71, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !78)
 // CHECK:STDOUT: !78 = !{!79}
 // CHECK:STDOUT: !79 = !DILocalVariable(arg: 1, scope: !77, type: !16)
@@ -373,7 +373,7 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: !91 = !{!30, !30}
 // CHECK:STDOUT: !92 = !{!93}
 // CHECK:STDOUT: !93 = !DILocalVariable(arg: 1, scope: !89, type: !30)
-// CHECK:STDOUT: !94 = !DILocation(line: 58, column: 36, scope: !89)
+// CHECK:STDOUT: !94 = !DILocation(line: 58, column: 28, scope: !89)
 // CHECK:STDOUT: !95 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.cc82cccb0d5a8ccf", scope: null, file: !50, line: 71, type: !35, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !96)
 // CHECK:STDOUT: !96 = !{!97}
 // CHECK:STDOUT: !97 = !DILocalVariable(arg: 1, scope: !95, type: !38)
@@ -385,10 +385,10 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: !103 = !{!16, !16}
 // CHECK:STDOUT: !104 = !{!105}
 // CHECK:STDOUT: !105 = !DILocalVariable(arg: 1, scope: !101, type: !16)
-// CHECK:STDOUT: !106 = !DILocation(line: 59, column: 37, scope: !101)
+// CHECK:STDOUT: !106 = !DILocation(line: 59, column: 29, scope: !101)
 // CHECK:STDOUT: !107 = distinct !DISubprogram(name: "AsUInt", linkageName: "_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.044c7d430ddd4fd6", scope: null, file: !50, line: 59, type: !108, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !110)
 // CHECK:STDOUT: !108 = !DISubroutineType(types: !109)
 // CHECK:STDOUT: !109 = !{!38, !38}
 // CHECK:STDOUT: !110 = !{!111}
 // CHECK:STDOUT: !111 = !DILocalVariable(arg: 1, scope: !107, type: !38)
-// CHECK:STDOUT: !112 = !DILocation(line: 59, column: 37, scope: !107)
+// CHECK:STDOUT: !112 = !DILocation(line: 59, column: 29, scope: !107)

@@ -22,8 +22,8 @@ class IntRange(N:! IntLiteral) {
   }
 
   impl as Iterate where .CursorType = Int(N) and .ElementType = Int(N) {
-    fn NewCursor[self: Self]() -> Int(N) { return self.start; }
-    fn Next[self: Self](cursor: Int(N)*) -> Optional(Int(N)) {
+    fn NewCursor(self) -> Int(N) { return self.start; }
+    fn Next(self, cursor: Int(N)*) -> Optional(Int(N)) {
       var value: Int(N) = *cursor;
       if (value < self.end) {
         ++*cursor;

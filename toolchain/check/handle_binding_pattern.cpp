@@ -13,6 +13,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/name_ref.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/period_self.h"
 #include "toolchain/check/return.h"
@@ -57,12 +58,14 @@ static auto IsValidParamForIntroducer(Context& context, Parse::NodeId node_id,
                                       bool is_generic) -> bool {
   switch (introducer_kind) {
     case Lex::TokenKind::Fn: {
+      // `self` in the implicit parameter list is diagnosed separately (see
+      // `SelfInImplicitParamList`), so skip it here to avoid a redundant
+      // diagnostic.
       if (context.full_pattern_stack().CurrentKind() ==
               FullPatternStack::Kind::ImplicitParamList &&
           !(is_generic || name_id == SemIR::NameId::SelfValue)) {
-        CARBON_DIAGNOSTIC(
-            ImplictParamMustBeConstant, Error,
-            "implicit parameters of functions must be constant or `self`");
+        CARBON_DIAGNOSTIC(ImplictParamMustBeConstant, Error,
+                          "implicit parameters of functions must be constant");
         context.emitter().Emit(node_id, ImplictParamMustBeConstant);
         return false;
       }
@@ -112,8 +115,10 @@ namespace {
 // expression may be interpreted as a type or a form, depending on the binding
 // kind.
 struct BindingPatternTypeInfo {
-  // The parse node representing the expression.
-  Parse::AnyExprId node_id;
+  // The parse node representing the expression. For a `self` binding with an
+  // omitted type this is the binding pattern node itself, since there is no
+  // separate type expression.
+  Parse::NodeId node_id;
   // The inst representing the converted value of that expression. For a `:?`
   // binding the expression is converted to type `Core.Form`; otherwise it is
   // converted to type `type`.
@@ -124,10 +129,21 @@ struct BindingPatternTypeInfo {
 };
 }  // namespace
 
-// Handle the type position of a binding pattern.
+// Handle the type position of a binding pattern. For a `self` binding with an
+// omitted type, `self_type_inst_id` is the synthesized `Self` type expression
+// and there is no type expression on the node stack to pop.
 static auto HandleAnyBindingPatternType(Context& context,
-                                        Parse::NodeKind node_kind)
+                                        Parse::NodeId binding_node_id,
+                                        Parse::NodeKind node_kind,
+                                        SemIR::InstId self_type_inst_id)
     -> BindingPatternTypeInfo {
+  if (self_type_inst_id.has_value()) {
+    auto as_type = ExprAsType(context, binding_node_id, self_type_inst_id);
+    return {.node_id = binding_node_id,
+            .inst_id = as_type.inst_id,
+            .type_component_id = as_type.type_id};
+  }
+
   auto [node_id, original_inst_id] = context.node_stack().PopExprWithNodeId();
 
   if (node_kind == Parse::FormBindingPattern::Kind) {
@@ -144,10 +160,12 @@ static auto HandleAnyBindingPatternType(Context& context,
 }
 
 // TODO: make this function shorter by factoring pieces out.
-static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
-                                    Parse::NodeKind node_kind,
-                                    bool is_unused = false) -> bool {
-  auto type_expr = HandleAnyBindingPatternType(context, node_kind);
+static auto HandleAnyBindingPattern(
+    Context& context, Parse::NodeId node_id, Parse::NodeKind node_kind,
+    bool is_unused = false,
+    SemIR::InstId self_type_inst_id = SemIR::InstId::None) -> bool {
+  auto type_expr = HandleAnyBindingPatternType(context, node_id, node_kind,
+                                               self_type_inst_id);
   if (context.types()
           .GetAsInst(type_expr.type_component_id)
           .Is<SemIR::TypeComponentOf>()) {
@@ -228,13 +246,29 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                     type_expr.type_component_id);
   };
 
-  // A `self` binding can only appear in an implicit parameter list.
-  if (name_id == SemIR::NameId::SelfValue &&
-      !context.node_stack().PeekIs(Parse::NodeKind::ImplicitParamListStart)) {
-    CARBON_DIAGNOSTIC(
-        SelfOutsideImplicitParamList, Error,
-        "`self` can only be declared in an implicit parameter list");
-    context.emitter().Emit(node_id, SelfOutsideImplicitParamList);
+  // A `self` binding must be the first parameter in the explicit parameter
+  // list (see proposal #7016). Here we can reject `self` in the implicit
+  // parameter list or outside any parameter list; that it must be *first* in
+  // the explicit list is checked once the full list is known (see
+  // `BuildFunctionDecl`).
+  if (name_id == SemIR::NameId::SelfValue) {
+    switch (context.full_pattern_stack().CurrentKind()) {
+      case FullPatternStack::Kind::ExplicitParamList:
+        break;
+      case FullPatternStack::Kind::ImplicitParamList: {
+        CARBON_DIAGNOSTIC(
+            SelfInImplicitParamList, Error,
+            "`self` must be declared in the explicit parameter list");
+        context.emitter().Emit(node_id, SelfInImplicitParamList);
+        break;
+      }
+      default: {
+        CARBON_DIAGNOSTIC(SelfOutsideParamList, Error,
+                          "`self` can only be declared in a parameter list");
+        context.emitter().Emit(node_id, SelfOutsideParamList);
+        break;
+      }
+    }
   }
 
   if (node_kind == Parse::NodeKind::CompileTimeBindingPattern &&
@@ -397,6 +431,21 @@ auto HandleParseNode(Context& context, Parse::LetBindingPatternId node_id)
     -> bool {
   return HandleAnyBindingPattern(context, node_id,
                                  Parse::NodeKind::LetBindingPattern);
+}
+
+auto HandleParseNode(Context& context, Parse::SelfBindingPatternId node_id)
+    -> bool {
+  // A `self` binding with an omitted type behaves like `self: Self`. There is
+  // no type expression in the parse tree, so synthesize a reference to `Self`
+  // into the current subpattern region and feed it in as the binding's type.
+  auto self_type =
+      LookupUnqualifiedName(context, node_id, SemIR::NameId::SelfType);
+  auto self_type_inst_id = BuildNameRef(
+      context, node_id, SemIR::NameId::SelfType,
+      self_type.scope_result.target_inst_id(), self_type.specific_id);
+  return HandleAnyBindingPattern(context, node_id,
+                                 Parse::NodeKind::LetBindingPattern,
+                                 /*is_unused=*/false, self_type_inst_id);
 }
 
 auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)

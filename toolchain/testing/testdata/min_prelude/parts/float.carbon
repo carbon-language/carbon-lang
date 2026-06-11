@@ -23,14 +23,14 @@ class Float(N:! IntLiteral) {
 }
 
 impl forall [N:! IntLiteral] Float(N) as Copy {
-  fn Op[self: Self]() -> Self = "primitive_copy";
+  fn Op(self) -> Self = "primitive_copy";
 }
 
 impl forall [To:! IntLiteral] FloatLiteral as ImplicitAs(Float(To)) {
-  fn Convert[self: Self]() -> Float(To) = "float.convert_checked";
+  fn Convert(self) -> Float(To) = "float.convert_checked";
 }
 
 // TODO: Remove this once ImplicitAs extends As.
 impl forall [To:! IntLiteral] FloatLiteral as As(Float(To)) {
-  fn Convert[self: Self]() -> Float(To) = "float.convert_checked";
+  fn Convert(self) -> Float(To) = "float.convert_checked";
 }

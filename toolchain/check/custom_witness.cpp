@@ -6,6 +6,7 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
@@ -152,7 +153,12 @@ static auto CanDestroyClass(
   }
 
   auto object_repr_id =
-      class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
+      class_info.GetAdaptedType(context.sem_ir(), class_type.specific_id);
+  if (!object_repr_id.has_value()) {
+    object_repr_id =
+        class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
+  }
+
   return HasWitnessForOneField(context, loc_id,
                                context.types().GetTypeInstId(object_repr_id),
                                query_specific_interface_id);
@@ -214,8 +220,8 @@ static auto CanDestroyType(
     }
 
     case SemIR::Call::Kind:
-      // TODO: These seem like they shouldn't be getting directly queried for
-      // destroy. The use is in a test that was TODO before this TODO.
+      // Dependent type constructor calls that cannot be resolved under the
+      // generic context.
       return DestroyFormat::NoDestroy;
 
     case CARBON_KIND(SemIR::ClassType class_type): {

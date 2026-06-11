@@ -31,12 +31,12 @@ class A {
     }
 
     impl ConvertsToB as Core.ImplicitAs(B) {
-      fn Convert[unused self: Self]() -> B { return {}; }
+      fn Convert(unused self) -> B { return {}; }
     }
   }
 
   impl ConvertsToA as Core.ImplicitAs(A) {
-    fn Convert[unused self: Self]() -> A { return {}; }
+    fn Convert(unused self) -> A { return {}; }
   }
 }
 
@@ -47,23 +47,23 @@ library "[[@TEST_NAME]]";
 class Wrap(T:! type) {}
 
 interface OpWith(U:! type) {
-  fn Op[self: Self](u: U);
+  fn Op(self, u: U);
 }
 
 impl forall [T:! type, U:! Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U) {
   // CHECK:STDERR: fail_todo_out_of_line_thunk.carbon:[[@LINE+7]]:3: error: use of undefined generic function [MissingGenericFunctionDefinition]
-  // CHECK:STDERR:   fn Op[self: Self](other: Self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   fn Op(self, other: Self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_out_of_line_thunk.carbon:[[@LINE+4]]:3: note: generic function declared here [MissingGenericFunctionDefinitionHere]
-  // CHECK:STDERR:   fn Op[self: Self](other: Self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   fn Op(self, other: Self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  fn Op[self: Self](other: Self);
+  fn Op(self, other: Self);
 }
 
 // TODO: Once we support the syntax for defining impl members out of line,
 // define the above function here.
-// fn (forall [T:! type, U:! Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U)).Op[self: Self](other: Self) {}
+// fn (forall [T:! type, U:! Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U)).Op(self, other: Self) {}
 
 // --- builtin_thunk.carbon
 
@@ -72,11 +72,11 @@ library "[[@TEST_NAME]]";
 class Wrap(T:! type) {}
 
 interface OpWith(U:! type) {
-  fn Op[self: Self](u: U);
+  fn Op(self, u: U);
 }
 
 impl forall [T:! type, U:! Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U) {
-  fn Op[self: Self](other: Self) = "no_op";
+  fn Op(self, other: Self) = "no_op";
 }
 
 // --- thunk_literal_convert.carbon

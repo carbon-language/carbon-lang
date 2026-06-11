@@ -182,4 +182,4 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !55 = distinct !DISubprogram(name: "AsInt", linkageName: "_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.be1e879c1ad406d8", scope: null, file: !35, line: 58, type: !49, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !56)
 // CHECK:STDOUT: !56 = !{!57}
 // CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !55, type: !7)
-// CHECK:STDOUT: !58 = !DILocation(line: 58, column: 36, scope: !55)
+// CHECK:STDOUT: !58 = !DILocation(line: 58, column: 28, scope: !55)

@@ -208,7 +208,7 @@ TEST_F(DriverTest, StdoutOutput) {
   EXPECT_TRUE(result->get()->isObject());
 }
 
-TEST_F(DriverTest, FileOutput) {
+TEST_F(DriverTest, LinkFileOutput) {
   auto scope = ScopedTempWorkingDir();
 
   // Use explicit filenames as the default output filename is computed from
@@ -334,6 +334,36 @@ TEST_F(DriverTest, ConfigJson) {
       json_obj->getString("CLANG_SYSROOT");
   ASSERT_THAT(clang_sysroot, Ne(std::nullopt));
   EXPECT_THAT(Filesystem::Cwd().OpenDir(clang_sysroot->str()), IsSuccess(_));
+}
+
+TEST_F(DriverTest, BuildFileOutput) {
+  auto scope = ScopedTempWorkingDir();
+
+  MakeTestFile(R"""(
+import Core library "io";
+
+fn Run() {
+  Core.PrintStr("Hello world!\n");
+}
+)""",
+               "hello_world.carbon");
+
+  // File should compile to a `hello_world` binary without error.
+  EXPECT_TRUE(
+      driver_
+          .RunCommand({"--no-build-runtimes", "build", "--no-use-temp-dir",
+                       "hello_world.carbon", "--", "--", "-lc"})
+          .success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+
+  // Binary should read as valid to LLVM.
+  auto result = llvm::object::createBinary("hello_world");
+  if (auto error = result.takeError()) {
+    FAIL() << toString(std::move(error));
+  }
+
+  // Executables are also classified as object files.
+  EXPECT_TRUE(result->getBinary()->isObject());
 }
 
 }  // namespace

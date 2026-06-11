@@ -44,7 +44,7 @@ auto CalleePatternMatch(Context& context,
 
 // Return type for ThunkPatternMatch.
 struct ThunkPatternMatchResults {
-  // The syntactic argument list. If `self_pattern_id` is not `None`, the first
+  // The syntactic argument list. If there is a self parameter, the first
   // element will be the corresponding argument.
   llvm::SmallVector<SemIR::InstId> syntactic_args;
 
@@ -57,7 +57,7 @@ struct ThunkPatternMatchResults {
 // Given the `Call` arguments for the outer part of a thunked function call,
 // computes the corresponding syntactic argument list, suitable for passing to
 // the inner part of the thunked function call.
-auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
+auto ThunkPatternMatch(Context& context,
                        llvm::ArrayRef<SemIR::InstId> param_pattern_ids,
                        llvm::ArrayRef<SemIR::InstId> outer_call_args)
     -> ThunkPatternMatchResults;

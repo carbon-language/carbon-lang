@@ -14,10 +14,10 @@ import library "prelude/types/int";
 import library "prelude/operators/as";
 
 class String {
-  fn Size[self: Self]() -> u64 { return self.size; }
+  fn Size(self) -> u64 { return self.size; }
 
   impl as Copy {
-    fn Op[self: Self]() -> Self { return {.ptr = self.ptr, .size = self.size}; }
+    fn Op(self) -> Self { return {.ptr = self.ptr, .size = self.size}; }
   }
   // TODO: This should be an array iterator.
   private var ptr: Char*;
@@ -28,5 +28,5 @@ class String {
 impl String as UnformedInit {}
 
 impl forall [T:! ImplicitAs(i64)] String as IndexWith(T) where .ElementType = Char {
-  fn At[self: Self](subscript: T) -> Char = "string.at";
+  fn At(self, subscript: T) -> Char = "string.at";
 }

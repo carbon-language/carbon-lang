@@ -38,6 +38,7 @@ fn CallNegative() {
   ErrorIfNIsZero(0);
 }
 
+
 // CHECK:STDOUT: --- fail_todo_call_monomorphization_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -145,11 +146,11 @@ fn CallNegative() {
 // CHECK:STDOUT:   %impl.elem0.loc9_28.2: @ErrorIfNIsZero.%.loc9_28.4 (%.b74) = impl_witness_access %DefaultOrUnformed.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_28.2 (constants.%impl.elem0.b17)]
 // CHECK:STDOUT:   %specific_impl_fn.loc9_28.2: <specific function> = specific_impl_function %impl.elem0.loc9_28.2, @DefaultOrUnformed.WithSelf.Op(%DefaultOrUnformed.facet.loc9_28.2) [symbolic = %specific_impl_fn.loc9_28.2 (constants.%specific_impl_fn.cf5)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc9_27.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.173)]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Int.loc9_27.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.7bb)]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.8f1)]
-// CHECK:STDOUT:   %.loc9_3: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Destroy.facet [symbolic = %.loc9_3 (constants.%.2c6)]
-// CHECK:STDOUT:   %impl.elem0.loc9_3.2: @ErrorIfNIsZero.%.loc9_3 (%.2c6) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_3.2 (constants.%impl.elem0.604)]
-// CHECK:STDOUT:   %specific_impl_fn.loc9_3.2: <specific function> = specific_impl_function %impl.elem0.loc9_3.2, @Destroy.WithSelf.Op(%Destroy.facet) [symbolic = %specific_impl_fn.loc9_3.2 (constants.%specific_impl_fn.693)]
+// CHECK:STDOUT:   %Destroy.facet.loc9_3.2: %Destroy.type = facet_value %Int.loc9_27.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc9_3.2 (constants.%Destroy.facet.7bb)]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.loc9_3.2) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.8f1)]
+// CHECK:STDOUT:   %.loc9_3.2: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Destroy.facet.loc9_3.2 [symbolic = %.loc9_3.2 (constants.%.2c6)]
+// CHECK:STDOUT:   %impl.elem0.loc9_3.2: @ErrorIfNIsZero.%.loc9_3.2 (%.2c6) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_3.2 (constants.%impl.elem0.604)]
+// CHECK:STDOUT:   %specific_impl_fn.loc9_3.2: <specific function> = specific_impl_function %impl.elem0.loc9_3.2, @Destroy.WithSelf.Op(%Destroy.facet.loc9_3.2) [symbolic = %specific_impl_fn.loc9_3.2 (constants.%specific_impl_fn.693)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -173,8 +174,10 @@ fn CallNegative() {
 // CHECK:STDOUT:       %Int.loc9_27.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc9_27.2 (constants.%Int)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @ErrorIfNIsZero.%Int.loc9_27.2 (%Int) = ref_binding v, %v.var
-// CHECK:STDOUT:     %impl.elem0.loc9_3.1: @ErrorIfNIsZero.%.loc9_3 (%.2c6) = impl_witness_access constants.%Destroy.lookup_impl_witness.173, element0 [symbolic = %impl.elem0.loc9_3.2 (constants.%impl.elem0.604)]
+// CHECK:STDOUT:     %impl.elem0.loc9_3.1: @ErrorIfNIsZero.%.loc9_3.2 (%.2c6) = impl_witness_access constants.%Destroy.lookup_impl_witness.173, element0 [symbolic = %impl.elem0.loc9_3.2 (constants.%impl.elem0.604)]
 // CHECK:STDOUT:     %bound_method.loc9_3.1: <bound method> = bound_method %v.var, %impl.elem0.loc9_3.1
+// CHECK:STDOUT:     %Destroy.facet.loc9_3.1: %Destroy.type = facet_value constants.%Int, (constants.%Destroy.lookup_impl_witness.173) [symbolic = %Destroy.facet.loc9_3.2 (constants.%Destroy.facet.7bb)]
+// CHECK:STDOUT:     %.loc9_3.1: %Destroy.type = converted constants.%Int, %Destroy.facet.loc9_3.1 [symbolic = %Destroy.facet.loc9_3.2 (constants.%Destroy.facet.7bb)]
 // CHECK:STDOUT:     %specific_impl_fn.loc9_3.1: <specific function> = specific_impl_function %impl.elem0.loc9_3.1, @Destroy.WithSelf.Op(constants.%Destroy.facet.7bb) [symbolic = %specific_impl_fn.loc9_3.2 (constants.%specific_impl_fn.693)]
 // CHECK:STDOUT:     %bound_method.loc9_3.2: <bound method> = bound_method %v.var, %specific_impl_fn.loc9_3.1
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc9_3.2(%v.var)
@@ -215,9 +218,9 @@ fn CallNegative() {
 // CHECK:STDOUT:   %impl.elem0.loc9_28.2 => constants.%T.as.DefaultOrUnformed.impl.Op.38a
 // CHECK:STDOUT:   %specific_impl_fn.loc9_28.2 => constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.df9
-// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.85b
+// CHECK:STDOUT:   %Destroy.facet.loc9_3.2 => constants.%Destroy.facet.85b
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b7e
-// CHECK:STDOUT:   %.loc9_3 => constants.%.338
+// CHECK:STDOUT:   %.loc9_3.2 => constants.%.338
 // CHECK:STDOUT:   %impl.elem0.loc9_3.2 => constants.%Destroy.Op
 // CHECK:STDOUT:   %specific_impl_fn.loc9_3.2 => constants.%Destroy.Op
 // CHECK:STDOUT: }

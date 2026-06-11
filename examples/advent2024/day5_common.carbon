@@ -33,7 +33,7 @@ class Rules {
     return var;
   }
 
-  fn IsValidOrder[self: Self](a: i32, b: i32) -> bool {
+  fn IsValidOrder(self, a: i32, b: i32) -> bool {
     return self.disallowed_before[b] & PageMask(a) == 0;
   }
 
@@ -65,12 +65,12 @@ class PageList {
     return var;
   }
 
-  fn Add[ref self: Self](page: i32) {
+  fn Add(ref self, page: i32) {
     self.pages[self.num_pages] = page;
     ++self.num_pages;
   }
 
-  fn FollowsRules[self: Self](rules: Rules) -> bool {
+  fn FollowsRules(self, rules: Rules) -> bool {
     var seen: Core.UInt(100) = 0;
     for (i: i32 in Core.Range(self.num_pages)) {
       let page: i32 = self.pages[i];
@@ -82,7 +82,7 @@ class PageList {
     return true;
   }
 
-  fn IsPossibleFirstPage[self: Self](rules: Rules, page: i32) -> bool {
+  fn IsPossibleFirstPage(self, rules: Rules, page: i32) -> bool {
     for (i: i32 in Core.Range(self.num_pages)) {
       if (not rules.IsValidOrder(page, self.pages[i])) {
         return false;
@@ -91,7 +91,7 @@ class PageList {
     return true;
   }
 
-  fn ExtractPossibleFirstPage[ref self: Self](rules: Rules) -> i32 {
+  fn ExtractPossibleFirstPage(ref self, rules: Rules) -> i32 {
     for (i: i32 in Core.Range(self.num_pages)) {
       var page: i32 = self.pages[i];
       if (self.IsPossibleFirstPage(rules, page)) {
@@ -104,7 +104,7 @@ class PageList {
     return 0;
   }
 
-  fn MiddlePage[self: Self]() -> i32 {
+  fn MiddlePage(self) -> i32 {
     return self.pages[self.num_pages / 2];
   }
 

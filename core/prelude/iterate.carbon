@@ -13,15 +13,15 @@ interface Iterate {
   // TODO: Support iterating ranges of non-copyable values.
   let ElementType:! Copy & Destroy;
   let CursorType:! Destroy;
-  fn NewCursor[self: Self]() -> CursorType;
-  fn Next[self: Self](cursor: CursorType*) -> Optional(ElementType);
+  fn NewCursor(self) -> CursorType;
+  fn Next(self, cursor: CursorType*) -> Optional(ElementType);
 }
 
 impl forall [T:! Copy & Destroy, N:! IntLiteral]
     array(T, N) as Iterate
     where .ElementType = T and .CursorType = i32 {
-  fn NewCursor[unused self: Self]() -> i32 { return 0; }
-  fn Next[self: Self](cursor: i32*) -> Optional(T) {
+  fn NewCursor(unused self) -> i32 { return 0; }
+  fn Next(self, cursor: i32*) -> Optional(T) {
     if (*cursor < N) {
       ++*cursor;
       return Optional(T).Some(self[*cursor - 1]);
@@ -36,8 +36,8 @@ interface CppRangeForIterate {
   let Sentinel:! type;
 
   // TODO: self must be ref-qualified
-  fn Begin[self: Self]() -> Iterator;
-  fn End[self: Self]() -> Sentinel;
+  fn Begin(self) -> Iterator;
+  fn End(self) -> Sentinel;
 }
 
 impl forall [
@@ -53,11 +53,11 @@ impl forall [
 {
   alias ElementType = R.Iterator.(CppUnsafeDeref.Result);
 
-  fn NewCursor[self: Self]() -> (R.Iterator, R.Sentinel) {
+  fn NewCursor(self) -> (R.Iterator, R.Sentinel) {
     return (self.Begin(), self.End());
   }
 
-  fn Next[unused self: Self](cursor: (R.Iterator, R.Sentinel)*) -> Optional(ElementType) {
+  fn Next(unused self, cursor: (R.Iterator, R.Sentinel)*) -> Optional(ElementType) {
     if (cursor->0 != cursor->1) {
       returned var result: Optional(ElementType) =
           Optional(ElementType).Some(cursor->0.(CppUnsafeDeref.Op)());

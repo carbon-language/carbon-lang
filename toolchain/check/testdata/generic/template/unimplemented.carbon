@@ -70,6 +70,7 @@ fn F[template T:! Core.Destroy](x: T) {
   var unused w: i32 = x;
 }
 
+
 // CHECK:STDOUT: --- fail_todo_unimplemented_operator.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -327,12 +328,12 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc4_36.1 [template = %require_complete (constants.%require_complete.14c)]
 // CHECK:STDOUT:   %ImplicitAs.type.loc14_3.2: type = facet_type <@ImplicitAs, @ImplicitAs(%T.as_type.loc4_36.1)> [template = %ImplicitAs.type.loc14_3.2 (constants.%ImplicitAs.type.f42)]
-// CHECK:STDOUT:   %.loc14_3.3: <instruction> = access_member_action %ImplicitAs.type.loc14_3.1, Convert [template]
-// CHECK:STDOUT:   %.loc14_3.4: type = type_of_inst %.loc14_3.3 [template]
+// CHECK:STDOUT:   %.loc14_3.4: <instruction> = access_member_action %ImplicitAs.type.loc14_3.1, Convert [template]
+// CHECK:STDOUT:   %.loc14_3.5: type = type_of_inst %.loc14_3.4 [template]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%T.loc4_16.1) [template = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.d3ece9.2)]
-// CHECK:STDOUT:   %.loc14_3.5: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %T.loc4_16.1 [template = %.loc14_3.5 (constants.%.53a)]
+// CHECK:STDOUT:   %.loc14_3.6: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %T.loc4_16.1 [template = %.loc14_3.6 (constants.%.53a)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc4_16.1, @Destroy [template = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc14_3.2: @F.%.loc14_3.5 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [template = %impl.elem0.loc14_3.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:   %impl.elem0.loc14_3.2: @F.%.loc14_3.6 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [template = %impl.elem0.loc14_3.2 (constants.%impl.elem0.0f9)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_3.2: <specific function> = specific_impl_function %impl.elem0.loc14_3.2, @Destroy.WithSelf.Op(%T.loc4_16.1) [template = %specific_impl_fn.loc14_3.2 (constants.%specific_impl_fn.afc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%T.as_type.loc4_36.1 (%T.as_type.700)) {
@@ -344,7 +345,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:     %v.var: ref @F.%T.as_type.loc4_36.1 (%T.as_type.700) = var %v.var_patt
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:     %ImplicitAs.type.loc14_3.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%T.as_type.700)> [template = %ImplicitAs.type.loc14_3.2 (constants.%ImplicitAs.type.f42)]
-// CHECK:STDOUT:     %.loc14_3.1: @F.%.loc14_3.4 (@F.%.loc14_3.4) = splice_inst %.loc14_3.3
+// CHECK:STDOUT:     %.loc14_3.1: @F.%.loc14_3.5 (@F.%.loc14_3.5) = splice_inst %.loc14_3.4
 // CHECK:STDOUT:     %.loc14_3.2: @F.%T.as_type.loc4_36.1 (%T.as_type.700) = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:     assign %v.var, <error>
 // CHECK:STDOUT:     %.loc14_17.1: type = splice_block %.loc14_17.2 [template = %T.as_type.loc4_36.1 (constants.%T.as_type.700)] {
@@ -365,8 +366,9 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:     %w: ref %i32 = ref_binding w, %w.var
 // CHECK:STDOUT:     %Destroy.Op.bound: <bound method> = bound_method %w.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%w.var)
-// CHECK:STDOUT:     %impl.elem0.loc14_3.1: @F.%.loc14_3.5 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [template = %impl.elem0.loc14_3.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:     %impl.elem0.loc14_3.1: @F.%.loc14_3.6 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [template = %impl.elem0.loc14_3.2 (constants.%impl.elem0.0f9)]
 // CHECK:STDOUT:     %bound_method.loc14_3.1: <bound method> = bound_method %v.var, %impl.elem0.loc14_3.1
+// CHECK:STDOUT:     %.loc14_3.3: %Destroy.type = converted constants.%T.as_type.700, constants.%T.0e7 [template = %T.loc4_16.1 (constants.%T.0e7)]
 // CHECK:STDOUT:     %specific_impl_fn.loc14_3.1: <specific function> = specific_impl_function %impl.elem0.loc14_3.1, @Destroy.WithSelf.Op(constants.%T.0e7) [template = %specific_impl_fn.loc14_3.2 (constants.%specific_impl_fn.afc)]
 // CHECK:STDOUT:     %bound_method.loc14_3.2: <bound method> = bound_method %v.var, %specific_impl_fn.loc14_3.1
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc14_3.2(%v.var)

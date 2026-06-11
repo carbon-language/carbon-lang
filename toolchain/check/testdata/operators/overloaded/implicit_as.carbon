@@ -17,11 +17,11 @@ class X {
 }
 
 impl i32 as Core.ImplicitAs(X) {
-  fn Convert[self: i32]() -> X { return {.n = self}; }
+  fn Convert(self: i32) -> X { return {.n = self}; }
 }
 
 impl X as Core.ImplicitAs(i32) {
-  fn Convert[self: X]() -> i32 { return self.n; }
+  fn Convert(self: X) -> i32 { return self.n; }
 }
 
 // TODO: fn Sink(T:! type, x: T);
@@ -34,6 +34,7 @@ fn Test() {
   Sink_i32(Source(X));
   Sink_X(Source(i32));
 }
+
 
 // CHECK:STDOUT: --- implicit_as.carbon
 // CHECK:STDOUT:
@@ -187,7 +188,7 @@ fn Test() {
 // CHECK:STDOUT:     %return.patt: %pattern_type.6cb = return_slot_pattern %return.param_patt, %X.ref [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %.loc20_30: Core.Form = init_form %X.ref [concrete = constants.%.325]
+// CHECK:STDOUT:     %.loc20_28: Core.Form = init_form %X.ref [concrete = constants.%.325]
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %self: %i32 = value_binding self, %self.param
@@ -212,7 +213,7 @@ fn Test() {
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc24_28: Core.Form = init_form %i32 [concrete = constants.%.795]
+// CHECK:STDOUT:     %.loc24_26: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param: %X = value_param call_param0
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %self: %X = value_binding self, %self.param
@@ -242,30 +243,30 @@ fn Test() {
 // CHECK:STDOUT: fn @i32.as.ImplicitAs.impl.Convert(%self.param: %i32) -> out %return.param: %X {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %i32 = name_ref self, %self
-// CHECK:STDOUT:   %.loc20_51.1: %struct_type.n = struct_literal (%self.ref)
+// CHECK:STDOUT:   %.loc20_49.1: %struct_type.n = struct_literal (%self.ref)
 // CHECK:STDOUT:   %impl.elem0: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
-// CHECK:STDOUT:   %bound_method.loc20_47.1: <bound method> = bound_method %self.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc20_45.1: <bound method> = bound_method %self.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc20_47.2: <bound method> = bound_method %self.ref, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc20_47.2(%self.ref)
-// CHECK:STDOUT:   %.loc20_51.2: ref %i32 = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc20_51.3: init %i32 to %.loc20_51.2 = in_place_init %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %.loc20_51.4: init %X to %return.param = class_init (%.loc20_51.3)
-// CHECK:STDOUT:   %.loc20_52: init %X = converted %.loc20_51.1, %.loc20_51.4
-// CHECK:STDOUT:   return %.loc20_52 to %return.param
+// CHECK:STDOUT:   %bound_method.loc20_45.2: <bound method> = bound_method %self.ref, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc20_45.2(%self.ref)
+// CHECK:STDOUT:   %.loc20_49.2: ref %i32 = class_element_access %return.param, element0
+// CHECK:STDOUT:   %.loc20_49.3: init %i32 to %.loc20_49.2 = in_place_init %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %.loc20_49.4: init %X to %return.param = class_init (%.loc20_49.3)
+// CHECK:STDOUT:   %.loc20_50: init %X = converted %.loc20_49.1, %.loc20_49.4
+// CHECK:STDOUT:   return %.loc20_50 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @X.as.ImplicitAs.impl.Convert(%self.param: %X) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %X = name_ref self, %self
 // CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%.loc16 [concrete = @X.%.loc16]
-// CHECK:STDOUT:   %.loc24_45.1: ref %i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc24_45.2: %i32 = acquire_value %.loc24_45.1
+// CHECK:STDOUT:   %.loc24_43.1: ref %i32 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc24_43.2: %i32 = acquire_value %.loc24_43.1
 // CHECK:STDOUT:   %impl.elem0: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
-// CHECK:STDOUT:   %bound_method.loc24_45.1: <bound method> = bound_method %.loc24_45.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc24_43.1: <bound method> = bound_method %.loc24_43.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc24_45.2: <bound method> = bound_method %.loc24_45.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc24_45.2(%.loc24_45.2)
+// CHECK:STDOUT:   %bound_method.loc24_43.2: <bound method> = bound_method %.loc24_43.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc24_43.2(%.loc24_43.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

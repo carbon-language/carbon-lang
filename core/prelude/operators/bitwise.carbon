@@ -21,89 +21,89 @@ import library "prelude/types/int_literal";
 // Bit complement: `^a`.
 interface BitComplement {
   let Result:! type;
-  fn Op[self: Self]() -> Result;
+  fn Op(self) -> Result;
 }
 
 // Bitwise AND: `a & b`.
 interface BitAndWith(Other:! type) {
   let Result:! type;
-  fn Op[self: Self](other: Other) -> Result;
+  fn Op(self, other: Other) -> Result;
 }
 
 // Bitwise AND with assignment: `a &= b`.
 interface BitAndAssignWith(Other:! type) {
-  fn Op[ref self: Self](other: Other);
+  fn Op(ref self, other: Other);
 }
 
 // Bitwise OR: `a | b`.
 interface BitOrWith(Other:! type) {
   let Result:! type;
-  fn Op[self: Self](other: Other) -> Result;
+  fn Op(self, other: Other) -> Result;
 }
 
 // Bitwise OR with assignment: `a |= b`.
 interface BitOrAssignWith(Other:! type) {
-  fn Op[ref self: Self](other: Other);
+  fn Op(ref self, other: Other);
 }
 
 // Bitwise XOR: `a ^ b`.
 interface BitXorWith(Other:! type) {
   let Result:! type;
-  fn Op[self: Self](other: Other) -> Result;
+  fn Op(self, other: Other) -> Result;
 }
 
 // Bitwise XOR with assignment: `a ^= b`.
 interface BitXorAssignWith(Other:! type) {
-  fn Op[ref self: Self](other: Other);
+  fn Op(ref self, other: Other);
 }
 
 // Left shift: `a << b`.
 interface LeftShiftWith(Other:! type) {
   let Result:! type;
-  fn Op[self: Self](other: Other) -> Result;
+  fn Op(self, other: Other) -> Result;
 }
 
 // Left shift with assignment: `a <<= b`.
 interface LeftShiftAssignWith(Other:! type) {
-  fn Op[ref self: Self](other: Other);
+  fn Op(ref self, other: Other);
 }
 
 // Right shift: `a >> b`.
 interface RightShiftWith(Other:! type) {
   let Result:! type;
-  fn Op[self: Self](other: Other) -> Result;
+  fn Op(self, other: Other) -> Result;
 }
 
 // Right shift with assignment: `a >>= b`.
 interface RightShiftAssignWith(Other:! type) {
-  fn Op[ref self: Self](other: Other);
+  fn Op(ref self, other: Other);
 }
 
 
 // Operations for IntLiteral. These need to be here because IntLiteral has no
 // associated library of its own.
 impl IntLiteral as BitAndWith(Self) where .Result = Self {
-  fn Op[self: Self](other: Self) -> Self = "int.and";
+  fn Op(self, other: Self) -> Self = "int.and";
 }
 
 impl IntLiteral as BitComplement where .Result = Self {
-  fn Op[self: Self]() -> Self = "int.complement";
+  fn Op(self) -> Self = "int.complement";
 }
 
 impl IntLiteral as BitOrWith(Self) where .Result = Self {
-  fn Op[self: Self](other: Self) -> Self = "int.or";
+  fn Op(self, other: Self) -> Self = "int.or";
 }
 
 impl IntLiteral as BitXorWith(Self) where .Result = Self {
-  fn Op[self: Self](other: Self) -> Self = "int.xor";
+  fn Op(self, other: Self) -> Self = "int.xor";
 }
 
 impl IntLiteral as LeftShiftWith(Self) where .Result = Self {
-  fn Op[self: Self](other: Self) -> Self = "int.left_shift";
+  fn Op(self, other: Self) -> Self = "int.left_shift";
 }
 
 impl IntLiteral as RightShiftWith(Self) where .Result = Self {
-  fn Op[self: Self](other: Self) -> Self = "int.right_shift";
+  fn Op(self, other: Self) -> Self = "int.right_shift";
 }
 
 // Operations for `type`. These need to be here because `type` has no
@@ -111,5 +111,5 @@ impl IntLiteral as RightShiftWith(Self) where .Result = Self {
 
 // Facet type combination.
 impl type as BitAndWith(Self) where .Result = Self {
-  fn Op[self: Self](other: Self) -> Self = "type.and";
+  fn Op(self, other: Self) -> Self = "type.and";
 }

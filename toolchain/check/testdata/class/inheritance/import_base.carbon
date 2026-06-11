@@ -17,8 +17,8 @@
 library "[[@TEST_NAME]]";
 
 base class Base {
-  fn F[self: Self]();
-  fn Unused[self: Self]();
+  fn F(self);
+  fn Unused(self);
 
   var x: i32;
   var unused_y: i32;
@@ -39,6 +39,7 @@ fn Run() {
   a.x = 2;
   a.F();
 }
+
 
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
@@ -197,8 +198,8 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.6fc: <witness> = import_ref Main//a, loc10_1, loaded [concrete = constants.%complete_type.6c3]
 // CHECK:STDOUT:   %Main.import_ref.d68 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.bc9: %Base.F.type = import_ref Main//a, loc5_21, loaded [concrete = constants.%Base.F]
-// CHECK:STDOUT:   %Main.import_ref.077 = import_ref Main//a, loc6_26, unloaded
+// CHECK:STDOUT:   %Main.import_ref.bc9: %Base.F.type = import_ref Main//a, loc5_13, loaded [concrete = constants.%Base.F]
+// CHECK:STDOUT:   %Main.import_ref.077 = import_ref Main//a, loc6_18, unloaded
 // CHECK:STDOUT:   %Main.import_ref.230: %Base.elem = import_ref Main//a, loc8_8, loaded [concrete = %.11f]
 // CHECK:STDOUT:   %Main.import_ref.9f4 = import_ref Main//a, loc9_15, unloaded
 // CHECK:STDOUT:   %Main.import_ref.60e: <witness> = import_ref Main//a, loc14_1, loaded [concrete = constants.%complete_type.c02]

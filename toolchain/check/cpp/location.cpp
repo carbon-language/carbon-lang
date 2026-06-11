@@ -4,6 +4,8 @@
 
 #include "toolchain/check/cpp/location.h"
 
+#include "clang/AST/ASTContext.h"
+#include "clang/Basic/SourceManager.h"
 #include "toolchain/sem_ir/absolute_node_ref.h"
 #include "toolchain/sem_ir/ids.h"
 

@@ -17,6 +17,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
   return **p;
 }
 
+
 // CHECK:STDOUT: --- nested_const.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -106,6 +107,8 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %.loc17_10.2: %const.6a8 = acquire_value %.loc17_10.1
 // CHECK:STDOUT:   %impl.elem0: %.367 = impl_witness_access constants.%Copy.impl_witness.0b0, element0 [concrete = constants.%const.as.Copy.impl.Op.9cf]
 // CHECK:STDOUT:   %bound_method.loc17_10.1: <bound method> = bound_method %.loc17_10.2, %impl.elem0
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value constants.%i32, (constants.%Copy.impl_witness.0e0) [concrete = constants.%Copy.facet.987]
+// CHECK:STDOUT:   %.loc17_10.3: %Copy.type = converted constants.%i32, %Copy.facet [concrete = constants.%Copy.facet.987]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @const.as.Copy.impl.Op(constants.%Copy.facet.987) [concrete = constants.%const.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc17_10.2: <bound method> = bound_method %.loc17_10.2, %specific_fn
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.call: init %const.6a8 = call %bound_method.loc17_10.2(%.loc17_10.2)

@@ -48,7 +48,7 @@ interface J2 {
 library "[[@TEST_NAME]]";
 
 interface A {
-  fn F[self: Self]() -> type;
+  fn F(self) -> type;
 }
 interface B {
   alias F = A.F;
@@ -63,15 +63,16 @@ interface B {
 library "[[@TEST_NAME]]";
 
 interface C {
-  fn F[self: Self]();
+  fn F(self);
   // TODO: Add `default` once supported.
-  fn G[self: Self]() {
+  fn G(self) {
     //@dump-sem-ir-begin
     self.F();
     self.(F)();
     //@dump-sem-ir-end
   }
 }
+
 
 // CHECK:STDOUT: --- alias_to_different_interface_with_requires.carbon
 // CHECK:STDOUT:
@@ -199,24 +200,26 @@ interface C {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.WithSelf.F.type: type = fn_type @C.WithSelf.F, @C.WithSelf(%Self) [symbolic = %C.WithSelf.F.type (constants.%C.WithSelf.F.type)]
-// CHECK:STDOUT:   %.loc8: type = fn_type_with_self_type %C.WithSelf.F.type, %Self [symbolic = %.loc8 (constants.%.b5a)]
+// CHECK:STDOUT:   %.loc8_9: type = fn_type_with_self_type %C.WithSelf.F.type, %Self [symbolic = %.loc8_9 (constants.%.b5a)]
 // CHECK:STDOUT:   %C.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @C [symbolic = %C.lookup_impl_witness (constants.%C.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc8_9.2: @C.WithSelf.G.%.loc8 (%.b5a) = impl_witness_access %C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %impl.elem0.loc8_9.2: @C.WithSelf.G.%.loc8_9 (%.b5a) = impl_witness_access %C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc8_9.2: <specific function> = specific_impl_function %impl.elem0.loc8_9.2, @C.WithSelf.F(%Self) [symbolic = %specific_impl_fn.loc8_9.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @C.WithSelf.G.%Self.as_type.loc6_14.1 (%Self.as_type)) {
+// CHECK:STDOUT:   fn(%self.param: @C.WithSelf.G.%Self.as_type.loc6_8.1 (%Self.as_type)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %self.ref.loc8: @C.WithSelf.G.%Self.as_type.loc6_14.1 (%Self.as_type) = name_ref self, %self
+// CHECK:STDOUT:     %self.ref.loc8: @C.WithSelf.G.%Self.as_type.loc6_8.1 (%Self.as_type) = name_ref self, %self
 // CHECK:STDOUT:     %F.ref.loc8: %C.assoc_type = name_ref F, @C.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc8_9.1: @C.WithSelf.G.%.loc8 (%.b5a) = impl_witness_access constants.%C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc8_9.1: @C.WithSelf.G.%.loc8_9 (%.b5a) = impl_witness_access constants.%C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc8_9: <bound method> = bound_method %self.ref.loc8, %impl.elem0.loc8_9.1
+// CHECK:STDOUT:     %.loc8_12: %C.type = converted constants.%Self.as_type, constants.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %specific_impl_fn.loc8_9.1: <specific function> = specific_impl_function %impl.elem0.loc8_9.1, @C.WithSelf.F(constants.%Self) [symbolic = %specific_impl_fn.loc8_9.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc8_12: <bound method> = bound_method %self.ref.loc8, %specific_impl_fn.loc8_9.1
 // CHECK:STDOUT:     %C.WithSelf.F.call.loc8: init %empty_tuple.type = call %bound_method.loc8_12(%self.ref.loc8)
-// CHECK:STDOUT:     %self.ref.loc9: @C.WithSelf.G.%Self.as_type.loc6_14.1 (%Self.as_type) = name_ref self, %self
-// CHECK:STDOUT:     %impl.elem0.loc9: @C.WithSelf.G.%.loc8 (%.b5a) = impl_witness_access constants.%C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:     %F.ref.loc9: @C.WithSelf.G.%.loc8 (%.b5a) = name_ref F, %impl.elem0.loc9 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %self.ref.loc9: @C.WithSelf.G.%Self.as_type.loc6_8.1 (%Self.as_type) = name_ref self, %self
+// CHECK:STDOUT:     %impl.elem0.loc9: @C.WithSelf.G.%.loc8_9 (%.b5a) = impl_witness_access constants.%C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %F.ref.loc9: @C.WithSelf.G.%.loc8_9 (%.b5a) = name_ref F, %impl.elem0.loc9 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc9_9: <bound method> = bound_method %self.ref.loc9, %F.ref.loc9
+// CHECK:STDOUT:     %.loc9: %C.type = converted constants.%Self.as_type, constants.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %specific_impl_fn.loc9: <specific function> = specific_impl_function %F.ref.loc9, @C.WithSelf.F(constants.%Self) [symbolic = %specific_impl_fn.loc8_9.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc9_14: <bound method> = bound_method %self.ref.loc9, %specific_impl_fn.loc9
 // CHECK:STDOUT:     %C.WithSelf.F.call.loc9: init %empty_tuple.type = call %bound_method.loc9_14(%self.ref.loc9)
@@ -235,7 +238,7 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.WithSelf.G(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc6_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc6_8.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

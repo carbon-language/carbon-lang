@@ -19,10 +19,10 @@ package User;
 class C {};
 
 impl C as Core.OrderedWith(C) {
-  fn Less[self: C](other: C) -> bool;
-  fn LessOrEquivalent[self: C](other: C) -> bool;
-  fn Greater[self: C](other: C) -> bool;
-  fn GreaterOrEquivalent[self: C](other: C) -> bool;
+  fn Less(self: C, other: C) -> bool;
+  fn LessOrEquivalent(self: C, other: C) -> bool;
+  fn Greater(self: C, other: C) -> bool;
+  fn GreaterOrEquivalent(self: C, other: C) -> bool;
 }
 
 fn TestLess(a: C, b: C) -> bool {

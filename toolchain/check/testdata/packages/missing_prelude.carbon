@@ -47,7 +47,7 @@ class X {}
 fn Int[T:! type](unused N:! T) -> X { return {}; }
 
 interface ImplicitAs(T:! type) {
-  fn Convert[self: Self]() -> T;
+  fn Convert(self) -> T;
 }
 
 // --- fail_use_fake_int.carbon
@@ -123,6 +123,7 @@ class Core {
 }
 
 let n: type = i32;
+
 
 // CHECK:STDOUT: --- fail_missing_prelude.carbon
 // CHECK:STDOUT:
@@ -264,31 +265,31 @@ let n: type = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %ImplicitAs.WithSelf.Convert.decl: @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.type (%ImplicitAs.WithSelf.Convert.type) = fn_decl @ImplicitAs.WithSelf.Convert [symbolic = @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert (constants.%ImplicitAs.WithSelf.Convert)] {
-// CHECK:STDOUT:       %self.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_18 (%pattern_type.701) = value_param_pattern [concrete]
-// CHECK:STDOUT:       %self.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_18 (%pattern_type.701) = at_binding_pattern self, %self.param_patt [concrete]
-// CHECK:STDOUT:       %return.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_31 (%pattern_type.51d) = out_param_pattern [concrete]
-// CHECK:STDOUT:       %return.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_31 (%pattern_type.51d) = return_slot_pattern %return.param_patt, %T.ref [concrete]
+// CHECK:STDOUT:       %self.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_14 (%pattern_type.701) = value_param_pattern [concrete]
+// CHECK:STDOUT:       %self.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_14 (%pattern_type.701) = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:       %return.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_23 (%pattern_type.51d) = out_param_pattern [concrete]
+// CHECK:STDOUT:       %return.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_23 (%pattern_type.51d) = return_slot_pattern %return.param_patt, %T.ref [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @ImplicitAs.%T.loc8_23.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc9_31.2: Core.Form = init_form %T.ref [symbolic = %.loc9_31.1 (constants.%.184)]
-// CHECK:STDOUT:       %self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_20.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:       %.loc9_20.1: type = splice_block %.loc9_20.3 [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type)] {
-// CHECK:STDOUT:         %.loc9_20.2: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = specific_constant @ImplicitAs.%Self.loc8_32.1, @ImplicitAs(constants.%T) [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:         %Self.ref: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = name_ref Self, %.loc9_20.2 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:         %Self.as_type.loc9_20.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:         %.loc9_20.3: type = converted %Self.ref, %Self.as_type.loc9_20.2 [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc9_23.2: Core.Form = init_form %T.ref [symbolic = %.loc9_23.1 (constants.%.184)]
+// CHECK:STDOUT:       %self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_14.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:       %.loc9_14.1: type = splice_block %.loc9_14.3 [symbolic = %Self.as_type.loc9_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:         %.loc9_14.2: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = specific_constant @ImplicitAs.%Self.loc8_32.1, @ImplicitAs(constants.%T) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.ref: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = name_ref Self, %.loc9_14.2 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.as_type.loc9_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc9_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:         %.loc9_14.3: type = converted %Self.ref, %Self.as_type.loc9_14.2 [symbolic = %Self.as_type.loc9_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_20.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_14.1 (%Self.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @ImplicitAs.WithSelf.Convert.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @ImplicitAs.WithSelf.Convert.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %assoc0.loc9_32.1: @ImplicitAs.WithSelf.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, %ImplicitAs.WithSelf.Convert.decl [symbolic = %assoc0.loc9_32.2 (constants.%assoc0)]
+// CHECK:STDOUT:     %assoc0.loc9_24.1: @ImplicitAs.WithSelf.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, %ImplicitAs.WithSelf.Convert.decl [symbolic = %assoc0.loc9_24.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc8_32.1
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .Convert = @ImplicitAs.WithSelf.%assoc0.loc9_32.1
+// CHECK:STDOUT:     .Convert = @ImplicitAs.WithSelf.%assoc0.loc9_24.1
 // CHECK:STDOUT:     witness = (@ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -323,12 +324,12 @@ let n: type = i32;
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.3aa)]
 // CHECK:STDOUT:   %Self: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc9_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type.loc9_18: type = pattern_type %Self.as_type.loc9_20.1 [symbolic = %pattern_type.loc9_18 (constants.%pattern_type.701)]
-// CHECK:STDOUT:   %.loc9_31.1: Core.Form = init_form %T [symbolic = %.loc9_31.1 (constants.%.184)]
-// CHECK:STDOUT:   %pattern_type.loc9_31: type = pattern_type %T [symbolic = %pattern_type.loc9_31 (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %Self.as_type.loc9_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type.loc9_14: type = pattern_type %Self.as_type.loc9_14.1 [symbolic = %pattern_type.loc9_14 (constants.%pattern_type.701)]
+// CHECK:STDOUT:   %.loc9_23.1: Core.Form = init_form %T [symbolic = %.loc9_23.1 (constants.%.184)]
+// CHECK:STDOUT:   %pattern_type.loc9_23: type = pattern_type %T [symbolic = %pattern_type.loc9_23 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_20.1 (%Self.as_type)) -> out %return.param: @ImplicitAs.WithSelf.Convert.%T (%T);
+// CHECK:STDOUT:   fn(%self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_14.1 (%Self.as_type)) -> out %return.param: @ImplicitAs.WithSelf.Convert.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
@@ -347,10 +348,10 @@ let n: type = i32;
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3aa
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc9_20.1 => constants.%Self.as_type
-// CHECK:STDOUT:   %pattern_type.loc9_18 => constants.%pattern_type.701
-// CHECK:STDOUT:   %.loc9_31.1 => constants.%.184
-// CHECK:STDOUT:   %pattern_type.loc9_31 => constants.%pattern_type.51d
+// CHECK:STDOUT:   %Self.as_type.loc9_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type.loc9_14 => constants.%pattern_type.701
+// CHECK:STDOUT:   %.loc9_23.1 => constants.%.184
+// CHECK:STDOUT:   %pattern_type.loc9_23 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_fake_int.carbon

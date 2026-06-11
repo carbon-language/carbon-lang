@@ -15,6 +15,10 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/ids.h"
 
+namespace clang {
+class CompilerInvocation;
+}  // namespace clang
+
 namespace Carbon::Check {
 
 // Generates a Clang AST for the given C++ imports and sets it as the context's

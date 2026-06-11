@@ -15,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn F[self: Self]() -> i32;
+  fn F(self) -> i32;
 }
 
 class A {
@@ -23,7 +23,7 @@ class A {
 }
 
 impl A as I {
-  fn F[self: A]() -> i32 {
+  fn F(self: A) -> i32 {
     return self.n;
   }
 }
@@ -41,15 +41,15 @@ class B {}
 class C {}
 
 interface I(T:! type) {
-  fn F[self: Self]() -> T;
+  fn F(self) -> T;
 }
 
 impl C as I(A) {
-  fn F[unused self: C]() -> A { return {}; }
+  fn F(unused self: C) -> A { return {}; }
 }
 
 impl C as I(B) {
-  fn F[unused self: C]() -> B { return {}; }
+  fn F(unused self: C) -> B { return {}; }
 }
 
 fn F1(x: C, y: C) {
@@ -127,20 +127,20 @@ impl C(B) as I {
 // CHECK:STDOUT: ; ModuleID = 'generic_impls.carbon'
 // CHECK:STDOUT: source_filename = "generic_impls.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @A.val.loc13_42 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @B.val.loc17_42 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @A.val.loc13_40 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @B.val.loc17_40 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_CF.C.Main:I.bd4fb75a414fe858.Main"(ptr sret({}) %return, ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @A.val.loc13_42, i64 0, i1 false), !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @A.val.loc13_40, i64 0, i1 false), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_CF.C.Main:I.a6a60dfee2d7d273.Main"(ptr sret({}) %return, ptr %self) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @B.val.loc17_42, i64 0, i1 false), !dbg !14
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @B.val.loc17_40, i64 0, i1 false), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -196,11 +196,11 @@ impl C(B) as I {
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 33, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 31, scope: !4)
 // CHECK:STDOUT: !11 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main:I.a6a60dfee2d7d273.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !12)
 // CHECK:STDOUT: !12 = !{!13}
 // CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !11, type: !7)
-// CHECK:STDOUT: !14 = !DILocation(line: 17, column: 33, scope: !11)
+// CHECK:STDOUT: !14 = !DILocation(line: 17, column: 31, scope: !11)
 // CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F1", linkageName: "_CF1.Main", scope: null, file: !3, line: 20, type: !16, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !18)
 // CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
 // CHECK:STDOUT: !17 = !{null, !7, !7}

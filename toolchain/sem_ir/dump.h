@@ -32,6 +32,7 @@ auto Dump(const File& file, GenericId generic_id) -> std::string;
 auto Dump(const File& file, IdentifiedFacetTypeId identified_facet_type_id)
     -> std::string;
 auto Dump(const File& file, ImplId impl_id) -> std::string;
+auto Dump(const File& file, ImportIRInstId import_inst_id) -> std::string;
 auto Dump(const File& file, const Inst& inst) -> std::string;
 auto Dump(const File& file, InstBlockId inst_block_id) -> std::string;
 auto Dump(const File& file, InstId inst_id) -> std::string;

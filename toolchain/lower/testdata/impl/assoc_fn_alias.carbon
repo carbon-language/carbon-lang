@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/impl/assoc_fn_alias.carbon
 
 interface I {
-  fn F[self: Self]() -> i32;
+  fn F(self) -> i32;
 }
 
 class A {
@@ -20,7 +20,7 @@ class A {
 }
 
 impl A as I {
-  fn F[self: A]() -> i32 {
+  fn F(self: A) -> i32 {
     return self.n;
   }
 }

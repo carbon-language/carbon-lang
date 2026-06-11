@@ -12,7 +12,7 @@
 
 class CharLike {
   impl as Core.ImplicitAs(char) {
-    fn Convert[unused self: Self]() -> char { return 'x'; }
+    fn Convert(unused self) -> char { return 'x'; }
   }
 }
 
@@ -568,7 +568,7 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !9 = !{!10}
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
-// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 47, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 39, scope: !4)
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Main", scope: null, file: !3, line: 21, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null, !7, !7}
@@ -1010,4 +1010,4 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: !450 = !{!7, !7}
 // CHECK:STDOUT: !451 = !{!452}
 // CHECK:STDOUT: !452 = !DILocalVariable(arg: 1, scope: !448, type: !7)
-// CHECK:STDOUT: !453 = !DILocation(line: 59, column: 37, scope: !448)
+// CHECK:STDOUT: !453 = !DILocation(line: 59, column: 29, scope: !448)

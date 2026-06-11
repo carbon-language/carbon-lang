@@ -111,7 +111,7 @@ fn G() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn Op[self: Self]();
+  fn Op(self);
 }
 
 class C {};

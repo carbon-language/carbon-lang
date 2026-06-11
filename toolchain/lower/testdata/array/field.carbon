@@ -15,11 +15,11 @@ class A {
 
   fn Init() -> A { return {.v = (1, 2)}; }
 
-  fn Access[self: Self]() -> i32 {
+  fn Access(self) -> i32 {
     return self.v[0];
   }
 
-  fn Use[ref self: Self]() -> i32 {
+  fn Use(ref self) -> i32 {
     self.v[0] = 1;
     return self.v[1];
   }

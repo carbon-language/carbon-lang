@@ -26,8 +26,8 @@ class Field {
 class ForwardDeclared;
 
 class ForwardDeclared {
-  fn F[self: Self]();
-  fn G[ref self: Self]();
+  fn F(self);
+  fn G(ref self);
 }
 
 class Incomplete;
@@ -52,6 +52,7 @@ fn Run() {
 
   var unused e: Incomplete*;
 }
+
 
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
@@ -263,12 +264,12 @@ fn Run() {
 // CHECK:STDOUT:   %.860: %Field.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//a, loc16_1, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Main.import_ref.fbb203.1 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.bc9: %ForwardDeclared.F.type = import_ref Main//a, loc14_21, loaded [concrete = constants.%ForwardDeclared.F]
-// CHECK:STDOUT:   %Main.import_ref.341: %ForwardDeclared.G.type = import_ref Main//a, loc15_25, loaded [concrete = constants.%ForwardDeclared.G]
+// CHECK:STDOUT:   %Main.import_ref.bc9: %ForwardDeclared.F.type = import_ref Main//a, loc14_13, loaded [concrete = constants.%ForwardDeclared.F]
+// CHECK:STDOUT:   %Main.import_ref.341: %ForwardDeclared.G.type = import_ref Main//a, loc15_17, loaded [concrete = constants.%ForwardDeclared.G]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//a, loc16_1, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Main.import_ref.fbb203.2 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.439 = import_ref Main//a, loc14_21, unloaded
-// CHECK:STDOUT:   %Main.import_ref.c46 = import_ref Main//a, loc15_25, unloaded
+// CHECK:STDOUT:   %Main.import_ref.439 = import_ref Main//a, loc14_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c46 = import_ref Main//a, loc15_17, unloaded
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.e5f: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.ff5) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.ce9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.4f1 = impl_witness_table (%Core.import_ref.e5f), @ptr.as.Copy.impl [concrete]

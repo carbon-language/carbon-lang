@@ -11,11 +11,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/generic/var_param.carbon
 
 interface I {
-  fn Op[self: Self]();
+  fn Op(self);
 }
 
 impl i32 as I {
-  fn Op[unused self: Self]() {}
+  fn Op(unused self) {}
 }
 
 //@dump-sem-ir-begin

@@ -11,6 +11,10 @@
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 
+namespace clang {
+class VarDecl;
+}  // namespace clang
+
 namespace Carbon::Check {
 
 // Converts an `APValue` to a Carbon `ConstantId`.

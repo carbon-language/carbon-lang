@@ -15,10 +15,10 @@
 class Class;
 
 class Class {
-  fn F[self: Self](b: ());
+  fn F(self, b: ());
 }
 
-fn Class.F[unused self: Self](unused b: ()) {}
+fn Class.F(unused self, unused b: ()) {}
 
 // CHECK:STDOUT: --- redeclaration.carbon
 // CHECK:STDOUT:
@@ -59,9 +59,9 @@ fn Class.F[unused self: Self](unused b: ()) {}
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %self.loc21: %Class = value_binding self, %self.param.loc21
 // CHECK:STDOUT:     %b.param.loc21: %empty_tuple.type = value_param call_param1
-// CHECK:STDOUT:     %.loc21_42.1: type = splice_block %.loc21_42.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc21_42.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc21_42.3: type = converted %.loc21_42.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc21_36.1: type = splice_block %.loc21_36.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc21_36.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc21_36.3: type = converted %.loc21_36.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc21: %empty_tuple.type = value_binding b, %b.param.loc21
 // CHECK:STDOUT:   }
@@ -78,9 +78,9 @@ fn Class.F[unused self: Self](unused b: ()) {}
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %self.loc18: %Class = value_binding self, %self.param.loc18
 // CHECK:STDOUT:     %b.param.loc18: %empty_tuple.type = value_param call_param1
-// CHECK:STDOUT:     %.loc18_24.1: type = splice_block %.loc18_24.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc18_24.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc18_24.3: type = converted %.loc18_24.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc18_18.1: type = splice_block %.loc18_18.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc18_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc18_18.3: type = converted %.loc18_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc18: %empty_tuple.type = value_binding b, %b.param.loc18
 // CHECK:STDOUT:   }

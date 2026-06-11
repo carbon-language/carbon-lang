@@ -127,7 +127,7 @@ import Cpp library "non_function_member_protected.h";
 
 class Derived {
   extend base: Cpp.C;
-  fn F[self: Self]() {
+  fn F(self) {
     //@dump-sem-ir-begin
     let unused instance_data: i32 = self.instance_data;
     let unused unqualified_static_data: i32 = static_data;
@@ -182,7 +182,7 @@ import Cpp library "non_function_member_private.h";
 
 class Derived {
   extend base: Cpp.C;
-  fn F[self: Self]() {
+  fn F(self) {
     // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+8]]:37: error: cannot access private member `instance_data` of type `Cpp.C` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     let unused instance_data: i32 = self.instance_data;
     // CHECK:STDERR:                                     ^~~~~~~~~~~~~~~~~~
@@ -313,7 +313,7 @@ import Cpp library "function_member_protected.h";
 
 class Derived {
   extend base: Cpp.C;
-  fn F[self: Self]() {
+  fn F(self) {
     //@dump-sem-ir-begin
     // TODO: It should be possible to call protected methods in the base class.
     // CHECK:STDERR: fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon:[[@LINE+8]]:22: error: no matching function for call to 'instance_fn' [CppInteropParseError]
@@ -337,7 +337,7 @@ import Cpp library "function_member_protected.h";
 
 class Derived {
   extend base: Cpp.C;
-  fn F[unused self: Self]() {
+  fn F(unused self) {
     //@dump-sem-ir-begin
     static_fn();
     Derived.static_fn();
@@ -366,7 +366,7 @@ import Cpp library "function_member_private.h";
 
 class Derived {
   extend base: Cpp.C;
-  fn F[self: Self]() {
+  fn F(self) {
     // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+7]]:5: error: cannot access private member `instance_fn` of type `Cpp.C` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     self.instance_fn();
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~

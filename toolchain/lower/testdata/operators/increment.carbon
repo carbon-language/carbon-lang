@@ -116,4 +116,4 @@ fn IncrSigned() {
 // CHECK:STDOUT: !38 = distinct !DISubprogram(name: "AsInt", linkageName: "_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.be1e879c1ad406d8", scope: null, file: !18, line: 58, type: !32, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !39)
 // CHECK:STDOUT: !39 = !{!40}
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !38, type: !13)
-// CHECK:STDOUT: !41 = !DILocation(line: 58, column: 36, scope: !38)
+// CHECK:STDOUT: !41 = !DILocation(line: 58, column: 28, scope: !38)

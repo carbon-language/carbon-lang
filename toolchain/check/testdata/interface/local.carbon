@@ -14,10 +14,10 @@
 
 fn F() {
   interface I {
-    fn G[self: Self]();
+    fn G(self);
   }
   impl () as I {
-    fn G[unused self: Self]() {}
+    fn G(unused self) {}
   }
   ().(I.G)();
 }
@@ -64,13 +64,13 @@ fn F() {
 // CHECK:STDOUT:     %self.param_patt: @I.WithSelf.G.%pattern_type (%pattern_type.4d0) = value_param_pattern [concrete]
 // CHECK:STDOUT:     %self.patt: @I.WithSelf.G.%pattern_type (%pattern_type.4d0) = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @I.WithSelf.G.%Self.as_type.loc17_16.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc17_16.1: type = splice_block %.loc17_16.2 [symbolic = %Self.as_type.loc17_16.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @I.WithSelf.G.%Self.as_type.loc17_10.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc17_10.1: type = splice_block %.loc17_10.2 [symbolic = %Self.as_type.loc17_10.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc17_16.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc17_16.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc17_16.2: type = converted %Self.ref, %Self.as_type.loc17_16.2 [symbolic = %Self.as_type.loc17_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc17_10.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc17_10.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc17_10.2: type = converted %Self.ref, %Self.as_type.loc17_10.2 [symbolic = %Self.as_type.loc17_10.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.G.%Self.as_type.loc17_16.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.G.%Self.as_type.loc17_10.1 (%Self.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.G.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -121,10 +121,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.G(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc17_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc17_16.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc17_16.1 [symbolic = %pattern_type (constants.%pattern_type.4d0)]
+// CHECK:STDOUT:   %Self.as_type.loc17_10.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc17_10.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc17_10.1 [symbolic = %pattern_type (constants.%pattern_type.4d0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.G.%Self.as_type.loc17_16.1 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.G.%Self.as_type.loc17_10.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @empty_tuple.type.as.I.impl.G(%self.param: %empty_tuple.type) {
@@ -141,7 +141,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.G(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc17_16.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc17_10.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4d0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -154,7 +154,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.G(constants.%I.facet) {
 // CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %Self.as_type.loc17_16.1 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %Self.as_type.loc17_10.1 => constants.%empty_tuple.type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.cb1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
