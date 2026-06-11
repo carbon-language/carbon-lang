@@ -12,6 +12,5 @@ exports_files(
         "carbon-check-test.tmLanguage.json",
         "language-configuration.json",
         "images/icon.png",
-        "LICENSE",
     ],
 )
