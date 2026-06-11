@@ -1195,8 +1195,14 @@ static auto PerformIntConvert(Context& context, SemIR::InstId arg_id,
                               SemIR::TypeId dest_type_id) -> SemIR::ConstantId {
   auto arg_val =
       context.ints().Get(context.insts().GetAs<SemIR::IntValue>(arg_id).int_id);
-  auto [dest_is_signed, bit_width_id] =
-      context.sem_ir().types().GetIntTypeInfo(dest_type_id);
+  auto dest_int_info = context.sem_ir().types().TryGetIntTypeInfo(dest_type_id);
+  if (!dest_int_info) {
+    // The destination is not a valid integer type, such as when its bit width
+    // was diagnosed as invalid. The error was already diagnosed when forming
+    // the type, so just produce an error value.
+    return SemIR::ErrorInst::ConstantId;
+  }
+  auto [dest_is_signed, bit_width_id] = *dest_int_info;
   if (bit_width_id.has_value()) {
     // TODO: If the value fits in the destination type, reuse the existing
     // int_id rather than recomputing it. This is probably the most common case.
@@ -1219,8 +1225,12 @@ static auto PerformCheckedIntConvert(Context& context, SemIR::LocId loc_id,
   auto arg = context.insts().GetAs<SemIR::IntValue>(arg_id);
   auto arg_val = context.ints().Get(arg.int_id);
 
-  auto [is_signed, bit_width_id] =
-      context.sem_ir().types().GetIntTypeInfo(dest_type_id);
+  auto dest_int_info = context.sem_ir().types().TryGetIntTypeInfo(dest_type_id);
+  if (!dest_int_info) {
+    // The destination is not a valid integer type; see PerformIntConvert.
+    return SemIR::ErrorInst::ConstantId;
+  }
+  auto [is_signed, bit_width_id] = *dest_int_info;
   auto width = bit_width_id.has_value()
                    ? context.ints().Get(bit_width_id).getZExtValue()
                    : arg_val.getBitWidth();
