@@ -52,8 +52,8 @@ auto CheckFailImpl(
     llvm::ArrayRef<llvm::support::detail::format_adapter*> extra_adapters)
     -> void;
 
-// Allow custom conversion of format values; the default behaviour is to just pass
-// them through.
+// Allow custom conversion of format values; the default behaviour is to just
+// pass them through.
 template <typename T>
 auto ConvertFormatValue(T&& t) -> T&& {
   return std::forward<T>(t);
