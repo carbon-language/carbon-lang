@@ -16,7 +16,15 @@ auto HandleBaseAfterIntroducer(Context& context) -> void {
     CARBON_DIAGNOSTIC(ExpectedAfterBase, Error,
                       "`class` or `:` expected after `base`");
     context.emitter().Emit(*context.position(), ExpectedAfterBase);
-    // Preserve the expected tree shape using an errored placeholder.
+    auto base_token = *(context.position() - 1);
+    auto previous_token = Lex::TokenIndex(base_token.index - 1);
+    if (context.tokens().GetKind(previous_token) != Lex::TokenKind::Extend) {
+      context.RecoverFromDeclError(state, NodeKind::BaseDecl,
+                                   /*skip_past_likely_end=*/true);
+      return;
+    }
+
+    // Preserve the `extend base` tree shape using an errored placeholder.
     context.AddLeafNode(NodeKind::BaseColon, *context.position(),
                         /*has_error=*/true);
     state.has_error = true;
