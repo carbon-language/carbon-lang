@@ -1,7 +1,8 @@
 ---
 name: Prek
 description:
-    Instructions for running prek, the Carbon pre-submit/style/lint checker, that *MUST* be run before submitting an change.
+    Instructions for running prek, the Carbon pre-submit/style/lint checker,
+    that *MUST* be run before submitting an change.
 ---
 
 # Prek
