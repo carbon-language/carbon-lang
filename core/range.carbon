@@ -7,16 +7,7 @@
 
 package Core library "range";
 
-import library "prelude/destroy";
-import library "prelude/iterate";
-import library "prelude/operators/arithmetic";
-import library "prelude/operators/as";
-import library "prelude/operators/comparison";
-import library "prelude/types/int";
-import library "prelude/types/int_literal";
-import library "prelude/types/optional";
-
-class IntRange(N: IntLiteral) {
+class IntRange(N:! IntLiteral) {
   fn Make(start: Int(N), end: Int(N)) -> Self {
     return {.start = start, .end = end};
   }

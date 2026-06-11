@@ -7,8 +7,6 @@
 
 package Core library "io";
 
-import library "prelude";
-
 // TODO: Support printing other types.
 // TODO: Consider rewriting using native support once library support exists.
 fn Print(x: i32) = "print.int";

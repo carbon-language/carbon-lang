@@ -53,7 +53,7 @@ def _carbon_binary_impl(ctx):
     # Build object files for the prelude and for the binary itself.
     # TODO: Eventually the prelude should be build as a separate `carbon_library`.
     srcs_and_flags = [
-        (ctx.files.prelude_srcs, ["--no-prelude-import"]),
+        #    (ctx.files.prelude_srcs, ["--no-prelude-import"]),
         (ctx.files.srcs, dep_flags),
     ]
 

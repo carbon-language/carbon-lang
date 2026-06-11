@@ -458,15 +458,32 @@ auto CheckParseTrees(
 
     // Add the prelude import. It's added to explicit_import_map so that it can
     // conflict with an explicit import of the prelude.
-    if (options.prelude_import &&
-        !(packaging && packaging->names.package_id == PackageNameId::Core)) {
-      auto prelude_id =
-          unit_info.unit->value_stores->string_literal_values().Add("prelude");
-      TrackImport(api_map, &explicit_import_map, unit_info,
-                  {.node_id = Parse::NoneNodeId(),
-                   .package_id = PackageNameId::Core,
-                   .library_id = prelude_id},
-                  options.fuzzing);
+    auto prelude_id =
+        unit_info.unit->value_stores->string_literal_values().Add("prelude");
+    if (options.prelude_import) {
+      // We add the prelude to every Carbon unit except for the prelude itself.
+      // Adding the prelude to the non-prelude parts of Core requires different
+      // semantics because it is not valid to mention the name of the package
+      // for a library import from the same package.
+      if (packaging && (packaging->names.package_id == PackageNameId::Core)) {
+        if (!unit_info.unit->value_stores->string_literal_values()
+                 .Get(packaging->names.library_id)
+                 .starts_with("prelude")) {
+          // Add the prelude to a non-prelude unit within Core.
+          TrackImport(api_map, &explicit_import_map, unit_info,
+                      {.node_id = Parse::NoneNodeId(),
+                       .package_id = PackageNameId::None,
+                       .library_id = prelude_id},
+                      options.fuzzing);
+        }
+      } else {
+        // Add the prelude to a non-Core unit.
+        TrackImport(api_map, &explicit_import_map, unit_info,
+                    {.node_id = Parse::NoneNodeId(),
+                     .package_id = PackageNameId::Core,
+                     .library_id = prelude_id},
+                    options.fuzzing);
+      }
     }
 
     for (const auto& import : unit_info.parse_tree().imports()) {
