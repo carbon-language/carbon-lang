@@ -41,7 +41,7 @@ namespace Carbon::Check {
 // TODO: Remove that restriction, and get rid of `ClonePattern`. The major
 // open question is when and how to create the binding inst that corresponds
 // to a binding pattern cloned via this function. `ScopeStack`, and specifically
-// the compile-time binding stack, seems to require `SymbolicBiding`s to be
+// the compile-time binding stack, seems to require `SymbolicBinding`s to be
 // created at the same time as the corresponding `SymbolicBindingPattern`s, but
 // that would require this function to traverse through the dependencies of
 // `inst_id` looking for binding patterns in order to eagerly create the
