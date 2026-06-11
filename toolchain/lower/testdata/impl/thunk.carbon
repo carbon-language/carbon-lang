@@ -104,17 +104,17 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_CF:thunk:I.4b54445be9b10a0e.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %0, ptr %1) #1 !dbg !25 {
+// CHECK:STDOUT: define void @"_CF:thunk:I.4b54445be9b10a0e.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc20_19.1.temp = alloca { i32 }, align 4, !dbg !28
-// CHECK:STDOUT:   %.loc16_9.3.temp = alloca { i32 }, align 4, !dbg !29
+// CHECK:STDOUT:   %.loc16_9.2.temp = alloca { i32 }, align 4, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_19.1.temp), !dbg !28
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_9.3.temp), !dbg !29
-// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc16_9.3.temp, ptr %1), !dbg !29
-// CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc20_19.1.temp, ptr %.loc16_9.3.temp), !dbg !28
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %0, ptr %.loc20_19.1.temp), !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_9.2.temp), !dbg !29
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc16_9.2.temp, ptr %a), !dbg !29
+// CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc20_19.1.temp, ptr %.loc16_9.2.temp), !dbg !28
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc20_19.1.temp), !dbg !28
 // CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.loc20_19.1.temp), !dbg !28
-// CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.loc16_9.3.temp), !dbg !29
+// CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.loc16_9.2.temp), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -290,17 +290,17 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CF:thunk:I.eb750e4e5cfbbe32.Main:C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr sret({}) %0, ptr %1, ptr %2) #2 !dbg !47 {
+// CHECK:STDOUT: define linkonce_odr void @"_CF:thunk:I.eb750e4e5cfbbe32.Main:C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr sret({}) %return, ptr %self, ptr %x) #2 !dbg !47 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_38.2.temp = alloca {}, align 1, !dbg !51
-// CHECK:STDOUT:   %.loc12_21.3.temp = alloca {}, align 1, !dbg !52
+// CHECK:STDOUT:   %.loc12_21.2.temp = alloca {}, align 1, !dbg !52
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_38.2.temp), !dbg !51
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_21.3.temp), !dbg !52
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.bd4fb75a414fe858.Core"(ptr %.loc12_21.3.temp, ptr %2), !dbg !52
-// CHECK:STDOUT:   call void @"_CF.C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr %.loc18_38.2.temp, ptr %1, ptr %.loc12_21.3.temp), !dbg !51
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.bd4fb75a414fe858.Core"(ptr %0, ptr %.loc18_38.2.temp), !dbg !51
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_21.2.temp), !dbg !52
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.bd4fb75a414fe858.Core"(ptr %.loc12_21.2.temp, ptr %x), !dbg !52
+// CHECK:STDOUT:   call void @"_CF.C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr %.loc18_38.2.temp, ptr %self, ptr %.loc12_21.2.temp), !dbg !51
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.bd4fb75a414fe858.Core"(ptr %return, ptr %.loc18_38.2.temp), !dbg !51
 // CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.loc18_38.2.temp), !dbg !51
-// CHECK:STDOUT:   call void @"_COp.68011419f123494e:core.Destroy.Core"(ptr %.loc12_21.3.temp), !dbg !52
+// CHECK:STDOUT:   call void @"_COp.68011419f123494e:core.Destroy.Core"(ptr %.loc12_21.2.temp), !dbg !52
 // CHECK:STDOUT:   ret void, !dbg !51
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

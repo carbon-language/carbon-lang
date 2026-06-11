@@ -336,7 +336,6 @@ fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)*
 // CHECK:STDOUT:   %TrivialDestructor.Op.decl: %TrivialDestructor.Op.type = fn_decl @TrivialDestructor.Op [concrete = constants.%TrivialDestructor.Op] {
 // CHECK:STDOUT:     %.1: %pattern_type.a12 = specific_constant constants.%self.param_patt.e73, @Destroy.WithSelf.Op(constants.%Destroy.facet.c09) [concrete = constants.%self.param_patt.e73]
 // CHECK:STDOUT:     %self.patt: %pattern_type.a12 = at_binding_pattern self, %.1 [concrete = constants.%self.patt.b81]
-// CHECK:STDOUT:     %.2: %pattern_type.a12 = specific_constant constants.%self.param_patt.e73, @Destroy.WithSelf.Op(constants.%Destroy.facet.c09) [concrete = constants.%self.param_patt.e73]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %TrivialDestructor = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %TrivialDestructor = ref_binding self, %self.param

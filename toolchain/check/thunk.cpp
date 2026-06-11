@@ -16,7 +16,6 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/member_access.h"
-#include "toolchain/check/name_ref.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"

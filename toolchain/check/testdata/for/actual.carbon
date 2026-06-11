@@ -720,8 +720,10 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:     %.loc15_42: @IntRange.as.Iterate.impl.Next.%Optional.Some.type (%Optional.Some.type.422) = specific_constant imports.%Core.import_ref.84ba, @Optional(constants.%OptionalStorage.facet.b99) [symbolic = %Optional.Some (constants.%Optional.Some.bcf)]
 // CHECK:STDOUT:     %Some.ref: @IntRange.as.Iterate.impl.Next.%Optional.Some.type (%Optional.Some.type.422) = name_ref Some, %.loc15_42 [symbolic = %Optional.Some (constants.%Optional.Some.bcf)]
 // CHECK:STDOUT:     %value.ref.loc15: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_43.1 (%Int.67af24.1) = name_ref value, %value
-// CHECK:STDOUT:     %OptionalStorage.facet.loc15_53: %OptionalStorage.type = facet_value constants.%Int.67af24.1, (constants.%OptionalStorage.lookup_impl_witness.a32) [symbolic = %OptionalStorage.facet.loc11_75.1 (constants.%OptionalStorage.facet.b99)]
-// CHECK:STDOUT:     %.loc15_53: %OptionalStorage.type = converted constants.%Int.67af24.1, %OptionalStorage.facet.loc15_53 [symbolic = %OptionalStorage.facet.loc11_75.1 (constants.%OptionalStorage.facet.b99)]
+// CHECK:STDOUT:     %OptionalStorage.facet.loc15_53.1: %OptionalStorage.type = facet_value constants.%Int.67af24.1, (constants.%OptionalStorage.lookup_impl_witness.a32) [symbolic = %OptionalStorage.facet.loc11_75.1 (constants.%OptionalStorage.facet.b99)]
+// CHECK:STDOUT:     %.loc15_53.1: %OptionalStorage.type = converted constants.%Int.67af24.1, %OptionalStorage.facet.loc15_53.1 [symbolic = %OptionalStorage.facet.loc11_75.1 (constants.%OptionalStorage.facet.b99)]
+// CHECK:STDOUT:     %OptionalStorage.facet.loc15_53.2: %OptionalStorage.type = facet_value constants.%Int.67af24.1, (constants.%OptionalStorage.lookup_impl_witness.a32) [symbolic = %OptionalStorage.facet.loc11_75.1 (constants.%OptionalStorage.facet.b99)]
+// CHECK:STDOUT:     %.loc15_53.2: %OptionalStorage.type = converted constants.%Int.67af24.1, %OptionalStorage.facet.loc15_53.2 [symbolic = %OptionalStorage.facet.loc11_75.1 (constants.%OptionalStorage.facet.b99)]
 // CHECK:STDOUT:     %Optional.Some.specific_fn.loc15_42.1: <specific function> = specific_function %Some.ref, @Optional.Some(constants.%OptionalStorage.facet.b99) [symbolic = %Optional.Some.specific_fn.loc15_42.2 (constants.%Optional.Some.specific_fn)]
 // CHECK:STDOUT:     %.loc11_75.1: ref @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.5ec) = splice_block %return.param {}
 // CHECK:STDOUT:     %.loc15_48: @IntRange.as.Iterate.impl.Next.%Int.loc11_43.1 (%Int.67af24.1) = acquire_value %value.ref.loc15

@@ -818,7 +818,6 @@ fn Call() {
 // CHECK:STDOUT:   %X.Op.decl: %X.Op.type = fn_decl @X.Op [concrete = constants.%X.Op] {
 // CHECK:STDOUT:     %.1: %pattern_type.fa7 = specific_constant constants.%self.param_patt.a14, @Destroy.WithSelf.Op(constants.%Destroy.facet.761) [concrete = constants.%self.param_patt.a14]
 // CHECK:STDOUT:     %self.patt: %pattern_type.fa7 = at_binding_pattern self, %.1 [concrete = constants.%self.patt.37b]
-// CHECK:STDOUT:     %.2: %pattern_type.fa7 = specific_constant constants.%self.param_patt.a14, @Destroy.WithSelf.Op(constants.%Destroy.facet.761) [concrete = constants.%self.param_patt.a14]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param

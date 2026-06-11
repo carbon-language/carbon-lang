@@ -83,20 +83,20 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CLib1CallF.Main.5bd8d5767580997a(i32 %0, i32 %1) #0 !dbg !11 {
-// CHECK:STDOUT:   %3 = call i32 @_CF.Main.5bd8d5767580997a(i32 %0, i32 %1), !dbg !18
-// CHECK:STDOUT:   ret i32 %3, !dbg !19
+// CHECK:STDOUT: define linkonce_odr i32 @_CLib1CallF.Main.5bd8d5767580997a(i32 %a, i32 %b) #0 !dbg !11 {
+// CHECK:STDOUT:   %1 = call i32 @_CF.Main.5bd8d5767580997a(i32 %a, i32 %b), !dbg !18
+// CHECK:STDOUT:   ret i32 %1, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CLib2CallF.Main.5bd8d5767580997a(i32 %0, i32 %1) #0 !dbg !20 {
-// CHECK:STDOUT:   %3 = call i32 @_CF.Main.5bd8d5767580997a(i32 %0, i32 %1), !dbg !25
-// CHECK:STDOUT:   ret i32 %3, !dbg !26
+// CHECK:STDOUT: define linkonce_odr i32 @_CLib2CallF.Main.5bd8d5767580997a(i32 %a, i32 %b) #0 !dbg !20 {
+// CHECK:STDOUT:   %1 = call i32 @_CF.Main.5bd8d5767580997a(i32 %a, i32 %b), !dbg !25
+// CHECK:STDOUT:   ret i32 %1, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.5bd8d5767580997a(i32 %0, i32 %1) #0 !dbg !27 {
-// CHECK:STDOUT:   ret i32 %0, !dbg !31
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.5bd8d5767580997a(i32 %a, i32 %_) #0 !dbg !27 {
+// CHECK:STDOUT:   ret i32 %a, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives

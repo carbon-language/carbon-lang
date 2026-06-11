@@ -1781,12 +1781,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc10: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc10_5: %.ad3 = impl_witness_access constants.%EqWith.impl_witness.f8a, element0 [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.1a881e.2]
 // CHECK:STDOUT:   %bound_method.loc10_5.1: <bound method> = bound_method %a.ref.loc10, %impl.elem0.loc10_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc10: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc10_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc10 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc10_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc10_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc10_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc10_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc10_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc10_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10_5, @Cpp.long.as.EqWith.impl.Equal.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.specific_fn.6692a8.1]
 // CHECK:STDOUT:   %bound_method.loc10_5.2: <bound method> = bound_method %a.ref.loc10, %specific_fn.loc10
-// CHECK:STDOUT:   %.loc10_5.2: %Cpp.long.as.EqWith.impl.Equal.type.91d370.1 = specific_constant imports.%Core.Equal.025, @Cpp.long.as.EqWith.impl.5b1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.1a881e.1]
-// CHECK:STDOUT:   %Equal.ref.loc10: %Cpp.long.as.EqWith.impl.Equal.type.91d370.1 = name_ref Equal, %.loc10_5.2 [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.1a881e.1]
+// CHECK:STDOUT:   %.loc10_5.3: %Cpp.long.as.EqWith.impl.Equal.type.91d370.1 = specific_constant imports.%Core.Equal.025, @Cpp.long.as.EqWith.impl.5b1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.1a881e.1]
+// CHECK:STDOUT:   %Equal.ref.loc10: %Cpp.long.as.EqWith.impl.Equal.type.91d370.1 = name_ref Equal, %.loc10_5.3 [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.1a881e.1]
 // CHECK:STDOUT:   %Cpp.long.as.EqWith.impl.Equal.bound.loc10: <bound method> = bound_method %a.ref.loc10, %Equal.ref.loc10
 // CHECK:STDOUT:   %Cpp.long.as.EqWith.impl.Equal.specific_fn.loc10: <specific function> = specific_function %Equal.ref.loc10, @Cpp.long.as.EqWith.impl.Equal.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.specific_fn.6692a8.2]
 // CHECK:STDOUT:   %bound_method.loc10_5.3: <bound method> = bound_method %a.ref.loc10, %Cpp.long.as.EqWith.impl.Equal.specific_fn.loc10
@@ -1800,12 +1802,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc11: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem1.loc11: %.e94 = impl_witness_access constants.%EqWith.impl_witness.f8a, element1 [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.7bb2f2.2]
 // CHECK:STDOUT:   %bound_method.loc11_5.1: <bound method> = bound_method %a.ref.loc11, %impl.elem1.loc11
-// CHECK:STDOUT:   %ImplicitAs.facet.loc11: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc11_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc11 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc11_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc11_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc11_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc11_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc11_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc11_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc11: <specific function> = specific_function %impl.elem1.loc11, @Cpp.long.as.EqWith.impl.NotEqual.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.specific_fn.7605b8.1]
 // CHECK:STDOUT:   %bound_method.loc11_5.2: <bound method> = bound_method %a.ref.loc11, %specific_fn.loc11
-// CHECK:STDOUT:   %.loc11_5.2: %Cpp.long.as.EqWith.impl.NotEqual.type.0ae55e.1 = specific_constant imports.%Core.NotEqual.db5, @Cpp.long.as.EqWith.impl.5b1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.7bb2f2.1]
-// CHECK:STDOUT:   %NotEqual.ref.loc11: %Cpp.long.as.EqWith.impl.NotEqual.type.0ae55e.1 = name_ref NotEqual, %.loc11_5.2 [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.7bb2f2.1]
+// CHECK:STDOUT:   %.loc11_5.3: %Cpp.long.as.EqWith.impl.NotEqual.type.0ae55e.1 = specific_constant imports.%Core.NotEqual.db5, @Cpp.long.as.EqWith.impl.5b1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.7bb2f2.1]
+// CHECK:STDOUT:   %NotEqual.ref.loc11: %Cpp.long.as.EqWith.impl.NotEqual.type.0ae55e.1 = name_ref NotEqual, %.loc11_5.3 [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.7bb2f2.1]
 // CHECK:STDOUT:   %Cpp.long.as.EqWith.impl.NotEqual.bound.loc11: <bound method> = bound_method %a.ref.loc11, %NotEqual.ref.loc11
 // CHECK:STDOUT:   %Cpp.long.as.EqWith.impl.NotEqual.specific_fn.loc11: <specific function> = specific_function %NotEqual.ref.loc11, @Cpp.long.as.EqWith.impl.NotEqual.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.specific_fn.7605b8.2]
 // CHECK:STDOUT:   %bound_method.loc11_5.3: <bound method> = bound_method %a.ref.loc11, %Cpp.long.as.EqWith.impl.NotEqual.specific_fn.loc11
@@ -1819,12 +1823,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc12: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem2.loc12: %.30b = impl_witness_access constants.%OrderedWith.impl_witness.512, element2 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.ea4cc4.2]
 // CHECK:STDOUT:   %bound_method.loc12_5.1: <bound method> = bound_method %a.ref.loc12, %impl.elem2.loc12
-// CHECK:STDOUT:   %ImplicitAs.facet.loc12: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc12_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc12 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc12_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc12_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc12_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc12_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc12_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc12_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem2.loc12, @Cpp.long.as.OrderedWith.impl.Greater.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.specific_fn.cc0b83.1]
 // CHECK:STDOUT:   %bound_method.loc12_5.2: <bound method> = bound_method %a.ref.loc12, %specific_fn.loc12
-// CHECK:STDOUT:   %.loc12_5.2: %Cpp.long.as.OrderedWith.impl.Greater.type.1eeaf7.1 = specific_constant imports.%Core.Greater.ac9, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.ea4cc4.1]
-// CHECK:STDOUT:   %Greater.ref.loc12: %Cpp.long.as.OrderedWith.impl.Greater.type.1eeaf7.1 = name_ref Greater, %.loc12_5.2 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.ea4cc4.1]
+// CHECK:STDOUT:   %.loc12_5.3: %Cpp.long.as.OrderedWith.impl.Greater.type.1eeaf7.1 = specific_constant imports.%Core.Greater.ac9, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.ea4cc4.1]
+// CHECK:STDOUT:   %Greater.ref.loc12: %Cpp.long.as.OrderedWith.impl.Greater.type.1eeaf7.1 = name_ref Greater, %.loc12_5.3 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.ea4cc4.1]
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.Greater.bound.loc12: <bound method> = bound_method %a.ref.loc12, %Greater.ref.loc12
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.Greater.specific_fn.loc12: <specific function> = specific_function %Greater.ref.loc12, @Cpp.long.as.OrderedWith.impl.Greater.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.specific_fn.cc0b83.2]
 // CHECK:STDOUT:   %bound_method.loc12_5.3: <bound method> = bound_method %a.ref.loc12, %Cpp.long.as.OrderedWith.impl.Greater.specific_fn.loc12
@@ -1838,12 +1844,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc13: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc13_5: %.d9d = impl_witness_access constants.%OrderedWith.impl_witness.512, element0 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.c497ef.2]
 // CHECK:STDOUT:   %bound_method.loc13_5.1: <bound method> = bound_method %a.ref.loc13, %impl.elem0.loc13_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc13: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc13_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc13 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc13_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc13_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc13_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc13_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc13_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc13_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13_5, @Cpp.long.as.OrderedWith.impl.Less.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.specific_fn.06a809.1]
 // CHECK:STDOUT:   %bound_method.loc13_5.2: <bound method> = bound_method %a.ref.loc13, %specific_fn.loc13
-// CHECK:STDOUT:   %.loc13_5.2: %Cpp.long.as.OrderedWith.impl.Less.type.cc154a.1 = specific_constant imports.%Core.Less.a91, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.c497ef.1]
-// CHECK:STDOUT:   %Less.ref.loc13: %Cpp.long.as.OrderedWith.impl.Less.type.cc154a.1 = name_ref Less, %.loc13_5.2 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.c497ef.1]
+// CHECK:STDOUT:   %.loc13_5.3: %Cpp.long.as.OrderedWith.impl.Less.type.cc154a.1 = specific_constant imports.%Core.Less.a91, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.c497ef.1]
+// CHECK:STDOUT:   %Less.ref.loc13: %Cpp.long.as.OrderedWith.impl.Less.type.cc154a.1 = name_ref Less, %.loc13_5.3 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.c497ef.1]
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.Less.bound.loc13: <bound method> = bound_method %a.ref.loc13, %Less.ref.loc13
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.Less.specific_fn.loc13: <specific function> = specific_function %Less.ref.loc13, @Cpp.long.as.OrderedWith.impl.Less.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.specific_fn.06a809.2]
 // CHECK:STDOUT:   %bound_method.loc13_5.3: <bound method> = bound_method %a.ref.loc13, %Cpp.long.as.OrderedWith.impl.Less.specific_fn.loc13
@@ -1857,12 +1865,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc14: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem3.loc14: %.c8e = impl_witness_access constants.%OrderedWith.impl_witness.512, element3 [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.b64dd2.2]
 // CHECK:STDOUT:   %bound_method.loc14_5.1: <bound method> = bound_method %a.ref.loc14, %impl.elem3.loc14
-// CHECK:STDOUT:   %ImplicitAs.facet.loc14: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc14_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc14 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc14_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc14_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc14_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc14_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc14_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc14_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc14: <specific function> = specific_function %impl.elem3.loc14, @Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.specific_fn.a6b8b7.1]
 // CHECK:STDOUT:   %bound_method.loc14_5.2: <bound method> = bound_method %a.ref.loc14, %specific_fn.loc14
-// CHECK:STDOUT:   %.loc14_5.2: %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.type.a93f64.1 = specific_constant imports.%Core.GreaterOrEquivalent.839, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.b64dd2.1]
-// CHECK:STDOUT:   %GreaterOrEquivalent.ref.loc14: %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.type.a93f64.1 = name_ref GreaterOrEquivalent, %.loc14_5.2 [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.b64dd2.1]
+// CHECK:STDOUT:   %.loc14_5.3: %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.type.a93f64.1 = specific_constant imports.%Core.GreaterOrEquivalent.839, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.b64dd2.1]
+// CHECK:STDOUT:   %GreaterOrEquivalent.ref.loc14: %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.type.a93f64.1 = name_ref GreaterOrEquivalent, %.loc14_5.3 [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.b64dd2.1]
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.bound.loc14: <bound method> = bound_method %a.ref.loc14, %GreaterOrEquivalent.ref.loc14
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.specific_fn.loc14: <specific function> = specific_function %GreaterOrEquivalent.ref.loc14, @Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.specific_fn.a6b8b7.2]
 // CHECK:STDOUT:   %bound_method.loc14_5.3: <bound method> = bound_method %a.ref.loc14, %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.specific_fn.loc14
@@ -1876,12 +1886,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc15: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem1.loc15: %.3fe = impl_witness_access constants.%OrderedWith.impl_witness.512, element1 [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.998aeb.2]
 // CHECK:STDOUT:   %bound_method.loc15_5.1: <bound method> = bound_method %a.ref.loc15, %impl.elem1.loc15
-// CHECK:STDOUT:   %ImplicitAs.facet.loc15: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc15_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc15 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc15_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc15_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc15_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc15_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc15_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc15_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc15: <specific function> = specific_function %impl.elem1.loc15, @Cpp.long.as.OrderedWith.impl.LessOrEquivalent.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.specific_fn.9913d3.1]
 // CHECK:STDOUT:   %bound_method.loc15_5.2: <bound method> = bound_method %a.ref.loc15, %specific_fn.loc15
-// CHECK:STDOUT:   %.loc15_5.2: %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.ae2ba0.1 = specific_constant imports.%Core.LessOrEquivalent.a62, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.998aeb.1]
-// CHECK:STDOUT:   %LessOrEquivalent.ref.loc15: %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.ae2ba0.1 = name_ref LessOrEquivalent, %.loc15_5.2 [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.998aeb.1]
+// CHECK:STDOUT:   %.loc15_5.3: %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.ae2ba0.1 = specific_constant imports.%Core.LessOrEquivalent.a62, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.998aeb.1]
+// CHECK:STDOUT:   %LessOrEquivalent.ref.loc15: %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.ae2ba0.1 = name_ref LessOrEquivalent, %.loc15_5.3 [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.998aeb.1]
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.bound.loc15: <bound method> = bound_method %a.ref.loc15, %LessOrEquivalent.ref.loc15
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.specific_fn.loc15: <specific function> = specific_function %LessOrEquivalent.ref.loc15, @Cpp.long.as.OrderedWith.impl.LessOrEquivalent.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.specific_fn.9913d3.2]
 // CHECK:STDOUT:   %bound_method.loc15_5.3: <bound method> = bound_method %a.ref.loc15, %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.specific_fn.loc15
@@ -1895,12 +1907,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %int_1.loc17: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc17_5: %.da0 = impl_witness_access constants.%EqWith.impl_witness.357, element0 [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.c5b9b0.2]
 // CHECK:STDOUT:   %bound_method.loc17_5.1: <bound method> = bound_method %a.ref.loc17, %impl.elem0.loc17_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc17: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
-// CHECK:STDOUT:   %.loc17_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc17 [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc17_5.1: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %.loc17_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc17_5.1 [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc17_5.2: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %.loc17_5.2: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc17_5.2 [concrete = constants.%ImplicitAs.facet.b30]
 // CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %impl.elem0.loc17_5, @Cpp.long.as.EqWith.impl.Equal.1(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.specific_fn.e188b3.1]
 // CHECK:STDOUT:   %bound_method.loc17_5.2: <bound method> = bound_method %a.ref.loc17, %specific_fn.loc17
-// CHECK:STDOUT:   %.loc17_5.2: %Cpp.long.as.EqWith.impl.Equal.type.10d936.1 = specific_constant imports.%Core.Equal.025, @Cpp.long.as.EqWith.impl.5b1(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.c5b9b0.1]
-// CHECK:STDOUT:   %Equal.ref.loc17: %Cpp.long.as.EqWith.impl.Equal.type.10d936.1 = name_ref Equal, %.loc17_5.2 [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.c5b9b0.1]
+// CHECK:STDOUT:   %.loc17_5.3: %Cpp.long.as.EqWith.impl.Equal.type.10d936.1 = specific_constant imports.%Core.Equal.025, @Cpp.long.as.EqWith.impl.5b1(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.c5b9b0.1]
+// CHECK:STDOUT:   %Equal.ref.loc17: %Cpp.long.as.EqWith.impl.Equal.type.10d936.1 = name_ref Equal, %.loc17_5.3 [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.c5b9b0.1]
 // CHECK:STDOUT:   %Cpp.long.as.EqWith.impl.Equal.bound.loc17: <bound method> = bound_method %a.ref.loc17, %Equal.ref.loc17
 // CHECK:STDOUT:   %Cpp.long.as.EqWith.impl.Equal.specific_fn.loc17: <specific function> = specific_function %Equal.ref.loc17, @Cpp.long.as.EqWith.impl.Equal.2(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.specific_fn.e188b3.2]
 // CHECK:STDOUT:   %bound_method.loc17_5.3: <bound method> = bound_method %a.ref.loc17, %Cpp.long.as.EqWith.impl.Equal.specific_fn.loc17
@@ -1914,12 +1928,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %int_1.loc18: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem1.loc18: %.b1b = impl_witness_access constants.%EqWith.impl_witness.357, element1 [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.0931ca.2]
 // CHECK:STDOUT:   %bound_method.loc18_5.1: <bound method> = bound_method %a.ref.loc18, %impl.elem1.loc18
-// CHECK:STDOUT:   %ImplicitAs.facet.loc18: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
-// CHECK:STDOUT:   %.loc18_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc18 [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc18_5.1: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %.loc18_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc18_5.1 [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc18_5.2: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %.loc18_5.2: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc18_5.2 [concrete = constants.%ImplicitAs.facet.b30]
 // CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem1.loc18, @Cpp.long.as.EqWith.impl.NotEqual.1(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.specific_fn.652cb3.1]
 // CHECK:STDOUT:   %bound_method.loc18_5.2: <bound method> = bound_method %a.ref.loc18, %specific_fn.loc18
-// CHECK:STDOUT:   %.loc18_5.2: %Cpp.long.as.EqWith.impl.NotEqual.type.d8ead4.1 = specific_constant imports.%Core.NotEqual.db5, @Cpp.long.as.EqWith.impl.5b1(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.0931ca.1]
-// CHECK:STDOUT:   %NotEqual.ref.loc18: %Cpp.long.as.EqWith.impl.NotEqual.type.d8ead4.1 = name_ref NotEqual, %.loc18_5.2 [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.0931ca.1]
+// CHECK:STDOUT:   %.loc18_5.3: %Cpp.long.as.EqWith.impl.NotEqual.type.d8ead4.1 = specific_constant imports.%Core.NotEqual.db5, @Cpp.long.as.EqWith.impl.5b1(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.0931ca.1]
+// CHECK:STDOUT:   %NotEqual.ref.loc18: %Cpp.long.as.EqWith.impl.NotEqual.type.d8ead4.1 = name_ref NotEqual, %.loc18_5.3 [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.0931ca.1]
 // CHECK:STDOUT:   %Cpp.long.as.EqWith.impl.NotEqual.bound.loc18: <bound method> = bound_method %a.ref.loc18, %NotEqual.ref.loc18
 // CHECK:STDOUT:   %Cpp.long.as.EqWith.impl.NotEqual.specific_fn.loc18: <specific function> = specific_function %NotEqual.ref.loc18, @Cpp.long.as.EqWith.impl.NotEqual.2(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.EqWith.impl.NotEqual.specific_fn.652cb3.2]
 // CHECK:STDOUT:   %bound_method.loc18_5.3: <bound method> = bound_method %a.ref.loc18, %Cpp.long.as.EqWith.impl.NotEqual.specific_fn.loc18
@@ -1933,12 +1949,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %int_1.loc19: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem2.loc19: %.d77 = impl_witness_access constants.%OrderedWith.impl_witness.f04, element2 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.f83821.2]
 // CHECK:STDOUT:   %bound_method.loc19_5.1: <bound method> = bound_method %a.ref.loc19, %impl.elem2.loc19
-// CHECK:STDOUT:   %ImplicitAs.facet.loc19: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
-// CHECK:STDOUT:   %.loc19_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc19 [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc19_5.1: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %.loc19_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc19_5.1 [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc19_5.2: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %.loc19_5.2: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc19_5.2 [concrete = constants.%ImplicitAs.facet.b30]
 // CHECK:STDOUT:   %specific_fn.loc19: <specific function> = specific_function %impl.elem2.loc19, @Cpp.long.as.OrderedWith.impl.Greater.1(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.specific_fn.faeadc.1]
 // CHECK:STDOUT:   %bound_method.loc19_5.2: <bound method> = bound_method %a.ref.loc19, %specific_fn.loc19
-// CHECK:STDOUT:   %.loc19_5.2: %Cpp.long.as.OrderedWith.impl.Greater.type.75fc02.1 = specific_constant imports.%Core.Greater.ac9, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.f83821.1]
-// CHECK:STDOUT:   %Greater.ref.loc19: %Cpp.long.as.OrderedWith.impl.Greater.type.75fc02.1 = name_ref Greater, %.loc19_5.2 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.f83821.1]
+// CHECK:STDOUT:   %.loc19_5.3: %Cpp.long.as.OrderedWith.impl.Greater.type.75fc02.1 = specific_constant imports.%Core.Greater.ac9, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.f83821.1]
+// CHECK:STDOUT:   %Greater.ref.loc19: %Cpp.long.as.OrderedWith.impl.Greater.type.75fc02.1 = name_ref Greater, %.loc19_5.3 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.f83821.1]
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.Greater.bound.loc19: <bound method> = bound_method %a.ref.loc19, %Greater.ref.loc19
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.Greater.specific_fn.loc19: <specific function> = specific_function %Greater.ref.loc19, @Cpp.long.as.OrderedWith.impl.Greater.2(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Greater.specific_fn.faeadc.2]
 // CHECK:STDOUT:   %bound_method.loc19_5.3: <bound method> = bound_method %a.ref.loc19, %Cpp.long.as.OrderedWith.impl.Greater.specific_fn.loc19
@@ -1952,12 +1970,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %int_1.loc20: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc20_5: %.124 = impl_witness_access constants.%OrderedWith.impl_witness.f04, element0 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.819a43.2]
 // CHECK:STDOUT:   %bound_method.loc20_5.1: <bound method> = bound_method %a.ref.loc20, %impl.elem0.loc20_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc20: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
-// CHECK:STDOUT:   %.loc20_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc20 [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc20_5.1: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %.loc20_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc20_5.1 [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc20_5.2: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %.loc20_5.2: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc20_5.2 [concrete = constants.%ImplicitAs.facet.b30]
 // CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem0.loc20_5, @Cpp.long.as.OrderedWith.impl.Less.1(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.specific_fn.f8760d.1]
 // CHECK:STDOUT:   %bound_method.loc20_5.2: <bound method> = bound_method %a.ref.loc20, %specific_fn.loc20
-// CHECK:STDOUT:   %.loc20_5.2: %Cpp.long.as.OrderedWith.impl.Less.type.544cda.1 = specific_constant imports.%Core.Less.a91, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.819a43.1]
-// CHECK:STDOUT:   %Less.ref.loc20: %Cpp.long.as.OrderedWith.impl.Less.type.544cda.1 = name_ref Less, %.loc20_5.2 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.819a43.1]
+// CHECK:STDOUT:   %.loc20_5.3: %Cpp.long.as.OrderedWith.impl.Less.type.544cda.1 = specific_constant imports.%Core.Less.a91, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.819a43.1]
+// CHECK:STDOUT:   %Less.ref.loc20: %Cpp.long.as.OrderedWith.impl.Less.type.544cda.1 = name_ref Less, %.loc20_5.3 [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.819a43.1]
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.Less.bound.loc20: <bound method> = bound_method %a.ref.loc20, %Less.ref.loc20
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.Less.specific_fn.loc20: <specific function> = specific_function %Less.ref.loc20, @Cpp.long.as.OrderedWith.impl.Less.2(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.Less.specific_fn.f8760d.2]
 // CHECK:STDOUT:   %bound_method.loc20_5.3: <bound method> = bound_method %a.ref.loc20, %Cpp.long.as.OrderedWith.impl.Less.specific_fn.loc20
@@ -1971,12 +1991,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %int_1.loc21: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem3.loc21: %.3eb = impl_witness_access constants.%OrderedWith.impl_witness.f04, element3 [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.76c962.2]
 // CHECK:STDOUT:   %bound_method.loc21_5.1: <bound method> = bound_method %a.ref.loc21, %impl.elem3.loc21
-// CHECK:STDOUT:   %ImplicitAs.facet.loc21: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
-// CHECK:STDOUT:   %.loc21_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc21 [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc21_5.1: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %.loc21_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc21_5.1 [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc21_5.2: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %.loc21_5.2: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc21_5.2 [concrete = constants.%ImplicitAs.facet.b30]
 // CHECK:STDOUT:   %specific_fn.loc21: <specific function> = specific_function %impl.elem3.loc21, @Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.1(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.specific_fn.ee8dd4.1]
 // CHECK:STDOUT:   %bound_method.loc21_5.2: <bound method> = bound_method %a.ref.loc21, %specific_fn.loc21
-// CHECK:STDOUT:   %.loc21_5.2: %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.type.f7405b.1 = specific_constant imports.%Core.GreaterOrEquivalent.839, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.76c962.1]
-// CHECK:STDOUT:   %GreaterOrEquivalent.ref.loc21: %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.type.f7405b.1 = name_ref GreaterOrEquivalent, %.loc21_5.2 [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.76c962.1]
+// CHECK:STDOUT:   %.loc21_5.3: %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.type.f7405b.1 = specific_constant imports.%Core.GreaterOrEquivalent.839, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.76c962.1]
+// CHECK:STDOUT:   %GreaterOrEquivalent.ref.loc21: %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.type.f7405b.1 = name_ref GreaterOrEquivalent, %.loc21_5.3 [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.76c962.1]
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.bound.loc21: <bound method> = bound_method %a.ref.loc21, %GreaterOrEquivalent.ref.loc21
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.specific_fn.loc21: <specific function> = specific_function %GreaterOrEquivalent.ref.loc21, @Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.2(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.specific_fn.ee8dd4.2]
 // CHECK:STDOUT:   %bound_method.loc21_5.3: <bound method> = bound_method %a.ref.loc21, %Cpp.long.as.OrderedWith.impl.GreaterOrEquivalent.specific_fn.loc21
@@ -1990,12 +2012,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %int_1.loc22: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem1.loc22: %.e14 = impl_witness_access constants.%OrderedWith.impl_witness.f04, element1 [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.3e29ec.2]
 // CHECK:STDOUT:   %bound_method.loc22_5.1: <bound method> = bound_method %a.ref.loc22, %impl.elem1.loc22
-// CHECK:STDOUT:   %ImplicitAs.facet.loc22: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
-// CHECK:STDOUT:   %.loc22_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc22 [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc22_5.1: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %.loc22_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc22_5.1 [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc22_5.2: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet.b30]
+// CHECK:STDOUT:   %.loc22_5.2: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc22_5.2 [concrete = constants.%ImplicitAs.facet.b30]
 // CHECK:STDOUT:   %specific_fn.loc22: <specific function> = specific_function %impl.elem1.loc22, @Cpp.long.as.OrderedWith.impl.LessOrEquivalent.1(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.specific_fn.42a4b8.1]
 // CHECK:STDOUT:   %bound_method.loc22_5.2: <bound method> = bound_method %a.ref.loc22, %specific_fn.loc22
-// CHECK:STDOUT:   %.loc22_5.2: %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.03c549.1 = specific_constant imports.%Core.LessOrEquivalent.a62, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.3e29ec.1]
-// CHECK:STDOUT:   %LessOrEquivalent.ref.loc22: %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.03c549.1 = name_ref LessOrEquivalent, %.loc22_5.2 [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.3e29ec.1]
+// CHECK:STDOUT:   %.loc22_5.3: %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.03c549.1 = specific_constant imports.%Core.LessOrEquivalent.a62, @Cpp.long.as.OrderedWith.impl.3fc(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.3e29ec.1]
+// CHECK:STDOUT:   %LessOrEquivalent.ref.loc22: %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.type.03c549.1 = name_ref LessOrEquivalent, %.loc22_5.3 [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.3e29ec.1]
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.bound.loc22: <bound method> = bound_method %a.ref.loc22, %LessOrEquivalent.ref.loc22
 // CHECK:STDOUT:   %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.specific_fn.loc22: <specific function> = specific_function %LessOrEquivalent.ref.loc22, @Cpp.long.as.OrderedWith.impl.LessOrEquivalent.2(constants.%ImplicitAs.facet.b30) [concrete = constants.%Cpp.long.as.OrderedWith.impl.LessOrEquivalent.specific_fn.42a4b8.2]
 // CHECK:STDOUT:   %bound_method.loc22_5.3: <bound method> = bound_method %a.ref.loc22, %Cpp.long.as.OrderedWith.impl.LessOrEquivalent.specific_fn.loc22
@@ -2922,13 +2946,15 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc11: ref %Cpp.long = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc11: %.705 = impl_witness_access constants.%AddAssignWith.impl_witness.515, element0 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.3976e1.2]
 // CHECK:STDOUT:   %bound_method.loc11_5.1: <bound method> = bound_method %a.ref.loc11, %impl.elem0.loc11
-// CHECK:STDOUT:   %ImplicitAs.facet.loc11: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
-// CHECK:STDOUT:   %.loc11_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc11 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc11_5.1: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc11_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc11_5.1 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc11_5.2: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc11_5.2: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc11_5.2 [concrete = constants.%ImplicitAs.facet.7ac]
 // CHECK:STDOUT:   %specific_fn.loc11: <specific function> = specific_function %impl.elem0.loc11, @Cpp.long.as.AddAssignWith.impl.Op.1(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.specific_fn.42c8d0.1]
 // CHECK:STDOUT:   %bound_method.loc11_5.2: <bound method> = bound_method %a.ref.loc11, %specific_fn.loc11
 // CHECK:STDOUT:   %.loc11_8: %Cpp.long = acquire_value %b.ref.loc11
-// CHECK:STDOUT:   %.loc11_5.2: %Cpp.long.as.AddAssignWith.impl.Op.type.3f3409.1 = specific_constant imports.%Core.Op.7fd, @Cpp.long.as.AddAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.3976e1.1]
-// CHECK:STDOUT:   %Op.ref.loc11: %Cpp.long.as.AddAssignWith.impl.Op.type.3f3409.1 = name_ref Op, %.loc11_5.2 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.3976e1.1]
+// CHECK:STDOUT:   %.loc11_5.3: %Cpp.long.as.AddAssignWith.impl.Op.type.3f3409.1 = specific_constant imports.%Core.Op.7fd, @Cpp.long.as.AddAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.3976e1.1]
+// CHECK:STDOUT:   %Op.ref.loc11: %Cpp.long.as.AddAssignWith.impl.Op.type.3f3409.1 = name_ref Op, %.loc11_5.3 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.3976e1.1]
 // CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc11, %Op.ref.loc11
 // CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc11, @Cpp.long.as.AddAssignWith.impl.Op.2(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.specific_fn.42c8d0.2]
 // CHECK:STDOUT:   %bound_method.loc11_5.3: <bound method> = bound_method %a.ref.loc11, %Cpp.long.as.AddAssignWith.impl.Op.specific_fn
@@ -2937,13 +2963,15 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc12: ref %Cpp.long = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc12: %.0c3 = impl_witness_access constants.%SubAssignWith.impl_witness.6fd, element0 [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.b9d526.2]
 // CHECK:STDOUT:   %bound_method.loc12_5.1: <bound method> = bound_method %a.ref.loc12, %impl.elem0.loc12
-// CHECK:STDOUT:   %ImplicitAs.facet.loc12: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
-// CHECK:STDOUT:   %.loc12_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc12 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc12_5.1: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc12_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc12_5.1 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc12_5.2: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc12_5.2: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc12_5.2 [concrete = constants.%ImplicitAs.facet.7ac]
 // CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem0.loc12, @Cpp.long.as.SubAssignWith.impl.Op.1(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.specific_fn.cf7f25.1]
 // CHECK:STDOUT:   %bound_method.loc12_5.2: <bound method> = bound_method %a.ref.loc12, %specific_fn.loc12
 // CHECK:STDOUT:   %.loc12_8: %Cpp.long = acquire_value %b.ref.loc12
-// CHECK:STDOUT:   %.loc12_5.2: %Cpp.long.as.SubAssignWith.impl.Op.type.2438e2.1 = specific_constant imports.%Core.Op.3ae, @Cpp.long.as.SubAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.b9d526.1]
-// CHECK:STDOUT:   %Op.ref.loc12: %Cpp.long.as.SubAssignWith.impl.Op.type.2438e2.1 = name_ref Op, %.loc12_5.2 [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.b9d526.1]
+// CHECK:STDOUT:   %.loc12_5.3: %Cpp.long.as.SubAssignWith.impl.Op.type.2438e2.1 = specific_constant imports.%Core.Op.3ae, @Cpp.long.as.SubAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.b9d526.1]
+// CHECK:STDOUT:   %Op.ref.loc12: %Cpp.long.as.SubAssignWith.impl.Op.type.2438e2.1 = name_ref Op, %.loc12_5.3 [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.b9d526.1]
 // CHECK:STDOUT:   %Cpp.long.as.SubAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc12, %Op.ref.loc12
 // CHECK:STDOUT:   %Cpp.long.as.SubAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc12, @Cpp.long.as.SubAssignWith.impl.Op.2(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.specific_fn.cf7f25.2]
 // CHECK:STDOUT:   %bound_method.loc12_5.3: <bound method> = bound_method %a.ref.loc12, %Cpp.long.as.SubAssignWith.impl.Op.specific_fn
@@ -2952,13 +2980,15 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc13: ref %Cpp.long = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc13: %.dcc = impl_witness_access constants.%MulAssignWith.impl_witness.a8e, element0 [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.e55b21.2]
 // CHECK:STDOUT:   %bound_method.loc13_5.1: <bound method> = bound_method %a.ref.loc13, %impl.elem0.loc13
-// CHECK:STDOUT:   %ImplicitAs.facet.loc13: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
-// CHECK:STDOUT:   %.loc13_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc13 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc13_5.1: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc13_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc13_5.1 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc13_5.2: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc13_5.2: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc13_5.2 [concrete = constants.%ImplicitAs.facet.7ac]
 // CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13, @Cpp.long.as.MulAssignWith.impl.Op.1(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.specific_fn.4bcff6.1]
 // CHECK:STDOUT:   %bound_method.loc13_5.2: <bound method> = bound_method %a.ref.loc13, %specific_fn.loc13
 // CHECK:STDOUT:   %.loc13_8: %Cpp.long = acquire_value %b.ref.loc13
-// CHECK:STDOUT:   %.loc13_5.2: %Cpp.long.as.MulAssignWith.impl.Op.type.58dc2b.1 = specific_constant imports.%Core.Op.a7f, @Cpp.long.as.MulAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.e55b21.1]
-// CHECK:STDOUT:   %Op.ref.loc13: %Cpp.long.as.MulAssignWith.impl.Op.type.58dc2b.1 = name_ref Op, %.loc13_5.2 [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.e55b21.1]
+// CHECK:STDOUT:   %.loc13_5.3: %Cpp.long.as.MulAssignWith.impl.Op.type.58dc2b.1 = specific_constant imports.%Core.Op.a7f, @Cpp.long.as.MulAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.e55b21.1]
+// CHECK:STDOUT:   %Op.ref.loc13: %Cpp.long.as.MulAssignWith.impl.Op.type.58dc2b.1 = name_ref Op, %.loc13_5.3 [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.e55b21.1]
 // CHECK:STDOUT:   %Cpp.long.as.MulAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc13, %Op.ref.loc13
 // CHECK:STDOUT:   %Cpp.long.as.MulAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc13, @Cpp.long.as.MulAssignWith.impl.Op.2(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.specific_fn.4bcff6.2]
 // CHECK:STDOUT:   %bound_method.loc13_5.3: <bound method> = bound_method %a.ref.loc13, %Cpp.long.as.MulAssignWith.impl.Op.specific_fn
@@ -2967,13 +2997,15 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc14: ref %Cpp.long = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc14: %.85d = impl_witness_access constants.%DivAssignWith.impl_witness.27b, element0 [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.e2cc58.2]
 // CHECK:STDOUT:   %bound_method.loc14_5.1: <bound method> = bound_method %a.ref.loc14, %impl.elem0.loc14
-// CHECK:STDOUT:   %ImplicitAs.facet.loc14: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
-// CHECK:STDOUT:   %.loc14_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc14 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc14_5.1: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc14_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc14_5.1 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc14_5.2: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc14_5.2: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc14_5.2 [concrete = constants.%ImplicitAs.facet.7ac]
 // CHECK:STDOUT:   %specific_fn.loc14: <specific function> = specific_function %impl.elem0.loc14, @Cpp.long.as.DivAssignWith.impl.Op.1(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.specific_fn.3d06eb.1]
 // CHECK:STDOUT:   %bound_method.loc14_5.2: <bound method> = bound_method %a.ref.loc14, %specific_fn.loc14
 // CHECK:STDOUT:   %.loc14_8: %Cpp.long = acquire_value %b.ref.loc14
-// CHECK:STDOUT:   %.loc14_5.2: %Cpp.long.as.DivAssignWith.impl.Op.type.d65fb4.1 = specific_constant imports.%Core.Op.8c3, @Cpp.long.as.DivAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.e2cc58.1]
-// CHECK:STDOUT:   %Op.ref.loc14: %Cpp.long.as.DivAssignWith.impl.Op.type.d65fb4.1 = name_ref Op, %.loc14_5.2 [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.e2cc58.1]
+// CHECK:STDOUT:   %.loc14_5.3: %Cpp.long.as.DivAssignWith.impl.Op.type.d65fb4.1 = specific_constant imports.%Core.Op.8c3, @Cpp.long.as.DivAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.e2cc58.1]
+// CHECK:STDOUT:   %Op.ref.loc14: %Cpp.long.as.DivAssignWith.impl.Op.type.d65fb4.1 = name_ref Op, %.loc14_5.3 [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.e2cc58.1]
 // CHECK:STDOUT:   %Cpp.long.as.DivAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc14, %Op.ref.loc14
 // CHECK:STDOUT:   %Cpp.long.as.DivAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc14, @Cpp.long.as.DivAssignWith.impl.Op.2(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.specific_fn.3d06eb.2]
 // CHECK:STDOUT:   %bound_method.loc14_5.3: <bound method> = bound_method %a.ref.loc14, %Cpp.long.as.DivAssignWith.impl.Op.specific_fn
@@ -2982,13 +3014,15 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc15: ref %Cpp.long = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc15: %.923 = impl_witness_access constants.%ModAssignWith.impl_witness.e1a, element0 [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.11d0fb.2]
 // CHECK:STDOUT:   %bound_method.loc15_5.1: <bound method> = bound_method %a.ref.loc15, %impl.elem0.loc15
-// CHECK:STDOUT:   %ImplicitAs.facet.loc15: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
-// CHECK:STDOUT:   %.loc15_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc15 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc15_5.1: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc15_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc15_5.1 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc15_5.2: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc15_5.2: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc15_5.2 [concrete = constants.%ImplicitAs.facet.7ac]
 // CHECK:STDOUT:   %specific_fn.loc15: <specific function> = specific_function %impl.elem0.loc15, @Cpp.long.as.ModAssignWith.impl.Op.1(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.specific_fn.55dd89.1]
 // CHECK:STDOUT:   %bound_method.loc15_5.2: <bound method> = bound_method %a.ref.loc15, %specific_fn.loc15
 // CHECK:STDOUT:   %.loc15_8: %Cpp.long = acquire_value %b.ref.loc15
-// CHECK:STDOUT:   %.loc15_5.2: %Cpp.long.as.ModAssignWith.impl.Op.type.cd191a.1 = specific_constant imports.%Core.Op.da3, @Cpp.long.as.ModAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.11d0fb.1]
-// CHECK:STDOUT:   %Op.ref.loc15: %Cpp.long.as.ModAssignWith.impl.Op.type.cd191a.1 = name_ref Op, %.loc15_5.2 [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.11d0fb.1]
+// CHECK:STDOUT:   %.loc15_5.3: %Cpp.long.as.ModAssignWith.impl.Op.type.cd191a.1 = specific_constant imports.%Core.Op.da3, @Cpp.long.as.ModAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.11d0fb.1]
+// CHECK:STDOUT:   %Op.ref.loc15: %Cpp.long.as.ModAssignWith.impl.Op.type.cd191a.1 = name_ref Op, %.loc15_5.3 [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.11d0fb.1]
 // CHECK:STDOUT:   %Cpp.long.as.ModAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc15, %Op.ref.loc15
 // CHECK:STDOUT:   %Cpp.long.as.ModAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc15, @Cpp.long.as.ModAssignWith.impl.Op.2(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.specific_fn.55dd89.2]
 // CHECK:STDOUT:   %bound_method.loc15_5.3: <bound method> = bound_method %a.ref.loc15, %Cpp.long.as.ModAssignWith.impl.Op.specific_fn
@@ -2997,13 +3031,15 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc17: ref %Cpp.long = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc17: %.a45 = impl_witness_access constants.%BitAndAssignWith.impl_witness.906, element0 [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.86fa41.2]
 // CHECK:STDOUT:   %bound_method.loc17_5.1: <bound method> = bound_method %a.ref.loc17, %impl.elem0.loc17
-// CHECK:STDOUT:   %ImplicitAs.facet.loc17: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
-// CHECK:STDOUT:   %.loc17_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc17 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc17_5.1: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc17_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc17_5.1 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc17_5.2: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc17_5.2: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc17_5.2 [concrete = constants.%ImplicitAs.facet.7ac]
 // CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %impl.elem0.loc17, @Cpp.long.as.BitAndAssignWith.impl.Op.1(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.specific_fn.022b9e.1]
 // CHECK:STDOUT:   %bound_method.loc17_5.2: <bound method> = bound_method %a.ref.loc17, %specific_fn.loc17
 // CHECK:STDOUT:   %.loc17_8: %Cpp.long = acquire_value %b.ref.loc17
-// CHECK:STDOUT:   %.loc17_5.2: %Cpp.long.as.BitAndAssignWith.impl.Op.type.e0e6c3.1 = specific_constant imports.%Core.Op.c9e, @Cpp.long.as.BitAndAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.86fa41.1]
-// CHECK:STDOUT:   %Op.ref.loc17: %Cpp.long.as.BitAndAssignWith.impl.Op.type.e0e6c3.1 = name_ref Op, %.loc17_5.2 [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.86fa41.1]
+// CHECK:STDOUT:   %.loc17_5.3: %Cpp.long.as.BitAndAssignWith.impl.Op.type.e0e6c3.1 = specific_constant imports.%Core.Op.c9e, @Cpp.long.as.BitAndAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.86fa41.1]
+// CHECK:STDOUT:   %Op.ref.loc17: %Cpp.long.as.BitAndAssignWith.impl.Op.type.e0e6c3.1 = name_ref Op, %.loc17_5.3 [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.86fa41.1]
 // CHECK:STDOUT:   %Cpp.long.as.BitAndAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc17, %Op.ref.loc17
 // CHECK:STDOUT:   %Cpp.long.as.BitAndAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc17, @Cpp.long.as.BitAndAssignWith.impl.Op.2(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.specific_fn.022b9e.2]
 // CHECK:STDOUT:   %bound_method.loc17_5.3: <bound method> = bound_method %a.ref.loc17, %Cpp.long.as.BitAndAssignWith.impl.Op.specific_fn
@@ -3012,13 +3048,15 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc18: ref %Cpp.long = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc18: %.871 = impl_witness_access constants.%BitOrAssignWith.impl_witness.ecb, element0 [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.737b02.2]
 // CHECK:STDOUT:   %bound_method.loc18_5.1: <bound method> = bound_method %a.ref.loc18, %impl.elem0.loc18
-// CHECK:STDOUT:   %ImplicitAs.facet.loc18: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
-// CHECK:STDOUT:   %.loc18_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc18 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc18_5.1: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc18_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc18_5.1 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc18_5.2: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc18_5.2: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc18_5.2 [concrete = constants.%ImplicitAs.facet.7ac]
 // CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Cpp.long.as.BitOrAssignWith.impl.Op.1(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.specific_fn.6acabf.1]
 // CHECK:STDOUT:   %bound_method.loc18_5.2: <bound method> = bound_method %a.ref.loc18, %specific_fn.loc18
 // CHECK:STDOUT:   %.loc18_8: %Cpp.long = acquire_value %b.ref.loc18
-// CHECK:STDOUT:   %.loc18_5.2: %Cpp.long.as.BitOrAssignWith.impl.Op.type.70ac7f.1 = specific_constant imports.%Core.Op.add, @Cpp.long.as.BitOrAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.737b02.1]
-// CHECK:STDOUT:   %Op.ref.loc18: %Cpp.long.as.BitOrAssignWith.impl.Op.type.70ac7f.1 = name_ref Op, %.loc18_5.2 [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.737b02.1]
+// CHECK:STDOUT:   %.loc18_5.3: %Cpp.long.as.BitOrAssignWith.impl.Op.type.70ac7f.1 = specific_constant imports.%Core.Op.add, @Cpp.long.as.BitOrAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.737b02.1]
+// CHECK:STDOUT:   %Op.ref.loc18: %Cpp.long.as.BitOrAssignWith.impl.Op.type.70ac7f.1 = name_ref Op, %.loc18_5.3 [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.737b02.1]
 // CHECK:STDOUT:   %Cpp.long.as.BitOrAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc18, %Op.ref.loc18
 // CHECK:STDOUT:   %Cpp.long.as.BitOrAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc18, @Cpp.long.as.BitOrAssignWith.impl.Op.2(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.specific_fn.6acabf.2]
 // CHECK:STDOUT:   %bound_method.loc18_5.3: <bound method> = bound_method %a.ref.loc18, %Cpp.long.as.BitOrAssignWith.impl.Op.specific_fn
@@ -3027,13 +3065,15 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc19: ref %Cpp.long = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc19: %.939 = impl_witness_access constants.%BitXorAssignWith.impl_witness.360, element0 [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.067369.2]
 // CHECK:STDOUT:   %bound_method.loc19_5.1: <bound method> = bound_method %a.ref.loc19, %impl.elem0.loc19
-// CHECK:STDOUT:   %ImplicitAs.facet.loc19: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
-// CHECK:STDOUT:   %.loc19_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc19 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc19_5.1: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc19_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc19_5.1 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc19_5.2: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc19_5.2: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc19_5.2 [concrete = constants.%ImplicitAs.facet.7ac]
 // CHECK:STDOUT:   %specific_fn.loc19: <specific function> = specific_function %impl.elem0.loc19, @Cpp.long.as.BitXorAssignWith.impl.Op.1(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.specific_fn.4fedc8.1]
 // CHECK:STDOUT:   %bound_method.loc19_5.2: <bound method> = bound_method %a.ref.loc19, %specific_fn.loc19
 // CHECK:STDOUT:   %.loc19_8: %Cpp.long = acquire_value %b.ref.loc19
-// CHECK:STDOUT:   %.loc19_5.2: %Cpp.long.as.BitXorAssignWith.impl.Op.type.902397.1 = specific_constant imports.%Core.Op.a72, @Cpp.long.as.BitXorAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.067369.1]
-// CHECK:STDOUT:   %Op.ref.loc19: %Cpp.long.as.BitXorAssignWith.impl.Op.type.902397.1 = name_ref Op, %.loc19_5.2 [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.067369.1]
+// CHECK:STDOUT:   %.loc19_5.3: %Cpp.long.as.BitXorAssignWith.impl.Op.type.902397.1 = specific_constant imports.%Core.Op.a72, @Cpp.long.as.BitXorAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.067369.1]
+// CHECK:STDOUT:   %Op.ref.loc19: %Cpp.long.as.BitXorAssignWith.impl.Op.type.902397.1 = name_ref Op, %.loc19_5.3 [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.067369.1]
 // CHECK:STDOUT:   %Cpp.long.as.BitXorAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc19, %Op.ref.loc19
 // CHECK:STDOUT:   %Cpp.long.as.BitXorAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc19, @Cpp.long.as.BitXorAssignWith.impl.Op.2(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.specific_fn.4fedc8.2]
 // CHECK:STDOUT:   %bound_method.loc19_5.3: <bound method> = bound_method %a.ref.loc19, %Cpp.long.as.BitXorAssignWith.impl.Op.specific_fn
@@ -3042,13 +3082,15 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc20: ref %Cpp.long = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc20: %.1be = impl_witness_access constants.%LeftShiftAssignWith.impl_witness.153, element0 [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.ec443b.2]
 // CHECK:STDOUT:   %bound_method.loc20_5.1: <bound method> = bound_method %a.ref.loc20, %impl.elem0.loc20
-// CHECK:STDOUT:   %ImplicitAs.facet.loc20: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
-// CHECK:STDOUT:   %.loc20_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc20 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc20_5.1: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc20_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc20_5.1 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc20_5.2: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc20_5.2: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc20_5.2 [concrete = constants.%ImplicitAs.facet.7ac]
 // CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem0.loc20, @Cpp.long.as.LeftShiftAssignWith.impl.Op.1(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.specific_fn.9c9ee2.1]
 // CHECK:STDOUT:   %bound_method.loc20_5.2: <bound method> = bound_method %a.ref.loc20, %specific_fn.loc20
 // CHECK:STDOUT:   %.loc20_9: %Cpp.long = acquire_value %b.ref.loc20
-// CHECK:STDOUT:   %.loc20_5.2: %Cpp.long.as.LeftShiftAssignWith.impl.Op.type.71c508.1 = specific_constant imports.%Core.Op.e4d, @Cpp.long.as.LeftShiftAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.ec443b.1]
-// CHECK:STDOUT:   %Op.ref.loc20: %Cpp.long.as.LeftShiftAssignWith.impl.Op.type.71c508.1 = name_ref Op, %.loc20_5.2 [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.ec443b.1]
+// CHECK:STDOUT:   %.loc20_5.3: %Cpp.long.as.LeftShiftAssignWith.impl.Op.type.71c508.1 = specific_constant imports.%Core.Op.e4d, @Cpp.long.as.LeftShiftAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.ec443b.1]
+// CHECK:STDOUT:   %Op.ref.loc20: %Cpp.long.as.LeftShiftAssignWith.impl.Op.type.71c508.1 = name_ref Op, %.loc20_5.3 [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.ec443b.1]
 // CHECK:STDOUT:   %Cpp.long.as.LeftShiftAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc20, %Op.ref.loc20
 // CHECK:STDOUT:   %Cpp.long.as.LeftShiftAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc20, @Cpp.long.as.LeftShiftAssignWith.impl.Op.2(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.specific_fn.9c9ee2.2]
 // CHECK:STDOUT:   %bound_method.loc20_5.3: <bound method> = bound_method %a.ref.loc20, %Cpp.long.as.LeftShiftAssignWith.impl.Op.specific_fn
@@ -3057,13 +3099,15 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc21: ref %Cpp.long = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc21: %.7cc = impl_witness_access constants.%RightShiftAssignWith.impl_witness.531, element0 [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.108e17.2]
 // CHECK:STDOUT:   %bound_method.loc21_5.1: <bound method> = bound_method %a.ref.loc21, %impl.elem0.loc21
-// CHECK:STDOUT:   %ImplicitAs.facet.loc21: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
-// CHECK:STDOUT:   %.loc21_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc21 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc21_5.1: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc21_5.1: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc21_5.1 [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc21_5.2: %ImplicitAs.type.7eb = facet_value constants.%Cpp.long, (constants.%ImplicitAs.impl_witness.a9b) [concrete = constants.%ImplicitAs.facet.7ac]
+// CHECK:STDOUT:   %.loc21_5.2: %ImplicitAs.type.7eb = converted constants.%Cpp.long, %ImplicitAs.facet.loc21_5.2 [concrete = constants.%ImplicitAs.facet.7ac]
 // CHECK:STDOUT:   %specific_fn.loc21: <specific function> = specific_function %impl.elem0.loc21, @Cpp.long.as.RightShiftAssignWith.impl.Op.1(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn.5a2726.1]
 // CHECK:STDOUT:   %bound_method.loc21_5.2: <bound method> = bound_method %a.ref.loc21, %specific_fn.loc21
 // CHECK:STDOUT:   %.loc21_9: %Cpp.long = acquire_value %b.ref.loc21
-// CHECK:STDOUT:   %.loc21_5.2: %Cpp.long.as.RightShiftAssignWith.impl.Op.type.253402.1 = specific_constant imports.%Core.Op.127, @Cpp.long.as.RightShiftAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.108e17.1]
-// CHECK:STDOUT:   %Op.ref.loc21: %Cpp.long.as.RightShiftAssignWith.impl.Op.type.253402.1 = name_ref Op, %.loc21_5.2 [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.108e17.1]
+// CHECK:STDOUT:   %.loc21_5.3: %Cpp.long.as.RightShiftAssignWith.impl.Op.type.253402.1 = specific_constant imports.%Core.Op.127, @Cpp.long.as.RightShiftAssignWith.impl(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.108e17.1]
+// CHECK:STDOUT:   %Op.ref.loc21: %Cpp.long.as.RightShiftAssignWith.impl.Op.type.253402.1 = name_ref Op, %.loc21_5.3 [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.108e17.1]
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc21, %Op.ref.loc21
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc21, @Cpp.long.as.RightShiftAssignWith.impl.Op.2(constants.%ImplicitAs.facet.7ac) [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn.5a2726.2]
 // CHECK:STDOUT:   %bound_method.loc21_5.3: <bound method> = bound_method %a.ref.loc21, %Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn
@@ -3328,12 +3372,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc10: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc10_5: %.68d = impl_witness_access constants.%AddAssignWith.impl_witness.b48, element0 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.d3c936.2]
 // CHECK:STDOUT:   %bound_method.loc10_5.1: <bound method> = bound_method %a.ref.loc10, %impl.elem0.loc10_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc10: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc10_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc10 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc10_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc10_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc10_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc10_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc10_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc10_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10_5, @Cpp.long.as.AddAssignWith.impl.Op.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.specific_fn.d4d8c8.1]
 // CHECK:STDOUT:   %bound_method.loc10_5.2: <bound method> = bound_method %a.ref.loc10, %specific_fn.loc10
-// CHECK:STDOUT:   %.loc10_5.2: %Cpp.long.as.AddAssignWith.impl.Op.type.0c4994.1 = specific_constant imports.%Core.Op.7fd, @Cpp.long.as.AddAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.d3c936.1]
-// CHECK:STDOUT:   %Op.ref.loc10: %Cpp.long.as.AddAssignWith.impl.Op.type.0c4994.1 = name_ref Op, %.loc10_5.2 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.d3c936.1]
+// CHECK:STDOUT:   %.loc10_5.3: %Cpp.long.as.AddAssignWith.impl.Op.type.0c4994.1 = specific_constant imports.%Core.Op.7fd, @Cpp.long.as.AddAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.d3c936.1]
+// CHECK:STDOUT:   %Op.ref.loc10: %Cpp.long.as.AddAssignWith.impl.Op.type.0c4994.1 = name_ref Op, %.loc10_5.3 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.d3c936.1]
 // CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc10, %Op.ref.loc10
 // CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc10, @Cpp.long.as.AddAssignWith.impl.Op.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.specific_fn.d4d8c8.2]
 // CHECK:STDOUT:   %bound_method.loc10_5.3: <bound method> = bound_method %a.ref.loc10, %Cpp.long.as.AddAssignWith.impl.Op.specific_fn
@@ -3347,12 +3393,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc11: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc11_5: %.8cc = impl_witness_access constants.%SubAssignWith.impl_witness.9be, element0 [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.e73c53.2]
 // CHECK:STDOUT:   %bound_method.loc11_5.1: <bound method> = bound_method %a.ref.loc11, %impl.elem0.loc11_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc11: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc11_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc11 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc11_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc11_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc11_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc11_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc11_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc11_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc11: <specific function> = specific_function %impl.elem0.loc11_5, @Cpp.long.as.SubAssignWith.impl.Op.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.specific_fn.ed33cb.1]
 // CHECK:STDOUT:   %bound_method.loc11_5.2: <bound method> = bound_method %a.ref.loc11, %specific_fn.loc11
-// CHECK:STDOUT:   %.loc11_5.2: %Cpp.long.as.SubAssignWith.impl.Op.type.b59bc8.1 = specific_constant imports.%Core.Op.3ae, @Cpp.long.as.SubAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.e73c53.1]
-// CHECK:STDOUT:   %Op.ref.loc11: %Cpp.long.as.SubAssignWith.impl.Op.type.b59bc8.1 = name_ref Op, %.loc11_5.2 [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.e73c53.1]
+// CHECK:STDOUT:   %.loc11_5.3: %Cpp.long.as.SubAssignWith.impl.Op.type.b59bc8.1 = specific_constant imports.%Core.Op.3ae, @Cpp.long.as.SubAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.e73c53.1]
+// CHECK:STDOUT:   %Op.ref.loc11: %Cpp.long.as.SubAssignWith.impl.Op.type.b59bc8.1 = name_ref Op, %.loc11_5.3 [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.e73c53.1]
 // CHECK:STDOUT:   %Cpp.long.as.SubAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc11, %Op.ref.loc11
 // CHECK:STDOUT:   %Cpp.long.as.SubAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc11, @Cpp.long.as.SubAssignWith.impl.Op.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op.specific_fn.ed33cb.2]
 // CHECK:STDOUT:   %bound_method.loc11_5.3: <bound method> = bound_method %a.ref.loc11, %Cpp.long.as.SubAssignWith.impl.Op.specific_fn
@@ -3366,12 +3414,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc12: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc12_5: %.e51 = impl_witness_access constants.%MulAssignWith.impl_witness.fb1, element0 [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.6fa29e.2]
 // CHECK:STDOUT:   %bound_method.loc12_5.1: <bound method> = bound_method %a.ref.loc12, %impl.elem0.loc12_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc12: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc12_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc12 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc12_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc12_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc12_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc12_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc12_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc12_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem0.loc12_5, @Cpp.long.as.MulAssignWith.impl.Op.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.specific_fn.674e38.1]
 // CHECK:STDOUT:   %bound_method.loc12_5.2: <bound method> = bound_method %a.ref.loc12, %specific_fn.loc12
-// CHECK:STDOUT:   %.loc12_5.2: %Cpp.long.as.MulAssignWith.impl.Op.type.6461a2.1 = specific_constant imports.%Core.Op.a7f, @Cpp.long.as.MulAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.6fa29e.1]
-// CHECK:STDOUT:   %Op.ref.loc12: %Cpp.long.as.MulAssignWith.impl.Op.type.6461a2.1 = name_ref Op, %.loc12_5.2 [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.6fa29e.1]
+// CHECK:STDOUT:   %.loc12_5.3: %Cpp.long.as.MulAssignWith.impl.Op.type.6461a2.1 = specific_constant imports.%Core.Op.a7f, @Cpp.long.as.MulAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.6fa29e.1]
+// CHECK:STDOUT:   %Op.ref.loc12: %Cpp.long.as.MulAssignWith.impl.Op.type.6461a2.1 = name_ref Op, %.loc12_5.3 [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.6fa29e.1]
 // CHECK:STDOUT:   %Cpp.long.as.MulAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc12, %Op.ref.loc12
 // CHECK:STDOUT:   %Cpp.long.as.MulAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc12, @Cpp.long.as.MulAssignWith.impl.Op.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op.specific_fn.674e38.2]
 // CHECK:STDOUT:   %bound_method.loc12_5.3: <bound method> = bound_method %a.ref.loc12, %Cpp.long.as.MulAssignWith.impl.Op.specific_fn
@@ -3385,12 +3435,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc13: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc13_5: %.182 = impl_witness_access constants.%DivAssignWith.impl_witness.1c3, element0 [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.aa5aae.2]
 // CHECK:STDOUT:   %bound_method.loc13_5.1: <bound method> = bound_method %a.ref.loc13, %impl.elem0.loc13_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc13: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc13_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc13 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc13_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc13_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc13_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc13_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc13_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc13_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13_5, @Cpp.long.as.DivAssignWith.impl.Op.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.specific_fn.53323c.1]
 // CHECK:STDOUT:   %bound_method.loc13_5.2: <bound method> = bound_method %a.ref.loc13, %specific_fn.loc13
-// CHECK:STDOUT:   %.loc13_5.2: %Cpp.long.as.DivAssignWith.impl.Op.type.5edb2e.1 = specific_constant imports.%Core.Op.8c3, @Cpp.long.as.DivAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.aa5aae.1]
-// CHECK:STDOUT:   %Op.ref.loc13: %Cpp.long.as.DivAssignWith.impl.Op.type.5edb2e.1 = name_ref Op, %.loc13_5.2 [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.aa5aae.1]
+// CHECK:STDOUT:   %.loc13_5.3: %Cpp.long.as.DivAssignWith.impl.Op.type.5edb2e.1 = specific_constant imports.%Core.Op.8c3, @Cpp.long.as.DivAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.aa5aae.1]
+// CHECK:STDOUT:   %Op.ref.loc13: %Cpp.long.as.DivAssignWith.impl.Op.type.5edb2e.1 = name_ref Op, %.loc13_5.3 [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.aa5aae.1]
 // CHECK:STDOUT:   %Cpp.long.as.DivAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc13, %Op.ref.loc13
 // CHECK:STDOUT:   %Cpp.long.as.DivAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc13, @Cpp.long.as.DivAssignWith.impl.Op.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op.specific_fn.53323c.2]
 // CHECK:STDOUT:   %bound_method.loc13_5.3: <bound method> = bound_method %a.ref.loc13, %Cpp.long.as.DivAssignWith.impl.Op.specific_fn
@@ -3404,12 +3456,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc14: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc14_5: %.3cd = impl_witness_access constants.%ModAssignWith.impl_witness.535, element0 [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.be932a.2]
 // CHECK:STDOUT:   %bound_method.loc14_5.1: <bound method> = bound_method %a.ref.loc14, %impl.elem0.loc14_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc14: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc14_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc14 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc14_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc14_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc14_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc14_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc14_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc14_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc14: <specific function> = specific_function %impl.elem0.loc14_5, @Cpp.long.as.ModAssignWith.impl.Op.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.specific_fn.922dd8.1]
 // CHECK:STDOUT:   %bound_method.loc14_5.2: <bound method> = bound_method %a.ref.loc14, %specific_fn.loc14
-// CHECK:STDOUT:   %.loc14_5.2: %Cpp.long.as.ModAssignWith.impl.Op.type.0bedac.1 = specific_constant imports.%Core.Op.da3, @Cpp.long.as.ModAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.be932a.1]
-// CHECK:STDOUT:   %Op.ref.loc14: %Cpp.long.as.ModAssignWith.impl.Op.type.0bedac.1 = name_ref Op, %.loc14_5.2 [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.be932a.1]
+// CHECK:STDOUT:   %.loc14_5.3: %Cpp.long.as.ModAssignWith.impl.Op.type.0bedac.1 = specific_constant imports.%Core.Op.da3, @Cpp.long.as.ModAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.be932a.1]
+// CHECK:STDOUT:   %Op.ref.loc14: %Cpp.long.as.ModAssignWith.impl.Op.type.0bedac.1 = name_ref Op, %.loc14_5.3 [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.be932a.1]
 // CHECK:STDOUT:   %Cpp.long.as.ModAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc14, %Op.ref.loc14
 // CHECK:STDOUT:   %Cpp.long.as.ModAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc14, @Cpp.long.as.ModAssignWith.impl.Op.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op.specific_fn.922dd8.2]
 // CHECK:STDOUT:   %bound_method.loc14_5.3: <bound method> = bound_method %a.ref.loc14, %Cpp.long.as.ModAssignWith.impl.Op.specific_fn
@@ -3423,12 +3477,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc16: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc16_5: %.d84 = impl_witness_access constants.%BitAndAssignWith.impl_witness.ca3, element0 [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.c55c9d.2]
 // CHECK:STDOUT:   %bound_method.loc16_5.1: <bound method> = bound_method %a.ref.loc16, %impl.elem0.loc16_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc16: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc16_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc16 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc16_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc16_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc16_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc16_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc16_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc16_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc16: <specific function> = specific_function %impl.elem0.loc16_5, @Cpp.long.as.BitAndAssignWith.impl.Op.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.specific_fn.b2e276.1]
 // CHECK:STDOUT:   %bound_method.loc16_5.2: <bound method> = bound_method %a.ref.loc16, %specific_fn.loc16
-// CHECK:STDOUT:   %.loc16_5.2: %Cpp.long.as.BitAndAssignWith.impl.Op.type.4ea5c7.1 = specific_constant imports.%Core.Op.c9e, @Cpp.long.as.BitAndAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.c55c9d.1]
-// CHECK:STDOUT:   %Op.ref.loc16: %Cpp.long.as.BitAndAssignWith.impl.Op.type.4ea5c7.1 = name_ref Op, %.loc16_5.2 [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.c55c9d.1]
+// CHECK:STDOUT:   %.loc16_5.3: %Cpp.long.as.BitAndAssignWith.impl.Op.type.4ea5c7.1 = specific_constant imports.%Core.Op.c9e, @Cpp.long.as.BitAndAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.c55c9d.1]
+// CHECK:STDOUT:   %Op.ref.loc16: %Cpp.long.as.BitAndAssignWith.impl.Op.type.4ea5c7.1 = name_ref Op, %.loc16_5.3 [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.c55c9d.1]
 // CHECK:STDOUT:   %Cpp.long.as.BitAndAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc16, %Op.ref.loc16
 // CHECK:STDOUT:   %Cpp.long.as.BitAndAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc16, @Cpp.long.as.BitAndAssignWith.impl.Op.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op.specific_fn.b2e276.2]
 // CHECK:STDOUT:   %bound_method.loc16_5.3: <bound method> = bound_method %a.ref.loc16, %Cpp.long.as.BitAndAssignWith.impl.Op.specific_fn
@@ -3442,12 +3498,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc17: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc17_5: %.0f7 = impl_witness_access constants.%BitOrAssignWith.impl_witness.936, element0 [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.f127f0.2]
 // CHECK:STDOUT:   %bound_method.loc17_5.1: <bound method> = bound_method %a.ref.loc17, %impl.elem0.loc17_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc17: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc17_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc17 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc17_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc17_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc17_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc17_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc17_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc17_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %impl.elem0.loc17_5, @Cpp.long.as.BitOrAssignWith.impl.Op.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.specific_fn.1bd8b4.1]
 // CHECK:STDOUT:   %bound_method.loc17_5.2: <bound method> = bound_method %a.ref.loc17, %specific_fn.loc17
-// CHECK:STDOUT:   %.loc17_5.2: %Cpp.long.as.BitOrAssignWith.impl.Op.type.1bf7d5.1 = specific_constant imports.%Core.Op.add, @Cpp.long.as.BitOrAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.f127f0.1]
-// CHECK:STDOUT:   %Op.ref.loc17: %Cpp.long.as.BitOrAssignWith.impl.Op.type.1bf7d5.1 = name_ref Op, %.loc17_5.2 [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.f127f0.1]
+// CHECK:STDOUT:   %.loc17_5.3: %Cpp.long.as.BitOrAssignWith.impl.Op.type.1bf7d5.1 = specific_constant imports.%Core.Op.add, @Cpp.long.as.BitOrAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.f127f0.1]
+// CHECK:STDOUT:   %Op.ref.loc17: %Cpp.long.as.BitOrAssignWith.impl.Op.type.1bf7d5.1 = name_ref Op, %.loc17_5.3 [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.f127f0.1]
 // CHECK:STDOUT:   %Cpp.long.as.BitOrAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc17, %Op.ref.loc17
 // CHECK:STDOUT:   %Cpp.long.as.BitOrAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc17, @Cpp.long.as.BitOrAssignWith.impl.Op.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op.specific_fn.1bd8b4.2]
 // CHECK:STDOUT:   %bound_method.loc17_5.3: <bound method> = bound_method %a.ref.loc17, %Cpp.long.as.BitOrAssignWith.impl.Op.specific_fn
@@ -3461,12 +3519,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc18: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc18_5: %.580 = impl_witness_access constants.%BitXorAssignWith.impl_witness.7a9, element0 [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.99c425.2]
 // CHECK:STDOUT:   %bound_method.loc18_5.1: <bound method> = bound_method %a.ref.loc18, %impl.elem0.loc18_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc18: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc18_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc18 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc18_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc18_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc18_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc18_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc18_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc18_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18_5, @Cpp.long.as.BitXorAssignWith.impl.Op.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.specific_fn.503a1b.1]
 // CHECK:STDOUT:   %bound_method.loc18_5.2: <bound method> = bound_method %a.ref.loc18, %specific_fn.loc18
-// CHECK:STDOUT:   %.loc18_5.2: %Cpp.long.as.BitXorAssignWith.impl.Op.type.d0da74.1 = specific_constant imports.%Core.Op.a72, @Cpp.long.as.BitXorAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.99c425.1]
-// CHECK:STDOUT:   %Op.ref.loc18: %Cpp.long.as.BitXorAssignWith.impl.Op.type.d0da74.1 = name_ref Op, %.loc18_5.2 [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.99c425.1]
+// CHECK:STDOUT:   %.loc18_5.3: %Cpp.long.as.BitXorAssignWith.impl.Op.type.d0da74.1 = specific_constant imports.%Core.Op.a72, @Cpp.long.as.BitXorAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.99c425.1]
+// CHECK:STDOUT:   %Op.ref.loc18: %Cpp.long.as.BitXorAssignWith.impl.Op.type.d0da74.1 = name_ref Op, %.loc18_5.3 [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.99c425.1]
 // CHECK:STDOUT:   %Cpp.long.as.BitXorAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc18, %Op.ref.loc18
 // CHECK:STDOUT:   %Cpp.long.as.BitXorAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc18, @Cpp.long.as.BitXorAssignWith.impl.Op.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op.specific_fn.503a1b.2]
 // CHECK:STDOUT:   %bound_method.loc18_5.3: <bound method> = bound_method %a.ref.loc18, %Cpp.long.as.BitXorAssignWith.impl.Op.specific_fn
@@ -3480,12 +3540,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc19: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc19_5: %.683 = impl_witness_access constants.%LeftShiftAssignWith.impl_witness.4c7, element0 [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.80597f.2]
 // CHECK:STDOUT:   %bound_method.loc19_5.1: <bound method> = bound_method %a.ref.loc19, %impl.elem0.loc19_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc19: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc19_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc19 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc19_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc19_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc19_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc19_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc19_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc19_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc19: <specific function> = specific_function %impl.elem0.loc19_5, @Cpp.long.as.LeftShiftAssignWith.impl.Op.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.specific_fn.df2fa0.1]
 // CHECK:STDOUT:   %bound_method.loc19_5.2: <bound method> = bound_method %a.ref.loc19, %specific_fn.loc19
-// CHECK:STDOUT:   %.loc19_5.2: %Cpp.long.as.LeftShiftAssignWith.impl.Op.type.8878df.1 = specific_constant imports.%Core.Op.e4d, @Cpp.long.as.LeftShiftAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.80597f.1]
-// CHECK:STDOUT:   %Op.ref.loc19: %Cpp.long.as.LeftShiftAssignWith.impl.Op.type.8878df.1 = name_ref Op, %.loc19_5.2 [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.80597f.1]
+// CHECK:STDOUT:   %.loc19_5.3: %Cpp.long.as.LeftShiftAssignWith.impl.Op.type.8878df.1 = specific_constant imports.%Core.Op.e4d, @Cpp.long.as.LeftShiftAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.80597f.1]
+// CHECK:STDOUT:   %Op.ref.loc19: %Cpp.long.as.LeftShiftAssignWith.impl.Op.type.8878df.1 = name_ref Op, %.loc19_5.3 [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.80597f.1]
 // CHECK:STDOUT:   %Cpp.long.as.LeftShiftAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc19, %Op.ref.loc19
 // CHECK:STDOUT:   %Cpp.long.as.LeftShiftAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc19, @Cpp.long.as.LeftShiftAssignWith.impl.Op.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op.specific_fn.df2fa0.2]
 // CHECK:STDOUT:   %bound_method.loc19_5.3: <bound method> = bound_method %a.ref.loc19, %Cpp.long.as.LeftShiftAssignWith.impl.Op.specific_fn
@@ -3499,12 +3561,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref.loc20: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc20_5: %.17e = impl_witness_access constants.%RightShiftAssignWith.impl_witness.348, element0 [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.76ada1.2]
 // CHECK:STDOUT:   %bound_method.loc20_5.1: <bound method> = bound_method %a.ref.loc20, %impl.elem0.loc20_5
-// CHECK:STDOUT:   %ImplicitAs.facet.loc20: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc20_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc20 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc20_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc20_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc20_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc20_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc20_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc20_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem0.loc20_5, @Cpp.long.as.RightShiftAssignWith.impl.Op.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn.708585.1]
 // CHECK:STDOUT:   %bound_method.loc20_5.2: <bound method> = bound_method %a.ref.loc20, %specific_fn.loc20
-// CHECK:STDOUT:   %.loc20_5.2: %Cpp.long.as.RightShiftAssignWith.impl.Op.type.3aa338.1 = specific_constant imports.%Core.Op.127, @Cpp.long.as.RightShiftAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.76ada1.1]
-// CHECK:STDOUT:   %Op.ref.loc20: %Cpp.long.as.RightShiftAssignWith.impl.Op.type.3aa338.1 = name_ref Op, %.loc20_5.2 [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.76ada1.1]
+// CHECK:STDOUT:   %.loc20_5.3: %Cpp.long.as.RightShiftAssignWith.impl.Op.type.3aa338.1 = specific_constant imports.%Core.Op.127, @Cpp.long.as.RightShiftAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.76ada1.1]
+// CHECK:STDOUT:   %Op.ref.loc20: %Cpp.long.as.RightShiftAssignWith.impl.Op.type.3aa338.1 = name_ref Op, %.loc20_5.3 [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.76ada1.1]
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref.loc20, %Op.ref.loc20
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc20, @Cpp.long.as.RightShiftAssignWith.impl.Op.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn.708585.2]
 // CHECK:STDOUT:   %bound_method.loc20_5.3: <bound method> = bound_method %a.ref.loc20, %Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn
@@ -3600,12 +3664,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc9_5: %.f86 = impl_witness_access constants.%AddAssignWith.impl_witness.e58, element0 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.2303e0.2]
 // CHECK:STDOUT:   %bound_method.loc9_5.1: <bound method> = bound_method %a.ref, %impl.elem0.loc9_5
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet]
-// CHECK:STDOUT:   %.loc9_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet [concrete = constants.%ImplicitAs.facet]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc9_5.1: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet]
+// CHECK:STDOUT:   %.loc9_5.1: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc9_5.1 [concrete = constants.%ImplicitAs.facet]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc9_5.2: %ImplicitAs.type.7eb = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.e27) [concrete = constants.%ImplicitAs.facet]
+// CHECK:STDOUT:   %.loc9_5.2: %ImplicitAs.type.7eb = converted Core.IntLiteral, %ImplicitAs.facet.loc9_5.2 [concrete = constants.%ImplicitAs.facet]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc9_5, @Cpp.long.as.AddAssignWith.impl.Op.1(constants.%ImplicitAs.facet) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.specific_fn.ffe0b1.1]
 // CHECK:STDOUT:   %bound_method.loc9_5.2: <bound method> = bound_method %a.ref, %specific_fn
-// CHECK:STDOUT:   %.loc9_5.2: %Cpp.long.as.AddAssignWith.impl.Op.type.59ea6c.1 = specific_constant imports.%Core.Op.7fd, @Cpp.long.as.AddAssignWith.impl(constants.%ImplicitAs.facet) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.2303e0.1]
-// CHECK:STDOUT:   %Op.ref: %Cpp.long.as.AddAssignWith.impl.Op.type.59ea6c.1 = name_ref Op, %.loc9_5.2 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.2303e0.1]
+// CHECK:STDOUT:   %.loc9_5.3: %Cpp.long.as.AddAssignWith.impl.Op.type.59ea6c.1 = specific_constant imports.%Core.Op.7fd, @Cpp.long.as.AddAssignWith.impl(constants.%ImplicitAs.facet) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.2303e0.1]
+// CHECK:STDOUT:   %Op.ref: %Cpp.long.as.AddAssignWith.impl.Op.type.59ea6c.1 = name_ref Op, %.loc9_5.3 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.2303e0.1]
 // CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref, %Op.ref
 // CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref, @Cpp.long.as.AddAssignWith.impl.Op.2(constants.%ImplicitAs.facet) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.specific_fn.ffe0b1.2]
 // CHECK:STDOUT:   %bound_method.loc9_5.3: <bound method> = bound_method %a.ref, %Cpp.long.as.AddAssignWith.impl.Op.specific_fn
@@ -3741,12 +3807,14 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc10_5: %.68d = impl_witness_access constants.%AddAssignWith.impl_witness.b48, element0 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.d3c936.2]
 // CHECK:STDOUT:   %bound_method.loc10_5.1: <bound method> = bound_method %a.ref, %impl.elem0.loc10_5
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
-// CHECK:STDOUT:   %.loc10_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc10_5.1: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc10_5.1: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc10_5.1 [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc10_5.2: %ImplicitAs.type.7eb = facet_value constants.%i32, (constants.%ImplicitAs.impl_witness.f82) [concrete = constants.%ImplicitAs.facet.ce4]
+// CHECK:STDOUT:   %.loc10_5.2: %ImplicitAs.type.7eb = converted constants.%i32, %ImplicitAs.facet.loc10_5.2 [concrete = constants.%ImplicitAs.facet.ce4]
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10_5, @Cpp.long.as.AddAssignWith.impl.Op.1(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.specific_fn.d4d8c8.1]
 // CHECK:STDOUT:   %bound_method.loc10_5.2: <bound method> = bound_method %a.ref, %specific_fn.loc10
-// CHECK:STDOUT:   %.loc10_5.2: %Cpp.long.as.AddAssignWith.impl.Op.type.0c4994.1 = specific_constant imports.%Core.Op.7fd, @Cpp.long.as.AddAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.d3c936.1]
-// CHECK:STDOUT:   %Op.ref: %Cpp.long.as.AddAssignWith.impl.Op.type.0c4994.1 = name_ref Op, %.loc10_5.2 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.d3c936.1]
+// CHECK:STDOUT:   %.loc10_5.3: %Cpp.long.as.AddAssignWith.impl.Op.type.0c4994.1 = specific_constant imports.%Core.Op.7fd, @Cpp.long.as.AddAssignWith.impl(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.d3c936.1]
+// CHECK:STDOUT:   %Op.ref: %Cpp.long.as.AddAssignWith.impl.Op.type.0c4994.1 = name_ref Op, %.loc10_5.3 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.d3c936.1]
 // CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.bound: <bound method> = bound_method %a.ref, %Op.ref
 // CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref, @Cpp.long.as.AddAssignWith.impl.Op.2(constants.%ImplicitAs.facet.ce4) [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.specific_fn.d4d8c8.2]
 // CHECK:STDOUT:   %bound_method.loc10_5.3: <bound method> = bound_method %a.ref, %Cpp.long.as.AddAssignWith.impl.Op.specific_fn

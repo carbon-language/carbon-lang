@@ -62,15 +62,15 @@ fn G(a: A(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.a6a60dfee2d7d273(ptr %0) #0 !dbg !12 {
-// CHECK:STDOUT:   %2 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.8c89b09ee520ceaa"(ptr %0), !dbg !16
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.a6a60dfee2d7d273(ptr %x) #0 !dbg !12 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.8c89b09ee520ceaa"(ptr %x), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.8c89b09ee520ceaa"(ptr %0) #0 !dbg !18 {
-// CHECK:STDOUT:   %2 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.8c89b09ee520ceaa"(ptr %0), !dbg !23
-// CHECK:STDOUT:   ret ptr %2, !dbg !24
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.8c89b09ee520ceaa"(ptr %self) #0 !dbg !18 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.8c89b09ee520ceaa"(ptr %self), !dbg !23
+// CHECK:STDOUT:   ret ptr %1, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

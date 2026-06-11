@@ -199,76 +199,76 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.211c7f442b391488"(i8 %0) #0 !dbg !42 {
-// CHECK:STDOUT:   %2 = call i8 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.ca1ac10d3fc7c1a8"(i8 %0), !dbg !46
-// CHECK:STDOUT:   %3 = sext i8 %2 to i32, !dbg !47
-// CHECK:STDOUT:   ret i32 %3, !dbg !48
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.211c7f442b391488"(i8 %self) #0 !dbg !42 {
+// CHECK:STDOUT:   %1 = call i8 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.ca1ac10d3fc7c1a8"(i8 %self), !dbg !46
+// CHECK:STDOUT:   %2 = sext i8 %1 to i32, !dbg !47
+// CHECK:STDOUT:   ret i32 %2, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.dbd6eca082a732b7"(i8 %0) #0 !dbg !49 {
-// CHECK:STDOUT:   %2 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.d93106ca8c7912cd"(i8 %0), !dbg !53
-// CHECK:STDOUT:   ret i32 %2, !dbg !54
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.dbd6eca082a732b7"(i8 %self) #0 !dbg !49 {
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.d93106ca8c7912cd"(i8 %self), !dbg !53
+// CHECK:STDOUT:   ret i32 %1, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.b26071071fee62b9"(i8 %0) #0 !dbg !55 {
-// CHECK:STDOUT:   %2 = call i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1d53f86bcab954ee"(i8 %0), !dbg !58
-// CHECK:STDOUT:   ret i32 %2, !dbg !59
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.b26071071fee62b9"(i8 %self) #0 !dbg !55 {
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1d53f86bcab954ee"(i8 %self), !dbg !58
+// CHECK:STDOUT:   ret i32 %1, !dbg !59
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i5 @"_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.913488c3cb524db0"(i4 %0) #0 !dbg !60 {
-// CHECK:STDOUT:   %2 = call i4 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.044c7d430ddd4fd6"(i4 %0), !dbg !63
-// CHECK:STDOUT:   %3 = sext i4 %2 to i5, !dbg !64
-// CHECK:STDOUT:   ret i5 %3, !dbg !65
+// CHECK:STDOUT: define linkonce_odr i5 @"_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.913488c3cb524db0"(i4 %self) #0 !dbg !60 {
+// CHECK:STDOUT:   %1 = call i4 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.044c7d430ddd4fd6"(i4 %self), !dbg !63
+// CHECK:STDOUT:   %2 = sext i4 %1 to i5, !dbg !64
+// CHECK:STDOUT:   ret i5 %2, !dbg !65
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i5 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.4c1b8e556dc24c05"(i4 %0) #0 !dbg !66 {
-// CHECK:STDOUT:   %2 = call i5 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.cc82cccb0d5a8ccf"(i4 %0), !dbg !69
-// CHECK:STDOUT:   ret i5 %2, !dbg !70
+// CHECK:STDOUT: define linkonce_odr i5 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.4c1b8e556dc24c05"(i4 %self) #0 !dbg !66 {
+// CHECK:STDOUT:   %1 = call i5 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.cc82cccb0d5a8ccf"(i4 %self), !dbg !69
+// CHECK:STDOUT:   ret i5 %1, !dbg !70
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.ca1ac10d3fc7c1a8"(i8 %0) #0 !dbg !71 {
-// CHECK:STDOUT:   ret i8 %0, !dbg !76
+// CHECK:STDOUT: define linkonce_odr i8 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.ca1ac10d3fc7c1a8"(i8 %self) #0 !dbg !71 {
+// CHECK:STDOUT:   ret i8 %self, !dbg !76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.d93106ca8c7912cd"(i8 %0) #0 !dbg !77 {
-// CHECK:STDOUT:   %2 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %0), !dbg !80
-// CHECK:STDOUT:   %3 = zext i8 %2 to i32, !dbg !81
-// CHECK:STDOUT:   ret i32 %3, !dbg !82
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.d93106ca8c7912cd"(i8 %from) #0 !dbg !77 {
+// CHECK:STDOUT:   %1 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %from), !dbg !80
+// CHECK:STDOUT:   %2 = zext i8 %1 to i32, !dbg !81
+// CHECK:STDOUT:   ret i32 %2, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1d53f86bcab954ee"(i8 %0) #0 !dbg !83 {
-// CHECK:STDOUT:   %2 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %0), !dbg !86
-// CHECK:STDOUT:   %3 = zext i8 %2 to i32, !dbg !87
-// CHECK:STDOUT:   ret i32 %3, !dbg !88
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1d53f86bcab954ee"(i8 %from) #0 !dbg !83 {
+// CHECK:STDOUT:   %1 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %from), !dbg !86
+// CHECK:STDOUT:   %2 = zext i8 %1 to i32, !dbg !87
+// CHECK:STDOUT:   ret i32 %2, !dbg !88
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i4 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.044c7d430ddd4fd6"(i4 %0) #0 !dbg !89 {
-// CHECK:STDOUT:   ret i4 %0, !dbg !94
+// CHECK:STDOUT: define linkonce_odr i4 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.044c7d430ddd4fd6"(i4 %self) #0 !dbg !89 {
+// CHECK:STDOUT:   ret i4 %self, !dbg !94
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i5 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.cc82cccb0d5a8ccf"(i4 %0) #0 !dbg !95 {
-// CHECK:STDOUT:   %2 = call i4 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.044c7d430ddd4fd6"(i4 %0), !dbg !98
-// CHECK:STDOUT:   %3 = zext i4 %2 to i5, !dbg !99
-// CHECK:STDOUT:   ret i5 %3, !dbg !100
+// CHECK:STDOUT: define linkonce_odr i5 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.cc82cccb0d5a8ccf"(i4 %from) #0 !dbg !95 {
+// CHECK:STDOUT:   %1 = call i4 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.044c7d430ddd4fd6"(i4 %from), !dbg !98
+// CHECK:STDOUT:   %2 = zext i4 %1 to i5, !dbg !99
+// CHECK:STDOUT:   ret i5 %2, !dbg !100
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %0) #0 !dbg !101 {
-// CHECK:STDOUT:   ret i8 %0, !dbg !106
+// CHECK:STDOUT: define linkonce_odr i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %self) #0 !dbg !101 {
+// CHECK:STDOUT:   ret i8 %self, !dbg !106
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i4 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.044c7d430ddd4fd6"(i4 %0) #0 !dbg !107 {
-// CHECK:STDOUT:   ret i4 %0, !dbg !112
+// CHECK:STDOUT: define linkonce_odr i4 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.044c7d430ddd4fd6"(i4 %self) #0 !dbg !107 {
+// CHECK:STDOUT:   ret i4 %self, !dbg !112
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives

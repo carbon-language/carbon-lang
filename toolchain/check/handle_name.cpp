@@ -9,7 +9,6 @@
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
-#include "toolchain/check/name_ref.h"
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/check/type.h"
 #include "toolchain/lex/token_kind.h"

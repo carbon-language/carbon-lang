@@ -326,7 +326,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  // TODO: This duplicates the work that HandleNameAsExpr does. Factor this out.
+  // TODO: Find a way to use `WrapInstForSpecific` here.
   auto type_id =
       SemIR::GetTypeOfInstInSpecific(context.sem_ir(), result.specific_id,
                                      result.scope_result.target_inst_id());

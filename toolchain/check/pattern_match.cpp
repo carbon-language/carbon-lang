@@ -63,16 +63,8 @@ struct CalleeState {
   auto PushCallParamPattern(Context& context, SemIR::LocId loc_id,
                             SemIR::InstId pattern_id,
                             SemIR::SpecificId specific_id) -> void {
-    if (specific_id.has_value()) {
-      auto pattern_type_id = SemIR::GetTypeOfInstInSpecific(
-          context.sem_ir(), specific_id, pattern_id);
-      pattern_id =
-          AddInst<SemIR::SpecificConstant>(context, loc_id,
-                                           {.type_id = pattern_type_id,
-                                            .inst_id = pattern_id,
-                                            .specific_id = specific_id});
-    }
-    call_param_patterns.push_back(pattern_id);
+    call_param_patterns.push_back(
+        WrapInstForSpecific(context, loc_id, pattern_id, specific_id).inst_id);
   }
 
   IndexSource index;
@@ -434,9 +426,10 @@ auto MatchContext::DoPostWork(State state,
   }
 
   if (specific_id_stack_.size() > 1) {
-    // If we're matching a substituted or to-be-substituted version of
-    // `binding_pattern`, `bind_name_map` will not have an entry for it, so we
-    // have to emit a new binding inst.
+    // If anything has been pushed onto the specific stack, that means
+    // that `binding_pattern` is a constant inst. The bindings for constant
+    // insts are not precomputed (see the documentation for bind_name_map), so
+    // we have to emit a new one here.
     context_.inst_block_stack().AddInstId(
         AddBindingForPattern(context_, SemIR::LocId(entry.pattern_id),
                              binding_pattern, scrutinee_type_id, value_id));

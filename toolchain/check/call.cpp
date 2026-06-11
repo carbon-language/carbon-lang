@@ -17,7 +17,6 @@
 #include "toolchain/check/function.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
-#include "toolchain/check/name_ref.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"

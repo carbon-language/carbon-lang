@@ -421,11 +421,11 @@ fn CallGeneric() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr sret({ i32 }) %0, ptr %1, ptr %2) #0 !dbg !29 {
+// CHECK:STDOUT: define linkonce_odr void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr sret({ i32 }) %return, ptr %v1, ptr %v2) #0 !dbg !29 {
 // CHECK:STDOUT:   %temp = alloca { i32 }, align 4, !dbg !36
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !36
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.84588f41d61dafba.Core"(ptr %temp, ptr %2, i32 2), !dbg !36
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %0, ptr %1, ptr %temp), !dbg !37
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.84588f41d61dafba.Core"(ptr %temp, ptr %v2, i32 2), !dbg !36
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %temp), !dbg !37
 // CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %temp), !dbg !36
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
@@ -605,11 +605,11 @@ fn CallGeneric() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr sret({ i32 }) %0, ptr %1, ptr %2) #0 !dbg !29 {
+// CHECK:STDOUT: define linkonce_odr void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr sret({ i32 }) %return, ptr %v1, ptr %v2) #0 !dbg !29 {
 // CHECK:STDOUT:   %temp = alloca { i32 }, align 4, !dbg !36
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !36
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.84588f41d61dafba.Core"(ptr %temp, ptr %2, i32 2), !dbg !36
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %0, ptr %1, ptr %temp), !dbg !37
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.84588f41d61dafba.Core"(ptr %temp, ptr %v2, i32 2), !dbg !36
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %temp), !dbg !37
 // CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %temp), !dbg !36
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
@@ -767,11 +767,11 @@ fn CallGeneric() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CGeneric.OtherPackage.e43630e9a6c38c3f(ptr sret({ i32 }) %0, ptr %1, ptr %2) #0 !dbg !29 {
+// CHECK:STDOUT: define linkonce_odr void @_CGeneric.OtherPackage.e43630e9a6c38c3f(ptr sret({ i32 }) %return, ptr %v1, ptr %v2) #0 !dbg !29 {
 // CHECK:STDOUT:   %temp = alloca { i32 }, align 4, !dbg !36
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !36
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.84588f41d61dafba.Core"(ptr %temp, ptr %2, i32 2), !dbg !36
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %0, ptr %1, ptr %temp), !dbg !37
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.84588f41d61dafba.Core"(ptr %temp, ptr %v2, i32 2), !dbg !36
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %temp), !dbg !37
 // CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %temp), !dbg !36
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }

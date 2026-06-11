@@ -35,12 +35,19 @@ class DeductionWorklist {
     SemIR::InstId param;
     SemIR::InstId arg;
     bool want_value;
+    SemIR::LocId param_loc_id;
   };
 
   // Adds a single (param, arg) deduction.
-  auto Add(SemIR::InstId param, SemIR::InstId arg, bool want_value) -> void {
-    deductions_.push_back(
-        {.param = param, .arg = arg, .want_value = want_value});
+  auto Add(SemIR::InstId param, SemIR::InstId arg, bool want_value,
+           SemIR::LocId param_loc_id = SemIR::LocId::None) -> void {
+    if (!param_loc_id.has_value()) {
+      param_loc_id = SemIR::LocId(param);
+    }
+    deductions_.push_back({.param = param,
+                           .arg = arg,
+                           .want_value = want_value,
+                           .param_loc_id = param_loc_id});
   }
 
   // Adds a single (param, arg) deduction of a specific.
@@ -162,11 +169,13 @@ class DeductionContext {
 
   auto context() const -> Context& { return *context_; }
 
-  // Adds a pending deduction of `param` from `arg`. `needs_substitution`
-  // indicates whether we need to substitute known generic parameters into
-  // `param`.
-  auto Add(SemIR::InstId param, SemIR::InstId arg, bool want_value) -> void {
-    worklist_.Add(param, arg, want_value);
+  // Adds a pending deduction of `param` from `arg`. If `param_loc_id` is not
+  // `None`, it is used in place of `LocId(param)` in diagnostics.
+  // `needs_substitution` indicates whether we need to substitute known generic
+  // parameters into `param`.
+  auto Add(SemIR::InstId param, SemIR::InstId arg, bool want_value,
+           SemIR::LocId param_loc_id = SemIR::LocId::None) -> void {
+    worklist_.Add(param, arg, want_value, param_loc_id);
   }
 
   template <typename ParamT, typename ArgT>
@@ -279,12 +288,8 @@ DeductionContext::DeductionContext(Context* context, SemIR::LocId loc_id,
 
 auto DeductionContext::Deduce() -> bool {
   while (!worklist_.Done()) {
-    auto [param_id, arg_id, want_value] = worklist_.PopNext();
-    SemIR::LocId param_loc_id(param_id);
+    auto [param_id, arg_id, want_value, param_loc_id] = worklist_.PopNext();
 
-    if (context().insts().Is<SemIR::ImportRefLoaded>(param_id)) {
-      param_id = context().constant_values().GetConstantInstId(param_id);
-    }
     if (param_id == SemIR::ErrorInst::InstId) {
       return false;
     }
@@ -293,6 +298,9 @@ auto DeductionContext::Deduce() -> bool {
 
     auto param = context().insts().Get(param_id);
     auto param_type_id = param.type_id();
+    if (param_type_id == SemIR::ErrorInst::TypeId) {
+      return false;
+    }
     if (context().types().Is<SemIR::PatternType>(param_type_id)) {
       param_type_id =
           SemIR::ExtractScrutineeType(context().sem_ir(), param_type_id);
@@ -457,7 +465,7 @@ auto DeductionContext::Deduce() -> bool {
     auto param_const_inst_id =
         context().constant_values().GetInstId(param_const_id);
     if (param_const_inst_id != param_id) {
-      Add(param_const_inst_id, arg_id, want_value);
+      Add(param_const_inst_id, arg_id, want_value, param_loc_id);
       continue;
     }
   }

@@ -100,17 +100,17 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_CF:thunk:I.4b54445be9b10a0e.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %0, ptr %1) #1 !dbg !25 {
+// CHECK:STDOUT: define void @"_CF:thunk:I.4b54445be9b10a0e.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc20_19.1.temp = alloca { i32 }, align 4, !dbg !28
-// CHECK:STDOUT:   %.loc16_9.3.temp = alloca { i32 }, align 4, !dbg !29
+// CHECK:STDOUT:   %.loc16_9.2.temp = alloca { i32 }, align 4, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_19.1.temp), !dbg !28
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_9.3.temp), !dbg !29
-// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc16_9.3.temp, ptr %1), !dbg !29
-// CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc20_19.1.temp, ptr %.loc16_9.3.temp), !dbg !28
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %0, ptr %.loc20_19.1.temp), !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_9.2.temp), !dbg !29
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc16_9.2.temp, ptr %a), !dbg !29
+// CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc20_19.1.temp, ptr %.loc16_9.2.temp), !dbg !28
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc20_19.1.temp), !dbg !28
 // CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.loc20_19.1.temp), !dbg !28
-// CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.loc16_9.3.temp), !dbg !29
+// CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.loc16_9.2.temp), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -296,17 +296,17 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_CF:thunk:I.c81631f865470482.Main:X.Main:I.Main"(ptr sret({ i32 }) %0, ptr %1) #1 !dbg !13 {
+// CHECK:STDOUT: define void @"_CF:thunk:I.c81631f865470482.Main:X.Main:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_19.1.temp = alloca { i32 }, align 4, !dbg !16
-// CHECK:STDOUT:   %.6.temp = alloca { i32 }, align 4, !dbg !17
+// CHECK:STDOUT:   %.4.temp = alloca { i32 }, align 4, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_19.1.temp), !dbg !16
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !17
-// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.6.temp, ptr %1), !dbg !17
-// CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc9_19.1.temp, ptr %.6.temp), !dbg !16
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %0, ptr %.loc9_19.1.temp), !dbg !16
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.4.temp), !dbg !17
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.4.temp, ptr %a), !dbg !17
+// CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc9_19.1.temp, ptr %.4.temp), !dbg !16
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc9_19.1.temp), !dbg !16
 // CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.loc9_19.1.temp), !dbg !16
-// CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.6.temp), !dbg !17
+// CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.4.temp), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -168,9 +168,9 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.269b9b75d033aabb.Core.84588f41d61dafba"(ptr %0) #0 !dbg !59 {
-// CHECK:STDOUT:   %2 = call ptr @_CNone.Optional.Core.a636f8d928e21310(), !dbg !65
-// CHECK:STDOUT:   ret ptr %2, !dbg !66
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.269b9b75d033aabb.Core.84588f41d61dafba"(ptr %self) #0 !dbg !59 {
+// CHECK:STDOUT:   %1 = call ptr @_CNone.Optional.Core.a636f8d928e21310(), !dbg !65
+// CHECK:STDOUT:   ret ptr %1, !dbg !66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
