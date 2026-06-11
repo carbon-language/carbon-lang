@@ -427,6 +427,8 @@ class D1 {
 }
 
 // --- fail_impl_generic_specifically_mismatch.carbon
+// CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon: error: cannot implicitly convert expression of type `T1*` to `T2*` [ConversionFailure]
+// CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon: note: type `T1*` does not implement interface `Core.ImplicitAs(T2*)` [MissingImplInMemberAccessInContext]
 
 library "[[@TEST_NAME]]";
 
@@ -434,12 +436,6 @@ class T1;
 class T2;
 
 base class Base(T:! type) {
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+6]]:42: error: cannot implicitly convert expression of type `T1*` to `T2*` [ConversionFailure]
-  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T1*) { }
-  // CHECK:STDERR:                                          ^~~~~~
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+3]]:42: note: type `T1*` does not implement interface `Core.ImplicitAs(T2*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T1*) { }
-  // CHECK:STDERR:                                          ^~~~~~
   virtual fn F[unused self: Self](unused t: T1*) { }
 }
 
@@ -456,16 +452,12 @@ class D1 {
 }
 
 // --- fail_impl_generic_generic_mismatch.carbon
+// CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon: error: cannot implicitly convert expression of type `T*` to `T` [ConversionFailure]
+// CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon: note: type `T*` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessInContext]
 
 library "[[@TEST_NAME]]";
 
 abstract class Base(T:! type) {
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+6]]:42: error: cannot implicitly convert expression of type `T*` to `T` [ConversionFailure]
-  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T*) { }
-  // CHECK:STDERR:                                          ^~~~~
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+3]]:42: note: type `T*` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T*) { }
-  // CHECK:STDERR:                                          ^~~~~
   virtual fn F[unused self: Self](unused t: T*) { }
 }
 class Derived(T:! type) {
@@ -1087,7 +1079,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %Derived.F.type.48cdab.1 = name_ref F, @Derived.%Derived.F.decl.loc15_30.1 [concrete = constants.%Derived.F.bd5be1.1]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc15_30.1: ref %AbstractIntermediate = enclosing_class_access %.loc5_21.2, element0
+// CHECK:STDOUT:   %.loc15_30.1: ref %AbstractIntermediate = enclosing_class_access %.2, element0
 // CHECK:STDOUT:   %.loc15_30.2: ref %Derived = enclosing_class_access %.loc15_30.1, element0
 // CHECK:STDOUT:   %.loc15_30.3: %Derived = acquire_value %.loc15_30.2
 // CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %.loc15_30.3, %F.ref
@@ -1158,7 +1150,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %Derived.F.type.48cdab.1 = name_ref F, @Derived.%Derived.F.decl.loc15_30.1 [concrete = constants.%Derived.F.bd5be1.1]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc15_30.1: ref %VirtualIntermediate = enclosing_class_access %.loc5_20.2, element0
+// CHECK:STDOUT:   %.loc15_30.1: ref %VirtualIntermediate = enclosing_class_access %.2, element0
 // CHECK:STDOUT:   %.loc15_30.2: ref %Derived = enclosing_class_access %.loc15_30.1, element0
 // CHECK:STDOUT:   %.loc15_30.3: %Derived = acquire_value %.loc15_30.2
 // CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %.loc15_30.3, %F.ref
@@ -1235,7 +1227,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %Derived.F.type.48cdab.1 = name_ref F, @Derived.%Derived.F.decl.loc23_36.1 [concrete = constants.%Derived.F.bd5be1.1]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc23_36.1: ref %Derived = enclosing_class_access %.loc17_20.2, element0
+// CHECK:STDOUT:   %.loc23_36.1: ref %Derived = enclosing_class_access %.3, element0
 // CHECK:STDOUT:   %.loc23_36.2: %Derived = acquire_value %.loc23_36.1
 // CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %.loc23_36.2, %F.ref
 // CHECK:STDOUT:   %.loc23_36.3: ref %T2 = temporary_storage
@@ -1245,7 +1237,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc23_36.4: ref %T2 = temporary %.loc23_36.3, %Derived.F.call
 // CHECK:STDOUT:   %.loc23_36.5: %T2 = acquire_value %.loc23_36.4
-// CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert.call: init %T1 to %.loc17_33 = call %bound_method(%.loc23_36.5)
+// CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert.call: init %T1 to %.4 = call %bound_method(%.loc23_36.5)
 // CHECK:STDOUT:   %.loc23_36.6: init %T1 = converted %Derived.F.call, %T2.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc23_36.4, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc23_36.4)
@@ -1528,7 +1520,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %D1.F.type.48cdab.1 = name_ref F, @D1.%D1.F.decl.loc11_57.1 [concrete = constants.%D1.F.bd5be1.1]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc11_57.1: ref %D1 = enclosing_class_access %.loc5_27.3, element0
+// CHECK:STDOUT:   %.loc11_57.1: ref %D1 = enclosing_class_access %.3, element0
 // CHECK:STDOUT:   %.loc11_57.2: %D1 = acquire_value %.loc11_57.1
 // CHECK:STDOUT:   %D1.F.bound: <bound method> = bound_method %.loc11_57.2, %F.ref
 // CHECK:STDOUT:   %D1.F.call: init %empty_tuple.type = call %D1.F.bound(%.loc11_57.2, %t.param)
@@ -1665,7 +1657,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %.loc10_50.1: @Derived.F.loc10_50.2.%Derived.F.type (%Derived.F.type.77405e.1) = specific_constant @Derived.%Derived.F.decl.loc10_50.1, @Derived(constants.%T) [symbolic = %Derived.F (constants.%Derived.F.d85493.1)]
 // CHECK:STDOUT:     %F.ref: @Derived.F.loc10_50.2.%Derived.F.type (%Derived.F.type.77405e.1) = name_ref F, %.loc10_50.1 [symbolic = %Derived.F (constants.%Derived.F.d85493.1)]
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %.loc10_50.2: ref @Derived.F.loc10_50.2.%Derived (%Derived) = enclosing_class_access %.loc5_27.3, element0
+// CHECK:STDOUT:     %.loc10_50.2: ref @Derived.F.loc10_50.2.%Derived (%Derived) = enclosing_class_access %.5, element0
 // CHECK:STDOUT:     %.loc10_50.3: @Derived.F.loc10_50.2.%Derived (%Derived) = acquire_value %.loc10_50.2
 // CHECK:STDOUT:     %Derived.F.bound: <bound method> = bound_method %.loc10_50.3, %F.ref
 // CHECK:STDOUT:     %Derived.F.specific_fn.loc10_50.1: <specific function> = specific_function %F.ref, @Derived.F.loc10_50.1(constants.%T) [symbolic = %Derived.F.specific_fn.loc10_50.2 (constants.%Derived.F.specific_fn.822c1a.2)]
@@ -1714,16 +1706,16 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %ptr => constants.%ptr.e8f
 // CHECK:STDOUT:   %Base => constants.%Base.99a
-// CHECK:STDOUT:   %pattern_type.loc5_27 => constants.%pattern_type.bdc
+// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.bdc
 // CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.c5a
-// CHECK:STDOUT:   %self.patt.loc5_27.2 => constants.%self.patt.489
-// CHECK:STDOUT:   %pattern_type.loc5_43 => constants.%pattern_type.4f4
+// CHECK:STDOUT:   %self.patt.2 => constants.%self.patt.489
+// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.4f4
 // CHECK:STDOUT:   %t.param_patt => constants.%t.param_patt.47b
-// CHECK:STDOUT:   %t.patt.loc5_43.2 => constants.%t.patt.14f0ed.1
+// CHECK:STDOUT:   %t.patt.2 => constants.%t.patt.14f0ed.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc5_27 => constants.%require_complete.29f
-// CHECK:STDOUT:   %require_complete.loc5_43 => constants.%require_complete.ef1
+// CHECK:STDOUT:   %require_complete.1 => constants.%require_complete.29f
+// CHECK:STDOUT:   %require_complete.2 => constants.%require_complete.ef1
 // CHECK:STDOUT:   %Derived.F.type => constants.%Derived.F.type.77405e.1
 // CHECK:STDOUT:   %Derived.F => constants.%Derived.F.d85493.1
 // CHECK:STDOUT:   %Derived => constants.%Derived

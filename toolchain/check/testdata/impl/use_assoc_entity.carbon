@@ -394,13 +394,11 @@ impl C2 as J2 where .U2 = C2 {
 }
 
 // --- fail_associated_type_in_signature_mismatch.carbon
+// CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon: error: cannot convert from struct type `{.a: ()}` to `{.x: ()}`: unexpected field `a` in source type [StructInitUnexpectedFieldInConversion]
 library "[[@TEST_NAME]]";
 
 interface K {
   let V:! type;
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+3]]:20: error: cannot convert from struct type `{.a: ()}` to `{.x: ()}`: unexpected field `a` in source type [StructInitUnexpectedFieldInConversion]
-  // CHECK:STDERR:   fn F[self: Self](v: V) -> V;
-  // CHECK:STDERR:                    ^~~~
   fn F[self: Self](v: V) -> V;
 }
 

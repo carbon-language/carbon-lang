@@ -279,8 +279,8 @@ auto WrapInstForSpecific(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(type_id.has_value(), "Missing type for {0}",
                context.insts().Get(inst_id));
 
-  // If the named entity has a constant value that depends on its specific,
-  // store the specific too.
+  // If `inst_id` has a constant value that depends on its specific, store the
+  // specific too.
   if (specific_id.has_value() &&
       context.constant_values().Get(inst_id).is_symbolic()) {
     inst_id = AddInst<SemIR::SpecificConstant>(

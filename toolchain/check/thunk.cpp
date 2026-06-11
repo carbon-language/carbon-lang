@@ -142,12 +142,9 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
                                           inst_id);
   };
 
-  if (auto loaded_ref =
-          context.insts().TryGetAs<SemIR::ImportRefLoaded>(pattern_id)) {
-    auto pattern_const_id = SemIR::GetConstantValueInSpecific(
-        context.sem_ir(), specific_id, pattern_id);
-    pattern_id = context.constant_values().GetInstId(pattern_const_id);
-  }
+  auto pattern_const_id = SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), specific_id, pattern_id);
+  pattern_id = context.constant_values().GetInstId(pattern_const_id);
   auto pattern = context.insts().Get(pattern_id);
 
   // Decompose the pattern. The forms we allow for patterns in a function
@@ -348,12 +345,6 @@ static auto BuildThunkDefinition(Context& context,
                                  SemIR::InstId thunk_id,
                                  SemIR::InstId callee_id,
                                  SemIR::TypeId override_self_type_id) -> void {
-  // TODO: Improve the diagnostics produced here. Specifically, it would likely
-  // be better for the primary error message to be that we tried to produce a
-  // thunk because of a type mismatch, but couldn't, with notes explaining
-  // why, rather than the primary error message being whatever went wrong
-  // building the thunk.
-
   StartThunkFunctionDefinition(context, function_id, thunk_id, callee_id);
 
   // The checks below produce diagnostics pointing at the callee, so also note
@@ -491,8 +482,10 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   context.scope_stack().PushForDeclName();
 
   // We can't use the function directly. Build a thunk.
-  // TODO: Check for and diagnose obvious reasons why this will fail, such as
-  // arity mismatch, before trying to build the thunk.
+  // TODO: Before building the thunk, check for and diagnose any reasons why
+  // that would fail. Diagnostics emitted while building the thunk aren't
+  // meaningful to users, because they point to errors in code that the user
+  // didn't write (and doesn't have a correct location).
   auto [function_id, thunk_inst_id] =
       CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
                         signature_specific_id, callee.function_id);

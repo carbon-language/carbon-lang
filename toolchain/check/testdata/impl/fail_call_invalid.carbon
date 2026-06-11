@@ -134,9 +134,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self: <error> = value_binding self, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.decl.loc24_27.2: %i32.as.Simple.impl.G.type.321a2c.2 = fn_decl @i32.as.Simple.impl.G.loc24_27.2 [concrete = constants.%i32.as.Simple.impl.G.d407b2.2] {
-// CHECK:STDOUT:     %.loc16_12.1: %pattern_type.6b6 = specific_constant @Simple.WithSelf.G.%self.param_patt.loc16_12.1, @Simple.WithSelf.G(constants.%Simple.facet) [concrete = constants.%self.param_patt.049]
-// CHECK:STDOUT:     %self.patt: %pattern_type.6b6 = at_binding_pattern self, %.loc16_12.1 [concrete = constants.%self.patt.f6c]
-// CHECK:STDOUT:     %.loc16_12.2: %pattern_type.6b6 = specific_constant @Simple.WithSelf.G.%self.param_patt.loc16_12.1, @Simple.WithSelf.G(constants.%Simple.facet) [concrete = constants.%self.param_patt.049]
+// CHECK:STDOUT:     %.1: %pattern_type.6b6 = specific_constant constants.%self.param_patt.049, @Simple.WithSelf.G(constants.%Simple.facet) [concrete = constants.%self.param_patt.049]
+// CHECK:STDOUT:     %self.patt: %pattern_type.6b6 = at_binding_pattern self, %.1 [concrete = constants.%self.patt.f6c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %self: %i32 = value_binding self, %self.param
