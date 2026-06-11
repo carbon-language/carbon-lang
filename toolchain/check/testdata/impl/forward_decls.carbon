@@ -1329,11 +1329,9 @@ impl C as Y {}
 // CHECK:STDOUT:     %x.patt: %pattern_type.0a8 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param.loc8: %C.fd5 = value_param call_param0
-// CHECK:STDOUT:     %.loc8_12.1: type = splice_block %C.loc8 [concrete = constants.%C.fd5] {
+// CHECK:STDOUT:     %.loc8: type = splice_block %C.loc8 [concrete = constants.%C.fd5] {
 // CHECK:STDOUT:       %C.ref.loc8: %C.type = name_ref C, file.%C.decl.loc6 [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %D.ref.loc8: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:       %I.facet.loc8: %I.type = facet_value %D.ref.loc8, (constants.%I.impl_witness) [concrete = constants.%I.facet]
-// CHECK:STDOUT:       %.loc8_12.2: %I.type = converted %D.ref.loc8, %I.facet.loc8 [concrete = constants.%I.facet]
 // CHECK:STDOUT:       %C.loc8: type = class_type @C, @C(constants.%I.facet) [concrete = constants.%C.fd5]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x.loc8: %C.fd5 = value_binding x, %x.param.loc8
@@ -1357,11 +1355,9 @@ impl C as Y {}
 // CHECK:STDOUT:     %x.patt: %pattern_type.0a8 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param.loc14: %C.fd5 = value_param call_param0
-// CHECK:STDOUT:     %.loc14_19.1: type = splice_block %C.loc14 [concrete = constants.%C.fd5] {
+// CHECK:STDOUT:     %.loc14: type = splice_block %C.loc14 [concrete = constants.%C.fd5] {
 // CHECK:STDOUT:       %C.ref.loc14: %C.type = name_ref C, file.%C.decl.loc6 [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %D.ref.loc14: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:       %I.facet.loc14: %I.type = facet_value %D.ref.loc14, (constants.%I.impl_witness) [concrete = constants.%I.facet]
-// CHECK:STDOUT:       %.loc14_19.2: %I.type = converted %D.ref.loc14, %I.facet.loc14 [concrete = constants.%I.facet]
 // CHECK:STDOUT:       %C.loc14: type = class_type @C, @C(constants.%I.facet) [concrete = constants.%C.fd5]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x.loc14: %C.fd5 = value_binding x, %x.param.loc14
@@ -1856,14 +1852,10 @@ impl C as Y {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl.loc6 [concrete = constants.%F]
 // CHECK:STDOUT:   %C.ref.loc27: type = name_ref C, file.%C.decl.loc9 [concrete = constants.%C]
-// CHECK:STDOUT:   %X.facet.loc27: %X.type = facet_value %C.ref.loc27, (constants.%X.impl_witness) [concrete = constants.%X.facet]
-// CHECK:STDOUT:   %.loc27: %X.type = converted %C.ref.loc27, %X.facet.loc27 [concrete = constants.%X.facet]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%X.facet) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl.loc7 [concrete = constants.%G]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %X.facet.loc28: %X.type = facet_value constants.%C, (constants.%X.impl_witness) [concrete = constants.%X.facet]
-// CHECK:STDOUT:   %.loc28: %X.type = converted constants.%C, %X.facet.loc28 [concrete = constants.%X.facet]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%X.facet) [concrete = constants.%G.specific_fn]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn(%c.ref)
 // CHECK:STDOUT:   return

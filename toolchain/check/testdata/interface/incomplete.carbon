@@ -451,8 +451,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.as_type.loc11_18.1: type = facet_access_type @A.%Self.loc3_23.1 [symbolic = %Self.as_type.loc11_18.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %A.ref: %A.type.55a = name_ref A, file.%A.decl [concrete = constants.%A.generic]
-// CHECK:STDOUT:       %.loc11_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc11_28: type = converted %.loc11_27, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:       %.loc11: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %A.type.loc11_28: type = facet_type <@A, @A(constants.%empty_struct_type)> [concrete = constants.%A.type.0aa]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:

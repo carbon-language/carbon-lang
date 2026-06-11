@@ -179,8 +179,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeNull.ref.loc10: %MakeNull.type = name_ref MakeNull, file.%MakeNull.decl [concrete = constants.%MakeNull]
-// CHECK:STDOUT:   %.loc10_38: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_39: type = converted %.loc10_38, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %MakeNull.specific_fn.loc10: <specific function> = specific_function %MakeNull.ref.loc10, @MakeNull(constants.%empty_struct_type) [concrete = constants.%MakeNull.specific_fn.391]
 // CHECK:STDOUT:   %MakeNull.call.loc10: init %.b2d = call %MakeNull.specific_fn.loc10()
 // CHECK:STDOUT:   %MakeNull.ref.loc11: %MakeNull.type = name_ref MakeNull, file.%MakeNull.decl [concrete = constants.%MakeNull]

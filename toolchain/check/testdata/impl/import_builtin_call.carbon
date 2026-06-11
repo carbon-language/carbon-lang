@@ -175,8 +175,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %FromLiteral.ref.loc7: %FromLiteral.type = name_ref FromLiteral, imports.%Main.FromLiteral [concrete = constants.%FromLiteral]
 // CHECK:STDOUT:   %int_64.loc7: Core.IntLiteral = int_value 64 [concrete = constants.%int_64.fab]
 // CHECK:STDOUT:   %FromLiteral.call.loc7: init %i32.builtin = call %FromLiteral.ref.loc7(%int_64.loc7) [concrete = constants.%int_64.f82]
-// CHECK:STDOUT:   %.loc7_38.1: %i32.builtin = value_of_initializer %FromLiteral.call.loc7 [concrete = constants.%int_64.f82]
-// CHECK:STDOUT:   %.loc7_38.2: %i32.builtin = converted %FromLiteral.call.loc7, %.loc7_38.1 [concrete = constants.%int_64.f82]
 // CHECK:STDOUT:   %Make.specific_fn: <specific function> = specific_function %Make.ref, @Make(constants.%int_64.f82) [concrete = constants.%Make.specific_fn.bb3]
 // CHECK:STDOUT:   %Make.call: init %i64.builtin = call %Make.specific_fn()
 // CHECK:STDOUT:   assign file.%m.var, %Make.call
@@ -187,8 +185,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %OtherInt.ref: type = name_ref OtherInt, imports.%Main.OtherInt [concrete = constants.%OtherInt]
 // CHECK:STDOUT:   %.loc8_48.1: init %OtherInt = as_compatible %FromLiteral.call.loc8 [concrete = constants.%int_64.420]
 // CHECK:STDOUT:   %.loc8_48.2: init %OtherInt = converted %FromLiteral.call.loc8, %.loc8_48.1 [concrete = constants.%int_64.420]
-// CHECK:STDOUT:   %.loc8_59.1: %OtherInt = value_of_initializer %.loc8_48.2 [concrete = constants.%int_64.420]
-// CHECK:STDOUT:   %.loc8_59.2: %OtherInt = converted %.loc8_48.2, %.loc8_59.1 [concrete = constants.%int_64.420]
 // CHECK:STDOUT:   %MakeFromClass.specific_fn: <specific function> = specific_function %MakeFromClass.ref, @MakeFromClass(constants.%int_64.420) [concrete = constants.%MakeFromClass.specific_fn.3a7]
 // CHECK:STDOUT:   %MakeFromClass.call: init %i64.builtin = call %MakeFromClass.specific_fn()
 // CHECK:STDOUT:   assign file.%n.var, %MakeFromClass.call

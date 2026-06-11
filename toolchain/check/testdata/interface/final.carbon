@@ -252,19 +252,16 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:   %T.loc12_10.1: %J.type = symbolic_binding T, 0 [symbolic = %T.loc12_10.1 (constants.%T.e40)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc12_24.2: type = facet_access_type %T.loc12_10.1 [symbolic = %T.as_type.loc12_24.2 (constants.%T.as_type.d90)]
-// CHECK:STDOUT:   %.loc12_24.2: require_specific_def_type = require_specific_def @T.as_type.as.I.impl(%T.loc12_10.1) [symbolic = %.loc12_24.2 (constants.%.062)]
+// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.loc12_10.1 [symbolic = %T.as_type (constants.%T.as_type.d90)]
+// CHECK:STDOUT:   %.loc12_24: require_specific_def_type = require_specific_def @T.as_type.as.I.impl(%T.loc12_10.1) [symbolic = %.loc12_24 (constants.%.062)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @T.as_type.as.I.impl.%I.impl_witness_table, @T.as_type.as.I.impl(%T.loc12_10.1) [symbolic = %I.impl_witness (constants.%I.impl_witness.333)]
-// CHECK:STDOUT:   %I.facet.loc12_24.2: %I.type = facet_value %T.as_type.loc12_24.2, (%I.impl_witness) [symbolic = %I.facet.loc12_24.2 (constants.%I.facet.39f)]
-// CHECK:STDOUT:   %UseI.specific_fn.loc12_18.2: <specific function> = specific_function constants.%UseI, @UseI(%I.facet.loc12_24.2) [symbolic = %UseI.specific_fn.loc12_18.2 (constants.%UseI.specific_fn.081)]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type, (%I.impl_witness) [symbolic = %I.facet (constants.%I.facet.39f)]
+// CHECK:STDOUT:   %UseI.specific_fn.loc12_18.2: <specific function> = specific_function constants.%UseI, @UseI(%I.facet) [symbolic = %UseI.specific_fn.loc12_18.2 (constants.%UseI.specific_fn.081)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %UseI.ref: %UseI.type = name_ref UseI, file.%UseI.decl [concrete = constants.%UseI]
 // CHECK:STDOUT:     %T.ref: %J.type = name_ref T, %T.loc12_10.2 [symbolic = %T.loc12_10.1 (constants.%T.e40)]
-// CHECK:STDOUT:     %T.as_type.loc12_24.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc12_24.2 (constants.%T.as_type.d90)]
-// CHECK:STDOUT:     %I.facet.loc12_24.1: %I.type = facet_value %T.as_type.loc12_24.1, (constants.%I.impl_witness.333) [symbolic = %I.facet.loc12_24.2 (constants.%I.facet.39f)]
-// CHECK:STDOUT:     %.loc12_24.1: %I.type = converted %T.ref, %I.facet.loc12_24.1 [symbolic = %I.facet.loc12_24.2 (constants.%I.facet.39f)]
 // CHECK:STDOUT:     %UseI.specific_fn.loc12_18.1: <specific function> = specific_function %UseI.ref, @UseI(constants.%I.facet.39f) [symbolic = %UseI.specific_fn.loc12_18.2 (constants.%UseI.specific_fn.081)]
 // CHECK:STDOUT:     %UseI.call: init %empty_tuple.type = call %UseI.specific_fn.loc12_18.1()
 // CHECK:STDOUT:     return
@@ -275,8 +272,6 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %UseJ.ref: %UseJ.type = name_ref UseJ, file.%UseJ.decl [concrete = constants.%UseJ]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %J.facet: %J.type = facet_value %C.ref, (constants.%J.impl_witness) [concrete = constants.%J.facet]
-// CHECK:STDOUT:   %.loc16: %J.type = converted %C.ref, %J.facet [concrete = constants.%J.facet]
 // CHECK:STDOUT:   %UseJ.specific_fn: <specific function> = specific_function %UseJ.ref, @UseJ(constants.%J.facet) [concrete = constants.%UseJ.specific_fn]
 // CHECK:STDOUT:   %UseJ.call: init %empty_tuple.type = call %UseJ.specific_fn()
 // CHECK:STDOUT:   return
@@ -355,10 +350,10 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:   %T.loc12_10.1 => constants.%J.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc12_24.2 => constants.%C
-// CHECK:STDOUT:   %.loc12_24.2 => constants.%.72e
+// CHECK:STDOUT:   %T.as_type => constants.%C
+// CHECK:STDOUT:   %.loc12_24 => constants.%.72e
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.9d5
-// CHECK:STDOUT:   %I.facet.loc12_24.2 => constants.%I.facet.ed7
+// CHECK:STDOUT:   %I.facet => constants.%I.facet.ed7
 // CHECK:STDOUT:   %UseI.specific_fn.loc12_18.2 => constants.%UseI.specific_fn.238
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

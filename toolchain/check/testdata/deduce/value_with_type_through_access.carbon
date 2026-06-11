@@ -252,8 +252,6 @@ fn G() {
 // CHECK:STDOUT:   %HoldsType.ref: %HoldsType.type = name_ref HoldsType, file.%HoldsType.decl [concrete = constants.%HoldsType.generic]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc13_25: %tuple.type = tuple_literal (%C.ref) [concrete = constants.%tuple.e45]
-// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%C.ref) [concrete = constants.%tuple.e45]
-// CHECK:STDOUT:   %.loc13_26: %tuple.type = converted %.loc13_25, %tuple [concrete = constants.%tuple.e45]
 // CHECK:STDOUT:   %HoldsType: type = class_type @HoldsType, @HoldsType(constants.%tuple.e45) [concrete = constants.%HoldsType.30f]
 // CHECK:STDOUT:   %.loc13_6.2: ref %HoldsType.30f = temporary_storage
 // CHECK:STDOUT:   %.loc13_6.3: init %HoldsType.30f to %.loc13_6.2 = class_init () [concrete = constants.%HoldsType.val]
@@ -465,8 +463,6 @@ fn G() {
 // CHECK:STDOUT:   %HoldsType.ref: %HoldsType.type = name_ref HoldsType, file.%HoldsType.decl [concrete = constants.%HoldsType.generic]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc13_28: %struct_type.t = struct_literal (%C.ref) [concrete = constants.%struct]
-// CHECK:STDOUT:   %struct: %struct_type.t = struct_value (%C.ref) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc13_29: %struct_type.t = converted %.loc13_28, %struct [concrete = constants.%struct]
 // CHECK:STDOUT:   %HoldsType: type = class_type @HoldsType, @HoldsType(constants.%struct) [concrete = constants.%HoldsType.53c]
 // CHECK:STDOUT:   %.loc13_6.2: ref %HoldsType.53c = temporary_storage
 // CHECK:STDOUT:   %.loc13_6.3: init %HoldsType.53c to %.loc13_6.2 = class_init () [concrete = constants.%HoldsType.val]
@@ -577,13 +573,6 @@ fn G() {
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.t = struct_value (%C) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.638: <witness> = impl_witness imports.%Copy.impl_witness_table.4d6 [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.638) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.8b3: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.524: type = fn_type_with_self_type %Copy.WithSelf.Op.type.8b3, %Copy.facet [concrete]
-// CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
-// CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %type.as.Copy.impl.Op.bound: <bound method> = bound_method %C, %type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %Class.val: %Class = struct_value (%C) [concrete]
 // CHECK:STDOUT:   %.0de: ref %Class = temporary invalid, %Class.val [concrete]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%Class.val) [concrete]
@@ -613,8 +602,6 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.9c3: %type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.Copy.impl.Op]
-// CHECK:STDOUT:   %Copy.impl_witness_table.4d6 = impl_witness_table (%Core.import_ref.9c3), @type.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -734,15 +721,15 @@ fn G() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HoldsType.loc26_22.2 [symbolic = %require_complete (constants.%require_complete.6f4d7d.2)]
 // CHECK:STDOUT:   %HoldsType.val: @G.%HoldsType.loc26_22.2 (%HoldsType.3500da.2) = struct_value () [symbolic = %HoldsType.val (constants.%HoldsType.val.7f1)]
 // CHECK:STDOUT:   %F.specific_fn.loc26_3.2: <specific function> = specific_function constants.%F, @F(%c.loc25_7.1) [symbolic = %F.specific_fn.loc26_3.2 (constants.%F.specific_fn.7ee)]
-// CHECK:STDOUT:   %.loc26_8.5: ref @G.%HoldsType.loc26_22.2 (%HoldsType.3500da.2) = temporary invalid, %HoldsType.val [symbolic = %.loc26_8.5 (constants.%.e1a)]
+// CHECK:STDOUT:   %.loc26_8.4: ref @G.%HoldsType.loc26_22.2 (%HoldsType.3500da.2) = temporary invalid, %HoldsType.val [symbolic = %.loc26_8.4 (constants.%.e1a)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %HoldsType.loc26_22.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
-// CHECK:STDOUT:   %Destroy.facet.loc26_8.2: %Destroy.type = facet_value %HoldsType.loc26_22.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc26_8.2 (constants.%Destroy.facet.833)]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.loc26_8.2) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.646)]
-// CHECK:STDOUT:   %.loc26_8.6: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Destroy.facet.loc26_8.2 [symbolic = %.loc26_8.6 (constants.%.ff0)]
-// CHECK:STDOUT:   %impl.elem0.loc26_8.2: @G.%.loc26_8.6 (%.ff0) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc26_8.2 (constants.%impl.elem0.c88)]
-// CHECK:STDOUT:   %bound_method.loc26_8.3: <bound method> = bound_method %.loc26_8.5, %impl.elem0.loc26_8.2 [symbolic = %bound_method.loc26_8.3 (constants.%bound_method.c32)]
-// CHECK:STDOUT:   %specific_impl_fn.loc26_8.2: <specific function> = specific_impl_function %impl.elem0.loc26_8.2, @Destroy.WithSelf.Op(%Destroy.facet.loc26_8.2) [symbolic = %specific_impl_fn.loc26_8.2 (constants.%specific_impl_fn.b17)]
-// CHECK:STDOUT:   %bound_method.loc26_8.4: <bound method> = bound_method %.loc26_8.5, %specific_impl_fn.loc26_8.2 [symbolic = %bound_method.loc26_8.4 (constants.%bound_method.8d3)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %HoldsType.loc26_22.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.833)]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.646)]
+// CHECK:STDOUT:   %.loc26_8.5: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Destroy.facet [symbolic = %.loc26_8.5 (constants.%.ff0)]
+// CHECK:STDOUT:   %impl.elem0.loc26_8.2: @G.%.loc26_8.5 (%.ff0) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc26_8.2 (constants.%impl.elem0.c88)]
+// CHECK:STDOUT:   %bound_method.loc26_8.3: <bound method> = bound_method %.loc26_8.4, %impl.elem0.loc26_8.2 [symbolic = %bound_method.loc26_8.3 (constants.%bound_method.c32)]
+// CHECK:STDOUT:   %specific_impl_fn.loc26_8.2: <specific function> = specific_impl_function %impl.elem0.loc26_8.2, @Destroy.WithSelf.Op(%Destroy.facet) [symbolic = %specific_impl_fn.loc26_8.2 (constants.%specific_impl_fn.b17)]
+// CHECK:STDOUT:   %bound_method.loc26_8.4: <bound method> = bound_method %.loc26_8.4, %specific_impl_fn.loc26_8.2 [symbolic = %bound_method.loc26_8.4 (constants.%bound_method.8d3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -756,13 +743,11 @@ fn G() {
 // CHECK:STDOUT:     %.loc26_8.1: init @G.%HoldsType.loc26_22.2 (%HoldsType.3500da.2) = converted %.loc26_6.1, %.loc26_6.3 [symbolic = %HoldsType.val (constants.%HoldsType.val.7f1)]
 // CHECK:STDOUT:     %.loc26_26: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %F.specific_fn.loc26_3.1: <specific function> = specific_function %F.ref, @F(constants.%c) [symbolic = %F.specific_fn.loc26_3.2 (constants.%F.specific_fn.7ee)]
-// CHECK:STDOUT:     %.loc26_8.2: ref @G.%HoldsType.loc26_22.2 (%HoldsType.3500da.2) = temporary %.loc26_6.2, %.loc26_8.1 [symbolic = %.loc26_8.5 (constants.%.e1a)]
+// CHECK:STDOUT:     %.loc26_8.2: ref @G.%HoldsType.loc26_22.2 (%HoldsType.3500da.2) = temporary %.loc26_6.2, %.loc26_8.1 [symbolic = %.loc26_8.4 (constants.%.e1a)]
 // CHECK:STDOUT:     %.loc26_8.3: @G.%HoldsType.loc26_22.2 (%HoldsType.3500da.2) = acquire_value %.loc26_8.2 [symbolic = %HoldsType.val (constants.%HoldsType.val.7f1)]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc26_3.1(%.loc26_8.3, <error>)
-// CHECK:STDOUT:     %impl.elem0.loc26_8.1: @G.%.loc26_8.6 (%.ff0) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc26_8.2 (constants.%impl.elem0.c88)]
+// CHECK:STDOUT:     %impl.elem0.loc26_8.1: @G.%.loc26_8.5 (%.ff0) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc26_8.2 (constants.%impl.elem0.c88)]
 // CHECK:STDOUT:     %bound_method.loc26_8.1: <bound method> = bound_method %.loc26_8.2, %impl.elem0.loc26_8.1 [symbolic = %bound_method.loc26_8.3 (constants.%bound_method.c32)]
-// CHECK:STDOUT:     %Destroy.facet.loc26_8.1: %Destroy.type = facet_value constants.%HoldsType.3500da.2, (constants.%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc26_8.2 (constants.%Destroy.facet.833)]
-// CHECK:STDOUT:     %.loc26_8.4: %Destroy.type = converted constants.%HoldsType.3500da.2, %Destroy.facet.loc26_8.1 [symbolic = %Destroy.facet.loc26_8.2 (constants.%Destroy.facet.833)]
 // CHECK:STDOUT:     %specific_impl_fn.loc26_8.1: <specific function> = specific_impl_function %impl.elem0.loc26_8.1, @Destroy.WithSelf.Op(constants.%Destroy.facet.833) [symbolic = %specific_impl_fn.loc26_8.2 (constants.%specific_impl_fn.b17)]
 // CHECK:STDOUT:     %bound_method.loc26_8.2: <bound method> = bound_method %.loc26_8.2, %specific_impl_fn.loc26_8.1 [symbolic = %bound_method.loc26_8.4 (constants.%bound_method.8d3)]
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc26_8.2(%.loc26_8.2)
@@ -776,17 +761,7 @@ fn G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc30_12.1: %struct_type.t = struct_literal (%C.ref) [concrete = constants.%struct]
-// CHECK:STDOUT:   %impl.elem0: %.524 = impl_witness_access constants.%Copy.impl_witness.638, element0 [concrete = constants.%type.as.Copy.impl.Op]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %C.ref, %impl.elem0 [concrete = constants.%type.as.Copy.impl.Op.bound]
-// CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%C.ref) [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc30_12.2: ref %Class = temporary_storage
-// CHECK:STDOUT:   %.loc30_12.3: ref type = class_element_access %.loc30_12.2, element0
-// CHECK:STDOUT:   %.loc30_12.4: init type to %.loc30_12.3 = in_place_init %type.as.Copy.impl.Op.call [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc30_12.5: init %Class to %.loc30_12.2 = class_init (%.loc30_12.4) [concrete = constants.%Class.val]
-// CHECK:STDOUT:   %.loc30_13.1: init %Class = converted %.loc30_12.1, %.loc30_12.5 [concrete = constants.%Class.val]
-// CHECK:STDOUT:   %.loc30_13.2: ref %Class = temporary %.loc30_12.2, %.loc30_13.1 [concrete = constants.%.0de]
-// CHECK:STDOUT:   %.loc30_13.3: %Class = acquire_value %.loc30_13.2 [concrete = constants.%Class.val]
+// CHECK:STDOUT:   %.loc30: %struct_type.t = struct_literal (%C.ref) [concrete = constants.%struct]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%Class.val) [concrete = constants.%G.specific_fn]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn()
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound.eb8(constants.%.0de)
@@ -851,11 +826,11 @@ fn G() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.357
 // CHECK:STDOUT:   %HoldsType.val => constants.%HoldsType.val.8bc
 // CHECK:STDOUT:   %F.specific_fn.loc26_3.2 => constants.%F.specific_fn.463
-// CHECK:STDOUT:   %.loc26_8.5 => constants.%.3f5
+// CHECK:STDOUT:   %.loc26_8.4 => constants.%.3f5
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.df9cc1.5
-// CHECK:STDOUT:   %Destroy.facet.loc26_8.2 => constants.%Destroy.facet.b45
+// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.b45
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.06d
-// CHECK:STDOUT:   %.loc26_8.6 => constants.%.db7
+// CHECK:STDOUT:   %.loc26_8.5 => constants.%.db7
 // CHECK:STDOUT:   %impl.elem0.loc26_8.2 => constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %bound_method.loc26_8.3 => constants.%Destroy.Op.bound.d49
 // CHECK:STDOUT:   %specific_impl_fn.loc26_8.2 => constants.%Destroy.Op.1a2547.5
@@ -1083,9 +1058,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc17_25.3: ref type = array_index %.loc17_25.2, %int_0
 // CHECK:STDOUT:   %.loc17_25.4: init type to %.loc17_25.3 = in_place_init %type.as.Copy.impl.Op.call [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc17_25.5: init %array_type to %.loc17_25.2 = array_init (%.loc17_25.4) [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc17_27.1: init %array_type = converted %.loc17_25.1, %.loc17_25.5 [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc17_27.2: ref %array_type = temporary %.loc17_25.2, %.loc17_27.1 [concrete = constants.%.1c6]
-// CHECK:STDOUT:   %.loc17_27.3: %array_type = acquire_value %.loc17_27.2 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc17_27: init %array_type = converted %.loc17_25.1, %.loc17_25.5 [concrete = constants.%array]
 // CHECK:STDOUT:   %HoldsType: type = class_type @HoldsType, @HoldsType(constants.%array) [concrete = constants.%HoldsType.f11]
 // CHECK:STDOUT:   %.loc17_6.2: ref %HoldsType.f11 = temporary_storage
 // CHECK:STDOUT:   %.loc17_6.3: init %HoldsType.f11 to %.loc17_6.2 = class_init () [concrete = constants.%HoldsType.val]

@@ -161,17 +161,14 @@ fn G(T:! Z) {
 // CHECK:STDOUT:   %T.loc9_7.1: %E2.type = symbolic_binding T, 0 [symbolic = %T.loc9_7.1 (constants.%T.f45530.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc10_6.2: type = facet_access_type %T.loc9_7.1 [symbolic = %T.as_type.loc10_6.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %E1.facet.loc10_6.2: %E1.type = facet_value %T.as_type.loc10_6.2, () [symbolic = %E1.facet.loc10_6.2 (constants.%E1.facet)]
-// CHECK:STDOUT:   %F.specific_fn.loc10_3.2: <specific function> = specific_function constants.%F, @F(%E1.facet.loc10_6.2) [symbolic = %F.specific_fn.loc10_3.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.loc9_7.1 [symbolic = %T.as_type (constants.%T.as_type)]
+// CHECK:STDOUT:   %E1.facet: %E1.type = facet_value %T.as_type, () [symbolic = %E1.facet (constants.%E1.facet)]
+// CHECK:STDOUT:   %F.specific_fn.loc10_3.2: <specific function> = specific_function constants.%F, @F(%E1.facet) [symbolic = %F.specific_fn.loc10_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref: %E2.type = name_ref T, %T.loc9_7.2 [symbolic = %T.loc9_7.1 (constants.%T.f45530.2)]
-// CHECK:STDOUT:     %T.as_type.loc10_6.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc10_6.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %E1.facet.loc10_6.1: %E1.type = facet_value %T.as_type.loc10_6.1, () [symbolic = %E1.facet.loc10_6.2 (constants.%E1.facet)]
-// CHECK:STDOUT:     %.loc10: %E1.type = converted %T.ref, %E1.facet.loc10_6.1 [symbolic = %E1.facet.loc10_6.2 (constants.%E1.facet)]
 // CHECK:STDOUT:     %F.specific_fn.loc10_3.1: <specific function> = specific_function %F.ref, @F(constants.%E1.facet) [symbolic = %F.specific_fn.loc10_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc10_3.1()
 // CHECK:STDOUT:     return

@@ -270,7 +270,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %.loc8_23.2: %ptr.d08 = acquire_value %.loc8_23.1
 // CHECK:STDOUT:   %.loc8_21.1: ref %i32 = deref %.loc8_23.2
 // CHECK:STDOUT:   %s.ref.loc8_28: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %q.ref: %Struct.elem.690 = name_ref q, @Struct.%.5 [concrete = @Struct.%.5]
+// CHECK:STDOUT:   %q.ref: %Struct.elem.690 = name_ref q, @Struct.%.4 [concrete = @Struct.%.4]
 // CHECK:STDOUT:   %.loc8_29.1: ref %Optional.815 = class_element_access %s.ref.loc8_28, element3
 // CHECK:STDOUT:   %.loc8_29.2: %Optional.815 = acquire_value %.loc8_29.1
 // CHECK:STDOUT:   %.loc8_31: %Optional.Get.type.e91 = specific_constant imports.%Core.import_ref.497, @Optional(constants.%OptionalStorage.facet) [concrete = constants.%Optional.Get.8af]
@@ -283,7 +283,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %.loc8_36.2: %ptr.d08 = converted %Optional.Get.call, %.loc8_36.1
 // CHECK:STDOUT:   %.loc8_27.1: ref %i32 = deref %.loc8_36.2
 // CHECK:STDOUT:   %s.ref.loc8_40: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %r.ref: %Struct.elem.6a0 = name_ref r, @Struct.%.6 [concrete = @Struct.%.6]
+// CHECK:STDOUT:   %r.ref: %Struct.elem.6a0 = name_ref r, @Struct.%.5 [concrete = @Struct.%.5]
 // CHECK:STDOUT:   %.loc8_41.1: ref %const.e2a = class_element_access %s.ref.loc8_40, element4
 // CHECK:STDOUT:   %.loc8_41.2: %const.e2a = acquire_value %.loc8_41.1
 // CHECK:STDOUT:   %.loc8_39.1: ref %i32 = deref %.loc8_41.2

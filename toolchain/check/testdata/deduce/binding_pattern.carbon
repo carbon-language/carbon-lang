@@ -357,8 +357,6 @@ fn F(unused U:! type, V:! Core.Destroy where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:       %Core.ref.loc9_55: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %ImplicitAs.ref: %ImplicitAs.type.0ff = name_ref ImplicitAs, imports.%Core.ImplicitAs [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:       %.Self.ref: %Destroy.type = name_ref .Self, %.Self.loc9_40 [symbolic_self = constants.%.Self.619]
-// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %.loc9_76: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %ImplicitAs.type.loc9: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%.Self.as_type)> [symbolic_self = constants.%ImplicitAs.type.71c]
 // CHECK:STDOUT:       %.loc9_47.2: type = converted %.loc9_47.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:       %.loc9_40.2: type = where_expr [concrete = constants.%Destroy_where.type] {
@@ -414,38 +412,36 @@ fn F(unused U:! type, V:! Core.Destroy where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %V.loc9_24.1: %Destroy_where.type = symbolic_binding V, 1 [symbolic = %V.loc9_24.1 (constants.%V)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %V.as_type.loc10_6.2: type = facet_access_type %V.loc9_24.1 [symbolic = %V.as_type.loc10_6.2 (constants.%V.as_type)]
-// CHECK:STDOUT:   %C.loc10_6.2: type = class_type @C, @C(%V.as_type.loc10_6.2) [symbolic = %C.loc10_6.2 (constants.%C.76a)]
+// CHECK:STDOUT:   %V.as_type: type = facet_access_type %V.loc9_24.1 [symbolic = %V.as_type (constants.%V.as_type)]
+// CHECK:STDOUT:   %C.loc10_6.2: type = class_type @C, @C(%V.as_type) [symbolic = %C.loc10_6.2 (constants.%C.76a)]
 // CHECK:STDOUT:   %require_complete.loc10_7: <witness> = require_complete_type %C.loc10_6.2 [symbolic = %require_complete.loc10_7 (constants.%require_complete.823)]
-// CHECK:STDOUT:   %C.Create.type: type = fn_type @C.Create, @C(%V.as_type.loc10_6.2) [symbolic = %C.Create.type (constants.%C.Create.type.b99)]
+// CHECK:STDOUT:   %C.Create.type: type = fn_type @C.Create, @C(%V.as_type) [symbolic = %C.Create.type (constants.%C.Create.type.b99)]
 // CHECK:STDOUT:   %C.Create: @F.%C.Create.type (%C.Create.type.b99) = struct_value () [symbolic = %C.Create (constants.%C.Create.d3c)]
-// CHECK:STDOUT:   %C.Create.specific_fn.loc10_7.2: <specific function> = specific_function %C.Create, @C.Create(%V.as_type.loc10_6.2) [symbolic = %C.Create.specific_fn.loc10_7.2 (constants.%C.Create.specific_fn)]
-// CHECK:STDOUT:   %require_complete.loc10_16.1: <witness> = require_complete_type %V.as_type.loc10_6.2 [symbolic = %require_complete.loc10_16.1 (constants.%require_complete.235)]
-// CHECK:STDOUT:   %ImplicitAs.type.loc10_16.2: type = facet_type <@ImplicitAs, @ImplicitAs(%V.as_type.loc10_6.2)> [symbolic = %ImplicitAs.type.loc10_16.2 (constants.%ImplicitAs.type.801)]
+// CHECK:STDOUT:   %C.Create.specific_fn.loc10_7.2: <specific function> = specific_function %C.Create, @C.Create(%V.as_type) [symbolic = %C.Create.specific_fn.loc10_7.2 (constants.%C.Create.specific_fn)]
+// CHECK:STDOUT:   %require_complete.loc10_16.1: <witness> = require_complete_type %V.as_type [symbolic = %require_complete.loc10_16.1 (constants.%require_complete.235)]
+// CHECK:STDOUT:   %ImplicitAs.type.loc10_16.2: type = facet_type <@ImplicitAs, @ImplicitAs(%V.as_type)> [symbolic = %ImplicitAs.type.loc10_16.2 (constants.%ImplicitAs.type.801)]
 // CHECK:STDOUT:   %require_complete.loc10_16.2: <witness> = require_complete_type %ImplicitAs.type.loc10_16.2 [symbolic = %require_complete.loc10_16.2 (constants.%require_complete.af0)]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%V.as_type.loc10_6.2) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.9d8)]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%V.as_type) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.9d8)]
 // CHECK:STDOUT:   %assoc0: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.9d8) = assoc_entity element0, imports.%Core.import_ref.cb2 [symbolic = %assoc0 (constants.%assoc0.cef)]
-// CHECK:STDOUT:   %ImplicitAs.lookup_impl_witness: <witness> = lookup_impl_witness constants.%empty_struct_type, @ImplicitAs, @ImplicitAs(%V.as_type.loc10_6.2) [symbolic = %ImplicitAs.lookup_impl_witness (constants.%ImplicitAs.lookup_impl_witness)]
+// CHECK:STDOUT:   %ImplicitAs.lookup_impl_witness: <witness> = lookup_impl_witness constants.%empty_struct_type, @ImplicitAs, @ImplicitAs(%V.as_type) [symbolic = %ImplicitAs.lookup_impl_witness (constants.%ImplicitAs.lookup_impl_witness)]
 // CHECK:STDOUT:   %ImplicitAs.facet: @F.%ImplicitAs.type.loc10_16.2 (%ImplicitAs.type.801) = facet_value constants.%empty_struct_type, (%ImplicitAs.lookup_impl_witness) [symbolic = %ImplicitAs.facet (constants.%ImplicitAs.facet)]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%V.as_type.loc10_6.2, %ImplicitAs.facet) [symbolic = %ImplicitAs.WithSelf.Convert.type (constants.%ImplicitAs.WithSelf.Convert.type.8ff)]
-// CHECK:STDOUT:   %.loc10_16.9: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type, %ImplicitAs.facet [symbolic = %.loc10_16.9 (constants.%.114)]
-// CHECK:STDOUT:   %impl.elem0.loc10_16.3: @F.%.loc10_16.9 (%.114) = impl_witness_access %ImplicitAs.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_16.3 (constants.%impl.elem0.0f0)]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%V.as_type, %ImplicitAs.facet) [symbolic = %ImplicitAs.WithSelf.Convert.type (constants.%ImplicitAs.WithSelf.Convert.type.8ff)]
+// CHECK:STDOUT:   %.loc10_16.8: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type, %ImplicitAs.facet [symbolic = %.loc10_16.8 (constants.%.114)]
+// CHECK:STDOUT:   %impl.elem0.loc10_16.3: @F.%.loc10_16.8 (%.114) = impl_witness_access %ImplicitAs.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_16.3 (constants.%impl.elem0.0f0)]
 // CHECK:STDOUT:   %bound_method.loc10_16.5: <bound method> = bound_method constants.%empty_struct, %impl.elem0.loc10_16.3 [symbolic = %bound_method.loc10_16.5 (constants.%bound_method.e59)]
-// CHECK:STDOUT:   %specific_impl_fn.loc10_16.3: <specific function> = specific_impl_function %impl.elem0.loc10_16.3, @ImplicitAs.WithSelf.Convert(%V.as_type.loc10_6.2, %ImplicitAs.facet) [symbolic = %specific_impl_fn.loc10_16.3 (constants.%specific_impl_fn.a2c)]
+// CHECK:STDOUT:   %specific_impl_fn.loc10_16.3: <specific function> = specific_impl_function %impl.elem0.loc10_16.3, @ImplicitAs.WithSelf.Convert(%V.as_type, %ImplicitAs.facet) [symbolic = %specific_impl_fn.loc10_16.3 (constants.%specific_impl_fn.a2c)]
 // CHECK:STDOUT:   %bound_method.loc10_16.6: <bound method> = bound_method constants.%empty_struct, %specific_impl_fn.loc10_16.3 [symbolic = %bound_method.loc10_16.6 (constants.%bound_method.fc7)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %V.loc9_24.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
-// CHECK:STDOUT:   %Destroy.facet.loc10_16.2: %Destroy.type = facet_value %V.as_type.loc10_6.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc10_16.2 (constants.%Destroy.facet)]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.loc10_16.2) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.c91)]
-// CHECK:STDOUT:   %.loc10_16.10: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Destroy.facet.loc10_16.2 [symbolic = %.loc10_16.10 (constants.%.8f3)]
-// CHECK:STDOUT:   %impl.elem0.loc10_16.4: @F.%.loc10_16.10 (%.8f3) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_16.4 (constants.%impl.elem0.f91)]
-// CHECK:STDOUT:   %specific_impl_fn.loc10_16.4: <specific function> = specific_impl_function %impl.elem0.loc10_16.4, @Destroy.WithSelf.Op(%Destroy.facet.loc10_16.2) [symbolic = %specific_impl_fn.loc10_16.4 (constants.%specific_impl_fn.b7b)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %V.as_type, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet)]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.c91)]
+// CHECK:STDOUT:   %.loc10_16.9: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Destroy.facet [symbolic = %.loc10_16.9 (constants.%.8f3)]
+// CHECK:STDOUT:   %impl.elem0.loc10_16.4: @F.%.loc10_16.9 (%.8f3) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_16.4 (constants.%impl.elem0.f91)]
+// CHECK:STDOUT:   %specific_impl_fn.loc10_16.4: <specific function> = specific_impl_function %impl.elem0.loc10_16.4, @Destroy.WithSelf.Op(%Destroy.facet) [symbolic = %specific_impl_fn.loc10_16.4 (constants.%specific_impl_fn.b7b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %V.ref: %Destroy_where.type = name_ref V, %V.loc9_24.2 [symbolic = %V.loc9_24.1 (constants.%V)]
-// CHECK:STDOUT:     %V.as_type.loc10_6.1: type = facet_access_type %V.ref [symbolic = %V.as_type.loc10_6.2 (constants.%V.as_type)]
-// CHECK:STDOUT:     %.loc10_6: type = converted %V.ref, %V.as_type.loc10_6.1 [symbolic = %V.as_type.loc10_6.2 (constants.%V.as_type)]
 // CHECK:STDOUT:     %C.loc10_6.1: type = class_type @C, @C(constants.%V.as_type) [symbolic = %C.loc10_6.2 (constants.%C.76a)]
 // CHECK:STDOUT:     %.loc10_7: @F.%C.Create.type (%C.Create.type.b99) = specific_constant @C.%C.Create.decl, @C(constants.%V.as_type) [symbolic = %C.Create (constants.%C.Create.d3c)]
 // CHECK:STDOUT:     %Create.ref: @F.%C.Create.type (%C.Create.type.b99) = name_ref Create, %.loc10_7 [symbolic = %C.Create (constants.%C.Create.d3c)]
@@ -454,22 +450,20 @@ fn F(unused U:! type, V:! Core.Destroy where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:     %ImplicitAs.type.loc10_16.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%V.as_type)> [symbolic = %ImplicitAs.type.loc10_16.2 (constants.%ImplicitAs.type.801)]
 // CHECK:STDOUT:     %.loc10_16.2: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.9d8) = specific_constant imports.%Core.import_ref.484, @ImplicitAs.WithSelf(constants.%V.as_type, constants.%Self.294) [symbolic = %assoc0 (constants.%assoc0.cef)]
 // CHECK:STDOUT:     %Convert.ref: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.9d8) = name_ref Convert, %.loc10_16.2 [symbolic = %assoc0 (constants.%assoc0.cef)]
-// CHECK:STDOUT:     %impl.elem0.loc10_16.1: @F.%.loc10_16.9 (%.114) = impl_witness_access constants.%ImplicitAs.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_16.3 (constants.%impl.elem0.0f0)]
+// CHECK:STDOUT:     %impl.elem0.loc10_16.1: @F.%.loc10_16.8 (%.114) = impl_witness_access constants.%ImplicitAs.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_16.3 (constants.%impl.elem0.0f0)]
 // CHECK:STDOUT:     %bound_method.loc10_16.1: <bound method> = bound_method %.loc10_16.1, %impl.elem0.loc10_16.1 [symbolic = %bound_method.loc10_16.5 (constants.%bound_method.e59)]
 // CHECK:STDOUT:     %specific_impl_fn.loc10_16.1: <specific function> = specific_impl_function %impl.elem0.loc10_16.1, @ImplicitAs.WithSelf.Convert(constants.%V.as_type, constants.%ImplicitAs.facet) [symbolic = %specific_impl_fn.loc10_16.3 (constants.%specific_impl_fn.a2c)]
 // CHECK:STDOUT:     %bound_method.loc10_16.2: <bound method> = bound_method %.loc10_16.1, %specific_impl_fn.loc10_16.1 [symbolic = %bound_method.loc10_16.6 (constants.%bound_method.fc7)]
-// CHECK:STDOUT:     %.loc10_16.3: ref @F.%V.as_type.loc10_6.2 (%V.as_type) = temporary_storage
+// CHECK:STDOUT:     %.loc10_16.3: ref @F.%V.as_type (%V.as_type) = temporary_storage
 // CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc10_16.4: %empty_struct_type = converted %.loc10_16.1, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %ImplicitAs.WithSelf.Convert.call: init @F.%V.as_type.loc10_6.2 (%V.as_type) to %.loc10_16.3 = call %bound_method.loc10_16.2(%.loc10_16.4)
-// CHECK:STDOUT:     %.loc10_16.5: init @F.%V.as_type.loc10_6.2 (%V.as_type) = converted %.loc10_16.1, %ImplicitAs.WithSelf.Convert.call
-// CHECK:STDOUT:     %.loc10_16.6: ref @F.%V.as_type.loc10_6.2 (%V.as_type) = temporary %.loc10_16.3, %.loc10_16.5
-// CHECK:STDOUT:     %.loc10_16.7: @F.%V.as_type.loc10_6.2 (%V.as_type) = acquire_value %.loc10_16.6
+// CHECK:STDOUT:     %ImplicitAs.WithSelf.Convert.call: init @F.%V.as_type (%V.as_type) to %.loc10_16.3 = call %bound_method.loc10_16.2(%.loc10_16.4)
+// CHECK:STDOUT:     %.loc10_16.5: init @F.%V.as_type (%V.as_type) = converted %.loc10_16.1, %ImplicitAs.WithSelf.Convert.call
+// CHECK:STDOUT:     %.loc10_16.6: ref @F.%V.as_type (%V.as_type) = temporary %.loc10_16.3, %.loc10_16.5
+// CHECK:STDOUT:     %.loc10_16.7: @F.%V.as_type (%V.as_type) = acquire_value %.loc10_16.6
 // CHECK:STDOUT:     %C.Create.call: init %empty_tuple.type = call %C.Create.specific_fn.loc10_7.1(%.loc10_16.7)
-// CHECK:STDOUT:     %impl.elem0.loc10_16.2: @F.%.loc10_16.10 (%.8f3) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_16.4 (constants.%impl.elem0.f91)]
+// CHECK:STDOUT:     %impl.elem0.loc10_16.2: @F.%.loc10_16.9 (%.8f3) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_16.4 (constants.%impl.elem0.f91)]
 // CHECK:STDOUT:     %bound_method.loc10_16.3: <bound method> = bound_method %.loc10_16.6, %impl.elem0.loc10_16.2
-// CHECK:STDOUT:     %Destroy.facet.loc10_16.1: %Destroy.type = facet_value constants.%V.as_type, (constants.%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc10_16.2 (constants.%Destroy.facet)]
-// CHECK:STDOUT:     %.loc10_16.8: %Destroy.type = converted constants.%V.as_type, %Destroy.facet.loc10_16.1 [symbolic = %Destroy.facet.loc10_16.2 (constants.%Destroy.facet)]
 // CHECK:STDOUT:     %specific_impl_fn.loc10_16.2: <specific function> = specific_impl_function %impl.elem0.loc10_16.2, @Destroy.WithSelf.Op(constants.%Destroy.facet) [symbolic = %specific_impl_fn.loc10_16.4 (constants.%specific_impl_fn.b7b)]
 // CHECK:STDOUT:     %bound_method.loc10_16.4: <bound method> = bound_method %.loc10_16.6, %specific_impl_fn.loc10_16.2
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc10_16.4(%.loc10_16.6)

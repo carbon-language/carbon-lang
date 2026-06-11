@@ -219,8 +219,7 @@ extern alias C = Class;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [concrete = constants.%A.generic]
-// CHECK:STDOUT:   %.loc7_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_15: type = converted %.loc7_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc7: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(constants.%empty_struct_type) [concrete = constants.%A.940]
 // CHECK:STDOUT:   %a: type = alias_binding a, %A [concrete = constants.%A.940]
 // CHECK:STDOUT: }

@@ -151,8 +151,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc23_15.2: ref %Goat = temporary_storage
 // CHECK:STDOUT:   %.loc23_15.3: init %Goat to %.loc23_15.2 = class_init () [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %.loc23_17.1: init %Goat = converted %.loc23_15.1, %.loc23_15.3 [concrete = constants.%Goat.val]
-// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc23_24: %Animal.type = converted constants.%Goat, %Animal.facet [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal.ref, @WalkAnimal(constants.%Animal.facet) [concrete = constants.%WalkAnimal.specific_fn]
 // CHECK:STDOUT:   %.loc23_17.2: ref %Goat = temporary %.loc23_15.2, %.loc23_17.1 [concrete = constants.%.4ea]
 // CHECK:STDOUT:   %.loc23_17.3: %Goat = acquire_value %.loc23_17.2 [concrete = constants.%Goat.val]

@@ -607,7 +607,24 @@ auto DeduceGenericCallArguments(
                        llvm::concat<const SemIR::InstId>(self_refs, arg_ids))),
                    /*want_value=*/false);
 
-  if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
+  // Deduction has side effects in the SemIR: the conversions it performs
+  // generate instructions, such as `Converted` and `FacetValue`, that are only
+  // used to feed constant values into the resulting specific and would
+  // otherwise be dead. Run deduction with a discarded instruction block to
+  // keep them out of the enclosing block. The enclosing generic region is
+  // deliberately kept: deduction can run while checking a generic definition,
+  // and symbolic instructions created here must still be tracked in that
+  // generic's eval block.
+  //
+  // TODO: Stop generating these instructions during deduction rather than
+  // discarding them after the fact.
+  context.inst_block_stack().Push();
+
+  bool success = deduction.Deduce() && deduction.CheckDeductionIsComplete();
+
+  context.inst_block_stack().PopAndDiscard();
+
+  if (!success) {
     return SemIR::SpecificId::None;
   }
 
@@ -630,12 +647,10 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
                 /*want_value=*/true);
   deduction.Add(impl.interface.specific_id, constraint_specific_id);
 
-  // TODO: Deduce has side effects in the semir by generating `Converted`
-  // instructions, and may also introduce intermediate states like
-  // `FacetAccessType`. We should stop generating those when deducing for impl
-  // lookup, but for now we discard them by pushing an InstBlock on the stack
-  // and dropping it right after. We also need to avoid adding those dropped
-  // instructions to any enclosing generic, so we push a fresh generic region.
+  // Run deduction with a discarded instruction block; see
+  // `DeduceGenericCallArguments`. Impl lookup additionally requires that the
+  // discarded instructions aren't added to any enclosing generic, so also push
+  // a fresh generic region.
   context.inst_block_stack().Push();
   context.generic_region_stack().Push({.generic_id = SemIR::GenericId::None});
 

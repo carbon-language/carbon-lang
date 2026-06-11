@@ -384,14 +384,14 @@ fn CallGeneric() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_20.1.temp = alloca { i32 }, align 4, !dbg !7
 // CHECK:STDOUT:   %.loc7_28.1.temp = alloca { i32 }, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc7_29.2.temp = alloca { i32 }, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc7_29.1.temp = alloca { i32 }, align 4, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.1.temp), !dbg !7
 // CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_20.1.temp), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_28.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_28.1.temp), !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_29.2.temp), !dbg !9
-// CHECK:STDOUT:   call void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr %.loc7_29.2.temp, ptr %.loc7_20.1.temp, ptr %.loc7_28.1.temp), !dbg !9
-// CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %.loc7_29.2.temp), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_29.1.temp), !dbg !9
+// CHECK:STDOUT:   call void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr %.loc7_29.1.temp, ptr %.loc7_20.1.temp, ptr %.loc7_28.1.temp), !dbg !9
+// CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %.loc7_29.1.temp), !dbg !9
 // CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %.loc7_28.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %.loc7_20.1.temp), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !10
@@ -568,14 +568,14 @@ fn CallGeneric() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_48.1.temp = alloca { i32 }, align 4, !dbg !7
 // CHECK:STDOUT:   %.loc7_70.1.temp = alloca { i32 }, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc7_71.2.temp = alloca { i32 }, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc7_71.1.temp = alloca { i32 }, align 4, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_48.1.temp), !dbg !7
 // CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_48.1.temp), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_70.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_70.1.temp), !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_71.2.temp), !dbg !9
-// CHECK:STDOUT:   call void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr %.loc7_71.2.temp, ptr %.loc7_48.1.temp, ptr %.loc7_70.1.temp), !dbg !9
-// CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %.loc7_71.2.temp), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_71.1.temp), !dbg !9
+// CHECK:STDOUT:   call void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr %.loc7_71.1.temp, ptr %.loc7_48.1.temp, ptr %.loc7_70.1.temp), !dbg !9
+// CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %.loc7_71.1.temp), !dbg !9
 // CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %.loc7_70.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %.loc7_48.1.temp), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !10
@@ -730,14 +730,14 @@ fn CallGeneric() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_20.1.temp = alloca { i32 }, align 4, !dbg !7
 // CHECK:STDOUT:   %.loc7_28.1.temp = alloca { i32 }, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc7_29.2.temp = alloca { i32 }, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc7_29.1.temp = alloca { i32 }, align 4, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.1.temp), !dbg !7
 // CHECK:STDOUT:   call void @_CMake.OtherPackage(ptr %.loc7_20.1.temp), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_28.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @_CMake.OtherPackage(ptr %.loc7_28.1.temp), !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_29.2.temp), !dbg !9
-// CHECK:STDOUT:   call void @_CGeneric.OtherPackage.e43630e9a6c38c3f(ptr %.loc7_29.2.temp, ptr %.loc7_20.1.temp, ptr %.loc7_28.1.temp), !dbg !9
-// CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %.loc7_29.2.temp), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_29.1.temp), !dbg !9
+// CHECK:STDOUT:   call void @_CGeneric.OtherPackage.e43630e9a6c38c3f(ptr %.loc7_29.1.temp, ptr %.loc7_20.1.temp, ptr %.loc7_28.1.temp), !dbg !9
+// CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %.loc7_29.1.temp), !dbg !9
 // CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %.loc7_28.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @"_COp.4985a3280848ef19:core.Destroy.Core"(ptr %.loc7_20.1.temp), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !10

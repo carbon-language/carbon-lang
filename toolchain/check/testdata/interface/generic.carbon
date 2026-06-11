@@ -566,13 +566,12 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc10_7.1: %Generic.type.57d = symbolic_binding T, 0 [symbolic = %T.loc10_7.1 (constants.%T.f18)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc18_6.2: type = facet_access_type %T.loc10_7.1 [symbolic = %T.as_type.loc18_6.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.loc10_7.1 [symbolic = %T.as_type (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref: %Generic.type.57d = name_ref T, %T.loc10_7.2 [symbolic = %T.loc10_7.1 (constants.%T.f18)]
-// CHECK:STDOUT:     %T.as_type.loc18_6.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc18_6.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
