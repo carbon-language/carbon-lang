@@ -18,7 +18,7 @@ system that may be used in Carbon checkouts.
 
 > [!IMPORTANT] You can detect if Jujutsu is in use by checking for a `.jj`
 > directory in the repository root. If present, you **must** use `jj` and **must
-> not** use `git`.
+> not** use `git`. If absent, you **must not** use `jj`.
 
 ## General usage
 
@@ -31,7 +31,8 @@ blocking or waiting for terminal paging.
 
 -   **Fetch from remote**: `jj --no-pager git fetch`
 -   **Create a new change on top of trunk**: `jj --no-pager new trunk`
--   **Show repository status and log**: `jj --no-pager` (or `jj --no-pager log`)
+-   **Show repository status**: `jj --no-pager status`
+-   **Show commit history**: `jj --no-pager log`
 
 ### Managing changes
 
@@ -40,4 +41,4 @@ blocking or waiting for terminal paging.
     -   _Note_: Prefer using `jj commit` over the combination of `jj describe`
         and `jj new`.
 -   **Abandon/discard current changes**: `jj --no-pager abandon`
--   **Rebase current change onto trunk**: `jj --no-pager rebase -d trunk`
+-   **Rebase current change onto trunk**: `jj --no-pager rebase -o trunk`
