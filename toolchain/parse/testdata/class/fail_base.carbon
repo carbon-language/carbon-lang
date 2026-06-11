@@ -9,7 +9,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/class/fail_base.carbon
 
 class A {
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:7: error: `class` or `:` expected after `base` [ExpectedAfterBase]
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+8]]:7: error: `class` or `:` expected after `base` [ExpectedAfterBase]
+  // CHECK:STDERR:   base;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:7: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:   base;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
@@ -34,6 +38,16 @@ class A {
   var n: i32;
 }
 
+base class Foo {}
+
+class B {
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:15: error: `class` or `:` expected after `base` [ExpectedAfterBase]
+  // CHECK:STDERR:   extend base Foo;
+  // CHECK:STDERR:               ^~~
+  // CHECK:STDERR:
+  extend base Foo;
+}
+
 // CHECK:STDOUT: - filename: fail_base.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -41,7 +55,9 @@ class A {
 // CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'A'},
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'BaseIntroducer', text: 'base'},
-// CHECK:STDOUT:       {kind: 'BaseDecl', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'BaseColon', text: ';', has_error: yes},
+// CHECK:STDOUT:         {kind: 'InvalidParse', text: ';', has_error: yes},
+// CHECK:STDOUT:       {kind: 'BaseDecl', text: ';', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'BaseIntroducer', text: 'base'},
 // CHECK:STDOUT:         {kind: 'BaseColon', text: ':'},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: ';', has_error: yes},
@@ -53,6 +69,20 @@ class A {
 // CHECK:STDOUT:       {kind: 'BaseDecl', text: 'var', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'InvalidParseStart', text: 'n', has_error: yes},
 // CHECK:STDOUT:       {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 17},
+// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 19},
+// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
+// CHECK:STDOUT:         {kind: 'BaseModifier', text: 'base'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'B'},
+// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'BaseIntroducer', text: 'base'},
+// CHECK:STDOUT:         {kind: 'ExtendModifier', text: 'extend'},
+// CHECK:STDOUT:         {kind: 'BaseColon', text: 'Foo', has_error: yes},
+// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'BaseDecl', text: ';', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
