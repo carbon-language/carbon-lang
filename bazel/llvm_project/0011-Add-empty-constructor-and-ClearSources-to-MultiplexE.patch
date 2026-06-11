@@ -1,0 +1,62 @@
+From 19a22b90e9e188beb9a31f1ba09d323eaf363316 Mon Sep 17 00:00:00 2001
+From: Nicholas Bishop <nicholsabishop@google.com>
+Date: Wed, 10 Jun 2026 20:19:57 -0400
+Subject: [PATCH] Add empty constructor and ClearSources to
+ MultiplexExternalSemaSource
+
+---
+ clang/include/clang/Sema/MultiplexExternalSemaSource.h | 6 ++++++
+ clang/lib/Sema/MultiplexExternalSemaSource.cpp         | 8 ++++++++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/clang/include/clang/Sema/MultiplexExternalSemaSource.h b/clang/include/clang/Sema/MultiplexExternalSemaSource.h
+index 12015724b39f..4a9aeab22e9a 100644
+--- a/clang/include/clang/Sema/MultiplexExternalSemaSource.h
++++ b/clang/include/clang/Sema/MultiplexExternalSemaSource.h
+@@ -43,6 +43,9 @@ private:
+   SmallVector<llvm::IntrusiveRefCntPtr<ExternalSemaSource>, 2> Sources;
+ 
+ public:
++  /// Constructs an empty multiplexing external sema source.
++  MultiplexExternalSemaSource();
++
+   /// Constructs a new multiplexing external sema source and appends the
+   /// given element to it.
+   ///
+@@ -58,6 +61,9 @@ public:
+   ///
+   void AddSource(llvm::IntrusiveRefCntPtr<ExternalSemaSource> Source);
+ 
++  /// Removes all sources from the source list.
++  void ClearSources();
++
+   //===--------------------------------------------------------------------===//
+   // ExternalASTSource.
+   //===--------------------------------------------------------------------===//
+diff --git a/clang/lib/Sema/MultiplexExternalSemaSource.cpp b/clang/lib/Sema/MultiplexExternalSemaSource.cpp
+index be9582ce501f..137be298bac2 100644
+--- a/clang/lib/Sema/MultiplexExternalSemaSource.cpp
++++ b/clang/lib/Sema/MultiplexExternalSemaSource.cpp
+@@ -16,6 +16,9 @@ using namespace clang;
+ 
+ char MultiplexExternalSemaSource::ID;
+ 
++/// Constructs an empty multiplexing external sema source.
++MultiplexExternalSemaSource::MultiplexExternalSemaSource() {}
++
+ /// Constructs a new multiplexing external sema source and appends the
+ /// given element to it.
+ ///
+@@ -35,6 +38,11 @@ void MultiplexExternalSemaSource::AddSource(
+   Sources.push_back(std::move(Source));
+ }
+ 
++/// Removes all sources from the source list.
++void MultiplexExternalSemaSource::ClearSources() {
++  Sources.clear();
++}
++
+ //===----------------------------------------------------------------------===//
+ // ExternalASTSource.
+ //===----------------------------------------------------------------------===//
+2.54.0.1136.gdb2ca164c4-goog
