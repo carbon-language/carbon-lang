@@ -875,17 +875,26 @@ auto GenerateAst(Context& context,
   context.sem_ir().cpp_file()->CreateMangleContext();
 
   auto& ast = clang_instance.getASTContext();
-  llvm::IntrusiveRefCntPtr<clang::ExternalSemaSource> carbon_source =
-      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context);
+
+  // Always build a multiplex source, even if there's only one child
+  // source. During lowering, the `CarbonExternalASTSource` can no longer be
+  // used (because it uses `Check::Context`), so a `ReadOnlyASTSource` is
+  // installed instead. However, clang internally keeps pointers to the
+  // top-level `ExternalASTSource` installed via `setExternalSource`, and
+  // those pointers aren't updated if `setExternalSource` is called again. By
+  // using `MultiplexExternalSemaSource`, we can keep the top-level
+  // `ExternalASTSource` pointer the same, and only update its children.
+  auto multiplex_source_ref_cnt_ptr =
+      llvm::makeIntrusiveRefCnt<clang::MultiplexExternalSemaSource>();
+  auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
+      multiplex_source_ref_cnt_ptr.get());
   if (auto* existing_source = llvm::cast_or_null<clang::ExternalSemaSource>(
           ast.getExternalSource())) {
-    auto multiplex_source =
-        llvm::makeIntrusiveRefCnt<clang::MultiplexExternalSemaSource>(
-            existing_source, std::move(carbon_source));
-    ast.setExternalSource(std::move(multiplex_source));
-  } else {
-    ast.setExternalSource(std::move(carbon_source));
+    multiplex_source->AddSource(existing_source);
   }
+  multiplex_source->AddSource(
+      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context));
+  ast.setExternalSource(std::move(multiplex_source_ref_cnt_ptr));
 
   if (llvm::Error error = action.Execute()) {
     // `Execute` currently never fails, but its contract allows it to.
