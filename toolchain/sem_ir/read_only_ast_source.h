@@ -22,7 +22,17 @@ class ReadOnlyASTSource : public clang::ExternalSemaSource {
       llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>&
           vbase_offsets) -> bool override;
 
+  auto isA(const void* class_id) const -> bool override {
+    return class_id == &id || ExternalSemaSource::isA(class_id);
+  }
+  static auto classof(const ExternalASTSource* s) -> bool {
+    return s->isA(&id);
+  }
+
  private:
+  // For LLVM RTTI.
+  static char id;
+
   const File& sem_ir_;
 };
 
