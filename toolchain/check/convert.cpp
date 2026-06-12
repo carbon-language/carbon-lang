@@ -428,6 +428,9 @@ static auto ConvertTupleToType(Context& context, SemIR::LocId loc_id,
                                SemIR::TypeId value_type_id,
                                ConversionTarget target) -> SemIR::TypeInstId {
   auto value_const_id = context.constant_values().Get(value_id);
+  if (value_const_id == SemIR::ErrorInst::ConstantId) {
+    return SemIR::ErrorInst::TypeInstId;
+  }
   if (!value_const_id.is_constant()) {
     // Types are constants. The input value must have a constant value to
     // convert.
