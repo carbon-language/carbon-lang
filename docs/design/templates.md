@@ -45,14 +45,14 @@ bound early to the extent possible. For example:
 
 ```
 class Stack(template T:! type) {
-  var storage: Array(T);
+  var storage: buf(T);
 
   fn Push(ref self, value: T);
   fn Pop(ref self) -> T;
 }
 ```
 
-This both defines a parameterized type (`Stack`) and uses one (`Array`). Within
+This both defines a parameterized type (`Stack`) and uses one (`buf`). Within
 the definition of the type, the template type parameter `T` can be used in all
 of the places a normal type would be used, and it will only by type checked on
 instantiation.
