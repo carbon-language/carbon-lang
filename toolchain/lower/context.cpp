@@ -55,6 +55,26 @@ auto Context::GetFileContext(const SemIR::File* file,
   if (!file_context) {
     file_context =
         std::make_unique<FileContext>(*this, *file, inst_namer, vlog_stream_);
+
+    if (file_context->cpp_file()) {
+      // Remove the `CarbonExternalASTSource` installed during check
+      // and replace it with a `ReadOnlyASTSource`. This is necessary
+      // because the original source has a now-invalid pointer to a
+      // `Check::Context`.
+      auto& ast = const_cast<clang::ASTContext&>(
+          file_context->cpp_file()->ast_context());
+      auto* multiplex_source =
+          cast<clang::MultiplexExternalSemaSource>(ast.getExternalSource());
+      auto& child_sources = multiplex_source->GetSources();
+      llvm::erase_if(child_sources, [](const auto& src) {
+        // `CarbonExternalASTSource` inherits from `ReadOnlyASTSource`.
+        return llvm::isa<SemIR::ReadOnlyASTSource>(src.get());
+      });
+      multiplex_source->AddSource(
+          llvm::makeIntrusiveRefCnt<SemIR::ReadOnlyASTSource>(
+              file_context->sem_ir()));
+    }
+
     file_context->PrepareToLower();
   }
   return *file_context;
@@ -73,25 +93,6 @@ auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
 
   for (auto& file_context : file_contexts_.values()) {
     if (file_context) {
-      if (file_context->cpp_file()) {
-        // Remove the `CarbonExternalASTSource` installed during check
-        // and replace it with a `ReadOnlyASTSource`. This is necessary
-        // because the original source has a now-invalid pointer to a
-        // `Check::Context`.
-        auto& ast = const_cast<clang::ASTContext&>(
-            file_context->cpp_file()->ast_context());
-        auto* multiplex_source =
-            cast<clang::MultiplexExternalSemaSource>(ast.getExternalSource());
-        auto& child_sources = multiplex_source->GetSources();
-        llvm::erase_if(child_sources, [](const auto& src) {
-          // `CarbonExternalASTSource` inherits from `ReadOnlyASTSource`.
-          return llvm::isa<SemIR::ReadOnlyASTSource>(src.get());
-        });
-        multiplex_source->AddSource(
-            llvm::makeIntrusiveRefCnt<SemIR::ReadOnlyASTSource>(
-                file_context->sem_ir()));
-      }
-
       file_context->Finalize();
     }
   }
