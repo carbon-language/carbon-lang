@@ -311,7 +311,7 @@ fn F(unused U:! Core.Destroy & I(.Self)) {}
 library "[[@TEST_NAME]]";
 
 interface I(T:! Core.Destroy) {
-  fn G[self: Self]() -> T;
+  fn G(self) -> T;
 }
 
 fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {

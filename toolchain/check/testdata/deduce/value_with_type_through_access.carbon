@@ -98,6 +98,7 @@ fn G() {
 }
 
 
+
 // CHECK:STDOUT: --- tuple_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

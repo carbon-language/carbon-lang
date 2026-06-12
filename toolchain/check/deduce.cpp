@@ -14,6 +14,7 @@
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -187,6 +188,12 @@ class DeductionContext {
   auto AddAll(SemIR::InstBlockId param, llvm::ArrayRef<SemIR::InstId> arg,
               bool want_value) -> void {
     worklist_.AddAll(param, arg, want_value);
+  }
+
+  template <typename ElementId>
+  auto AddAll(llvm::ArrayRef<ElementId> params, llvm::ArrayRef<ElementId> args,
+              bool want_value) -> void {
+    worklist_.AddAll(params, args, want_value);
   }
 
   template <typename ParamT, typename ArgT>
@@ -474,7 +481,7 @@ auto DeductionContext::Deduce() -> bool {
 }
 
 // Gets the entity name of a generic binding. The generic binding may be an
-// imported instruction.
+// imported instruction. Returns `None` if an ErrorInst is encountered.
 static auto GetEntityNameForGenericBinding(Context& context,
                                            SemIR::InstId binding_id)
     -> SemIR::NameId {
@@ -482,6 +489,9 @@ static auto GetEntityNameForGenericBinding(Context& context,
   // future), it may not have an entity name. Get a canonical local instruction
   // from its constant value which does.
   binding_id = context.constant_values().GetConstantInstId(binding_id);
+  if (binding_id == SemIR::ErrorInst::InstId) {
+    return SemIR::NameId::None;
+  }
 
   if (auto bind_name =
           context.insts().TryGetAs<SemIR::AnyBinding>(binding_id)) {
@@ -502,13 +512,13 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
     auto binding_id = context().inst_blocks().Get(
         context().generics().Get(generic_id_).bindings_id)[binding_index];
     if (!deduced_arg_id.has_value()) {
-      if (diagnose_) {
+      auto name_id = GetEntityNameForGenericBinding(context(), binding_id);
+      if (diagnose_ && name_id.has_value()) {
         CARBON_DIAGNOSTIC(DeductionIncomplete, Error,
                           "cannot deduce value for generic parameter `{0}`",
                           SemIR::NameId);
-        auto diag = context().emitter().Build(
-            loc_id_, DeductionIncomplete,
-            GetEntityNameForGenericBinding(context(), binding_id));
+        auto diag =
+            context().emitter().Build(loc_id_, DeductionIncomplete, name_id);
         NoteGenericHere(context(), generic_id_, diag);
         diag.Emit();
       }
@@ -598,17 +608,24 @@ auto DeduceGenericCallArguments(
     Context& context, SemIR::LocId loc_id, SemIR::GenericId generic_id,
     SemIR::SpecificId enclosing_specific_id,
     [[maybe_unused]] SemIR::InstBlockId implicit_param_patterns_id,
-    SemIR::InstBlockId param_patterns_id,
-    [[maybe_unused]] SemIR::InstId self_id,
+    SemIR::InstBlockId param_patterns_id, SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::SpecificId {
   DeductionContext deduction(&context, loc_id, generic_id,
                              enclosing_specific_id,
                              /*diagnose=*/true);
 
-  // Prepare to perform deduction of the explicit parameters against their
-  // arguments.
-  // TODO: Also perform deduction for type of self.
-  deduction.AddAll(param_patterns_id, arg_ids, /*want_value=*/false);
+  // Prepare to perform deduction of the parameters against the explicit
+  // arguments. When `self` is provided as the method-call receiver it is
+  // prepended to the explicit argument list to match the leading `self`
+  // parameter pattern.
+  llvm::ArrayRef<SemIR::InstId> self_refs = {};
+  if (self_id.has_value()) {
+    self_refs = self_id;
+  }
+  deduction.AddAll(context.inst_blocks().GetOrEmpty(param_patterns_id),
+                   llvm::ArrayRef<SemIR::InstId>(llvm::to_vector<8>(
+                       llvm::concat<const SemIR::InstId>(self_refs, arg_ids))),
+                   /*want_value=*/false);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
     return SemIR::SpecificId::None;

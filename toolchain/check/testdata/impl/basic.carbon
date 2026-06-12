@@ -31,7 +31,7 @@ impl C as Simple {
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn Op[self: Self]();
+  fn Op(self);
 }
 
 class C {}
@@ -42,7 +42,7 @@ class C {}
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
 impl Unknown as I {
-  fn Op[unused self: Self]() {}
+  fn Op(unused self) {}
 }
 
 // --- fail_import_invalid_impl.carbon

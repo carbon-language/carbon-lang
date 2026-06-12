@@ -24,13 +24,22 @@
 namespace Carbon::Check {
 
 auto FindSelfPattern(Context& context,
-                     SemIR::InstBlockId implicit_param_patterns_id)
-    -> SemIR::InstId {
+                     SemIR::InstBlockId implicit_param_patterns_id,
+                     SemIR::InstBlockId param_patterns_id) -> SemIR::InstId {
+  auto is_self_pattern = [&](auto param_id) {
+    return SemIR::IsSelfPattern(context.sem_ir(), param_id);
+  };
+  // `self` is the first explicit parameter. We also look in the implicit
+  // parameter list for error recovery: declaring `self` there is diagnosed (see
+  // `SelfInImplicitParamList`), but we still treat it as `self` afterwards.
+  auto param_patterns = context.inst_blocks().GetOrEmpty(param_patterns_id);
+  if (auto self_id = FindIfOrNone(param_patterns, is_self_pattern);
+      self_id.has_value()) {
+    return self_id;
+  }
   auto implicit_param_patterns =
       context.inst_blocks().GetOrEmpty(implicit_param_patterns_id);
-  return FindIfOrNone(implicit_param_patterns, [&](auto implicit_param_id) {
-    return SemIR::IsSelfPattern(context.sem_ir(), implicit_param_id);
-  });
+  return FindIfOrNone(implicit_param_patterns, is_self_pattern);
 }
 
 auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
@@ -97,31 +106,28 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
 
   StartFunctionSignature(context);
 
-  // Build and add a `self: Self` or `ref self: Self` parameter if needed.
-  if (args.self_type_id.has_value()) {
-    context.full_pattern_stack().StartImplicitParamList();
-
-    BeginSubpattern(context);
-    auto self_type_region_id = ConsumeSubpatternExpr(
-        context, context.types().GetTypeInstId(args.self_type_id));
-    EndEmptySubpattern(context);
-
-    insts.self_param_id =
-        AddParamPattern(context, loc_id, SemIR::NameId::SelfValue,
-                        self_type_region_id, args.self_type_id, args.self_kind);
-    insts.implicit_param_patterns_id =
-        context.inst_blocks().Add({insts.self_param_id});
-
-    context.full_pattern_stack().EndImplicitParamList();
-  }
-
-  // Build and add any explicit parameters. Whether these are references
-  // or not is controlled by `args.params_are_refs`.
+  // Build and add the explicit parameters, with a leading `self` parameter if
+  // one is needed. `self` is the first explicit parameter (proposal #7016),
+  // matching the convention used by user-written and prelude signatures.
+  // Keeping the placement consistent matters in particular for the
+  // `Destroy.Op` / `Copy.Op` functions backing custom witnesses: a mismatch
+  // would force a signature-adapting thunk for every witness.
   context.full_pattern_stack().StartExplicitParamList();
-  if (args.param_type_ids.empty()) {
+  if (!args.self_type_id.has_value() && args.param_type_ids.empty()) {
     insts.param_patterns_id = SemIR::InstBlockId::Empty;
   } else {
     context.inst_block_stack().Push();
+    if (args.self_type_id.has_value()) {
+      BeginSubpattern(context);
+      auto self_type_region_id = ConsumeSubpatternExpr(
+          context, context.types().GetTypeInstId(args.self_type_id));
+      EndEmptySubpattern(context);
+
+      insts.self_param_id = AddParamPattern(
+          context, loc_id, SemIR::NameId::SelfValue, self_type_region_id,
+          args.self_type_id, args.self_kind);
+      context.inst_block_stack().AddInstId(insts.self_param_id);
+    }
     for (auto param_type_id : args.param_type_ids) {
       BeginSubpattern(context);
       auto param_type_region_id = ConsumeSubpatternExpr(

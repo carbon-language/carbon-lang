@@ -346,7 +346,10 @@ static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc_id,
     return true;
   }
 
-  // If exactly one of the parameter lists was present, they differ.
+  // If exactly one of the parameter lists was present, they differ. An absent
+  // parameter list (`None`) and a present-but-empty one (`Empty`) are
+  // intentionally treated as different, following the syntactic redeclaration
+  // matching design.
   if (new_param_patterns_id.has_value() != prev_param_patterns_id.has_value()) {
     if (!diagnose) {
       return false;
@@ -473,6 +476,13 @@ static auto CheckRedeclParamSyntax(Context& context,
       prev_node_kind = context.parse_tree().node_kind(prev_node_id);
     }
     if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
+      // The `self` parameter's type must be spelled the same way (`self` vs.
+      // `self: Self`) in a redeclaration as in the previous declaration. This
+      // is not a special case: like any other parameter-type spelling
+      // difference (e.g. `self: Self` vs. `self: C`), it falls through to the
+      // generic "syntax differs" diagnostic below, following the token-based
+      // redeclaration matching rule from proposal #3763.
+      //
       // Skip difference if it is `Self as` vs. `as` in an `impl` declaration.
       // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p003763.md#redeclarations
       if (new_node_kind == Parse::NodeKind::ImplDefaultSelfAs &&

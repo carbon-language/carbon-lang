@@ -2247,8 +2247,9 @@ struct ValueForm {
 };
 
 // Converts an initializing expression to a value expression, in the case
-// where the initializing representation is the same as the value
-// representation.
+// where the initializing representation used by that expression is a copy of
+// the value representation. Note that this implies the expression must be a
+// repr initializing expression.
 struct ValueOfInitializer {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =

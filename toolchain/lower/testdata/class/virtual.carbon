@@ -19,12 +19,12 @@ base class Base {
 
 base class Intermediate {
   extend base: Base;
-  virtual fn Fn[unused self: Self]() { }
+  virtual fn Fn(unused self) { }
 }
 
 class Derived {
   extend base: Intermediate;
-  override fn Fn[unused self: Self]() { }
+  override fn Fn(unused self) { }
 }
 
 // --- create.carbon
@@ -82,7 +82,7 @@ package MemberInit;
 
 base class Base {
   var m: i32;
-  virtual fn Fn[unused self: Self]() { }
+  virtual fn Fn(unused self) { }
 }
 
 fn Fn() {
@@ -97,7 +97,7 @@ fn Fn() {
 library "[[@TEST_NAME]]";
 
 base class Base {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 class Derived {
@@ -113,7 +113,7 @@ fn Use() {
 library "[[@TEST_NAME]]";
 
 base class Base {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 fn Use(b: Base) {
@@ -125,12 +125,12 @@ fn Use(b: Base) {
 library "[[@TEST_NAME]]";
 
 base class Base {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 class Derived {
   extend base: Base;
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 fn Use() {
@@ -143,7 +143,7 @@ fn Use() {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! type) {
-  virtual fn F[unused self: Self]() { }
+  virtual fn F(unused self) { }
 }
 
 // --- generic_use.carbon
@@ -151,7 +151,7 @@ base class Base(T:! type) {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! Core.Destroy) {
-  virtual fn F[unused self: Self]() {
+  virtual fn F(unused self) {
     var _: T;
   }
 }
@@ -171,7 +171,7 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! type) {
-  virtual fn F[unused self: Self]() { }
+  virtual fn F(unused self) { }
 }
 
 class T1;
@@ -192,16 +192,16 @@ class From {}
 class To {}
 
 impl From as Core.ImplicitAs(To) {
-  fn Convert[self: From]() -> To;
+  fn Convert(self: From) -> To;
 }
 
 base class Base {
-  virtual fn F[ref self: Self](n: From) -> To;
+  virtual fn F(ref self, n: From) -> To;
 }
 
 class Derived {
   extend base: Base;
-  override fn F[unused self: Self](unused n: To) -> From {
+  override fn F(unused self, unused n: To) -> From {
     return {};
   }
 }
@@ -1119,14 +1119,14 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define void @"_CF:thunk:Base.Main:Derived.Main"(ptr sret({}) %return, ptr %self, ptr %n) #1 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_58.2.temp = alloca {}, align 1, !dbg !16
+// CHECK:STDOUT:   %.loc17_52.2.temp = alloca {}, align 1, !dbg !16
 // CHECK:STDOUT:   %.5.temp = alloca {}, align 1, !dbg !17
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_58.2.temp), !dbg !16
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_52.2.temp), !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.5.temp), !dbg !17
 // CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.a3bb440f6426a7d6.Core"(ptr %.5.temp, ptr %n), !dbg !17
-// CHECK:STDOUT:   call void @_CF.Derived.Main(ptr %.loc17_58.2.temp, ptr %self, ptr %.5.temp), !dbg !16
-// CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.a3bb440f6426a7d6.Core"(ptr %return, ptr %.loc17_58.2.temp), !dbg !16
-// CHECK:STDOUT:   call void @"_COp.419398171642b7b7:core.Destroy.Core"(ptr %.loc17_58.2.temp), !dbg !16
+// CHECK:STDOUT:   call void @_CF.Derived.Main(ptr %.loc17_52.2.temp, ptr %self, ptr %.5.temp), !dbg !16
+// CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.a3bb440f6426a7d6.Core"(ptr %return, ptr %.loc17_52.2.temp), !dbg !16
+// CHECK:STDOUT:   call void @"_COp.419398171642b7b7:core.Destroy.Core"(ptr %.loc17_52.2.temp), !dbg !16
 // CHECK:STDOUT:   call void @"_COp.41ca6508118965ec:core.Destroy.Core"(ptr %.5.temp), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }

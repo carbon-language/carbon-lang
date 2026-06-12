@@ -33,11 +33,11 @@ var d: i32 = a.({.index = 1 as i32}.index);
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn F[self: Self]();
+  fn F(self);
 }
 
 impl (i32, i32) as I {
-  fn F[unused self: Self]() {}
+  fn F(unused self) {}
 }
 
 fn G(x: (i32, i32)) {
@@ -51,7 +51,7 @@ base class Base {}
 class Derived { extend base: Base; }
 
 interface I {
-  fn F[self: Self]() -> Base*;
+  fn F(self) -> Base*;
 }
 
 var d: Derived;
@@ -60,7 +60,7 @@ impl (i32, i32) as I {
   // This requires a thunk due to the return type mismatch.
   // The thunk internally contains an element access of the form
   // `self.(RealF)()`.
-  fn F[unused self: Self]() -> Derived* { return &d; }
+  fn F(unused self) -> Derived* { return &d; }
 }
 
 fn G(x: (i32, i32)) {
@@ -71,7 +71,7 @@ fn G(x: (i32, i32)) {
 library "[[@TEST_NAME]]";
 
 class C {
-  fn F[self: (i32, i32)]();
+  fn F(self: (i32, i32));
 }
 
 fn G(x: (i32, i32)) {
@@ -147,8 +147,8 @@ var b: i32 = 0;
 // CHECK:STDERR: var c: i32 = a.(b);
 // CHECK:STDERR:                 ^
 // CHECK:STDERR: min_prelude/parts/int.carbon:27:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR:   fn Convert[self: Self]() -> IntLiteral = "int.convert_checked";
-// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:   fn Convert(self) -> IntLiteral = "int.convert_checked";
+// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+4]]:14: error: tuple index must be a constant [TupleIndexNotConstant]
 // CHECK:STDERR: var c: i32 = a.(b);

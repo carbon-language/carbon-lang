@@ -15,15 +15,15 @@
 class Derived;
 
 base class Base {
-  fn F[self: Self]() -> i32;
-  fn G[self: Derived]() -> i32;
+  fn F(self) -> i32;
+  fn G(self: Derived) -> i32;
 }
 
 class Derived {
   extend base: Base;
 
-  fn F[self: Self]();
-  fn G[self: Self]();
+  fn F(self);
+  fn G(self);
 }
 
 fn Call(a: Derived) -> i32 {

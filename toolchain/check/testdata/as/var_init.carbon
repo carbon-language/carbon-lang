@@ -16,7 +16,7 @@ library "[[@TEST_NAME]]";
 
 class X {
   impl () as Core.ImplicitAs(X) {
-    fn Convert[unused self: ()]() ->  X { return {}; }
+    fn Convert(unused self: ()) ->  X { return {}; }
   }
 }
 

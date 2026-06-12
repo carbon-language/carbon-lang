@@ -6,10 +6,12 @@
 #define CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 
 #include <limits>
+#include <optional>
 
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APInt.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/diagnostics/emitter.h"
@@ -532,6 +534,12 @@ struct CharId : public IdBase<CharId> {
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void;
+
+  // Returns the CharId corresponding to a particular Unicode code point,
+  // or std::nullopt if the value is not a valid Unicode code point. Assumes
+  // `code_point` is signed.
+  static auto ForCodePoint(const llvm::APInt& code_point)
+      -> std::optional<CharId>;
 };
 
 // An integer kind value -- either "signed" or "unsigned".

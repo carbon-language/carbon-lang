@@ -13,7 +13,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/self/fail_ref_self.carbon
 
 class Class {
-  fn F[ref self: Self]();
+  fn F(ref self);
 }
 
 fn Make() -> Class;
@@ -23,8 +23,8 @@ fn F(c: Class, p: Class*) {
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_ref_self.carbon:[[@LINE-9]]:8: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn F[ref self: Self]();
-  // CHECK:STDERR:        ^~~~~~~~~~~~~~
+  // CHECK:STDERR:   fn F(ref self);
+  // CHECK:STDERR:        ^~~~~~~~
   // CHECK:STDERR:
   c.F();
 

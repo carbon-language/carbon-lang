@@ -16,7 +16,7 @@
 package Core;
 
 interface ImplicitAs(Dest:! type) {
-  fn Convert[self: Self]() -> Dest;
+  fn Convert(self) -> Dest;
 }
 
 // --- non-instance_success.carbon
@@ -86,11 +86,11 @@ fn NonInstanceCallIndirect(p: {.c: ()}*) {
 library "[[@TEST_NAME]]";
 
 interface Instance1 {
-  fn G1[self: Self]();
+  fn G1(self);
 }
 
 impl {.d: ()} as Instance1 {
-  fn G1[unused self: Self]() {}
+  fn G1(unused self) {}
 }
 
 fn InstanceCall(n: {.d: ()}) {
@@ -105,11 +105,11 @@ fn InstanceCallIndirect(p: {.d: ()}*) {
 library "[[@TEST_NAME]]";
 
 interface Instance2 {
-  fn G2[self: Self]();
+  fn G2(self);
 }
 
 impl {.e: ()} as Instance2 {
-  fn G2[unused self: Self]() {}
+  fn G2(unused self) {}
 }
 
 fn InstanceCallFail() {
@@ -119,6 +119,7 @@ fn InstanceCallFail() {
   // CHECK:STDERR:
   {.e: ()}.(Instance2.G2)();
 }
+
 
 // CHECK:STDOUT: --- core.carbon
 // CHECK:STDOUT:
@@ -175,31 +176,31 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %ImplicitAs.WithSelf.Convert.decl: @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.type (%ImplicitAs.WithSelf.Convert.type) = fn_decl @ImplicitAs.WithSelf.Convert [symbolic = @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert (constants.%ImplicitAs.WithSelf.Convert)] {
-// CHECK:STDOUT:       %self.param_patt.loc4_18.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_18 (%pattern_type.701) = value_param_pattern [symbolic = %self.param_patt.loc4_18.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:       %self.patt.loc4_18.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_18 (%pattern_type.701) = at_binding_pattern self, %self.param_patt.loc4_18.1 [symbolic = %self.patt.loc4_18.2 (constants.%self.patt)]
-// CHECK:STDOUT:       %return.param_patt.loc4_31.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_31 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc4_31.2 (constants.%return.param_patt)]
-// CHECK:STDOUT:       %return.patt.loc4_28.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_31 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc4_31.1, %Dest.ref [symbolic = %return.patt.loc4_28.2 (constants.%return.patt)]
+// CHECK:STDOUT:       %self.param_patt.loc4_14.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_14 (%pattern_type.701) = value_param_pattern [symbolic = %self.param_patt.loc4_14.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:       %self.patt.loc4_14.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_14 (%pattern_type.701) = at_binding_pattern self, %self.param_patt.loc4_14.1 [symbolic = %self.patt.loc4_14.2 (constants.%self.patt)]
+// CHECK:STDOUT:       %return.param_patt.loc4_23.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_23 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc4_23.2 (constants.%return.param_patt)]
+// CHECK:STDOUT:       %return.patt.loc4_20.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_23 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc4_23.1, %Dest.ref [symbolic = %return.patt.loc4_20.2 (constants.%return.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc3_26.2 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:       %.loc4_31.2: Core.Form = init_form %Dest.ref [symbolic = %.loc4_31.1 (constants.%.184)]
-// CHECK:STDOUT:       %self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:       %.loc4_20.1: type = splice_block %.loc4_20.3 [symbolic = %Self.as_type.loc4_20.1 (constants.%Self.as_type)] {
-// CHECK:STDOUT:         %.loc4_20.2: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = specific_constant @ImplicitAs.%Self.loc3_35.1, @ImplicitAs(constants.%Dest) [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:         %Self.ref: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = name_ref Self, %.loc4_20.2 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:         %Self.as_type.loc4_20.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_20.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:         %.loc4_20.3: type = converted %Self.ref, %Self.as_type.loc4_20.2 [symbolic = %Self.as_type.loc4_20.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc4_23.2: Core.Form = init_form %Dest.ref [symbolic = %.loc4_23.1 (constants.%.184)]
+// CHECK:STDOUT:       %self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc4_14.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:       %.loc4_14.1: type = splice_block %.loc4_14.3 [symbolic = %Self.as_type.loc4_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:         %.loc4_14.2: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = specific_constant @ImplicitAs.%Self.loc3_35.1, @ImplicitAs(constants.%Dest) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.ref: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = name_ref Self, %.loc4_14.2 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.as_type.loc4_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:         %.loc4_14.3: type = converted %Self.ref, %Self.as_type.loc4_14.2 [symbolic = %Self.as_type.loc4_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc4_20.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc4_14.1 (%Self.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @ImplicitAs.WithSelf.Convert.%Dest (%Dest) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @ImplicitAs.WithSelf.Convert.%Dest (%Dest) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %assoc0.loc4_35.1: @ImplicitAs.WithSelf.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, %ImplicitAs.WithSelf.Convert.decl [symbolic = %assoc0.loc4_35.2 (constants.%assoc0)]
+// CHECK:STDOUT:     %assoc0.loc4_27.1: @ImplicitAs.WithSelf.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, %ImplicitAs.WithSelf.Convert.decl [symbolic = %assoc0.loc4_27.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc3_35.1
 // CHECK:STDOUT:     .Dest = <poisoned>
 // CHECK:STDOUT:     .Dest = <poisoned>
-// CHECK:STDOUT:     .Convert = @ImplicitAs.WithSelf.%assoc0.loc4_35.1
+// CHECK:STDOUT:     .Convert = @ImplicitAs.WithSelf.%assoc0.loc4_27.1
 // CHECK:STDOUT:     witness = (@ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -210,16 +211,16 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.3aa)]
 // CHECK:STDOUT:   %Self: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc4_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_20.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type.loc4_18: type = pattern_type %Self.as_type.loc4_20.1 [symbolic = %pattern_type.loc4_18 (constants.%pattern_type.701)]
-// CHECK:STDOUT:   %self.param_patt.loc4_18.2: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_18 (%pattern_type.701) = value_param_pattern [symbolic = %self.param_patt.loc4_18.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:   %self.patt.loc4_18.2: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_18 (%pattern_type.701) = at_binding_pattern self, %self.param_patt.loc4_18.2 [symbolic = %self.patt.loc4_18.2 (constants.%self.patt)]
-// CHECK:STDOUT:   %.loc4_31.1: Core.Form = init_form %Dest [symbolic = %.loc4_31.1 (constants.%.184)]
-// CHECK:STDOUT:   %pattern_type.loc4_31: type = pattern_type %Dest [symbolic = %pattern_type.loc4_31 (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %return.param_patt.loc4_31.2: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_31 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc4_31.2 (constants.%return.param_patt)]
-// CHECK:STDOUT:   %return.patt.loc4_28.2: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_31 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc4_31.2, %Dest [symbolic = %return.patt.loc4_28.2 (constants.%return.patt)]
+// CHECK:STDOUT:   %Self.as_type.loc4_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type.loc4_14: type = pattern_type %Self.as_type.loc4_14.1 [symbolic = %pattern_type.loc4_14 (constants.%pattern_type.701)]
+// CHECK:STDOUT:   %self.param_patt.loc4_14.2: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_14 (%pattern_type.701) = value_param_pattern [symbolic = %self.param_patt.loc4_14.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt.loc4_14.2: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_14 (%pattern_type.701) = at_binding_pattern self, %self.param_patt.loc4_14.2 [symbolic = %self.patt.loc4_14.2 (constants.%self.patt)]
+// CHECK:STDOUT:   %.loc4_23.1: Core.Form = init_form %Dest [symbolic = %.loc4_23.1 (constants.%.184)]
+// CHECK:STDOUT:   %pattern_type.loc4_23: type = pattern_type %Dest [symbolic = %pattern_type.loc4_23 (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %return.param_patt.loc4_23.2: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_23 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc4_23.2 (constants.%return.param_patt)]
+// CHECK:STDOUT:   %return.patt.loc4_20.2: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_23 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc4_23.2, %Dest [symbolic = %return.patt.loc4_20.2 (constants.%return.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc4_20.1 (%Self.as_type)) -> out %return.param: @ImplicitAs.WithSelf.Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn(%self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc4_14.1 (%Self.as_type)) -> out %return.param: @ImplicitAs.WithSelf.Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -233,14 +234,14 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3aa
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc4_20.1 => constants.%Self.as_type
-// CHECK:STDOUT:   %pattern_type.loc4_18 => constants.%pattern_type.701
-// CHECK:STDOUT:   %self.param_patt.loc4_18.2 => constants.%self.param_patt
-// CHECK:STDOUT:   %self.patt.loc4_18.2 => constants.%self.patt
-// CHECK:STDOUT:   %.loc4_31.1 => constants.%.184
-// CHECK:STDOUT:   %pattern_type.loc4_31 => constants.%pattern_type.51d
-// CHECK:STDOUT:   %return.param_patt.loc4_31.2 => constants.%return.param_patt
-// CHECK:STDOUT:   %return.patt.loc4_28.2 => constants.%return.patt
+// CHECK:STDOUT:   %Self.as_type.loc4_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type.loc4_14 => constants.%pattern_type.701
+// CHECK:STDOUT:   %self.param_patt.loc4_14.2 => constants.%self.param_patt
+// CHECK:STDOUT:   %self.patt.loc4_14.2 => constants.%self.patt
+// CHECK:STDOUT:   %.loc4_23.1 => constants.%.184
+// CHECK:STDOUT:   %pattern_type.loc4_23 => constants.%pattern_type.51d
+// CHECK:STDOUT:   %return.param_patt.loc4_23.2 => constants.%return.param_patt
+// CHECK:STDOUT:   %return.patt.loc4_20.2 => constants.%return.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- non-instance_success.carbon
@@ -901,16 +902,16 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Instance1.WithSelf.G1.decl: @Instance1.WithSelf.%Instance1.WithSelf.G1.type (%Instance1.WithSelf.G1.type.284) = fn_decl @Instance1.WithSelf.G1 [symbolic = @Instance1.WithSelf.%Instance1.WithSelf.G1 (constants.%Instance1.WithSelf.G1.7cb)] {
-// CHECK:STDOUT:     %self.param_patt.loc4_13.1: @Instance1.WithSelf.G1.%pattern_type (%pattern_type.f46) = value_param_pattern [symbolic = %self.param_patt.loc4_13.2 (constants.%self.param_patt.281)]
-// CHECK:STDOUT:     %self.patt.loc4_13.1: @Instance1.WithSelf.G1.%pattern_type (%pattern_type.f46) = at_binding_pattern self, %self.param_patt.loc4_13.1 [symbolic = %self.patt.loc4_13.2 (constants.%self.patt.1a0)]
+// CHECK:STDOUT:     %self.param_patt.loc4_9.1: @Instance1.WithSelf.G1.%pattern_type (%pattern_type.f46) = value_param_pattern [symbolic = %self.param_patt.loc4_9.2 (constants.%self.param_patt.281)]
+// CHECK:STDOUT:     %self.patt.loc4_9.1: @Instance1.WithSelf.G1.%pattern_type (%pattern_type.f46) = at_binding_pattern self, %self.param_patt.loc4_9.1 [symbolic = %self.patt.loc4_9.2 (constants.%self.patt.1a0)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @Instance1.WithSelf.G1.%Self.as_type.loc4_15.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc4_15.1: type = splice_block %.loc4_15.2 [symbolic = %Self.as_type.loc4_15.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @Instance1.WithSelf.G1.%Self.as_type.loc4_9.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc4_9.1: type = splice_block %.loc4_9.2 [symbolic = %Self.as_type.loc4_9.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %Instance1.type = name_ref Self, @Instance1.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc4_15.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_15.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc4_15.2: type = converted %Self.ref, %Self.as_type.loc4_15.2 [symbolic = %Self.as_type.loc4_15.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc4_9.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_9.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc4_9.2: type = converted %Self.ref, %Self.as_type.loc4_9.2 [symbolic = %Self.as_type.loc4_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Instance1.WithSelf.G1.%Self.as_type.loc4_15.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @Instance1.WithSelf.G1.%Self.as_type.loc4_9.1 (%Self.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Instance1.assoc_type = assoc_entity element0, %Instance1.WithSelf.G1.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -942,12 +943,12 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Instance1.WithSelf.G1(@Instance1.%Self: %Instance1.type) {
 // CHECK:STDOUT:   %Self: %Instance1.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc4_15.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_15.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc4_15.1 [symbolic = %pattern_type (constants.%pattern_type.f46)]
-// CHECK:STDOUT:   %self.param_patt.loc4_13.2: @Instance1.WithSelf.G1.%pattern_type (%pattern_type.f46) = value_param_pattern [symbolic = %self.param_patt.loc4_13.2 (constants.%self.param_patt.281)]
-// CHECK:STDOUT:   %self.patt.loc4_13.2: @Instance1.WithSelf.G1.%pattern_type (%pattern_type.f46) = at_binding_pattern self, %self.param_patt.loc4_13.2 [symbolic = %self.patt.loc4_13.2 (constants.%self.patt.1a0)]
+// CHECK:STDOUT:   %Self.as_type.loc4_9.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_9.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc4_9.1 [symbolic = %pattern_type (constants.%pattern_type.f46)]
+// CHECK:STDOUT:   %self.param_patt.loc4_9.2: @Instance1.WithSelf.G1.%pattern_type (%pattern_type.f46) = value_param_pattern [symbolic = %self.param_patt.loc4_9.2 (constants.%self.param_patt.281)]
+// CHECK:STDOUT:   %self.patt.loc4_9.2: @Instance1.WithSelf.G1.%pattern_type (%pattern_type.f46) = at_binding_pattern self, %self.param_patt.loc4_9.2 [symbolic = %self.patt.loc4_9.2 (constants.%self.patt.1a0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Instance1.WithSelf.G1.%Self.as_type.loc4_15.1 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @Instance1.WithSelf.G1.%Self.as_type.loc4_9.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @struct_type.d.as.Instance1.impl.G1(%self.param: %struct_type.d) {
@@ -992,10 +993,10 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance1.WithSelf.G1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc4_15.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc4_9.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.f46
-// CHECK:STDOUT:   %self.param_patt.loc4_13.2 => constants.%self.param_patt.281
-// CHECK:STDOUT:   %self.patt.loc4_13.2 => constants.%self.patt.1a0
+// CHECK:STDOUT:   %self.param_patt.loc4_9.2 => constants.%self.param_patt.281
+// CHECK:STDOUT:   %self.patt.loc4_9.2 => constants.%self.patt.1a0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance1.WithSelf(constants.%Instance1.facet) {
@@ -1007,10 +1008,10 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance1.WithSelf.G1(constants.%Instance1.facet) {
 // CHECK:STDOUT:   %Self => constants.%Instance1.facet
-// CHECK:STDOUT:   %Self.as_type.loc4_15.1 => constants.%struct_type.d
+// CHECK:STDOUT:   %Self.as_type.loc4_9.1 => constants.%struct_type.d
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.515
-// CHECK:STDOUT:   %self.param_patt.loc4_13.2 => constants.%self.param_patt.3aa
-// CHECK:STDOUT:   %self.patt.loc4_13.2 => constants.%self.patt.bed
+// CHECK:STDOUT:   %self.param_patt.loc4_9.2 => constants.%self.param_patt.3aa
+// CHECK:STDOUT:   %self.patt.loc4_9.2 => constants.%self.patt.bed
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_instance.carbon
@@ -1063,16 +1064,16 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Instance2.WithSelf.G2.decl: @Instance2.WithSelf.%Instance2.WithSelf.G2.type (%Instance2.WithSelf.G2.type.512) = fn_decl @Instance2.WithSelf.G2 [symbolic = @Instance2.WithSelf.%Instance2.WithSelf.G2 (constants.%Instance2.WithSelf.G2.09b)] {
-// CHECK:STDOUT:     %self.param_patt.loc4_13.1: @Instance2.WithSelf.G2.%pattern_type (%pattern_type.8a4) = value_param_pattern [symbolic = %self.param_patt.loc4_13.2 (constants.%self.param_patt.fe5)]
-// CHECK:STDOUT:     %self.patt.loc4_13.1: @Instance2.WithSelf.G2.%pattern_type (%pattern_type.8a4) = at_binding_pattern self, %self.param_patt.loc4_13.1 [symbolic = %self.patt.loc4_13.2 (constants.%self.patt.fd0)]
+// CHECK:STDOUT:     %self.param_patt.loc4_9.1: @Instance2.WithSelf.G2.%pattern_type (%pattern_type.8a4) = value_param_pattern [symbolic = %self.param_patt.loc4_9.2 (constants.%self.param_patt.fe5)]
+// CHECK:STDOUT:     %self.patt.loc4_9.1: @Instance2.WithSelf.G2.%pattern_type (%pattern_type.8a4) = at_binding_pattern self, %self.param_patt.loc4_9.1 [symbolic = %self.patt.loc4_9.2 (constants.%self.patt.fd0)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @Instance2.WithSelf.G2.%Self.as_type.loc4_15.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc4_15.1: type = splice_block %.loc4_15.2 [symbolic = %Self.as_type.loc4_15.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @Instance2.WithSelf.G2.%Self.as_type.loc4_9.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc4_9.1: type = splice_block %.loc4_9.2 [symbolic = %Self.as_type.loc4_9.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %Instance2.type = name_ref Self, @Instance2.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc4_15.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_15.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc4_15.2: type = converted %Self.ref, %Self.as_type.loc4_15.2 [symbolic = %Self.as_type.loc4_15.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc4_9.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_9.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc4_9.2: type = converted %Self.ref, %Self.as_type.loc4_9.2 [symbolic = %Self.as_type.loc4_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Instance2.WithSelf.G2.%Self.as_type.loc4_15.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @Instance2.WithSelf.G2.%Self.as_type.loc4_9.1 (%Self.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Instance2.assoc_type = assoc_entity element0, %Instance2.WithSelf.G2.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -1104,12 +1105,12 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Instance2.WithSelf.G2(@Instance2.%Self: %Instance2.type) {
 // CHECK:STDOUT:   %Self: %Instance2.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc4_15.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_15.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc4_15.1 [symbolic = %pattern_type (constants.%pattern_type.8a4)]
-// CHECK:STDOUT:   %self.param_patt.loc4_13.2: @Instance2.WithSelf.G2.%pattern_type (%pattern_type.8a4) = value_param_pattern [symbolic = %self.param_patt.loc4_13.2 (constants.%self.param_patt.fe5)]
-// CHECK:STDOUT:   %self.patt.loc4_13.2: @Instance2.WithSelf.G2.%pattern_type (%pattern_type.8a4) = at_binding_pattern self, %self.param_patt.loc4_13.2 [symbolic = %self.patt.loc4_13.2 (constants.%self.patt.fd0)]
+// CHECK:STDOUT:   %Self.as_type.loc4_9.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_9.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc4_9.1 [symbolic = %pattern_type (constants.%pattern_type.8a4)]
+// CHECK:STDOUT:   %self.param_patt.loc4_9.2: @Instance2.WithSelf.G2.%pattern_type (%pattern_type.8a4) = value_param_pattern [symbolic = %self.param_patt.loc4_9.2 (constants.%self.param_patt.fe5)]
+// CHECK:STDOUT:   %self.patt.loc4_9.2: @Instance2.WithSelf.G2.%pattern_type (%pattern_type.8a4) = at_binding_pattern self, %self.param_patt.loc4_9.2 [symbolic = %self.patt.loc4_9.2 (constants.%self.patt.fd0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Instance2.WithSelf.G2.%Self.as_type.loc4_15.1 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @Instance2.WithSelf.G2.%Self.as_type.loc4_9.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @struct_type.e.as.Instance2.impl.G2(%self.param: %struct_type.e) {
@@ -1136,10 +1137,10 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance2.WithSelf.G2(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc4_15.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc4_9.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.8a4
-// CHECK:STDOUT:   %self.param_patt.loc4_13.2 => constants.%self.param_patt.fe5
-// CHECK:STDOUT:   %self.patt.loc4_13.2 => constants.%self.patt.fd0
+// CHECK:STDOUT:   %self.param_patt.loc4_9.2 => constants.%self.param_patt.fe5
+// CHECK:STDOUT:   %self.patt.loc4_9.2 => constants.%self.patt.fd0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance2.WithSelf(constants.%Instance2.facet) {
@@ -1151,9 +1152,9 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance2.WithSelf.G2(constants.%Instance2.facet) {
 // CHECK:STDOUT:   %Self => constants.%Instance2.facet
-// CHECK:STDOUT:   %Self.as_type.loc4_15.1 => constants.%struct_type.e
+// CHECK:STDOUT:   %Self.as_type.loc4_9.1 => constants.%struct_type.e
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.efd
-// CHECK:STDOUT:   %self.param_patt.loc4_13.2 => constants.%self.param_patt.5cd
-// CHECK:STDOUT:   %self.patt.loc4_13.2 => constants.%self.patt.91e
+// CHECK:STDOUT:   %self.param_patt.loc4_9.2 => constants.%self.param_patt.5cd
+// CHECK:STDOUT:   %self.patt.loc4_9.2 => constants.%self.patt.91e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

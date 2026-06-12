@@ -24,7 +24,7 @@ class SomeClass {
 
   fn StaticMemberFunction();
 
-  fn AdapterMethod[self: SomeClassAdapter]();
+  fn AdapterMethod(self: SomeClassAdapter);
 }
 
 class SomeClassAdapter {
@@ -44,7 +44,7 @@ fn TestAdapterMethod(a: SomeClassAdapter) {
 library "[[@TEST_NAME]]";
 
 class SomeClass {
-  fn F[self: Self]();
+  fn F(self);
 }
 
 class SomeClassAdapter {
@@ -59,8 +59,8 @@ fn F(a: SomeClassAdapter) {
   // CHECK:STDERR:   a.F();
   // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-14]]:8: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn F[self: Self]();
-  // CHECK:STDERR:        ^~~~~~~~~~
+  // CHECK:STDERR:   fn F(self);
+  // CHECK:STDERR:        ^~~~
   // CHECK:STDERR:
   a.F();
 }

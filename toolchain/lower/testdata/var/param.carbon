@@ -17,7 +17,7 @@ library "[[@TEST_NAME]]";
 class C {
   // TODO: Change to Core.Destructor when possible.
   impl as Core.Destroy {
-    fn Op[ref self: Self]();
+    fn Op(ref self);
   }
 
   fn Make() -> Self;
@@ -36,7 +36,7 @@ library "[[@TEST_NAME]]";
 class C {
   // TODO: Change to Core.Destructor when possible.
   impl as Core.Destroy {
-    fn Op[ref self: Self]();
+    fn Op(ref self);
   }
 }
 

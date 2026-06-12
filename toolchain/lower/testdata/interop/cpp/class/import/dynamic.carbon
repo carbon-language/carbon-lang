@@ -34,9 +34,9 @@ __attribute__((optnone)) auto Use(Base& b) {
 
 base class Derived {
   extend base: Cpp.Base;
-  virtual fn other_func[unused self: Self]() {
+  virtual fn other_func(unused self) {
   }
-  override fn func[unused ref self: Self]() {
+  override fn func(unused ref self) {
   }
 }
 

@@ -19,7 +19,7 @@ interface DefaultOrUnformed {
 }
 
 interface Destroy {
-  fn Op[ref self: Self]();
+  fn Op(ref self);
 }
 
 impl () as DefaultOrUnformed {

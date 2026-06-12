@@ -27,6 +27,9 @@ auto HandlePattern(Context& context) -> void {
       break;
     case Lex::TokenKind::Template:
     case Lex::TokenKind::Ref:
+    // `self` is always a binding, even when its type is omitted (and so is not
+    // followed by a `:`).
+    case Lex::TokenKind::SelfValueIdentifier:
       context.PushStateForPattern(StateKind::BindingPattern,
                                   state.in_var_pattern, state.in_unused_pattern,
                                   state.ambient_precedence);

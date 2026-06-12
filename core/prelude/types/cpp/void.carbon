@@ -33,9 +33,9 @@ abstract class CppCompat.VoidBase {
 // #6357 allows it, and we don't have a good way to express "non-const" as a
 // constraint on this impl, but this conversion is not const-correct.
 impl forall [T:! type] T* as ImplicitAs(CppCompat.VoidBase*) {
-  fn Convert[self: T*]() -> CppCompat.VoidBase* = "pointer.unsafe_convert";
+  fn Convert(self: T*) -> CppCompat.VoidBase* = "pointer.unsafe_convert";
 }
 
 impl forall [T:! type] T* as ImplicitAs(const CppCompat.VoidBase*) {
-  fn Convert[self: T*]() -> CppCompat.VoidBase* = "pointer.unsafe_convert";
+  fn Convert(self: T*) -> CppCompat.VoidBase* = "pointer.unsafe_convert";
 }

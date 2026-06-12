@@ -16,13 +16,13 @@ package Modifiers;
 
 //@dump-sem-ir-begin
 base class Base {
-  virtual fn H[self: Self]();
+  virtual fn H(self);
 }
 
 abstract class Abstract {
-  abstract fn J[self: Self]();
+  abstract fn J(self);
 
-  virtual fn K[self: Self]();
+  virtual fn K(self);
 }
 //@dump-sem-ir-end
 
@@ -35,7 +35,7 @@ import Modifiers;
 //@dump-sem-ir-begin
 class Derived {
   extend base: Modifiers.Base;
-  override fn H[self: Self]();
+  override fn H(self);
 }
 //@dump-sem-ir-end
 
@@ -52,7 +52,7 @@ library "[[@TEST_NAME]]";
 import Modifiers;
 
 base class Derived {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
   extend base: Modifiers.Base;
 }
 
@@ -73,12 +73,12 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 abstract class A1 {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 abstract class A2 {
   extend base: A1;
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 // --- impl_base.carbon
@@ -86,17 +86,17 @@ abstract class A2 {
 library "[[@TEST_NAME]]";
 
 base class B1 {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 base class B2 {
   extend base: B1;
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 class C {
   extend base: B2;
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 fn Use() {
@@ -111,10 +111,10 @@ library "[[@TEST_NAME]]";
 
 class C {
   // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:3: error: override without base class [OverrideWithoutBase]
-  // CHECK:STDERR:   override fn F[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F(self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 // --- init_members.carbon
@@ -125,7 +125,7 @@ base class Base {
   var m1: i32;
   var m2: i32;
 
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 fn F() {
@@ -148,10 +148,10 @@ base class Base {
 class Derived {
   extend base: Base;
   // CHECK:STDERR: fail_impl_without_base_declaration.carbon:[[@LINE+4]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
-  // CHECK:STDERR:   override fn F[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F(self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 // --- abstract_impl.carbon
@@ -159,7 +159,7 @@ class Derived {
 library "[[@TEST_NAME]]";
 
 abstract class AbstractBase {
-  abstract fn F[self: Self]();
+  abstract fn F(self);
 }
 
 abstract class AbstractIntermediate {
@@ -169,7 +169,7 @@ abstract class AbstractIntermediate {
 class Derived {
   extend base: AbstractIntermediate;
   //@dump-sem-ir-begin
-  override fn F[self: Self]();
+  override fn F(self);
   //@dump-sem-ir-end
 }
 
@@ -178,7 +178,7 @@ class Derived {
 library "[[@TEST_NAME]]";
 
 base class VirtualBase {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 base class VirtualIntermediate {
@@ -188,7 +188,7 @@ base class VirtualIntermediate {
 class Derived {
   extend base: VirtualIntermediate;
   //@dump-sem-ir-begin
-  override fn F[self: Self]();
+  override fn F(self);
   //@dump-sem-ir-end
 }
 
@@ -197,22 +197,22 @@ class Derived {
 library "[[@TEST_NAME]]";
 
 base class Base {
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 class Derived {
   extend base: Base;
   // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+10]]:3: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-  // CHECK:STDERR:   override fn F[self: Self](v: i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F(self, v: i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+7]]:3: note: calling function declared here [InCallToEntity]
-  // CHECK:STDERR:   override fn F[self: Self](v: i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F(self, v: i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE-11]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   virtual fn F[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F(self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn F[self: Self](v: i32);
+  override fn F(self, v: i32);
 }
 
 // --- impl_conversion.carbon
@@ -226,23 +226,23 @@ class T2 {
 }
 
 impl T2 as Core.ImplicitAs(T1) {
-  fn Convert[unused self: Self]() -> T1 {
+  fn Convert(unused self) -> T1 {
     return {};
   }
 }
 
 base class Base {
-  virtual fn F[self: Self]() -> T1;
+  virtual fn F(self) -> T1;
 }
 
 class Derived {
   extend base: Base;
   //@dump-sem-ir-begin
-  override fn F[self: Self]() -> T2;
+  override fn F(self) -> T2;
   //@dump-sem-ir-end
 }
 
-fn Derived.F[unused self: Self]() -> T2 {
+fn Derived.F(unused self) -> T2 {
   return {};
 }
 
@@ -255,10 +255,10 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 base class Base(T:! type) {
   // CHECK:STDERR: fail_generic_virtual_decl.carbon:[[@LINE+4]]:3: note: generic function declared here [MissingGenericFunctionDefinitionHere]
-  // CHECK:STDERR:   virtual fn F[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F(self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  virtual fn F[self: Self]();
+  virtual fn F(self);
 }
 
 
@@ -270,12 +270,12 @@ class T1 {
 }
 
 base class Base(T:! type) {
-  virtual fn F[unused self: Self](unused t: T) { }
+  virtual fn F(unused self, unused t: T) { }
 }
 
 class Derived {
   extend base: Base(T1);
-  override fn F[unused self: Self](unused t: T1) { }
+  override fn F(unused self, unused t: T1) { }
 }
 
 // --- fail_virtual_without_self.carbon
@@ -309,22 +309,22 @@ class T2 {
 library "[[@TEST_NAME]]";
 
 base class T1 {
-  virtual fn F1[self: Self]();
+  virtual fn F1(self);
 }
 
 class T2 {
   extend base: T1;
   // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+10]]:3: error: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR:   override fn F1[ref self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F1(ref self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+7]]:18: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   override fn F1[ref self: Self]();
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F1(ref self);
+  // CHECK:STDERR:                  ^~~~~~~~
   // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE-11]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   virtual fn F1[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F1(self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn F1[ref self: Self]();
+  override fn F1(ref self);
 }
 
 // --- fail_generic_virtual.carbon
@@ -333,10 +333,10 @@ library "[[@TEST_NAME]]";
 
 base class T1 {
   // CHECK:STDERR: fail_generic_virtual.carbon:[[@LINE+4]]:3: error: generic virtual function [GenericVirtual]
-  // CHECK:STDERR:   virtual fn F[self: Self, T:! type]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F[T:! type](self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  virtual fn F[self: Self, T:! type]();
+  virtual fn F[T:! type](self);
 }
 
 // --- fail_generic_virtual_in_generic_class.carbon
@@ -345,10 +345,10 @@ library "[[@TEST_NAME]]";
 
 base class T1(T:! type) {
   // CHECK:STDERR: fail_generic_virtual_in_generic_class.carbon:[[@LINE+4]]:3: error: generic virtual function [GenericVirtual]
-  // CHECK:STDERR:   virtual fn F[self: Self, T:! type]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F[T:! type](self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  virtual fn F[self: Self, T:! type]();
+  virtual fn F[T:! type](self);
 }
 
 // --- generic_with_virtual.carbon
@@ -357,7 +357,7 @@ library "[[@TEST_NAME]]";
 
 base class T1(T:! type) {
   //@dump-sem-ir-begin
-  virtual fn F[unused self: Self]() { }
+  virtual fn F(unused self) { }
   //@dump-sem-ir-end
 }
 
@@ -367,7 +367,7 @@ library "[[@TEST_NAME]]";
 
 base class T1(T:! type) {
   //@dump-sem-ir-begin
-  virtual fn F[unused self: Self](unused t: T) { }
+  virtual fn F(unused self, unused t: T) { }
   //@dump-sem-ir-end
 }
 
@@ -384,14 +384,14 @@ fn F(b: Modifiers.Base);
 library "[[@TEST_NAME]]";
 
 base class NonGenericBase {
-  virtual fn F1[unused self: Self]() { }
-  virtual fn F2[unused self: Self]() { }
+  virtual fn F1(unused self) { }
+  virtual fn F2(unused self) { }
 }
 
 base class GenericDerived(T:! type) {
   extend base: NonGenericBase;
-  override fn F2[unused self: Self]() { }
-  virtual fn F3[unused self: Self]() { }
+  override fn F2(unused self) { }
+  virtual fn F3(unused self) { }
 }
 
 // --- nongeneric_derived_from_generic.carbon
@@ -399,16 +399,16 @@ base class GenericDerived(T:! type) {
 library "[[@TEST_NAME]]";
 
 base class GenericBase(T:! type) {
-  virtual fn F1[unused self: Self]() { }
-  virtual fn F2[unused self: Self]() { }
+  virtual fn F1(unused self) { }
+  virtual fn F2(unused self) { }
 }
 
 class T1;
 
 base class NonGenericDerived {
   extend base: GenericBase(T1);
-  override fn F2[unused self: Self]() { }
-  virtual fn F3[unused self: Self]() { }
+  override fn F2(unused self) { }
+  virtual fn F3(unused self) { }
 }
 
 // --- impl_generic_specifically.carbon
@@ -416,13 +416,13 @@ base class NonGenericDerived {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! type) {
-  virtual fn F[unused self: Self](unused t: Base(T)*) { }
+  virtual fn F(unused self, unused t: Base(T)*) { }
 }
 class T1;
 class D1 {
   extend base: Base(T1);
   //@dump-sem-ir-begin
-  override fn F[unused self: Self](unused t: Base(T1)*) { }
+  override fn F(unused self, unused t: Base(T1)*) { }
   //@dump-sem-ir-end
 }
 
@@ -436,19 +436,19 @@ class T1;
 class T2;
 
 base class Base(T:! type) {
-  virtual fn F[unused self: Self](unused t: T1*) { }
+  virtual fn F(unused self, unused t: T1*) { }
 }
 
 class D1 {
   extend base: Base(T1);
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+7]]:43: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   override fn F[unused self: Self](unused t: T2*) { }
-  // CHECK:STDERR:                                           ^~~~~~
+  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+7]]:37: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   override fn F(unused self, unused t: T2*) { }
+  // CHECK:STDERR:                                     ^~~~~~
   // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE-8]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T1*) { }
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F(unused self, unused t: T1*) { }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn F[unused self: Self](unused t: T2*) { }
+  override fn F(unused self, unused t: T2*) { }
 }
 
 // --- fail_impl_generic_generic_mismatch.carbon
@@ -458,18 +458,18 @@ class D1 {
 library "[[@TEST_NAME]]";
 
 abstract class Base(T:! type) {
-  virtual fn F[unused self: Self](unused t: T*) { }
+  virtual fn F(unused self, unused t: T*) { }
 }
 class Derived(T:! type) {
   extend base: Base(T);
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+7]]:43: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   override fn F[unused self: Self](unused t: T) { }
-  // CHECK:STDERR:                                           ^~~~
+  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+7]]:37: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   override fn F(unused self, unused t: T) { }
+  // CHECK:STDERR:                                     ^~~~
   // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE-7]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   virtual fn F[unused self: Self](unused t: T*) { }
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F(unused self, unused t: T*) { }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn F[unused self: Self](unused t: T) { }
+  override fn F(unused self, unused t: T) { }
 }
 
 // --- impl_generic_generic.carbon
@@ -477,12 +477,12 @@ class Derived(T:! type) {
 library "[[@TEST_NAME]]";
 
 abstract class Base(T:! type) {
-  virtual fn F[unused self: Self](unused t: T) { }
+  virtual fn F(unused self, unused t: T) { }
 }
 class Derived(T:! type) {
   extend base: Base(T*);
   //@dump-sem-ir-begin
-  override fn F[unused self: Self](unused t: T*) { }
+  override fn F(unused self, unused t: T*) { }
   //@dump-sem-ir-end
 }
 
@@ -491,14 +491,14 @@ class Derived(T:! type) {
 library "[[@TEST_NAME]]";
 
 abstract class Base(T:! type) {
-  abstract fn F[self: Self]();
+  abstract fn F(self);
 }
 
 class T1;
 
 class Derived {
   extend base: Base(T1);
-  override fn F[unused self: Self]() { }
+  override fn F(unused self) { }
 }
 
 // --- generic_lib.carbon
@@ -506,7 +506,7 @@ class Derived {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! type) {
-  virtual fn F[unused self: Self]() { }
+  virtual fn F(unused self) { }
 }
 
 // --- generic_import.carbon
@@ -523,7 +523,7 @@ var v: Base(T1) = {};
 library "[[@TEST_NAME]]";
 
 base class T1(G1:! type) {
-  virtual fn F[unused self: Self]() { }
+  virtual fn F(unused self) { }
 }
 
 class T2(G2:! type) {
@@ -535,7 +535,7 @@ class T2(G2:! type) {
 library "[[@TEST_NAME]]";
 
 base class T1(G1:! type) {
-  virtual fn F[unused self: Self]() { }
+  virtual fn F(unused self) { }
 }
 
 class T2(G2:! type) {
@@ -543,6 +543,7 @@ class T2(G2:! type) {
     extend base: T1(G2);
   }
 }
+
 
 // CHECK:STDOUT: --- modifiers.carbon
 // CHECK:STDOUT:
@@ -646,12 +647,12 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.746: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %self.param_patt.138: %pattern_type.746 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.727: %pattern_type.746 = at_binding_pattern self, %self.param_patt.138 [concrete]
-// CHECK:STDOUT:   %Derived.H.type.1f42d4.1: type = fn_type @Derived.H.loc9_30.1 [concrete]
+// CHECK:STDOUT:   %Derived.H.type.1f42d4.1: type = fn_type @Derived.H.loc9_22.1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Derived.H.a6796b.1: %Derived.H.type.1f42d4.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Base.H.type: type = fn_type @Base.H [concrete]
 // CHECK:STDOUT:   %Base.H: %Base.H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Derived.H.type.1f42d4.2: type = fn_type @Derived.H.loc9_30.2 [concrete]
+// CHECK:STDOUT:   %Derived.H.type.1f42d4.2: type = fn_type @Derived.H.loc9_22.2 [concrete]
 // CHECK:STDOUT:   %Derived.H.a6796b.2: %Derived.H.type.1f42d4.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.507: type = struct_type {.base: %Base} [concrete]
@@ -689,7 +690,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Modifiers.ref: <namespace> = name_ref Modifiers, imports.%Modifiers [concrete = imports.%Modifiers]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%Modifiers.Base [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %Base.ref, element0 [concrete]
-// CHECK:STDOUT:   %Derived.H.decl.loc9_30.1: %Derived.H.type.1f42d4.1 = fn_decl @Derived.H.loc9_30.1 [concrete = constants.%Derived.H.a6796b.1] {
+// CHECK:STDOUT:   %Derived.H.decl.loc9_22.1: %Derived.H.type.1f42d4.1 = fn_decl @Derived.H.loc9_22.1 [concrete = constants.%Derived.H.a6796b.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.746 = value_param_pattern [concrete = constants.%self.param_patt.138]
 // CHECK:STDOUT:     %self.patt: %pattern_type.746 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.727]
 // CHECK:STDOUT:   } {
@@ -697,7 +698,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = value_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Derived.H.decl.loc9_30.2: %Derived.H.type.1f42d4.2 = fn_decl @Derived.H.loc9_30.2 [concrete = constants.%Derived.H.a6796b.2] {
+// CHECK:STDOUT:   %Derived.H.decl.loc9_22.2: %Derived.H.type.1f42d4.2 = fn_decl @Derived.H.loc9_22.2 [concrete = constants.%Derived.H.a6796b.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -711,7 +712,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .Modifiers = <poisoned>
 // CHECK:STDOUT:   .base = %.loc8
-// CHECK:STDOUT:   .H [hidden] = %Derived.H.decl.loc9_30.1
+// CHECK:STDOUT:   .H [hidden] = %Derived.H.decl.loc9_22.1
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -720,19 +721,19 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
-// CHECK:STDOUT:   @Derived.%Derived.H.decl.loc9_30.2
+// CHECK:STDOUT:   @Derived.%Derived.H.decl.loc9_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: override fn @Derived.H.loc9_30.1(%self.param: %Derived);
+// CHECK:STDOUT: override fn @Derived.H.loc9_22.1(%self.param: %Derived);
 // CHECK:STDOUT:
-// CHECK:STDOUT: override fn @Derived.H.loc9_30.2(%self.param: %Base) [thunk @Derived.%Derived.H.decl.loc9_30.1 for imports.%Base.H.decl] {
+// CHECK:STDOUT: override fn @Derived.H.loc9_22.2(%self.param: %Base) [thunk @Derived.%Derived.H.decl.loc9_22.1 for imports.%Base.H.decl] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %H.ref: %Derived.H.type.1f42d4.1 = name_ref H, @Derived.%Derived.H.decl.loc9_30.1 [concrete = constants.%Derived.H.a6796b.1]
+// CHECK:STDOUT:   %H.ref: %Derived.H.type.1f42d4.1 = name_ref H, @Derived.%Derived.H.decl.loc9_22.1 [concrete = constants.%Derived.H.a6796b.1]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc9_30.1: ref %Derived = enclosing_class_access %.2, element0
-// CHECK:STDOUT:   %.loc9_30.2: %Derived = acquire_value %.loc9_30.1
-// CHECK:STDOUT:   %Derived.H.bound: <bound method> = bound_method %.loc9_30.2, %H.ref
-// CHECK:STDOUT:   %Derived.H.call: init %empty_tuple.type = call %Derived.H.bound(%.loc9_30.2)
+// CHECK:STDOUT:   %.loc9_22.1: ref %Derived = enclosing_class_access %.2, element0
+// CHECK:STDOUT:   %.loc9_22.2: %Derived = acquire_value %.loc9_22.1
+// CHECK:STDOUT:   %Derived.H.bound: <bound method> = bound_method %.loc9_22.2, %H.ref
+// CHECK:STDOUT:   %Derived.H.call: init %empty_tuple.type = call %Derived.H.bound(%.loc9_22.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1028,15 +1029,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.746: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %self.param_patt.138: %pattern_type.746 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.727: %pattern_type.746 = at_binding_pattern self, %self.param_patt.138 [concrete]
-// CHECK:STDOUT:   %Derived.F.type.48cdab.1: type = fn_type @Derived.F.loc15_30.1 [concrete]
+// CHECK:STDOUT:   %Derived.F.type.48cdab.1: type = fn_type @Derived.F.loc15_22.1 [concrete]
 // CHECK:STDOUT:   %Derived.F.bd5be1.1: %Derived.F.type.48cdab.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Derived.F.type.48cdab.2: type = fn_type @Derived.F.loc15_30.2 [concrete]
+// CHECK:STDOUT:   %Derived.F.type.48cdab.2: type = fn_type @Derived.F.loc15_22.2 [concrete]
 // CHECK:STDOUT:   %Derived.F.bd5be1.2: %Derived.F.type.48cdab.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Derived.F.decl.loc15_30.1: %Derived.F.type.48cdab.1 = fn_decl @Derived.F.loc15_30.1 [concrete = constants.%Derived.F.bd5be1.1] {
+// CHECK:STDOUT:   %Derived.F.decl.loc15_22.1: %Derived.F.type.48cdab.1 = fn_decl @Derived.F.loc15_22.1 [concrete = constants.%Derived.F.bd5be1.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.746 = value_param_pattern [concrete = constants.%self.param_patt.138]
 // CHECK:STDOUT:     %self.patt: %pattern_type.746 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.727]
 // CHECK:STDOUT:   } {
@@ -1044,7 +1045,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = value_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Derived.F.decl.loc15_30.2: %Derived.F.type.48cdab.2 = fn_decl @Derived.F.loc15_30.2 [concrete = constants.%Derived.F.bd5be1.2] {
+// CHECK:STDOUT:   %Derived.F.decl.loc15_22.2: %Derived.F.type.48cdab.2 = fn_decl @Derived.F.loc15_22.2 [concrete = constants.%Derived.F.bd5be1.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1057,7 +1058,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .AbstractIntermediate = <poisoned>
 // CHECK:STDOUT:   .base = %.loc13
-// CHECK:STDOUT:   .F [hidden] = %Derived.F.decl.loc15_30.1
+// CHECK:STDOUT:   .F [hidden] = %Derived.F.decl.loc15_22.1
 // CHECK:STDOUT:   extend %AbstractIntermediate.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1070,20 +1071,20 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
-// CHECK:STDOUT:   @Derived.%Derived.F.decl.loc15_30.2
+// CHECK:STDOUT:   @Derived.%Derived.F.decl.loc15_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: override fn @Derived.F.loc15_30.1(%self.param: %Derived);
+// CHECK:STDOUT: override fn @Derived.F.loc15_22.1(%self.param: %Derived);
 // CHECK:STDOUT:
-// CHECK:STDOUT: override fn @Derived.F.loc15_30.2(%self.param: %AbstractBase) [thunk @Derived.%Derived.F.decl.loc15_30.1 for @AbstractBase.%AbstractBase.F.decl] {
+// CHECK:STDOUT: override fn @Derived.F.loc15_22.2(%self.param: %AbstractBase) [thunk @Derived.%Derived.F.decl.loc15_22.1 for @AbstractBase.%AbstractBase.F.decl] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %Derived.F.type.48cdab.1 = name_ref F, @Derived.%Derived.F.decl.loc15_30.1 [concrete = constants.%Derived.F.bd5be1.1]
+// CHECK:STDOUT:   %F.ref: %Derived.F.type.48cdab.1 = name_ref F, @Derived.%Derived.F.decl.loc15_22.1 [concrete = constants.%Derived.F.bd5be1.1]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc15_30.1: ref %AbstractIntermediate = enclosing_class_access %.2, element0
-// CHECK:STDOUT:   %.loc15_30.2: ref %Derived = enclosing_class_access %.loc15_30.1, element0
-// CHECK:STDOUT:   %.loc15_30.3: %Derived = acquire_value %.loc15_30.2
-// CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %.loc15_30.3, %F.ref
-// CHECK:STDOUT:   %Derived.F.call: init %empty_tuple.type = call %Derived.F.bound(%.loc15_30.3)
+// CHECK:STDOUT:   %.loc15_22.1: ref %AbstractIntermediate = enclosing_class_access %.2, element0
+// CHECK:STDOUT:   %.loc15_22.2: ref %Derived = enclosing_class_access %.loc15_22.1, element0
+// CHECK:STDOUT:   %.loc15_22.3: %Derived = acquire_value %.loc15_22.2
+// CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %.loc15_22.3, %F.ref
+// CHECK:STDOUT:   %Derived.F.call: init %empty_tuple.type = call %Derived.F.bound(%.loc15_22.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1099,15 +1100,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.746: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %self.param_patt.138: %pattern_type.746 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.727: %pattern_type.746 = at_binding_pattern self, %self.param_patt.138 [concrete]
-// CHECK:STDOUT:   %Derived.F.type.48cdab.1: type = fn_type @Derived.F.loc15_30.1 [concrete]
+// CHECK:STDOUT:   %Derived.F.type.48cdab.1: type = fn_type @Derived.F.loc15_22.1 [concrete]
 // CHECK:STDOUT:   %Derived.F.bd5be1.1: %Derived.F.type.48cdab.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Derived.F.type.48cdab.2: type = fn_type @Derived.F.loc15_30.2 [concrete]
+// CHECK:STDOUT:   %Derived.F.type.48cdab.2: type = fn_type @Derived.F.loc15_22.2 [concrete]
 // CHECK:STDOUT:   %Derived.F.bd5be1.2: %Derived.F.type.48cdab.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Derived.F.decl.loc15_30.1: %Derived.F.type.48cdab.1 = fn_decl @Derived.F.loc15_30.1 [concrete = constants.%Derived.F.bd5be1.1] {
+// CHECK:STDOUT:   %Derived.F.decl.loc15_22.1: %Derived.F.type.48cdab.1 = fn_decl @Derived.F.loc15_22.1 [concrete = constants.%Derived.F.bd5be1.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.746 = value_param_pattern [concrete = constants.%self.param_patt.138]
 // CHECK:STDOUT:     %self.patt: %pattern_type.746 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.727]
 // CHECK:STDOUT:   } {
@@ -1115,7 +1116,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = value_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Derived.F.decl.loc15_30.2: %Derived.F.type.48cdab.2 = fn_decl @Derived.F.loc15_30.2 [concrete = constants.%Derived.F.bd5be1.2] {
+// CHECK:STDOUT:   %Derived.F.decl.loc15_22.2: %Derived.F.type.48cdab.2 = fn_decl @Derived.F.loc15_22.2 [concrete = constants.%Derived.F.bd5be1.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1128,7 +1129,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .VirtualIntermediate = <poisoned>
 // CHECK:STDOUT:   .base = %.loc13
-// CHECK:STDOUT:   .F [hidden] = %Derived.F.decl.loc15_30.1
+// CHECK:STDOUT:   .F [hidden] = %Derived.F.decl.loc15_22.1
 // CHECK:STDOUT:   extend %VirtualIntermediate.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1141,20 +1142,20 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
-// CHECK:STDOUT:   @Derived.%Derived.F.decl.loc15_30.2
+// CHECK:STDOUT:   @Derived.%Derived.F.decl.loc15_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: override fn @Derived.F.loc15_30.1(%self.param: %Derived);
+// CHECK:STDOUT: override fn @Derived.F.loc15_22.1(%self.param: %Derived);
 // CHECK:STDOUT:
-// CHECK:STDOUT: override fn @Derived.F.loc15_30.2(%self.param: %VirtualBase) [thunk @Derived.%Derived.F.decl.loc15_30.1 for @VirtualBase.%VirtualBase.F.decl] {
+// CHECK:STDOUT: override fn @Derived.F.loc15_22.2(%self.param: %VirtualBase) [thunk @Derived.%Derived.F.decl.loc15_22.1 for @VirtualBase.%VirtualBase.F.decl] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %Derived.F.type.48cdab.1 = name_ref F, @Derived.%Derived.F.decl.loc15_30.1 [concrete = constants.%Derived.F.bd5be1.1]
+// CHECK:STDOUT:   %F.ref: %Derived.F.type.48cdab.1 = name_ref F, @Derived.%Derived.F.decl.loc15_22.1 [concrete = constants.%Derived.F.bd5be1.1]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc15_30.1: ref %VirtualIntermediate = enclosing_class_access %.2, element0
-// CHECK:STDOUT:   %.loc15_30.2: ref %Derived = enclosing_class_access %.loc15_30.1, element0
-// CHECK:STDOUT:   %.loc15_30.3: %Derived = acquire_value %.loc15_30.2
-// CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %.loc15_30.3, %F.ref
-// CHECK:STDOUT:   %Derived.F.call: init %empty_tuple.type = call %Derived.F.bound(%.loc15_30.3)
+// CHECK:STDOUT:   %.loc15_22.1: ref %VirtualIntermediate = enclosing_class_access %.2, element0
+// CHECK:STDOUT:   %.loc15_22.2: ref %Derived = enclosing_class_access %.loc15_22.1, element0
+// CHECK:STDOUT:   %.loc15_22.3: %Derived = acquire_value %.loc15_22.2
+// CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %.loc15_22.3, %F.ref
+// CHECK:STDOUT:   %Derived.F.call: init %empty_tuple.type = call %Derived.F.bound(%.loc15_22.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1179,13 +1180,13 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.F.type.48cdab.2: type = fn_type @Derived.F.loc23 [concrete]
 // CHECK:STDOUT:   %Derived.F.bd5be1.2: %Derived.F.type.48cdab.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %.fd2: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.00a, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc23_36.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc23_28.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Derived.F.decl.loc23_36.1: %Derived.F.type.48cdab.1 = fn_decl @Derived.F.loc27 [concrete = constants.%Derived.F.bd5be1.1] {
+// CHECK:STDOUT:   %Derived.F.decl.loc23_28.1: %Derived.F.type.48cdab.1 = fn_decl @Derived.F.loc27 [concrete = constants.%Derived.F.bd5be1.1] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T2.ref.loc23: type = name_ref T2, file.%T2.decl [concrete = constants.%T2]
@@ -1197,7 +1198,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %return.loc23: ref %T2 = return_slot %return.param.loc23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Derived.F.decl.loc23_36.2: %Derived.F.type.48cdab.2 = fn_decl @Derived.F.loc23 [concrete = constants.%Derived.F.bd5be1.2] {
+// CHECK:STDOUT:   %Derived.F.decl.loc23_28.2: %Derived.F.type.48cdab.2 = fn_decl @Derived.F.loc23 [concrete = constants.%Derived.F.bd5be1.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1211,7 +1212,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc21
 // CHECK:STDOUT:   .T2 = <poisoned>
-// CHECK:STDOUT:   .F [hidden] = %Derived.F.decl.loc23_36.1
+// CHECK:STDOUT:   .F [hidden] = %Derived.F.decl.loc23_28.1
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1220,33 +1221,33 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
-// CHECK:STDOUT:   @Derived.%Derived.F.decl.loc23_36.2
+// CHECK:STDOUT:   @Derived.%Derived.F.decl.loc23_28.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: override fn @Derived.F.loc23(%self.param: %Base) -> out %return.param: %T1 [thunk @Derived.%Derived.F.decl.loc23_36.1 for @Base.%Base.F.decl] {
+// CHECK:STDOUT: override fn @Derived.F.loc23(%self.param: %Base) -> out %return.param: %T1 [thunk @Derived.%Derived.F.decl.loc23_28.1 for @Base.%Base.F.decl] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %Derived.F.type.48cdab.1 = name_ref F, @Derived.%Derived.F.decl.loc23_36.1 [concrete = constants.%Derived.F.bd5be1.1]
+// CHECK:STDOUT:   %F.ref: %Derived.F.type.48cdab.1 = name_ref F, @Derived.%Derived.F.decl.loc23_28.1 [concrete = constants.%Derived.F.bd5be1.1]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc23_36.1: ref %Derived = enclosing_class_access %.3, element0
-// CHECK:STDOUT:   %.loc23_36.2: %Derived = acquire_value %.loc23_36.1
-// CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %.loc23_36.2, %F.ref
-// CHECK:STDOUT:   %.loc23_36.3: ref %T2 = temporary_storage
-// CHECK:STDOUT:   %Derived.F.call: init %T2 to %.loc23_36.3 = call %Derived.F.bound(%.loc23_36.2)
+// CHECK:STDOUT:   %.loc23_28.1: ref %Derived = enclosing_class_access %.3, element0
+// CHECK:STDOUT:   %.loc23_28.2: %Derived = acquire_value %.loc23_28.1
+// CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %.loc23_28.2, %F.ref
+// CHECK:STDOUT:   %.loc23_28.3: ref %T2 = temporary_storage
+// CHECK:STDOUT:   %Derived.F.call: init %T2 to %.loc23_28.3 = call %Derived.F.bound(%.loc23_28.2)
 // CHECK:STDOUT:   %impl.elem0: %.fd2 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%T2.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %Derived.F.call, %impl.elem0
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc23_36.4: ref %T2 = temporary %.loc23_36.3, %Derived.F.call
-// CHECK:STDOUT:   %.loc23_36.5: %T2 = acquire_value %.loc23_36.4
-// CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert.call: init %T1 to %.4 = call %bound_method(%.loc23_36.5)
-// CHECK:STDOUT:   %.loc23_36.6: init %T1 = converted %Derived.F.call, %T2.as.ImplicitAs.impl.Convert.call
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc23_36.4, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc23_36.4)
-// CHECK:STDOUT:   return %.loc23_36.6 to %return.param
+// CHECK:STDOUT:   %.loc23_28.4: ref %T2 = temporary %.loc23_28.3, %Derived.F.call
+// CHECK:STDOUT:   %.loc23_28.5: %T2 = acquire_value %.loc23_28.4
+// CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert.call: init %T1 to %.4 = call %bound_method(%.loc23_28.5)
+// CHECK:STDOUT:   %.loc23_28.6: init %T1 = converted %Derived.F.call, %T2.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc23_28.4, constants.%Destroy.Op.1a2547.2
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc23_28.4)
+// CHECK:STDOUT:   return %.loc23_28.6 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc23_36.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc23_28.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc23_36.2(%self.param: ref %T2) {
+// CHECK:STDOUT: fn @Destroy.Op.loc23_28.2(%self.param: ref %T2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -1277,13 +1278,13 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T1.F.decl: @T1.%T1.F.type (%T1.F.type) = fn_decl @T1.F [symbolic = @T1.%T1.F (constants.%T1.F)] {
-// CHECK:STDOUT:       %self.param_patt.loc6_27.1: @T1.F.%pattern_type (%pattern_type.c79) = value_param_pattern [symbolic = %self.param_patt.loc6_27.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:       %self.patt.loc6_27.1: @T1.F.%pattern_type (%pattern_type.c79) = at_binding_pattern self, %self.param_patt.loc6_27.1 [symbolic = %self.patt.loc6_27.2 (constants.%self.patt)]
+// CHECK:STDOUT:       %self.param_patt.loc6_23.1: @T1.F.%pattern_type (%pattern_type.c79) = value_param_pattern [symbolic = %self.param_patt.loc6_23.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:       %self.patt.loc6_23.1: @T1.F.%pattern_type (%pattern_type.c79) = at_binding_pattern self, %self.param_patt.loc6_23.1 [symbolic = %self.patt.loc6_23.2 (constants.%self.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @T1.F.%T1 (%T1) = value_param call_param0
-// CHECK:STDOUT:       %.loc6_29.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
-// CHECK:STDOUT:         %.loc6_29.2: type = specific_constant constants.%T1, @T1(constants.%T) [symbolic = %T1 (constants.%T1)]
-// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_29.2 [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:       %.loc6_23.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
+// CHECK:STDOUT:         %.loc6_23.2: type = specific_constant constants.%T1, @T1(constants.%T) [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_23.2 [symbolic = %T1 (constants.%T1)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @T1.F.%T1 (%T1) = value_binding self, %self.param
 // CHECK:STDOUT:     }
@@ -1305,8 +1306,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic = %T1 (constants.%T1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T1 [symbolic = %pattern_type (constants.%pattern_type.c79)]
-// CHECK:STDOUT:   %self.param_patt.loc6_27.2: @T1.F.%pattern_type (%pattern_type.c79) = value_param_pattern [symbolic = %self.param_patt.loc6_27.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:   %self.patt.loc6_27.2: @T1.F.%pattern_type (%pattern_type.c79) = at_binding_pattern self, %self.param_patt.loc6_27.2 [symbolic = %self.patt.loc6_27.2 (constants.%self.patt)]
+// CHECK:STDOUT:   %self.param_patt.loc6_23.2: @T1.F.%pattern_type (%pattern_type.c79) = value_param_pattern [symbolic = %self.param_patt.loc6_23.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt.loc6_23.2: @T1.F.%pattern_type (%pattern_type.c79) = at_binding_pattern self, %self.param_patt.loc6_23.2 [symbolic = %self.patt.loc6_23.2 (constants.%self.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T1 [symbolic = %require_complete (constants.%require_complete)]
@@ -1331,8 +1332,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T1 => constants.%T1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c79
-// CHECK:STDOUT:   %self.param_patt.loc6_27.2 => constants.%self.param_patt
-// CHECK:STDOUT:   %self.patt.loc6_27.2 => constants.%self.patt
+// CHECK:STDOUT:   %self.param_patt.loc6_23.2 => constants.%self.param_patt
+// CHECK:STDOUT:   %self.patt.loc6_23.2 => constants.%self.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
@@ -1368,15 +1369,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T1.F.decl: @T1.%T1.F.type (%T1.F.type) = fn_decl @T1.F [symbolic = @T1.%T1.F (constants.%T1.F)] {
-// CHECK:STDOUT:       %self.param_patt.loc6_27.1: @T1.F.%pattern_type.loc6_27 (%pattern_type.c79) = value_param_pattern [symbolic = %self.param_patt.loc6_27.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:       %self.patt.loc6_27.1: @T1.F.%pattern_type.loc6_27 (%pattern_type.c79) = at_binding_pattern self, %self.param_patt.loc6_27.1 [symbolic = %self.patt.loc6_27.2 (constants.%self.patt)]
-// CHECK:STDOUT:       %t.param_patt.loc6_43.1: @T1.F.%pattern_type.loc6_43 (%pattern_type.51d) = value_param_pattern [symbolic = %t.param_patt.loc6_43.2 (constants.%t.param_patt)]
-// CHECK:STDOUT:       %t.patt.loc6_43.1: @T1.F.%pattern_type.loc6_43 (%pattern_type.51d) = at_binding_pattern t, %t.param_patt.loc6_43.1 [symbolic = %t.patt.loc6_43.2 (constants.%t.patt)]
+// CHECK:STDOUT:       %self.param_patt.loc6_23.1: @T1.F.%pattern_type.loc6_23 (%pattern_type.c79) = value_param_pattern [symbolic = %self.param_patt.loc6_23.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:       %self.patt.loc6_23.1: @T1.F.%pattern_type.loc6_23 (%pattern_type.c79) = at_binding_pattern self, %self.param_patt.loc6_23.1 [symbolic = %self.patt.loc6_23.2 (constants.%self.patt)]
+// CHECK:STDOUT:       %t.param_patt.loc6_37.1: @T1.F.%pattern_type.loc6_37 (%pattern_type.51d) = value_param_pattern [symbolic = %t.param_patt.loc6_37.2 (constants.%t.param_patt)]
+// CHECK:STDOUT:       %t.patt.loc6_37.1: @T1.F.%pattern_type.loc6_37 (%pattern_type.51d) = at_binding_pattern t, %t.param_patt.loc6_37.1 [symbolic = %t.patt.loc6_37.2 (constants.%t.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @T1.F.%T1 (%T1) = value_param call_param0
-// CHECK:STDOUT:       %.loc6_29.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
-// CHECK:STDOUT:         %.loc6_29.2: type = specific_constant constants.%T1, @T1(constants.%T) [symbolic = %T1 (constants.%T1)]
-// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_29.2 [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:       %.loc6_23.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
+// CHECK:STDOUT:         %.loc6_23.2: type = specific_constant constants.%T1, @T1(constants.%T) [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_23.2 [symbolic = %T1 (constants.%T1)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @T1.F.%T1 (%T1) = value_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @T1.F.%T (%T) = value_param call_param1
@@ -1401,16 +1402,16 @@ class T2(G2:! type) {
 // CHECK:STDOUT: generic virtual fn @T1.F(@T1.%T.loc4_16.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic = %T1 (constants.%T1)]
-// CHECK:STDOUT:   %pattern_type.loc6_27: type = pattern_type %T1 [symbolic = %pattern_type.loc6_27 (constants.%pattern_type.c79)]
-// CHECK:STDOUT:   %self.param_patt.loc6_27.2: @T1.F.%pattern_type.loc6_27 (%pattern_type.c79) = value_param_pattern [symbolic = %self.param_patt.loc6_27.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:   %self.patt.loc6_27.2: @T1.F.%pattern_type.loc6_27 (%pattern_type.c79) = at_binding_pattern self, %self.param_patt.loc6_27.2 [symbolic = %self.patt.loc6_27.2 (constants.%self.patt)]
-// CHECK:STDOUT:   %pattern_type.loc6_43: type = pattern_type %T [symbolic = %pattern_type.loc6_43 (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %t.param_patt.loc6_43.2: @T1.F.%pattern_type.loc6_43 (%pattern_type.51d) = value_param_pattern [symbolic = %t.param_patt.loc6_43.2 (constants.%t.param_patt)]
-// CHECK:STDOUT:   %t.patt.loc6_43.2: @T1.F.%pattern_type.loc6_43 (%pattern_type.51d) = at_binding_pattern t, %t.param_patt.loc6_43.2 [symbolic = %t.patt.loc6_43.2 (constants.%t.patt)]
+// CHECK:STDOUT:   %pattern_type.loc6_23: type = pattern_type %T1 [symbolic = %pattern_type.loc6_23 (constants.%pattern_type.c79)]
+// CHECK:STDOUT:   %self.param_patt.loc6_23.2: @T1.F.%pattern_type.loc6_23 (%pattern_type.c79) = value_param_pattern [symbolic = %self.param_patt.loc6_23.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt.loc6_23.2: @T1.F.%pattern_type.loc6_23 (%pattern_type.c79) = at_binding_pattern self, %self.param_patt.loc6_23.2 [symbolic = %self.patt.loc6_23.2 (constants.%self.patt)]
+// CHECK:STDOUT:   %pattern_type.loc6_37: type = pattern_type %T [symbolic = %pattern_type.loc6_37 (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %t.param_patt.loc6_37.2: @T1.F.%pattern_type.loc6_37 (%pattern_type.51d) = value_param_pattern [symbolic = %t.param_patt.loc6_37.2 (constants.%t.param_patt)]
+// CHECK:STDOUT:   %t.patt.loc6_37.2: @T1.F.%pattern_type.loc6_37 (%pattern_type.51d) = at_binding_pattern t, %t.param_patt.loc6_37.2 [symbolic = %t.patt.loc6_37.2 (constants.%t.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_27: <witness> = require_complete_type %T1 [symbolic = %require_complete.loc6_27 (constants.%require_complete.ce3)]
-// CHECK:STDOUT:   %require_complete.loc6_43: <witness> = require_complete_type %T [symbolic = %require_complete.loc6_43 (constants.%require_complete.944)]
+// CHECK:STDOUT:   %require_complete.loc6_23: <witness> = require_complete_type %T1 [symbolic = %require_complete.loc6_23 (constants.%require_complete.ce3)]
+// CHECK:STDOUT:   %require_complete.loc6_37: <witness> = require_complete_type %T [symbolic = %require_complete.loc6_37 (constants.%require_complete.944)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   virtual fn(%self.param: @T1.F.%T1 (%T1), %t.param: @T1.F.%T (%T)) {
 // CHECK:STDOUT:   !entry:
@@ -1431,16 +1432,16 @@ class T2(G2:! type) {
 // CHECK:STDOUT: specific @T1.F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T1 => constants.%T1
-// CHECK:STDOUT:   %pattern_type.loc6_27 => constants.%pattern_type.c79
-// CHECK:STDOUT:   %self.param_patt.loc6_27.2 => constants.%self.param_patt
-// CHECK:STDOUT:   %self.patt.loc6_27.2 => constants.%self.patt
-// CHECK:STDOUT:   %pattern_type.loc6_43 => constants.%pattern_type.51d
-// CHECK:STDOUT:   %t.param_patt.loc6_43.2 => constants.%t.param_patt
-// CHECK:STDOUT:   %t.patt.loc6_43.2 => constants.%t.patt
+// CHECK:STDOUT:   %pattern_type.loc6_23 => constants.%pattern_type.c79
+// CHECK:STDOUT:   %self.param_patt.loc6_23.2 => constants.%self.param_patt
+// CHECK:STDOUT:   %self.patt.loc6_23.2 => constants.%self.patt
+// CHECK:STDOUT:   %pattern_type.loc6_37 => constants.%pattern_type.51d
+// CHECK:STDOUT:   %t.param_patt.loc6_37.2 => constants.%t.param_patt
+// CHECK:STDOUT:   %t.patt.loc6_37.2 => constants.%t.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_27 => constants.%require_complete.ce3
-// CHECK:STDOUT:   %require_complete.loc6_43 => constants.%require_complete.944
+// CHECK:STDOUT:   %require_complete.loc6_23 => constants.%require_complete.ce3
+// CHECK:STDOUT:   %require_complete.loc6_37 => constants.%require_complete.944
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- impl_generic_specifically.carbon
@@ -1459,15 +1460,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %self.param_patt.fc7: %pattern_type.c35 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.1b8: %pattern_type.c35 = at_binding_pattern self, %self.param_patt.fc7 [concrete]
 // CHECK:STDOUT:   %t.patt.27f644.2: %pattern_type.e0f = at_binding_pattern t, %t.param_patt.cd0 [concrete]
-// CHECK:STDOUT:   %D1.F.type.48cdab.1: type = fn_type @D1.F.loc11_57.1 [concrete]
+// CHECK:STDOUT:   %D1.F.type.48cdab.1: type = fn_type @D1.F.loc11_51.1 [concrete]
 // CHECK:STDOUT:   %D1.F.bd5be1.1: %D1.F.type.48cdab.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %D1.F.type.48cdab.2: type = fn_type @D1.F.loc11_57.2 [concrete]
+// CHECK:STDOUT:   %D1.F.type.48cdab.2: type = fn_type @D1.F.loc11_51.2 [concrete]
 // CHECK:STDOUT:   %D1.F.bd5be1.2: %D1.F.type.48cdab.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D1 {
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %D1.F.decl.loc11_57.1: %D1.F.type.48cdab.1 = fn_decl @D1.F.loc11_57.1 [concrete = constants.%D1.F.bd5be1.1] {
+// CHECK:STDOUT:   %D1.F.decl.loc11_51.1: %D1.F.type.48cdab.1 = fn_decl @D1.F.loc11_51.1 [concrete = constants.%D1.F.bd5be1.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c35 = value_param_pattern [concrete = constants.%self.param_patt.fc7]
 // CHECK:STDOUT:     %self.patt: %pattern_type.c35 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.1b8]
 // CHECK:STDOUT:     %t.param_patt: %pattern_type.e0f = value_param_pattern [concrete = constants.%t.param_patt.cd0]
@@ -1485,7 +1486,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %t: %ptr.2ee = value_binding t, %t.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D1.F.decl.loc11_57.2: %D1.F.type.48cdab.2 = fn_decl @D1.F.loc11_57.2 [concrete = constants.%D1.F.bd5be1.2] {
+// CHECK:STDOUT:   %D1.F.decl.loc11_51.2: %D1.F.type.48cdab.2 = fn_decl @D1.F.loc11_51.2 [concrete = constants.%D1.F.bd5be1.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1499,7 +1500,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .T1 = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
-// CHECK:STDOUT:   .F [hidden] = %D1.F.decl.loc11_57.1
+// CHECK:STDOUT:   .F [hidden] = %D1.F.decl.loc11_51.1
 // CHECK:STDOUT:   extend %Base
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1508,22 +1509,22 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @D1.vtable {
-// CHECK:STDOUT:   @D1.%D1.F.decl.loc11_57.2
+// CHECK:STDOUT:   @D1.%D1.F.decl.loc11_51.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: override fn @D1.F.loc11_57.1(%self.param: %D1, %t.param: %ptr.2ee) {
+// CHECK:STDOUT: override fn @D1.F.loc11_51.1(%self.param: %D1, %t.param: %ptr.2ee) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: override fn @D1.F.loc11_57.2(%self.param: %Base.5b2, %t.param: %ptr.2ee) [thunk @D1.%D1.F.decl.loc11_57.1 for @Base.%Base.F.decl, @Base.F(constants.%T1)] {
+// CHECK:STDOUT: override fn @D1.F.loc11_51.2(%self.param: %Base.5b2, %t.param: %ptr.2ee) [thunk @D1.%D1.F.decl.loc11_51.1 for @Base.%Base.F.decl, @Base.F(constants.%T1)] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %D1.F.type.48cdab.1 = name_ref F, @D1.%D1.F.decl.loc11_57.1 [concrete = constants.%D1.F.bd5be1.1]
+// CHECK:STDOUT:   %F.ref: %D1.F.type.48cdab.1 = name_ref F, @D1.%D1.F.decl.loc11_51.1 [concrete = constants.%D1.F.bd5be1.1]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc11_57.1: ref %D1 = enclosing_class_access %.3, element0
-// CHECK:STDOUT:   %.loc11_57.2: %D1 = acquire_value %.loc11_57.1
-// CHECK:STDOUT:   %D1.F.bound: <bound method> = bound_method %.loc11_57.2, %F.ref
-// CHECK:STDOUT:   %D1.F.call: init %empty_tuple.type = call %D1.F.bound(%.loc11_57.2, %t.param)
+// CHECK:STDOUT:   %.loc11_51.1: ref %D1 = enclosing_class_access %.3, element0
+// CHECK:STDOUT:   %.loc11_51.2: %D1 = acquire_value %.loc11_51.1
+// CHECK:STDOUT:   %D1.F.bound: <bound method> = bound_method %.loc11_51.2, %F.ref
+// CHECK:STDOUT:   %D1.F.call: init %empty_tuple.type = call %D1.F.bound(%.loc11_51.2, %t.param)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1550,16 +1551,16 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %self.patt.62f3ac.1: %pattern_type.839 = at_binding_pattern self, %self.param_patt.c15 [symbolic]
 // CHECK:STDOUT:   %t.patt.14f0ed.2: %pattern_type.4f4 = at_binding_pattern t, %t.param_patt.47b [symbolic]
 // CHECK:STDOUT:   %self.patt.62f3ac.2: %pattern_type.839 = at_binding_pattern self, %self.param_patt.c15 [symbolic]
-// CHECK:STDOUT:   %Derived.F.type.77405e.1: type = fn_type @Derived.F.loc10_50.1, @Derived(%T) [symbolic]
+// CHECK:STDOUT:   %Derived.F.type.77405e.1: type = fn_type @Derived.F.loc10_44.1, @Derived(%T) [symbolic]
 // CHECK:STDOUT:   %Derived.F.d85493.1: %Derived.F.type.77405e.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Derived.F.type.77405e.2: type = fn_type @Derived.F.loc10_50.2, @Derived(%T) [symbolic]
+// CHECK:STDOUT:   %Derived.F.type.77405e.2: type = fn_type @Derived.F.loc10_44.2, @Derived(%T) [symbolic]
 // CHECK:STDOUT:   %Derived.F.d85493.2: %Derived.F.type.77405e.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Derived.F.specific_fn.822c1a.1: <specific function> = specific_function %Derived.F.d85493.2, @Derived.F.loc10_50.2(%T) [symbolic]
+// CHECK:STDOUT:   %Derived.F.specific_fn.822c1a.1: <specific function> = specific_function %Derived.F.d85493.2, @Derived.F.loc10_44.2(%T) [symbolic]
 // CHECK:STDOUT:   %struct_type.base.619: type = struct_type {.base: %Base.99a} [symbolic]
 // CHECK:STDOUT:   %complete_type.db5: <witness> = complete_type_witness %struct_type.base.619 [symbolic]
 // CHECK:STDOUT:   %require_complete.1e7: <witness> = require_complete_type %Derived [symbolic]
 // CHECK:STDOUT:   %require_complete.ef1: <witness> = require_complete_type %ptr.e8f [symbolic]
-// CHECK:STDOUT:   %Derived.F.specific_fn.822c1a.2: <specific function> = specific_function %Derived.F.d85493.1, @Derived.F.loc10_50.1(%T) [symbolic]
+// CHECK:STDOUT:   %Derived.F.specific_fn.822c1a.2: <specific function> = specific_function %Derived.F.d85493.1, @Derived.F.loc10_44.1(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Derived(%T.loc7_16.2: type) {
@@ -1567,34 +1568,34 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Derived.F.type.loc10_50.1: type = fn_type @Derived.F.loc10_50.1, @Derived(%T.loc7_16.1) [symbolic = %Derived.F.type.loc10_50.1 (constants.%Derived.F.type.77405e.1)]
-// CHECK:STDOUT:   %Derived.F.loc10_50.1: @Derived.%Derived.F.type.loc10_50.1 (%Derived.F.type.77405e.1) = struct_value () [symbolic = %Derived.F.loc10_50.1 (constants.%Derived.F.d85493.1)]
-// CHECK:STDOUT:   %Derived.F.type.loc10_50.2: type = fn_type @Derived.F.loc10_50.2, @Derived(%T.loc7_16.1) [symbolic = %Derived.F.type.loc10_50.2 (constants.%Derived.F.type.77405e.2)]
-// CHECK:STDOUT:   %Derived.F.loc10_50.2: @Derived.%Derived.F.type.loc10_50.2 (%Derived.F.type.77405e.2) = struct_value () [symbolic = %Derived.F.loc10_50.2 (constants.%Derived.F.d85493.2)]
+// CHECK:STDOUT:   %Derived.F.type.loc10_44.1: type = fn_type @Derived.F.loc10_44.1, @Derived(%T.loc7_16.1) [symbolic = %Derived.F.type.loc10_44.1 (constants.%Derived.F.type.77405e.1)]
+// CHECK:STDOUT:   %Derived.F.loc10_44.1: @Derived.%Derived.F.type.loc10_44.1 (%Derived.F.type.77405e.1) = struct_value () [symbolic = %Derived.F.loc10_44.1 (constants.%Derived.F.d85493.1)]
+// CHECK:STDOUT:   %Derived.F.type.loc10_44.2: type = fn_type @Derived.F.loc10_44.2, @Derived(%T.loc7_16.1) [symbolic = %Derived.F.type.loc10_44.2 (constants.%Derived.F.type.77405e.2)]
+// CHECK:STDOUT:   %Derived.F.loc10_44.2: @Derived.%Derived.F.type.loc10_44.2 (%Derived.F.type.77405e.2) = struct_value () [symbolic = %Derived.F.loc10_44.2 (constants.%Derived.F.d85493.2)]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %Derived.F.decl.loc10_50.1: @Derived.%Derived.F.type.loc10_50.1 (%Derived.F.type.77405e.1) = fn_decl @Derived.F.loc10_50.1 [symbolic = @Derived.%Derived.F.loc10_50.1 (constants.%Derived.F.d85493.1)] {
-// CHECK:STDOUT:       %self.param_patt.loc10_28.1: @Derived.F.loc10_50.1.%pattern_type.loc10_28 (%pattern_type.839) = value_param_pattern [symbolic = %self.param_patt.loc10_28.2 (constants.%self.param_patt.c15)]
-// CHECK:STDOUT:       %self.patt.loc10_28.1: @Derived.F.loc10_50.1.%pattern_type.loc10_28 (%pattern_type.839) = at_binding_pattern self, %self.param_patt.loc10_28.1 [symbolic = %self.patt.loc10_28.2 (constants.%self.patt.62f3ac.1)]
-// CHECK:STDOUT:       %t.param_patt.loc10_44.1: @Derived.F.loc10_50.1.%pattern_type.loc10_44 (%pattern_type.4f4) = value_param_pattern [symbolic = %t.param_patt.loc10_44.2 (constants.%t.param_patt.47b)]
-// CHECK:STDOUT:       %t.patt.loc10_44.1: @Derived.F.loc10_50.1.%pattern_type.loc10_44 (%pattern_type.4f4) = at_binding_pattern t, %t.param_patt.loc10_44.1 [symbolic = %t.patt.loc10_44.2 (constants.%t.patt.14f0ed.2)]
+// CHECK:STDOUT:     %Derived.F.decl.loc10_44.1: @Derived.%Derived.F.type.loc10_44.1 (%Derived.F.type.77405e.1) = fn_decl @Derived.F.loc10_44.1 [symbolic = @Derived.%Derived.F.loc10_44.1 (constants.%Derived.F.d85493.1)] {
+// CHECK:STDOUT:       %self.param_patt.loc10_24.1: @Derived.F.loc10_44.1.%pattern_type.loc10_24 (%pattern_type.839) = value_param_pattern [symbolic = %self.param_patt.loc10_24.2 (constants.%self.param_patt.c15)]
+// CHECK:STDOUT:       %self.patt.loc10_24.1: @Derived.F.loc10_44.1.%pattern_type.loc10_24 (%pattern_type.839) = at_binding_pattern self, %self.param_patt.loc10_24.1 [symbolic = %self.patt.loc10_24.2 (constants.%self.patt.62f3ac.1)]
+// CHECK:STDOUT:       %t.param_patt.loc10_38.1: @Derived.F.loc10_44.1.%pattern_type.loc10_38 (%pattern_type.4f4) = value_param_pattern [symbolic = %t.param_patt.loc10_38.2 (constants.%t.param_patt.47b)]
+// CHECK:STDOUT:       %t.patt.loc10_38.1: @Derived.F.loc10_44.1.%pattern_type.loc10_38 (%pattern_type.4f4) = at_binding_pattern t, %t.param_patt.loc10_38.1 [symbolic = %t.patt.loc10_38.2 (constants.%t.patt.14f0ed.2)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %self.param: @Derived.F.loc10_50.1.%Derived (%Derived) = value_param call_param0
-// CHECK:STDOUT:       %.loc10_30.1: type = splice_block %Self.ref [symbolic = %Derived (constants.%Derived)] {
-// CHECK:STDOUT:         %.loc10_30.2: type = specific_constant constants.%Derived, @Derived(constants.%T) [symbolic = %Derived (constants.%Derived)]
-// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_30.2 [symbolic = %Derived (constants.%Derived)]
+// CHECK:STDOUT:       %self.param: @Derived.F.loc10_44.1.%Derived (%Derived) = value_param call_param0
+// CHECK:STDOUT:       %.loc10_24.1: type = splice_block %Self.ref [symbolic = %Derived (constants.%Derived)] {
+// CHECK:STDOUT:         %.loc10_24.2: type = specific_constant constants.%Derived, @Derived(constants.%T) [symbolic = %Derived (constants.%Derived)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_24.2 [symbolic = %Derived (constants.%Derived)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Derived.F.loc10_50.1.%Derived (%Derived) = value_binding self, %self.param
-// CHECK:STDOUT:       %t.param: @Derived.F.loc10_50.1.%ptr.loc10_47.1 (%ptr.e8f) = value_param call_param1
-// CHECK:STDOUT:       %.loc10_47: type = splice_block %ptr.loc10_47.2 [symbolic = %ptr.loc10_47.1 (constants.%ptr.e8f)] {
+// CHECK:STDOUT:       %self: @Derived.F.loc10_44.1.%Derived (%Derived) = value_binding self, %self.param
+// CHECK:STDOUT:       %t.param: @Derived.F.loc10_44.1.%ptr.loc10_41.1 (%ptr.e8f) = value_param call_param1
+// CHECK:STDOUT:       %.loc10_41: type = splice_block %ptr.loc10_41.2 [symbolic = %ptr.loc10_41.1 (constants.%ptr.e8f)] {
 // CHECK:STDOUT:         %T.ref: type = name_ref T, @Derived.%T.loc7_16.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:         %ptr.loc10_47.2: type = ptr_type %T.ref [symbolic = %ptr.loc10_47.1 (constants.%ptr.e8f)]
+// CHECK:STDOUT:         %ptr.loc10_41.2: type = ptr_type %T.ref [symbolic = %ptr.loc10_41.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %t: @Derived.F.loc10_50.1.%ptr.loc10_47.1 (%ptr.e8f) = value_binding t, %t.param
+// CHECK:STDOUT:       %t: @Derived.F.loc10_44.1.%ptr.loc10_41.1 (%ptr.e8f) = value_binding t, %t.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Derived.F.decl.loc10_50.2: @Derived.%Derived.F.type.loc10_50.2 (%Derived.F.type.77405e.2) = fn_decl @Derived.F.loc10_50.2 [symbolic = @Derived.%Derived.F.loc10_50.2 (constants.%Derived.F.d85493.2)] {
+// CHECK:STDOUT:     %Derived.F.decl.loc10_44.2: @Derived.%Derived.F.type.loc10_44.2 (%Derived.F.type.77405e.2) = fn_decl @Derived.F.loc10_44.2 [symbolic = @Derived.%Derived.F.loc10_44.2 (constants.%Derived.F.d85493.2)] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       <elided>
@@ -1608,7 +1609,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     .Base = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .base = %.loc8
-// CHECK:STDOUT:     .F [hidden] = %Derived.F.decl.loc10_50.1
+// CHECK:STDOUT:     .F [hidden] = %Derived.F.decl.loc10_44.1
 // CHECK:STDOUT:     extend %Base.loc8_23.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1621,48 +1622,48 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @Derived.%Derived.F.specific_fn.loc12_1.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic override fn @Derived.F.loc10_50.1(@Derived.%T.loc7_16.2: type) {
+// CHECK:STDOUT: generic override fn @Derived.F.loc10_44.1(@Derived.%T.loc7_16.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T) [symbolic = %Derived (constants.%Derived)]
-// CHECK:STDOUT:   %pattern_type.loc10_28: type = pattern_type %Derived [symbolic = %pattern_type.loc10_28 (constants.%pattern_type.839)]
-// CHECK:STDOUT:   %self.param_patt.loc10_28.2: @Derived.F.loc10_50.1.%pattern_type.loc10_28 (%pattern_type.839) = value_param_pattern [symbolic = %self.param_patt.loc10_28.2 (constants.%self.param_patt.c15)]
-// CHECK:STDOUT:   %self.patt.loc10_28.2: @Derived.F.loc10_50.1.%pattern_type.loc10_28 (%pattern_type.839) = at_binding_pattern self, %self.param_patt.loc10_28.2 [symbolic = %self.patt.loc10_28.2 (constants.%self.patt.62f3ac.1)]
-// CHECK:STDOUT:   %ptr.loc10_47.1: type = ptr_type %T [symbolic = %ptr.loc10_47.1 (constants.%ptr.e8f)]
-// CHECK:STDOUT:   %pattern_type.loc10_44: type = pattern_type %ptr.loc10_47.1 [symbolic = %pattern_type.loc10_44 (constants.%pattern_type.4f4)]
-// CHECK:STDOUT:   %t.param_patt.loc10_44.2: @Derived.F.loc10_50.1.%pattern_type.loc10_44 (%pattern_type.4f4) = value_param_pattern [symbolic = %t.param_patt.loc10_44.2 (constants.%t.param_patt.47b)]
-// CHECK:STDOUT:   %t.patt.loc10_44.2: @Derived.F.loc10_50.1.%pattern_type.loc10_44 (%pattern_type.4f4) = at_binding_pattern t, %t.param_patt.loc10_44.2 [symbolic = %t.patt.loc10_44.2 (constants.%t.patt.14f0ed.2)]
+// CHECK:STDOUT:   %pattern_type.loc10_24: type = pattern_type %Derived [symbolic = %pattern_type.loc10_24 (constants.%pattern_type.839)]
+// CHECK:STDOUT:   %self.param_patt.loc10_24.2: @Derived.F.loc10_44.1.%pattern_type.loc10_24 (%pattern_type.839) = value_param_pattern [symbolic = %self.param_patt.loc10_24.2 (constants.%self.param_patt.c15)]
+// CHECK:STDOUT:   %self.patt.loc10_24.2: @Derived.F.loc10_44.1.%pattern_type.loc10_24 (%pattern_type.839) = at_binding_pattern self, %self.param_patt.loc10_24.2 [symbolic = %self.patt.loc10_24.2 (constants.%self.patt.62f3ac.1)]
+// CHECK:STDOUT:   %ptr.loc10_41.1: type = ptr_type %T [symbolic = %ptr.loc10_41.1 (constants.%ptr.e8f)]
+// CHECK:STDOUT:   %pattern_type.loc10_38: type = pattern_type %ptr.loc10_41.1 [symbolic = %pattern_type.loc10_38 (constants.%pattern_type.4f4)]
+// CHECK:STDOUT:   %t.param_patt.loc10_38.2: @Derived.F.loc10_44.1.%pattern_type.loc10_38 (%pattern_type.4f4) = value_param_pattern [symbolic = %t.param_patt.loc10_38.2 (constants.%t.param_patt.47b)]
+// CHECK:STDOUT:   %t.patt.loc10_38.2: @Derived.F.loc10_44.1.%pattern_type.loc10_38 (%pattern_type.4f4) = at_binding_pattern t, %t.param_patt.loc10_38.2 [symbolic = %t.patt.loc10_38.2 (constants.%t.patt.14f0ed.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc10_28: <witness> = require_complete_type %Derived [symbolic = %require_complete.loc10_28 (constants.%require_complete.1e7)]
-// CHECK:STDOUT:   %require_complete.loc10_44: <witness> = require_complete_type %ptr.loc10_47.1 [symbolic = %require_complete.loc10_44 (constants.%require_complete.ef1)]
+// CHECK:STDOUT:   %require_complete.loc10_24: <witness> = require_complete_type %Derived [symbolic = %require_complete.loc10_24 (constants.%require_complete.1e7)]
+// CHECK:STDOUT:   %require_complete.loc10_38: <witness> = require_complete_type %ptr.loc10_41.1 [symbolic = %require_complete.loc10_38 (constants.%require_complete.ef1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   override fn(%self.param: @Derived.F.loc10_50.1.%Derived (%Derived), %t.param: @Derived.F.loc10_50.1.%ptr.loc10_47.1 (%ptr.e8f)) {
+// CHECK:STDOUT:   override fn(%self.param: @Derived.F.loc10_44.1.%Derived (%Derived), %t.param: @Derived.F.loc10_44.1.%ptr.loc10_41.1 (%ptr.e8f)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic override fn @Derived.F.loc10_50.2(@Derived.%T.loc7_16.2: type) {
+// CHECK:STDOUT: generic override fn @Derived.F.loc10_44.2(@Derived.%T.loc7_16.2: type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Derived.F.type: type = fn_type @Derived.F.loc10_50.1, @Derived(%T) [symbolic = %Derived.F.type (constants.%Derived.F.type.77405e.1)]
-// CHECK:STDOUT:   %Derived.F: @Derived.F.loc10_50.2.%Derived.F.type (%Derived.F.type.77405e.1) = struct_value () [symbolic = %Derived.F (constants.%Derived.F.d85493.1)]
+// CHECK:STDOUT:   %Derived.F.type: type = fn_type @Derived.F.loc10_44.1, @Derived(%T) [symbolic = %Derived.F.type (constants.%Derived.F.type.77405e.1)]
+// CHECK:STDOUT:   %Derived.F: @Derived.F.loc10_44.2.%Derived.F.type (%Derived.F.type.77405e.1) = struct_value () [symbolic = %Derived.F (constants.%Derived.F.d85493.1)]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T) [symbolic = %Derived (constants.%Derived)]
-// CHECK:STDOUT:   %Derived.F.specific_fn.loc10_50.2: <specific function> = specific_function %Derived.F, @Derived.F.loc10_50.1(%T) [symbolic = %Derived.F.specific_fn.loc10_50.2 (constants.%Derived.F.specific_fn.822c1a.2)]
+// CHECK:STDOUT:   %Derived.F.specific_fn.loc10_44.2: <specific function> = specific_function %Derived.F, @Derived.F.loc10_44.1(%T) [symbolic = %Derived.F.specific_fn.loc10_44.2 (constants.%Derived.F.specific_fn.822c1a.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   override fn(%self.param: @Derived.F.loc10_50.2.%Base (%Base.99a), %t.param: @Derived.F.loc10_50.2.%ptr (%ptr.e8f)) [thunk @Derived.%Derived.F.decl.loc10_50.1 for @Base.%Base.F.decl, @Base.F(constants.%ptr.e8f)] {
+// CHECK:STDOUT:   override fn(%self.param: @Derived.F.loc10_44.2.%Base (%Base.99a), %t.param: @Derived.F.loc10_44.2.%ptr (%ptr.e8f)) [thunk @Derived.%Derived.F.decl.loc10_44.1 for @Base.%Base.F.decl, @Base.F(constants.%ptr.e8f)] {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc10_50.1: @Derived.F.loc10_50.2.%Derived.F.type (%Derived.F.type.77405e.1) = specific_constant @Derived.%Derived.F.decl.loc10_50.1, @Derived(constants.%T) [symbolic = %Derived.F (constants.%Derived.F.d85493.1)]
-// CHECK:STDOUT:     %F.ref: @Derived.F.loc10_50.2.%Derived.F.type (%Derived.F.type.77405e.1) = name_ref F, %.loc10_50.1 [symbolic = %Derived.F (constants.%Derived.F.d85493.1)]
+// CHECK:STDOUT:     %.loc10_44.1: @Derived.F.loc10_44.2.%Derived.F.type (%Derived.F.type.77405e.1) = specific_constant @Derived.%Derived.F.decl.loc10_44.1, @Derived(constants.%T) [symbolic = %Derived.F (constants.%Derived.F.d85493.1)]
+// CHECK:STDOUT:     %F.ref: @Derived.F.loc10_44.2.%Derived.F.type (%Derived.F.type.77405e.1) = name_ref F, %.loc10_44.1 [symbolic = %Derived.F (constants.%Derived.F.d85493.1)]
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %.loc10_50.2: ref @Derived.F.loc10_50.2.%Derived (%Derived) = enclosing_class_access %.5, element0
-// CHECK:STDOUT:     %.loc10_50.3: @Derived.F.loc10_50.2.%Derived (%Derived) = acquire_value %.loc10_50.2
-// CHECK:STDOUT:     %Derived.F.bound: <bound method> = bound_method %.loc10_50.3, %F.ref
-// CHECK:STDOUT:     %Derived.F.specific_fn.loc10_50.1: <specific function> = specific_function %F.ref, @Derived.F.loc10_50.1(constants.%T) [symbolic = %Derived.F.specific_fn.loc10_50.2 (constants.%Derived.F.specific_fn.822c1a.2)]
-// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc10_50.3, %Derived.F.specific_fn.loc10_50.1
-// CHECK:STDOUT:     %Derived.F.call: init %empty_tuple.type = call %bound_method(%.loc10_50.3, %t.param)
+// CHECK:STDOUT:     %.loc10_44.2: ref @Derived.F.loc10_44.2.%Derived (%Derived) = enclosing_class_access %.5, element0
+// CHECK:STDOUT:     %.loc10_44.3: @Derived.F.loc10_44.2.%Derived (%Derived) = acquire_value %.loc10_44.2
+// CHECK:STDOUT:     %Derived.F.bound: <bound method> = bound_method %.loc10_44.3, %F.ref
+// CHECK:STDOUT:     %Derived.F.specific_fn.loc10_44.1: <specific function> = specific_function %F.ref, @Derived.F.loc10_44.1(constants.%T) [symbolic = %Derived.F.specific_fn.loc10_44.2 (constants.%Derived.F.specific_fn.822c1a.2)]
+// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc10_44.3, %Derived.F.specific_fn.loc10_44.1
+// CHECK:STDOUT:     %Derived.F.call: init %empty_tuple.type = call %bound_method(%.loc10_44.3, %t.param)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1677,32 +1678,32 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.29f
 // CHECK:STDOUT:   %Derived => constants.%Derived
 // CHECK:STDOUT:   %Derived.elem => constants.%Derived.elem
-// CHECK:STDOUT:   %Derived.F.type.loc10_50.1 => constants.%Derived.F.type.77405e.1
-// CHECK:STDOUT:   %Derived.F.loc10_50.1 => constants.%Derived.F.d85493.1
-// CHECK:STDOUT:   %Derived.F.type.loc10_50.2 => constants.%Derived.F.type.77405e.2
-// CHECK:STDOUT:   %Derived.F.loc10_50.2 => constants.%Derived.F.d85493.2
+// CHECK:STDOUT:   %Derived.F.type.loc10_44.1 => constants.%Derived.F.type.77405e.1
+// CHECK:STDOUT:   %Derived.F.loc10_44.1 => constants.%Derived.F.d85493.1
+// CHECK:STDOUT:   %Derived.F.type.loc10_44.2 => constants.%Derived.F.type.77405e.2
+// CHECK:STDOUT:   %Derived.F.loc10_44.2 => constants.%Derived.F.d85493.2
 // CHECK:STDOUT:   %Derived.F.specific_fn.loc12_1.2 => constants.%Derived.F.specific_fn.822c1a.1
 // CHECK:STDOUT:   %struct_type.base => constants.%struct_type.base.619
 // CHECK:STDOUT:   %complete_type.loc12_1.2 => constants.%complete_type.db5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Derived.F.loc10_50.1(constants.%T) {
+// CHECK:STDOUT: specific @Derived.F.loc10_44.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Derived => constants.%Derived
-// CHECK:STDOUT:   %pattern_type.loc10_28 => constants.%pattern_type.839
-// CHECK:STDOUT:   %self.param_patt.loc10_28.2 => constants.%self.param_patt.c15
-// CHECK:STDOUT:   %self.patt.loc10_28.2 => constants.%self.patt.62f3ac.2
-// CHECK:STDOUT:   %ptr.loc10_47.1 => constants.%ptr.e8f
-// CHECK:STDOUT:   %pattern_type.loc10_44 => constants.%pattern_type.4f4
-// CHECK:STDOUT:   %t.param_patt.loc10_44.2 => constants.%t.param_patt.47b
-// CHECK:STDOUT:   %t.patt.loc10_44.2 => constants.%t.patt.14f0ed.1
+// CHECK:STDOUT:   %pattern_type.loc10_24 => constants.%pattern_type.839
+// CHECK:STDOUT:   %self.param_patt.loc10_24.2 => constants.%self.param_patt.c15
+// CHECK:STDOUT:   %self.patt.loc10_24.2 => constants.%self.patt.62f3ac.2
+// CHECK:STDOUT:   %ptr.loc10_41.1 => constants.%ptr.e8f
+// CHECK:STDOUT:   %pattern_type.loc10_38 => constants.%pattern_type.4f4
+// CHECK:STDOUT:   %t.param_patt.loc10_38.2 => constants.%t.param_patt.47b
+// CHECK:STDOUT:   %t.patt.loc10_38.2 => constants.%t.patt.14f0ed.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc10_28 => constants.%require_complete.1e7
-// CHECK:STDOUT:   %require_complete.loc10_44 => constants.%require_complete.ef1
+// CHECK:STDOUT:   %require_complete.loc10_24 => constants.%require_complete.1e7
+// CHECK:STDOUT:   %require_complete.loc10_38 => constants.%require_complete.ef1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Derived.F.loc10_50.2(constants.%T) {
+// CHECK:STDOUT: specific @Derived.F.loc10_44.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %ptr => constants.%ptr.e8f
 // CHECK:STDOUT:   %Base => constants.%Base.99a
@@ -1719,6 +1720,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.F.type => constants.%Derived.F.type.77405e.1
 // CHECK:STDOUT:   %Derived.F => constants.%Derived.F.d85493.1
 // CHECK:STDOUT:   %Derived => constants.%Derived
-// CHECK:STDOUT:   %Derived.F.specific_fn.loc10_50.2 => constants.%Derived.F.specific_fn.822c1a.2
+// CHECK:STDOUT:   %Derived.F.specific_fn.loc10_44.2 => constants.%Derived.F.specific_fn.822c1a.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

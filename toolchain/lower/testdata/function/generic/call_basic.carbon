@@ -12,7 +12,7 @@
 
 class C {
   impl as Core.Copy {
-    fn Op[unused self: Self]() -> Self { return {}; }
+    fn Op(unused self) -> Self { return {}; }
   }
 }
 
@@ -60,12 +60,12 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %type = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc15_51 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc15_43 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.C.Main:Copy.Core"(ptr sret({}) %return, ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.loc15_51, i64 0, i1 false), !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.loc15_43, i64 0, i1 false), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -284,7 +284,7 @@ fn M() {
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
-// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 42, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 34, scope: !4)
 // CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.807eb4f2d3ed7e54:core.Destroy.Core", scope: null, file: !3, line: 43, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null, !7}

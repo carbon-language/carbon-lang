@@ -17,7 +17,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class A {
-  fn F[self: Self]() { self; }
+  fn F(self) { self; }
 }
 
 inline Cpp '''
@@ -32,7 +32,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class A {
-  fn F[self: Self](a: i32) -> i32 {
+  fn F(self, a: i32) -> i32 {
     self;
     return a;
   }
@@ -251,8 +251,8 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF__carbon_thunk.A.Main(ptr %self, ptr %_, ptr %_1) #4 !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc6_35.2 = load i32, ptr %_, align 4, !dbg !40
-// CHECK:STDOUT:   %A.F.call = call i32 @_CF.A.Main(ptr %self, i32 %.loc6_35.2), !dbg !40
+// CHECK:STDOUT:   %.loc6_29.2 = load i32, ptr %_, align 4, !dbg !40
+// CHECK:STDOUT:   %A.F.call = call i32 @_CF.A.Main(ptr %self, i32 %.loc6_29.2), !dbg !40
 // CHECK:STDOUT:   store i32 %A.F.call, ptr %_1, align 4, !dbg !40
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }

@@ -25,12 +25,12 @@ struct A {
 
 class Final {
   extend base: Cpp.A;
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 base class Base {
   extend base: Cpp.A;
-  override fn F[self: Self]();
+  override fn F(self);
 }
 
 inline Cpp '''

@@ -48,7 +48,7 @@ library "[[@TEST_NAME]]";
 
 interface Z {
   fn Zero();
-  fn Method[self: Self]();
+  fn Method(self);
 
    // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE+4]]:9: error: `impl as` can only be used in a class [ImplAsOutsideClass]
    // CHECK:STDERR:    impl as Z {
@@ -56,14 +56,14 @@ interface Z {
    // CHECK:STDERR:
    impl as Z {
     fn Zero() {}
-    fn Method[unused self: Self]() {}
+    fn Method(unused self) {}
   }
 }
 
 class Point {
    impl as Z {
     fn Zero() {}
-    fn Method[unused self: Self]() {}
+    fn Method(unused self) {}
   }
 }
 
@@ -98,6 +98,7 @@ class X {
     }
   }
 }
+
 
 // CHECK:STDOUT: --- fail_impl_as_file_scope.carbon
 // CHECK:STDOUT:
@@ -313,16 +314,16 @@ class X {
 // CHECK:STDOUT:   %Z.WithSelf.Zero.decl: @Z.WithSelf.%Z.WithSelf.Zero.type (%Z.WithSelf.Zero.type.68b) = fn_decl @Z.WithSelf.Zero [symbolic = @Z.WithSelf.%Z.WithSelf.Zero (constants.%Z.WithSelf.Zero.087)] {} {}
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.WithSelf.Zero.decl [concrete = constants.%assoc0.627]
 // CHECK:STDOUT:   %Z.WithSelf.Method.decl: @Z.WithSelf.%Z.WithSelf.Method.type (%Z.WithSelf.Method.type.d41) = fn_decl @Z.WithSelf.Method [symbolic = @Z.WithSelf.%Z.WithSelf.Method (constants.%Z.WithSelf.Method.ead)] {
-// CHECK:STDOUT:     %self.param_patt.loc5_17.1: @Z.WithSelf.Method.%pattern_type (%pattern_type.52a) = value_param_pattern [symbolic = %self.param_patt.loc5_17.2 (constants.%self.param_patt.241)]
-// CHECK:STDOUT:     %self.patt.loc5_17.1: @Z.WithSelf.Method.%pattern_type (%pattern_type.52a) = at_binding_pattern self, %self.param_patt.loc5_17.1 [symbolic = %self.patt.loc5_17.2 (constants.%self.patt.104)]
+// CHECK:STDOUT:     %self.param_patt.loc5_13.1: @Z.WithSelf.Method.%pattern_type (%pattern_type.52a) = value_param_pattern [symbolic = %self.param_patt.loc5_13.2 (constants.%self.param_patt.241)]
+// CHECK:STDOUT:     %self.patt.loc5_13.1: @Z.WithSelf.Method.%pattern_type (%pattern_type.52a) = at_binding_pattern self, %self.param_patt.loc5_13.1 [symbolic = %self.patt.loc5_13.2 (constants.%self.patt.104)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @Z.WithSelf.Method.%Self.as_type.loc5_19.1 (%Self.as_type.0cf) = value_param call_param0
-// CHECK:STDOUT:     %.loc5_19.1: type = splice_block %.loc5_19.2 [symbolic = %Self.as_type.loc5_19.1 (constants.%Self.as_type.0cf)] {
+// CHECK:STDOUT:     %self.param: @Z.WithSelf.Method.%Self.as_type.loc5_13.1 (%Self.as_type.0cf) = value_param call_param0
+// CHECK:STDOUT:     %.loc5_13.1: type = splice_block %.loc5_13.2 [symbolic = %Self.as_type.loc5_13.1 (constants.%Self.as_type.0cf)] {
 // CHECK:STDOUT:       %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self.cb6)]
-// CHECK:STDOUT:       %Self.as_type.loc5_19.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_19.1 (constants.%Self.as_type.0cf)]
-// CHECK:STDOUT:       %.loc5_19.2: type = converted %Self.ref, %Self.as_type.loc5_19.2 [symbolic = %Self.as_type.loc5_19.1 (constants.%Self.as_type.0cf)]
+// CHECK:STDOUT:       %Self.as_type.loc5_13.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_13.1 (constants.%Self.as_type.0cf)]
+// CHECK:STDOUT:       %.loc5_13.2: type = converted %Self.ref, %Self.as_type.loc5_13.2 [symbolic = %Self.as_type.loc5_13.1 (constants.%Self.as_type.0cf)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Z.WithSelf.Method.%Self.as_type.loc5_19.1 (%Self.as_type.0cf) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @Z.WithSelf.Method.%Self.as_type.loc5_13.1 (%Self.as_type.0cf) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %Z.assoc_type = assoc_entity element1, %Z.WithSelf.Method.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:   impl_decl @<error>.as.Z.impl [concrete] {} {
@@ -351,16 +352,16 @@ class X {
 // CHECK:STDOUT:   impl: <error> as %Z.ref {
 // CHECK:STDOUT:     %<error>.as.Z.impl.Zero.decl: @<error>.as.Z.impl.%<error>.as.Z.impl.Zero.type (%<error>.as.Z.impl.Zero.type) = fn_decl @<error>.as.Z.impl.Zero [symbolic = @<error>.as.Z.impl.%<error>.as.Z.impl.Zero (constants.%<error>.as.Z.impl.Zero)] {} {}
 // CHECK:STDOUT:     %<error>.as.Z.impl.Method.decl: @<error>.as.Z.impl.%<error>.as.Z.impl.Method.type (%<error>.as.Z.impl.Method.type) = fn_decl @<error>.as.Z.impl.Method [symbolic = @<error>.as.Z.impl.%<error>.as.Z.impl.Method (constants.%<error>.as.Z.impl.Method)] {
-// CHECK:STDOUT:       %self.param_patt.loc13_26.1: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.52a) = value_param_pattern [symbolic = %self.param_patt.loc13_26.2 (constants.%self.param_patt.241)]
-// CHECK:STDOUT:       %self.patt.loc13_26.1: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.52a) = at_binding_pattern self, %self.param_patt.loc13_26.1 [symbolic = %self.patt.loc13_26.2 (constants.%self.patt.104)]
+// CHECK:STDOUT:       %self.param_patt.loc13_22.1: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.52a) = value_param_pattern [symbolic = %self.param_patt.loc13_22.2 (constants.%self.param_patt.241)]
+// CHECK:STDOUT:       %self.patt.loc13_22.1: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.52a) = at_binding_pattern self, %self.param_patt.loc13_22.1 [symbolic = %self.patt.loc13_22.2 (constants.%self.patt.104)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %self.param: @<error>.as.Z.impl.Method.%Self.as_type.loc13_28.1 (%Self.as_type.0cf) = value_param call_param0
-// CHECK:STDOUT:       %.loc13_28.1: type = splice_block %.loc13_28.2 [symbolic = %Self.as_type.loc13_28.1 (constants.%Self.as_type.0cf)] {
+// CHECK:STDOUT:       %self.param: @<error>.as.Z.impl.Method.%Self.as_type.loc13_22.1 (%Self.as_type.0cf) = value_param call_param0
+// CHECK:STDOUT:       %.loc13_22.1: type = splice_block %.loc13_22.2 [symbolic = %Self.as_type.loc13_22.1 (constants.%Self.as_type.0cf)] {
 // CHECK:STDOUT:         %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self.cb6)]
-// CHECK:STDOUT:         %Self.as_type.loc13_28.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc13_28.1 (constants.%Self.as_type.0cf)]
-// CHECK:STDOUT:         %.loc13_28.2: type = converted %Self.ref, %Self.as_type.loc13_28.2 [symbolic = %Self.as_type.loc13_28.1 (constants.%Self.as_type.0cf)]
+// CHECK:STDOUT:         %Self.as_type.loc13_22.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc13_22.1 (constants.%Self.as_type.0cf)]
+// CHECK:STDOUT:         %.loc13_22.2: type = converted %Self.ref, %Self.as_type.loc13_22.2 [symbolic = %Self.as_type.loc13_22.1 (constants.%Self.as_type.0cf)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @<error>.as.Z.impl.Method.%Self.as_type.loc13_28.1 (%Self.as_type.0cf) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @<error>.as.Z.impl.Method.%Self.as_type.loc13_22.1 (%Self.as_type.0cf) = value_binding self, %self.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -410,12 +411,12 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Z.WithSelf.Method(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.cb6)]
-// CHECK:STDOUT:   %Self.as_type.loc5_19.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_19.1 (constants.%Self.as_type.0cf)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_19.1 [symbolic = %pattern_type (constants.%pattern_type.52a)]
-// CHECK:STDOUT:   %self.param_patt.loc5_17.2: @Z.WithSelf.Method.%pattern_type (%pattern_type.52a) = value_param_pattern [symbolic = %self.param_patt.loc5_17.2 (constants.%self.param_patt.241)]
-// CHECK:STDOUT:   %self.patt.loc5_17.2: @Z.WithSelf.Method.%pattern_type (%pattern_type.52a) = at_binding_pattern self, %self.param_patt.loc5_17.2 [symbolic = %self.patt.loc5_17.2 (constants.%self.patt.104)]
+// CHECK:STDOUT:   %Self.as_type.loc5_13.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_13.1 (constants.%Self.as_type.0cf)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_13.1 [symbolic = %pattern_type (constants.%pattern_type.52a)]
+// CHECK:STDOUT:   %self.param_patt.loc5_13.2: @Z.WithSelf.Method.%pattern_type (%pattern_type.52a) = value_param_pattern [symbolic = %self.param_patt.loc5_13.2 (constants.%self.param_patt.241)]
+// CHECK:STDOUT:   %self.patt.loc5_13.2: @Z.WithSelf.Method.%pattern_type (%pattern_type.52a) = at_binding_pattern self, %self.param_patt.loc5_13.2 [symbolic = %self.patt.loc5_13.2 (constants.%self.patt.104)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Z.WithSelf.Method.%Self.as_type.loc5_19.1 (%Self.as_type.0cf));
+// CHECK:STDOUT:   fn(%self.param: @Z.WithSelf.Method.%Self.as_type.loc5_13.1 (%Self.as_type.0cf));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @<error>.as.Z.impl.Zero(@Z.%Self: %Z.type) {
@@ -429,15 +430,15 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @<error>.as.Z.impl.Method(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.cb6)]
-// CHECK:STDOUT:   %Self.as_type.loc13_28.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc13_28.1 (constants.%Self.as_type.0cf)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc13_28.1 [symbolic = %pattern_type (constants.%pattern_type.52a)]
-// CHECK:STDOUT:   %self.param_patt.loc13_26.2: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.52a) = value_param_pattern [symbolic = %self.param_patt.loc13_26.2 (constants.%self.param_patt.241)]
-// CHECK:STDOUT:   %self.patt.loc13_26.2: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.52a) = at_binding_pattern self, %self.param_patt.loc13_26.2 [symbolic = %self.patt.loc13_26.2 (constants.%self.patt.104)]
+// CHECK:STDOUT:   %Self.as_type.loc13_22.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc13_22.1 (constants.%Self.as_type.0cf)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc13_22.1 [symbolic = %pattern_type (constants.%pattern_type.52a)]
+// CHECK:STDOUT:   %self.param_patt.loc13_22.2: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.52a) = value_param_pattern [symbolic = %self.param_patt.loc13_22.2 (constants.%self.param_patt.241)]
+// CHECK:STDOUT:   %self.patt.loc13_22.2: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.52a) = at_binding_pattern self, %self.param_patt.loc13_22.2 [symbolic = %self.patt.loc13_22.2 (constants.%self.patt.104)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.loc13_28.1 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.loc13_22.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @<error>.as.Z.impl.Method.%Self.as_type.loc13_28.1 (%Self.as_type.0cf)) {
+// CHECK:STDOUT:   fn(%self.param: @<error>.as.Z.impl.Method.%Self.as_type.loc13_22.1 (%Self.as_type.0cf)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -498,10 +499,10 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.Method(constants.%Self.cb6) {
 // CHECK:STDOUT:   %Self => constants.%Self.cb6
-// CHECK:STDOUT:   %Self.as_type.loc5_19.1 => constants.%Self.as_type.0cf
+// CHECK:STDOUT:   %Self.as_type.loc5_13.1 => constants.%Self.as_type.0cf
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.52a
-// CHECK:STDOUT:   %self.param_patt.loc5_17.2 => constants.%self.param_patt.241
-// CHECK:STDOUT:   %self.patt.loc5_17.2 => constants.%self.patt.104
+// CHECK:STDOUT:   %self.param_patt.loc5_13.2 => constants.%self.param_patt.241
+// CHECK:STDOUT:   %self.patt.loc5_13.2 => constants.%self.patt.104
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @<error>.as.Z.impl(constants.%Self.cb6) {
@@ -517,10 +518,10 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @<error>.as.Z.impl.Method(constants.%Self.cb6) {
 // CHECK:STDOUT:   %Self => constants.%Self.cb6
-// CHECK:STDOUT:   %Self.as_type.loc13_28.1 => constants.%Self.as_type.0cf
+// CHECK:STDOUT:   %Self.as_type.loc13_22.1 => constants.%Self.as_type.0cf
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.52a
-// CHECK:STDOUT:   %self.param_patt.loc13_26.2 => constants.%self.param_patt.241
-// CHECK:STDOUT:   %self.patt.loc13_26.2 => constants.%self.patt.104
+// CHECK:STDOUT:   %self.param_patt.loc13_22.2 => constants.%self.param_patt.241
+// CHECK:STDOUT:   %self.patt.loc13_22.2 => constants.%self.patt.104
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Z.facet) {
@@ -536,10 +537,10 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.Method(constants.%Z.facet) {
 // CHECK:STDOUT:   %Self => constants.%Z.facet
-// CHECK:STDOUT:   %Self.as_type.loc5_19.1 => constants.%Point
+// CHECK:STDOUT:   %Self.as_type.loc5_13.1 => constants.%Point
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9d8
-// CHECK:STDOUT:   %self.param_patt.loc5_17.2 => constants.%self.param_patt.b38
-// CHECK:STDOUT:   %self.patt.loc5_17.2 => constants.%self.patt.60a
+// CHECK:STDOUT:   %self.param_patt.loc5_13.2 => constants.%self.param_patt.b38
+// CHECK:STDOUT:   %self.patt.loc5_13.2 => constants.%self.patt.60a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_impl_as_other_interface.carbon

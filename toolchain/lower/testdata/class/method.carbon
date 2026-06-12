@@ -13,8 +13,8 @@
 class C {
   var a: i32;
 
-  fn Get[self: C]() -> i32;
-  fn Set[ref self: C](n: i32);
+  fn Get(self: C) -> i32;
+  fn Set(ref self: C, n: i32);
 }
 
 fn F(p: C*) {

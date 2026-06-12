@@ -35,7 +35,7 @@ class SectorList {
     return var;
   }
 
-  fn DefragBlocks[ref self: Self]() {
+  fn DefragBlocks(ref self) {
     var i: i32 = 0;
     var j: i32 = self.size - 1;
     while (j > i) {
@@ -52,7 +52,7 @@ class SectorList {
     self.size = j;
   }
 
-  fn HasSpace[ref self: Self](start: i32, size: i32) -> bool {
+  fn HasSpace(ref self, start: i32, size: i32) -> bool {
     for (i: i32 in Core.InclusiveRange(start, start + size - 1)) {
       if (self.data[i] != -1) {
         return false;
@@ -61,13 +61,13 @@ class SectorList {
     return true;
   }
 
-  fn Fill[ref self: Self](start: i32, size: i32, sector: i32) {
+  fn Fill(ref self, start: i32, size: i32, sector: i32) {
     for (i: i32 in Core.InclusiveRange(start, start + size - 1)) {
       self.data[i] = sector;
     }
   }
 
-  fn DefragFiles[ref self: Self]() {
+  fn DefragFiles(ref self) {
     var j: i32 = self.size - 1;
     while (j >= 0) {
       // Skip empty sectors.
@@ -101,7 +101,7 @@ class SectorList {
     }
   }
 
-  fn Checksum[self: Self]() -> i64 {
+  fn Checksum(self) -> i64 {
     var total: i64 = 0;
     for (i: i32 in Core.Range(self.size)) {
       if (self.data[i] != -1) {

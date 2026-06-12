@@ -85,11 +85,11 @@ class BezoutSolutionSet {
             .m_step = b_over_gcd, .n_step = -a_over_gcd};
   }
 
-  fn Valid[self: Self]() -> bool {
+  fn Valid(self) -> bool {
     return self.m_step >= 0;
   }
 
-  fn Solution[self: Self](k: i64) -> (i64, i64) {
+  fn Solution(self, k: i64) -> (i64, i64) {
     return (self.m0 + k * self.m_step, self.n0 + k * self.n_step);
   }
 

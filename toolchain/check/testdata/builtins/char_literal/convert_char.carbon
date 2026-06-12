@@ -1,14 +1,13 @@
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/char/convert_checked.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/char_literal/convert_char.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtins/char/convert_checked.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtins/char_literal/convert_char.carbon
 
 // --- builtin.carbon
 
@@ -20,30 +19,30 @@ fn MakeIntLiteral() -> type = "int_literal.make_type";
 alias IntLiteral = MakeIntLiteral();
 fn UInt(n: IntLiteral) -> type = "int.make_type_unsigned";
 
-fn ToChar(c: CharLiteral) -> UInt(8) = "char.convert_checked";
+fn ToChar(c: CharLiteral) -> UInt(8) = "char_literal.convert_char";
 
 // --- fail_bad_decl.carbon
 
 library "[[@TEST_NAME]]";
 import library "builtin";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char.convert_checked" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn ToCharBarResultU16(c: CharLiteral) -> UInt(16) = "char.convert_checked";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char_literal.convert_char" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn ToCharBarResultU16(c: CharLiteral) -> UInt(16) = "char_literal.convert_char";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn ToCharBarResultU16(c: CharLiteral) -> UInt(16) = "char.convert_checked";
+fn ToCharBarResultU16(c: CharLiteral) -> UInt(16) = "char_literal.convert_char";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char.convert_checked" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn ToCharBadResultU9(c: CharLiteral) -> UInt(9) = "char.convert_checked";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char_literal.convert_char" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn ToCharBadResultU9(c: CharLiteral) -> UInt(9) = "char_literal.convert_char";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn ToCharBadResultU9(c: CharLiteral) -> UInt(9) = "char.convert_checked";
+fn ToCharBadResultU9(c: CharLiteral) -> UInt(9) = "char_literal.convert_char";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char.convert_checked" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn ToCharNoParam() -> UInt(8) = "char.convert_checked";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char_literal.convert_char" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn ToCharNoParam() -> UInt(8) = "char_literal.convert_char";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn ToCharNoParam() -> UInt(8) = "char.convert_checked";
+fn ToCharNoParam() -> UInt(8) = "char_literal.convert_char";
 
 // --- fail_runtime_call.carbon
 
@@ -56,7 +55,7 @@ let c: CharLiteral = 'a';
 // CHECK:STDERR:                  ^~~~~~~~~
 // CHECK:STDERR: fail_runtime_call.carbon:[[@LINE-6]]:1: in import [InImport]
 // CHECK:STDERR: builtin.carbon:10:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn ToChar(c: CharLiteral) -> UInt(8) = "char.convert_checked";
+// CHECK:STDERR: fn ToChar(c: CharLiteral) -> UInt(8) = "char_literal.convert_char";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let d: UInt(8) = ToChar(c);

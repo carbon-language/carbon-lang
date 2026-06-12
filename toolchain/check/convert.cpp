@@ -36,6 +36,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -2078,7 +2079,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         });
 
     // Pull a value directly out of the initializer if possible and wanted.
+    // TODO: Should this be done as part of category conversion instead?
     if (expr_id != SemIR::ErrorInst::InstId &&
+        SemIR::GetExprCategory(sem_ir, expr_id) ==
+            SemIR::ExprCategory::ReprInitializing &&
         CanUseValueOfInitializer(sem_ir, target.type_id, target.kind)) {
       expr_id = AddInst<SemIR::ValueOfInitializer>(
           context, loc_id, {.type_id = target.type_id, .init_id = expr_id});
@@ -2218,32 +2222,18 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 }
 
 // TODO: Consider moving this to pattern_match.h.
-auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
-                     SemIR::InstId self_id,
+auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_arg_id, const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id, bool is_desugared)
     -> SemIR::InstBlockId {
-  auto param_patterns =
-      context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
-  auto return_pattern_id = callee.return_pattern_id;
-
   // The caller should have ensured this callee has the right arity.
-  CARBON_CHECK(arg_refs.size() == param_patterns.size());
-
-  if (callee.self_param_id.has_value() && !self_id.has_value()) {
-    CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
-                      "missing object argument in method call");
-    CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");
-    context.emitter()
-        .Build(call_loc_id, MissingObjectInMethodCall)
-        .Note(callee.latest_decl_id(), InCallToFunction)
-        .Emit();
-    self_id = SemIR::ErrorInst::InstId;
-  }
+  CARBON_CHECK(
+      (self_id.has_value() ? 1 : 0) + arg_refs.size() ==
+      context.inst_blocks().GetOrEmpty(callee.param_patterns_id).size());
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
-                            callee.param_patterns_id, return_pattern_id,
+                            callee.param_patterns_id, callee.return_pattern_id,
                             self_id, arg_refs, return_arg_id, is_desugared);
 }
 

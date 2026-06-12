@@ -25,6 +25,7 @@
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -56,9 +57,12 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
                                 llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<SemIR::SpecificId> {
-  // Check that the arity matches.
-  auto params = context.inst_blocks().GetOrEmpty(entity.param_patterns_id);
-  if (arg_ids.size() != params.size()) {
+  // Check that the arity matches the explicit arguments.
+  auto param_patterns =
+      context.inst_blocks().GetOrEmpty(entity.param_patterns_id);
+  size_t expected_args_size =
+      param_patterns.size() - (self_id.has_value() ? 1 : 0);
+  if (arg_ids.size() != expected_args_size) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                       "{0} argument{0:s} passed to "
                       "{1:=0:function|=1:generic class|=2:generic "
@@ -73,7 +77,7 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                       Diagnostics::IntAsSelect);
     context.emitter()
         .Build(loc_id, CallArgCountMismatch, arg_ids.size(),
-               static_cast<int>(entity_kind_for_diagnostic), params.size())
+               static_cast<int>(entity_kind_for_diagnostic), expected_args_size)
         .Note(entity.latest_decl_id(), InCallToEntity,
               static_cast<int>(entity_kind_for_diagnostic))
         .Emit();
@@ -257,8 +261,8 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   }
   // Convert the arguments to match the parameters.
   auto converted_args_id =
-      ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
-                      return_arg_id, callee, *callee_specific_id, is_desugared);
+      ConvertCallArgs(context, callee_function.self_id, arg_ids, return_arg_id,
+                      callee, *callee_specific_id, is_desugared);
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {
       // If we're about to form a direct call to a thunk, inline it.

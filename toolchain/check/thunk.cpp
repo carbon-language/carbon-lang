@@ -211,7 +211,8 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
                                              signature.return_type_inst_id);
   auto return_form_inst_id = CloneInstId(context, signature_specific_id,
                                          signature.return_form_inst_id);
-  auto self_param_id = FindSelfPattern(context, implicit_param_patterns_id);
+  auto self_param_id =
+      FindSelfPattern(context, implicit_param_patterns_id, param_patterns_id);
 
   // Perform callee-side pattern matching to rebuild the parameter list.
   context.inst_block_stack().Push();
@@ -271,8 +272,8 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::TypeId override_self_type_id) -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);
 
-  auto [args_vec, ignored_call_args] = ThunkPatternMatch(
-      context, function.self_param_id, param_pattern_ids, call_arg_ids);
+  auto [args_vec, ignored_call_args] =
+      ThunkPatternMatch(context, param_pattern_ids, call_arg_ids);
   llvm::ArrayRef<SemIR::InstId> args = args_vec;
 
   if (override_self_type_id.has_value()) {
