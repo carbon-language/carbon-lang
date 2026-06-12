@@ -85,21 +85,6 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
 auto IsPeriodSelf(Context& context, SemIR::InstId inst_id,
                   bool canonicalize = true) -> bool;
 
-// Look for ambiguous `.Self` in a `T impls X where ...` statement. The given
-// inst ids are the non-canonical insts for the LHS and RHS of the `impls`
-// inside a `where` expression.
-//
-// If the LHS is not `.Self` and RHS contains a nested `where` expression, the
-// value of `.Self` becomes ambiguous on the RHS of the `where` (it could mean
-// either the original value or new value given by the LHS of the `impls`). Note
-// that implicit `.Self` references are never ambiguous, they always refer to
-// the innermost value that `.Self` could refer to.
-//
-// Returns true if an error was diagnosed.
-auto FindAndDiagnoseAmbiguousPeriodSelf(Context& context,
-                                        SemIR::InstId impls_lhs_id,
-                                        SemIR::InstId impls_rhs_id) -> bool;
-
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_PERIOD_SELF_H_

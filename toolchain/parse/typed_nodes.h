@@ -1300,10 +1300,20 @@ struct DesignatorExpr {
   NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfTypeName> name;
 };
 
+// The `.Member` on the left-hand side of a rewrite requirement, such as the
+// `.A` in `type where .A = B`.
+struct RewriteDesignatorExpr {
+  static constexpr auto Kind = NodeKind::RewriteDesignatorExpr.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::PeriodTokenIndex token;
+  IdentifierNameNotBeforeSignatureId name;
+};
+
 struct RequirementEqualOperand {
   static constexpr auto Kind =
       NodeKind::RequirementEqualOperand.Define({.child_count = 1});
-  DesignatorExprId lhs;
+  RewriteDesignatorExprId lhs;
   // This is a virtual token. The `=` token is owned by the RequirementEqual
   // node.
   Lex::EqualTokenIndex token;

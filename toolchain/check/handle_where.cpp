@@ -83,6 +83,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // Introduce `.Self` as a symbolic binding. Its type is the value of the
   // expression to the left of `where`, so `MyInterface` in the example above.
   MakePeriodSelfFacetValue(context, node_id, period_self_type_id);
+  context.where_history_stack().PushWhere();
 
   // Going to put each requirement on `args_type_info_stack`, so we can have an
   // inst block with the varying number of requirements but keeping other
@@ -102,8 +103,6 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // The first `where` acts like `.Self impls` in that it's allowed to introduce
   // a new `.Self`.
   context.where_stack().emplace_back();
-
-  context.where_history_stack_.push_back(context.next_period_self());
 
   // Make rewrite constraints from the self facet type available immediately to
   // expressions in rewrite constraints for this `where` expression.
@@ -297,8 +296,7 @@ auto HandleParseNode(Context& context,
                      Parse::RequirementImplsOperandId /*node_id*/) -> bool {
   auto lhs_id = context.node_stack().Peek<Parse::NodeCategory::Expr>();
   if (IsPeriodSelf(context, lhs_id)) {
-    context.where_history_stack_.push_back(
-        Context::WhereHistory::PeriodSelfImpls);
+    context.where_history_stack().PushPeriodSelfImplsConstraint();
   }
   return true;
 }
@@ -309,7 +307,8 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
 
   if (IsPeriodSelf(context, lhs_id)) {
-    context.where_history_stack_.pop_back();
+    // Pop the `impls` constraint from the history stack.
+    context.where_history_stack().Pop();
   }
 
   auto const_lhs = context.constant_values().Get(lhs_id);
@@ -371,12 +370,6 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   // TODO: For things like `HashSet(.T) as type`, add an implied constraint
   // that `.T impls Hash`.
 
-  if (FindAndDiagnoseAmbiguousPeriodSelf(context, lhs_as_type.inst_id,
-                                         rhs_id)) {
-    rhs_as_type.type_id = SemIR::ErrorInst::TypeId;
-    rhs_as_type.inst_id = SemIR::ErrorInst::TypeInstId;
-  }
-
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
       AddInstInNoBlock<SemIR::RequirementImpls>(
@@ -420,7 +413,8 @@ auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
 }
 
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
-  context.where_history_stack_.pop_back();
+  // Pop the `where` from the history stack.
+  context.where_history_stack().Pop();
   context.where_stack().pop_back();
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.

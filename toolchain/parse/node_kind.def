@@ -322,6 +322,7 @@ CARBON_PARSE_NODE_KIND(ShortCircuitOperatorOr)
 CARBON_PARSE_NODE_KIND(UnsafeModifier)
 
 CARBON_PARSE_NODE_KIND(DesignatorExpr)
+CARBON_PARSE_NODE_KIND(RewriteDesignatorExpr)
 CARBON_PARSE_NODE_KIND(SelfTypeName)
 CARBON_PARSE_NODE_KIND(RequirementAnd)
 CARBON_PARSE_NODE_KIND(RequirementEqualOperand)

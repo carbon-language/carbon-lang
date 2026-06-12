@@ -162,44 +162,28 @@ class C;
 // CHECK:STDERR:
 fn F1(unused T:! type where C impls (I where .I1 = C)) {}
 
-// --- fail_impls_with_nested_facet_type_with_equiv_does_not_constrain_self.carbon
-library "[[@TEST_NAME]]";
-
-interface I {
-  let I1:! type;
-}
-class C;
-
-// The `.I1` satisfies constraining the "current type" of the inner nested facet
-// type `I where ...`. But it does not constrain the current type of the outer
-// facet type `type where...`. We should not consider the designator in the
-// nested where expression as making the `C impls ...` constraint valid.
-
-// CHECK:STDERR: fail_impls_with_nested_facet_type_with_equiv_does_not_constrain_self.carbon:[[@LINE+4]]:29: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F2(unused T:! type where C impls (I where .I1 == C)) {}
-// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn F2(unused T:! type where C impls (I where .I1 == C)) {}
-
 // --- fail_impls_with_nested_facet_type_with_impls_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
   let I1:! type;
 }
-interface J(T:! type) {}
+interface J {}
 class C;
 
-// The `.I1` satisfies constraining the "current type" of the inner nested facet
-// type `I where ...`. But it does not constrain the current type of the outer
-// facet type `type where...`. We should not consider the designator in the
-// nested where expression as making the `C impls ...` constraint valid.
+// The `.Self` satisfies constraining the "current type" of the inner nested
+// facet type `I where ...`. But it does not constrain the current type of the
+// outer facet type `type where...`. We should not consider the designator in
+// the nested where expression as making the `C impls ...` constraint valid.
 
-// CHECK:STDERR: fail_impls_with_nested_facet_type_with_impls_does_not_constrain_self.carbon:[[@LINE+4]]:29: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F3(unused T:! type where C impls (I where .I1 impls J(.Self))) {}
-// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// TODO: The `.Self impls` is ambiguous, but we could choose to accept it. Then
+// this would still fail though as the `C impls ...` would not be valid.
+
+// CHECK:STDERR: fail_impls_with_nested_facet_type_with_impls_does_not_constrain_self.carbon:[[@LINE+4]]:46: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fn F3(unused T:! type where C impls (I where .Self impls J)) {}
+// CHECK:STDERR:                                              ^~~~~
 // CHECK:STDERR:
-fn F3(unused T:! type where C impls (I where .I1 impls J(.Self))) {}
+fn F3(unused T:! type where C impls (I where .Self impls J)) {}
 
 // --- fail_equiv_with_nested_facet_type_with_rewrite_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
@@ -220,44 +204,28 @@ class C;
 // CHECK:STDERR:
 fn F(unused T:! type where C == (I where .I1 = C)) {}
 
-// --- fail_equiv_with_nested_facet_type_with_equiv_does_not_constrain_self.carbon
-library "[[@TEST_NAME]]";
-
-interface I {
-  let I1:! type;
-}
-class C;
-
-// The `.I1` satisfies constraining the "current type" of the inner nested facet
-// type `I where ...`. But it does not constrain the current type of the outer
-// facet type `I where...`. We should not consider the designator in the nested
-// where expression as making the `C impls ...` constraint valid.
-
-// CHECK:STDERR: fail_equiv_with_nested_facet_type_with_equiv_does_not_constrain_self.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused T:! type where C == (I where .I1 == C)) {}
-// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn F(unused T:! type where C == (I where .I1 == C)) {}
-
 // --- fail_equiv_with_nested_facet_type_with_impls_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
   let I1:! type;
 }
-interface J(T:! type) {}
+interface J {}
 class C;
 
-// The `.I1` satisfies constraining the "current type" of the inner nested facet
-// type `I where ...`. But it does not constrain the current type of the outer
-// facet type `I where...`. We should not consider the designator in the nested
-// where expression as making the `C impls ...` constraint valid.
+// The `.Self` satisfies constraining the "current type" of the inner nested
+// facet type `I where ...`. But it does not constrain the current type of the
+// outer facet type `I where...`. We should not consider the designator in the
+// nested where expression as making the `C impls ...` constraint valid.
 
-// CHECK:STDERR: fail_equiv_with_nested_facet_type_with_impls_does_not_constrain_self.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused T:! type where C == (I where .I1 impls J(.Self))) {}
-// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// TODO: The `.Self impls` is ambiguous, but we could choose to accept it. Then
+// this would still fail though as the `C impls ...` would not be valid.
+
+// CHECK:STDERR: fail_equiv_with_nested_facet_type_with_impls_does_not_constrain_self.carbon:[[@LINE+4]]:42: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fn F(unused T:! type where C == (I where .Self impls J)) {}
+// CHECK:STDERR:                                          ^~~~~
 // CHECK:STDERR:
-fn F(unused T:! type where C == (I where .I1 impls J(.Self))) {}
+fn F(unused T:! type where C == (I where .Self impls J)) {}
 
 // --- fail_impls_with_nested_facet_type_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
@@ -265,7 +233,7 @@ library "[[@TEST_NAME]]";
 interface I {
   let I1:! type;
 }
-interface J(T:! type) {}
+interface J {}
 class C;
 
 // The `.I1` satisfies constraining the "current type" of the inner nested facet
@@ -273,11 +241,14 @@ class C;
 // facet type `I where...`. We should not consider the designator in the nested
 // where expression as making the `(I where ...) impls ...` constraint valid.
 
-// CHECK:STDERR: fail_impls_with_nested_facet_type_does_not_constrain_self.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused T:! type where (I where .I1 impls J(.Self)) impls I) {}
-// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// TODO: The `.Self impls` is ambiguous, but we could choose to accept it. Then
+// this would still fail though as the `C impls ...` would not be valid.
+
+// CHECK:STDERR: fail_impls_with_nested_facet_type_does_not_constrain_self.carbon:[[@LINE+4]]:37: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fn F(unused T:! type where (I where .Self impls J) impls I) {}
+// CHECK:STDERR:                                     ^~~~~
 // CHECK:STDERR:
-fn F(unused T:! type where (I where .I1 impls J(.Self)) impls I) {}
+fn F(unused T:! type where (I where .Self impls J) impls I) {}
 
 // --- fail_where_without_designator_in_one_equiv_constraint.carbon
 library "[[@TEST_NAME]]";

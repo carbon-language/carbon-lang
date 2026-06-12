@@ -452,7 +452,7 @@ class C(U:! Tuple);
 // CHECK:STDERR:
 fn G(unused T:! Z where .Z1 impls (Y where .Y1 = ()) and .Self impls Y and .Z2 = C(Self.(Y.Y1))) {}
 
-// --- fail_nested_facet_type_in_rewrite_does_not_use_rewrite_from_outside.carbon
+// --- todo_fail_nested_named_constraint_uses_early_rewrite.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -460,17 +460,17 @@ interface Z {
   let Y:! type;
 }
 
-// TODO: Does the `.X = .Y` contain an ambiguous `.Self` in `.Y`? See
-// https://github.com/carbon-language/carbon-lang/issues/7138.
+constraint N(Y:! type) {
+  extend require impls Z where .X = Y;
+}
 
-fn F(T:! Z where .Y = {} and .X = (Z where .X = .Y), U:! T.X) -> U.(Z.X) {
-  // This should fail: `U:! T.X` contains a rewrite `.X = .Y` in its type, but
-  // the value of `U.(Z.Y)` is not known. Only `T.(Z.Y)` is rewritten to `{}`.
-  //
-  // CHECK:STDERR: fail_nested_facet_type_in_rewrite_does_not_use_rewrite_from_outside.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `{}` to `U.(Z.Y)` [ConversionFailure]
+// This gives `T.X = Z where T.X = T.Y`. So `T.X.(Z.X)` should be `T.Y` which is
+// `{}`.
+fn F(T:! Z where .Y = {} and .X = N(.Y), U:! T.X) -> U.(Z.X) {
+  // CHECK:STDERR: todo_fail_nested_named_constraint_uses_early_rewrite.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `{}` to `U.(Z.X)` [ConversionFailure]
   // CHECK:STDERR:   return {};
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_nested_facet_type_in_rewrite_does_not_use_rewrite_from_outside.carbon:[[@LINE+4]]:3: note: type `{}` does not implement interface `Core.ImplicitAs(U.(Z.Y))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: todo_fail_nested_named_constraint_uses_early_rewrite.carbon:[[@LINE+4]]:3: note: type `{}` does not implement interface `Core.ImplicitAs(U.(Z.X))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   return {};
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:

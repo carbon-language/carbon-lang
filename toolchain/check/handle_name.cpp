@@ -192,6 +192,18 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
     -> bool {
   SemIR::NameId name_id = context.node_stack().PopName();
 
+  // TODO: If this is `.Self impls`, we could choose to allow it, since that
+  // `.Self` value does not appear in the cananical facet type. But we'd need to
+  // look ahead during parse to know and use a different parse node for `.Self
+  // impls`.
+  if (context.where_history_stack().IsCurrentPeriodSelfAmbiguous()) {
+    CARBON_DIAGNOSTIC(AmbiguousPeriodSelf, Error,
+                      "use of `.Self` would be ambiguous in canonical values.");
+    context.emitter().Emit(node_id, AmbiguousPeriodSelf);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+    return true;
+  }
+
   if (name_id == SemIR::NameId::SelfType) {
     // Look up `.Self`.
     SemIR::InstId period_self_id =
@@ -221,6 +233,22 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
         PerformMemberAccess(context, node_id, period_self_id, name_id);
     context.node_stack().Push(node_id, member_id);
   }
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::RewriteDesignatorExprId node_id)
+    -> bool {
+  SemIR::NameId name_id = context.node_stack().PopName();
+  // `.Self = ...` would be rejected in parse.
+  CARBON_CHECK(name_id != SemIR::NameId::SelfType);
+
+  // This is `.Member`, so look up `.Self` and then `Member` in `.Self`.
+  SemIR::InstId period_self_id =
+      HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf);
+  CARBON_CHECK(period_self_id.has_value(), "rewrite without `where`?");
+  auto member_id =
+      PerformMemberAccess(context, node_id, period_self_id, name_id);
+  context.node_stack().Push(node_id, member_id);
   return true;
 }
 

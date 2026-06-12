@@ -394,33 +394,6 @@ fn F(U:! W, V:! Z(U, .Self)) {
   V.(Z(U, V).Z1).(Y(V).Y1).(X.X1) as W;
 }
 
-// --- find_access_value_in_third_nested_access.carbon
-library "[[@TEST_NAME]]";
-
-interface W {}
-interface X {
-  let X1:! type;
-}
-interface Y {
-  let Y1:! type;
-}
-interface Z(T:! type) {
-  let Z0:! type;
-  let Z1:! type;
-  let Z2:! type;
-}
-
-fn F(U:! W, V:! Z(.Self) where .Z0 impls (Y where .Y1 impls (X where .X1 = ()))
-                           and .Z1 impls (Y where .Y1 impls (X where .X1 = U))
-                           and .Z2 impls (Y where .Y1 impls (X where .X1 = ()))) {
-  // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
-  // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, then `V.Z1`, then
-  // `V` where it finds the rewrite of `.Z1.Y1.X1 = U`.
-  //
-  // Only U impls W so we use `as W` to test that the LHS is U.
-  V.(Z(V).Z1).(Y.Y1).(X.X1) as W;
-}
-
 // --- fail_todo_find_access_value_in_second_nested_access_through_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
@@ -481,14 +454,18 @@ constraint NX(V:! type) {
   extend require impls X where .X1 = V;
 }
 
-fn F(V:! Z(.Self) where .Z0 impls (Y where .Y1 impls NX(()))
-                    and .Z1 impls (Y where .Y1 impls NX({}))
-                    and .Z2 impls (Y where .Y1 impls NX(()))) {
+constraint NY(V:! type) {
+  extend require impls Y where .Y1 impls NX(V);
+}
+
+fn F(V:! Z(.Self) where .Z0 impls NY(())
+                    and .Z1 impls NY({})
+                    and .Z2 impls NY(())) {
   // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
   // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, then `V.Z1`, then
   // `V` where it finds the rewrite of `.Z1.Y1.X1 = {}`.
   //
-  // TODO: The identified facet type `NX` includes `X` and should provide a
+  // TODO: The identified facet type `NY` includes `X` and should provide a
   // same-type constraint `X.X1 == V` which would allow this conversion.
   // CHECK:STDERR: fail_todo_find_access_value_in_third_nested_access_through_named_constraint.carbon:[[@LINE+7]]:3: error: cannot convert expression of type `{}` to `V.(Z(V).Z1).(Y.Y1).(X.X1)` with `as` [ConversionFailure]
   // CHECK:STDERR:   {} as V.(Z(V).Z1).(Y.Y1).(X.X1);

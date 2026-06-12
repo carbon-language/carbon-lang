@@ -27,6 +27,7 @@
 #include "toolchain/check/region_stack.h"
 #include "toolchain/check/require_impls_stack.h"
 #include "toolchain/check/scope_stack.h"
+#include "toolchain/check/where_history_stack.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
@@ -284,33 +285,8 @@ class Context {
     return where_stack_;
   }
 
-  enum class WhereHistory {
-    GoodWherePeriodSelf,
-    PeriodSelfImpls,
-    BadWherePeriodSelf,
-  };
-  llvm::SmallVector<WhereHistory> where_history_stack_;
-
-  auto next_period_self() -> WhereHistory {
-    bool saw_impls = false;
-    for (auto h : llvm::reverse(where_history_stack_)) {
-      switch (h) {
-        case WhereHistory::BadWherePeriodSelf:
-          return WhereHistory::BadWherePeriodSelf;
-        case WhereHistory::PeriodSelfImpls:
-          CARBON_CHECK(!saw_impls, "two `impls` without `where` between?");
-          saw_impls = true;
-          break;
-        case WhereHistory::GoodWherePeriodSelf:
-          if (!saw_impls) {
-            // Two `where` without `.Self impls` in between. The latter one will
-            // introduce a different `.Self` value.
-            return WhereHistory::BadWherePeriodSelf;
-          }
-          saw_impls = false;
-      }
-    }
-    return WhereHistory::GoodWherePeriodSelf;
+  auto where_history_stack() -> WhereHistoryStack& {
+    return where_history_stack_;
   }
 
   // Data about a form expression.
@@ -591,6 +567,10 @@ class Context {
   // Tracks information about constraints in the current `where` expression
   // being checked so that they can be used by later constraints.
   llvm::SmallVector<WhereStackEntry> where_stack_;
+
+  // Tracks the introduction of `.Self` names by `where` clauses in order to
+  // determine if the `.Self` would be ambiguous in canonical values.
+  WhereHistoryStack where_history_stack_;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;

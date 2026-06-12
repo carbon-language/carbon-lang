@@ -22,7 +22,8 @@ auto HandleRequirementBegin(Context& context) -> void {
     auto equal = context.Consume();
     context.AddNode(NodeKind::IdentifierNameNotBeforeSignature, name,
                     /*has_error=*/false);
-    context.AddNode(NodeKind::DesignatorExpr, period, /*has_error=*/false);
+    context.AddNode(NodeKind::RewriteDesignatorExpr, period,
+                    /*has_error=*/false);
     state.token = equal;
     context.AddNode(NodeKind::RequirementEqualOperand, state.token,
                     /*has_error=*/false);

@@ -60,7 +60,7 @@ fn F() {
 // CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
 // CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'U'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'RewriteDesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'RequirementEqualOperand', text: '=', subtree_size: 3},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'V'},
 // CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},

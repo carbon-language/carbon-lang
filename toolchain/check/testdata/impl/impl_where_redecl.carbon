@@ -16,26 +16,27 @@
 library "[[@TEST_NAME]]";
 
 interface I { let T:! type; }
+interface J {}
 
 // CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as I where .T = {};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl () as I where .T = {};
-impl () as I where .T = {} and .T impls (type where .Self impls type) {}
+impl () as I where .T = {} and .Self impls J {}
 
 // CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl {} as I;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
 impl {} as I;
-impl {} as I where .T = {} and .T impls (type where .Self impls type) {}
+impl {} as I where .T = {} and .Self impls J {}
 
 // CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: impl ({},) as I where .T = {} and .T impls (type where .Self impls type);
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl ({},) as I where .T = {} and .Self impls J;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl ({},) as I where .T = {} and .T impls (type where .Self impls type);
+impl ({},) as I where .T = {} and .Self impls J;
 impl ({},) as I where .T = {} {}
 
 // --- fail_match_with_empty_interface.carbon

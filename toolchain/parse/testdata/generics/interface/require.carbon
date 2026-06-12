@@ -147,7 +147,7 @@ interface Z {
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'Y'},
 // CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'Y1'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'RewriteDesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'RequirementEqualOperand', text: '=', subtree_size: 3},
 // CHECK:STDOUT:               {kind: 'TupleLiteralStart', text: '('},
 // CHECK:STDOUT:             {kind: 'TupleLiteral', text: ')', subtree_size: 2},

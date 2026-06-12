@@ -269,16 +269,17 @@ fn F(T:! I(.Self) where .A = ((I(.Self) where .B = {}) where .A = {}) and .B = {
   U as (I(T) where .A = {} and .B = {});
 }
 
-// --- todo_fail_nested_period_self_ambiguous.carbon
+// --- fail_nested_period_self_ambiguous.carbon
 library "[[@TEST_NAME]]";
 
 interface I(T:! type) {
   let A:! type;
 }
 
-// TODO: This should be an error: The third `.Self` becomes is not able to be
-// bound to anything unambiguous here, as it could refer to `T` or to something
-// later being constrained by `T.A`.
+// CHECK:STDERR: fail_nested_period_self_ambiguous.carbon:[[@LINE+4]]:60: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fn F(unused T:! I(.Self) where .A = (I(.Self) where .A = I(.Self))) {}
+// CHECK:STDERR:                                                            ^~~~~
+// CHECK:STDERR:
 fn F(unused T:! I(.Self) where .A = (I(.Self) where .A = I(.Self))) {}
 
 
@@ -347,20 +348,71 @@ fn C(unused T:! Z(.Self) where .Self impls (Y(.Self) where .Y1 = .Self)) {}
 //                ^T as type   ^T as Z(T)     ^T as Z(T)   ^T as Z(T) & Y(T)
 //                                                               ^ T as Z(T) & Y(T)
 
-// This introduces a different meaning of `.Self`, but we allow it here.
-fn D(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(P))) {}
-//                ^T as type     ^T as Z(T)      ^T as Z(T)   ^R(T as Z(T)) as Y(T as Z(T))
+// --- fail_ambiguous_period_self_impls.carbon
+library "[[@TEST_NAME]]";
 
-// This introduces a different meaning of `.Self`, but we allow it here.
-fn E(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Y1 = .Y2)) {}
-//                ^T as type     ^T as Z(T)      ^T as Z(T)   ^R(T as Z(T)) as Y(T as Z(T))
-//                                                                  ^R(T as Z(T)) as Y(T as Z(T))
+interface Z(T:! type) {}
+interface Y(T:! type) {}
+interface X(T:! type) {}
 
-// Member designators have an implicit `.Self` which is always allowed. It binds
-// to the innermost facet value rather than being ambiguous.
-fn F(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Y1))) {}
+class Q;
+class R(T:! type);
+
+// TODO: We could choose to allow this use of `.Self` if we'd like, since it
+// does not appear in the canonical facet type.
+
+// This introduces a different meaning of `.Self`, with value `R(.Self)`.
+//
+// CHECK:STDERR: fail_ambiguous_period_self_impls.carbon:[[@LINE+4]]:63: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fn A(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(Q))) {}
+// CHECK:STDERR:                                                               ^~~~~
+// CHECK:STDERR:
+fn A(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(Q))) {}
+//                ^T as type     ^T as Z(T)      ^T as Z(T)   ^ERROR: R(T as Z(T)) as Y(T as Z(T))
+
+// --- fail_ambiguous_period_self_member_access.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y(T:! type) {
+  let Y1:! type;
+  let Y2:! type;
+}
+interface X(T:! type) {}
+
+class R(T:! type);
+
+
+// This introduces a different meaning of `.Self`, with value `R(.Self)`.
+//
+// CHECK:STDERR: fail_ambiguous_period_self_member_access.carbon:[[@LINE+4]]:69: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fn A(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Y1 = .Y2)) {}
+// CHECK:STDERR:                                                                     ^~~
+// CHECK:STDERR:
+fn A(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Y1 = .Y2)) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)   ^R(T as Z(T)) as Y(T as Z(T))
-//                                                                          ^Implicit: R(T as Z(T)) as Y(T as Z(T))
+//                                                                  ^ERROR: R(T as Z(T)) as Y(T as Z(T))
+
+// --- fail_ambiguous_period_self_member_access_in_generic_arg.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y(T:! type) {
+  let Y1:! type;
+}
+interface X(T:! type) {}
+
+class Q;
+class R(T:! type);
+
+// This introduces a different meaning of `.Self`, with value `R(.Self)`.
+//
+// CHECK:STDERR: fail_ambiguous_period_self_member_access_in_generic_arg.carbon:[[@LINE+4]]:73: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fn A(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where Q impls X(.Y1))) {}
+// CHECK:STDERR:                                                                         ^~~
+// CHECK:STDERR:
+fn A(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where Q impls X(.Y1))) {}
+//                ^T as type     ^T as Z(T)      ^T as Z(T)             ^ERROR: R(T as Z(T)) as Y(T as Z(T))
 
 // --- fail_type_impls_ambiguous_period_self_argument.carbon
 library "[[@TEST_NAME]]";
@@ -374,9 +426,9 @@ class P;
 class Q(T:! type);
 class R(T:! type);
 
-// CHECK:STDERR: fail_type_impls_ambiguous_period_self_argument.carbon:[[@LINE+4]]:71: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fail_type_impls_ambiguous_period_self_argument.carbon:[[@LINE+4]]:73: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
 // CHECK:STDERR: fn A(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where P impls X(.Self))) {}
-// CHECK:STDERR:                                                                       ^~~~~~~~
+// CHECK:STDERR:                                                                         ^~~~~
 // CHECK:STDERR:
 fn A(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where P impls X(.Self))) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)             ^ERROR: R(T as Z(T)) as Y(T as Z(T))
@@ -391,9 +443,9 @@ interface X {}
 class Q(T:! type);
 class R(T:! type);
 
-// CHECK:STDERR: fail_ambiguous_period_self_argument_impls.carbon:[[@LINE+4]]:63: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fail_ambiguous_period_self_argument_impls.carbon:[[@LINE+4]]:65: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
 // CHECK:STDERR: fn B(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where Q(.Self) impls X)) {}
-// CHECK:STDERR:                                                               ^~~~~~~~
+// CHECK:STDERR:                                                                 ^~~~~
 // CHECK:STDERR:
 fn B(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where Q(.Self) impls X)) {}
 //                ^T as type     ^T as Z(T)      ^T as Z(T)     ^ERROR: R(T as Z(T)) as Y(T as Z(T))
@@ -407,12 +459,19 @@ interface X(T:! type) {}
 
 class R(T:! type);
 
-// CHECK:STDERR: fail_period_self_impls_ambiguous_period_self_argument.carbon:[[@LINE+4]]:75: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
+// TODO: We could choose to allow th use of `.Self impls` if we'd like, since it
+// does not appear in the canonical facet type.
+
+// CHECK:STDERR: fail_period_self_impls_ambiguous_period_self_argument.carbon:[[@LINE+8]]:63: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
 // CHECK:STDERR: fn C(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Self))) {}
-// CHECK:STDERR:                                                                           ^~~~~~~~
+// CHECK:STDERR:                                                               ^~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_period_self_impls_ambiguous_period_self_argument.carbon:[[@LINE+4]]:77: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fn C(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Self))) {}
+// CHECK:STDERR:                                                                             ^~~~~
 // CHECK:STDERR:
 fn C(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Self impls X(.Self))) {}
-//                ^T as type     ^T as Z(T)      ^T as Z(T)   ^R(T as Z(T)) as Y(T as Z(T))
+//                ^T as type     ^T as Z(T)      ^T as Z(T)   ^ERROR: R(T as Z(T)) as Y(T as Z(T))
 //                                                                          ^ERROR: R(T as Z(T)) as Y(T as Z(T))
 
 // --- fail_rewrite_rhs_ambiguous_period_self.carbon
@@ -425,7 +484,7 @@ interface Y(T:! type) {
 
 class R(T:! type);
 
-// CHECK:STDERR: fail_rewrite_rhs_ambiguous_period_self.carbon:[[@LINE+4]]:69: error: `.Self` is ambiguous after nested `where` in `<type> impls ...` clause. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fail_rewrite_rhs_ambiguous_period_self.carbon:[[@LINE+4]]:69: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
 // CHECK:STDERR: fn D(unused T:! Z(.Self) where R(.Self) impls (Y(.Self) where .Y1 = .Self)) {}
 // CHECK:STDERR:                                                                     ^~~~~
 // CHECK:STDERR:
@@ -461,6 +520,110 @@ impl C as Y {}
 
 fn F() {
   C as (Z where .Z1 impls Y);
+}
+
+// --- fail_ambiguous_self_from_constant.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  let Y:! type;
+}
+
+// These constants introduce an ambiguous `.Self` into the facet type, since
+// they are used on the RHS of a `where` and the `.Y` could refer to two
+// different values in the canonical facet type.
+
+fn F1() {
+  // CHECK:STDERR: fail_ambiguous_self_from_constant.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
+  // CHECK:STDERR:   let Constant:! type = I where .X = .Y;
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let Constant:! type = I where .X = .Y;
+
+  // TODO: Should be an error of ambiguous `.Self` from `.Y`.
+  fn F(_:! I where .X = (I where .Y = (Constant, ))) {}
+}
+
+fn F2() {
+  let Constant:! type = (I where .X = .Y, );
+
+  // TODO: Should be an error of ambiguous `.Self` from `.Y`.
+  fn F(_:! I where .X = (I where .Y = Constant)) {}
+}
+
+fn F3() {
+  let Constant2:! type = (I where .X = .Y, );
+  let Constant:! type = Constant2;
+
+  // TODO: Should be an error of ambiguous `.Self` from `.Y`.
+  fn F(_:! I where .X = (I where .Y = Constant)) {}
+}
+
+fn F4() {
+  let Constant2:! type = I where .X = .Y;
+  let Constant:! type = (Constant2, );
+
+  // TODO: Should be an error of ambiguous `.Self` from `.Y`.
+  fn F(_:! I where .X = (I where .Y = Constant)) {}
+}
+
+fn F5() {
+  let Constant2:! type = (I where .X = .Y, );
+  let Constant:! type = I where .Y = Constant2;
+
+  // TODO: Should be an error of ambiguous `.Self` from `.Y`.
+  fn F(_:! I where .X = Constant) {}
+}
+
+// --- todo_fail_ambiguous_self_from_alias.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  let Y:! type;
+}
+
+// These aliases introduce an ambiguous `.Self` into the facet type, since
+// they are used on the RHS of a `where` and the `.Y` could refer to two
+// different values in the canonical facet type.
+
+fn F1() {
+  alias Constant = I where .X = .Y;
+
+  // TODO: Should be an error of ambiguous `.Self` from `.Y`.
+  fn F(_:! I where .X = (I where .Y = (Constant, ))) {}
+}
+
+fn F2() {
+  alias Constant = (I where .X = .Y, );
+
+  // TODO: Should be an error of ambiguous `.Self` from `.Y`.
+  fn F(_:! I where .X = (I where .Y = Constant)) {}
+}
+
+fn F3() {
+  alias Constant2 = (I where .X = .Y, );
+  alias Constant = Constant2;
+
+  // TODO: Should be an error of ambiguous `.Self` from `.Y`.
+  fn F(_:! I where .X = (I where .Y = Constant)) {}
+}
+
+fn F4() {
+  alias Constant2 = I where .X = .Y;
+  alias Constant = (Constant2, );
+
+  // TODO: Should be an error of ambiguous `.Self` from `.Y`.
+  fn F(_:! I where .X = (I where .Y = Constant)) {}
+}
+
+fn F5() {
+  alias Constant2 = (I where .X = .Y, );
+  alias Constant = I where .Y = Constant2;
+
+  // TODO: Should be an error of ambiguous `.Self` from `.Y`.
+  fn F(_:! I where .X = Constant) {}
 }
 
 // CHECK:STDOUT: --- period_self_param.carbon

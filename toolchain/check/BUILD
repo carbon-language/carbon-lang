@@ -76,6 +76,7 @@ cc_library(
         "type_completion.cpp",
         "type_structure.cpp",
         "unused.cpp",
+        "where_history_stack.cpp",
     ],
     hdrs = [
         "action.h",
@@ -147,6 +148,7 @@ cc_library(
         "type_completion.h",
         "type_structure.h",
         "unused.h",
+        "where_history_stack.h",
     ],
     deps = [
         ":core_identifier",
