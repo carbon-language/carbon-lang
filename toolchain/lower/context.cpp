@@ -10,6 +10,7 @@
 #include "common/growing_range.h"
 #include "common/raw_string_ostream.h"
 #include "common/vlog.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/inst_namer.h"
@@ -74,16 +75,18 @@ auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
     if (file_context) {
       if (file_context->cpp_file()) {
         // Remove the `CarbonExternalASTSource` installed during check
-        // (always the last child of the multiplex source) and replace
-        // it with a `ReadOnlyASTSource`. This is necessary because the
-        // original source has a now-invalid pointer to a
+        // and replace it with a `ReadOnlyASTSource`. This is necessary
+        // because the original source has a now-invalid pointer to a
         // `Check::Context`.
         auto& ast = const_cast<clang::ASTContext&>(
             file_context->cpp_file()->ast_context());
         auto* multiplex_source =
             cast<clang::MultiplexExternalSemaSource>(ast.getExternalSource());
         auto& child_sources = multiplex_source->GetSources();
-        child_sources.pop_back();
+        llvm::erase_if(child_sources, [](const auto& src) {
+          // `CarbonExternalASTSource` inherits from `ReadOnlyASTSource`.
+          return llvm::isa<SemIR::ReadOnlyASTSource>(src.get());
+        });
         multiplex_source->AddSource(
             llvm::makeIntrusiveRefCnt<SemIR::ReadOnlyASTSource>(
                 file_context->sem_ir()));

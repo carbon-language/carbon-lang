@@ -6,6 +6,8 @@
 
 namespace Carbon::SemIR {
 
+char ReadOnlyASTSource::id;
+
 // Get the field offset for each field in a class.
 //
 // Returns true on success, false if any error occurs.

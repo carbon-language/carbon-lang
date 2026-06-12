@@ -347,6 +347,13 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
       llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>&
           vbase_offsets) -> bool override;
 
+  auto isA(const void* class_id) const -> bool override {
+    return class_id == &id || ReadOnlyASTSource::isA(class_id);
+  }
+  static auto classof(const ExternalASTSource* s) -> bool {
+    return s->isA(&id);
+  }
+
  private:
   // Builds the top-level C++ namespace `Carbon` and adds it to the translation
   // unit.
@@ -382,8 +389,13 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
         SemIR::ImportIRInst(clang_source_loc_id));
   }
 
+  // For LLVM RTTI.
+  static char id;
+
   Check::Context* context_;
 };
+
+char CarbonExternalASTSource::id;
 
 }  // namespace
 
