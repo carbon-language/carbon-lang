@@ -314,9 +314,9 @@ base class T1 {
 
 class T2 {
   extend base: T1;
-  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+10]]:3: error: value expression passed to reference parameter [ValueForRefParam]
+  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+10]]:18: error: value expression passed to reference parameter [ValueForRefParam]
   // CHECK:STDERR:   override fn F1(ref self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                  ^~~~~~~~
   // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+7]]:18: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   override fn F1(ref self);
   // CHECK:STDERR:                  ^~~~~~~~
@@ -434,21 +434,21 @@ class T1;
 class T2;
 
 base class Base(T:! type) {
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+6]]:36: error: cannot implicitly convert expression of type `T1*` to `T2*` [ConversionFailure]
-  // CHECK:STDERR:   virtual fn F(unused self, unused t: T1*) { }
-  // CHECK:STDERR:                                    ^~~~~~
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+3]]:36: note: type `T1*` does not implement interface `Core.ImplicitAs(T2*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   virtual fn F(unused self, unused t: T1*) { }
-  // CHECK:STDERR:                                    ^~~~~~
   virtual fn F(unused self, unused t: T1*) { }
 }
 
 class D1 {
   extend base: Base(T1);
+  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+13]]:37: error: cannot implicitly convert expression of type `T1*` to `T2*` [ConversionFailure]
+  // CHECK:STDERR:   override fn F(unused self, unused t: T2*) { }
+  // CHECK:STDERR:                                     ^~~~~~
+  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+10]]:37: note: type `T1*` does not implement interface `Core.ImplicitAs(T2*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   override fn F(unused self, unused t: T2*) { }
+  // CHECK:STDERR:                                     ^~~~~~
   // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+7]]:37: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   override fn F(unused self, unused t: T2*) { }
   // CHECK:STDERR:                                     ^~~~~~
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE-8]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE-14]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   virtual fn F(unused self, unused t: T1*) { }
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -460,20 +460,20 @@ class D1 {
 library "[[@TEST_NAME]]";
 
 abstract class Base(T:! type) {
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+6]]:36: error: cannot implicitly convert expression of type `T*` to `T` [ConversionFailure]
-  // CHECK:STDERR:   virtual fn F(unused self, unused t: T*) { }
-  // CHECK:STDERR:                                    ^~~~~
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+3]]:36: note: type `T*` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   virtual fn F(unused self, unused t: T*) { }
-  // CHECK:STDERR:                                    ^~~~~
   virtual fn F(unused self, unused t: T*) { }
 }
 class Derived(T:! type) {
   extend base: Base(T);
+  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+13]]:37: error: cannot implicitly convert expression of type `T*` to `T` [ConversionFailure]
+  // CHECK:STDERR:   override fn F(unused self, unused t: T) { }
+  // CHECK:STDERR:                                     ^~~~
+  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+10]]:37: note: type `T*` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   override fn F(unused self, unused t: T) { }
+  // CHECK:STDERR:                                     ^~~~
   // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+7]]:37: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   override fn F(unused self, unused t: T) { }
   // CHECK:STDERR:                                     ^~~~
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE-7]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE-13]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   virtual fn F(unused self, unused t: T*) { }
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

@@ -36,6 +36,10 @@ struct CallerState {
 
   // The SpecificId of the function being called (if any).
   SemIR::SpecificId callee_specific_id;
+
+  // Whether argument conversions should use the callee parameter location
+  // rather than the argument location.
+  bool use_callee_param_for_conversion_loc;
 };
 
 // Manages the allocation of call parameter indices.
@@ -457,8 +461,12 @@ auto MatchContext::DoPreWork(State state, SemIR::AnyParamPattern param_pattern,
       if (scrutinee_id == SemIR::ErrorInst::InstId) {
         caller_state->call_args.push_back(SemIR::ErrorInst::InstId);
       } else {
+        auto conversion_loc_id =
+            caller_state->use_callee_param_for_conversion_loc
+                ? SemIR::LocId(entry.pattern_id)
+                : SemIR::LocId(scrutinee_id);
         caller_state->call_args.push_back(
-            Convert(context_, SemIR::LocId(scrutinee_id), scrutinee_id,
+            Convert(context_, conversion_loc_id, scrutinee_id,
                     {.kind = ConversionKindFor(param_pattern, entry),
                      .type_id = scrutinee_type_id}));
       }
@@ -1023,9 +1031,12 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstId return_pattern_id,
                         SemIR::InstId self_arg_id,
                         llvm::ArrayRef<SemIR::InstId> arg_refs,
-                        SemIR::InstId return_arg_id, bool is_desugared)
+                        SemIR::InstId return_arg_id, bool is_desugared,
+                        bool use_callee_param_for_conversion_loc)
     -> SemIR::InstBlockId {
-  CallerState state = {.callee_specific_id = specific_id};
+  CallerState state = {.callee_specific_id = specific_id,
+                       .use_callee_param_for_conversion_loc =
+                           use_callee_param_for_conversion_loc};
   MatchContext match(context);
 
   // When we have a separate `self_arg_id`, we concatenate that onto the front

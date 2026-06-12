@@ -339,7 +339,7 @@ fn F() {
 // CHECK:STDOUT: !112 = !{!113, !114}
 // CHECK:STDOUT: !113 = !DILocalVariable(arg: 1, scope: !109, type: !15)
 // CHECK:STDOUT: !114 = !DILocalVariable(arg: 2, scope: !109, type: !15)
-// CHECK:STDOUT: !115 = !DILocation(line: 4294967295, scope: !109)
+// CHECK:STDOUT: !115 = !DILocation(line: 331, column: 19, scope: !109)
 // CHECK:STDOUT: !116 = !DILocation(line: 331, column: 3, scope: !109)
 // CHECK:STDOUT: !117 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.5d6f3f3a4b44a8f1:OptionalStorage.Core.58016a73bff04416", scope: null, file: !69, line: 131, type: !88, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !118)
 // CHECK:STDOUT: !118 = !{!119}
