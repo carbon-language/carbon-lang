@@ -4,6 +4,7 @@
 
 #include "toolchain/check/deduce.h"
 
+#include "common/set.h"
 #include "llvm/ADT/SmallBitVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
@@ -610,8 +611,8 @@ auto DeduceGenericCallArguments(
   // Deduction has side effects in the SemIR: the conversions it performs
   // generate instructions, such as `Converted` and `FacetValue`, that are only
   // used to feed constant values into the resulting specific and would
-  // otherwise be dead. Run deduction with a discarded instruction block to
-  // keep them out of the enclosing block. The enclosing generic region is
+  // otherwise be dead. Run deduction with a separate instruction block, and
+  // discard the dead instructions it collects. The enclosing generic region is
   // deliberately kept: deduction can run while checking a generic definition,
   // and symbolic instructions created here must still be tracked in that
   // generic's eval block.
@@ -622,7 +623,56 @@ auto DeduceGenericCallArguments(
 
   bool success = deduction.Deduce() && deduction.CheckDeductionIsComplete();
 
+  // Instructions with constant values are dead here: their users only need
+  // the constant value. Anything else, such as a temporary materialized by a
+  // runtime conversion, may be referenced by instructions outside the block
+  // -- for example, the cleanup machinery emits destroy operations
+  // referencing temporaries -- and so is preserved by splicing it into the
+  // enclosing block. A preserved instruction may in turn reference constant
+  // instructions in the block, such as the callee of a runtime call, so walk
+  // the block in reverse and also preserve any instruction referenced by an
+  // already-preserved one.
+  Set<SemIR::InstId> referenced_insts;
+  auto mark_referenced = [&](SemIR::IdAndKind arg) {
+    CARBON_KIND_SWITCH(arg) {
+      case CARBON_KIND(SemIR::InstId inst_id): {
+        referenced_insts.Insert(inst_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::TypeInstId inst_id): {
+        referenced_insts.Insert(static_cast<SemIR::InstId>(inst_id));
+        break;
+      }
+      case CARBON_KIND(SemIR::InstBlockId block_id): {
+        for (auto inst_id : context.inst_blocks().GetOrEmpty(block_id)) {
+          referenced_insts.Insert(inst_id);
+        }
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  };
+  llvm::SmallVector<SemIR::InstId> kept_insts;
+  for (auto inst_id :
+       llvm::reverse(context.inst_block_stack().PeekCurrentBlockContents())) {
+    if (context.constant_values().Get(inst_id).is_constant() &&
+        !referenced_insts.Contains(inst_id)) {
+      continue;
+    }
+    kept_insts.push_back(inst_id);
+    auto inst = context.insts().Get(inst_id);
+    mark_referenced(inst.arg0_and_kind());
+    mark_referenced(inst.arg1_and_kind());
+  }
+
+  // Discard the inst block, and insert the live instructions where they would
+  // have been placed.
   context.inst_block_stack().PopAndDiscard();
+  for (auto inst_id : llvm::reverse(kept_insts)) {
+    context.inst_block_stack().AddInstId(inst_id);
+  }
 
   if (!success) {
     return SemIR::SpecificId::None;
