@@ -5,23 +5,12 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 
-#include <optional>
-
 #include "common/map.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/struct_type_field.h"
-
-namespace clang {
-class TagDecl;
-}
 
 namespace Carbon::SemIR {
-
-class File;
-class NameScope;
 
 // Class-specific fields.
 struct ClassFields {
@@ -140,24 +129,9 @@ struct Class : public EntityWithParamsBase,
   // Gets the object representation for this class. Returns `None` if the class
   // is not yet defined.
   auto GetObjectRepr(const File& file, SpecificId specific_id) const -> TypeId;
-
-  // Get the `StructTypeField`s from a class's object repr.
-  auto GetStructTypeFields(const File& sem_ir) const
-      -> llvm::ArrayRef<SemIR::StructTypeField>;
 };
 
 using ClassStore = ValueStore<ClassId, Class, Tag<CheckIRId>>;
-
-// If this declaration declares a class type that is "owned" by Carbon, and not
-// imported from C++, returns the corresponding type ID and `ClassType`.
-// Otherwise returns `nullopt`.
-auto GetAsCarbonOwnedClass(const File& sem_ir, const clang::TagDecl* tag_decl)
-    -> std::optional<std::pair<SemIR::TypeId, SemIR::ClassType>>;
-
-auto LookupClassFieldByStructField(const File& sem_ir,
-                                   const NameScope& class_scope,
-                                   const StructTypeField& struct_field)
-    -> std::optional<InstStore::GetAsWithIdResult<SemIR::FieldDecl>>;
 
 }  // namespace Carbon::SemIR
 

@@ -382,13 +382,3 @@ cc_library(
         "@llvm-project//llvm:Support",
     ],
 )
-
-cc_library(
-    name = "read_only_ast_source",
-    srcs = ["read_only_ast_source.cpp"],
-    hdrs = ["read_only_ast_source.h"],
-    deps = [
-        "//toolchain/sem_ir:file",
-        "@llvm-project//clang:sema",
-    ],
-)
