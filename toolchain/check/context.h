@@ -284,6 +284,35 @@ class Context {
     return where_stack_;
   }
 
+  enum class WhereHistory {
+    GoodWherePeriodSelf,
+    PeriodSelfImpls,
+    BadWherePeriodSelf,
+  };
+  llvm::SmallVector<WhereHistory> where_history_stack_;
+
+  auto next_period_self() -> WhereHistory {
+    bool saw_impls = false;
+    for (auto h : llvm::reverse(where_history_stack_)) {
+      switch (h) {
+        case WhereHistory::BadWherePeriodSelf:
+          return WhereHistory::BadWherePeriodSelf;
+        case WhereHistory::PeriodSelfImpls:
+          CARBON_CHECK(!saw_impls, "two `impls` without `where` between?");
+          saw_impls = true;
+          break;
+        case WhereHistory::GoodWherePeriodSelf:
+          if (!saw_impls) {
+            // Two `where` without `.Self impls` in between. The latter one will
+            // introduce a different `.Self` value.
+            return WhereHistory::BadWherePeriodSelf;
+          }
+          saw_impls = false;
+      }
+    }
+    return WhereHistory::GoodWherePeriodSelf;
+  }
+
   // Data about a form expression.
   //
   // TODO: consider moving this out of Context.

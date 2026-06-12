@@ -98,7 +98,12 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
 
   // Add a context stack for tracking constraints, that will be used to allow
   // later constraints to read from them eagerly.
+  //
+  // The first `where` acts like `.Self impls` in that it's allowed to introduce
+  // a new `.Self`.
   context.where_stack().emplace_back();
+
+  context.where_history_stack_.push_back(context.next_period_self());
 
   // Make rewrite constraints from the self facet type available immediately to
   // expressions in rewrite constraints for this `where` expression.
@@ -117,22 +122,6 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
     }
   }
 
-  return true;
-}
-
-auto HandleParseNode(Context& /*context*/,
-                     Parse::RequirementEqualOperandId /*node_id*/) -> bool {
-  return true;
-}
-
-auto HandleParseNode(Context& /*context*/,
-                     Parse::RequirementEqualEqualOperandId /*node_id*/)
-    -> bool {
-  return true;
-}
-
-auto HandleParseNode(Context& /*context*/,
-                     Parse::RequirementImplsOperandId /*node_id*/) -> bool {
   return true;
 }
 
@@ -199,6 +188,12 @@ static auto DiagnoseMissingDesignator(Context& context, SemIR::LocId loc_id)
   context.emitter().Emit(loc_id, WhereWithoutDesignator);
 }
 
+auto HandleParseNode(Context& /*context*/,
+                     Parse::RequirementEqualOperandId /*node_id*/) -> bool {
+  // Nothing to do.
+  return true;
+}
+
 auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     -> bool {
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
@@ -238,6 +233,13 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
             GetImplWitnessAccessWithoutSubstitution(context, lhs_id)),
         rhs_id);
   }
+  return true;
+}
+
+auto HandleParseNode(Context& /*context*/,
+                     Parse::RequirementEqualEqualOperandId /*node_id*/)
+    -> bool {
+  // Nothing to do.
   return true;
 }
 
@@ -291,10 +293,24 @@ static auto IsPeriodSelfAccess(Context& context, SemIR::InstId inst_id)
   }
 }
 
+auto HandleParseNode(Context& context,
+                     Parse::RequirementImplsOperandId /*node_id*/) -> bool {
+  auto lhs_id = context.node_stack().Peek<Parse::NodeCategory::Expr>();
+  if (IsPeriodSelf(context, lhs_id)) {
+    context.where_history_stack_.push_back(
+        Context::WhereHistory::PeriodSelfImpls);
+  }
+  return true;
+}
+
 auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
     -> bool {
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
+
+  if (IsPeriodSelf(context, lhs_id)) {
+    context.where_history_stack_.pop_back();
+  }
 
   auto const_lhs = context.constant_values().Get(lhs_id);
   auto const_rhs = context.constant_values().Get(rhs_id);
@@ -404,6 +420,7 @@ auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
 }
 
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
+  context.where_history_stack_.pop_back();
   context.where_stack().pop_back();
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
