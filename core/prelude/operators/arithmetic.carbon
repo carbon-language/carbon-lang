@@ -4,6 +4,7 @@
 
 package Core library "prelude/operators/arithmetic";
 
+import library "prelude/types/char_literal";
 import library "prelude/types/int_literal";
 
 // TODO: Per the design, the associated type `Result` in each of these
@@ -114,4 +115,24 @@ impl IntLiteral as Negate where .Result = Self {
 
 impl IntLiteral as SubWith(Self) where .Result = Self {
   fn Op(self, other: Self) -> Self = "int.ssub";
+}
+
+
+// Operations for CharLiteral. These need to be here because CharLiteral has no
+// associated library of its own.
+
+impl CharLiteral as AddWith(IntLiteral) where .Result = CharLiteral {
+  fn Op(self, other: IntLiteral) -> CharLiteral = "char_literal.add";
+}
+
+impl IntLiteral as AddWith(CharLiteral) where .Result = CharLiteral {
+  fn Op(self, other: CharLiteral) -> CharLiteral = "int.add_char_literal";
+}
+
+impl CharLiteral as SubWith(IntLiteral) where .Result = CharLiteral {
+  fn Op(self, other: IntLiteral) -> CharLiteral = "char_literal.sub_int";
+}
+
+impl CharLiteral as SubWith(Self) where .Result = IntLiteral {
+  fn Op(self, other: Self) -> IntLiteral = "char_literal.sub_char";
 }

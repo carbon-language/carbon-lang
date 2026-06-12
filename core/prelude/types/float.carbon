@@ -72,7 +72,7 @@ impl forall [From:! IntLiteral, To:! AnyFloat where Float(From) impls FloatFitsI
 // impl forall [From:! IntLiteral, To:! IntLiteral
 //              where Float(From) impls FloatFitsIn(Float(To))]
 //     Float(From) as ImplicitAs(Float(To)) {
-//   fn Convert[self: Self]() -> Float(To) = "float.convert";
+//   fn Convert(self) -> Float(To) = "float.convert";
 // }
 
 // Conversions from floating-point to integer type. Always unsafe: not all
@@ -163,13 +163,13 @@ impl forall [To:! IntLiteral, From:! IntImplicitAsFloat(To)]
 // impl forall [From:! IntLiteral, To:! IntLiteral
 //              where Int(From) impls ImplicitAs(Float(To))]
 //     Int(From) as ImplicitAs(Float(To)) {
-//   fn Convert[self: Self]() -> Float(To) = "int.convert_float";
+//   fn Convert(self) -> Float(To) = "int.convert_float";
 // }
 //
 // impl forall [From:! IntLiteral, To:! IntLiteral
 //              where UInt(From) impls ImplicitAs(Float(To))]
 //     UInt(From) as ImplicitAs(Float(To)) {
-//   fn Convert[self: Self]() -> Float(To) = "int.convert_float";
+//   fn Convert(self) -> Float(To) = "int.convert_float";
 // }
 
 impl forall [To:! IntLiteral]

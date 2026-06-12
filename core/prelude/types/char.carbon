@@ -9,13 +9,9 @@ import library "prelude/default";
 import library "prelude/destroy";
 import library "prelude/operators";
 import library "prelude/types/uint";
+import library "prelude/types/char_literal";
 import library "prelude/types/int";
 import library "prelude/types/int_literal";
-
-private fn MakeCharLiteral() -> type = "char_literal.make_type";
-alias CharLiteral = MakeCharLiteral();
-
-// TODO: Provide operations for `CharLiteral`.
 
 class Char {
   adapt u8;
@@ -30,18 +26,17 @@ impl Char as Copy {
 // Conversions.
 
 impl CharLiteral as ImplicitAs(Char) {
-  fn Convert(self) -> Char = "char.convert_checked";
+  fn Convert(self) -> Char = "char_literal.convert_char";
 }
 
 // TODO: Remove these once ImplicitAs extends As.
 impl CharLiteral as As(Char) {
-  fn Convert(self) -> Char = "char.convert_checked";
+  fn Convert(self) -> Char = "char_literal.convert_char";
 }
 
 impl forall [From:! IntLiteral] UInt(From) as As(Char) {
   fn Convert(self) -> Char = "int.convert_char";
 }
-
 // `char` explicitly converts to any type that `u8` implicitly converts to.
 impl forall [T:! type where u8 impls ImplicitAs(.Self)] Char as As(T) {
   fn Convert(self) -> T {
@@ -98,7 +93,7 @@ impl forall [T:! AnyInt & As(u8)]
     Char as AddWith(T) where .Result = Char {
   fn Op(self, other: T) -> Self {
     // TODO: This should be erroneous if the addition overflows.
-    return ((self as u8) + (other as u8)) as char;
+    return ((self as u8) + (other as u8)) as Char;
   }
 }
 
@@ -106,7 +101,7 @@ impl forall [T:! AnyInt & As(u8)]
     T as AddWith(Char) where .Result = Char {
   fn Op(self, other: Char) -> Char {
     // TODO: This should be erroneous if the addition overflows.
-    return ((self as u8) + (other as u8)) as char;
+    return ((self as u8) + (other as u8)) as Char;
   }
 }
 
@@ -114,7 +109,7 @@ final impl forall [T:! AnyInt & As(u8)]
     Char as SubWith(T) where .Result = Char {
   fn Op(self, other: T) -> Self {
     // TODO: This should be erroneous if the addition overflows.
-    return ((self as u8) - (other as u8)) as char;
+    return ((self as u8) - (other as u8)) as Char;
   }
 }
 

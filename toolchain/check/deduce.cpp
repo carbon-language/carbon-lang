@@ -465,7 +465,7 @@ auto DeductionContext::Deduce() -> bool {
 }
 
 // Gets the entity name of a generic binding. The generic binding may be an
-// imported instruction.
+// imported instruction. Returns `None` if an ErrorInst is encountered.
 static auto GetEntityNameForGenericBinding(Context& context,
                                            SemIR::InstId binding_id)
     -> SemIR::NameId {
@@ -473,6 +473,9 @@ static auto GetEntityNameForGenericBinding(Context& context,
   // future), it may not have an entity name. Get a canonical local instruction
   // from its constant value which does.
   binding_id = context.constant_values().GetConstantInstId(binding_id);
+  if (binding_id == SemIR::ErrorInst::InstId) {
+    return SemIR::NameId::None;
+  }
 
   if (auto bind_name =
           context.insts().TryGetAs<SemIR::AnyBinding>(binding_id)) {
@@ -493,13 +496,13 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
     auto binding_id = context().inst_blocks().Get(
         context().generics().Get(generic_id_).bindings_id)[binding_index];
     if (!deduced_arg_id.has_value()) {
-      if (diagnose_) {
+      auto name_id = GetEntityNameForGenericBinding(context(), binding_id);
+      if (diagnose_ && name_id.has_value()) {
         CARBON_DIAGNOSTIC(DeductionIncomplete, Error,
                           "cannot deduce value for generic parameter `{0}`",
                           SemIR::NameId);
-        auto diag = context().emitter().Build(
-            loc_id_, DeductionIncomplete,
-            GetEntityNameForGenericBinding(context(), binding_id));
+        auto diag =
+            context().emitter().Build(loc_id_, DeductionIncomplete, name_id);
         NoteGenericHere(context(), generic_id_, diag);
         diag.Emit();
       }

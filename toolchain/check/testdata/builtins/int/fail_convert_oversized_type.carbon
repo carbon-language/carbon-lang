@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_width_not_multiple_of_8.carbon:[[@LINE+7]]:10: error: binding pattern has incomplete type `i8388609` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: let bad: i8388609 = 0;
 // CHECK:STDERR:          ^~~~~~~~
-// CHECK:STDERR: {{.*}}/prelude/types/int.carbon:17:9: note: integer type width of 8388609 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: {{.*}}/prelude/types/int.carbon:18:9: note: integer type width of 8388609 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 // CHECK:STDERR:   adapt MakeInt(N);
 // CHECK:STDERR:         ^~~~~~~~~~
 // CHECK:STDERR:
@@ -37,7 +37,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_width_too_large.carbon:[[@LINE+7]]:10: error: binding pattern has incomplete type `i16777216` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: let bad: i16777216 = 0;
 // CHECK:STDERR:          ^~~~~~~~~
-// CHECK:STDERR: {{.*}}/prelude/types/int.carbon:17:9: note: integer type width of 16777216 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: {{.*}}/prelude/types/int.carbon:18:9: note: integer type width of 16777216 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 // CHECK:STDERR:   adapt MakeInt(N);
 // CHECK:STDERR:         ^~~~~~~~~~
 // CHECK:STDERR:
@@ -50,7 +50,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_width_too_large_core_int.carbon:[[@LINE+7]]:10: error: binding pattern has incomplete type `i8388609` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: let bad: Core.Int(8388609) = 0;
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: {{.*}}/prelude/types/int.carbon:17:9: note: integer type width of 8388609 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: {{.*}}/prelude/types/int.carbon:18:9: note: integer type width of 8388609 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 // CHECK:STDERR:   adapt MakeInt(N);
 // CHECK:STDERR:         ^~~~~~~~~~
 // CHECK:STDERR:

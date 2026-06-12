@@ -2,6 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+licenses(["notice"])
+
 exports_files(
     [
         "package.json",
@@ -10,6 +12,5 @@ exports_files(
         "carbon-check-test.tmLanguage.json",
         "language-configuration.json",
         "images/icon.png",
-        "LICENSE",
     ],
 )

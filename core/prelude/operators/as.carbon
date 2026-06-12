@@ -5,6 +5,7 @@
 package Core library "prelude/operators/as";
 
 import library "prelude/copy";
+import library "prelude/types/char_literal";
 import library "prelude/types/int_literal";
 import library "prelude/types/float_literal";
 
@@ -72,6 +73,12 @@ impl IntLiteral as ImplicitAs(FloatLiteral) {
 impl FloatLiteral as UnsafeAs(IntLiteral) {
   fn Convert(self) -> IntLiteral = "float.convert_int";
 }
+
+// Integer literals can be explicitly cast to char literals.
+impl IntLiteral as As(CharLiteral) {
+  fn Convert(self) -> CharLiteral = "int.convert_char_literal";
+}
+
 
 interface IntFitsIn(Dest:! type) {}
 interface FloatFitsIn(Src:! type) {}

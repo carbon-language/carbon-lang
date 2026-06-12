@@ -227,6 +227,19 @@ patterns for builtins:
 Create validation splits under
 [toolchain/check/testdata/builtins/](../../../toolchain/check/testdata/builtins/):
 
+-   **Test Naming Convention**: All tests under
+    [toolchain/check/testdata/builtins/](../../../toolchain/check/testdata/builtins/)
+    must be named after the builtin they are testing, replacing `.` characters
+    in the builtin name with `/` (directories). For example, a test for the
+    builtin `"char_literal.convert"` must be located at
+    `toolchain/check/testdata/builtins/char_literal/convert.carbon`.
+-   **Minimal Prelude & Direct Call Isolation**: Builtin tests must **not** test
+    the prelude library or operators. They must use the minimal primitive
+    prelude
+    (`// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon`)
+    or a smaller prelude, and explicitly declare and call the builtin functions
+    under test directly (e.g., `fn Add(a: f64, b: f64) -> f64 = "float.add";`).
+    This isolates the testing of compiler builtins from the library prelude.
 -   **Min-Prelude Limitations**: Standard operators (like `+`, `-`, `/`, `<`,
     etc.) are **not** available in minimized preludes because the core operators
     library isn't imported. To write tests with a minimal footprint, call

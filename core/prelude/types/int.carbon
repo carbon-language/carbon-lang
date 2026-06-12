@@ -8,8 +8,9 @@ import library "prelude/copy";
 import library "prelude/default";
 import library "prelude/destroy";
 import library "prelude/operators";
-import library "prelude/types/int_literal";
+import library "prelude/types/char_literal";
 import library "prelude/types/float_literal";
+import library "prelude/types/int_literal";
 
 private fn MakeInt(size: IntLiteral) -> type = "int.make_type_signed";
 
@@ -68,6 +69,15 @@ impl forall [To:! IntLiteral, From:! AnyInt & IntFitsIn(Int(To))]
 
 final impl forall [From:! IntLiteral, To:! IntLiteral] Int(From) as As(Int(To)) {
   fn Convert(self) -> Int(To) = "int.convert";
+}
+
+// Explicit conversion to/from character literals.
+impl forall [N:! IntLiteral] Int(N) as As(CharLiteral) {
+  fn Convert(self) -> CharLiteral = "int.convert_char_literal";
+}
+
+impl forall [N:! IntLiteral] CharLiteral as As(Int(N)) {
+  fn Convert(self) -> Int(N) = "char_literal.convert_int";
 }
 
 // Explicit conversion from floating-point literals.
@@ -211,6 +221,21 @@ impl forall [N:! IntLiteral, T:! ImplicitAs(Int(N))]
   fn Op(self: Int(N), other: Int(N)) -> Int(N) = "int.ssub";
 }
 
+// - CharLiteral and Int(N).
+
+impl forall [N:! IntLiteral] CharLiteral as AddWith(Int(N)) where .Result = CharLiteral {
+  fn Op(self, other: Int(N)) -> CharLiteral = "char_literal.add";
+}
+
+impl forall [N:! IntLiteral] Int(N) as AddWith(CharLiteral) where .Result = CharLiteral {
+  fn Op(self, other: CharLiteral) -> CharLiteral = "int.add_char_literal";
+}
+
+impl forall [N:! IntLiteral] CharLiteral as SubWith(Int(N)) where .Result = CharLiteral {
+  fn Op(self, other: Int(N)) -> CharLiteral = "char_literal.sub_int";
+}
+
+
 // Bitwise operators.
 
 // - Homogeneous.
@@ -350,6 +375,7 @@ impl forall [N:! IntLiteral, U:! ImplicitAs(Int(N))]
     Int(N) as SubAssignWith(U) {
   fn Op(ref self, other: Self) = "int.ssub_assign";
 }
+
 
 // Increment and decrement.
 
