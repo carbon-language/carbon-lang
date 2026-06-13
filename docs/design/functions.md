@@ -90,7 +90,7 @@ auto Add(std::int64_t a, std::int64_t b) -> std::int64_t {
 ### Captures, function fields, and positional parameters
 
 Named function definitions support [captures](lambdas.md#captures),
-[function fields](lambdas.md#function-fields-in-lambdas), and
+[function fields](lambdas.md#function-fields), and
 [positional parameters](lambdas.md#positional-parameters) in their signature and
 body, with the following restrictions:
 
