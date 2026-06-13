@@ -16,6 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [`return` statements](#return-statements)
     -   [Unused parameters](#unused-parameters)
 -   [Function declarations](#function-declarations)
+    -   [Redeclaration matching](#redeclaration-matching)
 -   [Function types and values](#function-types-and-values)
     -   [Bound methods](#bound-methods)
 -   [Function calls](#function-calls)
@@ -173,10 +174,41 @@ fn Add(a: i64, b: i64) -> i64 {
 The corresponding definition may be provided later in the same file or, when the
 declaration is in an
 [API file of a library](code_and_name_organization/#libraries), in an
-implementation file of the same library. The signature of a function declaration
-must match the corresponding definition. This includes the
-[return clause](#return-clause); even though an omitted return type has
-equivalent behavior to `-> ()`, the presence or omission must match.
+implementation file of the same library.
+
+A function may only be forward declared once in any given file, and any forward
+declaration must appear before the definition.
+
+To declare a function that is defined in a different library, the `extern`
+modifier is used (for example, `extern fn F();`). A library that declares a
+function as `extern` cannot define it. The `extern` modifier is only valid on
+namespace-scoped functions, not on member functions of classes. For more details
+on cross-library forward declarations and modifier merging, see the
+[declaring entities design](declaring_entities.md#extern-and-extern-library).
+
+### Redeclaration matching
+
+Redeclarations of a function must match syntactically. The sequence of tokens
+following the `fn` keyword (and optional scope name) up to the semicolon or open
+brace must be identical.
+
+Specifically, the following must match exactly between the forward declaration
+and the definition:
+
+-   **Parameter names**: You cannot change a parameter name or replace it with
+    `_` in the definition.
+-   **Parameter types**: The types and grouping parentheses must match exactly.
+-   **Return clause**: The presence or omission of the return clause must match
+    exactly (for example, an omitted return type behaves equivalent to `-> ()`,
+    but they are syntactically different and cannot be mixed).
+
+The only exception is the `unused` modifier on parameters, which is allowed on a
+defining declaration (such as the definition) but disallowed on a non-defining
+declaration.
+
+Declaration modifiers (such as access control keywords or `virtual`) appear
+before the `fn` keyword, so they are not involved in checking whether the two
+signatures differ.
 
 ## Function types and values
 
@@ -446,3 +478,7 @@ Other designs build upon basic function syntax to add advanced features:
     [#2022: Unused Pattern Bindings (Unused Function Parameters)](https://github.com/carbon-language/carbon-lang/pull/2022)
 -   Proposal
     [#2875: Functions, function types, and function calls](https://github.com/carbon-language/carbon-lang/pull/2875)
+-   Proposal
+    [#3762: Merging forward declarations](https://github.com/carbon-language/carbon-lang/pull/3762)
+-   Proposal
+    [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
