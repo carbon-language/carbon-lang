@@ -97,6 +97,22 @@ auto HandleParseNode(Context& context, Parse::VariableIntroducerId node_id)
 
 auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     -> bool {
+  auto [subpattern_node_id, maybe_expr_id] =
+      context.node_stack().PopWithNodeIdIf<Parse::NodeCategory::Expr>();
+  if (maybe_expr_id) {
+    auto expr_region_id = ConsumeSubpatternExpr(context, *maybe_expr_id);
+    auto expr_type_id = context.insts().Get(*maybe_expr_id).type_id();
+    auto pattern_type_id = GetPatternType(context, expr_type_id);
+    auto expr_pattern_id = AddInst<SemIR::ExprPattern>(
+        context, subpattern_node_id,
+        {.type_id = pattern_type_id, .expr_region_id = expr_region_id});
+    if (expr_type_id != SemIR::ErrorInst::TypeId) {
+      context.TODO(expr_pattern_id, "expression pattern");
+    }
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+    return true;
+  }
+
   auto subpattern_id = context.node_stack().PopPattern();
   auto type_id = context.insts().Get(subpattern_id).type_id();
 
