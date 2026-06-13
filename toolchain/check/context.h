@@ -184,7 +184,16 @@ class Context {
 
   auto generated() -> llvm::SmallVector<SemIR::InstId>& { return generated_; }
 
-  // Pre-computed parts of a binding pattern.
+  // Map from the IDs of binding patterns to the IDs of the corresponding
+  // bindings, and related information. The binding insts must be created early,
+  // well before we have a block to put them in, because they have to be added
+  // to name lookup in case they are referenced later in the pattern. See
+  // docs/check/pattern_matching.md for details.
+  //
+  // This is only populated for "ordinary" binding pattern insts, not insts
+  // produced by constant evaluation, because the latter do not have a unique
+  // identity, and cannot be referenced by name in any event.
+  //
   // TODO: Consider putting this behind a narrower API to guard against emitting
   // multiple times.
   struct BindingPatternInfo {

@@ -663,7 +663,7 @@ fn F(unused T:! I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt: <error> = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt: <error> = symbolic_binding_pattern T, 0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_19.1: type = splice_block %.loc13_19.2 [concrete = <error>] {
 // CHECK:STDOUT:       %.Self.loc13_14: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]

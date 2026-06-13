@@ -669,6 +669,7 @@ struct ExprPattern {
   static constexpr auto Kind = InstKind::ExprPattern.Define<Parse::NodeId>(
       {.ir_name = "expr_pattern",
        .expr_category = ExprCategory::Pattern,
+       // TODO: Figure out how constant evaluation should work for ExprPatterns.
        .constant_kind = InstConstantKind::AlwaysUnique,
        .is_lowered = false});
 
@@ -1388,7 +1389,7 @@ struct OutParamPattern {
   static constexpr auto Kind = InstKind::OutParamPattern.Define<Parse::NodeId>(
       {.ir_name = "out_param_pattern",
        .expr_category = ExprCategory::Pattern,
-       .constant_kind = InstConstantKind::AlwaysUnique,
+       .constant_kind = InstConstantKind::Always,
        .is_lowered = false});
 
   TypeId type_id;
@@ -1498,7 +1499,7 @@ struct RefBindingPattern {
       InstKind::RefBindingPattern.Define<Parse::NodeId>(
           {.ir_name = "ref_binding_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   TypeId type_id;
@@ -1538,7 +1539,7 @@ struct RefParamPattern {
   static constexpr auto Kind = InstKind::RefParamPattern.Define<Parse::NodeId>(
       {.ir_name = "ref_param_pattern",
        .expr_category = ExprCategory::Pattern,
-       .constant_kind = InstConstantKind::AlwaysUnique,
+       .constant_kind = InstConstantKind::Always,
        .is_lowered = false});
 
   TypeId type_id;
@@ -1565,7 +1566,7 @@ struct RefReturnPattern {
   static constexpr auto Kind = InstKind::RefReturnPattern.Define<Parse::NodeId>(
       {.ir_name = "ref_return_pattern",
        .expr_category = ExprCategory::Pattern,
-       .constant_kind = InstConstantKind::AlwaysUnique,
+       .constant_kind = InstConstantKind::Always,
        .is_lowered = false});
 
   TypeId type_id;
@@ -1770,7 +1771,7 @@ struct ReturnSlotPattern {
       InstKind::ReturnSlotPattern.Define<Parse::NodeId>(
           {.ir_name = "return_slot_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   // Always a PatternType whose scrutinee type is the return type of the
@@ -1976,7 +1977,7 @@ struct SymbolicBindingPattern {
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
           .ir_name = "symbolic_binding_pattern",
           .expr_category = ExprCategory::Pattern,
-          .constant_kind = InstConstantKind::AlwaysUnique,
+          .constant_kind = InstConstantKind::Always,
           .is_lowered = false,
       });
 
@@ -2055,7 +2056,7 @@ struct TuplePattern {
       InstKind::TuplePattern.Define<Parse::TuplePatternId>(
           {.ir_name = "tuple_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   // Always a PatternType whose scrutinee type is a tuple of the scrutinee
@@ -2226,7 +2227,7 @@ struct ValueBindingPattern {
       InstKind::ValueBindingPattern.Define<Parse::NodeId>(
           {.ir_name = "value_binding_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   TypeId type_id;
@@ -2278,7 +2279,7 @@ struct ValueParamPattern {
       InstKind::ValueParamPattern.Define<Parse::NodeId>(
           {.ir_name = "value_param_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   TypeId type_id;
@@ -2306,7 +2307,7 @@ struct ValueReturnPattern {
       InstKind::ValueReturnPattern.Define<Parse::NodeId>(
           {.ir_name = "value_return_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   TypeId type_id;
@@ -2322,7 +2323,7 @@ struct VarParamPattern {
       InstKind::VarParamPattern.Define<Parse::VariablePatternId>(
           {.ir_name = "var_param_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   TypeId type_id;
@@ -2335,7 +2336,7 @@ struct VarPattern {
       Parse::VariablePatternId, Parse::FormBindingPatternId>>(
       {.ir_name = "var_pattern",
        .expr_category = ExprCategory::Pattern,
-       .constant_kind = InstConstantKind::AlwaysUnique,
+       .constant_kind = InstConstantKind::Always,
        .is_lowered = false});
 
   // Always a PatternType that represents the same type as the type of
@@ -2419,7 +2420,7 @@ struct WrapperBindingPattern {
       InstKind::WrapperBindingPattern.Define<Parse::NodeId>(
           {.ir_name = "at_binding_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   TypeId type_id;

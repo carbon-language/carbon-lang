@@ -94,6 +94,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
@@ -107,6 +108,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %CompleteClass.elem: type = unbound_element_type %CompleteClass.bae, %i32 [symbolic]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.type: type = fn_type @CompleteClass.F, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F: %CompleteClass.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete]
@@ -131,6 +134,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.d55: type = class_type @CompleteClass, @CompleteClass(%i32) [concrete]
 // CHECK:STDOUT:   %.290: Core.Form = init_form %CompleteClass.d55 [concrete]
 // CHECK:STDOUT:   %pattern_type.97d: type = pattern_type %CompleteClass.d55 [concrete]
+// CHECK:STDOUT:   %return.param_patt.e24: %pattern_type.97d = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.639: %pattern_type.97d = return_slot_pattern %return.param_patt.e24, %CompleteClass.d55 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -157,7 +162,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc4_14.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -166,7 +171,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %T.loc4_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CompleteClass.decl: %CompleteClass.type = class_decl @CompleteClass [concrete = constants.%CompleteClass.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc6_22.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_25.1: type = splice_block %.loc6_25.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -175,8 +180,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %T.loc6_22.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_22.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.97d = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.97d = return_slot_pattern %return.param_patt, %CompleteClass [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.97d = out_param_pattern [concrete = constants.%return.param_patt.e24]
+// CHECK:STDOUT:     %return.patt: %pattern_type.97d = return_slot_pattern %return.param_patt, %CompleteClass [concrete = constants.%return.patt.639]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, file.%CompleteClass.decl [concrete = constants.%CompleteClass.generic]
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -188,12 +193,14 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc4_14.2: type) {
+// CHECK:STDOUT:   %T.patt.loc4_14.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc4_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @CompleteClass(%T.loc6_22.2: type) {
+// CHECK:STDOUT:   %T.patt.loc6_22.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc6_22.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_22.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -205,8 +212,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %.loc7: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem) = field_decl n, element0 [concrete]
 // CHECK:STDOUT:     %CompleteClass.F.decl: @CompleteClass.%CompleteClass.F.type (%CompleteClass.F.type) = fn_decl @CompleteClass.F [symbolic = @CompleteClass.%CompleteClass.F (constants.%CompleteClass.F)] {
-// CHECK:STDOUT:       %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:       %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
+// CHECK:STDOUT:       %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:       %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %.loc8_13: Core.Form = init_form %i32 [concrete = constants.%.795]
@@ -242,10 +249,12 @@ class Class(U:! type) {
 // CHECK:STDOUT: fn @F() -> out %return.param: %CompleteClass.d55;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc4_14.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc6_22.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc6_22.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -258,6 +267,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: specific @CompleteClass.F(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%i32) {
+// CHECK:STDOUT:   %T.patt.loc6_22.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc6_22.1 => constants.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -274,11 +284,14 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.845: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74 = struct_value () [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %x.patt: %pattern_type.51d1c4.2 = ref_binding_pattern x [symbolic]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.735: <witness> = complete_type_witness %struct_type.x [symbolic]
@@ -295,6 +308,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.d55: type = class_type @CompleteClass, @CompleteClass(%i32) [concrete]
 // CHECK:STDOUT:   %.290: Core.Form = init_form %CompleteClass.d55 [concrete]
 // CHECK:STDOUT:   %pattern_type.97d: type = pattern_type %CompleteClass.d55 [concrete]
+// CHECK:STDOUT:   %return.param_patt.e24: %pattern_type.97d = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.639: %pattern_type.97d = return_slot_pattern %return.param_patt.e24, %CompleteClass.d55 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CompleteClass.elem.2cc: type = unbound_element_type %CompleteClass.d55, %i32 [concrete]
@@ -349,7 +364,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %default.import.loc2_19.2 = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc4: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -358,8 +373,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %T.loc4: type = symbolic_binding T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.97d = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.97d = return_slot_pattern %return.param_patt, %CompleteClass [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.97d = out_param_pattern [concrete = constants.%return.param_patt.e24]
+// CHECK:STDOUT:     %return.patt: %pattern_type.97d = return_slot_pattern %return.param_patt, %CompleteClass [concrete = constants.%return.patt.639]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%Main.CompleteClass [concrete = constants.%CompleteClass.generic]
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -371,10 +386,13 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(imports.%Main.import_ref.b3bc94.1: type) {
+// CHECK:STDOUT:   %T.patt.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.1: type = symbolic_binding T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.1 [symbolic = %require_complete (constants.%require_complete.944)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.1 [symbolic = %pattern_type (constants.%pattern_type.51d1c4.2)]
+// CHECK:STDOUT:   %x.patt: @Class.%pattern_type (%pattern_type.51d1c4.2) = ref_binding_pattern x [symbolic = %x.patt (constants.%x.patt)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.1 [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @Class.%T.1 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x)]
@@ -393,6 +411,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @CompleteClass(imports.%Main.import_ref.b3bc94.3: type) [from "foo.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -435,10 +454,12 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
+// CHECK:STDOUT:   %T.patt.1 => constants.%T.patt
 // CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -451,6 +472,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: specific @CompleteClass.F(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%i32) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -471,6 +493,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
 // CHECK:STDOUT:   %UseMethod.type: type = fn_type @UseMethod [concrete]
 // CHECK:STDOUT:   %UseMethod: %UseMethod.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
@@ -483,11 +507,15 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.F.type.4ea: type = fn_type @CompleteClass.F, @CompleteClass(%T.67d) [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.c7a: %CompleteClass.F.type.4ea = struct_value () [symbolic]
 // CHECK:STDOUT:   %CompleteClass.elem.c1f: type = unbound_element_type %CompleteClass.bae, %i32 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.d47: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.d55: type = class_type @CompleteClass, @CompleteClass(%i32) [concrete]
 // CHECK:STDOUT:   %CompleteClass.elem.2cc: type = unbound_element_type %CompleteClass.d55, %i32 [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.type.dac: type = fn_type @CompleteClass.F, @CompleteClass(%i32) [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.623: %CompleteClass.F.type.dac = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.97d: type = pattern_type %CompleteClass.d55 [concrete]
+// CHECK:STDOUT:   %v.patt: %pattern_type.97d = ref_binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.var_patt: %pattern_type.97d = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.specific_fn: <specific function> = specific_function %CompleteClass.F.623, @CompleteClass.F(%i32) [concrete]
@@ -545,8 +573,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %UseMethod.decl: %UseMethod.type = fn_decl @UseMethod [concrete = constants.%UseMethod] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc5 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc5 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc5: Core.Form = init_form %i32.loc5 [concrete = constants.%.795]
@@ -554,8 +582,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseField.decl: %UseField.type = fn_decl @UseField [concrete = constants.%UseField] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc10 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc10 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc10: Core.Form = init_form %i32.loc10 [concrete = constants.%.795]
@@ -565,6 +593,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @CompleteClass(imports.%Main.import_ref.b3bc94.2: type) [from "foo.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.d47)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -586,8 +615,8 @@ class Class(U:! type) {
 // CHECK:STDOUT: fn @UseMethod() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.97d = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.97d = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.97d = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.97d = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.d55 = var %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc6: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
@@ -638,8 +667,8 @@ class Class(U:! type) {
 // CHECK:STDOUT: fn @UseField() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.97d = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.97d = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.97d = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.97d = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.d55 = var %v.var_patt
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
@@ -667,6 +696,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T.67d) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt.d47
 // CHECK:STDOUT:   %T => constants.%T.67d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -679,6 +709,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: specific @CompleteClass.F(constants.%T.67d) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%i32) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt.d47
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -712,12 +743,16 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.F.type.4ea: type = fn_type @CompleteClass.F, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.c7a: %CompleteClass.F.type.4ea = struct_value () [symbolic]
 // CHECK:STDOUT:   %CompleteClass.elem.c1f: type = unbound_element_type %CompleteClass.bae, %i32 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %CompleteClass.22b: type = class_type @CompleteClass, @CompleteClass(%ptr.d08) [concrete]
 // CHECK:STDOUT:   %CompleteClass.elem.014: type = unbound_element_type %CompleteClass.22b, %i32 [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.type.a78: type = fn_type @CompleteClass.F, @CompleteClass(%ptr.d08) [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.819: %CompleteClass.F.type.a78 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.ff3: type = pattern_type %CompleteClass.22b [concrete]
+// CHECK:STDOUT:   %v.patt: %pattern_type.ff3 = ref_binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.var_patt: %pattern_type.ff3 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CompleteClass.d55: type = class_type @CompleteClass, @CompleteClass(%i32) [concrete]
@@ -767,6 +802,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @CompleteClass(imports.%Main.import_ref.b3bc94.2: type) [from "foo.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -788,8 +824,8 @@ class Class(U:! type) {
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.ff3 = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.ff3 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.ff3 = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.ff3 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.22b = var %v.var_patt
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
@@ -835,6 +871,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -847,6 +884,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: specific @CompleteClass.F(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%ptr.d08) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%ptr.d08
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -857,6 +895,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%i32) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -872,10 +911,12 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type.3256be.1: type = generic_class_type @Class.1 [concrete]
 // CHECK:STDOUT:   %Class.generic.4154f7.1: %Class.type.3256be.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type.3256be.2: type = generic_class_type @Class.loc12 [concrete]
 // CHECK:STDOUT:   %Class.generic.4154f7.2: %Class.type.3256be.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Class.7bcfd6.2: type = class_type @Class.loc12, @Class.loc12(%U) [symbolic]
@@ -904,7 +945,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %default.import.loc2_19.2 = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type.3256be.2 = class_decl @Class.loc12 [concrete = constants.%Class.generic.4154f7.2] {
-// CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [concrete]
+// CHECK:STDOUT:     %U.patt.loc12_14.1: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc12_14.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_17.1: type = splice_block %.loc12_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -915,12 +956,14 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class.1(imports.%Main.import_ref.b3b: type) [from "foo.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class.loc12(%U.loc12_14.2: type) {
+// CHECK:STDOUT:   %U.patt.loc12_14.2: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc12_14.2 (constants.%U.patt)]
 // CHECK:STDOUT:   %U.loc12_14.1: type = symbolic_binding U, 0 [symbolic = %U.loc12_14.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -938,10 +981,12 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.1(constants.%T) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.loc12(constants.%U) {
+// CHECK:STDOUT:   %U.patt.loc12_14.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc12_14.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

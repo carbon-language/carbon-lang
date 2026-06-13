@@ -73,6 +73,8 @@ import library "var";
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %Foo.patt: %pattern_type.6b6 = ref_binding_pattern Foo [concrete]
+// CHECK:STDOUT:   %Foo.var_patt: %pattern_type.6b6 = var_pattern %Foo.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
@@ -104,8 +106,8 @@ import library "var";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %Foo.patt: %pattern_type.6b6 = ref_binding_pattern Foo [concrete]
-// CHECK:STDOUT:     %Foo.var_patt: %pattern_type.6b6 = var_pattern %Foo.patt [concrete]
+// CHECK:STDOUT:     %Foo.patt: %pattern_type.6b6 = ref_binding_pattern Foo [concrete = constants.%Foo.patt]
+// CHECK:STDOUT:     %Foo.var_patt: %pattern_type.6b6 = var_pattern %Foo.patt [concrete = constants.%Foo.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.var: ref %i32 = var %Foo.var_patt [concrete]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]

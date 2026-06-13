@@ -223,8 +223,8 @@ fn Var5() {
 // CHECK:STDOUT: fn @Var() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete = <error>]
+// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
@@ -244,12 +244,15 @@ fn Var5() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.457: type = pattern_type %Abstract3 [concrete]
+// CHECK:STDOUT:   %a.param_patt: %pattern_type.457 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.457 = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type.85c = tuple_value (%Abstract3) [concrete]
 // CHECK:STDOUT:   %tuple.type.4cc: type = tuple_type (%Abstract3) [concrete]
 // CHECK:STDOUT:   %pattern_type.ac0: type = pattern_type %tuple.type.4cc [concrete]
+// CHECK:STDOUT:   %l.patt: %pattern_type.ac0 = value_binding_pattern l [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -268,8 +271,8 @@ fn Var5() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Abstract3.decl: type = class_decl @Abstract3 [concrete = constants.%Abstract3] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.457 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.457 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.457 = value_param_pattern [concrete = constants.%a.param_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.457 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract3 = value_param call_param0
 // CHECK:STDOUT:     %Abstract3.ref.loc6: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
@@ -288,7 +291,7 @@ fn Var5() {
 // CHECK:STDOUT: fn @F(%a.param: %Abstract3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %l.patt: %pattern_type.ac0 = value_binding_pattern l [concrete]
+// CHECK:STDOUT:     %l.patt: %pattern_type.ac0 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract3 = name_ref a, %a
 // CHECK:STDOUT:   %.loc14_35: %tuple.type.4cc = tuple_literal (%a.ref)
@@ -357,8 +360,8 @@ fn Var5() {
 // CHECK:STDOUT: fn @Var2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v2.patt: <error> = ref_binding_pattern v2 [concrete]
-// CHECK:STDOUT:     %v2.var_patt: <error> = var_pattern %v2.patt [concrete]
+// CHECK:STDOUT:     %v2.patt: <error> = ref_binding_pattern v2 [concrete = <error>]
+// CHECK:STDOUT:     %v2.var_patt: <error> = var_pattern %v2.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref <error> = var %v2.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v2.var, <error>
@@ -418,8 +421,8 @@ fn Var5() {
 // CHECK:STDOUT: fn @Var3() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v3.patt: <error> = ref_binding_pattern v3 [concrete]
-// CHECK:STDOUT:     %v3.var_patt: <error> = var_pattern %v3.patt [concrete]
+// CHECK:STDOUT:     %v3.patt: <error> = ref_binding_pattern v3 [concrete = <error>]
+// CHECK:STDOUT:     %v3.var_patt: <error> = var_pattern %v3.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v3.var: ref <error> = var %v3.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v3.var, <error>
@@ -480,8 +483,8 @@ fn Var5() {
 // CHECK:STDOUT: fn @Var4() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v4.patt: <error> = ref_binding_pattern v4 [concrete]
-// CHECK:STDOUT:     %v4.var_patt: <error> = var_pattern %v4.patt [concrete]
+// CHECK:STDOUT:     %v4.patt: <error> = ref_binding_pattern v4 [concrete = <error>]
+// CHECK:STDOUT:     %v4.var_patt: <error> = var_pattern %v4.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v4.var: ref <error> = var %v4.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v4.var, <error>
@@ -575,8 +578,8 @@ fn Var5() {
 // CHECK:STDOUT: fn @Var5() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v5.patt: <error> = ref_binding_pattern v5 [concrete]
-// CHECK:STDOUT:     %v5.var_patt: <error> = var_pattern %v5.patt [concrete]
+// CHECK:STDOUT:     %v5.patt: <error> = ref_binding_pattern v5 [concrete = <error>]
+// CHECK:STDOUT:     %v5.var_patt: <error> = var_pattern %v5.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v5.var: ref <error> = var %v5.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v5.var, <error>

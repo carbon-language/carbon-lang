@@ -60,12 +60,16 @@ fn F() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %static_field.patt: %pattern_type.6b6 = ref_binding_pattern static_field [concrete]
+// CHECK:STDOUT:   %static_field.var_patt: %pattern_type.6b6 = var_pattern %static_field.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.53a: %T.as.DefaultOrUnformed.impl.Op.type.150 = struct_value () [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.e52: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%i32) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %i32, (%DefaultOrUnformed.impl_witness.e52) [concrete]
+// CHECK:STDOUT:   %static_field_with_init.patt: %pattern_type.6b6 = ref_binding_pattern static_field_with_init [concrete]
+// CHECK:STDOUT:   %static_field_with_init.var_patt: %pattern_type.6b6 = var_pattern %static_field_with_init.patt [concrete]
 // CHECK:STDOUT:   %int_123.fff: Core.IntLiteral = int_value 123 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.914: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
@@ -105,15 +109,15 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %static_field.patt: %pattern_type.6b6 = ref_binding_pattern static_field [concrete]
-// CHECK:STDOUT:     %static_field.var_patt: %pattern_type.6b6 = var_pattern %static_field.patt [concrete]
+// CHECK:STDOUT:     %static_field.patt: %pattern_type.6b6 = ref_binding_pattern static_field [concrete = constants.%static_field.patt]
+// CHECK:STDOUT:     %static_field.var_patt: %pattern_type.6b6 = var_pattern %static_field.patt [concrete = constants.%static_field.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %static_field.var: ref %i32 = var %static_field.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %static_field: ref %i32 = ref_binding static_field, %static_field.var [concrete = %static_field.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %static_field_with_init.patt: %pattern_type.6b6 = ref_binding_pattern static_field_with_init [concrete]
-// CHECK:STDOUT:     %static_field_with_init.var_patt: %pattern_type.6b6 = var_pattern %static_field_with_init.patt [concrete]
+// CHECK:STDOUT:     %static_field_with_init.patt: %pattern_type.6b6 = ref_binding_pattern static_field_with_init [concrete = constants.%static_field_with_init.patt]
+// CHECK:STDOUT:     %static_field_with_init.var_patt: %pattern_type.6b6 = var_pattern %static_field_with_init.patt [concrete = constants.%static_field_with_init.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %static_field_with_init.var: ref %i32 = var %static_field_with_init.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]

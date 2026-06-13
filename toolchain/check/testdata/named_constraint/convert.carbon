@@ -77,6 +77,7 @@ fn G(T:! Z) {
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.bound: <bound method> = bound_method %E.type, %type.as.BitAndWith.impl.Op [concrete]
+// CHECK:STDOUT:   %T.patt.3a0592.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.f45530.2: %E.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -90,7 +91,7 @@ fn G(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc8_7.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_7.2 (constants.%T.patt.3a0592.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_12.1: type = splice_block %.loc8_12.3 [concrete = constants.%E.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -107,6 +108,7 @@ fn G(T:! Z) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc8_7.2: %E.type) {
+// CHECK:STDOUT:   %T.patt.loc8_7.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_7.2 (constants.%T.patt.3a0592.2)]
 // CHECK:STDOUT:   %T.loc8_7.1: %E.type = symbolic_binding T, 0 [symbolic = %T.loc8_7.1 (constants.%T.f45530.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -123,6 +125,7 @@ fn G(T:! Z) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.f45530.2) {
+// CHECK:STDOUT:   %T.patt.loc8_7.2 => constants.%T.patt.3a0592.2
 // CHECK:STDOUT:   %T.loc8_7.1 => constants.%T.f45530.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -137,6 +140,7 @@ fn G(T:! Z) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.9a587c.2: type = pattern_type %E2.type [concrete]
+// CHECK:STDOUT:   %T.patt.3a0592.2: %pattern_type.9a587c.2 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.f45530.2: %E2.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -147,7 +151,7 @@ fn G(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.9a587c.2 = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc9_7.1: %pattern_type.9a587c.2 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_7.2 (constants.%T.patt.3a0592.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9: type = splice_block %E2.ref [concrete = constants.%E2.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -158,6 +162,7 @@ fn G(T:! Z) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc9_7.2: %E2.type) {
+// CHECK:STDOUT:   %T.patt.loc9_7.2: %pattern_type.9a587c.2 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_7.2 (constants.%T.patt.3a0592.2)]
 // CHECK:STDOUT:   %T.loc9_7.1: %E2.type = symbolic_binding T, 0 [symbolic = %T.loc9_7.1 (constants.%T.f45530.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -179,6 +184,7 @@ fn G(T:! Z) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.f45530.2) {
+// CHECK:STDOUT:   %T.patt.loc9_7.2 => constants.%T.patt.3a0592.2
 // CHECK:STDOUT:   %T.loc9_7.1 => constants.%T.f45530.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

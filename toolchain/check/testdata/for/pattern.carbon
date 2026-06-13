@@ -128,6 +128,7 @@ fn Run() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Body: %Body.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
+// CHECK:STDOUT:   %c.patt.aa8: %pattern_type.98b = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   %EmptyRange.type: type = generic_class_type @EmptyRange [concrete]
 // CHECK:STDOUT:   %EmptyRange.generic: %EmptyRange.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -199,7 +200,7 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete = constants.%c.patt.aa8]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EmptyRange.ref: %EmptyRange.type = name_ref EmptyRange, imports.%Main.EmptyRange [concrete = constants.%EmptyRange.generic]
 // CHECK:STDOUT:   %C.ref.loc10_27: type = name_ref C, imports.%Main.C [concrete = constants.%C]
@@ -252,9 +253,9 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_36.8: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc10_36.9: %Optional.f82 = acquire_value %.loc10_36.2
 // CHECK:STDOUT:   %Optional.Get.call: init %C to %.loc10_36.8 = call %bound_method.loc10_36.6(%.loc10_36.9)
-// CHECK:STDOUT:   %C.ref.loc10_11: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc10_36.10: ref %C = temporary %.loc10_36.8, %Optional.Get.call
 // CHECK:STDOUT:   %.loc10_36.11: %C = acquire_value %.loc10_36.10
+// CHECK:STDOUT:   %C.ref.loc10_11: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: %C = value_binding c, %.loc10_36.11
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
@@ -308,6 +309,8 @@ fn Run() {
 // CHECK:STDOUT:   %Body: %Body.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt.dd0: %pattern_type.98b = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type.98b = var_pattern %c.patt.dd0 [concrete]
 // CHECK:STDOUT:   %EmptyRange.type: type = generic_class_type @EmptyRange [concrete]
 // CHECK:STDOUT:   %EmptyRange.generic: %EmptyRange.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -379,8 +382,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt.dd0]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EmptyRange.ref: %EmptyRange.type = name_ref EmptyRange, imports.%Main.EmptyRange [concrete = constants.%EmptyRange.generic]
 // CHECK:STDOUT:   %C.ref.loc10_31: type = name_ref C, imports.%Main.C [concrete = constants.%C]
@@ -486,8 +489,11 @@ fn Run() {
 // CHECK:STDOUT:   %Body.type: type = fn_type @Body [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Body: %Body.type = struct_value () [concrete]
+// CHECK:STDOUT:   %a.patt.9e2: %pattern_type.831 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   %b.patt.0c3: %pattern_type.831 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   %tuple.type.784: type = tuple_type (bool, bool) [concrete]
 // CHECK:STDOUT:   %pattern_type.860: type = pattern_type %tuple.type.784 [concrete]
+// CHECK:STDOUT:   %.d8a: %pattern_type.860 = tuple_pattern (%a.patt.9e2, %b.patt.0c3) [concrete]
 // CHECK:STDOUT:   %EmptyRange.type: type = generic_class_type @EmptyRange [concrete]
 // CHECK:STDOUT:   %EmptyRange.generic: %EmptyRange.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -569,9 +575,9 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc10_25: %pattern_type.860 = tuple_pattern (%a.patt, %b.patt) [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete = constants.%a.patt.9e2]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt.0c3]
+// CHECK:STDOUT:     %.loc10_25: %pattern_type.860 = tuple_pattern (%a.patt, %b.patt) [concrete = constants.%.d8a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EmptyRange.ref: %EmptyRange.type = name_ref EmptyRange, imports.%Main.EmptyRange [concrete = constants.%EmptyRange.generic]
 // CHECK:STDOUT:   %.loc10_42: type = type_literal bool [concrete = bool]
@@ -629,11 +635,11 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_61.10: ref %tuple.type.784 = temporary %.loc10_61.8, %Optional.Get.call
 // CHECK:STDOUT:   %tuple.elem0: ref bool = tuple_access %.loc10_61.10, element0
 // CHECK:STDOUT:   %tuple.elem1: ref bool = tuple_access %.loc10_61.10, element1
-// CHECK:STDOUT:   %.loc10_12: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc10_61.11: bool = acquire_value %tuple.elem0
+// CHECK:STDOUT:   %.loc10_12: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %a: bool = value_binding a, %.loc10_61.11
-// CHECK:STDOUT:   %.loc10_21: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc10_61.12: bool = acquire_value %tuple.elem1
+// CHECK:STDOUT:   %.loc10_21: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %b: bool = value_binding b, %.loc10_61.12
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %a.ref: bool = name_ref a, %a
@@ -687,8 +693,11 @@ fn Run() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Body: %Body.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
+// CHECK:STDOUT:   %a.patt.1ad: %pattern_type.98b = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   %b.patt.29b: %pattern_type.98b = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   %tuple.type.748: type = tuple_type (%C, %C) [concrete]
 // CHECK:STDOUT:   %pattern_type.8b4: type = pattern_type %tuple.type.748 [concrete]
+// CHECK:STDOUT:   %.d56: %pattern_type.8b4 = tuple_pattern (%a.patt.1ad, %b.patt.29b) [concrete]
 // CHECK:STDOUT:   %EmptyRange.type: type = generic_class_type @EmptyRange [concrete]
 // CHECK:STDOUT:   %EmptyRange.generic: %EmptyRange.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -769,9 +778,9 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.98b = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.98b = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc10_19: %pattern_type.8b4 = tuple_pattern (%a.patt, %b.patt) [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.98b = value_binding_pattern a [concrete = constants.%a.patt.1ad]
+// CHECK:STDOUT:     %b.patt: %pattern_type.98b = value_binding_pattern b [concrete = constants.%b.patt.29b]
+// CHECK:STDOUT:     %.loc10_19: %pattern_type.8b4 = tuple_pattern (%a.patt, %b.patt) [concrete = constants.%.d56]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EmptyRange.ref: %EmptyRange.type = name_ref EmptyRange, imports.%Main.EmptyRange [concrete = constants.%EmptyRange.generic]
 // CHECK:STDOUT:   %C.ref.loc10_36: type = name_ref C, imports.%Main.C [concrete = constants.%C]
@@ -829,11 +838,11 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_49.10: ref %tuple.type.748 = temporary %.loc10_49.8, %Optional.Get.call
 // CHECK:STDOUT:   %tuple.elem0: ref %C = tuple_access %.loc10_49.10, element0
 // CHECK:STDOUT:   %tuple.elem1: ref %C = tuple_access %.loc10_49.10, element1
-// CHECK:STDOUT:   %C.ref.loc10_12: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc10_49.11: %C = acquire_value %tuple.elem0
+// CHECK:STDOUT:   %C.ref.loc10_12: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %a: %C = value_binding a, %.loc10_49.11
-// CHECK:STDOUT:   %C.ref.loc10_18: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc10_49.12: %C = acquire_value %tuple.elem1
+// CHECK:STDOUT:   %C.ref.loc10_18: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %b: %C = value_binding b, %.loc10_49.12
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a

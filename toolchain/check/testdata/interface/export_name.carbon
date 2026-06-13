@@ -105,6 +105,8 @@ fn UseEmpty(unused i: I) {}
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT:   %i.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:   %i.patt: %pattern_type = at_binding_pattern i, %i.param_patt [concrete]
 // CHECK:STDOUT:   %UseEmpty.type: type = fn_type @UseEmpty [concrete]
 // CHECK:STDOUT:   %UseEmpty: %UseEmpty.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -121,8 +123,8 @@ fn UseEmpty(unused i: I) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [concrete = constants.%UseEmpty] {
-// CHECK:STDOUT:     %i.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:     %i.patt: %pattern_type = at_binding_pattern i, %i.param_patt [concrete]
+// CHECK:STDOUT:     %i.param_patt: %pattern_type = value_param_pattern [concrete = constants.%i.param_patt]
+// CHECK:STDOUT:     %i.patt: %pattern_type = at_binding_pattern i, %i.param_patt [concrete = constants.%i.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %I.type = value_param call_param0
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]

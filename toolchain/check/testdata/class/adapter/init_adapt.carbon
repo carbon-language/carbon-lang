@@ -109,6 +109,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %complete_type.7b9: <witness> = complete_type_witness %struct_type.a.b.b4c [concrete]
 // CHECK:STDOUT:   %AdaptC: type = class_type @AdaptC [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %a.patt.c32: %pattern_type.98b = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.cfd: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [concrete]
@@ -135,12 +136,22 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %C.val: %C = struct_value (%int_1.0c6, %int_2.295) [concrete]
 // CHECK:STDOUT:   %.c76: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %pattern_type.720: type = pattern_type %AdaptC [concrete]
+// CHECK:STDOUT:   %b.patt.658: %pattern_type.720 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.98b = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   %.a44: Core.Form = init_form %C [concrete]
+// CHECK:STDOUT:   %return.param_patt.89a: %pattern_type.98b = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.e4a: %pattern_type.98b = return_slot_pattern %return.param_patt.89a, %C [concrete]
 // CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [concrete]
 // CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.624: Core.Form = init_form %AdaptC [concrete]
+// CHECK:STDOUT:   %return.param_patt.788: %pattern_type.720 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.794: %pattern_type.720 = return_slot_pattern %return.param_patt.788, %AdaptC [concrete]
 // CHECK:STDOUT:   %MakeAdaptC.type: type = fn_type @MakeAdaptC [concrete]
 // CHECK:STDOUT:   %MakeAdaptC: %MakeAdaptC.type = struct_value () [concrete]
+// CHECK:STDOUT:   %d.patt: %pattern_type.720 = ref_binding_pattern d [concrete]
+// CHECK:STDOUT:   %d.var_patt: %pattern_type.720 = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:   %e.patt: %pattern_type.98b = ref_binding_pattern e [concrete]
+// CHECK:STDOUT:   %e.var_patt: %pattern_type.98b = var_pattern %e.patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -173,9 +184,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %AdaptC.decl: type = class_decl @AdaptC [concrete = constants.%AdaptC] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.98b = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.98b = value_binding_pattern a [concrete = constants.%a.patt.c32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %impl.elem0.loc13_27.1: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc13_27.1: <bound method> = bound_method @__global_init.%int_1, %impl.elem0.loc13_27.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.094]
 // CHECK:STDOUT:   %specific_fn.loc13_27.1: <specific function> = specific_function %impl.elem0.loc13_27.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -197,20 +207,21 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.9: init %C = converted @__global_init.%.loc13, %.loc13_27.8 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc13_27.10: ref %C = temporary %.loc13_27.2, %.loc13_27.9 [concrete = constants.%.c76]
 // CHECK:STDOUT:   %.loc13_27.11: %C = acquire_value %.loc13_27.10 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %a: %C = value_binding a, %.loc13_27.11
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.720 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.720 = value_binding_pattern b [concrete = constants.%b.patt.658]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AdaptC.ref.loc15: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:   %b: %AdaptC = value_binding b, @__global_init.%.loc15_19.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref.loc17: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: %C = value_binding c, @__global_init.%.loc17_14.2
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [concrete = constants.%MakeC] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.98b = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98b = out_param_pattern [concrete = constants.%return.param_patt.89a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref [concrete = constants.%return.patt.e4a]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc19: Core.Form = init_form %C.ref [concrete = constants.%.a44]
@@ -218,8 +229,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeAdaptC.decl: %MakeAdaptC.type = fn_decl @MakeAdaptC [concrete = constants.%MakeAdaptC] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.720 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.720 = return_slot_pattern %return.param_patt, %AdaptC.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.720 = out_param_pattern [concrete = constants.%return.param_patt.788]
+// CHECK:STDOUT:     %return.patt: %pattern_type.720 = return_slot_pattern %return.param_patt, %AdaptC.ref [concrete = constants.%return.patt.794]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptC.ref: type = name_ref AdaptC, file.%AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:     %.loc21: Core.Form = init_form %AdaptC.ref [concrete = constants.%.624]
@@ -227,15 +238,15 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     %return: ref %AdaptC = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.720 = ref_binding_pattern d [concrete]
-// CHECK:STDOUT:     %d.var_patt: %pattern_type.720 = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type.720 = ref_binding_pattern d [concrete = constants.%d.patt]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.720 = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %AdaptC = var %d.var_patt [concrete]
 // CHECK:STDOUT:   %AdaptC.ref.loc23: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:   %d: ref %AdaptC = ref_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %e.patt: %pattern_type.98b = ref_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.var_patt: %pattern_type.98b = var_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.patt: %pattern_type.98b = ref_binding_pattern e [concrete = constants.%e.patt]
+// CHECK:STDOUT:     %e.var_patt: %pattern_type.98b = var_pattern %e.patt [concrete = constants.%e.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %C = var %e.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref.loc25: type = name_ref C, %C.decl [concrete = constants.%C]
@@ -312,6 +323,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %complete_type.7b9: <witness> = complete_type_witness %struct_type.a.b.b4c [concrete]
 // CHECK:STDOUT:   %AdaptC: type = class_type @AdaptC [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %a.patt.c32: %pattern_type.98b = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.cfd: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [concrete]
@@ -338,12 +350,22 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %C.val: %C = struct_value (%int_1.0c6, %int_2.295) [concrete]
 // CHECK:STDOUT:   %.c76: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %pattern_type.720: type = pattern_type %AdaptC [concrete]
+// CHECK:STDOUT:   %b.patt.658: %pattern_type.720 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.98b = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   %.a44: Core.Form = init_form %C [concrete]
+// CHECK:STDOUT:   %return.param_patt.89a: %pattern_type.98b = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.e4a: %pattern_type.98b = return_slot_pattern %return.param_patt.89a, %C [concrete]
 // CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [concrete]
 // CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.624: Core.Form = init_form %AdaptC [concrete]
+// CHECK:STDOUT:   %return.param_patt.788: %pattern_type.720 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.794: %pattern_type.720 = return_slot_pattern %return.param_patt.788, %AdaptC [concrete]
 // CHECK:STDOUT:   %MakeAdaptC.type: type = fn_type @MakeAdaptC [concrete]
 // CHECK:STDOUT:   %MakeAdaptC: %MakeAdaptC.type = struct_value () [concrete]
+// CHECK:STDOUT:   %d.patt: %pattern_type.720 = ref_binding_pattern d [concrete]
+// CHECK:STDOUT:   %d.var_patt: %pattern_type.720 = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:   %e.patt: %pattern_type.98b = ref_binding_pattern e [concrete]
+// CHECK:STDOUT:   %e.var_patt: %pattern_type.98b = var_pattern %e.patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -376,9 +398,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %AdaptC.decl: type = class_decl @AdaptC [concrete = constants.%AdaptC] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.98b = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.98b = value_binding_pattern a [concrete = constants.%a.patt.c32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %impl.elem0.loc13_27.1: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc13_27.1: <bound method> = bound_method @__global_init.%int_1, %impl.elem0.loc13_27.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.094]
 // CHECK:STDOUT:   %specific_fn.loc13_27.1: <specific function> = specific_function %impl.elem0.loc13_27.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -400,22 +421,23 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.9: init %C = converted @__global_init.%.loc13, %.loc13_27.8 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc13_27.10: ref %C = temporary %.loc13_27.2, %.loc13_27.9 [concrete = constants.%.c76]
 // CHECK:STDOUT:   %.loc13_27.11: %C = acquire_value %.loc13_27.10 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %a: %C = value_binding a, %.loc13_27.11
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.720 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.720 = value_binding_pattern b [concrete = constants.%b.patt.658]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AdaptC.ref.loc24: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:   %.loc24: %AdaptC = converted @__global_init.%a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %AdaptC.ref.loc24: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:   %b: %AdaptC = value_binding b, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref.loc33: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc33: %C = converted @__global_init.%b.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %C.ref.loc33: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: %C = value_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [concrete = constants.%MakeC] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.98b = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98b = out_param_pattern [concrete = constants.%return.param_patt.89a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref [concrete = constants.%return.patt.e4a]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc35: Core.Form = init_form %C.ref [concrete = constants.%.a44]
@@ -423,8 +445,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeAdaptC.decl: %MakeAdaptC.type = fn_decl @MakeAdaptC [concrete = constants.%MakeAdaptC] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.720 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.720 = return_slot_pattern %return.param_patt, %AdaptC.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.720 = out_param_pattern [concrete = constants.%return.param_patt.788]
+// CHECK:STDOUT:     %return.patt: %pattern_type.720 = return_slot_pattern %return.param_patt, %AdaptC.ref [concrete = constants.%return.patt.794]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptC.ref: type = name_ref AdaptC, file.%AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:     %.loc37: Core.Form = init_form %AdaptC.ref [concrete = constants.%.624]
@@ -432,15 +454,15 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     %return: ref %AdaptC = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.720 = ref_binding_pattern d [concrete]
-// CHECK:STDOUT:     %d.var_patt: %pattern_type.720 = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type.720 = ref_binding_pattern d [concrete = constants.%d.patt]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.720 = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %AdaptC = var %d.var_patt [concrete]
 // CHECK:STDOUT:   %AdaptC.ref.loc46: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:   %d: ref %AdaptC = ref_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %e.patt: %pattern_type.98b = ref_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.var_patt: %pattern_type.98b = var_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.patt: %pattern_type.98b = ref_binding_pattern e [concrete = constants.%e.patt]
+// CHECK:STDOUT:     %e.var_patt: %pattern_type.98b = var_pattern %e.patt [concrete = constants.%e.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %C = var %e.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref.loc55: type = name_ref C, %C.decl [concrete = constants.%C]

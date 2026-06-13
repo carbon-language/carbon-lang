@@ -28,26 +28,28 @@ let b: bool = Neq('a', 'a');
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %Neq.type: type = fn_type @Neq [concrete]
 // CHECK:STDOUT:   %Neq: %Neq.type = struct_value () [concrete]
+// CHECK:STDOUT:   %a.patt.567: %pattern_type.831 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   %.54f: Core.CharLiteral = char_value U+0061 [concrete]
 // CHECK:STDOUT:   %.711: Core.CharLiteral = char_value U+0062 [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
+// CHECK:STDOUT:   %b.patt.438: %pattern_type.831 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete = constants.%a.patt.567]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21_8: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc21_27.1: bool = value_of_initializer @__global_init.%Neq.call.loc21 [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc21_27.2: bool = converted @__global_init.%Neq.call.loc21, %.loc21_27.1 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc21_8: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %a: bool = value_binding a, %.loc21_27.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt.438]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22_8: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc22_27.1: bool = value_of_initializer @__global_init.%Neq.call.loc22 [concrete = constants.%false]
 // CHECK:STDOUT:   %.loc22_27.2: bool = converted @__global_init.%Neq.call.loc22, %.loc22_27.1 [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc22_8: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %b: bool = value_binding b, %.loc22_27.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -201,10 +201,10 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_20.1.temp = alloca { i32 }, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc7_20.2.temp = alloca { i32 }, align 4, !dbg !10
-// CHECK:STDOUT:   %.2.temp = alloca { i32 }, align 4
+// CHECK:STDOUT:   %.2.temp = alloca { i32 }, align 4, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.1.temp), !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.2.temp), !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.2.temp)
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.2.temp), !dbg !11
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.2.temp, ptr %a), !dbg !11
 // CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc7_20.2.temp, ptr %.2.temp), !dbg !10
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc7_20.2.temp), !dbg !12
@@ -263,7 +263,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 10, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 4294967295, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 0, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 7, column: 3, scope: !4)
 // CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !3, line: 7, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
 // CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
@@ -389,10 +389,10 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc8_19.1.temp = alloca { i32 }, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc8_19.2.temp = alloca { i32 }, align 4, !dbg !10
-// CHECK:STDOUT:   %.2.temp = alloca { i32 }, align 4
+// CHECK:STDOUT:   %.2.temp = alloca { i32 }, align 4, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.1.temp), !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.2.temp), !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.2.temp)
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.2.temp), !dbg !11
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.2.temp, ptr %a), !dbg !11
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc8_19.2.temp, ptr %.2.temp), !dbg !10
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc8_19.2.temp), !dbg !12
@@ -451,7 +451,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 8, column: 10, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 4294967295, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 0, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 8, column: 3, scope: !4)
 // CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !3, line: 8, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
 // CHECK:STDOUT: !14 = !DISubroutineType(types: !15)

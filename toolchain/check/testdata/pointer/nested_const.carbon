@@ -32,8 +32,12 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %ptr.f93: type = ptr_type %const.8df [concrete]
 // CHECK:STDOUT:   %const.99e: type = const_type %ptr.f93 [concrete]
 // CHECK:STDOUT:   %pattern_type.a04: type = pattern_type %const.99e [concrete]
+// CHECK:STDOUT:   %p.param_patt: %pattern_type.a04 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type.a04 = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %.242: Core.Form = init_form %const.6a8 [concrete]
 // CHECK:STDOUT:   %pattern_type.ed1: type = pattern_type %const.6a8 [concrete]
+// CHECK:STDOUT:   %return.param_patt.2ae: %pattern_type.ed1 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.524: %pattern_type.ed1 = return_slot_pattern %return.param_patt.2ae, %const.6a8 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -75,10 +79,10 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.a04 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %p.patt: %pattern_type.a04 = at_binding_pattern p, %p.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.ed1 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.ed1 = return_slot_pattern %return.param_patt, %const.loc16_41 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.a04 = value_param_pattern [concrete = constants.%p.param_patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.a04 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.ed1 = out_param_pattern [concrete = constants.%return.param_patt.2ae]
+// CHECK:STDOUT:     %return.patt: %pattern_type.ed1 = return_slot_pattern %return.param_patt, %const.loc16_41 [concrete = constants.%return.patt.524]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc16_47: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %const.loc16_41: type = const_type %i32.loc16_47 [concrete = constants.%const.6a8]
@@ -107,8 +111,10 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %.loc17_10.2: %const.6a8 = acquire_value %.loc17_10.1
 // CHECK:STDOUT:   %impl.elem0: %.367 = impl_witness_access constants.%Copy.impl_witness.0b0, element0 [concrete = constants.%const.as.Copy.impl.Op.9cf]
 // CHECK:STDOUT:   %bound_method.loc17_10.1: <bound method> = bound_method %.loc17_10.2, %impl.elem0
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value constants.%i32, (constants.%Copy.impl_witness.0e0) [concrete = constants.%Copy.facet.987]
-// CHECK:STDOUT:   %.loc17_10.3: %Copy.type = converted constants.%i32, %Copy.facet [concrete = constants.%Copy.facet.987]
+// CHECK:STDOUT:   %Copy.facet.loc17_10.1: %Copy.type = facet_value constants.%i32, (constants.%Copy.impl_witness.0e0) [concrete = constants.%Copy.facet.987]
+// CHECK:STDOUT:   %.loc17_10.3: %Copy.type = converted constants.%i32, %Copy.facet.loc17_10.1 [concrete = constants.%Copy.facet.987]
+// CHECK:STDOUT:   %Copy.facet.loc17_10.2: %Copy.type = facet_value constants.%i32, (constants.%Copy.impl_witness.0e0) [concrete = constants.%Copy.facet.987]
+// CHECK:STDOUT:   %.loc17_10.4: %Copy.type = converted constants.%i32, %Copy.facet.loc17_10.2 [concrete = constants.%Copy.facet.987]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @const.as.Copy.impl.Op(constants.%Copy.facet.987) [concrete = constants.%const.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc17_10.2: <bound method> = bound_method %.loc17_10.2, %specific_fn
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.call: init %const.6a8 = call %bound_method.loc17_10.2(%.loc17_10.2)

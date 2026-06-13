@@ -1025,6 +1025,8 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.bbc: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.bbc = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type.bbc = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.0a2: type = ptr_type %C [concrete]
@@ -1034,8 +1036,10 @@ fn F() {
 // CHECK:STDOUT:   %cpp_operator.3fb16d.1: %cpp_operator.type.da53e5.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %cpp_operator.type.da53e5.2: type = fn_type @cpp_operator.2 [concrete]
 // CHECK:STDOUT:   %cpp_operator.3fb16d.2: %cpp_operator.type.da53e5.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %minus.patt: %pattern_type.bbc = value_binding_pattern minus [concrete]
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk.type: type = fn_type @operator_Minus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk: %operator_Minus__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %complement.patt: %pattern_type.bbc = value_binding_pattern complement [concrete]
 // CHECK:STDOUT:   %operator_Tilde__carbon_thunk.type: type = fn_type @operator_Tilde__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Tilde__carbon_thunk: %operator_Tilde__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
@@ -1086,8 +1090,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.bbc = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.bbc = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.bbc = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.bbc = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc8_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -1108,7 +1112,7 @@ fn F() {
 // CHECK:STDOUT:   %c.ref.loc12: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %cpp_operator.call.loc12: ref %C = call imports.%cpp_operator.decl.5ce91d.2(%c.ref.loc12)
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %minus.patt: %pattern_type.bbc = value_binding_pattern minus [concrete]
+// CHECK:STDOUT:     %minus.patt: %pattern_type.bbc = value_binding_pattern minus [concrete = constants.%minus.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref.loc15: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc15_29.1: ref %C = temporary_storage
@@ -1118,15 +1122,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc15_29.2: %ptr.0a2 = addr_of %.loc15_29.1
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Minus__carbon_thunk.decl(%addr.loc15_29.1, %addr.loc15_29.2)
 // CHECK:STDOUT:   %.loc15_29.2: init %C to %.loc15_29.1 = mark_in_place_init %operator_Minus__carbon_thunk.call
+// CHECK:STDOUT:   %.loc15_29.3: ref %C = temporary %.loc15_29.1, %.loc15_29.2
+// CHECK:STDOUT:   %.loc15_29.4: %C = acquire_value %.loc15_29.3
 // CHECK:STDOUT:   %.loc15_24: type = splice_block %C.ref.loc15 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc15: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_29.3: ref %C = temporary %.loc15_29.1, %.loc15_29.2
-// CHECK:STDOUT:   %.loc15_29.4: %C = acquire_value %.loc15_29.3
 // CHECK:STDOUT:   %minus: %C = value_binding minus, %.loc15_29.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %complement.patt: %pattern_type.bbc = value_binding_pattern complement [concrete]
+// CHECK:STDOUT:     %complement.patt: %pattern_type.bbc = value_binding_pattern complement [concrete = constants.%complement.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref.loc18: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc18_34.1: ref %C = temporary_storage
@@ -1136,12 +1140,12 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc18_34.2: %ptr.0a2 = addr_of %.loc18_34.1
 // CHECK:STDOUT:   %operator_Tilde__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Tilde__carbon_thunk.decl(%addr.loc18_34.1, %addr.loc18_34.2)
 // CHECK:STDOUT:   %.loc18_34.2: init %C to %.loc18_34.1 = mark_in_place_init %operator_Tilde__carbon_thunk.call
+// CHECK:STDOUT:   %.loc18_34.3: ref %C = temporary %.loc18_34.1, %.loc18_34.2
+// CHECK:STDOUT:   %.loc18_34.4: %C = acquire_value %.loc18_34.3
 // CHECK:STDOUT:   %.loc18_29: type = splice_block %C.ref.loc18 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc18: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18_34.3: ref %C = temporary %.loc18_34.1, %.loc18_34.2
-// CHECK:STDOUT:   %.loc18_34.4: %C = acquire_value %.loc18_34.3
 // CHECK:STDOUT:   %complement: %C = value_binding complement, %.loc18_34.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.Op.bound.loc18: <bound method> = bound_method %.loc18_34.3, constants.%C.Op
@@ -1165,27 +1169,40 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.bbc: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete]
+// CHECK:STDOUT:   %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.0a2: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete]
+// CHECK:STDOUT:   %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete]
+// CHECK:STDOUT:   %addition.patt: %pattern_type.bbc = value_binding_pattern addition [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.type: type = fn_type @operator_Plus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk: %operator_Plus__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %subtraction.patt: %pattern_type.bbc = value_binding_pattern subtraction [concrete]
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk.type: type = fn_type @operator_Minus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk: %operator_Minus__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %multiplication.patt: %pattern_type.bbc = value_binding_pattern multiplication [concrete]
 // CHECK:STDOUT:   %operator_Star__carbon_thunk.type: type = fn_type @operator_Star__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Star__carbon_thunk: %operator_Star__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %division.patt: %pattern_type.bbc = value_binding_pattern division [concrete]
 // CHECK:STDOUT:   %operator_Slash__carbon_thunk.type: type = fn_type @operator_Slash__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Slash__carbon_thunk: %operator_Slash__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %modulo.patt: %pattern_type.bbc = value_binding_pattern modulo [concrete]
 // CHECK:STDOUT:   %operator_Percent__carbon_thunk.type: type = fn_type @operator_Percent__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Percent__carbon_thunk: %operator_Percent__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %bitwise_and.patt: %pattern_type.bbc = value_binding_pattern bitwise_and [concrete]
 // CHECK:STDOUT:   %operator_Amp__carbon_thunk.type: type = fn_type @operator_Amp__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Amp__carbon_thunk: %operator_Amp__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %bitwise_or.patt: %pattern_type.bbc = value_binding_pattern bitwise_or [concrete]
 // CHECK:STDOUT:   %operator_Pipe__carbon_thunk.type: type = fn_type @operator_Pipe__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Pipe__carbon_thunk: %operator_Pipe__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %bitwise_xor.patt: %pattern_type.bbc = value_binding_pattern bitwise_xor [concrete]
 // CHECK:STDOUT:   %operator_Caret__carbon_thunk.type: type = fn_type @operator_Caret__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Caret__carbon_thunk: %operator_Caret__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %left_shift.patt: %pattern_type.bbc = value_binding_pattern left_shift [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -1206,6 +1223,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.763: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.410: %i32 = int_value 3 [concrete]
+// CHECK:STDOUT:   %right_shift.patt: %pattern_type.bbc = value_binding_pattern right_shift [concrete]
 // CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [concrete]
 // CHECK:STDOUT:   %operator_GreaterGreater__carbon_thunk.type: type = fn_type @operator_GreaterGreater__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_GreaterGreater__carbon_thunk: %operator_GreaterGreater__carbon_thunk.type = struct_value () [concrete]
@@ -1233,19 +1251,26 @@ fn F() {
 // CHECK:STDOUT:   %cpp_operator.type.da53e5.20: type = fn_type @cpp_operator.20 [concrete]
 // CHECK:STDOUT:   %cpp_operator.3fb16d.20: %cpp_operator.type.da53e5.20 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %equal.patt: %pattern_type.831 = value_binding_pattern equal [concrete]
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk.type: type = fn_type @operator_EqualEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk: %operator_EqualEqual__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete]
 // CHECK:STDOUT:   %operator_ExclaimEqual__carbon_thunk.type: type = fn_type @operator_ExclaimEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_ExclaimEqual__carbon_thunk: %operator_ExclaimEqual__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %greater_than.patt: %pattern_type.831 = value_binding_pattern greater_than [concrete]
 // CHECK:STDOUT:   %operator_Greater__carbon_thunk.type: type = fn_type @operator_Greater__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Greater__carbon_thunk: %operator_Greater__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %less_than.patt: %pattern_type.831 = value_binding_pattern less_than [concrete]
 // CHECK:STDOUT:   %operator_Less__carbon_thunk.type: type = fn_type @operator_Less__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Less__carbon_thunk: %operator_Less__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %greater_than_or_equal.patt: %pattern_type.831 = value_binding_pattern greater_than_or_equal [concrete]
 // CHECK:STDOUT:   %operator_GreaterEqual__carbon_thunk.type: type = fn_type @operator_GreaterEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_GreaterEqual__carbon_thunk: %operator_GreaterEqual__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete]
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.type: type = fn_type @operator_LessEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk: %operator_LessEqual__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %index.patt: %pattern_type.6b6 = value_binding_pattern index [concrete]
 // CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT:   %C.cpp_operator.type: type = fn_type @C.cpp_operator [concrete]
 // CHECK:STDOUT:   %C.cpp_operator: %C.cpp_operator.type = struct_value () [concrete]
@@ -1419,8 +1444,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete]
-// CHECK:STDOUT:     %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete = constants.%c1.patt]
+// CHECK:STDOUT:     %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete = constants.%c1.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.var: ref %C = var %c1.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -1437,8 +1462,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1: ref %C = ref_binding c1, %c1.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete]
-// CHECK:STDOUT:     %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete = constants.%c2.patt]
+// CHECK:STDOUT:     %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete = constants.%c2.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2.var: ref %C = var %c2.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc9_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -1455,7 +1480,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2: ref %C = ref_binding c2, %c2.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %addition.patt: %pattern_type.bbc = value_binding_pattern addition [concrete]
+// CHECK:STDOUT:     %addition.patt: %pattern_type.bbc = value_binding_pattern addition [concrete = constants.%addition.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc12: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc12: ref %C = name_ref c2, %c2
@@ -1469,15 +1494,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc12_35.3: %ptr.0a2 = addr_of %.loc12_35.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc12_35.1, %addr.loc12_35.2, %addr.loc12_35.3)
 // CHECK:STDOUT:   %.loc12_35.2: init %C to %.loc12_35.1 = mark_in_place_init %operator_Plus__carbon_thunk.call
+// CHECK:STDOUT:   %.loc12_35.3: ref %C = temporary %.loc12_35.1, %.loc12_35.2
+// CHECK:STDOUT:   %.loc12_35.4: %C = acquire_value %.loc12_35.3
 // CHECK:STDOUT:   %.loc12_27: type = splice_block %C.ref.loc12 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_35.3: ref %C = temporary %.loc12_35.1, %.loc12_35.2
-// CHECK:STDOUT:   %.loc12_35.4: %C = acquire_value %.loc12_35.3
 // CHECK:STDOUT:   %addition: %C = value_binding addition, %.loc12_35.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %subtraction.patt: %pattern_type.bbc = value_binding_pattern subtraction [concrete]
+// CHECK:STDOUT:     %subtraction.patt: %pattern_type.bbc = value_binding_pattern subtraction [concrete = constants.%subtraction.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc13: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc13: ref %C = name_ref c2, %c2
@@ -1491,15 +1516,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc13_38.3: %ptr.0a2 = addr_of %.loc13_38.1
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Minus__carbon_thunk.decl(%addr.loc13_38.1, %addr.loc13_38.2, %addr.loc13_38.3)
 // CHECK:STDOUT:   %.loc13_38.2: init %C to %.loc13_38.1 = mark_in_place_init %operator_Minus__carbon_thunk.call
+// CHECK:STDOUT:   %.loc13_38.3: ref %C = temporary %.loc13_38.1, %.loc13_38.2
+// CHECK:STDOUT:   %.loc13_38.4: %C = acquire_value %.loc13_38.3
 // CHECK:STDOUT:   %.loc13_30: type = splice_block %C.ref.loc13 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13_38.3: ref %C = temporary %.loc13_38.1, %.loc13_38.2
-// CHECK:STDOUT:   %.loc13_38.4: %C = acquire_value %.loc13_38.3
 // CHECK:STDOUT:   %subtraction: %C = value_binding subtraction, %.loc13_38.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %multiplication.patt: %pattern_type.bbc = value_binding_pattern multiplication [concrete]
+// CHECK:STDOUT:     %multiplication.patt: %pattern_type.bbc = value_binding_pattern multiplication [concrete = constants.%multiplication.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc14: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc14: ref %C = name_ref c2, %c2
@@ -1513,15 +1538,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc14_41.3: %ptr.0a2 = addr_of %.loc14_41.1
 // CHECK:STDOUT:   %operator_Star__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Star__carbon_thunk.decl(%addr.loc14_41.1, %addr.loc14_41.2, %addr.loc14_41.3)
 // CHECK:STDOUT:   %.loc14_41.2: init %C to %.loc14_41.1 = mark_in_place_init %operator_Star__carbon_thunk.call
+// CHECK:STDOUT:   %.loc14_41.3: ref %C = temporary %.loc14_41.1, %.loc14_41.2
+// CHECK:STDOUT:   %.loc14_41.4: %C = acquire_value %.loc14_41.3
 // CHECK:STDOUT:   %.loc14_33: type = splice_block %C.ref.loc14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14_41.3: ref %C = temporary %.loc14_41.1, %.loc14_41.2
-// CHECK:STDOUT:   %.loc14_41.4: %C = acquire_value %.loc14_41.3
 // CHECK:STDOUT:   %multiplication: %C = value_binding multiplication, %.loc14_41.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %division.patt: %pattern_type.bbc = value_binding_pattern division [concrete]
+// CHECK:STDOUT:     %division.patt: %pattern_type.bbc = value_binding_pattern division [concrete = constants.%division.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc15: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc15: ref %C = name_ref c2, %c2
@@ -1535,15 +1560,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc15_35.3: %ptr.0a2 = addr_of %.loc15_35.1
 // CHECK:STDOUT:   %operator_Slash__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Slash__carbon_thunk.decl(%addr.loc15_35.1, %addr.loc15_35.2, %addr.loc15_35.3)
 // CHECK:STDOUT:   %.loc15_35.2: init %C to %.loc15_35.1 = mark_in_place_init %operator_Slash__carbon_thunk.call
+// CHECK:STDOUT:   %.loc15_35.3: ref %C = temporary %.loc15_35.1, %.loc15_35.2
+// CHECK:STDOUT:   %.loc15_35.4: %C = acquire_value %.loc15_35.3
 // CHECK:STDOUT:   %.loc15_27: type = splice_block %C.ref.loc15 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc15: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_35.3: ref %C = temporary %.loc15_35.1, %.loc15_35.2
-// CHECK:STDOUT:   %.loc15_35.4: %C = acquire_value %.loc15_35.3
 // CHECK:STDOUT:   %division: %C = value_binding division, %.loc15_35.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %modulo.patt: %pattern_type.bbc = value_binding_pattern modulo [concrete]
+// CHECK:STDOUT:     %modulo.patt: %pattern_type.bbc = value_binding_pattern modulo [concrete = constants.%modulo.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc16: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc16: ref %C = name_ref c2, %c2
@@ -1557,15 +1582,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc16_33.3: %ptr.0a2 = addr_of %.loc16_33.1
 // CHECK:STDOUT:   %operator_Percent__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Percent__carbon_thunk.decl(%addr.loc16_33.1, %addr.loc16_33.2, %addr.loc16_33.3)
 // CHECK:STDOUT:   %.loc16_33.2: init %C to %.loc16_33.1 = mark_in_place_init %operator_Percent__carbon_thunk.call
+// CHECK:STDOUT:   %.loc16_33.3: ref %C = temporary %.loc16_33.1, %.loc16_33.2
+// CHECK:STDOUT:   %.loc16_33.4: %C = acquire_value %.loc16_33.3
 // CHECK:STDOUT:   %.loc16_25: type = splice_block %C.ref.loc16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc16: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_33.3: ref %C = temporary %.loc16_33.1, %.loc16_33.2
-// CHECK:STDOUT:   %.loc16_33.4: %C = acquire_value %.loc16_33.3
 // CHECK:STDOUT:   %modulo: %C = value_binding modulo, %.loc16_33.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %bitwise_and.patt: %pattern_type.bbc = value_binding_pattern bitwise_and [concrete]
+// CHECK:STDOUT:     %bitwise_and.patt: %pattern_type.bbc = value_binding_pattern bitwise_and [concrete = constants.%bitwise_and.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc19: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc19: ref %C = name_ref c2, %c2
@@ -1579,15 +1604,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc19_38.3: %ptr.0a2 = addr_of %.loc19_38.1
 // CHECK:STDOUT:   %operator_Amp__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Amp__carbon_thunk.decl(%addr.loc19_38.1, %addr.loc19_38.2, %addr.loc19_38.3)
 // CHECK:STDOUT:   %.loc19_38.2: init %C to %.loc19_38.1 = mark_in_place_init %operator_Amp__carbon_thunk.call
+// CHECK:STDOUT:   %.loc19_38.3: ref %C = temporary %.loc19_38.1, %.loc19_38.2
+// CHECK:STDOUT:   %.loc19_38.4: %C = acquire_value %.loc19_38.3
 // CHECK:STDOUT:   %.loc19_30: type = splice_block %C.ref.loc19 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_38.3: ref %C = temporary %.loc19_38.1, %.loc19_38.2
-// CHECK:STDOUT:   %.loc19_38.4: %C = acquire_value %.loc19_38.3
 // CHECK:STDOUT:   %bitwise_and: %C = value_binding bitwise_and, %.loc19_38.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %bitwise_or.patt: %pattern_type.bbc = value_binding_pattern bitwise_or [concrete]
+// CHECK:STDOUT:     %bitwise_or.patt: %pattern_type.bbc = value_binding_pattern bitwise_or [concrete = constants.%bitwise_or.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc20: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc20: ref %C = name_ref c2, %c2
@@ -1601,15 +1626,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc20_37.3: %ptr.0a2 = addr_of %.loc20_37.1
 // CHECK:STDOUT:   %operator_Pipe__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Pipe__carbon_thunk.decl(%addr.loc20_37.1, %addr.loc20_37.2, %addr.loc20_37.3)
 // CHECK:STDOUT:   %.loc20_37.2: init %C to %.loc20_37.1 = mark_in_place_init %operator_Pipe__carbon_thunk.call
+// CHECK:STDOUT:   %.loc20_37.3: ref %C = temporary %.loc20_37.1, %.loc20_37.2
+// CHECK:STDOUT:   %.loc20_37.4: %C = acquire_value %.loc20_37.3
 // CHECK:STDOUT:   %.loc20_29: type = splice_block %C.ref.loc20 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc20: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc20_37.3: ref %C = temporary %.loc20_37.1, %.loc20_37.2
-// CHECK:STDOUT:   %.loc20_37.4: %C = acquire_value %.loc20_37.3
 // CHECK:STDOUT:   %bitwise_or: %C = value_binding bitwise_or, %.loc20_37.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %bitwise_xor.patt: %pattern_type.bbc = value_binding_pattern bitwise_xor [concrete]
+// CHECK:STDOUT:     %bitwise_xor.patt: %pattern_type.bbc = value_binding_pattern bitwise_xor [concrete = constants.%bitwise_xor.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc21: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc21: ref %C = name_ref c2, %c2
@@ -1623,15 +1648,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc21_38.3: %ptr.0a2 = addr_of %.loc21_38.1
 // CHECK:STDOUT:   %operator_Caret__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Caret__carbon_thunk.decl(%addr.loc21_38.1, %addr.loc21_38.2, %addr.loc21_38.3)
 // CHECK:STDOUT:   %.loc21_38.2: init %C to %.loc21_38.1 = mark_in_place_init %operator_Caret__carbon_thunk.call
+// CHECK:STDOUT:   %.loc21_38.3: ref %C = temporary %.loc21_38.1, %.loc21_38.2
+// CHECK:STDOUT:   %.loc21_38.4: %C = acquire_value %.loc21_38.3
 // CHECK:STDOUT:   %.loc21_30: type = splice_block %C.ref.loc21 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21_38.3: ref %C = temporary %.loc21_38.1, %.loc21_38.2
-// CHECK:STDOUT:   %.loc21_38.4: %C = acquire_value %.loc21_38.3
 // CHECK:STDOUT:   %bitwise_xor: %C = value_binding bitwise_xor, %.loc21_38.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %left_shift.patt: %pattern_type.bbc = value_binding_pattern left_shift [concrete]
+// CHECK:STDOUT:     %left_shift.patt: %pattern_type.bbc = value_binding_pattern left_shift [concrete = constants.%left_shift.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc22: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %int_3.loc22: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -1649,15 +1674,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc22_37.2: %ptr.0a2 = addr_of %.loc22_37.1
 // CHECK:STDOUT:   %operator_LessLess__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_LessLess__carbon_thunk.decl(%addr.loc22_37.1, %.loc22_40.2, %addr.loc22_37.2)
 // CHECK:STDOUT:   %.loc22_37.2: init %C to %.loc22_37.1 = mark_in_place_init %operator_LessLess__carbon_thunk.call
+// CHECK:STDOUT:   %.loc22_37.3: ref %C = temporary %.loc22_37.1, %.loc22_37.2
+// CHECK:STDOUT:   %.loc22_37.4: %C = acquire_value %.loc22_37.3
 // CHECK:STDOUT:   %.loc22_29: type = splice_block %C.ref.loc22 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22_37.3: ref %C = temporary %.loc22_37.1, %.loc22_37.2
-// CHECK:STDOUT:   %.loc22_37.4: %C = acquire_value %.loc22_37.3
 // CHECK:STDOUT:   %left_shift: %C = value_binding left_shift, %.loc22_37.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %right_shift.patt: %pattern_type.bbc = value_binding_pattern right_shift [concrete]
+// CHECK:STDOUT:     %right_shift.patt: %pattern_type.bbc = value_binding_pattern right_shift [concrete = constants.%right_shift.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc23: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %int_5.loc23: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
@@ -1675,12 +1700,12 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc23_38.2: %ptr.0a2 = addr_of %.loc23_38.1
 // CHECK:STDOUT:   %operator_GreaterGreater__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_GreaterGreater__carbon_thunk.decl(%addr.loc23_38.1, %.loc23_41.2, %addr.loc23_38.2)
 // CHECK:STDOUT:   %.loc23_38.2: init %C to %.loc23_38.1 = mark_in_place_init %operator_GreaterGreater__carbon_thunk.call
+// CHECK:STDOUT:   %.loc23_38.3: ref %C = temporary %.loc23_38.1, %.loc23_38.2
+// CHECK:STDOUT:   %.loc23_38.4: %C = acquire_value %.loc23_38.3
 // CHECK:STDOUT:   %.loc23_30: type = splice_block %C.ref.loc23 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc23: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc23_38.3: ref %C = temporary %.loc23_38.1, %.loc23_38.2
-// CHECK:STDOUT:   %.loc23_38.4: %C = acquire_value %.loc23_38.3
 // CHECK:STDOUT:   %right_shift: %C = value_binding right_shift, %.loc23_38.4
 // CHECK:STDOUT:   %c1.ref.loc26: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc26: ref %C = name_ref c2, %c2
@@ -1751,7 +1776,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc37_10.2: %i32 = converted %int_5.loc37, %.loc37_10.1 [concrete = constants.%int_5.eef]
 // CHECK:STDOUT:   %cpp_operator.call.loc37: ref %C = call imports.%cpp_operator.decl.5ce91d.20(%c1.ref.loc37, %.loc37_10.2)
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %equal.patt: %pattern_type.831 = value_binding_pattern equal [concrete]
+// CHECK:STDOUT:     %equal.patt: %pattern_type.831 = value_binding_pattern equal [concrete = constants.%equal.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc40: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc40: ref %C = name_ref c2, %c2
@@ -1765,12 +1790,12 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc40_31.3: %ptr.bb2 = addr_of %.loc40_31.1
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_EqualEqual__carbon_thunk.decl(%addr.loc40_31.1, %addr.loc40_31.2, %addr.loc40_31.3)
 // CHECK:STDOUT:   %.loc40_31.2: init bool to %.loc40_31.1 = mark_in_place_init %operator_EqualEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc40_21: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc40_31.3: ref bool = temporary %.loc40_31.1, %.loc40_31.2
 // CHECK:STDOUT:   %.loc40_31.4: bool = acquire_value %.loc40_31.3
+// CHECK:STDOUT:   %.loc40_21: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %equal: bool = value_binding equal, %.loc40_31.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete]
+// CHECK:STDOUT:     %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete = constants.%not_equal.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc41: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc41: ref %C = name_ref c2, %c2
@@ -1784,12 +1809,12 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc41_35.3: %ptr.bb2 = addr_of %.loc41_35.1
 // CHECK:STDOUT:   %operator_ExclaimEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_ExclaimEqual__carbon_thunk.decl(%addr.loc41_35.1, %addr.loc41_35.2, %addr.loc41_35.3)
 // CHECK:STDOUT:   %.loc41_35.2: init bool to %.loc41_35.1 = mark_in_place_init %operator_ExclaimEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc41_25: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc41_35.3: ref bool = temporary %.loc41_35.1, %.loc41_35.2
 // CHECK:STDOUT:   %.loc41_35.4: bool = acquire_value %.loc41_35.3
+// CHECK:STDOUT:   %.loc41_25: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %not_equal: bool = value_binding not_equal, %.loc41_35.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %greater_than.patt: %pattern_type.831 = value_binding_pattern greater_than [concrete]
+// CHECK:STDOUT:     %greater_than.patt: %pattern_type.831 = value_binding_pattern greater_than [concrete = constants.%greater_than.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc42: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc42: ref %C = name_ref c2, %c2
@@ -1803,12 +1828,12 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc42_38.3: %ptr.bb2 = addr_of %.loc42_38.1
 // CHECK:STDOUT:   %operator_Greater__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Greater__carbon_thunk.decl(%addr.loc42_38.1, %addr.loc42_38.2, %addr.loc42_38.3)
 // CHECK:STDOUT:   %.loc42_38.2: init bool to %.loc42_38.1 = mark_in_place_init %operator_Greater__carbon_thunk.call
-// CHECK:STDOUT:   %.loc42_28: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc42_38.3: ref bool = temporary %.loc42_38.1, %.loc42_38.2
 // CHECK:STDOUT:   %.loc42_38.4: bool = acquire_value %.loc42_38.3
+// CHECK:STDOUT:   %.loc42_28: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %greater_than: bool = value_binding greater_than, %.loc42_38.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %less_than.patt: %pattern_type.831 = value_binding_pattern less_than [concrete]
+// CHECK:STDOUT:     %less_than.patt: %pattern_type.831 = value_binding_pattern less_than [concrete = constants.%less_than.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc43: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc43: ref %C = name_ref c2, %c2
@@ -1822,12 +1847,12 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc43_35.3: %ptr.bb2 = addr_of %.loc43_35.1
 // CHECK:STDOUT:   %operator_Less__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Less__carbon_thunk.decl(%addr.loc43_35.1, %addr.loc43_35.2, %addr.loc43_35.3)
 // CHECK:STDOUT:   %.loc43_35.2: init bool to %.loc43_35.1 = mark_in_place_init %operator_Less__carbon_thunk.call
-// CHECK:STDOUT:   %.loc43_25: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc43_35.3: ref bool = temporary %.loc43_35.1, %.loc43_35.2
 // CHECK:STDOUT:   %.loc43_35.4: bool = acquire_value %.loc43_35.3
+// CHECK:STDOUT:   %.loc43_25: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %less_than: bool = value_binding less_than, %.loc43_35.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %greater_than_or_equal.patt: %pattern_type.831 = value_binding_pattern greater_than_or_equal [concrete]
+// CHECK:STDOUT:     %greater_than_or_equal.patt: %pattern_type.831 = value_binding_pattern greater_than_or_equal [concrete = constants.%greater_than_or_equal.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc44: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc44: ref %C = name_ref c2, %c2
@@ -1841,12 +1866,12 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc44_47.3: %ptr.bb2 = addr_of %.loc44_47.1
 // CHECK:STDOUT:   %operator_GreaterEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_GreaterEqual__carbon_thunk.decl(%addr.loc44_47.1, %addr.loc44_47.2, %addr.loc44_47.3)
 // CHECK:STDOUT:   %.loc44_47.2: init bool to %.loc44_47.1 = mark_in_place_init %operator_GreaterEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc44_37: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc44_47.3: ref bool = temporary %.loc44_47.1, %.loc44_47.2
 // CHECK:STDOUT:   %.loc44_47.4: bool = acquire_value %.loc44_47.3
+// CHECK:STDOUT:   %.loc44_37: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %greater_than_or_equal: bool = value_binding greater_than_or_equal, %.loc44_47.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete]
+// CHECK:STDOUT:     %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete = constants.%less_than_or_equal.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc45: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc45: ref %C = name_ref c2, %c2
@@ -1860,12 +1885,12 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc45_44.3: %ptr.bb2 = addr_of %.loc45_44.1
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_LessEqual__carbon_thunk.decl(%addr.loc45_44.1, %addr.loc45_44.2, %addr.loc45_44.3)
 // CHECK:STDOUT:   %.loc45_44.2: init bool to %.loc45_44.1 = mark_in_place_init %operator_LessEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc45_34: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc45_44.3: ref bool = temporary %.loc45_44.1, %.loc45_44.2
 // CHECK:STDOUT:   %.loc45_44.4: bool = acquire_value %.loc45_44.3
+// CHECK:STDOUT:   %.loc45_34: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %less_than_or_equal: bool = value_binding less_than_or_equal, %.loc45_44.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %index.patt: %pattern_type.6b6 = value_binding_pattern index [concrete]
+// CHECK:STDOUT:     %index.patt: %pattern_type.6b6 = value_binding_pattern index [concrete = constants.%index.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc48: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
@@ -1877,9 +1902,9 @@ fn F() {
 // CHECK:STDOUT:   %.loc48_30.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc48 [concrete = constants.%int_42.ac4]
 // CHECK:STDOUT:   %.loc48_30.2: %i32 = converted %int_42, %.loc48_30.1 [concrete = constants.%int_42.ac4]
 // CHECK:STDOUT:   %C.cpp_operator.call: init %i32 = call imports.%C.cpp_operator.decl(%c1.ref.loc48, %.loc48_30.2)
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc48_32.1: %i32 = value_of_initializer %C.cpp_operator.call
 // CHECK:STDOUT:   %.loc48_32.2: %i32 = converted %C.cpp_operator.call, %.loc48_32.1
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %index: %i32 = value_binding index, %.loc48_32.2
 // CHECK:STDOUT:   %Destroy.Op.bound.loc45: <bound method> = bound_method %.loc45_44.3, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc45: init %empty_tuple.type = call %Destroy.Op.bound.loc45(%.loc45_44.3)
@@ -1953,13 +1978,18 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.bbc: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c1.patt: %pattern_type.bbc = value_binding_pattern c1 [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.0a2: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %c2.patt: %pattern_type.bbc = value_binding_pattern c2 [concrete]
+// CHECK:STDOUT:   %c3.patt: %pattern_type.bbc = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.type: type = fn_type @operator_Plus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk: %operator_Plus__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %c4.patt: %pattern_type.bbc = value_binding_pattern c4 [concrete]
+// CHECK:STDOUT:   %c5.patt: %pattern_type.bbc = value_binding_pattern c5 [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.Op.type: type = fn_type @C.Op [concrete]
@@ -1993,7 +2023,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = value_binding_pattern c1 [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = value_binding_pattern c1 [concrete = constants.%c1.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -2002,15 +2032,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc8: %ptr.0a2 = addr_of %.loc8_27.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8)
 // CHECK:STDOUT:   %.loc8_27.2: init %C to %.loc8_27.1 = mark_in_place_init %C__carbon_thunk.call.loc8
+// CHECK:STDOUT:   %.loc8_27.3: ref %C = temporary %.loc8_27.1, %.loc8_27.2
+// CHECK:STDOUT:   %.loc8_27.4: %C = acquire_value %.loc8_27.3
 // CHECK:STDOUT:   %.loc8_14: type = splice_block %C.ref.loc8_14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_27.3: ref %C = temporary %.loc8_27.1, %.loc8_27.2
-// CHECK:STDOUT:   %.loc8_27.4: %C = acquire_value %.loc8_27.3
 // CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_27.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = value_binding_pattern c2 [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = value_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc9_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -2019,15 +2049,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc9: %ptr.0a2 = addr_of %.loc9_27.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9)
 // CHECK:STDOUT:   %.loc9_27.2: init %C to %.loc9_27.1 = mark_in_place_init %C__carbon_thunk.call.loc9
+// CHECK:STDOUT:   %.loc9_27.3: ref %C = temporary %.loc9_27.1, %.loc9_27.2
+// CHECK:STDOUT:   %.loc9_27.4: %C = acquire_value %.loc9_27.3
 // CHECK:STDOUT:   %.loc9_14: type = splice_block %C.ref.loc9_14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc9_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_27.3: ref %C = temporary %.loc9_27.1, %.loc9_27.2
-// CHECK:STDOUT:   %.loc9_27.4: %C = acquire_value %.loc9_27.3
 // CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_27.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c3.patt: %pattern_type.bbc = value_binding_pattern c3 [concrete]
+// CHECK:STDOUT:     %c3.patt: %pattern_type.bbc = value_binding_pattern c3 [concrete = constants.%c3.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc10: %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref: %C = name_ref c2, %c2
@@ -2039,15 +2069,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc10_22.3: %ptr.0a2 = addr_of %.loc10_22.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call.loc10: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc10_22.1, %addr.loc10_22.2, %addr.loc10_22.3)
 // CHECK:STDOUT:   %.loc10_22.2: init %C to %.loc10_22.1 = mark_in_place_init %operator_Plus__carbon_thunk.call.loc10
+// CHECK:STDOUT:   %.loc10_22.3: ref %C = temporary %.loc10_22.1, %.loc10_22.2
+// CHECK:STDOUT:   %.loc10_22.4: %C = acquire_value %.loc10_22.3
 // CHECK:STDOUT:   %.loc10_14: type = splice_block %C.ref.loc10 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_22.3: ref %C = temporary %.loc10_22.1, %.loc10_22.2
-// CHECK:STDOUT:   %.loc10_22.4: %C = acquire_value %.loc10_22.3
 // CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_22.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c4.patt: %pattern_type.bbc = value_binding_pattern c4 [concrete]
+// CHECK:STDOUT:     %c4.patt: %pattern_type.bbc = value_binding_pattern c4 [concrete = constants.%c4.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc11: %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c3.ref.loc11: %C = name_ref c3, %c3
@@ -2059,15 +2089,15 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc11_22.3: %ptr.0a2 = addr_of %.loc11_22.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc11_22.1, %addr.loc11_22.2, %addr.loc11_22.3)
 // CHECK:STDOUT:   %.loc11_22.2: init %C to %.loc11_22.1 = mark_in_place_init %operator_Plus__carbon_thunk.call.loc11
+// CHECK:STDOUT:   %.loc11_22.3: ref %C = temporary %.loc11_22.1, %.loc11_22.2
+// CHECK:STDOUT:   %.loc11_22.4: %C = acquire_value %.loc11_22.3
 // CHECK:STDOUT:   %.loc11_14: type = splice_block %C.ref.loc11 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc11: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_22.3: ref %C = temporary %.loc11_22.1, %.loc11_22.2
-// CHECK:STDOUT:   %.loc11_22.4: %C = acquire_value %.loc11_22.3
 // CHECK:STDOUT:   %c4: %C = value_binding c4, %.loc11_22.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c5.patt: %pattern_type.bbc = value_binding_pattern c5 [concrete]
+// CHECK:STDOUT:     %c5.patt: %pattern_type.bbc = value_binding_pattern c5 [concrete = constants.%c5.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c4.ref: %C = name_ref c4, %c4
 // CHECK:STDOUT:   %c3.ref.loc12: %C = name_ref c3, %c3
@@ -2079,12 +2109,12 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc12_29.3: %ptr.0a2 = addr_of %.loc12_29.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call.loc12: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc12_29.1, %addr.loc12_29.2, %addr.loc12_29.3)
 // CHECK:STDOUT:   %.loc12_29.2: init %C to %.loc12_29.1 = mark_in_place_init %operator_Plus__carbon_thunk.call.loc12
+// CHECK:STDOUT:   %.loc12_29.3: ref %C = temporary %.loc12_29.1, %.loc12_29.2
+// CHECK:STDOUT:   %.loc12_29.4: %C = acquire_value %.loc12_29.3
 // CHECK:STDOUT:   %.loc12_21: type = splice_block %C.ref.loc12 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_29.3: ref %C = temporary %.loc12_29.1, %.loc12_29.2
-// CHECK:STDOUT:   %.loc12_29.4: %C = acquire_value %.loc12_29.3
 // CHECK:STDOUT:   %c5: %C = value_binding c5, %.loc12_29.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.Op.bound.loc12: <bound method> = bound_method %.loc12_29.3, constants.%C.Op
@@ -2116,15 +2146,23 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.bbc: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete]
+// CHECK:STDOUT:   %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.0a2: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete]
+// CHECK:STDOUT:   %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %greater_than.patt: %pattern_type.831 = value_binding_pattern greater_than [concrete]
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
 // CHECK:STDOUT:   %operator_Greater__carbon_thunk.type: type = fn_type @operator_Greater__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Greater__carbon_thunk: %operator_Greater__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %less_than.patt: %pattern_type.831 = value_binding_pattern less_than [concrete]
+// CHECK:STDOUT:   %greater_than_or_equal.patt: %pattern_type.831 = value_binding_pattern greater_than_or_equal [concrete]
+// CHECK:STDOUT:   %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete]
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.type: type = fn_type @operator_LessEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk: %operator_LessEqual__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
@@ -2167,8 +2205,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete]
-// CHECK:STDOUT:     %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete = constants.%c1.patt]
+// CHECK:STDOUT:     %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete = constants.%c1.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.var: ref %C = var %c1.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc15_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -2185,8 +2223,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1: ref %C = ref_binding c1, %c1.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete]
-// CHECK:STDOUT:     %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete = constants.%c2.patt]
+// CHECK:STDOUT:     %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete = constants.%c2.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2.var: ref %C = var %c2.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc16_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -2203,7 +2241,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2: ref %C = ref_binding c2, %c2.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %greater_than.patt: %pattern_type.831 = value_binding_pattern greater_than [concrete]
+// CHECK:STDOUT:     %greater_than.patt: %pattern_type.831 = value_binding_pattern greater_than [concrete = constants.%greater_than.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc19: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc19: ref %C = name_ref c2, %c2
@@ -2217,26 +2255,26 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc19_38.3: %ptr.bb2 = addr_of %.loc19_38.1
 // CHECK:STDOUT:   %operator_Greater__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Greater__carbon_thunk.decl(%addr.loc19_38.1, %addr.loc19_38.2, %addr.loc19_38.3)
 // CHECK:STDOUT:   %.loc19_38.2: init bool to %.loc19_38.1 = mark_in_place_init %operator_Greater__carbon_thunk.call
-// CHECK:STDOUT:   %.loc19_28: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc19_38.3: ref bool = temporary %.loc19_38.1, %.loc19_38.2
 // CHECK:STDOUT:   %.loc19_38.4: bool = acquire_value %.loc19_38.3
+// CHECK:STDOUT:   %.loc19_28: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %greater_than: bool = value_binding greater_than, %.loc19_38.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %less_than.patt: %pattern_type.831 = value_binding_pattern less_than [concrete]
+// CHECK:STDOUT:     %less_than.patt: %pattern_type.831 = value_binding_pattern less_than [concrete = constants.%less_than.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc26: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc26: ref %C = name_ref c2, %c2
 // CHECK:STDOUT:   %.loc26: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %less_than: bool = value_binding less_than, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %greater_than_or_equal.patt: %pattern_type.831 = value_binding_pattern greater_than_or_equal [concrete]
+// CHECK:STDOUT:     %greater_than_or_equal.patt: %pattern_type.831 = value_binding_pattern greater_than_or_equal [concrete = constants.%greater_than_or_equal.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc33: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc33: ref %C = name_ref c2, %c2
 // CHECK:STDOUT:   %.loc33: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %greater_than_or_equal: bool = value_binding greater_than_or_equal, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete]
+// CHECK:STDOUT:     %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete = constants.%less_than_or_equal.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc36: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc36: ref %C = name_ref c2, %c2
@@ -2250,9 +2288,9 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc36_44.3: %ptr.bb2 = addr_of %.loc36_44.1
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_LessEqual__carbon_thunk.decl(%addr.loc36_44.1, %addr.loc36_44.2, %addr.loc36_44.3)
 // CHECK:STDOUT:   %.loc36_44.2: init bool to %.loc36_44.1 = mark_in_place_init %operator_LessEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc36_34: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc36_44.3: ref bool = temporary %.loc36_44.1, %.loc36_44.2
 // CHECK:STDOUT:   %.loc36_44.4: bool = acquire_value %.loc36_44.3
+// CHECK:STDOUT:   %.loc36_34: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %less_than_or_equal: bool = value_binding less_than_or_equal, %.loc36_44.4
 // CHECK:STDOUT:   %Destroy.Op.bound.loc36: <bound method> = bound_method %.loc36_44.3, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc36: init %empty_tuple.type = call %Destroy.Op.bound.loc36(%.loc36_44.3)
@@ -2278,15 +2316,21 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.bbc: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete]
+// CHECK:STDOUT:   %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.0a2: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete]
+// CHECK:STDOUT:   %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %equal.patt: %pattern_type.831 = value_binding_pattern equal [concrete]
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk.type: type = fn_type @operator_EqualEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk: %operator_EqualEqual__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
@@ -2322,8 +2366,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete]
-// CHECK:STDOUT:     %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete = constants.%c1.patt]
+// CHECK:STDOUT:     %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete = constants.%c1.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.var: ref %C = var %c1.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc12_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -2340,8 +2384,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1: ref %C = ref_binding c1, %c1.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete]
-// CHECK:STDOUT:     %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete = constants.%c2.patt]
+// CHECK:STDOUT:     %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete = constants.%c2.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2.var: ref %C = var %c2.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc13_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -2358,7 +2402,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2: ref %C = ref_binding c2, %c2.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %equal.patt: %pattern_type.831 = value_binding_pattern equal [concrete]
+// CHECK:STDOUT:     %equal.patt: %pattern_type.831 = value_binding_pattern equal [concrete = constants.%equal.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc16: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc16: ref %C = name_ref c2, %c2
@@ -2372,12 +2416,12 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc16_31.3: %ptr.bb2 = addr_of %.loc16_31.1
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_EqualEqual__carbon_thunk.decl(%addr.loc16_31.1, %addr.loc16_31.2, %addr.loc16_31.3)
 // CHECK:STDOUT:   %.loc16_31.2: init bool to %.loc16_31.1 = mark_in_place_init %operator_EqualEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc16_21: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %.loc16_31.3: ref bool = temporary %.loc16_31.1, %.loc16_31.2
 // CHECK:STDOUT:   %.loc16_31.4: bool = acquire_value %.loc16_31.3
+// CHECK:STDOUT:   %.loc16_21: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %equal: bool = value_binding equal, %.loc16_31.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete]
+// CHECK:STDOUT:     %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete = constants.%not_equal.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc23: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc23: ref %C = name_ref c2, %c2
@@ -2405,11 +2449,14 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.7cb: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c1.patt: %pattern_type.7cb = value_binding_pattern c1 [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.f8b: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %c2.patt: %pattern_type.7cb = value_binding_pattern c2 [concrete]
+// CHECK:STDOUT:   %c3.patt: %pattern_type.7cb = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.type: type = fn_type @operator_Plus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk: %operator_Plus__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
@@ -2449,7 +2496,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.7cb = value_binding_pattern c1 [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.7cb = value_binding_pattern c1 [concrete = constants.%c1.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N.ref.loc8_24: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -2459,16 +2506,16 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc8: %ptr.f8b = addr_of %.loc8_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8)
 // CHECK:STDOUT:   %.loc8_31.2: init %C to %.loc8_31.1 = mark_in_place_init %C__carbon_thunk.call.loc8
+// CHECK:STDOUT:   %.loc8_31.3: ref %C = temporary %.loc8_31.1, %.loc8_31.2
+// CHECK:STDOUT:   %.loc8_31.4: %C = acquire_value %.loc8_31.3
 // CHECK:STDOUT:   %.loc8_16: type = splice_block %C.ref.loc8_16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc8_14: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %C.ref.loc8_16: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_31.3: ref %C = temporary %.loc8_31.1, %.loc8_31.2
-// CHECK:STDOUT:   %.loc8_31.4: %C = acquire_value %.loc8_31.3
 // CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_31.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.7cb = value_binding_pattern c2 [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.7cb = value_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N.ref.loc9_24: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -2478,16 +2525,16 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc9: %ptr.f8b = addr_of %.loc9_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9)
 // CHECK:STDOUT:   %.loc9_31.2: init %C to %.loc9_31.1 = mark_in_place_init %C__carbon_thunk.call.loc9
+// CHECK:STDOUT:   %.loc9_31.3: ref %C = temporary %.loc9_31.1, %.loc9_31.2
+// CHECK:STDOUT:   %.loc9_31.4: %C = acquire_value %.loc9_31.3
 // CHECK:STDOUT:   %.loc9_16: type = splice_block %C.ref.loc9_16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc9_14: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %C.ref.loc9_16: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_31.3: ref %C = temporary %.loc9_31.1, %.loc9_31.2
-// CHECK:STDOUT:   %.loc9_31.4: %C = acquire_value %.loc9_31.3
 // CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_31.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c3.patt: %pattern_type.7cb = value_binding_pattern c3 [concrete]
+// CHECK:STDOUT:     %c3.patt: %pattern_type.7cb = value_binding_pattern c3 [concrete = constants.%c3.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref: %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref: %C = name_ref c2, %c2
@@ -2499,13 +2546,13 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc10_31.3: %ptr.f8b = addr_of %.loc10_31.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc10_31.1, %addr.loc10_31.2, %addr.loc10_31.3)
 // CHECK:STDOUT:   %.loc10_31.2: init %C to %.loc10_31.1 = mark_in_place_init %operator_Plus__carbon_thunk.call
+// CHECK:STDOUT:   %.loc10_31.3: ref %C = temporary %.loc10_31.1, %.loc10_31.2
+// CHECK:STDOUT:   %.loc10_31.4: %C = acquire_value %.loc10_31.3
 // CHECK:STDOUT:   %.loc10_23: type = splice_block %C.ref.loc10 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc10: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_31.3: ref %C = temporary %.loc10_31.1, %.loc10_31.2
-// CHECK:STDOUT:   %.loc10_31.4: %C = acquire_value %.loc10_31.3
 // CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_31.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.Op.bound.loc10: <bound method> = bound_method %.loc10_31.3, constants.%C.Op
@@ -2529,6 +2576,7 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C1: type = class_type @C1 [concrete]
 // CHECK:STDOUT:   %pattern_type.da8: type = pattern_type %C1 [concrete]
+// CHECK:STDOUT:   %c1.patt: %pattern_type.da8 = value_binding_pattern c1 [concrete]
 // CHECK:STDOUT:   %C1.C1.cpp_overload_set.type: type = cpp_overload_set_type @C1.C1.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C1.C1.cpp_overload_set.value: %C1.C1.cpp_overload_set.type = cpp_overload_set_value @C1.C1.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.876: type = ptr_type %C1 [concrete]
@@ -2536,13 +2584,16 @@ fn F() {
 // CHECK:STDOUT:   %C1__carbon_thunk: %C1__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C2: type = class_type @C2 [concrete]
 // CHECK:STDOUT:   %pattern_type.00d: type = pattern_type %C2 [concrete]
+// CHECK:STDOUT:   %c2.patt: %pattern_type.00d = value_binding_pattern c2 [concrete]
 // CHECK:STDOUT:   %C2.C2.cpp_overload_set.type: type = cpp_overload_set_type @C2.C2.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C2.C2.cpp_overload_set.value: %C2.C2.cpp_overload_set.type = cpp_overload_set_value @C2.C2.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.b22: type = ptr_type %C2 [concrete]
 // CHECK:STDOUT:   %C2__carbon_thunk.type: type = fn_type @C2__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C2__carbon_thunk: %C2__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %c3.patt: %pattern_type.00d = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.type: type = fn_type @operator_Plus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk: %operator_Plus__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %c4.patt: %pattern_type.00d = value_binding_pattern c4 [concrete]
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk.type: type = fn_type @operator_Minus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk: %operator_Minus__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C2.cpp_destructor.type: type = fn_type @C2.cpp_destructor [concrete]
@@ -2608,7 +2659,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.da8 = value_binding_pattern c1 [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.da8 = value_binding_pattern c1 [concrete = constants.%c1.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N1.ref.loc8_26: <namespace> = name_ref N1, imports.%N1 [concrete = imports.%N1]
@@ -2618,16 +2669,16 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc8: %ptr.876 = addr_of %.loc8_36.1
 // CHECK:STDOUT:   %C1__carbon_thunk.call: init %empty_tuple.type = call imports.%C1__carbon_thunk.decl(%addr.loc8)
 // CHECK:STDOUT:   %.loc8_36.2: init %C1 to %.loc8_36.1 = mark_in_place_init %C1__carbon_thunk.call
+// CHECK:STDOUT:   %.loc8_36.3: ref %C1 = temporary %.loc8_36.1, %.loc8_36.2
+// CHECK:STDOUT:   %.loc8_36.4: %C1 = acquire_value %.loc8_36.3
 // CHECK:STDOUT:   %.loc8_17: type = splice_block %C1.ref.loc8_17 [concrete = constants.%C1] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N1.ref.loc8_14: <namespace> = name_ref N1, imports.%N1 [concrete = imports.%N1]
 // CHECK:STDOUT:     %C1.ref.loc8_17: type = name_ref C1, imports.%C1.decl [concrete = constants.%C1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_36.3: ref %C1 = temporary %.loc8_36.1, %.loc8_36.2
-// CHECK:STDOUT:   %.loc8_36.4: %C1 = acquire_value %.loc8_36.3
 // CHECK:STDOUT:   %c1: %C1 = value_binding c1, %.loc8_36.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.00d = value_binding_pattern c2 [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.00d = value_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N2.ref.loc9_26: <namespace> = name_ref N2, imports.%N2 [concrete = imports.%N2]
@@ -2637,16 +2688,16 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc9: %ptr.b22 = addr_of %.loc9_36.1
 // CHECK:STDOUT:   %C2__carbon_thunk.call: init %empty_tuple.type = call imports.%C2__carbon_thunk.decl(%addr.loc9)
 // CHECK:STDOUT:   %.loc9_36.2: init %C2 to %.loc9_36.1 = mark_in_place_init %C2__carbon_thunk.call
+// CHECK:STDOUT:   %.loc9_36.3: ref %C2 = temporary %.loc9_36.1, %.loc9_36.2
+// CHECK:STDOUT:   %.loc9_36.4: %C2 = acquire_value %.loc9_36.3
 // CHECK:STDOUT:   %.loc9_17: type = splice_block %C2.ref.loc9_17 [concrete = constants.%C2] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N2.ref.loc9_14: <namespace> = name_ref N2, imports.%N2 [concrete = imports.%N2]
 // CHECK:STDOUT:     %C2.ref.loc9_17: type = name_ref C2, imports.%C2.decl [concrete = constants.%C2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_36.3: ref %C2 = temporary %.loc9_36.1, %.loc9_36.2
-// CHECK:STDOUT:   %.loc9_36.4: %C2 = acquire_value %.loc9_36.3
 // CHECK:STDOUT:   %c2: %C2 = value_binding c2, %.loc9_36.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c3.patt: %pattern_type.00d = value_binding_pattern c3 [concrete]
+// CHECK:STDOUT:     %c3.patt: %pattern_type.00d = value_binding_pattern c3 [concrete = constants.%c3.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc10: %C1 = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc10: %C2 = name_ref c2, %c2
@@ -2658,16 +2709,16 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc10_33.3: %ptr.b22 = addr_of %.loc10_33.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc10_33.1, %addr.loc10_33.2, %addr.loc10_33.3)
 // CHECK:STDOUT:   %.loc10_33.2: init %C2 to %.loc10_33.1 = mark_in_place_init %operator_Plus__carbon_thunk.call
+// CHECK:STDOUT:   %.loc10_33.3: ref %C2 = temporary %.loc10_33.1, %.loc10_33.2
+// CHECK:STDOUT:   %.loc10_33.4: %C2 = acquire_value %.loc10_33.3
 // CHECK:STDOUT:   %.loc10_24: type = splice_block %C2.ref.loc10 [concrete = constants.%C2] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N2.ref.loc10: <namespace> = name_ref N2, imports.%N2 [concrete = imports.%N2]
 // CHECK:STDOUT:     %C2.ref.loc10: type = name_ref C2, imports.%C2.decl [concrete = constants.%C2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_33.3: ref %C2 = temporary %.loc10_33.1, %.loc10_33.2
-// CHECK:STDOUT:   %.loc10_33.4: %C2 = acquire_value %.loc10_33.3
 // CHECK:STDOUT:   %c3: %C2 = value_binding c3, %.loc10_33.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c4.patt: %pattern_type.00d = value_binding_pattern c4 [concrete]
+// CHECK:STDOUT:     %c4.patt: %pattern_type.00d = value_binding_pattern c4 [concrete = constants.%c4.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2.ref.loc11: %C2 = name_ref c2, %c2
 // CHECK:STDOUT:   %c1.ref.loc11: %C1 = name_ref c1, %c1
@@ -2679,13 +2730,13 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc11_33.3: %ptr.b22 = addr_of %.loc11_33.1
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Minus__carbon_thunk.decl(%addr.loc11_33.1, %addr.loc11_33.2, %addr.loc11_33.3)
 // CHECK:STDOUT:   %.loc11_33.2: init %C2 to %.loc11_33.1 = mark_in_place_init %operator_Minus__carbon_thunk.call
+// CHECK:STDOUT:   %.loc11_33.3: ref %C2 = temporary %.loc11_33.1, %.loc11_33.2
+// CHECK:STDOUT:   %.loc11_33.4: %C2 = acquire_value %.loc11_33.3
 // CHECK:STDOUT:   %.loc11_24: type = splice_block %C2.ref.loc11 [concrete = constants.%C2] {
 // CHECK:STDOUT:     %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N2.ref.loc11: <namespace> = name_ref N2, imports.%N2 [concrete = imports.%N2]
 // CHECK:STDOUT:     %C2.ref.loc11: type = name_ref C2, imports.%C2.decl [concrete = constants.%C2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_33.3: ref %C2 = temporary %.loc11_33.1, %.loc11_33.2
-// CHECK:STDOUT:   %.loc11_33.4: %C2 = acquire_value %.loc11_33.3
 // CHECK:STDOUT:   %c4: %C2 = value_binding c4, %.loc11_33.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C2.Op.bound.loc11: <bound method> = bound_method %.loc11_33.3, constants.%C2.Op
@@ -2714,11 +2765,14 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.7cb: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c1.patt: %pattern_type.7cb = value_binding_pattern c1 [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.f8b: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %c2.patt: %pattern_type.7cb = value_binding_pattern c2 [concrete]
+// CHECK:STDOUT:   %c3.patt: %pattern_type.7cb = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.Op.type: type = fn_type @C.Op [concrete]
@@ -2751,7 +2805,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.7cb = value_binding_pattern c1 [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.7cb = value_binding_pattern c1 [concrete = constants.%c1.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N.ref.loc8_24: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -2761,16 +2815,16 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc8: %ptr.f8b = addr_of %.loc8_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8)
 // CHECK:STDOUT:   %.loc8_31.2: init %C to %.loc8_31.1 = mark_in_place_init %C__carbon_thunk.call.loc8
+// CHECK:STDOUT:   %.loc8_31.3: ref %C = temporary %.loc8_31.1, %.loc8_31.2
+// CHECK:STDOUT:   %.loc8_31.4: %C = acquire_value %.loc8_31.3
 // CHECK:STDOUT:   %.loc8_16: type = splice_block %C.ref.loc8_16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc8_14: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %C.ref.loc8_16: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_31.3: ref %C = temporary %.loc8_31.1, %.loc8_31.2
-// CHECK:STDOUT:   %.loc8_31.4: %C = acquire_value %.loc8_31.3
 // CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_31.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.7cb = value_binding_pattern c2 [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.7cb = value_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N.ref.loc9_24: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -2780,16 +2834,16 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc9: %ptr.f8b = addr_of %.loc9_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9)
 // CHECK:STDOUT:   %.loc9_31.2: init %C to %.loc9_31.1 = mark_in_place_init %C__carbon_thunk.call.loc9
+// CHECK:STDOUT:   %.loc9_31.3: ref %C = temporary %.loc9_31.1, %.loc9_31.2
+// CHECK:STDOUT:   %.loc9_31.4: %C = acquire_value %.loc9_31.3
 // CHECK:STDOUT:   %.loc9_16: type = splice_block %C.ref.loc9_16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc9_14: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %C.ref.loc9_16: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_31.3: ref %C = temporary %.loc9_31.1, %.loc9_31.2
-// CHECK:STDOUT:   %.loc9_31.4: %C = acquire_value %.loc9_31.3
 // CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_31.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c3.patt: %pattern_type.7cb = value_binding_pattern c3 [concrete]
+// CHECK:STDOUT:     %c3.patt: %pattern_type.7cb = value_binding_pattern c3 [concrete = constants.%c3.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref: %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref: %C = name_ref c2, %c2
@@ -2818,11 +2872,14 @@ fn F() {
 // CHECK:STDOUT:   %O: type = class_type @O [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.aac: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c1.patt: %pattern_type.aac = value_binding_pattern c1 [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.39f: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %c2.patt: %pattern_type.aac = value_binding_pattern c2 [concrete]
+// CHECK:STDOUT:   %c3.patt: %pattern_type.aac = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.type: type = fn_type @operator_Plus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk: %operator_Plus__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
@@ -2859,7 +2916,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.aac = value_binding_pattern c1 [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.aac = value_binding_pattern c1 [concrete = constants.%c1.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %O.ref.loc8_24: type = name_ref O, imports.%O.decl [concrete = constants.%O]
@@ -2869,16 +2926,16 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc8: %ptr.39f = addr_of %.loc8_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8)
 // CHECK:STDOUT:   %.loc8_31.2: init %C to %.loc8_31.1 = mark_in_place_init %C__carbon_thunk.call.loc8
+// CHECK:STDOUT:   %.loc8_31.3: ref %C = temporary %.loc8_31.1, %.loc8_31.2
+// CHECK:STDOUT:   %.loc8_31.4: %C = acquire_value %.loc8_31.3
 // CHECK:STDOUT:   %.loc8_16: type = splice_block %C.ref.loc8_16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %O.ref.loc8_14: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:     %C.ref.loc8_16: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_31.3: ref %C = temporary %.loc8_31.1, %.loc8_31.2
-// CHECK:STDOUT:   %.loc8_31.4: %C = acquire_value %.loc8_31.3
 // CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_31.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.aac = value_binding_pattern c2 [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.aac = value_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %O.ref.loc9_24: type = name_ref O, imports.%O.decl [concrete = constants.%O]
@@ -2888,16 +2945,16 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc9: %ptr.39f = addr_of %.loc9_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9)
 // CHECK:STDOUT:   %.loc9_31.2: init %C to %.loc9_31.1 = mark_in_place_init %C__carbon_thunk.call.loc9
+// CHECK:STDOUT:   %.loc9_31.3: ref %C = temporary %.loc9_31.1, %.loc9_31.2
+// CHECK:STDOUT:   %.loc9_31.4: %C = acquire_value %.loc9_31.3
 // CHECK:STDOUT:   %.loc9_16: type = splice_block %C.ref.loc9_16 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %O.ref.loc9_14: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:     %C.ref.loc9_16: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_31.3: ref %C = temporary %.loc9_31.1, %.loc9_31.2
-// CHECK:STDOUT:   %.loc9_31.4: %C = acquire_value %.loc9_31.3
 // CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_31.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c3.patt: %pattern_type.aac = value_binding_pattern c3 [concrete]
+// CHECK:STDOUT:     %c3.patt: %pattern_type.aac = value_binding_pattern c3 [concrete = constants.%c3.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref: %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref: %C = name_ref c2, %c2
@@ -2909,13 +2966,13 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc10_31.3: %ptr.39f = addr_of %.loc10_31.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc10_31.1, %addr.loc10_31.2, %addr.loc10_31.3)
 // CHECK:STDOUT:   %.loc10_31.2: init %C to %.loc10_31.1 = mark_in_place_init %operator_Plus__carbon_thunk.call
+// CHECK:STDOUT:   %.loc10_31.3: ref %C = temporary %.loc10_31.1, %.loc10_31.2
+// CHECK:STDOUT:   %.loc10_31.4: %C = acquire_value %.loc10_31.3
 // CHECK:STDOUT:   %.loc10_23: type = splice_block %C.ref.loc10 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %O.ref.loc10: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_31.3: ref %C = temporary %.loc10_31.1, %.loc10_31.2
-// CHECK:STDOUT:   %.loc10_31.4: %C = acquire_value %.loc10_31.3
 // CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_31.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.Op.bound.loc10: <bound method> = bound_method %.loc10_31.3, constants.%C.Op
@@ -2940,11 +2997,14 @@ fn F() {
 // CHECK:STDOUT:   %O: type = class_type @O [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.f6e: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c1.patt: %pattern_type.f6e = value_binding_pattern c1 [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.7c7: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %c2.patt: %pattern_type.f6e = value_binding_pattern c2 [concrete]
+// CHECK:STDOUT:   %c3.patt: %pattern_type.f6e = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.type: type = fn_type @operator_Plus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk: %operator_Plus__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
@@ -2985,7 +3045,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.f6e = value_binding_pattern c1 [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.f6e = value_binding_pattern c1 [concrete = constants.%c1.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N.ref.loc8_26: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -2996,17 +3056,17 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc8: %ptr.7c7 = addr_of %.loc8_35.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8)
 // CHECK:STDOUT:   %.loc8_35.2: init %C to %.loc8_35.1 = mark_in_place_init %C__carbon_thunk.call.loc8
+// CHECK:STDOUT:   %.loc8_35.3: ref %C = temporary %.loc8_35.1, %.loc8_35.2
+// CHECK:STDOUT:   %.loc8_35.4: %C = acquire_value %.loc8_35.3
 // CHECK:STDOUT:   %.loc8_18: type = splice_block %C.ref.loc8_18 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc8_14: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %O.ref.loc8_16: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:     %C.ref.loc8_18: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_35.3: ref %C = temporary %.loc8_35.1, %.loc8_35.2
-// CHECK:STDOUT:   %.loc8_35.4: %C = acquire_value %.loc8_35.3
 // CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_35.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.f6e = value_binding_pattern c2 [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.f6e = value_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N.ref.loc9_26: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
@@ -3017,17 +3077,17 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc9: %ptr.7c7 = addr_of %.loc9_35.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9)
 // CHECK:STDOUT:   %.loc9_35.2: init %C to %.loc9_35.1 = mark_in_place_init %C__carbon_thunk.call.loc9
+// CHECK:STDOUT:   %.loc9_35.3: ref %C = temporary %.loc9_35.1, %.loc9_35.2
+// CHECK:STDOUT:   %.loc9_35.4: %C = acquire_value %.loc9_35.3
 // CHECK:STDOUT:   %.loc9_18: type = splice_block %C.ref.loc9_18 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc9_14: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %O.ref.loc9_16: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:     %C.ref.loc9_18: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_35.3: ref %C = temporary %.loc9_35.1, %.loc9_35.2
-// CHECK:STDOUT:   %.loc9_35.4: %C = acquire_value %.loc9_35.3
 // CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_35.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c3.patt: %pattern_type.f6e = value_binding_pattern c3 [concrete]
+// CHECK:STDOUT:     %c3.patt: %pattern_type.f6e = value_binding_pattern c3 [concrete = constants.%c3.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref: %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref: %C = name_ref c2, %c2
@@ -3039,14 +3099,14 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc10_33.3: %ptr.7c7 = addr_of %.loc10_33.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc10_33.1, %addr.loc10_33.2, %addr.loc10_33.3)
 // CHECK:STDOUT:   %.loc10_33.2: init %C to %.loc10_33.1 = mark_in_place_init %operator_Plus__carbon_thunk.call
+// CHECK:STDOUT:   %.loc10_33.3: ref %C = temporary %.loc10_33.1, %.loc10_33.2
+// CHECK:STDOUT:   %.loc10_33.4: %C = acquire_value %.loc10_33.3
 // CHECK:STDOUT:   %.loc10_25: type = splice_block %C.ref.loc10 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref.loc10: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %O.ref.loc10: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_33.3: ref %C = temporary %.loc10_33.1, %.loc10_33.2
-// CHECK:STDOUT:   %.loc10_33.4: %C = acquire_value %.loc10_33.3
 // CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_33.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.Op.bound.loc10: <bound method> = bound_method %.loc10_33.3, constants.%C.Op
@@ -3070,13 +3130,19 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.bbc: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete]
+// CHECK:STDOUT:   %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.0a2: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete]
+// CHECK:STDOUT:   %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete]
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk.type: type = fn_type @operator_Minus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Minus__carbon_thunk: %operator_Minus__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %c3.patt: %pattern_type.bbc = ref_binding_pattern c3 [concrete]
+// CHECK:STDOUT:   %c3.var_patt: %pattern_type.bbc = var_pattern %c3.patt [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.type: type = fn_type @operator_Plus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk: %operator_Plus__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
@@ -3117,8 +3183,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete]
-// CHECK:STDOUT:     %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete = constants.%c1.patt]
+// CHECK:STDOUT:     %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete = constants.%c1.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.var: ref %C = var %c1.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -3135,8 +3201,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1: ref %C = ref_binding c1, %c1.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete]
-// CHECK:STDOUT:     %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete = constants.%c2.patt]
+// CHECK:STDOUT:     %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete = constants.%c2.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2.var: ref %C = var %c2.var_patt
 // CHECK:STDOUT:   %c1.ref.loc9: ref %C = name_ref c1, %c1
@@ -3151,8 +3217,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2: ref %C = ref_binding c2, %c2.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c3.patt: %pattern_type.bbc = ref_binding_pattern c3 [concrete]
-// CHECK:STDOUT:     %c3.var_patt: %pattern_type.bbc = var_pattern %c3.patt [concrete]
+// CHECK:STDOUT:     %c3.patt: %pattern_type.bbc = ref_binding_pattern c3 [concrete = constants.%c3.patt]
+// CHECK:STDOUT:     %c3.var_patt: %pattern_type.bbc = var_pattern %c3.patt [concrete = constants.%c3.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c3.var: ref %C = var %c3.var_patt
 // CHECK:STDOUT:   %c1.ref.loc10: ref %C = name_ref c1, %c1
@@ -3224,6 +3290,7 @@ fn F() {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.bbc: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %ptr.0a2: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %c3.patt: %pattern_type.bbc = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.type: type = fn_type @operator_Plus__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk: %operator_Plus__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
@@ -3254,7 +3321,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c3.patt: %pattern_type.bbc = value_binding_pattern c3 [concrete]
+// CHECK:STDOUT:     %c3.patt: %pattern_type.bbc = value_binding_pattern c3 [concrete = constants.%c3.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref: %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref: %C = name_ref c2, %c2
@@ -3266,12 +3333,12 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc10_29.3: %ptr.0a2 = addr_of %.loc10_29.1
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc10_29.1, %addr.loc10_29.2, %addr.loc10_29.3)
 // CHECK:STDOUT:   %.loc10_29.2: init %C to %.loc10_29.1 = mark_in_place_init %operator_Plus__carbon_thunk.call
+// CHECK:STDOUT:   %.loc10_29.3: ref %C = temporary %.loc10_29.1, %.loc10_29.2
+// CHECK:STDOUT:   %.loc10_29.4: %C = acquire_value %.loc10_29.3
 // CHECK:STDOUT:   %.loc10_21: type = splice_block %C.ref.loc10 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_29.3: ref %C = temporary %.loc10_29.1, %.loc10_29.2
-// CHECK:STDOUT:   %.loc10_29.4: %C = acquire_value %.loc10_29.3
 // CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_29.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.Op.bound.loc10: <bound method> = bound_method %.loc10_29.3, constants.%C.Op

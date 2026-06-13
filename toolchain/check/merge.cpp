@@ -243,7 +243,10 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   do {
     auto patterns = pattern_stack.pop_back_val();
     auto new_param_pattern = context.insts().Get(patterns.new_id);
-    auto prev_param_pattern = context.insts().Get(patterns.prev_id);
+    auto prev_param_const_id = SemIR::GetConstantValueInSpecific(
+        context.sem_ir(), prev_specific_id, patterns.prev_id);
+    auto prev_param_pattern =
+        context.constant_values().GetInst(prev_param_const_id);
     if (new_param_pattern.kind() != prev_param_pattern.kind()) {
       emit_general_diagnostic();
       return false;

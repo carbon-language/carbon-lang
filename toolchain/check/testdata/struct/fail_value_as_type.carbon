@@ -47,8 +47,8 @@ var x: {.a = 1};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: <error> = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: <error> = ref_binding_pattern x [concrete = <error>]
+// CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {

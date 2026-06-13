@@ -623,7 +623,7 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: !63 = !{!64, !65}
 // CHECK:STDOUT: !64 = !DILocalVariable(arg: 1, scope: !60, type: !7)
 // CHECK:STDOUT: !65 = !DILocalVariable(arg: 2, scope: !60, type: !8)
-// CHECK:STDOUT: !66 = !DILocation(line: 4294967295, scope: !60)
+// CHECK:STDOUT: !66 = !DILocation(line: 0, scope: !60)
 // CHECK:STDOUT: !67 = !DILocation(line: 50, column: 11, scope: !60)
 // CHECK:STDOUT: !68 = !DILocation(line: 50, column: 3, scope: !60)
 // CHECK:STDOUT: !69 = !DILocation(line: 51, column: 11, scope: !60)
@@ -655,7 +655,7 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: !95 = !DILocalVariable(arg: 2, scope: !92, type: !8)
 // CHECK:STDOUT: !96 = !DILocation(line: 66, column: 11, scope: !92)
 // CHECK:STDOUT: !97 = !DILocation(line: 66, column: 3, scope: !92)
-// CHECK:STDOUT: !98 = !DILocation(line: 4294967295, scope: !92)
+// CHECK:STDOUT: !98 = !DILocation(line: 0, scope: !92)
 // CHECK:STDOUT: !99 = !DILocation(line: 67, column: 11, scope: !92)
 // CHECK:STDOUT: !100 = !DILocation(line: 67, column: 3, scope: !92)
 // CHECK:STDOUT: !101 = !DILocation(line: 68, column: 11, scope: !92)

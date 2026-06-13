@@ -62,37 +62,40 @@ let b: CharLiteral = SubCharInt('\u{10FFFF}', Negate(1));
 // CHECK:STDOUT:   %SubCharInt: %SubCharInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [concrete]
 // CHECK:STDOUT:   %Negate: %Negate.type = struct_value () [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.8c6 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   %.711: Core.CharLiteral = char_value U+0062 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %.54f: Core.CharLiteral = char_value U+0061 [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.8c6 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   %.e28: Core.CharLiteral = char_value U+007F [concrete]
 // CHECK:STDOUT:   %int_-1: Core.IntLiteral = int_value -1 [concrete]
 // CHECK:STDOUT:   %.ae7: Core.CharLiteral = char_value U+0080 [concrete]
+// CHECK:STDOUT:   %c.patt.c30: %pattern_type.8c6 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   %.ad8: Core.CharLiteral = char_value U+00FF [concrete]
 // CHECK:STDOUT:   %.a8b: Core.CharLiteral = char_value U+0100 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.8c6 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.8c6 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %CharLiteral.ref.loc13: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %.loc13_39.1: Core.CharLiteral = value_of_initializer @__global_init.%SubCharInt.call.loc13 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %.loc13_39.2: Core.CharLiteral = converted @__global_init.%SubCharInt.call.loc13, %.loc13_39.1 [concrete = constants.%.54f]
+// CHECK:STDOUT:   %CharLiteral.ref.loc13: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %a: Core.CharLiteral = value_binding a, %.loc13_39.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.8c6 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.8c6 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %CharLiteral.ref.loc16: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %.loc16_52.1: Core.CharLiteral = value_of_initializer @__global_init.%SubCharInt.call.loc16 [concrete = constants.%.ae7]
 // CHECK:STDOUT:   %.loc16_52.2: Core.CharLiteral = converted @__global_init.%SubCharInt.call.loc16, %.loc16_52.1 [concrete = constants.%.ae7]
+// CHECK:STDOUT:   %CharLiteral.ref.loc16: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %b: Core.CharLiteral = value_binding b, %.loc16_52.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.8c6 = value_binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.8c6 = value_binding_pattern c [concrete = constants.%c.patt.c30]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %CharLiteral.ref.loc17: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %.loc17_52.1: Core.CharLiteral = value_of_initializer @__global_init.%SubCharInt.call.loc17 [concrete = constants.%.a8b]
 // CHECK:STDOUT:   %.loc17_52.2: Core.CharLiteral = converted @__global_init.%SubCharInt.call.loc17, %.loc17_52.1 [concrete = constants.%.a8b]
+// CHECK:STDOUT:   %CharLiteral.ref.loc17: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %c: Core.CharLiteral = value_binding c, %.loc17_52.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

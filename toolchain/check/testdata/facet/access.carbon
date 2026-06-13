@@ -424,6 +424,8 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.DoIt.decl [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %I.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.DoIt.type.0a5: type = fn_type @I.WithSelf.DoIt, @I.WithSelf(%T) [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
@@ -458,6 +460,7 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Use(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc8_9.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -467,10 +470,14 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.Make.decl [concrete]
+// CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %I.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %.0ce: Core.Form = init_form %T.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.b3a: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %return.param_patt.b82: %pattern_type.b3a = out_param_pattern [symbolic]
+// CHECK:STDOUT:   %return.patt.2e6: %pattern_type.b3a = return_slot_pattern %return.param_patt.b82, %T.as_type [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.Make.type.9c0: type = fn_type @I.WithSelf.Make, @I.WithSelf(%T) [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T, @I [symbolic]
 // CHECK:STDOUT:   %.889: type = fn_type_with_self_type %I.WithSelf.Make.type.9c0, %T [symbolic]
@@ -504,10 +511,13 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Use(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc8_9.1 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc8_18.1 => constants.%T.as_type
 // CHECK:STDOUT:   %.loc8_18.2 => constants.%.0ce
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b3a
+// CHECK:STDOUT:   %return.param_patt.loc8_18.2 => constants.%return.param_patt.b82
+// CHECK:STDOUT:   %return.patt.loc8_15.2 => constants.%return.patt.2e6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- access_assoc_method.carbon
@@ -519,10 +529,15 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %I.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.b3a: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.b3a = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt: %pattern_type.b3a = at_binding_pattern x, %x.param_patt [symbolic]
 // CHECK:STDOUT:   %.0ce: Core.Form = init_form %T.as_type [symbolic]
+// CHECK:STDOUT:   %return.param_patt.b82: %pattern_type.b3a = out_param_pattern [symbolic]
+// CHECK:STDOUT:   %return.patt.2e6: %pattern_type.b3a = return_slot_pattern %return.param_patt.b82, %T.as_type [symbolic]
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type [symbolic]
@@ -535,11 +550,11 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.6cb = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.param_patt: @Use.%pattern_type (%pattern_type.b3a) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: @Use.%pattern_type (%pattern_type.b3a) = at_binding_pattern x, %x.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: @Use.%pattern_type (%pattern_type.b3a) = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: @Use.%pattern_type (%pattern_type.b3a) = return_slot_pattern %return.param_patt, %.loc9_24.3 [concrete]
+// CHECK:STDOUT:     %T.patt.loc9_9.1: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %x.param_patt.loc9_16.1: @Use.%pattern_type (%pattern_type.b3a) = value_param_pattern [symbolic = %x.param_patt.loc9_16.2 (constants.%x.param_patt)]
+// CHECK:STDOUT:     %x.patt.loc9_16.1: @Use.%pattern_type (%pattern_type.b3a) = at_binding_pattern x, %x.param_patt.loc9_16.1 [symbolic = %x.patt.loc9_16.2 (constants.%x.patt)]
+// CHECK:STDOUT:     %return.param_patt.loc9_24.1: @Use.%pattern_type (%pattern_type.b3a) = out_param_pattern [symbolic = %return.param_patt.loc9_24.2 (constants.%return.param_patt.b82)]
+// CHECK:STDOUT:     %return.patt.loc9_21.1: @Use.%pattern_type (%pattern_type.b3a) = return_slot_pattern %return.param_patt.loc9_24.1, %.loc9_24.3 [symbolic = %return.patt.loc9_21.2 (constants.%return.patt.2e6)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc9_24: %I.type = name_ref T, %T.loc9_9.2 [symbolic = %T.loc9_9.1 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc9_24: type = facet_access_type %T.ref.loc9_24 [symbolic = %T.as_type.loc9_18.1 (constants.%T.as_type)]
@@ -563,10 +578,15 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Use(%T.loc9_9.2: %I.type) {
+// CHECK:STDOUT:   %T.patt.loc9_9.2: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc9_9.1: %I.type = symbolic_binding T, 0 [symbolic = %T.loc9_9.1 (constants.%T)]
 // CHECK:STDOUT:   %T.as_type.loc9_18.1: type = facet_access_type %T.loc9_9.1 [symbolic = %T.as_type.loc9_18.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc9_18.1 [symbolic = %pattern_type (constants.%pattern_type.b3a)]
+// CHECK:STDOUT:   %x.param_patt.loc9_16.2: @Use.%pattern_type (%pattern_type.b3a) = value_param_pattern [symbolic = %x.param_patt.loc9_16.2 (constants.%x.param_patt)]
+// CHECK:STDOUT:   %x.patt.loc9_16.2: @Use.%pattern_type (%pattern_type.b3a) = at_binding_pattern x, %x.param_patt.loc9_16.2 [symbolic = %x.patt.loc9_16.2 (constants.%x.patt)]
 // CHECK:STDOUT:   %.loc9_24.2: Core.Form = init_form %T.as_type.loc9_18.1 [symbolic = %.loc9_24.2 (constants.%.0ce)]
+// CHECK:STDOUT:   %return.param_patt.loc9_24.2: @Use.%pattern_type (%pattern_type.b3a) = out_param_pattern [symbolic = %return.param_patt.loc9_24.2 (constants.%return.param_patt.b82)]
+// CHECK:STDOUT:   %return.patt.loc9_21.2: @Use.%pattern_type (%pattern_type.b3a) = return_slot_pattern %return.param_patt.loc9_24.2, %T.as_type.loc9_18.1 [symbolic = %return.patt.loc9_21.2 (constants.%return.patt.2e6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc9_18.1 [symbolic = %require_complete (constants.%require_complete)]
@@ -582,7 +602,8 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT:     %Copy.ref: %I.assoc_type = name_ref Copy, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0.loc10_11.1: @Use.%.loc10_11 (%.c06) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc10_11: <bound method> = bound_method %x.ref, %impl.elem0.loc10_11.1
-// CHECK:STDOUT:     %.loc10_17: %I.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc9_9.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc10_17.1: %I.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc9_9.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc10_17.2: %I.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc9_9.1 (constants.%T)]
 // CHECK:STDOUT:     %specific_impl_fn.loc10_11.1: <specific function> = specific_impl_function %impl.elem0.loc10_11.1, @I.WithSelf.Copy(constants.%T) [symbolic = %specific_impl_fn.loc10_11.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc10_17: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_11.1
 // CHECK:STDOUT:     %.loc9_24.1: ref @Use.%T.as_type.loc9_18.1 (%T.as_type) = splice_block %return.param {}
@@ -592,10 +613,15 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Use(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc9_9.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc9_9.1 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc9_18.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b3a
+// CHECK:STDOUT:   %x.param_patt.loc9_16.2 => constants.%x.param_patt
+// CHECK:STDOUT:   %x.patt.loc9_16.2 => constants.%x.patt
 // CHECK:STDOUT:   %.loc9_24.2 => constants.%.0ce
+// CHECK:STDOUT:   %return.param_patt.loc9_24.2 => constants.%return.param_patt.b82
+// CHECK:STDOUT:   %return.patt.loc9_21.2 => constants.%return.patt.2e6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- access_selfless_method.carbon
@@ -605,9 +631,13 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.Hello.decl [concrete]
+// CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %I.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.b3a: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.b3a = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt: %pattern_type.b3a = at_binding_pattern x, %x.param_patt [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.Hello.type.d5c: type = fn_type @I.WithSelf.Hello, @I.WithSelf(%T) [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T, @I [symbolic]
 // CHECK:STDOUT:   %.244: type = fn_type_with_self_type %I.WithSelf.Hello.type.d5c, %T [symbolic]
@@ -638,9 +668,12 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Use(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc8_9.1 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc8_18.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b3a
+// CHECK:STDOUT:   %x.param_patt.loc8_16.2 => constants.%x.param_patt
+// CHECK:STDOUT:   %x.patt.loc8_16.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- access_assoc_method_indirect.carbon
@@ -649,10 +682,16 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.Copy.decl [concrete]
+// CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %I.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.b3a: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.b3a = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt: %pattern_type.b3a = at_binding_pattern x, %x.param_patt [symbolic]
 // CHECK:STDOUT:   %.0ce: Core.Form = init_form %T.as_type [symbolic]
+// CHECK:STDOUT:   %return.param_patt.b82: %pattern_type.b3a = out_param_pattern [symbolic]
+// CHECK:STDOUT:   %return.patt.2e6: %pattern_type.b3a = return_slot_pattern %return.param_patt.b82, %T.as_type [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.Copy.type.54f: type = fn_type @I.WithSelf.Copy, @I.WithSelf(%T) [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T, @I [symbolic]
 // CHECK:STDOUT:   %.c06: type = fn_type_with_self_type %I.WithSelf.Copy.type.54f, %T [symbolic]
@@ -680,7 +719,8 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT:     %Copy.ref: %I.assoc_type = name_ref Copy, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0.loc10_14.1: @UseIndirect.%.loc10_14.2 (%.c06) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_14.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc10_11: <bound method> = bound_method %x.ref, %impl.elem0.loc10_14.1
-// CHECK:STDOUT:     %.loc10_21: %I.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc8_17.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc10_21.1: %I.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc8_17.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc10_21.2: %I.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc8_17.1 (constants.%T)]
 // CHECK:STDOUT:     %specific_impl_fn.loc10_14.1: <specific function> = specific_impl_function %impl.elem0.loc10_14.1, @I.WithSelf.Copy(constants.%T) [symbolic = %specific_impl_fn.loc10_14.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc10_21: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_14.1
 // CHECK:STDOUT:     <elided>
@@ -690,10 +730,15 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @UseIndirect(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc8_17.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc8_17.1 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc8_26.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b3a
+// CHECK:STDOUT:   %x.param_patt.loc8_24.2 => constants.%x.param_patt
+// CHECK:STDOUT:   %x.patt.loc8_24.2 => constants.%x.patt
 // CHECK:STDOUT:   %.loc8_32.2 => constants.%.0ce
+// CHECK:STDOUT:   %return.param_patt.loc8_32.2 => constants.%return.param_patt.b82
+// CHECK:STDOUT:   %return.patt.loc8_29.2 => constants.%return.patt.2e6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- access_constant_in_self_facet.carbon
@@ -713,12 +758,15 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %A_where.type: type = facet_type <@A where %impl.elem0 = %empty_tuple.type> [concrete]
 // CHECK:STDOUT:   %pattern_type.634: type = pattern_type %A_where.type [concrete]
+// CHECK:STDOUT:   %AA.patt: %pattern_type.634 = symbolic_binding_pattern AA, 0 [symbolic]
 // CHECK:STDOUT:   %AA: %A_where.type = symbolic_binding AA, 0 [symbolic]
 // CHECK:STDOUT:   %AA.as_type: type = facet_access_type %AA [symbolic]
 // CHECK:STDOUT:   %A.lookup_impl_witness.9cf: <witness> = lookup_impl_witness %AA, @A [symbolic]
 // CHECK:STDOUT:   %A.facet: %A.type = facet_value %AA.as_type, (%A.lookup_impl_witness.9cf) [symbolic]
 // CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -726,9 +774,9 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A.decl: type = interface_decl @A [concrete = constants.%A.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %AA.patt: %pattern_type.634 = symbolic_binding_pattern AA, 0 [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %impl.elem0.loc6_33 [concrete]
+// CHECK:STDOUT:     %AA.patt.loc6_8.1: %pattern_type.634 = symbolic_binding_pattern AA, 0 [symbolic = %AA.patt.loc6_8.2 (constants.%AA.patt)]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %impl.elem0.loc6_33 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AA.ref: %A_where.type = name_ref AA, %AA.loc6_8.2 [symbolic = %AA.loc6_8.1 (constants.%AA)]
 // CHECK:STDOUT:     %AA.as_type.loc6_33.2: type = facet_access_type %AA.ref [symbolic = %AA.as_type.loc6_33.1 (constants.%AA.as_type)]
@@ -776,6 +824,7 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%AA.loc6_8.2: %A_where.type) {
+// CHECK:STDOUT:   %AA.patt.loc6_8.2: %pattern_type.634 = symbolic_binding_pattern AA, 0 [symbolic = %AA.patt.loc6_8.2 (constants.%AA.patt)]
 // CHECK:STDOUT:   %AA.loc6_8.1: %A_where.type = symbolic_binding AA, 0 [symbolic = %AA.loc6_8.1 (constants.%AA)]
 // CHECK:STDOUT:   %AA.as_type.loc6_33.1: type = facet_access_type %AA.loc6_8.1 [symbolic = %AA.as_type.loc6_33.1 (constants.%AA.as_type)]
 // CHECK:STDOUT:
@@ -807,6 +856,7 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%AA) {
+// CHECK:STDOUT:   %AA.patt.loc6_8.2 => constants.%AA.patt
 // CHECK:STDOUT:   %AA.loc6_8.1 => constants.%AA
 // CHECK:STDOUT:   %AA.as_type.loc6_33.1 => constants.%AA.as_type
 // CHECK:STDOUT: }
@@ -843,16 +893,21 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_type.121: type = facet_type <@A & @B where %impl.elem0.bfe = %empty_tuple.type and %impl.elem0.3d7 = %empty_struct_type> [concrete]
 // CHECK:STDOUT:   %pattern_type.a40: type = pattern_type %facet_type.121 [concrete]
+// CHECK:STDOUT:   %AB.patt: %pattern_type.a40 = symbolic_binding_pattern AB, 0 [symbolic]
 // CHECK:STDOUT:   %AB: %facet_type.121 = symbolic_binding AB, 0 [symbolic]
 // CHECK:STDOUT:   %AB.as_type: type = facet_access_type %AB [symbolic]
 // CHECK:STDOUT:   %A.lookup_impl_witness.ed2: <witness> = lookup_impl_witness %AB, @A [symbolic]
 // CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %return.param_patt.900: %pattern_type.cb1 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.427: %pattern_type.cb1 = return_slot_pattern %return.param_patt.900, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B.lookup_impl_witness.77c: <witness> = lookup_impl_witness %AB, @B [symbolic]
 // CHECK:STDOUT:   %.469: Core.Form = init_form %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
+// CHECK:STDOUT:   %return.param_patt.296: %pattern_type.a96 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.c45: %pattern_type.a96 = return_slot_pattern %return.param_patt.296, %empty_struct_type [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -864,9 +919,9 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %AB.patt: %pattern_type.a40 = symbolic_binding_pattern AB, 0 [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %impl.elem0.loc14_49 [concrete]
+// CHECK:STDOUT:     %AB.patt.loc14_8.1: %pattern_type.a40 = symbolic_binding_pattern AB, 0 [symbolic = %AB.patt.loc14_8.2 (constants.%AB.patt)]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete = constants.%return.param_patt.900]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %impl.elem0.loc14_49 [concrete = constants.%return.patt.427]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AB.ref: %facet_type.121 = name_ref AB, %AB.loc14_8.2 [symbolic = %AB.loc14_8.1 (constants.%AB)]
 // CHECK:STDOUT:     %AB.as_type.loc14_49.2: type = facet_access_type %AB.ref [symbolic = %AB.as_type.loc14_49.1 (constants.%AB.as_type)]
@@ -909,9 +964,9 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %AB.patt: %pattern_type.a40 = symbolic_binding_pattern AB, 0 [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern %return.param_patt, %impl.elem0.loc18_49 [concrete]
+// CHECK:STDOUT:     %AB.patt.loc18_8.1: %pattern_type.a40 = symbolic_binding_pattern AB, 0 [symbolic = %AB.patt.loc18_8.2 (constants.%AB.patt)]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern [concrete = constants.%return.param_patt.296]
+// CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern %return.param_patt, %impl.elem0.loc18_49 [concrete = constants.%return.patt.c45]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AB.ref: %facet_type.121 = name_ref AB, %AB.loc18_8.2 [symbolic = %AB.loc18_8.1 (constants.%AB)]
 // CHECK:STDOUT:     %AB.as_type.loc18_49.2: type = facet_access_type %AB.ref [symbolic = %AB.as_type.loc18_49.1 (constants.%AB.as_type)]
@@ -956,6 +1011,7 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%AB.loc14_8.2: %facet_type.121) {
+// CHECK:STDOUT:   %AB.patt.loc14_8.2: %pattern_type.a40 = symbolic_binding_pattern AB, 0 [symbolic = %AB.patt.loc14_8.2 (constants.%AB.patt)]
 // CHECK:STDOUT:   %AB.loc14_8.1: %facet_type.121 = symbolic_binding AB, 0 [symbolic = %AB.loc14_8.1 (constants.%AB)]
 // CHECK:STDOUT:   %AB.as_type.loc14_49.1: type = facet_access_type %AB.loc14_8.1 [symbolic = %AB.as_type.loc14_49.1 (constants.%AB.as_type)]
 // CHECK:STDOUT:
@@ -971,6 +1027,7 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%AB.loc18_8.2: %facet_type.121) {
+// CHECK:STDOUT:   %AB.patt.loc18_8.2: %pattern_type.a40 = symbolic_binding_pattern AB, 0 [symbolic = %AB.patt.loc18_8.2 (constants.%AB.patt)]
 // CHECK:STDOUT:   %AB.loc18_8.1: %facet_type.121 = symbolic_binding AB, 0 [symbolic = %AB.loc18_8.1 (constants.%AB)]
 // CHECK:STDOUT:   %AB.as_type.loc18_49.1: type = facet_access_type %AB.loc18_8.1 [symbolic = %AB.as_type.loc18_49.1 (constants.%AB.as_type)]
 // CHECK:STDOUT:
@@ -986,11 +1043,13 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls (Y where .Y1 impls (X where .X1 = U))) 
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%AB) {
+// CHECK:STDOUT:   %AB.patt.loc14_8.2 => constants.%AB.patt
 // CHECK:STDOUT:   %AB.loc14_8.1 => constants.%AB
 // CHECK:STDOUT:   %AB.as_type.loc14_49.1 => constants.%AB.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%AB) {
+// CHECK:STDOUT:   %AB.patt.loc18_8.2 => constants.%AB.patt
 // CHECK:STDOUT:   %AB.loc18_8.1 => constants.%AB
 // CHECK:STDOUT:   %AB.as_type.loc18_49.1 => constants.%AB.as_type
 // CHECK:STDOUT: }

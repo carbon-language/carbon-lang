@@ -472,10 +472,14 @@ class V {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %ptr.976: type = ptr_type %Derived [concrete]
 // CHECK:STDOUT:   %pattern_type.d23: type = pattern_type %ptr.976 [concrete]
+// CHECK:STDOUT:   %d.param_patt.9b7: %pattern_type.d23 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %d.patt.1fc: %pattern_type.d23 = at_binding_pattern d, %d.param_patt.9b7 [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %ptr.0e0: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %.866: Core.Form = init_form %ptr.0e0 [concrete]
 // CHECK:STDOUT:   %pattern_type.cb0: type = pattern_type %ptr.0e0 [concrete]
+// CHECK:STDOUT:   %return.param_patt.b43: %pattern_type.cb0 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.363: %pattern_type.cb0 = return_slot_pattern %return.param_patt.b43, %ptr.0e0 [concrete]
 // CHECK:STDOUT:   %ConvertPtr.type: type = fn_type @ConvertPtr [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ConvertPtr: %ConvertPtr.type = struct_value () [concrete]
@@ -493,6 +497,8 @@ class V {
 // CHECK:STDOUT:   %AcceptVal.type: type = fn_type @AcceptVal [concrete]
 // CHECK:STDOUT:   %AcceptVal: %AcceptVal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.2f5: type = pattern_type %Derived [concrete]
+// CHECK:STDOUT:   %d.param_patt.0f5: %pattern_type.2f5 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %d.patt.e5a: %pattern_type.2f5 = at_binding_pattern d, %d.param_patt.0f5 [concrete]
 // CHECK:STDOUT:   %ConvertVal.type: type = fn_type @ConvertVal [concrete]
 // CHECK:STDOUT:   %ConvertVal: %ConvertVal.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -511,10 +517,10 @@ class V {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %ConvertPtr.decl: %ConvertPtr.type = fn_decl @ConvertPtr [concrete = constants.%ConvertPtr] {
-// CHECK:STDOUT:     %d.param_patt: %pattern_type.d23 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %d.patt: %pattern_type.d23 = at_binding_pattern d, %d.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb0 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb0 = return_slot_pattern %return.param_patt, %ptr.loc7_43 [concrete]
+// CHECK:STDOUT:     %d.param_patt: %pattern_type.d23 = value_param_pattern [concrete = constants.%d.param_patt.9b7]
+// CHECK:STDOUT:     %d.patt: %pattern_type.d23 = at_binding_pattern d, %d.param_patt [concrete = constants.%d.patt.1fc]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb0 = out_param_pattern [concrete = constants.%return.param_patt.b43]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb0 = return_slot_pattern %return.param_patt, %ptr.loc7_43 [concrete = constants.%return.patt.363]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Cpp.ref.loc7_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, imports.%Base.decl [concrete = constants.%Base]
@@ -531,8 +537,8 @@ class V {
 // CHECK:STDOUT:     %return: ref %ptr.0e0 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertVal.decl: %ConvertVal.type = fn_decl @ConvertVal [concrete = constants.%ConvertVal] {
-// CHECK:STDOUT:     %d.param_patt: %pattern_type.2f5 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %d.patt: %pattern_type.2f5 = at_binding_pattern d, %d.param_patt [concrete]
+// CHECK:STDOUT:     %d.param_patt: %pattern_type.2f5 = value_param_pattern [concrete = constants.%d.param_patt.0f5]
+// CHECK:STDOUT:     %d.patt: %pattern_type.2f5 = at_binding_pattern d, %d.param_patt [concrete = constants.%d.patt.e5a]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %.loc15: type = splice_block %Derived.ref [concrete = constants.%Derived] {

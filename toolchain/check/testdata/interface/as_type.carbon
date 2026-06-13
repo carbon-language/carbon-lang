@@ -22,6 +22,8 @@ fn F(unused e: Empty) {}
 // CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty> [concrete]
 // CHECK:STDOUT:   %Self: %Empty.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Empty.type [concrete]
+// CHECK:STDOUT:   %e.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:   %e.patt: %pattern_type = at_binding_pattern e, %e.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -33,8 +35,8 @@ fn F(unused e: Empty) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [concrete = constants.%Empty.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %e.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:     %e.patt: %pattern_type = at_binding_pattern e, %e.param_patt [concrete]
+// CHECK:STDOUT:     %e.param_patt: %pattern_type = value_param_pattern [concrete = constants.%e.param_patt]
+// CHECK:STDOUT:     %e.patt: %pattern_type = at_binding_pattern e, %e.param_patt [concrete = constants.%e.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Empty.type = value_param call_param0
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.type]

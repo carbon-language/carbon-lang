@@ -75,6 +75,8 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @empty_struct_type.as.Z.impl.%Z.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %empty_struct_type, (%Z.impl_witness) [concrete]
+// CHECK:STDOUT:   %pattern_type.5d7: type = pattern_type %Z.type [concrete]
+// CHECK:STDOUT:   %U.patt.4a7: %pattern_type.5d7 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U.013: %Z.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %U.as_type.ff1: type = facet_access_type %U.013 [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -113,10 +115,12 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E(constants.%U.013) {
+// CHECK:STDOUT:   %U.patt.loc6_12.2 => constants.%U.patt.4a7
 // CHECK:STDOUT:   %U.loc6_12.1 => constants.%U.013
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E(constants.%Z.facet) {
+// CHECK:STDOUT:   %U.patt.loc6_12.2 => constants.%U.patt.4a7
 // CHECK:STDOUT:   %U.loc6_12.1 => constants.%Z.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
