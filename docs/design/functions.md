@@ -115,22 +115,25 @@ it can be deduced using a return expression (`=>`):
     that context.
     -   For example, `fn ToString(val: i64) -> String;` has a return type of
         `String`.
-
-*   `->` followed by the `auto` keyword indicates that
-    [type inference](type_inference.md) should be used to determine the return
-    type.
+-   `->` followed by the `auto` keyword (optionally prefixed with `val`, `ref`,
+    or `var`) indicates that [type inference](type_inference.md) should be used
+    to determine the return type.
+    -   The category tag determines the return expression category:
+        `-> val auto` returns a value expression, `-> ref auto` returns a
+        durable reference expression, and `-> var auto` or `-> auto` returns an
+        initializing expression.
     -   For example, `fn Echo(val: i64) -> auto { return val; }` will have a
         return type of `i64` through type inference.
     -   Forward declarations must have a known return type, so `auto` is not
         valid.
     -   The function must have precisely one `return` statement. That `return`
         statement's expression will then be used for type inference.
-*   Omission of `->` (when using `{` ... `}` body) indicates that the return
+-   Omission of `->` (when using `{` ... `}` body) indicates that the return
     type is the empty tuple, `()`.
     -   For example, `fn Sleep(seconds: i64);` is similar to
         `fn Sleep(seconds: i64) -> ();`.
     -   `()` is similar to a `void` return type in C++.
-*   `=>` followed by an _expression_ defines a shorthand for a function body
+-   `=>` followed by an _expression_ defines a shorthand for a function body
     that returns the expression. The return type is deduced as if `-> auto` were
     used.
     -   For example, `fn Add(a: i64, b: i64) => a + b;` has a return type of
@@ -319,9 +322,10 @@ Calls take the form `a(b, c, d)` or `a(b, c, d,)`, where:
 
 -   `a` is the callee, which can be a name, a literal, a member access, or some
     more complex expression enclosed in parentheses.
--   `b`, `c`, `d` are any number of argument expressions. Arguments are
-    separated by commas, and if the argument list is not empty, an optional
-    trailing comma is permitted but not required after the final argument.
+-   `b`, `c`, `d` are any number of argument expressions, each optionally
+    prefixed with `ref` if passing to a `ref` parameter. Arguments are separated
+    by commas, and if the argument list is not empty, an optional trailing comma
+    is permitted but not required after the final argument.
 
 Call syntax is syntactically equivalent to a primary expression followed by a
 tuple literal, except that a tuple literal requires a trailing comma to form a
@@ -357,6 +361,14 @@ checking proceeds as follows:
 -   Then, for each binding in the explicit parameter list in turn, all argument
     values that have been deduced are substituted into the parameter.
 
+    -   If the parameter is a `ref` parameter (other than `self`), the
+        corresponding argument expression at the call-site must be prefixed with
+        `ref`. It is a compile-time error if the call-site has a mismatched
+        `ref` prefix:
+        -   An argument to a non-`ref` parameter must not be prefixed with
+            `ref`, and
+        -   An argument to a `ref` parameter must be prefixed with `ref`, except
+            in a generic context where the parameter's `ref` status may vary.
     -   If the parameter is a `template :!` binding, the argument expression is
         converted to have the same type as the binding and template constant
         expression phase.
@@ -523,3 +535,5 @@ Other designs build upon basic function syntax to add advanced features:
     [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
 -   Proposal
     [#3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
+-   Proposal
+    [#5434: `ref` parameters, arguments, returns and `val` returns](https://github.com/carbon-language/carbon-lang/pull/5434)
