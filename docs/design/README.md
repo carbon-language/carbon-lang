@@ -1297,7 +1297,7 @@ fn Positive(a: i64) -> auto {
 > References:
 >
 > -   [Type inference](type_inference.md)
-> -   [Function return clause](functions.md#return-clause)
+> -   [Function return clause](functions.md#specifying-return-type-and-return-expressions)
 > -   Proposal
 >     [#826: Function return type inference](https://github.com/carbon-language/carbon-lang/pull/826)
 
