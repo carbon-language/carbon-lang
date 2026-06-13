@@ -12,7 +12,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Function definitions](#function-definitions)
-    -   [Return clause](#return-clause)
+    -   [Captures, function fields, and positional parameters](#captures-function-fields-and-positional-parameters)
+    -   [Specifying return type and return expressions](#specifying-return-type-and-return-expressions)
     -   [`return` statements](#return-statements)
     -   [Unused parameters](#unused-parameters)
 -   [Function declarations](#function-declarations)
@@ -31,24 +32,28 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-> **TODO:** Update this document to reflect the changes to named functions in
-> [#3848: Lambdas](/proposals/p003848-lambdas.md).
+Functions are the core building block for applications. A function definition or
+declaration has one of the following syntactic forms (where items in square
+brackets are optional and independent):
 
-Functions are the core building block for applications. Carbon's basic function
-syntax is:
+-   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] `=>` _expression_ `;`
+-   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] [`->` _return-type_] `{`
+    _statements_ `}`
+-   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] [`->` _return-type_] `;`
 
--   _parameter_: _identifier_ `:` _expression_
--   _parameter-list_: _[ parameter_ `,` _parameter_ `,` _... ]_
--   _return-clause_: _[_ `->` _< expression |_ `auto` _> ]_
--   _signature_: `fn` _identifier_ `(` _parameter-list_ `)` _return-clause_
--   _function-definition_: _signature_ `{` _statements_ `}`
--   _function-declaration_: _signature_ `;`
--   _function-call_: _identifier_ `(` _[ expression_ `,` _expression_ `,` _...
-    ]_ `)`
+The first form is a shorthand: `=> expression ;` is equivalent to
+`-> auto { return expression; }`. When a body is present (the first and second
+forms), it is a function definition. The body introduces nested scopes which may
+contain local variable declarations. A function with only a signature and no
+body (the third form) is a forward declaration.
 
-A function with only a signature and no body is a function declaration, or
-forward declaration. When the body is a present, it's a function definition. The
-body introduces nested scopes which may contain local variable declarations.
+The syntax for parameters and returns is the same for functions and
+[lambdas](lambdas.md#syntax-overview):
+
+-   _implicit-parameters_: square brackets `[`...`]` enclosing default capture
+    modes, explicit captures, function fields, or deduced parameters
+-   _tuple-pattern_: parentheses `(`...`)` enclosing a list of explicit
+    parameter patterns.
 
 ## Function definitions
 
@@ -60,9 +65,14 @@ fn Add(a: i64, b: i64) -> i64 {
 }
 ```
 
-This declares a function called `Add` which accepts two `i64` parameters, the
-first called `a` and the second called `b`, and returns an `i64` result. It
-returns the result of adding the two arguments.
+Or using the shorthand `=>` return expression syntax:
+
+```carbon
+fn Add(a: i64, b: i64) => a + b;
+```
+
+These declare a function called `Add` which accepts two `i64` parameters, the
+first called `a` and the second called `b`, and returns an `i64` result.
 
 C++ might declare the same thing:
 
@@ -77,28 +87,56 @@ auto Add(std::int64_t a, std::int64_t b) -> std::int64_t {
 }
 ```
 
-### Return clause
+### Captures, function fields, and positional parameters
 
-The return clause of a function specifies the return type using one of three
-possible syntaxes:
+Named function definitions support [captures](lambdas.md#captures),
+[function fields](lambdas.md#function-fields-in-lambdas), and
+[positional parameters](lambdas.md#positional-parameters) in their signature and
+body, with the following restrictions:
+
+-   **Definition attached**: They can only be used on functions where the
+    definition is attached to the declaration (so they cannot be forward
+    declared).
+-   **Scope limit**: Captures and function fields are only supported on local
+    function definitions immediately defined inside the body of another
+    function. They are not supported on namespace-scoped functions or member
+    functions of classes/interfaces.
+-   **Positional parameters**: Positional parameters can only be used in a
+    context where there is exactly one enclosing function or lambda that has no
+    explicit parameter list.
+
+### Specifying return type and return expressions
+
+The return type of a function can be specified using a return clause (`->`), or
+it can be deduced using a return expression (`=>`):
 
 -   `->` followed by an _expression_, such as `i64`, directly states the return
     type. This expression will be evaluated at compile-time, so must be valid in
     that context.
     -   For example, `fn ToString(val: i64) -> String;` has a return type of
         `String`.
--   `->` followed by the `auto` keyword indicates that
+
+*   `->` followed by the `auto` keyword indicates that
     [type inference](type_inference.md) should be used to determine the return
     type.
     -   For example, `fn Echo(val: i64) -> auto { return val; }` will have a
         return type of `i64` through type inference.
-    -   Declarations must have a known return type, so `auto` is not valid.
+    -   Forward declarations must have a known return type, so `auto` is not
+        valid.
     -   The function must have precisely one `return` statement. That `return`
         statement's expression will then be used for type inference.
--   Omission indicates that the return type is the empty tuple, `()`.
+*   Omission of `->` (when using `{` ... `}` body) indicates that the return
+    type is the empty tuple, `()`.
     -   For example, `fn Sleep(seconds: i64);` is similar to
         `fn Sleep(seconds: i64) -> ();`.
     -   `()` is similar to a `void` return type in C++.
+*   `=>` followed by an _expression_ defines a shorthand for a function body
+    that returns the expression. The return type is deduced as if `-> auto` were
+    used.
+    -   For example, `fn Add(a: i64, b: i64) => a + b;` has a return type of
+        `i64` based on the type of the expression `a + b`.
+    -   Because the return type is deduced and not explicitly known, functions
+        defined using `=>` cannot have a separate forward declaration.
 
 > **TODO:** Update this section to cover return forms, as discussed
 > [here](values.md#function-calls-and-returns).
@@ -109,9 +147,10 @@ The [`return` statement](control_flow/return.md) is essential to function
 control flow. It ends the flow of the function and returns execution to the
 caller.
 
-When the [return clause](#return-clause) is omitted, the `return` statement has
-no expression argument, and function control flow implicitly ends after the last
-statement in the function's body as if `return;` were present.
+When the [return clause](#specifying-return-type-and-return-expressions) is
+omitted, the `return` statement has no expression argument, and function control
+flow implicitly ends after the last statement in the function's body as if
+`return;` were present.
 
 When the return clause is provided, including when it is `-> ()`, the `return`
 statement must have an expression that is convertible to the return type, and a
@@ -482,3 +521,5 @@ Other designs build upon basic function syntax to add advanced features:
     [#3762: Merging forward declarations](https://github.com/carbon-language/carbon-lang/pull/3762)
 -   Proposal
     [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
+-   Proposal
+    [#3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)

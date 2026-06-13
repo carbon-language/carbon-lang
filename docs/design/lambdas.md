@@ -27,6 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Copy semantics](#copy-semantics)
 -   [Self and recursion](#self-and-recursion)
 -   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -66,8 +67,8 @@ PushBack(my_list, fn -> T { return T.Make() });
 ### Return type
 
 There are three options for how a lambda expresses its return type, parallel to
-[how function declarations express returns](functions.md#return-clause): using a
-return expression, using an explicit return type, or having no return.
+[how function declarations express returns](functions.md#specifying-return-type-and-return-expressions):
+using a return expression, using an explicit return type, or having no return.
 
 #### Return expression
 
@@ -485,3 +486,8 @@ function fields with a `self` parameter.
 -   [Sigil](/proposals/p003848-lambdas.md#alternative-considered-sigil)
 -   [Additional Positional Parameter Restriction](/proposals/p003848-lambdas.md#alternative-considered-additional-positional-parameter-restriction)
 -   [Recursive Self](/proposals/p003848-lambdas.md#alternative-considered-recursive-self)
+
+## References
+
+-   Proposal
+    [#3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
