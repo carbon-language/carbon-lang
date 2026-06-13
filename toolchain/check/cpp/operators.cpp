@@ -497,188 +497,79 @@ static auto GetCandidateArgType(const clang::ImplicitConversionSequence& ics)
   return {};
 }
 
-// Gets the types of the arguments that C++ overload resolution wanted to pass
-// to the candidate. Returns true on success, false if any argument type
-// couldn't be imported, whether or not an error was produced.
-static auto TryGetCandidateArgTypes(
-    Context& context, SemIR::LocId loc_id,
-    clang::OverloadCandidateSet::iterator candidate,
-    llvm::SmallVectorImpl<SemIR::TypeId>& arg_type_ids) -> bool {
-  for (const auto& conversion : candidate->Conversions) {
-    auto converted_type = GetCandidateArgType(conversion);
-    if (converted_type.isNull()) {
-      return false;
-    }
-    auto arg_type_id = ImportCppType(context, loc_id, converted_type).type_id;
-    if (!arg_type_id.has_value() || arg_type_id == SemIR::ErrorInst::TypeId) {
-      return false;
-    }
-    arg_type_ids.push_back(arg_type_id);
-  }
-  return true;
-}
-
 namespace {
-enum class BuiltinTypeKind { Int, Float, Bool, Other };
-}
+// Information about a C++ overloaded operator that we might map into a Carbon
+// builtin function.
+struct OverloadedOperatorInfo {
+  enum ReturnType { FirstArgType, Bool };
 
-// Returns the kind of type that the given builtin argument represents.
-static auto GetBuiltinTypeKind(Context& context, SemIR::TypeId type_id) {
-  auto object_repr_id = context.types().GetObjectRepr(type_id);
-  if (context.types().Is<SemIR::IntType>(object_repr_id)) {
-    return BuiltinTypeKind::Int;
-  }
-  if (context.types().Is<SemIR::FloatType>(object_repr_id)) {
-    return BuiltinTypeKind::Float;
-  }
-  if (context.types().Is<SemIR::BoolType>(object_repr_id)) {
-    return BuiltinTypeKind::Bool;
-  }
-  return BuiltinTypeKind::Other;
-}
+  // The name for the function used to implement this operator. This is usually
+  // `Op`. This mostly only affects the mangled name, but might show up in
+  // diagnostics.
+  CoreIdentifier op_name = CoreIdentifier::Op;
 
-namespace {
-struct ArithmeticOps {
-  SemIR::BuiltinFunctionKind sint_kind = SemIR::BuiltinFunctionKind::None;
-  SemIR::BuiltinFunctionKind uint_kind = SemIR::BuiltinFunctionKind::None;
-  SemIR::BuiltinFunctionKind float_kind = SemIR::BuiltinFunctionKind::None;
+  // The builtin function used to implement this operator. For now we're only
+  // supporting enum types, so this should be an int builtin.
+  SemIR::BuiltinFunctionKind builtin_kind = SemIR::BuiltinFunctionKind::None;
+
+  // The return type to produce for the overloaded operator.
+  ReturnType return_type;
 };
 }  // namespace
 
-// Builds a Carbon builtin arithmetic operator declaration for a C++ builtin
-// arithmetic operator candidate.
-static auto TryBuildBuiltinArithmeticOperator(
-    Context& context, SemIR::LocId loc_id,
-    clang::OverloadCandidateSet::iterator candidate, ArithmeticOps binary,
-    ArithmeticOps unary = {}) -> SemIR::InstId {
-  llvm::SmallVector<SemIR::TypeId, 2> arg_type_ids;
-  if (!TryGetCandidateArgTypes(context, loc_id, candidate, arg_type_ids)) {
-    return SemIR::InstId::None;
-  }
-  CARBON_CHECK(arg_type_ids.size() == 1 || arg_type_ids.size() == 2);
-  const ArithmeticOps& ops = arg_type_ids.size() == 1 ? unary : binary;
+// Determine what kind of Carbon builtin function should be used to represent
+// the given C++ overloaded operator.
+static auto GetBuiltinOperatorInfo(clang::OverloadedOperatorKind kind)
+    -> OverloadedOperatorInfo {
+  using OperatorTable =
+      std::array<OverloadedOperatorInfo, clang::NUM_OVERLOADED_OPERATORS>;
+  static constexpr OperatorTable OpTable = [] {
+    OperatorTable table = {};
 
-  if (arg_type_ids.size() == 2 && arg_type_ids[0] != arg_type_ids[1]) {
-    // TODO: Should we support non-homogeneous operators?
-    return SemIR::InstId::None;
-  }
+    // Bitwise operators. In C++, the return type is computed with the usual
+    // arithmetic conversions, but we will just use the type of the arguments.
+    table[clang::OO_Amp] = {
+        .builtin_kind = SemIR::BuiltinFunctionKind::IntAnd,
+        .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
+    table[clang::OO_Pipe] = {
+        .builtin_kind = SemIR::BuiltinFunctionKind::IntOr,
+        .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
+    table[clang::OO_Caret] = {
+        .builtin_kind = SemIR::BuiltinFunctionKind::IntXor,
+        .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
+    table[clang::OO_Tilde] = {
+        .builtin_kind = SemIR::BuiltinFunctionKind::IntComplement,
+        .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
 
-  auto builtin_kind = SemIR::BuiltinFunctionKind::None;
-  switch (GetBuiltinTypeKind(context, arg_type_ids[0])) {
-    case BuiltinTypeKind::Int:
-      builtin_kind = context.types().IsSignedInt(arg_type_ids[0])
-                         ? ops.sint_kind
-                         : ops.uint_kind;
-      break;
-    case BuiltinTypeKind::Float:
-      builtin_kind = ops.float_kind;
-      break;
-    case BuiltinTypeKind::Bool:
-    case BuiltinTypeKind::Other:
-      break;
-  }
-  if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
-    return SemIR::InstId::None;
-  }
+    // Comparison operators.
+    table[clang::OO_EqualEqual] = {
+        .op_name = CoreIdentifier::Equal,
+        .builtin_kind = SemIR::BuiltinFunctionKind::IntEq,
+        .return_type = OverloadedOperatorInfo::ReturnType::Bool};
+    table[clang::OO_ExclaimEqual] = {
+        .op_name = CoreIdentifier::NotEqual,
+        .builtin_kind = SemIR::BuiltinFunctionKind::IntNeq,
+        .return_type = OverloadedOperatorInfo::ReturnType::Bool};
+    table[clang::OO_Less] = {
+        .op_name = CoreIdentifier::Less,
+        .builtin_kind = SemIR::BuiltinFunctionKind::IntLess,
+        .return_type = OverloadedOperatorInfo::ReturnType::Bool};
+    table[clang::OO_LessEqual] = {
+        .op_name = CoreIdentifier::LessOrEquivalent,
+        .builtin_kind = SemIR::BuiltinFunctionKind::IntLessEq,
+        .return_type = OverloadedOperatorInfo::ReturnType::Bool};
+    table[clang::OO_Greater] = {
+        .op_name = CoreIdentifier::Greater,
+        .builtin_kind = SemIR::BuiltinFunctionKind::IntGreater,
+        .return_type = OverloadedOperatorInfo::ReturnType::Bool};
+    table[clang::OO_GreaterEqual] = {
+        .op_name = CoreIdentifier::GreaterOrEquivalent,
+        .builtin_kind = SemIR::BuiltinFunctionKind::IntGreaterEq,
+        .return_type = OverloadedOperatorInfo::ReturnType::Bool};
 
-  // C++ applies the usual arithmetic conversions to binary arithmetic
-  // operators, but we always provide the input type as the result type.
-  auto return_type_id = arg_type_ids[0];
-  return MakeBuiltinOperatorFunction(context, arg_type_ids, return_type_id,
-                                     CoreIdentifier::Op, builtin_kind);
-}
-
-// Builds a Carbon builtin bitwise operator declaration for a C++ builtin
-// bitwise operator candidate.
-static auto TryBuildBuiltinBitwiseOperator(
-    Context& context, SemIR::LocId loc_id,
-    clang::OverloadCandidateSet::iterator candidate,
-    SemIR::BuiltinFunctionKind builtin_kind) -> SemIR::InstId {
-  llvm::SmallVector<SemIR::TypeId, 2> arg_type_ids;
-  if (!TryGetCandidateArgTypes(context, loc_id, candidate, arg_type_ids)) {
-    return SemIR::InstId::None;
-  }
-  CARBON_CHECK(arg_type_ids.size() == 1 || arg_type_ids.size() == 2);
-
-  if (arg_type_ids.size() == 2 && arg_type_ids[0] != arg_type_ids[1]) {
-    // TODO: Should we support non-homogeneous operators?
-    return SemIR::InstId::None;
-  }
-
-  if (GetBuiltinTypeKind(context, arg_type_ids[0]) != BuiltinTypeKind::Int) {
-    return SemIR::InstId::None;
-  }
-
-  // C++ applies the usual arithmetic conversions to binary bitwise operators,
-  // but we always provide the input type as the result type.
-  auto return_type_id = arg_type_ids[0];
-  return MakeBuiltinOperatorFunction(context, arg_type_ids, return_type_id,
-                                     CoreIdentifier::Op, builtin_kind);
-}
-
-// Builds a Carbon builtin bit shift operator declaration for a C++ builtin bit
-// shift operator candidate.
-static auto TryBuildBuiltinBitShiftOperator(
-    Context& context, SemIR::LocId loc_id,
-    clang::OverloadCandidateSet::iterator candidate,
-    SemIR::BuiltinFunctionKind builtin_kind) -> SemIR::InstId {
-  llvm::SmallVector<SemIR::TypeId, 2> arg_type_ids;
-  if (!TryGetCandidateArgTypes(context, loc_id, candidate, arg_type_ids)) {
-    return SemIR::InstId::None;
-  }
-  CARBON_CHECK(arg_type_ids.size() == 2);
-
-  if (GetBuiltinTypeKind(context, arg_type_ids[0]) != BuiltinTypeKind::Int ||
-      GetBuiltinTypeKind(context, arg_type_ids[1]) != BuiltinTypeKind::Int) {
-    return SemIR::InstId::None;
-  }
-
-  auto return_type_id = arg_type_ids[0];
-  return MakeBuiltinOperatorFunction(context, arg_type_ids, return_type_id,
-                                     CoreIdentifier::Op, builtin_kind);
-}
-
-// Builds a Carbon builtin comparison function declaration for a C++ builtin
-// comparison candidate.
-static auto TryBuildBuiltinComparisonOperator(
-    Context& context, SemIR::LocId loc_id,
-    clang::OverloadCandidateSet::iterator candidate, CoreIdentifier op_name,
-    SemIR::BuiltinFunctionKind int_kind, SemIR::BuiltinFunctionKind float_kind,
-    SemIR::BuiltinFunctionKind bool_kind) -> SemIR::InstId {
-  llvm::SmallVector<SemIR::TypeId, 2> arg_type_ids;
-  if (!TryGetCandidateArgTypes(context, loc_id, candidate, arg_type_ids)) {
-    return SemIR::InstId::None;
-  }
-  CARBON_CHECK(arg_type_ids.size() == 2);
-
-  auto lhs_kind = GetBuiltinTypeKind(context, arg_type_ids[0]);
-  auto rhs_kind = GetBuiltinTypeKind(context, arg_type_ids[1]);
-  if (lhs_kind != rhs_kind) {
-    return SemIR::InstId::None;
-  }
-
-  auto builtin_kind = SemIR::BuiltinFunctionKind::None;
-  switch (lhs_kind) {
-    case BuiltinTypeKind::Int:
-      builtin_kind = int_kind;
-      break;
-    case BuiltinTypeKind::Float:
-      builtin_kind = float_kind;
-      break;
-    case BuiltinTypeKind::Bool:
-      builtin_kind = bool_kind;
-      break;
-    case BuiltinTypeKind::Other:
-      break;
-  }
-  if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
-    return SemIR::InstId::None;
-  }
-
-  auto return_type_id =
-      context.types().GetTypeIdForTypeInstId(SemIR::BoolType::TypeInstId);
-  return MakeBuiltinOperatorFunction(context, arg_type_ids, return_type_id,
-                                     op_name, builtin_kind);
+    return table;
+  }();
+  return OpTable[kind];
 }
 
 // Builds a Carbon builtin function declaration corresponding to an overload
@@ -688,106 +579,49 @@ static auto TryBuildBuiltinOperator(
     Context& context, SemIR::LocId loc_id,
     clang::OverloadedOperatorKind op_kind,
     clang::OverloadCandidateSet::iterator candidate) -> SemIR::InstId {
-  switch (op_kind) {
-    // Arithmetic.
-    case clang::OO_Plus:
-      return TryBuildBuiltinArithmeticOperator(
-          context, loc_id, candidate,
-          {SemIR::BuiltinFunctionKind::IntSAdd,
-           SemIR::BuiltinFunctionKind::IntUAdd,
-           SemIR::BuiltinFunctionKind::FloatAdd});
-    case clang::OO_Minus:
-      return TryBuildBuiltinArithmeticOperator(
-          context, loc_id, candidate,
-          {SemIR::BuiltinFunctionKind::IntSSub,
-           SemIR::BuiltinFunctionKind::IntUSub,
-           SemIR::BuiltinFunctionKind::FloatSub},
-          {SemIR::BuiltinFunctionKind::IntSNegate,
-           SemIR::BuiltinFunctionKind::IntUNegate,
-           SemIR::BuiltinFunctionKind::FloatNegate});
-    case clang::OO_Star:
-      return TryBuildBuiltinArithmeticOperator(
-          context, loc_id, candidate,
-          {SemIR::BuiltinFunctionKind::IntSMul,
-           SemIR::BuiltinFunctionKind::IntUMul,
-           SemIR::BuiltinFunctionKind::FloatMul});
-    case clang::OO_Slash:
-      return TryBuildBuiltinArithmeticOperator(
-          context, loc_id, candidate,
-          {SemIR::BuiltinFunctionKind::IntSDiv,
-           SemIR::BuiltinFunctionKind::IntUDiv,
-           SemIR::BuiltinFunctionKind::FloatDiv});
-    case clang::OO_Percent:
-      return TryBuildBuiltinArithmeticOperator(
-          context, loc_id, candidate,
-          {SemIR::BuiltinFunctionKind::IntSMod,
-           SemIR::BuiltinFunctionKind::IntUMod});
-
-    // Bitwise.
-    case clang::OO_Amp:
-      return TryBuildBuiltinBitwiseOperator(context, loc_id, candidate,
-                                            SemIR::BuiltinFunctionKind::IntAnd);
-    case clang::OO_Pipe:
-      return TryBuildBuiltinBitwiseOperator(context, loc_id, candidate,
-                                            SemIR::BuiltinFunctionKind::IntOr);
-    case clang::OO_Caret:
-      return TryBuildBuiltinBitwiseOperator(context, loc_id, candidate,
-                                            SemIR::BuiltinFunctionKind::IntXor);
-    case clang::OO_Tilde:
-      return TryBuildBuiltinBitwiseOperator(
-          context, loc_id, candidate,
-          SemIR::BuiltinFunctionKind::IntComplement);
-
-    // Bit shift.
-    case clang::OO_LessLess:
-      return TryBuildBuiltinBitShiftOperator(
-          context, loc_id, candidate, SemIR::BuiltinFunctionKind::IntLeftShift);
-    case clang::OO_GreaterGreater:
-      return TryBuildBuiltinBitShiftOperator(
-          context, loc_id, candidate,
-          SemIR::BuiltinFunctionKind::IntRightShift);
-
-    // Comparisons.
-    case clang::OO_EqualEqual:
-      return TryBuildBuiltinComparisonOperator(
-          context, loc_id, candidate, CoreIdentifier::Equal,
-          SemIR::BuiltinFunctionKind::IntEq,
-          SemIR::BuiltinFunctionKind::FloatEq,
-          SemIR::BuiltinFunctionKind::BoolEq);
-    case clang::OO_ExclaimEqual:
-      return TryBuildBuiltinComparisonOperator(
-          context, loc_id, candidate, CoreIdentifier::NotEqual,
-          SemIR::BuiltinFunctionKind::IntNeq,
-          SemIR::BuiltinFunctionKind::FloatNeq,
-          SemIR::BuiltinFunctionKind::BoolNeq);
-    case clang::OO_Less:
-      return TryBuildBuiltinComparisonOperator(
-          context, loc_id, candidate, CoreIdentifier::Less,
-          SemIR::BuiltinFunctionKind::IntLess,
-          SemIR::BuiltinFunctionKind::FloatLess,
-          SemIR::BuiltinFunctionKind::None);
-    case clang::OO_LessEqual:
-      return TryBuildBuiltinComparisonOperator(
-          context, loc_id, candidate, CoreIdentifier::LessOrEquivalent,
-          SemIR::BuiltinFunctionKind::IntLessEq,
-          SemIR::BuiltinFunctionKind::FloatLessEq,
-          SemIR::BuiltinFunctionKind::None);
-    case clang::OO_Greater:
-      return TryBuildBuiltinComparisonOperator(
-          context, loc_id, candidate, CoreIdentifier::Greater,
-          SemIR::BuiltinFunctionKind::IntGreater,
-          SemIR::BuiltinFunctionKind::FloatGreater,
-          SemIR::BuiltinFunctionKind::None);
-    case clang::OO_GreaterEqual:
-      return TryBuildBuiltinComparisonOperator(
-          context, loc_id, candidate, CoreIdentifier::GreaterOrEquivalent,
-          SemIR::BuiltinFunctionKind::IntGreaterEq,
-          SemIR::BuiltinFunctionKind::FloatGreaterEq,
-          SemIR::BuiltinFunctionKind::None);
-
-    default:
-      return SemIR::InstId::None;
+  auto info = GetBuiltinOperatorInfo(op_kind);
+  if (info.builtin_kind == SemIR::BuiltinFunctionKind::None) {
+    return SemIR::InstId::None;
   }
+
+  // Import the argument types. For now, we only accept enum types.
+  // TODO: Consider expanding this to other types.
+  llvm::SmallVector<SemIR::TypeId, 2> arg_type_ids;
+  for (const auto& conversion : candidate->Conversions) {
+    auto converted_type = GetCandidateArgType(conversion);
+    if (converted_type.isNull()) {
+      return SemIR::InstId::None;
+    }
+    if (!converted_type->isEnumeralType()) {
+      return SemIR::InstId::None;
+    }
+    auto arg_type_id = ImportCppType(context, loc_id, converted_type).type_id;
+    if (!arg_type_id.has_value() || arg_type_id == SemIR::ErrorInst::TypeId) {
+      return SemIR::InstId::None;
+    }
+    arg_type_ids.push_back(arg_type_id);
+  }
+  CARBON_CHECK(arg_type_ids.size() == 1 || arg_type_ids.size() == 2);
+
+  // For now we only accept homogeneous operators.
+  if (arg_type_ids.size() == 2 && arg_type_ids[0] != arg_type_ids[1]) {
+    return SemIR::InstId::None;
+  }
+
+  // Compute the return type.
+  auto return_type_id = SemIR::TypeId::None;
+  switch (info.return_type) {
+    case OverloadedOperatorInfo::FirstArgType:
+      return_type_id = arg_type_ids[0];
+      break;
+    case OverloadedOperatorInfo::Bool:
+      return_type_id =
+          context.types().GetTypeIdForTypeInstId(SemIR::BoolType::TypeInstId);
+      break;
+  }
+
+  return MakeBuiltinOperatorFunction(context, arg_type_ids, return_type_id,
+                                     info.op_name, info.builtin_kind);
 }
 
 namespace {

@@ -44,7 +44,6 @@ static auto GetFacetAsType(Context& context,
   return context.types().GetTypeIdForTypeInstId(facet_or_type_id);
 }
 
-
 // Returns a manufactured operator function.
 auto MakeBuiltinOperatorFunction(Context& context,
                                  llvm::ArrayRef<SemIR::TypeId> param_types,

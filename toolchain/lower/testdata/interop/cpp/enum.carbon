@@ -74,11 +74,21 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "bitmask.h";
 
-// TODO: We should be able to use `|` below rather than declaring our own builtin.
-fn BitOr(a: Cpp.Bits, b: Cpp.Bits) -> Cpp.Bits = "int.or";
+fn CompileTime() {
+  Cpp.Take(Cpp.A & Cpp.C);
+  Cpp.Take(Cpp.A | Cpp.C);
+  Cpp.Take(Cpp.A ^ Cpp.C);
+  Cpp.Take(^Cpp.A);
+}
 
-fn Call() {
-  Cpp.Take(BitOr(Cpp.A, Cpp.C));
+fn Runtime(a: Cpp.Bits, b: Cpp.Bits) {
+  Cpp.Take(a & b);
+  Cpp.Take(a | b);
+  Cpp.Take(a ^ b);
+  // TODO: This produces a value with bits set that are not in the range of
+  // representable values of the enumeration. Should we produce `^a & 7`
+  // instead?
+  Cpp.Take(^a);
 }
 
 // --- compare.carbon
@@ -340,13 +350,33 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall.Main() #0 !dbg !11 {
+// CHECK:STDOUT: define void @_CCompileTime.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 5), !dbg !14
-// CHECK:STDOUT:   ret void, !dbg !15
+// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 0), !dbg !14
+// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 5), !dbg !15
+// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 5), !dbg !16
+// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 -2), !dbg !17
+// CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z4Take4Bits(i32 noundef) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CRuntime.Main(i32 %a, i32 %b) #0 !dbg !19 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %Op.call.loc14 = and i32 %a, %b, !dbg !26
+// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 %Op.call.loc14), !dbg !27
+// CHECK:STDOUT:   %Op.call.loc15 = or i32 %a, %b, !dbg !28
+// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 %Op.call.loc15), !dbg !29
+// CHECK:STDOUT:   %Op.call.loc16 = xor i32 %a, %b, !dbg !30
+// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 %Op.call.loc16), !dbg !31
+// CHECK:STDOUT:   %Op.call.loc20 = xor i32 -1, %a, !dbg !32
+// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 %Op.call.loc20), !dbg !33
+// CHECK:STDOUT:   ret void, !dbg !34
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @_Z4Take4Bits, { 0, 1, 2, 3, 7, 6, 5, 4 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -366,11 +396,30 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 9, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "CompileTime", linkageName: "_CCompileTime.Main", scope: null, file: !6, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
-// CHECK:STDOUT: !14 = !DILocation(line: 10, column: 3, scope: !11)
-// CHECK:STDOUT: !15 = !DILocation(line: 9, column: 1, scope: !11)
+// CHECK:STDOUT: !14 = !DILocation(line: 7, column: 3, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 8, column: 3, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 9, column: 3, scope: !11)
+// CHECK:STDOUT: !17 = !DILocation(line: 10, column: 3, scope: !11)
+// CHECK:STDOUT: !18 = !DILocation(line: 6, column: 1, scope: !11)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Runtime", linkageName: "_CRuntime.Main", scope: null, file: !6, line: 13, type: !20, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !23)
+// CHECK:STDOUT: !20 = !DISubroutineType(types: !21)
+// CHECK:STDOUT: !21 = !{null, !22, !22}
+// CHECK:STDOUT: !22 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_unsigned)
+// CHECK:STDOUT: !23 = !{!24, !25}
+// CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !19, type: !22)
+// CHECK:STDOUT: !25 = !DILocalVariable(arg: 2, scope: !19, type: !22)
+// CHECK:STDOUT: !26 = !DILocation(line: 14, column: 12, scope: !19)
+// CHECK:STDOUT: !27 = !DILocation(line: 14, column: 3, scope: !19)
+// CHECK:STDOUT: !28 = !DILocation(line: 15, column: 12, scope: !19)
+// CHECK:STDOUT: !29 = !DILocation(line: 15, column: 3, scope: !19)
+// CHECK:STDOUT: !30 = !DILocation(line: 16, column: 12, scope: !19)
+// CHECK:STDOUT: !31 = !DILocation(line: 16, column: 3, scope: !19)
+// CHECK:STDOUT: !32 = !DILocation(line: 20, column: 12, scope: !19)
+// CHECK:STDOUT: !33 = !DILocation(line: 20, column: 3, scope: !19)
+// CHECK:STDOUT: !34 = !DILocation(line: 13, column: 1, scope: !19)
 // CHECK:STDOUT: ; ModuleID = 'compare.carbon'
 // CHECK:STDOUT: source_filename = "compare.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
