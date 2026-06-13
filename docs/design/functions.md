@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Function definitions](#function-definitions)
     -   [Return clause](#return-clause)
     -   [`return` statements](#return-statements)
+    -   [Unused parameters](#unused-parameters)
 -   [Function declarations](#function-declarations)
 -   [Function types and values](#function-types-and-values)
     -   [Bound methods](#bound-methods)
@@ -117,6 +118,42 @@ statement must have an expression that is convertible to the return type, and a
 
 > **TODO:** Update this section to cover the requirements on the form of the
 > expression.
+
+### Unused parameters
+
+When a parameter introduced in a function definition is not used in the function
+body, a compiler warning is issued. To suppress this warning, a parameter can be
+explicitly marked as unused in one of two ways:
+
+-   **Anonymous parameters**: By using `_` in place of the parameter name (for
+    example, `_: i32`).
+-   **`unused` parameters**: By preceding the parameter name with the `unused`
+    keyword (for example, `unused size: i32`), which allows preserving the
+    parameter name for documentation purposes.
+
+Both of these forms are patterns. For more details on the behavior of `unused`
+name bindings and patterns, see the
+[pattern matching design](pattern_matching.md#unused).
+
+For example:
+
+```carbon
+// Function declaration (for example, in an API file)
+fn Sum(x: List(i32), size: i32) -> i32;
+
+// Implementation that does not use the `size` parameter, using an
+// anonymous parameter:
+fn Sum(x: List(i32), _: i32) -> i32 { ... }
+
+// Or using the `unused` keyword to keep the name for documentation:
+fn Sum(x: List(i32), unused size: i32) -> i32 { ... }
+```
+
+As specified in
+[Matching redeclarations](/proposals/p003763-matching-redeclarations.md),
+`unused` markers may only appear on definitions, not on non-defining
+declarations. The names of parameters must match between redeclarations, but the
+presence of the `unused` marker does not need to match.
 
 ## Function declarations
 
@@ -405,5 +442,7 @@ Other designs build upon basic function syntax to add advanced features:
     [#438: Add statement syntax for function declarations](https://github.com/carbon-language/carbon-lang/pull/438)
 -   Proposal
     [#826: Function return type inference](https://github.com/carbon-language/carbon-lang/pull/826)
+-   Proposal
+    [#2022: Unused Pattern Bindings (Unused Function Parameters)](https://github.com/carbon-language/carbon-lang/pull/2022)
 -   Proposal
     [#2875: Functions, function types, and function calls](https://github.com/carbon-language/carbon-lang/pull/2875)
