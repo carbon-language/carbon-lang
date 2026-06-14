@@ -24,12 +24,18 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT: --- pointer_to_pointer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.d47: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T.67d [symbolic]
 // CHECK:STDOUT:   %ptr.125: type = ptr_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %pattern_type.8bb: type = pattern_type %ptr.125 [symbolic]
+// CHECK:STDOUT:   %p.param_patt: %pattern_type.8bb = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %p.patt: %pattern_type.8bb = at_binding_pattern p, %p.param_patt [symbolic]
 // CHECK:STDOUT:   %.cb6: Core.Form = init_form %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
+// CHECK:STDOUT:   %return.param_patt.27f: %pattern_type.4f4 = out_param_pattern [symbolic]
+// CHECK:STDOUT:   %return.patt.d67: %pattern_type.4f4 = return_slot_pattern %return.param_patt.27f, %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.1da: <witness> = lookup_impl_witness %ptr.e8f, @Copy [symbolic]
 // CHECK:STDOUT:   %.0e9: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.67d) [symbolic]
@@ -68,11 +74,16 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67d) {
+// CHECK:STDOUT:   %T.patt.loc4_7.2 => constants.%T.patt.d47
 // CHECK:STDOUT:   %T.loc4_7.1 => constants.%T.67d
 // CHECK:STDOUT:   %ptr.loc4_20.1 => constants.%ptr.e8f
 // CHECK:STDOUT:   %ptr.loc4_21.1 => constants.%ptr.125
 // CHECK:STDOUT:   %pattern_type.loc4_17 => constants.%pattern_type.8bb
+// CHECK:STDOUT:   %p.param_patt.loc4_17.2 => constants.%p.param_patt
+// CHECK:STDOUT:   %p.patt.loc4_17.2 => constants.%p.patt
 // CHECK:STDOUT:   %.loc4_28.1 => constants.%.cb6
 // CHECK:STDOUT:   %pattern_type.loc4_28 => constants.%pattern_type.4f4
+// CHECK:STDOUT:   %return.param_patt.loc4_28.2 => constants.%return.param_patt.27f
+// CHECK:STDOUT:   %return.patt.loc4_24.2 => constants.%return.patt.d67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

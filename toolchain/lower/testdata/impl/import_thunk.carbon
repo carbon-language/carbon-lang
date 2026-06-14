@@ -103,14 +103,14 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: define void @"_CF:thunk:I.4b54445be9b10a0e.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc20_19.1.temp = alloca { i32 }, align 4, !dbg !28
-// CHECK:STDOUT:   %.loc16_9.1.temp = alloca { i32 }, align 4, !dbg !29
+// CHECK:STDOUT:   %.4.temp = alloca { i32 }, align 4, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_19.1.temp), !dbg !28
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_9.1.temp), !dbg !29
-// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc16_9.1.temp, ptr %a), !dbg !29
-// CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc20_19.1.temp, ptr %.loc16_9.1.temp), !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.4.temp), !dbg !29
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.4.temp, ptr %a), !dbg !29
+// CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc20_19.1.temp, ptr %.4.temp), !dbg !28
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc20_19.1.temp), !dbg !28
 // CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.loc20_19.1.temp), !dbg !28
-// CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.loc16_9.1.temp), !dbg !29
+// CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.4.temp), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -175,7 +175,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !26 = !{!27}
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !7)
 // CHECK:STDOUT: !28 = !DILocation(line: 20, column: 3, scope: !25)
-// CHECK:STDOUT: !29 = !DILocation(line: 16, column: 8, scope: !25)
+// CHECK:STDOUT: !29 = !DILocation(line: 0, scope: !25)
 // CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !3, line: 20, type: !31, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !34)
 // CHECK:STDOUT: !31 = !DISubroutineType(types: !32)
 // CHECK:STDOUT: !32 = !{null, !33}
@@ -299,14 +299,14 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: define void @"_CF:thunk:I.c81631f865470482.Main:X.Main:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_19.1.temp = alloca { i32 }, align 4, !dbg !16
-// CHECK:STDOUT:   %.2.temp = alloca { i32 }, align 4
+// CHECK:STDOUT:   %.4.temp = alloca { i32 }, align 4, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_19.1.temp), !dbg !16
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.2.temp)
-// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.2.temp, ptr %a), !dbg !17
-// CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc9_19.1.temp, ptr %.2.temp), !dbg !16
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.4.temp), !dbg !17
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.4.temp, ptr %a), !dbg !17
+// CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc9_19.1.temp, ptr %.4.temp), !dbg !16
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc9_19.1.temp), !dbg !16
 // CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.loc9_19.1.temp), !dbg !16
-// CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.2.temp), !dbg !17
+// CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %.4.temp), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -363,7 +363,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !13, type: !7)
 // CHECK:STDOUT: !16 = !DILocation(line: 9, column: 3, scope: !13)
-// CHECK:STDOUT: !17 = !DILocation(line: 4294967295, scope: !13)
+// CHECK:STDOUT: !17 = !DILocation(line: 0, scope: !13)
 // CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !3, line: 9, type: !19, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !22)
 // CHECK:STDOUT: !19 = !DISubroutineType(types: !20)
 // CHECK:STDOUT: !20 = !{null, !21}

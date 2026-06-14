@@ -705,7 +705,7 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %.loc8_13 {
 // CHECK:STDOUT:   %C.as.I.impl.F.decl: %C.as.I.impl.F.type = fn_decl @C.as.I.impl.F [concrete = constants.%C.as.I.impl.F] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete]
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.I.impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [concrete = constants.%Incomplete.type]
@@ -796,6 +796,7 @@ interface B {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %X_where.type: type = facet_type <@X where %impl.elem0 = %empty_struct_type> [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %X_where.type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %X_where.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -812,7 +813,7 @@ interface B {
 // CHECK:STDOUT:   %Y.decl: type = constraint_decl @Y [concrete = constants.%Y.type] {} {}
 // CHECK:STDOUT:   %X.decl: type = interface_decl @X [concrete = constants.%X.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc16_14.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_19.1: type = splice_block %.loc16_19.2 [concrete = constants.%X_where.type] {
 // CHECK:STDOUT:       %.Self.loc16_14: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
@@ -898,6 +899,7 @@ interface B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc16_14.2: %X_where.type) {
+// CHECK:STDOUT:   %T.patt.loc16_14.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc16_14.1: %X_where.type = symbolic_binding T, 0 [symbolic = %T.loc16_14.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -938,6 +940,7 @@ interface B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc16_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc16_14.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

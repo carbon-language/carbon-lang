@@ -34,7 +34,9 @@ fn F() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Enum: type = class_type @Enum [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Enum [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   %int_0: %Enum = int_value 0 [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   %int_1: %Enum = int_value 1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -56,7 +58,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Enum.ref.loc8_31: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
@@ -67,7 +69,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %Enum = value_binding a, %a.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %b.ref: %Enum = name_ref b, imports.%int_1 [concrete = constants.%int_1]

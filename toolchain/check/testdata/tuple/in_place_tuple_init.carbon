@@ -62,6 +62,8 @@ fn H() {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
+// CHECK:STDOUT:   %v.patt: %pattern_type.394 = ref_binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.var_patt: %pattern_type.394 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc7_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
@@ -85,8 +87,8 @@ fn H() {
 // CHECK:STDOUT: fn @G() -> out %return.param: %tuple.type.e55 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.394 = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.394 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.394 = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.394 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %tuple.type.e55 = var %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc7: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
@@ -160,12 +162,16 @@ fn H() {
 // CHECK:STDOUT:   %tuple.type.015: type = tuple_type (%tuple.type.555, %tuple.type.555) [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %pattern_type.e12: type = pattern_type %tuple.type.015 [concrete]
+// CHECK:STDOUT:   %v.patt.dde: %pattern_type.e12 = ref_binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.var_patt.678: %pattern_type.e12 = var_pattern %v.patt.dde [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc7_3.4 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.type.3a3: type = tuple_type (type, %tuple.type.ff9, type) [concrete]
 // CHECK:STDOUT:   %tuple.82e: %tuple.type.3a3 = tuple_value (%i32, %tuple.04d, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.b7e: type = tuple_type (%i32, %tuple.type.555, %i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.f8e: type = pattern_type %tuple.type.b7e [concrete]
+// CHECK:STDOUT:   %v.patt.7e2: %pattern_type.f8e = ref_binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.var_patt.409: %pattern_type.f8e = var_pattern %v.patt.7e2 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %tuple.type.c47: type = tuple_type (Core.IntLiteral, %tuple.type.555, Core.IntLiteral) [concrete]
@@ -198,8 +204,8 @@ fn H() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.e12 = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.e12 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.e12 = ref_binding_pattern v [concrete = constants.%v.patt.dde]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.e12 = var_pattern %v.patt [concrete = constants.%v.var_patt.678]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %tuple.type.015 = var %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc7_55: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
@@ -252,8 +258,8 @@ fn H() {
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.f8e = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.f8e = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.f8e = ref_binding_pattern v [concrete = constants.%v.patt.7e2]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.f8e = var_pattern %v.patt [concrete = constants.%v.var_patt.409]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %tuple.type.b7e = var %v.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]

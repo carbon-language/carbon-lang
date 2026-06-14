@@ -142,6 +142,7 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %Eats.WithSelf.Eat.type.618: type = fn_type @Eats.WithSelf.Eat, @Eats.WithSelf(%Eats.facet) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.283: type = pattern_type %Goat [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.283 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Goat.val: %Goat = struct_value () [concrete]
 // CHECK:STDOUT:   %.4ea: ref %Goat = temporary invalid, %Goat.val [concrete]
@@ -154,13 +155,15 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.283 = value_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.283 = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_28.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Goat.ref.loc22_33: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %.loc22_28.2: ref %Goat = temporary_storage
 // CHECK:STDOUT:   %.loc22_28.3: init %Goat to %.loc22_28.2 = class_init () [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %.loc22_30.1: init %Goat = converted %.loc22_28.1, %.loc22_28.3 [concrete = constants.%Goat.val]
+// CHECK:STDOUT:   %.loc22_30.2: ref %Goat = temporary %.loc22_28.2, %.loc22_30.1 [concrete = constants.%.4ea]
+// CHECK:STDOUT:   %.loc22_30.3: %Goat = acquire_value %.loc22_30.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %.loc22_15.1: type = splice_block %.loc22_15.3 [concrete = constants.%Goat] {
 // CHECK:STDOUT:     %Goat.ref.loc22_10: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Animal.ref.loc22: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
@@ -169,8 +172,6 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:     %as_type.loc22: type = facet_access_type %.loc22_15.2 [concrete = constants.%Goat]
 // CHECK:STDOUT:     %.loc22_15.3: type = converted %.loc22_15.2, %as_type.loc22 [concrete = constants.%Goat]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22_30.2: ref %Goat = temporary %.loc22_28.2, %.loc22_30.1 [concrete = constants.%.4ea]
-// CHECK:STDOUT:   %.loc22_30.3: %Goat = acquire_value %.loc22_30.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %x: %Goat = value_binding x, %.loc22_30.3
 // CHECK:STDOUT:   %x.ref.loc23: %Goat = name_ref x, %x
 // CHECK:STDOUT:   %Bleet.ref.loc23: %Goat.Bleet.type = name_ref Bleet, @Goat.%Goat.Bleet.decl [concrete = constants.%Goat.Bleet]
@@ -225,15 +226,20 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
+// CHECK:STDOUT:   %pattern_type.2c5: type = pattern_type %J.type [concrete]
+// CHECK:STDOUT:   %A.patt: %pattern_type.2c5 = symbolic_binding_pattern A, 0 [symbolic]
 // CHECK:STDOUT:   %A: %J.type = symbolic_binding A, 0 [symbolic]
 // CHECK:STDOUT:   %A.as_type: type = facet_access_type %A [symbolic]
 // CHECK:STDOUT:   %pattern_type.76a: type = pattern_type %A.as_type [symbolic]
+// CHECK:STDOUT:   %B.patt: %pattern_type.76a = symbolic_binding_pattern B, 1 [symbolic]
 // CHECK:STDOUT:   %B: %A.as_type = symbolic_binding B, 1 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%A, %B) [symbolic]
 // CHECK:STDOUT:   %pattern_type.bac: type = pattern_type %C [symbolic]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.bac = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %x.patt.390072.2: %pattern_type.bac = at_binding_pattern x, %x.param_patt [symbolic]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%A, %B) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -255,11 +261,15 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%A, constants.%B) {
+// CHECK:STDOUT:   %A.patt.loc25_7.2 => constants.%A.patt
 // CHECK:STDOUT:   %A.loc25_7.1 => constants.%A
 // CHECK:STDOUT:   %A.as_type.loc25_17.1 => constants.%A.as_type
-// CHECK:STDOUT:   %B.loc25_14.1 => constants.%B
 // CHECK:STDOUT:   %pattern_type.loc25_14 => constants.%pattern_type.76a
+// CHECK:STDOUT:   %B.patt.loc25_14.2 => constants.%B.patt
+// CHECK:STDOUT:   %B.loc25_14.1 => constants.%B
 // CHECK:STDOUT:   %C.loc25_29.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type.loc25_21 => constants.%pattern_type.bac
+// CHECK:STDOUT:   %x.param_patt.loc25_21.2 => constants.%x.param_patt
+// CHECK:STDOUT:   %x.patt.loc25_21.2 => constants.%x.patt.390072.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

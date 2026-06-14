@@ -43,6 +43,8 @@ fn Run() {
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.f15: type = pattern_type %Class [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.f15 = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type.f15 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
@@ -73,6 +75,8 @@ fn Run() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.9f3: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
 // CHECK:STDOUT:   %bound_method.3cb: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.295: %i32 = int_value 2 [concrete]
+// CHECK:STDOUT:   %cj.patt: %pattern_type.6b6 = ref_binding_pattern cj [concrete]
+// CHECK:STDOUT:   %cj.var_patt: %pattern_type.6b6 = var_pattern %cj.patt [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
@@ -83,6 +87,8 @@ fn Run() {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.d09: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.7a6: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d09, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %ck.patt: %pattern_type.6b6 = ref_binding_pattern ck [concrete]
+// CHECK:STDOUT:   %ck.var_patt: %pattern_type.6b6 = var_pattern %ck.patt [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc25_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
@@ -139,8 +145,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.f15 = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.f15 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.f15 = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.f15 = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Class = var %c.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%Class, (constants.%DefaultOrUnformed.impl_witness.4e8) [concrete = constants.%DefaultOrUnformed.facet]
@@ -176,8 +182,8 @@ fn Run() {
 // CHECK:STDOUT:   %.loc23_7: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc23 [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   assign %.loc23_4, %.loc23_7
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %cj.patt: %pattern_type.6b6 = ref_binding_pattern cj [concrete]
-// CHECK:STDOUT:     %cj.var_patt: %pattern_type.6b6 = var_pattern %cj.patt [concrete]
+// CHECK:STDOUT:     %cj.patt: %pattern_type.6b6 = ref_binding_pattern cj [concrete = constants.%cj.patt]
+// CHECK:STDOUT:     %cj.var_patt: %pattern_type.6b6 = var_pattern %cj.patt [concrete = constants.%cj.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cj.var: ref %i32 = var %cj.var_patt
 // CHECK:STDOUT:   %c.ref.loc24: ref %Class = name_ref c, %c
@@ -193,8 +199,8 @@ fn Run() {
 // CHECK:STDOUT:   %i32.loc24: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %cj: ref %i32 = ref_binding cj, %cj.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %ck.patt: %pattern_type.6b6 = ref_binding_pattern ck [concrete]
-// CHECK:STDOUT:     %ck.var_patt: %pattern_type.6b6 = var_pattern %ck.patt [concrete]
+// CHECK:STDOUT:     %ck.patt: %pattern_type.6b6 = ref_binding_pattern ck [concrete = constants.%ck.patt]
+// CHECK:STDOUT:     %ck.var_patt: %pattern_type.6b6 = var_pattern %ck.patt [concrete = constants.%ck.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ck.var: ref %i32 = var %ck.var_patt
 // CHECK:STDOUT:   %c.ref.loc25: ref %Class = name_ref c, %c

@@ -168,6 +168,8 @@ fn F() {
 // CHECK:STDOUT: --- fail_nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %pattern_type: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %B.patt: %pattern_type = symbolic_binding_pattern B, 0 [symbolic]
 // CHECK:STDOUT:   %B.a76: bool = symbolic_binding B, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
@@ -180,6 +182,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(<unexpected>.inst{{[0-9A-F]+}}.loc4_15: bool) {
+// CHECK:STDOUT:   %B.patt.loc4_15.2: %pattern_type = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc4_15.2 (constants.%B.patt)]
 // CHECK:STDOUT:   %B: bool = symbolic_binding B, 0 [symbolic = %B (constants.%B.a76)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -209,6 +212,7 @@ fn F() {
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%B.a76) {
+// CHECK:STDOUT:   %B.patt.loc4_15.2 => constants.%B.patt
 // CHECK:STDOUT:   %B => constants.%B.a76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

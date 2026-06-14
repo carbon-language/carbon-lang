@@ -37,6 +37,8 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %pattern_type.3fa: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.3fa = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.3fa = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %X.type: type = cpp_type_template_type X [concrete]
 // CHECK:STDOUT:   %X.template: %X.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
@@ -71,8 +73,8 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3fa = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.3fa = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.3fa = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.3fa = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7: type = splice_block %A.ref [concrete = constants.%A] {

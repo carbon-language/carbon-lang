@@ -21,14 +21,16 @@ var x: {.v: ()} = {.v = ()};
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.v [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.v = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.267: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.v = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc14_15: type = splice_block %struct_type.v [concrete = constants.%struct_type.v] {

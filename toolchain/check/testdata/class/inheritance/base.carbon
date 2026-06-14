@@ -68,6 +68,8 @@ class Derived {
 // CHECK:STDOUT:   %complete_type.2d7: <witness> = complete_type_witness %struct_type.base.d.90a [concrete]
 // CHECK:STDOUT:   %.2c5: Core.Form = init_form %Derived [concrete]
 // CHECK:STDOUT:   %pattern_type.4fd: type = pattern_type %Derived [concrete]
+// CHECK:STDOUT:   %return.param_patt.0bc: %pattern_type.4fd = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.e0c: %pattern_type.4fd = return_slot_pattern %return.param_patt.0bc, %Derived [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
@@ -99,11 +101,15 @@ class Derived {
 // CHECK:STDOUT:   %bound_method.7ff: <bound method> = bound_method %int_7.29f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_7.690: %i32 = int_value 7 [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%Base.val, %int_7.690) [concrete]
+// CHECK:STDOUT:   %d.param_patt: %pattern_type.4fd = value_param_pattern [concrete]
+// CHECK:STDOUT:   %d.patt.ad5: %pattern_type.4fd = at_binding_pattern d, %d.param_patt [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.b59: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.e55: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %.c11: Core.Form = init_form %tuple.type.e55 [concrete]
 // CHECK:STDOUT:   %pattern_type.394: type = pattern_type %tuple.type.e55 [concrete]
+// CHECK:STDOUT:   %return.param_patt.a90: %pattern_type.394 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.2ed: %pattern_type.394 = return_slot_pattern %return.param_patt.a90, %tuple.type.e55 [concrete]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [concrete]
 // CHECK:STDOUT:   %Access: %Access.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -147,8 +153,8 @@ class Derived {
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.4fd = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.4fd = return_slot_pattern %return.param_patt, %Derived.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.4fd = out_param_pattern [concrete = constants.%return.param_patt.0bc]
+// CHECK:STDOUT:     %return.patt: %pattern_type.4fd = return_slot_pattern %return.param_patt, %Derived.ref [concrete = constants.%return.patt.e0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:     %.loc13: Core.Form = init_form %Derived.ref [concrete = constants.%.2c5]
@@ -156,10 +162,10 @@ class Derived {
 // CHECK:STDOUT:     %return: ref %Derived = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
-// CHECK:STDOUT:     %d.param_patt: %pattern_type.4fd = value_param_pattern [concrete]
-// CHECK:STDOUT:     %d.patt: %pattern_type.4fd = at_binding_pattern d, %d.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.394 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.394 = return_slot_pattern %return.param_patt, %.loc17_35.2 [concrete]
+// CHECK:STDOUT:     %d.param_patt: %pattern_type.4fd = value_param_pattern [concrete = constants.%d.param_patt]
+// CHECK:STDOUT:     %d.patt: %pattern_type.4fd = at_binding_pattern d, %d.param_patt [concrete = constants.%d.patt.ad5]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.394 = out_param_pattern [concrete = constants.%return.param_patt.a90]
+// CHECK:STDOUT:     %return.patt: %pattern_type.394 = return_slot_pattern %return.param_patt, %.loc17_35.2 [concrete = constants.%return.patt.2ed]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc17_27: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc17_32: type = type_literal constants.%i32 [concrete = constants.%i32]

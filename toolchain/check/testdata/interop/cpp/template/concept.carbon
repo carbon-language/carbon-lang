@@ -46,6 +46,8 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:   %X.Make.type.243: type = fn_type @X.Make, @X(%false) [concrete]
 // CHECK:STDOUT:   %X.Make.d05: %X.Make.type.243 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.26c: type = pattern_type %X.541 [concrete]
+// CHECK:STDOUT:   %x1.patt: %pattern_type.26c = ref_binding_pattern x1 [concrete]
+// CHECK:STDOUT:   %x1.var_patt: %pattern_type.26c = var_pattern %x1.patt [concrete]
 // CHECK:STDOUT:   %X.Make.specific_fn.932: <specific function> = specific_function %X.Make.d05, @X.Make(%false) [concrete]
 // CHECK:STDOUT:   %Large: type = class_type @Large [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
@@ -53,6 +55,8 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:   %X.Make.type.4b0: type = fn_type @X.Make, @X(%true) [concrete]
 // CHECK:STDOUT:   %X.Make.42d: %X.Make.type.4b0 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.795: type = pattern_type %X.7b4 [concrete]
+// CHECK:STDOUT:   %x2.patt: %pattern_type.795 = ref_binding_pattern x2 [concrete]
+// CHECK:STDOUT:   %x2.var_patt: %pattern_type.795 = var_pattern %x2.patt [concrete]
 // CHECK:STDOUT:   %X.Make.specific_fn.8a7: <specific function> = specific_function %X.Make.42d, @X.Make(%true) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -70,8 +74,8 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x1.patt: %pattern_type.26c = ref_binding_pattern x1 [concrete]
-// CHECK:STDOUT:     %x1.var_patt: %pattern_type.26c = var_pattern %x1.patt [concrete]
+// CHECK:STDOUT:     %x1.patt: %pattern_type.26c = ref_binding_pattern x1 [concrete = constants.%x1.patt]
+// CHECK:STDOUT:     %x1.var_patt: %pattern_type.26c = var_pattern %x1.patt [concrete = constants.%x1.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x1.var: ref %X.541 = var %x1.var_patt [concrete]
 // CHECK:STDOUT:   %.loc11: type = splice_block %X.loc11 [concrete = constants.%X.541] {
@@ -85,8 +89,8 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x1: ref %X.541 = ref_binding x1, %x1.var [concrete = %x1.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x2.patt: %pattern_type.795 = ref_binding_pattern x2 [concrete]
-// CHECK:STDOUT:     %x2.var_patt: %pattern_type.795 = var_pattern %x2.patt [concrete]
+// CHECK:STDOUT:     %x2.patt: %pattern_type.795 = ref_binding_pattern x2 [concrete = constants.%x2.patt]
+// CHECK:STDOUT:     %x2.var_patt: %pattern_type.795 = var_pattern %x2.patt [concrete = constants.%x2.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x2.var: ref %X.7b4 = var %x2.var_patt [concrete]
 // CHECK:STDOUT:   %.loc12: type = splice_block %X.loc12 [concrete = constants.%X.7b4] {

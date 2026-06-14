@@ -62,6 +62,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.335: type = generic_interface_type @I [concrete]
 // CHECK:STDOUT:   %I.generic: %I.type.335 = struct_value () [concrete]
@@ -69,6 +70,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self: %I.type.3fe = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.b82: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %self.param_patt: %pattern_type.b82 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %self.patt: %pattern_type.b82 = at_binding_pattern self, %self.param_patt [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%T, %Self) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F: %I.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%T) [symbolic]
@@ -88,7 +91,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: %I.type.335 = interface_decl @I [concrete = constants.%I.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc4_14.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -97,7 +100,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     %T.loc4_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc5_10.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5_13.1: type = splice_block %.loc5_13.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -109,6 +112,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @I(%T.loc4_14.2: type) {
+// CHECK:STDOUT:   %T.patt.loc4_14.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc4_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -121,8 +125,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F)] {
-// CHECK:STDOUT:       %self.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = value_param_pattern [concrete]
-// CHECK:STDOUT:       %self.patt: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:       %self.param_patt.loc4_30.1: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = value_param_pattern [symbolic = %self.param_patt.loc4_30.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:       %self.patt.loc4_30.1: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = at_binding_pattern self, %self.param_patt.loc4_30.1 [symbolic = %self.patt.loc4_30.2 (constants.%self.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @I.WithSelf.F.%Self.as_type.loc4_30.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc4_30.1: type = splice_block %.loc4_30.3 [symbolic = %Self.as_type.loc4_30.1 (constants.%Self.as_type)] {
@@ -145,6 +149,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%T.loc5_10.2: type) {
+// CHECK:STDOUT:   %T.patt.loc5_10.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc5_10.1: type = symbolic_binding T, 0 [symbolic = %T.loc5_10.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -172,11 +177,14 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self: @I.WithSelf.F.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc4_30.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_30.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc4_30.1 [symbolic = %pattern_type (constants.%pattern_type.b82)]
+// CHECK:STDOUT:   %self.param_patt.loc4_30.2: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = value_param_pattern [symbolic = %self.param_patt.loc4_30.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt.loc4_30.2: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = at_binding_pattern self, %self.param_patt.loc4_30.2 [symbolic = %self.patt.loc4_30.2 (constants.%self.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.as_type.loc4_30.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc4_14.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -188,9 +196,12 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type.loc4_30.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b82
+// CHECK:STDOUT:   %self.param_patt.loc4_30.2 => constants.%self.param_patt
+// CHECK:STDOUT:   %self.patt.loc4_30.2 => constants.%self.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc5_10.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc5_10.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -205,11 +216,15 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %I.generic: %I.type.335 = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.3fe: type = facet_type <@I, @I(%T)> [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Self.a67: %I.type.3fe = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type.0fc: type = fn_type @I.WithSelf.F, @I.WithSelf(%T, %Self.a67) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.a92: %I.WithSelf.F.type.0fc = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.a67 [symbolic]
 // CHECK:STDOUT:   %pattern_type.efd: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %self.param_patt.e56: %pattern_type.efd = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %self.patt.99d: %pattern_type.efd = at_binding_pattern self, %self.param_patt.e56 [symbolic]
 // CHECK:STDOUT:   %I.type.ec4: type = facet_type <@I, @I(%InInterfaceArgs)> [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @X.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.8d9: %I.type.ec4 = symbolic_binding Self, 1 [symbolic]
@@ -218,6 +233,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %I.assoc_type.f32: type = assoc_entity_type @I, @I(%InInterfaceArgs) [concrete]
 // CHECK:STDOUT:   %assoc0.d86: %I.assoc_type.f32 = assoc_entity element0, imports.%Main.import_ref.35c [concrete]
 // CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %X [concrete]
+// CHECK:STDOUT:   %self.param_patt.172: %pattern_type.6cb = value_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.7ac: %pattern_type.6cb = at_binding_pattern self, %self.param_patt.172 [concrete]
 // CHECK:STDOUT:   %X.as.I.impl.F.type: type = fn_type @X.as.I.impl.F [concrete]
 // CHECK:STDOUT:   %X.as.I.impl.F: %X.as.I.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type.ec4 = facet_value %X, (%I.impl_witness) [concrete]
@@ -258,6 +275,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @I(imports.%Main.import_ref.b3bc94.3: type) [from "types.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -276,8 +294,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @X.as.I.impl: %X.ref as %I.type {
 // CHECK:STDOUT:   %X.as.I.impl.F.decl: %X.as.I.impl.F.type = fn_decl @X.as.I.impl.F [concrete = constants.%X.as.I.impl.F] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.6cb = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.6cb = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.6cb = value_param_pattern [concrete = constants.%self.param_patt.172]
+// CHECK:STDOUT:     %self.patt: %pattern_type.6cb = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.7ac]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %X = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @X.as.I.impl.%X.ref [concrete = constants.%X]
@@ -313,6 +331,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self: @I.WithSelf.F.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.a67)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.efd)]
+// CHECK:STDOUT:   %self.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.efd) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.e56)]
+// CHECK:STDOUT:   %self.patt: @I.WithSelf.F.%pattern_type (%pattern_type.efd) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.99d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -323,6 +343,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -334,9 +355,12 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self => constants.%Self.a67
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.efd
+// CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.e56
+// CHECK:STDOUT:   %self.patt => constants.%self.patt.99d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%InInterfaceArgs) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%InInterfaceArgs
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -372,6 +396,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %Self.as_type => constants.%X
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6cb
+// CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.172
+// CHECK:STDOUT:   %self.patt => constants.%self.patt.7ac
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_impl_in_interface_args.carbon
@@ -381,6 +407,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %X [concrete]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.6cb = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.6cb = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -388,12 +416,16 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %I.generic: %I.type.335 = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.3fe: type = facet_type <@I, @I(%T)> [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Self.a67: %I.type.3fe = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type.b71: type = assoc_entity_type @I, @I(%T) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type.0fc: type = fn_type @I.WithSelf.F, @I.WithSelf(%T, %Self.a67) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.a92: %I.WithSelf.F.type.0fc = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.a67 [symbolic]
 // CHECK:STDOUT:   %pattern_type.efd: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %self.param_patt.e56: %pattern_type.efd = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %self.patt.99d: %pattern_type.efd = at_binding_pattern self, %self.param_patt.e56 [symbolic]
 // CHECK:STDOUT:   %InInterfaceArgs: type = class_type @InInterfaceArgs [concrete]
 // CHECK:STDOUT:   %I.type.ec4: type = facet_type <@I, @I(%InInterfaceArgs)> [concrete]
 // CHECK:STDOUT:   %Self.8d9: %I.type.ec4 = symbolic_binding Self, 1 [symbolic]
@@ -445,8 +477,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.6cb = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type.6cb = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.6cb = value_param_pattern [concrete = constants.%x.param_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6cb = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %X = value_param call_param0
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Main.X [concrete = constants.%X]
@@ -455,6 +487,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @I(imports.%Main.import_ref.b3bc94.3: type) [from "types.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -510,6 +543,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self: @I.WithSelf.F.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.a67)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.efd)]
+// CHECK:STDOUT:   %self.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.efd) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.e56)]
+// CHECK:STDOUT:   %self.patt: @I.WithSelf.F.%pattern_type (%pattern_type.efd) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.99d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -517,6 +552,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: fn @X.as.I.impl.F [from "impl_in_interface_args.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -528,9 +564,12 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self => constants.%Self.a67
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.efd
+// CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.e56
+// CHECK:STDOUT:   %self.patt => constants.%self.patt.99d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%InInterfaceArgs) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%InInterfaceArgs
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -569,6 +608,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C.165: type = class_type @C, @C(%InClassArgs) [concrete]
 // CHECK:STDOUT:   %I.type.335: type = generic_interface_type @I [concrete]
 // CHECK:STDOUT:   %I.generic: %I.type.335 = struct_value () [concrete]
@@ -578,6 +619,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %I.WithSelf.F.a92: %I.WithSelf.F.type.0fc = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.a67 [symbolic]
 // CHECK:STDOUT:   %pattern_type.efd: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %self.param_patt.e56: %pattern_type.efd = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %self.patt.99d: %pattern_type.efd = at_binding_pattern self, %self.param_patt.e56 [symbolic]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %I.type.d91: type = facet_type <@I, @I(%X)> [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
@@ -587,6 +630,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %I.assoc_type.696: type = assoc_entity_type @I, @I(%X) [concrete]
 // CHECK:STDOUT:   %assoc0.a42: %I.assoc_type.696 = assoc_entity element0, imports.%Main.import_ref.35c [concrete]
 // CHECK:STDOUT:   %pattern_type.90a: type = pattern_type %C.165 [concrete]
+// CHECK:STDOUT:   %self.param_patt.b6d: %pattern_type.90a = value_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.8f9: %pattern_type.90a = at_binding_pattern self, %self.param_patt.b6d [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.type: type = fn_type @C.as.I.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F: %C.as.I.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type.d91 = facet_value %C.165, (%I.impl_witness) [concrete]
@@ -632,6 +677,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @I(imports.%Main.import_ref.b3bc94.4: type) [from "types.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -650,8 +696,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C as %I.type {
 // CHECK:STDOUT:   %C.as.I.impl.F.decl: %C.as.I.impl.F.type = fn_decl @C.as.I.impl.F [concrete = constants.%C.as.I.impl.F] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.90a = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.90a = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.90a = value_param_pattern [concrete = constants.%self.param_patt.b6d]
+// CHECK:STDOUT:     %self.patt: %pattern_type.90a = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.8f9]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C.165 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.I.impl.%C [concrete = constants.%C.165]
@@ -675,6 +721,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(imports.%Main.import_ref.b3bc94.1: type) [from "types.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -700,6 +747,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self: @I.WithSelf.F.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.a67)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.efd)]
+// CHECK:STDOUT:   %self.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.efd) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.e56)]
+// CHECK:STDOUT:   %self.patt: @I.WithSelf.F.%pattern_type (%pattern_type.efd) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.99d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -710,16 +759,19 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%InClassArgs) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%InClassArgs
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -731,9 +783,12 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self => constants.%Self.a67
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.efd
+// CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.e56
+// CHECK:STDOUT:   %self.patt => constants.%self.patt.99d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%X) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -769,6 +824,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %Self.as_type => constants.%C.165
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.90a
+// CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.b6d
+// CHECK:STDOUT:   %self.patt => constants.%self.patt.8f9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_impl_in_class_args.carbon
@@ -780,9 +837,13 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %InClassArgs: type = class_type @InClassArgs [concrete]
 // CHECK:STDOUT:   %C.165: type = class_type @C, @C(%InClassArgs) [concrete]
 // CHECK:STDOUT:   %pattern_type.90a: type = pattern_type %C.165 [concrete]
+// CHECK:STDOUT:   %c.param_patt: %pattern_type.90a = value_param_pattern [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.90a = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type.335: type = generic_interface_type @I [concrete]
@@ -794,6 +855,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %I.WithSelf.F.a92: %I.WithSelf.F.type.0fc = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.a67 [symbolic]
 // CHECK:STDOUT:   %pattern_type.efd: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %self.param_patt.e56: %pattern_type.efd = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %self.patt.99d: %pattern_type.efd = at_binding_pattern self, %self.param_patt.e56 [symbolic]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %I.type.d91: type = facet_type <@I, @I(%X)> [concrete]
 // CHECK:STDOUT:   %Self.c9d: %I.type.d91 = symbolic_binding Self, 1 [symbolic]
@@ -848,8 +911,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.90a = value_param_pattern [concrete]
-// CHECK:STDOUT:     %c.patt: %pattern_type.90a = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.90a = value_param_pattern [concrete = constants.%c.param_patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.90a = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C.165 = value_param call_param0
 // CHECK:STDOUT:     %.loc6_22: type = splice_block %C [concrete = constants.%C.165] {
@@ -862,6 +925,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @I(imports.%Main.import_ref.b3bc94.4: type) [from "types.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -884,6 +948,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(imports.%Main.import_ref.b3bc94.1: type) [from "types.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -930,6 +995,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self: @I.WithSelf.F.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.a67)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.efd)]
+// CHECK:STDOUT:   %self.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.efd) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.e56)]
+// CHECK:STDOUT:   %self.patt: @I.WithSelf.F.%pattern_type (%pattern_type.efd) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.99d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -937,16 +1004,19 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: fn @C.as.I.impl.F [from "impl_in_class_args.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%InClassArgs) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%InClassArgs
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -958,9 +1028,12 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self => constants.%Self.a67
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.efd
+// CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.e56
+// CHECK:STDOUT:   %self.patt => constants.%self.patt.99d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%X) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

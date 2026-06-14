@@ -109,6 +109,8 @@ var C: Class = {};
 // CHECK:STDOUT:   %struct_type.field: type = struct_type {.field: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.935: <witness> = complete_type_witness %struct_type.field [concrete]
 // CHECK:STDOUT:   %pattern_type.f15: type = pattern_type %Class [concrete]
+// CHECK:STDOUT:   %C.patt: %pattern_type.f15 = ref_binding_pattern C [concrete]
+// CHECK:STDOUT:   %C.var_patt: %pattern_type.f15 = var_pattern %C.patt [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class.val: %Class = struct_value (%int_123.2bf) [concrete]
@@ -122,8 +124,8 @@ var C: Class = {};
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %C.patt: %pattern_type.f15 = ref_binding_pattern C [concrete]
-// CHECK:STDOUT:     %C.var_patt: %pattern_type.f15 = var_pattern %C.patt [concrete]
+// CHECK:STDOUT:     %C.patt: %pattern_type.f15 = ref_binding_pattern C [concrete = constants.%C.patt]
+// CHECK:STDOUT:     %C.var_patt: %pattern_type.f15 = var_pattern %C.patt [concrete = constants.%C.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.var: ref %Class = var %C.var_patt [concrete]
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [concrete = constants.%Class]
@@ -131,7 +133,7 @@ var C: Class = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc5_12: %Class.elem = field_decl field, element0, initializer = inst640000D4 [concrete]
+// CHECK:STDOUT:   %.loc5_12: %Class.elem = field_decl field, element0, initializer = inst64000105 [concrete]
 // CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [concrete = constants.%int_123.fff]
 // CHECK:STDOUT:   %impl.elem0: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc5_20.1: <bound method> = bound_method %int_123, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]

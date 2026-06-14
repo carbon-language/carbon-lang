@@ -738,11 +738,6 @@ static auto GetAsCppFunctionDecl(Context& context, SemIR::InstId inst_id)
                     : nullptr;
 }
 
-auto IsCppOperatorMethod(Context& context, SemIR::InstId inst_id) -> bool {
-  auto* function_decl = GetAsCppFunctionDecl(context, inst_id);
-  return function_decl && IsCppOperatorMethodDecl(function_decl);
-}
-
 auto IsCppConstructorOrNonMethod(Context& context, SemIR::InstId inst_id)
     -> bool {
   auto* function_decl = GetAsCppFunctionDecl(context, inst_id);

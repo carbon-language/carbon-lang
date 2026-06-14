@@ -32,6 +32,7 @@ let b: Bool() = false;
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -41,7 +42,7 @@ let b: Bool() = false;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_13.1: type = splice_block %.loc7_13.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.ref: %Bool.type = name_ref Bool, imports.%Main.Bool [concrete = constants.%Bool]

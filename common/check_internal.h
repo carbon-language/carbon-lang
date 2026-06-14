@@ -31,9 +31,9 @@ CheckCondition(bool condition)
 // Implements the check failure message printing.
 //
 // This is out-of-line and will arrange to stop the program, print any debugging
-// information and this string. In `!NDEBUG` mode (`dbg` and `fastbuild`), check
-// failures can be made non-fatal by a build flag, so this is not `[[noreturn]]`
-// in that case.
+// information and the failure message. In `!NDEBUG` mode (`dbg` and
+// `fastbuild`), check failures can be made non-fatal by a build flag, so this
+// is not `[[noreturn]]` in that case.
 //
 // This API uses `const char*` C string arguments rather than `llvm::StringRef`
 // because we know that these are available as C strings and passing them that
@@ -52,8 +52,8 @@ auto CheckFailImpl(
     llvm::ArrayRef<llvm::support::detail::format_adapter*> extra_adapters)
     -> void;
 
-// Allow converting format values; the default behaviour is to just pass them
-// through.
+// Allow custom conversion of format values; the default behaviour is to just
+// pass them through.
 template <typename T>
 auto ConvertFormatValue(T&& t) -> T&& {
   return std::forward<T>(t);
@@ -74,28 +74,21 @@ auto ConvertFormatValue(T&& t) -> auto {
   }
 }
 
-// Collects pointers to the given type-erased format adapters and passes them,
-// with the rest of the check metadata, to the out-of-line `CheckFailImpl`.
-//
-// We need a separate function accepting all the adapters as arguments to ensure
-// those objects stay alive for pointers to their base class to be put into an
-// array and passed to the type erased implementation.
-template <typename... Adapters>
-#ifdef NDEBUG
-[[noreturn]]
-#endif
-auto CheckFailWithAdapters(const char* kind, const char* file, int line,
-                           const char* condition_str, const char* extra_format,
-                           Adapters&&... adapters) -> void {
-  std::array<llvm::support::detail::format_adapter*, sizeof...(Adapters)>
-      adapter_pointers = {&adapters...};
-  CheckFailImpl(kind, file, line, condition_str, extra_format,
-                adapter_pointers);
+// Helper to compute a pointer to the base class of a given LLVM
+// `format_adapter` object. This both handles converting to the base class and
+// allows taking the address of temporaries within arguments to another function
+// call.
+template <typename T>
+auto CheckFailFormatAdapterAddr(T&& adapter)
+    -> llvm::support::detail::format_adapter* {
+  return &adapter;
 }
 
 // Builds one type-erased format adapter per value -- forwarding each value
-// through the conversion machinery -- and hands them to
-// `CheckFailWithAdapters`.
+// through the conversion machinery. The address of the base classes of each of
+// these are then collected into an init list that can be accessed with an
+// `ArrayRef`. All of this is then passed to the out-of-line rendering function
+// `CheckFailImpl`.
 //
 // This is templated only on the value types, not on the per-check-site
 // metadata (file, line, etc., which are passed as ordinary arguments), so the
@@ -108,9 +101,10 @@ template <typename... Ts>
 auto CheckFailFormat(const char* kind, const char* file, int line,
                      const char* condition_str, const char* extra_format,
                      Ts&&... values) -> void {
-  CheckFailWithAdapters(kind, file, line, condition_str, extra_format,
-                        llvm::support::detail::build_format_adapter(
-                            ConvertFormatValue(std::forward<Ts>(values)))...);
+  CheckFailImpl(
+      kind, file, line, condition_str, extra_format,
+      {CheckFailFormatAdapterAddr(llvm::support::detail::build_format_adapter(
+          ConvertFormatValue(std::forward<Ts>(values))))...});
 }
 
 // Prints a check failure, including rendering any user-provided message using

@@ -204,6 +204,8 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.cdf: <witness> = complete_type_witness %struct_type.n [concrete]
 // CHECK:STDOUT:   %pattern_type.8dc: type = pattern_type %Core [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.8dc = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type.8dc = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %As.type.116: type = generic_interface_type @As [concrete]
 // CHECK:STDOUT:   %As.generic: %As.type.116 = struct_value () [concrete]
@@ -264,8 +266,8 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Core.decl: type = class_decl @Core [concrete = constants.%Core] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.8dc = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.8dc = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.8dc = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.8dc = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Core = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %Core.ref: type = name_ref r#Core, %Core.decl [concrete = constants.%Core]
