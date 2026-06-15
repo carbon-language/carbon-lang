@@ -416,7 +416,7 @@ interface Tuple {}
 impl () as Tuple {}
 class C(U:! Tuple);
 
-// This should fail: `.Z1.(Y.Y1)` is rewritten to be `()` but `T.(Z.Z1).(Y.Y1)`
+// This should fail: `T.(Y.Y1)` is rewritten to be `()` but `T.(Z.Z1).(Y.Y1)`
 // is used in the argument to `C`.
 //
 // CHECK:STDERR: fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_period_self.carbon:[[@LINE+7]]:82: error: cannot convert type `.(Z.Z1).(Y.Y1)` into type implementing `Tuple` [ConversionFailureTypeToFacet]
