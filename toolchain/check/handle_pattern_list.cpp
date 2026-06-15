@@ -32,6 +32,11 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
   return HandlePatternListStart(context, node_id);
 }
 
+auto HandleParseNode(Context& context, Parse::StructPatternStartId node_id)
+    -> bool {
+  return context.TODO(node_id, "struct pattern start");
+}
+
 auto HandleParseNode(Context& context, Parse::ExplicitParamListStartId node_id)
     -> bool {
   context.full_pattern_stack().StartExplicitParamList();
@@ -116,6 +121,16 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
       AddInst<SemIR::TuplePattern>(
           context, node_id, {.type_id = type_id, .elements_id = refs_id}));
   return true;
+}
+
+auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
+  return context.TODO(
+      node_id, "struct pattern");  // HandlePatternListStart(context node_id)
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::StructPatternDesignatedFieldId node_id) -> bool {
+  return context.TODO(node_id, "struct pattern Field");
 }
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)

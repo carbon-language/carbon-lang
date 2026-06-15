@@ -168,6 +168,10 @@ CARBON_PARSE_NODE_KIND(PatternListComma)
 CARBON_PARSE_NODE_KIND(ParenPattern)
 CARBON_PARSE_NODE_KIND(TuplePattern)
 
+CARBON_PARSE_NODE_KIND(StructPatternStart)
+CARBON_PARSE_NODE_KIND(StructPatternDesignatedField)
+CARBON_PARSE_NODE_KIND(StructPattern)
+
 CARBON_PARSE_NODE_KIND(ExplicitParamListStart)
 CARBON_PARSE_NODE_KIND(ExplicitParamList)
 CARBON_PARSE_NODE_KIND(ImplicitParamListStart)

@@ -15,6 +15,11 @@ auto HandlePattern(Context& context) -> void {
                                   state.in_var_pattern, state.in_unused_pattern,
                                   state.ambient_precedence);
       break;
+    case Lex::TokenKind::OpenCurlyBrace:
+      context.PushStateForPattern(StateKind::PatternListAsStruct,
+                                  state.in_var_pattern, state.in_unused_pattern,
+                                  state.ambient_precedence);
+      break;
     case Lex::TokenKind::Var:
       context.PushStateForPattern(StateKind::VariablePattern,
                                   state.in_var_pattern, state.in_unused_pattern,
