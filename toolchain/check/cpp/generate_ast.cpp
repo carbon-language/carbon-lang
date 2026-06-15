@@ -24,6 +24,7 @@
 #include "common/map.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/kind_switch.h"
@@ -958,6 +959,21 @@ auto FinishAst(Context& context) -> void {
   }
 
   context.cpp_context()->sema().ActOnEndOfTranslationUnit();
+
+  // Remove the `CarbonExternalASTSource` installed in `GenerateAst` and
+  // replace it with a `ReadOnlyASTSource`. This is necessary because
+  // the source may be accessed later during lowering, but the
+  // `CarbonExternalASTSource` has a pointer to `Check::Context` that
+  // will not remain valid.
+  auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
+      context.ast_context().getExternalSource());
+  auto& child_sources = multiplex_source->GetSources();
+  llvm::erase_if(child_sources, [](const auto& src) {
+    // `CarbonExternalASTSource` inherits from `ReadOnlyASTSource`.
+    return llvm::isa<SemIR::ReadOnlyASTSource>(src.get());
+  });
+  multiplex_source->AddSource(
+      llvm::makeIntrusiveRefCnt<SemIR::ReadOnlyASTSource>(context.sem_ir()));
 
   // We don't call FrontendAction::EndSourceFile, because that destroys the AST.
   context.set_cpp_context(nullptr);
