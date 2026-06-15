@@ -15,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn F[self: Self]() -> i32;
+  fn F(self) -> i32;
 }
 
 class A {
@@ -23,7 +23,7 @@ class A {
 }
 
 impl A as I {
-  fn F[self: A]() -> i32 {
+  fn F(self: A) -> i32 {
     return self.n;
   }
 }

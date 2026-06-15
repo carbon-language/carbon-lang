@@ -72,10 +72,10 @@ fn Tuples() -> A((i32, i32)) {
 library "[[@TEST_NAME]]";
 
 class C(T:! Core.Copy) {
-  fn GetBool[self: Self]() -> bool {
+  fn GetBool(self) -> bool {
     return self.v;
   }
-  fn GetT[self: Self]() -> T {
+  fn GetT(self) -> T {
     return self.w;
   }
   var v: bool;

@@ -22,7 +22,7 @@ class B {}
 impl forall [T:! type] A(T) as J {}
 
 impl forall [T:! type where A(.Self) impls J] A(T) as Core.As(T*) {
-  fn Convert[self: A(T)]() -> T* {
+  fn Convert(self) -> T* {
     return self as T*;
   }
 }

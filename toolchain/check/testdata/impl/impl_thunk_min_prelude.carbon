@@ -31,12 +31,12 @@ class A {
     }
 
     impl ConvertsToB as Core.ImplicitAs(B) {
-      fn Convert[unused self: Self]() -> B { return {}; }
+      fn Convert(unused self) -> B { return {}; }
     }
   }
 
   impl ConvertsToA as Core.ImplicitAs(A) {
-    fn Convert[unused self: Self]() -> A { return {}; }
+    fn Convert(unused self) -> A { return {}; }
   }
 }
 
@@ -47,23 +47,23 @@ library "[[@TEST_NAME]]";
 class Wrap(T:! type) {}
 
 interface OpWith(U:! type) {
-  fn Op[self: Self](u: U);
+  fn Op(self, u: U);
 }
 
 impl forall [T:! type, U:! Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U) {
   // CHECK:STDERR: fail_todo_out_of_line_thunk.carbon:[[@LINE+7]]:3: error: use of undefined generic function [MissingGenericFunctionDefinition]
-  // CHECK:STDERR:   fn Op[self: Self](other: Self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   fn Op(self, other: Self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_out_of_line_thunk.carbon:[[@LINE+4]]:3: note: generic function declared here [MissingGenericFunctionDefinitionHere]
-  // CHECK:STDERR:   fn Op[self: Self](other: Self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   fn Op(self, other: Self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  fn Op[self: Self](other: Self);
+  fn Op(self, other: Self);
 }
 
 // TODO: Once we support the syntax for defining impl members out of line,
 // define the above function here.
-// fn (forall [T:! type, U:! Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U)).Op[self: Self](other: Self) {}
+// fn (forall [T:! type, U:! Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U)).Op(self, other: Self) {}
 
 // --- builtin_thunk.carbon
 
@@ -72,11 +72,11 @@ library "[[@TEST_NAME]]";
 class Wrap(T:! type) {}
 
 interface OpWith(U:! type) {
-  fn Op[self: Self](u: U);
+  fn Op(self, u: U);
 }
 
 impl forall [T:! type, U:! Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U) {
-  fn Op[self: Self](other: Self) = "no_op";
+  fn Op(self, other: Self) = "no_op";
 }
 
 // --- thunk_literal_convert.carbon
@@ -137,11 +137,13 @@ fn Call() -> i32 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.914 = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.a23) [concrete = constants.%ImplicitAs.facet]
-// CHECK:STDOUT:   %.loc18_14.1: %ImplicitAs.type.914 = converted Core.IntLiteral, %ImplicitAs.facet [concrete = constants.%ImplicitAs.facet]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc18_14.1: %ImplicitAs.type.914 = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.a23) [concrete = constants.%ImplicitAs.facet]
+// CHECK:STDOUT:   %.loc18_14.1: %ImplicitAs.type.914 = converted Core.IntLiteral, %ImplicitAs.facet.loc18_14.1 [concrete = constants.%ImplicitAs.facet]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc18_14.2: %ImplicitAs.type.914 = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness.a23) [concrete = constants.%ImplicitAs.facet]
+// CHECK:STDOUT:   %.loc18_14.2: %ImplicitAs.type.914 = converted Core.IntLiteral, %ImplicitAs.facet.loc18_14.2 [concrete = constants.%ImplicitAs.facet]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc18_14.2: %i32.as.Add.impl.Op.type.79f953.1 = specific_constant @i32.as.Add.impl.%i32.as.Add.impl.Op.decl.loc8_35.1, @i32.as.Add.impl(constants.%ImplicitAs.facet) [concrete = constants.%i32.as.Add.impl.Op.0c3802.1]
-// CHECK:STDOUT:   %Op.ref.loc18: %i32.as.Add.impl.Op.type.79f953.1 = name_ref Op, %.loc18_14.2 [concrete = constants.%i32.as.Add.impl.Op.0c3802.1]
+// CHECK:STDOUT:   %.loc18_14.3: %i32.as.Add.impl.Op.type.79f953.1 = specific_constant @i32.as.Add.impl.%i32.as.Add.impl.Op.decl.loc8_35.1, @i32.as.Add.impl(constants.%ImplicitAs.facet) [concrete = constants.%i32.as.Add.impl.Op.0c3802.1]
+// CHECK:STDOUT:   %Op.ref.loc18: %i32.as.Add.impl.Op.type.79f953.1 = name_ref Op, %.loc18_14.3 [concrete = constants.%i32.as.Add.impl.Op.0c3802.1]
 // CHECK:STDOUT:   %i32.as.Add.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc18, @i32.as.Add.impl.Op.loc8_35.1(constants.%ImplicitAs.facet) [concrete = constants.%i32.as.Add.impl.Op.specific_fn.f5e09b.2]
 // CHECK:STDOUT:   %impl.elem0.loc18: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc18_13.1: <bound method> = bound_method %int_2, %impl.elem0.loc18 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.9f3]

@@ -243,3 +243,25 @@ constraint N(V:! type) {
 // CHECK:STDERR:                                                   ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(_:! Z(.Self) where C impls N(.Z1) and .Z2 = (.Z1 as Y(.Self))) {}
+
+// --- early_type_impls_nested_self_impls.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+}
+interface Y {
+  let Y1:! type;
+}
+interface X {}
+
+class C(T:! type);
+class D(T:! X);
+
+// TODO: Does the `.Y1 impls X` contain an ambiguous `.Self`? See
+// https://github.com/carbon-language/carbon-lang/issues/7138.
+
+// A lookup of `C(V).(Y.Y1) as X` requires us to see that the `.Y1 impls X`
+// constraint is visible through the `C(.Self) impls (Y...)` constraint and that
+// `C(.Self)` is used as the implied `.Self` in `.Y1 impls X`.
+fn F(unused V:! Z where C(.Self) impls (Y where .Y1 impls X) and .Z1 = D(C(.Self).(Y.Y1))) {}

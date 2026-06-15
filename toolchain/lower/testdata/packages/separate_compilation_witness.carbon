@@ -22,13 +22,13 @@ class Vector {
 }
 
 impl Vector as Core.AddWith(Vector) where .Result = Vector {
-  fn Op[self: Vector](other: Vector) -> Vector {
+  fn Op(self, other: Vector) -> Vector {
     return {.x = self.x + other.x};
   }
 }
 
 impl Vector as Core.MulWith(i32) where .Result = Vector {
-  fn Op[self: Vector](n: i32) -> Vector {
+  fn Op(self, n: i32) -> Vector {
     return {.x = self.x * n};
   }
 }

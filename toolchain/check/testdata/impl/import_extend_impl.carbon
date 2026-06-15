@@ -141,6 +141,8 @@ fn G(c: C) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -189,8 +191,8 @@ fn G(c: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:     %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern [concrete = constants.%c.param_patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, imports.%Main.C [concrete = constants.%C]

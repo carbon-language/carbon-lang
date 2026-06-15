@@ -17,7 +17,6 @@
 #include "toolchain/check/function.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
-#include "toolchain/check/name_ref.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -26,6 +25,7 @@
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -57,9 +57,12 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
                                 llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<SemIR::SpecificId> {
-  // Check that the arity matches.
-  auto params = context.inst_blocks().GetOrEmpty(entity.param_patterns_id);
-  if (arg_ids.size() != params.size()) {
+  // Check that the arity matches the explicit arguments.
+  auto param_patterns =
+      context.inst_blocks().GetOrEmpty(entity.param_patterns_id);
+  size_t expected_args_size =
+      param_patterns.size() - (self_id.has_value() ? 1 : 0);
+  if (arg_ids.size() != expected_args_size) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                       "{0} argument{0:s} passed to "
                       "{1:=0:function|=1:generic class|=2:generic "
@@ -74,7 +77,7 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                       Diagnostics::IntAsSelect);
     context.emitter()
         .Build(loc_id, CallArgCountMismatch, arg_ids.size(),
-               static_cast<int>(entity_kind_for_diagnostic), params.size())
+               static_cast<int>(entity_kind_for_diagnostic), expected_args_size)
         .Note(entity.latest_decl_id(), InCallToEntity,
               static_cast<int>(entity_kind_for_diagnostic))
         .Emit();
@@ -258,18 +261,17 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   }
   // Convert the arguments to match the parameters.
   auto converted_args_id =
-      ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
-                      return_arg_id, callee, *callee_specific_id, is_desugared);
+      ConvertCallArgs(context, callee_function.self_id, arg_ids, return_arg_id,
+                      callee, *callee_specific_id, is_desugared);
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {
       // If we're about to form a direct call to a thunk, inline it.
-      auto callee_inst_id =
-          context.sem_ir().thunks().Get(callee.thunk_id()).callee_id;
-      LoadImportRef(context, callee_inst_id);
+      const auto& thunk_info = context.sem_ir().thunks().Get(callee.thunk_id());
+      LoadImportRef(context, thunk_info.callee_id);
 
       // Name the thunk target within the enclosing scope of the thunk.
       auto thunk_ref_id =
-          BuildNameRef(context, loc_id, callee.name_id, callee_inst_id,
+          BuildNameRef(context, loc_id, callee.name_id, thunk_info.callee_id,
                        callee_function.enclosing_specific_id);
 
       auto param_pattern_ids =
@@ -279,9 +281,10 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
 
       // This recurses back into `PerformCall`. However, we never form a thunk
       // to a thunk, so we only recurse once.
-      return PerformThunkCall(
-          context, loc_id, callee_function.function_id, param_pattern_ids,
-          context.inst_blocks().Get(converted_args_id), thunk_ref_id);
+      return PerformThunkCall(context, loc_id, callee_function.function_id,
+                              param_pattern_ids,
+                              context.inst_blocks().Get(converted_args_id),
+                              thunk_ref_id, thunk_info.override_self_type_id);
     }
 
     case SemIR::Function::SpecialFunctionKind::HasCppThunk: {

@@ -615,10 +615,10 @@ omitted.
 ```
 //@dump-sem-ir-begin
 class Bar {
-  fn ImportantCall[self: Self] { ... }
+  fn ImportantCall(self) { ... }
   //@dump-sem-ir-end
 
-  fn UnimportantCall[self: Self]() { ... }
+  fn UnimportantCall(self) { ... }
 }
 ```
 

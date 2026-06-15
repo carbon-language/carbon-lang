@@ -42,6 +42,8 @@ fn Run() {
 // CHECK:STDOUT:   %ptr: type = ptr_type %Cycle [concrete]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %ptr} [concrete]
 // CHECK:STDOUT:   %pattern_type.38c: type = pattern_type %struct_type.b [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.38c = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.38c = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
@@ -76,8 +78,8 @@ fn Run() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Cycle.decl.loc4: type = class_decl @Cycle [concrete = constants.%Cycle] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.38c = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.38c = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.38c = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.38c = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %struct_type.b = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6: type = splice_block %struct_type.b [concrete = constants.%struct_type.b] {
@@ -123,6 +125,8 @@ fn Run() {
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %struct_type.b} [concrete]
 // CHECK:STDOUT:   %complete_type.663: <witness> = complete_type_witness %struct_type.c [concrete]
 // CHECK:STDOUT:   %pattern_type.38c: type = pattern_type %struct_type.b [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.38c = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.38c = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %.d98: ref %ptr.5cd = struct_access imports.%a.var, element0 [concrete]
 // CHECK:STDOUT:   %Cycle.elem: type = unbound_element_type %Cycle, %struct_type.b [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -149,9 +153,7 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.281: <witness> = import_ref Main//a, loc11_1, loaded [concrete = constants.%complete_type.663]
 // CHECK:STDOUT:   %Main.import_ref.3b0 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.697: %Cycle.elem = import_ref Main//a, loc10_8, loaded [concrete = %.ec0]
-// CHECK:STDOUT:   %a.patt: %pattern_type.38c = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:   %a.var_patt: %pattern_type.38c = var_pattern %a.patt [concrete]
-// CHECK:STDOUT:   %a.var: ref %struct_type.b = var %a.var_patt [concrete]
+// CHECK:STDOUT:   %a.var: ref %struct_type.b = var constants.%a.var_patt [concrete]
 // CHECK:STDOUT:   %.ec0: %Cycle.elem = field_decl c, element0 [concrete]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.e5f: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.ff5) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.ce9)]

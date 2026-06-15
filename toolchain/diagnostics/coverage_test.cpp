@@ -31,6 +31,11 @@ constexpr Kind UntestedKinds[] = {
 
     // Diagnosing erroneous install conditions, but test environments are
     // typically correct.
+    Kind::BuildFailureRunningClangToLink,
+    Kind::BuildOutputFileOpenError,
+    Kind::BuildPreludeManifestError,
+    Kind::BuildTempDirectoryCreationError,
+    Kind::BuildTempDirectoryDeletionError,
     Kind::CompilePreludeManifestError,
     Kind::ConfigFailedToReadDigest,
     Kind::ConfigFailedToSetupTarget,

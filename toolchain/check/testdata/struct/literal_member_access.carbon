@@ -30,10 +30,14 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %struct_type.x.y.z: type = struct_type {.x: %i32, .y: %i32, .z: %i32} [concrete]
 // CHECK:STDOUT:   %.2d9: Core.Form = init_form %struct_type.x.y.z [concrete]
 // CHECK:STDOUT:   %pattern_type.62c: type = pattern_type %struct_type.x.y.z [concrete]
+// CHECK:STDOUT:   %return.param_patt.c67: %pattern_type.62c = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.f01: %pattern_type.62c = return_slot_pattern %return.param_patt.c67, %struct_type.x.y.z [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
@@ -78,8 +82,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.62c = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.62c = return_slot_pattern %return.param_patt, %struct_type.x.y.z [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.62c = out_param_pattern [concrete = constants.%return.param_patt.c67]
+// CHECK:STDOUT:     %return.patt: %pattern_type.62c = return_slot_pattern %return.param_patt, %struct_type.x.y.z [concrete = constants.%return.patt.f01]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc15_16: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc15_25: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -90,8 +94,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:     %return: ref %struct_type.x.y.z = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc17: Core.Form = init_form %i32 [concrete = constants.%.795]

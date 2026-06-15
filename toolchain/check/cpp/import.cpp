@@ -1452,11 +1452,10 @@ static auto MapParameterType(
           .kind = GetParamPatternKindForPassingMode(passing_mode)};
 }
 
-// Returns a block for the implicit parameters of the given function
-// declaration. Because function templates are not yet supported, this currently
-// only contains the `self` parameter. On error, produces a diagnostic and
-// returns None.
-static auto MakeImplicitParamPatternsBlockId(
+// Returns a block containing the `self` parameter pattern for the given
+// function declaration, or `Empty` if it is not a method.
+// Returns `None` on error.
+static auto MakeSelfParamPatternBlockId(
     Context& context, SemIR::LocId loc_id,
     SemIR::ImportIRInstId import_ir_inst_id,
     const clang::FunctionDecl& clang_decl,
@@ -1741,30 +1740,46 @@ static auto CreateFunctionSignatureInsts(
     SemIR::ImportIRInstId import_ir_inst_id, clang::FunctionDecl* clang_decl,
     SemIR::ClangDeclSignatureId signature_id)
     -> std::optional<FunctionSignatureInsts> {
-  context.full_pattern_stack().StartImplicitParamList();
-  auto implicit_param_patterns_id = MakeImplicitParamPatternsBlockId(
+  // The `self` parameter of a method (proposal #7016) is the
+  // first entry in the explicit parameter list. Build it (if any) first, then
+  // the remaining explicit parameters, and concatenate them into a single
+  // explicit parameter list.
+  context.full_pattern_stack().StartExplicitParamList();
+  auto self_param_patterns_id = MakeSelfParamPatternBlockId(
       context, loc_id, import_ir_inst_id, *clang_decl, signature_id);
-  if (!implicit_param_patterns_id.has_value()) {
+  if (!self_param_patterns_id.has_value()) {
     return std::nullopt;
   }
-  context.full_pattern_stack().EndImplicitParamList();
-  context.full_pattern_stack().StartExplicitParamList();
-  auto param_patterns_id = MakeParamPatternsBlockId(
+  auto explicit_param_patterns_id = MakeParamPatternsBlockId(
       context, loc_id, import_ir_inst_id, *clang_decl, signature_id);
-  if (!param_patterns_id.has_value()) {
+  if (!explicit_param_patterns_id.has_value()) {
     return std::nullopt;
   }
   context.full_pattern_stack().EndExplicitParamList();
+
+  auto self_param_patterns =
+      context.inst_blocks().GetOrEmpty(self_param_patterns_id);
+  auto param_patterns_id = explicit_param_patterns_id;
+  if (!self_param_patterns.empty()) {
+    llvm::SmallVector<SemIR::InstId> combined(self_param_patterns);
+    llvm::append_range(
+        combined, context.inst_blocks().GetOrEmpty(explicit_param_patterns_id));
+    param_patterns_id = context.inst_blocks().Add(combined);
+  }
+
   auto [return_type_inst_id, return_form_inst_id, return_pattern_id] =
       GetReturnInfo(context, loc_id, clang_decl);
   if (return_type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return std::nullopt;
   }
 
-  auto match_results = CalleePatternMatch(context, implicit_param_patterns_id,
+  // C++ functions have no implicit parameters. Use `None` rather than an empty
+  // block so that the signature matches a Carbon function with no implicit
+  // parameter list.
+  auto match_results = CalleePatternMatch(context, SemIR::InstBlockId::None,
                                           param_patterns_id, return_pattern_id);
 
-  return {{.implicit_param_patterns_id = implicit_param_patterns_id,
+  return {{.implicit_param_patterns_id = SemIR::InstBlockId::None,
            .param_patterns_id = param_patterns_id,
            .return_type_inst_id = return_type_inst_id,
            .return_form_inst_id = return_form_inst_id,
@@ -1892,7 +1907,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .virtual_index = virtual_index,
               .evaluation_mode = evaluation_mode,
               .self_param_id = FindSelfPattern(
-                  context, function_params_insts->implicit_param_patterns_id),
+                  context, function_params_insts->implicit_param_patterns_id,
+                  function_params_insts->param_patterns_id),
           }});
   context.imports().push_back(decl_id);
 

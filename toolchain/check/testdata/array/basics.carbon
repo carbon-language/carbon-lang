@@ -114,6 +114,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_3, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.035: type = pattern_type %array_type [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.035 = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt: %pattern_type.035 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access file.%a.var, element0 [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access file.%a.var, element1 [concrete]
@@ -125,8 +127,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.035 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.035 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.035 = ref_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.035 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %array_type = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6_19: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -180,6 +182,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_2, %tuple.type.a8c [concrete]
 // CHECK:STDOUT:   %pattern_type.c3e: type = pattern_type %array_type [concrete]
+// CHECK:STDOUT:   %v.patt: %pattern_type.c3e = ref_binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.var_patt: %pattern_type.c3e = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   %tuple.type.8c7: type = tuple_type (%tuple.type.a8c, %tuple.type.a8c) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
@@ -190,8 +194,8 @@ var a: array(1, 1);
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.c3e = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.c3e = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.c3e = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.c3e = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %array_type = var %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc10_40: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
@@ -250,6 +254,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_3, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.035: type = pattern_type %array_type [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.035 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.035 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
@@ -259,6 +265,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple, %empty_tuple, %empty_tuple) [concrete]
 // CHECK:STDOUT:   %pattern_type.8c1: type = pattern_type %tuple.type [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.8c1 = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt: %pattern_type.8c1 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.762: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%tuple.type) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.38b: %DefaultOrUnformed.type = facet_value %tuple.type, (%DefaultOrUnformed.impl_witness.762) [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc8_3.2 [concrete]
@@ -275,8 +283,8 @@ var a: array(1, 1);
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.035 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.035 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.035 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.035 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var %a.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc7: %DefaultOrUnformed.type = facet_value constants.%array_type, (constants.%DefaultOrUnformed.impl_witness.3c6) [concrete = constants.%DefaultOrUnformed.facet.b2c]
@@ -295,8 +303,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.8c1 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.8c1 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.8c1 = ref_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.8c1 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %tuple.type = var %b.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%tuple.type, (constants.%DefaultOrUnformed.impl_witness.762) [concrete = constants.%DefaultOrUnformed.facet.38b]
@@ -348,6 +356,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_1, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %array_type [concrete]
+// CHECK:STDOUT:   %t.patt: %pattern_type.fe8 = ref_binding_pattern t [concrete]
+// CHECK:STDOUT:   %t.var_patt: %pattern_type.fe8 = var_pattern %t.patt [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc8_34.2 [concrete]
@@ -359,8 +369,8 @@ var a: array(1, 1);
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: %pattern_type.fe8 = ref_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.var_patt: %pattern_type.fe8 = var_pattern %t.patt [concrete]
+// CHECK:STDOUT:     %t.patt: %pattern_type.fe8 = ref_binding_pattern t [concrete = constants.%t.patt]
+// CHECK:STDOUT:     %t.var_patt: %pattern_type.fe8 = var_pattern %t.patt [concrete = constants.%t.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref %array_type = var %t.var_patt
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
@@ -420,6 +430,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_9, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.3db: type = pattern_type %array_type [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.3db = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt: %pattern_type.3db = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
@@ -434,8 +446,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.3db = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.3db = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.3db = ref_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.3db = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %array_type = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc9_19: type = splice_block %array_type [concrete = constants.%array_type] {

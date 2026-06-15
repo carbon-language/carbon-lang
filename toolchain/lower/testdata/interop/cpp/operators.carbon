@@ -147,20 +147,20 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define i1 @"_CEqual:thunk:EqWith.ffb401eeee8c4872.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !34
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !34
-// CHECK:STDOUT:   call void @_Zeq1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !34
-// CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !34
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !34
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !34
+// CHECK:STDOUT:   call void @_Zeq1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !34
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !34
 // CHECK:STDOUT:   ret i1 %0, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define i1 @"_CNotEqual:thunk:EqWith.ffb401eeee8c4872.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !39
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !39
-// CHECK:STDOUT:   call void @_Zne1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !39
-// CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !39
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !39
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !39
+// CHECK:STDOUT:   call void @_Zne1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !39
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !39
 // CHECK:STDOUT:   ret i1 %0, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -409,40 +409,40 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define i1 @"_CLess:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !34
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !34
-// CHECK:STDOUT:   call void @_Zlt1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !34
-// CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !34
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !34
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !34
+// CHECK:STDOUT:   call void @_Zlt1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !34
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !34
 // CHECK:STDOUT:   ret i1 %0, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define i1 @"_CLessOrEquivalent:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !39
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !39
-// CHECK:STDOUT:   call void @_Zle1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !39
-// CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !39
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !39
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !39
+// CHECK:STDOUT:   call void @_Zle1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !39
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !39
 // CHECK:STDOUT:   ret i1 %0, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define i1 @"_CGreater:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !40 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !44
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !44
-// CHECK:STDOUT:   call void @_Zgt1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !44
-// CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !44
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !44
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !44
+// CHECK:STDOUT:   call void @_Zgt1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !44
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !44
 // CHECK:STDOUT:   ret i1 %0, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !49
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !49
-// CHECK:STDOUT:   call void @_Zge1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !49
-// CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !49
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !49
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !49
+// CHECK:STDOUT:   call void @_Zge1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !49
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !49
 // CHECK:STDOUT:   ret i1 %0, !dbg !49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

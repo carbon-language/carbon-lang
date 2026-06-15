@@ -74,7 +74,7 @@ standard library.
 
 The operands of these operators can be any [expression](expressions/README.md).
 However, the first operand must be modifiable because it is passed to a
-`[ref self: Self]` parameter, which disallows most expression forms other than:
+`(ref self: Self)` parameter, which disallows most expression forms other than:
 
 -   The name of a `var` binding.
 -   A dereference of a pointer.

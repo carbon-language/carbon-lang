@@ -18,7 +18,7 @@ class Sieve {
     return var;
   }
 
-  fn MarkMultiplesNotPrime[ref self: Self](p: i32) {
+  fn MarkMultiplesNotPrime(ref self, p: i32) {
     var n: i32 = p * 2;
     while (n < 1000) {
       self.is_prime[n] = false;

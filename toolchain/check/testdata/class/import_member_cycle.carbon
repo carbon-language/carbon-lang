@@ -78,6 +78,8 @@ fn Run() {
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %ptr} [concrete]
 // CHECK:STDOUT:   %complete_type.de4: <witness> = complete_type_witness %struct_type.a [concrete]
 // CHECK:STDOUT:   %pattern_type.c3e: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.c3e = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.c3e = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
@@ -131,8 +133,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.c3e = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.c3e = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.c3e = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.c3e = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr = var %a.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%ptr, (constants.%DefaultOrUnformed.impl_witness.961) [concrete = constants.%DefaultOrUnformed.facet]

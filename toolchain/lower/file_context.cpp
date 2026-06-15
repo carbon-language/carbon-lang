@@ -583,6 +583,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
       // Otherwise, always inline thunks.
       if (definition_function.special_function_kind ==
           SemIR::Function::SpecialFunctionKind::Thunk) {
+        // TODO: emit the thunk as an alias instead of a separate function,
+        // when that would be correct.
         attr_builder.addAttribute(llvm::Attribute::AlwaysInline);
       }
 

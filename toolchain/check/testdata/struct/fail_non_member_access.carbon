@@ -28,6 +28,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.a92: type = struct_type {.a: %i32} [concrete]
 // CHECK:STDOUT:   %pattern_type.506: type = pattern_type %struct_type.a.a92 [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.506 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type.506 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.2cb: %struct_type.a.a6c = struct_value (%int_4.0c1) [concrete]
@@ -49,6 +51,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_4.4eb: %i32 = int_value 4 [concrete]
 // CHECK:STDOUT:   %struct.751: %struct_type.a.a92 = struct_value (%int_4.4eb) [concrete]
+// CHECK:STDOUT:   %y.patt: %pattern_type.6b6 = ref_binding_pattern y [concrete]
+// CHECK:STDOUT:   %y.var_patt: %pattern_type.6b6 = var_pattern %y.patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -72,8 +76,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.506 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.506 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.506 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.506 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.a92 = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.a92] {
@@ -82,8 +86,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.a92 = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.6b6 = ref_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.var_patt: %pattern_type.6b6 = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.6b6 = ref_binding_pattern y [concrete = constants.%y.patt]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.6b6 = var_pattern %y.patt [concrete = constants.%y.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var %y.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]

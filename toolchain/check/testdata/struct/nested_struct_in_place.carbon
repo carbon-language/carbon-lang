@@ -31,6 +31,8 @@ fn G() {
 // CHECK:STDOUT:   %tuple.type.555: type = tuple_type (%i32, %i32, %i32) [concrete]
 // CHECK:STDOUT:   %.718: Core.Form = init_form %tuple.type.555 [concrete]
 // CHECK:STDOUT:   %pattern_type.777: type = pattern_type %tuple.type.555 [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type.777 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type.777 = return_slot_pattern %return.param_patt, %tuple.type.555 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -38,6 +40,8 @@ fn G() {
 // CHECK:STDOUT:   %struct_type.a.b.2a0: type = struct_type {.a: %tuple.type.555, .b: %tuple.type.555} [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %pattern_type.28f: type = pattern_type %struct_type.a.b.2a0 [concrete]
+// CHECK:STDOUT:   %v.patt: %pattern_type.28f = ref_binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.var_patt: %pattern_type.28f = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc18_3.4 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
@@ -62,8 +66,8 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.777 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.777 = return_slot_pattern %return.param_patt, %.loc15_25.2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.777 = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.777 = return_slot_pattern %return.param_patt, %.loc15_25.2 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc15_12: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc15_17: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -82,8 +86,8 @@ fn G() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.28f = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.28f = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.28f = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.28f = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %struct_type.a.b.2a0 = var %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc18_68: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]

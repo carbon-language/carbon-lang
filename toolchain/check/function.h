@@ -15,11 +15,14 @@
 
 namespace Carbon::Check {
 
-// Returns the ID of the self parameter pattern, or None.
-// TODO: Do this during initial traversal of implicit params.
+// Returns the ID of the self parameter pattern, or None. `self` is declared as
+// the first explicit parameter. The implicit parameter list is also searched
+// for error recovery: declaring `self` there is diagnosed, but we still
+// recognize it as `self` afterwards.
+// TODO: Do this during initial traversal of the parameters.
 auto FindSelfPattern(Context& context,
-                     SemIR::InstBlockId implicit_param_patterns_id)
-    -> SemIR::InstId;
+                     SemIR::InstBlockId implicit_param_patterns_id,
+                     SemIR::InstBlockId param_patterns_id) -> SemIR::InstId;
 
 // Creates suitable return patterns for the given return form, and adds them to
 // the current pattern block.
@@ -35,8 +38,7 @@ auto IsValidBuiltinDeclaration(Context& context,
 struct FunctionDeclArgs {
   SemIR::NameScopeId parent_scope_id;
   SemIR::NameId name_id;
-  // The type of the implicit `[self: Self]` parameter, or `None` if there is
-  // none.
+  // The type of the leading `self` parameter, or `None` if there is none.
   SemIR::TypeId self_type_id = SemIR::TypeId::None;
   // The kind of the `self` parameter.
   ParamPatternKind self_kind = ParamPatternKind::Ref;
@@ -71,16 +73,11 @@ auto CheckFunctionReturnTypeMatches(Context& context,
 //
 // `check_syntax` is false if the redeclaration can be called via a thunk with
 // implicit conversions from the original declaration.
-//
-// If `self_type_override_id` is specified, the self type is checked against
-// that type instead of the type from `prev_function`. This is used to check
-// virtual function overrides.
-auto CheckFunctionTypeMatches(
-    Context& context, const SemIR::Function& new_function,
-    const SemIR::Function& prev_function, SemIR::SpecificId prev_specific_id,
-    bool check_syntax,
-    SemIR::TypeId self_type_override_id = SemIR::TypeId::None,
-    bool diagnose = true) -> bool;
+auto CheckFunctionTypeMatches(Context& context,
+                              const SemIR::Function& new_function,
+                              const SemIR::Function& prev_function,
+                              SemIR::SpecificId prev_specific_id,
+                              bool check_syntax, bool diagnose = true) -> bool;
 
 inline auto CheckFunctionTypeMatches(Context& context,
                                      const SemIR::Function& new_function,

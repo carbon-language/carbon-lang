@@ -121,6 +121,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_1.5b8, %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.97e: type = pattern_type %array_type [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.97e = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %int_1.0c6: %i32 = int_value 1 [concrete]
@@ -144,7 +145,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: fn @F() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.97e = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.97e = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]

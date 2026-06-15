@@ -77,6 +77,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc20_28.4 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.0e3, %Destroy.Op.1a2547.4 [concrete]
+// CHECK:STDOUT:   %v.patt: %pattern_type.f15 = ref_binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.var_patt: %pattern_type.f15 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -144,8 +146,8 @@ fn G() -> i32 {
 // CHECK:STDOUT: fn @G() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.f15 = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.f15 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.f15 = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.f15 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %Class = var %v.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]

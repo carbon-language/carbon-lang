@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/builtins/method_vs_nonmethod.carbon
 
 fn AddNonmethod(a: i32, b: i32) -> i32 = "int.sadd";
-fn AddMethod[self: i32](b: i32) -> i32 = "int.sadd";
+fn AddMethod(self: i32, b: i32) -> i32 = "int.sadd";
 
 fn TestAddNonmethod(a: i32, b: i32) -> i32 { return AddNonmethod(a, b); }
 fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }

@@ -16,13 +16,13 @@ library "[[@TEST_NAME]]";
 constraint E {
   // TODO: Any fn in a non-template constraint is an error.
   fn DeclaredFunction();
-  fn DeclaredMethod[self: Self](b: Self);
+  fn DeclaredMethod(self, b: Self);
 }
 
 constraint F {
   // TODO: Any fn in a non-template constraint is an error.
   fn DefinedFunction() {}
-  fn DefinedMethod[unused self: Self](unused b: Self) {}
+  fn DefinedMethod(unused self, unused b: Self) {}
 }
 
 // --- todo_fail_invalid_var.carbon

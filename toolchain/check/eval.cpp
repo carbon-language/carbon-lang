@@ -108,21 +108,48 @@ class EvalContext {
 
   // Gets the value of the specified compile-time binding in this context.
   // Returns `None` if the value is not fixed in this context.
-  auto GetCompileTimeBindValue(SemIR::CompileTimeBindIndex bind_index)
+  auto GetCompileTimeBindValue(SemIR::SymbolicBinding binding)
       -> SemIR::ConstantId {
-    if (!bind_index.has_value() || !specific_id_.has_value()) {
+    // If we know which specific we're evaluating within and this is an argument
+    // of that specific, its constant value is the corresponding argument value.
+    const auto& binding_name = entity_names().Get(binding.entity_name_id);
+    if (!binding_name.bind_index().has_value() || !specific_id_.has_value()) {
       return SemIR::ConstantId::None;
     }
+    auto binding_index = binding_name.bind_index().index;
 
     const auto& specific = specifics().Get(specific_id_);
     auto args = inst_blocks().Get(specific.args_id);
 
     // Bindings past the ones with known arguments can appear as local
     // bindings of entities declared within this generic.
-    if (static_cast<size_t>(bind_index.index) >= args.size()) {
+    if (static_cast<size_t>(binding_index) >= args.size()) {
       return SemIR::ConstantId::None;
     }
-    return constant_values().Get(args[bind_index.index]);
+
+    // Check that the binding belongs to the current generic.
+    {
+      auto generic = generics().Get(specific.generic_id);
+      auto generic_bindings = inst_blocks().Get(generic.bindings_id);
+      CARBON_CHECK(static_cast<size_t>(binding_index) <
+                   generic_bindings.size());
+      auto generic_binding_const_id =
+          constant_values().Get(generic_bindings[binding_index]);
+      auto generic_binding =
+          constant_values().GetInstAs<SemIR::SymbolicBinding>(
+              generic_binding_const_id);
+      auto generic_binding_name =
+          entity_names().Get(generic_binding.entity_name_id);
+      // TODO: consider checking more fields of EntityName. But note that even
+      // if we check all of them, there will still be false negatives when
+      // different bindings happen to have the same EntityName representation.
+      CARBON_CHECK(generic_binding.type_id == binding.type_id &&
+                       generic_binding_name.name_id == binding_name.name_id,
+                   "Binding {0} does not belong to generic {1}", binding_name,
+                   generic);
+    }
+
+    return constant_values().Get(args[binding_index]);
   }
 
   // Given information about a symbolic constant, determine its value in the
@@ -1129,27 +1156,159 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   return eval_context.GetConstantValue(elements[index_val.getZExtValue()]);
 }
 
+// Diagnoses that a character value is too large for the destination type.
+static auto DiagnoseCharTooLargeForType(Context& context, SemIR::LocId loc_id,
+                                        SemIR::CharId char_id,
+                                        SemIR::TypeId dest_type_id) -> void {
+  CARBON_DIAGNOSTIC(CharTooLargeForType, Error,
+                    "character value {0} too large for type {1}", SemIR::CharId,
+                    SemIR::TypeId);
+  context.emitter().Emit(loc_id, CharTooLargeForType, char_id, dest_type_id);
+}
+
 // Performs a conversion between character types, diagnosing if the value
 // doesn't fit in the destination type.
-static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
-                                      SemIR::InstId arg_id,
-                                      SemIR::TypeId dest_type_id)
+static auto PerformCharLiteralConvertChar(Context& context, SemIR::LocId loc_id,
+                                          SemIR::InstId arg_id,
+                                          SemIR::TypeId dest_type_id)
     -> SemIR::ConstantId {
   auto arg = context.insts().GetAs<SemIR::CharLiteralValue>(arg_id);
 
   // Values over 0x80 require multiple code units in UTF-8.
   if (arg.value.index >= 0x80) {
-    CARBON_DIAGNOSTIC(CharTooLargeForType, Error,
-                      "character value {0} too large for type {1}",
-                      SemIR::CharId, SemIR::TypeId);
-    context.emitter().Emit(loc_id, CharTooLargeForType, arg.value,
-                           dest_type_id);
+    DiagnoseCharTooLargeForType(context, loc_id, arg.value, dest_type_id);
     return SemIR::ErrorInst::ConstantId;
   }
 
   llvm::APInt int_val(8, arg.value.index, /*isSigned=*/false);
   return MakeIntResult(context, dest_type_id, /*is_signed=*/false,
                        std::move(int_val));
+}
+
+// Converts a CharLiteral to an integer type.
+static auto PerformCharLiteralConvertInt(Context& context, SemIR::LocId loc_id,
+                                         SemIR::InstId arg_id,
+                                         SemIR::TypeId dest_type_id)
+    -> SemIR::ConstantId {
+  auto arg = context.insts().GetAs<SemIR::CharLiteralValue>(arg_id);
+  auto [is_signed, bit_width_id] =
+      context.sem_ir().types().GetIntTypeInfo(dest_type_id);
+  CARBON_CHECK(bit_width_id.has_value());
+  unsigned int width = context.ints().Get(bit_width_id).getZExtValue();
+
+  int32_t code_point = arg.value.index;
+  // Determine the bit width of the code point value. Log2_32(0) is -1, so this
+  // correctly computes a width of 0 for U+0000.
+  unsigned code_point_bit_width = llvm::Log2_32(code_point) + 1;
+  if (code_point_bit_width > width - is_signed) {
+    DiagnoseCharTooLargeForType(context, loc_id, arg.value, dest_type_id);
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  llvm::APInt int_val(width, code_point, /*isSigned=*/false);
+  return MakeIntResult(context, dest_type_id, is_signed, std::move(int_val));
+}
+
+// Converts an integer to a CharLiteral, checking if the value is a valid
+// Unicode code point.
+static auto PerformIntConvertCharLiteral(Context& context, SemIR::LocId loc_id,
+                                         SemIR::InstId arg_id,
+                                         SemIR::TypeId dest_type_id)
+    -> SemIR::ConstantId {
+  auto arg = context.insts().GetAs<SemIR::IntValue>(arg_id);
+  llvm::APInt arg_val = context.ints().Get(arg.int_id);
+  auto char_id = SemIR::CharId::ForCodePoint(arg_val);
+  if (!char_id) {
+    CARBON_DIAGNOSTIC(InvalidCharLiteralValue, Error,
+                      "integer value {0} is not a valid Unicode code point",
+                      TypedInt);
+    context.emitter().Emit(loc_id, InvalidCharLiteralValue,
+                           {.type = arg.type_id, .value = arg_val});
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return MakeConstantResult(
+      context,
+      SemIR::CharLiteralValue{.type_id = dest_type_id, .value = *char_id},
+      Phase::Concrete);
+}
+
+// Performs a comparison between two CharLiteral values.
+static auto PerformCharLiteralComparison(
+    Context& context, SemIR::BuiltinFunctionKind builtin_kind,
+    SemIR::InstId lhs_id, SemIR::InstId rhs_id, SemIR::TypeId bool_type_id)
+    -> SemIR::ConstantId {
+  auto lhs = context.insts().GetAs<SemIR::CharLiteralValue>(lhs_id);
+  auto rhs = context.insts().GetAs<SemIR::CharLiteralValue>(rhs_id);
+  bool result;
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::CharLiteralEq:
+      result = (lhs.value.index == rhs.value.index);
+      break;
+    case SemIR::BuiltinFunctionKind::CharLiteralNeq:
+      result = (lhs.value.index != rhs.value.index);
+      break;
+    case SemIR::BuiltinFunctionKind::CharLiteralLess:
+      result = (lhs.value.index < rhs.value.index);
+      break;
+    case SemIR::BuiltinFunctionKind::CharLiteralLessEq:
+      result = (lhs.value.index <= rhs.value.index);
+      break;
+    case SemIR::BuiltinFunctionKind::CharLiteralGreater:
+      result = (lhs.value.index > rhs.value.index);
+      break;
+    case SemIR::BuiltinFunctionKind::CharLiteralGreaterEq:
+      result = (lhs.value.index >= rhs.value.index);
+      break;
+    default:
+      CARBON_FATAL("Unexpected operation kind.");
+  }
+  return MakeBoolResult(context, bool_type_id, result);
+}
+
+// Performs subtraction/addition of CharLiteral and Int.
+static auto PerformCharLiteralArithmetic(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::BuiltinFunctionKind builtin_kind, SemIR::InstId lhs_id,
+    SemIR::InstId rhs_id, SemIR::TypeId dest_type_id) -> SemIR::ConstantId {
+  auto lhs = context.insts().GetAs<SemIR::CharLiteralValue>(lhs_id);
+  auto rhs = context.insts().GetAs<SemIR::IntValue>(rhs_id);
+  const llvm::APInt& rhs_val = context.ints().Get(rhs.int_id);
+
+  // The code point value fits in 21 bits, so 32 bits is plenty for the
+  // CharLiteral. Active bits + 2 gives us room for a sign bit and a carry,
+  // while avoiding an APInt heap allocation except on the error path.
+  auto val = rhs_val.sextOrTrunc(std::max(32U, rhs_val.getActiveBits() + 2));
+  if (builtin_kind == SemIR::BuiltinFunctionKind::CharLiteralSubInt) {
+    val.negate();
+  }
+  val += lhs.value.index;
+
+  auto char_id = SemIR::CharId::ForCodePoint(val);
+  if (!char_id) {
+    CARBON_DIAGNOSTIC(InvalidCharLiteralArithmeticResult, Error,
+                      "character arithmetic result {0} is not a valid "
+                      "Unicode code point",
+                      llvm::APSInt);
+    context.emitter().Emit(loc_id, InvalidCharLiteralArithmeticResult,
+                           llvm::APSInt(val, /*isUnsigned=*/false));
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return MakeConstantResult(
+      context,
+      SemIR::CharLiteralValue{.type_id = dest_type_id, .value = *char_id},
+      Phase::Concrete);
+}
+
+// Performs subtraction of two CharLiteral values.
+static auto PerformCharLiteralSubChar(Context& context, SemIR::InstId lhs_id,
+                                      SemIR::InstId rhs_id,
+                                      SemIR::TypeId dest_type_id)
+    -> SemIR::ConstantId {
+  auto lhs = context.insts().GetAs<SemIR::CharLiteralValue>(lhs_id);
+  auto rhs = context.insts().GetAs<SemIR::CharLiteralValue>(rhs_id);
+  int32_t result = lhs.value.index - rhs.value.index;
+  return MakeIntResult(context, dest_type_id, /*is_signed=*/true,
+                       llvm::APInt(32, result, /*isSigned=*/true));
 }
 
 // Forms a constant int type as an evaluation result. Requires that width_id is
@@ -1195,8 +1354,14 @@ static auto PerformIntConvert(Context& context, SemIR::InstId arg_id,
                               SemIR::TypeId dest_type_id) -> SemIR::ConstantId {
   auto arg_val =
       context.ints().Get(context.insts().GetAs<SemIR::IntValue>(arg_id).int_id);
-  auto [dest_is_signed, bit_width_id] =
-      context.sem_ir().types().GetIntTypeInfo(dest_type_id);
+  auto dest_int_info = context.sem_ir().types().TryGetIntTypeInfo(dest_type_id);
+  if (!dest_int_info) {
+    // The destination is not a valid integer type, such as when its bit width
+    // was diagnosed as invalid. The error was already diagnosed when forming
+    // the type, so just produce an error value.
+    return SemIR::ErrorInst::ConstantId;
+  }
+  auto [dest_is_signed, bit_width_id] = *dest_int_info;
   if (bit_width_id.has_value()) {
     // TODO: If the value fits in the destination type, reuse the existing
     // int_id rather than recomputing it. This is probably the most common case.
@@ -1219,8 +1384,12 @@ static auto PerformCheckedIntConvert(Context& context, SemIR::LocId loc_id,
   auto arg = context.insts().GetAs<SemIR::IntValue>(arg_id);
   auto arg_val = context.ints().Get(arg.int_id);
 
-  auto [is_signed, bit_width_id] =
-      context.sem_ir().types().GetIntTypeInfo(dest_type_id);
+  auto dest_int_info = context.sem_ir().types().TryGetIntTypeInfo(dest_type_id);
+  if (!dest_int_info) {
+    // The destination is not a valid integer type; see PerformIntConvert.
+    return SemIR::ErrorInst::ConstantId;
+  }
+  auto [is_signed, bit_width_id] = *dest_int_info;
   auto width = bit_width_id.has_value()
                    ? context.ints().Get(bit_width_id).getZExtValue()
                    : arg_val.getBitWidth();
@@ -2289,13 +2458,61 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       return context.constant_values().Get(SemIR::FormType::TypeInstId);
     }
 
-    // Character conversions.
-    case SemIR::BuiltinFunctionKind::CharConvertChecked: {
+    case SemIR::BuiltinFunctionKind::CharLiteralAdd:
+    case SemIR::BuiltinFunctionKind::CharLiteralSubInt: {
+      if (phase != Phase::Concrete) {
+        break;
+      }
+      return PerformCharLiteralArithmetic(context, loc_id, builtin_kind,
+                                          arg_ids[0], arg_ids[1], call.type_id);
+    }
+    case SemIR::BuiltinFunctionKind::CharLiteralConvertChar: {
       if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);
       }
-      return PerformCheckedCharConvert(context, loc_id, arg_ids[0],
+      return PerformCharLiteralConvertChar(context, loc_id, arg_ids[0],
+                                           call.type_id);
+    }
+    case SemIR::BuiltinFunctionKind::CharLiteralConvertInt: {
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformCharLiteralConvertInt(context, loc_id, arg_ids[0],
+                                          call.type_id);
+    }
+    case SemIR::BuiltinFunctionKind::CharLiteralEq:
+    case SemIR::BuiltinFunctionKind::CharLiteralGreater:
+    case SemIR::BuiltinFunctionKind::CharLiteralGreaterEq:
+    case SemIR::BuiltinFunctionKind::CharLiteralLess:
+    case SemIR::BuiltinFunctionKind::CharLiteralLessEq:
+    case SemIR::BuiltinFunctionKind::CharLiteralNeq: {
+      if (phase != Phase::Concrete) {
+        break;
+      }
+      return PerformCharLiteralComparison(context, builtin_kind, arg_ids[0],
+                                          arg_ids[1], call.type_id);
+    }
+    case SemIR::BuiltinFunctionKind::CharLiteralSubChar: {
+      if (phase != Phase::Concrete) {
+        break;
+      }
+      return PerformCharLiteralSubChar(context, arg_ids[0], arg_ids[1],
                                        call.type_id);
+    }
+    case SemIR::BuiltinFunctionKind::IntAddCharLiteral: {
+      if (phase != Phase::Concrete) {
+        break;
+      }
+      return PerformCharLiteralArithmetic(
+          context, loc_id, SemIR::BuiltinFunctionKind::CharLiteralAdd,
+          arg_ids[1], arg_ids[0], call.type_id);
+    }
+    case SemIR::BuiltinFunctionKind::IntConvertCharLiteral: {
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformIntConvertCharLiteral(context, loc_id, arg_ids[0],
+                                          call.type_id);
     }
 
     // Integer conversions.
@@ -2764,13 +2981,9 @@ auto TryEvalTypedInst<SemIR::SymbolicBinding>(EvalContext& eval_context,
 
   // If we know which specific we're evaluating within and this is an argument
   // of that specific, its constant value is the corresponding argument value.
-  const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
-  if (bind_name.bind_index().has_value()) {
-    if (auto value =
-            eval_context.GetCompileTimeBindValue(bind_name.bind_index());
-        value.has_value()) {
-      return value;
-    }
+  if (auto value = eval_context.GetCompileTimeBindValue(bind);
+      value.has_value()) {
+    return value;
   }
 
   // The constant form of a symbolic binding is an idealized form of the

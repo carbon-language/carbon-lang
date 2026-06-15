@@ -23,7 +23,7 @@ A sample of quicksort in Carbon.
 ```cpp
 package Sorting;
 
-fn Partition[T:! Comparable & Movable](s: Slice(T))
+fn Partition[T:! Comparable & Movable](s: slice(T))
      -> i64 {
   var i: i64 = -1;
 
@@ -36,7 +36,7 @@ fn Partition[T:! Comparable & Movable](s: Slice(T))
   return i;
 }
 
-fn QuickSort[T:! Comparable & Movable](s: Slice(T)) {
+fn QuickSort[T:! Comparable & Movable](s: slice(T)) {
   if (s.Size() <= 1) {
     return;
   }
@@ -90,7 +90,7 @@ class Circle {
   var r: f32;
 }
 
-fn PrintTotalArea(circles: [Circle]) {
+fn PrintTotalArea(circles: slice(Circle)) {
   var area: f32 = 0;
   for (c: Circle in circles) {
     area += Math.Pi * c.r * c.r;
@@ -100,8 +100,8 @@ fn PrintTotalArea(circles: [Circle]) {
 
 fn Run() -> i32 {
   // A dynamically sized array, like `std::vector`.
-  var circles: array [Circle] = ({.r = 1.0}, {.r = 2.0});
-  // Implicitly constructs a slice from the array.
+  var circles: buf(Circle) = ({.r = 1.0}, {.r = 2.0});
+  // Implicitly constructs a slice from the buf.
   PrintTotalArea(circles);
   return 0;
 }
@@ -122,7 +122,7 @@ package Geometry;
 import Cpp library "circle.h";
 import Math;
 
-fn PrintTotalArea(circles: [Cpp.Circle]) {
+fn PrintTotalArea(circles: slice(Cpp.Circle)) {
   var area: f32 = 0;
   for (c: Cpp.Circle in circles) {
     area += Math.Pi * c.r * c.r;

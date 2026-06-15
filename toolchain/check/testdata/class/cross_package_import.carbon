@@ -195,6 +195,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -222,8 +224,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6: type = splice_block %C.ref [concrete = constants.%C] {
@@ -278,8 +280,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete = <error>]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc14: type = splice_block %C.ref [concrete = constants.%C] {
@@ -305,6 +307,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -333,8 +337,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %.loc19: type = splice_block %C.ref [concrete = constants.%C] {
@@ -367,6 +371,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -395,8 +401,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %.loc19: type = splice_block %C.ref [concrete = constants.%C] {

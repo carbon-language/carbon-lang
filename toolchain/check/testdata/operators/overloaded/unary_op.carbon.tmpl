@@ -15,7 +15,7 @@ package User;
 class C {};
 
 impl C as Core.INTERFACE where .Result = C {
-  fn Op[unused self: C]() -> C {
+  fn Op(unused self: C) -> C {
     return {};
   }
 }

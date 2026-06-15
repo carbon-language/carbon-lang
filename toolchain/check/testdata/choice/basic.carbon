@@ -90,12 +90,13 @@ let never: Never = {};
 // CHECK:STDOUT:   %Always.val: %Always = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.302: ref %Always = temporary invalid, %Always.val [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Always [concrete]
+// CHECK:STDOUT:   %mood.patt: %pattern_type = value_binding_pattern mood [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Always.decl: type = class_decl @Always [concrete = constants.%Always] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %mood.patt: %pattern_type = value_binding_pattern mood [concrete]
+// CHECK:STDOUT:     %mood.patt: %pattern_type = value_binding_pattern mood [concrete = constants.%mood.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Always.ref: type = name_ref Always, %Always.decl [concrete = constants.%Always]
 // CHECK:STDOUT:   %mood: %Always = value_binding mood, @__global_init.%Sunny.ref
@@ -197,6 +198,10 @@ let never: Never = {};
 // CHECK:STDOUT:   %Ordering.val.3b4: %Ordering = struct_value (%int_3.184) [concrete]
 // CHECK:STDOUT:   %.a83: ref %Ordering = temporary invalid, %Ordering.val.3b4 [concrete]
 // CHECK:STDOUT:   %pattern_type.542: type = pattern_type %Ordering [concrete]
+// CHECK:STDOUT:   %less.patt: %pattern_type.542 = value_binding_pattern less [concrete]
+// CHECK:STDOUT:   %equiv.patt: %pattern_type.542 = value_binding_pattern equiv [concrete]
+// CHECK:STDOUT:   %greater.patt: %pattern_type.542 = value_binding_pattern greater [concrete]
+// CHECK:STDOUT:   %inc.patt: %pattern_type.542 = value_binding_pattern inc [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -209,22 +214,22 @@ let never: Never = {};
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Ordering.decl: type = class_decl @Ordering [concrete = constants.%Ordering] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %less.patt: %pattern_type.542 = value_binding_pattern less [concrete]
+// CHECK:STDOUT:     %less.patt: %pattern_type.542 = value_binding_pattern less [concrete = constants.%less.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Ordering.ref.loc11: type = name_ref Ordering, %Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %less: %Ordering = value_binding less, @__global_init.%Less.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %equiv.patt: %pattern_type.542 = value_binding_pattern equiv [concrete]
+// CHECK:STDOUT:     %equiv.patt: %pattern_type.542 = value_binding_pattern equiv [concrete = constants.%equiv.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Ordering.ref.loc12: type = name_ref Ordering, %Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %equiv: %Ordering = value_binding equiv, @__global_init.%Equivalent.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %greater.patt: %pattern_type.542 = value_binding_pattern greater [concrete]
+// CHECK:STDOUT:     %greater.patt: %pattern_type.542 = value_binding_pattern greater [concrete = constants.%greater.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Ordering.ref.loc13: type = name_ref Ordering, %Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %greater: %Ordering = value_binding greater, @__global_init.%Greater.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %inc.patt: %pattern_type.542 = value_binding_pattern inc [concrete]
+// CHECK:STDOUT:     %inc.patt: %pattern_type.542 = value_binding_pattern inc [concrete = constants.%inc.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Ordering.ref.loc14: type = name_ref Ordering, %Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %inc: %Ordering = value_binding inc, @__global_init.%Incomparable.ref

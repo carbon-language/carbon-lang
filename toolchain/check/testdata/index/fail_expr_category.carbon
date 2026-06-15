@@ -53,13 +53,19 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:   %array_type: type = array_type %int_3, %i32 [concrete]
 // CHECK:STDOUT:   %.2b2: Core.Form = init_form %array_type [concrete]
 // CHECK:STDOUT:   %pattern_type.771: type = pattern_type %array_type [concrete]
+// CHECK:STDOUT:   %return.param_patt.8a2: %pattern_type.771 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.2f6: %pattern_type.771 = return_slot_pattern %return.param_patt.8a2, %array_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %b.param_patt: %pattern_type.771 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.771 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.f00: type = pattern_type %ptr.d08 [concrete]
+// CHECK:STDOUT:   %pb.patt: %pattern_type.f00 = ref_binding_pattern pb [concrete]
+// CHECK:STDOUT:   %pb.var_patt: %pattern_type.f00 = var_pattern %pb.patt [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
@@ -92,6 +98,8 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.aad: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
 // CHECK:STDOUT:   %bound_method.b7a: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_4.4eb: %i32 = int_value 4 [concrete]
+// CHECK:STDOUT:   %pf.patt: %pattern_type.f00 = ref_binding_pattern pf [concrete]
+// CHECK:STDOUT:   %pf.var_patt: %pattern_type.f00 = var_pattern %pf.patt [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc41_5.3 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
@@ -126,8 +134,8 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.771 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.771 = return_slot_pattern %return.param_patt, %array_type [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.771 = out_param_pattern [concrete = constants.%return.param_patt.8a2]
+// CHECK:STDOUT:     %return.patt: %pattern_type.771 = return_slot_pattern %return.param_patt, %array_type [concrete = constants.%return.patt.2f6]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
@@ -137,8 +145,8 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:     %return: ref %array_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.771 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.771 = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.771 = value_param_pattern [concrete = constants.%b.param_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.771 = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %array_type = value_param call_param0
 // CHECK:STDOUT:     %.loc17: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -155,8 +163,8 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT: fn @G(%b.param: %array_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pb.patt: %pattern_type.f00 = ref_binding_pattern pb [concrete]
-// CHECK:STDOUT:     %pb.var_patt: %pattern_type.f00 = var_pattern %pb.patt [concrete]
+// CHECK:STDOUT:     %pb.patt: %pattern_type.f00 = ref_binding_pattern pb [concrete = constants.%pb.patt]
+// CHECK:STDOUT:     %pb.var_patt: %pattern_type.f00 = var_pattern %pb.patt [concrete = constants.%pb.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pb.var: ref %ptr.d08 = var %pb.var_patt
 // CHECK:STDOUT:   %b.ref.loc23: %array_type = name_ref b, %b
@@ -204,8 +212,8 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:   %.loc28_8: init %i32 = converted %int_4.loc28, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc28_8 [concrete = constants.%int_4.4eb]
 // CHECK:STDOUT:   assign %.loc28_6.3, %.loc28_8
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pf.patt: %pattern_type.f00 = ref_binding_pattern pf [concrete]
-// CHECK:STDOUT:     %pf.var_patt: %pattern_type.f00 = var_pattern %pf.patt [concrete]
+// CHECK:STDOUT:     %pf.patt: %pattern_type.f00 = ref_binding_pattern pf [concrete = constants.%pf.patt]
+// CHECK:STDOUT:     %pf.var_patt: %pattern_type.f00 = var_pattern %pf.patt [concrete = constants.%pf.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pf.var: ref %ptr.d08 = var %pf.var_patt
 // CHECK:STDOUT:   %F.ref.loc36: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]

@@ -38,6 +38,8 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ptr.7ee: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.8c5: type = pattern_type %ptr.7ee [concrete]
+// CHECK:STDOUT:   %Self.patt: %pattern_type.8c5 = ref_binding_pattern r#Self [concrete]
+// CHECK:STDOUT:   %Self.var_patt: %pattern_type.8c5 = var_pattern %Self.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
@@ -47,6 +49,8 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.aa5: %T.as.DefaultOrUnformed.impl.Op.type.4ec = struct_value () [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %ptr.7ee, (%DefaultOrUnformed.impl_witness.a7b) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.aa5, @T.as.DefaultOrUnformed.impl.Op(%ptr.7ee) [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type.8c5 = ref_binding_pattern p [concrete]
+// CHECK:STDOUT:   %p.var_patt: %pattern_type.8c5 = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.ff5: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.ce9: %ptr.as.Copy.impl.Op.type.ff5 = struct_value () [symbolic]
@@ -63,7 +67,11 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:   %MemberNamedSelf: type = class_type @MemberNamedSelf [concrete]
 // CHECK:STDOUT:   %Self.7fc: type = class_type @Self [concrete]
 // CHECK:STDOUT:   %pattern_type.bb1: type = pattern_type %MemberNamedSelf [concrete]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.bb1 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.bb1 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %pattern_type.917: type = pattern_type %Self.7fc [concrete]
+// CHECK:STDOUT:   %y.param_patt: %pattern_type.917 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt: %pattern_type.917 = at_binding_pattern y, %y.param_patt [concrete]
 // CHECK:STDOUT:   %MemberNamedSelf.F.type: type = fn_type @MemberNamedSelf.F [concrete]
 // CHECK:STDOUT:   %MemberNamedSelf.F: %MemberNamedSelf.F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -95,10 +103,10 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %MemberNamedSelf.decl: type = class_decl @MemberNamedSelf [concrete = constants.%MemberNamedSelf] {} {}
 // CHECK:STDOUT:   %MemberNamedSelf.F.decl: %MemberNamedSelf.F.type = fn_decl @MemberNamedSelf.F [concrete = constants.%MemberNamedSelf.F] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.bb1 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type.bb1 = at_binding_pattern x, %x.param_patt [concrete]
-// CHECK:STDOUT:     %y.param_patt: %pattern_type.917 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %y.patt: %pattern_type.917 = at_binding_pattern y, %y.param_patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.bb1 = value_param_pattern [concrete = constants.%x.param_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.bb1 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type.917 = value_param_pattern [concrete = constants.%y.param_patt]
+// CHECK:STDOUT:     %y.patt: %pattern_type.917 = at_binding_pattern y, %y.param_patt [concrete = constants.%y.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param.loc28: %MemberNamedSelf = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc28_32: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
@@ -122,10 +130,10 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT: class @MemberNamedSelf {
 // CHECK:STDOUT:   %Self.decl: type = class_decl @Self [concrete = constants.%Self.7fc] {} {}
 // CHECK:STDOUT:   %MemberNamedSelf.F.decl: %MemberNamedSelf.F.type = fn_decl @MemberNamedSelf.F [concrete = constants.%MemberNamedSelf.F] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.bb1 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type.bb1 = at_binding_pattern x, %x.param_patt [concrete]
-// CHECK:STDOUT:     %y.param_patt: %pattern_type.917 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %y.patt: %pattern_type.917 = at_binding_pattern y, %y.param_patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.bb1 = value_param_pattern [concrete = constants.%x.param_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.bb1 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type.917 = value_param_pattern [concrete = constants.%y.param_patt]
+// CHECK:STDOUT:     %y.patt: %pattern_type.917 = at_binding_pattern y, %y.param_patt [concrete = constants.%y.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param.loc25: %MemberNamedSelf = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc25_11: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
@@ -154,8 +162,8 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT: fn @Class.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %Self.patt: %pattern_type.8c5 = ref_binding_pattern r#Self [concrete]
-// CHECK:STDOUT:     %Self.var_patt: %pattern_type.8c5 = var_pattern %Self.patt [concrete]
+// CHECK:STDOUT:     %Self.patt: %pattern_type.8c5 = ref_binding_pattern r#Self [concrete = constants.%Self.patt]
+// CHECK:STDOUT:     %Self.var_patt: %pattern_type.8c5 = var_pattern %Self.patt [concrete = constants.%Self.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.var: ref %ptr.7ee = var %Self.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%ptr.7ee, (constants.%DefaultOrUnformed.impl_witness.a7b) [concrete = constants.%DefaultOrUnformed.facet]
@@ -171,8 +179,8 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self: ref %ptr.7ee = ref_binding r#Self, %Self.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.8c5 = ref_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.var_patt: %pattern_type.8c5 = var_pattern %p.patt [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.8c5 = ref_binding_pattern p [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.var_patt: %pattern_type.8c5 = var_pattern %p.patt [concrete = constants.%p.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.7ee = var %p.var_patt
 // CHECK:STDOUT:   %Self.ref.loc18_27: ref %ptr.7ee = name_ref r#Self, %Self

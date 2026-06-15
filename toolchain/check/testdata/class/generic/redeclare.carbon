@@ -103,6 +103,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Generic.type: type = generic_class_type @Generic [concrete]
 // CHECK:STDOUT:   %Generic.generic: %Generic.type = struct_value () [concrete]
@@ -125,7 +126,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Generic.decl.loc4: %Generic.type = class_decl @Generic [concrete = constants.%Generic.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc6: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_19.1: type = splice_block %.loc4_19.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.loc4: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -134,7 +135,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.loc4_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl.loc6: %Generic.type = class_decl @Generic [concrete = constants.%Generic.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc6: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_19.1: type = splice_block %.loc6_19.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.loc6: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -145,6 +146,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Generic(%T.loc4_16.2: type) {
+// CHECK:STDOUT:   %T.patt.loc4: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc4_16.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_16.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -159,6 +161,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc4 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc4_16.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,6 +172,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A.loc12 [concrete]
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [concrete]
@@ -192,7 +196,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl.loc4: type = class_decl @A.loc4 [concrete = constants.%A.5a2] {} {}
 // CHECK:STDOUT:   %A.decl.loc12: %A.type = class_decl @A.loc12 [concrete = constants.%A.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc12_10.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_13.1: type = splice_block %.loc12_13.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -205,6 +209,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: class @A.loc4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @A.loc12(%T.loc12_10.2: type) {
+// CHECK:STDOUT:   %T.patt.loc12_10.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc12_10.1: type = symbolic_binding T, 0 [symbolic = %T.loc12_10.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -219,6 +224,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.loc12(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc12_10.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc12_10.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -231,12 +237,15 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %N.patt.3a1: %pattern_type.9ef = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %N.37f: %A = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %B.type.7937a9.1: type = generic_class_type @B.loc6 [concrete]
 // CHECK:STDOUT:   %B.generic.60ca48.1: %B.type.7937a9.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %N.patt.9f0: %pattern_type.51d = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %N.bd9: %T = symbolic_binding N, 1 [symbolic]
 // CHECK:STDOUT:   %B.type.7937a9.2: type = generic_class_type @B.loc14 [concrete]
 // CHECK:STDOUT:   %B.generic.60ca48.2: %B.type.7937a9.2 = struct_value () [concrete]
@@ -259,7 +268,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl.loc6: %B.type.7937a9.1 = class_decl @B.loc6 [concrete = constants.%B.generic.60ca48.1] {
-// CHECK:STDOUT:     %N.patt: %pattern_type.9ef = symbolic_binding_pattern N, 0 [concrete]
+// CHECK:STDOUT:     %N.patt.loc6_10.1: %pattern_type.9ef = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_10.2 (constants.%N.patt.3a1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6: type = splice_block %A.ref [concrete = constants.%A] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -268,8 +277,8 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %N.loc6_10.2: %A = symbolic_binding N, 0 [symbolic = %N.loc6_10.1 (constants.%N.37f)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc14: %B.type.7937a9.2 = class_decl @B.loc14 [concrete = constants.%B.generic.60ca48.2] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %N.patt: @B.loc14.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [concrete]
+// CHECK:STDOUT:     %T.patt.loc14_10.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_10.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %N.patt.loc14_20.1: @B.loc14.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc14_20.2 (constants.%N.patt.9f0)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_13.1: type = splice_block %.loc14_13.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.loc14_10: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -293,15 +302,18 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @B.loc6(%N.loc6_10.2: %A) {
+// CHECK:STDOUT:   %N.patt.loc6_10.2: %pattern_type.9ef = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_10.2 (constants.%N.patt.3a1)]
 // CHECK:STDOUT:   %N.loc6_10.1: %A = symbolic_binding N, 0 [symbolic = %N.loc6_10.1 (constants.%N.37f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @B.loc14(%T.loc14_10.2: type, %N.loc14_20.2: @B.loc14.%T.loc14_10.1 (%T)) {
+// CHECK:STDOUT:   %T.patt.loc14_10.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc14_10.1: type = symbolic_binding T, 0 [symbolic = %T.loc14_10.1 (constants.%T)]
-// CHECK:STDOUT:   %N.loc14_20.1: @B.loc14.%T.loc14_10.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc14_20.1 (constants.%N.bd9)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc14_10.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %N.patt.loc14_20.2: @B.loc14.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc14_20.2 (constants.%N.patt.9f0)]
+// CHECK:STDOUT:   %N.loc14_20.1: @B.loc14.%T.loc14_10.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc14_20.1 (constants.%N.bd9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -315,13 +327,16 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.loc6(constants.%N.37f) {
+// CHECK:STDOUT:   %N.patt.loc6_10.2 => constants.%N.patt.3a1
 // CHECK:STDOUT:   %N.loc6_10.1 => constants.%N.37f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.loc14(constants.%T, constants.%N.bd9) {
+// CHECK:STDOUT:   %T.patt.loc14_10.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc14_10.1 => constants.%T
-// CHECK:STDOUT:   %N.loc14_20.1 => constants.%N.bd9
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
+// CHECK:STDOUT:   %N.patt.loc14_20.2 => constants.%N.patt.9f0
+// CHECK:STDOUT:   %N.loc14_20.1 => constants.%N.bd9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_count.carbon
@@ -333,10 +348,12 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %C.type.a601fe.1: type = generic_class_type @C.loc6 [concrete]
 // CHECK:STDOUT:   %C.generic.4b4597.1: %C.type.a601fe.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type.9ef = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %U: %A = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %C.type.a601fe.2: type = generic_class_type @C.loc14 [concrete]
 // CHECK:STDOUT:   %C.generic.4b4597.2: %C.type.a601fe.2 = struct_value () [concrete]
@@ -359,7 +376,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %C.decl.loc6: %C.type.a601fe.1 = class_decl @C.loc6 [concrete = constants.%C.generic.4b4597.1] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc6_10.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_13.1: type = splice_block %.loc6_13.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -368,8 +385,8 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.loc6_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_10.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc14: %C.type.a601fe.2 = class_decl @C.loc14 [concrete = constants.%C.generic.4b4597.2] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %U.patt: %pattern_type.9ef = symbolic_binding_pattern U, 1 [concrete]
+// CHECK:STDOUT:     %T.patt.loc14_10.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_10.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %U.patt.loc14_20.1: %pattern_type.9ef = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc14_20.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_13.1: type = splice_block %.loc14_13.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.loc14_10: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -393,13 +410,16 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C.loc6(%T.loc6_10.2: type) {
+// CHECK:STDOUT:   %T.patt.loc6_10.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc6_10.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_10.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C.loc14(%T.loc14_10.2: type, %U.loc14_20.2: %A) {
+// CHECK:STDOUT:   %T.patt.loc14_10.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc14_10.1: type = symbolic_binding T, 0 [symbolic = %T.loc14_10.1 (constants.%T)]
+// CHECK:STDOUT:   %U.patt.loc14_20.2: %pattern_type.9ef = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc14_20.2 (constants.%U.patt)]
 // CHECK:STDOUT:   %U.loc14_20.1: %A = symbolic_binding U, 1 [symbolic = %U.loc14_20.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -414,11 +434,14 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.loc6(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc6_10.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc6_10.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.loc14(constants.%T, constants.%U) {
+// CHECK:STDOUT:   %T.patt.loc14_10.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc14_10.1 => constants.%T
+// CHECK:STDOUT:   %U.patt.loc14_20.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc14_20.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -431,10 +454,12 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.d47: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %D.type.ff75f2.1: type = generic_class_type @D.loc6 [concrete]
 // CHECK:STDOUT:   %D.generic.7223e9.1: %D.type.ff75f2.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %T.patt.3a1: %pattern_type.9ef = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.37f: %A = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %D.type.ff75f2.2: type = generic_class_type @D.loc14 [concrete]
 // CHECK:STDOUT:   %D.generic.7223e9.2: %D.type.ff75f2.2 = struct_value () [concrete]
@@ -457,7 +482,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %D.decl.loc6: %D.type.ff75f2.1 = class_decl @D.loc6 [concrete = constants.%D.generic.7223e9.1] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc6_10.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_10.2 (constants.%T.patt.d47)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_13.1: type = splice_block %.loc6_13.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -466,7 +491,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.loc6_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_10.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc14: %D.type.ff75f2.2 = class_decl @D.loc14 [concrete = constants.%D.generic.7223e9.2] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.9ef = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc14_10.1: %pattern_type.9ef = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_10.2 (constants.%T.patt.3a1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14: type = splice_block %A.ref [concrete = constants.%A] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -485,12 +510,14 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @D.loc6(%T.loc6_10.2: type) {
+// CHECK:STDOUT:   %T.patt.loc6_10.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_10.2 (constants.%T.patt.d47)]
 // CHECK:STDOUT:   %T.loc6_10.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_10.1 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @D.loc14(%T.loc14_10.2: %A) {
+// CHECK:STDOUT:   %T.patt.loc14_10.2: %pattern_type.9ef = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_10.2 (constants.%T.patt.3a1)]
 // CHECK:STDOUT:   %T.loc14_10.1: %A = symbolic_binding T, 0 [symbolic = %T.loc14_10.1 (constants.%T.37f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -505,10 +532,12 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.loc6(constants.%T.67d) {
+// CHECK:STDOUT:   %T.patt.loc6_10.2 => constants.%T.patt.d47
 // CHECK:STDOUT:   %T.loc6_10.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.loc14(constants.%T.37f) {
+// CHECK:STDOUT:   %T.patt.loc14_10.2 => constants.%T.patt.3a1
 // CHECK:STDOUT:   %T.loc14_10.1 => constants.%T.37f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -518,9 +547,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %E.type.0b1ef1.1: type = generic_class_type @E.loc4 [concrete]
 // CHECK:STDOUT:   %E.generic.5469ef.1: %E.type.0b1ef1.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %E.type.0b1ef1.2: type = generic_class_type @E.loc12 [concrete]
 // CHECK:STDOUT:   %E.generic.5469ef.2: %E.type.0b1ef1.2 = struct_value () [concrete]
@@ -543,7 +574,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %E.decl.loc4: %E.type.0b1ef1.1 = class_decl @E.loc4 [concrete = constants.%E.generic.5469ef.1] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc4_10.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_13.1: type = splice_block %.loc4_13.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -552,7 +583,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.loc4_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_10.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %E.decl.loc12: %E.type.0b1ef1.2 = class_decl @E.loc12 [concrete = constants.%E.generic.5469ef.2] {
-// CHECK:STDOUT:     %U.patt: %pattern_type = symbolic_binding_pattern U, 0 [concrete]
+// CHECK:STDOUT:     %U.patt.loc12_10.1: %pattern_type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc12_10.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_13.1: type = splice_block %.loc12_13.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -563,12 +594,14 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @E.loc4(%T.loc4_10.2: type) {
+// CHECK:STDOUT:   %T.patt.loc4_10.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc4_10.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_10.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @E.loc12(%U.loc12_10.2: type) {
+// CHECK:STDOUT:   %U.patt.loc12_10.2: %pattern_type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc12_10.2 (constants.%U.patt)]
 // CHECK:STDOUT:   %U.loc12_10.1: type = symbolic_binding U, 0 [symbolic = %U.loc12_10.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -583,10 +616,12 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E.loc4(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc4_10.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc4_10.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E.loc12(constants.%U) {
+// CHECK:STDOUT:   %U.patt.loc12_10.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc12_10.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

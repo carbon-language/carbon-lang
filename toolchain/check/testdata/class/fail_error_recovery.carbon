@@ -18,7 +18,7 @@
 // CHECK:STDERR:
 fn F(unused N:! error_not_found) {
   base class C {
-    virtual fn Foo[unused self: Self]() {}
+    virtual fn Foo(unused self) {}
   }
 
   base class D {

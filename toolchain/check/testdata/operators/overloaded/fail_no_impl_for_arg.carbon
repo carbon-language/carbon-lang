@@ -16,10 +16,10 @@ class C {};
 class D {};
 
 impl C as Core.AddWith(C) where .Result = C {
-  fn Op[unused self: C](unused other: C) -> C { return {}; }
+  fn Op(unused self: C, unused other: C) -> C { return {}; }
 }
 impl C as Core.AddAssignWith(C) {
-  fn Op[unused ref self: C](unused other: C) {}
+  fn Op(unused ref self: C, unused other: C) {}
 }
 
 fn Test(a: C, b: D, z: bool) -> C {
