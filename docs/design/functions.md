@@ -128,7 +128,7 @@ it can be deduced using a return expression (`=>`):
         valid.
     -   The function must have precisely one `return` statement. That `return`
         statement's expression will then be used for type inference.
--   Omission of `->` (when using `{` ... `}` body) indicates that the return
+-   Omission of both `->` and `=>` indicates that the return
     type is the empty tuple, `()`.
     -   For example, `fn Sleep(seconds: i64);` is similar to
         `fn Sleep(seconds: i64) -> ();`.
@@ -316,7 +316,7 @@ fn F(h1: HasMember, h2: HasMember) -> i32 {
 
 ## Function calls
 
-Function calls use C-like syntax: an expression naming a callable is followed by
+Function calls use C-like syntax: an expression naming a callee is followed by
 an argument list enclosed in parentheses, which resembles a tuple of arguments.
 Calls take the form `a(b, c, d)` or `a(b, c, d,)`, where:
 
@@ -332,14 +332,15 @@ tuple literal, except that a tuple literal requires a trailing comma to form a
 single-element tuple `(b,)`, whereas in call syntax both `a(b)` and `a(b,)` are
 permitted.
 
-There are several kinds of callable:
+A _callable value_ (or _callable_ for short) is a value that can be used as the callee
+of a call expression. There are several kinds of callable:
 
 -   Functions, and more generally values of function types.
 -   Bound methods, such as `my_vector.Begin`.
 -   Lambdas.
 -   Parameterized entities, such as a generic class `Vector` or a generic
     interface `AddWith`.
--   Values of dependent types that are constrained to be callable.
+-   Values of dependent types that are [constrained to be callable](#indirect-calls-and-the-call-interface).
 -   User-defined class types that overload function call syntax.
 
 Function calls are divided into _direct calls_ and _indirect calls_.
@@ -386,9 +387,9 @@ The result of the call expression depends on the callee:
 -   If the callee is a parameterized entity such as a generic class or a generic
     interface, the result is the specific instance of that generic, such as a
     class or interface, and the call is a value expression of type `type`.
--   If the callee is a function value, the call is an initializing expression
-    whose type is the substituted return type of the function. When evaluated,
-    the call expression will invoke the function and produce whatever value it
+-   If the callee is a function value, the call is an expression
+    whose form is the substituted return form of the function. When evaluated,
+    the call expression will invoke the function and produce whatever result it
     returns.
 -   If the callee is a bound method value, it behaves the same as a function
     value, except that the `self` parameter of the called function is bound to
@@ -400,9 +401,9 @@ A generic parameter can be constrained to be a callable type using the `Call`
 interface:
 
 ```carbon
-interface Call(... each Args: type) {
+interface Call(... each Arg: type) {
   let Result:! type;
-  fn Op(self, ... each args: each Args) -> Result;
+  fn Op(self, ... each arg: each Arg) -> Result;
 }
 ```
 
