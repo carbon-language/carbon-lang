@@ -253,23 +253,16 @@ have corresponding types in Carbon.
 
 C++'s `std::string_view` maps directly to Carbon's `str` (which is an alias for
 `Core.Str`) when importing C++ headers. The Carbon compiler treats
-`std::string_view` as a type alias for `str` at the ABI level.
+`std::string_view` as a type alias for `str` at the ABI level, with identical
+memory representation.
 
-To support this mapping:
-
--   **Identical Representation:** The memory layout (sequence of fields, size,
-    and alignment) of `std::string_view` and `str` must be identical for the
-    target platform and C++ standard library.
--   **Target Restrictions:** This direct mapping is initially enabled only on
-    64-bit targets (since `str` has a 64-bit size field, whereas C++
-    `std::string_view` uses `size_t`, which is 32-bit on 32-bit platforms) and
-    where the standard library representation matches the
-    pointer-first-then-size layout of `str` (such as `libc++` used by Clang and
-    MSVC STL). For platforms with other layout conventions (like `libstdc++`'s
-    size-first-then-pointer layout), this mapping is disabled by default until
-    layout compatibility is established.
--   **Semantic Alignment:** Both `str` and `std::string_view` are views of a
-    `char` sequence, see [character types](#character-types).
+This direct mapping is initially enabled only on 64-bit targets (since `str` has
+a 64-bit size field, whereas C++ `std::string_view` uses `size_t`, which is
+32-bit on 32-bit platforms) and where the standard library representation
+matches the pointer-first-then-size layout of `str` (such as `libc++` used by
+Clang and MSVC STL). For platforms with other layout conventions (like
+`libstdc++`'s size-first-then-pointer layout), this mapping is disabled by
+default until layout compatibility is established.
 
 > References:
 >
