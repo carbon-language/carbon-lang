@@ -877,7 +877,7 @@ var i: i32 = 1;
 var a: array(i32, 3) = (i, i, i);
 ```
 
-A heap-allocted dynamically sized array is written `buf(T)`, which is a
+A heap-allocated dynamically sized array is written `buf(T)`, which is a
 shorthand for the library type `Core.Buf(T)`.
 
 Elements of an `array` or `buf` may be accessed using square brackets
