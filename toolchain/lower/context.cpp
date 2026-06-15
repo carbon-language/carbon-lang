@@ -5,6 +5,7 @@
 #include "toolchain/lower/context.h"
 
 #include "clang/Basic/SourceManager.h"
+#include "clang/Sema/MultiplexExternalSemaSource.h"
 #include "common/check.h"
 #include "common/growing_range.h"
 #include "common/raw_string_ostream.h"
@@ -12,6 +13,7 @@
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/inst_namer.h"
+#include "toolchain/sem_ir/read_only_ast_source.h"
 
 namespace Carbon::Lower {
 
@@ -70,6 +72,23 @@ auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
 
   for (auto& file_context : file_contexts_.values()) {
     if (file_context) {
+      if (file_context->cpp_file()) {
+        // Remove the `CarbonExternalASTSource` installed during check
+        // (always the last child of the multiplex source) and replace
+        // it with a `ReadOnlyASTSource`. This is necessary because the
+        // original source has a now-invalid pointer to a
+        // `Check::Context`.
+        auto& ast = const_cast<clang::ASTContext&>(
+            file_context->cpp_file()->ast_context());
+        auto* multiplex_source =
+            cast<clang::MultiplexExternalSemaSource>(ast.getExternalSource());
+        auto& child_sources = multiplex_source->GetSources();
+        child_sources.pop_back();
+        multiplex_source->AddSource(
+            llvm::makeIntrusiveRefCnt<SemIR::ReadOnlyASTSource>(
+                file_context->sem_ir()));
+      }
+
       file_context->Finalize();
     }
   }
