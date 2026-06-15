@@ -370,6 +370,18 @@ struct LetBindingPattern {
   AnyExprId type;
 };
 
+// A `self` binding whose type is omitted, such as `fn F(self)` or
+// `fn F(ref self)`. The type is implicitly `Self`; checking treats this exactly
+// like a `self: Self` binding. There is no type node, so the whole binding
+// sits on the one `self` token.
+struct SelfBindingPattern {
+  static constexpr auto Kind = NodeKind::SelfBindingPattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 1});
+
+  Lex::SelfValueIdentifierTokenIndex token;
+  NodeIdOneOf<SelfValueName, RefBindingName> name;
+};
+
 // A binding pattern, such as `name: Type`, that is inside a `var` pattern.
 struct VarBindingPattern {
   static constexpr auto Kind = NodeKind::VarBindingPattern.Define(

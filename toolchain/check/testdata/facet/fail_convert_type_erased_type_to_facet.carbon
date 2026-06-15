@@ -38,6 +38,8 @@ fn F() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}}.loc18_21 [concrete]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%Animal.impl_witness) [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Animal.type [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %Animal.type = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -70,6 +72,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @WalkAnimal(<unexpected>.inst{{[0-9A-F]+}}.loc20_23: %Animal.type) {
+// CHECK:STDOUT:   %a.patt.loc20_23.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc20_23.2 (constants.%a.patt)]
 // CHECK:STDOUT:   %a: %Animal.type = symbolic_binding a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -91,6 +94,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%a) {
+// CHECK:STDOUT:   %a.patt.loc20_23.2 => constants.%a.patt
 // CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

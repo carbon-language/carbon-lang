@@ -366,6 +366,19 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ImplId impl_id) -> std::string {
   return out.TakeStr();
 }
 
+LLVM_DUMP_METHOD auto Dump(const File& file, ImportIRInstId import_inst_id)
+    -> std::string {
+  RawStringOstream out;
+  out << import_inst_id;
+  if (import_inst_id.has_value()) {
+    auto import_ir_inst = file.import_ir_insts().Get(import_inst_id);
+    out << ": " << import_ir_inst << "\n"
+        << Dump(*file.import_irs().Get(import_ir_inst.ir_id()).sem_ir,
+                import_ir_inst.inst_id());
+  }
+  return out.TakeStr();
+}
+
 static auto DumpInstCommonDetails(const File& file, const Inst& inst,
                                   RawStringOstream& out) -> void {
   if (inst.arg0_and_kind().kind() == IdKind::For<EntityNameId>) {

@@ -35,7 +35,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Tuples](#tuples)
     -   [Struct types](#struct-types)
     -   [Pointer types](#pointer-types)
-    -   [Arrays and slices](#arrays-and-slices)
+    -   [Arrays and buffers](#arrays-and-buffers)
+    -   [Slices](#slices)
 -   [Expressions](#expressions)
 -   [Declarations, Definitions, and Scopes](#declarations-definitions-and-scopes)
 -   [Patterns](#patterns)
@@ -861,35 +862,49 @@ or restrictions on casts between pointers and integers.
 > -   Proposal
 >     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
-### Arrays and slices
+### Arrays and buffers
 
-> **TODO:** The provisional array syntax documented here has been superseded by
-> [#4682: The Core.Array type for direct-storage immutably-sized buffers](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md).
+The type of a direct-storage immutably sized array holding `N` values of type
+`T` is written `array(T, N)`, which is a shorthand for the library type
+`Core.Array(T, N)`. This type is defined in the prelude.
 
-The type of an array of holding 4 `i32` values is written `[i32; 4]`. There is
-an [implicit conversion](expressions/implicit_conversions.md) from tuples to
-arrays of the same length as long as every component of the tuple may be
-implicitly converted to the destination element type. In cases where the size of
-the array may be deduced, it may be omitted, as in:
+There is an [implicit conversion](expressions/implicit_conversions.md) from
+tuples to arrays of the same length as long as every component of the tuple may
+be implicitly converted to the destination element type. For example:
 
 ```carbon
 var i: i32 = 1;
-// `[i32;]` equivalent to `[i32; 3]` here.
-var a: [i32;] = (i, i, i);
+var a: array(i32, 3) = (i, i, i);
 ```
 
-Elements of an array may be accessed using square brackets (`[`...`]`), as in
-`a[i]`:
+A heap-allocated dynamically sized array is written `buf(T)`, which is a
+shorthand for the library type `Core.Buf(T)`.
+
+Elements of an `array` or `buf` may be accessed using square brackets
+(`[`...`]`), as in `a[i]`:
 
 ```carbon
 a[i] = 2;
 Core.Print(a[0]);
 ```
 
-> **TODO:** Slices
+> Alternatives considered:
+>
+> -   [`[T; N]` builtin syntax](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#t-n-builtin-syntax)
+> -   [`array [T; N]` builtin syntax](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#array-t-n-builtin-syntax)
+> -   [Just the `Core.Array(T, N)` library type](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#just-the-corearrayt-n-library-type)
+> -   [Implicitly importing `Core.Array(T, N)` to the file scope](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#implicitly-importing-corearrayt-n-to-the-file-scope)
 
-> **Note:** This is provisional, no design for arrays has been through the
-> proposal process yet.
+> References:
+>
+> -   Leads issue
+>     [#5969: Core type names and keywords for string types](https://github.com/carbon-language/carbon-lang/issues/5969)
+> -   Proposal
+>     [#4682: The Core.Array type for direct-storage immutably-sized buffers](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md)
+
+### Slices
+
+> **TODO:** Slices
 
 ## Expressions
 
@@ -920,9 +935,10 @@ Some common expressions in Carbon include:
     -   [Conversion](expressions/as_expressions.md): `2 as i32`
     -   [Logical](expressions/logical_operators.md): `a and b`, `c or d`,
         `not e`
-    -   [Indexing](#arrays-and-slices): `a[3]`
+    -   [Indexing](expressions/indexing.md): `a[3]`
     -   [Function](#functions) call: `f(4)`
     -   [Pointer](expressions/pointer_operators.md): `*p`, `p->m`, `&x`
+    -   [Type](expressions/type_operators.md): `T*`, `const T`
     -   [Move](#move): `~x`
 
 -   [Conditionals](expressions/if.md): `if c then t else f`
@@ -3047,7 +3063,7 @@ class Stack(T:! type) {
   fn Push(ref self, value: T);
   fn Pop(ref self) -> T;
 
-  var storage: Array(T);
+  var storage: buf(T);
 }
 
 var int_stack: Stack(i32);
@@ -3058,7 +3074,7 @@ In this example:
 -   `Stack` is a type parameterized by a type `T`.
 -   `T` may be used within the definition of `Stack` anywhere a normal type
     would be used.
--   `Array(T)` instantiates generic type `Array` with its argument set to `T`.
+-   `buf(T)` instantiates generic type `buf` with its argument set to `T`.
 -   `Stack(i32)` instantiates `Stack` with `T` set to `i32`.
 
 The values of type parameters are part of a type's value, and so may be deduced
@@ -3621,7 +3637,7 @@ Other C and C++ types are equal to Carbon types as follows:
 | `float`  | `f32`          |
 | `double` | `f64`          |
 | `T*`     | `Optional(T*)` |
-| `T[4]`   | `[T; 4]`       |
+| `T[4]`   | `array(T, 4)`  |
 
 Further, C++ reference types like `T&` will be translated to `T*` in Carbon,
 which is Carbon's non-null pointer type.

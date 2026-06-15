@@ -14,6 +14,7 @@
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -35,12 +36,19 @@ class DeductionWorklist {
     SemIR::InstId param;
     SemIR::InstId arg;
     bool want_value;
+    SemIR::LocId param_loc_id;
   };
 
   // Adds a single (param, arg) deduction.
-  auto Add(SemIR::InstId param, SemIR::InstId arg, bool want_value) -> void {
-    deductions_.push_back(
-        {.param = param, .arg = arg, .want_value = want_value});
+  auto Add(SemIR::InstId param, SemIR::InstId arg, bool want_value,
+           SemIR::LocId param_loc_id = SemIR::LocId::None) -> void {
+    if (!param_loc_id.has_value()) {
+      param_loc_id = SemIR::LocId(param);
+    }
+    deductions_.push_back({.param = param,
+                           .arg = arg,
+                           .want_value = want_value,
+                           .param_loc_id = param_loc_id});
   }
 
   // Adds a single (param, arg) deduction of a specific.
@@ -162,11 +170,13 @@ class DeductionContext {
 
   auto context() const -> Context& { return *context_; }
 
-  // Adds a pending deduction of `param` from `arg`. `needs_substitution`
-  // indicates whether we need to substitute known generic parameters into
-  // `param`.
-  auto Add(SemIR::InstId param, SemIR::InstId arg, bool want_value) -> void {
-    worklist_.Add(param, arg, want_value);
+  // Adds a pending deduction of `param` from `arg`. If `param_loc_id` is not
+  // `None`, it is used in place of `LocId(param)` in diagnostics.
+  // `needs_substitution` indicates whether we need to substitute known generic
+  // parameters into `param`.
+  auto Add(SemIR::InstId param, SemIR::InstId arg, bool want_value,
+           SemIR::LocId param_loc_id = SemIR::LocId::None) -> void {
+    worklist_.Add(param, arg, want_value, param_loc_id);
   }
 
   template <typename ParamT, typename ArgT>
@@ -178,6 +188,12 @@ class DeductionContext {
   auto AddAll(SemIR::InstBlockId param, llvm::ArrayRef<SemIR::InstId> arg,
               bool want_value) -> void {
     worklist_.AddAll(param, arg, want_value);
+  }
+
+  template <typename ElementId>
+  auto AddAll(llvm::ArrayRef<ElementId> params, llvm::ArrayRef<ElementId> args,
+              bool want_value) -> void {
+    worklist_.AddAll(params, args, want_value);
   }
 
   template <typename ParamT, typename ArgT>
@@ -198,13 +214,14 @@ class DeductionContext {
   auto MakeSpecific() -> SemIR::SpecificId;
 
  private:
-  auto NoteInitializingParam(SemIR::InstId param_id, auto& builder) -> void {
+  auto NoteInitializingParam(SemIR::InstId param_id, SemIR::LocId loc_id,
+                             auto& builder) -> void {
     if (auto param = context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(
             param_id)) {
       CARBON_DIAGNOSTIC(InitializingGenericParam, Note,
                         "initializing generic parameter `{0}` declared here",
                         SemIR::NameId);
-      builder.Note(param_id, InitializingGenericParam,
+      builder.Note(loc_id, InitializingGenericParam,
                    context().entity_names().Get(param->entity_name_id).name_id);
     } else {
       NoteGenericHere(context(), generic_id_, builder);
@@ -278,13 +295,19 @@ DeductionContext::DeductionContext(Context* context, SemIR::LocId loc_id,
 
 auto DeductionContext::Deduce() -> bool {
   while (!worklist_.Done()) {
-    auto [param_id, arg_id, want_value] = worklist_.PopNext();
+    auto [param_id, arg_id, want_value, param_loc_id] = worklist_.PopNext();
 
+    if (param_id == SemIR::ErrorInst::InstId) {
+      return false;
+    }
     // TODO: Bail out if there's nothing to deduce: if we're not in a pattern
     // and the parameter doesn't have a symbolic constant value.
 
     auto param = context().insts().Get(param_id);
     auto param_type_id = param.type_id();
+    if (param_type_id == SemIR::ErrorInst::TypeId) {
+      return false;
+    }
     if (context().types().Is<SemIR::PatternType>(param_type_id)) {
       param_type_id =
           SemIR::ExtractScrutineeType(context().sem_ir(), param_type_id);
@@ -317,7 +340,7 @@ auto DeductionContext::Deduce() -> bool {
       Diagnostics::AnnotationScope annotate_diagnostics(
           &context().emitter(), [&](auto& builder) {
             if (diagnose_) {
-              NoteInitializingParam(param_id, builder);
+              NoteInitializingParam(param_id, param_loc_id, builder);
             }
           });
       // `want_value` is only set within types and the arguments for symbolic
@@ -366,7 +389,7 @@ auto DeductionContext::Deduce() -> bool {
                               "compile-time constant");
             auto diag =
                 context().emitter().Build(loc_id_, CompTimeArgumentNotConstant);
-            NoteInitializingParam(param_id, diag);
+            NoteInitializingParam(param_id, param_loc_id, diag);
             diag.Emit();
           }
           return false;
@@ -449,7 +472,7 @@ auto DeductionContext::Deduce() -> bool {
     auto param_const_inst_id =
         context().constant_values().GetInstId(param_const_id);
     if (param_const_inst_id != param_id) {
-      Add(param_const_inst_id, arg_id, want_value);
+      Add(param_const_inst_id, arg_id, want_value, param_loc_id);
       continue;
     }
   }
@@ -458,7 +481,7 @@ auto DeductionContext::Deduce() -> bool {
 }
 
 // Gets the entity name of a generic binding. The generic binding may be an
-// imported instruction.
+// imported instruction. Returns `None` if an ErrorInst is encountered.
 static auto GetEntityNameForGenericBinding(Context& context,
                                            SemIR::InstId binding_id)
     -> SemIR::NameId {
@@ -466,6 +489,9 @@ static auto GetEntityNameForGenericBinding(Context& context,
   // future), it may not have an entity name. Get a canonical local instruction
   // from its constant value which does.
   binding_id = context.constant_values().GetConstantInstId(binding_id);
+  if (binding_id == SemIR::ErrorInst::InstId) {
+    return SemIR::NameId::None;
+  }
 
   if (auto bind_name =
           context.insts().TryGetAs<SemIR::AnyBinding>(binding_id)) {
@@ -486,13 +512,13 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
     auto binding_id = context().inst_blocks().Get(
         context().generics().Get(generic_id_).bindings_id)[binding_index];
     if (!deduced_arg_id.has_value()) {
-      if (diagnose_) {
+      auto name_id = GetEntityNameForGenericBinding(context(), binding_id);
+      if (diagnose_ && name_id.has_value()) {
         CARBON_DIAGNOSTIC(DeductionIncomplete, Error,
                           "cannot deduce value for generic parameter `{0}`",
                           SemIR::NameId);
-        auto diag = context().emitter().Build(
-            loc_id_, DeductionIncomplete,
-            GetEntityNameForGenericBinding(context(), binding_id));
+        auto diag =
+            context().emitter().Build(loc_id_, DeductionIncomplete, name_id);
         NoteGenericHere(context(), generic_id_, diag);
         diag.Emit();
       }
@@ -527,7 +553,8 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       Diagnostics::AnnotationScope annotate_diagnostics(
           &context().emitter(), [&](auto& builder) {
             if (diagnose_) {
-              NoteInitializingParam(binding_id, builder);
+              NoteInitializingParam(binding_id, SemIR::LocId(binding_id),
+                                    builder);
             }
           });
       auto converted_arg_id =
@@ -581,17 +608,24 @@ auto DeduceGenericCallArguments(
     Context& context, SemIR::LocId loc_id, SemIR::GenericId generic_id,
     SemIR::SpecificId enclosing_specific_id,
     [[maybe_unused]] SemIR::InstBlockId implicit_param_patterns_id,
-    SemIR::InstBlockId param_patterns_id,
-    [[maybe_unused]] SemIR::InstId self_id,
+    SemIR::InstBlockId param_patterns_id, SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::SpecificId {
   DeductionContext deduction(&context, loc_id, generic_id,
                              enclosing_specific_id,
                              /*diagnose=*/true);
 
-  // Prepare to perform deduction of the explicit parameters against their
-  // arguments.
-  // TODO: Also perform deduction for type of self.
-  deduction.AddAll(param_patterns_id, arg_ids, /*want_value=*/false);
+  // Prepare to perform deduction of the parameters against the explicit
+  // arguments. When `self` is provided as the method-call receiver it is
+  // prepended to the explicit argument list to match the leading `self`
+  // parameter pattern.
+  llvm::ArrayRef<SemIR::InstId> self_refs = {};
+  if (self_id.has_value()) {
+    self_refs = self_id;
+  }
+  deduction.AddAll(context.inst_blocks().GetOrEmpty(param_patterns_id),
+                   llvm::ArrayRef<SemIR::InstId>(llvm::to_vector<8>(
+                       llvm::concat<const SemIR::InstId>(self_refs, arg_ids))),
+                   /*want_value=*/false);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
     return SemIR::SpecificId::None;

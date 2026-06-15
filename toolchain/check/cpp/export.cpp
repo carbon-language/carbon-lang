@@ -373,23 +373,22 @@ struct FunctionInfo {
         decl_context(decl_context) {
     auto function_params =
         context.inst_blocks().Get(function.call_param_patterns_id);
+    const auto& ranges = function.call_param_ranges;
+    auto explicit_begin = ranges.explicit_begin().index;
 
-    // Get the function's `self` parameter, if present.
-    if (function.call_param_ranges.implicit_size() > 0) {
-      CARBON_CHECK(function.call_param_ranges.implicit_size() == 1);
-
-      auto param_inst_id =
-          function_params[function.call_param_ranges.implicit_begin().index];
-      self_param = Param(context, param_inst_id);
+    // Get the function's `self` parameter, if present. `self` is the first
+    // explicit call parameter. (The lowered call parameters are leaf patterns
+    // without binding names, so we rely on `self_param_id` and the positional
+    // convention rather than inspecting the pattern.)
+    if (function.self_param_id.has_value()) {
+      CARBON_CHECK(explicit_begin != ranges.explicit_end().index);
+      self_param = Param(context, function_params[explicit_begin]);
+      ++explicit_begin;
     }
 
-    // Get the function's explicit parameters.
-    function_params =
-        function_params.drop_front(function.call_param_ranges.implicit_size());
-    function_params =
-        function_params.drop_back(function.call_param_ranges.return_size());
-    for (auto param_inst_id : function_params) {
-      explicit_params.push_back(Param(context, param_inst_id));
+    // The remaining explicit parameters are the caller-provided arguments.
+    for (auto i = explicit_begin; i != ranges.explicit_end().index; ++i) {
+      explicit_params.push_back(Param(context, function_params[i]));
     }
   }
 

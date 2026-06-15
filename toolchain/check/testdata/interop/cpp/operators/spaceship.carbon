@@ -229,6 +229,8 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT: --- fail_todo_spaceship_rewrites.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %Other: type = symbolic_binding Other, 0 [symbolic]
 // CHECK:STDOUT:   %EqWith.type.98ea86.1: type = facet_type <@EqWith.1, @EqWith.1(%Other)> [symbolic]
@@ -240,13 +242,18 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT:   %EqWith.WithSelf.Equal.ae3c3e.1: %EqWith.WithSelf.Equal.type.b82ec7.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %EqWith.type.98ea86.2: type = facet_type <@EqWith.1, @EqWith.1(%U)> [symbolic]
 // CHECK:STDOUT:   %pattern_type.3d4: type = pattern_type %EqWith.type.98ea86.2 [symbolic]
+// CHECK:STDOUT:   %T.patt.6b9: %pattern_type.3d4 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T.d94: %EqWith.type.98ea86.2 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %EqWith.assoc_type.85b122.2: type = assoc_entity_type @EqWith.1, @EqWith.1(%U) [symbolic]
 // CHECK:STDOUT:   %assoc0.eee873.2: %EqWith.assoc_type.85b122.2 = assoc_entity element0, imports.%Core.import_ref.5ba [symbolic]
 // CHECK:STDOUT:   %assoc1.0ffc88.2: %EqWith.assoc_type.85b122.2 = assoc_entity element1, imports.%Core.import_ref.03f [symbolic]
 // CHECK:STDOUT:   %T.as_type.93d: type = facet_access_type %T.d94 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e6374a.2: type = pattern_type %T.as_type.93d [symbolic]
+// CHECK:STDOUT:   %x.param_patt.aa2: %pattern_type.e6374a.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.4e4: %pattern_type.e6374a.2 = at_binding_pattern x, %x.param_patt.aa2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %U [symbolic]
+// CHECK:STDOUT:   %y.param_patt.be3: %pattern_type.51d1c4.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %y.patt.b85: %pattern_type.51d1c4.2 = at_binding_pattern y, %y.param_patt.be3 [symbolic]
 // CHECK:STDOUT:   %require_complete.fb5: <witness> = require_complete_type %EqWith.type.98ea86.2 [symbolic]
 // CHECK:STDOUT:   %assoc0.d00: %EqWith.assoc_type.85b122.1 = assoc_entity element0, imports.%Core.import_ref.2e5 [symbolic]
 // CHECK:STDOUT:   %EqWith.lookup_impl_witness: <witness> = lookup_impl_witness %T.d94, @EqWith.1, @EqWith.1(%U) [symbolic]
@@ -272,6 +279,7 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.9e1f56.1: %OrderedWith.WithSelf.Less.type.b87f4b.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %OrderedWith.type.32ae87.2: type = facet_type <@OrderedWith.1, @OrderedWith.1(%U)> [symbolic]
 // CHECK:STDOUT:   %pattern_type.ebc: type = pattern_type %OrderedWith.type.32ae87.2 [symbolic]
+// CHECK:STDOUT:   %T.patt.aaa: %pattern_type.ebc = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T.7df: %OrderedWith.type.32ae87.2 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.1d2e6f.2: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%U) [symbolic]
 // CHECK:STDOUT:   %assoc0.c0023b.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element0, imports.%Core.import_ref.e7a [symbolic]
@@ -280,6 +288,8 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT:   %assoc3.5d53f7.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element3, imports.%Core.import_ref.39b [symbolic]
 // CHECK:STDOUT:   %T.as_type.262: type = facet_access_type %T.7df [symbolic]
 // CHECK:STDOUT:   %pattern_type.f6ec4f.2: type = pattern_type %T.as_type.262 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.a58: %pattern_type.f6ec4f.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.140: %pattern_type.f6ec4f.2 = at_binding_pattern x, %x.param_patt.a58 [symbolic]
 // CHECK:STDOUT:   %require_complete.3c0: <witness> = require_complete_type %OrderedWith.type.32ae87.2 [symbolic]
 // CHECK:STDOUT:   %assoc0.13c: %OrderedWith.assoc_type.1d2e6f.1 = assoc_entity element0, imports.%Core.import_ref.447 [symbolic]
 // CHECK:STDOUT:   %OrderedWith.lookup_impl_witness: <witness> = lookup_impl_witness %T.7df, @OrderedWith.1, @OrderedWith.1(%U) [symbolic]
@@ -314,16 +324,32 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT:   %pattern_type.aac: type = pattern_type %CrossTypeRhs [concrete]
 // CHECK:STDOUT:   %EqWith.type.bf2: type = facet_type <@EqWith.1, @EqWith.1(%DefaultSpaceshipOnly)> [concrete]
 // CHECK:STDOUT:   %pattern_type.062: type = pattern_type %EqWith.type.bf2 [concrete]
+// CHECK:STDOUT:   %T.patt.107: %pattern_type.062 = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %y.param_patt.62b: %pattern_type.80f = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.e91: %pattern_type.80f = at_binding_pattern y, %y.param_patt.62b [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.33f: type = facet_type <@OrderedWith.1, @OrderedWith.1(%DefaultSpaceshipOnly)> [concrete]
 // CHECK:STDOUT:   %pattern_type.7f2: type = pattern_type %OrderedWith.type.33f [concrete]
+// CHECK:STDOUT:   %T.patt.84b: %pattern_type.7f2 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %OrderedWith.type.0fb: type = facet_type <@OrderedWith.1, @OrderedWith.1(%ReturnsStrongOrdering)> [concrete]
 // CHECK:STDOUT:   %pattern_type.623: type = pattern_type %OrderedWith.type.0fb [concrete]
+// CHECK:STDOUT:   %T.patt.62e: %pattern_type.623 = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %y.param_patt.794: %pattern_type.37f = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.e01: %pattern_type.37f = at_binding_pattern y, %y.param_patt.794 [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.5f1: type = facet_type <@OrderedWith.1, @OrderedWith.1(%ReturnsPartialOrdering)> [concrete]
 // CHECK:STDOUT:   %pattern_type.53d: type = pattern_type %OrderedWith.type.5f1 [concrete]
+// CHECK:STDOUT:   %T.patt.d27: %pattern_type.53d = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %y.param_patt.301: %pattern_type.9ae = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.e76: %pattern_type.9ae = at_binding_pattern y, %y.param_patt.301 [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.8cb: type = facet_type <@OrderedWith.1, @OrderedWith.1(%CrossTypeRhs)> [concrete]
 // CHECK:STDOUT:   %pattern_type.935: type = pattern_type %OrderedWith.type.8cb [concrete]
+// CHECK:STDOUT:   %T.patt.d75: %pattern_type.935 = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %y.param_patt.da2: %pattern_type.aac = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.ac7: %pattern_type.aac = at_binding_pattern y, %y.param_patt.da2 [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.c6c: type = facet_type <@OrderedWith.1, @OrderedWith.1(%CrossTypeLhs)> [concrete]
 // CHECK:STDOUT:   %pattern_type.b4e: type = pattern_type %OrderedWith.type.c6c [concrete]
+// CHECK:STDOUT:   %T.patt.6f6: %pattern_type.b4e = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %y.param_patt.65d: %pattern_type.eb5 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.6a4: %pattern_type.eb5 = at_binding_pattern y, %y.param_patt.65d [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -468,82 +494,130 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqWith.loc4(constants.%U, constants.%T.d94) {
+// CHECK:STDOUT:   %U.patt.loc4_12.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc4_12.1 => constants.%U
 // CHECK:STDOUT:   %EqWith.type.loc4_38.1 => constants.%EqWith.type.98ea86.2
-// CHECK:STDOUT:   %T.loc4_22.1 => constants.%T.d94
 // CHECK:STDOUT:   %pattern_type.loc4_22 => constants.%pattern_type.3d4
+// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T.patt.6b9
+// CHECK:STDOUT:   %T.loc4_22.1 => constants.%T.d94
 // CHECK:STDOUT:   %T.as_type.loc4_44.1 => constants.%T.as_type.93d
 // CHECK:STDOUT:   %pattern_type.loc4_42 => constants.%pattern_type.e6374a.2
+// CHECK:STDOUT:   %x.param_patt.loc4_42.2 => constants.%x.param_patt.aa2
+// CHECK:STDOUT:   %x.patt.loc4_42.2 => constants.%x.patt.4e4
 // CHECK:STDOUT:   %pattern_type.loc4_48 => constants.%pattern_type.51d1c4.2
+// CHECK:STDOUT:   %y.param_patt.loc4_48.2 => constants.%y.param_patt.be3
+// CHECK:STDOUT:   %y.patt.loc4_48.2 => constants.%y.patt.b85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc11(constants.%U, constants.%T.7df) {
+// CHECK:STDOUT:   %U.patt.loc11_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc11_17.1 => constants.%U
 // CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.32ae87.2
-// CHECK:STDOUT:   %T.loc11_27.1 => constants.%T.7df
 // CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.ebc
+// CHECK:STDOUT:   %T.patt.loc11_27.2 => constants.%T.patt.aaa
+// CHECK:STDOUT:   %T.loc11_27.1 => constants.%T.7df
 // CHECK:STDOUT:   %T.as_type.loc11_54.1 => constants.%T.as_type.262
 // CHECK:STDOUT:   %pattern_type.loc11_52 => constants.%pattern_type.f6ec4f.2
+// CHECK:STDOUT:   %x.param_patt.loc11_52.2 => constants.%x.param_patt.a58
+// CHECK:STDOUT:   %x.patt.loc11_52.2 => constants.%x.patt.140
 // CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.51d1c4.2
+// CHECK:STDOUT:   %y.param_patt.loc11_58.2 => constants.%y.param_patt.be3
+// CHECK:STDOUT:   %y.patt.loc11_58.2 => constants.%y.patt.b85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqWith.loc4(constants.%DefaultSpaceshipOnly, <error>) {
+// CHECK:STDOUT:   %U.patt.loc4_12.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc4_12.1 => constants.%DefaultSpaceshipOnly
 // CHECK:STDOUT:   %EqWith.type.loc4_38.1 => constants.%EqWith.type.bf2
-// CHECK:STDOUT:   %T.loc4_22.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc4_22 => constants.%pattern_type.062
+// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T.patt.107
+// CHECK:STDOUT:   %T.loc4_22.1 => <error>
 // CHECK:STDOUT:   %T.as_type.loc4_44.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc4_42 => <error>
+// CHECK:STDOUT:   %x.param_patt.loc4_42.2 => <error>
+// CHECK:STDOUT:   %x.patt.loc4_42.2 => <error>
 // CHECK:STDOUT:   %pattern_type.loc4_48 => constants.%pattern_type.80f
+// CHECK:STDOUT:   %y.param_patt.loc4_48.2 => constants.%y.param_patt.62b
+// CHECK:STDOUT:   %y.patt.loc4_48.2 => constants.%y.patt.e91
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc11(constants.%DefaultSpaceshipOnly, <error>) {
+// CHECK:STDOUT:   %U.patt.loc11_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc11_17.1 => constants.%DefaultSpaceshipOnly
 // CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.33f
-// CHECK:STDOUT:   %T.loc11_27.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.7f2
+// CHECK:STDOUT:   %T.patt.loc11_27.2 => constants.%T.patt.84b
+// CHECK:STDOUT:   %T.loc11_27.1 => <error>
 // CHECK:STDOUT:   %T.as_type.loc11_54.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_52 => <error>
+// CHECK:STDOUT:   %x.param_patt.loc11_52.2 => <error>
+// CHECK:STDOUT:   %x.patt.loc11_52.2 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.80f
+// CHECK:STDOUT:   %y.param_patt.loc11_58.2 => constants.%y.param_patt.62b
+// CHECK:STDOUT:   %y.patt.loc11_58.2 => constants.%y.patt.e91
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc11(constants.%ReturnsStrongOrdering, <error>) {
+// CHECK:STDOUT:   %U.patt.loc11_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc11_17.1 => constants.%ReturnsStrongOrdering
 // CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.0fb
-// CHECK:STDOUT:   %T.loc11_27.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.623
+// CHECK:STDOUT:   %T.patt.loc11_27.2 => constants.%T.patt.62e
+// CHECK:STDOUT:   %T.loc11_27.1 => <error>
 // CHECK:STDOUT:   %T.as_type.loc11_54.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_52 => <error>
+// CHECK:STDOUT:   %x.param_patt.loc11_52.2 => <error>
+// CHECK:STDOUT:   %x.patt.loc11_52.2 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.37f
+// CHECK:STDOUT:   %y.param_patt.loc11_58.2 => constants.%y.param_patt.794
+// CHECK:STDOUT:   %y.patt.loc11_58.2 => constants.%y.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc11(constants.%ReturnsPartialOrdering, <error>) {
+// CHECK:STDOUT:   %U.patt.loc11_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc11_17.1 => constants.%ReturnsPartialOrdering
 // CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.5f1
-// CHECK:STDOUT:   %T.loc11_27.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.53d
+// CHECK:STDOUT:   %T.patt.loc11_27.2 => constants.%T.patt.d27
+// CHECK:STDOUT:   %T.loc11_27.1 => <error>
 // CHECK:STDOUT:   %T.as_type.loc11_54.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_52 => <error>
+// CHECK:STDOUT:   %x.param_patt.loc11_52.2 => <error>
+// CHECK:STDOUT:   %x.patt.loc11_52.2 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.9ae
+// CHECK:STDOUT:   %y.param_patt.loc11_58.2 => constants.%y.param_patt.301
+// CHECK:STDOUT:   %y.patt.loc11_58.2 => constants.%y.patt.e76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc11(constants.%CrossTypeRhs, <error>) {
+// CHECK:STDOUT:   %U.patt.loc11_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc11_17.1 => constants.%CrossTypeRhs
 // CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.8cb
-// CHECK:STDOUT:   %T.loc11_27.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.935
+// CHECK:STDOUT:   %T.patt.loc11_27.2 => constants.%T.patt.d75
+// CHECK:STDOUT:   %T.loc11_27.1 => <error>
 // CHECK:STDOUT:   %T.as_type.loc11_54.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_52 => <error>
+// CHECK:STDOUT:   %x.param_patt.loc11_52.2 => <error>
+// CHECK:STDOUT:   %x.patt.loc11_52.2 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.aac
+// CHECK:STDOUT:   %y.param_patt.loc11_58.2 => constants.%y.param_patt.da2
+// CHECK:STDOUT:   %y.patt.loc11_58.2 => constants.%y.patt.ac7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc11(constants.%CrossTypeLhs, <error>) {
+// CHECK:STDOUT:   %U.patt.loc11_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc11_17.1 => constants.%CrossTypeLhs
 // CHECK:STDOUT:   %OrderedWith.type.loc11_48.1 => constants.%OrderedWith.type.c6c
-// CHECK:STDOUT:   %T.loc11_27.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_27 => constants.%pattern_type.b4e
+// CHECK:STDOUT:   %T.patt.loc11_27.2 => constants.%T.patt.6f6
+// CHECK:STDOUT:   %T.loc11_27.1 => <error>
 // CHECK:STDOUT:   %T.as_type.loc11_54.1 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_52 => <error>
+// CHECK:STDOUT:   %x.param_patt.loc11_52.2 => <error>
+// CHECK:STDOUT:   %x.patt.loc11_52.2 => <error>
 // CHECK:STDOUT:   %pattern_type.loc11_58 => constants.%pattern_type.eb5
+// CHECK:STDOUT:   %y.param_patt.loc11_58.2 => constants.%y.param_patt.65d
+// CHECK:STDOUT:   %y.patt.loc11_58.2 => constants.%y.patt.6a4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -36,6 +36,10 @@ struct CalleePatternMatchResults {
 // Returns the IDs of inst blocks consisting of references to the `Call`
 // parameter patterns and `Call` parameters of the function, as well as
 // the implicit, explicit, and return index ranges of those blocks.
+//
+// In some circumstances this can add new pattern insts, so the pattern
+// block containing the parameter patterns should still be on top of
+// `context.pattern_block_stack()`.
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
                         SemIR::InstBlockId param_patterns_id,
@@ -44,7 +48,7 @@ auto CalleePatternMatch(Context& context,
 
 // Return type for ThunkPatternMatch.
 struct ThunkPatternMatchResults {
-  // The syntactic argument list. If `self_pattern_id` is not `None`, the first
+  // The syntactic argument list. If there is a self parameter, the first
   // element will be the corresponding argument.
   llvm::SmallVector<SemIR::InstId> syntactic_args;
 
@@ -54,10 +58,10 @@ struct ThunkPatternMatchResults {
   llvm::ArrayRef<SemIR::InstId> ignored_call_args;
 };
 
-// Given the `Call` arguments for the outer part of a thunked function call,
-// computes the corresponding syntactic argument list, suitable for passing to
-// the inner part of the thunked function call.
-auto ThunkPatternMatch(Context& context, SemIR::InstId self_pattern_id,
+// Given the syntactic parameters and `Call` arguments for the outer part of a
+// thunked function call, computes the corresponding syntactic argument list,
+// suitable for passing to the inner part of the thunked function call.
+auto ThunkPatternMatch(Context& context,
                        llvm::ArrayRef<SemIR::InstId> param_pattern_ids,
                        llvm::ArrayRef<SemIR::InstId> outer_call_args)
     -> ThunkPatternMatchResults;

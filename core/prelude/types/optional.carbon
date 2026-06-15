@@ -16,7 +16,7 @@ import library "prelude/types/maybe_unformed";
 private interface OptionalStorage {
   let Type:! type;
   fn None() -> Type;
-  fn Some[self: Self]() -> Type;
+  fn Some(self) -> Type;
   fn Has(value: Type) -> bool;
   fn Get(value: Type) -> Self;
   // Copying can also be performed by Get(value).Some(), but Get returns by
@@ -33,10 +33,10 @@ class Optional(T:! OptionalStorage) {
   fn Some(value: T) -> Self {
     return value.Some() as Self;
   }
-  fn HasValue[self: Self]() -> bool {
+  fn HasValue(self) -> bool {
     return T.Has(self as T.Type);
   }
-  fn Get[self: Self]() -> T {
+  fn Get(self) -> T {
     return T.Get(self as T.Type);
   }
 
@@ -47,7 +47,7 @@ class Optional(T:! OptionalStorage) {
 impl forall [T:! OptionalStorage & UnformedInit] Optional(T) as UnformedInit {}
 
 impl forall [T:! OptionalStorage] Optional(T) as Copy {
-  fn Op[self: Self]() -> Self {
+  fn Op(self) -> Self {
     return T.Copy(self as T.Type) as Optional(T);
   }
 }
@@ -58,33 +58,33 @@ impl forall [T:! OptionalStorage] Optional(T) as Copy {
 // match_first {
 //   impl forall [T:! OptionalStorage]
 //       T as ImplicitAs(Optional(T)) {
-//     fn Convert[self: T]() -> Optional(T) {
+//     fn Convert(self: T) -> Optional(T) {
 //       return Optional(T).Some(self);
 //     }
 //   }
 //
 //   impl forall [T:! Destroy & OptionalStorage, U:! ImplicitAs(T)]
 //       U as ImplicitAs(Optional(T)) {
-//     fn Convert[self: U]() -> Optional(T) {
+//     fn Convert(self: U) -> Optional(T) {
 //       return Optional(T).Some(self.Convert());
 //     }
 //   }
 // }
 
 private interface OptionalAs(T:! OptionalStorage) {
-  fn Convert[self: Self]() -> Optional(T);
+  fn Convert(self) -> Optional(T);
 }
 
 final impl forall [T:! OptionalStorage]
     T as OptionalAs(T) {
-  fn Convert[self: Self]() -> Optional(T) {
+  fn Convert(self) -> Optional(T) {
     return Optional(T).Some(self);
   }
 }
 
 impl forall [T:! Destroy & OptionalStorage, U:! ImplicitAs(T)]
     U as OptionalAs(T) {
-  fn Convert[self: Self]() -> Optional(T) {
+  fn Convert(self) -> Optional(T) {
     return Optional(T).Some(self.Convert());
   }
 }
@@ -92,7 +92,7 @@ impl forall [T:! Destroy & OptionalStorage, U:! ImplicitAs(T)]
 impl forall [T:! Destroy & OptionalStorage,
              U:! Destroy & OptionalStorage & ImplicitAs(T)]
     Optional(U) as OptionalAs(T) {
-  fn Convert[self: Self]() -> Optional(T) {
+  fn Convert(self) -> Optional(T) {
     if (self.HasValue()) {
       return Optional(T).Some(self.Get().Convert());
     }
@@ -102,7 +102,7 @@ impl forall [T:! Destroy & OptionalStorage,
 
 impl forall [T:! OptionalStorage, U:! OptionalAs(T)]
     U as ImplicitAs(Optional(T)) {
-  fn Convert[self: Self]() -> Optional(T) {
+  fn Convert(self) -> Optional(T) {
     return self.Convert();
   }
 }
@@ -128,7 +128,7 @@ impl forall [T:! Copy & Destroy] T as OptionalStorage
     me.has_value = false;
     return var;
   }
-  fn Some[self: Self]() -> DefaultOptionalStorage(T) {
+  fn Some(self) -> DefaultOptionalStorage(T) {
     // TODO: This whole function should be just
     //   return {.value = self, .has_value = true};
     // but that requires that `T` implements `ImplicitAs(MaybeUnformed(T))`.
@@ -163,7 +163,7 @@ private fn MakeUninitializedOptionalPointer(T:! type)
 final impl forall [T:! type] T* as OptionalStorage
     where .Type = MaybeUnformed(T*) {
   fn None() -> MaybeUnformed(T*) = "pointer.make_null";
-  fn Some[self: Self]() -> MaybeUnformed(T*) {
+  fn Some(self) -> MaybeUnformed(T*) {
     returned var result: MaybeUnformed(T*) =
         MakeUninitializedOptionalPointer(T);
     result unsafe as T* = self;

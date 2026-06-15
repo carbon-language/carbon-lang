@@ -219,6 +219,8 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %X.elem: type = unbound_element_type %X, %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.88a: type = pattern_type %X [concrete]
+// CHECK:STDOUT:   %ax.patt: %pattern_type.88a = ref_binding_pattern ax [concrete]
+// CHECK:STDOUT:   %ax.var_patt: %pattern_type.88a = var_pattern %ax.patt [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %ptr.606: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %X__carbon_thunk.type: type = fn_type @X__carbon_thunk [concrete]
@@ -277,8 +279,8 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT: fn @Use() -> out %return.param: %tuple.type.e55 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %ax.patt: %pattern_type.88a = ref_binding_pattern ax [concrete]
-// CHECK:STDOUT:     %ax.var_patt: %pattern_type.88a = var_pattern %ax.patt [concrete]
+// CHECK:STDOUT:     %ax.patt: %pattern_type.88a = ref_binding_pattern ax [concrete = constants.%ax.patt]
+// CHECK:STDOUT:     %ax.var_patt: %pattern_type.88a = var_pattern %ax.patt [concrete = constants.%ax.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ax.var: ref %X = var %ax.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]

@@ -13,15 +13,21 @@ auto HandleBaseAfterIntroducer(Context& context) -> void {
 
   if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Colon,
                                        NodeKind::BaseColon)) {
-    // TODO: If the next token isn't a colon or `class`, try to recover
-    // based on whether we're in a class, whether we have an `extend`
-    // modifier, and the following tokens.
     CARBON_DIAGNOSTIC(ExpectedAfterBase, Error,
                       "`class` or `:` expected after `base`");
     context.emitter().Emit(*context.position(), ExpectedAfterBase);
-    context.RecoverFromDeclError(state, NodeKind::BaseDecl,
-                                 /*skip_past_likely_end=*/true);
-    return;
+    auto base_token = *(context.position() - 1);
+    auto previous_token = Lex::TokenIndex(base_token.index - 1);
+    if (context.tokens().GetKind(previous_token) != Lex::TokenKind::Extend) {
+      context.RecoverFromDeclError(state, NodeKind::BaseDecl,
+                                   /*skip_past_likely_end=*/true);
+      return;
+    }
+
+    // Preserve the `extend base` tree shape using an errored placeholder.
+    context.AddLeafNode(NodeKind::BaseColon, *context.position(),
+                        /*has_error=*/true);
+    state.has_error = true;
   }
 
   state.kind = StateKind::BaseDecl;

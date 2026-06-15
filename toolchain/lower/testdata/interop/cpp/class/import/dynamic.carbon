@@ -34,9 +34,9 @@ __attribute__((optnone)) auto Use(Base& b) {
 
 base class Derived {
   extend base: Cpp.Base;
-  virtual fn other_func[unused self: Self]() {
+  virtual fn other_func(unused self) {
   }
-  override fn func[unused ref self: Self]() {
+  override fn func(unused ref self) {
   }
 }
 
@@ -93,25 +93,32 @@ fn DoThing() {
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CDoThing.Main() #2 !dbg !25 {
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define void @"_Cfunc:thunk:Base.Cpp:Derived.Main"(ptr %self) #3 !dbg !25 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %d.var = alloca { [16 x i8] }, align 8, !dbg !28
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d.var), !dbg !28
-// CHECK:STDOUT:   %.loc31_44.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !29
-// CHECK:STDOUT:   call void @_ZN4BaseC1Ev.carbon_thunk.(ptr %.loc31_44.1.base), !dbg !30
-// CHECK:STDOUT:   %.loc31_44.7.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !29
-// CHECK:STDOUT:   %.loc31_44.8.base = getelementptr inbounds nuw [16 x i8], ptr %.loc31_44.7.base, i32 0, i32 0, !dbg !29
-// CHECK:STDOUT:   %.loc31_44.9.vptr = getelementptr inbounds nuw [8 x i8], ptr %.loc31_44.8.base, i32 0, i32 0, !dbg !29
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) ({ [5 x ptr] }, ptr @_ZTVN6Carbon7DerivedE, i32 0, i32 0, i32 2), ptr %.loc31_44.9.vptr, align 8, !dbg !29
-// CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !31
-// CHECK:STDOUT:   call void @_Z3UseR4Base(ptr %.loc32_11.2.base), !dbg !32
-// CHECK:STDOUT:   call void @"_COp.8185e3504351afa8:core.Destroy.Core"(ptr %d.var), !dbg !28
-// CHECK:STDOUT:   ret void, !dbg !33
+// CHECK:STDOUT:   call void @_Cfunc.Derived.Main(ptr %self), !dbg !28
+// CHECK:STDOUT:   ret void, !dbg !28
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CDoThing.Main() #2 !dbg !29 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %d.var = alloca { [16 x i8] }, align 8, !dbg !32
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d.var), !dbg !32
+// CHECK:STDOUT:   %.loc31_44.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !33
+// CHECK:STDOUT:   call void @_ZN4BaseC1Ev.carbon_thunk.(ptr %.loc31_44.1.base), !dbg !34
+// CHECK:STDOUT:   %.loc31_44.7.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !33
+// CHECK:STDOUT:   %.loc31_44.8.base = getelementptr inbounds nuw [16 x i8], ptr %.loc31_44.7.base, i32 0, i32 0, !dbg !33
+// CHECK:STDOUT:   %.loc31_44.9.vptr = getelementptr inbounds nuw [8 x i8], ptr %.loc31_44.8.base, i32 0, i32 0, !dbg !33
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) ({ [5 x ptr] }, ptr @_ZTVN6Carbon7DerivedE, i32 0, i32 0, i32 2), ptr %.loc31_44.9.vptr, align 8, !dbg !33
+// CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !35
+// CHECK:STDOUT:   call void @_Z3UseR4Base(ptr %.loc32_11.2.base), !dbg !36
+// CHECK:STDOUT:   call void @"_COp.8185e3504351afa8:core.Destroy.Core"(ptr %d.var), !dbg !32
+// CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN4BaseC1Ev.carbon_thunk.(ptr noundef %return) #3 {
+// CHECK:STDOUT: define internal void @_ZN4BaseC1Ev.carbon_thunk.(ptr noundef %return) #4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !11
@@ -121,40 +128,38 @@ fn DoThing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.Derived.Main"(ptr %self) #4 !dbg !34 {
+// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.Derived.Main"(ptr %self) #3 !dbg !38 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.8185e3504351afa8:core.Destroy.Core"(ptr %self), !dbg !37
-// CHECK:STDOUT:   ret void, !dbg !37
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.13b019890e86b6be:core.Destroy.Core"(ptr %self) #2 !dbg !38 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @"_COp.8185e3504351afa8:core.Destroy.Core"(ptr %self), !dbg !41
 // CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.8185e3504351afa8:core.Destroy.Core"(ptr %self) #2 !dbg !42 {
+// CHECK:STDOUT: define weak_odr void @"_COp.13b019890e86b6be:core.Destroy.Core"(ptr %self) #2 !dbg !42 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_Cfunc__carbon_thunk.Derived.Main(ptr %self) #2 !dbg !46 {
+// CHECK:STDOUT: define weak_odr void @"_COp.8185e3504351afa8:core.Destroy.Core"(ptr %self) #2 !dbg !46 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Derived.func.call.vtable = load ptr, ptr %self, align 8, !dbg !49
-// CHECK:STDOUT:   %Derived.func.call = call ptr @llvm.load.relative.i32(ptr %Derived.func.call.vtable, i32 4), !dbg !49
-// CHECK:STDOUT:   call void %Derived.func.call(ptr %self), !dbg !49
 // CHECK:STDOUT:   ret void, !dbg !49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_Cother_func__carbon_thunk.Derived.Main(ptr %self) #2 !dbg !50 {
+// CHECK:STDOUT: define void @_Cfunc__carbon_thunk.Derived.Main(ptr %self) #2 !dbg !50 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Derived.other_func.call.vtable = load ptr, ptr %self, align 8, !dbg !53
-// CHECK:STDOUT:   %Derived.other_func.call = call ptr @llvm.load.relative.i32(ptr %Derived.other_func.call.vtable, i32 8), !dbg !53
-// CHECK:STDOUT:   call void %Derived.other_func.call(ptr %self), !dbg !53
+// CHECK:STDOUT:   call void @_Cfunc.Derived.Main(ptr %self), !dbg !53
 // CHECK:STDOUT:   ret void, !dbg !53
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_Cother_func__carbon_thunk.Derived.Main(ptr %self) #2 !dbg !54 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %Derived.other_func.call.vtable = load ptr, ptr %self, align 8, !dbg !57
+// CHECK:STDOUT:   %Derived.other_func.call = call ptr @llvm.load.relative.i32(ptr %Derived.other_func.call.vtable, i32 8), !dbg !57
+// CHECK:STDOUT:   call void %Derived.other_func.call(ptr %self), !dbg !57
+// CHECK:STDOUT:   ret void, !dbg !57
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -164,20 +169,20 @@ fn DoThing() {
 // CHECK:STDOUT: declare ptr @llvm.load.relative.i32(ptr, i32) #6
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZNR6Carbon7Derived4funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #3 align 2 {
+// CHECK:STDOUT: define internal void @_ZNR6Carbon7Derived4funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #4 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !58
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_Cfunc__carbon_thunk.Derived.Main(ptr noundef nonnull align 8 dereferenceable(12) %this1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6Carbon7Derived10other_funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #3 align 2 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon7Derived10other_funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #4 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !58
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_Cother_func__carbon_thunk.Derived.Main(ptr noundef nonnull align 8 dereferenceable(12) %this1)
 // CHECK:STDOUT:   ret void
@@ -190,7 +195,7 @@ fn DoThing() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !11
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN11FurtherBaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this1) #2
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 16) ({ [4 x ptr] }, ptr @_ZTV4Base, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !56
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 16) ({ [4 x ptr] }, ptr @_ZTV4Base, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !60
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -198,22 +203,21 @@ fn DoThing() {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN11FurtherBaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #7 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !58
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !62
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) ({ [3 x ptr] }, ptr @_ZTV11FurtherBase, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !56
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) ({ [3 x ptr] }, ptr @_ZTV11FurtherBase, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !60
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_ZN11FurtherBase17further_base_funcEv, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @"_COp.8185e3504351afa8:core.Destroy.Core", { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @llvm.load.relative.i32, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress noinline nounwind optnone uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nounwind }
-// CHECK:STDOUT: attributes #3 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #4 = { alwaysinline nounwind }
+// CHECK:STDOUT: attributes #3 = { alwaysinline nounwind }
+// CHECK:STDOUT: attributes #4 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #5 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #6 = { nocallback nofree nosync nounwind willreturn memory(argmem: read) }
 // CHECK:STDOUT: attributes #7 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -247,38 +251,42 @@ fn DoThing() {
 // CHECK:STDOUT: !22 = !{!23}
 // CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !21, type: !17)
 // CHECK:STDOUT: !24 = !DILocation(line: 26, column: 3, scope: !21)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "DoThing", linkageName: "_CDoThing.Main", scope: null, file: !6, line: 30, type: !26, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !26 = !DISubroutineType(types: !27)
-// CHECK:STDOUT: !27 = !{null}
-// CHECK:STDOUT: !28 = !DILocation(line: 31, column: 3, scope: !25)
-// CHECK:STDOUT: !29 = !DILocation(line: 31, column: 20, scope: !25)
-// CHECK:STDOUT: !30 = !DILocation(line: 31, column: 29, scope: !25)
-// CHECK:STDOUT: !31 = !DILocation(line: 32, column: 11, scope: !25)
-// CHECK:STDOUT: !32 = !DILocation(line: 32, column: 3, scope: !25)
-// CHECK:STDOUT: !33 = !DILocation(line: 30, column: 1, scope: !25)
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.Derived.Main", scope: null, file: !6, line: 22, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !35)
-// CHECK:STDOUT: !35 = !{!36}
-// CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !34, type: !17)
-// CHECK:STDOUT: !37 = !DILocation(line: 22, column: 1, scope: !34)
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Op", linkageName: "_COp.13b019890e86b6be:core.Destroy.Core", scope: null, file: !6, line: 22, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !39)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "func", linkageName: "_Cfunc:thunk:Base.Cpp:Derived.Main", scope: null, file: !6, line: 26, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !26)
+// CHECK:STDOUT: !26 = !{!27}
+// CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !17)
+// CHECK:STDOUT: !28 = !DILocation(line: 26, column: 3, scope: !25)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "DoThing", linkageName: "_CDoThing.Main", scope: null, file: !6, line: 30, type: !30, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !30 = !DISubroutineType(types: !31)
+// CHECK:STDOUT: !31 = !{null}
+// CHECK:STDOUT: !32 = !DILocation(line: 31, column: 3, scope: !29)
+// CHECK:STDOUT: !33 = !DILocation(line: 31, column: 20, scope: !29)
+// CHECK:STDOUT: !34 = !DILocation(line: 31, column: 29, scope: !29)
+// CHECK:STDOUT: !35 = !DILocation(line: 32, column: 11, scope: !29)
+// CHECK:STDOUT: !36 = !DILocation(line: 32, column: 3, scope: !29)
+// CHECK:STDOUT: !37 = !DILocation(line: 30, column: 1, scope: !29)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.Derived.Main", scope: null, file: !6, line: 22, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !39)
 // CHECK:STDOUT: !39 = !{!40}
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !38, type: !17)
 // CHECK:STDOUT: !41 = !DILocation(line: 22, column: 1, scope: !38)
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8185e3504351afa8:core.Destroy.Core", scope: null, file: !6, line: 22, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !43)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "Op", linkageName: "_COp.13b019890e86b6be:core.Destroy.Core", scope: null, file: !6, line: 22, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !43)
 // CHECK:STDOUT: !43 = !{!44}
 // CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !42, type: !17)
 // CHECK:STDOUT: !45 = !DILocation(line: 22, column: 1, scope: !42)
-// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "func__carbon_thunk", linkageName: "_Cfunc__carbon_thunk.Derived.Main", scope: null, file: !6, line: 26, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !47)
+// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8185e3504351afa8:core.Destroy.Core", scope: null, file: !6, line: 22, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !47)
 // CHECK:STDOUT: !47 = !{!48}
 // CHECK:STDOUT: !48 = !DILocalVariable(arg: 1, scope: !46, type: !17)
-// CHECK:STDOUT: !49 = !DILocation(line: 26, column: 3, scope: !46)
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "other_func__carbon_thunk", linkageName: "_Cother_func__carbon_thunk.Derived.Main", scope: null, file: !6, line: 24, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !51)
+// CHECK:STDOUT: !49 = !DILocation(line: 22, column: 1, scope: !46)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "func__carbon_thunk", linkageName: "_Cfunc__carbon_thunk.Derived.Main", scope: null, file: !6, line: 26, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !51)
 // CHECK:STDOUT: !51 = !{!52}
 // CHECK:STDOUT: !52 = !DILocalVariable(arg: 1, scope: !50, type: !17)
-// CHECK:STDOUT: !53 = !DILocation(line: 24, column: 3, scope: !50)
-// CHECK:STDOUT: !54 = !{!55, !55, i64 0}
-// CHECK:STDOUT: !55 = !{!"p1 _ZTSN6Carbon7DerivedE", !13, i64 0}
-// CHECK:STDOUT: !56 = !{!57, !57, i64 0}
-// CHECK:STDOUT: !57 = !{!"vtable pointer", !10, i64 0}
+// CHECK:STDOUT: !53 = !DILocation(line: 26, column: 3, scope: !50)
+// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "other_func__carbon_thunk", linkageName: "_Cother_func__carbon_thunk.Derived.Main", scope: null, file: !6, line: 24, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !55)
+// CHECK:STDOUT: !55 = !{!56}
+// CHECK:STDOUT: !56 = !DILocalVariable(arg: 1, scope: !54, type: !17)
+// CHECK:STDOUT: !57 = !DILocation(line: 24, column: 3, scope: !54)
 // CHECK:STDOUT: !58 = !{!59, !59, i64 0}
-// CHECK:STDOUT: !59 = !{!"p1 _ZTS11FurtherBase", !13, i64 0}
+// CHECK:STDOUT: !59 = !{!"p1 _ZTSN6Carbon7DerivedE", !13, i64 0}
+// CHECK:STDOUT: !60 = !{!61, !61, i64 0}
+// CHECK:STDOUT: !61 = !{!"vtable pointer", !10, i64 0}
+// CHECK:STDOUT: !62 = !{!63, !63, i64 0}
+// CHECK:STDOUT: !63 = !{!"p1 _ZTS11FurtherBase", !13, i64 0}

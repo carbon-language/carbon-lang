@@ -34,11 +34,15 @@ impl forall [T:! type] T as I where .U = C {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @T.as.I.impl.%I.impl_witness_table, @T.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %T, (%I.impl_witness) [symbolic]
 // CHECK:STDOUT:   %.a44: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %return.param_patt.89a: %pattern_type.98b = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.e4a: %pattern_type.98b = return_slot_pattern %return.param_patt.89a, %C [concrete]
 // CHECK:STDOUT:   %T.as.I.impl.F.type: type = fn_type @T.as.I.impl.F, @T.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %T.as.I.impl.F: %T.as.I.impl.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
@@ -53,8 +57,8 @@ impl forall [T:! type] T as I where .U = C {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %.loc10_31 {
 // CHECK:STDOUT:     %T.as.I.impl.F.decl: @T.as.I.impl.%T.as.I.impl.F.type (%T.as.I.impl.F.type) = fn_decl @T.as.I.impl.F [symbolic = @T.as.I.impl.%T.as.I.impl.F (constants.%T.as.I.impl.F)] {
-// CHECK:STDOUT:       %return.param_patt: %pattern_type.98b = out_param_pattern [concrete]
-// CHECK:STDOUT:       %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %U.ref [concrete]
+// CHECK:STDOUT:       %return.param_patt: %pattern_type.98b = out_param_pattern [concrete = constants.%return.param_patt.89a]
+// CHECK:STDOUT:       %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %U.ref [concrete = constants.%return.patt.e4a]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %I.facet.loc13_13.2: %I.type = facet_value @T.as.I.impl.%T.ref, (constants.%I.impl_witness) [symbolic = %I.facet.loc13_13.1 (constants.%I.facet)]
 // CHECK:STDOUT:       %.loc13_13.1: %I.type = converted @T.as.I.impl.%T.ref, %I.facet.loc13_13.2 [symbolic = %I.facet.loc13_13.1 (constants.%I.facet)]
@@ -98,6 +102,7 @@ impl forall [T:! type] T as I where .U = C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.I.impl(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc10_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc10_15.1 => constants.%T
 // CHECK:STDOUT:   %I.impl_witness.loc10_44.2 => constants.%I.impl_witness
 // CHECK:STDOUT:

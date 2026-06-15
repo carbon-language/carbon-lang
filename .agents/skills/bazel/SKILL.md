@@ -1,8 +1,8 @@
 ---
 name: Bazel usage
 description:
-    Instructions for using Bazel or Bazelisk to build, test, and debug in the
-    Carbon repository.
+    Instructions that **MUST** be followed when using Bazel or Bazelisk to
+    build, test, and debug in the Carbon repository.
 ---
 
 # Bazel usage

@@ -13,15 +13,15 @@
 class C {
   var a: i32;
 
-  fn Get[self: C]() -> i32;
-  fn Set[ref self: C]();
+  fn Get(self: C) -> i32;
+  fn Set(ref self: C);
 }
 
-fn C.Get[self: C]() -> i32 {
+fn C.Get(self: C) -> i32 {
   return self.a;
 }
 
-fn C.Set[ref self: C]() {
+fn C.Set(ref self: C) {
   self.a = 1;
 }
 

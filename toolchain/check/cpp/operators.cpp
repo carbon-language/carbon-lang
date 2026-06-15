@@ -329,7 +329,7 @@ static auto GetConversionSignatureToImport(
     // Otherwise, the initialization is calling a conversion function
     // `Source::operator Dest`:
     //
-    //   fn Source.<conversion function>[self: Source]() -> Dest;
+    //   fn Source.<conversion function>(self: Source) -> Dest;
     auto* conversion_decl = cast<clang::CXXConversionDecl>(function_decl);
     self_expr = arg_expr;
     arg_exprs = {};
@@ -736,11 +736,6 @@ static auto GetAsCppFunctionDecl(Context& context, SemIR::InstId inst_id)
       context.functions().Get(function_type->function_id).first_decl_id());
   return clang_decl ? dyn_cast<clang::FunctionDecl>(clang_decl->decl())
                     : nullptr;
-}
-
-auto IsCppOperatorMethod(Context& context, SemIR::InstId inst_id) -> bool {
-  auto* function_decl = GetAsCppFunctionDecl(context, inst_id);
-  return function_decl && IsCppOperatorMethodDecl(function_decl);
 }
 
 auto IsCppConstructorOrNonMethod(Context& context, SemIR::InstId inst_id)

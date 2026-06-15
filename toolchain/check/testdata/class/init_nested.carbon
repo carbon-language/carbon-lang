@@ -41,6 +41,8 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %complete_type.7b9: <witness> = complete_type_witness %struct_type.a.b [concrete]
 // CHECK:STDOUT:   %.ffb: Core.Form = init_form %Inner [concrete]
 // CHECK:STDOUT:   %pattern_type.dfc: type = pattern_type %Inner [concrete]
+// CHECK:STDOUT:   %return.param_patt.4dd: %pattern_type.dfc = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.5f5: %pattern_type.dfc = return_slot_pattern %return.param_patt.4dd, %Inner [concrete]
 // CHECK:STDOUT:   %MakeInner.type: type = fn_type @MakeInner [concrete]
 // CHECK:STDOUT:   %MakeInner: %MakeInner.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Outer: type = class_type @Outer [concrete]
@@ -49,6 +51,8 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %complete_type.890: <witness> = complete_type_witness %struct_type.c.d.899 [concrete]
 // CHECK:STDOUT:   %.50e: Core.Form = init_form %Outer [concrete]
 // CHECK:STDOUT:   %pattern_type.d6c: type = pattern_type %Outer [concrete]
+// CHECK:STDOUT:   %return.param_patt.756: %pattern_type.d6c = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.991: %pattern_type.d6c = return_slot_pattern %return.param_patt.756, %Outer [concrete]
 // CHECK:STDOUT:   %MakeOuter.type: type = fn_type @MakeOuter [concrete]
 // CHECK:STDOUT:   %MakeOuter: %MakeOuter.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -73,8 +77,8 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [concrete = constants.%Inner] {} {}
 // CHECK:STDOUT:   %MakeInner.decl: %MakeInner.type = fn_decl @MakeInner [concrete = constants.%MakeInner] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.dfc = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.dfc = return_slot_pattern %return.param_patt, %Inner.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.dfc = out_param_pattern [concrete = constants.%return.param_patt.4dd]
+// CHECK:STDOUT:     %return.patt: %pattern_type.dfc = return_slot_pattern %return.param_patt, %Inner.ref [concrete = constants.%return.patt.5f5]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:     %.loc20: Core.Form = init_form %Inner.ref [concrete = constants.%.ffb]
@@ -83,8 +87,8 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [concrete = constants.%Outer] {} {}
 // CHECK:STDOUT:   %MakeOuter.decl: %MakeOuter.type = fn_decl @MakeOuter [concrete = constants.%MakeOuter] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.d6c = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.d6c = return_slot_pattern %return.param_patt, %Outer.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.d6c = out_param_pattern [concrete = constants.%return.param_patt.756]
+// CHECK:STDOUT:     %return.patt: %pattern_type.d6c = return_slot_pattern %return.param_patt, %Outer.ref [concrete = constants.%return.patt.991]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:     %.loc27: Core.Form = init_form %Outer.ref [concrete = constants.%.50e]

@@ -101,24 +101,24 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CB.Main.58016a73bff04416(ptr %x) #0 !dbg !46 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc27_7.2.temp = alloca i32, align 4, !dbg !49
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_7.2.temp), !dbg !49
+// CHECK:STDOUT:   %.loc27_7.3.temp = alloca i32, align 4, !dbg !49
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_7.3.temp), !dbg !49
 // CHECK:STDOUT:   %.loc27_5.2 = load i32, ptr %x, align 4, !dbg !50
 // CHECK:STDOUT:   %D.call = call i32 @_CD.Main.5bd8d5767580997a(i32 %.loc27_5.2), !dbg !49
-// CHECK:STDOUT:   store i32 %D.call, ptr %.loc27_7.2.temp, align 4, !dbg !49
-// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %.loc27_7.2.temp), !dbg !49
+// CHECK:STDOUT:   store i32 %D.call, ptr %.loc27_7.3.temp, align 4, !dbg !49
+// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %.loc27_7.3.temp), !dbg !49
 // CHECK:STDOUT:   ret void, !dbg !51
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CB.Main.fa1f0912a5bbe922(ptr %x) #0 !dbg !52 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc27_7.2.temp = alloca double, align 8, !dbg !55
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_7.2.temp), !dbg !55
+// CHECK:STDOUT:   %.loc27_7.3.temp = alloca double, align 8, !dbg !55
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_7.3.temp), !dbg !55
 // CHECK:STDOUT:   %.loc27_5.2 = load double, ptr %x, align 8, !dbg !56
 // CHECK:STDOUT:   %D.call = call double @_CD.Main.c27b765f2159c9a0(double %.loc27_5.2), !dbg !55
-// CHECK:STDOUT:   store double %D.call, ptr %.loc27_7.2.temp, align 8, !dbg !55
-// CHECK:STDOUT:   call void @"_COp.30d8007fdcc57f83:core.Destroy.Core"(ptr %.loc27_7.2.temp), !dbg !55
+// CHECK:STDOUT:   store double %D.call, ptr %.loc27_7.3.temp, align 8, !dbg !55
+// CHECK:STDOUT:   call void @"_COp.30d8007fdcc57f83:core.Destroy.Core"(ptr %.loc27_7.3.temp), !dbg !55
 // CHECK:STDOUT:   ret void, !dbg !57
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

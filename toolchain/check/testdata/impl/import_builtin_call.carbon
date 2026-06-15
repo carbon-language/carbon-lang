@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 import library "int_literal";
 
 interface Add {
-  fn Op[self: Self](other: Self) -> Self;
+  fn Op(self, other: Self) -> Self;
 }
 
 fn Int(n: IntLiteral) -> type = "int.make_type_signed";
@@ -34,7 +34,7 @@ class MyInt(N:! IntLiteral) {
 }
 
 impl forall [N:! IntLiteral] MyInt(N) as Add {
-  fn Op[self: Self](other: Self) -> Self = "int.sadd";
+  fn Op(self, other: Self) -> Self = "int.sadd";
 }
 
 fn Double[N:! IntLiteral](x: MyInt(N)) -> MyInt(N) {
@@ -67,10 +67,10 @@ fn Make(N:! Int(32)) -> Int(ToLiteral(N)) { return Make(N); }
 
 class OtherInt {
   adapt Int(32);
-  fn ToLiteral[self: Self]() -> IntLiteral;
+  fn ToLiteral(self) -> IntLiteral;
 };
 
-fn OtherInt.ToLiteral[self: Self]() -> IntLiteral = "int.convert_checked";
+fn OtherInt.ToLiteral(self) -> IntLiteral = "int.convert_checked";
 
 fn MakeFromClass(N:! OtherInt) -> Int(N.ToLiteral()) { return MakeFromClass(N); }
 
@@ -84,6 +84,7 @@ import library "convert_symbolic";
 var m: Int(64) = Make(FromLiteral(64));
 var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 //@dump-sem-ir-end
+
 
 // CHECK:STDOUT: --- use_generic_impl.carbon
 // CHECK:STDOUT:
@@ -116,6 +117,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %int_64.fab: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %i64.builtin: type = int_type signed, %int_64.fab [concrete]
 // CHECK:STDOUT:   %pattern_type.e13: type = pattern_type %i64.builtin [concrete]
+// CHECK:STDOUT:   %m.patt: %pattern_type.e13 = ref_binding_pattern m [concrete]
+// CHECK:STDOUT:   %m.var_patt: %pattern_type.e13 = var_pattern %m.patt [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -124,6 +127,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %FromLiteral: %FromLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_64.f82: %i32.builtin = int_value 64 [concrete]
 // CHECK:STDOUT:   %Make.specific_fn.bb3: <specific function> = specific_function %Make, @Make(%int_64.f82) [concrete]
+// CHECK:STDOUT:   %n.patt.914: %pattern_type.e13 = ref_binding_pattern n [concrete]
+// CHECK:STDOUT:   %n.var_patt: %pattern_type.e13 = var_pattern %n.patt.914 [concrete]
 // CHECK:STDOUT:   %MakeFromClass.type: type = fn_type @MakeFromClass [concrete]
 // CHECK:STDOUT:   %MakeFromClass: %MakeFromClass.type = struct_value () [concrete]
 // CHECK:STDOUT:   %OtherInt: type = class_type @OtherInt [concrete]
@@ -141,8 +146,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %m.patt: %pattern_type.e13 = ref_binding_pattern m [concrete]
-// CHECK:STDOUT:     %m.var_patt: %pattern_type.e13 = var_pattern %m.patt [concrete]
+// CHECK:STDOUT:     %m.patt: %pattern_type.e13 = ref_binding_pattern m [concrete = constants.%m.patt]
+// CHECK:STDOUT:     %m.var_patt: %pattern_type.e13 = var_pattern %m.patt [concrete = constants.%m.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %m.var: ref %i64.builtin = var %m.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7_14.1: type = splice_block %.loc7_14.3 [concrete = constants.%i64.builtin] {
@@ -154,8 +159,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %m: ref %i64.builtin = ref_binding m, %m.var [concrete = %m.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.e13 = ref_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.var_patt: %pattern_type.e13 = var_pattern %n.patt [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.e13 = ref_binding_pattern n [concrete = constants.%n.patt.914]
+// CHECK:STDOUT:     %n.var_patt: %pattern_type.e13 = var_pattern %n.patt [concrete = constants.%n.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %i64.builtin = var %n.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8_14.1: type = splice_block %.loc8_14.3 [concrete = constants.%i64.builtin] {

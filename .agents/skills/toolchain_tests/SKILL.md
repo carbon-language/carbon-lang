@@ -74,9 +74,10 @@ library "[[@TEST_NAME]]";
 // ...
 ```
 
--   Use `library "[[@TEST_NAME]]";` in each split when necessary to prevent name
-    conflicts or redefining the default library.
--   Exactly `[[@TEST_NAME]]` (including the brackets) should be used. The test
+-   **Always** use `library "[[@TEST_NAME]]";` in each split rather than
+    hardcoding the library name. This prevents name conflicts, avoids redefining
+    the default library, and keeps the test code clean and templateable.
+-   Exactly `[[@TEST_NAME]]` (including the brackets) must be used. The test
     infrastructure automatically replaces it with the split's filename minus
     `todo_` and `fail_` prefixes.
 -   **Do not put code that is expected to pass and code that is expected to fail

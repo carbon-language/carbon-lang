@@ -35,10 +35,13 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
 auto HandleParseNode(Context& context, Parse::CharLiteralId node_id) -> bool {
   auto value = context.tokens().GetCharLiteralValue(
       context.parse_tree().node_token(node_id));
+  auto char_id = SemIR::CharId::ForCodePoint(llvm::APInt(32, value.value));
+  CARBON_CHECK(char_id.has_value(), "Invalid character literal parsed: {0}",
+               value.value);
   auto inst_id = AddInst<SemIR::CharLiteralValue>(
       context, node_id,
       {.type_id = GetSingletonType(context, SemIR::CharLiteralType::TypeInstId),
-       .value = SemIR::CharId(value.value)});
+       .value = *char_id});
   context.node_stack().Push(node_id, inst_id);
   return true;
 }

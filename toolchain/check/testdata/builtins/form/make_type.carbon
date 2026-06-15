@@ -31,6 +31,7 @@ let f: Form = form(var ());
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type Core.Form [concrete]
+// CHECK:STDOUT:   %f.patt: %pattern_type = value_binding_pattern f [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
@@ -42,7 +43,7 @@ let f: Form = form(var ());
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type = value_binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type = value_binding_pattern f [concrete = constants.%f.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Form.ref: type = name_ref Form, imports.%Main.Form [concrete = Core.Form]
 // CHECK:STDOUT:   %f: Core.Form = value_binding f, @__global_init.%.loc7_20

@@ -31,6 +31,13 @@ auto EmitAggregateInitializer(FunctionContext& context,
                               SemIR::InstBlockId refs_id, llvm::Twine name)
     -> llvm::Value*;
 
+// Given that `element_id` is the `index` element of an aggregate of type
+// `aggr_type`, returns a reference to that aggregate.
+auto GetEnclosingAggregate(FunctionContext& context,
+                           FunctionContext::TypeInFile aggr_type,
+                           SemIR::InstId element_id, SemIR::ElementIndex index)
+    -> llvm::Value*;
+
 }  // namespace Carbon::Lower
 
 #endif  // CARBON_TOOLCHAIN_LOWER_AGGREGATE_H_

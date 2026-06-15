@@ -324,8 +324,10 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %Copy.ref: %Copy.type.705 = name_ref Copy, file.%Copy.decl [concrete = constants.%Copy]
 // CHECK:STDOUT:   %c.ref: %Copyable = name_ref c, %c
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Copy.facet: %Copy.type.bd0 = facet_value constants.%Copyable, (constants.%custom_witness.d0d) [concrete = constants.%Copy.facet.07e]
-// CHECK:STDOUT:   %.loc12: %Copy.type.bd0 = converted constants.%Copyable, %Copy.facet [concrete = constants.%Copy.facet.07e]
+// CHECK:STDOUT:   %Copy.facet.loc12_16.1: %Copy.type.bd0 = facet_value constants.%Copyable, (constants.%custom_witness.d0d) [concrete = constants.%Copy.facet.07e]
+// CHECK:STDOUT:   %.loc12_16.1: %Copy.type.bd0 = converted constants.%Copyable, %Copy.facet.loc12_16.1 [concrete = constants.%Copy.facet.07e]
+// CHECK:STDOUT:   %Copy.facet.loc12_16.2: %Copy.type.bd0 = facet_value constants.%Copyable, (constants.%custom_witness.d0d) [concrete = constants.%Copy.facet.07e]
+// CHECK:STDOUT:   %.loc12_16.2: %Copy.type.bd0 = converted constants.%Copyable, %Copy.facet.loc12_16.2 [concrete = constants.%Copy.facet.07e]
 // CHECK:STDOUT:   %Copy.specific_fn: <specific function> = specific_function %Copy.ref, @Copy.loc6(constants.%Copy.facet.07e) [concrete = constants.%Copy.specific_fn]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Copy.call: init %Copyable to %.loc10_34.1 = call %Copy.specific_fn(%c.ref)

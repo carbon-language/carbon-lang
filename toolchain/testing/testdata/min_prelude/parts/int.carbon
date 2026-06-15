@@ -23,31 +23,31 @@ class Int(N:! IntLiteral) {
 // Copy.
 
 impl forall [N:! IntLiteral] Int(N) as Copy {
-  fn Op[self: Self]() -> Self = "primitive_copy";
+  fn Op(self) -> Self = "primitive_copy";
 }
 
 // Conversions.
 
 impl forall [To:! IntLiteral] IntLiteral as ImplicitAs(Int(To)) {
-  fn Convert[self: Self]() -> Int(To) = "int.convert_checked";
+  fn Convert(self) -> Int(To) = "int.convert_checked";
 }
 
 final impl forall [From:! IntLiteral] Int(From) as ImplicitAs(IntLiteral) {
-  fn Convert[self: Self]() -> IntLiteral = "int.convert_checked";
+  fn Convert(self) -> IntLiteral = "int.convert_checked";
 }
 
 // TODO: Remove these once ImplicitAs extends As.
 impl forall [To:! IntLiteral] IntLiteral as As(Int(To)) {
-  fn Convert[self: Self]() -> Int(To) = "int.convert_checked";
+  fn Convert(self) -> Int(To) = "int.convert_checked";
 }
 
 final impl forall [From:! IntLiteral] Int(From) as As(IntLiteral) {
-  fn Convert[self: Self]() -> IntLiteral = "int.convert_checked";
+  fn Convert(self) -> IntLiteral = "int.convert_checked";
 }
 
 // Negate.
 
 final impl forall [N:! IntLiteral]
     Int(N) as Negate where .Result = Self {
-  fn Op[self: Self]() -> Self = "int.snegate";
+  fn Op(self) -> Self = "int.snegate";
 }

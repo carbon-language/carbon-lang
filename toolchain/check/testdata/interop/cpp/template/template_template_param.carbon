@@ -85,6 +85,8 @@ var x: Cpp.TwoTemplates(Cpp.A, true);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %TwoTemplates: type = class_type @TwoTemplates [concrete]
 // CHECK:STDOUT:   %pattern_type.f5e: type = pattern_type %TwoTemplates [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.f5e = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type.f5e = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
 // CHECK:STDOUT:   %T.b09: %Default.type = symbolic_binding T, 0 [symbolic]
@@ -105,8 +107,8 @@ var x: Cpp.TwoTemplates(Cpp.A, true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.f5e = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.f5e = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.f5e = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.f5e = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %TwoTemplates = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %x: ref %TwoTemplates = ref_binding x, %x.var [concrete = %x.var]
@@ -129,8 +131,8 @@ var x: Cpp.TwoTemplates(Cpp.A, true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: <error> = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: <error> = ref_binding_pattern x [concrete = <error>]
+// CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %x: ref <error> = ref_binding x, <error> [concrete = <error>]

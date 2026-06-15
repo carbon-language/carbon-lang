@@ -33,8 +33,11 @@ let not_8_bit: CharLiteral = '\u{1E15}';
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type Core.CharLiteral [concrete]
+// CHECK:STDOUT:   %ascii_x.patt: %pattern_type = value_binding_pattern ascii_x [concrete]
 // CHECK:STDOUT:   %.4ac: Core.CharLiteral = char_value U+0078 [concrete]
+// CHECK:STDOUT:   %not_7_bit.patt: %pattern_type = value_binding_pattern not_7_bit [concrete]
 // CHECK:STDOUT:   %.ae7: Core.CharLiteral = char_value U+0080 [concrete]
+// CHECK:STDOUT:   %not_8_bit.patt: %pattern_type = value_binding_pattern not_8_bit [concrete]
 // CHECK:STDOUT:   %.a81: Core.CharLiteral = char_value U+1E15 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -44,17 +47,17 @@ let not_8_bit: CharLiteral = '\u{1E15}';
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %ascii_x.patt: %pattern_type = value_binding_pattern ascii_x [concrete]
+// CHECK:STDOUT:     %ascii_x.patt: %pattern_type = value_binding_pattern ascii_x [concrete = constants.%ascii_x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CharLiteral.ref.loc7: type = name_ref CharLiteral, imports.%Main.CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %ascii_x: Core.CharLiteral = value_binding ascii_x, @__global_init.%.loc7
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_7_bit.patt: %pattern_type = value_binding_pattern not_7_bit [concrete]
+// CHECK:STDOUT:     %not_7_bit.patt: %pattern_type = value_binding_pattern not_7_bit [concrete = constants.%not_7_bit.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CharLiteral.ref.loc8: type = name_ref CharLiteral, imports.%Main.CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %not_7_bit: Core.CharLiteral = value_binding not_7_bit, @__global_init.%.loc8
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_8_bit.patt: %pattern_type = value_binding_pattern not_8_bit [concrete]
+// CHECK:STDOUT:     %not_8_bit.patt: %pattern_type = value_binding_pattern not_8_bit [concrete = constants.%not_8_bit.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CharLiteral.ref.loc9: type = name_ref CharLiteral, imports.%Main.CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %not_8_bit: Core.CharLiteral = value_binding not_8_bit, @__global_init.%.loc9

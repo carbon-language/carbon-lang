@@ -22,11 +22,11 @@ impl {.i: ()} as Undeclared {
 }
 
 interface Instance {
-  fn G[self: Self]();
+  fn G(self);
 }
 
 impl {.i: ()} as Instance {
-  fn G[unused self: Self]() {}
+  fn G(unused self) {}
 }
 
 // --- import_instance_success.carbon

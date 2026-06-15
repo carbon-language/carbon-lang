@@ -13,47 +13,47 @@
 class FinalClass {
 
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: error: `abstract` not allowed; requires `abstract` class scope [ModifierAbstractNotAllowed]
-  // CHECK:STDERR:   abstract fn Abstract[self: Self]();
+  // CHECK:STDERR:   abstract fn Abstract(self);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: note: containing definition here [ModifierNotInContext]
   // CHECK:STDERR: class FinalClass {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  abstract fn Abstract[self: Self]();
+  abstract fn Abstract(self);
 
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: error: `virtual` not allowed; requires `abstract` or `base` class scope [ModifierVirtualNotAllowed]
-  // CHECK:STDERR:   virtual fn Virtual[self: Self]();
+  // CHECK:STDERR:   virtual fn Virtual(self);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-14]]:1: note: containing definition here [ModifierNotInContext]
   // CHECK:STDERR: class FinalClass {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  virtual fn Virtual[self: Self]();
+  virtual fn Virtual(self);
 }
 
 abstract class AbstractClass {
 
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
-  // CHECK:STDERR:   default fn Default[self: Self]();
+  // CHECK:STDERR:   default fn Default(self);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  default fn Default[self: Self]();
+  default fn Default(self);
 
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: error: `final` not allowed; requires interface scope [ModifierRequiresInterface]
-  // CHECK:STDERR:   final fn Final[self: Self]();
+  // CHECK:STDERR:   final fn Final(self);
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
-  final fn Final[self: Self]();
+  final fn Final(self);
 }
 
 base class BaseClass {
 
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: error: `abstract` not allowed; requires `abstract` class scope [ModifierAbstractNotAllowed]
-  // CHECK:STDERR:   abstract fn Abstract[self: Self]();
+  // CHECK:STDERR:   abstract fn Abstract(self);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: note: containing definition here [ModifierNotInContext]
   // CHECK:STDERR: base class BaseClass {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  abstract fn Abstract[self: Self]();
+  abstract fn Abstract(self);
 }

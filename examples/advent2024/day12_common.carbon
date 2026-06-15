@@ -24,7 +24,7 @@ class Map {
     return var;
   }
 
-  fn At[self: Self](x: i32, y: i32) -> i32 {
+  fn At(self, x: i32, y: i32) -> i32 {
     return if x < 0 or x >= 140 or y < 0 or y >= 140
            then -1
            else self.kind[x][y];
@@ -46,7 +46,7 @@ class DisjointSetForest {
     return var;
   }
 
-  fn Lookup[ref self: Self](a: i32) -> i32 {
+  fn Lookup(ref self, a: i32) -> i32 {
     let next: i32 = self.nodes[a].next;
     if (next == a) {
       return next;
@@ -56,21 +56,21 @@ class DisjointSetForest {
     return resolved;
   }
 
-  fn Unions[self: Self](canon_a: i32) -> i32 {
+  fn Unions(self, canon_a: i32) -> i32 {
     return self.nodes[canon_a].unions;
   }
 
-  fn Weight[self: Self](canon_a: i32) -> i32 {
+  fn Weight(self, canon_a: i32) -> i32 {
     return self.nodes[canon_a].weight;
   }
 
-  fn Union[ref self: Self](a: i32, b: i32) {
+  fn Union(ref self, a: i32, b: i32) {
     let canon_b: i32 = self.Lookup(b);
     self.Set(a, canon_b);
     ++self.nodes[canon_b].unions;
   }
 
-  private fn Set[ref self: Self](a: i32, canon_b: i32) {
+  private fn Set(ref self, a: i32, canon_b: i32) {
     let next: i32 = self.nodes[a].next;
     self.nodes[a].next = canon_b;
     if (next == a) {
