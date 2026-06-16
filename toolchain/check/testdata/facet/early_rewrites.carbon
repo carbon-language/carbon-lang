@@ -452,7 +452,7 @@ class C(U:! Tuple);
 // CHECK:STDERR:
 fn G(unused T:! Z where .Z1 impls (Y where .Y1 = ()) and .Self impls Y and .Z2 = C(Self.(Y.Y1))) {}
 
-// --- todo_fail_nested_named_constraint_uses_early_rewrite.carbon
+// --- fail_todo_nested_named_constraint_uses_early_rewrite.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -467,10 +467,10 @@ constraint N(Y:! type) {
 // This gives `T.X = Z where T.X = T.Y`. So `T.X.(Z.X)` should be `T.Y` which is
 // `{}`.
 fn F(T:! Z where .Y = {} and .X = N(.Y), U:! T.X) -> U.(Z.X) {
-  // CHECK:STDERR: todo_fail_nested_named_constraint_uses_early_rewrite.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `{}` to `U.(Z.X)` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_nested_named_constraint_uses_early_rewrite.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `{}` to `U.(Z.X)` [ConversionFailure]
   // CHECK:STDERR:   return {};
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: todo_fail_nested_named_constraint_uses_early_rewrite.carbon:[[@LINE+4]]:3: note: type `{}` does not implement interface `Core.ImplicitAs(U.(Z.X))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_todo_nested_named_constraint_uses_early_rewrite.carbon:[[@LINE+4]]:3: note: type `{}` does not implement interface `Core.ImplicitAs(U.(Z.X))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   return {};
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
