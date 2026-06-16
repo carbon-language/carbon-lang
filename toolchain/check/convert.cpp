@@ -1764,9 +1764,7 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
       if (target_.is_initializer()) {
         // Overwrite the initializer's storage argument with the inst currently
         // at target_.storage_id, if both are present and the storage argument
-        // hasn't already been set. However, we skip this if the type is a C++
-        // enum: in that case, we don't actually have an initializing
-        // expression, we're just pretending we do.
+        // hasn't already been set.
         auto new_storage_id =
             OverwriteTemporaryStorageArg(sem_ir_, expr_id, target_);
 
