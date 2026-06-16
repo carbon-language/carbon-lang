@@ -237,6 +237,7 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   Options options;
   DriverEnv env(fs_, installation_, input_stream_, output_stream_,
                 error_stream_, fuzzing_, enable_leaking_);
+  env.mem_usage = mem_usage_;
 
   ErrorOr<CommandLine::ParseResult> result = CommandLine::Parse(
       args, *env.output_stream, Options::Info,

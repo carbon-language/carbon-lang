@@ -127,7 +127,8 @@ class CompilationUnit {
 
   // Initialized by `SetMultiUnitCache`.
   MultiUnitCache* cache_ = nullptr;
-  // Tracks memory usage of the compile.
+  // Tracks memory usage of the compile. Present when usage is being dumped or
+  // collected into `DriverEnv::mem_usage`; see `SetMultiUnitCache`.
   std::optional<MemUsage> mem_usage_;
   // Tracks timings of the compile.
   std::optional<Timings> timings_;
