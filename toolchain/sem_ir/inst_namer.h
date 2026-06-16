@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_INST_NAMER_H_
 #define CARBON_TOOLCHAIN_SEM_IR_INST_NAMER_H_
 
+#include <optional>
+
 #include "common/type_enum.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -207,6 +209,33 @@ class InstNamer {
   auto GetScopeInfo(ScopeId scope_id) const -> const Scope& {
     return scopes_[static_cast<int>(scope_id)];
   }
+
+  // A source line and column, used as the basis for a location-based name
+  // disambiguator.
+  struct LineAndColumn {
+    int line;
+    int column;
+  };
+
+  // The pieces of a location-based name disambiguator. `line_and_column` is the
+  // source position, or `nullopt` when the location has no source node to name
+  // (such as a C++ import). `mark_implicit` indicates that the name refers to a
+  // desugared (generated) location and should be marked as such; it is only set
+  // for import locations, since node locations are named the same whether or
+  // not they are desugared.
+  struct LocName {
+    std::optional<LineAndColumn> line_and_column;
+    bool mark_implicit;
+  };
+
+  // Resolves a location to the disambiguator pieces used in an instruction's
+  // name. A `NodeId` uses the current IR's tree; an import location follows one
+  // level of import to the imported IR's tree, and is marked implicit if
+  // desugared. A desugared C++ import has no source node, so it produces a
+  // `LocName` with no line and column but still marked implicit. Returns
+  // `nullopt` when there is nothing to name by, such as a non-desugared C++
+  // import, a multi-level import, or no location.
+  auto GetLocName(LocId loc_id) const -> std::optional<LocName>;
 
   // For the given `IdT`, returns its start offset in the `ScopeId` space. Each
   // of `ScopeIdTypeEnum` is stored sequentially. When called with

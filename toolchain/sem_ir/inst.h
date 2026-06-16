@@ -585,7 +585,10 @@ class InstStore {
   // another instruction.
   auto GetImportSource(InstId inst_id) const -> ImportIRInstId {
     auto loc_id = GetNonCanonicalLocId(inst_id);
-    return loc_id.kind() == LocId::Kind::ImportIRInstId
+    // A desugared import location refers to imported code but marks a locally
+    // generated instruction, which was not itself imported.
+    return loc_id.kind() == LocId::Kind::ImportIRInstId &&
+                   !loc_id.is_desugared()
                ? loc_id.import_ir_inst_id()
                : ImportIRInstId::None;
   }

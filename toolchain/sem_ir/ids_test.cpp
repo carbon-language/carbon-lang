@@ -36,9 +36,22 @@ TEST(IdsTest, LocIdValues) {
   EXPECT_THAT(max_node_id.AsDesugared().index,
               Eq(max_node_id.AsDesugared().AsDesugared().index));
 
-  EXPECT_THAT(static_cast<LocId>(ImportIRInstId(0)).index, Eq(-2 - (1 << 25)));
-  EXPECT_THAT(static_cast<LocId>(ImportIRInstId(ImportIRInstId::Max - 1)).index,
-              Eq(std::numeric_limits<int32_t>::min()));
+  auto min_import_ir_inst_id = static_cast<LocId>(ImportIRInstId(0));
+  EXPECT_THAT(min_import_ir_inst_id.index, Eq(-2 - (1 << 25)));
+  EXPECT_THAT(min_import_ir_inst_id.AsDesugared().index,
+              Eq(-2 - (1 << 25) - ImportIRInstId::Max));
+  EXPECT_THAT(min_import_ir_inst_id.AsDesugared().index,
+              Eq(min_import_ir_inst_id.AsDesugared().AsDesugared().index));
+
+  auto max_import_ir_inst_id =
+      static_cast<LocId>(ImportIRInstId(ImportIRInstId::Max - 1));
+  EXPECT_THAT(max_import_ir_inst_id.index,
+              Eq(-2 - (1 << 25) - (ImportIRInstId::Max - 1)));
+  EXPECT_THAT(
+      max_import_ir_inst_id.AsDesugared().index,
+      Eq(-2 - (1 << 25) - ImportIRInstId::Max - (ImportIRInstId::Max - 1)));
+  EXPECT_THAT(max_import_ir_inst_id.AsDesugared().index,
+              Eq(max_import_ir_inst_id.AsDesugared().AsDesugared().index));
 }
 
 // A standard parameterized test for (is_desugared, index).
@@ -104,7 +117,7 @@ TEST_P(LocIdAsImportIRInstIdTest, Test) {
   EXPECT_TRUE(loc_id.has_value());
   ASSERT_THAT(loc_id.kind(), Eq(LocId::Kind::ImportIRInstId));
   EXPECT_THAT(loc_id.import_ir_inst_id(), import_ir_inst_id);
-  EXPECT_FALSE(loc_id.is_desugared());
+  EXPECT_THAT(loc_id.is_desugared(), Eq(is_desugared()));
 }
 
 class LocIdAsInstIdTest : public IdsTestWithParam {};

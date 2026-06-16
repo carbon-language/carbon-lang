@@ -979,9 +979,11 @@ inline constexpr LibraryNameId LibraryNameId::Error =
 struct ImportIRInstId : public IdBase<ImportIRInstId> {
   static constexpr llvm::StringLiteral Label = "import_ir_inst";
 
-  // The maximum ID, non-inclusive. This is constrained to fit inside LocId.
+  // The maximum ID, non-inclusive. This is constrained to fit inside LocId,
+  // which reserves two equal-sized ranges of this size: one for canonical
+  // import locations and one for their desugared form.
   static constexpr int Max =
-      -(std::numeric_limits<int32_t>::min() + 2 * Parse::NodeId::Max + 1);
+      -(std::numeric_limits<int32_t>::min() + 2 * Parse::NodeId::Max + 1) / 2;
 
   constexpr explicit ImportIRInstId(int32_t index) : IdBase(index) {
     CARBON_DCHECK(index < Max, "Index out of range: {0}", index);
@@ -1046,11 +1048,14 @@ struct RawBundleId : public IdBase<RawBundleId> {
 //   - [-2, -2 - (1 << 24))
 // - Desugared NodeId: Another 24 bit NodeId range.
 //   - [-2 - (1 << 24), -2 - (1 << 25))
-// - ImportIRInstId: Remaining negative values; after NodeId, fills out negative
-//   values.
-//   - [-2 - (1 << 25), -(1 << 31)]
+// - ImportIRInstId: The next `ImportIRInstId::Max` negative values.
+// - Desugared ImportIRInstId: Another `ImportIRInstId::Max` negative values,
+//   filling out the remaining negative range.
 //
-// For desugaring, use `InstStore::GetLocIdForDesugaring()`.
+// Both `NodeId` and `ImportIRInstId` have a canonical and a desugared range; a
+// desugared location identifies the same node or import but indicates that the
+// instructions at it were generated rather than directly written there. For
+// desugaring, use `InstStore::GetLocIdForDesugaring()`.
 struct LocId : public IdBase<LocId> {
   // The contained index kind.
   enum class Kind {
@@ -1080,11 +1085,14 @@ struct LocId : public IdBase<LocId> {
   // Forms an equivalent LocId for a desugared location. Prefer calling
   // `InstStore::GetLocIdForDesugaring`.
   auto AsDesugared() const -> LocId {
-    // This should only be called for NodeId or ImportIRInstId (i.e. canonical
-    // locations), but we only set the flag for NodeId.
     CARBON_CHECK(kind() != Kind::InstId, "Use InstStore::GetDesugaredLocId");
+    // Shift a canonical `NodeId` or `ImportIRInstId` into its desugared range;
+    // already-desugared and `None` locations are returned unchanged.
     if (index <= FirstNodeId && index > FirstDesugaredNodeId) {
       return LocId(index - Parse::NodeId::Max);
+    }
+    if (index <= FirstImportIRInstId && index > FirstDesugaredImportIRInstId) {
+      return LocId(index - ImportIRInstId::Max);
     }
     return *this;
   }
@@ -1106,7 +1114,8 @@ struct LocId : public IdBase<LocId> {
   // Returns true if the location corresponds to desugared instructions.
   // Requires a non-`InstId` location.
   auto is_desugared() const -> bool {
-    return index <= FirstDesugaredNodeId && index > FirstImportIRInstId;
+    return (index <= FirstDesugaredNodeId && index > FirstImportIRInstId) ||
+           index <= FirstDesugaredImportIRInstId;
   }
 
   // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.
@@ -1118,6 +1127,10 @@ struct LocId : public IdBase<LocId> {
       return ImportIRInstId::None;
     }
     CARBON_CHECK(kind() == Kind::ImportIRInstId, "{0}", index);
+    // Decode from the canonical or desugared range, which share an id space.
+    if (index <= FirstDesugaredImportIRInstId) {
+      return ImportIRInstId(FirstDesugaredImportIRInstId - index);
+    }
     return ImportIRInstId(FirstImportIRInstId - index);
   }
 
@@ -1149,6 +1162,8 @@ struct LocId : public IdBase<LocId> {
       FirstNodeId - Parse::NodeId::Max;
   static constexpr int32_t FirstImportIRInstId =
       FirstDesugaredNodeId - Parse::NodeId::Max;
+  static constexpr int32_t FirstDesugaredImportIRInstId =
+      FirstImportIRInstId - ImportIRInstId::Max;
 };
 
 // Polymorphic id for fields in `Any[...]` typed instruction category. Used for

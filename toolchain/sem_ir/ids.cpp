@@ -286,6 +286,9 @@ auto LocId::Print(llvm::raw_ostream& out) const -> void {
       break;
     case Kind::ImportIRInstId:
       out << Label << "_" << import_ir_inst_id();
+      if (is_desugared()) {
+        out << "_desugared";
+      }
       break;
     case Kind::InstId:
       out << Label << "_" << inst_id();

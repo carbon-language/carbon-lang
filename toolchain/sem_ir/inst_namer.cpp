@@ -264,13 +264,14 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     // This should not happen in valid IR.
     RawStringOstream out;
     out << "<unexpected>." << inst_id;
-    auto loc_id = sem_ir_->insts().GetCanonicalLocId(inst_id);
-    // TODO: Consider handling other kinds.
-    if (loc_id.kind() == LocId::Kind::NodeId) {
-      const auto& tree = sem_ir_->parse_tree();
-      auto token = tree.node_token(loc_id.node_id());
-      out << ".loc" << tree.tokens().GetLineNumber(token) << "_"
-          << tree.tokens().GetColumnNumber(token);
+    if (auto loc_name = GetLocName(LocId(inst_id))) {
+      if (loc_name->line_and_column) {
+        out << ".loc" << loc_name->line_and_column->line << "_"
+            << loc_name->line_and_column->column;
+      }
+      if (loc_name->mark_implicit) {
+        out << ".implicit";
+      }
     }
     return out.TakeStr();
   }
@@ -309,6 +310,57 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
     return ("!" + label_name.GetFullName()).str();
   }
   return (GetScopeName(label_scope) + ".!" + label_name.GetFullName()).str();
+}
+
+auto InstNamer::GetLocName(LocId loc_id) const -> std::optional<LocName> {
+  loc_id = sem_ir_->insts().GetCanonicalLocId(loc_id);
+  const Parse::Tree* tree = nullptr;
+  Parse::NodeId node_id = Parse::NodeId::None;
+  bool mark_implicit = false;
+  switch (loc_id.kind()) {
+    case LocId::Kind::NodeId:
+      // Node locations are named the same whether or not they are desugared, so
+      // they are never marked implicit.
+      tree = &sem_ir_->parse_tree();
+      node_id = loc_id.node_id();
+      break;
+    case LocId::Kind::ImportIRInstId: {
+      // Follow one level of import to the imported IR, analogous to how
+      // `FormatImportRefRhs` names an imported instruction by its location.
+      auto import_ir_inst =
+          sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id());
+      const auto* import_ir =
+          sem_ir_->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+      auto imported_loc_id =
+          import_ir == nullptr
+              ? LocId::None
+              : import_ir->insts().GetCanonicalLocId(import_ir_inst.inst_id());
+      if (imported_loc_id.kind() != LocId::Kind::NodeId) {
+        // There's no source node to name by: this is a C++ import, a
+        // multi-level import, or an import with no location. If it's a
+        // desugared location, we still mark it implicit so that a generated
+        // instruction is named distinctly from the imported one it came from.
+        if (loc_id.is_desugared()) {
+          return LocName{.line_and_column = std::nullopt,
+                         .mark_implicit = true};
+        }
+        return std::nullopt;
+      }
+      tree = &import_ir->parse_tree();
+      node_id = imported_loc_id.node_id();
+      mark_implicit = loc_id.is_desugared();
+      break;
+    }
+    case LocId::Kind::None:
+    case LocId::Kind::InstId:
+      return std::nullopt;
+  }
+  auto token = tree->node_token(node_id);
+  return LocName{
+      .line_and_column =
+          LineAndColumn{.line = tree->tokens().GetLineNumber(token),
+                        .column = tree->tokens().GetColumnNumber(token)},
+      .mark_implicit = mark_implicit};
 }
 
 auto InstNamer::Namespace::Name::GetFullName() const -> llvm::StringRef {
@@ -370,18 +422,23 @@ auto InstNamer::Namespace::AllocateName(
 
   // Append location information to try to disambiguate.
   if (auto* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
-    *loc_id = inst_namer.sem_ir_->insts().GetCanonicalLocId(*loc_id);
-    // TODO: Consider handling other kinds.
-    if (loc_id->kind() == LocId::Kind::NodeId) {
-      const auto& tree = inst_namer.sem_ir_->parse_tree();
-      auto token = tree.node_token(loc_id->node_id());
-      llvm::raw_string_ostream(name)
-          << ".loc" << tree.tokens().GetLineNumber(token);
-      add_name();
+    if (auto loc_name = inst_namer.GetLocName(*loc_id)) {
+      if (loc_name->line_and_column) {
+        llvm::raw_string_ostream(name)
+            << ".loc" << loc_name->line_and_column->line;
+        add_name();
 
-      llvm::raw_string_ostream(name)
-          << "_" << tree.tokens().GetColumnNumber(token);
-      add_name();
+        llvm::raw_string_ostream(name)
+            << "_" << loc_name->line_and_column->column;
+        add_name();
+      }
+
+      // Mark a desugared import location so an instruction generated at it is
+      // named distinctly from one written there.
+      if (loc_name->mark_implicit) {
+        llvm::raw_string_ostream(name) << ".implicit";
+        add_name();
+      }
     }
   } else {
     uint64_t fingerprint = std::get<uint64_t>(loc_id_or_fingerprint);

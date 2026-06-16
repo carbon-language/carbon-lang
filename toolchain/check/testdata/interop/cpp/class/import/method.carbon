@@ -292,9 +292,9 @@ fn F() {
   // `Make()` returns materializes a separate `self` object to invoke it on,
   // and both that `self` and the `Make()` temporary are destroyed here. The
   // `Make()` temporary's destruction has an ordinary location in this file,
-  // but the materialized `self`'s location is the imported C++ type, which has
-  // no node here, so its destruction has no location in this file and is
-  // excluded from this focused dump.
+  // but the materialized `self`'s location is a desugared form of the imported
+  // C++ type, which has no node here, so its destruction is named `.implicit`
+  // and is brought into this focused dump by `include-implicit`.
   Make().rvalue_method();
 }
 //@dump-sem-ir-end
@@ -479,8 +479,8 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc22_9: <bound method> = bound_method %.loc22_8.2, %ref_ref_this.ref
 // CHECK:STDOUT:   %.loc22_8.3: %HasQualifiers = acquire_value %.loc22_8.2
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0.loc22: %.703 = impl_witness_access constants.%custom_witness.d0d, element0 [concrete = constants.%HasQualifiers.Op.4dca31.1]
-// CHECK:STDOUT:   %bound_method.loc22_8: <bound method> = bound_method %.loc22_8.3, %impl.elem0.loc22
+// CHECK:STDOUT:   %impl.elem0: %.703 = impl_witness_access constants.%custom_witness.d0d, element0 [concrete = constants.%HasQualifiers.Op.4dca31.1]
+// CHECK:STDOUT:   %bound_method.loc22_8: <bound method> = bound_method %.loc22_8.3, %impl.elem0
 // CHECK:STDOUT:   %.loc22_8.4: ref %HasQualifiers = temporary_storage
 // CHECK:STDOUT:   %Op.ref.loc22_8.1: %HasQualifiers.HasQualifiers.type = name_ref Op, imports.%HasQualifiers.HasQualifiers.decl [concrete = constants.%HasQualifiers.HasQualifiers]
 // CHECK:STDOUT:   <elided>
@@ -886,10 +886,10 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc18_9: <bound method> = bound_method %.loc18_8.2, %rvalue_method.ref
 // CHECK:STDOUT:   %.loc18_8.3: %WithDestructor = acquire_value %.loc18_8.2
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0.loc18: %.873 = impl_witness_access constants.%custom_witness.d0d, element0 [concrete = constants.%WithDestructor.Op]
-// CHECK:STDOUT:   %bound_method.loc18_8: <bound method> = bound_method %.loc18_8.3, %impl.elem0.loc18
+// CHECK:STDOUT:   %impl.elem0: %.873 = impl_witness_access constants.%custom_witness.d0d, element0 [concrete = constants.%WithDestructor.Op]
+// CHECK:STDOUT:   %bound_method.loc18_8: <bound method> = bound_method %.loc18_8.3, %impl.elem0
 // CHECK:STDOUT:   %.loc18_8.4: ref %WithDestructor = temporary_storage
-// CHECK:STDOUT:   %Op.ref.loc18: %WithDestructor.WithDestructor.type = name_ref Op, imports.%WithDestructor.WithDestructor.decl [concrete = constants.%WithDestructor.WithDestructor]
+// CHECK:STDOUT:   %Op.ref: %WithDestructor.WithDestructor.type = name_ref Op, imports.%WithDestructor.WithDestructor.decl [concrete = constants.%WithDestructor.WithDestructor]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc18_8.5: ref %WithDestructor = value_as_ref %.loc18_8.3
 // CHECK:STDOUT:   %addr.loc18_8.1: %ptr.0c4 = addr_of %.loc18_8.5
@@ -900,9 +900,10 @@ fn F() {
 // CHECK:STDOUT:   %.loc18_8.8: init %WithDestructor to %self.var = mark_in_place_init %WithDestructor__carbon_thunk.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %rvalue_method__carbon_thunk.call: init %empty_tuple.type = call imports.%rvalue_method__carbon_thunk.decl(%self.var)
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %WithDestructor.cpp_destructor.bound: <bound method> = bound_method %.loc18_8.2, constants.%WithDestructor.cpp_destructor
-// CHECK:STDOUT:   %WithDestructor.cpp_destructor.call.loc18: init %empty_tuple.type = call %WithDestructor.cpp_destructor.bound(%.loc18_8.2)
+// CHECK:STDOUT:   %WithDestructor.cpp_destructor.bound.implicit: <bound method> = bound_method %self.var, constants.%WithDestructor.cpp_destructor
+// CHECK:STDOUT:   %WithDestructor.cpp_destructor.call.implicit: init %empty_tuple.type = call %WithDestructor.cpp_destructor.bound.implicit(%self.var)
+// CHECK:STDOUT:   %WithDestructor.cpp_destructor.bound.loc18: <bound method> = bound_method %.loc18_8.2, constants.%WithDestructor.cpp_destructor
+// CHECK:STDOUT:   %WithDestructor.cpp_destructor.call.loc18: init %empty_tuple.type = call %WithDestructor.cpp_destructor.bound.loc18(%.loc18_8.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
