@@ -86,6 +86,8 @@ class A {
 // CHECK:STDOUT:   %struct_type.a.a92: type = struct_type {.a: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.388: <witness> = complete_type_witness %struct_type.a.a92 [concrete]
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %a.patt.17c: %pattern_type.9ef = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.9ef = var_pattern %a.patt.17c [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.48c: %struct_type.a.a6c = struct_value (%int_1.5b8) [concrete]
@@ -107,6 +109,8 @@ class A {
 // CHECK:STDOUT:   %int_1.0c6: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value (%int_1.0c6) [concrete]
 // CHECK:STDOUT:   %pattern_type.e78: type = pattern_type %B [concrete]
+// CHECK:STDOUT:   %b.patt.245: %pattern_type.e78 = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt: %pattern_type.e78 = var_pattern %b.patt.245 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct_type.b.a15: type = struct_type {.b: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.26f: %struct_type.b.a15 = struct_value (%int_2.ecc) [concrete]
@@ -115,6 +119,8 @@ class A {
 // CHECK:STDOUT:   %int_2.295: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %B.val: %B = struct_value (%int_2.295) [concrete]
 // CHECK:STDOUT:   %pattern_type.ca8: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt.a75: %pattern_type.ca8 = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type.ca8 = var_pattern %c.patt.a75 [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct_type.c.5b8: type = struct_type {.c: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.d98: %struct_type.c.5b8 = struct_value (%int_3.1ba) [concrete]
@@ -123,6 +129,8 @@ class A {
 // CHECK:STDOUT:   %int_3.410: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%int_3.410) [concrete]
 // CHECK:STDOUT:   %pattern_type.a0b: type = pattern_type %D [concrete]
+// CHECK:STDOUT:   %d.patt.60f: %pattern_type.a0b = ref_binding_pattern d [concrete]
+// CHECK:STDOUT:   %d.var_patt: %pattern_type.a0b = var_pattern %d.patt.60f [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT:   %struct_type.d.3ea: type = struct_type {.d: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.5a9: %struct_type.d.3ea = struct_value (%int_4.0c1) [concrete]
@@ -246,8 +254,8 @@ class A {
 // CHECK:STDOUT: fn @D.DF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.9ef = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.9ef = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.9ef = ref_binding_pattern a [concrete = constants.%a.patt.17c]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.9ef = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -266,8 +274,8 @@ class A {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.e78 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.e78 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.e78 = ref_binding_pattern b [concrete = constants.%b.patt.245]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.e78 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %B = var %b.var_patt
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
@@ -286,8 +294,8 @@ class A {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, @A.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %b: ref %B = ref_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.ca8 = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.ca8 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.ca8 = ref_binding_pattern c [concrete = constants.%c.patt.a75]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.ca8 = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -306,8 +314,8 @@ class A {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, @B.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.a0b = ref_binding_pattern d [concrete]
-// CHECK:STDOUT:     %d.var_patt: %pattern_type.a0b = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type.a0b = ref_binding_pattern d [concrete = constants.%d.patt.60f]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.a0b = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %D = var %d.var_patt
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]

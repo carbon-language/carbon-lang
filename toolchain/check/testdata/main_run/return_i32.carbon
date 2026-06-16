@@ -33,6 +33,8 @@ fn Run(unused argc: i32, unused argv: i32*) -> i32 { return 0; }
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
@@ -74,8 +76,8 @@ fn Run(unused argc: i32, unused argv: i32*) -> i32 { return 0; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [concrete = constants.%Run] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc4_13: Core.Form = init_form %i32 [concrete = constants.%.795]
@@ -104,9 +106,15 @@ fn Run(unused argc: i32, unused argv: i32*) -> i32 { return 0; }
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %argc.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %argc.patt: %pattern_type.6b6 = at_binding_pattern argc, %argc.param_patt [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.f00: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %argv.param_patt: %pattern_type.f00 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %argv.patt: %pattern_type.f00 = at_binding_pattern argv, %argv.param_patt [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
@@ -148,12 +156,12 @@ fn Run(unused argc: i32, unused argv: i32*) -> i32 { return 0; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [concrete = constants.%Run] {
-// CHECK:STDOUT:     %argc.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %argc.patt: %pattern_type.6b6 = at_binding_pattern argc, %argc.param_patt [concrete]
-// CHECK:STDOUT:     %argv.param_patt: %pattern_type.f00 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %argv.patt: %pattern_type.f00 = at_binding_pattern argv, %argv.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc5_48 [concrete]
+// CHECK:STDOUT:     %argc.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%argc.param_patt]
+// CHECK:STDOUT:     %argc.patt: %pattern_type.6b6 = at_binding_pattern argc, %argc.param_patt [concrete = constants.%argc.patt]
+// CHECK:STDOUT:     %argv.param_patt: %pattern_type.f00 = value_param_pattern [concrete = constants.%argv.param_patt]
+// CHECK:STDOUT:     %argv.patt: %pattern_type.f00 = at_binding_pattern argv, %argv.param_patt [concrete = constants.%argv.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc5_48 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc5_48: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc5_48: Core.Form = init_form %i32.loc5_48 [concrete = constants.%.795]

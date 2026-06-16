@@ -121,6 +121,7 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
 // CHECK:STDOUT:   %ptr.093: type = ptr_type %u8 [concrete]
 // CHECK:STDOUT:   %pattern_type.adf: type = pattern_type %str.3d4 [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.adf = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   %str.f81: %ptr.093 = string_literal "hello" [concrete]
 // CHECK:STDOUT:   %int_5: %u8 = int_value 5 [concrete]
 // CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str.f81, %int_5) [concrete]
@@ -128,7 +129,7 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.adf = value_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.adf = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %str: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
 // CHECK:STDOUT:   %x: %str.3d4 = value_binding x, @__global_init.%String.val
@@ -150,12 +151,13 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
 // CHECK:STDOUT:   %ptr.093: type = ptr_type %u8 [concrete]
 // CHECK:STDOUT:   %pattern_type.adf: type = pattern_type %str.3d4 [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.adf = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   %str.9e7: %ptr.093 = string_literal "A string so long its size does not fit in `u8`. This results in an error,\nbecause we can't form a `Core.String` value that describes this string.\n\nThis string contains 256 characters. Among them are:\n\n* 6 `g`s,\n* 21 `s`s,\n* 9 newlines,\n* and only one `p`.\n" [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.adf = value_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.adf = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %str: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
 // CHECK:STDOUT:   %x: %str.3d4 = value_binding x, <error> [concrete = <error>]

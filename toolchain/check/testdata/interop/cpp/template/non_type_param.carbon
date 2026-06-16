@@ -184,14 +184,16 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %TwoNonType: type = class_type @TwoNonType [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.2aa: type = pattern_type %TwoNonType [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.2aa = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type.2aa = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %TwoNonType.val: %TwoNonType = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.2aa = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.2aa = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.2aa = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.2aa = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %TwoNonType = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %x: ref %TwoNonType = ref_binding x, %x.var [concrete = %x.var]
@@ -218,13 +220,19 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %DependentNonType.43e: type = class_type @DependentNonType.1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.eef: type = pattern_type %DependentNonType.43e [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.eef = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type.eef = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123.cpp_overload_set.type: type = cpp_overload_set_type @MakeDependentNonType123.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123.cpp_overload_set.value: %MakeDependentNonType123.cpp_overload_set.type = cpp_overload_set_value @MakeDependentNonType123.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.f0c: type = ptr_type %DependentNonType.43e [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk.type: type = fn_type @MakeDependentNonType123__carbon_thunk [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk: %MakeDependentNonType123__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.6b6 = ref_binding_pattern StaticInt [concrete]
+// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.6b6 = var_pattern %StaticInt.patt [concrete]
 // CHECK:STDOUT:   %DependentNonType.d43: type = class_type @DependentNonType.2 [concrete]
 // CHECK:STDOUT:   %pattern_type.70d: type = pattern_type %DependentNonType.d43 [concrete]
+// CHECK:STDOUT:   %y.patt: %pattern_type.70d = ref_binding_pattern y [concrete]
+// CHECK:STDOUT:   %y.var_patt: %pattern_type.70d = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %DependentNonType.val: %DependentNonType.d43 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -243,21 +251,21 @@ fn G() -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.6b6 = ref_binding_pattern StaticInt [concrete]
-// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.6b6 = var_pattern %StaticInt.patt [concrete]
+// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.6b6 = ref_binding_pattern StaticInt [concrete = constants.%StaticInt.patt]
+// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.6b6 = var_pattern %StaticInt.patt [concrete = constants.%StaticInt.var_patt]
 // CHECK:STDOUT:   %StaticInt.var: ref %i32 = var %StaticInt.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.eef = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.eef = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.eef = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.eef = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %DependentNonType.43e = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %x: ref %DependentNonType.43e = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.70d = ref_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.var_patt: %pattern_type.70d = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.70d = ref_binding_pattern y [concrete = constants.%y.patt]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.70d = var_pattern %y.patt [concrete = constants.%y.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %DependentNonType.d43 = var %y.var_patt [concrete]
 // CHECK:STDOUT:   %y: ref %DependentNonType.d43 = ref_binding y, %y.var [concrete = %y.var]

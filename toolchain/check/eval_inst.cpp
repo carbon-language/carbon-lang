@@ -281,6 +281,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   if (witness_id.has_value()) {
     return ConstantEvalResult::Existing(witness_id);
   }
+
   // Try again when the query is modified by a specific.
   return ConstantEvalResult::NewSamePhase(inst);
 }
@@ -290,6 +291,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 // the type of `search_facet`.
 static auto TryFindValueInRewriteConstraints(
     Context& context, SemIR::LocId loc_id,
+    llvm::ArrayRef<SemIR::ImplWitnessAccess> access_qualifiers,
     SemIR::SpecificInterfaceId specific_interface_id,
     SemIR::ElementIndex interface_index, SemIR::InstId search_facet)
     -> SemIR::ConstantId {
@@ -344,11 +346,71 @@ static auto TryFindValueInRewriteConstraints(
 
     auto self_const_id = context.constant_values().Get(search_facet);
 
-    // The LHS of the rewrite might be `.Self` or it could be one or more nested
-    // ImplWitnessAccess instructions that eventually bottom out in `.Self`.
-    // Rewrite constraints must modify `.Self` so we know the target of the
-    // rewrite is ultimately always `.Self` which refers to the `search_facet`.
-    // So we don't have to substitute the `.Self` and do any comparison.
+    // The LHS of a rewrite can be an arbitrary type. For example:
+    // ```
+    //   T:! Z where C impls (Y(.Self) where .Y1 = {})
+    // ```
+    // The rewrite in the facet type will be `(C as Y(T)).Y1 = {}`.
+    //
+    // It can also be another ImplWitnessAccess. For example:
+    // ```
+    //   T:! Z where .Z1 impls (Y where .Y1 = {})
+    // ```
+    // The rewrite in the facet type will be `((T as Z).Z1 as Y).Y1 = {}`.
+    //
+    // If the original access was `T.Z1.Y1`, by the time `search_facet` is `T`
+    // where we find the rewrite, we will have already tried and failed to find
+    // a witness in `T.Z1`. So now a rewrite must be `.Z1.Y1` not just `.Y1`.
+    // This is represented in the `access_qualifiers`, and we check that the LHS
+    // of the rewrite contains those qualifiers in its access self facets,
+    // requiring that they are accessing the same interface and element.
+    //
+    // The inner-most self facet in the rewrite must be `.Self` in order to be
+    // providing a value for `search_facet`.
+    //
+    // TODO: Requiring the rewrite to be against `.Self` is actually
+    // insufficient. For a facet like
+    // ```
+    // T:! type where C impls (Z(.Self) where .Z1 = ())
+    // ```
+    // and an access like `C.(Z(T).Z1)`, the root of the access is `C`. If we
+    // search `T` for a witness, we'd need the inner-most self facet to be `C`
+    // in the rewrite. This isn't an issue in the code right now, because we
+    // only ever search the facet type for the self facets in the
+    // ImplWitnessAccess. But we should also be searching facets in the specific
+    // interfaces that would be part of the type structure. That is, we should
+    // match the search in `CollectFacetWitnessSources()`.
+    auto rewrite_lhs_self = rewrite_lhs_witness.query_self_inst_id;
+    bool mismatching_qualifier = false;
+    for (auto qualifier : access_qualifiers) {
+      auto rewrite_lhs_access =
+          context.insts().TryGetAs<SemIR::ImplWitnessAccess>(rewrite_lhs_self);
+      if (!rewrite_lhs_access) {
+        mismatching_qualifier = true;
+        break;
+      }
+      if (rewrite_lhs_access->index != qualifier.index) {
+        mismatching_qualifier = true;
+        break;
+      }
+      auto rewrite_lhs_witness =
+          context.insts().GetAs<SemIR::LookupImplWitness>(
+              rewrite_lhs_access->witness_id);
+      auto qualifier_witness = context.insts().GetAs<SemIR::LookupImplWitness>(
+          rewrite_lhs_access->witness_id);
+      if (rewrite_lhs_witness.query_specific_interface_id !=
+          qualifier_witness.query_specific_interface_id) {
+        mismatching_qualifier = true;
+        break;
+      }
+      rewrite_lhs_self = rewrite_lhs_witness.query_self_inst_id;
+    }
+    if (mismatching_qualifier) {
+      continue;
+    }
+    if (!IsPeriodSelf(context, rewrite_lhs_self)) {
+      continue;
+    }
 
     auto rewrite_lhs_interface =
         SubstPeriodSelf(context, loc_id,
@@ -425,11 +487,12 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
       // If we have a nested `.X1.Y1.Z1` we start with the facet type of .Y1 to
       // look for a rewrite constraint that provides the value for .Z1. But if
       // we don't find it, we try .X1 and .Self.
+      llvm::SmallVector<SemIR::ImplWitnessAccess> access_qualifiers;
       auto search_facet = witness.query_self_inst_id;
       while (true) {
         auto const_id = TryFindValueInRewriteConstraints(
-            context, SemIR::LocId(inst_id), witness.query_specific_interface_id,
-            inst.index, search_facet);
+            context, SemIR::LocId(inst_id), access_qualifiers,
+            witness.query_specific_interface_id, inst.index, search_facet);
         if (const_id.has_value()) {
           return ConstantEvalResult::Existing(const_id);
         }
@@ -437,6 +500,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                 search_facet)) {
           auto witness = context.insts().GetAs<SemIR::LookupImplWitness>(
               access->witness_id);
+          access_qualifiers.push_back(*access);
           search_facet = witness.query_self_inst_id;
         } else {
           break;

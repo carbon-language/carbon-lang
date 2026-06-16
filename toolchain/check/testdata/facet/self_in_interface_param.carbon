@@ -41,21 +41,24 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I, @I(%.Self.as_type.246) where %impl.elem0 = %empty_tuple.type> [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.021: type = pattern_type %I_where.type [symbolic_self]
+// CHECK:STDOUT:   %T.patt.e6f: %pattern_type.021 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.8c8: %I_where.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.8c8 [symbolic]
 // CHECK:STDOUT:   %facet_value: %type = facet_value %T.as_type, () [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness.506: <witness> = lookup_impl_witness %T.8c8, @I, @I(%T.as_type) [symbolic]
 // CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.021 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %impl.elem0.loc18_39 [concrete]
+// CHECK:STDOUT:     %T.patt.loc18_7.1: %pattern_type.021 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_7.2 (constants.%T.patt.e6f)]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %impl.elem0.loc18_39 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: %I_where.type = name_ref T, %T.loc18_7.2 [symbolic = %T.loc18_7.1 (constants.%T.8c8)]
 // CHECK:STDOUT:     %T.as_type.loc18_39.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc18_39.1 (constants.%T.as_type)]
@@ -100,6 +103,7 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc18_7.2: %I_where.type) {
+// CHECK:STDOUT:   %T.patt.loc18_7.2: %pattern_type.021 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_7.2 (constants.%T.patt.e6f)]
 // CHECK:STDOUT:   %T.loc18_7.1: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc18_7.1 (constants.%T.8c8)]
 // CHECK:STDOUT:   %T.as_type.loc18_39.1: type = facet_access_type %T.loc18_7.1 [symbolic = %T.as_type.loc18_39.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %facet_value.loc18_39.1: %type = facet_value %T.as_type.loc18_39.1, () [symbolic = %facet_value.loc18_39.1 (constants.%facet_value)]
@@ -116,6 +120,7 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.8c8) {
+// CHECK:STDOUT:   %T.patt.loc18_7.2 => constants.%T.patt.e6f
 // CHECK:STDOUT:   %T.loc18_7.1 => constants.%T.8c8
 // CHECK:STDOUT:   %T.as_type.loc18_39.1 => constants.%T.as_type
 // CHECK:STDOUT:   %facet_value.loc18_39.1 => constants.%facet_value

@@ -96,6 +96,7 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %EqWith.type.f77: type = generic_interface_type @EqWith [concrete]
 // CHECK:STDOUT:   %EqWith.generic: %EqWith.type.f77 = struct_value () [concrete]
@@ -104,17 +105,24 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT:   %Self.d94ae0.1: %EqWith.type.98ea86.1 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %EqWith.assoc_type.85b122.1: type = assoc_entity_type @EqWith, @EqWith(%Other) [symbolic]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %.f34: Core.Form = init_form bool [concrete]
 // CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.b82ec7.1: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%Other, %Self.d94ae0.1) [symbolic]
 // CHECK:STDOUT:   %EqWith.WithSelf.Equal.ae3c3e.1: %EqWith.WithSelf.Equal.type.b82ec7.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %EqWith.type.98ea86.2: type = facet_type <@EqWith, @EqWith(%U)> [symbolic]
 // CHECK:STDOUT:   %pattern_type.3d4: type = pattern_type %EqWith.type.98ea86.2 [symbolic]
+// CHECK:STDOUT:   %T.patt.6b9: %pattern_type.3d4 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T: %EqWith.type.98ea86.2 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %EqWith.assoc_type.85b122.2: type = assoc_entity_type @EqWith, @EqWith(%U) [symbolic]
 // CHECK:STDOUT:   %assoc0.eee873.2: %EqWith.assoc_type.85b122.2 = assoc_entity element0, imports.%Core.import_ref.5ba [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.e6374a.2: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %x.param_patt.aa2: %pattern_type.e6374a.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.4e4: %pattern_type.e6374a.2 = at_binding_pattern x, %x.param_patt.aa2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %U [symbolic]
+// CHECK:STDOUT:   %y.param_patt.be3: %pattern_type.51d1c4.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %y.patt.b85: %pattern_type.51d1c4.2 = at_binding_pattern y, %y.param_patt.be3 [symbolic]
+// CHECK:STDOUT:   %return.patt.c0c: %pattern_type.831 = return_slot_pattern %return.param_patt, bool [concrete]
 // CHECK:STDOUT:   %CompareGeneric.type: type = fn_type @CompareGeneric [concrete]
 // CHECK:STDOUT:   %CompareGeneric: %CompareGeneric.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.7f1: <witness> = require_complete_type %T.as_type [symbolic]
@@ -128,6 +136,10 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @EqWith.WithSelf.Equal(%U, %T) [symbolic]
 // CHECK:STDOUT:   %Unscoped: type = class_type @Unscoped [concrete]
 // CHECK:STDOUT:   %pattern_type.812: type = pattern_type %Unscoped [concrete]
+// CHECK:STDOUT:   %x.param_patt.6f9: %pattern_type.812 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.640: %pattern_type.812 = at_binding_pattern x, %x.param_patt.6f9 [concrete]
+// CHECK:STDOUT:   %y.param_patt.793: %pattern_type.812 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.efa: %pattern_type.812 = at_binding_pattern y, %y.param_patt.793 [concrete]
 // CHECK:STDOUT:   %CompareUnscoped.type: type = fn_type @CompareUnscoped [concrete]
 // CHECK:STDOUT:   %CompareUnscoped: %CompareUnscoped.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -137,6 +149,10 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT:   %Equal.8c4faf.1: %Equal.type.eace26.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Scoped: type = class_type @Scoped [concrete]
 // CHECK:STDOUT:   %pattern_type.5f2: type = pattern_type %Scoped [concrete]
+// CHECK:STDOUT:   %x.param_patt.78e: %pattern_type.5f2 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.d32: %pattern_type.5f2 = at_binding_pattern x, %x.param_patt.78e [concrete]
+// CHECK:STDOUT:   %y.param_patt.0bb: %pattern_type.5f2 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.fc0: %pattern_type.5f2 = at_binding_pattern y, %y.param_patt.0bb [concrete]
 // CHECK:STDOUT:   %CompareScoped.type: type = fn_type @CompareScoped [concrete]
 // CHECK:STDOUT:   %CompareScoped: %CompareScoped.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Equal.type.eace26.2: type = fn_type @Equal.2 [concrete]
@@ -153,6 +169,7 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT:   %custom_witness.ce6: <witness> = custom_witness (%Equal.8c4faf.3, %NotEqual), @EqWith, @EqWith(%Unscoped) [concrete]
 // CHECK:STDOUT:   %EqWith.facet.500: %EqWith.type.ed9 = facet_value %Unscoped, (%custom_witness.ce6) [concrete]
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %EqWith.type.ed9 [concrete]
+// CHECK:STDOUT:   %T.patt.daf: %pattern_type.fe8 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %CompareGeneric.specific_fn: <specific function> = specific_function %CompareGeneric, @CompareGeneric(%Unscoped, %EqWith.facet.500) [concrete]
 // CHECK:STDOUT:   %complete_type.0e2: <witness> = complete_type_witness %EqWith.type.ed9 [concrete]
 // CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.d93: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%Unscoped, %EqWith.facet.500) [concrete]
@@ -195,14 +212,14 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %CompareGeneric.decl: %CompareGeneric.type = fn_decl @CompareGeneric [concrete = constants.%CompareGeneric] {
-// CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [concrete]
-// CHECK:STDOUT:     %T.patt: @CompareGeneric.%pattern_type.loc7_30 (%pattern_type.3d4) = symbolic_binding_pattern T, 1 [concrete]
-// CHECK:STDOUT:     %x.param_patt: @CompareGeneric.%pattern_type.loc7_50 (%pattern_type.e6374a.2) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: @CompareGeneric.%pattern_type.loc7_50 (%pattern_type.e6374a.2) = at_binding_pattern x, %x.param_patt [concrete]
-// CHECK:STDOUT:     %y.param_patt: @CompareGeneric.%pattern_type.loc7_56 (%pattern_type.51d1c4.2) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %y.patt: @CompareGeneric.%pattern_type.loc7_56 (%pattern_type.51d1c4.2) = at_binding_pattern y, %y.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc7_64.1 [concrete]
+// CHECK:STDOUT:     %U.patt.loc7_20.1: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc7_20.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %T.patt.loc7_30.1: @CompareGeneric.%pattern_type.loc7_30 (%pattern_type.3d4) = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc7_30.2 (constants.%T.patt.6b9)]
+// CHECK:STDOUT:     %x.param_patt.loc7_50.1: @CompareGeneric.%pattern_type.loc7_50 (%pattern_type.e6374a.2) = value_param_pattern [symbolic = %x.param_patt.loc7_50.2 (constants.%x.param_patt.aa2)]
+// CHECK:STDOUT:     %x.patt.loc7_50.1: @CompareGeneric.%pattern_type.loc7_50 (%pattern_type.e6374a.2) = at_binding_pattern x, %x.param_patt.loc7_50.1 [symbolic = %x.patt.loc7_50.2 (constants.%x.patt.4e4)]
+// CHECK:STDOUT:     %y.param_patt.loc7_56.1: @CompareGeneric.%pattern_type.loc7_56 (%pattern_type.51d1c4.2) = value_param_pattern [symbolic = %y.param_patt.loc7_56.2 (constants.%y.param_patt.be3)]
+// CHECK:STDOUT:     %y.patt.loc7_56.1: @CompareGeneric.%pattern_type.loc7_56 (%pattern_type.51d1c4.2) = at_binding_pattern y, %y.param_patt.loc7_56.1 [symbolic = %y.patt.loc7_56.2 (constants.%y.patt.b85)]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc7_64.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_64.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc7_64.2: Core.Form = init_form %.loc7_64.1 [concrete = constants.%.f34]
@@ -233,12 +250,12 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CompareUnscoped.decl: %CompareUnscoped.type = fn_decl @CompareUnscoped [concrete = constants.%CompareUnscoped] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.812 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type.812 = at_binding_pattern x, %x.param_patt [concrete]
-// CHECK:STDOUT:     %y.param_patt: %pattern_type.812 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %y.patt: %pattern_type.812 = at_binding_pattern y, %y.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc10_57.1 [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.812 = value_param_pattern [concrete = constants.%x.param_patt.6f9]
+// CHECK:STDOUT:     %x.patt: %pattern_type.812 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.640]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type.812 = value_param_pattern [concrete = constants.%y.param_patt.793]
+// CHECK:STDOUT:     %y.patt: %pattern_type.812 = at_binding_pattern y, %y.param_patt [concrete = constants.%y.patt.efa]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc10_57.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_57.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc10_57.2: Core.Form = init_form %.loc10_57.1 [concrete = constants.%.f34]
@@ -258,12 +275,12 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CompareScoped.decl: %CompareScoped.type = fn_decl @CompareScoped [concrete = constants.%CompareScoped] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.5f2 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type.5f2 = at_binding_pattern x, %x.param_patt [concrete]
-// CHECK:STDOUT:     %y.param_patt: %pattern_type.5f2 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %y.patt: %pattern_type.5f2 = at_binding_pattern y, %y.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc14_51.1 [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.5f2 = value_param_pattern [concrete = constants.%x.param_patt.78e]
+// CHECK:STDOUT:     %x.patt: %pattern_type.5f2 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.d32]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type.5f2 = value_param_pattern [concrete = constants.%y.param_patt.0bb]
+// CHECK:STDOUT:     %y.patt: %pattern_type.5f2 = at_binding_pattern y, %y.param_patt [concrete = constants.%y.patt.fc0]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc14_51.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_51.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc14_51.2: Core.Form = init_form %.loc14_51.1 [concrete = constants.%.f34]
@@ -283,12 +300,12 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallCompareGeneric.decl: %CallCompareGeneric.type = fn_decl @CallCompareGeneric [concrete = constants.%CallCompareGeneric] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.812 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type.812 = at_binding_pattern x, %x.param_patt [concrete]
-// CHECK:STDOUT:     %y.param_patt: %pattern_type.812 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %y.patt: %pattern_type.812 = at_binding_pattern y, %y.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc18_60.1 [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.812 = value_param_pattern [concrete = constants.%x.param_patt.6f9]
+// CHECK:STDOUT:     %x.patt: %pattern_type.812 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.640]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type.812 = value_param_pattern [concrete = constants.%y.param_patt.793]
+// CHECK:STDOUT:     %y.patt: %pattern_type.812 = at_binding_pattern y, %y.param_patt [concrete = constants.%y.patt.efa]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc18_60.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc18_60.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc18_60.2: Core.Form = init_form %.loc18_60.1 [concrete = constants.%.f34]
@@ -310,13 +327,19 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @CompareGeneric(%U.loc7_20.2: type, %T.loc7_30.2: @CompareGeneric.%EqWith.type.loc7_46.1 (%EqWith.type.98ea86.2)) {
+// CHECK:STDOUT:   %U.patt.loc7_20.2: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc7_20.2 (constants.%U.patt)]
 // CHECK:STDOUT:   %U.loc7_20.1: type = symbolic_binding U, 0 [symbolic = %U.loc7_20.1 (constants.%U)]
 // CHECK:STDOUT:   %EqWith.type.loc7_46.1: type = facet_type <@EqWith, @EqWith(%U.loc7_20.1)> [symbolic = %EqWith.type.loc7_46.1 (constants.%EqWith.type.98ea86.2)]
-// CHECK:STDOUT:   %T.loc7_30.1: @CompareGeneric.%EqWith.type.loc7_46.1 (%EqWith.type.98ea86.2) = symbolic_binding T, 1 [symbolic = %T.loc7_30.1 (constants.%T)]
 // CHECK:STDOUT:   %pattern_type.loc7_30: type = pattern_type %EqWith.type.loc7_46.1 [symbolic = %pattern_type.loc7_30 (constants.%pattern_type.3d4)]
+// CHECK:STDOUT:   %T.patt.loc7_30.2: @CompareGeneric.%pattern_type.loc7_30 (%pattern_type.3d4) = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc7_30.2 (constants.%T.patt.6b9)]
+// CHECK:STDOUT:   %T.loc7_30.1: @CompareGeneric.%EqWith.type.loc7_46.1 (%EqWith.type.98ea86.2) = symbolic_binding T, 1 [symbolic = %T.loc7_30.1 (constants.%T)]
 // CHECK:STDOUT:   %T.as_type.loc7_52.1: type = facet_access_type %T.loc7_30.1 [symbolic = %T.as_type.loc7_52.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %pattern_type.loc7_50: type = pattern_type %T.as_type.loc7_52.1 [symbolic = %pattern_type.loc7_50 (constants.%pattern_type.e6374a.2)]
+// CHECK:STDOUT:   %x.param_patt.loc7_50.2: @CompareGeneric.%pattern_type.loc7_50 (%pattern_type.e6374a.2) = value_param_pattern [symbolic = %x.param_patt.loc7_50.2 (constants.%x.param_patt.aa2)]
+// CHECK:STDOUT:   %x.patt.loc7_50.2: @CompareGeneric.%pattern_type.loc7_50 (%pattern_type.e6374a.2) = at_binding_pattern x, %x.param_patt.loc7_50.2 [symbolic = %x.patt.loc7_50.2 (constants.%x.patt.4e4)]
 // CHECK:STDOUT:   %pattern_type.loc7_56: type = pattern_type %U.loc7_20.1 [symbolic = %pattern_type.loc7_56 (constants.%pattern_type.51d1c4.2)]
+// CHECK:STDOUT:   %y.param_patt.loc7_56.2: @CompareGeneric.%pattern_type.loc7_56 (%pattern_type.51d1c4.2) = value_param_pattern [symbolic = %y.param_patt.loc7_56.2 (constants.%y.param_patt.be3)]
+// CHECK:STDOUT:   %y.patt.loc7_56.2: @CompareGeneric.%pattern_type.loc7_56 (%pattern_type.51d1c4.2) = at_binding_pattern y, %y.param_patt.loc7_56.2 [symbolic = %y.patt.loc7_56.2 (constants.%y.patt.b85)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc7_50: <witness> = require_complete_type %T.as_type.loc7_52.1 [symbolic = %require_complete.loc7_50 (constants.%require_complete.7f1)]
@@ -375,23 +398,35 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompareGeneric(constants.%U, constants.%T) {
+// CHECK:STDOUT:   %U.patt.loc7_20.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc7_20.1 => constants.%U
 // CHECK:STDOUT:   %EqWith.type.loc7_46.1 => constants.%EqWith.type.98ea86.2
-// CHECK:STDOUT:   %T.loc7_30.1 => constants.%T
 // CHECK:STDOUT:   %pattern_type.loc7_30 => constants.%pattern_type.3d4
+// CHECK:STDOUT:   %T.patt.loc7_30.2 => constants.%T.patt.6b9
+// CHECK:STDOUT:   %T.loc7_30.1 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc7_52.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type.loc7_50 => constants.%pattern_type.e6374a.2
+// CHECK:STDOUT:   %x.param_patt.loc7_50.2 => constants.%x.param_patt.aa2
+// CHECK:STDOUT:   %x.patt.loc7_50.2 => constants.%x.patt.4e4
 // CHECK:STDOUT:   %pattern_type.loc7_56 => constants.%pattern_type.51d1c4.2
+// CHECK:STDOUT:   %y.param_patt.loc7_56.2 => constants.%y.param_patt.be3
+// CHECK:STDOUT:   %y.patt.loc7_56.2 => constants.%y.patt.b85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompareGeneric(constants.%Unscoped, constants.%EqWith.facet.500) {
+// CHECK:STDOUT:   %U.patt.loc7_20.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc7_20.1 => constants.%Unscoped
 // CHECK:STDOUT:   %EqWith.type.loc7_46.1 => constants.%EqWith.type.ed9
-// CHECK:STDOUT:   %T.loc7_30.1 => constants.%EqWith.facet.500
 // CHECK:STDOUT:   %pattern_type.loc7_30 => constants.%pattern_type.fe8
+// CHECK:STDOUT:   %T.patt.loc7_30.2 => constants.%T.patt.daf
+// CHECK:STDOUT:   %T.loc7_30.1 => constants.%EqWith.facet.500
 // CHECK:STDOUT:   %T.as_type.loc7_52.1 => constants.%Unscoped
 // CHECK:STDOUT:   %pattern_type.loc7_50 => constants.%pattern_type.812
+// CHECK:STDOUT:   %x.param_patt.loc7_50.2 => constants.%x.param_patt.6f9
+// CHECK:STDOUT:   %x.patt.loc7_50.2 => constants.%x.patt.640
 // CHECK:STDOUT:   %pattern_type.loc7_56 => constants.%pattern_type.812
+// CHECK:STDOUT:   %y.param_patt.loc7_56.2 => constants.%y.param_patt.793
+// CHECK:STDOUT:   %y.patt.loc7_56.2 => constants.%y.patt.efa
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc7_50 => constants.%complete_type.8a9
@@ -411,11 +446,17 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %return.param_patt.5a1: %pattern_type.831 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %.f34: Core.Form = init_form bool [concrete]
+// CHECK:STDOUT:   %return.patt.c0c: %pattern_type.831 = return_slot_pattern %return.param_patt.5a1, bool [concrete]
 // CHECK:STDOUT:   %CompareGeneric.type: type = fn_type @CompareGeneric [concrete]
 // CHECK:STDOUT:   %CompareGeneric: %CompareGeneric.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CustomEnum: type = class_type @CustomEnum [concrete]
 // CHECK:STDOUT:   %pattern_type.031: type = pattern_type %CustomEnum [concrete]
+// CHECK:STDOUT:   %x.param_patt.758: %pattern_type.031 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.739: %pattern_type.031 = at_binding_pattern x, %x.param_patt.758 [concrete]
+// CHECK:STDOUT:   %y.param_patt.07b: %pattern_type.031 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.99d: %pattern_type.031 = at_binding_pattern y, %y.param_patt.07b [concrete]
 // CHECK:STDOUT:   %CompareCustom.type: type = fn_type @CompareCustom [concrete]
 // CHECK:STDOUT:   %CompareCustom: %CompareCustom.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type bool [concrete]
@@ -423,8 +464,12 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk.5da7db.1: %operator_EqualEqual__carbon_thunk.type.d58437.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %HeteroScoped: type = class_type @HeteroScoped [concrete]
 // CHECK:STDOUT:   %pattern_type.55e: type = pattern_type %HeteroScoped [concrete]
+// CHECK:STDOUT:   %x.param_patt.bcb: %pattern_type.55e = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.b48: %pattern_type.55e = at_binding_pattern x, %x.param_patt.bcb [concrete]
 // CHECK:STDOUT:   %HeteroUnscoped: type = class_type @HeteroUnscoped [concrete]
 // CHECK:STDOUT:   %pattern_type.dac: type = pattern_type %HeteroUnscoped [concrete]
+// CHECK:STDOUT:   %y.param_patt.6ca: %pattern_type.dac = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.2ab: %pattern_type.dac = at_binding_pattern y, %y.param_patt.6ca [concrete]
 // CHECK:STDOUT:   %CompareHetero.type: type = fn_type @CompareHetero [concrete]
 // CHECK:STDOUT:   %CompareHetero: %CompareHetero.type = struct_value () [concrete]
 // CHECK:STDOUT:   %EqWith.type.553: type = facet_type <@EqWith, @EqWith(%HeteroUnscoped)> [concrete]
@@ -456,12 +501,12 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %CompareCustom.decl: %CompareCustom.type = fn_decl @CompareCustom [concrete = constants.%CompareCustom] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.031 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type.031 = at_binding_pattern x, %x.param_patt [concrete]
-// CHECK:STDOUT:     %y.param_patt: %pattern_type.031 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %y.patt: %pattern_type.031 = at_binding_pattern y, %y.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc11_59.1 [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.031 = value_param_pattern [concrete = constants.%x.param_patt.758]
+// CHECK:STDOUT:     %x.patt: %pattern_type.031 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.739]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type.031 = value_param_pattern [concrete = constants.%y.param_patt.07b]
+// CHECK:STDOUT:     %y.patt: %pattern_type.031 = at_binding_pattern y, %y.param_patt [concrete = constants.%y.patt.99d]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt.5a1]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc11_59.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_59.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc11_59.2: Core.Form = init_form %.loc11_59.1 [concrete = constants.%.f34]
@@ -481,12 +526,12 @@ fn CompareHeteroFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CompareHetero.decl: %CompareHetero.type = fn_decl @CompareHetero [concrete = constants.%CompareHetero] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.55e = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type.55e = at_binding_pattern x, %x.param_patt [concrete]
-// CHECK:STDOUT:     %y.param_patt: %pattern_type.dac = value_param_pattern [concrete]
-// CHECK:STDOUT:     %y.patt: %pattern_type.dac = at_binding_pattern y, %y.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc15_65.1 [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.55e = value_param_pattern [concrete = constants.%x.param_patt.bcb]
+// CHECK:STDOUT:     %x.patt: %pattern_type.55e = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.b48]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type.dac = value_param_pattern [concrete = constants.%y.param_patt.6ca]
+// CHECK:STDOUT:     %y.patt: %pattern_type.dac = at_binding_pattern y, %y.param_patt [concrete = constants.%y.patt.2ab]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt.5a1]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc15_65.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_65.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc15_65.2: Core.Form = init_form %.loc15_65.1 [concrete = constants.%.f34]

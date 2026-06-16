@@ -22,8 +22,12 @@ var y: {.v: ()} = x;
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.v [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.v = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.267: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete]
+// CHECK:STDOUT:   %y.patt: %pattern_type = ref_binding_pattern y [concrete]
+// CHECK:STDOUT:   %y.var_patt: %pattern_type = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   %.268: ref %empty_tuple.type = struct_access file.%y.var, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -33,8 +37,8 @@ var y: {.v: ()} = x;
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.v = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15_15: type = splice_block %struct_type.v.loc15 [concrete = constants.%struct_type.v] {
@@ -44,8 +48,8 @@ var y: {.v: ()} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.v = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type = ref_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.var_patt: %pattern_type = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type = ref_binding_pattern y [concrete = constants.%y.patt]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type = var_pattern %y.patt [concrete = constants.%y.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.v = var %y.var_patt [concrete]
 // CHECK:STDOUT:   %.loc16_15: type = splice_block %struct_type.v.loc16 [concrete = constants.%struct_type.v] {

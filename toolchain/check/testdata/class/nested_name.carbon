@@ -45,7 +45,11 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.dc4: type = pattern_type %Inner [concrete]
+// CHECK:STDOUT:   %oi.param_patt: %pattern_type.dc4 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %oi.patt: %pattern_type.dc4 = at_binding_pattern oi, %oi.param_patt [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -60,8 +64,12 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %.7a6: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d09, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.d6c: type = pattern_type %Outer [concrete]
+// CHECK:STDOUT:   %o.param_patt: %pattern_type.d6c = value_param_pattern [concrete]
+// CHECK:STDOUT:   %o.patt: %pattern_type.d6c = at_binding_pattern o, %o.param_patt [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %i.patt: %pattern_type.dc4 = ref_binding_pattern i [concrete]
+// CHECK:STDOUT:   %i.var_patt: %pattern_type.dc4 = var_pattern %i.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.53a: %T.as.DefaultOrUnformed.impl.Op.type.150 = struct_value () [symbolic]
@@ -104,10 +112,10 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [concrete = constants.%Outer] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %oi.param_patt: %pattern_type.dc4 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %oi.patt: %pattern_type.dc4 = at_binding_pattern oi, %oi.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
+// CHECK:STDOUT:     %oi.param_patt: %pattern_type.dc4 = value_param_pattern [concrete = constants.%oi.param_patt]
+// CHECK:STDOUT:     %oi.patt: %pattern_type.dc4 = at_binding_pattern oi, %oi.param_patt [concrete = constants.%oi.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc21_26: Core.Form = init_form %i32 [concrete = constants.%.795]
@@ -121,8 +129,8 @@ fn G(o: Outer) {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %o.param_patt: %pattern_type.d6c = value_param_pattern [concrete]
-// CHECK:STDOUT:     %o.patt: %pattern_type.d6c = at_binding_pattern o, %o.param_patt [concrete]
+// CHECK:STDOUT:     %o.param_patt: %pattern_type.d6c = value_param_pattern [concrete = constants.%o.param_patt]
+// CHECK:STDOUT:     %o.patt: %pattern_type.d6c = at_binding_pattern o, %o.param_patt [concrete = constants.%o.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %o.param: %Outer = value_param call_param0
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
@@ -167,8 +175,8 @@ fn G(o: Outer) {
 // CHECK:STDOUT: fn @G(%o.param: %Outer) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %i.patt: %pattern_type.dc4 = ref_binding_pattern i [concrete]
-// CHECK:STDOUT:     %i.var_patt: %pattern_type.dc4 = var_pattern %i.patt [concrete]
+// CHECK:STDOUT:     %i.patt: %pattern_type.dc4 = ref_binding_pattern i [concrete = constants.%i.patt]
+// CHECK:STDOUT:     %i.var_patt: %pattern_type.dc4 = var_pattern %i.patt [concrete = constants.%i.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %Inner = var %i.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%Inner, (constants.%DefaultOrUnformed.impl_witness.b1a) [concrete = constants.%DefaultOrUnformed.facet]

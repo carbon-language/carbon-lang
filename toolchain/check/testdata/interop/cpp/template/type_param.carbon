@@ -69,6 +69,8 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %TwoTypes: type = class_type @TwoTypes [concrete]
 // CHECK:STDOUT:   %pattern_type.83a: type = pattern_type %TwoTypes [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.83a = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type.83a = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
 // CHECK:STDOUT:   %T.b09: %Default.type = symbolic_binding T, 0 [symbolic]
@@ -89,8 +91,8 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.83a = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.83a = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.83a = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.83a = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %TwoTypes = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %x: ref %TwoTypes = ref_binding x, %x.var [concrete = %x.var]
@@ -114,6 +116,8 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %TwoTypes: type = class_type @TwoTypes [concrete]
 // CHECK:STDOUT:   %pattern_type.0c3: type = pattern_type %TwoTypes [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.0c3 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type.0c3 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
 // CHECK:STDOUT:   %T.b09: %Default.type = symbolic_binding T, 0 [symbolic]
@@ -134,8 +138,8 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.0c3 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.0c3 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.0c3 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.0c3 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %TwoTypes = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %x: ref %TwoTypes = ref_binding x, %x.var [concrete = %x.var]

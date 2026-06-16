@@ -13,7 +13,6 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
-#include "toolchain/check/name_ref.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/period_self.h"
 #include "toolchain/check/return.h"
@@ -210,7 +209,7 @@ static auto HandleAnyBindingPattern(
       phase = is_template ? BindingPhase::Template : BindingPhase::Symbolic;
     }
     auto binding = AddBindingPattern(
-        context, node_id, type_expr_region_id,
+        context, node_id, type_expr_region_id, type_expr.type_component_id,
         {.kind = kind,
          .type_id = GetPatternType(context, type_expr.type_component_id),
          .entity_name_id =

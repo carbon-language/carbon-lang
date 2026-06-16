@@ -26,6 +26,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.805: Core.Form = init_form type [concrete]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %return.param_patt.70e: %pattern_type.98f = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.3ae: %pattern_type.98f = return_slot_pattern %return.param_patt.70e, type [concrete]
 // CHECK:STDOUT:   %ReturnType.type: type = fn_type @ReturnType [concrete]
 // CHECK:STDOUT:   %ReturnType: %ReturnType.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -66,8 +68,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ReturnType.decl: %ReturnType.type = fn_decl @ReturnType [concrete = constants.%ReturnType] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc17_20.1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete = constants.%return.param_patt.70e]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc17_20.1 [concrete = constants.%return.patt.3ae]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17_20.1: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %.loc17_20.2: Core.Form = init_form %.loc17_20.1 [concrete = constants.%.805]
@@ -75,7 +77,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete]
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ReturnType.ref: %ReturnType.type = name_ref ReturnType, file.%ReturnType.decl [concrete = constants.%ReturnType]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()

@@ -32,7 +32,7 @@ fn F() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc16_43.3.temp = alloca [6 x i32], align 4, !dbg !7
 // CHECK:STDOUT:   %var = alloca i32, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc17_19.3.temp = alloca <{ i32, i1 }>, align 4, !dbg !8
+// CHECK:STDOUT:   %.loc17_19.5.temp = alloca <{ i32, i1 }>, align 4, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_43.3.temp), !dbg !7
 // CHECK:STDOUT:   %.loc16_43.4.array.index = getelementptr inbounds [6 x i32], ptr %.loc16_43.3.temp, i32 0, i64 0, !dbg !7
 // CHECK:STDOUT:   %.loc16_43.7.array.index = getelementptr inbounds [6 x i32], ptr %.loc16_43.3.temp, i32 0, i64 1, !dbg !7
@@ -46,22 +46,24 @@ fn F() {
 // CHECK:STDOUT:   br label %for.next, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.next:                                         ; preds = %for.body, %entry
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_19.3.temp), !dbg !8
-// CHECK:STDOUT:   call void @"_CNext.e163a239f9fa927c:Iterate.Core.620427d555024fe2"(ptr %.loc17_19.3.temp, ptr @array.loc16_43.24, ptr %var), !dbg !8
-// CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.18012f5191ea64dc(ptr %.loc17_19.3.temp), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_19.5.temp), !dbg !8
+// CHECK:STDOUT:   call void @"_CNext.e163a239f9fa927c:Iterate.Core.620427d555024fe2"(ptr %.loc17_19.5.temp, ptr @array.loc16_43.24, ptr %var), !dbg !8
+// CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.18012f5191ea64dc(ptr %.loc17_19.5.temp), !dbg !8
 // CHECK:STDOUT:   br i1 %Optional.HasValue.call, label %for.body, label %for.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.body:                                         ; preds = %for.next
-// CHECK:STDOUT:   %Optional.Get.call = call i32 @_CGet.Optional.Core.18012f5191ea64dc(ptr %.loc17_19.3.temp), !dbg !8
+// CHECK:STDOUT:   %Optional.Get.call = call i32 @_CGet.Optional.Core.18012f5191ea64dc(ptr %.loc17_19.5.temp), !dbg !8
 // CHECK:STDOUT:   call void @_CG.Main(i32 %Optional.Get.call), !dbg !9
 // CHECK:STDOUT:   br label %for.next, !dbg !10
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.done:                                         ; preds = %for.next
-// CHECK:STDOUT:   call void @"_COp.ab782c7eec490fc7:core.Destroy.Core"(ptr %.loc17_19.3.temp), !dbg !8
+// CHECK:STDOUT:   call void @"_COp.ab782c7eec490fc7:core.Destroy.Core"(ptr %.loc17_19.5.temp), !dbg !8
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %var), !dbg !8
 // CHECK:STDOUT:   call void @"_COp.3a5df7cec745952b:core.Destroy.Core"(ptr @array), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_COp.1155b488c23b5086:core.Destroy.Core"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %self) #0 !dbg !12 {
@@ -339,7 +341,7 @@ fn F() {
 // CHECK:STDOUT: !112 = !{!113, !114}
 // CHECK:STDOUT: !113 = !DILocalVariable(arg: 1, scope: !109, type: !15)
 // CHECK:STDOUT: !114 = !DILocalVariable(arg: 2, scope: !109, type: !15)
-// CHECK:STDOUT: !115 = !DILocation(line: 4294967295, scope: !109)
+// CHECK:STDOUT: !115 = !DILocation(line: 0, scope: !109)
 // CHECK:STDOUT: !116 = !DILocation(line: 331, column: 3, scope: !109)
 // CHECK:STDOUT: !117 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.5d6f3f3a4b44a8f1:OptionalStorage.Core.58016a73bff04416", scope: null, file: !69, line: 131, type: !88, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !118)
 // CHECK:STDOUT: !118 = !{!119}

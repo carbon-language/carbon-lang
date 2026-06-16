@@ -45,6 +45,8 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Point: type = class_type @Point [concrete]
 // CHECK:STDOUT:   %pattern_type.9d8: type = pattern_type %Point [concrete]
+// CHECK:STDOUT:   %self.param_patt.b38: %pattern_type.9d8 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.60a: %pattern_type.9d8 = at_binding_pattern self, %self.param_patt.b38 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -52,8 +54,12 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
 // CHECK:STDOUT:   %Point.Get.type: type = fn_type @Point.Get [concrete]
 // CHECK:STDOUT:   %Point.Get: %Point.Get.type = struct_value () [concrete]
+// CHECK:STDOUT:   %other.param_patt: %pattern_type.9d8 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %other.patt: %pattern_type.9d8 = at_binding_pattern other, %other.param_patt [concrete]
 // CHECK:STDOUT:   %Point.First.type: type = fn_type @Point.First [concrete]
 // CHECK:STDOUT:   %Point.First: %Point.First.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Point.elem: type = unbound_element_type %Point, %i32 [concrete]
@@ -69,8 +75,12 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.d09: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.7a6: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d09, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %p.param_patt: %pattern_type.9d8 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type.9d8 = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %CallGet.type: type = fn_type @CallGet [concrete]
 // CHECK:STDOUT:   %CallGet: %CallGet.type = struct_value () [concrete]
+// CHECK:STDOUT:   %q.param_patt: %pattern_type.9d8 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %q.patt: %pattern_type.9d8 = at_binding_pattern q, %q.param_patt [concrete]
 // CHECK:STDOUT:   %CallFirst.type: type = fn_type @CallFirst [concrete]
 // CHECK:STDOUT:   %CallFirst: %CallFirst.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CallViaAlias.type: type = fn_type @CallViaAlias [concrete]
@@ -101,10 +111,10 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Point.decl: type = class_decl @Point [concrete = constants.%Point] {} {}
 // CHECK:STDOUT:   %CallGet.decl: %CallGet.type = fn_decl @CallGet [concrete = constants.%CallGet] {
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.9d8 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %p.patt: %pattern_type.9d8 = at_binding_pattern p, %p.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%p.param_patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.9d8 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc13: Core.Form = init_form %i32 [concrete = constants.%.795]
@@ -115,12 +125,12 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallFirst.decl: %CallFirst.type = fn_decl @CallFirst [concrete = constants.%CallFirst] {
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.9d8 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %p.patt: %pattern_type.9d8 = at_binding_pattern p, %p.param_patt [concrete]
-// CHECK:STDOUT:     %q.param_patt: %pattern_type.9d8 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %q.patt: %pattern_type.9d8 = at_binding_pattern q, %q.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%p.param_patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.9d8 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %q.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%q.param_patt]
+// CHECK:STDOUT:     %q.patt: %pattern_type.9d8 = at_binding_pattern q, %q.param_patt [concrete = constants.%q.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc18: Core.Form = init_form %i32 [concrete = constants.%.795]
@@ -134,10 +144,10 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallViaAlias.decl: %CallViaAlias.type = fn_decl @CallViaAlias [concrete = constants.%CallViaAlias] {
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.9d8 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %p.patt: %pattern_type.9d8 = at_binding_pattern p, %p.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%p.param_patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.9d8 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc23: Core.Form = init_form %i32 [concrete = constants.%.795]
@@ -151,10 +161,10 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Point {
 // CHECK:STDOUT:   %Point.Get.decl: %Point.Get.type = fn_decl @Point.Get [concrete = constants.%Point.Get] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.9d8 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.9d8 = at_binding_pattern self, %self.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%self.param_patt.b38]
+// CHECK:STDOUT:     %self.patt: %pattern_type.9d8 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.60a]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc4_19: Core.Form = init_form %i32 [concrete = constants.%.795]
@@ -165,12 +175,12 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Point.First.decl: %Point.First.type = fn_decl @Point.First [concrete = constants.%Point.First] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.9d8 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.9d8 = at_binding_pattern self, %self.param_patt [concrete]
-// CHECK:STDOUT:     %other.param_patt: %pattern_type.9d8 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %other.patt: %pattern_type.9d8 = at_binding_pattern other, %other.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%self.param_patt.b38]
+// CHECK:STDOUT:     %self.patt: %pattern_type.9d8 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.60a]
+// CHECK:STDOUT:     %other.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%other.param_patt]
+// CHECK:STDOUT:     %other.patt: %pattern_type.9d8 = at_binding_pattern other, %other.param_patt [concrete = constants.%other.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc5_42: Core.Form = init_form %i32 [concrete = constants.%.795]

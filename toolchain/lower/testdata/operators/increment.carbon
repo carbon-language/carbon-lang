@@ -104,7 +104,7 @@ fn IncrSigned() {
 // CHECK:STDOUT: !26 = !{!27, !28}
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !23, type: !13)
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 2, scope: !23, type: !13)
-// CHECK:STDOUT: !29 = !DILocation(line: 4294967295, scope: !23)
+// CHECK:STDOUT: !29 = !DILocation(line: 0, scope: !23)
 // CHECK:STDOUT: !30 = !DILocation(line: 331, column: 3, scope: !23)
 // CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.40372ba0ea03ef47", scope: null, file: !18, line: 64, type: !32, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !34)
 // CHECK:STDOUT: !32 = !DISubroutineType(types: !33)

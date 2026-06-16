@@ -52,8 +52,8 @@ var p2: i32->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: <error> = ref_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.var_patt: <error> = var_pattern %p.patt [concrete]
+// CHECK:STDOUT:     %p.patt: <error> = ref_binding_pattern p [concrete = <error>]
+// CHECK:STDOUT:     %p.var_patt: <error> = var_pattern %p.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref <error> = var %p.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -62,8 +62,8 @@ var p2: i32->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref <error> = ref_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p2.patt: <error> = ref_binding_pattern p2 [concrete]
-// CHECK:STDOUT:     %p2.var_patt: <error> = var_pattern %p2.patt [concrete]
+// CHECK:STDOUT:     %p2.patt: <error> = ref_binding_pattern p2 [concrete = <error>]
+// CHECK:STDOUT:     %p2.var_patt: <error> = var_pattern %p2.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p2.var: ref <error> = var %p2.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.2: <error> = splice_block <error> [concrete = <error>] {

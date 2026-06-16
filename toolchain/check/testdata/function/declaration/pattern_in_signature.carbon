@@ -27,24 +27,34 @@ fn CallF(ab: ({}, {}), c: {}) {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
+// CHECK:STDOUT:   %a.param_patt: %pattern_type.a96 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.a96 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %b.param_patt: %pattern_type.a96 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.a96 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   %tuple.type.b6b: type = tuple_type (%empty_struct_type, %empty_struct_type) [concrete]
 // CHECK:STDOUT:   %pattern_type.de4: type = pattern_type %tuple.type.b6b [concrete]
+// CHECK:STDOUT:   %.20f: %pattern_type.de4 = tuple_pattern (%a.patt, %b.patt) [concrete]
+// CHECK:STDOUT:   %c.param_patt: %pattern_type.a96 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %c.patt.d53327.1: %pattern_type.a96 = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type.b6b = tuple_value (%empty_struct, %empty_struct) [concrete]
+// CHECK:STDOUT:   %ab.param_patt: %pattern_type.de4 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %ab.patt: %pattern_type.de4 = at_binding_pattern ab, %ab.param_patt [concrete]
+// CHECK:STDOUT:   %c.patt.d53327.2: %pattern_type.a96 = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %CallF.type: type = fn_type @CallF [concrete]
 // CHECK:STDOUT:   %CallF: %CallF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.a96 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.a96 = at_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.a96 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.a96 = at_binding_pattern b, %b.param_patt [concrete]
-// CHECK:STDOUT:     %.loc14_33: %pattern_type.de4 = tuple_pattern (%a.patt, %b.patt) [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.a96 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %c.patt: %pattern_type.a96 = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.a96 = value_param_pattern [concrete = constants.%a.param_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.a96 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.a96 = value_param_pattern [concrete = constants.%b.param_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.a96 = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %.loc14_33: %pattern_type.de4 = tuple_pattern (%a.patt, %b.patt) [concrete = constants.%.20f]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.a96 = value_param_pattern [concrete = constants.%c.param_patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.a96 = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.d53327.1]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %empty_struct_type = value_param call_param0
 // CHECK:STDOUT:     %.loc14_18.1: type = splice_block %.loc14_18.3 [concrete = constants.%empty_struct_type] {
@@ -66,10 +76,10 @@ fn CallF(ab: ({}, {}), c: {}) {
 // CHECK:STDOUT:     %c: %empty_struct_type = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallF.decl: %CallF.type = fn_decl @CallF [concrete = constants.%CallF] {
-// CHECK:STDOUT:     %ab.param_patt: %pattern_type.de4 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %ab.patt: %pattern_type.de4 = at_binding_pattern ab, %ab.param_patt [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.a96 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %c.patt: %pattern_type.a96 = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %ab.param_patt: %pattern_type.de4 = value_param_pattern [concrete = constants.%ab.param_patt]
+// CHECK:STDOUT:     %ab.patt: %pattern_type.de4 = at_binding_pattern ab, %ab.param_patt [concrete = constants.%ab.patt]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.a96 = value_param_pattern [concrete = constants.%c.param_patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.a96 = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.d53327.2]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ab.param: %tuple.type.b6b = value_param call_param0
 // CHECK:STDOUT:     %.loc18_21.1: type = splice_block %.loc18_21.5 [concrete = constants.%tuple.type.b6b] {

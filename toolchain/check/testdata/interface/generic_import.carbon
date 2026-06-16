@@ -37,6 +37,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.097: type = generic_interface_type @AddWith [concrete]
 // CHECK:STDOUT:   %AddWith.generic: %AddWith.type.097 = struct_value () [concrete]
@@ -53,7 +54,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     .AddWith = %AddWith.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type.097 = interface_decl @AddWith [concrete = constants.%AddWith.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc4_20.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_20.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_23.1: type = splice_block %.loc4_23.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -64,6 +65,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @AddWith(%T.loc4_20.2: type) {
+// CHECK:STDOUT:   %T.patt.loc4_20.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_20.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc4_20.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_20.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -92,6 +94,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc4_20.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc4_20.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -109,6 +112,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.generic: %AddWith.type.097 = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.e7b: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Self.403: %AddWith.type.e7b = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %AddWith.WithSelf.F.type.ada: type = fn_type @AddWith.WithSelf.F, @AddWith.WithSelf(%T, %Self.403) [symbolic]
 // CHECK:STDOUT:   %AddWith.WithSelf.F.2ed: %AddWith.WithSelf.F.type.ada = struct_value () [symbolic]
@@ -153,6 +158,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @AddWith(imports.%Main.import_ref.b3bc94.3: type) [from "a.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -198,6 +204,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(constants.%T) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -206,6 +213,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: specific @AddWith.WithSelf.F(constants.%T, constants.%Self.403) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(constants.%C) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

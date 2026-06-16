@@ -46,6 +46,8 @@ fn Run() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %pattern_type.912: type = pattern_type %Base [concrete]
+// CHECK:STDOUT:   %self.param_patt: %pattern_type.912 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt: %pattern_type.912 = at_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F [concrete]
 // CHECK:STDOUT:   %Base.F: %Base.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Base.Unused.type: type = fn_type @Base.Unused [concrete]
@@ -85,16 +87,16 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %Base.F.decl: %Base.F.type = fn_decl @Base.F [concrete = constants.%Base.F] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.912 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.912 = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.912 = value_param_pattern [concrete = constants.%self.param_patt]
+// CHECK:STDOUT:     %self.patt: %pattern_type.912 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:     %self: %Base = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.Unused.decl: %Base.Unused.type = fn_decl @Base.Unused [concrete = constants.%Base.Unused] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.912 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.912 = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.912 = value_param_pattern [concrete = constants.%self.param_patt]
+// CHECK:STDOUT:     %self.patt: %pattern_type.912 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
@@ -146,6 +148,8 @@ fn Run() {
 // CHECK:STDOUT:   %struct_type.base.cae: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.c02: <witness> = complete_type_witness %struct_type.base.cae [concrete]
 // CHECK:STDOUT:   %pattern_type.860: type = pattern_type %Child [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.860 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.860 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.x.unused_y.76a: type = struct_type {.x: Core.IntLiteral, .unused_y: Core.IntLiteral} [concrete]
@@ -250,8 +254,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.860 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.860 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.860 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.860 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Child = var %a.var_patt
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]

@@ -749,9 +749,13 @@ constraint N {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.d87: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.d87 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type %Z.type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %Z.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.86a: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %t.param_patt: %pattern_type.86a = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %t.patt: %pattern_type.86a = at_binding_pattern t, %t.param_patt [symbolic]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Y [symbolic]
 // CHECK:STDOUT:   %Y.facet: %Y.type = facet_value %T.as_type, (%Y.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %Y.WithSelf.YY.type.0e8: type = fn_type @Y.WithSelf.YY, @Y.WithSelf(%Y.facet) [symbolic]
@@ -844,9 +848,12 @@ constraint N {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc13_7.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc13_7.1 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc13_16.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.86a
+// CHECK:STDOUT:   %t.param_patt.loc13_14.2 => constants.%t.param_patt
+// CHECK:STDOUT:   %t.patt.loc13_14.2 => constants.%t.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%T) {
@@ -872,9 +879,13 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.d87 [symbolic]
 // CHECK:STDOUT:   %Y.type.f41: type = facet_type <@Y, @Y(%Self.as_type)> [symbolic]
 // CHECK:STDOUT:   %require_complete.097: <witness> = require_complete_type %Y.type.f41 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type %Z.type [concrete]
+// CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.f45: %Z.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.f45 [symbolic]
 // CHECK:STDOUT:   %pattern_type.86a: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %t.param_patt: %pattern_type.86a = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %t.patt: %pattern_type.86a = at_binding_pattern t, %t.param_patt [symbolic]
 // CHECK:STDOUT:   %Y.type.40d: type = facet_type <@Y, @Y(%T.as_type)> [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %Y.type.40d [symbolic]
 // CHECK:STDOUT:   %Y.assoc_type.0ce: type = assoc_entity_type @Y, @Y(%T.as_type) [symbolic]
@@ -992,9 +1003,12 @@ constraint N {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.f45) {
+// CHECK:STDOUT:   %T.patt.loc13_7.2 => constants.%T.patt.3a0
 // CHECK:STDOUT:   %T.loc13_7.1 => constants.%T.f45
 // CHECK:STDOUT:   %T.as_type.loc13_16.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.86a
+// CHECK:STDOUT:   %t.param_patt.loc13_14.2 => constants.%t.param_patt
+// CHECK:STDOUT:   %t.patt.loc13_14.2 => constants.%t.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%T.f45) {
@@ -1294,6 +1308,7 @@ constraint N {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.c39: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Z.type.8e1: type = generic_named_constaint_type @Z [concrete]
 // CHECK:STDOUT:   %empty_struct: %Z.type.8e1 = struct_value () [concrete]
@@ -1303,7 +1318,7 @@ constraint N {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Z.decl: %Z.type.8e1 = constraint_decl @Z [concrete = constants.%empty_struct] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc8_15.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_18.1: type = splice_block %.loc8_18.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
@@ -1314,6 +1329,7 @@ constraint N {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic constraint @Z(%T.loc8_15.2: type) {
+// CHECK:STDOUT:   %T.patt.loc8_15.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc8_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc8_15.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1336,6 +1352,7 @@ constraint N {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc8_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc8_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

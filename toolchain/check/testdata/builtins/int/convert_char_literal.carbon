@@ -71,8 +71,10 @@ let c: CharLiteral = ConvertFromIntLiteral(0x110000);
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
 // CHECK:STDOUT:   %ConvertFromU32.type: type = fn_type @ConvertFromU32 [concrete]
 // CHECK:STDOUT:   %ConvertFromU32: %ConvertFromU32.type = struct_value () [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.8c6 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   %int_97: Core.IntLiteral = int_value 97 [concrete]
 // CHECK:STDOUT:   %.54f: Core.CharLiteral = char_value U+0061 [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.8c6 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   %int_98.fb6: Core.IntLiteral = int_value 98 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.914: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
@@ -89,6 +91,7 @@ let c: CharLiteral = ConvertFromIntLiteral(0x110000);
 // CHECK:STDOUT:   %bound_method.6e9: <bound method> = bound_method %int_98.fb6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn.571 [concrete]
 // CHECK:STDOUT:   %int_98.1e6: %i32 = int_value 98 [concrete]
 // CHECK:STDOUT:   %.711: Core.CharLiteral = char_value U+0062 [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.8c6 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   %int_99.6d1: Core.IntLiteral = int_value 99 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.efe: type = facet_type <@ImplicitAs, @ImplicitAs(%u32)> [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.199: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.2, @Core.IntLiteral.as.ImplicitAs.impl.b68(%To) [symbolic]
@@ -115,25 +118,25 @@ let c: CharLiteral = ConvertFromIntLiteral(0x110000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.8c6 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.8c6 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %CharLiteral.ref.loc14: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %.loc14_46.1: Core.CharLiteral = value_of_initializer @__global_init.%ConvertFromIntLiteral.call [concrete = constants.%.54f]
 // CHECK:STDOUT:   %.loc14_46.2: Core.CharLiteral = converted @__global_init.%ConvertFromIntLiteral.call, %.loc14_46.1 [concrete = constants.%.54f]
+// CHECK:STDOUT:   %CharLiteral.ref.loc14: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %a: Core.CharLiteral = value_binding a, %.loc14_46.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.8c6 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.8c6 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %CharLiteral.ref.loc15: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %.loc15_39.1: Core.CharLiteral = value_of_initializer @__global_init.%ConvertFromI32.call [concrete = constants.%.711]
 // CHECK:STDOUT:   %.loc15_39.2: Core.CharLiteral = converted @__global_init.%ConvertFromI32.call, %.loc15_39.1 [concrete = constants.%.711]
+// CHECK:STDOUT:   %CharLiteral.ref.loc15: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %b: Core.CharLiteral = value_binding b, %.loc15_39.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.8c6 = value_binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.8c6 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %CharLiteral.ref.loc16: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %.loc16_39.1: Core.CharLiteral = value_of_initializer @__global_init.%ConvertFromU32.call [concrete = constants.%.b9b]
 // CHECK:STDOUT:   %.loc16_39.2: Core.CharLiteral = converted @__global_init.%ConvertFromU32.call, %.loc16_39.1 [concrete = constants.%.b9b]
+// CHECK:STDOUT:   %CharLiteral.ref.loc16: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %c: Core.CharLiteral = value_binding c, %.loc16_39.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

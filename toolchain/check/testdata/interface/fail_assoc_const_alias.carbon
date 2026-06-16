@@ -89,6 +89,8 @@ interface C {
 // CHECK:STDOUT:   %impl.elem0.422: type = impl_witness_access %I2.lookup_impl_witness.b5c, element0 [symbolic]
 // CHECK:STDOUT:   %.932: Core.Form = init_form %impl.elem0.422 [symbolic]
 // CHECK:STDOUT:   %pattern_type.ff8: type = pattern_type %impl.elem0.422 [symbolic]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type.ff8 = out_param_pattern [symbolic]
+// CHECK:STDOUT:   %return.patt: %pattern_type.ff8 = return_slot_pattern %return.param_patt, %impl.elem0.422 [symbolic]
 // CHECK:STDOUT:   %J2.WithSelf.F2.type: type = fn_type @J2.WithSelf.F2, @J2.WithSelf(%Self.c1f) [symbolic]
 // CHECK:STDOUT:   %J2.WithSelf.F2: %J2.WithSelf.F2.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %J2.assoc_type: type = assoc_entity_type @J2 [concrete]
@@ -108,8 +110,8 @@ interface C {
 // CHECK:STDOUT:   %T2.ref: %I2.assoc_type = name_ref T2, @T2.%assoc0 [concrete = constants.%assoc0.d6c]
 // CHECK:STDOUT:   %U2: %I2.assoc_type = alias_binding U2, %T2.ref [concrete = constants.%assoc0.d6c]
 // CHECK:STDOUT:   %J2.WithSelf.F2.decl: @J2.WithSelf.%J2.WithSelf.F2.type (%J2.WithSelf.F2.type) = fn_decl @J2.WithSelf.F2 [symbolic = @J2.WithSelf.%J2.WithSelf.F2 (constants.%J2.WithSelf.F2)] {
-// CHECK:STDOUT:     %return.param_patt: @J2.WithSelf.F2.%pattern_type (%pattern_type.ff8) = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: @J2.WithSelf.F2.%pattern_type (%pattern_type.ff8) = return_slot_pattern %return.param_patt, %U2.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt.loc14_14.1: @J2.WithSelf.F2.%pattern_type (%pattern_type.ff8) = out_param_pattern [symbolic = %return.param_patt.loc14_14.2 (constants.%return.param_patt)]
+// CHECK:STDOUT:     %return.patt.loc14_11.1: @J2.WithSelf.F2.%pattern_type (%pattern_type.ff8) = return_slot_pattern %return.param_patt.loc14_14.1, %U2.ref [symbolic = %return.patt.loc14_11.2 (constants.%return.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type.loc14_14.2: type = facet_access_type @J2.%Self [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %I2.facet.loc14_14.2: %I2.type = facet_value %Self.as_type.loc14_14.2, (constants.%I2.lookup_impl_witness.b5c) [symbolic = %I2.facet.loc14_14.1 (constants.%I2.facet.39b)]
@@ -142,6 +144,8 @@ interface C {
 // CHECK:STDOUT:   %impl.elem0.loc14_14.1: type = impl_witness_access %I2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_14.1 (constants.%impl.elem0.422)]
 // CHECK:STDOUT:   %.loc14_14.2: Core.Form = init_form %impl.elem0.loc14_14.1 [symbolic = %.loc14_14.2 (constants.%.932)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %impl.elem0.loc14_14.1 [symbolic = %pattern_type (constants.%pattern_type.ff8)]
+// CHECK:STDOUT:   %return.param_patt.loc14_14.2: @J2.WithSelf.F2.%pattern_type (%pattern_type.ff8) = out_param_pattern [symbolic = %return.param_patt.loc14_14.2 (constants.%return.param_patt)]
+// CHECK:STDOUT:   %return.patt.loc14_11.2: @J2.WithSelf.F2.%pattern_type (%pattern_type.ff8) = return_slot_pattern %return.param_patt.loc14_14.2, %impl.elem0.loc14_14.1 [symbolic = %return.patt.loc14_11.2 (constants.%return.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: @J2.WithSelf.F2.%impl.elem0.loc14_14.1 (%impl.elem0.422);
 // CHECK:STDOUT: }
@@ -157,6 +161,8 @@ interface C {
 // CHECK:STDOUT:   %impl.elem0.loc14_14.1 => constants.%impl.elem0.422
 // CHECK:STDOUT:   %.loc14_14.2 => constants.%.932
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.ff8
+// CHECK:STDOUT:   %return.param_patt.loc14_14.2 => constants.%return.param_patt
+// CHECK:STDOUT:   %return.patt.loc14_11.2 => constants.%return.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_with_compound_member_access.carbon
@@ -166,6 +172,8 @@ interface C {
 // CHECK:STDOUT:   %Self: %C.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %self.param_patt: %pattern_type = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %self.patt: %pattern_type = at_binding_pattern self, %self.param_patt [symbolic]
 // CHECK:STDOUT:   %C.WithSelf.F.type: type = fn_type @C.WithSelf.F, @C.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.WithSelf.F: %C.WithSelf.F.type = struct_value () [symbolic]
@@ -211,7 +219,8 @@ interface C {
 // CHECK:STDOUT:     %F.ref.loc8: %C.assoc_type = name_ref F, @C.WithSelf.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0.loc8_9.1: @C.WithSelf.G.%.loc8_9 (%.b5a) = impl_witness_access constants.%C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc8_9: <bound method> = bound_method %self.ref.loc8, %impl.elem0.loc8_9.1
-// CHECK:STDOUT:     %.loc8_12: %C.type = converted constants.%Self.as_type, constants.%Self [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc8_12.1: %C.type = converted constants.%Self.as_type, constants.%Self [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc8_12.2: %C.type = converted constants.%Self.as_type, constants.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %specific_impl_fn.loc8_9.1: <specific function> = specific_impl_function %impl.elem0.loc8_9.1, @C.WithSelf.F(constants.%Self) [symbolic = %specific_impl_fn.loc8_9.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc8_12: <bound method> = bound_method %self.ref.loc8, %specific_impl_fn.loc8_9.1
 // CHECK:STDOUT:     %C.WithSelf.F.call.loc8: init %empty_tuple.type = call %bound_method.loc8_12(%self.ref.loc8)
@@ -219,7 +228,8 @@ interface C {
 // CHECK:STDOUT:     %impl.elem0.loc9: @C.WithSelf.G.%.loc8_9 (%.b5a) = impl_witness_access constants.%C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %F.ref.loc9: @C.WithSelf.G.%.loc8_9 (%.b5a) = name_ref F, %impl.elem0.loc9 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc9_9: <bound method> = bound_method %self.ref.loc9, %F.ref.loc9
-// CHECK:STDOUT:     %.loc9: %C.type = converted constants.%Self.as_type, constants.%Self [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc9_14.1: %C.type = converted constants.%Self.as_type, constants.%Self [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc9_14.2: %C.type = converted constants.%Self.as_type, constants.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %specific_impl_fn.loc9: <specific function> = specific_impl_function %F.ref.loc9, @C.WithSelf.F(constants.%Self) [symbolic = %specific_impl_fn.loc8_9.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc9_14: <bound method> = bound_method %self.ref.loc9, %specific_impl_fn.loc9
 // CHECK:STDOUT:     %C.WithSelf.F.call.loc9: init %empty_tuple.type = call %bound_method.loc9_14(%self.ref.loc9)
@@ -240,5 +250,7 @@ interface C {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type.loc6_8.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type
+// CHECK:STDOUT:   %self.param_patt.loc6_8.2 => constants.%self.param_patt
+// CHECK:STDOUT:   %self.patt.loc6_8.2 => constants.%self.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

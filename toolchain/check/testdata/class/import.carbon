@@ -70,8 +70,12 @@ fn Run() {
 // CHECK:STDOUT:   %complete_type.0c6: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %ForwardDeclared: type = class_type @ForwardDeclared [concrete]
 // CHECK:STDOUT:   %pattern_type.bdf: type = pattern_type %ForwardDeclared [concrete]
+// CHECK:STDOUT:   %self.param_patt.46c: %pattern_type.bdf = value_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.34d: %pattern_type.bdf = at_binding_pattern self, %self.param_patt.46c [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.F.type: type = fn_type @ForwardDeclared.F [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.F: %ForwardDeclared.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %self.param_patt.a42: %pattern_type.bdf = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.d30: %pattern_type.bdf = at_binding_pattern self, %self.param_patt.a42 [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.G.type: type = fn_type @ForwardDeclared.G [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.G: %ForwardDeclared.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [concrete]
@@ -122,16 +126,16 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared {
 // CHECK:STDOUT:   %ForwardDeclared.F.decl: %ForwardDeclared.F.type = fn_decl @ForwardDeclared.F [concrete = constants.%ForwardDeclared.F] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.bdf = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.bdf = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.bdf = value_param_pattern [concrete = constants.%self.param_patt.46c]
+// CHECK:STDOUT:     %self.patt: %pattern_type.bdf = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.34d]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ForwardDeclared = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [concrete = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %self: %ForwardDeclared = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclared.G.decl: %ForwardDeclared.G.type = fn_decl @ForwardDeclared.G [concrete = constants.%ForwardDeclared.G] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.bdf = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.bdf = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.bdf = ref_param_pattern [concrete = constants.%self.param_patt.a42]
+// CHECK:STDOUT:     %self.patt: %pattern_type.bdf = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.d30]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %ForwardDeclared = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [concrete = constants.%ForwardDeclared]
@@ -162,6 +166,8 @@ fn Run() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.47a: type = pattern_type %Empty [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.47a = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.47a = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Empty.val: %Empty = struct_value () [concrete]
 // CHECK:STDOUT:   %Field: type = class_type @Field [concrete]
@@ -171,6 +177,8 @@ fn Run() {
 // CHECK:STDOUT:   %struct_type.x.a15: type = struct_type {.x: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.0c6: <witness> = complete_type_witness %struct_type.x.a15 [concrete]
 // CHECK:STDOUT:   %pattern_type.f17: type = pattern_type %Field [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.f17 = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt: %pattern_type.f17 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.x.c96: type = struct_type {.x: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.x.c96 = struct_value (%int_1.5b8) [concrete]
@@ -198,6 +206,8 @@ fn Run() {
 // CHECK:STDOUT:   %int_2.295: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.08bd4c.1: type = class_type @ForwardDeclared.1 [concrete]
 // CHECK:STDOUT:   %pattern_type.bdf: type = pattern_type %ForwardDeclared.08bd4c.1 [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.bdf = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type.bdf = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.val: %ForwardDeclared.08bd4c.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.F.type: type = fn_type @ForwardDeclared.F [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.F: %ForwardDeclared.F.type = struct_value () [concrete]
@@ -205,6 +215,8 @@ fn Run() {
 // CHECK:STDOUT:   %ForwardDeclared.G: %ForwardDeclared.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.11e: type = ptr_type %ForwardDeclared.08bd4c.1 [concrete]
 // CHECK:STDOUT:   %pattern_type.8cd: type = pattern_type %ptr.11e [concrete]
+// CHECK:STDOUT:   %d.patt: %pattern_type.8cd = ref_binding_pattern d [concrete]
+// CHECK:STDOUT:   %d.var_patt: %pattern_type.8cd = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.ff5: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
@@ -219,6 +231,8 @@ fn Run() {
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [concrete]
 // CHECK:STDOUT:   %ptr.06d: type = ptr_type %Incomplete [concrete]
 // CHECK:STDOUT:   %pattern_type.bae: type = pattern_type %ptr.06d [concrete]
+// CHECK:STDOUT:   %e.patt: %pattern_type.bae = ref_binding_pattern e [concrete]
+// CHECK:STDOUT:   %e.var_patt: %pattern_type.bae = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.53a: %T.as.DefaultOrUnformed.impl.Op.type.150 = struct_value () [symbolic]
@@ -331,8 +345,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.47a = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.47a = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.47a = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.47a = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Empty = var %a.var_patt
 // CHECK:STDOUT:   %.loc7_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -342,8 +356,8 @@ fn Run() {
 // CHECK:STDOUT:   %Empty.ref: type = name_ref Empty, imports.%Main.Empty [concrete = constants.%Empty]
 // CHECK:STDOUT:   %a: ref %Empty = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.f17 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.f17 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.f17 = ref_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.f17 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %Field = var %b.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -373,8 +387,8 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_7: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10 [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   assign %.loc10_4, %.loc10_7
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.bdf = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.bdf = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.bdf = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.bdf = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %ForwardDeclared.08bd4c.1 = var %c.var_patt
 // CHECK:STDOUT:   %.loc12_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -393,8 +407,8 @@ fn Run() {
 // CHECK:STDOUT:   %ForwardDeclared.G.bound: <bound method> = bound_method %c.ref.loc14, %G.ref
 // CHECK:STDOUT:   %ForwardDeclared.G.call: init %empty_tuple.type = call %ForwardDeclared.G.bound(%c.ref.loc14)
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.8cd = ref_binding_pattern d [concrete]
-// CHECK:STDOUT:     %d.var_patt: %pattern_type.8cd = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type.8cd = ref_binding_pattern d [concrete = constants.%d.patt]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.8cd = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %ptr.11e = var %d.var_patt
 // CHECK:STDOUT:   %c.ref.loc16: ref %ForwardDeclared.08bd4c.1 = name_ref c, %c
@@ -411,8 +425,8 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %ptr.11e = ref_binding d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %e.patt: %pattern_type.bae = ref_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.var_patt: %pattern_type.bae = var_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.patt: %pattern_type.bae = ref_binding_pattern e [concrete = constants.%e.patt]
+// CHECK:STDOUT:     %e.var_patt: %pattern_type.bae = var_pattern %e.patt [concrete = constants.%e.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %ptr.06d = var %e.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%ptr.06d, (constants.%DefaultOrUnformed.impl_witness.3a6) [concrete = constants.%DefaultOrUnformed.facet]

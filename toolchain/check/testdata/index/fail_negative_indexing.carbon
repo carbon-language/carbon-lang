@@ -31,6 +31,8 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_2, %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.7b0: type = pattern_type %array_type [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.7b0 = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type.7b0 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT:   %tuple.type.f94: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %tuple.df5: %tuple.type.f94 = tuple_value (%int_42.20e, %int_42.20e) [concrete]
@@ -54,6 +56,8 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %int_42.ac4: %i32 = int_value 42 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%int_42.ac4, %int_42.ac4) [concrete]
+// CHECK:STDOUT:   %d.patt: %pattern_type.6b6 = ref_binding_pattern d [concrete]
+// CHECK:STDOUT:   %d.var_patt: %pattern_type.6b6 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [concrete]
 // CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [concrete]
 // CHECK:STDOUT:   %Negate.impl_witness: <witness> = impl_witness imports.%Negate.impl_witness_table [concrete]
@@ -109,8 +113,8 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.7b0 = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.7b0 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.7b0 = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.7b0 = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %array_type = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -120,8 +124,8 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %array_type = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.6b6 = ref_binding_pattern d [concrete]
-// CHECK:STDOUT:     %d.var_patt: %pattern_type.6b6 = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type.6b6 = ref_binding_pattern d [concrete = constants.%d.patt]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.6b6 = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %i32 = var %d.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]

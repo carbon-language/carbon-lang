@@ -500,8 +500,12 @@ struct Worklist {
     // decl block don't change the identity of the declaration.
   }
 
-  auto Add(LabelId /*block_id*/) -> void {
-    CARBON_FATAL("Should never fingerprint a label");
+  auto Add(LabelId block_id) -> void {
+    // TODO: Find a more stable way to assign fingerprints to labels. Possibly
+    // we could just number them sequentially, in the order we encounter them,
+    // but that would require a persistent cache to ensure we use the same
+    // number on subsequent encounters.
+    store->AddInteger(block_id.index);
   }
 
   auto Add(FacetTypeId facet_type_id) -> void {
@@ -622,8 +626,16 @@ struct Worklist {
     store->AddInteger(arg.index);
   }
 
+  auto Add(ExprRegionId region_id) -> void {
+    auto region = sem_ir->expr_regions().Get(region_id);
+    for (auto block_id : region.block_ids) {
+      Add(block_id);
+    }
+    Add(region.result_id);
+  }
+
   template <typename T>
-    requires(SameAsOneOf<T, AnyRawId, ExprRegionId, LocId>)
+    requires(SameAsOneOf<T, AnyRawId, LocId>)
   auto Add(T /*arg*/) -> void {
     CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
   }

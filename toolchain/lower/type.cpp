@@ -442,7 +442,6 @@ auto FunctionTypeInfoBuilder::TryHandleParameter(
       !param_type_id.AsConstantId().is_symbolic(),
       "Found symbolic type id after resolution when lowering type {0}.",
       param_pattern.type_id());
-
   auto param_kind = param_pattern.kind();
 
   switch (param_kind) {

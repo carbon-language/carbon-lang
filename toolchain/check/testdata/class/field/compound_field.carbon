@@ -60,7 +60,11 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %struct_type.base.d.e.26c: type = struct_type {.base: %Base, .d: %i32, .e: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.9b3: <witness> = complete_type_witness %struct_type.base.d.e.26c [concrete]
 // CHECK:STDOUT:   %pattern_type.746: type = pattern_type %Derived [concrete]
+// CHECK:STDOUT:   %d.param_patt: %pattern_type.746 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %d.patt.fac: %pattern_type.746 = at_binding_pattern d, %d.param_patt [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
 // CHECK:STDOUT:   %AccessDerived.type: type = fn_type @AccessDerived [concrete]
 // CHECK:STDOUT:   %AccessDerived: %AccessDerived.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -80,9 +84,13 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %AccessBase: %AccessBase.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.64c: type = ptr_type %Derived [concrete]
 // CHECK:STDOUT:   %pattern_type.56c: type = pattern_type %ptr.64c [concrete]
+// CHECK:STDOUT:   %p.param_patt: %pattern_type.56c = value_param_pattern [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type.56c = at_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %.952: Core.Form = init_form %ptr.d08 [concrete]
 // CHECK:STDOUT:   %pattern_type.f00: type = pattern_type %ptr.d08 [concrete]
+// CHECK:STDOUT:   %return.param_patt.7dd: %pattern_type.f00 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.dbe: %pattern_type.f00 = return_slot_pattern %return.param_patt.7dd, %ptr.d08 [concrete]
 // CHECK:STDOUT:   %AccessDerivedIndirect.type: type = fn_type @AccessDerivedIndirect [concrete]
 // CHECK:STDOUT:   %AccessDerivedIndirect: %AccessDerivedIndirect.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.ce1: <witness> = impl_witness imports.%Copy.impl_witness_table.4f1, @ptr.as.Copy.impl(%i32) [concrete]
@@ -125,10 +133,10 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %AccessDerived.decl: %AccessDerived.type = fn_decl @AccessDerived [concrete = constants.%AccessDerived] {
-// CHECK:STDOUT:     %d.param_patt: %pattern_type.746 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %d.patt: %pattern_type.746 = at_binding_pattern d, %d.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
+// CHECK:STDOUT:     %d.param_patt: %pattern_type.746 = value_param_pattern [concrete = constants.%d.param_patt]
+// CHECK:STDOUT:     %d.patt: %pattern_type.746 = at_binding_pattern d, %d.param_patt [concrete = constants.%d.patt.fac]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc28: Core.Form = init_form %i32 [concrete = constants.%.795]
@@ -139,10 +147,10 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBase.decl: %AccessBase.type = fn_decl @AccessBase [concrete = constants.%AccessBase] {
-// CHECK:STDOUT:     %d.param_patt: %pattern_type.746 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %d.patt: %pattern_type.746 = at_binding_pattern d, %d.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
+// CHECK:STDOUT:     %d.param_patt: %pattern_type.746 = value_param_pattern [concrete = constants.%d.param_patt]
+// CHECK:STDOUT:     %d.patt: %pattern_type.746 = at_binding_pattern d, %d.param_patt [concrete = constants.%d.patt.fac]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc32: Core.Form = init_form %i32 [concrete = constants.%.795]
@@ -153,10 +161,10 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessDerivedIndirect.decl: %AccessDerivedIndirect.type = fn_decl @AccessDerivedIndirect [concrete = constants.%AccessDerivedIndirect] {
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.56c = value_param_pattern [concrete]
-// CHECK:STDOUT:     %p.patt: %pattern_type.56c = at_binding_pattern p, %p.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.f00 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.f00 = return_slot_pattern %return.param_patt, %ptr.loc36_45 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.56c = value_param_pattern [concrete = constants.%p.param_patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.56c = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.f00 = out_param_pattern [concrete = constants.%return.param_patt.7dd]
+// CHECK:STDOUT:     %return.patt: %pattern_type.f00 = return_slot_pattern %return.param_patt, %ptr.loc36_45 [concrete = constants.%return.patt.dbe]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc36_45: type = ptr_type %i32 [concrete = constants.%ptr.d08]
@@ -171,10 +179,10 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %return: ref %ptr.d08 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBaseIndirect.decl: %AccessBaseIndirect.type = fn_decl @AccessBaseIndirect [concrete = constants.%AccessBaseIndirect] {
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.56c = value_param_pattern [concrete]
-// CHECK:STDOUT:     %p.patt: %pattern_type.56c = at_binding_pattern p, %p.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.f00 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.f00 = return_slot_pattern %return.param_patt, %ptr.loc40_42 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.56c = value_param_pattern [concrete = constants.%p.param_patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.56c = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.f00 = out_param_pattern [concrete = constants.%return.param_patt.7dd]
+// CHECK:STDOUT:     %return.patt: %pattern_type.f00 = return_slot_pattern %return.param_patt, %ptr.loc40_42 [concrete = constants.%return.patt.dbe]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc40_42: type = ptr_type %i32 [concrete = constants.%ptr.d08]

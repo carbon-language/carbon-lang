@@ -80,6 +80,8 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CRange.Core(ptr sret({ i32, i32 }), i32)
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_COp.1155b488c23b5086:core.Destroy.Core"(ptr)
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %self) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
@@ -384,7 +386,7 @@ fn For() {
 // CHECK:STDOUT: !125 = !{!126, !127}
 // CHECK:STDOUT: !126 = !DILocalVariable(arg: 1, scope: !122, type: !22)
 // CHECK:STDOUT: !127 = !DILocalVariable(arg: 2, scope: !122, type: !22)
-// CHECK:STDOUT: !128 = !DILocation(line: 4294967295, scope: !122)
+// CHECK:STDOUT: !128 = !DILocation(line: 0, scope: !122)
 // CHECK:STDOUT: !129 = !DILocation(line: 331, column: 3, scope: !122)
 // CHECK:STDOUT: !130 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.5d6f3f3a4b44a8f1:OptionalStorage.Core.39417379e302314a", scope: null, file: !82, line: 131, type: !101, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !131)
 // CHECK:STDOUT: !131 = !{!132}

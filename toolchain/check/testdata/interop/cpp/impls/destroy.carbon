@@ -234,6 +234,8 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.bdc: type = pattern_type %PublicDestructor [concrete]
+// CHECK:STDOUT:   %a.patt.e26: %pattern_type.bdc = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt.17b: %pattern_type.bdc = var_pattern %a.patt.e26 [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %PublicDestructor.val: %PublicDestructor = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
@@ -247,7 +249,11 @@ fn F() {
 // CHECK:STDOUT:   %TrivialDestroy: %TrivialDestroy.type = struct_value () [concrete]
 // CHECK:STDOUT:   %TrivialDestructor: type = class_type @TrivialDestructor [concrete]
 // CHECK:STDOUT:   %pattern_type.a12: type = pattern_type %TrivialDestructor [concrete]
+// CHECK:STDOUT:   %a.patt.b64: %pattern_type.a12 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt.d25: %pattern_type.a12 = var_pattern %a.patt.b64 [concrete]
 // CHECK:STDOUT:   %TrivialDestructor.val: %TrivialDestructor = struct_value () [concrete]
+// CHECK:STDOUT:   %self.param_patt.e73: %pattern_type.a12 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.b81: %pattern_type.a12 = at_binding_pattern self, %self.param_patt.e73 [concrete]
 // CHECK:STDOUT:   %TrivialDestructor.cpp_destructor.type: type = fn_type @TrivialDestructor.cpp_destructor [concrete]
 // CHECK:STDOUT:   %TrivialDestructor.cpp_destructor: %TrivialDestructor.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.c09: %Destroy.type = facet_value %TrivialDestructor, (%custom_witness.c5a) [concrete]
@@ -271,8 +277,8 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.d3e = fn_decl @Destroy.WithSelf.Op [symbolic = @Destroy.WithSelf.%Destroy.WithSelf.Op (constants.%Destroy.WithSelf.Op.42b)] {} {}
 // CHECK:STDOUT:   %TrivialDestructor.decl: type = class_decl @TrivialDestructor [concrete = constants.%TrivialDestructor] {} {}
 // CHECK:STDOUT:   %TrivialDestructor.cpp_destructor.decl: %TrivialDestructor.cpp_destructor.type = fn_decl @TrivialDestructor.cpp_destructor [concrete = constants.%TrivialDestructor.cpp_destructor] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.a12 = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.a12 = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.a12 = ref_param_pattern [concrete = constants.%self.param_patt.e73]
+// CHECK:STDOUT:     %self.patt: %pattern_type.a12 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.b81]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %TrivialDestructor = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %TrivialDestructor = ref_binding self, %self.param
@@ -315,8 +321,8 @@ fn F() {
 // CHECK:STDOUT: fn @PublicDestroy() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.bdc = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.bdc = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.bdc = ref_binding_pattern a [concrete = constants.%a.patt.e26]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.bdc = var_pattern %a.patt [concrete = constants.%a.var_patt.17b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %PublicDestructor = var %a.var_patt
 // CHECK:STDOUT:   %.loc11_41.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -338,8 +344,8 @@ fn F() {
 // CHECK:STDOUT: fn @TrivialDestroy() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.a12 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.a12 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.a12 = ref_binding_pattern a [concrete = constants.%a.patt.b64]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.a12 = var_pattern %a.patt [concrete = constants.%a.var_patt.d25]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %TrivialDestructor = var %a.var_patt
 // CHECK:STDOUT:   %.loc15_42.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -352,8 +358,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %TrivialDestructor = ref_binding a, %a.var
 // CHECK:STDOUT:   %TrivialDestructor.Op.decl: %TrivialDestructor.Op.type = fn_decl @TrivialDestructor.Op [concrete = constants.%TrivialDestructor.Op] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.a12 = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.a12 = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %.1: %pattern_type.a12 = specific_constant constants.%self.param_patt.e73, @Destroy.WithSelf.Op(constants.%Destroy.facet.c09) [concrete = constants.%self.param_patt.e73]
+// CHECK:STDOUT:     %self.patt: %pattern_type.a12 = at_binding_pattern self, %.1 [concrete = constants.%self.patt.b81]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %TrivialDestructor = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %TrivialDestructor = ref_binding self, %self.param
@@ -384,6 +390,8 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %struct_type.base.454: type = struct_type {.base: %ProtectedDestructor} [concrete]
 // CHECK:STDOUT:   %pattern_type.746: type = pattern_type %Derived [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.746 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.746 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.base.f5e = struct_value (%empty_struct.a40) [concrete]
@@ -398,8 +406,8 @@ fn F() {
 // CHECK:STDOUT: fn @DestroyClassWithProtectedBaseDestructor() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.746 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.746 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.746 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.746 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Derived = var %a.var_patt
 // CHECK:STDOUT:   %.loc20_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
@@ -437,6 +445,8 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %struct_type.base.9aa: type = struct_type {.base: %PrivateDestructor} [concrete]
 // CHECK:STDOUT:   %pattern_type.746: type = pattern_type %Derived [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.746 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.746 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.base.f5e = struct_value (%empty_struct.a40) [concrete]
@@ -451,8 +461,8 @@ fn F() {
 // CHECK:STDOUT: fn @DestroyClassWithPrivateBaseDestructor() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.746 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.746 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.746 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.746 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Derived = var %a.var_patt
 // CHECK:STDOUT:   %.loc21_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]

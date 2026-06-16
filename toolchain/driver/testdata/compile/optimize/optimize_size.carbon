@@ -170,7 +170,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !43 = !{!44, !45}
 // CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !40, type: !7)
 // CHECK:STDOUT: !45 = !DILocalVariable(arg: 2, scope: !40, type: !7)
-// CHECK:STDOUT: !46 = !DILocation(line: 4294967295, scope: !40)
+// CHECK:STDOUT: !46 = !DILocation(line: 0, scope: !40)
 // CHECK:STDOUT: !47 = !DILocation(line: 331, column: 3, scope: !40)
 // CHECK:STDOUT: !48 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.40372ba0ea03ef47", scope: null, file: !35, line: 64, type: !49, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !51)
 // CHECK:STDOUT: !49 = !DISubroutineType(types: !50)

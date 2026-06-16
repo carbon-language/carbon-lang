@@ -214,14 +214,16 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %.512: Core.Form = ref_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete = constants.%x.param_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.512] {
@@ -252,6 +254,9 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type.6b6 = var_pattern %x.param_patt [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.var_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
@@ -281,9 +286,9 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.6b6 = var_pattern %x.param_patt [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.var_patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete = constants.%x.param_patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.6b6 = var_pattern %x.param_patt [concrete = constants.%x.var_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.var_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.795] {
@@ -329,6 +334,8 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %.c2a: Core.Form = value_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
@@ -355,8 +362,8 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%x.param_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.c2a] {
@@ -391,14 +398,16 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %.9f9: Core.Form = ref_form %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type = ref_param_pattern [concrete = constants.%x.param_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %empty_tuple.type = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.9f9] {
@@ -419,14 +428,17 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %.512: Core.Form = ref_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %.ae0: %pattern_type.6b6 = ref_return_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type.6b6 = return_slot_pattern %.ae0, %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %_.patt: %pattern_type.6b6 = ref_binding_pattern _ [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %.loc4_17.1: %pattern_type.6b6 = ref_return_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %.loc4_17.1, constants.%i32 [concrete]
+// CHECK:STDOUT:     %.loc4_17.1: %pattern_type.6b6 = ref_return_pattern [concrete = constants.%.ae0]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %.loc4_17.1, constants.%i32 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc4_17.2: Core.Form = ref_form %i32 [concrete = constants.%.512]
@@ -440,7 +452,7 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = ref_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = ref_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: ref %i32 = call %F.ref()
@@ -457,17 +469,21 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
+// CHECK:STDOUT:   %_.patt: %pattern_type.6b6 = ref_binding_pattern _ [concrete]
+// CHECK:STDOUT:   %_.var_patt: %pattern_type.6b6 = var_pattern %_.patt [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc9_7.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, constants.%i32 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, constants.%i32 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc4: Core.Form = init_form %i32 [concrete = constants.%.795]
@@ -481,8 +497,8 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = ref_binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.var_patt: %pattern_type.6b6 = var_pattern %_.patt [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = ref_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.var_patt: %pattern_type.6b6 = var_pattern %_.patt [concrete = constants.%_.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.var: ref %i32 = var %_.var_patt
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
@@ -509,14 +525,17 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %.c2a: Core.Form = value_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %.1a5: %pattern_type.6b6 = value_return_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type.6b6 = return_slot_pattern %.1a5, %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %_.patt: %pattern_type.6b6 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %.loc4_17.1: %pattern_type.6b6 = value_return_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %.loc4_17.1, constants.%i32 [concrete]
+// CHECK:STDOUT:     %.loc4_17.1: %pattern_type.6b6 = value_return_pattern [concrete = constants.%.1a5]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %.loc4_17.1, constants.%i32 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc4_17.2: Core.Form = value_form %i32 [concrete = constants.%.c2a]
@@ -530,7 +549,7 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = value_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: %i32 = call %F.ref()
@@ -545,17 +564,20 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.13f: type = pattern_type Core.Form [concrete]
+// CHECK:STDOUT:   %Form.patt: %pattern_type.13f = symbolic_binding_pattern Form, 0 [symbolic]
 // CHECK:STDOUT:   %Form: Core.Form = symbolic_binding Form, 0 [symbolic]
 // CHECK:STDOUT:   %.344: Core.Form = splice_inst @F.%.loc4_28.1 [template]
 // CHECK:STDOUT:   %.82f: type = type_component_of %.344 [template]
 // CHECK:STDOUT:   %pattern_type.ec7: type = pattern_type %.82f [template]
 // CHECK:STDOUT:   %.f74: %.82f = splice_inst @F.%.loc4_24.2 [template]
+// CHECK:STDOUT:   %return.patt.08d: %pattern_type.ec7 = return_slot_pattern %.f74, %.82f [template]
 // CHECK:STDOUT:   %.33d: <instruction> = refine_form_action %Form [template]
 // CHECK:STDOUT:   %.80a: Core.Form = splice_inst %.33d [template]
 // CHECK:STDOUT:   %.af3: <instruction> = out_form_param_pattern_action %.80a [template]
 // CHECK:STDOUT:   %.465: type = type_component_of %.80a [template]
 // CHECK:STDOUT:   %.e7f: %.465 = splice_inst %.af3 [template]
 // CHECK:STDOUT:   %pattern_type.a51: type = pattern_type %.465 [template]
+// CHECK:STDOUT:   %return.patt.de8: %pattern_type.a51 = return_slot_pattern %.e7f, %.465 [template]
 // CHECK:STDOUT:   %.cab: <instruction> = callee_pattern_match_action %.e7f, call_param0 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -572,8 +594,8 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %Form.patt: %pattern_type.13f = symbolic_binding_pattern Form, 0 [concrete]
-// CHECK:STDOUT:     %return.patt: @F.%pattern_type (%pattern_type.ec7) = return_slot_pattern %.loc4_24.6, constants.%.82f [concrete]
+// CHECK:STDOUT:     %Form.patt.loc4_10.1: %pattern_type.13f = symbolic_binding_pattern Form, 0 [symbolic = %Form.patt.loc4_10.2 (constants.%Form.patt)]
+// CHECK:STDOUT:     %return.patt.loc4_24.1: @F.%pattern_type (%pattern_type.ec7) = return_slot_pattern %.loc4_24.6, constants.%.82f [template = %return.patt.loc4_24.2 (constants.%return.patt.08d)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Form.ref.loc4_28: Core.Form = name_ref Form, %Form.loc4_10.2 [symbolic = %Form.loc4_10.1 (constants.%Form)]
 // CHECK:STDOUT:     %.loc4_28.3: Core.Form = splice_inst %.loc4_28.1 [template = %.loc4_28.2 (constants.%.344)]
@@ -590,6 +612,7 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%Form.loc4_10.2: Core.Form) {
+// CHECK:STDOUT:   %Form.patt.loc4_10.2: %pattern_type.13f = symbolic_binding_pattern Form, 0 [symbolic = %Form.patt.loc4_10.2 (constants.%Form.patt)]
 // CHECK:STDOUT:   %Form.loc4_10.1: Core.Form = symbolic_binding Form, 0 [symbolic = %Form.loc4_10.1 (constants.%Form)]
 // CHECK:STDOUT:   %.loc4_28.1: <instruction> = refine_form_action %Form.ref.loc4_28 [template]
 // CHECK:STDOUT:   %.loc4_28.2: Core.Form = splice_inst %.loc4_28.1 [template = %.loc4_28.2 (constants.%.344)]
@@ -597,12 +620,14 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:   %.loc4_24.3: type = type_component_of %.loc4_28.2 [template = %.loc4_24.3 (constants.%.82f)]
 // CHECK:STDOUT:   %.loc4_24.4: @F.%.loc4_24.3 (%.82f) = splice_inst %.loc4_24.2 [template = %.loc4_24.4 (constants.%.f74)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.loc4_24.3 [template = %pattern_type (constants.%pattern_type.ec7)]
+// CHECK:STDOUT:   %return.patt.loc4_24.2: @F.%pattern_type (%pattern_type.ec7) = return_slot_pattern %.loc4_24.4, %.loc4_24.3 [template = %return.patt.loc4_24.2 (constants.%return.patt.08d)]
 // CHECK:STDOUT:   %.loc4_24.5: <instruction> = callee_pattern_match_action %.loc4_24.6, call_param0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %.loc4_24.1:? @F.%.loc4_28.1 (@F.%.loc4_28.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Form) {
+// CHECK:STDOUT:   %Form.patt.loc4_10.2 => constants.%Form.patt
 // CHECK:STDOUT:   %Form.loc4_10.1 => constants.%Form
 // CHECK:STDOUT:   %.loc4_28.1 => constants.%.33d
 // CHECK:STDOUT:   %.loc4_28.2 => constants.%.80a
@@ -610,6 +635,7 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:   %.loc4_24.3 => constants.%.465
 // CHECK:STDOUT:   %.loc4_24.4 => constants.%.e7f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a51
+// CHECK:STDOUT:   %return.patt.loc4_24.2 => constants.%return.patt.de8
 // CHECK:STDOUT:   %.loc4_24.5 => constants.%.cab
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

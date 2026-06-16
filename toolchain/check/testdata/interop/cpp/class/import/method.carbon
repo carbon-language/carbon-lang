@@ -503,12 +503,16 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %a.patt.623a16.1: %pattern_type.6b6 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt.207d5f.1: %pattern_type.6b6 = var_pattern %a.patt.623a16.1 [concrete]
 // CHECK:STDOUT:   %NoRefQualifier.F.cpp_overload_set.type: type = cpp_overload_set_type @NoRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %NoRefQualifier.F.cpp_overload_set.value: %NoRefQualifier.F.cpp_overload_set.type = cpp_overload_set_value @NoRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.8cce43.1: type = fn_type @F__carbon_thunk.1 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.a92106.1: %F__carbon_thunk.type.8cce43.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.f00: type = pattern_type %ptr.d08 [concrete]
+// CHECK:STDOUT:   %b.patt.9fb99a.1: %pattern_type.f00 = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt.dede8c.1: %pattern_type.f00 = var_pattern %b.patt.9fb99a.1 [concrete]
 // CHECK:STDOUT:   %NoRefQualifier.F.type.8b6eff.2: type = fn_type @NoRefQualifier.F.2 [concrete]
 // CHECK:STDOUT:   %NoRefQualifier.F.dbb5f5.2: %NoRefQualifier.F.type.8b6eff.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.1: type = fn_type @Destroy.Op.loc9 [concrete]
@@ -517,10 +521,14 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %WithRefQualifier: type = class_type @WithRefQualifier [concrete]
 // CHECK:STDOUT:   %ptr.90c: type = ptr_type %WithRefQualifier [concrete]
+// CHECK:STDOUT:   %a.patt.623a16.2: %pattern_type.6b6 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt.207d5f.2: %pattern_type.6b6 = var_pattern %a.patt.623a16.2 [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.cpp_overload_set.type: type = cpp_overload_set_type @WithRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.cpp_overload_set.value: %WithRefQualifier.F.cpp_overload_set.type = cpp_overload_set_value @WithRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.8cce43.2: type = fn_type @F__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.a92106.2: %F__carbon_thunk.type.8cce43.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %b.patt.9fb99a.2: %pattern_type.f00 = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt.dede8c.2: %pattern_type.f00 = var_pattern %b.patt.9fb99a.2 [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.type.8b6eff.2: type = fn_type @WithRefQualifier.F.2 [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.dbb5f5.2: %WithRefQualifier.F.type.8b6eff.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -553,8 +561,8 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT: fn @CallFNoRefQualifier(%v.param: %NoRefQualifier, %p.param: %ptr.f7d) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.6b6 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = ref_binding_pattern a [concrete = constants.%a.patt.623a16.1]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.6b6 = var_pattern %a.patt [concrete = constants.%a.var_patt.207d5f.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
 // CHECK:STDOUT:   %v.ref: %NoRefQualifier = name_ref v, %v
@@ -565,8 +573,8 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: ref %i32 = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete = constants.%b.patt.9fb99a.1]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete = constants.%b.var_patt.dede8c.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %ptr.d08 = var %b.var_patt
 // CHECK:STDOUT:   %p.ref: %ptr.f7d = name_ref p, %p
@@ -599,8 +607,8 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT: fn @CallFWithRefQualifier(%v.param: %WithRefQualifier, %p.param: %ptr.90c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.6b6 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = ref_binding_pattern a [concrete = constants.%a.patt.623a16.2]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.6b6 = var_pattern %a.patt [concrete = constants.%a.var_patt.207d5f.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
 // CHECK:STDOUT:   %v.ref: %WithRefQualifier = name_ref v, %v
@@ -611,8 +619,8 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: ref %i32 = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete = constants.%b.patt.9fb99a.2]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete = constants.%b.var_patt.dede8c.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %ptr.d08 = var %b.var_patt
 // CHECK:STDOUT:   %p.ref: %ptr.90c = name_ref p, %p

@@ -269,6 +269,7 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.668: type = pattern_type %u32 [concrete]
+// CHECK:STDOUT:   %SizePreserving.patt: %pattern_type.668 = value_binding_pattern SizePreserving [concrete]
 // CHECK:STDOUT:   %Int32ToUint32.type: type = fn_type @Int32ToUint32 [concrete]
 // CHECK:STDOUT:   %Int32ToUint32: %Int32ToUint32.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -291,12 +292,14 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
 // CHECK:STDOUT:   %pattern_type.203: type = pattern_type %i16 [concrete]
+// CHECK:STDOUT:   %Narrowing.patt: %pattern_type.203 = value_binding_pattern Narrowing [concrete]
 // CHECK:STDOUT:   %Int32ToInt16.type: type = fn_type @Int32ToInt16 [concrete]
 // CHECK:STDOUT:   %Int32ToInt16: %Int32ToInt16.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.d17: %i16 = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.f57: type = pattern_type %i64 [concrete]
+// CHECK:STDOUT:   %Widening.patt: %pattern_type.f57 = value_binding_pattern Widening [concrete]
 // CHECK:STDOUT:   %Int32ToInt64.type: type = fn_type @Int32ToInt64 [concrete]
 // CHECK:STDOUT:   %Int32ToInt64: %Int32ToInt64.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.d98: %i64 = int_value 1 [concrete]
@@ -312,25 +315,25 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %SizePreserving.patt: %pattern_type.668 = value_binding_pattern SizePreserving [concrete]
+// CHECK:STDOUT:     %SizePreserving.patt: %pattern_type.668 = value_binding_pattern SizePreserving [concrete = constants.%SizePreserving.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
 // CHECK:STDOUT:   %.loc6_42.1: %u32 = value_of_initializer @__global_init.%Int32ToUint32.call [concrete = constants.%int_1.92d]
 // CHECK:STDOUT:   %.loc6_42.2: %u32 = converted @__global_init.%Int32ToUint32.call, %.loc6_42.1 [concrete = constants.%int_1.92d]
+// CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
 // CHECK:STDOUT:   %SizePreserving: %u32 = value_binding SizePreserving, %.loc6_42.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %Narrowing.patt: %pattern_type.203 = value_binding_pattern Narrowing [concrete]
+// CHECK:STDOUT:     %Narrowing.patt: %pattern_type.203 = value_binding_pattern Narrowing [concrete = constants.%Narrowing.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i16: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %.loc7_36.1: %i16 = value_of_initializer @__global_init.%Int32ToInt16.call [concrete = constants.%int_1.d17]
 // CHECK:STDOUT:   %.loc7_36.2: %i16 = converted @__global_init.%Int32ToInt16.call, %.loc7_36.1 [concrete = constants.%int_1.d17]
+// CHECK:STDOUT:   %i16: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %Narrowing: %i16 = value_binding Narrowing, %.loc7_36.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %Widening.patt: %pattern_type.f57 = value_binding_pattern Widening [concrete]
+// CHECK:STDOUT:     %Widening.patt: %pattern_type.f57 = value_binding_pattern Widening [concrete = constants.%Widening.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
 // CHECK:STDOUT:   %.loc8_35.1: %i64 = value_of_initializer @__global_init.%Int32ToInt64.call [concrete = constants.%int_1.d98]
 // CHECK:STDOUT:   %.loc8_35.2: %i64 = converted @__global_init.%Int32ToInt64.call, %.loc8_35.1 [concrete = constants.%int_1.d98]
+// CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
 // CHECK:STDOUT:   %Widening: %i64 = value_binding Widening, %.loc8_35.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
