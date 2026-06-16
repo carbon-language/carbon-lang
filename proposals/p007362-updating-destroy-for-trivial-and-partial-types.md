@@ -12,7 +12,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [TODO: Initial proposal setup](#todo-initial-proposal-setup)
 -   [Abstract](#abstract)
 -   [Problem](#problem)
 -   [Background](#background)
@@ -25,8 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Abstract
 
-TODO: Describe, in a succinct paragraph, the gist of this document. This
-paragraph should be reproduced verbatim in the PR summary.
+
 
 ## Problem
 
