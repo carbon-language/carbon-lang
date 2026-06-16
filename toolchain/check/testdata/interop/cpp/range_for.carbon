@@ -57,6 +57,22 @@ fn TestDriver(var m: Cpp.MutableRange, c: Cpp.ConstRange) {
   Test(c);
 }
 
+fn TestRangeFor(var m: Cpp.MutableRange, c: Cpp.ConstRange) {
+  var sum: i32 = 0;
+
+  //@dump-sem-ir-begin
+  for (i: i32 in m) {
+    sum += i;
+  }
+  //@dump-sem-ir-end
+
+  //@dump-sem-ir-begin
+  for (i: i32 in c) {
+    sum += i;
+  }
+  //@dump-sem-ir-end
+}
+
 // --- methods_return_different_types.carbon
 
 library "[[@TEST_NAME]]";
@@ -112,6 +128,20 @@ fn TestDriver(var m: Cpp.MutableRange, c: Cpp.ConstRange) {
   Test(c);
 }
 
+fn TestRangeFor(var m: Cpp.MutableRange, c: Cpp.ConstRange) {
+  var sum: Cpp.ValueType = Cpp.ValueType.ValueType();
+
+  //@dump-sem-ir-begin
+  for (i: Cpp.ValueType in m) {
+    sum += i;
+  }
+
+  for (i: Cpp.ValueType in c) {
+    sum += i;
+  }
+  //@dump-sem-ir-end
+}
+
 // --- adl_return_same_types.carbon
 
 library "[[@TEST_NAME]]";
@@ -144,6 +174,16 @@ fn Test[R:! Core.Iterate where .ElementType = f64](r: R) {
 
 fn TestDriver(c: Cpp.N.ConstRange) {
   Test(c);
+}
+
+fn TestRangeFor(c: Cpp.N.ConstRange) {
+  var sum: f64 = 0;
+
+  //@dump-sem-ir-begin
+  for (i: f64 in c) {
+    sum += i;
+  }
+  //@dump-sem-ir-end
 }
 
 // --- fail_todo_adl_returns_same_types_mutable.carbon
@@ -210,6 +250,16 @@ fn TestDriver(var m: Cpp.N.MutableRange) {
   Test(m);
 }
 
+fn TestRangeFor(var m: Cpp.N.MutableRange) {
+  var sum: f64 = 0;
+
+  //@dump-sem-ir-begin
+  for (i: f64 in m) {
+    sum += i;
+  }
+  //@dump-sem-ir-end
+}
+
 // --- adl_returns_different_types.carbon
 
 library "[[@TEST_NAME]]";
@@ -249,6 +299,16 @@ fn Test[R:! Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
 
 fn TestDriver(c: Cpp.N.ConstRange) {
   Test(c);
+}
+
+fn TestRangeFor(c: Cpp.N.ConstRange) {
+  var sum: Cpp.N.ValueType = Cpp.N.ValueType.ValueType();
+
+  //@dump-sem-ir-begin
+  for (i: Cpp.N.ValueType in c) {
+    sum += i;
+  }
+  //@dump-sem-ir-end
 }
 
 // --- fail_todo_adl_returns_different_types_mutable.carbon
@@ -335,6 +395,24 @@ fn TestDriver(var m: Cpp.N.MutableRange) {
   Test(m);
 }
 
+fn TestRangeFor(var m: Cpp.N.MutableRange) {
+  var sum: Cpp.N.ValueType = Cpp.N.ValueType.ValueType();
+
+  //@dump-sem-ir-begin
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+8]]:7: error: cannot access member of interface `Core.Iterate` in type `Cpp.N.MutableRange` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   for (i: Cpp.N.ValueType in m) {
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+4]]:7: error: cannot access member of interface `Core.Iterate` in type `Cpp.N.MutableRange` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   for (i: Cpp.N.ValueType in m) {
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  for (i: Cpp.N.ValueType in m) {
+    sum += i;
+  }
+  //@dump-sem-ir-end
+}
+
 // --- fail_todo_adl_overloads.carbon
 
 import Cpp inline '''c++
@@ -410,6 +488,16 @@ fn TestDriver(var mc: Cpp.N.MutableAndConstRange) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(mc);
+}
+
+fn TestRangeFor(var mc: Cpp.N.MutableAndConstRange) {
+  var sum: Cpp.N.ValueType = Cpp.N.ValueType.ValueType();
+
+  //@dump-sem-ir-begin
+  for (i: Cpp.N.ValueType in mc) {
+    sum += i;
+  }
+  //@dump-sem-ir-end
 }
 
 // --- fail_never_valid.carbon
