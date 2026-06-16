@@ -279,29 +279,29 @@ fn F(unused T:! type where () == J(.Self)) {}
 
 fn G(unused T:! type where () == (J(.Self), )) {}
 
-// --- fail_same_type_designator_in_nested_rewrite_does_not_constraint_self.carbon
+// --- fail_same_type_designator_in_nested_rewrite_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
 
 interface I { let I1:! type; }
 
-// CHECK:STDERR: fail_same_type_designator_in_nested_rewrite_does_not_constraint_self.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fail_same_type_designator_in_nested_rewrite_does_not_constrain_self.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F(unused T:! type where () == (I where .I1 = ())) {}
 // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(unused T:! type where () == (I where .I1 = ())) {}
 
-// --- fail_same_type_designator_in_nested_rewrite_in_tuple_does_not_constraint_self.carbon
+// --- fail_same_type_designator_in_nested_rewrite_in_tuple_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
 
 interface I { let I1:! type; }
 
-// CHECK:STDERR: fail_same_type_designator_in_nested_rewrite_in_tuple_does_not_constraint_self.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fail_same_type_designator_in_nested_rewrite_in_tuple_does_not_constrain_self.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F(unused T:! type where () == ((I where .I1 = ()), )) {}
 // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(unused T:! type where () == ((I where .I1 = ()), )) {}
 
-// --- fail_same_type_designator_in_nested_self_impls_does_not_constraint_self.carbon
+// --- fail_same_type_designator_in_nested_self_impls_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
 
 interface I { let I1:! type; }
@@ -309,13 +309,13 @@ interface I { let I1:! type; }
 // TODO: The `.Self impls` is ambiguous, but we could choose to accept it. Then
 // this would still fail though as the `C impls ...` would not be valid.
 
-// CHECK:STDERR: fail_same_type_designator_in_nested_self_impls_does_not_constraint_self.carbon:[[@LINE+4]]:43: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fail_same_type_designator_in_nested_self_impls_does_not_constrain_self.carbon:[[@LINE+4]]:43: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
 // CHECK:STDERR: fn F(unused T:! type where () == (I where .Self impls I)) {}
 // CHECK:STDERR:                                           ^~~~~
 // CHECK:STDERR:
 fn F(unused T:! type where () == (I where .Self impls I)) {}
 
-// --- fail_same_type_designator_in_nested_self_impls_in_tuple_does_not_constraint_self.carbon
+// --- fail_same_type_designator_in_nested_self_impls_in_tuple_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
 
 interface I { let I1:! type; }
@@ -323,7 +323,7 @@ interface I { let I1:! type; }
 // TODO: The `.Self impls` is ambiguous, but we could choose to accept it. Then
 // this would still fail though as the `C impls ...` would not be valid.
 
-// CHECK:STDERR: fail_same_type_designator_in_nested_self_impls_in_tuple_does_not_constraint_self.carbon:[[@LINE+4]]:44: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
+// CHECK:STDERR: fail_same_type_designator_in_nested_self_impls_in_tuple_does_not_constrain_self.carbon:[[@LINE+4]]:44: error: use of `.Self` would be ambiguous in canonical values. [AmbiguousPeriodSelf]
 // CHECK:STDERR: fn F(unused T:! type where () == ((I where .Self impls I), )) {}
 // CHECK:STDERR:                                            ^~~~~
 // CHECK:STDERR:
