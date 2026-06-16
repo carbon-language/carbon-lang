@@ -186,9 +186,8 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
 }
 
 // Returns whether a designator (`.Self` or `.MemberName`) is present in
-// `inst_id`.
-static auto FindDesignator(Context& context, SemIR::ConstantId const_id)
-    -> bool {
+// `inst_id` in a way that will constrain the current `.Self`.
+static auto FindDesignator(Context& context, SemIR::InstId inst_id) -> bool {
   class SubstFindDesignator : public SubstInstCallbacks {
    public:
     explicit SubstFindDesignator(Context* context, bool* found)
@@ -206,18 +205,18 @@ static auto FindDesignator(Context& context, SemIR::ConstantId const_id)
       }
 
       // TypeType has type TypeType, avoid recursing on its type.
-      if (context().insts().Is<SemIR::TypeType>(inst_id)) {
+      if (inst_id == SemIR::TypeType::TypeInstId) {
         return FullySubstituted;
       }
 
       // `.MemberName` is represented as an ImplWitnessAccess through `.Self` so
       // we only need to look for `.Self` here.
-      if (IsPeriodSelf(context(), inst_id)) {
+      if (IsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
         *found_ = true;
         return FullySubstituted;
       }
 
-      return SubstOperands;
+      return SubstOperandsSkipType;
     }
 
     auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst /*new_inst*/)
@@ -228,15 +227,9 @@ static auto FindDesignator(Context& context, SemIR::ConstantId const_id)
     bool* found_;
   };
 
-  // A facet type may contain designators but they do not constrain this where
-  // clause's type.
-  if (context.constant_values().InstIs<SemIR::FacetType>(const_id)) {
-    return false;
-  }
-
   bool found = false;
   SubstFindDesignator callbacks(&context, &found);
-  SubstInst(context, context.constant_values().GetInstId(const_id), callbacks);
+  SubstInst(context, inst_id, callbacks);
   return found;
 }
 
@@ -295,25 +288,22 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
 
 auto HandleParseNode(Context& context, Parse::RequirementEqualEqualId node_id)
     -> bool {
-  auto rhs = context.node_stack().PopExpr();
-  auto lhs = context.node_stack().PopExpr();
+  auto rhs_id = context.node_stack().PopExpr();
+  auto lhs_id = context.node_stack().PopExpr();
   // TODO: Type check lhs and rhs are comparable.
 
-  auto const_lhs = context.constant_values().Get(lhs);
-  auto const_rhs = context.constant_values().Get(rhs);
-  if (!FindDesignator(context, const_lhs) &&
-      !FindDesignator(context, const_rhs)) {
-    if (const_lhs != SemIR::ErrorInst::ConstantId &&
-        const_rhs != SemIR::ErrorInst::ConstantId) {
+  if (!FindDesignator(context, lhs_id) && !FindDesignator(context, rhs_id)) {
+    if (context.constant_values().Get(lhs_id) != SemIR::ErrorInst::ConstantId &&
+        context.constant_values().Get(rhs_id) != SemIR::ErrorInst::ConstantId) {
       DiagnoseMissingDesignator(context, node_id);
     }
-    lhs = rhs = SemIR::ErrorInst::InstId;
+    lhs_id = rhs_id = SemIR::ErrorInst::InstId;
   }
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
-      AddInst<SemIR::RequirementEquivalent>(context, node_id,
-                                            {.lhs_id = lhs, .rhs_id = rhs}));
+      AddInst<SemIR::RequirementEquivalent>(
+          context, node_id, {.lhs_id = lhs_id, .rhs_id = rhs_id}));
   return true;
 }
 
@@ -348,47 +338,33 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
 
-  auto const_lhs = context.constant_values().Get(lhs_id);
-  auto const_rhs = context.constant_values().Get(rhs_id);
-  if (!FindDesignator(context, const_lhs)) {
+  if (!FindDesignator(context, lhs_id)) {
     // The RHS of an `impls` may be another `where`. We require a designator to
     // be present in each constraint created from the LHS of that `where`, which
     // equates to requiring a designator in each extend constraint of the facet
     // type.
-    //
-    // If a designator is part of the LHS of the `impls` or the LHS of the inner
-    // `where`, then that implies all constraints nested within the `where`
-    // clause will constrain the top level type in some way.
-    if (auto facet_type =
-            context.constant_values().TryGetInstAs<SemIR::FacetType>(
-                const_rhs)) {
-      const auto& info = context.facet_types().Get(facet_type->facet_type_id);
-      for (auto extend : llvm::concat<SemIR::SpecificId>(
-               llvm::map_range(
-                   info.extend_constraints,
-                   [](SemIR::SpecificInterface i) { return i.specific_id; }),
-               llvm::map_range(info.extend_named_constraints,
-                               [](SemIR::SpecificNamedConstraint c) {
-                                 return c.specific_id;
-                               }))) {
-        bool found_designator = false;
-        for (auto inst_id : context.inst_blocks().Get(
-                 context.specifics().GetArgsOrEmpty(extend))) {
-          if (FindDesignator(context, context.constant_values().Get(inst_id))) {
-            found_designator = true;
-            break;
-          }
-        }
-        if (!found_designator) {
-          if (const_lhs != SemIR::ErrorInst::ConstantId &&
-              const_rhs != SemIR::ErrorInst::ConstantId) {
-            DiagnoseMissingDesignator(context, node_id);
-          }
-          lhs_id = rhs_id = SemIR::ErrorInst::InstId;
-          const_lhs = const_rhs = SemIR::ErrorInst::ConstantId;
+    auto extend_constraints = SemIR::InstId::None;
+    if (auto where = context.insts().TryGetAs<SemIR::WhereExpr>(rhs_id)) {
+      for (auto req_id : context.inst_blocks().Get(where->requirements_id)) {
+        if (context.insts().Is<SemIR::RequirementBaseFacetType>(req_id)) {
+          CARBON_CHECK(!extend_constraints.has_value(),
+                       "multiple bases in where?");
+          extend_constraints = req_id;
           break;
         }
       }
+    } else {
+      extend_constraints = rhs_id;
+    }
+
+    if (!FindDesignator(context, extend_constraints)) {
+      if (context.constant_values().Get(lhs_id) !=
+              SemIR::ErrorInst::ConstantId &&
+          context.constant_values().Get(rhs_id) !=
+              SemIR::ErrorInst::ConstantId) {
+        DiagnoseMissingDesignator(context, node_id);
+      }
+      lhs_id = rhs_id = SemIR::ErrorInst::InstId;
     }
   }
 
