@@ -263,22 +263,22 @@ fn GetRefs() {
 // CHECK:STDOUT: attributes #4 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #5 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "pass_references.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "pass_references.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "PassRefs", linkageName: "_CPassRefs.Main", scope: null, file: !6, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "PassRefs", linkageName: "_CPassRefs.Main", scope: null, file: !1, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 17, column: 3, scope: !11)
@@ -296,21 +296,21 @@ fn GetRefs() {
 // CHECK:STDOUT: !26 = !{!27, !27, i64 0}
 // CHECK:STDOUT: !27 = !{!"p1 _ZTS1C", !28, i64 0}
 // CHECK:STDOUT: !28 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp", scope: null, file: !6, line: 5, type: !30, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp", scope: null, file: !1, line: 5, type: !30, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !30 = !DISubroutineType(types: !31)
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !33 = !DILocation(line: 5, column: 7, scope: !29)
 // CHECK:STDOUT: !34 = !{!35, !35, i64 0}
 // CHECK:STDOUT: !35 = !{!"p1 int", !28, i64 0}
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !6, line: 25, type: !37, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !40)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !1, line: 25, type: !37, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !40)
 // CHECK:STDOUT: !37 = !DISubroutineType(types: !38)
 // CHECK:STDOUT: !38 = !{null, !39}
 // CHECK:STDOUT: !39 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !40 = !{!41}
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !36, type: !39)
 // CHECK:STDOUT: !42 = !DILocation(line: 25, column: 23, scope: !36)
-// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !44, line: 9, type: !30, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !44, line: 9, type: !30, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !44 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !45 = !DILocation(line: 9, column: 28, scope: !43)
 // CHECK:STDOUT: !46 = !DILocation(line: 9, column: 21, scope: !43)
@@ -474,22 +474,22 @@ fn GetRefs() {
 // CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #5 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "pass_references_via_thunk.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "pass_references_via_thunk.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "PassRefs", linkageName: "_CPassRefs.Main", scope: null, file: !6, line: 17, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "PassRefs", linkageName: "_CPassRefs.Main", scope: null, file: !1, line: 17, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 18, column: 3, scope: !11)
@@ -507,7 +507,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !26 = !{!27, !27, i64 0}
 // CHECK:STDOUT: !27 = !{!"p1 _ZTS1C", !28, i64 0}
 // CHECK:STDOUT: !28 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp", scope: null, file: !6, line: 5, type: !30, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp", scope: null, file: !1, line: 5, type: !30, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !30 = !DISubroutineType(types: !31)
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -516,14 +516,14 @@ fn GetRefs() {
 // CHECK:STDOUT: !35 = !{!36, !36, i64 0}
 // CHECK:STDOUT: !36 = !{!"p1 int", !28, i64 0}
 // CHECK:STDOUT: !37 = !{i64 4}
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !6, line: 26, type: !39, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !42)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !1, line: 26, type: !39, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !42)
 // CHECK:STDOUT: !39 = !DISubroutineType(types: !40)
 // CHECK:STDOUT: !40 = !{null, !41}
 // CHECK:STDOUT: !41 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !42 = !{!43}
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !38, type: !41)
 // CHECK:STDOUT: !44 = !DILocation(line: 26, column: 23, scope: !38)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !46, line: 9, type: !30, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !46, line: 9, type: !30, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !46 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !47 = !DILocation(line: 9, column: 28, scope: !45)
 // CHECK:STDOUT: !48 = !DILocation(line: 9, column: 21, scope: !45)
@@ -559,22 +559,22 @@ fn GetRefs() {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "return_references.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "return_references.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "GetRefs", linkageName: "_CGetRefs.Main", scope: null, file: !6, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "GetRefs", linkageName: "_CGetRefs.Main", scope: null, file: !1, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 17, column: 22, scope: !11)
@@ -667,22 +667,22 @@ fn GetRefs() {
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "return_references_via_thunk.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "return_references_via_thunk.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "GetRefs", linkageName: "_CGetRefs.Main", scope: null, file: !6, line: 17, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "GetRefs", linkageName: "_CGetRefs.Main", scope: null, file: !1, line: 17, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 18, column: 22, scope: !11)

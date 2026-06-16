@@ -93,6 +93,7 @@ git_override(
         "//bazel/llvm_project:0004_Introduce_basic_sources_exporting_for_libunwind.patch",
         "//bazel/llvm_project:0005_Introduce_basic_sources_exporting_for_libcxx_and_libcxxabi.patch",
         "//bazel/llvm_project:0009_Introduce_starlark_exporting_compiler-rt_build_information.patch",
+        "//bazel/llvm_project:0010_Expose_vptr_init.patch",
         "//bazel/llvm_project:0011-Add-empty-constructor-and-GetSources-method-to-Multi.patch",
     ],
     remote = "https://github.com/llvm/llvm-project.git",

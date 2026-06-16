@@ -428,6 +428,9 @@ static auto ConvertTupleToType(Context& context, SemIR::LocId loc_id,
                                SemIR::TypeId value_type_id,
                                ConversionTarget target) -> SemIR::TypeInstId {
   auto value_const_id = context.constant_values().Get(value_id);
+  if (value_const_id == SemIR::ErrorInst::ConstantId) {
+    return SemIR::ErrorInst::TypeInstId;
+  }
   if (!value_const_id.is_constant()) {
     // Types are constants. The input value must have a constant value to
     // convert.
@@ -544,16 +547,19 @@ static auto PerformVptrAccess(Context& context, SemIR::LocId loc_id,
     if (object_repr_id == SemIR::ErrorInst::TypeId) {
       return SemIR::ErrorInst::InstId;
     }
-    if (context.types().Is<SemIR::CustomLayoutType>(object_repr_id)) {
-      context.TODO(loc_id, "accessing vptr of custom layout class");
-      return SemIR::ErrorInst::InstId;
+
+    SemIR::StructTypeFieldsId struct_type_fields_id =
+        SemIR::StructTypeFieldsId::None;
+    if (const auto& custom_layout_type =
+            context.types().TryGetAs<SemIR::CustomLayoutType>(object_repr_id)) {
+      struct_type_fields_id = custom_layout_type->fields_id;
+    } else {
+      struct_type_fields_id =
+          context.types().GetAs<SemIR::StructType>(object_repr_id).fields_id;
     }
 
     // Check to see if this class introduces the vptr.
-    auto repr_struct_type =
-        context.types().GetAs<SemIR::StructType>(object_repr_id);
-    auto repr_fields =
-        context.struct_type_fields().Get(repr_struct_type.fields_id);
+    auto repr_fields = context.struct_type_fields().Get(struct_type_fields_id);
     if (auto vptr_field_index = GetVptrFieldIndex(repr_fields);
         vptr_field_index.has_value()) {
       return AddInst<SemIR::ClassElementAccess>(
@@ -1764,9 +1770,7 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
       if (target_.is_initializer()) {
         // Overwrite the initializer's storage argument with the inst currently
         // at target_.storage_id, if both are present and the storage argument
-        // hasn't already been set. However, we skip this if the type is a C++
-        // enum: in that case, we don't actually have an initializing
-        // expression, we're just pretending we do.
+        // hasn't already been set.
         auto new_storage_id =
             OverwriteTemporaryStorageArg(sem_ir_, expr_id, target_);
 

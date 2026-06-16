@@ -9,11 +9,25 @@
 #include "common/growing_range.h"
 #include "common/raw_string_ostream.h"
 #include "common/vlog.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
 namespace Carbon::Lower {
+
+static auto CheckOrAddModuleFlag(llvm::Module& llvm_module,
+                                 llvm::Module::ModFlagBehavior behavior,
+                                 llvm::StringRef key, uint32_t value) -> void {
+  if (auto* flag = llvm_module.getModuleFlag(key)) {
+    CARBON_CHECK(llvm::cast<llvm::ConstantInt>(
+                     llvm::cast<llvm::ConstantAsMetadata>(flag)->getValue())
+                         ->getZExtValue() == value,
+                 "Module flag mismatch for {0}", key);
+  } else {
+    llvm_module.addModuleFlag(behavior, key, value);
+  }
+}
 
 Context::Context(
     llvm::LLVMContext* llvm_context,
@@ -74,18 +88,21 @@ auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
     }
   }
 
+  if (di_compile_unit_) {
+    CheckOrAddModuleFlag(*llvm_module_, llvm::Module::Max, "Dwarf Version", 5);
+    CheckOrAddModuleFlag(*llvm_module_, llvm::Module::Warning,
+                         "Debug Info Version", llvm::DEBUG_METADATA_VERSION);
+  }
+
   return clang_code_generator_ ? std::unique_ptr<llvm::Module>(
                                      clang_code_generator_->ReleaseModule())
                                : std::move(llvm_module_owner_);
 }
 
 auto Context::BuildDICompileUnit(llvm::StringRef module_name,
-                                 llvm::Module& llvm_module,
+                                 llvm::Module& /*llvm_module*/,
                                  llvm::DIBuilder& di_builder)
     -> llvm::DICompileUnit* {
-  llvm_module.addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
-  llvm_module.addModuleFlag(llvm::Module::Warning, "Debug Info Version",
-                            llvm::DEBUG_METADATA_VERSION);
   // TODO: Include directory path in the compile_unit_file.
   llvm::DIFile* compile_unit_file = di_builder.createFile(module_name, "");
   // TODO: Introduce a new language code for Carbon. C++ works well for now

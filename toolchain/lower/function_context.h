@@ -273,7 +273,7 @@ class FunctionContext {
   }
 
   auto GetVtable(SemIR::VtableId vtable_id, SemIR::SpecificId specific_id) const
-      -> llvm::GlobalVariable* {
+      -> llvm::Constant* {
     return file_context_->GetVtable(vtable_id, specific_id);
   }
 

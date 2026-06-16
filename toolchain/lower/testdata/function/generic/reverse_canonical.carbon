@@ -174,14 +174,14 @@ fn Main() {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "reverse_canonical.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 43, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "reverse_canonical.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !1, line: 43, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 44, column: 3, scope: !4)
@@ -191,7 +191,7 @@ fn Main() {
 // CHECK:STDOUT: !11 = !DILocation(line: 47, column: 15, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 47, column: 3, scope: !4)
 // CHECK:STDOUT: !13 = !DILocation(line: 43, column: 1, scope: !4)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "first", linkageName: "_Cfirst.Main.36f5e0b0ce09cb9a", scope: null, file: !3, line: 20, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !18)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "first", linkageName: "_Cfirst.Main.36f5e0b0ce09cb9a", scope: null, file: !1, line: 20, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !18)
 // CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
 // CHECK:STDOUT: !16 = !{null, !17, !17, !17}
 // CHECK:STDOUT: !17 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -203,7 +203,7 @@ fn Main() {
 // CHECK:STDOUT: !23 = !DILocation(line: 23, column: 22, scope: !14)
 // CHECK:STDOUT: !24 = !DILocation(line: 23, column: 3, scope: !14)
 // CHECK:STDOUT: !25 = !DILocation(line: 20, column: 1, scope: !14)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "second", linkageName: "_Csecond.Main.0f29a29bf45af723", scope: null, file: !3, line: 26, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !27)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "second", linkageName: "_Csecond.Main.0f29a29bf45af723", scope: null, file: !1, line: 26, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !27)
 // CHECK:STDOUT: !27 = !{!28, !29, !30}
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !26, type: !17)
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 2, scope: !26, type: !17)
@@ -213,7 +213,7 @@ fn Main() {
 // CHECK:STDOUT: !33 = !DILocation(line: 30, column: 21, scope: !26)
 // CHECK:STDOUT: !34 = !DILocation(line: 30, column: 3, scope: !26)
 // CHECK:STDOUT: !35 = !DILocation(line: 26, column: 1, scope: !26)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "first", linkageName: "_Cfirst.Main.81f1c9de445b895c", scope: null, file: !3, line: 20, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !37)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "first", linkageName: "_Cfirst.Main.81f1c9de445b895c", scope: null, file: !1, line: 20, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !37)
 // CHECK:STDOUT: !37 = !{!38, !39, !40}
 // CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !36, type: !17)
 // CHECK:STDOUT: !39 = !DILocalVariable(arg: 2, scope: !36, type: !17)
@@ -222,7 +222,7 @@ fn Main() {
 // CHECK:STDOUT: !42 = !DILocation(line: 23, column: 22, scope: !36)
 // CHECK:STDOUT: !43 = !DILocation(line: 23, column: 3, scope: !36)
 // CHECK:STDOUT: !44 = !DILocation(line: 20, column: 1, scope: !36)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "third", linkageName: "_Cthird.Main.0f29a29bf45af723", scope: null, file: !3, line: 33, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !46)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "third", linkageName: "_Cthird.Main.0f29a29bf45af723", scope: null, file: !1, line: 33, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !46)
 // CHECK:STDOUT: !46 = !{!47, !48, !49}
 // CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !45, type: !17)
 // CHECK:STDOUT: !48 = !DILocalVariable(arg: 2, scope: !45, type: !17)
@@ -233,7 +233,7 @@ fn Main() {
 // CHECK:STDOUT: !53 = !DILocation(line: 36, column: 3, scope: !45)
 // CHECK:STDOUT: !54 = !DILocation(line: 37, column: 3, scope: !45)
 // CHECK:STDOUT: !55 = !DILocation(line: 33, column: 1, scope: !45)
-// CHECK:STDOUT: !56 = distinct !DISubprogram(name: "second", linkageName: "_Csecond.Main.e1ce67f3c23ab61f", scope: null, file: !3, line: 26, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !57)
+// CHECK:STDOUT: !56 = distinct !DISubprogram(name: "second", linkageName: "_Csecond.Main.e1ce67f3c23ab61f", scope: null, file: !1, line: 26, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !57)
 // CHECK:STDOUT: !57 = !{!58, !59, !60}
 // CHECK:STDOUT: !58 = !DILocalVariable(arg: 1, scope: !56, type: !17)
 // CHECK:STDOUT: !59 = !DILocalVariable(arg: 2, scope: !56, type: !17)
@@ -243,13 +243,13 @@ fn Main() {
 // CHECK:STDOUT: !63 = !DILocation(line: 30, column: 21, scope: !56)
 // CHECK:STDOUT: !64 = !DILocation(line: 30, column: 3, scope: !56)
 // CHECK:STDOUT: !65 = !DILocation(line: 26, column: 1, scope: !56)
-// CHECK:STDOUT: !66 = distinct !DISubprogram(name: "fourth", linkageName: "_Cfourth.Main.c6787c0e2572c86c", scope: null, file: !3, line: 40, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !67)
+// CHECK:STDOUT: !66 = distinct !DISubprogram(name: "fourth", linkageName: "_Cfourth.Main.c6787c0e2572c86c", scope: null, file: !1, line: 40, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !67)
 // CHECK:STDOUT: !67 = !{!68, !69, !70}
 // CHECK:STDOUT: !68 = !DILocalVariable(arg: 1, scope: !66, type: !17)
 // CHECK:STDOUT: !69 = !DILocalVariable(arg: 2, scope: !66, type: !17)
 // CHECK:STDOUT: !70 = !DILocalVariable(arg: 3, scope: !66, type: !17)
 // CHECK:STDOUT: !71 = !DILocation(line: 40, column: 1, scope: !66)
-// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "first", linkageName: "_Cfirst.Main.e1ce67f3c23ab61f", scope: null, file: !3, line: 20, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !73)
+// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "first", linkageName: "_Cfirst.Main.e1ce67f3c23ab61f", scope: null, file: !1, line: 20, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !73)
 // CHECK:STDOUT: !73 = !{!74, !75, !76}
 // CHECK:STDOUT: !74 = !DILocalVariable(arg: 1, scope: !72, type: !17)
 // CHECK:STDOUT: !75 = !DILocalVariable(arg: 2, scope: !72, type: !17)
@@ -258,7 +258,7 @@ fn Main() {
 // CHECK:STDOUT: !78 = !DILocation(line: 23, column: 22, scope: !72)
 // CHECK:STDOUT: !79 = !DILocation(line: 23, column: 3, scope: !72)
 // CHECK:STDOUT: !80 = !DILocation(line: 20, column: 1, scope: !72)
-// CHECK:STDOUT: !81 = distinct !DISubprogram(name: "third", linkageName: "_Cthird.Main.e1ce67f3c23ab61f", scope: null, file: !3, line: 33, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !82)
+// CHECK:STDOUT: !81 = distinct !DISubprogram(name: "third", linkageName: "_Cthird.Main.e1ce67f3c23ab61f", scope: null, file: !1, line: 33, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !82)
 // CHECK:STDOUT: !82 = !{!83, !84, !85}
 // CHECK:STDOUT: !83 = !DILocalVariable(arg: 1, scope: !81, type: !17)
 // CHECK:STDOUT: !84 = !DILocalVariable(arg: 2, scope: !81, type: !17)
@@ -269,7 +269,7 @@ fn Main() {
 // CHECK:STDOUT: !89 = !DILocation(line: 36, column: 3, scope: !81)
 // CHECK:STDOUT: !90 = !DILocation(line: 37, column: 3, scope: !81)
 // CHECK:STDOUT: !91 = !DILocation(line: 33, column: 1, scope: !81)
-// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "fourth", linkageName: "_Cfourth.Main.901b24db5c2cfe42", scope: null, file: !3, line: 40, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !93)
+// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "fourth", linkageName: "_Cfourth.Main.901b24db5c2cfe42", scope: null, file: !1, line: 40, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !93)
 // CHECK:STDOUT: !93 = !{!94, !95, !96}
 // CHECK:STDOUT: !94 = !DILocalVariable(arg: 1, scope: !92, type: !17)
 // CHECK:STDOUT: !95 = !DILocalVariable(arg: 2, scope: !92, type: !17)
