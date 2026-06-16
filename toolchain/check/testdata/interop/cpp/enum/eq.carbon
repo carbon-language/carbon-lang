@@ -85,4 +85,3 @@ fn CompareHeterogeneousFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
   // CHECK:STDERR:
   return CompareGeneric(x, y);
 }
-
