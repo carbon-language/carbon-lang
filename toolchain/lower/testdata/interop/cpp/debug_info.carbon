@@ -4,7 +4,7 @@
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 //
-// ARGS: compile --phase=lower --dump-llvm-ir %s --clang-arg=-g
+// EXTRA-ARGS: --clang-arg=-g
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
