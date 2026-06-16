@@ -483,20 +483,6 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
   return SemIR::InstId::None;
 }
 
-// Gets the type of the argument that C++ overload resolution wanted to pass to
-// an overload candidate. This steps past a user-defined conversion, but not
-// past any implicit conversions.
-static auto GetCandidateArgType(const clang::ImplicitConversionSequence& ics)
-    -> clang::QualType {
-  if (ics.isStandard()) {
-    return ics.Standard.getFromType();
-  }
-  if (ics.isUserDefined()) {
-    return ics.UserDefined.After.getFromType();
-  }
-  return {};
-}
-
 namespace {
 // Information about a C++ overloaded operator that we might map into a Carbon
 // builtin function.
@@ -588,8 +574,17 @@ static auto TryBuildBuiltinOperator(
   // TODO: Consider expanding this to other types.
   llvm::SmallVector<SemIR::TypeId, 2> arg_type_ids;
   for (const auto& conversion : candidate->Conversions) {
-    auto converted_type = GetCandidateArgType(conversion);
-    if (converted_type.isNull()) {
+    // Get the type of the argument that overload resolution wanted to pass to
+    // the overload candidate, after any user-defined implicit conversions but
+    // before the final standard conversion sequence, to find an enum type prior
+    // to promotion.
+    clang::QualType converted_type;
+    if (conversion.isStandard()) {
+      converted_type = conversion.Standard.getFromType();
+    } else if (conversion.isUserDefined()) {
+      converted_type = conversion.UserDefined.After.getFromType();
+    } else {
+      // Unexpected kind of conversion sequence.
       return SemIR::InstId::None;
     }
     if (!converted_type->isEnumeralType()) {
