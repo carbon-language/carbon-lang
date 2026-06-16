@@ -120,14 +120,14 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "overloaded.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:Negate.Core", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "overloaded.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:Negate.Core", scope: null, file: !1, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7, !7}
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -137,7 +137,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !11 = !DILocation(line: 19, column: 28, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 19, column: 12, scope: !4)
 // CHECK:STDOUT: !13 = !DILocation(line: 19, column: 5, scope: !4)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:MulWith.124acaad20680602.Core", scope: null, file: !3, line: 23, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:MulWith.124acaad20680602.Core", scope: null, file: !1, line: 23, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !17)
 // CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
 // CHECK:STDOUT: !16 = !{!7, !7, !7}
 // CHECK:STDOUT: !17 = !{!18, !19}
@@ -152,19 +152,19 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !26 = !DILocation(line: 25, column: 55, scope: !14)
 // CHECK:STDOUT: !27 = !DILocation(line: 24, column: 12, scope: !14)
 // CHECK:STDOUT: !28 = !DILocation(line: 24, column: 5, scope: !14)
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Calculate", linkageName: "_CCalculate.Main", scope: null, file: !3, line: 29, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !30)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Calculate", linkageName: "_CCalculate.Main", scope: null, file: !1, line: 29, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !30)
 // CHECK:STDOUT: !30 = !{!31, !32}
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !29, type: !7)
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 2, scope: !29, type: !7)
 // CHECK:STDOUT: !33 = !DILocation(line: 30, column: 10, scope: !29)
 // CHECK:STDOUT: !34 = !DILocation(line: 30, column: 3, scope: !29)
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "Op", linkageName: "_COp.86fb9acde14db001:core.Destroy.Core", scope: null, file: !3, line: 30, type: !36, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !38)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "Op", linkageName: "_COp.86fb9acde14db001:core.Destroy.Core", scope: null, file: !1, line: 30, type: !36, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !38)
 // CHECK:STDOUT: !36 = !DISubroutineType(types: !37)
 // CHECK:STDOUT: !37 = !{null, !7}
 // CHECK:STDOUT: !38 = !{!39}
 // CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !35, type: !7)
 // CHECK:STDOUT: !40 = !DILocation(line: 30, column: 10, scope: !35)
-// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "Op", linkageName: "_COp.494b68f9219b33ab:core.Destroy.Core", scope: null, file: !3, line: 30, type: !36, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !42)
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "Op", linkageName: "_COp.494b68f9219b33ab:core.Destroy.Core", scope: null, file: !1, line: 30, type: !36, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !42)
 // CHECK:STDOUT: !42 = !{!43}
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !41, type: !7)
 // CHECK:STDOUT: !44 = !DILocation(line: 30, column: 10, scope: !41)

@@ -142,22 +142,22 @@ fn Call() {
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "pass_as_arg.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "pass_as_arg.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Pass", linkageName: "_CPass.Main", scope: null, file: !6, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Pass", linkageName: "_CPass.Main", scope: null, file: !1, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 7, column: 11, scope: !11)
@@ -231,27 +231,27 @@ fn Call() {
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "convert.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "convert.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "PassEnum", linkageName: "_CPassEnum.Main", scope: null, file: !6, line: 8, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "PassEnum", linkageName: "_CPassEnum.Main", scope: null, file: !1, line: 8, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 9, column: 3, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 8, column: 1, scope: !11)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "ConvertEnumToI16", linkageName: "_CConvertEnumToI16.Main", scope: null, file: !6, line: 12, type: !17, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !20)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "ConvertEnumToI16", linkageName: "_CConvertEnumToI16.Main", scope: null, file: !1, line: 12, type: !17, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !20)
 // CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
 // CHECK:STDOUT: !18 = !{null, !19}
 // CHECK:STDOUT: !19 = !DIBasicType(name: "int", size: 16, encoding: DW_ATE_signed)
@@ -259,7 +259,7 @@ fn Call() {
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !16, type: !19)
 // CHECK:STDOUT: !22 = !DILocation(line: 13, column: 3, scope: !16)
 // CHECK:STDOUT: !23 = !DILocation(line: 12, column: 1, scope: !16)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "ConvertI16ToEnum", linkageName: "_CConvertI16ToEnum.Main", scope: null, file: !6, line: 16, type: !17, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !25)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "ConvertI16ToEnum", linkageName: "_CConvertI16ToEnum.Main", scope: null, file: !1, line: 16, type: !17, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !25)
 // CHECK:STDOUT: !25 = !{!26}
 // CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !24, type: !19)
 // CHECK:STDOUT: !27 = !DILocation(line: 17, column: 11, scope: !24)
@@ -286,22 +286,22 @@ fn Call() {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "use_bitmask.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "use_bitmask.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 9, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !1, line: 9, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 10, column: 3, scope: !11)

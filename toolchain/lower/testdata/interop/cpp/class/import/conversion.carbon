@@ -133,22 +133,22 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #4 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "class_to_class.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "class_to_class.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "ConvertToVar", linkageName: "_CConvertToVar.Main", scope: null, file: !6, line: 15, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !15)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "ConvertToVar", linkageName: "_CConvertToVar.Main", scope: null, file: !1, line: 15, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null, !14}
 // CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -162,7 +162,7 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: !22 = !{!23, !23, i64 0}
 // CHECK:STDOUT: !23 = !{!"p1 _ZTS1A", !21, i64 0}
 // CHECK:STDOUT: !24 = !{}
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "ConvertToValue", linkageName: "_CConvertToValue.Main", scope: null, file: !6, line: 19, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !26)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "ConvertToValue", linkageName: "_CConvertToValue.Main", scope: null, file: !1, line: 19, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !26)
 // CHECK:STDOUT: !26 = !{!27}
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !14)
 // CHECK:STDOUT: !28 = !DILocation(line: 20, column: 25, scope: !25)
@@ -241,22 +241,22 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "class_to_enum.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "class_to_enum.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "ConvertToVar", linkageName: "_CConvertToVar.Main", scope: null, file: !6, line: 14, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !15)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "ConvertToVar", linkageName: "_CConvertToVar.Main", scope: null, file: !1, line: 14, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null, !14}
 // CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -274,7 +274,7 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: !26 = !{!"_ZTS1S", !9, i64 0}
 // CHECK:STDOUT: !27 = !{!28, !28, i64 0}
 // CHECK:STDOUT: !28 = !{!"_ZTS1I", !9, i64 0}
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "ConvertToValue", linkageName: "_CConvertToValue.Main", scope: null, file: !6, line: 19, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !30)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "ConvertToValue", linkageName: "_CConvertToValue.Main", scope: null, file: !1, line: 19, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !30)
 // CHECK:STDOUT: !30 = !{!31}
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !29, type: !14)
 // CHECK:STDOUT: !32 = !DILocation(line: 20, column: 25, scope: !29)
@@ -329,22 +329,22 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "class_to_int.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "class_to_int.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "ConvertToVar", linkageName: "_CConvertToVar.Main", scope: null, file: !6, line: 11, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !15)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "ConvertToVar", linkageName: "_CConvertToVar.Main", scope: null, file: !1, line: 11, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null, !14}
 // CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -356,14 +356,14 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: !20 = !{!"p1 _ZTS1B", !21, i64 0}
 // CHECK:STDOUT: !21 = !{!"any pointer", !9, i64 0}
 // CHECK:STDOUT: !22 = !{}
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !6, line: 12, type: !24, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !27)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !1, line: 12, type: !24, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !27)
 // CHECK:STDOUT: !24 = !DISubroutineType(types: !25)
 // CHECK:STDOUT: !25 = !{null, !26}
 // CHECK:STDOUT: !26 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !27 = !{!28}
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !23, type: !26)
 // CHECK:STDOUT: !29 = !DILocation(line: 12, column: 3, scope: !23)
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "ConvertToValue", linkageName: "_CConvertToValue.Main", scope: null, file: !6, line: 15, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "ConvertToValue", linkageName: "_CConvertToValue.Main", scope: null, file: !1, line: 15, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !31)
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !30, type: !14)
 // CHECK:STDOUT: !33 = !DILocation(line: 16, column: 27, scope: !30)

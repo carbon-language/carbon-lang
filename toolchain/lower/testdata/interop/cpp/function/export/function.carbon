@@ -97,36 +97,36 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "other.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "NoArgs", linkageName: "_CNoArgs.Other", scope: null, file: !3, line: 2, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "other.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "NoArgs", linkageName: "_CNoArgs.Other", scope: null, file: !1, line: 2, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 2, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "BoolArg", linkageName: "_CBoolArg.Other", scope: null, file: !3, line: 3, type: !9, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !12)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "BoolArg", linkageName: "_CBoolArg.Other", scope: null, file: !1, line: 3, type: !9, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !12)
 // CHECK:STDOUT: !9 = !DISubroutineType(types: !10)
 // CHECK:STDOUT: !10 = !{null, !11}
 // CHECK:STDOUT: !11 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !12 = !{!13}
 // CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !8, type: !11)
 // CHECK:STDOUT: !14 = !DILocation(line: 3, column: 1, scope: !8)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "IntArg", linkageName: "_CIntArg.Other", scope: null, file: !3, line: 6, type: !16, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !19)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "IntArg", linkageName: "_CIntArg.Other", scope: null, file: !1, line: 6, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !19)
 // CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
 // CHECK:STDOUT: !17 = !{null, !18}
 // CHECK:STDOUT: !18 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
 // CHECK:STDOUT: !21 = !DILocation(line: 6, column: 1, scope: !15)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "FloatArg", linkageName: "_CFloatArg.Other", scope: null, file: !3, line: 9, type: !9, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !23)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "FloatArg", linkageName: "_CFloatArg.Other", scope: null, file: !1, line: 9, type: !9, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !23)
 // CHECK:STDOUT: !23 = !{!24}
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !22, type: !11)
 // CHECK:STDOUT: !25 = !DILocation(line: 9, column: 1, scope: !22)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "IntReturn", linkageName: "_CIntReturn.Other", scope: null, file: !3, line: 12, type: !27, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "IntReturn", linkageName: "_CIntReturn.Other", scope: null, file: !1, line: 12, type: !27, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !27 = !DISubroutineType(types: !28)
 // CHECK:STDOUT: !28 = !{!18}
 // CHECK:STDOUT: !29 = !DILocation(line: 13, column: 3, scope: !26)
@@ -244,17 +244,17 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "function.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "function.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
@@ -263,30 +263,30 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: !12 = !{!"bool", !9, i64 0}
 // CHECK:STDOUT: !13 = !{!14, !14, i64 0}
 // CHECK:STDOUT: !14 = !{!"float", !9, i64 0}
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "NoArgs__carbon_thunk", linkageName: "_CNoArgs__carbon_thunk.Other", scope: null, file: !16, line: 2, type: !17, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "NoArgs__carbon_thunk", linkageName: "_CNoArgs__carbon_thunk.Other", scope: null, file: !16, line: 2, type: !17, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !16 = !DIFile(filename: "other.carbon", directory: "")
 // CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
 // CHECK:STDOUT: !18 = !{null}
 // CHECK:STDOUT: !19 = !DILocation(line: 2, column: 1, scope: !15)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "BoolArg__carbon_thunk", linkageName: "_CBoolArg__carbon_thunk.Other", scope: null, file: !16, line: 3, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !24)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "BoolArg__carbon_thunk", linkageName: "_CBoolArg__carbon_thunk.Other", scope: null, file: !16, line: 3, type: !21, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !24)
 // CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
 // CHECK:STDOUT: !22 = !{null, !23}
 // CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !20, type: !23)
 // CHECK:STDOUT: !26 = !DILocation(line: 3, column: 1, scope: !20)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "IntArg__carbon_thunk", linkageName: "_CIntArg__carbon_thunk.Other", scope: null, file: !16, line: 6, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "IntArg__carbon_thunk", linkageName: "_CIntArg__carbon_thunk.Other", scope: null, file: !16, line: 6, type: !28, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !31)
 // CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
 // CHECK:STDOUT: !29 = !{null, !30}
 // CHECK:STDOUT: !30 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !27, type: !30)
 // CHECK:STDOUT: !33 = !DILocation(line: 6, column: 1, scope: !27)
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "FloatArg__carbon_thunk", linkageName: "_CFloatArg__carbon_thunk.Other", scope: null, file: !16, line: 9, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !35)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "FloatArg__carbon_thunk", linkageName: "_CFloatArg__carbon_thunk.Other", scope: null, file: !16, line: 9, type: !21, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !35)
 // CHECK:STDOUT: !35 = !{!36}
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !34, type: !23)
 // CHECK:STDOUT: !37 = !DILocation(line: 9, column: 1, scope: !34)
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "IntReturn__carbon_thunk", linkageName: "_CIntReturn__carbon_thunk.Other", scope: null, file: !16, line: 12, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !39)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "IntReturn__carbon_thunk", linkageName: "_CIntReturn__carbon_thunk.Other", scope: null, file: !16, line: 12, type: !28, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !39)
 // CHECK:STDOUT: !39 = !{!40}
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !38, type: !30)
 // CHECK:STDOUT: !41 = !DILocation(line: 12, column: 1, scope: !38)
@@ -344,27 +344,27 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: attributes #1 = { inlinehint mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "single_file.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "single_file.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !6, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !1, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 6, column: 1, scope: !11)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.Main", scope: null, file: !6, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.Main", scope: null, file: !1, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !16 = !DILocation(line: 6, column: 1, scope: !15)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !6, line: 20, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !1, line: 20, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !18 = !DILocation(line: 20, column: 10, scope: !17)
 // CHECK:STDOUT: !19 = !DILocation(line: 20, column: 1, scope: !17)

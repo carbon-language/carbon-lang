@@ -107,22 +107,22 @@ fn Test() {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "std_initializer_list_make.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "std_initializer_list_make.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !6, line: 24, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !1, line: 24, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 25, column: 22, scope: !11)
@@ -132,14 +132,14 @@ fn Test() {
 // CHECK:STDOUT: !18 = !DILocation(line: 25, column: 3, scope: !11)
 // CHECK:STDOUT: !19 = !DILocation(line: 26, column: 3, scope: !11)
 // CHECK:STDOUT: !20 = !DILocation(line: 24, column: 1, scope: !11)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !6, line: 26, type: !22, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !25)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !1, line: 26, type: !22, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !25)
 // CHECK:STDOUT: !22 = !DISubroutineType(types: !23)
 // CHECK:STDOUT: !23 = !{null, !24}
 // CHECK:STDOUT: !24 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !25 = !{!26}
 // CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !21, type: !24)
 // CHECK:STDOUT: !27 = !DILocation(line: 26, column: 35, scope: !21)
-// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8ab5ebc4f407c395:core.Destroy.Core", scope: null, file: !6, line: 26, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !32)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8ab5ebc4f407c395:core.Destroy.Core", scope: null, file: !1, line: 26, type: !29, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !32)
 // CHECK:STDOUT: !29 = !DISubroutineType(types: !30)
 // CHECK:STDOUT: !30 = !{null, !31}
 // CHECK:STDOUT: !31 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
