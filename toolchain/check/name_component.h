@@ -53,9 +53,10 @@ auto PopNameComponent(Context& context,
     -> NameComponent;
 
 // Equivalent to PopNameComponent, but also diagnoses if the name component has
-// parameters.
-auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer)
-    -> NameComponent;
+// parameters. Sets `*diagnosed` to true when diagnosing parameters if it's not
+// null.
+auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer,
+                                   bool* diagnosed = nullptr) -> NameComponent;
 
 }  // namespace Carbon::Check
 

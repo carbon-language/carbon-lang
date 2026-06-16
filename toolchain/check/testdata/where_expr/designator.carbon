@@ -387,6 +387,51 @@ eval fn E(T:! type) -> type { return T; }
 // CHECK:STDERR:                         ^~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(unused T:! I where C == E(.Self)) {}
+
+// --- alias_of_generic_type.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+class C(T:! type);
+
+alias A = C;
+
+fn F(unused T:! I where C == A(.Self)) {}
+
+// --- fail_todo_generic_alias_preserves_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+class C(T:! type);
+
+// TODO: Once we can write a generic alias, this should pass.
+
+// CHECK:STDERR: fail_todo_generic_alias_preserves_self.carbon:[[@LINE+4]]:8: error: `alias` declaration cannot have parameters [UnexpectedDeclNameParams]
+// CHECK:STDERR: alias A(U:! type) = C(U);
+// CHECK:STDERR:        ^~~~~~~~~~
+// CHECK:STDERR:
+alias A(U:! type) = C(U);
+
+fn F(unused T:! I where C == A(.Self)) {}
+
+// --- fail_generic_alias_without_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+class C;
+
+// CHECK:STDERR: fail_generic_alias_without_self.carbon:[[@LINE+4]]:8: error: `alias` declaration cannot have parameters [UnexpectedDeclNameParams]
+// CHECK:STDERR: alias A(U:! type) = C;
+// CHECK:STDERR:        ^~~~~~~~~~
+// CHECK:STDERR:
+alias A(U:! type) = C;
+
+// The alias returns `C` which does not contain `.Self`.
+
+// TODO: Once we can write a generic alias, this should become an error because
+// there is no constraint against `.Self`.
+fn F(unused T:! I where C == A(.Self)) {}
+
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
