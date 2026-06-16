@@ -209,6 +209,13 @@ static auto FindDesignator(Context& context, SemIR::InstId inst_id) -> bool {
         return FullySubstituted;
       }
 
+      // The arguments to a function call do not constrain the self type. We
+      // could look at the evaluated result, but if `.Self` was in an argument,
+      // the function call is symbolic so is not evalauted in the facet type.
+      if (auto call = context().insts().TryGetAs<SemIR::Call>(inst_id)) {
+        return FullySubstituted;
+      }
+
       // `.MemberName` is represented as an ImplWitnessAccess through `.Self` so
       // we only need to look for `.Self` here.
       if (IsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
@@ -216,7 +223,7 @@ static auto FindDesignator(Context& context, SemIR::InstId inst_id) -> bool {
         return FullySubstituted;
       }
 
-      return SubstOperandsSkipType;
+      return SubstOperands;
     }
 
     auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst /*new_inst*/)

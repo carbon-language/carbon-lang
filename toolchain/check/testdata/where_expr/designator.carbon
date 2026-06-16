@@ -355,6 +355,38 @@ fn F3(_:! J where .Self.(I.Member) == ()) {}
 
 fn F4(_:! J where .Self.(I.Member) impls J) {}
 
+// --- fail_fn_call_returns_type_without_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+class C;
+
+eval fn E(_:! type) -> type { return C; }
+
+// CHECK:STDERR: fail_fn_call_returns_type_without_self.carbon:[[@LINE+4]]:25: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused T:! I where C == E(.Self)) {}
+// CHECK:STDERR:                         ^~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(unused T:! I where C == E(.Self)) {}
+
+// --- fail_fn_call_returns_type_with_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+class C;
+
+eval fn E(T:! type) -> type { return T; }
+
+// Given `E(.Self)`, it should return `.Self`. However since `.Self` is
+// symbolic, the call is not evaluated until `.Self` is replaced with a concrete
+// value. As such, we can't tell at the time of checking the facet type if
+// `E(.Self)` resolves to an expression containing a designator.
+
+// CHECK:STDERR: fail_fn_call_returns_type_with_self.carbon:[[@LINE+4]]:25: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused T:! I where C == E(.Self)) {}
+// CHECK:STDERR:                         ^~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(unused T:! I where C == E(.Self)) {}
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
