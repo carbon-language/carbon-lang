@@ -3643,12 +3643,14 @@ Further, C++ reference types like `T&` will be translated to `T*` in Carbon,
 which is Carbon's non-null pointer type.
 
 Carbon will work to have idiomatic vocabulary _view_ types for common data
-structures, like `std::string_view` and `std::span`, map transparently between
-C++ and the Carbon equivalents. This will include data layout so that even
-pointers to these types translate seamlessly, contingent on a suitable C++ ABI
-for those types, potentially by re-compiling the C++ code with a customized ABI.
-We will also explore how to expand coverage to similar view types in other
-libraries.
+structures map transparently between C++ and the Carbon equivalents. For
+instance, C++'s `std::string_view` maps directly to Carbon's `Core.Str` (see
+[here](interoperability/README.md#stdstring_view-and-str)). Other view types,
+like `std::span`, are intended to map similarly. This includes matching the data
+layout so that even pointers to these types translate seamlessly, contingent on
+a compatible standard library ABI (potentially by re-compiling the C++ code with
+a customized ABI). We will also explore how to expand coverage to similar view
+types in other libraries.
 
 However, Carbon's containers will be distinct from the C++ standard library
 containers in order to maximize our ability to improve performance and leverage
@@ -3662,6 +3664,11 @@ containers without performance loss or constraining the Carbon container
 implementations. In the other direction, Carbon containers will satisfy C++
 container requirements, so templated C++ code can operate directly on Carbon
 containers as well.
+
+> References:
+>
+> -   Proposal
+>     [#6177: C++ Interop: Mapping `std::string_view` to `Core.Str`](https://github.com/carbon-language/carbon-lang/pull/6177)
 
 ### Inheritance
 

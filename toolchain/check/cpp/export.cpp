@@ -177,39 +177,6 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
   return record_decl;
 }
 
-// Get the `StructTypeField`s from a class's object repr.
-static auto GetStructTypeFields(Context& context,
-                                const SemIR::Class& class_info)
-    -> llvm::ArrayRef<SemIR::StructTypeField> {
-  if (class_info.adapt_id.has_value()) {
-    // The representation of an adapter won't necessarily be a
-    // struct. Return an empty array since adapters can't declare
-    // fields.
-    return {};
-  }
-
-  auto object_repr_type_id =
-      class_info.GetObjectRepr(context.sem_ir(), SemIR::SpecificId::None);
-  if (object_repr_type_id == SemIR::ErrorInst::TypeId) {
-    return {};
-  }
-  auto struct_type =
-      context.types().GetAs<SemIR::StructType>(object_repr_type_id);
-  return context.struct_type_fields().Get(struct_type.fields_id);
-}
-
-static auto LookupClassFieldByStructField(
-    const Context& context, const SemIR::NameScope& class_scope,
-    const SemIR::StructTypeField& struct_field)
-    -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
-  if (auto entry_id = class_scope.Lookup(struct_field.name_id)) {
-    auto field_inst_id =
-        class_scope.GetEntry(*entry_id).result.target_inst_id();
-    return context.insts().TryGetAsWithId<SemIR::FieldDecl>(field_inst_id);
-  }
-  return std::nullopt;
-}
-
 static auto SetCppClassMemberAccess(const SemIR::NameScope& class_scope,
                                     SemIR::NameId member_name_id,
                                     clang::Decl* member) -> void {
@@ -265,9 +232,10 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
 
   const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
 
-  for (const auto& struct_field : GetStructTypeFields(context, class_info)) {
-    auto class_field =
-        LookupClassFieldByStructField(context, class_scope, struct_field);
+  for (const auto& struct_field :
+       class_info.GetStructTypeFields(context.sem_ir())) {
+    auto class_field = LookupClassFieldByStructField(context.sem_ir(),
+                                                     class_scope, struct_field);
     if (!class_field) {
       continue;
     }
@@ -312,42 +280,6 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
     return cast<clang::FieldDecl>(clang_decl->decl());
   }
   return nullptr;
-}
-
-auto CalculateCppFieldOffsets(
-    Context& context, SemIR::ClassId class_id,
-    llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets) -> bool {
-  auto class_info = context.classes().Get(class_id);
-  const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-
-  auto class_layout = SemIR::ObjectLayout::Empty();
-  for (const auto& struct_field : GetStructTypeFields(context, class_info)) {
-    auto field_type_id = context.sem_ir().types().GetTypeIdForTypeInstId(
-        struct_field.type_inst_id);
-    auto field_layout = context.sem_ir()
-                            .types()
-                            .GetCompleteTypeInfo(field_type_id)
-                            .object_layout;
-
-    // Use the field's name to look up the corresponding entry in the
-    // class. If it's a `FieldDecl`, write out the offset of the
-    // corresponding `clang::FieldDecl`.
-    auto class_field =
-        LookupClassFieldByStructField(context, class_scope, struct_field);
-    if (class_field) {
-      auto* cpp_field_decl =
-          ExportFieldToCpp(context, class_field->inst_id, class_field->inst);
-      if (!cpp_field_decl) {
-        return false;
-      }
-      field_offsets.insert(
-          {cpp_field_decl, class_layout.FieldOffset(field_layout).bits()});
-    }
-
-    class_layout.AppendField(field_layout);
-  }
-
-  return true;
 }
 
 namespace {
