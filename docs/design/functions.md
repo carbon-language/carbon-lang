@@ -12,11 +12,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Function definitions](#function-definitions)
-    -   [Captures, function fields, and positional parameters](#captures-function-fields-and-positional-parameters)
-    -   [Specifying return type and return expressions](#specifying-return-type-and-return-expressions)
+    -   [Function signatures](#function-signatures)
+        -   [Captures and function fields](#captures-and-function-fields)
+        -   [Positional Parameters](#positional-parameters)
+        -   [Return specification](#return-specification)
+        -   [Unused parameters](#unused-parameters)
     -   [`return` statements](#return-statements)
-    -   [Unused parameters](#unused-parameters)
--   [Function declarations](#function-declarations)
+-   [Forward declarations](#forward-declarations)
     -   [Redeclaration matching](#redeclaration-matching)
 -   [Function types and values](#function-types-and-values)
     -   [Bound methods](#bound-methods)
@@ -37,9 +39,9 @@ declaration has one of the following syntactic forms (where items in square
 brackets are optional and independent):
 
 -   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] `=>` _expression_ `;`
--   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] [`->` _return-type_] `{`
+-   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_] `{`
     _statements_ `}`
--   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] [`->` _return-type_] `;`
+-   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_] `;`
 
 The first form is a shorthand: `=> expression ;` is equivalent to
 `-> auto { return expression; }`. When a body is present (the first and second
@@ -51,9 +53,11 @@ The syntax for parameters and returns is the same for functions and
 [lambdas](lambdas.md#syntax-overview):
 
 -   _implicit-parameters_: square brackets `[`...`]` enclosing default capture
-    modes, explicit captures, function fields, or deduced parameters
+    modes, explicit captures, function fields, or deduced parameters, see
+    [lambdas](lambdas.md#implicit-parameters-in-square-brackets).
 -   _tuple-pattern_: parentheses `(`...`)` enclosing a list of explicit
-    parameter patterns.
+    parameter patterns, see
+    [pattern matching](pattern_matching.md#pattern-syntax-and-semantics).
 
 ## Function definitions
 
@@ -87,47 +91,61 @@ auto Add(std::int64_t a, std::int64_t b) -> std::int64_t {
 }
 ```
 
-### Captures, function fields, and positional parameters
+### Function signatures
 
-Named function definitions support [captures](lambdas.md#captures),
-[function fields](lambdas.md#function-fields), and
-[positional parameters](lambdas.md#positional-parameters) in their signature and
-body, with the following restrictions:
+#### Captures and function fields
 
--   **Definition attached**: They can only be used on functions where the
-    definition is attached to the declaration (so they cannot be forward
-    declared).
--   **Scope limit**: Captures and function fields are only supported on local
+Like lambdas, named function definitions support
+[captures](lambdas.md#captures), [function fields](lambdas.md#function-fields),
+with these restrictions:
+
+-   Definition attached: They can only be used on functions where the definition
+    is attached to the declaration (so they cannot be forward declared).
+-   Scope limit: Captures and function fields are only supported on local
     function definitions immediately defined inside the body of another
-    function. They are not supported on namespace-scoped functions or member
-    functions of classes/interfaces.
--   **Positional parameters**: Positional parameters can only be used in a
-    context where there is exactly one enclosing function or lambda that has no
-    explicit parameter list.
+    function. They are not supported on member functions of classes/interfaces.
 
-### Specifying return type and return expressions
+#### Positional Parameters
+
+Like lambdas, named function definitions support
+[positional parameters](lambdas.md#positional-parameters), which are used when
+the explicit parameter list is omitted. Like
+[captures and function fields](#captures-and-function-fields), they may only be
+used with function definitions and not forward declarations. In addition,
+positional parameters can only be used in a context where there is exactly one
+enclosing function or lambda that has no explicit parameter list.
+
+#### Return specification
 
 The return type of a function can be specified using a return clause (`->`), or
-it can be deduced using a return expression (`=>`):
+it can be deduced using a signature return expression (`=>`).
 
--   `->` followed by an _expression_, such as `i64`, directly states the return
-    type. This expression will be evaluated at compile-time, so must be valid in
-    that context.
-    -   For example, `fn ToString(val: i64) -> String;` has a return type of
-        `String`.
--   `->` followed by the `auto` keyword (optionally prefixed with `val`, `ref`,
-    or `var`) indicates that [type inference](type_inference.md) should be used
-    to determine the return type.
-    -   The category tag determines the return expression category:
-        `-> val auto` returns a value expression, `-> ref auto` returns a
-        durable reference expression, and `-> var auto` or `-> auto` returns an
-        initializing expression.
+-   `->` followed by a return form:
+    -   Most commonly, this will be an _expression_ that directly states the
+        return type, such as `i64`.
+        -   The expression will be evaluated at compile-time, so must be valid
+            in that context.
+        -   For example, `fn ToString(val: i64) -> strbuf;` has a return type of
+            `strbuf`.
+    -   Other return forms are possible
+        -   `-> val` _type-expression_ indicates that the function returns a
+            value expression
+        -   `-> ref` _type-expression_ returns a durable reference expression
+        -   `-> var` _type-expression_ returns an initializing expression, which
+            is the default
+    -   Return forms are documented in
+        ["Function calls and returns"](values.md#function-calls-and-returns)
+-   `->` followed by the `auto` keyword indicates that
+    [type inference](type_inference.md) should be used to determine the return
+    type.
     -   For example, `fn Echo(val: i64) -> auto { return val; }` will have a
         return type of `i64` through type inference.
     -   Forward declarations must have a known return type, so `auto` is not
         valid.
     -   The function must have precisely one `return` statement. That `return`
         statement's expression will then be used for type inference.
+    -   The `auto` keyword may be preceded by `val`, `ref`, or `var` to specify
+        the return expression category.
 -   Omission of both `->` and `=>` indicates that the return type is the empty
     tuple, `()`.
     -   For example, `fn Sleep(seconds: i64);` is similar to
@@ -141,28 +159,7 @@ it can be deduced using a return expression (`=>`):
     -   Because the return type is deduced and not explicitly known, functions
         defined using `=>` cannot have a separate forward declaration.
 
-> **TODO:** Update this section to cover return forms, as discussed
-> [here](values.md#function-calls-and-returns).
-
-### `return` statements
-
-The [`return` statement](control_flow/return.md) is essential to function
-control flow. It ends the flow of the function and returns execution to the
-caller.
-
-When the [return clause](#specifying-return-type-and-return-expressions) is
-omitted, the `return` statement has no expression argument, and function control
-flow implicitly ends after the last statement in the function's body as if
-`return;` were present.
-
-When the return clause is provided, including when it is `-> ()`, the `return`
-statement must have an expression that is convertible to the return type, and a
-`return` statement must be used to end control flow of the function.
-
-> **TODO:** Update this section to cover the requirements on the form of the
-> expression.
-
-### Unused parameters
+#### Unused parameters
 
 When a parameter introduced in a function definition is not used in the function
 body, a compiler warning is issued. To suppress this warning, a parameter can be
@@ -192,13 +189,29 @@ fn Sum(x: List(i32), _: i32) -> i32 { ... }
 fn Sum(x: List(i32), unused size: i32) -> i32 { ... }
 ```
 
-As specified in
-[Matching redeclarations](/proposals/p003763-matching-redeclarations.md),
 `unused` markers may only appear on definitions, not on non-defining
 declarations. The names of parameters must match between redeclarations, but the
-presence of the `unused` marker does not need to match.
+presence of the `unused` marker does not need to match, see
+[redeclaration matching](#redeclaration-matching).
 
-## Function declarations
+### `return` statements
+
+The [`return` statement](control_flow/return.md) is essential to function
+control flow. It ends the flow of the function and returns execution to the
+caller.
+
+When the [return clause](#return-specification) is omitted, the `return`
+statement has no expression argument, and function control flow implicitly ends
+after the last statement in the function's body as if `return;` were present.
+
+When the return clause is provided, including when it is `-> ()`, the `return`
+statement must have an expression that is convertible to the return type, and a
+`return` statement must be used to end control flow of the function.
+
+> **TODO:** Update this section to cover the requirements on the form of the
+> expression.
+
+## Forward declarations
 
 Functions may be declared separate from the definition by providing only a
 signature, with no body. This provides an API which may be called. For example:
@@ -260,8 +273,7 @@ type.
 
 Distinct functions have distinct function types, even if they have the same
 signature. A function type is an empty, trivial type. There is no way to name a
-function type other than asking for the type of the function value (for example,
-using `TypeOf`).
+function type other than asking for the type of the function value.
 
 ```carbon
 fn F(x: i32) -> i32 { return x; }
@@ -290,17 +302,20 @@ introduces the function value.
 
 ### Bound methods
 
-For each function type corresponding to a method, there is a corresponding
-_bound method type_. When a member access is performed on an object of class
-type to access a method, the result is a _bound method value_ of bound method
-type. A bound method type describes the callee in a method call, and a bound
-method value describes the `self` parameter of the call.
+A function with a `self` parameter is a method. The type of a method is a
+stateless type, like other functions. Once the method is
+[bound to an instance](expressions/member_access.md#instance-binding), for
+example in the expression `object.MethodName`, the result is a _bound method
+value_. The type of the result is a _bound method type_, with the same signature
+as the method, but with the `self` parameter removed. A bound method type
+describes the callee in a method call, and a bound method value describes the
+`self` parameter of the call.
 
 ```carbon
 class HasMember {
   // `HasMember.F` has a stateless function type, with signature
-  // `[self: Self](n: i32) -> i32`.
-  fn F[self: Self](n: i32) -> i32;
+  // `(self, n: i32) -> i32`.
+  fn F(self, n: i32) -> i32;
 }
 
 fn F(h1: HasMember, h2: HasMember) -> i32 {
@@ -316,9 +331,13 @@ fn F(h1: HasMember, h2: HasMember) -> i32 {
 
 ## Function calls
 
-Function calls use C-like syntax: an expression naming a callee is followed by
-an argument list enclosed in parentheses, which resembles a tuple of arguments.
-Calls take the form `a(b, c, d)` or `a(b, c, d,)`, where:
+Function calls use C-like syntax:
+
+> _expression_ `(` _[ expression_ `,` _expression_ `,` _... ]_ `)`
+
+It consists of an expression naming a callee followed by an argument list
+enclosed in parentheses, which resembles a tuple of arguments. Calls take the
+form `a(b, c, d)` or `a(b, c, d,)`, where:
 
 -   `a` is the callee, which can be a name, a literal, a member access, or some
     more complex expression enclosed in parentheses.
@@ -327,8 +346,9 @@ Calls take the form `a(b, c, d)` or `a(b, c, d,)`, where:
     by commas, and if the argument list is not empty, an optional trailing comma
     is permitted but not required after the final argument.
 
-Call syntax is syntactically equivalent to a primary expression followed by a
-tuple literal, except that a tuple literal requires a trailing comma to form a
+Call syntax is syntactically equivalent to a
+[suffix expression](expressions/README.md#suffix-operators) followed by a tuple
+literal, except that a tuple literal requires a trailing comma to form a
 single-element tuple `(b,)`, whereas in call syntax both `a(b)` and `a(b,)` are
 permitted.
 
@@ -353,9 +373,10 @@ A call expression is a _direct call_ when the callee:
 -   is the name of a parameterized entity, like a generic class or interface, or
 -   has a function type or bound method type.
 
-In a direct call, a call signature is available which is used to check the given
-arguments against the callee's declared implicit and explicit parameters. This
-checking proceeds as follows:
+Note that this includes virtual method calls, even though those can include some
+indirection. In a direct call, a call signature is available which is used to
+check the given arguments against the callee's declared implicit and explicit
+parameters. This checking proceeds as follows:
 
 -   Argument deduction is performed by comparing the declared parameter types
     against the actual argument types and deducing values for implicit arguments
@@ -388,10 +409,10 @@ The result of the call expression depends on the callee:
 -   If the callee is a parameterized entity such as a generic class or a generic
     interface, the result is the specific instance of that generic, such as a
     class or interface, and the call is a value expression of type `type`.
--   If the callee is a function value, the call is an expression whose form is
-    the substituted return form of the function. When evaluated, the call
+-   If the callee has a function type, the call is an expression whose form is
+    the substituted return form of its signature. When evaluated, the call
     expression will invoke the function and produce whatever result it returns.
--   If the callee is a bound method value, it behaves the same as a function
+-   If the callee has a bound method type, it behaves the same as a function
     value, except that the `self` parameter of the called function is bound to
     the `self` value in the bound method value.
 
@@ -448,23 +469,8 @@ fn Run() {
 }
 ```
 
-The `Call` interface only models function calls for which arbitrary runtime
-values of the given parameter types can be passed to the function. If the
-signature of the function has compile-time parameters in its explicit argument
-list, the function type will not implement `Call`.
-
-```carbon
-fn Runtime[T:! type](x: T);
-fn CompileTime(T:! type, x: T);
-
-fn Run() {
-  // ✅ Calls `Runtime(0 as i32)`.
-  Runtime.(Call(i32).Op)(0);
-  // ❌ Can't call `CompileTime` this way, it can't implement `Call(type, i32)`
-  // because the type would be passed at runtime.
-  CompileTime.(Call(type, i32).Op)(i32, 0);
-}
-```
+> **Future work:** The `Call` interface currently only supports value parameters
+> and initializing returns. It is future work to remove this restriction.
 
 ### Overloaded call operator
 
@@ -474,7 +480,7 @@ call operator for a type.
 ```carbon
 class Func(Arg:! type) {
   impl as Call((Arg,)) where .Result = () {
-    fn Op[self: Self](arg: (Arg,)) { Print("hello, world"); }
+    fn Op(self, arg: (Arg,)) { Print("hello, world"); }
   }
 }
 
@@ -492,7 +498,7 @@ implementing an interface.
 class X { var n: i32; }
 
 impl {.a: X} as Call(()) where .Result = i32 {
-  fn Op[self: Self](args: ()) -> i32 {
+  fn Op(self, args: ()) -> i32 {
     return self.a.n;
   }
 }

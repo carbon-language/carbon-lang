@@ -1018,8 +1018,10 @@ fn Use(a: A) {
 }
 ```
 
-Member access has lower precedence than primary expressions, and higher
-precedence than all other expression forms.
+Member access has [lower precedence](README.md#precedence) than primary
+expressions (literals, unqualified names, and expressions in parentheses, as in
+[C++](https://cppreference.com/cpp/language/expressions#Primary_expressions)),
+and higher precedence than all other expression forms.
 
 ```
 // ✅ OK, `*` has lower precedence than `.`. Same as `(A.B)*`.

@@ -67,7 +67,7 @@ PushBack(my_list, fn -> T { return T.Make() });
 ### Return type
 
 There are three options for how a lambda expresses its return type, parallel to
-[how function declarations express returns](functions.md#specifying-return-type-and-return-expressions):
+[how function declarations express returns](functions.md#return-specification):
 using a return expression, using an explicit return type, or having no return.
 
 #### Return expression
