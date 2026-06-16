@@ -322,7 +322,6 @@ struct ValueType {
 };
 
 class MutableRange {
-
   struct Iterator {
     auto operator*() const -> ValueType&;
     auto operator++() -> Iterator&;
@@ -422,7 +421,6 @@ struct ValueType {
 };
 
 class MutableAndConstRange {
-
   struct Iterator {
     auto operator*() const -> ValueType&;
     auto operator++() -> Iterator&;
@@ -2845,7 +2843,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.6bf, @Optional.Get(%OptionalStorage.facet.642) [concrete]
 // CHECK:STDOUT:   %operator_PlusEqual__carbon_thunk.type: type = fn_type @operator_PlusEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_PlusEqual__carbon_thunk: %operator_PlusEqual__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.7: type = fn_type @Destroy.Op.loc32_31.6 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.7: type = fn_type @Destroy.Op.loc31_31.6 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.7: %Destroy.Op.type.1d8f74.7 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness.f37: <witness> = lookup_impl_witness %impl.elem1.46a, @Destroy [symbolic]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.e7e: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%impl.elem1.46a) [symbolic]
@@ -2888,153 +2886,153 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %MutableRange.decl: type = class_decl @MutableRange [concrete = constants.%MutableRange] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Test(%R.loc28_10.2: %Iterate_where.type.99d) {
+// CHECK:STDOUT: generic fn @Test(%R.loc27_10.2: %Iterate_where.type.99d) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc28_10.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.8b4)]
-// CHECK:STDOUT:   %Iterate.facet.loc32_31.5: %Iterate.type = facet_value %R.as_type.loc28_67.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc32_31.5 (constants.%Iterate.facet)]
-// CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc32_31.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.217)]
-// CHECK:STDOUT:   %.loc32_31.20: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc32_31.5 [symbolic = %.loc32_31.20 (constants.%.a27)]
-// CHECK:STDOUT:   %impl.elem2.loc32_31.2: @Test.%.loc32_31.20 (%.a27) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc32_31.2 (constants.%impl.elem2.7c0)]
-// CHECK:STDOUT:   %specific_impl_fn.loc32_31.4: <specific function> = specific_impl_function %impl.elem2.loc32_31.2, @Iterate.WithSelf.NewCursor(%Iterate.facet.loc32_31.5) [symbolic = %specific_impl_fn.loc32_31.4 (constants.%specific_impl_fn.e23)]
+// CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc27_10.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.8b4)]
+// CHECK:STDOUT:   %Iterate.facet.loc31_31.5: %Iterate.type = facet_value %R.as_type.loc27_67.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet)]
+// CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc31_31.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.217)]
+// CHECK:STDOUT:   %.loc31_31.20: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc31_31.5 [symbolic = %.loc31_31.20 (constants.%.a27)]
+// CHECK:STDOUT:   %impl.elem2.loc31_31.2: @Test.%.loc31_31.20 (%.a27) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc31_31.2 (constants.%impl.elem2.7c0)]
+// CHECK:STDOUT:   %specific_impl_fn.loc31_31.4: <specific function> = specific_impl_function %impl.elem2.loc31_31.2, @Iterate.WithSelf.NewCursor(%Iterate.facet.loc31_31.5) [symbolic = %specific_impl_fn.loc31_31.4 (constants.%specific_impl_fn.e23)]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %ptr: type = ptr_type %as_type [symbolic = %ptr (constants.%ptr.530)]
-// CHECK:STDOUT:   %Iterate.WithSelf.Next.type: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.loc32_31.5) [symbolic = %Iterate.WithSelf.Next.type (constants.%Iterate.WithSelf.Next.type.10a)]
-// CHECK:STDOUT:   %.loc32_31.21: type = fn_type_with_self_type %Iterate.WithSelf.Next.type, %Iterate.facet.loc32_31.5 [symbolic = %.loc32_31.21 (constants.%.df57)]
-// CHECK:STDOUT:   %impl.elem3.loc32_31.2: @Test.%.loc32_31.21 (%.df57) = impl_witness_access %Iterate.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc32_31.2 (constants.%impl.elem3.199)]
-// CHECK:STDOUT:   %specific_impl_fn.loc32_31.5: <specific function> = specific_impl_function %impl.elem3.loc32_31.2, @Iterate.WithSelf.Next(%Iterate.facet.loc32_31.5) [symbolic = %specific_impl_fn.loc32_31.5 (constants.%specific_impl_fn.169)]
+// CHECK:STDOUT:   %Iterate.WithSelf.Next.type: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.loc31_31.5) [symbolic = %Iterate.WithSelf.Next.type (constants.%Iterate.WithSelf.Next.type.10a)]
+// CHECK:STDOUT:   %.loc31_31.21: type = fn_type_with_self_type %Iterate.WithSelf.Next.type, %Iterate.facet.loc31_31.5 [symbolic = %.loc31_31.21 (constants.%.df57)]
+// CHECK:STDOUT:   %impl.elem3.loc31_31.2: @Test.%.loc31_31.21 (%.df57) = impl_witness_access %Iterate.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc31_31.2 (constants.%impl.elem3.199)]
+// CHECK:STDOUT:   %specific_impl_fn.loc31_31.5: <specific function> = specific_impl_function %impl.elem3.loc31_31.2, @Iterate.WithSelf.Next(%Iterate.facet.loc31_31.5) [symbolic = %specific_impl_fn.loc31_31.5 (constants.%specific_impl_fn.169)]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%impl.elem1) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.e7e)]
-// CHECK:STDOUT:   %.loc32_31.22: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %impl.elem1 [symbolic = %.loc32_31.22 (constants.%.bc1)]
+// CHECK:STDOUT:   %.loc31_31.22: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %impl.elem1 [symbolic = %.loc31_31.22 (constants.%.bc1)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.f37)]
-// CHECK:STDOUT:   %impl.elem0.loc32_31.2: @Test.%.loc32_31.22 (%.bc1) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc32_31.2 (constants.%impl.elem0.c7c)]
-// CHECK:STDOUT:   %specific_impl_fn.loc32_31.6: <specific function> = specific_impl_function %impl.elem0.loc32_31.2, @Destroy.WithSelf.Op(%impl.elem1) [symbolic = %specific_impl_fn.loc32_31.6 (constants.%specific_impl_fn.cd3)]
+// CHECK:STDOUT:   %impl.elem0.loc31_31.2: @Test.%.loc31_31.22 (%.bc1) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc31_31.2 (constants.%impl.elem0.c7c)]
+// CHECK:STDOUT:   %specific_impl_fn.loc31_31.6: <specific function> = specific_impl_function %impl.elem0.loc31_31.2, @Destroy.WithSelf.Op(%impl.elem1) [symbolic = %specific_impl_fn.loc31_31.6 (constants.%specific_impl_fn.cd3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%r.param: @Test.%R.as_type.loc28_67.1 (%R.as_type.a62)) {
+// CHECK:STDOUT:   fn(%r.param: @Test.%R.as_type.loc27_67.1 (%R.as_type.a62)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %i.patt: %pattern_type.e41 = value_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %r.ref: @Test.%R.as_type.loc28_67.1 (%R.as_type.a62) = name_ref r, %r
-// CHECK:STDOUT:     %impl.elem2.loc32_31.1: @Test.%.loc32_31.20 (%.a27) = impl_witness_access constants.%Iterate.lookup_impl_witness.8b4, element2 [symbolic = %impl.elem2.loc32_31.2 (constants.%impl.elem2.7c0)]
-// CHECK:STDOUT:     %bound_method.loc32_31.1: <bound method> = bound_method %r.ref, %impl.elem2.loc32_31.1
-// CHECK:STDOUT:     %Iterate.facet.loc32_31.1: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc32_31.5 (constants.%Iterate.facet)]
-// CHECK:STDOUT:     %.loc32_31.1: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc32_31.1 [symbolic = %Iterate.facet.loc32_31.5 (constants.%Iterate.facet)]
-// CHECK:STDOUT:     %Iterate.facet.loc32_31.2: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc32_31.5 (constants.%Iterate.facet)]
-// CHECK:STDOUT:     %.loc32_31.2: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc32_31.2 [symbolic = %Iterate.facet.loc32_31.5 (constants.%Iterate.facet)]
-// CHECK:STDOUT:     %specific_impl_fn.loc32_31.1: <specific function> = specific_impl_function %impl.elem2.loc32_31.1, @Iterate.WithSelf.NewCursor(constants.%Iterate.facet) [symbolic = %specific_impl_fn.loc32_31.4 (constants.%specific_impl_fn.e23)]
-// CHECK:STDOUT:     %bound_method.loc32_31.2: <bound method> = bound_method %r.ref, %specific_impl_fn.loc32_31.1
+// CHECK:STDOUT:     %r.ref: @Test.%R.as_type.loc27_67.1 (%R.as_type.a62) = name_ref r, %r
+// CHECK:STDOUT:     %impl.elem2.loc31_31.1: @Test.%.loc31_31.20 (%.a27) = impl_witness_access constants.%Iterate.lookup_impl_witness.8b4, element2 [symbolic = %impl.elem2.loc31_31.2 (constants.%impl.elem2.7c0)]
+// CHECK:STDOUT:     %bound_method.loc31_31.1: <bound method> = bound_method %r.ref, %impl.elem2.loc31_31.1
+// CHECK:STDOUT:     %Iterate.facet.loc31_31.1: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet)]
+// CHECK:STDOUT:     %.loc31_31.1: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc31_31.1 [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet)]
+// CHECK:STDOUT:     %Iterate.facet.loc31_31.2: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet)]
+// CHECK:STDOUT:     %.loc31_31.2: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc31_31.2 [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet)]
+// CHECK:STDOUT:     %specific_impl_fn.loc31_31.1: <specific function> = specific_impl_function %impl.elem2.loc31_31.1, @Iterate.WithSelf.NewCursor(constants.%Iterate.facet) [symbolic = %specific_impl_fn.loc31_31.4 (constants.%specific_impl_fn.e23)]
+// CHECK:STDOUT:     %bound_method.loc31_31.2: <bound method> = bound_method %r.ref, %specific_impl_fn.loc31_31.1
 // CHECK:STDOUT:     %var: ref @Test.%as_type (%as_type.862) = var invalid
-// CHECK:STDOUT:     %Iterate.WithSelf.NewCursor.call: init @Test.%as_type (%as_type.862) to %var = call %bound_method.loc32_31.2(%r.ref)
+// CHECK:STDOUT:     %Iterate.WithSelf.NewCursor.call: init @Test.%as_type (%as_type.862) to %var = call %bound_method.loc31_31.2(%r.ref)
 // CHECK:STDOUT:     assign %var, %Iterate.WithSelf.NewCursor.call
 // CHECK:STDOUT:     br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !for.next:
-// CHECK:STDOUT:     %addr.loc32: @Test.%ptr (%ptr.530) = addr_of %var
-// CHECK:STDOUT:     %impl.elem3.loc32_31.1: @Test.%.loc32_31.21 (%.df57) = impl_witness_access constants.%Iterate.lookup_impl_witness.8b4, element3 [symbolic = %impl.elem3.loc32_31.2 (constants.%impl.elem3.199)]
-// CHECK:STDOUT:     %bound_method.loc32_31.3: <bound method> = bound_method %r.ref, %impl.elem3.loc32_31.1
-// CHECK:STDOUT:     %Iterate.facet.loc32_31.3: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc32_31.5 (constants.%Iterate.facet)]
-// CHECK:STDOUT:     %.loc32_31.3: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc32_31.3 [symbolic = %Iterate.facet.loc32_31.5 (constants.%Iterate.facet)]
-// CHECK:STDOUT:     %Iterate.facet.loc32_31.4: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc32_31.5 (constants.%Iterate.facet)]
-// CHECK:STDOUT:     %.loc32_31.4: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc32_31.4 [symbolic = %Iterate.facet.loc32_31.5 (constants.%Iterate.facet)]
-// CHECK:STDOUT:     %.loc32_31.5: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
-// CHECK:STDOUT:     %.loc32_31.6: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
-// CHECK:STDOUT:     %specific_impl_fn.loc32_31.2: <specific function> = specific_impl_function %impl.elem3.loc32_31.1, @Iterate.WithSelf.Next(constants.%Iterate.facet) [symbolic = %specific_impl_fn.loc32_31.5 (constants.%specific_impl_fn.169)]
-// CHECK:STDOUT:     %bound_method.loc32_31.4: <bound method> = bound_method %r.ref, %specific_impl_fn.loc32_31.2
-// CHECK:STDOUT:     %.loc32_31.7: ref %Optional.be6 = temporary_storage
-// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.be6 to %.loc32_31.7 = call %bound_method.loc32_31.4(%r.ref, %addr.loc32)
-// CHECK:STDOUT:     %.loc32_31.8: ref %Optional.be6 = temporary %.loc32_31.7, %Iterate.WithSelf.Next.call
-// CHECK:STDOUT:     %.loc32_31.9: %Optional.HasValue.type.2bf = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.642) [concrete = constants.%Optional.HasValue.cdf]
-// CHECK:STDOUT:     %HasValue.ref: %Optional.HasValue.type.2bf = name_ref HasValue, %.loc32_31.9 [concrete = constants.%Optional.HasValue.cdf]
-// CHECK:STDOUT:     %Optional.HasValue.bound: <bound method> = bound_method %.loc32_31.8, %HasValue.ref
+// CHECK:STDOUT:     %addr.loc31: @Test.%ptr (%ptr.530) = addr_of %var
+// CHECK:STDOUT:     %impl.elem3.loc31_31.1: @Test.%.loc31_31.21 (%.df57) = impl_witness_access constants.%Iterate.lookup_impl_witness.8b4, element3 [symbolic = %impl.elem3.loc31_31.2 (constants.%impl.elem3.199)]
+// CHECK:STDOUT:     %bound_method.loc31_31.3: <bound method> = bound_method %r.ref, %impl.elem3.loc31_31.1
+// CHECK:STDOUT:     %Iterate.facet.loc31_31.3: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet)]
+// CHECK:STDOUT:     %.loc31_31.3: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc31_31.3 [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet)]
+// CHECK:STDOUT:     %Iterate.facet.loc31_31.4: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet)]
+// CHECK:STDOUT:     %.loc31_31.4: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc31_31.4 [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet)]
+// CHECK:STDOUT:     %.loc31_31.5: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:     %.loc31_31.6: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:     %specific_impl_fn.loc31_31.2: <specific function> = specific_impl_function %impl.elem3.loc31_31.1, @Iterate.WithSelf.Next(constants.%Iterate.facet) [symbolic = %specific_impl_fn.loc31_31.5 (constants.%specific_impl_fn.169)]
+// CHECK:STDOUT:     %bound_method.loc31_31.4: <bound method> = bound_method %r.ref, %specific_impl_fn.loc31_31.2
+// CHECK:STDOUT:     %.loc31_31.7: ref %Optional.be6 = temporary_storage
+// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.be6 to %.loc31_31.7 = call %bound_method.loc31_31.4(%r.ref, %addr.loc31)
+// CHECK:STDOUT:     %.loc31_31.8: ref %Optional.be6 = temporary %.loc31_31.7, %Iterate.WithSelf.Next.call
+// CHECK:STDOUT:     %.loc31_31.9: %Optional.HasValue.type.2bf = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.642) [concrete = constants.%Optional.HasValue.cdf]
+// CHECK:STDOUT:     %HasValue.ref: %Optional.HasValue.type.2bf = name_ref HasValue, %.loc31_31.9 [concrete = constants.%Optional.HasValue.cdf]
+// CHECK:STDOUT:     %Optional.HasValue.bound: <bound method> = bound_method %.loc31_31.8, %HasValue.ref
 // CHECK:STDOUT:     %Optional.HasValue.specific_fn: <specific function> = specific_function %HasValue.ref, @Optional.HasValue(constants.%OptionalStorage.facet.642) [concrete = constants.%Optional.HasValue.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc32_31.5: <bound method> = bound_method %.loc32_31.8, %Optional.HasValue.specific_fn
-// CHECK:STDOUT:     %.loc32_31.10: %Optional.be6 = acquire_value %.loc32_31.8
-// CHECK:STDOUT:     %Optional.HasValue.call: init bool = call %bound_method.loc32_31.5(%.loc32_31.10)
-// CHECK:STDOUT:     %.loc32_31.11: bool = value_of_initializer %Optional.HasValue.call
-// CHECK:STDOUT:     %.loc32_31.12: bool = converted %Optional.HasValue.call, %.loc32_31.11
-// CHECK:STDOUT:     if %.loc32_31.12 br !for.body else br !for.done
+// CHECK:STDOUT:     %bound_method.loc31_31.5: <bound method> = bound_method %.loc31_31.8, %Optional.HasValue.specific_fn
+// CHECK:STDOUT:     %.loc31_31.10: %Optional.be6 = acquire_value %.loc31_31.8
+// CHECK:STDOUT:     %Optional.HasValue.call: init bool = call %bound_method.loc31_31.5(%.loc31_31.10)
+// CHECK:STDOUT:     %.loc31_31.11: bool = value_of_initializer %Optional.HasValue.call
+// CHECK:STDOUT:     %.loc31_31.12: bool = converted %Optional.HasValue.call, %.loc31_31.11
+// CHECK:STDOUT:     if %.loc31_31.12 br !for.body else br !for.done
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !for.body:
-// CHECK:STDOUT:     %.loc32_31.13: %Optional.Get.type.112 = specific_constant imports.%Core.import_ref.daba, @Optional(constants.%OptionalStorage.facet.642) [concrete = constants.%Optional.Get.6bf]
-// CHECK:STDOUT:     %Get.ref: %Optional.Get.type.112 = name_ref Get, %.loc32_31.13 [concrete = constants.%Optional.Get.6bf]
-// CHECK:STDOUT:     %Optional.Get.bound: <bound method> = bound_method %.loc32_31.8, %Get.ref
+// CHECK:STDOUT:     %.loc31_31.13: %Optional.Get.type.112 = specific_constant imports.%Core.import_ref.daba, @Optional(constants.%OptionalStorage.facet.642) [concrete = constants.%Optional.Get.6bf]
+// CHECK:STDOUT:     %Get.ref: %Optional.Get.type.112 = name_ref Get, %.loc31_31.13 [concrete = constants.%Optional.Get.6bf]
+// CHECK:STDOUT:     %Optional.Get.bound: <bound method> = bound_method %.loc31_31.8, %Get.ref
 // CHECK:STDOUT:     %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%OptionalStorage.facet.642) [concrete = constants.%Optional.Get.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc32_31.6: <bound method> = bound_method %.loc32_31.8, %Optional.Get.specific_fn
-// CHECK:STDOUT:     %.loc32_31.14: ref %ValueType = temporary_storage
-// CHECK:STDOUT:     %.loc32_31.15: %Optional.be6 = acquire_value %.loc32_31.8
-// CHECK:STDOUT:     %Optional.Get.call: init %ValueType to %.loc32_31.14 = call %bound_method.loc32_31.6(%.loc32_31.15)
-// CHECK:STDOUT:     %.loc32_31.16: ref %ValueType = temporary %.loc32_31.14, %Optional.Get.call
-// CHECK:STDOUT:     %.loc32_31.17: %ValueType = acquire_value %.loc32_31.16
-// CHECK:STDOUT:     %.loc32_16: type = splice_block %ValueType.ref.loc32 [concrete = constants.%ValueType] {
-// CHECK:STDOUT:       %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %N.ref.loc32: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
-// CHECK:STDOUT:       %ValueType.ref.loc32: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
+// CHECK:STDOUT:     %bound_method.loc31_31.6: <bound method> = bound_method %.loc31_31.8, %Optional.Get.specific_fn
+// CHECK:STDOUT:     %.loc31_31.14: ref %ValueType = temporary_storage
+// CHECK:STDOUT:     %.loc31_31.15: %Optional.be6 = acquire_value %.loc31_31.8
+// CHECK:STDOUT:     %Optional.Get.call: init %ValueType to %.loc31_31.14 = call %bound_method.loc31_31.6(%.loc31_31.15)
+// CHECK:STDOUT:     %.loc31_31.16: ref %ValueType = temporary %.loc31_31.14, %Optional.Get.call
+// CHECK:STDOUT:     %.loc31_31.17: %ValueType = acquire_value %.loc31_31.16
+// CHECK:STDOUT:     %.loc31_16: type = splice_block %ValueType.ref.loc31 [concrete = constants.%ValueType] {
+// CHECK:STDOUT:       %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %N.ref.loc31: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
+// CHECK:STDOUT:       %ValueType.ref.loc31: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: %ValueType = value_binding i, %.loc32_31.17
+// CHECK:STDOUT:     %i: %ValueType = value_binding i, %.loc31_31.17
 // CHECK:STDOUT:     %sum.ref: ref %ValueType = name_ref sum, %sum
 // CHECK:STDOUT:     %i.ref: %ValueType = name_ref i, %i
-// CHECK:STDOUT:     %.loc33_12: ref %ValueType = value_as_ref %i.ref
-// CHECK:STDOUT:     %addr.loc33: %ptr.9d3 = addr_of %.loc33_12
-// CHECK:STDOUT:     %.loc33_9.1: %ptr.32e = as_compatible %addr.loc33
-// CHECK:STDOUT:     %.loc33_9.2: %ptr.32e = converted %addr.loc33, %.loc33_9.1
-// CHECK:STDOUT:     %operator_PlusEqual__carbon_thunk.call: ref %ValueType = call imports.%operator_PlusEqual__carbon_thunk.decl(%sum.ref, %.loc33_9.2)
+// CHECK:STDOUT:     %.loc32_12: ref %ValueType = value_as_ref %i.ref
+// CHECK:STDOUT:     %addr.loc32: %ptr.9d3 = addr_of %.loc32_12
+// CHECK:STDOUT:     %.loc32_9.1: %ptr.32e = as_compatible %addr.loc32
+// CHECK:STDOUT:     %.loc32_9.2: %ptr.32e = converted %addr.loc32, %.loc32_9.1
+// CHECK:STDOUT:     %operator_PlusEqual__carbon_thunk.call: ref %ValueType = call imports.%operator_PlusEqual__carbon_thunk.decl(%sum.ref, %.loc32_9.2)
 // CHECK:STDOUT:     br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !for.done:
-// CHECK:STDOUT:     %ValueType.Op.bound.loc32: <bound method> = bound_method %.loc32_31.16, constants.%ValueType.Op.4c94b9.1
-// CHECK:STDOUT:     %Op.ref.loc32: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
-// CHECK:STDOUT:     %ValueType.cpp_destructor.bound.loc32: <bound method> = bound_method %.loc32_31.16, %Op.ref.loc32
-// CHECK:STDOUT:     %ValueType.cpp_destructor.call.loc32: init %empty_tuple.type = call %ValueType.cpp_destructor.bound.loc32(%.loc32_31.16)
-// CHECK:STDOUT:     %Destroy.Op.bound: <bound method> = bound_method %.loc32_31.8, constants.%Destroy.Op.1a2547.7
-// CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc32_31.8)
-// CHECK:STDOUT:     %impl.elem0.loc32_31.1: @Test.%.loc32_31.22 (%.bc1) = impl_witness_access constants.%Destroy.lookup_impl_witness.f37, element0 [symbolic = %impl.elem0.loc32_31.2 (constants.%impl.elem0.c7c)]
-// CHECK:STDOUT:     %bound_method.loc32_31.7: <bound method> = bound_method %var, %impl.elem0.loc32_31.1
-// CHECK:STDOUT:     %.loc32_31.18: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
-// CHECK:STDOUT:     %.loc32_31.19: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
-// CHECK:STDOUT:     %specific_impl_fn.loc32_31.3: <specific function> = specific_impl_function %impl.elem0.loc32_31.1, @Destroy.WithSelf.Op(constants.%impl.elem1.46a) [symbolic = %specific_impl_fn.loc32_31.6 (constants.%specific_impl_fn.cd3)]
-// CHECK:STDOUT:     %bound_method.loc32_31.8: <bound method> = bound_method %var, %specific_impl_fn.loc32_31.3
-// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc32_31.8(%var)
+// CHECK:STDOUT:     %ValueType.Op.bound.loc31: <bound method> = bound_method %.loc31_31.16, constants.%ValueType.Op.4c94b9.1
+// CHECK:STDOUT:     %Op.ref.loc31: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
+// CHECK:STDOUT:     %ValueType.cpp_destructor.bound.loc31: <bound method> = bound_method %.loc31_31.16, %Op.ref.loc31
+// CHECK:STDOUT:     %ValueType.cpp_destructor.call.loc31: init %empty_tuple.type = call %ValueType.cpp_destructor.bound.loc31(%.loc31_31.16)
+// CHECK:STDOUT:     %Destroy.Op.bound: <bound method> = bound_method %.loc31_31.8, constants.%Destroy.Op.1a2547.7
+// CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc31_31.8)
+// CHECK:STDOUT:     %impl.elem0.loc31_31.1: @Test.%.loc31_31.22 (%.bc1) = impl_witness_access constants.%Destroy.lookup_impl_witness.f37, element0 [symbolic = %impl.elem0.loc31_31.2 (constants.%impl.elem0.c7c)]
+// CHECK:STDOUT:     %bound_method.loc31_31.7: <bound method> = bound_method %var, %impl.elem0.loc31_31.1
+// CHECK:STDOUT:     %.loc31_31.18: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:     %.loc31_31.19: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:     %specific_impl_fn.loc31_31.3: <specific function> = specific_impl_function %impl.elem0.loc31_31.1, @Destroy.WithSelf.Op(constants.%impl.elem1.46a) [symbolic = %specific_impl_fn.loc31_31.6 (constants.%specific_impl_fn.cd3)]
+// CHECK:STDOUT:     %bound_method.loc31_31.8: <bound method> = bound_method %var, %specific_impl_fn.loc31_31.3
+// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc31_31.8(%var)
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc32_31.1(%self.param: ref %.b36) {
+// CHECK:STDOUT: fn @Destroy.Op.loc31_31.1(%self.param: ref %.b36) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc32_31.2(%self.param: ref %MaybeUnformed.669) {
+// CHECK:STDOUT: fn @Destroy.Op.loc31_31.2(%self.param: ref %MaybeUnformed.669) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc32_31.3(%self.param: ref bool) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc31_31.3(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc32_31.4(%self.param: ref %struct_type.value.has_value.5a1) {
+// CHECK:STDOUT: fn @Destroy.Op.loc31_31.4(%self.param: ref %struct_type.value.has_value.5a1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc32_31.5(%self.param: ref %DefaultOptionalStorage.257) {
+// CHECK:STDOUT: fn @Destroy.Op.loc31_31.5(%self.param: ref %DefaultOptionalStorage.257) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc32_31.6(%self.param: ref %Optional.be6) {
+// CHECK:STDOUT: fn @Destroy.Op.loc31_31.6(%self.param: ref %Optional.be6) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Test(constants.%R.623) {
-// CHECK:STDOUT:   %R.patt.loc28_10.2 => constants.%R.patt.324
-// CHECK:STDOUT:   %R.loc28_10.1 => constants.%R.623
-// CHECK:STDOUT:   %R.as_type.loc28_67.1 => constants.%R.as_type.a62
+// CHECK:STDOUT:   %R.patt.loc27_10.2 => constants.%R.patt.324
+// CHECK:STDOUT:   %R.loc27_10.1 => constants.%R.623
+// CHECK:STDOUT:   %R.as_type.loc27_67.1 => constants.%R.as_type.a62
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.725
-// CHECK:STDOUT:   %r.param_patt.loc28_65.2 => constants.%r.param_patt
-// CHECK:STDOUT:   %r.patt.loc28_65.2 => constants.%r.patt
+// CHECK:STDOUT:   %r.param_patt.loc27_65.2 => constants.%r.param_patt
+// CHECK:STDOUT:   %r.patt.loc27_65.2 => constants.%r.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_adl_overloads.carbon
@@ -3141,7 +3139,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.5aa, @Optional.Get(%OptionalStorage.facet.7ce) [concrete]
 // CHECK:STDOUT:   %operator_PlusEqual__carbon_thunk.type: type = fn_type @operator_PlusEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_PlusEqual__carbon_thunk: %operator_PlusEqual__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.7: type = fn_type @Destroy.Op.loc39_31.6 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.7: type = fn_type @Destroy.Op.loc38_31.6 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.7: %Destroy.Op.type.1d8f74.7 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness.f37: <witness> = lookup_impl_witness %impl.elem1.46a, @Destroy [symbolic]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.e7e: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%impl.elem1.46a) [symbolic]
@@ -3238,183 +3236,183 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %MutableAndConstRange.decl: type = class_decl @MutableAndConstRange [concrete = constants.%MutableAndConstRange] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Test(%R.loc35_10.2: %Iterate_where.type.99d) {
+// CHECK:STDOUT: generic fn @Test(%R.loc34_10.2: %Iterate_where.type.99d) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc35_10.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.8b4)]
-// CHECK:STDOUT:   %Iterate.facet.loc39_31.5: %Iterate.type = facet_value %R.as_type.loc35_67.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc39_31.5 (constants.%Iterate.facet.b19)]
-// CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc39_31.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.217)]
-// CHECK:STDOUT:   %.loc39_31.20: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc39_31.5 [symbolic = %.loc39_31.20 (constants.%.a27)]
-// CHECK:STDOUT:   %impl.elem2.loc39_31.2: @Test.%.loc39_31.20 (%.a27) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc39_31.2 (constants.%impl.elem2.7c0)]
-// CHECK:STDOUT:   %specific_impl_fn.loc39_31.4: <specific function> = specific_impl_function %impl.elem2.loc39_31.2, @Iterate.WithSelf.NewCursor(%Iterate.facet.loc39_31.5) [symbolic = %specific_impl_fn.loc39_31.4 (constants.%specific_impl_fn.e23)]
+// CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc34_10.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.8b4)]
+// CHECK:STDOUT:   %Iterate.facet.loc38_31.5: %Iterate.type = facet_value %R.as_type.loc34_67.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc38_31.5 (constants.%Iterate.facet.b19)]
+// CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc38_31.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.217)]
+// CHECK:STDOUT:   %.loc38_31.20: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc38_31.5 [symbolic = %.loc38_31.20 (constants.%.a27)]
+// CHECK:STDOUT:   %impl.elem2.loc38_31.2: @Test.%.loc38_31.20 (%.a27) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc38_31.2 (constants.%impl.elem2.7c0)]
+// CHECK:STDOUT:   %specific_impl_fn.loc38_31.4: <specific function> = specific_impl_function %impl.elem2.loc38_31.2, @Iterate.WithSelf.NewCursor(%Iterate.facet.loc38_31.5) [symbolic = %specific_impl_fn.loc38_31.4 (constants.%specific_impl_fn.e23)]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %ptr: type = ptr_type %as_type [symbolic = %ptr (constants.%ptr.530)]
-// CHECK:STDOUT:   %Iterate.WithSelf.Next.type: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.loc39_31.5) [symbolic = %Iterate.WithSelf.Next.type (constants.%Iterate.WithSelf.Next.type.10a)]
-// CHECK:STDOUT:   %.loc39_31.21: type = fn_type_with_self_type %Iterate.WithSelf.Next.type, %Iterate.facet.loc39_31.5 [symbolic = %.loc39_31.21 (constants.%.df57)]
-// CHECK:STDOUT:   %impl.elem3.loc39_31.2: @Test.%.loc39_31.21 (%.df57) = impl_witness_access %Iterate.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc39_31.2 (constants.%impl.elem3.199)]
-// CHECK:STDOUT:   %specific_impl_fn.loc39_31.5: <specific function> = specific_impl_function %impl.elem3.loc39_31.2, @Iterate.WithSelf.Next(%Iterate.facet.loc39_31.5) [symbolic = %specific_impl_fn.loc39_31.5 (constants.%specific_impl_fn.169)]
+// CHECK:STDOUT:   %Iterate.WithSelf.Next.type: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.loc38_31.5) [symbolic = %Iterate.WithSelf.Next.type (constants.%Iterate.WithSelf.Next.type.10a)]
+// CHECK:STDOUT:   %.loc38_31.21: type = fn_type_with_self_type %Iterate.WithSelf.Next.type, %Iterate.facet.loc38_31.5 [symbolic = %.loc38_31.21 (constants.%.df57)]
+// CHECK:STDOUT:   %impl.elem3.loc38_31.2: @Test.%.loc38_31.21 (%.df57) = impl_witness_access %Iterate.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc38_31.2 (constants.%impl.elem3.199)]
+// CHECK:STDOUT:   %specific_impl_fn.loc38_31.5: <specific function> = specific_impl_function %impl.elem3.loc38_31.2, @Iterate.WithSelf.Next(%Iterate.facet.loc38_31.5) [symbolic = %specific_impl_fn.loc38_31.5 (constants.%specific_impl_fn.169)]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%impl.elem1) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.e7e)]
-// CHECK:STDOUT:   %.loc39_31.22: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %impl.elem1 [symbolic = %.loc39_31.22 (constants.%.bc1)]
+// CHECK:STDOUT:   %.loc38_31.22: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %impl.elem1 [symbolic = %.loc38_31.22 (constants.%.bc1)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.f37)]
-// CHECK:STDOUT:   %impl.elem0.loc39_31.2: @Test.%.loc39_31.22 (%.bc1) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc39_31.2 (constants.%impl.elem0.c7c)]
-// CHECK:STDOUT:   %specific_impl_fn.loc39_31.6: <specific function> = specific_impl_function %impl.elem0.loc39_31.2, @Destroy.WithSelf.Op(%impl.elem1) [symbolic = %specific_impl_fn.loc39_31.6 (constants.%specific_impl_fn.cd3)]
+// CHECK:STDOUT:   %impl.elem0.loc38_31.2: @Test.%.loc38_31.22 (%.bc1) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc38_31.2 (constants.%impl.elem0.c7c)]
+// CHECK:STDOUT:   %specific_impl_fn.loc38_31.6: <specific function> = specific_impl_function %impl.elem0.loc38_31.2, @Destroy.WithSelf.Op(%impl.elem1) [symbolic = %specific_impl_fn.loc38_31.6 (constants.%specific_impl_fn.cd3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%r.param: @Test.%R.as_type.loc35_67.1 (%R.as_type.a62)) {
+// CHECK:STDOUT:   fn(%r.param: @Test.%R.as_type.loc34_67.1 (%R.as_type.a62)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %i.patt: %pattern_type.e41 = value_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %r.ref: @Test.%R.as_type.loc35_67.1 (%R.as_type.a62) = name_ref r, %r
-// CHECK:STDOUT:     %impl.elem2.loc39_31.1: @Test.%.loc39_31.20 (%.a27) = impl_witness_access constants.%Iterate.lookup_impl_witness.8b4, element2 [symbolic = %impl.elem2.loc39_31.2 (constants.%impl.elem2.7c0)]
-// CHECK:STDOUT:     %bound_method.loc39_31.1: <bound method> = bound_method %r.ref, %impl.elem2.loc39_31.1
-// CHECK:STDOUT:     %Iterate.facet.loc39_31.1: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc39_31.5 (constants.%Iterate.facet.b19)]
-// CHECK:STDOUT:     %.loc39_31.1: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc39_31.1 [symbolic = %Iterate.facet.loc39_31.5 (constants.%Iterate.facet.b19)]
-// CHECK:STDOUT:     %Iterate.facet.loc39_31.2: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc39_31.5 (constants.%Iterate.facet.b19)]
-// CHECK:STDOUT:     %.loc39_31.2: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc39_31.2 [symbolic = %Iterate.facet.loc39_31.5 (constants.%Iterate.facet.b19)]
-// CHECK:STDOUT:     %specific_impl_fn.loc39_31.1: <specific function> = specific_impl_function %impl.elem2.loc39_31.1, @Iterate.WithSelf.NewCursor(constants.%Iterate.facet.b19) [symbolic = %specific_impl_fn.loc39_31.4 (constants.%specific_impl_fn.e23)]
-// CHECK:STDOUT:     %bound_method.loc39_31.2: <bound method> = bound_method %r.ref, %specific_impl_fn.loc39_31.1
+// CHECK:STDOUT:     %r.ref: @Test.%R.as_type.loc34_67.1 (%R.as_type.a62) = name_ref r, %r
+// CHECK:STDOUT:     %impl.elem2.loc38_31.1: @Test.%.loc38_31.20 (%.a27) = impl_witness_access constants.%Iterate.lookup_impl_witness.8b4, element2 [symbolic = %impl.elem2.loc38_31.2 (constants.%impl.elem2.7c0)]
+// CHECK:STDOUT:     %bound_method.loc38_31.1: <bound method> = bound_method %r.ref, %impl.elem2.loc38_31.1
+// CHECK:STDOUT:     %Iterate.facet.loc38_31.1: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc38_31.5 (constants.%Iterate.facet.b19)]
+// CHECK:STDOUT:     %.loc38_31.1: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc38_31.1 [symbolic = %Iterate.facet.loc38_31.5 (constants.%Iterate.facet.b19)]
+// CHECK:STDOUT:     %Iterate.facet.loc38_31.2: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc38_31.5 (constants.%Iterate.facet.b19)]
+// CHECK:STDOUT:     %.loc38_31.2: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc38_31.2 [symbolic = %Iterate.facet.loc38_31.5 (constants.%Iterate.facet.b19)]
+// CHECK:STDOUT:     %specific_impl_fn.loc38_31.1: <specific function> = specific_impl_function %impl.elem2.loc38_31.1, @Iterate.WithSelf.NewCursor(constants.%Iterate.facet.b19) [symbolic = %specific_impl_fn.loc38_31.4 (constants.%specific_impl_fn.e23)]
+// CHECK:STDOUT:     %bound_method.loc38_31.2: <bound method> = bound_method %r.ref, %specific_impl_fn.loc38_31.1
 // CHECK:STDOUT:     %var: ref @Test.%as_type (%as_type.862) = var invalid
-// CHECK:STDOUT:     %Iterate.WithSelf.NewCursor.call: init @Test.%as_type (%as_type.862) to %var = call %bound_method.loc39_31.2(%r.ref)
+// CHECK:STDOUT:     %Iterate.WithSelf.NewCursor.call: init @Test.%as_type (%as_type.862) to %var = call %bound_method.loc38_31.2(%r.ref)
 // CHECK:STDOUT:     assign %var, %Iterate.WithSelf.NewCursor.call
 // CHECK:STDOUT:     br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !for.next:
-// CHECK:STDOUT:     %addr.loc39: @Test.%ptr (%ptr.530) = addr_of %var
-// CHECK:STDOUT:     %impl.elem3.loc39_31.1: @Test.%.loc39_31.21 (%.df57) = impl_witness_access constants.%Iterate.lookup_impl_witness.8b4, element3 [symbolic = %impl.elem3.loc39_31.2 (constants.%impl.elem3.199)]
-// CHECK:STDOUT:     %bound_method.loc39_31.3: <bound method> = bound_method %r.ref, %impl.elem3.loc39_31.1
-// CHECK:STDOUT:     %Iterate.facet.loc39_31.3: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc39_31.5 (constants.%Iterate.facet.b19)]
-// CHECK:STDOUT:     %.loc39_31.3: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc39_31.3 [symbolic = %Iterate.facet.loc39_31.5 (constants.%Iterate.facet.b19)]
-// CHECK:STDOUT:     %Iterate.facet.loc39_31.4: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc39_31.5 (constants.%Iterate.facet.b19)]
-// CHECK:STDOUT:     %.loc39_31.4: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc39_31.4 [symbolic = %Iterate.facet.loc39_31.5 (constants.%Iterate.facet.b19)]
-// CHECK:STDOUT:     %.loc39_31.5: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
-// CHECK:STDOUT:     %.loc39_31.6: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
-// CHECK:STDOUT:     %specific_impl_fn.loc39_31.2: <specific function> = specific_impl_function %impl.elem3.loc39_31.1, @Iterate.WithSelf.Next(constants.%Iterate.facet.b19) [symbolic = %specific_impl_fn.loc39_31.5 (constants.%specific_impl_fn.169)]
-// CHECK:STDOUT:     %bound_method.loc39_31.4: <bound method> = bound_method %r.ref, %specific_impl_fn.loc39_31.2
-// CHECK:STDOUT:     %.loc39_31.7: ref %Optional.552 = temporary_storage
-// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.552 to %.loc39_31.7 = call %bound_method.loc39_31.4(%r.ref, %addr.loc39)
-// CHECK:STDOUT:     %.loc39_31.8: ref %Optional.552 = temporary %.loc39_31.7, %Iterate.WithSelf.Next.call
-// CHECK:STDOUT:     %.loc39_31.9: %Optional.HasValue.type.109 = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.7ce) [concrete = constants.%Optional.HasValue.605]
-// CHECK:STDOUT:     %HasValue.ref: %Optional.HasValue.type.109 = name_ref HasValue, %.loc39_31.9 [concrete = constants.%Optional.HasValue.605]
-// CHECK:STDOUT:     %Optional.HasValue.bound: <bound method> = bound_method %.loc39_31.8, %HasValue.ref
+// CHECK:STDOUT:     %addr.loc38: @Test.%ptr (%ptr.530) = addr_of %var
+// CHECK:STDOUT:     %impl.elem3.loc38_31.1: @Test.%.loc38_31.21 (%.df57) = impl_witness_access constants.%Iterate.lookup_impl_witness.8b4, element3 [symbolic = %impl.elem3.loc38_31.2 (constants.%impl.elem3.199)]
+// CHECK:STDOUT:     %bound_method.loc38_31.3: <bound method> = bound_method %r.ref, %impl.elem3.loc38_31.1
+// CHECK:STDOUT:     %Iterate.facet.loc38_31.3: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc38_31.5 (constants.%Iterate.facet.b19)]
+// CHECK:STDOUT:     %.loc38_31.3: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc38_31.3 [symbolic = %Iterate.facet.loc38_31.5 (constants.%Iterate.facet.b19)]
+// CHECK:STDOUT:     %Iterate.facet.loc38_31.4: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc38_31.5 (constants.%Iterate.facet.b19)]
+// CHECK:STDOUT:     %.loc38_31.4: %Iterate.type = converted constants.%R.as_type.a62, %Iterate.facet.loc38_31.4 [symbolic = %Iterate.facet.loc38_31.5 (constants.%Iterate.facet.b19)]
+// CHECK:STDOUT:     %.loc38_31.5: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:     %.loc38_31.6: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:     %specific_impl_fn.loc38_31.2: <specific function> = specific_impl_function %impl.elem3.loc38_31.1, @Iterate.WithSelf.Next(constants.%Iterate.facet.b19) [symbolic = %specific_impl_fn.loc38_31.5 (constants.%specific_impl_fn.169)]
+// CHECK:STDOUT:     %bound_method.loc38_31.4: <bound method> = bound_method %r.ref, %specific_impl_fn.loc38_31.2
+// CHECK:STDOUT:     %.loc38_31.7: ref %Optional.552 = temporary_storage
+// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.552 to %.loc38_31.7 = call %bound_method.loc38_31.4(%r.ref, %addr.loc38)
+// CHECK:STDOUT:     %.loc38_31.8: ref %Optional.552 = temporary %.loc38_31.7, %Iterate.WithSelf.Next.call
+// CHECK:STDOUT:     %.loc38_31.9: %Optional.HasValue.type.109 = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.7ce) [concrete = constants.%Optional.HasValue.605]
+// CHECK:STDOUT:     %HasValue.ref: %Optional.HasValue.type.109 = name_ref HasValue, %.loc38_31.9 [concrete = constants.%Optional.HasValue.605]
+// CHECK:STDOUT:     %Optional.HasValue.bound: <bound method> = bound_method %.loc38_31.8, %HasValue.ref
 // CHECK:STDOUT:     %Optional.HasValue.specific_fn: <specific function> = specific_function %HasValue.ref, @Optional.HasValue(constants.%OptionalStorage.facet.7ce) [concrete = constants.%Optional.HasValue.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc39_31.5: <bound method> = bound_method %.loc39_31.8, %Optional.HasValue.specific_fn
-// CHECK:STDOUT:     %.loc39_31.10: %Optional.552 = acquire_value %.loc39_31.8
-// CHECK:STDOUT:     %Optional.HasValue.call: init bool = call %bound_method.loc39_31.5(%.loc39_31.10)
-// CHECK:STDOUT:     %.loc39_31.11: bool = value_of_initializer %Optional.HasValue.call
-// CHECK:STDOUT:     %.loc39_31.12: bool = converted %Optional.HasValue.call, %.loc39_31.11
-// CHECK:STDOUT:     if %.loc39_31.12 br !for.body else br !for.done
+// CHECK:STDOUT:     %bound_method.loc38_31.5: <bound method> = bound_method %.loc38_31.8, %Optional.HasValue.specific_fn
+// CHECK:STDOUT:     %.loc38_31.10: %Optional.552 = acquire_value %.loc38_31.8
+// CHECK:STDOUT:     %Optional.HasValue.call: init bool = call %bound_method.loc38_31.5(%.loc38_31.10)
+// CHECK:STDOUT:     %.loc38_31.11: bool = value_of_initializer %Optional.HasValue.call
+// CHECK:STDOUT:     %.loc38_31.12: bool = converted %Optional.HasValue.call, %.loc38_31.11
+// CHECK:STDOUT:     if %.loc38_31.12 br !for.body else br !for.done
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !for.body:
-// CHECK:STDOUT:     %.loc39_31.13: %Optional.Get.type.135 = specific_constant imports.%Core.import_ref.daba, @Optional(constants.%OptionalStorage.facet.7ce) [concrete = constants.%Optional.Get.5aa]
-// CHECK:STDOUT:     %Get.ref: %Optional.Get.type.135 = name_ref Get, %.loc39_31.13 [concrete = constants.%Optional.Get.5aa]
-// CHECK:STDOUT:     %Optional.Get.bound: <bound method> = bound_method %.loc39_31.8, %Get.ref
+// CHECK:STDOUT:     %.loc38_31.13: %Optional.Get.type.135 = specific_constant imports.%Core.import_ref.daba, @Optional(constants.%OptionalStorage.facet.7ce) [concrete = constants.%Optional.Get.5aa]
+// CHECK:STDOUT:     %Get.ref: %Optional.Get.type.135 = name_ref Get, %.loc38_31.13 [concrete = constants.%Optional.Get.5aa]
+// CHECK:STDOUT:     %Optional.Get.bound: <bound method> = bound_method %.loc38_31.8, %Get.ref
 // CHECK:STDOUT:     %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%OptionalStorage.facet.7ce) [concrete = constants.%Optional.Get.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc39_31.6: <bound method> = bound_method %.loc39_31.8, %Optional.Get.specific_fn
-// CHECK:STDOUT:     %.loc39_31.14: ref %ValueType = temporary_storage
-// CHECK:STDOUT:     %.loc39_31.15: %Optional.552 = acquire_value %.loc39_31.8
-// CHECK:STDOUT:     %Optional.Get.call: init %ValueType to %.loc39_31.14 = call %bound_method.loc39_31.6(%.loc39_31.15)
-// CHECK:STDOUT:     %.loc39_31.16: ref %ValueType = temporary %.loc39_31.14, %Optional.Get.call
-// CHECK:STDOUT:     %.loc39_31.17: %ValueType = acquire_value %.loc39_31.16
-// CHECK:STDOUT:     %.loc39_16: type = splice_block %ValueType.ref.loc39 [concrete = constants.%ValueType] {
-// CHECK:STDOUT:       %Cpp.ref.loc39: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %N.ref.loc39: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
-// CHECK:STDOUT:       %ValueType.ref.loc39: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
+// CHECK:STDOUT:     %bound_method.loc38_31.6: <bound method> = bound_method %.loc38_31.8, %Optional.Get.specific_fn
+// CHECK:STDOUT:     %.loc38_31.14: ref %ValueType = temporary_storage
+// CHECK:STDOUT:     %.loc38_31.15: %Optional.552 = acquire_value %.loc38_31.8
+// CHECK:STDOUT:     %Optional.Get.call: init %ValueType to %.loc38_31.14 = call %bound_method.loc38_31.6(%.loc38_31.15)
+// CHECK:STDOUT:     %.loc38_31.16: ref %ValueType = temporary %.loc38_31.14, %Optional.Get.call
+// CHECK:STDOUT:     %.loc38_31.17: %ValueType = acquire_value %.loc38_31.16
+// CHECK:STDOUT:     %.loc38_16: type = splice_block %ValueType.ref.loc38 [concrete = constants.%ValueType] {
+// CHECK:STDOUT:       %Cpp.ref.loc38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %N.ref.loc38: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
+// CHECK:STDOUT:       %ValueType.ref.loc38: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: %ValueType = value_binding i, %.loc39_31.17
+// CHECK:STDOUT:     %i: %ValueType = value_binding i, %.loc38_31.17
 // CHECK:STDOUT:     %sum.ref: ref %ValueType = name_ref sum, %sum
 // CHECK:STDOUT:     %i.ref: %ValueType = name_ref i, %i
-// CHECK:STDOUT:     %.loc40_12: ref %ValueType = value_as_ref %i.ref
-// CHECK:STDOUT:     %addr.loc40: %ptr.9d3 = addr_of %.loc40_12
-// CHECK:STDOUT:     %.loc40_9.1: %ptr.32e = as_compatible %addr.loc40
-// CHECK:STDOUT:     %.loc40_9.2: %ptr.32e = converted %addr.loc40, %.loc40_9.1
-// CHECK:STDOUT:     %operator_PlusEqual__carbon_thunk.call: ref %ValueType = call imports.%operator_PlusEqual__carbon_thunk.decl(%sum.ref, %.loc40_9.2)
+// CHECK:STDOUT:     %.loc39_12: ref %ValueType = value_as_ref %i.ref
+// CHECK:STDOUT:     %addr.loc39: %ptr.9d3 = addr_of %.loc39_12
+// CHECK:STDOUT:     %.loc39_9.1: %ptr.32e = as_compatible %addr.loc39
+// CHECK:STDOUT:     %.loc39_9.2: %ptr.32e = converted %addr.loc39, %.loc39_9.1
+// CHECK:STDOUT:     %operator_PlusEqual__carbon_thunk.call: ref %ValueType = call imports.%operator_PlusEqual__carbon_thunk.decl(%sum.ref, %.loc39_9.2)
 // CHECK:STDOUT:     br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !for.done:
-// CHECK:STDOUT:     %ValueType.Op.bound.loc39: <bound method> = bound_method %.loc39_31.16, constants.%ValueType.Op.4c94b9.1
-// CHECK:STDOUT:     %Op.ref.loc39: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
-// CHECK:STDOUT:     %ValueType.cpp_destructor.bound.loc39: <bound method> = bound_method %.loc39_31.16, %Op.ref.loc39
-// CHECK:STDOUT:     %ValueType.cpp_destructor.call.loc39: init %empty_tuple.type = call %ValueType.cpp_destructor.bound.loc39(%.loc39_31.16)
-// CHECK:STDOUT:     %Destroy.Op.bound: <bound method> = bound_method %.loc39_31.8, constants.%Destroy.Op.1a2547.7
-// CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc39_31.8)
-// CHECK:STDOUT:     %impl.elem0.loc39_31.1: @Test.%.loc39_31.22 (%.bc1) = impl_witness_access constants.%Destroy.lookup_impl_witness.f37, element0 [symbolic = %impl.elem0.loc39_31.2 (constants.%impl.elem0.c7c)]
-// CHECK:STDOUT:     %bound_method.loc39_31.7: <bound method> = bound_method %var, %impl.elem0.loc39_31.1
-// CHECK:STDOUT:     %.loc39_31.18: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
-// CHECK:STDOUT:     %.loc39_31.19: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
-// CHECK:STDOUT:     %specific_impl_fn.loc39_31.3: <specific function> = specific_impl_function %impl.elem0.loc39_31.1, @Destroy.WithSelf.Op(constants.%impl.elem1.46a) [symbolic = %specific_impl_fn.loc39_31.6 (constants.%specific_impl_fn.cd3)]
-// CHECK:STDOUT:     %bound_method.loc39_31.8: <bound method> = bound_method %var, %specific_impl_fn.loc39_31.3
-// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc39_31.8(%var)
+// CHECK:STDOUT:     %ValueType.Op.bound.loc38: <bound method> = bound_method %.loc38_31.16, constants.%ValueType.Op.4c94b9.1
+// CHECK:STDOUT:     %Op.ref.loc38: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
+// CHECK:STDOUT:     %ValueType.cpp_destructor.bound.loc38: <bound method> = bound_method %.loc38_31.16, %Op.ref.loc38
+// CHECK:STDOUT:     %ValueType.cpp_destructor.call.loc38: init %empty_tuple.type = call %ValueType.cpp_destructor.bound.loc38(%.loc38_31.16)
+// CHECK:STDOUT:     %Destroy.Op.bound: <bound method> = bound_method %.loc38_31.8, constants.%Destroy.Op.1a2547.7
+// CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc38_31.8)
+// CHECK:STDOUT:     %impl.elem0.loc38_31.1: @Test.%.loc38_31.22 (%.bc1) = impl_witness_access constants.%Destroy.lookup_impl_witness.f37, element0 [symbolic = %impl.elem0.loc38_31.2 (constants.%impl.elem0.c7c)]
+// CHECK:STDOUT:     %bound_method.loc38_31.7: <bound method> = bound_method %var, %impl.elem0.loc38_31.1
+// CHECK:STDOUT:     %.loc38_31.18: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:     %.loc38_31.19: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = %impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:     %specific_impl_fn.loc38_31.3: <specific function> = specific_impl_function %impl.elem0.loc38_31.1, @Destroy.WithSelf.Op(constants.%impl.elem1.46a) [symbolic = %specific_impl_fn.loc38_31.6 (constants.%specific_impl_fn.cd3)]
+// CHECK:STDOUT:     %bound_method.loc38_31.8: <bound method> = bound_method %var, %specific_impl_fn.loc38_31.3
+// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc38_31.8(%var)
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc39_31.1(%self.param: ref %.b36) {
+// CHECK:STDOUT: fn @Destroy.Op.loc38_31.1(%self.param: ref %.b36) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc39_31.2(%self.param: ref %MaybeUnformed.669) {
+// CHECK:STDOUT: fn @Destroy.Op.loc38_31.2(%self.param: ref %MaybeUnformed.669) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc39_31.3(%self.param: ref bool) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc38_31.3(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc39_31.4(%self.param: ref %struct_type.value.has_value.5a1) {
+// CHECK:STDOUT: fn @Destroy.Op.loc38_31.4(%self.param: ref %struct_type.value.has_value.5a1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc39_31.5(%self.param: ref %DefaultOptionalStorage.257) {
+// CHECK:STDOUT: fn @Destroy.Op.loc38_31.5(%self.param: ref %DefaultOptionalStorage.257) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc39_31.6(%self.param: ref %Optional.552) {
+// CHECK:STDOUT: fn @Destroy.Op.loc38_31.6(%self.param: ref %Optional.552) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Test(constants.%R.623) {
-// CHECK:STDOUT:   %R.patt.loc35_10.2 => constants.%R.patt.324
-// CHECK:STDOUT:   %R.loc35_10.1 => constants.%R.623
-// CHECK:STDOUT:   %R.as_type.loc35_67.1 => constants.%R.as_type.a62
+// CHECK:STDOUT:   %R.patt.loc34_10.2 => constants.%R.patt.324
+// CHECK:STDOUT:   %R.loc34_10.1 => constants.%R.623
+// CHECK:STDOUT:   %R.as_type.loc34_67.1 => constants.%R.as_type.a62
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.725
-// CHECK:STDOUT:   %r.param_patt.loc35_65.2 => constants.%r.param_patt.162
-// CHECK:STDOUT:   %r.patt.loc35_65.2 => constants.%r.patt.15b
+// CHECK:STDOUT:   %r.param_patt.loc34_65.2 => constants.%r.param_patt.162
+// CHECK:STDOUT:   %r.patt.loc34_65.2 => constants.%r.patt.15b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Test(constants.%facet_value.0ec) {
-// CHECK:STDOUT:   %R.patt.loc35_10.2 => constants.%R.patt.324
-// CHECK:STDOUT:   %R.loc35_10.1 => constants.%facet_value.0ec
-// CHECK:STDOUT:   %R.as_type.loc35_67.1 => constants.%MutableAndConstRange
+// CHECK:STDOUT:   %R.patt.loc34_10.2 => constants.%R.patt.324
+// CHECK:STDOUT:   %R.loc34_10.1 => constants.%facet_value.0ec
+// CHECK:STDOUT:   %R.as_type.loc34_67.1 => constants.%MutableAndConstRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.394
-// CHECK:STDOUT:   %r.param_patt.loc35_65.2 => constants.%r.param_patt.8bb
-// CHECK:STDOUT:   %r.patt.loc35_65.2 => constants.%r.patt.ac4
+// CHECK:STDOUT:   %r.param_patt.loc34_65.2 => constants.%r.param_patt.8bb
+// CHECK:STDOUT:   %r.patt.loc34_65.2 => constants.%r.patt.ac4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc35 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc34 => constants.%complete_type.357
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness => constants.%Iterate.impl_witness.a6e
-// CHECK:STDOUT:   %Iterate.facet.loc39_31.5 => constants.%Iterate.facet.5cc
+// CHECK:STDOUT:   %Iterate.facet.loc38_31.5 => constants.%Iterate.facet.5cc
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type => constants.%Iterate.WithSelf.NewCursor.type.875
-// CHECK:STDOUT:   %.loc39_31.20 => constants.%.7e3
-// CHECK:STDOUT:   %impl.elem2.loc39_31.2 => constants.%R.as_type.as.Iterate.impl.NewCursor.96c
-// CHECK:STDOUT:   %specific_impl_fn.loc39_31.4 => constants.%R.as_type.as.Iterate.impl.NewCursor.specific_fn
+// CHECK:STDOUT:   %.loc38_31.20 => constants.%.7e3
+// CHECK:STDOUT:   %impl.elem2.loc38_31.2 => constants.%R.as_type.as.Iterate.impl.NewCursor.96c
+// CHECK:STDOUT:   %specific_impl_fn.loc38_31.4 => constants.%R.as_type.as.Iterate.impl.NewCursor.specific_fn
 // CHECK:STDOUT:   %impl.elem1 => constants.%Destroy.facet.7aa
 // CHECK:STDOUT:   %as_type => constants.%tuple.type.56e
 // CHECK:STDOUT:   %require_complete.1 => constants.%complete_type.1b5
 // CHECK:STDOUT:   %ptr => constants.%ptr.484
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type => constants.%Iterate.WithSelf.Next.type.b41
-// CHECK:STDOUT:   %.loc39_31.21 => constants.%.fef
-// CHECK:STDOUT:   %impl.elem3.loc39_31.2 => constants.%R.as_type.as.Iterate.impl.Next.683
-// CHECK:STDOUT:   %specific_impl_fn.loc39_31.5 => constants.%R.as_type.as.Iterate.impl.Next.specific_fn
+// CHECK:STDOUT:   %.loc38_31.21 => constants.%.fef
+// CHECK:STDOUT:   %impl.elem3.loc38_31.2 => constants.%R.as_type.as.Iterate.impl.Next.683
+// CHECK:STDOUT:   %specific_impl_fn.loc38_31.5 => constants.%R.as_type.as.Iterate.impl.Next.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b7b
-// CHECK:STDOUT:   %.loc39_31.22 => constants.%.1ad
+// CHECK:STDOUT:   %.loc38_31.22 => constants.%.1ad
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.df9cc1.8
-// CHECK:STDOUT:   %impl.elem0.loc39_31.2 => constants.%Destroy.Op.1a2547.8
-// CHECK:STDOUT:   %specific_impl_fn.loc39_31.6 => constants.%Destroy.Op.1a2547.8
+// CHECK:STDOUT:   %impl.elem0.loc38_31.2 => constants.%Destroy.Op.1a2547.8
+// CHECK:STDOUT:   %specific_impl_fn.loc38_31.6 => constants.%Destroy.Op.1a2547.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
