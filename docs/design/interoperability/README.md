@@ -32,9 +32,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [TODO: Integers](#todo-integers)
     -   [Literals](#literals)
     -   [Character types](#character-types)
-        -   [References](#references)
 -   [TODO: Advanced type mapping: pointers, references, and `const`](#todo-advanced-type-mapping-pointers-references-and-const)
--   [TODO: Bi-directional type mapping: standard library types](#todo-bi-directional-type-mapping-standard-library-types)
+-   [Bi-directional type mapping: standard library types](#bi-directional-type-mapping-standard-library-types)
+    -   [`std::string_view` and `str`](#stdstring_view-and-str)
 -   [TODO: The operator interoperability model](#todo-the-operator-interoperability-model)
 
 <!-- tocstop -->
@@ -237,13 +237,36 @@ is treated as `unsigned` by default (`-funsigned-char`). When interoperating
 with a signed C++ `char` type (`-fno-unsigned-char`), Carbon will maintain
 interoperability, though bits will be interpreted differently in each language.
 
-#### References
-
--   Proposal
-    [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)
+> References:
+>
+> -   Proposal
+>     [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)
 
 ## TODO: Advanced type mapping: pointers, references, and `const`
 
-## TODO: Bi-directional type mapping: standard library types
+## Bi-directional type mapping: standard library types
+
+TODO: C++ view types such as `std::span` and other standard library types will
+have corresponding types in Carbon.
+
+### `std::string_view` and `str`
+
+C++'s `std::string_view` maps directly to Carbon's `str` (which is an alias for
+`Core.Str`) when importing C++ headers. The Carbon compiler treats
+`std::string_view` as a type alias for `str` at the ABI level, with identical
+memory representation.
+
+This direct mapping is initially enabled only on 64-bit targets (since `str` has
+a 64-bit size field, whereas C++ `std::string_view` uses `size_t`, which is
+32-bit on 32-bit platforms) and where the standard library representation
+matches the pointer-first-then-size layout of `str` (such as `libc++` used by
+Clang and MSVC STL). For platforms with other layout conventions (like
+`libstdc++`'s size-first-then-pointer layout), this mapping is disabled by
+default until layout compatibility is established.
+
+> References:
+>
+> -   Proposal
+>     [#6177: C++ Interop: Mapping `std::string_view` to `Core.Str`](https://github.com/carbon-language/carbon-lang/pull/6177)
 
 ## TODO: The operator interoperability model
