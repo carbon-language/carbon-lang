@@ -1968,11 +1968,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                     target.type_id);
   };
 
-  // Allow abstract but complete types if the conversion is just a
-  // same-type value acqisition.
+  // Allow forming a value or reference of abstract class type, but not
+  // an initializer.
   bool require_concrete =
-      target.kind != ConversionTarget::Value ||
-      target.type_id != context.insts().Get(expr_id).type_id() ||
+      target.is_initializer() ||
       // TODO: relax this restriction.
       !context.insts().Is<SemIR::ClassElementAccess>(expr_id);
 
