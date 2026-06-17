@@ -339,12 +339,6 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   // TODO: For things like `HashSet(.T) as type`, add an implied constraint
   // that `.T impls Hash`.
 
-  if (FindAndDiagnoseAmbiguousPeriodSelf(context, lhs_as_type.inst_id,
-                                         rhs_id)) {
-    rhs_as_type.type_id = SemIR::ErrorInst::TypeId;
-    rhs_as_type.inst_id = SemIR::ErrorInst::TypeInstId;
-  }
-
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
       AddInstInNoBlock<SemIR::RequirementImpls>(
@@ -394,9 +388,19 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   context.scope_stack().Pop(/*check_unused=*/true);
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
 
+  auto type_id = SemIR::TypeType::TypeId;
+  if (!context.where_stack().empty()) {
+    CARBON_DIAGNOSTIC(NestedWhereInsideWhere, Error,
+                      "found `where` expression nested inside `where`");
+    context.emitter().Emit(node_id, NestedWhereInsideWhere);
+    type_id = SemIR::ErrorInst::TypeId;
+  }
+
+  // TODO: Look at the constant value and diagnose NestedWhereInsideWhere if
+  // there are any non-extend constraints present.
   AddInstAndPush<SemIR::WhereExpr>(
       context, node_id,
-      {.type_id = SemIR::TypeType::TypeId, .requirements_id = requirements_id});
+      {.type_id = type_id, .requirements_id = requirements_id});
   return true;
 }
 

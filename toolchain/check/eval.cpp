@@ -3243,6 +3243,10 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
   Phase phase = Phase::Concrete;
   SemIR::FacetTypeInfo info;
 
+  if (inst.type_id() == SemIR::ErrorInst::TypeId) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+
   // Note that these requirement instructions don't have a constant value. That
   // means we have to look for errors inside them, we can't just look to see if
   // their constant value is an error.
