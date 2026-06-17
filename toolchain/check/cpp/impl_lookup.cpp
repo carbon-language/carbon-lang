@@ -369,6 +369,8 @@ static auto BuildCppComparisonWitness(
       // The behavior is dependent on which expression is checked first: no
       // diagnostic will be emitted for an erroneous `operator!=` if lookup for
       // `operator==` produces `SemIR::InstId::None`.
+      //
+      // Similarly for `T.(Core.OrderedWith(U))` and the inequality operators.
       return lookup_id;
     }
 
@@ -559,6 +561,7 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                                           query_self_const_id,
                                           query_specific_interface_id);
     case SemIR::CoreInterface::Negate:
+    case SemIR::CoreInterface::BitComplement:
       return BuildCppUnaryOperatorWitness(
           context, loc_id, core_interface, /*has_associated_result_type=*/true,
           query_self_const_id, query_specific_interface_id);
@@ -567,6 +570,11 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::MulWith:
     case SemIR::CoreInterface::DivWith:
     case SemIR::CoreInterface::ModWith:
+    case SemIR::CoreInterface::BitAndWith:
+    case SemIR::CoreInterface::BitOrWith:
+    case SemIR::CoreInterface::BitXorWith:
+    case SemIR::CoreInterface::LeftShiftWith:
+    case SemIR::CoreInterface::RightShiftWith:
       return BuildCppBinaryOperatorWitness(context, loc_id, core_interface,
                                            /*has_associated_result_type=*/true,
                                            query_self_const_id,
@@ -576,6 +584,11 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::MulAssignWith:
     case SemIR::CoreInterface::DivAssignWith:
     case SemIR::CoreInterface::ModAssignWith:
+    case SemIR::CoreInterface::BitAndAssignWith:
+    case SemIR::CoreInterface::BitOrAssignWith:
+    case SemIR::CoreInterface::BitXorAssignWith:
+    case SemIR::CoreInterface::LeftShiftAssignWith:
+    case SemIR::CoreInterface::RightShiftAssignWith:
       return BuildCppBinaryOperatorWitness(context, loc_id, core_interface,
                                            /*has_associated_result_type=*/false,
                                            query_self_const_id,

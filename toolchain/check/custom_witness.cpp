@@ -842,6 +842,13 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                                   query_specific_interface_id, build_witness);
     case SemIR::CoreInterface::AddAssignWith:
     case SemIR::CoreInterface::AddWith:
+    case SemIR::CoreInterface::BitAndAssignWith:
+    case SemIR::CoreInterface::BitAndWith:
+    case SemIR::CoreInterface::BitComplement:
+    case SemIR::CoreInterface::BitOrAssignWith:
+    case SemIR::CoreInterface::BitOrWith:
+    case SemIR::CoreInterface::BitXorAssignWith:
+    case SemIR::CoreInterface::BitXorWith:
     case SemIR::CoreInterface::Copy:
     case SemIR::CoreInterface::CppRangeForIterate:
     case SemIR::CoreInterface::CppUnsafeDeref:
@@ -851,12 +858,16 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::DivWith:
     case SemIR::CoreInterface::EqWith:
     case SemIR::CoreInterface::Inc:
+    case SemIR::CoreInterface::LeftShiftAssignWith:
+    case SemIR::CoreInterface::LeftShiftWith:
     case SemIR::CoreInterface::ModAssignWith:
     case SemIR::CoreInterface::ModWith:
     case SemIR::CoreInterface::MulAssignWith:
     case SemIR::CoreInterface::MulWith:
     case SemIR::CoreInterface::Negate:
     case SemIR::CoreInterface::OrderedWith:
+    case SemIR::CoreInterface::RightShiftAssignWith:
+    case SemIR::CoreInterface::RightShiftWith:
     case SemIR::CoreInterface::SubAssignWith:
     case SemIR::CoreInterface::SubWith:
     case SemIR::CoreInterface::Unknown:
