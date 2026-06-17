@@ -279,7 +279,7 @@ function type other than asking for the type of the function value.
 fn F(x: i32) -> i32 { return x; }
 
 // Compile-time function.
-fn TypeOf[T:! type](x: T) -> type { return T; }
+musteval fn TypeOf[T:! type](x: T) -> type { return T; }
 
 // `F` is a first-class value with a first-class type.
 let template FType:! type = TypeOf(F);
