@@ -17,6 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Background](#background)
 -   [Proposal](#proposal)
 -   [Rationale](#rationale)
+-   [Future work](#future-work)
 -   [Alternatives considered](#alternatives-considered)
 
 <!-- tocstop -->
@@ -66,6 +67,12 @@ Change the declaration of `Core.Iterate.Next` to:
 -   [Code that is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write)
     -   Makes the `Iterate` interface, and user-defined `impl`s of it, more
         consistent with the rest of the language.
+
+## Future work
+
+We should consider making `Core.Iterate` a form-generic interface, and making
+the `ElementType` instead be an associated form, with a suitable change to
+return a form-generic `Optional`.
 
 ## Alternatives considered
 
