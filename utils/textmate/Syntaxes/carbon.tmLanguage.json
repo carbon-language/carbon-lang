@@ -400,7 +400,11 @@
       "patterns": [
         {
           "name": "support.class.carbon",
-          "match": "(?<=\\b(package|Core)\\s)\\w+"
+          "match": "(?<=\\bpackage\\s)\\w+"
+        },
+        {
+          "name": "support.class.carbon",
+          "match": "(?<=\\bCore\\s)\\w+"
         },
         {
           "name": "support.type.property-name.carbon",
