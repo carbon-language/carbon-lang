@@ -25,7 +25,7 @@ class Formatter {
       const File* sem_ir, int total_ir_count,
       Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
       const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps,
-      bool use_dump_sem_ir_ranges);
+      bool use_dump_sem_ir_ranges, bool include_implicit);
 
   // Prints the SemIR into an internal buffer. Must only be called once.
   //
@@ -337,6 +337,11 @@ class Formatter {
 
   // Whether to use ranges when dumping, or to dump the full SemIR.
   bool use_dump_sem_ir_ranges_;
+
+  // Whether to include instructions with implicit (desugared) locations when
+  // using dump ranges. These instructions have no source location of their own
+  // to anchor a dump range, so they are normally excluded.
+  bool include_implicit_;
 
   // The current scope that we are formatting within. References to names in
   // this scope will not have a `@scope.` prefix added.

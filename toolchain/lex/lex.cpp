@@ -979,6 +979,11 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
       AdvanceToLine(source_text, position, next_line());
       return;
     }
+    if (comment_text.starts_with("//@dump-sem-ir-include-implicit\n")) {
+      buffer_.has_dump_sem_ir_include_implicit_ = true;
+      AdvanceToLine(source_text, position, next_line());
+      return;
+    }
     if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
       BeginDumpSemIRRange(comment_text.begin());
       AdvanceToLine(source_text, position, next_line());

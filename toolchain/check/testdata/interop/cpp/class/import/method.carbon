@@ -266,6 +266,39 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
   //@dump-sem-ir-end
 }
 
+// --- rvalue_method_destroys_temporary.h
+
+struct WithDestructor {
+  WithDestructor();
+  ~WithDestructor();
+
+  void rvalue_method() &&;
+};
+
+WithDestructor Make();
+
+// --- use_rvalue_method_destroys_temporary.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "rvalue_method_destroys_temporary.h";
+
+fn Make() -> Cpp.WithDestructor;
+
+//@dump-sem-ir-begin
+//@dump-sem-ir-include-implicit
+fn F() {
+  // `rvalue_method` is `&&`-qualified, so calling it on the temporary that
+  // `Make()` returns materializes a separate `self` object to invoke it on,
+  // and both that `self` and the `Make()` temporary are destroyed here. The
+  // `Make()` temporary's destruction has an ordinary location in this file,
+  // but the materialized `self`'s location is the imported C++ type, which has
+  // no node here, so its destruction has no location in this file and is
+  // excluded from this focused dump.
+  Make().rvalue_method();
+}
+//@dump-sem-ir-end
+
 // CHECK:STDOUT: --- use_object_param_qualifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -787,5 +820,89 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %addr.loc10: %ptr.bad = addr_of %.loc10
 // CHECK:STDOUT:   %F__carbon_thunk.call.loc10: init %empty_tuple.type = call imports.%F__carbon_thunk.decl.828b0d.3(%addr.loc10)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- use_rvalue_method_destroys_temporary.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %WithDestructor: type = class_type @WithDestructor [concrete]
+// CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %WithDestructor.rvalue_method.cpp_overload_set.type: type = cpp_overload_set_type @WithDestructor.rvalue_method.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %WithDestructor.rvalue_method.cpp_overload_set.value: %WithDestructor.rvalue_method.cpp_overload_set.type = cpp_overload_set_value @WithDestructor.rvalue_method.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %rvalue_method__carbon_thunk.type: type = fn_type @rvalue_method__carbon_thunk [concrete]
+// CHECK:STDOUT:   %rvalue_method__carbon_thunk: %rvalue_method__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %WithDestructor.WithDestructor.type: type = fn_type @WithDestructor.WithDestructor [concrete]
+// CHECK:STDOUT:   %WithDestructor.WithDestructor: %WithDestructor.WithDestructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %const.815: type = const_type %WithDestructor [concrete]
+// CHECK:STDOUT:   %ptr.3d0: type = ptr_type %const.815 [concrete]
+// CHECK:STDOUT:   %ptr.0c4: type = ptr_type %WithDestructor [concrete]
+// CHECK:STDOUT:   %WithDestructor__carbon_thunk.type: type = fn_type @WithDestructor__carbon_thunk [concrete]
+// CHECK:STDOUT:   %WithDestructor__carbon_thunk: %WithDestructor__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %WithDestructor.Op.type: type = fn_type @WithDestructor.Op [concrete]
+// CHECK:STDOUT:   %WithDestructor.Op: %WithDestructor.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.d0d: <witness> = custom_witness (%WithDestructor.Op), @Copy [concrete]
+// CHECK:STDOUT:   %Copy.facet.d9f: %Copy.type = facet_value %WithDestructor, (%custom_witness.d0d) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d34: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.d9f) [concrete]
+// CHECK:STDOUT:   %.873: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d34, %Copy.facet.d9f [concrete]
+// CHECK:STDOUT:   %WithDestructor.cpp_destructor.type: type = fn_type @WithDestructor.cpp_destructor [concrete]
+// CHECK:STDOUT:   %WithDestructor.cpp_destructor: %WithDestructor.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %WithDestructor.rvalue_method.cpp_overload_set.value: %WithDestructor.rvalue_method.cpp_overload_set.type = cpp_overload_set_value @WithDestructor.rvalue_method.cpp_overload_set [concrete = constants.%WithDestructor.rvalue_method.cpp_overload_set.value]
+// CHECK:STDOUT:   %rvalue_method__carbon_thunk.decl: %rvalue_method__carbon_thunk.type = fn_decl @rvalue_method__carbon_thunk [concrete = constants.%rvalue_method__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %WithDestructor.WithDestructor.decl: %WithDestructor.WithDestructor.type = fn_decl @WithDestructor.WithDestructor [concrete = constants.%WithDestructor.WithDestructor] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %WithDestructor__carbon_thunk.decl: %WithDestructor__carbon_thunk.type = fn_decl @WithDestructor__carbon_thunk [concrete = constants.%WithDestructor__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
+// CHECK:STDOUT:   %.loc18_8.1: ref %WithDestructor = temporary_storage
+// CHECK:STDOUT:   %Make.call: init %WithDestructor to %.loc18_8.1 = call %Make.ref()
+// CHECK:STDOUT:   %.loc18_8.2: ref %WithDestructor = temporary %.loc18_8.1, %Make.call
+// CHECK:STDOUT:   %rvalue_method.ref: %WithDestructor.rvalue_method.cpp_overload_set.type = name_ref rvalue_method, imports.%WithDestructor.rvalue_method.cpp_overload_set.value [concrete = constants.%WithDestructor.rvalue_method.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method.loc18_9: <bound method> = bound_method %.loc18_8.2, %rvalue_method.ref
+// CHECK:STDOUT:   %.loc18_8.3: %WithDestructor = acquire_value %.loc18_8.2
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %impl.elem0.loc18: %.873 = impl_witness_access constants.%custom_witness.d0d, element0 [concrete = constants.%WithDestructor.Op]
+// CHECK:STDOUT:   %bound_method.loc18_8: <bound method> = bound_method %.loc18_8.3, %impl.elem0.loc18
+// CHECK:STDOUT:   %.loc18_8.4: ref %WithDestructor = temporary_storage
+// CHECK:STDOUT:   %Op.ref.loc18: %WithDestructor.WithDestructor.type = name_ref Op, imports.%WithDestructor.WithDestructor.decl [concrete = constants.%WithDestructor.WithDestructor]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc18_8.5: ref %WithDestructor = value_as_ref %.loc18_8.3
+// CHECK:STDOUT:   %addr.loc18_8.1: %ptr.0c4 = addr_of %.loc18_8.5
+// CHECK:STDOUT:   %.loc18_8.6: %ptr.3d0 = as_compatible %addr.loc18_8.1
+// CHECK:STDOUT:   %.loc18_8.7: %ptr.3d0 = converted %addr.loc18_8.1, %.loc18_8.6
+// CHECK:STDOUT:   %addr.loc18_8.2: %ptr.0c4 = addr_of %self.var
+// CHECK:STDOUT:   %WithDestructor__carbon_thunk.call: init %empty_tuple.type = call imports.%WithDestructor__carbon_thunk.decl(%.loc18_8.7, %addr.loc18_8.2)
+// CHECK:STDOUT:   %.loc18_8.8: init %WithDestructor to %self.var = mark_in_place_init %WithDestructor__carbon_thunk.call
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %rvalue_method__carbon_thunk.call: init %empty_tuple.type = call imports.%rvalue_method__carbon_thunk.decl(%self.var)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %WithDestructor.cpp_destructor.bound: <bound method> = bound_method %.loc18_8.2, constants.%WithDestructor.cpp_destructor
+// CHECK:STDOUT:   %WithDestructor.cpp_destructor.call.loc18: init %empty_tuple.type = call %WithDestructor.cpp_destructor.bound(%.loc18_8.2)
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -346,7 +346,8 @@ static auto MaybeDumpFormattedSemIR(
           CheckParseTreesOptions::DumpSemIRRanges::Ignore &&
       tokens.has_dump_sem_ir_ranges();
   SemIR::Formatter formatter(&sem_ir, total_ir_count, tree_and_subtrees_getter,
-                             options.include_in_dumps, use_dump_sem_ir_ranges);
+                             options.include_in_dumps, use_dump_sem_ir_ranges,
+                             tokens.has_dump_sem_ir_include_implicit());
   formatter.Format();
   if (options.vlog_stream) {
     CARBON_VLOG_TO(options.vlog_stream, "*** SemIR::File ***\n");
