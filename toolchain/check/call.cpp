@@ -215,8 +215,7 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
                            SemIR::InstId callee_id,
                            const SemIR::CalleeFunction& callee_function,
                            llvm::ArrayRef<SemIR::InstId> arg_ids,
-                           bool is_desugared,
-                           bool use_callee_param_for_conversion_loc)
+                           bool is_desugared, bool is_thunk_call)
     -> SemIR::InstId {
   // If the callee is a generic function, determine the generic argument values
   // for the call.
@@ -264,7 +263,7 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
       context, callee_function.self_id, arg_ids, return_arg_id, callee,
-      *callee_specific_id, is_desugared, use_callee_param_for_conversion_loc);
+      *callee_specific_id, is_desugared, is_thunk_call);
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {
       // If we're about to form a direct call to a thunk, inline it.
@@ -346,7 +345,7 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
 
 auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                  llvm::ArrayRef<SemIR::InstId> arg_ids, bool is_desugared,
-                 bool use_callee_param_for_conversion_loc) -> SemIR::InstId {
+                 bool is_thunk_call) -> SemIR::InstId {
   // Try treating the callee as a function first.
   auto callee = GetCallee(context.sem_ir(), callee_id);
   CARBON_KIND_SWITCH(callee) {
@@ -355,8 +354,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     }
     case CARBON_KIND(SemIR::CalleeFunction fn): {
       return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids,
-                                   is_desugared,
-                                   use_callee_param_for_conversion_loc);
+                                   is_desugared, is_thunk_call);
     }
     case CARBON_KIND(SemIR::CalleeNonFunction _): {
       return PerformCallToNonFunction(context, loc_id, callee_id, arg_ids);

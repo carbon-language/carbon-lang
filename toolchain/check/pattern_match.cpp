@@ -146,15 +146,20 @@ class MatchContext {
     }
   };
 
+  struct ThunkCall {};
+
   // Constructs a MatchContext that uses the substituted constant values of
   // patterns in the given specific.
-  explicit MatchContext(Context& context,
-                        SemIR::SpecificId specific_id = SemIR::SpecificId::None,
-                        bool use_callee_param_for_conversion_loc = false)
+  explicit MatchContext(Context& context, SemIR::SpecificId specific_id)
       : specific_id_stack_({specific_id}),
         context_(context),
-        use_callee_param_for_conversion_loc_(
-            use_callee_param_for_conversion_loc) {}
+        is_thunk_call_(false) {}
+
+  explicit MatchContext(Context& context, SemIR::SpecificId specific_id,
+                        ThunkCall)
+      : specific_id_stack_({specific_id}),
+        context_(context),
+        is_thunk_call_(true) {}
 
   // Performs pattern matching for the given work item.
   auto Match(State state, WorkItem entry) -> void;
@@ -266,9 +271,8 @@ class MatchContext {
 
   Context& context_;
 
-  // Whether caller argument conversions should use the callee parameter
-  // location rather than the argument location.
-  bool use_callee_param_for_conversion_loc_;
+  // Whether caller matching is for a thunk body call.
+  bool is_thunk_call_;
 };
 
 }  // namespace
@@ -500,9 +504,13 @@ auto MatchContext::DoPreWork(State state, SemIR::AnyParamPattern param_pattern,
       if (scrutinee_id == SemIR::ErrorInst::InstId) {
         caller_state->call_args.push_back(SemIR::ErrorInst::InstId);
       } else {
-        auto conversion_loc_id = use_callee_param_for_conversion_loc_
-                                     ? SemIR::LocId(entry.pattern_id)
-                                     : SemIR::LocId(scrutinee_id);
+        auto conversion_loc_id = SemIR::LocId(scrutinee_id);
+        if (is_thunk_call_) {
+          // In thunk calls, the argument location is synthetic machinery
+          // cloned from the signature. Use the callee parameter so conversion
+          // diagnostics point at user-written code that can be changed.
+          conversion_loc_id = SemIR::LocId(entry.pattern_id);
+        }
         caller_state->call_args.push_back(
             Convert(context_, conversion_loc_id, scrutinee_id,
                     {.kind = ConversionKindFor(param_pattern, entry),
@@ -1045,7 +1053,7 @@ auto CalleePatternMatch(Context& context,
   }
 
   CalleeState state = {.index = IndexSource(SemIR::CallParamIndex(0))};
-  MatchContext match(context);
+  MatchContext match(context, SemIR::SpecificId::None);
 
   // We add work to the stack in reverse so that the results will be produced
   // in the original order.
@@ -1090,7 +1098,7 @@ auto ThunkPatternMatch(Context& context,
                        llvm::ArrayRef<SemIR::InstId> outer_call_args)
     -> ThunkPatternMatchResults {
   ThunkState state = {.outer_call_args = outer_call_args};
-  MatchContext match(context);
+  MatchContext match(context, SemIR::SpecificId::None);
 
   llvm::SmallVector<SemIR::InstId> inner_args;
   inner_args.reserve(outer_call_args.size());
@@ -1111,7 +1119,7 @@ auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
                    SemIR::CalleePatternMatchAction action) -> SemIR::InstId {
   auto args = context.bundles().Get(action.args_id);
   CalleeState state = {.index = IndexSource(args.parent_index)};
-  MatchContext match(context);
+  MatchContext match(context, SemIR::SpecificId::None);
 
   auto result_id = match.MatchWithResult(
       &state,
@@ -1130,10 +1138,13 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstId self_arg_id,
                         llvm::ArrayRef<SemIR::InstId> arg_refs,
                         SemIR::InstId return_arg_id, bool is_desugared,
-                        bool use_callee_param_for_conversion_loc)
+                        bool is_thunk_call)
     -> SemIR::InstBlockId {
   CallerState state;
-  MatchContext match(context, specific_id, use_callee_param_for_conversion_loc);
+  auto match =
+      is_thunk_call
+          ? MatchContext(context, specific_id, MatchContext::ThunkCall{})
+          : MatchContext(context, specific_id);
 
   // When we have a separate `self_arg_id`, we concatenate that onto the front
   // of the arg_refs to match against the first parameter.
@@ -1171,7 +1182,7 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
 auto LocalPatternMatch(Context& context, SemIR::InstId pattern_id,
                        SemIR::InstId scrutinee_id) -> void {
   LocalState state;
-  MatchContext match(context);
+  MatchContext match(context, SemIR::SpecificId::None);
   match.Match(&state,
               {.pattern_id = pattern_id,
                .work = MatchContext::PreWork{.scrutinee_id = scrutinee_id}});

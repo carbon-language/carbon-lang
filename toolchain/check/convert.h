@@ -209,13 +209,12 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 // argument values for runtime parameters. `is_desugared` indicates that this
 // call was produced by desugaring, not written as a function call in user code,
 // so arguments to `ref` parameters aren't required to have `ref` tags.
-// `use_callee_param_for_conversion_loc` uses the callee parameter as the
-// location for argument conversion.
+// `is_thunk_call` indicates that this is a call from a thunk to its callee.
 auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_arg_id, const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id, bool is_desugared,
-                     bool use_callee_param_for_conversion_loc)
+                     bool is_thunk_call)
     -> SemIR::InstBlockId;
 
 // A type that has been converted for use as a type expression.

@@ -295,8 +295,7 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
   // We treat this as an operator call because it's a call that's synthesized
   // by the toolchain, not written by the user.
   return PerformCall(context, loc_id, callee_id, args,
-                     /*is_desugared=*/true,
-                     /*use_callee_param_for_conversion_loc=*/true);
+                     /*is_desugared=*/true, /*is_thunk_call=*/true);
 }
 
 // Build a call to a function that forwards the arguments of the enclosing

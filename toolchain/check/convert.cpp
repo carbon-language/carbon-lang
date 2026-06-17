@@ -2226,7 +2226,7 @@ auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_arg_id, const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id, bool is_desugared,
-                     bool use_callee_param_for_conversion_loc)
+                     bool is_thunk_call)
     -> SemIR::InstBlockId {
   // The caller should have ensured this callee has the right arity.
   CARBON_CHECK(
@@ -2236,7 +2236,7 @@ auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
                             callee.param_patterns_id, callee.return_pattern_id,
                             self_id, arg_refs, return_arg_id, is_desugared,
-                            use_callee_param_for_conversion_loc);
+                            is_thunk_call);
 }
 
 auto TypeExpr::ForUnsugared(Context& context, SemIR::TypeId type_id)

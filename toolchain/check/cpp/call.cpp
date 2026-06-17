@@ -74,8 +74,7 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
       }
       return PerformCallToFunction(context, loc_id, callee_id, fn,
                                    function_arg_ids, is_desugared,
-                                   /*use_callee_param_for_conversion_loc=*/
-                                   false);
+                                   /*is_thunk_call=*/false);
     }
     case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
       CARBON_FATAL("overloads can't be recursive");
