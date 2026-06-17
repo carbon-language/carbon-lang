@@ -1976,8 +1976,11 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // an initializer.
   bool require_concrete =
       target.is_initializer() ||
-      // TODO: relax this restriction.
-      !context.insts().Is<SemIR::ClassElementAccess>(expr_id);
+      // Prevent conversion from a struct literal to an abstract class.
+      //
+      // TODO: this prevents some correct code from being accepted; see
+      // `fail_todo_abstract_let.carbon`.
+      context.insts().Is<SemIR::StructLiteral>(expr_id);
 
   // TODO: Push this check down to the points where we perform operations that
   // need the type to be complete.
