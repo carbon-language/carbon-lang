@@ -712,7 +712,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1.d31: %Destroy.type = impl_witness_access %Iterate.lookup_impl_witness.c86, element1 [symbolic]
 // CHECK:STDOUT:   %as_type.ca2: type = facet_access_type %impl.elem1.d31 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.87a: <specific function> = specific_impl_function %impl.elem2.f53, @Iterate.WithSelf.NewCursor(%Iterate.facet.bbb) [symbolic]
-// CHECK:STDOUT:   %ptr.3b4: type = ptr_type %as_type.ca2 [symbolic]
 // CHECK:STDOUT:   %.a8b: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.28b, %Iterate.facet.bbb [symbolic]
 // CHECK:STDOUT:   %impl.elem3.9c3: %.a8b = impl_witness_access %Iterate.lookup_impl_witness.c86, element3 [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.970: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%facet_value.ba2) [concrete]
@@ -848,7 +847,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.d6a: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.dcb, %Iterate.facet.ffb [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.NewCursor.specific_fn.bf1: <specific function> = specific_function %R.as_type.as.Iterate.impl.NewCursor.8d2, @R.as_type.as.Iterate.impl.NewCursor(%facet_value.cd6) [concrete]
 // CHECK:STDOUT:   %complete_type.c28: <witness> = complete_type_witness %tuple.type.508 [concrete]
-// CHECK:STDOUT:   %ptr.45c: type = ptr_type %tuple.type.508 [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.30e: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.ffb) [concrete]
 // CHECK:STDOUT:   %.d23: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.30e, %Iterate.facet.ffb [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.Next.specific_fn.dd5: <specific function> = specific_function %R.as_type.as.Iterate.impl.Next.34d, @R.as_type.as.Iterate.impl.Next(%facet_value.cd6) [concrete]
@@ -858,7 +856,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.744: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.ab5, %Iterate.facet.5eb [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.NewCursor.specific_fn.a05: <specific function> = specific_function %R.as_type.as.Iterate.impl.NewCursor.2f6, @R.as_type.as.Iterate.impl.NewCursor(%facet_value.e88) [concrete]
 // CHECK:STDOUT:   %complete_type.8d5: <witness> = complete_type_witness %tuple.type.69f [concrete]
-// CHECK:STDOUT:   %ptr.c5c: type = ptr_type %tuple.type.69f [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.e25: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.5eb) [concrete]
 // CHECK:STDOUT:   %.03b: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.e25, %Iterate.facet.5eb [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.Next.specific_fn.4cc: <specific function> = specific_function %R.as_type.as.Iterate.impl.Next.393, @R.as_type.as.Iterate.impl.Next(%facet_value.e88) [concrete]
@@ -905,7 +902,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem2.loc34_19.2: @Test.%.loc34_19.19 (%.3e2) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc34_19.2 (constants.%impl.elem2.f53)]
 // CHECK:STDOUT:   %specific_impl_fn.loc34_19.4: <specific function> = specific_impl_function %impl.elem2.loc34_19.2, @Iterate.WithSelf.NewCursor(%Iterate.facet.loc34_19.5) [symbolic = %specific_impl_fn.loc34_19.4 (constants.%specific_impl_fn.87a)]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %ptr: type = ptr_type %as_type [symbolic = %ptr (constants.%ptr.3b4)]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.loc34_19.5) [symbolic = %Iterate.WithSelf.Next.type (constants.%Iterate.WithSelf.Next.type.28b)]
 // CHECK:STDOUT:   %.loc34_19.20: type = fn_type_with_self_type %Iterate.WithSelf.Next.type, %Iterate.facet.loc34_19.5 [symbolic = %.loc34_19.20 (constants.%.a8b)]
 // CHECK:STDOUT:   %impl.elem3.loc34_19.2: @Test.%.loc34_19.20 (%.a8b) = impl_witness_access %Iterate.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc34_19.2 (constants.%impl.elem3.9c3)]
@@ -937,7 +933,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !for.next:
-// CHECK:STDOUT:     %addr: @Test.%ptr (%ptr.3b4) = addr_of %var
 // CHECK:STDOUT:     %impl.elem3.loc34_19.1: @Test.%.loc34_19.20 (%.a8b) = impl_witness_access constants.%Iterate.lookup_impl_witness.c86, element3 [symbolic = %impl.elem3.loc34_19.2 (constants.%impl.elem3.9c3)]
 // CHECK:STDOUT:     %bound_method.loc34_19.3: <bound method> = bound_method %r.ref, %impl.elem3.loc34_19.1
 // CHECK:STDOUT:     %Iterate.facet.loc34_19.3: %Iterate.type = facet_value constants.%R.as_type.67d, (constants.%Iterate.lookup_impl_witness.c86) [symbolic = %Iterate.facet.loc34_19.5 (constants.%Iterate.facet.bbb)]
@@ -949,7 +944,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %specific_impl_fn.loc34_19.2: <specific function> = specific_impl_function %impl.elem3.loc34_19.1, @Iterate.WithSelf.Next(constants.%Iterate.facet.bbb) [symbolic = %specific_impl_fn.loc34_19.5 (constants.%specific_impl_fn.ab2)]
 // CHECK:STDOUT:     %bound_method.loc34_19.4: <bound method> = bound_method %r.ref, %specific_impl_fn.loc34_19.2
 // CHECK:STDOUT:     %.loc34_19.7: ref %Optional.e28 = temporary_storage
-// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.e28 to %.loc34_19.7 = call %bound_method.loc34_19.4(%r.ref, %addr)
+// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.e28 to %.loc34_19.7 = call %bound_method.loc34_19.4(%r.ref, %var)
 // CHECK:STDOUT:     %.loc34_19.8: ref %Optional.e28 = temporary %.loc34_19.7, %Iterate.WithSelf.Next.call
 // CHECK:STDOUT:     %.loc34_19.9: %Optional.HasValue.type.c6d = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.172) [concrete = constants.%Optional.HasValue.89b]
 // CHECK:STDOUT:     %HasValue.ref: %Optional.HasValue.type.c6d = name_ref HasValue, %.loc34_19.9 [concrete = constants.%Optional.HasValue.89b]
@@ -1057,7 +1052,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1 => constants.%Destroy.facet.30f
 // CHECK:STDOUT:   %as_type => constants.%tuple.type.508
 // CHECK:STDOUT:   %require_complete.1 => constants.%complete_type.c28
-// CHECK:STDOUT:   %ptr => constants.%ptr.45c
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type => constants.%Iterate.WithSelf.Next.type.30e
 // CHECK:STDOUT:   %.loc34_19.20 => constants.%.d23
 // CHECK:STDOUT:   %impl.elem3.loc34_19.2 => constants.%R.as_type.as.Iterate.impl.Next.34d
@@ -1088,7 +1082,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1 => constants.%Destroy.facet.e4c
 // CHECK:STDOUT:   %as_type => constants.%tuple.type.69f
 // CHECK:STDOUT:   %require_complete.1 => constants.%complete_type.8d5
-// CHECK:STDOUT:   %ptr => constants.%ptr.c5c
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type => constants.%Iterate.WithSelf.Next.type.e25
 // CHECK:STDOUT:   %.loc34_19.20 => constants.%.03b
 // CHECK:STDOUT:   %impl.elem3.loc34_19.2 => constants.%R.as_type.as.Iterate.impl.Next.393
@@ -1184,7 +1177,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1.411: %Destroy.type = impl_witness_access %Iterate.lookup_impl_witness.acc, element1 [symbolic]
 // CHECK:STDOUT:   %as_type.bc6: type = facet_access_type %impl.elem1.411 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.544: <specific function> = specific_impl_function %impl.elem2.398, @Iterate.WithSelf.NewCursor(%Iterate.facet.b95) [symbolic]
-// CHECK:STDOUT:   %ptr.bdd: type = ptr_type %as_type.bc6 [symbolic]
 // CHECK:STDOUT:   %.52a: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.d6f, %Iterate.facet.b95 [symbolic]
 // CHECK:STDOUT:   %impl.elem3.510: %.52a = impl_witness_access %Iterate.lookup_impl_witness.acc, element3 [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.84c: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%facet_value.bf1) [concrete]
@@ -1309,7 +1301,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.47d: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.47d, %Iterate.facet.723 [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.NewCursor.specific_fn.532: <specific function> = specific_function %R.as_type.as.Iterate.impl.NewCursor.498, @R.as_type.as.Iterate.impl.NewCursor(%facet_value.55a) [concrete]
 // CHECK:STDOUT:   %complete_type.94f: <witness> = complete_type_witness %tuple.type.829 [concrete]
-// CHECK:STDOUT:   %ptr.d6b: type = ptr_type %tuple.type.829 [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.6f1: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.723) [concrete]
 // CHECK:STDOUT:   %.fd2: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.6f1, %Iterate.facet.723 [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.Next.specific_fn.5cb: <specific function> = specific_function %R.as_type.as.Iterate.impl.Next.055, @R.as_type.as.Iterate.impl.Next(%facet_value.55a) [concrete]
@@ -1319,7 +1310,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.763: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.cd5, %Iterate.facet.c46 [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.NewCursor.specific_fn.7c7: <specific function> = specific_function %R.as_type.as.Iterate.impl.NewCursor.bd2, @R.as_type.as.Iterate.impl.NewCursor(%facet_value.445) [concrete]
 // CHECK:STDOUT:   %complete_type.dea: <witness> = complete_type_witness %tuple.type.99f [concrete]
-// CHECK:STDOUT:   %ptr.2f7: type = ptr_type %tuple.type.99f [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.285: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.c46) [concrete]
 // CHECK:STDOUT:   %.bca: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.285, %Iterate.facet.c46 [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.Next.specific_fn.a9a: <specific function> = specific_function %R.as_type.as.Iterate.impl.Next.c50, @R.as_type.as.Iterate.impl.Next(%facet_value.445) [concrete]
@@ -1375,7 +1365,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem2.loc44_29.2: @Test.%.loc44_29.20 (%.f8a) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc44_29.2 (constants.%impl.elem2.398)]
 // CHECK:STDOUT:   %specific_impl_fn.loc44_29.4: <specific function> = specific_impl_function %impl.elem2.loc44_29.2, @Iterate.WithSelf.NewCursor(%Iterate.facet.loc44_29.5) [symbolic = %specific_impl_fn.loc44_29.4 (constants.%specific_impl_fn.544)]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %ptr: type = ptr_type %as_type [symbolic = %ptr (constants.%ptr.bdd)]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.loc44_29.5) [symbolic = %Iterate.WithSelf.Next.type (constants.%Iterate.WithSelf.Next.type.d6f)]
 // CHECK:STDOUT:   %.loc44_29.21: type = fn_type_with_self_type %Iterate.WithSelf.Next.type, %Iterate.facet.loc44_29.5 [symbolic = %.loc44_29.21 (constants.%.52a)]
 // CHECK:STDOUT:   %impl.elem3.loc44_29.2: @Test.%.loc44_29.21 (%.52a) = impl_witness_access %Iterate.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc44_29.2 (constants.%impl.elem3.510)]
@@ -1408,7 +1397,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !for.next:
-// CHECK:STDOUT:     %addr.loc44: @Test.%ptr (%ptr.bdd) = addr_of %var
 // CHECK:STDOUT:     %impl.elem3.loc44_29.1: @Test.%.loc44_29.21 (%.52a) = impl_witness_access constants.%Iterate.lookup_impl_witness.acc, element3 [symbolic = %impl.elem3.loc44_29.2 (constants.%impl.elem3.510)]
 // CHECK:STDOUT:     %bound_method.loc44_29.3: <bound method> = bound_method %r.ref, %impl.elem3.loc44_29.1
 // CHECK:STDOUT:     %Iterate.facet.loc44_29.3: %Iterate.type = facet_value constants.%R.as_type.f62, (constants.%Iterate.lookup_impl_witness.acc) [symbolic = %Iterate.facet.loc44_29.5 (constants.%Iterate.facet.b95)]
@@ -1421,7 +1409,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %bound_method.loc44_29.4: <bound method> = bound_method %r.ref, %specific_impl_fn.loc44_29.2
 // CHECK:STDOUT:     %.loc44_29.7: ref %Optional.95f = temporary_storage
 // CHECK:STDOUT:     %.loc44_28.2: @Test.%R.as_type.loc40_69.1 (%R.as_type.f62) = acquire_value %r.ref
-// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.95f to %.loc44_29.7 = call %bound_method.loc44_29.4(%.loc44_28.2, %addr.loc44)
+// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.95f to %.loc44_29.7 = call %bound_method.loc44_29.4(%.loc44_28.2, %var)
 // CHECK:STDOUT:     %.loc44_29.8: ref %Optional.95f = temporary %.loc44_29.7, %Iterate.WithSelf.Next.call
 // CHECK:STDOUT:     %.loc44_29.9: %Optional.HasValue.type.006 = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.705) [concrete = constants.%Optional.HasValue.988]
 // CHECK:STDOUT:     %HasValue.ref: %Optional.HasValue.type.006 = name_ref HasValue, %.loc44_29.9 [concrete = constants.%Optional.HasValue.988]
@@ -1532,7 +1520,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1 => constants.%Destroy.facet.305
 // CHECK:STDOUT:   %as_type => constants.%tuple.type.829
 // CHECK:STDOUT:   %require_complete.1 => constants.%complete_type.94f
-// CHECK:STDOUT:   %ptr => constants.%ptr.d6b
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type => constants.%Iterate.WithSelf.Next.type.6f1
 // CHECK:STDOUT:   %.loc44_29.21 => constants.%.fd2
 // CHECK:STDOUT:   %impl.elem3.loc44_29.2 => constants.%R.as_type.as.Iterate.impl.Next.055
@@ -1563,7 +1550,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1 => constants.%Destroy.facet.e08
 // CHECK:STDOUT:   %as_type => constants.%tuple.type.99f
 // CHECK:STDOUT:   %require_complete.1 => constants.%complete_type.dea
-// CHECK:STDOUT:   %ptr => constants.%ptr.2f7
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type => constants.%Iterate.WithSelf.Next.type.285
 // CHECK:STDOUT:   %.loc44_29.21 => constants.%.bca
 // CHECK:STDOUT:   %impl.elem3.loc44_29.2 => constants.%R.as_type.as.Iterate.impl.Next.c50
@@ -1654,7 +1640,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1.f12: %Destroy.type = impl_witness_access %Iterate.lookup_impl_witness.171, element1 [symbolic]
 // CHECK:STDOUT:   %as_type.6f2: type = facet_access_type %impl.elem1.f12 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.5ff: <specific function> = specific_impl_function %impl.elem2.9ef, @Iterate.WithSelf.NewCursor(%Iterate.facet.523) [symbolic]
-// CHECK:STDOUT:   %ptr.b94: type = ptr_type %as_type.6f2 [symbolic]
 // CHECK:STDOUT:   %.f81: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.e1d, %Iterate.facet.523 [symbolic]
 // CHECK:STDOUT:   %impl.elem3.04c: %.f81 = impl_witness_access %Iterate.lookup_impl_witness.171, element3 [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.541: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%facet_value.209) [concrete]
@@ -1735,7 +1720,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.e0f: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.d89, %Iterate.facet.9f4 [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.NewCursor.specific_fn: <specific function> = specific_function %R.as_type.as.Iterate.impl.NewCursor.d2e, @R.as_type.as.Iterate.impl.NewCursor(%facet_value.c05) [concrete]
 // CHECK:STDOUT:   %complete_type.320: <witness> = complete_type_witness %tuple.type.005 [concrete]
-// CHECK:STDOUT:   %ptr.d1a: type = ptr_type %tuple.type.005 [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.64f: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.9f4) [concrete]
 // CHECK:STDOUT:   %.50c: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.64f, %Iterate.facet.9f4 [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.Next.specific_fn: <specific function> = specific_function %R.as_type.as.Iterate.impl.Next.0b7, @R.as_type.as.Iterate.impl.Next(%facet_value.c05) [concrete]
@@ -1776,7 +1760,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem2.loc24_19.2: @Test.%.loc24_19.19 (%.250) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc24_19.2 (constants.%impl.elem2.9ef)]
 // CHECK:STDOUT:   %specific_impl_fn.loc24_19.4: <specific function> = specific_impl_function %impl.elem2.loc24_19.2, @Iterate.WithSelf.NewCursor(%Iterate.facet.loc24_19.5) [symbolic = %specific_impl_fn.loc24_19.4 (constants.%specific_impl_fn.5ff)]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %ptr: type = ptr_type %as_type [symbolic = %ptr (constants.%ptr.b94)]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.loc24_19.5) [symbolic = %Iterate.WithSelf.Next.type (constants.%Iterate.WithSelf.Next.type.e1d)]
 // CHECK:STDOUT:   %.loc24_19.20: type = fn_type_with_self_type %Iterate.WithSelf.Next.type, %Iterate.facet.loc24_19.5 [symbolic = %.loc24_19.20 (constants.%.f81)]
 // CHECK:STDOUT:   %impl.elem3.loc24_19.2: @Test.%.loc24_19.20 (%.f81) = impl_witness_access %Iterate.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc24_19.2 (constants.%impl.elem3.04c)]
@@ -1808,7 +1791,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !for.next:
-// CHECK:STDOUT:     %addr: @Test.%ptr (%ptr.b94) = addr_of %var
 // CHECK:STDOUT:     %impl.elem3.loc24_19.1: @Test.%.loc24_19.20 (%.f81) = impl_witness_access constants.%Iterate.lookup_impl_witness.171, element3 [symbolic = %impl.elem3.loc24_19.2 (constants.%impl.elem3.04c)]
 // CHECK:STDOUT:     %bound_method.loc24_19.3: <bound method> = bound_method %r.ref, %impl.elem3.loc24_19.1
 // CHECK:STDOUT:     %Iterate.facet.loc24_19.3: %Iterate.type = facet_value constants.%R.as_type.657, (constants.%Iterate.lookup_impl_witness.171) [symbolic = %Iterate.facet.loc24_19.5 (constants.%Iterate.facet.523)]
@@ -1820,7 +1802,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %specific_impl_fn.loc24_19.2: <specific function> = specific_impl_function %impl.elem3.loc24_19.1, @Iterate.WithSelf.Next(constants.%Iterate.facet.523) [symbolic = %specific_impl_fn.loc24_19.5 (constants.%specific_impl_fn.c5b)]
 // CHECK:STDOUT:     %bound_method.loc24_19.4: <bound method> = bound_method %r.ref, %specific_impl_fn.loc24_19.2
 // CHECK:STDOUT:     %.loc24_19.7: ref %Optional.f48 = temporary_storage
-// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.f48 to %.loc24_19.7 = call %bound_method.loc24_19.4(%r.ref, %addr)
+// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.f48 to %.loc24_19.7 = call %bound_method.loc24_19.4(%r.ref, %var)
 // CHECK:STDOUT:     %.loc24_19.8: ref %Optional.f48 = temporary %.loc24_19.7, %Iterate.WithSelf.Next.call
 // CHECK:STDOUT:     %.loc24_19.9: %Optional.HasValue.type.d4e = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.cc1) [concrete = constants.%Optional.HasValue.e79]
 // CHECK:STDOUT:     %HasValue.ref: %Optional.HasValue.type.d4e = name_ref HasValue, %.loc24_19.9 [concrete = constants.%Optional.HasValue.e79]
@@ -1923,7 +1905,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1 => constants.%Destroy.facet.40b
 // CHECK:STDOUT:   %as_type => constants.%tuple.type.005
 // CHECK:STDOUT:   %require_complete.1 => constants.%complete_type.320
-// CHECK:STDOUT:   %ptr => constants.%ptr.d1a
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type => constants.%Iterate.WithSelf.Next.type.64f
 // CHECK:STDOUT:   %.loc24_19.20 => constants.%.50c
 // CHECK:STDOUT:   %impl.elem3.loc24_19.2 => constants.%R.as_type.as.Iterate.impl.Next.0b7
@@ -2014,7 +1995,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1.f12: %Destroy.type = impl_witness_access %Iterate.lookup_impl_witness.171, element1 [symbolic]
 // CHECK:STDOUT:   %as_type.6f2: type = facet_access_type %impl.elem1.f12 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.5ff: <specific function> = specific_impl_function %impl.elem2.9ef, @Iterate.WithSelf.NewCursor(%Iterate.facet.523) [symbolic]
-// CHECK:STDOUT:   %ptr.b94: type = ptr_type %as_type.6f2 [symbolic]
 // CHECK:STDOUT:   %.f81: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.e1d, %Iterate.facet.523 [symbolic]
 // CHECK:STDOUT:   %impl.elem3.04c: %.f81 = impl_witness_access %Iterate.lookup_impl_witness.171, element3 [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.541: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%facet_value.209) [concrete]
@@ -2095,7 +2075,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.c29a: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.bde, %Iterate.facet.c9f [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.NewCursor.specific_fn: <specific function> = specific_function %R.as_type.as.Iterate.impl.NewCursor.41a, @R.as_type.as.Iterate.impl.NewCursor(%facet_value.85f) [concrete]
 // CHECK:STDOUT:   %complete_type.843: <witness> = complete_type_witness %tuple.type.dd0 [concrete]
-// CHECK:STDOUT:   %ptr.a4f: type = ptr_type %tuple.type.dd0 [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.454: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.c9f) [concrete]
 // CHECK:STDOUT:   %.b4c: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.454, %Iterate.facet.c9f [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.Next.specific_fn: <specific function> = specific_function %R.as_type.as.Iterate.impl.Next.928, @R.as_type.as.Iterate.impl.Next(%facet_value.85f) [concrete]
@@ -2136,7 +2115,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem2.loc26_19.2: @Test.%.loc26_19.19 (%.250) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc26_19.2 (constants.%impl.elem2.9ef)]
 // CHECK:STDOUT:   %specific_impl_fn.loc26_19.4: <specific function> = specific_impl_function %impl.elem2.loc26_19.2, @Iterate.WithSelf.NewCursor(%Iterate.facet.loc26_19.5) [symbolic = %specific_impl_fn.loc26_19.4 (constants.%specific_impl_fn.5ff)]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %ptr: type = ptr_type %as_type [symbolic = %ptr (constants.%ptr.b94)]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.loc26_19.5) [symbolic = %Iterate.WithSelf.Next.type (constants.%Iterate.WithSelf.Next.type.e1d)]
 // CHECK:STDOUT:   %.loc26_19.20: type = fn_type_with_self_type %Iterate.WithSelf.Next.type, %Iterate.facet.loc26_19.5 [symbolic = %.loc26_19.20 (constants.%.f81)]
 // CHECK:STDOUT:   %impl.elem3.loc26_19.2: @Test.%.loc26_19.20 (%.f81) = impl_witness_access %Iterate.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc26_19.2 (constants.%impl.elem3.04c)]
@@ -2168,7 +2146,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !for.next:
-// CHECK:STDOUT:     %addr: @Test.%ptr (%ptr.b94) = addr_of %var
 // CHECK:STDOUT:     %impl.elem3.loc26_19.1: @Test.%.loc26_19.20 (%.f81) = impl_witness_access constants.%Iterate.lookup_impl_witness.171, element3 [symbolic = %impl.elem3.loc26_19.2 (constants.%impl.elem3.04c)]
 // CHECK:STDOUT:     %bound_method.loc26_19.3: <bound method> = bound_method %r.ref, %impl.elem3.loc26_19.1
 // CHECK:STDOUT:     %Iterate.facet.loc26_19.3: %Iterate.type = facet_value constants.%R.as_type.657, (constants.%Iterate.lookup_impl_witness.171) [symbolic = %Iterate.facet.loc26_19.5 (constants.%Iterate.facet.523)]
@@ -2180,7 +2157,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %specific_impl_fn.loc26_19.2: <specific function> = specific_impl_function %impl.elem3.loc26_19.1, @Iterate.WithSelf.Next(constants.%Iterate.facet.523) [symbolic = %specific_impl_fn.loc26_19.5 (constants.%specific_impl_fn.c5b)]
 // CHECK:STDOUT:     %bound_method.loc26_19.4: <bound method> = bound_method %r.ref, %specific_impl_fn.loc26_19.2
 // CHECK:STDOUT:     %.loc26_19.7: ref %Optional.f48 = temporary_storage
-// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.f48 to %.loc26_19.7 = call %bound_method.loc26_19.4(%r.ref, %addr)
+// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.f48 to %.loc26_19.7 = call %bound_method.loc26_19.4(%r.ref, %var)
 // CHECK:STDOUT:     %.loc26_19.8: ref %Optional.f48 = temporary %.loc26_19.7, %Iterate.WithSelf.Next.call
 // CHECK:STDOUT:     %.loc26_19.9: %Optional.HasValue.type.d4e = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.cc1) [concrete = constants.%Optional.HasValue.e79]
 // CHECK:STDOUT:     %HasValue.ref: %Optional.HasValue.type.d4e = name_ref HasValue, %.loc26_19.9 [concrete = constants.%Optional.HasValue.e79]
@@ -2283,7 +2260,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1 => constants.%Destroy.facet.e1e
 // CHECK:STDOUT:   %as_type => constants.%tuple.type.dd0
 // CHECK:STDOUT:   %require_complete.1 => constants.%complete_type.843
-// CHECK:STDOUT:   %ptr => constants.%ptr.a4f
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type => constants.%Iterate.WithSelf.Next.type.454
 // CHECK:STDOUT:   %.loc26_19.20 => constants.%.b4c
 // CHECK:STDOUT:   %impl.elem3.loc26_19.2 => constants.%R.as_type.as.Iterate.impl.Next.928
@@ -2379,7 +2355,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1.46a: %Destroy.type = impl_witness_access %Iterate.lookup_impl_witness.8b4, element1 [symbolic]
 // CHECK:STDOUT:   %as_type.862: type = facet_access_type %impl.elem1.46a [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.e23: <specific function> = specific_impl_function %impl.elem2.7c0, @Iterate.WithSelf.NewCursor(%Iterate.facet.b19) [symbolic]
-// CHECK:STDOUT:   %ptr.530: type = ptr_type %as_type.862 [symbolic]
 // CHECK:STDOUT:   %.df57: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.10a, %Iterate.facet.b19 [symbolic]
 // CHECK:STDOUT:   %impl.elem3.199: %.df57 = impl_witness_access %Iterate.lookup_impl_witness.8b4, element3 [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.257: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%facet_value.ccb) [concrete]
@@ -2457,7 +2432,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.da4e: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.e43, %Iterate.facet.099 [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.NewCursor.specific_fn: <specific function> = specific_function %R.as_type.as.Iterate.impl.NewCursor.a27, @R.as_type.as.Iterate.impl.NewCursor(%facet_value.b1e) [concrete]
 // CHECK:STDOUT:   %complete_type.e35: <witness> = complete_type_witness %tuple.type.df8 [concrete]
-// CHECK:STDOUT:   %ptr.fc0: type = ptr_type %tuple.type.df8 [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.be4: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.099) [concrete]
 // CHECK:STDOUT:   %.4b8: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.be4, %Iterate.facet.099 [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.Next.specific_fn: <specific function> = specific_function %R.as_type.as.Iterate.impl.Next.bf3, @R.as_type.as.Iterate.impl.Next(%facet_value.b1e) [concrete]
@@ -2515,7 +2489,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem2.loc31_31.2: @Test.%.loc31_31.20 (%.a27) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc31_31.2 (constants.%impl.elem2.7c0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc31_31.4: <specific function> = specific_impl_function %impl.elem2.loc31_31.2, @Iterate.WithSelf.NewCursor(%Iterate.facet.loc31_31.5) [symbolic = %specific_impl_fn.loc31_31.4 (constants.%specific_impl_fn.e23)]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %ptr: type = ptr_type %as_type [symbolic = %ptr (constants.%ptr.530)]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.loc31_31.5) [symbolic = %Iterate.WithSelf.Next.type (constants.%Iterate.WithSelf.Next.type.10a)]
 // CHECK:STDOUT:   %.loc31_31.21: type = fn_type_with_self_type %Iterate.WithSelf.Next.type, %Iterate.facet.loc31_31.5 [symbolic = %.loc31_31.21 (constants.%.df57)]
 // CHECK:STDOUT:   %impl.elem3.loc31_31.2: @Test.%.loc31_31.21 (%.df57) = impl_witness_access %Iterate.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc31_31.2 (constants.%impl.elem3.199)]
@@ -2547,7 +2520,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !for.next:
-// CHECK:STDOUT:     %addr.loc31: @Test.%ptr (%ptr.530) = addr_of %var
 // CHECK:STDOUT:     %impl.elem3.loc31_31.1: @Test.%.loc31_31.21 (%.df57) = impl_witness_access constants.%Iterate.lookup_impl_witness.8b4, element3 [symbolic = %impl.elem3.loc31_31.2 (constants.%impl.elem3.199)]
 // CHECK:STDOUT:     %bound_method.loc31_31.3: <bound method> = bound_method %r.ref, %impl.elem3.loc31_31.1
 // CHECK:STDOUT:     %Iterate.facet.loc31_31.3: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet.b19)]
@@ -2559,7 +2531,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %specific_impl_fn.loc31_31.2: <specific function> = specific_impl_function %impl.elem3.loc31_31.1, @Iterate.WithSelf.Next(constants.%Iterate.facet.b19) [symbolic = %specific_impl_fn.loc31_31.5 (constants.%specific_impl_fn.169)]
 // CHECK:STDOUT:     %bound_method.loc31_31.4: <bound method> = bound_method %r.ref, %specific_impl_fn.loc31_31.2
 // CHECK:STDOUT:     %.loc31_31.7: ref %Optional.552 = temporary_storage
-// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.552 to %.loc31_31.7 = call %bound_method.loc31_31.4(%r.ref, %addr.loc31)
+// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.552 to %.loc31_31.7 = call %bound_method.loc31_31.4(%r.ref, %var)
 // CHECK:STDOUT:     %.loc31_31.8: ref %Optional.552 = temporary %.loc31_31.7, %Iterate.WithSelf.Next.call
 // CHECK:STDOUT:     %.loc31_31.9: %Optional.HasValue.type.109 = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.7ce) [concrete = constants.%Optional.HasValue.605]
 // CHECK:STDOUT:     %HasValue.ref: %Optional.HasValue.type.109 = name_ref HasValue, %.loc31_31.9 [concrete = constants.%Optional.HasValue.605]
@@ -2671,7 +2643,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1 => constants.%Destroy.facet.777
 // CHECK:STDOUT:   %as_type => constants.%tuple.type.df8
 // CHECK:STDOUT:   %require_complete.1 => constants.%complete_type.e35
-// CHECK:STDOUT:   %ptr => constants.%ptr.fc0
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type => constants.%Iterate.WithSelf.Next.type.be4
 // CHECK:STDOUT:   %.loc31_31.21 => constants.%.4b8
 // CHECK:STDOUT:   %impl.elem3.loc31_31.2 => constants.%R.as_type.as.Iterate.impl.Next.bf3
@@ -2737,7 +2708,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1.46a: %Destroy.type = impl_witness_access %Iterate.lookup_impl_witness.8b4, element1 [symbolic]
 // CHECK:STDOUT:   %as_type.862: type = facet_access_type %impl.elem1.46a [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.e23: <specific function> = specific_impl_function %impl.elem2.7c0, @Iterate.WithSelf.NewCursor(%Iterate.facet) [symbolic]
-// CHECK:STDOUT:   %ptr.530: type = ptr_type %as_type.862 [symbolic]
 // CHECK:STDOUT:   %.df57: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.10a, %Iterate.facet [symbolic]
 // CHECK:STDOUT:   %impl.elem3.199: %.df57 = impl_witness_access %Iterate.lookup_impl_witness.8b4, element3 [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.257: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%facet_value.ccb) [concrete]
@@ -2812,7 +2782,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem2.loc32_31.2: @Test.%.loc32_31.20 (%.a27) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc32_31.2 (constants.%impl.elem2.7c0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc32_31.4: <specific function> = specific_impl_function %impl.elem2.loc32_31.2, @Iterate.WithSelf.NewCursor(%Iterate.facet.loc32_31.5) [symbolic = %specific_impl_fn.loc32_31.4 (constants.%specific_impl_fn.e23)]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %ptr: type = ptr_type %as_type [symbolic = %ptr (constants.%ptr.530)]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.loc32_31.5) [symbolic = %Iterate.WithSelf.Next.type (constants.%Iterate.WithSelf.Next.type.10a)]
 // CHECK:STDOUT:   %.loc32_31.21: type = fn_type_with_self_type %Iterate.WithSelf.Next.type, %Iterate.facet.loc32_31.5 [symbolic = %.loc32_31.21 (constants.%.df57)]
 // CHECK:STDOUT:   %impl.elem3.loc32_31.2: @Test.%.loc32_31.21 (%.df57) = impl_witness_access %Iterate.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc32_31.2 (constants.%impl.elem3.199)]
@@ -2844,7 +2813,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !for.next:
-// CHECK:STDOUT:     %addr.loc32: @Test.%ptr (%ptr.530) = addr_of %var
 // CHECK:STDOUT:     %impl.elem3.loc32_31.1: @Test.%.loc32_31.21 (%.df57) = impl_witness_access constants.%Iterate.lookup_impl_witness.8b4, element3 [symbolic = %impl.elem3.loc32_31.2 (constants.%impl.elem3.199)]
 // CHECK:STDOUT:     %bound_method.loc32_31.3: <bound method> = bound_method %r.ref, %impl.elem3.loc32_31.1
 // CHECK:STDOUT:     %Iterate.facet.loc32_31.3: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc32_31.5 (constants.%Iterate.facet)]
@@ -2856,7 +2824,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %specific_impl_fn.loc32_31.2: <specific function> = specific_impl_function %impl.elem3.loc32_31.1, @Iterate.WithSelf.Next(constants.%Iterate.facet) [symbolic = %specific_impl_fn.loc32_31.5 (constants.%specific_impl_fn.169)]
 // CHECK:STDOUT:     %bound_method.loc32_31.4: <bound method> = bound_method %r.ref, %specific_impl_fn.loc32_31.2
 // CHECK:STDOUT:     %.loc32_31.7: ref %Optional.be6 = temporary_storage
-// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.be6 to %.loc32_31.7 = call %bound_method.loc32_31.4(%r.ref, %addr.loc32)
+// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.be6 to %.loc32_31.7 = call %bound_method.loc32_31.4(%r.ref, %var)
 // CHECK:STDOUT:     %.loc32_31.8: ref %Optional.be6 = temporary %.loc32_31.7, %Iterate.WithSelf.Next.call
 // CHECK:STDOUT:     %.loc32_31.9: %Optional.HasValue.type.2bf = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.642) [concrete = constants.%Optional.HasValue.cdf]
 // CHECK:STDOUT:     %HasValue.ref: %Optional.HasValue.type.2bf = name_ref HasValue, %.loc32_31.9 [concrete = constants.%Optional.HasValue.cdf]
@@ -3033,7 +3001,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1.46a: %Destroy.type = impl_witness_access %Iterate.lookup_impl_witness.8b4, element1 [symbolic]
 // CHECK:STDOUT:   %as_type.862: type = facet_access_type %impl.elem1.46a [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.e23: <specific function> = specific_impl_function %impl.elem2.7c0, @Iterate.WithSelf.NewCursor(%Iterate.facet.b19) [symbolic]
-// CHECK:STDOUT:   %ptr.530: type = ptr_type %as_type.862 [symbolic]
 // CHECK:STDOUT:   %.df57: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.10a, %Iterate.facet.b19 [symbolic]
 // CHECK:STDOUT:   %impl.elem3.199: %.df57 = impl_witness_access %Iterate.lookup_impl_witness.8b4, element3 [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.257: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%facet_value.ccb) [concrete]
@@ -3104,7 +3071,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.7e3: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.875, %Iterate.facet.5cc [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.NewCursor.specific_fn: <specific function> = specific_function %R.as_type.as.Iterate.impl.NewCursor.96c, @R.as_type.as.Iterate.impl.NewCursor(%facet_value.88d) [concrete]
 // CHECK:STDOUT:   %complete_type.1b5: <witness> = complete_type_witness %tuple.type.56e [concrete]
-// CHECK:STDOUT:   %ptr.484: type = ptr_type %tuple.type.56e [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.b41: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.5cc) [concrete]
 // CHECK:STDOUT:   %.fef: type = fn_type_with_self_type %Iterate.WithSelf.Next.type.b41, %Iterate.facet.5cc [concrete]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.Next.specific_fn: <specific function> = specific_function %R.as_type.as.Iterate.impl.Next.683, @R.as_type.as.Iterate.impl.Next(%facet_value.88d) [concrete]
@@ -3162,7 +3128,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem2.loc39_31.2: @Test.%.loc39_31.20 (%.a27) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc39_31.2 (constants.%impl.elem2.7c0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc39_31.4: <specific function> = specific_impl_function %impl.elem2.loc39_31.2, @Iterate.WithSelf.NewCursor(%Iterate.facet.loc39_31.5) [symbolic = %specific_impl_fn.loc39_31.4 (constants.%specific_impl_fn.e23)]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %ptr: type = ptr_type %as_type [symbolic = %ptr (constants.%ptr.530)]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.loc39_31.5) [symbolic = %Iterate.WithSelf.Next.type (constants.%Iterate.WithSelf.Next.type.10a)]
 // CHECK:STDOUT:   %.loc39_31.21: type = fn_type_with_self_type %Iterate.WithSelf.Next.type, %Iterate.facet.loc39_31.5 [symbolic = %.loc39_31.21 (constants.%.df57)]
 // CHECK:STDOUT:   %impl.elem3.loc39_31.2: @Test.%.loc39_31.21 (%.df57) = impl_witness_access %Iterate.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc39_31.2 (constants.%impl.elem3.199)]
@@ -3194,7 +3159,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !for.next:
-// CHECK:STDOUT:     %addr.loc39: @Test.%ptr (%ptr.530) = addr_of %var
 // CHECK:STDOUT:     %impl.elem3.loc39_31.1: @Test.%.loc39_31.21 (%.df57) = impl_witness_access constants.%Iterate.lookup_impl_witness.8b4, element3 [symbolic = %impl.elem3.loc39_31.2 (constants.%impl.elem3.199)]
 // CHECK:STDOUT:     %bound_method.loc39_31.3: <bound method> = bound_method %r.ref, %impl.elem3.loc39_31.1
 // CHECK:STDOUT:     %Iterate.facet.loc39_31.3: %Iterate.type = facet_value constants.%R.as_type.a62, (constants.%Iterate.lookup_impl_witness.8b4) [symbolic = %Iterate.facet.loc39_31.5 (constants.%Iterate.facet.b19)]
@@ -3206,7 +3170,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %specific_impl_fn.loc39_31.2: <specific function> = specific_impl_function %impl.elem3.loc39_31.1, @Iterate.WithSelf.Next(constants.%Iterate.facet.b19) [symbolic = %specific_impl_fn.loc39_31.5 (constants.%specific_impl_fn.169)]
 // CHECK:STDOUT:     %bound_method.loc39_31.4: <bound method> = bound_method %r.ref, %specific_impl_fn.loc39_31.2
 // CHECK:STDOUT:     %.loc39_31.7: ref %Optional.552 = temporary_storage
-// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.552 to %.loc39_31.7 = call %bound_method.loc39_31.4(%r.ref, %addr.loc39)
+// CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.552 to %.loc39_31.7 = call %bound_method.loc39_31.4(%r.ref, %var)
 // CHECK:STDOUT:     %.loc39_31.8: ref %Optional.552 = temporary %.loc39_31.7, %Iterate.WithSelf.Next.call
 // CHECK:STDOUT:     %.loc39_31.9: %Optional.HasValue.type.109 = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.7ce) [concrete = constants.%Optional.HasValue.605]
 // CHECK:STDOUT:     %HasValue.ref: %Optional.HasValue.type.109 = name_ref HasValue, %.loc39_31.9 [concrete = constants.%Optional.HasValue.605]
@@ -3318,7 +3282,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem1 => constants.%Destroy.facet.7aa
 // CHECK:STDOUT:   %as_type => constants.%tuple.type.56e
 // CHECK:STDOUT:   %require_complete.1 => constants.%complete_type.1b5
-// CHECK:STDOUT:   %ptr => constants.%ptr.484
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type => constants.%Iterate.WithSelf.Next.type.b41
 // CHECK:STDOUT:   %.loc39_31.21 => constants.%.fef
 // CHECK:STDOUT:   %impl.elem3.loc39_31.2 => constants.%R.as_type.as.Iterate.impl.Next.683

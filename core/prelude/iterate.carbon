@@ -14,17 +14,17 @@ interface Iterate {
   let ElementType:! Copy & Destroy;
   let CursorType:! Destroy;
   fn NewCursor(self) -> CursorType;
-  fn Next(self, cursor: CursorType*) -> Optional(ElementType);
+  fn Next(self, ref cursor: CursorType) -> Optional(ElementType);
 }
 
 impl forall [T:! Copy & Destroy, N:! IntLiteral]
     array(T, N) as Iterate
     where .ElementType = T and .CursorType = i32 {
   fn NewCursor(unused self) -> i32 { return 0; }
-  fn Next(self, cursor: i32*) -> Optional(T) {
-    if (*cursor < N) {
-      ++*cursor;
-      return Optional(T).Some(self[*cursor - 1]);
+  fn Next(self, ref cursor: i32) -> Optional(T) {
+    if (cursor < N) {
+      ++cursor;
+      return Optional(T).Some(self[cursor - 1]);
     } else {
       return Optional(T).None();
     }
@@ -57,11 +57,11 @@ impl forall [
     return (self.Begin(), self.End());
   }
 
-  fn Next(unused self, cursor: (R.Iterator, R.Sentinel)*) -> Optional(ElementType) {
-    if (cursor->0 != cursor->1) {
+  fn Next(unused self, ref cursor: (R.Iterator, R.Sentinel)) -> Optional(ElementType) {
+    if (cursor.0 != cursor.1) {
       returned var result: Optional(ElementType) =
-          Optional(ElementType).Some(cursor->0.(CppUnsafeDeref.Op)());
-      ++cursor->0;
+          Optional(ElementType).Some(cursor.0.(CppUnsafeDeref.Op)());
+      ++cursor.0;
       return var;
     } else {
       return Optional(ElementType).None();

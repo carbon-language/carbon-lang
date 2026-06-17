@@ -15,7 +15,7 @@ class EmptyRange(T:! Core.Copy & Core.Destroy) {
     fn NewCursor(unused self) -> {} {
       return {};
     }
-    fn Next(unused self, _: {}*) -> Core.Optional(T) {
+    fn Next(unused self, ref _: {}) -> Core.Optional(T) {
       return Core.Optional(T).None();
     }
   }

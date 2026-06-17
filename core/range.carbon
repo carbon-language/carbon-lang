@@ -23,10 +23,10 @@ class IntRange(N:! IntLiteral) {
 
   impl as Iterate where .CursorType = Int(N) and .ElementType = Int(N) {
     fn NewCursor(self) -> Int(N) { return self.start; }
-    fn Next(self, cursor: Int(N)*) -> Optional(Int(N)) {
-      var value: Int(N) = *cursor;
+    fn Next(self, ref cursor: Int(N)) -> Optional(Int(N)) {
+      var value: Int(N) = cursor;
       if (value < self.end) {
-        ++*cursor;
+        ++cursor;
         return Optional(Int(N)).Some(value);
       } else {
         return Optional(Int(N)).None();

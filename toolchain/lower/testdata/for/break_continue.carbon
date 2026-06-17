@@ -324,10 +324,10 @@ fn For() {
 // CHECK:STDOUT: !63 = !DILocation(line: 25, column: 36, scope: !57)
 // CHECK:STDOUT: !64 = distinct !DISubprogram(name: "Next", linkageName: "_CNext.IntRange.9452f4c51951679b.Core:Iterate.Core.be1e879c1ad406d8", scope: null, file: !19, line: 26, type: !65, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !67)
 // CHECK:STDOUT: !65 = !DISubroutineType(types: !66)
-// CHECK:STDOUT: !66 = !{!29, !29, !29}
+// CHECK:STDOUT: !66 = !{!29, !29, !22}
 // CHECK:STDOUT: !67 = !{!68, !69}
 // CHECK:STDOUT: !68 = !DILocalVariable(arg: 1, scope: !64, type: !29)
-// CHECK:STDOUT: !69 = !DILocalVariable(arg: 2, scope: !64, type: !29)
+// CHECK:STDOUT: !69 = !DILocalVariable(arg: 2, scope: !64, type: !22)
 // CHECK:STDOUT: !70 = !DILocation(line: 27, column: 7, scope: !64)
 // CHECK:STDOUT: !71 = !DILocation(line: 27, column: 27, scope: !64)
 // CHECK:STDOUT: !72 = !DILocation(line: 28, column: 19, scope: !64)
