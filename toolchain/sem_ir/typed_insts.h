@@ -1450,35 +1450,6 @@ struct RefBinding {
   InstId value_id;
 };
 
-// An action that performs form refinement of the form expression `form_id`:
-// for each operand of `form_id` in a position where a form is expected, if the
-// operand is not a concrete constant, it is wrapped in a `RefineFormAction`.
-// A `RefineFormAction` can be performed (i.e. is non-template-dependent) if we
-// can identify the form operands of `form_id`, which is typically possible only
-// if it will not be rewritten by constant evaluation except to substitute
-// values for its operands. As usual when creating Actions, if possible the
-// nested `RefineFormActions` are performed immediately, and not added to the
-// SemIR.
-//
-// This ensures that a form expression is template-dependent if it depends on
-// any non-concrete constants in form positions, even if those constants are not
-// themselves template-dependent. Unlike type refinement, form refinement does
-// not necessarily produce a concrete result, but it moves as far as possible
-// toward a state where non-concrete constants occur only in type positions, and
-// so the structure of the form is concretely known even if its type component
-// remains symbolic.
-struct RefineFormAction {
-  static constexpr auto Kind = InstKind::RefineFormAction.Define<Parse::NodeId>(
-      {.ir_name = "refine_form_action",
-       .constant_kind = InstConstantKind::ConstantInstAction,
-       .is_lowered = false});
-
-  // Always `Core.Form`.
-  TypeId type_id;
-
-  MetaInstId form_id;
-};
-
 // An action that performs type refinement for an instruction, by creating an
 // instruction that converts from a template symbolic type to a concrete type.
 struct RefineTypeAction {

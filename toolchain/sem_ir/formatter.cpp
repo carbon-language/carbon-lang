@@ -784,12 +784,12 @@ auto Formatter::FormatFunctionSignature(InstBlockId params_id,
         FormatInstAsType(return_form_id);
         break;
       }
-      case CARBON_KIND(SpliceInst splice): {
+      case CARBON_KIND(SymbolicBinding _): {
         out() << "out ";
         FormatName(params[i]);
         out() << ":? ";
         // A form isn't a type, but it's close enough for formatting purposes.
-        FormatInstAsType(splice.inst_id);
+        FormatInstAsType(return_form_id);
         ++i;
         break;
       }

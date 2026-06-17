@@ -40,10 +40,6 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::RefineTypeAction action) -> SemIR::InstId;
 
-// Performs a form refinement action.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::RefineFormAction action) -> SemIR::InstId;
-
 // Determines whether the given action can be performed immediately (i.e.
 // whether it is non-template-dependent).
 auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool;
