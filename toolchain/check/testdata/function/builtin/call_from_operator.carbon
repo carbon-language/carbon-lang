@@ -1144,13 +1144,13 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %As.type: type = facet_type <@As, @As(%T)> [symbolic = %As.type (constants.%As.type.c5f)]
 // CHECK:STDOUT:   %Self: @As.WithSelf.Convert.%As.type (%As.type.c5f) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.37a)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.d4a)]
-// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.e33)]
-// CHECK:STDOUT:   %self.param_patt: @As.WithSelf.Convert.%pattern_type.1 (%pattern_type.e33) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.9e9)]
-// CHECK:STDOUT:   %self.patt: @As.WithSelf.Convert.%pattern_type.1 (%pattern_type.e33) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.51c)]
-// CHECK:STDOUT:   %.1: Core.Form = init_form %T [symbolic = %.1 (constants.%.184)]
-// CHECK:STDOUT:   %pattern_type.2: type = pattern_type %T [symbolic = %pattern_type.2 (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %return.param_patt: @As.WithSelf.Convert.%pattern_type.2 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.41d)]
-// CHECK:STDOUT:   %return.patt: @As.WithSelf.Convert.%pattern_type.2 (%pattern_type.51d) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.c39)]
+// CHECK:STDOUT:   %pattern_type.loc13_14: type = pattern_type %Self.as_type [symbolic = %pattern_type.loc13_14 (constants.%pattern_type.e33)]
+// CHECK:STDOUT:   %self.param_patt: @As.WithSelf.Convert.%pattern_type.loc13_14 (%pattern_type.e33) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.9e9)]
+// CHECK:STDOUT:   %self.patt: @As.WithSelf.Convert.%pattern_type.loc13_14 (%pattern_type.e33) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.51c)]
+// CHECK:STDOUT:   %.loc13: Core.Form = init_form %T [symbolic = %.loc13 (constants.%.184)]
+// CHECK:STDOUT:   %pattern_type.loc13_23: type = pattern_type %T [symbolic = %pattern_type.loc13_23 (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %return.param_patt: @As.WithSelf.Convert.%pattern_type.loc13_23 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.41d)]
+// CHECK:STDOUT:   %return.patt: @As.WithSelf.Convert.%pattern_type.loc13_23 (%pattern_type.51d) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.c39)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -1167,7 +1167,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %self.patt: @AddWith.WithSelf.Op.%pattern_type (%pattern_type.aed) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.c4d)]
 // CHECK:STDOUT:   %other.param_patt: @AddWith.WithSelf.Op.%pattern_type (%pattern_type.aed) = value_param_pattern [symbolic = %other.param_patt (constants.%other.param_patt.076)]
 // CHECK:STDOUT:   %other.patt: @AddWith.WithSelf.Op.%pattern_type (%pattern_type.aed) = at_binding_pattern other, %other.param_patt [symbolic = %other.patt (constants.%other.patt.667)]
-// CHECK:STDOUT:   %.1: Core.Form = init_form %Self.as_type [symbolic = %.1 (constants.%.4cc)]
+// CHECK:STDOUT:   %.loc9: Core.Form = init_form %Self.as_type [symbolic = %.loc9 (constants.%.4cc)]
 // CHECK:STDOUT:   %return.param_patt: @AddWith.WithSelf.Op.%pattern_type (%pattern_type.aed) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.7c8)]
 // CHECK:STDOUT:   %return.patt: @AddWith.WithSelf.Op.%pattern_type (%pattern_type.aed) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.1c8)]
 // CHECK:STDOUT:
@@ -1181,13 +1181,13 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.3aa)]
 // CHECK:STDOUT:   %Self: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.294)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.ef0)]
-// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.20e)]
-// CHECK:STDOUT:   %self.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.1 (%pattern_type.20e) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.360)]
-// CHECK:STDOUT:   %self.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.1 (%pattern_type.20e) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.25f)]
-// CHECK:STDOUT:   %.1: Core.Form = init_form %T [symbolic = %.1 (constants.%.184)]
-// CHECK:STDOUT:   %pattern_type.2: type = pattern_type %T [symbolic = %pattern_type.2 (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %return.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.2 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.41d)]
-// CHECK:STDOUT:   %return.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.2 (%pattern_type.51d) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.c39)]
+// CHECK:STDOUT:   %pattern_type.loc17_14: type = pattern_type %Self.as_type [symbolic = %pattern_type.loc17_14 (constants.%pattern_type.20e)]
+// CHECK:STDOUT:   %self.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc17_14 (%pattern_type.20e) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.360)]
+// CHECK:STDOUT:   %self.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc17_14 (%pattern_type.20e) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.25f)]
+// CHECK:STDOUT:   %.loc17: Core.Form = init_form %T [symbolic = %.loc17 (constants.%.184)]
+// CHECK:STDOUT:   %pattern_type.loc17_23: type = pattern_type %T [symbolic = %pattern_type.loc17_23 (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %return.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc17_23 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.41d)]
+// CHECK:STDOUT:   %return.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc17_23 (%pattern_type.51d) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.c39)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -1253,11 +1253,11 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %As.type => constants.%As.type.c5f
 // CHECK:STDOUT:   %Self => constants.%Self.37a
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.d4a
-// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.e33
+// CHECK:STDOUT:   %pattern_type.loc13_14 => constants.%pattern_type.e33
 // CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.9e9
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.51c
-// CHECK:STDOUT:   %.1 => constants.%.184
-// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.51d
+// CHECK:STDOUT:   %.loc13 => constants.%.184
+// CHECK:STDOUT:   %pattern_type.loc13_23 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.41d
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.c39
 // CHECK:STDOUT: }
@@ -1310,7 +1310,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.c4d
 // CHECK:STDOUT:   %other.param_patt => constants.%other.param_patt.076
 // CHECK:STDOUT:   %other.patt => constants.%other.patt.667
-// CHECK:STDOUT:   %.1 => constants.%.4cc
+// CHECK:STDOUT:   %.loc9 => constants.%.4cc
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.7c8
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.1c8
 // CHECK:STDOUT: }
@@ -1358,11 +1358,11 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3aa
 // CHECK:STDOUT:   %Self => constants.%Self.294
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.ef0
-// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.20e
+// CHECK:STDOUT:   %pattern_type.loc17_14 => constants.%pattern_type.20e
 // CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.360
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.25f
-// CHECK:STDOUT:   %.1 => constants.%.184
-// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.51d
+// CHECK:STDOUT:   %.loc17 => constants.%.184
+// CHECK:STDOUT:   %pattern_type.loc17_23 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.41d
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.c39
 // CHECK:STDOUT: }

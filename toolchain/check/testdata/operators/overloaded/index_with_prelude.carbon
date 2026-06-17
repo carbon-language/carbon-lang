@@ -141,7 +141,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Core.import_ref.bc6: @IndexWith.WithSelf.%IndexWith.assoc_type (%IndexWith.assoc_type.e15) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.WithSelf.%assoc0 (constants.%assoc0.a4e)]
 // CHECK:STDOUT:   %Core.import_ref.fc2: type = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [concrete = %ElementType]
 // CHECK:STDOUT:   %Core.import_ref.6b6 = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %ElementType: type = assoc_const_decl @ElementType.1 [concrete] {}
+// CHECK:STDOUT:   %ElementType: type = assoc_const_decl @ElementType.loc8 [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -536,7 +536,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Core.import_ref.bc6: @IndexWith.WithSelf.%IndexWith.assoc_type (%IndexWith.assoc_type.e15) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.WithSelf.%assoc0 (constants.%assoc0.a4e)]
 // CHECK:STDOUT:   %Core.import_ref.fc2: type = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [concrete = %ElementType]
 // CHECK:STDOUT:   %Core.import_ref.6b6 = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %ElementType: type = assoc_const_decl @ElementType.1 [concrete] {}
+// CHECK:STDOUT:   %ElementType: type = assoc_const_decl @ElementType.loc8 [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -51,7 +51,7 @@ interface I {}
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type.8e70aa.1: type = facet_type <@I.1> [concrete]
+// CHECK:STDOUT:   %I.type.8e70aa.1: type = facet_type <@I.loc4> [concrete]
 // CHECK:STDOUT:   %I.type.8e70aa.2: type = facet_type <@I.loc13> [concrete]
 // CHECK:STDOUT:   %Self: %I.type.8e70aa.2 = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
@@ -68,7 +68,7 @@ interface I {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I.loc13 [concrete = constants.%I.type.8e70aa.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I.1 [from "a.carbon"];
+// CHECK:STDOUT: interface @I.loc4 [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.loc13 {
 // CHECK:STDOUT:   %Self: %I.type.8e70aa.2 = symbolic_binding Self, 0 [symbolic = constants.%Self]

@@ -804,7 +804,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.facet.93a: %ImplicitAs.type.24d = facet_value %C.771, (%ImplicitAs.impl_witness.39f) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.c58: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%D, %ImplicitAs.facet.93a) [concrete]
 // CHECK:STDOUT:   %.f28: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.c58, %ImplicitAs.facet.93a [concrete]
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.1: type = fn_type @C.as.ImplicitAs.impl.Convert.1 [concrete]
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.1: type = fn_type @C.as.ImplicitAs.impl.Convert.loc8 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.3cefb0.1: %C.as.ImplicitAs.impl.Convert.type.ae6f4c.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.bound.d30: <bound method> = bound_method %C.val.d9b, %C.as.ImplicitAs.impl.Convert.3cefb0.1 [concrete]
 // CHECK:STDOUT:   %.de3: ref %C.771 = temporary invalid, %C.val.d9b [concrete]
@@ -820,7 +820,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.facet.da3: %ImplicitAs.type.24d = facet_value %C.83b, (%ImplicitAs.impl_witness.d9f) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.0dc: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%D, %ImplicitAs.facet.da3) [concrete]
 // CHECK:STDOUT:   %.a7f: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.0dc, %ImplicitAs.facet.da3 [concrete]
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.2: type = fn_type @C.as.ImplicitAs.impl.Convert.2 [concrete]
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.2: type = fn_type @C.as.ImplicitAs.impl.Convert.loc9 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.3cefb0.2: %C.as.ImplicitAs.impl.Convert.type.ae6f4c.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.bound.b85: <bound method> = bound_method %C.val.399, %C.as.ImplicitAs.impl.Convert.3cefb0.2 [concrete]
 // CHECK:STDOUT:   %.027: ref %C.83b = temporary invalid, %C.val.399 [concrete]
@@ -835,7 +835,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.facet.bb4: %ImplicitAs.type.24d = facet_value %C.5ce, (%ImplicitAs.impl_witness.409) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.2a1: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%D, %ImplicitAs.facet.bb4) [concrete]
 // CHECK:STDOUT:   %.8f7: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.2a1, %ImplicitAs.facet.bb4 [concrete]
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.3: type = fn_type @C.as.ImplicitAs.impl.Convert.3 [concrete]
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.3: type = fn_type @C.as.ImplicitAs.impl.Convert.loc10 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.3cefb0.3: %C.as.ImplicitAs.impl.Convert.type.ae6f4c.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.bound.468: <bound method> = bound_method %C.val.040, %C.as.ImplicitAs.impl.Convert.3cefb0.3 [concrete]
 // CHECK:STDOUT:   %.ed7: ref %C.5ce = temporary invalid, %C.val.040 [concrete]
@@ -850,7 +850,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.facet.7a4: %ImplicitAs.type.24d = facet_value %C.b3e, (%ImplicitAs.impl_witness.69a) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.dfc: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%D, %ImplicitAs.facet.7a4) [concrete]
 // CHECK:STDOUT:   %.8eb: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.dfc, %ImplicitAs.facet.7a4 [concrete]
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.4: type = fn_type @C.as.ImplicitAs.impl.Convert.4 [concrete]
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.4: type = fn_type @C.as.ImplicitAs.impl.Convert.loc11 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.3cefb0.4: %C.as.ImplicitAs.impl.Convert.type.ae6f4c.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.bound.891: <bound method> = bound_method %C.val.cf1, %C.as.ImplicitAs.impl.Convert.3cefb0.4 [concrete]
 // CHECK:STDOUT:   %.dc8: ref %C.b3e = temporary invalid, %C.val.cf1 [concrete]
@@ -865,7 +865,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.facet.007: %ImplicitAs.type.24d = facet_value %C.8ee, (%ImplicitAs.impl_witness.af6) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.7d2: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%D, %ImplicitAs.facet.007) [concrete]
 // CHECK:STDOUT:   %.9db: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.7d2, %ImplicitAs.facet.007 [concrete]
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.5: type = fn_type @C.as.ImplicitAs.impl.Convert.5 [concrete]
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.5: type = fn_type @C.as.ImplicitAs.impl.Convert.loc12 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.3cefb0.5: %C.as.ImplicitAs.impl.Convert.type.ae6f4c.5 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.bound.65e: <bound method> = bound_method %C.val.19e, %C.as.ImplicitAs.impl.Convert.3cefb0.5 [concrete]
 // CHECK:STDOUT:   %.054: ref %C.8ee = temporary invalid, %C.val.19e [concrete]
@@ -880,7 +880,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.facet.930: %ImplicitAs.type.24d = facet_value %C.5c1, (%ImplicitAs.impl_witness.b0e) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.950: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%D, %ImplicitAs.facet.930) [concrete]
 // CHECK:STDOUT:   %.cf1: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.950, %ImplicitAs.facet.930 [concrete]
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.6: type = fn_type @C.as.ImplicitAs.impl.Convert.6 [concrete]
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.6: type = fn_type @C.as.ImplicitAs.impl.Convert.loc13 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.3cefb0.6: %C.as.ImplicitAs.impl.Convert.type.ae6f4c.6 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.bound.c06: <bound method> = bound_method %C.val.6ca, %C.as.ImplicitAs.impl.Convert.3cefb0.6 [concrete]
 // CHECK:STDOUT:   %.6f6: ref %C.5c1 = temporary invalid, %C.val.6ca [concrete]
@@ -895,7 +895,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.facet.9e1: %ImplicitAs.type.24d = facet_value %C.57b, (%ImplicitAs.impl_witness.4cc) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.c1e: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%D, %ImplicitAs.facet.9e1) [concrete]
 // CHECK:STDOUT:   %.68f: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.c1e, %ImplicitAs.facet.9e1 [concrete]
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.7: type = fn_type @C.as.ImplicitAs.impl.Convert.7 [concrete]
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.7: type = fn_type @C.as.ImplicitAs.impl.Convert.loc14 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.3cefb0.7: %C.as.ImplicitAs.impl.Convert.type.ae6f4c.7 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.bound.edd: <bound method> = bound_method %C.val.225, %C.as.ImplicitAs.impl.Convert.3cefb0.7 [concrete]
 // CHECK:STDOUT:   %.fa8: ref %C.57b = temporary invalid, %C.val.225 [concrete]
@@ -910,7 +910,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.facet.b94: %ImplicitAs.type.24d = facet_value %C.b0a, (%ImplicitAs.impl_witness.82a) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.ff6: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%D, %ImplicitAs.facet.b94) [concrete]
 // CHECK:STDOUT:   %.eb8: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.ff6, %ImplicitAs.facet.b94 [concrete]
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.8: type = fn_type @C.as.ImplicitAs.impl.Convert.8 [concrete]
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.ae6f4c.8: type = fn_type @C.as.ImplicitAs.impl.Convert.loc15 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.3cefb0.8: %C.as.ImplicitAs.impl.Convert.type.ae6f4c.8 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.bound.a06: <bound method> = bound_method %C.val.79c, %C.as.ImplicitAs.impl.Convert.3cefb0.8 [concrete]
 // CHECK:STDOUT:   %.a0a: ref %C.b0a = temporary invalid, %C.val.79c [concrete]
@@ -1365,7 +1365,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.1 [from "library.carbon"];
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc8 [from "library.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc7_26.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
@@ -1374,49 +1374,49 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.2 [from "library.carbon"];
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc9 [from "library.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8(%self.param: ref %C.83b) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.3 [from "library.carbon"];
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc10 [from "library.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc9(%self.param: ref %C.5ce) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.4 [from "library.carbon"];
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc11 [from "library.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10(%self.param: ref %C.b3e) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.5 [from "library.carbon"];
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc12 [from "library.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc11(%self.param: ref %C.8ee) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.6 [from "library.carbon"];
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc13 [from "library.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc12(%self.param: ref %C.5c1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.7 [from "library.carbon"];
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc14 [from "library.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc13(%self.param: ref %C.57b) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.8 [from "library.carbon"];
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc15 [from "library.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc14(%self.param: ref %C.b0a) {
 // CHECK:STDOUT: !entry:

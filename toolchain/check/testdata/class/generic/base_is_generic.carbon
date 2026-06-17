@@ -994,7 +994,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @X.G(imports.%Main.import_ref.b3bc94.1: type) [from "extend_generic_symbolic_base.carbon"] {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic = %U (constants.%U)]
-// CHECK:STDOUT:   %.1: Core.Form = init_form %U [symbolic = %.1 (constants.%.184)]
+// CHECK:STDOUT:   %.loc5: Core.Form = init_form %U [symbolic = %.loc5 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %U [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %return.param_patt: @X.G.%pattern_type (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:   %return.patt: @X.G.%pattern_type (%pattern_type.51d) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.c39)]
@@ -1019,7 +1019,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X.G(constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
-// CHECK:STDOUT:   %.1 => constants.%.184
+// CHECK:STDOUT:   %.loc5 => constants.%.184
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.41d
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.c39
@@ -1069,7 +1069,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X.G(constants.%i32) {
 // CHECK:STDOUT:   %U => constants.%i32
-// CHECK:STDOUT:   %.1 => constants.%.795
+// CHECK:STDOUT:   %.loc5 => constants.%.795
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.a9a
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.0bc

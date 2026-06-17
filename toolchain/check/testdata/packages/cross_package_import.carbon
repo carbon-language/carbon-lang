@@ -482,7 +482,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type.2a8c71.1: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.2a8c71.1: type = fn_type @F.loc4 [concrete]
 // CHECK:STDOUT:   %F.1be9f8.1: %F.type.2a8c71.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type.2a8c71.2: type = fn_type @F.loc23 [concrete]
 // CHECK:STDOUT:   %F.1be9f8.2: %F.type.2a8c71.2 = struct_value () [concrete]
@@ -506,7 +506,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %F.decl: %F.type.2a8c71.2 = fn_decl @F.loc23 [concrete = constants.%F.1be9f8.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1 [from "other_fn.carbon"];
+// CHECK:STDOUT: fn @F.loc4 [from "other_fn.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.loc23() {
 // CHECK:STDOUT: !entry:

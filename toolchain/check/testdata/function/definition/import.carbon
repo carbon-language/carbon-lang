@@ -427,7 +427,7 @@ fn D() {}
 // CHECK:STDOUT: --- fail_def_ownership.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type.9f4a6d.1: type = fn_type @A.1 [concrete]
+// CHECK:STDOUT:   %A.type.9f4a6d.1: type = fn_type @A.loc4 [concrete]
 // CHECK:STDOUT:   %A.921eb9.1: %A.type.9f4a6d.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %A.type.9f4a6d.2: type = fn_type @A.loc14 [concrete]
 // CHECK:STDOUT:   %A.921eb9.2: %A.type.9f4a6d.2 = struct_value () [concrete]
@@ -474,7 +474,7 @@ fn D() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.1 [from "fns.carbon"];
+// CHECK:STDOUT: fn @A.loc4 [from "fns.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.loc14() {
 // CHECK:STDOUT: !entry:

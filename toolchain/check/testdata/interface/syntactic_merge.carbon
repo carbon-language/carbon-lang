@@ -680,13 +680,13 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
-// CHECK:STDOUT:   %Foo.type.bc6a25.1: type = generic_interface_type @Foo.1 [concrete]
+// CHECK:STDOUT:   %Foo.type.bc6a25.1: type = generic_interface_type @Foo.loc7 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.1: %Foo.type.bc6a25.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc12 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.2: %Foo.type.bc6a25.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.8ee: type = facet_type <@Foo.loc12, @Foo.loc12(%a)> [symbolic]
 // CHECK:STDOUT:   %Self.a95: %Foo.type.8ee = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %Bar.type.3f06c8.1: type = generic_interface_type @Bar.1 [concrete]
+// CHECK:STDOUT:   %Bar.type.3f06c8.1: type = generic_interface_type @Bar.loc8 [concrete]
 // CHECK:STDOUT:   %Bar.generic.b3011f.1: %Bar.type.3f06c8.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Bar.type.3f06c8.2: type = generic_interface_type @Bar.loc21 [concrete]
 // CHECK:STDOUT:   %Bar.generic.b3011f.2: %Bar.type.3f06c8.2 = struct_value () [concrete]
@@ -701,8 +701,8 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %Main.Bar: %Bar.type.3f06c8.1 = import_ref Main//two_file, Bar, loaded [concrete = constants.%Bar.generic.b3011f.1]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//two_file, loc4_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.e47 = import_ref Main//two_file, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.99696d.1: %C = import_ref Main//two_file, loc7_16, loaded [symbolic = @Foo.1.%a (constants.%a)]
-// CHECK:STDOUT:   %Main.import_ref.99696d.2: %C = import_ref Main//two_file, loc8_16, loaded [symbolic = @Bar.1.%a (constants.%a)]
+// CHECK:STDOUT:   %Main.import_ref.99696d.1: %C = import_ref Main//two_file, loc7_16, loaded [symbolic = @Foo.loc7.%a (constants.%a)]
+// CHECK:STDOUT:   %Main.import_ref.99696d.2: %C = import_ref Main//two_file, loc8_16, loaded [symbolic = @Bar.loc8.%a (constants.%a)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -734,7 +734,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo.1(imports.%Main.import_ref.99696d.1: %C) [from "two_file.carbon"] {
+// CHECK:STDOUT: generic interface @Foo.loc7(imports.%Main.import_ref.99696d.1: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt (constants.%a.patt)]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
@@ -761,7 +761,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Bar.1(imports.%Main.import_ref.99696d.2: %C) [from "two_file.carbon"] {
+// CHECK:STDOUT: generic interface @Bar.loc8(imports.%Main.import_ref.99696d.2: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt (constants.%a.patt)]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
@@ -795,7 +795,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.1(constants.%a) {
+// CHECK:STDOUT: specific @Foo.loc7(constants.%a) {
 // CHECK:STDOUT:   %a.patt => constants.%a.patt
 // CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
@@ -807,7 +807,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self.a95) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Bar.1(constants.%a) {
+// CHECK:STDOUT: specific @Bar.loc8(constants.%a) {
 // CHECK:STDOUT:   %a.patt => constants.%a.patt
 // CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
@@ -1169,7 +1169,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
-// CHECK:STDOUT:   %Foo.type.bc6a25.1: type = generic_interface_type @Foo.1 [concrete]
+// CHECK:STDOUT:   %Foo.type.bc6a25.1: type = generic_interface_type @Foo.loc6 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.1: %Foo.type.bc6a25.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc17 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.2: %Foo.type.bc6a25.2 = struct_value () [concrete]
@@ -1182,7 +1182,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %Main.Foo: %Foo.type.bc6a25.1 = import_ref Main//alias_two_file, Foo, loaded [concrete = constants.%Foo.generic.d3ea5a.1]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//alias_two_file, loc4_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.e47 = import_ref Main//alias_two_file, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.996: %C = import_ref Main//alias_two_file, loc6_16, loaded [symbolic = @Foo.1.%a (constants.%a)]
+// CHECK:STDOUT:   %Main.import_ref.996: %C = import_ref Main//alias_two_file, loc6_16, loaded [symbolic = @Foo.loc6.%a (constants.%a)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1206,7 +1206,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo.1(imports.%Main.import_ref.996: %C) [from "alias_two_file.carbon"] {
+// CHECK:STDOUT: generic interface @Foo.loc6(imports.%Main.import_ref.996: %C) [from "alias_two_file.carbon"] {
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt (constants.%a.patt)]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
@@ -1240,7 +1240,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.1(constants.%a) {
+// CHECK:STDOUT: specific @Foo.loc6(constants.%a) {
 // CHECK:STDOUT:   %a.patt => constants.%a.patt
 // CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }

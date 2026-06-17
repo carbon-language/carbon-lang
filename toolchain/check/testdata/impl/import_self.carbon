@@ -301,7 +301,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %self.patt: @Add.WithSelf.Op.%pattern_type (%pattern_type.78d) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.26c)]
 // CHECK:STDOUT:   %other.param_patt: @Add.WithSelf.Op.%pattern_type (%pattern_type.78d) = value_param_pattern [symbolic = %other.param_patt (constants.%other.param_patt.03b)]
 // CHECK:STDOUT:   %other.patt: @Add.WithSelf.Op.%pattern_type (%pattern_type.78d) = at_binding_pattern other, %other.param_patt [symbolic = %other.patt (constants.%other.patt.bca)]
-// CHECK:STDOUT:   %.1: Core.Form = init_form %Self.as_type [symbolic = %.1 (constants.%.719)]
+// CHECK:STDOUT:   %.loc5: Core.Form = init_form %Self.as_type [symbolic = %.loc5 (constants.%.719)]
 // CHECK:STDOUT:   %return.param_patt: @Add.WithSelf.Op.%pattern_type (%pattern_type.78d) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.c69)]
 // CHECK:STDOUT:   %return.patt: @Add.WithSelf.Op.%pattern_type (%pattern_type.78d) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.279)]
 // CHECK:STDOUT:
@@ -349,7 +349,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.26c
 // CHECK:STDOUT:   %other.param_patt => constants.%other.param_patt.03b
 // CHECK:STDOUT:   %other.patt => constants.%other.patt.bca
-// CHECK:STDOUT:   %.1 => constants.%.719
+// CHECK:STDOUT:   %.loc5 => constants.%.719
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.c69
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.279
 // CHECK:STDOUT: }
@@ -369,7 +369,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.49a
 // CHECK:STDOUT:   %other.param_patt => constants.%other.param_patt.d59
 // CHECK:STDOUT:   %other.patt => constants.%other.patt.38f
-// CHECK:STDOUT:   %.1 => constants.%.a44
+// CHECK:STDOUT:   %.loc5 => constants.%.a44
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.89a
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.18a
 // CHECK:STDOUT: }
