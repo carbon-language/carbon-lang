@@ -63,8 +63,6 @@ for (name: strbuf in names) {
 }
 ```
 
-`PrintNames()` prints each `String` in the `names` `List` in iteration order.
-
 > **Note:** A name binding in the pattern of a `for` loop is a value binding by
 > default. If a mutable loop variable is desired, the pattern can use `var`. For
 > example: `for (var x: T in range)`.
