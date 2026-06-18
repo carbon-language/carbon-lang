@@ -60,7 +60,7 @@ the pattern defaults to value (immutable) bindings, like `let`.
 For example, this prints all names in `names`:
 
 ```carbon
-for (name: String in names) {
+for (name: strbuf in names) {
   Print(name);
 }
 ```
@@ -68,7 +68,7 @@ for (name: String in names) {
 This default can be overridden by adding the `var` keyword:
 
 ```carbon
-for (var name: String in names) {
+for (var name: strbuf in names) {
   // `name` can be modified, but this will not modify the underlying `names` container.
 }
 ```
@@ -139,7 +139,7 @@ empty lines:
 ```carbon
 var f: File = OpenFile(path);
 while (!f.EOF()) {
-  var line: String = f.ReadLine();
+  var line: strbuf = f.ReadLine();
   if (line.IsEmpty()) {
     continue;
   }
