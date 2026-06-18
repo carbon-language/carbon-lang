@@ -96,7 +96,7 @@ auto Add(std::int64_t a, std::int64_t b) -> std::int64_t {
 #### Captures and function fields
 
 Like lambdas, named function definitions support
-[captures](lambdas.md#captures), [function fields](lambdas.md#function-fields),
+[captures](lambdas.md#captures) and [function fields](lambdas.md#function-fields),
 with these restrictions:
 
 -   They can only be used on functions where the definition is attached to the
@@ -127,14 +127,11 @@ it can be deduced using a signature return expression (`=>`).
             in that context.
         -   For example, `fn ToString(val: i64) -> strbuf;` has a return type of
             `strbuf`.
-    -   Other return forms are possible
-        -   `-> val` _type-expression_ indicates that the function returns a
-            value expression
-        -   `-> ref` _type-expression_ returns a durable reference expression
-        -   `-> var` _type-expression_ returns an initializing expression, which
-            is the default
-    -   Return forms are documented in
+    -   A return form can also use `val`, `ref`, and `var` to control the
+        function call's expression category. For example, `-> ref i32`
+        indicates that the function returns by reference. See
         ["Function calls and returns"](values.md#function-calls-and-returns)
+        for details.
 -   `->` followed by the `auto` keyword indicates that
     [type inference](type_inference.md) should be used to determine the return
     type.
