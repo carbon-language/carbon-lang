@@ -94,18 +94,25 @@ function updateSplitLineNumbers(editor: TextEditor | undefined) {
 }
 
 // Get an SVG image with a diagonal "C++" logo.
-const getCppSvgBase64 = (fillColor: string) => {
+const getCppSvgBase64 = (color: string, opacity: number) => {
   const svg = [
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">',
-    `<text x="50%" y="50%" font-size="10px" font-family="sans-serif" `,
-    `fill="${fillColor}" text-anchor="middle" dominant-baseline="central" `,
-    `transform="rotate(-45 10 10)">C++</text></svg>`,
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="2.1 2.3 15.6 15.6">',
+    `<g fill="none" stroke-linecap="square" stroke="${color}" `,
+    `opacity="${opacity}" transform="rotate(-45 10 10)">`,
+    `<circle cx="4.45" cy="10" r="2.7" stroke-width="1.8" `,
+    `stroke-dasharray="10.76 6.2" stroke-dashoffset="-3.1" />`,
+    `<g stroke-width="1.8">`,
+    `<line x1="10.05" y1="8.1" x2="10.05" y2="11.9" />`,
+    `<line x1="8.15" y1="10" x2="11.95" y2="10" />`,
+    `<line x1="16.35" y1="8.1" x2="16.35" y2="11.9" />`,
+    `<line x1="14.45" y1="10" x2="18.25" y2="10" />`,
+    `</g></g></svg>`,
   ].join('');
   return Buffer.from(svg).toString('base64');
 };
 
-const lightSvgBase64 = getCppSvgBase64('rgba(0,0,0,0.05)');
-const darkSvgBase64 = getCppSvgBase64('rgba(255,255,255,0.06)');
+const lightSvgBase64 = getCppSvgBase64('rgb(0,0,0)', 0.07);
+const darkSvgBase64 = getCppSvgBase64('rgb(255,255,255)', 0.06);
 
 // Create a decoration type for C++ code embedded in Carbon.
 const createCppDecorationType = (isWholeLine: boolean) => {
