@@ -36,7 +36,7 @@ function updateSplitLineNumbers(editor: TextEditor | undefined) {
     return;
   }
   const document = editor.document;
-  if (!document.fileName.includes('/testdata/')) {
+  if (document.languageId !== 'carbon-testdata') {
     return;
   }
 
@@ -189,7 +189,10 @@ export function activate(context: ExtensionContext) {
   };
 
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [{ language: 'carbon' }],
+    documentSelector: [
+      { language: 'carbon' },
+      { language: 'carbon-testdata' },
+    ],
   };
 
   // Create and start the client.
