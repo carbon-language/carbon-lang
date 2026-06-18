@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -224,6 +224,23 @@ fn CallReturnAbstract() {
   ReturnAbstract();
 }
 
+// --- fail_assign_to_abstract_ref.carbon
+library "[[@TEST_NAME]]";
+
+abstract class Abstract {
+}
+
+fn Assign(ref a: Abstract) {
+  // CHECK:STDERR: fail_assign_to_abstract_ref.carbon:[[@LINE+7]]:3: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
+  // CHECK:STDERR:   a = a;
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_assign_to_abstract_ref.carbon:[[@LINE-7]]:1: note: class was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR: abstract class Abstract {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  a = a;
+}
+
 // CHECK:STDOUT: --- fail_abstract_field.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -287,7 +304,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -874,7 +891,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -944,7 +961,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1063,6 +1080,60 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ReturnAbstract.ref: %ReturnAbstract.type = name_ref ReturnAbstract, file.%ReturnAbstract.decl [concrete = constants.%ReturnAbstract]
 // CHECK:STDOUT:   %ReturnAbstract.call: init <error> = call %ReturnAbstract.ref()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_assign_to_abstract_ref.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Abstract [concrete]
+// CHECK:STDOUT:   %a.param_patt: %pattern_type = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %Assign.type: type = fn_type @Assign [concrete]
+// CHECK:STDOUT:   %Assign: %Assign.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Abstract = %Abstract.decl
+// CHECK:STDOUT:     .Assign = %Assign.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
+// CHECK:STDOUT:   %Assign.decl: %Assign.type = fn_decl @Assign [concrete = constants.%Assign] {
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = ref_param_pattern [concrete = constants.%a.param_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %a.param: ref %Abstract = ref_param call_param0
+// CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:     %a: ref %Abstract = ref_binding a, %a.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Abstract {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Abstract
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Assign(%a.param: ref %Abstract) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a.ref.loc14_3: ref %Abstract = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc14_7: ref %Abstract = name_ref a, %a
+// CHECK:STDOUT:   assign %a.ref.loc14_3, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
