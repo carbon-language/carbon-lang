@@ -95,9 +95,8 @@ auto Add(std::int64_t a, std::int64_t b) -> std::int64_t {
 
 #### Captures and function fields
 
-Like lambdas, named function definitions support
-[captures](lambdas.md#captures) and [function fields](lambdas.md#function-fields),
-with these restrictions:
+Like lambdas, named function definitions support [captures](lambdas.md#captures)
+and [function fields](lambdas.md#function-fields), with these restrictions:
 
 -   They can only be used on functions where the definition is attached to the
     declaration (so they cannot be forward declared).
@@ -128,10 +127,10 @@ it can be deduced using a signature return expression (`=>`).
         -   For example, `fn ToString(val: i64) -> strbuf;` has a return type of
             `strbuf`.
     -   A return form can also use `val`, `ref`, and `var` to control the
-        function call's expression category. For example, `-> ref i32`
-        indicates that the function returns by reference. See
-        ["Function calls and returns"](values.md#function-calls-and-returns)
-        for details.
+        function call's expression category. For example, `-> ref i32` indicates
+        that the function returns by reference. See
+        ["Function calls and returns"](values.md#function-calls-and-returns) for
+        details.
 -   `->` followed by the `auto` keyword indicates that
     [type inference](type_inference.md) should be used to determine the return
     type.
@@ -305,7 +304,7 @@ stateless type, like other functions. Once the method is
 example in the expression `object.MethodName`, the result is a _bound method
 value_. The type of the result is a _bound method type_, with the same signature
 as the method, but with the `self` parameter removed. A bound method type
-describes the callee in a method call, and a bound method value describes the
+describes the callee in a method call, and a bound method value specifies the
 `self` parameter of the call.
 
 ```carbon
