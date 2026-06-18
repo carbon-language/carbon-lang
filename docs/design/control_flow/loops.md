@@ -96,8 +96,8 @@ interface Iterate {
 A `for` loop of the form:
 
 ```carbon
-for (pattern in range) {
-  statements
+for (<pattern> in <range>) {
+  <statements>
 }
 ```
 
@@ -119,7 +119,7 @@ values:
 }
 ```
 
-> [!NOTE] The loop variable binding in the `for` loop is `let` (immutable) by
+> **Note:** The loop variable binding in the `for` loop is `let` (immutable) by
 > default. If a mutable loop variable is desired, the pattern can use `var` (for
 > example, `for (var x: T in range)`).
 
