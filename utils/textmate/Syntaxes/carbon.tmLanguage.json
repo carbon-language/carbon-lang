@@ -10,6 +10,9 @@
       "include": "#comments"
     },
     {
+      "include": "#cpp-inline"
+    },
+    {
       "include": "#strings"
     },
     {
@@ -59,6 +62,94 @@
     }
   ],
   "repository": {
+    "cpp-inline": {
+      "patterns": [
+        {
+          "comment": "C++ inline import (triple-quoted)",
+          "begin": "\\b(import)\\b\\s+\\b(Cpp)\\b\\s+\\b(inline)\\b\\s*(''')([^\\s'#]*\\n)?",
+          "beginCaptures": {
+            "1": { "name": "storage.type.carbon" },
+            "2": { "name": "support.type.property-name.carbon" },
+            "3": { "name": "storage.type.carbon" },
+            "4": { "name": "string.quoted.triple.carbon" },
+            "5": { "name": "constant.character.escape.carbon" }
+          },
+          "end": "(''')\\s*(;)",
+          "endCaptures": {
+            "1": { "name": "string.quoted.triple.carbon" },
+            "2": { "name": "punctuation.terminator.carbon" }
+          },
+          "contentName": "meta.embedded.block.cpp",
+          "patterns": [
+            {
+              "include": "source.cpp"
+            }
+          ]
+        },
+        {
+          "comment": "C++ inline import (double-quoted)",
+          "begin": "\\b(import)\\b\\s+\\b(Cpp)\\b\\s+\\b(inline)\\b\\s*(\")",
+          "beginCaptures": {
+            "1": { "name": "storage.type.carbon" },
+            "2": { "name": "support.type.property-name.carbon" },
+            "3": { "name": "storage.type.carbon" },
+            "4": { "name": "string.quoted.double.carbon" }
+          },
+          "end": "(\")\\s*(;)",
+          "endCaptures": {
+            "1": { "name": "string.quoted.double.carbon" },
+            "2": { "name": "punctuation.terminator.carbon" }
+          },
+          "contentName": "meta.embedded.inline.cpp",
+          "patterns": [
+            {
+              "include": "source.cpp"
+            }
+          ]
+        },
+        {
+          "comment": "C++ inline block (triple-quoted)",
+          "begin": "\\b(inline)\\b\\s+\\b(Cpp)\\b\\s*(''')([^\\s'#]*\\n)?",
+          "beginCaptures": {
+            "1": { "name": "storage.type.carbon" },
+            "2": { "name": "support.type.property-name.carbon" },
+            "3": { "name": "string.quoted.triple.carbon" },
+            "4": { "name": "constant.character.escape.carbon" }
+          },
+          "end": "(''')\\s*(;)",
+          "endCaptures": {
+            "1": { "name": "string.quoted.triple.carbon" },
+            "2": { "name": "punctuation.terminator.carbon" }
+          },
+          "contentName": "meta.embedded.block.cpp",
+          "patterns": [
+            {
+              "include": "source.cpp"
+            }
+          ]
+        },
+        {
+          "comment": "C++ inline block (double-quoted)",
+          "begin": "\\b(inline)\\b\\s+\\b(Cpp)\\b\\s*(\")",
+          "beginCaptures": {
+            "1": { "name": "storage.type.carbon" },
+            "2": { "name": "support.type.property-name.carbon" },
+            "3": { "name": "string.quoted.double.carbon" }
+          },
+          "end": "(\")\\s*(;)",
+          "endCaptures": {
+            "1": { "name": "string.quoted.double.carbon" },
+            "2": { "name": "punctuation.terminator.carbon" }
+          },
+          "contentName": "meta.embedded.inline.cpp",
+          "patterns": [
+            {
+              "include": "source.cpp"
+            }
+          ]
+        }
+      ]
+    },
     "comments": {
       "patterns": [
         {
@@ -274,7 +365,7 @@
       "patterns": [
         {
           "name": "storage.type.carbon",
-          "match": "\\b(adapt|alias|choice|class|constraint|fn|import|interface|let|library|namespace|var)\\b"
+          "match": "\\b(adapt|alias|choice|class|constraint|fn|import|inline|interface|let|library|namespace|var)\\b"
         },
         {
           "name": "storage.type.carbon",
