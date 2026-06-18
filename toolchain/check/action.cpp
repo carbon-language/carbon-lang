@@ -333,7 +333,7 @@ auto Internal::EndPerformDelayedAction(Context& context,
   } else {
     // TODO: pattern insts can depend on non-pattern insts, so we'll probably
     // eventually need to support actions that produce both.
-    CARBON_CHECK(contents.empty());
+    CARBON_CHECK(!contents.empty());
     block_id = context.pattern_block_stack().Pop();
     context.inst_block_stack().PopAndDiscard();
   }
