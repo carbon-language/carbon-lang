@@ -173,6 +173,14 @@ auto FacetTypeInfo::ExtendedOnly(const FacetTypeInfo& info) -> FacetTypeInfo {
           .extend_named_constraints = info.extend_named_constraints};
 }
 
+auto FacetTypeInfo::IsExtendedOnly(const FacetTypeInfo& info) -> bool {
+  return info.self_impls_constraints.empty() &&
+         info.self_impls_named_constraints.empty() &&
+         info.type_impls_interfaces.empty() &&
+         info.type_impls_named_constraints.empty() &&
+         info.rewrite_constraints.empty() && !info.other_requirements;
+}
+
 auto FacetTypeInfo::Canonicalize() -> void {
   SortAndDeduplicate(extend_constraints, InterfaceLess);
   SortAndDeduplicate(self_impls_constraints, InterfaceLess);

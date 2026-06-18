@@ -381,6 +381,77 @@ auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
   return true;
 }
 
+// Returns whether the constant value `const_id` contains a facet type
+// instruction with a `where` expression.
+//
+// This search ignores the type_id of insts, and just looks at the `const_id`
+// and its non-type operands recursively. Any use of a symbolic facet may have a
+// type with an arbitrary facet type (including a `where` expression). But we
+// are looking for a nested `where` that is part of the current `WhereExpr`
+// being checked.
+static auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool {
+  class FindWhereCallbacks : public SubstInstCallbacks {
+   public:
+    FindWhereCallbacks(Context* context, bool* found)
+        : SubstInstCallbacks(context), found_(found) {}
+
+    auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+      if (skip_type_next_) {
+        skip_type_next_ = false;
+        return FullySubstituted;
+      }
+      if (*found_ || inst_id == SemIR::TypeType::TypeInstId ||
+          inst_id == SemIR::ErrorInst::InstId) {
+        return FullySubstituted;
+      }
+
+      // Facet types can contain many references to the same value. Only search
+      // a given constant one time to avoid exponential costs.
+      if (!searched_.Insert(inst_id).is_inserted()) {
+        return FullySubstituted;
+      }
+
+      if (auto facet_type =
+              context().insts().TryGetAs<SemIR::FacetType>(inst_id)) {
+        const auto& info =
+            context().facet_types().Get(facet_type->facet_type_id);
+        if (!SemIR::FacetTypeInfo::IsExtendedOnly(info)) {
+          *found_ = true;
+          return FullySubstituted;
+        }
+      }
+
+      auto type_id = context().insts().Get(inst_id).type_id();
+      if (type_id.has_value() &&
+          context().types().Is<SemIR::FacetType>(type_id)) {
+        skip_type_next_ = true;
+      }
+
+      return SubstOperands;
+    }
+
+    auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst /*new_inst*/)
+        -> SemIR::InstId override {
+      CARBON_FATAL("unexpected rebuild of inst {0}",
+                   context().insts().Get(orig_inst_id));
+    }
+
+   private:
+    bool* found_;
+    bool skip_type_next_ = false;
+    Set<SemIR::InstId> searched_;
+  };
+
+  if (!const_id.is_constant()) {
+    return false;
+  }
+
+  bool found = false;
+  FindWhereCallbacks callbacks(&context, &found);
+  SubstInst(context, context.constant_values().GetInstId(const_id), callbacks);
+  return found;
+}
+
 // There are two ways to nest `where` expressions, this diagnoses a `where`
 // expression inside the RHS of another `where` expression.
 //
@@ -399,6 +470,7 @@ static auto DiagnoseNestedWhere(Context& context, SemIR::LocId loc_id,
 }
 
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
+  auto where_loc = context.where_stack().back().loc_id;
   context.where_stack().pop_back();
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
@@ -411,8 +483,46 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
     type_id = SemIR::ErrorInst::TypeId;
   }
 
-  // TODO: Look at the constant value and diagnose NestedWhereInsideWhere if
-  // there are any non-extend constraints present.
+  for (auto inst_id : context.inst_blocks().Get(requirements_id)) {
+    auto inst = context.insts().Get(inst_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::RequirementBaseFacetType _): {
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementImpls impls): {
+        if (FindWhere(context, context.constant_values().Get(impls.lhs_id))) {
+          DiagnoseNestedWhere(context, SemIR::LocId(impls.lhs_id), where_loc);
+          impls.lhs_id = SemIR::ErrorInst::InstId;
+        }
+        if (FindWhere(context, context.constant_values().Get(impls.rhs_id))) {
+          DiagnoseNestedWhere(context, SemIR::LocId(impls.rhs_id), where_loc);
+          impls.rhs_id = SemIR::ErrorInst::InstId;
+        }
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementRewrite rewrite): {
+        if (FindWhere(context, context.constant_values().Get(rewrite.rhs_id))) {
+          DiagnoseNestedWhere(context, SemIR::LocId(rewrite.rhs_id), where_loc);
+          rewrite.rhs_id = SemIR::ErrorInst::InstId;
+        }
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementEquivalent equiv): {
+        if (FindWhere(context, context.constant_values().Get(equiv.lhs_id))) {
+          DiagnoseNestedWhere(context, SemIR::LocId(equiv.lhs_id), where_loc);
+          equiv.lhs_id = SemIR::ErrorInst::InstId;
+        }
+        if (FindWhere(context, context.constant_values().Get(equiv.rhs_id))) {
+          DiagnoseNestedWhere(context, SemIR::LocId(equiv.rhs_id), where_loc);
+          equiv.rhs_id = SemIR::ErrorInst::InstId;
+        }
+        break;
+      }
+      default:
+        CARBON_FATAL("unexpected `where` requirement inst {0}", inst);
+    }
+  }
+
   AddInstAndPush<SemIR::WhereExpr>(
       context, node_id,
       {.type_id = type_id, .requirements_id = requirements_id});
