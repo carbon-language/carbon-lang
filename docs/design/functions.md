@@ -99,11 +99,11 @@ Like lambdas, named function definitions support
 [captures](lambdas.md#captures), [function fields](lambdas.md#function-fields),
 with these restrictions:
 
--   Definition attached: They can only be used on functions where the definition
-    is attached to the declaration (so they cannot be forward declared).
--   Scope limit: Captures and function fields are only supported on local
-    function definitions immediately defined inside the body of another
-    function. They are not supported on member functions of classes/interfaces.
+-   They can only be used on functions where the definition is attached to the
+    declaration (so they cannot be forward declared).
+-   Captures and function fields are only supported on local function
+    definitions immediately defined inside the body of another function. They
+    are not supported on member functions of classes/interfaces.
 
 #### Positional Parameters
 
