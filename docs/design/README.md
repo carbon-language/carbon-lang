@@ -1450,7 +1450,7 @@ Core.Print("Done!");
 example, this prints each `String` value in `names`:
 
 ```carbon
-for (var name: String in names) {
+for (name: String in names) {
   Core.Print(name);
 }
 ```
@@ -1471,7 +1471,7 @@ steps until a manual step is hit (if no manual step is hit, all steps are
 processed):
 
 ```carbon
-for (var step: Step in steps) {
+for (step: Step in steps) {
   if (step.IsManual()) {
     Core.Print("Reached manual step!");
     break;

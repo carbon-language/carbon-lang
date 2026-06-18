@@ -58,7 +58,7 @@ is:
 For example, this prints all names in `names`:
 
 ```carbon
-for (name: String in names) {
+for (name: strbuf in names) {
   Print(name);
 }
 ```
@@ -135,7 +135,7 @@ For example, this processes steps until a manual step is hit (if no manual step
 is hit, all steps are processed):
 
 ```carbon
-for (var step: Step in steps) {
+for (step: Step in steps) {
   if (step.IsManual()) {
     Print("Reached manual step!");
     break;
@@ -157,7 +157,7 @@ empty lines:
 ```carbon
 var f: File = OpenFile(path);
 while (!f.EOF()) {
-  var line: String = f.ReadLine();
+  var line: strbuf = f.ReadLine();
   if (line.IsEmpty()) {
     continue;
   }
@@ -173,7 +173,7 @@ while (!f.EOF()) {
     -   [Include semisemi `for` loops](/proposals/p000353-for-loops.md#include-semisemi-for-loops)
     -   [Multi-variable bindings](/proposals/p000353-for-loops.md#multi-variable-bindings)
     -   [`:` versus `in`](/proposals/p000618-var-ordering.md#-versus-in)
-    -   [Atomic methods for `Iterate` (instead of a single `Next` method)](/proposals/p001885-for-statement-and-user-types.md#atomic-methods-for-iterate)
+    -   [Atomic methods for `Iterate`](/proposals/p001885-for-statement-and-user-types.md#atomic-methods-for-iterate)
     -   [Using an iterator instead of a cursor](/proposals/p001885-for-statement-and-user-types.md#using-an-iterator-instead-of-a-cursor)
     -   [Support getter for both `T` and `T*` with `Iterate`](/proposals/p001885-for-statement-and-user-types.md#support-getter-for-both-t-and-t-with-iterate)
 -   [Optional braces](/proposals/p000623-require-braces.md#optional-braces)
