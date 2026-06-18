@@ -235,8 +235,9 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   });
 
   Options options;
+  Diagnostics::StreamConsumer consumer(error_stream_);
   DriverEnv env(fs_, installation_, input_stream_, output_stream_,
-                error_stream_, fuzzing_, enable_leaking_);
+                error_stream_, fuzzing_, enable_leaking_, &consumer);
 
   ErrorOr<CommandLine::ParseResult> result = CommandLine::Parse(
       args, *env.output_stream, Options::Info,
@@ -244,7 +245,7 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
 
   // Regardless of whether the parse succeeded, try to use the diagnostic kind
   // flag.
-  env.consumer.set_include_diagnostic_kind(options.include_diagnostic_kind);
+  consumer.set_include_diagnostic_kind(options.include_diagnostic_kind);
 
   if (env.installation->error()) {
     CARBON_DIAGNOSTIC(DriverInstallInvalid, Error, "{0}", std::string);

@@ -18,13 +18,23 @@
 
 namespace Carbon {
 
+// The result of a driver run.
+struct DriverResult {
+  // Overall success result.
+  bool success;
+
+  // Per-file success results. May be empty if files aren't individually
+  // processed.
+  llvm::SmallVector<std::pair<std::string, bool>> per_file_success = {};
+};
+
 // Driver environment information, encapsulated for easy passing to subcommands.
 struct DriverEnv {
   explicit DriverEnv(llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                      const InstallPaths* installation, FILE* input_stream,
                      llvm::raw_pwrite_stream* output_stream,
                      llvm::raw_pwrite_stream* error_stream, bool fuzzing,
-                     bool enable_leaking)
+                     bool enable_leaking, Diagnostics::Consumer* consumer)
       : fs(std::move(fs)),
         installation(installation),
         input_stream(input_stream),
@@ -32,8 +42,8 @@ struct DriverEnv {
         error_stream(error_stream),
         fuzzing(fuzzing),
         enable_leaking(enable_leaking),
-        consumer(error_stream),
-        emitter(&consumer) {}
+        consumer(consumer),
+        emitter(consumer) {}
 
   // The filesystem for source code.
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs;
@@ -63,7 +73,7 @@ struct DriverEnv {
   bool build_runtimes_on_demand = false;
 
   // A diagnostic consumer, to be able to connect output.
-  Diagnostics::StreamConsumer consumer;
+  Diagnostics::Consumer* consumer;
 
   // A diagnostic emitter that has no locations.
   Diagnostics::NoLocEmitter emitter;

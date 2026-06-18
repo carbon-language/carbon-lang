@@ -41,6 +41,7 @@ cc_library(
         "//toolchain/check",
         "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:file_diagnostics",
+        "//toolchain/driver:compile_driver",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse",
@@ -48,6 +49,7 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/source:source_buffer",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
+        "@llvm-project//llvm:Support",
         "@llvm-project//llvm:TargetParser",
     ],
 )
