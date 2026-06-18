@@ -169,12 +169,13 @@ abstract class Abstract {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+7]]:28: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
+  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+8]]:28: error: initialization of abstract class `Abstract` [AbstractTypeInInit]
   // CHECK:STDERR:   let unused l: Abstract = {};
   // CHECK:STDERR:                            ^~
-  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE-7]]:1: note: class was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+4]]:28: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   let unused l: Abstract = {};
+  // CHECK:STDERR:                            ^~
   // CHECK:STDERR:
   let unused l: Abstract = {};
 }
@@ -859,16 +860,21 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Abstract [concrete]
-// CHECK:STDOUT:   %l.patt: %pattern_type = value_binding_pattern l [concrete]
+// CHECK:STDOUT:   %pattern_type.169: type = pattern_type %Abstract [concrete]
+// CHECK:STDOUT:   %l.patt: %pattern_type.169 = value_binding_pattern l [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %Abstract.val: %Abstract = struct_value () [concrete]
+// CHECK:STDOUT:   %.69a: ref %Abstract = temporary invalid, %Abstract.val [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -893,11 +899,16 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %l.patt: %pattern_type = value_binding_pattern l [concrete = constants.%l.patt]
+// CHECK:STDOUT:     %l.patt: %pattern_type.169 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc15_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc15_29.2: ref %Abstract = temporary_storage
+// CHECK:STDOUT:   %.loc15_29.3: init %Abstract to %.loc15_29.2 = class_init () [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc15_29.4: init %Abstract = converted %.loc15_29.1, %.loc15_29.3 [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc15_29.5: ref %Abstract = temporary %.loc15_29.2, %.loc15_29.4 [concrete = constants.%.69a]
+// CHECK:STDOUT:   %.loc15_29.6: %Abstract = acquire_value %.loc15_29.5 [concrete = constants.%Abstract.val]
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = value_binding l, <error> [concrete = <error>]
+// CHECK:STDOUT:   %l: %Abstract = value_binding l, %.loc15_29.6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -868,8 +868,12 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                target.storage_id.has_value());
   PendingBlock target_block(&context);
   auto& dest_class_info = context.classes().Get(dest_type.class_id);
-  CARBON_CHECK(is_partial ||
-               dest_class_info.inheritance_kind != SemIR::Class::Abstract);
+  if (!is_partial &&
+      dest_class_info.inheritance_kind == SemIR::Class::Abstract) {
+    CARBON_DIAGNOSTIC(AbstractTypeInInit, Error,
+                      "initialization of abstract class {0}", SemIR::TypeId);
+    context.emitter().Emit(value_id, AbstractTypeInInit, target.type_id);
+  }
   auto object_repr_id =
       dest_class_info.GetObjectRepr(context.sem_ir(), dest_type.specific_id);
   if (object_repr_id == SemIR::ErrorInst::TypeId) {
@@ -1974,13 +1978,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
   // Allow forming a value or reference of abstract class type, but not
   // an initializer.
-  bool require_concrete =
-      target.is_initializer() ||
-      // Prevent conversion from a struct literal to an abstract class.
-      //
-      // TODO: this prevents some correct code from being accepted; see
-      // `fail_todo_abstract_let.carbon`.
-      context.insts().Is<SemIR::StructLiteral>(expr_id);
+  bool require_concrete = target.is_initializer();
 
   // TODO: Push this check down to the points where we perform operations that
   // need the type to be complete.
