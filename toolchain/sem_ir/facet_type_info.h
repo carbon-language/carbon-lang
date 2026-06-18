@@ -47,6 +47,10 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // by the caller if desired.
   static auto ExtendedOnly(const FacetTypeInfo& info) -> FacetTypeInfo;
 
+  // Returns whether a FacetTypeInfo only contains constraints that are extended
+  // by the facet type. If true, `ExtendedOnly()` would be a no-op.
+  static auto IsExtendedOnly(const FacetTypeInfo& info) -> bool;
+
   // TODO: Need to switch to a processed, canonical form, that can support facet
   // type equality as defined by
   // https://github.com/carbon-language/carbon-lang/issues/2409.
