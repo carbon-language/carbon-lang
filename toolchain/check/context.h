@@ -108,6 +108,17 @@ class Context {
 
   auto node_stack() -> NodeStack& { return node_stack_; }
 
+  // While generating instructions whose own location is desugared and refers
+  // outside this file (e.g. destroying values of imported types during
+  // cleanup), holds the local node location generating them. Such instructions
+  // have no node of their own here; recording this origin lets a ranged SemIR
+  // dump still bracket them. Set with `llvm::SaveAndRestore` around the
+  // generating code, and read in `AddInstInNoBlock`. This is purely a hint for
+  // dumping SemIR; see `InstStore::GetDesugaredOriginLoc`.
+  auto desugaring_origin_loc_id() -> SemIR::LocId& {
+    return desugaring_origin_loc_id_;
+  }
+
   auto inst_block_stack() -> InstBlockStack& { return inst_block_stack_; }
   auto pattern_block_stack() -> InstBlockStack& { return pattern_block_stack_; }
 
@@ -431,6 +442,9 @@ class Context {
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
+
+  // See `desugaring_origin_loc_id()`.
+  SemIR::LocId desugaring_origin_loc_id_ = SemIR::LocId::None;
 
   // The stack during Build. Will contain file-level parse nodes on return.
   NodeStack node_stack_;
