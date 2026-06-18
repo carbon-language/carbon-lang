@@ -191,9 +191,7 @@ class Derived {
 }
 
 fn F() {
-  // TODO: We should be able to construct a temporary `Derived`, and assign it
-  // to the `Abstract` value since `Abstract` and `Derived` have pointer value
-  // representations.
+  // TODO: support destroying classes that derive from abstract types.
   //
   // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+4]]:28: error: cannot access member of interface `Core.Destroy` in type `Derived` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   let unused l: Abstract = {.base = {}} as Derived;
@@ -1003,22 +1001,22 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %pattern_type.169 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_38.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc19_39.1: %struct_type.base.f5e = struct_literal (%.loc19_38.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc17_38.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc17_39.1: %struct_type.base.f5e = struct_literal (%.loc17_38.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %.loc19_39.2: ref %Derived = temporary_storage
-// CHECK:STDOUT:   %.loc19_39.3: ref %.79f = class_element_access %.loc19_39.2, element0
-// CHECK:STDOUT:   %.loc19_38.2: init %.79f to %.loc19_39.3 = class_init () [concrete = constants.%empty_struct.5e0]
-// CHECK:STDOUT:   %.loc19_39.4: init %.79f = converted %.loc19_38.1, %.loc19_38.2 [concrete = constants.%empty_struct.5e0]
-// CHECK:STDOUT:   %.loc19_39.5: init %Abstract = as_compatible %.loc19_39.4 [concrete = constants.%Abstract.val]
-// CHECK:STDOUT:   %.loc19_39.6: init %Derived to %.loc19_39.2 = class_init (%.loc19_39.5) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc19_41.1: init %Derived = converted %.loc19_39.1, %.loc19_39.6 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc19_41.2: ref %Derived = temporary %.loc19_39.2, %.loc19_41.1 [concrete = constants.%.521]
-// CHECK:STDOUT:   %.loc19_41.3: ref %Abstract = class_element_access %.loc19_41.2, element0 [concrete = constants.%.5d3]
-// CHECK:STDOUT:   %.loc19_41.4: ref %Abstract = converted %.loc19_41.1, %.loc19_41.3 [concrete = constants.%.5d3]
-// CHECK:STDOUT:   %.loc19_41.5: %Abstract = acquire_value %.loc19_41.4
+// CHECK:STDOUT:   %.loc17_39.2: ref %Derived = temporary_storage
+// CHECK:STDOUT:   %.loc17_39.3: ref %.79f = class_element_access %.loc17_39.2, element0
+// CHECK:STDOUT:   %.loc17_38.2: init %.79f to %.loc17_39.3 = class_init () [concrete = constants.%empty_struct.5e0]
+// CHECK:STDOUT:   %.loc17_39.4: init %.79f = converted %.loc17_38.1, %.loc17_38.2 [concrete = constants.%empty_struct.5e0]
+// CHECK:STDOUT:   %.loc17_39.5: init %Abstract = as_compatible %.loc17_39.4 [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc17_39.6: init %Derived to %.loc17_39.2 = class_init (%.loc17_39.5) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc17_41.1: init %Derived = converted %.loc17_39.1, %.loc17_39.6 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc17_41.2: ref %Derived = temporary %.loc17_39.2, %.loc17_41.1 [concrete = constants.%.521]
+// CHECK:STDOUT:   %.loc17_41.3: ref %Abstract = class_element_access %.loc17_41.2, element0 [concrete = constants.%.5d3]
+// CHECK:STDOUT:   %.loc17_41.4: ref %Abstract = converted %.loc17_41.1, %.loc17_41.3 [concrete = constants.%.5d3]
+// CHECK:STDOUT:   %.loc17_41.5: %Abstract = acquire_value %.loc17_41.4
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = value_binding l, %.loc19_41.5
+// CHECK:STDOUT:   %l: %Abstract = value_binding l, %.loc17_41.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
