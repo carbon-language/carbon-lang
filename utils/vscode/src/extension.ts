@@ -131,7 +131,8 @@ function updateCppInlineDecorations(editor: TextEditor | undefined) {
     return;
   }
   const document = editor.document;
-  if (document.languageId !== 'carbon') {
+  if (document.languageId !== 'carbon' &&
+      document.languageId !== 'carbon-testdata') {
     return;
   }
 
