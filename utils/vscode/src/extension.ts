@@ -93,25 +93,39 @@ function updateSplitLineNumbers(editor: TextEditor | undefined) {
   editor.setDecorations(splitLineNumberDecorationType, decorations);
 }
 
-const cppBlockDecorationType = window.createTextEditorDecorationType({
-  light: {
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
-  },
-  dark: {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-  },
-  isWholeLine: true,
-});
+// Get an SVG image with a diagonal "C++" logo.
+const getCppSvgBase64 = (fillColor: string) => {
+  const svg = [
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" ',
+    'preserveAspectRatio="none">',
+    `<text x="50%" y="50%" font-size="10px" font-family="sans-serif" `,
+    `fill="${fillColor}" text-anchor="middle" dominant-baseline="central" `,
+    `transform="rotate(-45 10 10)">C++</text></svg>`,
+  ].join('');
+  return Buffer.from(svg).toString('base64');
+};
 
-const cppInlineDecorationType = window.createTextEditorDecorationType({
-  light: {
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
-  },
-  dark: {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-  },
-  isWholeLine: false,
-});
+const lightSvgBase64 = getCppSvgBase64('rgba(0,0,0,0.05)');
+const darkSvgBase64 = getCppSvgBase64('rgba(255,255,255,0.06)');
+
+// Create a decoration type for C++ code embedded in Carbon.
+const createCppDecorationType = (isWholeLine: boolean) => {
+  // We can't directly set a background image on a decoration, but we can set it
+  // via a CSS escape in the border property.
+  const getBorder = (base64: string) =>
+    /*border:*/ `none; ` +
+    `background-image: url('data:image/svg+xml;base64,${base64}'); ` +
+    `background-repeat: repeat; ` +
+    `background-size: 20px 100%;`;
+  return window.createTextEditorDecorationType({
+    light: { border: getBorder(lightSvgBase64) },
+    dark: { border: getBorder(darkSvgBase64) },
+    isWholeLine,
+  });
+};
+
+const cppBlockDecorationType = createCppDecorationType(true);
+const cppInlineDecorationType = createCppDecorationType(false);
 
 function updateCppInlineDecorations(editor: TextEditor | undefined) {
   if (!editor) {
