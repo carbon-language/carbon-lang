@@ -30,19 +30,19 @@ static constexpr llvm::StringLiteral InputFileName =
 // The variations of input file we compile. The prelude is fully checked in all
 // cases; the variations differ in how much of the prelude they then exercise,
 // which drives additional instantiation in the main file.
-enum class Variation : uint8_t {
+enum class Import : uint8_t {
   // The minimal possible file: no use of the prelude at all. Measures the
   // baseline cost of compiling the prelude on its own.
-  Empty,
+  Nothing,
   // The minimal use of a single prelude entity (the `i32` type).
   SingleType,
   // A small amount of code that exercises many `impl`s across the prelude: the
   // arithmetic and comparison operators on several builtin numeric types.
-  ManyImpls,
+  ManyTypesManyImpls,
   // The smallest code that pulls in a wide swath of the prelude: a `for` loop
   // over an array plus a string operation, touching iteration, indexing,
   // comparison, arithmetic, copy/destroy, and string support.
-  WideUse,
+  NonTrivialAmount,
 };
 
 // Returns the source code for a given input variation.
