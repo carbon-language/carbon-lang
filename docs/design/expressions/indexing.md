@@ -101,7 +101,7 @@ its own definitions of `IndexWith.At` and `IndexWith.Ref`.
 An array type could implement subscripting like so:
 
 ```
-class Array(template T:! type) {
+class Array(template T:! type, template N:! i64) {
   impl as IndexWith(like i64) {
     let ElementType:! type = T;
     fn At(bound self, subscript: i64) -> val T;

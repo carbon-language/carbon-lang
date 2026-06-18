@@ -295,6 +295,8 @@ var test_str: str = ();
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %i8: type = class_type @Int, @Int(%int_8) [concrete]
 // CHECK:STDOUT:   %pattern_type.0cf: type = pattern_type %i8 [concrete]
+// CHECK:STDOUT:   %test_i8.patt: %pattern_type.0cf = ref_binding_pattern test_i8 [concrete]
+// CHECK:STDOUT:   %test_i8.var_patt: %pattern_type.0cf = var_pattern %test_i8.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
@@ -304,16 +306,22 @@ var test_str: str = ();
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
 // CHECK:STDOUT:   %pattern_type.203: type = pattern_type %i16 [concrete]
+// CHECK:STDOUT:   %test_i16.patt: %pattern_type.203 = ref_binding_pattern test_i16 [concrete]
+// CHECK:STDOUT:   %test_i16.var_patt: %pattern_type.203 = var_pattern %test_i16.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.77c: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%i16) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.0f9: %DefaultOrUnformed.type = facet_value %i16, (%DefaultOrUnformed.impl_witness.77c) [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %test_i32.patt: %pattern_type.6b6 = ref_binding_pattern test_i32 [concrete]
+// CHECK:STDOUT:   %test_i32.var_patt: %pattern_type.6b6 = var_pattern %test_i32.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.e52: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%i32) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.e5a: %DefaultOrUnformed.type = facet_value %i32, (%DefaultOrUnformed.impl_witness.e52) [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.f57: type = pattern_type %i64 [concrete]
+// CHECK:STDOUT:   %test_i64.patt: %pattern_type.f57 = ref_binding_pattern test_i64 [concrete]
+// CHECK:STDOUT:   %test_i64.var_patt: %pattern_type.f57 = var_pattern %test_i64.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.bba: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%i64) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.b9d: %DefaultOrUnformed.type = facet_value %i64, (%DefaultOrUnformed.impl_witness.bba) [concrete]
 // CHECK:STDOUT: }
@@ -325,29 +333,29 @@ var test_str: str = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_i8.patt: %pattern_type.0cf = ref_binding_pattern test_i8 [concrete]
-// CHECK:STDOUT:     %test_i8.var_patt: %pattern_type.0cf = var_pattern %test_i8.patt [concrete]
+// CHECK:STDOUT:     %test_i8.patt: %pattern_type.0cf = ref_binding_pattern test_i8 [concrete = constants.%test_i8.patt]
+// CHECK:STDOUT:     %test_i8.var_patt: %pattern_type.0cf = var_pattern %test_i8.patt [concrete = constants.%test_i8.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i8.var: ref %i8 = var %test_i8.var_patt [concrete]
 // CHECK:STDOUT:   %i8: type = type_literal constants.%i8 [concrete = constants.%i8]
 // CHECK:STDOUT:   %test_i8: ref %i8 = ref_binding test_i8, %test_i8.var [concrete = %test_i8.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_i16.patt: %pattern_type.203 = ref_binding_pattern test_i16 [concrete]
-// CHECK:STDOUT:     %test_i16.var_patt: %pattern_type.203 = var_pattern %test_i16.patt [concrete]
+// CHECK:STDOUT:     %test_i16.patt: %pattern_type.203 = ref_binding_pattern test_i16 [concrete = constants.%test_i16.patt]
+// CHECK:STDOUT:     %test_i16.var_patt: %pattern_type.203 = var_pattern %test_i16.patt [concrete = constants.%test_i16.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i16.var: ref %i16 = var %test_i16.var_patt [concrete]
 // CHECK:STDOUT:   %i16: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %test_i16: ref %i16 = ref_binding test_i16, %test_i16.var [concrete = %test_i16.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_i32.patt: %pattern_type.6b6 = ref_binding_pattern test_i32 [concrete]
-// CHECK:STDOUT:     %test_i32.var_patt: %pattern_type.6b6 = var_pattern %test_i32.patt [concrete]
+// CHECK:STDOUT:     %test_i32.patt: %pattern_type.6b6 = ref_binding_pattern test_i32 [concrete = constants.%test_i32.patt]
+// CHECK:STDOUT:     %test_i32.var_patt: %pattern_type.6b6 = var_pattern %test_i32.patt [concrete = constants.%test_i32.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i32.var: ref %i32 = var %test_i32.var_patt [concrete]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %test_i32: ref %i32 = ref_binding test_i32, %test_i32.var [concrete = %test_i32.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_i64.patt: %pattern_type.f57 = ref_binding_pattern test_i64 [concrete]
-// CHECK:STDOUT:     %test_i64.var_patt: %pattern_type.f57 = var_pattern %test_i64.patt [concrete]
+// CHECK:STDOUT:     %test_i64.patt: %pattern_type.f57 = ref_binding_pattern test_i64 [concrete = constants.%test_i64.patt]
+// CHECK:STDOUT:     %test_i64.var_patt: %pattern_type.f57 = var_pattern %test_i64.patt [concrete = constants.%test_i64.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i64.var: ref %i64 = var %test_i64.var_patt [concrete]
 // CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
@@ -393,6 +401,8 @@ var test_str: str = ();
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
 // CHECK:STDOUT:   %pattern_type.186: type = pattern_type %u8 [concrete]
+// CHECK:STDOUT:   %test_u8.patt: %pattern_type.186 = ref_binding_pattern test_u8 [concrete]
+// CHECK:STDOUT:   %test_u8.var_patt: %pattern_type.186 = var_pattern %test_u8.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
@@ -402,16 +412,22 @@ var test_str: str = ();
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
 // CHECK:STDOUT:   %u16: type = class_type @UInt, @UInt(%int_16) [concrete]
 // CHECK:STDOUT:   %pattern_type.17c: type = pattern_type %u16 [concrete]
+// CHECK:STDOUT:   %test_u16.patt: %pattern_type.17c = ref_binding_pattern test_u16 [concrete]
+// CHECK:STDOUT:   %test_u16.var_patt: %pattern_type.17c = var_pattern %test_u16.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.caf: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%u16) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.2f2: %DefaultOrUnformed.type = facet_value %u16, (%DefaultOrUnformed.impl_witness.caf) [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.668: type = pattern_type %u32 [concrete]
+// CHECK:STDOUT:   %test_u32.patt: %pattern_type.668 = ref_binding_pattern test_u32 [concrete]
+// CHECK:STDOUT:   %test_u32.var_patt: %pattern_type.668 = var_pattern %test_u32.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.4e1: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%u32) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.4eb: %DefaultOrUnformed.type = facet_value %u32, (%DefaultOrUnformed.impl_witness.4e1) [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.b35: type = pattern_type %u64 [concrete]
+// CHECK:STDOUT:   %test_u64.patt: %pattern_type.b35 = ref_binding_pattern test_u64 [concrete]
+// CHECK:STDOUT:   %test_u64.var_patt: %pattern_type.b35 = var_pattern %test_u64.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.4ac: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%u64) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.662: %DefaultOrUnformed.type = facet_value %u64, (%DefaultOrUnformed.impl_witness.4ac) [concrete]
 // CHECK:STDOUT: }
@@ -423,29 +439,29 @@ var test_str: str = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_u8.patt: %pattern_type.186 = ref_binding_pattern test_u8 [concrete]
-// CHECK:STDOUT:     %test_u8.var_patt: %pattern_type.186 = var_pattern %test_u8.patt [concrete]
+// CHECK:STDOUT:     %test_u8.patt: %pattern_type.186 = ref_binding_pattern test_u8 [concrete = constants.%test_u8.patt]
+// CHECK:STDOUT:     %test_u8.var_patt: %pattern_type.186 = var_pattern %test_u8.patt [concrete = constants.%test_u8.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u8.var: ref %u8 = var %test_u8.var_patt [concrete]
 // CHECK:STDOUT:   %u8: type = type_literal constants.%u8 [concrete = constants.%u8]
 // CHECK:STDOUT:   %test_u8: ref %u8 = ref_binding test_u8, %test_u8.var [concrete = %test_u8.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_u16.patt: %pattern_type.17c = ref_binding_pattern test_u16 [concrete]
-// CHECK:STDOUT:     %test_u16.var_patt: %pattern_type.17c = var_pattern %test_u16.patt [concrete]
+// CHECK:STDOUT:     %test_u16.patt: %pattern_type.17c = ref_binding_pattern test_u16 [concrete = constants.%test_u16.patt]
+// CHECK:STDOUT:     %test_u16.var_patt: %pattern_type.17c = var_pattern %test_u16.patt [concrete = constants.%test_u16.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u16.var: ref %u16 = var %test_u16.var_patt [concrete]
 // CHECK:STDOUT:   %u16: type = type_literal constants.%u16 [concrete = constants.%u16]
 // CHECK:STDOUT:   %test_u16: ref %u16 = ref_binding test_u16, %test_u16.var [concrete = %test_u16.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_u32.patt: %pattern_type.668 = ref_binding_pattern test_u32 [concrete]
-// CHECK:STDOUT:     %test_u32.var_patt: %pattern_type.668 = var_pattern %test_u32.patt [concrete]
+// CHECK:STDOUT:     %test_u32.patt: %pattern_type.668 = ref_binding_pattern test_u32 [concrete = constants.%test_u32.patt]
+// CHECK:STDOUT:     %test_u32.var_patt: %pattern_type.668 = var_pattern %test_u32.patt [concrete = constants.%test_u32.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u32.var: ref %u32 = var %test_u32.var_patt [concrete]
 // CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
 // CHECK:STDOUT:   %test_u32: ref %u32 = ref_binding test_u32, %test_u32.var [concrete = %test_u32.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_u64.patt: %pattern_type.b35 = ref_binding_pattern test_u64 [concrete]
-// CHECK:STDOUT:     %test_u64.var_patt: %pattern_type.b35 = var_pattern %test_u64.patt [concrete]
+// CHECK:STDOUT:     %test_u64.patt: %pattern_type.b35 = ref_binding_pattern test_u64 [concrete = constants.%test_u64.patt]
+// CHECK:STDOUT:     %test_u64.var_patt: %pattern_type.b35 = var_pattern %test_u64.patt [concrete = constants.%test_u64.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u64.var: ref %u64 = var %test_u64.var_patt [concrete]
 // CHECK:STDOUT:   %u64: type = type_literal constants.%u64 [concrete = constants.%u64]
@@ -491,6 +507,8 @@ var test_str: str = ();
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
 // CHECK:STDOUT:   %f16.907: type = class_type @Float, @Float(%int_16) [concrete]
 // CHECK:STDOUT:   %pattern_type.7cc: type = pattern_type %f16.907 [concrete]
+// CHECK:STDOUT:   %test_f16.patt: %pattern_type.7cc = ref_binding_pattern test_f16 [concrete]
+// CHECK:STDOUT:   %test_f16.var_patt: %pattern_type.7cc = var_pattern %test_f16.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
@@ -500,16 +518,22 @@ var test_str: str = ();
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %f32.c73: type = class_type @Float, @Float(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.240: type = pattern_type %f32.c73 [concrete]
+// CHECK:STDOUT:   %test_f32.patt: %pattern_type.240 = ref_binding_pattern test_f32 [concrete]
+// CHECK:STDOUT:   %test_f32.var_patt: %pattern_type.240 = var_pattern %test_f32.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.be8: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%f32.c73) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.92c: %DefaultOrUnformed.type = facet_value %f32.c73, (%DefaultOrUnformed.impl_witness.be8) [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.fb7: type = pattern_type %f64.dc1 [concrete]
+// CHECK:STDOUT:   %test_f64.patt: %pattern_type.fb7 = ref_binding_pattern test_f64 [concrete]
+// CHECK:STDOUT:   %test_f64.var_patt: %pattern_type.fb7 = var_pattern %test_f64.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.994: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%f64.dc1) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.a01: %DefaultOrUnformed.type = facet_value %f64.dc1, (%DefaultOrUnformed.impl_witness.994) [concrete]
 // CHECK:STDOUT:   %int_128: Core.IntLiteral = int_value 128 [concrete]
 // CHECK:STDOUT:   %f128.e39: type = class_type @Float, @Float(%int_128) [concrete]
 // CHECK:STDOUT:   %pattern_type.847: type = pattern_type %f128.e39 [concrete]
+// CHECK:STDOUT:   %test_f128.patt: %pattern_type.847 = ref_binding_pattern test_f128 [concrete]
+// CHECK:STDOUT:   %test_f128.var_patt: %pattern_type.847 = var_pattern %test_f128.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.44c: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%f128.e39) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.566: %DefaultOrUnformed.type = facet_value %f128.e39, (%DefaultOrUnformed.impl_witness.44c) [concrete]
 // CHECK:STDOUT: }
@@ -521,29 +545,29 @@ var test_str: str = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_f16.patt: %pattern_type.7cc = ref_binding_pattern test_f16 [concrete]
-// CHECK:STDOUT:     %test_f16.var_patt: %pattern_type.7cc = var_pattern %test_f16.patt [concrete]
+// CHECK:STDOUT:     %test_f16.patt: %pattern_type.7cc = ref_binding_pattern test_f16 [concrete = constants.%test_f16.patt]
+// CHECK:STDOUT:     %test_f16.var_patt: %pattern_type.7cc = var_pattern %test_f16.patt [concrete = constants.%test_f16.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f16.var: ref %f16.907 = var %test_f16.var_patt [concrete]
 // CHECK:STDOUT:   %f16: type = type_literal constants.%f16.907 [concrete = constants.%f16.907]
 // CHECK:STDOUT:   %test_f16: ref %f16.907 = ref_binding test_f16, %test_f16.var [concrete = %test_f16.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_f32.patt: %pattern_type.240 = ref_binding_pattern test_f32 [concrete]
-// CHECK:STDOUT:     %test_f32.var_patt: %pattern_type.240 = var_pattern %test_f32.patt [concrete]
+// CHECK:STDOUT:     %test_f32.patt: %pattern_type.240 = ref_binding_pattern test_f32 [concrete = constants.%test_f32.patt]
+// CHECK:STDOUT:     %test_f32.var_patt: %pattern_type.240 = var_pattern %test_f32.patt [concrete = constants.%test_f32.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f32.var: ref %f32.c73 = var %test_f32.var_patt [concrete]
 // CHECK:STDOUT:   %f32: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:   %test_f32: ref %f32.c73 = ref_binding test_f32, %test_f32.var [concrete = %test_f32.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_f64.patt: %pattern_type.fb7 = ref_binding_pattern test_f64 [concrete]
-// CHECK:STDOUT:     %test_f64.var_patt: %pattern_type.fb7 = var_pattern %test_f64.patt [concrete]
+// CHECK:STDOUT:     %test_f64.patt: %pattern_type.fb7 = ref_binding_pattern test_f64 [concrete = constants.%test_f64.patt]
+// CHECK:STDOUT:     %test_f64.var_patt: %pattern_type.fb7 = var_pattern %test_f64.patt [concrete = constants.%test_f64.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f64.var: ref %f64.dc1 = var %test_f64.var_patt [concrete]
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %test_f64: ref %f64.dc1 = ref_binding test_f64, %test_f64.var [concrete = %test_f64.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_f128.patt: %pattern_type.847 = ref_binding_pattern test_f128 [concrete]
-// CHECK:STDOUT:     %test_f128.var_patt: %pattern_type.847 = var_pattern %test_f128.patt [concrete]
+// CHECK:STDOUT:     %test_f128.patt: %pattern_type.847 = ref_binding_pattern test_f128 [concrete = constants.%test_f128.patt]
+// CHECK:STDOUT:     %test_f128.var_patt: %pattern_type.847 = var_pattern %test_f128.patt [concrete = constants.%test_f128.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f128.var: ref %f128.e39 = var %test_f128.var_patt [concrete]
 // CHECK:STDOUT:   %f128: type = type_literal constants.%f128.e39 [concrete = constants.%f128.e39]
@@ -588,6 +612,7 @@ var test_str: str = ();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %char: type = class_type @Char [concrete]
 // CHECK:STDOUT:   %pattern_type.2ff: type = pattern_type %char [concrete]
+// CHECK:STDOUT:   %test_char.patt: %pattern_type.2ff = value_binding_pattern test_char [concrete]
 // CHECK:STDOUT:   %.b9b: Core.CharLiteral = char_value U+0063 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.e81: type = facet_type <@ImplicitAs, @ImplicitAs(%char)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table [concrete]
@@ -607,14 +632,14 @@ var test_str: str = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_char.patt: %pattern_type.2ff = value_binding_pattern test_char [concrete]
+// CHECK:STDOUT:     %test_char.patt: %pattern_type.2ff = value_binding_pattern test_char [concrete = constants.%test_char.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %char: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %impl.elem0: %.1e6 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method @__global_init.%.loc5, %impl.elem0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call: init %char = call %bound_method(@__global_init.%.loc5) [concrete = constants.%int_99]
 // CHECK:STDOUT:   %.loc5_23.1: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_99]
 // CHECK:STDOUT:   %.loc5_23.2: %char = converted @__global_init.%.loc5, %.loc5_23.1 [concrete = constants.%int_99]
+// CHECK:STDOUT:   %char: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %test_char: %char = value_binding test_char, %.loc5_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -634,6 +659,7 @@ var test_str: str = ();
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
 // CHECK:STDOUT:   %ptr.093: type = ptr_type %u8 [concrete]
 // CHECK:STDOUT:   %pattern_type.adf: type = pattern_type %str.3d4 [concrete]
+// CHECK:STDOUT:   %test_str.patt: %pattern_type.adf = value_binding_pattern test_str [concrete]
 // CHECK:STDOUT:   %str.16f: %ptr.093 = string_literal "Test" [concrete]
 // CHECK:STDOUT:   %int_4: %u64 = int_value 4 [concrete]
 // CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str.16f, %int_4) [concrete]
@@ -641,7 +667,7 @@ var test_str: str = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_str.patt: %pattern_type.adf = value_binding_pattern test_str [concrete]
+// CHECK:STDOUT:     %test_str.patt: %pattern_type.adf = value_binding_pattern test_str [concrete = constants.%test_str.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %str: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
 // CHECK:STDOUT:   %test_str: %str.3d4 = value_binding test_str, @__global_init.%String.val
@@ -659,6 +685,8 @@ var test_str: str = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %test_type.patt: %pattern_type.98f = ref_binding_pattern test_type [concrete]
+// CHECK:STDOUT:   %test_type.var_patt: %pattern_type.98f = var_pattern %test_type.patt [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -678,8 +706,8 @@ var test_str: str = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_type.patt: %pattern_type.98f = ref_binding_pattern test_type [concrete]
-// CHECK:STDOUT:     %test_type.var_patt: %pattern_type.98f = var_pattern %test_type.patt [concrete]
+// CHECK:STDOUT:     %test_type.patt: %pattern_type.98f = ref_binding_pattern test_type [concrete = constants.%test_type.patt]
+// CHECK:STDOUT:     %test_type.var_patt: %pattern_type.98f = var_pattern %test_type.patt [concrete = constants.%test_type.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_type.var: ref type = var %test_type.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5: type = type_literal type [concrete = type]

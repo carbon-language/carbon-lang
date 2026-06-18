@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_CUSTOM_WITNESS_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -24,6 +25,17 @@ auto BuildPrimitiveCopyWitness(
     Context& context, SemIR::LocId loc_id, SemIR::NameScopeId parent_scope_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId;
+
+// Returns a manufactured operator function.
+// `param_types` contains the parameter types. The first element of
+// `param_types` is treated as the `self` type, and any subsequent elements
+// are treated as the types of the remaining explicit parameters.
+auto MakeBuiltinOperatorFunction(
+    Context& context, llvm::ArrayRef<SemIR::TypeId> param_types,
+    SemIR::TypeId return_type_id, CoreIdentifier op_name,
+    SemIR::BuiltinFunctionKind builtin_kind,
+    SemIR::NameScopeId parent_scope_id = SemIR::NameScopeId::None)
+    -> SemIR::InstId;
 
 // Builds a witness that the given type is trivially destroyable.
 auto BuildTrivialDestroyWitness(

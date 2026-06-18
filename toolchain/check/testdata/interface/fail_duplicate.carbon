@@ -142,6 +142,8 @@ interface Class { }
 // CHECK:STDOUT:   %Self.3ce02d.2: %Interface.type.283524.2 = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.3ce02d.2 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %self.param_patt: %pattern_type = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %self.patt: %pattern_type = at_binding_pattern self, %self.param_patt [symbolic]
 // CHECK:STDOUT:   %Interface.WithSelf.F.type: type = fn_type @Interface.WithSelf.F, @Interface.WithSelf.loc13(%Self.3ce02d.2) [symbolic]
 // CHECK:STDOUT:   %Interface.WithSelf.F: %Interface.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface.loc13 [concrete]
@@ -173,8 +175,8 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Interface.WithSelf.F.decl: @Interface.WithSelf.loc13.%Interface.WithSelf.F.type (%Interface.WithSelf.F.type) = fn_decl @Interface.WithSelf.F [symbolic = @Interface.WithSelf.loc13.%Interface.WithSelf.F (constants.%Interface.WithSelf.F)] {
-// CHECK:STDOUT:     %self.param_patt: @Interface.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: @Interface.WithSelf.F.%pattern_type (%pattern_type) = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt.loc14_8.1: @Interface.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern [symbolic = %self.param_patt.loc14_8.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:     %self.patt.loc14_8.1: @Interface.WithSelf.F.%pattern_type (%pattern_type) = at_binding_pattern self, %self.param_patt.loc14_8.1 [symbolic = %self.patt.loc14_8.2 (constants.%self.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @Interface.WithSelf.F.%Self.as_type.loc14_8.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc14_8.1: type = splice_block %.loc14_8.2 [symbolic = %Self.as_type.loc14_8.1 (constants.%Self.as_type)] {
@@ -198,6 +200,8 @@ interface Class { }
 // CHECK:STDOUT:   %Self: %Interface.type.283524.2 = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.3ce02d.2)]
 // CHECK:STDOUT:   %Self.as_type.loc14_8.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc14_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc14_8.1 [symbolic = %pattern_type (constants.%pattern_type)]
+// CHECK:STDOUT:   %self.param_patt.loc14_8.2: @Interface.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern [symbolic = %self.param_patt.loc14_8.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt.loc14_8.2: @Interface.WithSelf.F.%pattern_type (%pattern_type) = at_binding_pattern self, %self.param_patt.loc14_8.2 [symbolic = %self.patt.loc14_8.2 (constants.%self.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Interface.WithSelf.F.%Self.as_type.loc14_8.1 (%Self.as_type));
 // CHECK:STDOUT: }
@@ -210,6 +214,8 @@ interface Class { }
 // CHECK:STDOUT:   %Self => constants.%Self.3ce02d.2
 // CHECK:STDOUT:   %Self.as_type.loc14_8.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type
+// CHECK:STDOUT:   %self.param_patt.loc14_8.2 => constants.%self.param_patt
+// CHECK:STDOUT:   %self.patt.loc14_8.2 => constants.%self.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_name_conflict_with_fn.carbon

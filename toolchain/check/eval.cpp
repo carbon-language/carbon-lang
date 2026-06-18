@@ -108,21 +108,48 @@ class EvalContext {
 
   // Gets the value of the specified compile-time binding in this context.
   // Returns `None` if the value is not fixed in this context.
-  auto GetCompileTimeBindValue(SemIR::CompileTimeBindIndex bind_index)
+  auto GetCompileTimeBindValue(SemIR::SymbolicBinding binding)
       -> SemIR::ConstantId {
-    if (!bind_index.has_value() || !specific_id_.has_value()) {
+    // If we know which specific we're evaluating within and this is an argument
+    // of that specific, its constant value is the corresponding argument value.
+    const auto& binding_name = entity_names().Get(binding.entity_name_id);
+    if (!binding_name.bind_index().has_value() || !specific_id_.has_value()) {
       return SemIR::ConstantId::None;
     }
+    auto binding_index = binding_name.bind_index().index;
 
     const auto& specific = specifics().Get(specific_id_);
     auto args = inst_blocks().Get(specific.args_id);
 
     // Bindings past the ones with known arguments can appear as local
     // bindings of entities declared within this generic.
-    if (static_cast<size_t>(bind_index.index) >= args.size()) {
+    if (static_cast<size_t>(binding_index) >= args.size()) {
       return SemIR::ConstantId::None;
     }
-    return constant_values().Get(args[bind_index.index]);
+
+    // Check that the binding belongs to the current generic.
+    {
+      auto generic = generics().Get(specific.generic_id);
+      auto generic_bindings = inst_blocks().Get(generic.bindings_id);
+      CARBON_CHECK(static_cast<size_t>(binding_index) <
+                   generic_bindings.size());
+      auto generic_binding_const_id =
+          constant_values().Get(generic_bindings[binding_index]);
+      auto generic_binding =
+          constant_values().GetInstAs<SemIR::SymbolicBinding>(
+              generic_binding_const_id);
+      auto generic_binding_name =
+          entity_names().Get(generic_binding.entity_name_id);
+      // TODO: consider checking more fields of EntityName. But note that even
+      // if we check all of them, there will still be false negatives when
+      // different bindings happen to have the same EntityName representation.
+      CARBON_CHECK(generic_binding.type_id == binding.type_id &&
+                       generic_binding_name.name_id == binding_name.name_id,
+                   "Binding {0} does not belong to generic {1}", binding_name,
+                   generic);
+    }
+
+    return constant_values().Get(args[binding_index]);
   }
 
   // Given information about a symbolic constant, determine its value in the
@@ -2954,13 +2981,9 @@ auto TryEvalTypedInst<SemIR::SymbolicBinding>(EvalContext& eval_context,
 
   // If we know which specific we're evaluating within and this is an argument
   // of that specific, its constant value is the corresponding argument value.
-  const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
-  if (bind_name.bind_index().has_value()) {
-    if (auto value =
-            eval_context.GetCompileTimeBindValue(bind_name.bind_index());
-        value.has_value()) {
-      return value;
-    }
+  if (auto value = eval_context.GetCompileTimeBindValue(bind);
+      value.has_value()) {
+    return value;
   }
 
   // The constant form of a symbolic binding is an idealized form of the

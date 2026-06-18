@@ -90,35 +90,6 @@ impl C as J where .X = ();
 // CHECK:STDERR:
 impl C as J where .X = () {}
 
-// --- fail_todo_class_with_qualified_rewrite.carbon
-library "[[@TEST_NAME]]";
-
-interface J;
-interface K { let X:! type; }
-class C {}
-
-// TODO: There should be no error here.
-//
-// CHECK:STDERR: fail_todo_class_with_qualified_rewrite.carbon:[[@LINE+8]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
-// CHECK:STDERR: impl C as J where .Self impls K and .(K.X) = ();
-// CHECK:STDERR:                                      ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_class_with_qualified_rewrite.carbon:[[@LINE+4]]:38: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: impl C as J where .Self impls K and .(K.X) = ();
-// CHECK:STDERR:                                      ^
-// CHECK:STDERR:
-impl C as J where .Self impls K and .(K.X) = ();
-
-// TODO: The failure here should be that J is incomplete, once the rewrite of
-// `.(K.X)` works. Since any rewrite in the decl requires us to know the size of
-// the witness table which requires all interfaces to be complete.
-//
-// CHECK:STDERR: fail_todo_class_with_qualified_rewrite.carbon:[[@LINE+4]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
-// CHECK:STDERR: impl C as J where .Self impls K and .(K.X) = () {}
-// CHECK:STDERR:                                      ^
-// CHECK:STDERR:
-impl C as J where .Self impls K and .(K.X) = () {}
-
 // --- incomplete_where.carbon
 library "[[@TEST_NAME]]";
 
@@ -404,47 +375,6 @@ interface B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_class_with_qualified_rewrite.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %K.type: type = facet_type <@K> [concrete]
-// CHECK:STDOUT:   %Self: %K.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type @K [concrete]
-// CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, @K.WithSelf.%X [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @J;
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @K {
-// CHECK:STDOUT:   %Self: %K.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %K.WithSelf.decl = interface_with_self_decl @K [concrete]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %X: type = assoc_const_decl @X [concrete] {
-// CHECK:STDOUT:     %assoc0: %K.assoc_type = assoc_entity element0, @K.WithSelf.%X [concrete = constants.%assoc0]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .X = @X.%assoc0
-// CHECK:STDOUT:   witness = (@K.WithSelf.%X)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !requires:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @K.WithSelf(constants.%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- incomplete_where.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -705,7 +635,7 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %.loc8_13 {
 // CHECK:STDOUT:   %C.as.I.impl.F.decl: %C.as.I.impl.F.type = fn_decl @C.as.I.impl.F [concrete = constants.%C.as.I.impl.F] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete]
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.I.impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [concrete = constants.%Incomplete.type]
@@ -796,6 +726,7 @@ interface B {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %X_where.type: type = facet_type <@X where %impl.elem0 = %empty_struct_type> [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %X_where.type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %X_where.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -812,7 +743,7 @@ interface B {
 // CHECK:STDOUT:   %Y.decl: type = constraint_decl @Y [concrete = constants.%Y.type] {} {}
 // CHECK:STDOUT:   %X.decl: type = interface_decl @X [concrete = constants.%X.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc16_14.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_19.1: type = splice_block %.loc16_19.2 [concrete = constants.%X_where.type] {
 // CHECK:STDOUT:       %.Self.loc16_14: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
@@ -898,6 +829,7 @@ interface B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc16_14.2: %X_where.type) {
+// CHECK:STDOUT:   %T.patt.loc16_14.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc16_14.1: %X_where.type = symbolic_binding T, 0 [symbolic = %T.loc16_14.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -938,6 +870,7 @@ interface B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc16_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc16_14.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

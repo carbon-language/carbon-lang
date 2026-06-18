@@ -123,6 +123,8 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %TwoTypes: type = class_type @TwoTypes [concrete]
 // CHECK:STDOUT:   %pattern_type.83a: type = pattern_type %TwoTypes [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.83a = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type.83a = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
 // CHECK:STDOUT:   %T.b09: %Default.type = symbolic_binding T, 0 [symbolic]
@@ -143,8 +145,8 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.83a = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.83a = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.83a = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.83a = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %TwoTypes = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %x: ref %TwoTypes = ref_binding x, %x.var [concrete = %x.var]
@@ -168,6 +170,8 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %TypePack.78f: type = class_type @TypePack.1 [concrete]
 // CHECK:STDOUT:   %pattern_type.a64: type = pattern_type %TypePack.78f [concrete]
+// CHECK:STDOUT:   %a0.patt: %pattern_type.a64 = ref_binding_pattern a0 [concrete]
+// CHECK:STDOUT:   %a0.var_patt: %pattern_type.a64 = var_pattern %a0.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
 // CHECK:STDOUT:   %T.b09: %Default.type = symbolic_binding T, 0 [symbolic]
@@ -181,6 +185,8 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.be2: %DefaultOrUnformed.type = facet_value %TypePack.78f, (%DefaultOrUnformed.impl_witness.6f4) [concrete]
 // CHECK:STDOUT:   %TypePack.0bc: type = class_type @TypePack.2 [concrete]
 // CHECK:STDOUT:   %pattern_type.20e: type = pattern_type %TypePack.0bc [concrete]
+// CHECK:STDOUT:   %a1.patt: %pattern_type.20e = ref_binding_pattern a1 [concrete]
+// CHECK:STDOUT:   %a1.var_patt: %pattern_type.20e = var_pattern %a1.patt [concrete]
 // CHECK:STDOUT:   %TypePack.Op.type.83af6e.2: type = fn_type @TypePack.Op.2 [concrete]
 // CHECK:STDOUT:   %TypePack.Op.4dca31.2: %TypePack.Op.type.83af6e.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.9b40fb.2: <witness> = custom_witness (%TypePack.Op.4dca31.2), @Default [concrete]
@@ -189,6 +195,8 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.777: %DefaultOrUnformed.type = facet_value %TypePack.0bc, (%DefaultOrUnformed.impl_witness.8e2) [concrete]
 // CHECK:STDOUT:   %TypePack.0ec: type = class_type @TypePack.3 [concrete]
 // CHECK:STDOUT:   %pattern_type.c25: type = pattern_type %TypePack.0ec [concrete]
+// CHECK:STDOUT:   %a2.patt: %pattern_type.c25 = ref_binding_pattern a2 [concrete]
+// CHECK:STDOUT:   %a2.var_patt: %pattern_type.c25 = var_pattern %a2.patt [concrete]
 // CHECK:STDOUT:   %TypePack.Op.type.83af6e.3: type = fn_type @TypePack.Op.3 [concrete]
 // CHECK:STDOUT:   %TypePack.Op.4dca31.3: %TypePack.Op.type.83af6e.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.9b40fb.3: <witness> = custom_witness (%TypePack.Op.4dca31.3), @Default [concrete]
@@ -197,6 +205,8 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.967: %DefaultOrUnformed.type = facet_value %TypePack.0ec, (%DefaultOrUnformed.impl_witness.873) [concrete]
 // CHECK:STDOUT:   %TypePack.186: type = class_type @TypePack.4 [concrete]
 // CHECK:STDOUT:   %pattern_type.678: type = pattern_type %TypePack.186 [concrete]
+// CHECK:STDOUT:   %a3.patt: %pattern_type.678 = ref_binding_pattern a3 [concrete]
+// CHECK:STDOUT:   %a3.var_patt: %pattern_type.678 = var_pattern %a3.patt [concrete]
 // CHECK:STDOUT:   %TypePack.Op.type.83af6e.4: type = fn_type @TypePack.Op.4 [concrete]
 // CHECK:STDOUT:   %TypePack.Op.4dca31.4: %TypePack.Op.type.83af6e.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.9b40fb.4: <witness> = custom_witness (%TypePack.Op.4dca31.4), @Default [concrete]
@@ -212,26 +222,26 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a0.patt: %pattern_type.a64 = ref_binding_pattern a0 [concrete]
-// CHECK:STDOUT:     %a0.var_patt: %pattern_type.a64 = var_pattern %a0.patt [concrete]
+// CHECK:STDOUT:     %a0.patt: %pattern_type.a64 = ref_binding_pattern a0 [concrete = constants.%a0.patt]
+// CHECK:STDOUT:     %a0.var_patt: %pattern_type.a64 = var_pattern %a0.patt [concrete = constants.%a0.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a0.var: ref %TypePack.78f = var %a0.var_patt [concrete]
 // CHECK:STDOUT:   %a0: ref %TypePack.78f = ref_binding a0, %a0.var [concrete = %a0.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a1.patt: %pattern_type.20e = ref_binding_pattern a1 [concrete]
-// CHECK:STDOUT:     %a1.var_patt: %pattern_type.20e = var_pattern %a1.patt [concrete]
+// CHECK:STDOUT:     %a1.patt: %pattern_type.20e = ref_binding_pattern a1 [concrete = constants.%a1.patt]
+// CHECK:STDOUT:     %a1.var_patt: %pattern_type.20e = var_pattern %a1.patt [concrete = constants.%a1.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a1.var: ref %TypePack.0bc = var %a1.var_patt [concrete]
 // CHECK:STDOUT:   %a1: ref %TypePack.0bc = ref_binding a1, %a1.var [concrete = %a1.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a2.patt: %pattern_type.c25 = ref_binding_pattern a2 [concrete]
-// CHECK:STDOUT:     %a2.var_patt: %pattern_type.c25 = var_pattern %a2.patt [concrete]
+// CHECK:STDOUT:     %a2.patt: %pattern_type.c25 = ref_binding_pattern a2 [concrete = constants.%a2.patt]
+// CHECK:STDOUT:     %a2.var_patt: %pattern_type.c25 = var_pattern %a2.patt [concrete = constants.%a2.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a2.var: ref %TypePack.0ec = var %a2.var_patt [concrete]
 // CHECK:STDOUT:   %a2: ref %TypePack.0ec = ref_binding a2, %a2.var [concrete = %a2.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a3.patt: %pattern_type.678 = ref_binding_pattern a3 [concrete]
-// CHECK:STDOUT:     %a3.var_patt: %pattern_type.678 = var_pattern %a3.patt [concrete]
+// CHECK:STDOUT:     %a3.patt: %pattern_type.678 = ref_binding_pattern a3 [concrete = constants.%a3.patt]
+// CHECK:STDOUT:     %a3.var_patt: %pattern_type.678 = var_pattern %a3.patt [concrete = constants.%a3.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a3.var: ref %TypePack.186 = var %a3.var_patt [concrete]
 // CHECK:STDOUT:   %a3: ref %TypePack.186 = ref_binding a3, %a3.var [concrete = %a3.var]

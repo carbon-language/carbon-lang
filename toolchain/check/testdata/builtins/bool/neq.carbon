@@ -57,12 +57,14 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %pattern_type.794: type = pattern_type %C.4b2 [concrete]
 // CHECK:STDOUT:   %False.type: type = fn_type @False [concrete]
 // CHECK:STDOUT:   %False: %False.type = struct_value () [concrete]
+// CHECK:STDOUT:   %a.patt.c70: %pattern_type.794 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.794 = var_pattern %a.patt.c70 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.794 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.794 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.794 = ref_binding_pattern a [concrete = constants.%a.patt.c70]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.794 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C.4b2 = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc12_25.1: type = splice_block %C.loc12 [concrete = constants.%C.4b2] {
@@ -106,6 +108,8 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %bool.as.EqWith.impl.NotEqual.type: type = fn_type @bool.as.EqWith.impl.NotEqual [concrete]
 // CHECK:STDOUT:   %bool.as.EqWith.impl.NotEqual: %bool.as.EqWith.impl.NotEqual.type = struct_value () [concrete]
 // CHECK:STDOUT:   %bool.as.EqWith.impl.NotEqual.bound.598: <bound method> = bound_method %true, %bool.as.EqWith.impl.NotEqual [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.794 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.794 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -116,8 +120,8 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.794 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.794 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.794 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.794 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C.4b2 = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_22.1: type = splice_block %C.loc10 [concrete = constants.%C.4b2] {

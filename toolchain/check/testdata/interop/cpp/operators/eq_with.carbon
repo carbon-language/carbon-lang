@@ -360,6 +360,8 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT: --- returns_bool.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %Other: type = symbolic_binding Other, 0 [symbolic]
 // CHECK:STDOUT:   %EqWith.type.98ea86.1: type = facet_type <@EqWith.1, @EqWith.1(%Other)> [symbolic]
@@ -371,13 +373,18 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT:   %EqWith.WithSelf.Equal.ae3c3e.1: %EqWith.WithSelf.Equal.type.b82ec7.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %EqWith.type.98ea86.2: type = facet_type <@EqWith.1, @EqWith.1(%U)> [symbolic]
 // CHECK:STDOUT:   %pattern_type.3d4: type = pattern_type %EqWith.type.98ea86.2 [symbolic]
+// CHECK:STDOUT:   %T.patt.6b9: %pattern_type.3d4 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T: %EqWith.type.98ea86.2 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %EqWith.assoc_type.85b122.2: type = assoc_entity_type @EqWith.1, @EqWith.1(%U) [symbolic]
 // CHECK:STDOUT:   %assoc0.eee873.2: %EqWith.assoc_type.85b122.2 = assoc_entity element0, imports.%Core.import_ref.5ba [symbolic]
 // CHECK:STDOUT:   %assoc1.0ffc88.2: %EqWith.assoc_type.85b122.2 = assoc_entity element1, imports.%Core.import_ref.03f [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.e6374a.2: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %x.param_patt.aa2: %pattern_type.e6374a.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.4e4: %pattern_type.e6374a.2 = at_binding_pattern x, %x.param_patt.aa2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %U [symbolic]
+// CHECK:STDOUT:   %y.param_patt.be3: %pattern_type.51d1c4.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %y.patt.b85: %pattern_type.51d1c4.2 = at_binding_pattern y, %y.param_patt.be3 [symbolic]
 // CHECK:STDOUT:   %require_complete.fb5: <witness> = require_complete_type %EqWith.type.98ea86.2 [symbolic]
 // CHECK:STDOUT:   %assoc0.d00: %EqWith.assoc_type.85b122.1 = assoc_entity element0, imports.%Core.import_ref.2e5 [symbolic]
 // CHECK:STDOUT:   %EqWith.lookup_impl_witness: <witness> = lookup_impl_witness %T, @EqWith.1, @EqWith.1(%U) [symbolic]
@@ -405,6 +412,11 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT:   %custom_witness.505: <witness> = custom_witness (%EqualityComparable.Equal, %EqualityComparable.NotEqual), @EqWith.1, @EqWith.1(%EqualityComparable) [concrete]
 // CHECK:STDOUT:   %EqWith.facet.b15: %EqWith.type.6a7 = facet_value %EqualityComparable, (%custom_witness.505) [concrete]
 // CHECK:STDOUT:   %pattern_type.876: type = pattern_type %EqWith.type.6a7 [concrete]
+// CHECK:STDOUT:   %T.patt.d6d: %pattern_type.876 = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.427: %pattern_type.73b = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.570: %pattern_type.73b = at_binding_pattern x, %x.param_patt.427 [concrete]
+// CHECK:STDOUT:   %y.param_patt.464: %pattern_type.73b = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.d34: %pattern_type.73b = at_binding_pattern y, %y.param_patt.464 [concrete]
 // CHECK:STDOUT:   %complete_type.c86: <witness> = complete_type_witness %EqWith.type.6a7 [concrete]
 // CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.6ae: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%EqualityComparable, %EqWith.facet.b15) [concrete]
 // CHECK:STDOUT:   %.96d: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.6ae, %EqWith.facet.b15 [concrete]
@@ -467,23 +479,35 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqWith.loc11(constants.%U, constants.%T) {
+// CHECK:STDOUT:   %U.patt.loc11_12.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc11_12.1 => constants.%U
 // CHECK:STDOUT:   %EqWith.type.loc11_38.1 => constants.%EqWith.type.98ea86.2
-// CHECK:STDOUT:   %T.loc11_22.1 => constants.%T
 // CHECK:STDOUT:   %pattern_type.loc11_22 => constants.%pattern_type.3d4
+// CHECK:STDOUT:   %T.patt.loc11_22.2 => constants.%T.patt.6b9
+// CHECK:STDOUT:   %T.loc11_22.1 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc11_44.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type.loc11_42 => constants.%pattern_type.e6374a.2
+// CHECK:STDOUT:   %x.param_patt.loc11_42.2 => constants.%x.param_patt.aa2
+// CHECK:STDOUT:   %x.patt.loc11_42.2 => constants.%x.patt.4e4
 // CHECK:STDOUT:   %pattern_type.loc11_48 => constants.%pattern_type.51d1c4.2
+// CHECK:STDOUT:   %y.param_patt.loc11_48.2 => constants.%y.param_patt.be3
+// CHECK:STDOUT:   %y.patt.loc11_48.2 => constants.%y.patt.b85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqWith.loc11(constants.%EqualityComparable, constants.%EqWith.facet.b15) {
+// CHECK:STDOUT:   %U.patt.loc11_12.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc11_12.1 => constants.%EqualityComparable
 // CHECK:STDOUT:   %EqWith.type.loc11_38.1 => constants.%EqWith.type.6a7
-// CHECK:STDOUT:   %T.loc11_22.1 => constants.%EqWith.facet.b15
 // CHECK:STDOUT:   %pattern_type.loc11_22 => constants.%pattern_type.876
+// CHECK:STDOUT:   %T.patt.loc11_22.2 => constants.%T.patt.d6d
+// CHECK:STDOUT:   %T.loc11_22.1 => constants.%EqWith.facet.b15
 // CHECK:STDOUT:   %T.as_type.loc11_44.1 => constants.%EqualityComparable
 // CHECK:STDOUT:   %pattern_type.loc11_42 => constants.%pattern_type.73b
+// CHECK:STDOUT:   %x.param_patt.loc11_42.2 => constants.%x.param_patt.427
+// CHECK:STDOUT:   %x.patt.loc11_42.2 => constants.%x.patt.570
 // CHECK:STDOUT:   %pattern_type.loc11_48 => constants.%pattern_type.73b
+// CHECK:STDOUT:   %y.param_patt.loc11_48.2 => constants.%y.param_patt.464
+// CHECK:STDOUT:   %y.patt.loc11_48.2 => constants.%y.patt.d34
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc11_42 => constants.%complete_type.357
@@ -506,6 +530,8 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT: --- cross_type_equality.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %Other: type = symbolic_binding Other, 0 [symbolic]
 // CHECK:STDOUT:   %EqWith.type.98ea86.1: type = facet_type <@EqWith.1, @EqWith.1(%Other)> [symbolic]
@@ -517,13 +543,18 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT:   %EqWith.WithSelf.Equal.ae3c3e.1: %EqWith.WithSelf.Equal.type.b82ec7.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %EqWith.type.98ea86.2: type = facet_type <@EqWith.1, @EqWith.1(%U)> [symbolic]
 // CHECK:STDOUT:   %pattern_type.3d4: type = pattern_type %EqWith.type.98ea86.2 [symbolic]
+// CHECK:STDOUT:   %T.patt.6b9: %pattern_type.3d4 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T: %EqWith.type.98ea86.2 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %EqWith.assoc_type.85b122.2: type = assoc_entity_type @EqWith.1, @EqWith.1(%U) [symbolic]
 // CHECK:STDOUT:   %assoc0.eee873.2: %EqWith.assoc_type.85b122.2 = assoc_entity element0, imports.%Core.import_ref.5ba [symbolic]
 // CHECK:STDOUT:   %assoc1.0ffc88.2: %EqWith.assoc_type.85b122.2 = assoc_entity element1, imports.%Core.import_ref.03f [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.e6374a.2: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %x.param_patt.aa2: %pattern_type.e6374a.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.4e4: %pattern_type.e6374a.2 = at_binding_pattern x, %x.param_patt.aa2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %U [symbolic]
+// CHECK:STDOUT:   %y.param_patt.be3: %pattern_type.51d1c4.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %y.patt.b85: %pattern_type.51d1c4.2 = at_binding_pattern y, %y.param_patt.be3 [symbolic]
 // CHECK:STDOUT:   %require_complete.fb5: <witness> = require_complete_type %EqWith.type.98ea86.2 [symbolic]
 // CHECK:STDOUT:   %assoc0.d00: %EqWith.assoc_type.85b122.1 = assoc_entity element0, imports.%Core.import_ref.2e5 [symbolic]
 // CHECK:STDOUT:   %EqWith.lookup_impl_witness: <witness> = lookup_impl_witness %T, @EqWith.1, @EqWith.1(%U) [symbolic]
@@ -561,6 +592,11 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT:   %custom_witness.087: <witness> = custom_witness (%A1.Equal, %A1.NotEqual), @EqWith.1, @EqWith.1(%B1) [concrete]
 // CHECK:STDOUT:   %EqWith.facet.2d3: %EqWith.type.6ed = facet_value %A1, (%custom_witness.087) [concrete]
 // CHECK:STDOUT:   %pattern_type.e16: type = pattern_type %EqWith.type.6ed [concrete]
+// CHECK:STDOUT:   %T.patt.869: %pattern_type.e16 = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.c7f: %pattern_type.3b4 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.4ff: %pattern_type.3b4 = at_binding_pattern x, %x.param_patt.c7f [concrete]
+// CHECK:STDOUT:   %y.param_patt.9d7: %pattern_type.5b2 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.979: %pattern_type.5b2 = at_binding_pattern y, %y.param_patt.9d7 [concrete]
 // CHECK:STDOUT:   %EqWith.type.dda: type = facet_type <@EqWith.1, @EqWith.1(%A1)> [concrete]
 // CHECK:STDOUT:   %EqWith.assoc_type.5ce: type = assoc_entity_type @EqWith.1, @EqWith.1(%A1) [concrete]
 // CHECK:STDOUT:   %assoc0.7c8: %EqWith.assoc_type.5ce = assoc_entity element0, imports.%Core.import_ref.5ba [concrete]
@@ -572,6 +608,11 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT:   %custom_witness.123: <witness> = custom_witness (%B1.Equal, %B1.NotEqual), @EqWith.1, @EqWith.1(%A1) [concrete]
 // CHECK:STDOUT:   %EqWith.facet.b94: %EqWith.type.dda = facet_value %B1, (%custom_witness.123) [concrete]
 // CHECK:STDOUT:   %pattern_type.a95: type = pattern_type %EqWith.type.dda [concrete]
+// CHECK:STDOUT:   %T.patt.b7f: %pattern_type.a95 = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.bff: %pattern_type.5b2 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.f3d: %pattern_type.5b2 = at_binding_pattern x, %x.param_patt.bff [concrete]
+// CHECK:STDOUT:   %y.param_patt.257: %pattern_type.3b4 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.774: %pattern_type.3b4 = at_binding_pattern y, %y.param_patt.257 [concrete]
 // CHECK:STDOUT:   %EqWith.type.c63: type = facet_type <@EqWith.1, @EqWith.1(%A2)> [concrete]
 // CHECK:STDOUT:   %EqWith.assoc_type.2ca: type = assoc_entity_type @EqWith.1, @EqWith.1(%A2) [concrete]
 // CHECK:STDOUT:   %assoc0.878: %EqWith.assoc_type.2ca = assoc_entity element0, imports.%Core.import_ref.5ba [concrete]
@@ -583,6 +624,11 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT:   %custom_witness.640: <witness> = custom_witness (%B2.Equal, %B2.NotEqual), @EqWith.1, @EqWith.1(%A2) [concrete]
 // CHECK:STDOUT:   %EqWith.facet.fe0: %EqWith.type.c63 = facet_value %B2, (%custom_witness.640) [concrete]
 // CHECK:STDOUT:   %pattern_type.cbd: type = pattern_type %EqWith.type.c63 [concrete]
+// CHECK:STDOUT:   %T.patt.aaf: %pattern_type.cbd = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.0e6: %pattern_type.d1e = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.94e: %pattern_type.d1e = at_binding_pattern x, %x.param_patt.0e6 [concrete]
+// CHECK:STDOUT:   %y.param_patt.a4f: %pattern_type.9f0 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.912: %pattern_type.9f0 = at_binding_pattern y, %y.param_patt.a4f [concrete]
 // CHECK:STDOUT:   %EqWith.type.2e6: type = facet_type <@EqWith.1, @EqWith.1(%B3)> [concrete]
 // CHECK:STDOUT:   %EqWith.assoc_type.eda: type = assoc_entity_type @EqWith.1, @EqWith.1(%B3) [concrete]
 // CHECK:STDOUT:   %assoc0.34f: %EqWith.assoc_type.eda = assoc_entity element0, imports.%Core.import_ref.5ba [concrete]
@@ -594,6 +640,11 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT:   %custom_witness.528: <witness> = custom_witness (%A3.Equal, %NotEqual), @EqWith.1, @EqWith.1(%B3) [concrete]
 // CHECK:STDOUT:   %EqWith.facet.34d: %EqWith.type.2e6 = facet_value %A3, (%custom_witness.528) [concrete]
 // CHECK:STDOUT:   %pattern_type.2b2: type = pattern_type %EqWith.type.2e6 [concrete]
+// CHECK:STDOUT:   %T.patt.7d5: %pattern_type.2b2 = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.429: %pattern_type.7fe = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.6e2: %pattern_type.7fe = at_binding_pattern x, %x.param_patt.429 [concrete]
+// CHECK:STDOUT:   %y.param_patt.b51: %pattern_type.2dd = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.7b8: %pattern_type.2dd = at_binding_pattern y, %y.param_patt.b51 [concrete]
 // CHECK:STDOUT:   %EqWith.type.831: type = facet_type <@EqWith.1, @EqWith.1(%A3)> [concrete]
 // CHECK:STDOUT:   %EqWith.assoc_type.d85: type = assoc_entity_type @EqWith.1, @EqWith.1(%A3) [concrete]
 // CHECK:STDOUT:   %assoc0.b7b: %EqWith.assoc_type.d85 = assoc_entity element0, imports.%Core.import_ref.5ba [concrete]
@@ -605,6 +656,11 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT:   %custom_witness.0ff: <witness> = custom_witness (%Equal, %B3.NotEqual), @EqWith.1, @EqWith.1(%A3) [concrete]
 // CHECK:STDOUT:   %EqWith.facet.2a4: %EqWith.type.831 = facet_value %B3, (%custom_witness.0ff) [concrete]
 // CHECK:STDOUT:   %pattern_type.9c8: type = pattern_type %EqWith.type.831 [concrete]
+// CHECK:STDOUT:   %T.patt.fcb: %pattern_type.9c8 = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.074: %pattern_type.2dd = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.234: %pattern_type.2dd = at_binding_pattern x, %x.param_patt.074 [concrete]
+// CHECK:STDOUT:   %y.param_patt.d86: %pattern_type.7fe = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.fd9: %pattern_type.7fe = at_binding_pattern y, %y.param_patt.d86 [concrete]
 // CHECK:STDOUT:   %complete_type.1d5: <witness> = complete_type_witness %EqWith.type.6ed [concrete]
 // CHECK:STDOUT:   %EqWith.WithSelf.Equal.type.b99: type = fn_type @EqWith.WithSelf.Equal, @EqWith.WithSelf(%B1, %EqWith.facet.2d3) [concrete]
 // CHECK:STDOUT:   %.bad: type = fn_type_with_self_type %EqWith.WithSelf.Equal.type.b99, %EqWith.facet.2d3 [concrete]
@@ -687,23 +743,35 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqWith.loc34(constants.%U, constants.%T) {
+// CHECK:STDOUT:   %U.patt.loc34_12.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc34_12.1 => constants.%U
 // CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.98ea86.2
-// CHECK:STDOUT:   %T.loc34_22.1 => constants.%T
 // CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.3d4
+// CHECK:STDOUT:   %T.patt.loc34_22.2 => constants.%T.patt.6b9
+// CHECK:STDOUT:   %T.loc34_22.1 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc34_44.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.e6374a.2
+// CHECK:STDOUT:   %x.param_patt.loc34_42.2 => constants.%x.param_patt.aa2
+// CHECK:STDOUT:   %x.patt.loc34_42.2 => constants.%x.patt.4e4
 // CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.51d1c4.2
+// CHECK:STDOUT:   %y.param_patt.loc34_48.2 => constants.%y.param_patt.be3
+// CHECK:STDOUT:   %y.patt.loc34_48.2 => constants.%y.patt.b85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqWith.loc34(constants.%B1, constants.%EqWith.facet.2d3) {
+// CHECK:STDOUT:   %U.patt.loc34_12.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc34_12.1 => constants.%B1
 // CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.6ed
-// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.2d3
 // CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.e16
+// CHECK:STDOUT:   %T.patt.loc34_22.2 => constants.%T.patt.869
+// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.2d3
 // CHECK:STDOUT:   %T.as_type.loc34_44.1 => constants.%A1
 // CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.3b4
+// CHECK:STDOUT:   %x.param_patt.loc34_42.2 => constants.%x.param_patt.c7f
+// CHECK:STDOUT:   %x.patt.loc34_42.2 => constants.%x.patt.4ff
 // CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.5b2
+// CHECK:STDOUT:   %y.param_patt.loc34_48.2 => constants.%y.param_patt.9d7
+// CHECK:STDOUT:   %y.patt.loc34_48.2 => constants.%y.patt.979
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc34_42 => constants.%complete_type.357
@@ -724,13 +792,19 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqWith.loc34(constants.%A1, constants.%EqWith.facet.b94) {
+// CHECK:STDOUT:   %U.patt.loc34_12.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc34_12.1 => constants.%A1
 // CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.dda
-// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.b94
 // CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.a95
+// CHECK:STDOUT:   %T.patt.loc34_22.2 => constants.%T.patt.b7f
+// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.b94
 // CHECK:STDOUT:   %T.as_type.loc34_44.1 => constants.%B1
 // CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.5b2
+// CHECK:STDOUT:   %x.param_patt.loc34_42.2 => constants.%x.param_patt.bff
+// CHECK:STDOUT:   %x.patt.loc34_42.2 => constants.%x.patt.f3d
 // CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.3b4
+// CHECK:STDOUT:   %y.param_patt.loc34_48.2 => constants.%y.param_patt.257
+// CHECK:STDOUT:   %y.patt.loc34_48.2 => constants.%y.patt.774
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc34_42 => constants.%complete_type.357
@@ -751,13 +825,19 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqWith.loc34(constants.%A2, constants.%EqWith.facet.fe0) {
+// CHECK:STDOUT:   %U.patt.loc34_12.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc34_12.1 => constants.%A2
 // CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.c63
-// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.fe0
 // CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.cbd
+// CHECK:STDOUT:   %T.patt.loc34_22.2 => constants.%T.patt.aaf
+// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.fe0
 // CHECK:STDOUT:   %T.as_type.loc34_44.1 => constants.%B2
 // CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.d1e
+// CHECK:STDOUT:   %x.param_patt.loc34_42.2 => constants.%x.param_patt.0e6
+// CHECK:STDOUT:   %x.patt.loc34_42.2 => constants.%x.patt.94e
 // CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.9f0
+// CHECK:STDOUT:   %y.param_patt.loc34_48.2 => constants.%y.param_patt.a4f
+// CHECK:STDOUT:   %y.patt.loc34_48.2 => constants.%y.patt.912
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc34_42 => constants.%complete_type.357
@@ -778,13 +858,19 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqWith.loc34(constants.%B3, constants.%EqWith.facet.34d) {
+// CHECK:STDOUT:   %U.patt.loc34_12.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc34_12.1 => constants.%B3
 // CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.2e6
-// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.34d
 // CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.2b2
+// CHECK:STDOUT:   %T.patt.loc34_22.2 => constants.%T.patt.7d5
+// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.34d
 // CHECK:STDOUT:   %T.as_type.loc34_44.1 => constants.%A3
 // CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.7fe
+// CHECK:STDOUT:   %x.param_patt.loc34_42.2 => constants.%x.param_patt.429
+// CHECK:STDOUT:   %x.patt.loc34_42.2 => constants.%x.patt.6e2
 // CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.2dd
+// CHECK:STDOUT:   %y.param_patt.loc34_48.2 => constants.%y.param_patt.b51
+// CHECK:STDOUT:   %y.patt.loc34_48.2 => constants.%y.patt.7b8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc34_42 => constants.%complete_type.357
@@ -805,13 +891,19 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqWith.loc34(constants.%A3, constants.%EqWith.facet.2a4) {
+// CHECK:STDOUT:   %U.patt.loc34_12.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc34_12.1 => constants.%A3
 // CHECK:STDOUT:   %EqWith.type.loc34_38.1 => constants.%EqWith.type.831
-// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.2a4
 // CHECK:STDOUT:   %pattern_type.loc34_22 => constants.%pattern_type.9c8
+// CHECK:STDOUT:   %T.patt.loc34_22.2 => constants.%T.patt.fcb
+// CHECK:STDOUT:   %T.loc34_22.1 => constants.%EqWith.facet.2a4
 // CHECK:STDOUT:   %T.as_type.loc34_44.1 => constants.%B3
 // CHECK:STDOUT:   %pattern_type.loc34_42 => constants.%pattern_type.2dd
+// CHECK:STDOUT:   %x.param_patt.loc34_42.2 => constants.%x.param_patt.074
+// CHECK:STDOUT:   %x.patt.loc34_42.2 => constants.%x.patt.234
 // CHECK:STDOUT:   %pattern_type.loc34_48 => constants.%pattern_type.7fe
+// CHECK:STDOUT:   %y.param_patt.loc34_48.2 => constants.%y.param_patt.d86
+// CHECK:STDOUT:   %y.patt.loc34_48.2 => constants.%y.patt.fd9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc34_42 => constants.%complete_type.357

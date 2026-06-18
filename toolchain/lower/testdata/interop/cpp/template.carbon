@@ -156,22 +156,22 @@ fn Call3() {
 // CHECK:STDOUT: attributes #1 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "call.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "call.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "PassI32", linkageName: "_CPassI32.Main", scope: null, file: !6, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !15)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "PassI32", linkageName: "_CPassI32.Main", scope: null, file: !1, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{!14, !14}
 // CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -179,12 +179,12 @@ fn Call3() {
 // CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
 // CHECK:STDOUT: !17 = !DILocation(line: 7, column: 10, scope: !11)
 // CHECK:STDOUT: !18 = !DILocation(line: 7, column: 3, scope: !11)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "PassI32Explicitly", linkageName: "_CPassI32Explicitly.Main", scope: null, file: !6, line: 10, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !20)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "PassI32Explicitly", linkageName: "_CPassI32Explicitly.Main", scope: null, file: !1, line: 10, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !20)
 // CHECK:STDOUT: !20 = !{!21}
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !19, type: !14)
 // CHECK:STDOUT: !22 = !DILocation(line: 11, column: 10, scope: !19)
 // CHECK:STDOUT: !23 = !DILocation(line: 11, column: 3, scope: !19)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "PassClass", linkageName: "_CPassClass.Main", scope: null, file: !6, line: 14, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "PassClass", linkageName: "_CPassClass.Main", scope: null, file: !1, line: 14, type: !25, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !28)
 // CHECK:STDOUT: !25 = !DISubroutineType(types: !26)
 // CHECK:STDOUT: !26 = !{!27, !27}
 // CHECK:STDOUT: !27 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -230,30 +230,30 @@ fn Call3() {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "variadic.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "variadic.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Call1", linkageName: "_CCall1.Main", scope: null, file: !6, line: 9, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Call1", linkageName: "_CCall1.Main", scope: null, file: !1, line: 9, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 11, column: 3, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 9, column: 1, scope: !11)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "Call2", linkageName: "_CCall2.Main", scope: null, file: !6, line: 15, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "Call2", linkageName: "_CCall2.Main", scope: null, file: !1, line: 15, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !17 = !DILocation(line: 17, column: 3, scope: !16)
 // CHECK:STDOUT: !18 = !DILocation(line: 15, column: 1, scope: !16)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Call3", linkageName: "_CCall3.Main", scope: null, file: !6, line: 21, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Call3", linkageName: "_CCall3.Main", scope: null, file: !1, line: 21, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !20 = !DILocation(line: 23, column: 3, scope: !19)
 // CHECK:STDOUT: !21 = !DILocation(line: 21, column: 1, scope: !19)
 // CHECK:STDOUT: ; ModuleID = 'variadic_thunk.carbon'
@@ -352,22 +352,22 @@ fn Call3() {
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "variadic_thunk.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "variadic_thunk.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Call1", linkageName: "_CCall1.Main", scope: null, file: !6, line: 10, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Call1", linkageName: "_CCall1.Main", scope: null, file: !1, line: 10, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 12, column: 11, scope: !11)
@@ -376,11 +376,11 @@ fn Call3() {
 // CHECK:STDOUT: !17 = !{!18, !18, i64 0}
 // CHECK:STDOUT: !18 = !{!"p1 _ZTS1X", !19, i64 0}
 // CHECK:STDOUT: !19 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Call2", linkageName: "_CCall2.Main", scope: null, file: !6, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Call2", linkageName: "_CCall2.Main", scope: null, file: !1, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !21 = !DILocation(line: 18, column: 11, scope: !20)
 // CHECK:STDOUT: !22 = !DILocation(line: 18, column: 3, scope: !20)
 // CHECK:STDOUT: !23 = !DILocation(line: 16, column: 1, scope: !20)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Call3", linkageName: "_CCall3.Main", scope: null, file: !6, line: 22, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Call3", linkageName: "_CCall3.Main", scope: null, file: !1, line: 22, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !25 = !DILocation(line: 24, column: 11, scope: !24)
 // CHECK:STDOUT: !26 = !DILocation(line: 24, column: 3, scope: !24)
 // CHECK:STDOUT: !27 = !DILocation(line: 22, column: 1, scope: !24)

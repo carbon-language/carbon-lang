@@ -125,6 +125,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %.46c: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %C [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -152,8 +154,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %C.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %C.ref [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: <namespace> = name_ref A, imports.%A [concrete = imports.%A]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Same.C [concrete = constants.%C]
@@ -243,6 +245,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %e.patt: %pattern_type = ref_binding_pattern e [concrete]
+// CHECK:STDOUT:   %e.var_patt: %pattern_type = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [concrete]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -276,8 +280,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %e.patt: %pattern_type = ref_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.var_patt: %pattern_type = var_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.patt: %pattern_type = ref_binding_pattern e [concrete = constants.%e.patt]
+// CHECK:STDOUT:     %e.var_patt: %pattern_type = var_pattern %e.patt [concrete = constants.%e.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var %e.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5_9.1: type = splice_block %.loc5_9.3 [concrete = constants.%empty_tuple.type] {

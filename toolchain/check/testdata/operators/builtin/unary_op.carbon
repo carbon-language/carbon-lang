@@ -28,7 +28,11 @@ fn Constant() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %b.param_patt: %pattern_type.831 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %b.patt.4e2: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   %.f34: Core.Form = init_form bool [concrete]
+// CHECK:STDOUT:   %return.param_patt.5a1: %pattern_type.831 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.c0c: %pattern_type.831 = return_slot_pattern %return.param_patt.5a1, bool [concrete]
 // CHECK:STDOUT:   %Not.type: type = fn_type @Not [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Not: %Not.type = struct_value () [concrete]
@@ -39,12 +43,18 @@ fn Constant() {
 // CHECK:STDOUT:   %.15e: type = fn_type_with_self_type %Copy.WithSelf.Op.type.4a4, %Copy.facet [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.type: type = fn_type @bool.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op: %bool.as.Copy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %not_true.patt: %pattern_type.831 = value_binding_pattern not_true [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
+// CHECK:STDOUT:   %not_false.patt: %pattern_type.831 = value_binding_pattern not_false [concrete]
 // CHECK:STDOUT:   %Constant.type: type = fn_type @Constant [concrete]
 // CHECK:STDOUT:   %Constant: %Constant.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.cb1 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:   %b.patt.454: %pattern_type.831 = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt: %pattern_type.831 = var_pattern %b.patt.454 [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.bound: <bound method> = bound_method %true, %bool.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.1: type = fn_type @Destroy.Op.loc24 [concrete]
@@ -78,10 +88,10 @@ fn Constant() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Not.decl: %Not.type = fn_decl @Not [concrete = constants.%Not] {
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc15_20.1 [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern [concrete = constants.%b.param_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt.4e2]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt.5a1]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc15_20.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_20.1: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %.loc15_20.2: Core.Form = init_form %.loc15_20.1 [concrete = constants.%.f34]
@@ -92,12 +102,12 @@ fn Constant() {
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_true.patt: %pattern_type.831 = value_binding_pattern not_true [concrete]
+// CHECK:STDOUT:     %not_true.patt: %pattern_type.831 = value_binding_pattern not_true [concrete = constants.%not_true.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %not_true: bool = value_binding not_true, @__global_init.%.loc19
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_false.patt: %pattern_type.831 = value_binding_pattern not_false [concrete]
+// CHECK:STDOUT:     %not_false.patt: %pattern_type.831 = value_binding_pattern not_false [concrete = constants.%not_false.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc20: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %not_false: bool = value_binding not_false, @__global_init.%.loc20
@@ -117,8 +127,8 @@ fn Constant() {
 // CHECK:STDOUT: fn @Constant() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt
 // CHECK:STDOUT:   %.loc23_50.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -148,8 +158,8 @@ fn Constant() {
 // CHECK:STDOUT: !.loc23_15:
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.831 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = ref_binding_pattern b [concrete = constants.%b.patt.454]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.831 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref bool = var %b.var_patt
 // CHECK:STDOUT:   %true.loc24: bool = bool_literal true [concrete = constants.%true]

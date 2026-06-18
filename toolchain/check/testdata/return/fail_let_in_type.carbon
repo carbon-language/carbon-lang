@@ -47,6 +47,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.98f = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -56,8 +57,10 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %y.patt: %pattern_type.98f = value_binding_pattern y [concrete]
 // CHECK:STDOUT:   %HalfDozen.type: type = fn_type @HalfDozen [concrete]
 // CHECK:STDOUT:   %HalfDozen: %HalfDozen.type = struct_value () [concrete]
+// CHECK:STDOUT:   %z.patt: %pattern_type.98f = value_binding_pattern z [concrete]
 // CHECK:STDOUT:   %FirstPerfectNumber.type: type = fn_type @FirstPerfectNumber [concrete]
 // CHECK:STDOUT:   %FirstPerfectNumber: %FirstPerfectNumber.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -83,18 +86,18 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.98f = value_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.98f = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   %x: type = value_binding x, @__global_init.%i32.loc15
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete]
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.ref: type = name_ref x, file.%x
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.98f = value_binding_pattern y [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.98f = value_binding_pattern y [concrete = constants.%y.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc27_9.1: type = splice_block %.loc27_9.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.loc27: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -102,13 +105,13 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: type = value_binding y, @__global_init.%i32.loc27
 // CHECK:STDOUT:   %HalfDozen.decl: %HalfDozen.type = fn_decl @HalfDozen [concrete = constants.%HalfDozen] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete]
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %y.ref: type = name_ref y, file.%y
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %z.patt: %pattern_type.98f = value_binding_pattern z [concrete]
+// CHECK:STDOUT:     %z.patt: %pattern_type.98f = value_binding_pattern z [concrete = constants.%z.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc39_18.1: type = splice_block %.loc39_18.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.loc39: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -116,7 +119,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %z: type = value_binding z, @__global_init.%i32.loc39
 // CHECK:STDOUT:   %FirstPerfectNumber.decl: %FirstPerfectNumber.type = fn_decl @FirstPerfectNumber [concrete = constants.%FirstPerfectNumber] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete]
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %z.ref: type = name_ref z, file.%z
 // CHECK:STDOUT:     %return: <error> = return_slot <error>

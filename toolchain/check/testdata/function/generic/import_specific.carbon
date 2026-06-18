@@ -44,10 +44,12 @@ fn H() {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.d47011.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %T.patt.d47011.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67db0b.2: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -60,7 +62,7 @@ fn H() {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc4_14.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt.d47011.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -69,7 +71,7 @@ fn H() {
 // CHECK:STDOUT:     %T.loc4_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc7_7.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_7.2 (constants.%T.patt.d47011.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_10.1: type = splice_block %.loc7_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -80,6 +82,7 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc4_14.2: type) {
+// CHECK:STDOUT:   %T.patt.loc4_14.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt.d47011.1)]
 // CHECK:STDOUT:   %T.loc4_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -91,6 +94,7 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc7_7.2: type) {
+// CHECK:STDOUT:   %T.patt.loc7_7.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_7.2 (constants.%T.patt.d47011.2)]
 // CHECK:STDOUT:   %T.loc7_7.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_7.1 (constants.%T.67db0b.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -107,14 +111,17 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67db0b.1) {
+// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt.d47011.1
 // CHECK:STDOUT:   %T.loc4_14.1 => constants.%T.67db0b.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.67db0b.2) {
+// CHECK:STDOUT:   %T.patt.loc7_7.2 => constants.%T.patt.d47011.2
 // CHECK:STDOUT:   %T.loc7_7.1 => constants.%T.67db0b.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67db0b.2) {
+// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt.d47011.1
 // CHECK:STDOUT:   %T.loc4_14.1 => constants.%T.67db0b.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -132,6 +139,8 @@ fn H() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.e0d: <specific function> = specific_function %F, @F(%C) [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -181,6 +190,7 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(imports.%Main.import_ref.b3bc94.1: type) [from "library.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T.67db0b.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -189,6 +199,7 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(imports.%Main.import_ref.b3bc94.2: type) [from "library.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T.67db0b.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -198,26 +209,31 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67db0b.1) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T.67db0b.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67db0b.2) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T.67db0b.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.67db0b.2) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T.67db0b.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%C) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

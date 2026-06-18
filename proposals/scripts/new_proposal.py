@@ -93,8 +93,7 @@ def _calculate_branch(parsed_args: argparse.Namespace) -> str:
     if parsed_args.branch:
         assert isinstance(parsed_args.branch, str)
         return parsed_args.branch
-    # Only use the first 20 chars of the title for branch names.
-    return "proposal-%s" % (parsed_args.title.lower().replace(" ", "-")[0:20])
+    return "proposal-%s" % slugify(parsed_args.title)
 
 
 def _find_tool(tool: str) -> str:

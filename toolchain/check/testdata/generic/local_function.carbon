@@ -24,6 +24,7 @@ fn Test[unused T:! type]() {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -47,7 +48,7 @@ fn Test[unused T:! type]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [concrete = constants.%Test] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc15_17.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_20.1: type = splice_block %.loc15_20.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -58,6 +59,7 @@ fn Test[unused T:! type]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Test(%T.loc15_17.2: type) {
+// CHECK:STDOUT:   %T.patt.loc15_17.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc15_17.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_17.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -85,6 +87,7 @@ fn Test[unused T:! type]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Test(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc15_17.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc15_17.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

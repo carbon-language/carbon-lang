@@ -212,7 +212,7 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst50000011, name1: inst50000012, name4: inst50000060, name7: inst50000095}}
+// CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst50000011, name1: inst50000012, name4: inst5000006A, name7: inst500000A9}}
 // CHECK:STDOUT:     name_scope50000001: {inst: inst50000011, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name6: inst50000025}}
 // CHECK:STDOUT:     name_scope50000002: {inst: inst50000012, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name(SelfType): inst50000014}}
 // CHECK:STDOUT:     name_scope50000003: {inst: inst50000017, parent_scope: name_scope50000002, has_error: false, extended_scopes: [], names: {name2: inst5000001B, name3: inst5000001F}}
@@ -242,15 +242,15 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:   associated_constants:
 // CHECK:STDOUT:     assoc_const50000000: {name: name2, parent_scope: name_scope50000003, decl_id: inst50000019, default_value_id: inst<none>}
 // CHECK:STDOUT:     assoc_const50000001: {name: name3, parent_scope: name_scope50000003, decl_id: inst5000001E, default_value_id: inst<none>}
-// CHECK:STDOUT:     assoc_const50000002: {name: name2, parent_scope: name_scope50000005, decl_id: inst50000041, default_value_id: inst<none>}
-// CHECK:STDOUT:     assoc_const50000003: {name: name3, parent_scope: name_scope50000005, decl_id: inst50000052, default_value_id: inst<none>}
+// CHECK:STDOUT:     assoc_const50000002: {name: name2, parent_scope: name_scope50000005, decl_id: inst50000043, default_value_id: inst<none>}
+// CHECK:STDOUT:     assoc_const50000003: {name: name3, parent_scope: name_scope50000005, decl_id: inst50000058, default_value_id: inst<none>}
 // CHECK:STDOUT:   impls:           {}
 // CHECK:STDOUT:   generics:
 // CHECK:STDOUT:     generic50000000: {decl: inst<none>, bindings: inst_block<none>, self_specific_id: specific<none>, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
 // CHECK:STDOUT:     generic50000001: {decl: inst50000017, bindings: inst_block50000005, self_specific_id: specific50000000, decl_block_id: inst_block_empty, definition_block_id: inst_block_empty}
 // CHECK:STDOUT:     generic50000002: {decl: inst50000028, bindings: inst_block50000010, self_specific_id: specific50000001, decl_block_id: inst_block_empty, definition_block_id: inst_block_empty}
-// CHECK:STDOUT:     generic50000003: {decl: inst50000060, bindings: inst_block5000001C, self_specific_id: specific50000003, decl_block_id: inst_block5000001D, definition_block_id: inst_block50000020}
-// CHECK:STDOUT:     generic50000004: {decl: inst50000095, bindings: inst_block5000002C, self_specific_id: specific50000005, decl_block_id: inst_block5000002D, definition_block_id: inst_block50000030}
+// CHECK:STDOUT:     generic50000003: {decl: inst5000006A, bindings: inst_block5000001C, self_specific_id: specific50000003, decl_block_id: inst_block5000001D, definition_block_id: inst_block50000020}
+// CHECK:STDOUT:     generic50000004: {decl: inst500000A9, bindings: inst_block5000002C, self_specific_id: specific50000005, decl_block_id: inst_block5000002D, definition_block_id: inst_block50000030}
 // CHECK:STDOUT:   specifics:
 // CHECK:STDOUT:     specific50000000: {generic: generic50000001, args: inst_block50000006, decl_block_id: inst_block_empty, decl_has_error: 0, definition_block_id: inst_block_empty, definition_has_error: 0}
 // CHECK:STDOUT:     specific50000001: {generic: generic50000002, args: inst_block50000011, decl_block_id: inst_block_empty, decl_has_error: 0, definition_block_id: inst_block_empty, definition_has_error: 0}
@@ -299,23 +299,23 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(inst50000061)':
-// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000062)}
+// CHECK:STDOUT:     'type(inst5000006B)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst5000006C)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(inst50000062)':
-// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000062)}
+// CHECK:STDOUT:     'type(inst5000006C)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst5000006C)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(symbolic_constant50000009)':
-// CHECK:STDOUT:       value_repr:      {kind: dependent, type: type(symbolic_constant50000009)}
+// CHECK:STDOUT:     'type(symbolic_constant5000000B)':
+// CHECK:STDOUT:       value_repr:      {kind: dependent, type: type(symbolic_constant5000000B)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       0
-// CHECK:STDOUT:     'type(symbolic_constant5000000E)':
-// CHECK:STDOUT:       value_repr:      {kind: dependent, type: type(symbolic_constant5000000E)}
+// CHECK:STDOUT:     'type(symbolic_constant50000014)':
+// CHECK:STDOUT:       value_repr:      {kind: dependent, type: type(symbolic_constant50000014)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       0
@@ -324,18 +324,18 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(inst50000096)':
-// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000062)}
+// CHECK:STDOUT:     'type(inst500000AA)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst5000006C)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(symbolic_constant5000001B)':
-// CHECK:STDOUT:       value_repr:      {kind: dependent, type: type(symbolic_constant5000001B)}
+// CHECK:STDOUT:     'type(symbolic_constant50000027)':
+// CHECK:STDOUT:       value_repr:      {kind: dependent, type: type(symbolic_constant50000027)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       0
-// CHECK:STDOUT:     'type(symbolic_constant50000020)':
-// CHECK:STDOUT:       value_repr:      {kind: dependent, type: type(symbolic_constant50000020)}
+// CHECK:STDOUT:     'type(symbolic_constant50000030)':
+// CHECK:STDOUT:       value_repr:      {kind: dependent, type: type(symbolic_constant50000030)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       0
@@ -371,123 +371,143 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     inst50000027:    {kind: FacetType, arg0: facet_type50000002, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000028:    {kind: InterfaceWithSelfDecl, arg0: interface50000001}
 // CHECK:STDOUT:     inst50000029:    {kind: SymbolicBinding, arg0: entity_name50000003, arg1: inst<none>, type: type(inst50000027)}
-// CHECK:STDOUT:     inst5000002A:    {kind: ImportRefLoaded, arg0: import_ir_inst3, arg1: entity_name<none>, type: type(inst5000003B)}
-// CHECK:STDOUT:     inst5000002B:    {kind: ImportRefLoaded, arg0: import_ir_inst4, arg1: entity_name<none>, type: type(inst5000003B)}
+// CHECK:STDOUT:     inst5000002A:    {kind: ImportRefLoaded, arg0: import_ir_inst3, arg1: entity_name<none>, type: type(inst5000003D)}
+// CHECK:STDOUT:     inst5000002B:    {kind: ImportRefLoaded, arg0: import_ir_inst4, arg1: entity_name<none>, type: type(inst5000003D)}
 // CHECK:STDOUT:     inst5000002C:    {kind: ImportRefUnloaded, arg0: import_ir_inst5, arg1: entity_name50000004}
 // CHECK:STDOUT:     inst5000002D:    {kind: ImportRefUnloaded, arg0: import_ir_inst6, arg1: entity_name50000005}
 // CHECK:STDOUT:     inst5000002E:    {kind: ImportRefLoaded, arg0: import_ir_inst7, arg1: entity_name<none>, type: type(inst50000027)}
 // CHECK:STDOUT:     inst5000002F:    {kind: ImportRefUnloaded, arg0: import_ir_inst8, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst50000030:    {kind: NameRef, arg0: name6, arg1: inst50000025, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000031:    {kind: PatternType, arg0: inst50000027, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000032:    {kind: SymbolicBinding, arg0: entity_name50000007, arg1: inst<none>, type: type(inst50000027)}
-// CHECK:STDOUT:     inst50000033:    {kind: SymbolicBinding, arg0: entity_name50000007, arg1: inst<none>, type: type(inst50000027)}
-// CHECK:STDOUT:     inst50000034:    {kind: SymbolicBinding, arg0: entity_name50000007, arg1: inst<none>, type: type(inst50000027)}
-// CHECK:STDOUT:     inst50000035:    {kind: SymbolicBindingPattern, arg0: entity_name50000007, type: type(inst50000031)}
-// CHECK:STDOUT:     inst50000036:    {kind: NameRef, arg0: name5, arg1: inst50000032, type: type(inst50000027)}
-// CHECK:STDOUT:     inst50000037:    {kind: FacetAccessType, arg0: inst50000036, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000038:    {kind: FacetAccessType, arg0: inst50000033, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000039:    {kind: FacetAccessType, arg0: inst50000034, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000003A:    {kind: Converted, arg0: inst50000036, arg1: inst50000037, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000003B:    {kind: AssociatedEntityType, arg0: interface50000001, arg1: specific<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000003C:    {kind: ImportRefLoaded, arg0: import_ir_inst9, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000003D:    {kind: AssociatedEntity, arg0: element0, arg1: inst5000003C, type: type(inst5000003B)}
-// CHECK:STDOUT:     inst5000003E:    {kind: NameRef, arg0: name2, arg1: inst5000002A, type: type(inst5000003B)}
-// CHECK:STDOUT:     inst5000003F:    {kind: LookupImplWitness, arg0: inst50000033, arg1: specific_interface50000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst50000040:    {kind: LookupImplWitness, arg0: inst50000033, arg1: specific_interface50000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst50000041:    {kind: AssociatedConstantDecl, arg0: assoc_const50000002, arg1: inst_block_empty, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000042:    {kind: ImplWitnessAccess, arg0: inst50000040, arg1: element0, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000043:    {kind: ImplWitnessAccess, arg0: inst50000040, arg1: element0, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000044:    {kind: LookupImplWitness, arg0: inst50000034, arg1: specific_interface50000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst50000045:    {kind: ImplWitnessAccess, arg0: inst50000044, arg1: element0, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000046:    {kind: PatternType, arg0: inst50000043, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000047:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant5000000D)}
+// CHECK:STDOUT:     inst50000032:    {kind: SymbolicBindingPattern, arg0: entity_name50000007, type: type(inst50000031)}
+// CHECK:STDOUT:     inst50000033:    {kind: SymbolicBindingPattern, arg0: entity_name50000007, type: type(inst50000031)}
+// CHECK:STDOUT:     inst50000034:    {kind: SymbolicBindingPattern, arg0: entity_name50000007, type: type(inst50000031)}
+// CHECK:STDOUT:     inst50000035:    {kind: SymbolicBinding, arg0: entity_name50000007, arg1: inst<none>, type: type(inst50000027)}
+// CHECK:STDOUT:     inst50000036:    {kind: SymbolicBinding, arg0: entity_name50000007, arg1: inst<none>, type: type(inst50000027)}
+// CHECK:STDOUT:     inst50000037:    {kind: SymbolicBinding, arg0: entity_name50000007, arg1: inst<none>, type: type(inst50000027)}
+// CHECK:STDOUT:     inst50000038:    {kind: NameRef, arg0: name5, arg1: inst50000035, type: type(inst50000027)}
+// CHECK:STDOUT:     inst50000039:    {kind: FacetAccessType, arg0: inst50000038, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000003A:    {kind: FacetAccessType, arg0: inst50000036, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000003B:    {kind: FacetAccessType, arg0: inst50000037, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000003C:    {kind: Converted, arg0: inst50000038, arg1: inst50000039, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000003D:    {kind: AssociatedEntityType, arg0: interface50000001, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000003E:    {kind: ImportRefLoaded, arg0: import_ir_inst9, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000003F:    {kind: AssociatedEntity, arg0: element0, arg1: inst5000003E, type: type(inst5000003D)}
+// CHECK:STDOUT:     inst50000040:    {kind: NameRef, arg0: name2, arg1: inst5000002A, type: type(inst5000003D)}
+// CHECK:STDOUT:     inst50000041:    {kind: LookupImplWitness, arg0: inst50000036, arg1: specific_interface50000000, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst50000042:    {kind: LookupImplWitness, arg0: inst50000036, arg1: specific_interface50000000, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst50000043:    {kind: AssociatedConstantDecl, arg0: assoc_const50000002, arg1: inst_block_empty, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000044:    {kind: ImplWitnessAccess, arg0: inst50000042, arg1: element0, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000045:    {kind: ImplWitnessAccess, arg0: inst50000042, arg1: element0, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000046:    {kind: LookupImplWitness, arg0: inst50000037, arg1: specific_interface50000000, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst50000047:    {kind: ImplWitnessAccess, arg0: inst50000046, arg1: element0, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000048:    {kind: PatternType, arg0: inst50000045, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000049:    {kind: ValueBinding, arg0: entity_name50000008, arg1: inst5000005C, type: type(symbolic_constant5000000B)}
-// CHECK:STDOUT:     inst5000004A:    {kind: WrapperBindingPattern, arg0: entity_name50000008, arg1: inst50000047, type: type(symbolic_constant5000000D)}
-// CHECK:STDOUT:     inst5000004B:    {kind: NameRef, arg0: name5, arg1: inst50000032, type: type(inst50000027)}
-// CHECK:STDOUT:     inst5000004C:    {kind: FacetAccessType, arg0: inst5000004B, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000004D:    {kind: Converted, arg0: inst5000004B, arg1: inst5000004C, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000004E:    {kind: ImportRefLoaded, arg0: import_ir_instB, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000004F:    {kind: AssociatedEntity, arg0: element1, arg1: inst5000004E, type: type(inst5000003B)}
-// CHECK:STDOUT:     inst50000050:    {kind: NameRef, arg0: name3, arg1: inst5000002B, type: type(inst5000003B)}
-// CHECK:STDOUT:     inst50000051:    {kind: LookupImplWitness, arg0: inst50000033, arg1: specific_interface50000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst50000052:    {kind: AssociatedConstantDecl, arg0: assoc_const50000003, arg1: inst_block_empty, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000053:    {kind: ImplWitnessAccess, arg0: inst50000040, arg1: element1, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000054:    {kind: ImplWitnessAccess, arg0: inst50000040, arg1: element1, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000055:    {kind: ImplWitnessAccess, arg0: inst50000044, arg1: element1, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000056:    {kind: PatternType, arg0: inst50000054, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000057:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant50000011)}
-// CHECK:STDOUT:     inst50000058:    {kind: PatternType, arg0: inst50000055, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000059:    {kind: ValueBinding, arg0: entity_name50000009, arg1: inst5000005E, type: type(symbolic_constant5000000F)}
-// CHECK:STDOUT:     inst5000005A:    {kind: WrapperBindingPattern, arg0: entity_name50000009, arg1: inst50000057, type: type(symbolic_constant50000011)}
-// CHECK:STDOUT:     inst5000005B:    {kind: SpliceBlock, arg0: inst_block5000000E, arg1: inst50000030, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000005C:    {kind: ValueParam, arg0: call_param0, arg1: name(Underscore), type: type(symbolic_constant5000000B)}
-// CHECK:STDOUT:     inst5000005D:    {kind: SpliceBlock, arg0: inst_block50000013, arg1: inst50000042, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000005E:    {kind: ValueParam, arg0: call_param1, arg1: name(Underscore), type: type(symbolic_constant5000000F)}
-// CHECK:STDOUT:     inst5000005F:    {kind: SpliceBlock, arg0: inst_block50000016, arg1: inst50000053, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000060:    {kind: FunctionDecl, arg0: function50000000, arg1: inst_block5000001B, type: type(inst50000061)}
-// CHECK:STDOUT:     inst50000061:    {kind: FunctionType, arg0: function50000000, arg1: specific<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000062:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000063:    {kind: StructValue, arg0: inst_block_empty, type: type(inst50000061)}
-// CHECK:STDOUT:     inst50000064:    {kind: RequireCompleteType, arg0: inst50000043, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst50000065:    {kind: RequireCompleteType, arg0: inst50000043, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst50000066:    {kind: RequireCompleteType, arg0: inst50000045, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst50000067:    {kind: RequireCompleteType, arg0: inst50000054, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst50000068:    {kind: RequireCompleteType, arg0: inst50000054, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst50000069:    {kind: RequireCompleteType, arg0: inst50000055, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst5000006A:    {kind: Return}
-// CHECK:STDOUT:     inst5000006B:    {kind: SymbolicBinding, arg0: entity_name50000001, arg1: inst<none>, type: type(inst50000021)}
-// CHECK:STDOUT:     inst5000006C:    {kind: NameRef, arg0: name1, arg1: inst50000012, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000006D:    {kind: PatternType, arg0: inst50000013, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000006E:    {kind: SymbolicBinding, arg0: entity_name5000000A, arg1: inst<none>, type: type(inst50000013)}
-// CHECK:STDOUT:     inst5000006F:    {kind: SymbolicBinding, arg0: entity_name50000007, arg1: inst<none>, type: type(inst50000013)}
-// CHECK:STDOUT:     inst50000070:    {kind: SymbolicBinding, arg0: entity_name50000007, arg1: inst<none>, type: type(inst50000013)}
-// CHECK:STDOUT:     inst50000071:    {kind: SymbolicBindingPattern, arg0: entity_name5000000A, type: type(inst5000006D)}
-// CHECK:STDOUT:     inst50000072:    {kind: NameRef, arg0: name5, arg1: inst5000006E, type: type(inst50000013)}
-// CHECK:STDOUT:     inst50000073:    {kind: FacetAccessType, arg0: inst50000072, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000074:    {kind: FacetAccessType, arg0: inst5000006F, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000075:    {kind: FacetAccessType, arg0: inst50000070, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000076:    {kind: Converted, arg0: inst50000072, arg1: inst50000073, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000077:    {kind: NameRef, arg0: name2, arg1: inst5000001B, type: type(inst5000001A)}
-// CHECK:STDOUT:     inst50000078:    {kind: LookupImplWitness, arg0: inst5000006F, arg1: specific_interface50000001, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst50000079:    {kind: LookupImplWitness, arg0: inst5000006F, arg1: specific_interface50000001, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst5000007A:    {kind: ImplWitnessAccess, arg0: inst50000079, arg1: element0, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000007B:    {kind: ImplWitnessAccess, arg0: inst50000079, arg1: element0, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000007C:    {kind: LookupImplWitness, arg0: inst50000070, arg1: specific_interface50000001, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst5000007D:    {kind: ImplWitnessAccess, arg0: inst5000007C, arg1: element0, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000007E:    {kind: PatternType, arg0: inst5000007B, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000007F:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant5000001F)}
-// CHECK:STDOUT:     inst50000080:    {kind: PatternType, arg0: inst5000007D, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000081:    {kind: ValueBinding, arg0: entity_name5000000B, arg1: inst50000091, type: type(symbolic_constant5000001D)}
-// CHECK:STDOUT:     inst50000082:    {kind: WrapperBindingPattern, arg0: entity_name5000000B, arg1: inst5000007F, type: type(symbolic_constant5000001F)}
-// CHECK:STDOUT:     inst50000083:    {kind: NameRef, arg0: name5, arg1: inst5000006E, type: type(inst50000013)}
-// CHECK:STDOUT:     inst50000084:    {kind: FacetAccessType, arg0: inst50000083, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000085:    {kind: Converted, arg0: inst50000083, arg1: inst50000084, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000086:    {kind: NameRef, arg0: name3, arg1: inst5000001F, type: type(inst5000001A)}
-// CHECK:STDOUT:     inst50000087:    {kind: LookupImplWitness, arg0: inst5000006F, arg1: specific_interface50000001, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst50000088:    {kind: ImplWitnessAccess, arg0: inst50000079, arg1: element1, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000089:    {kind: ImplWitnessAccess, arg0: inst50000079, arg1: element1, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000008A:    {kind: ImplWitnessAccess, arg0: inst5000007C, arg1: element1, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000008B:    {kind: PatternType, arg0: inst50000089, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000008C:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant50000023)}
-// CHECK:STDOUT:     inst5000008D:    {kind: PatternType, arg0: inst5000008A, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000008E:    {kind: ValueBinding, arg0: entity_name5000000C, arg1: inst50000093, type: type(symbolic_constant50000021)}
-// CHECK:STDOUT:     inst5000008F:    {kind: WrapperBindingPattern, arg0: entity_name5000000C, arg1: inst5000008C, type: type(symbolic_constant50000023)}
-// CHECK:STDOUT:     inst50000090:    {kind: SpliceBlock, arg0: inst_block50000021, arg1: inst5000006C, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000091:    {kind: ValueParam, arg0: call_param0, arg1: name(Underscore), type: type(symbolic_constant5000001D)}
-// CHECK:STDOUT:     inst50000092:    {kind: SpliceBlock, arg0: inst_block50000023, arg1: inst5000007A, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000093:    {kind: ValueParam, arg0: call_param1, arg1: name(Underscore), type: type(symbolic_constant50000021)}
-// CHECK:STDOUT:     inst50000094:    {kind: SpliceBlock, arg0: inst_block50000026, arg1: inst50000088, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000095:    {kind: FunctionDecl, arg0: function50000001, arg1: inst_block5000002B, type: type(inst50000096)}
-// CHECK:STDOUT:     inst50000096:    {kind: FunctionType, arg0: function50000001, arg1: specific<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000097:    {kind: StructValue, arg0: inst_block_empty, type: type(inst50000096)}
-// CHECK:STDOUT:     inst50000098:    {kind: RequireCompleteType, arg0: inst5000007B, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst50000099:    {kind: RequireCompleteType, arg0: inst5000007B, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst5000009A:    {kind: RequireCompleteType, arg0: inst5000007D, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst5000009B:    {kind: RequireCompleteType, arg0: inst50000089, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst5000009C:    {kind: RequireCompleteType, arg0: inst50000089, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst5000009D:    {kind: RequireCompleteType, arg0: inst5000008A, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst5000009E:    {kind: Return}
+// CHECK:STDOUT:     inst50000049:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant50000010)}
+// CHECK:STDOUT:     inst5000004A:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant5000000E)}
+// CHECK:STDOUT:     inst5000004B:    {kind: PatternType, arg0: inst50000047, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000004C:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant50000010)}
+// CHECK:STDOUT:     inst5000004D:    {kind: WrapperBindingPattern, arg0: entity_name50000008, arg1: inst50000049, type: type(symbolic_constant50000010)}
+// CHECK:STDOUT:     inst5000004E:    {kind: WrapperBindingPattern, arg0: entity_name50000008, arg1: inst5000004A, type: type(symbolic_constant5000000E)}
+// CHECK:STDOUT:     inst5000004F:    {kind: WrapperBindingPattern, arg0: entity_name50000008, arg1: inst5000004C, type: type(symbolic_constant50000010)}
+// CHECK:STDOUT:     inst50000050:    {kind: ValueBinding, arg0: entity_name50000008, arg1: inst50000066, type: type(symbolic_constant5000000D)}
+// CHECK:STDOUT:     inst50000051:    {kind: NameRef, arg0: name5, arg1: inst50000035, type: type(inst50000027)}
+// CHECK:STDOUT:     inst50000052:    {kind: FacetAccessType, arg0: inst50000051, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000053:    {kind: Converted, arg0: inst50000051, arg1: inst50000052, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000054:    {kind: ImportRefLoaded, arg0: import_ir_instB, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000055:    {kind: AssociatedEntity, arg0: element1, arg1: inst50000054, type: type(inst5000003D)}
+// CHECK:STDOUT:     inst50000056:    {kind: NameRef, arg0: name3, arg1: inst5000002B, type: type(inst5000003D)}
+// CHECK:STDOUT:     inst50000057:    {kind: LookupImplWitness, arg0: inst50000036, arg1: specific_interface50000000, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst50000058:    {kind: AssociatedConstantDecl, arg0: assoc_const50000003, arg1: inst_block_empty, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000059:    {kind: ImplWitnessAccess, arg0: inst50000042, arg1: element1, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000005A:    {kind: ImplWitnessAccess, arg0: inst50000042, arg1: element1, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000005B:    {kind: ImplWitnessAccess, arg0: inst50000046, arg1: element1, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000005C:    {kind: PatternType, arg0: inst5000005A, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000005D:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant50000018)}
+// CHECK:STDOUT:     inst5000005E:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant50000016)}
+// CHECK:STDOUT:     inst5000005F:    {kind: PatternType, arg0: inst5000005B, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000060:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant50000018)}
+// CHECK:STDOUT:     inst50000061:    {kind: WrapperBindingPattern, arg0: entity_name50000009, arg1: inst5000005D, type: type(symbolic_constant50000018)}
+// CHECK:STDOUT:     inst50000062:    {kind: WrapperBindingPattern, arg0: entity_name50000008, arg1: inst5000005E, type: type(symbolic_constant50000016)}
+// CHECK:STDOUT:     inst50000063:    {kind: WrapperBindingPattern, arg0: entity_name50000008, arg1: inst50000060, type: type(symbolic_constant50000018)}
+// CHECK:STDOUT:     inst50000064:    {kind: ValueBinding, arg0: entity_name50000009, arg1: inst50000068, type: type(symbolic_constant50000015)}
+// CHECK:STDOUT:     inst50000065:    {kind: SpliceBlock, arg0: inst_block5000000E, arg1: inst50000030, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000066:    {kind: ValueParam, arg0: call_param0, arg1: name(Underscore), type: type(symbolic_constant5000000D)}
+// CHECK:STDOUT:     inst50000067:    {kind: SpliceBlock, arg0: inst_block50000013, arg1: inst50000044, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000068:    {kind: ValueParam, arg0: call_param1, arg1: name(Underscore), type: type(symbolic_constant50000015)}
+// CHECK:STDOUT:     inst50000069:    {kind: SpliceBlock, arg0: inst_block50000016, arg1: inst50000059, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000006A:    {kind: FunctionDecl, arg0: function50000000, arg1: inst_block5000001B, type: type(inst5000006B)}
+// CHECK:STDOUT:     inst5000006B:    {kind: FunctionType, arg0: function50000000, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000006C:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000006D:    {kind: StructValue, arg0: inst_block_empty, type: type(inst5000006B)}
+// CHECK:STDOUT:     inst5000006E:    {kind: RequireCompleteType, arg0: inst50000045, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst5000006F:    {kind: RequireCompleteType, arg0: inst50000045, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst50000070:    {kind: RequireCompleteType, arg0: inst50000047, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst50000071:    {kind: RequireCompleteType, arg0: inst5000005A, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst50000072:    {kind: RequireCompleteType, arg0: inst5000005A, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst50000073:    {kind: RequireCompleteType, arg0: inst5000005B, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst50000074:    {kind: Return}
+// CHECK:STDOUT:     inst50000075:    {kind: SymbolicBinding, arg0: entity_name50000001, arg1: inst<none>, type: type(inst50000021)}
+// CHECK:STDOUT:     inst50000076:    {kind: NameRef, arg0: name1, arg1: inst50000012, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000077:    {kind: PatternType, arg0: inst50000013, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000078:    {kind: SymbolicBindingPattern, arg0: entity_name5000000A, type: type(inst50000077)}
+// CHECK:STDOUT:     inst50000079:    {kind: SymbolicBindingPattern, arg0: entity_name50000007, type: type(inst50000077)}
+// CHECK:STDOUT:     inst5000007A:    {kind: SymbolicBindingPattern, arg0: entity_name50000007, type: type(inst50000077)}
+// CHECK:STDOUT:     inst5000007B:    {kind: SymbolicBinding, arg0: entity_name5000000A, arg1: inst<none>, type: type(inst50000013)}
+// CHECK:STDOUT:     inst5000007C:    {kind: SymbolicBinding, arg0: entity_name50000007, arg1: inst<none>, type: type(inst50000013)}
+// CHECK:STDOUT:     inst5000007D:    {kind: SymbolicBinding, arg0: entity_name50000007, arg1: inst<none>, type: type(inst50000013)}
+// CHECK:STDOUT:     inst5000007E:    {kind: NameRef, arg0: name5, arg1: inst5000007B, type: type(inst50000013)}
+// CHECK:STDOUT:     inst5000007F:    {kind: FacetAccessType, arg0: inst5000007E, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000080:    {kind: FacetAccessType, arg0: inst5000007C, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000081:    {kind: FacetAccessType, arg0: inst5000007D, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000082:    {kind: Converted, arg0: inst5000007E, arg1: inst5000007F, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000083:    {kind: NameRef, arg0: name2, arg1: inst5000001B, type: type(inst5000001A)}
+// CHECK:STDOUT:     inst50000084:    {kind: LookupImplWitness, arg0: inst5000007C, arg1: specific_interface50000001, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst50000085:    {kind: LookupImplWitness, arg0: inst5000007C, arg1: specific_interface50000001, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst50000086:    {kind: ImplWitnessAccess, arg0: inst50000085, arg1: element0, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000087:    {kind: ImplWitnessAccess, arg0: inst50000085, arg1: element0, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000088:    {kind: LookupImplWitness, arg0: inst5000007D, arg1: specific_interface50000001, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst50000089:    {kind: ImplWitnessAccess, arg0: inst50000088, arg1: element0, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000008A:    {kind: PatternType, arg0: inst50000087, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000008B:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant5000002C)}
+// CHECK:STDOUT:     inst5000008C:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant5000002A)}
+// CHECK:STDOUT:     inst5000008D:    {kind: PatternType, arg0: inst50000089, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000008E:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant5000002C)}
+// CHECK:STDOUT:     inst5000008F:    {kind: WrapperBindingPattern, arg0: entity_name5000000B, arg1: inst5000008B, type: type(symbolic_constant5000002C)}
+// CHECK:STDOUT:     inst50000090:    {kind: WrapperBindingPattern, arg0: entity_name50000008, arg1: inst5000008C, type: type(symbolic_constant5000002A)}
+// CHECK:STDOUT:     inst50000091:    {kind: WrapperBindingPattern, arg0: entity_name50000008, arg1: inst5000008E, type: type(symbolic_constant5000002C)}
+// CHECK:STDOUT:     inst50000092:    {kind: ValueBinding, arg0: entity_name5000000B, arg1: inst500000A5, type: type(symbolic_constant50000029)}
+// CHECK:STDOUT:     inst50000093:    {kind: NameRef, arg0: name5, arg1: inst5000007B, type: type(inst50000013)}
+// CHECK:STDOUT:     inst50000094:    {kind: FacetAccessType, arg0: inst50000093, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000095:    {kind: Converted, arg0: inst50000093, arg1: inst50000094, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000096:    {kind: NameRef, arg0: name3, arg1: inst5000001F, type: type(inst5000001A)}
+// CHECK:STDOUT:     inst50000097:    {kind: LookupImplWitness, arg0: inst5000007C, arg1: specific_interface50000001, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst50000098:    {kind: ImplWitnessAccess, arg0: inst50000085, arg1: element1, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000099:    {kind: ImplWitnessAccess, arg0: inst50000085, arg1: element1, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000009A:    {kind: ImplWitnessAccess, arg0: inst50000088, arg1: element1, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000009B:    {kind: PatternType, arg0: inst50000099, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000009C:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant50000034)}
+// CHECK:STDOUT:     inst5000009D:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant50000032)}
+// CHECK:STDOUT:     inst5000009E:    {kind: PatternType, arg0: inst5000009A, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000009F:    {kind: ValueParamPattern, arg0: name(Underscore), type: type(symbolic_constant50000034)}
+// CHECK:STDOUT:     inst500000A0:    {kind: WrapperBindingPattern, arg0: entity_name5000000C, arg1: inst5000009C, type: type(symbolic_constant50000034)}
+// CHECK:STDOUT:     inst500000A1:    {kind: WrapperBindingPattern, arg0: entity_name50000008, arg1: inst5000009D, type: type(symbolic_constant50000032)}
+// CHECK:STDOUT:     inst500000A2:    {kind: WrapperBindingPattern, arg0: entity_name50000008, arg1: inst5000009F, type: type(symbolic_constant50000034)}
+// CHECK:STDOUT:     inst500000A3:    {kind: ValueBinding, arg0: entity_name5000000C, arg1: inst500000A7, type: type(symbolic_constant50000031)}
+// CHECK:STDOUT:     inst500000A4:    {kind: SpliceBlock, arg0: inst_block50000021, arg1: inst50000076, type: type(TypeType)}
+// CHECK:STDOUT:     inst500000A5:    {kind: ValueParam, arg0: call_param0, arg1: name(Underscore), type: type(symbolic_constant50000029)}
+// CHECK:STDOUT:     inst500000A6:    {kind: SpliceBlock, arg0: inst_block50000023, arg1: inst50000086, type: type(TypeType)}
+// CHECK:STDOUT:     inst500000A7:    {kind: ValueParam, arg0: call_param1, arg1: name(Underscore), type: type(symbolic_constant50000031)}
+// CHECK:STDOUT:     inst500000A8:    {kind: SpliceBlock, arg0: inst_block50000026, arg1: inst50000098, type: type(TypeType)}
+// CHECK:STDOUT:     inst500000A9:    {kind: FunctionDecl, arg0: function50000001, arg1: inst_block5000002B, type: type(inst500000AA)}
+// CHECK:STDOUT:     inst500000AA:    {kind: FunctionType, arg0: function50000001, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst500000AB:    {kind: StructValue, arg0: inst_block_empty, type: type(inst500000AA)}
+// CHECK:STDOUT:     inst500000AC:    {kind: RequireCompleteType, arg0: inst50000087, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst500000AD:    {kind: RequireCompleteType, arg0: inst50000087, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst500000AE:    {kind: RequireCompleteType, arg0: inst50000089, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst500000AF:    {kind: RequireCompleteType, arg0: inst50000099, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst500000B0:    {kind: RequireCompleteType, arg0: inst50000099, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst500000B1:    {kind: RequireCompleteType, arg0: inst5000009A, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst500000B2:    {kind: Return}
 // CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
@@ -517,8 +537,8 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:       inst50000027:    concrete_constant(inst50000027)
 // CHECK:STDOUT:       inst50000028:    concrete_constant(inst50000028)
 // CHECK:STDOUT:       inst50000029:    symbolic_constant50000003
-// CHECK:STDOUT:       inst5000002A:    concrete_constant(inst5000003D)
-// CHECK:STDOUT:       inst5000002B:    concrete_constant(inst5000004F)
+// CHECK:STDOUT:       inst5000002A:    concrete_constant(inst5000003F)
+// CHECK:STDOUT:       inst5000002B:    concrete_constant(inst50000055)
 // CHECK:STDOUT:       inst5000002C:    constant<none>
 // CHECK:STDOUT:       inst5000002D:    constant<none>
 // CHECK:STDOUT:       inst5000002E:    symbolic_constant50000003
@@ -528,98 +548,118 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:       inst50000032:    symbolic_constant50000005
 // CHECK:STDOUT:       inst50000033:    symbolic_constant50000004
 // CHECK:STDOUT:       inst50000034:    symbolic_constant50000005
-// CHECK:STDOUT:       inst50000035:    concrete_constant(inst50000035)
-// CHECK:STDOUT:       inst50000036:    symbolic_constant50000005
+// CHECK:STDOUT:       inst50000035:    symbolic_constant50000007
+// CHECK:STDOUT:       inst50000036:    symbolic_constant50000006
 // CHECK:STDOUT:       inst50000037:    symbolic_constant50000007
-// CHECK:STDOUT:       inst50000038:    symbolic_constant50000006
-// CHECK:STDOUT:       inst50000039:    symbolic_constant50000007
-// CHECK:STDOUT:       inst5000003A:    symbolic_constant50000007
-// CHECK:STDOUT:       inst5000003B:    concrete_constant(inst5000003B)
-// CHECK:STDOUT:       inst5000003C:    concrete_constant(inst50000041)
+// CHECK:STDOUT:       inst50000038:    symbolic_constant50000007
+// CHECK:STDOUT:       inst50000039:    symbolic_constant50000009
+// CHECK:STDOUT:       inst5000003A:    symbolic_constant50000008
+// CHECK:STDOUT:       inst5000003B:    symbolic_constant50000009
+// CHECK:STDOUT:       inst5000003C:    symbolic_constant50000009
 // CHECK:STDOUT:       inst5000003D:    concrete_constant(inst5000003D)
-// CHECK:STDOUT:       inst5000003E:    concrete_constant(inst5000003D)
-// CHECK:STDOUT:       inst50000040:    symbolic_constant50000008
-// CHECK:STDOUT:       inst50000041:    concrete_constant(inst50000041)
-// CHECK:STDOUT:       inst50000042:    symbolic_constant5000000B
-// CHECK:STDOUT:       inst50000043:    symbolic_constant50000009
-// CHECK:STDOUT:       inst50000044:    symbolic_constant5000000A
+// CHECK:STDOUT:       inst5000003E:    concrete_constant(inst50000043)
+// CHECK:STDOUT:       inst5000003F:    concrete_constant(inst5000003F)
+// CHECK:STDOUT:       inst50000040:    concrete_constant(inst5000003F)
+// CHECK:STDOUT:       inst50000042:    symbolic_constant5000000A
+// CHECK:STDOUT:       inst50000043:    concrete_constant(inst50000043)
+// CHECK:STDOUT:       inst50000044:    symbolic_constant5000000D
 // CHECK:STDOUT:       inst50000045:    symbolic_constant5000000B
 // CHECK:STDOUT:       inst50000046:    symbolic_constant5000000C
-// CHECK:STDOUT:       inst50000047:    concrete_constant(inst50000047)
-// CHECK:STDOUT:       inst50000048:    symbolic_constant5000000D
-// CHECK:STDOUT:       inst5000004A:    concrete_constant(inst5000004A)
-// CHECK:STDOUT:       inst5000004B:    symbolic_constant50000005
-// CHECK:STDOUT:       inst5000004C:    symbolic_constant50000007
-// CHECK:STDOUT:       inst5000004D:    symbolic_constant50000007
-// CHECK:STDOUT:       inst5000004E:    concrete_constant(inst50000052)
-// CHECK:STDOUT:       inst5000004F:    concrete_constant(inst5000004F)
-// CHECK:STDOUT:       inst50000050:    concrete_constant(inst5000004F)
-// CHECK:STDOUT:       inst50000052:    concrete_constant(inst50000052)
-// CHECK:STDOUT:       inst50000053:    symbolic_constant5000000F
-// CHECK:STDOUT:       inst50000054:    symbolic_constant5000000E
-// CHECK:STDOUT:       inst50000055:    symbolic_constant5000000F
-// CHECK:STDOUT:       inst50000056:    symbolic_constant50000010
-// CHECK:STDOUT:       inst50000057:    concrete_constant(inst50000057)
-// CHECK:STDOUT:       inst50000058:    symbolic_constant50000011
-// CHECK:STDOUT:       inst5000005A:    concrete_constant(inst5000005A)
-// CHECK:STDOUT:       inst5000005B:    concrete_constant(inst50000027)
-// CHECK:STDOUT:       inst5000005D:    symbolic_constant5000000B
-// CHECK:STDOUT:       inst5000005F:    symbolic_constant5000000F
-// CHECK:STDOUT:       inst50000060:    concrete_constant(inst50000063)
-// CHECK:STDOUT:       inst50000061:    concrete_constant(inst50000061)
-// CHECK:STDOUT:       inst50000062:    concrete_constant(inst50000062)
-// CHECK:STDOUT:       inst50000063:    concrete_constant(inst50000063)
-// CHECK:STDOUT:       inst50000064:    symbolic_constant50000013
-// CHECK:STDOUT:       inst50000065:    symbolic_constant50000012
-// CHECK:STDOUT:       inst50000066:    symbolic_constant50000013
-// CHECK:STDOUT:       inst50000067:    symbolic_constant50000015
-// CHECK:STDOUT:       inst50000068:    symbolic_constant50000014
+// CHECK:STDOUT:       inst50000047:    symbolic_constant5000000D
+// CHECK:STDOUT:       inst50000048:    symbolic_constant5000000E
+// CHECK:STDOUT:       inst50000049:    symbolic_constant50000011
+// CHECK:STDOUT:       inst5000004A:    symbolic_constant5000000F
+// CHECK:STDOUT:       inst5000004B:    symbolic_constant50000010
+// CHECK:STDOUT:       inst5000004C:    symbolic_constant50000011
+// CHECK:STDOUT:       inst5000004D:    symbolic_constant50000013
+// CHECK:STDOUT:       inst5000004E:    symbolic_constant50000012
+// CHECK:STDOUT:       inst5000004F:    symbolic_constant50000013
+// CHECK:STDOUT:       inst50000051:    symbolic_constant50000007
+// CHECK:STDOUT:       inst50000052:    symbolic_constant50000009
+// CHECK:STDOUT:       inst50000053:    symbolic_constant50000009
+// CHECK:STDOUT:       inst50000054:    concrete_constant(inst50000058)
+// CHECK:STDOUT:       inst50000055:    concrete_constant(inst50000055)
+// CHECK:STDOUT:       inst50000056:    concrete_constant(inst50000055)
+// CHECK:STDOUT:       inst50000058:    concrete_constant(inst50000058)
+// CHECK:STDOUT:       inst50000059:    symbolic_constant50000015
+// CHECK:STDOUT:       inst5000005A:    symbolic_constant50000014
+// CHECK:STDOUT:       inst5000005B:    symbolic_constant50000015
+// CHECK:STDOUT:       inst5000005C:    symbolic_constant50000016
+// CHECK:STDOUT:       inst5000005D:    symbolic_constant50000019
+// CHECK:STDOUT:       inst5000005E:    symbolic_constant50000017
+// CHECK:STDOUT:       inst5000005F:    symbolic_constant50000018
+// CHECK:STDOUT:       inst50000060:    symbolic_constant50000019
+// CHECK:STDOUT:       inst50000061:    symbolic_constant5000001B
+// CHECK:STDOUT:       inst50000062:    symbolic_constant5000001A
+// CHECK:STDOUT:       inst50000063:    symbolic_constant5000001B
+// CHECK:STDOUT:       inst50000065:    concrete_constant(inst50000027)
+// CHECK:STDOUT:       inst50000067:    symbolic_constant5000000D
 // CHECK:STDOUT:       inst50000069:    symbolic_constant50000015
-// CHECK:STDOUT:       inst5000006B:    symbolic_constant50000002
-// CHECK:STDOUT:       inst5000006C:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst5000006A:    concrete_constant(inst5000006D)
+// CHECK:STDOUT:       inst5000006B:    concrete_constant(inst5000006B)
+// CHECK:STDOUT:       inst5000006C:    concrete_constant(inst5000006C)
 // CHECK:STDOUT:       inst5000006D:    concrete_constant(inst5000006D)
-// CHECK:STDOUT:       inst5000006E:    symbolic_constant50000017
-// CHECK:STDOUT:       inst5000006F:    symbolic_constant50000016
-// CHECK:STDOUT:       inst50000070:    symbolic_constant50000017
-// CHECK:STDOUT:       inst50000071:    concrete_constant(inst50000071)
-// CHECK:STDOUT:       inst50000072:    symbolic_constant50000017
-// CHECK:STDOUT:       inst50000073:    symbolic_constant50000019
-// CHECK:STDOUT:       inst50000074:    symbolic_constant50000018
-// CHECK:STDOUT:       inst50000075:    symbolic_constant50000019
-// CHECK:STDOUT:       inst50000076:    symbolic_constant50000019
-// CHECK:STDOUT:       inst50000077:    concrete_constant(inst5000001C)
-// CHECK:STDOUT:       inst50000079:    symbolic_constant5000001A
-// CHECK:STDOUT:       inst5000007A:    symbolic_constant5000001D
-// CHECK:STDOUT:       inst5000007B:    symbolic_constant5000001B
-// CHECK:STDOUT:       inst5000007C:    symbolic_constant5000001C
-// CHECK:STDOUT:       inst5000007D:    symbolic_constant5000001D
-// CHECK:STDOUT:       inst5000007E:    symbolic_constant5000001E
-// CHECK:STDOUT:       inst5000007F:    concrete_constant(inst5000007F)
-// CHECK:STDOUT:       inst50000080:    symbolic_constant5000001F
-// CHECK:STDOUT:       inst50000082:    concrete_constant(inst50000082)
-// CHECK:STDOUT:       inst50000083:    symbolic_constant50000017
-// CHECK:STDOUT:       inst50000084:    symbolic_constant50000019
-// CHECK:STDOUT:       inst50000085:    symbolic_constant50000019
-// CHECK:STDOUT:       inst50000086:    concrete_constant(inst50000020)
-// CHECK:STDOUT:       inst50000088:    symbolic_constant50000021
-// CHECK:STDOUT:       inst50000089:    symbolic_constant50000020
-// CHECK:STDOUT:       inst5000008A:    symbolic_constant50000021
-// CHECK:STDOUT:       inst5000008B:    symbolic_constant50000022
-// CHECK:STDOUT:       inst5000008C:    concrete_constant(inst5000008C)
-// CHECK:STDOUT:       inst5000008D:    symbolic_constant50000023
-// CHECK:STDOUT:       inst5000008F:    concrete_constant(inst5000008F)
-// CHECK:STDOUT:       inst50000090:    concrete_constant(inst50000013)
-// CHECK:STDOUT:       inst50000092:    symbolic_constant5000001D
-// CHECK:STDOUT:       inst50000094:    symbolic_constant50000021
-// CHECK:STDOUT:       inst50000095:    concrete_constant(inst50000097)
-// CHECK:STDOUT:       inst50000096:    concrete_constant(inst50000096)
-// CHECK:STDOUT:       inst50000097:    concrete_constant(inst50000097)
-// CHECK:STDOUT:       inst50000098:    symbolic_constant50000025
-// CHECK:STDOUT:       inst50000099:    symbolic_constant50000024
-// CHECK:STDOUT:       inst5000009A:    symbolic_constant50000025
-// CHECK:STDOUT:       inst5000009B:    symbolic_constant50000027
-// CHECK:STDOUT:       inst5000009C:    symbolic_constant50000026
-// CHECK:STDOUT:       inst5000009D:    symbolic_constant50000027
+// CHECK:STDOUT:       inst5000006E:    symbolic_constant5000001D
+// CHECK:STDOUT:       inst5000006F:    symbolic_constant5000001C
+// CHECK:STDOUT:       inst50000070:    symbolic_constant5000001D
+// CHECK:STDOUT:       inst50000071:    symbolic_constant5000001F
+// CHECK:STDOUT:       inst50000072:    symbolic_constant5000001E
+// CHECK:STDOUT:       inst50000073:    symbolic_constant5000001F
+// CHECK:STDOUT:       inst50000075:    symbolic_constant50000002
+// CHECK:STDOUT:       inst50000076:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst50000077:    concrete_constant(inst50000077)
+// CHECK:STDOUT:       inst50000078:    symbolic_constant50000021
+// CHECK:STDOUT:       inst50000079:    symbolic_constant50000020
+// CHECK:STDOUT:       inst5000007A:    symbolic_constant50000021
+// CHECK:STDOUT:       inst5000007B:    symbolic_constant50000023
+// CHECK:STDOUT:       inst5000007C:    symbolic_constant50000022
+// CHECK:STDOUT:       inst5000007D:    symbolic_constant50000023
+// CHECK:STDOUT:       inst5000007E:    symbolic_constant50000023
+// CHECK:STDOUT:       inst5000007F:    symbolic_constant50000025
+// CHECK:STDOUT:       inst50000080:    symbolic_constant50000024
+// CHECK:STDOUT:       inst50000081:    symbolic_constant50000025
+// CHECK:STDOUT:       inst50000082:    symbolic_constant50000025
+// CHECK:STDOUT:       inst50000083:    concrete_constant(inst5000001C)
+// CHECK:STDOUT:       inst50000085:    symbolic_constant50000026
+// CHECK:STDOUT:       inst50000086:    symbolic_constant50000029
+// CHECK:STDOUT:       inst50000087:    symbolic_constant50000027
+// CHECK:STDOUT:       inst50000088:    symbolic_constant50000028
+// CHECK:STDOUT:       inst50000089:    symbolic_constant50000029
+// CHECK:STDOUT:       inst5000008A:    symbolic_constant5000002A
+// CHECK:STDOUT:       inst5000008B:    symbolic_constant5000002D
+// CHECK:STDOUT:       inst5000008C:    symbolic_constant5000002B
+// CHECK:STDOUT:       inst5000008D:    symbolic_constant5000002C
+// CHECK:STDOUT:       inst5000008E:    symbolic_constant5000002D
+// CHECK:STDOUT:       inst5000008F:    symbolic_constant5000002F
+// CHECK:STDOUT:       inst50000090:    symbolic_constant5000002E
+// CHECK:STDOUT:       inst50000091:    symbolic_constant5000002F
+// CHECK:STDOUT:       inst50000093:    symbolic_constant50000023
+// CHECK:STDOUT:       inst50000094:    symbolic_constant50000025
+// CHECK:STDOUT:       inst50000095:    symbolic_constant50000025
+// CHECK:STDOUT:       inst50000096:    concrete_constant(inst50000020)
+// CHECK:STDOUT:       inst50000098:    symbolic_constant50000031
+// CHECK:STDOUT:       inst50000099:    symbolic_constant50000030
+// CHECK:STDOUT:       inst5000009A:    symbolic_constant50000031
+// CHECK:STDOUT:       inst5000009B:    symbolic_constant50000032
+// CHECK:STDOUT:       inst5000009C:    symbolic_constant50000035
+// CHECK:STDOUT:       inst5000009D:    symbolic_constant50000033
+// CHECK:STDOUT:       inst5000009E:    symbolic_constant50000034
+// CHECK:STDOUT:       inst5000009F:    symbolic_constant50000035
+// CHECK:STDOUT:       inst500000A0:    symbolic_constant50000037
+// CHECK:STDOUT:       inst500000A1:    symbolic_constant50000036
+// CHECK:STDOUT:       inst500000A2:    symbolic_constant50000037
+// CHECK:STDOUT:       inst500000A4:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst500000A6:    symbolic_constant50000029
+// CHECK:STDOUT:       inst500000A8:    symbolic_constant50000031
+// CHECK:STDOUT:       inst500000A9:    concrete_constant(inst500000AB)
+// CHECK:STDOUT:       inst500000AA:    concrete_constant(inst500000AA)
+// CHECK:STDOUT:       inst500000AB:    concrete_constant(inst500000AB)
+// CHECK:STDOUT:       inst500000AC:    symbolic_constant50000039
+// CHECK:STDOUT:       inst500000AD:    symbolic_constant50000038
+// CHECK:STDOUT:       inst500000AE:    symbolic_constant50000039
+// CHECK:STDOUT:       inst500000AF:    symbolic_constant5000003B
+// CHECK:STDOUT:       inst500000B0:    symbolic_constant5000003A
+// CHECK:STDOUT:       inst500000B1:    symbolic_constant5000003B
 // CHECK:STDOUT:     symbolic_constants:
 // CHECK:STDOUT:       symbolic_constant50000000: {inst: inst50000015, kind: checked, attached: null}
 // CHECK:STDOUT:       symbolic_constant50000001: {inst: inst50000015, kind: checked, attached: {generic: generic50000000, index: generic_inst_in_def0}}
@@ -627,46 +667,66 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:       symbolic_constant50000003: {inst: inst50000029, kind: checked, attached: null}
 // CHECK:STDOUT:       symbolic_constant50000004: {inst: inst50000033, kind: checked, attached: null}
 // CHECK:STDOUT:       symbolic_constant50000005: {inst: inst50000033, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl0}}
-// CHECK:STDOUT:       symbolic_constant50000006: {inst: inst50000038, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant50000007: {inst: inst50000038, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl1}}
-// CHECK:STDOUT:       symbolic_constant50000008: {inst: inst50000040, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant50000009: {inst: inst50000043, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant5000000A: {inst: inst50000040, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl2}}
-// CHECK:STDOUT:       symbolic_constant5000000B: {inst: inst50000043, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl3}}
-// CHECK:STDOUT:       symbolic_constant5000000C: {inst: inst50000046, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant5000000D: {inst: inst50000046, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl4}}
-// CHECK:STDOUT:       symbolic_constant5000000E: {inst: inst50000054, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant5000000F: {inst: inst50000054, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl5}}
-// CHECK:STDOUT:       symbolic_constant50000010: {inst: inst50000056, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant50000011: {inst: inst50000056, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl6}}
-// CHECK:STDOUT:       symbolic_constant50000012: {inst: inst50000065, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant50000013: {inst: inst50000065, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_def0}}
-// CHECK:STDOUT:       symbolic_constant50000014: {inst: inst50000068, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant50000015: {inst: inst50000068, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_def1}}
-// CHECK:STDOUT:       symbolic_constant50000016: {inst: inst5000006F, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant50000017: {inst: inst5000006F, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl0}}
-// CHECK:STDOUT:       symbolic_constant50000018: {inst: inst50000074, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant50000019: {inst: inst50000074, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl1}}
-// CHECK:STDOUT:       symbolic_constant5000001A: {inst: inst50000079, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant5000001B: {inst: inst5000007B, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant5000001C: {inst: inst50000079, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl2}}
-// CHECK:STDOUT:       symbolic_constant5000001D: {inst: inst5000007B, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl3}}
-// CHECK:STDOUT:       symbolic_constant5000001E: {inst: inst5000007E, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant5000001F: {inst: inst5000007E, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl4}}
-// CHECK:STDOUT:       symbolic_constant50000020: {inst: inst50000089, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant50000021: {inst: inst50000089, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl5}}
-// CHECK:STDOUT:       symbolic_constant50000022: {inst: inst5000008B, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant50000023: {inst: inst5000008B, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl6}}
-// CHECK:STDOUT:       symbolic_constant50000024: {inst: inst50000099, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant50000025: {inst: inst50000099, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_def0}}
-// CHECK:STDOUT:       symbolic_constant50000026: {inst: inst5000009C, kind: checked, attached: null}
-// CHECK:STDOUT:       symbolic_constant50000027: {inst: inst5000009C, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_def1}}
+// CHECK:STDOUT:       symbolic_constant50000006: {inst: inst50000036, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000007: {inst: inst50000036, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl1}}
+// CHECK:STDOUT:       symbolic_constant50000008: {inst: inst5000003A, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000009: {inst: inst5000003A, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl2}}
+// CHECK:STDOUT:       symbolic_constant5000000A: {inst: inst50000042, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant5000000B: {inst: inst50000045, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant5000000C: {inst: inst50000042, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl3}}
+// CHECK:STDOUT:       symbolic_constant5000000D: {inst: inst50000045, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl4}}
+// CHECK:STDOUT:       symbolic_constant5000000E: {inst: inst50000048, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant5000000F: {inst: inst5000004A, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000010: {inst: inst50000048, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl5}}
+// CHECK:STDOUT:       symbolic_constant50000011: {inst: inst5000004A, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl6}}
+// CHECK:STDOUT:       symbolic_constant50000012: {inst: inst5000004E, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000013: {inst: inst5000004E, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl7}}
+// CHECK:STDOUT:       symbolic_constant50000014: {inst: inst5000005A, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000015: {inst: inst5000005A, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl8}}
+// CHECK:STDOUT:       symbolic_constant50000016: {inst: inst5000005C, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000017: {inst: inst5000005E, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000018: {inst: inst5000005C, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl9}}
+// CHECK:STDOUT:       symbolic_constant50000019: {inst: inst5000005E, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl10}}
+// CHECK:STDOUT:       symbolic_constant5000001A: {inst: inst50000062, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant5000001B: {inst: inst50000062, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_decl11}}
+// CHECK:STDOUT:       symbolic_constant5000001C: {inst: inst5000006F, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant5000001D: {inst: inst5000006F, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_def0}}
+// CHECK:STDOUT:       symbolic_constant5000001E: {inst: inst50000072, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant5000001F: {inst: inst50000072, kind: checked, attached: {generic: generic50000003, index: generic_inst_in_def1}}
+// CHECK:STDOUT:       symbolic_constant50000020: {inst: inst50000079, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000021: {inst: inst50000079, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl0}}
+// CHECK:STDOUT:       symbolic_constant50000022: {inst: inst5000007C, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000023: {inst: inst5000007C, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl1}}
+// CHECK:STDOUT:       symbolic_constant50000024: {inst: inst50000080, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000025: {inst: inst50000080, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl2}}
+// CHECK:STDOUT:       symbolic_constant50000026: {inst: inst50000085, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000027: {inst: inst50000087, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000028: {inst: inst50000085, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl3}}
+// CHECK:STDOUT:       symbolic_constant50000029: {inst: inst50000087, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl4}}
+// CHECK:STDOUT:       symbolic_constant5000002A: {inst: inst5000008A, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant5000002B: {inst: inst5000008C, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant5000002C: {inst: inst5000008A, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl5}}
+// CHECK:STDOUT:       symbolic_constant5000002D: {inst: inst5000008C, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl6}}
+// CHECK:STDOUT:       symbolic_constant5000002E: {inst: inst50000090, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant5000002F: {inst: inst50000090, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl7}}
+// CHECK:STDOUT:       symbolic_constant50000030: {inst: inst50000099, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000031: {inst: inst50000099, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl8}}
+// CHECK:STDOUT:       symbolic_constant50000032: {inst: inst5000009B, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000033: {inst: inst5000009D, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000034: {inst: inst5000009B, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl9}}
+// CHECK:STDOUT:       symbolic_constant50000035: {inst: inst5000009D, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl10}}
+// CHECK:STDOUT:       symbolic_constant50000036: {inst: inst500000A1, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000037: {inst: inst500000A1, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_decl11}}
+// CHECK:STDOUT:       symbolic_constant50000038: {inst: inst500000AD, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant50000039: {inst: inst500000AD, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_def0}}
+// CHECK:STDOUT:       symbolic_constant5000003A: {inst: inst500000B0, kind: checked, attached: null}
+// CHECK:STDOUT:       symbolic_constant5000003B: {inst: inst500000B0, kind: checked, attached: {generic: generic50000004, index: generic_inst_in_def1}}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst50000012
-// CHECK:STDOUT:       1:               inst50000060
-// CHECK:STDOUT:       2:               inst50000095
+// CHECK:STDOUT:       1:               inst5000006A
+// CHECK:STDOUT:       2:               inst500000A9
 // CHECK:STDOUT:     generated:       {}
 // CHECK:STDOUT:     imports:
 // CHECK:STDOUT:       0:               inst50000011
@@ -679,10 +739,10 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:       7:               inst5000002D
 // CHECK:STDOUT:       8:               inst5000002E
 // CHECK:STDOUT:       9:               inst5000002F
-// CHECK:STDOUT:       10:              inst5000003C
-// CHECK:STDOUT:       11:              inst50000041
-// CHECK:STDOUT:       12:              inst5000004E
-// CHECK:STDOUT:       13:              inst50000052
+// CHECK:STDOUT:       10:              inst5000003E
+// CHECK:STDOUT:       11:              inst50000043
+// CHECK:STDOUT:       12:              inst50000054
+// CHECK:STDOUT:       13:              inst50000058
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block50000005:
 // CHECK:STDOUT:       0:               inst50000014
@@ -717,144 +777,164 @@ fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     inst_block50000011:
 // CHECK:STDOUT:       0:               inst50000029
 // CHECK:STDOUT:     inst_block50000012:
-// CHECK:STDOUT:       0:               inst50000035
-// CHECK:STDOUT:     inst_block50000013:
-// CHECK:STDOUT:       0:               inst50000036
-// CHECK:STDOUT:       1:               inst50000037
-// CHECK:STDOUT:       2:               inst5000003A
-// CHECK:STDOUT:       3:               inst5000003E
-// CHECK:STDOUT:       4:               inst50000042
-// CHECK:STDOUT:     inst_block50000014:
-// CHECK:STDOUT:       0:               inst50000033
-// CHECK:STDOUT:     inst_block50000015:
-// CHECK:STDOUT:       0:               inst50000040
-// CHECK:STDOUT:     inst_block50000016:
-// CHECK:STDOUT:       0:               inst5000004B
-// CHECK:STDOUT:       1:               inst5000004C
-// CHECK:STDOUT:       2:               inst5000004D
-// CHECK:STDOUT:       3:               inst50000050
-// CHECK:STDOUT:       4:               inst50000053
-// CHECK:STDOUT:     inst_block50000017:
-// CHECK:STDOUT:       0:               inst5000004A
-// CHECK:STDOUT:       1:               inst5000005A
-// CHECK:STDOUT:     inst_block50000018:
-// CHECK:STDOUT:       0:               inst50000047
-// CHECK:STDOUT:       1:               inst50000057
-// CHECK:STDOUT:     inst_block50000019:
-// CHECK:STDOUT:       0:               inst5000005C
-// CHECK:STDOUT:       1:               inst5000005E
-// CHECK:STDOUT:     inst_block5000001A:
-// CHECK:STDOUT:       0:               inst50000035
-// CHECK:STDOUT:       1:               inst50000047
-// CHECK:STDOUT:       2:               inst5000004A
-// CHECK:STDOUT:       3:               inst50000057
-// CHECK:STDOUT:       4:               inst5000005A
-// CHECK:STDOUT:     inst_block5000001B:
-// CHECK:STDOUT:       0:               inst5000005B
-// CHECK:STDOUT:       1:               inst50000032
-// CHECK:STDOUT:       2:               inst5000005C
-// CHECK:STDOUT:       3:               inst5000005D
-// CHECK:STDOUT:       4:               inst50000049
-// CHECK:STDOUT:       5:               inst5000005E
-// CHECK:STDOUT:       6:               inst5000005F
-// CHECK:STDOUT:       7:               inst50000059
-// CHECK:STDOUT:     inst_block5000001C:
 // CHECK:STDOUT:       0:               inst50000032
+// CHECK:STDOUT:     inst_block50000013:
+// CHECK:STDOUT:       0:               inst50000038
+// CHECK:STDOUT:       1:               inst50000039
+// CHECK:STDOUT:       2:               inst5000003C
+// CHECK:STDOUT:       3:               inst50000040
+// CHECK:STDOUT:       4:               inst50000044
+// CHECK:STDOUT:     inst_block50000014:
+// CHECK:STDOUT:       0:               inst50000036
+// CHECK:STDOUT:     inst_block50000015:
+// CHECK:STDOUT:       0:               inst50000042
+// CHECK:STDOUT:     inst_block50000016:
+// CHECK:STDOUT:       0:               inst50000051
+// CHECK:STDOUT:       1:               inst50000052
+// CHECK:STDOUT:       2:               inst50000053
+// CHECK:STDOUT:       3:               inst50000056
+// CHECK:STDOUT:       4:               inst50000059
+// CHECK:STDOUT:     inst_block50000017:
+// CHECK:STDOUT:       0:               inst5000004D
+// CHECK:STDOUT:       1:               inst50000061
+// CHECK:STDOUT:     inst_block50000018:
+// CHECK:STDOUT:       0:               inst50000049
+// CHECK:STDOUT:       1:               inst5000005D
+// CHECK:STDOUT:     inst_block50000019:
+// CHECK:STDOUT:       0:               inst50000066
+// CHECK:STDOUT:       1:               inst50000068
+// CHECK:STDOUT:     inst_block5000001A:
+// CHECK:STDOUT:       0:               inst50000032
+// CHECK:STDOUT:       1:               inst50000049
+// CHECK:STDOUT:       2:               inst5000004D
+// CHECK:STDOUT:       3:               inst5000005D
+// CHECK:STDOUT:       4:               inst50000061
+// CHECK:STDOUT:     inst_block5000001B:
+// CHECK:STDOUT:       0:               inst50000065
+// CHECK:STDOUT:       1:               inst50000035
+// CHECK:STDOUT:       2:               inst50000066
+// CHECK:STDOUT:       3:               inst50000067
+// CHECK:STDOUT:       4:               inst50000050
+// CHECK:STDOUT:       5:               inst50000068
+// CHECK:STDOUT:       6:               inst50000069
+// CHECK:STDOUT:       7:               inst50000064
+// CHECK:STDOUT:     inst_block5000001C:
+// CHECK:STDOUT:       0:               inst50000035
 // CHECK:STDOUT:     inst_block5000001D:
 // CHECK:STDOUT:       0:               inst50000034
-// CHECK:STDOUT:       1:               inst50000039
-// CHECK:STDOUT:       2:               inst50000044
-// CHECK:STDOUT:       3:               inst50000045
-// CHECK:STDOUT:       4:               inst50000048
-// CHECK:STDOUT:       5:               inst50000055
-// CHECK:STDOUT:       6:               inst50000058
+// CHECK:STDOUT:       1:               inst50000037
+// CHECK:STDOUT:       2:               inst5000003B
+// CHECK:STDOUT:       3:               inst50000046
+// CHECK:STDOUT:       4:               inst50000047
+// CHECK:STDOUT:       5:               inst5000004B
+// CHECK:STDOUT:       6:               inst5000004C
+// CHECK:STDOUT:       7:               inst5000004F
+// CHECK:STDOUT:       8:               inst5000005B
+// CHECK:STDOUT:       9:               inst5000005F
+// CHECK:STDOUT:       10:              inst50000060
+// CHECK:STDOUT:       11:              inst50000063
 // CHECK:STDOUT:     inst_block5000001E:
 // CHECK:STDOUT:       0:               inst50000033
-// CHECK:STDOUT:       1:               inst50000038
-// CHECK:STDOUT:       2:               inst50000040
-// CHECK:STDOUT:       3:               inst50000043
-// CHECK:STDOUT:       4:               inst50000046
-// CHECK:STDOUT:       5:               inst50000054
-// CHECK:STDOUT:       6:               inst50000056
+// CHECK:STDOUT:       1:               inst50000036
+// CHECK:STDOUT:       2:               inst5000003A
+// CHECK:STDOUT:       3:               inst50000042
+// CHECK:STDOUT:       4:               inst50000045
+// CHECK:STDOUT:       5:               inst50000048
+// CHECK:STDOUT:       6:               inst5000004A
+// CHECK:STDOUT:       7:               inst5000004E
+// CHECK:STDOUT:       8:               inst5000005A
+// CHECK:STDOUT:       9:               inst5000005C
+// CHECK:STDOUT:       10:              inst5000005E
+// CHECK:STDOUT:       11:              inst50000062
 // CHECK:STDOUT:     inst_block5000001F:
-// CHECK:STDOUT:       0:               inst5000006A
+// CHECK:STDOUT:       0:               inst50000074
 // CHECK:STDOUT:     inst_block50000020:
-// CHECK:STDOUT:       0:               inst50000066
-// CHECK:STDOUT:       1:               inst50000069
-// CHECK:STDOUT:     inst_block50000021:
-// CHECK:STDOUT:       0:               inst5000006B
-// CHECK:STDOUT:       1:               inst5000006C
-// CHECK:STDOUT:     inst_block50000022:
-// CHECK:STDOUT:       0:               inst50000071
-// CHECK:STDOUT:     inst_block50000023:
-// CHECK:STDOUT:       0:               inst50000072
+// CHECK:STDOUT:       0:               inst50000070
 // CHECK:STDOUT:       1:               inst50000073
-// CHECK:STDOUT:       2:               inst50000076
-// CHECK:STDOUT:       3:               inst50000077
-// CHECK:STDOUT:       4:               inst5000007A
-// CHECK:STDOUT:     inst_block50000024:
-// CHECK:STDOUT:       0:               inst5000006F
-// CHECK:STDOUT:     inst_block50000025:
-// CHECK:STDOUT:       0:               inst50000079
-// CHECK:STDOUT:     inst_block50000026:
-// CHECK:STDOUT:       0:               inst50000083
-// CHECK:STDOUT:       1:               inst50000084
-// CHECK:STDOUT:       2:               inst50000085
-// CHECK:STDOUT:       3:               inst50000086
-// CHECK:STDOUT:       4:               inst50000088
-// CHECK:STDOUT:     inst_block50000027:
-// CHECK:STDOUT:       0:               inst50000082
-// CHECK:STDOUT:       1:               inst5000008F
-// CHECK:STDOUT:     inst_block50000028:
-// CHECK:STDOUT:       0:               inst5000007F
-// CHECK:STDOUT:       1:               inst5000008C
-// CHECK:STDOUT:     inst_block50000029:
-// CHECK:STDOUT:       0:               inst50000091
-// CHECK:STDOUT:       1:               inst50000093
-// CHECK:STDOUT:     inst_block5000002A:
-// CHECK:STDOUT:       0:               inst50000071
+// CHECK:STDOUT:     inst_block50000021:
+// CHECK:STDOUT:       0:               inst50000075
+// CHECK:STDOUT:       1:               inst50000076
+// CHECK:STDOUT:     inst_block50000022:
+// CHECK:STDOUT:       0:               inst50000078
+// CHECK:STDOUT:     inst_block50000023:
+// CHECK:STDOUT:       0:               inst5000007E
 // CHECK:STDOUT:       1:               inst5000007F
 // CHECK:STDOUT:       2:               inst50000082
-// CHECK:STDOUT:       3:               inst5000008C
-// CHECK:STDOUT:       4:               inst5000008F
+// CHECK:STDOUT:       3:               inst50000083
+// CHECK:STDOUT:       4:               inst50000086
+// CHECK:STDOUT:     inst_block50000024:
+// CHECK:STDOUT:       0:               inst5000007C
+// CHECK:STDOUT:     inst_block50000025:
+// CHECK:STDOUT:       0:               inst50000085
+// CHECK:STDOUT:     inst_block50000026:
+// CHECK:STDOUT:       0:               inst50000093
+// CHECK:STDOUT:       1:               inst50000094
+// CHECK:STDOUT:       2:               inst50000095
+// CHECK:STDOUT:       3:               inst50000096
+// CHECK:STDOUT:       4:               inst50000098
+// CHECK:STDOUT:     inst_block50000027:
+// CHECK:STDOUT:       0:               inst5000008F
+// CHECK:STDOUT:       1:               inst500000A0
+// CHECK:STDOUT:     inst_block50000028:
+// CHECK:STDOUT:       0:               inst5000008B
+// CHECK:STDOUT:       1:               inst5000009C
+// CHECK:STDOUT:     inst_block50000029:
+// CHECK:STDOUT:       0:               inst500000A5
+// CHECK:STDOUT:       1:               inst500000A7
+// CHECK:STDOUT:     inst_block5000002A:
+// CHECK:STDOUT:       0:               inst50000078
+// CHECK:STDOUT:       1:               inst5000008B
+// CHECK:STDOUT:       2:               inst5000008F
+// CHECK:STDOUT:       3:               inst5000009C
+// CHECK:STDOUT:       4:               inst500000A0
 // CHECK:STDOUT:     inst_block5000002B:
-// CHECK:STDOUT:       0:               inst50000090
-// CHECK:STDOUT:       1:               inst5000006E
-// CHECK:STDOUT:       2:               inst50000091
-// CHECK:STDOUT:       3:               inst50000092
-// CHECK:STDOUT:       4:               inst50000081
-// CHECK:STDOUT:       5:               inst50000093
-// CHECK:STDOUT:       6:               inst50000094
-// CHECK:STDOUT:       7:               inst5000008E
+// CHECK:STDOUT:       0:               inst500000A4
+// CHECK:STDOUT:       1:               inst5000007B
+// CHECK:STDOUT:       2:               inst500000A5
+// CHECK:STDOUT:       3:               inst500000A6
+// CHECK:STDOUT:       4:               inst50000092
+// CHECK:STDOUT:       5:               inst500000A7
+// CHECK:STDOUT:       6:               inst500000A8
+// CHECK:STDOUT:       7:               inst500000A3
 // CHECK:STDOUT:     inst_block5000002C:
-// CHECK:STDOUT:       0:               inst5000006E
+// CHECK:STDOUT:       0:               inst5000007B
 // CHECK:STDOUT:     inst_block5000002D:
-// CHECK:STDOUT:       0:               inst50000070
-// CHECK:STDOUT:       1:               inst50000075
-// CHECK:STDOUT:       2:               inst5000007C
-// CHECK:STDOUT:       3:               inst5000007D
-// CHECK:STDOUT:       4:               inst50000080
-// CHECK:STDOUT:       5:               inst5000008A
-// CHECK:STDOUT:       6:               inst5000008D
+// CHECK:STDOUT:       0:               inst5000007A
+// CHECK:STDOUT:       1:               inst5000007D
+// CHECK:STDOUT:       2:               inst50000081
+// CHECK:STDOUT:       3:               inst50000088
+// CHECK:STDOUT:       4:               inst50000089
+// CHECK:STDOUT:       5:               inst5000008D
+// CHECK:STDOUT:       6:               inst5000008E
+// CHECK:STDOUT:       7:               inst50000091
+// CHECK:STDOUT:       8:               inst5000009A
+// CHECK:STDOUT:       9:               inst5000009E
+// CHECK:STDOUT:       10:              inst5000009F
+// CHECK:STDOUT:       11:              inst500000A2
 // CHECK:STDOUT:     inst_block5000002E:
-// CHECK:STDOUT:       0:               inst5000006F
-// CHECK:STDOUT:       1:               inst50000074
-// CHECK:STDOUT:       2:               inst50000079
-// CHECK:STDOUT:       3:               inst5000007B
-// CHECK:STDOUT:       4:               inst5000007E
-// CHECK:STDOUT:       5:               inst50000089
-// CHECK:STDOUT:       6:               inst5000008B
+// CHECK:STDOUT:       0:               inst50000079
+// CHECK:STDOUT:       1:               inst5000007C
+// CHECK:STDOUT:       2:               inst50000080
+// CHECK:STDOUT:       3:               inst50000085
+// CHECK:STDOUT:       4:               inst50000087
+// CHECK:STDOUT:       5:               inst5000008A
+// CHECK:STDOUT:       6:               inst5000008C
+// CHECK:STDOUT:       7:               inst50000090
+// CHECK:STDOUT:       8:               inst50000099
+// CHECK:STDOUT:       9:               inst5000009B
+// CHECK:STDOUT:       10:              inst5000009D
+// CHECK:STDOUT:       11:              inst500000A1
 // CHECK:STDOUT:     inst_block5000002F:
-// CHECK:STDOUT:       0:               inst5000009E
+// CHECK:STDOUT:       0:               inst500000B2
 // CHECK:STDOUT:     inst_block50000030:
-// CHECK:STDOUT:       0:               inst5000009A
-// CHECK:STDOUT:       1:               inst5000009D
+// CHECK:STDOUT:       0:               inst500000AE
+// CHECK:STDOUT:       1:               inst500000B1
 // CHECK:STDOUT:     inst_block50000031:
 // CHECK:STDOUT:       0:               instF
 // CHECK:STDOUT:       1:               inst50000010
 // CHECK:STDOUT:       2:               inst50000012
-// CHECK:STDOUT:       3:               inst50000060
-// CHECK:STDOUT:       4:               inst50000095
+// CHECK:STDOUT:       3:               inst5000006A
+// CHECK:STDOUT:       4:               inst500000A9
 // CHECK:STDOUT:   value_stores:
 // CHECK:STDOUT:     shared_values:
 // CHECK:STDOUT:       ints:            {}

@@ -49,6 +49,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.d47: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %NotGeneric.type.fec: type = generic_interface_type @NotGeneric.loc23 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -63,6 +64,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %DifferentParams.generic.54c122.1: %DifferentParams.type.998819.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %T.patt.8f8: %pattern_type.cb1 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.d5f: %empty_tuple.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %DifferentParams.type.998819.2: type = generic_interface_type @DifferentParams.loc43 [concrete]
 // CHECK:STDOUT:   %DifferentParams.generic.54c122.2: %DifferentParams.type.998819.2 = struct_value () [concrete]
@@ -78,7 +80,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotGeneric.decl.loc15: type = interface_decl @NotGeneric.loc15 [concrete = constants.%NotGeneric.type.fd5] {} {}
 // CHECK:STDOUT:   %NotGeneric.decl.loc23: %NotGeneric.type.fec = interface_decl @NotGeneric.loc23 [concrete = constants.%NotGeneric.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc23_23.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc23_23.2 (constants.%T.patt.d47)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc23_26.1: type = splice_block %.loc23_26.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -87,7 +89,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:     %T.loc23_23.2: type = symbolic_binding T, 0 [symbolic = %T.loc23_23.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl.loc25: %Generic.type.30d = interface_decl @Generic.loc25 [concrete = constants.%Generic.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc25_20.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc25_20.2 (constants.%T.patt.d47)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc25_23.1: type = splice_block %.loc25_23.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -97,7 +99,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl.loc33: type = interface_decl @Generic.loc33 [concrete = constants.%Generic.type.b2d] {} {}
 // CHECK:STDOUT:   %DifferentParams.decl.loc35: %DifferentParams.type.998819.1 = interface_decl @DifferentParams.loc35 [concrete = constants.%DifferentParams.generic.54c122.1] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc35_28.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc35_28.2 (constants.%T.patt.d47)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc35_31.1: type = splice_block %.loc35_31.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -106,7 +108,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:     %T.loc35_28.2: type = symbolic_binding T, 0 [symbolic = %T.loc35_28.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %DifferentParams.decl.loc43: %DifferentParams.type.998819.2 = interface_decl @DifferentParams.loc43 [concrete = constants.%DifferentParams.generic.54c122.2] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.cb1 = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc43_28.1: %pattern_type.cb1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc43_28.2 (constants.%T.patt.8f8)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc43_32.1: type = splice_block %.loc43_32.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -120,6 +122,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: interface @NotGeneric.loc15;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @NotGeneric.loc23(%T.loc23_23.2: type) {
+// CHECK:STDOUT:   %T.patt.loc23_23.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc23_23.2 (constants.%T.patt.d47)]
 // CHECK:STDOUT:   %T.loc23_23.1: type = symbolic_binding T, 0 [symbolic = %T.loc23_23.1 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -139,6 +142,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Generic.loc25(%T.loc25_20.2: type) {
+// CHECK:STDOUT:   %T.patt.loc25_20.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc25_20.2 (constants.%T.patt.d47)]
 // CHECK:STDOUT:   %T.loc25_20.1: type = symbolic_binding T, 0 [symbolic = %T.loc25_20.1 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
@@ -156,12 +160,14 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @DifferentParams.loc35(%T.loc35_28.2: type) {
+// CHECK:STDOUT:   %T.patt.loc35_28.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc35_28.2 (constants.%T.patt.d47)]
 // CHECK:STDOUT:   %T.loc35_28.1: type = symbolic_binding T, 0 [symbolic = %T.loc35_28.1 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @DifferentParams.loc43(%T.loc43_28.2: %empty_tuple.type) {
+// CHECK:STDOUT:   %T.patt.loc43_28.2: %pattern_type.cb1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc43_28.2 (constants.%T.patt.8f8)]
 // CHECK:STDOUT:   %T.loc43_28.1: %empty_tuple.type = symbolic_binding T, 0 [symbolic = %T.loc43_28.1 (constants.%T.d5f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -181,22 +187,26 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NotGeneric.loc23(constants.%T.67d) {
+// CHECK:STDOUT:   %T.patt.loc23_23.2 => constants.%T.patt.d47
 // CHECK:STDOUT:   %T.loc23_23.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NotGeneric.WithSelf(constants.%T.67d, constants.%Self.b8f) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.loc25(constants.%T.67d) {
+// CHECK:STDOUT:   %T.patt.loc25_20.2 => constants.%T.patt.d47
 // CHECK:STDOUT:   %T.loc25_20.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.WithSelf(constants.%Self.c53) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DifferentParams.loc35(constants.%T.67d) {
+// CHECK:STDOUT:   %T.patt.loc35_28.2 => constants.%T.patt.d47
 // CHECK:STDOUT:   %T.loc35_28.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DifferentParams.loc43(constants.%T.d5f) {
+// CHECK:STDOUT:   %T.patt.loc43_28.2 => constants.%T.patt.8f8
 // CHECK:STDOUT:   %T.loc43_28.1 => constants.%T.d5f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

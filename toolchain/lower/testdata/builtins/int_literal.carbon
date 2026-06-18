@@ -57,26 +57,26 @@ fn IntMin() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "int_literal.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Copy", linkageName: "_CCopy.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "int_literal.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Copy", linkageName: "_CCopy.Main", scope: null, file: !1, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7, !7}
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 16, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "MinusOne", linkageName: "_CMinusOne.Main", scope: null, file: !3, line: 19, type: !12, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "MinusOne", linkageName: "_CMinusOne.Main", scope: null, file: !1, line: 19, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{!14}
 // CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !15 = !DILocation(line: 20, column: 3, scope: !11)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "IntMax", linkageName: "_CIntMax.Main", scope: null, file: !3, line: 23, type: !12, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "IntMax", linkageName: "_CIntMax.Main", scope: null, file: !1, line: 23, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !17 = !DILocation(line: 24, column: 3, scope: !16)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "IntMin", linkageName: "_CIntMin.Main", scope: null, file: !3, line: 27, type: !12, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "IntMin", linkageName: "_CIntMin.Main", scope: null, file: !1, line: 27, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !19 = !DILocation(line: 28, column: 3, scope: !18)

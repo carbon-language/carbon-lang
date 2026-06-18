@@ -740,7 +740,7 @@ base class WidgetBase {
   alias Draw = Renderable.Draw;
 
   fn DrawAll[T:! Renderable](v: Vector(T)) {
-    for (var w: T in v) {
+    for (w: T in v) {
       // ✅ OK. Unqualified lookup for `Draw` finds alias `WidgetBase.Draw`
       // to `Renderable.Draw`, which does not perform `impl` lookup yet.
       // Then the compound member access expression performs `impl` lookup

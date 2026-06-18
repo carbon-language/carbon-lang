@@ -44,24 +44,30 @@ static auto GetFacetAsType(Context& context,
   return context.types().GetTypeIdForTypeInstId(facet_or_type_id);
 }
 
-// Returns a manufactured `Copy.Op` function with the `self` parameter typed
-// to `self_type_id`.
-static auto MakeCopyOpFunction(Context& context, SemIR::LocId loc_id,
-                               SemIR::TypeId self_type_id,
-                               SemIR::NameScopeId parent_scope_id)
+// Returns a manufactured operator function.
+auto MakeBuiltinOperatorFunction(Context& context,
+                                 llvm::ArrayRef<SemIR::TypeId> param_types,
+                                 SemIR::TypeId return_type_id,
+                                 CoreIdentifier op_name,
+                                 SemIR::BuiltinFunctionKind builtin_kind,
+                                 SemIR::NameScopeId parent_scope_id)
     -> SemIR::InstId {
-  auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
+  CARBON_CHECK(!param_types.empty());
+  auto self_type_id = param_types.front();
+  auto name_id = context.core_identifiers().AddNameId(op_name);
 
   auto [decl_id, function_id] =
-      MakeGeneratedFunctionDecl(context, loc_id,
+      MakeGeneratedFunctionDecl(context, SemIR::LocId::None,
                                 {.parent_scope_id = parent_scope_id,
                                  .name_id = name_id,
                                  .self_type_id = self_type_id,
                                  .self_kind = ParamPatternKind::Value,
-                                 .return_type_id = self_type_id});
+                                 .param_type_ids = param_types.drop_front(),
+                                 .param_kind = ParamPatternKind::Value,
+                                 .return_type_id = return_type_id});
 
   auto& function = context.functions().Get(function_id);
-  function.SetCoreWitness(SemIR::BuiltinFunctionKind::PrimitiveCopy);
+  function.SetCoreWitness(builtin_kind);
 
   return decl_id;
 }
@@ -586,8 +592,9 @@ auto BuildPrimitiveCopyWitness(
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto self_type_id = GetFacetAsType(context, query_self_const_id);
-  auto op_id =
-      MakeCopyOpFunction(context, loc_id, self_type_id, parent_scope_id);
+  auto op_id = MakeBuiltinOperatorFunction(
+      context, {self_type_id}, self_type_id, CoreIdentifier::Op,
+      SemIR::BuiltinFunctionKind::PrimitiveCopy, parent_scope_id);
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {op_id});
 }

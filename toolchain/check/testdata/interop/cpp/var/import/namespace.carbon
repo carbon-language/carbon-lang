@@ -52,6 +52,8 @@ fn F() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -59,8 +61,8 @@ fn F() {
 // CHECK:STDOUT:     .c = %c.var
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.patt: %pattern_type = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:   %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

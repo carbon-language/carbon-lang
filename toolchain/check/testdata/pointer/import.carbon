@@ -33,6 +33,8 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %a_orig.patt: %pattern_type.6b6 = ref_binding_pattern a_orig [concrete]
+// CHECK:STDOUT:   %a_orig.var_patt: %pattern_type.6b6 = var_pattern %a_orig.patt [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
@@ -52,6 +54,8 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %int_0.3c0: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.f00: type = pattern_type %ptr.d08 [concrete]
+// CHECK:STDOUT:   %a_ref.patt: %pattern_type.f00 = ref_binding_pattern a_ref [concrete]
+// CHECK:STDOUT:   %a_ref.var_patt: %pattern_type.f00 = var_pattern %a_ref.patt [concrete]
 // CHECK:STDOUT:   %addr: %ptr.d08 = addr_of file.%a_orig.var [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
@@ -93,15 +97,15 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_orig.patt: %pattern_type.6b6 = ref_binding_pattern a_orig [concrete]
-// CHECK:STDOUT:     %a_orig.var_patt: %pattern_type.6b6 = var_pattern %a_orig.patt [concrete]
+// CHECK:STDOUT:     %a_orig.patt: %pattern_type.6b6 = ref_binding_pattern a_orig [concrete = constants.%a_orig.patt]
+// CHECK:STDOUT:     %a_orig.var_patt: %pattern_type.6b6 = var_pattern %a_orig.patt [concrete = constants.%a_orig.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_orig.var: ref %i32 = var %a_orig.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc4: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a_orig: ref %i32 = ref_binding a_orig, %a_orig.var [concrete = %a_orig.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_ref.patt: %pattern_type.f00 = ref_binding_pattern a_ref [concrete]
-// CHECK:STDOUT:     %a_ref.var_patt: %pattern_type.f00 = var_pattern %a_ref.patt [concrete]
+// CHECK:STDOUT:     %a_ref.patt: %pattern_type.f00 = ref_binding_pattern a_ref [concrete = constants.%a_ref.patt]
+// CHECK:STDOUT:     %a_ref.var_patt: %pattern_type.f00 = var_pattern %a_ref.patt [concrete = constants.%a_ref.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref.var: ref %ptr.d08 = var %a_ref.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5: type = splice_block %ptr [concrete = constants.%ptr.d08] {
@@ -145,6 +149,10 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.f00: type = pattern_type %ptr.d08 [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.f00 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.f00 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:   %a_ref.patt: %pattern_type.f00 = ref_binding_pattern a_ref [concrete]
+// CHECK:STDOUT:   %a_ref.var_patt: %pattern_type.f00 = var_pattern %a_ref.patt [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.101: <witness> = impl_witness imports.%Copy.impl_witness_table.90e, @ptr.as.Copy.impl(%i32) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.c1c: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%i32) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.d1c: %ptr.as.Copy.impl.Op.type.c1c = struct_value () [concrete]
@@ -166,9 +174,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Implicit.import_ref.499: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.ff5) = import_ref Implicit//default, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.ce9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.90e = impl_witness_table (%Implicit.import_ref.499), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %a_ref.patt: %pattern_type.f00 = ref_binding_pattern a_ref [concrete]
-// CHECK:STDOUT:   %a_ref.var_patt: %pattern_type.f00 = var_pattern %a_ref.patt [concrete]
-// CHECK:STDOUT:   %a_ref.var: ref %ptr.d08 = var %a_ref.var_patt [concrete]
+// CHECK:STDOUT:   %a_ref.var: ref %ptr.d08 = var constants.%a_ref.var_patt [concrete]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -183,8 +189,8 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.f00 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.f00 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.f00 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.f00 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr.d08 = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4: type = splice_block %ptr [concrete = constants.%ptr.d08] {

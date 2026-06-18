@@ -28,6 +28,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %tuple.type.a8a: type = tuple_type (%i32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.388: type = struct_type {.a: %i32, .b: %tuple.type.a8a} [concrete]
 // CHECK:STDOUT:   %pattern_type.227: type = pattern_type %struct_type.a.b.388 [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.227 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type.227 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %tuple.type.985: type = tuple_type (Core.IntLiteral) [concrete]
@@ -58,6 +60,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %int_2.295: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %tuple.b60: %tuple.type.a8a = tuple_value (%int_2.295) [concrete]
 // CHECK:STDOUT:   %struct.390: %struct_type.a.b.388 = struct_value (%int_1.0c6, %tuple.b60) [concrete]
+// CHECK:STDOUT:   %y.patt: %pattern_type.227 = ref_binding_pattern y [concrete]
+// CHECK:STDOUT:   %y.var_patt: %pattern_type.227 = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   %.377: ref %i32 = struct_access file.%y.var, element0 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
@@ -97,8 +101,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.227 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.227 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.227 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.227 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.b.388 = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15_28: type = splice_block %struct_type.a.b.loc15 [concrete = constants.%struct_type.a.b.388] {
@@ -110,8 +114,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.b.388 = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.227 = ref_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.var_patt: %pattern_type.227 = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.227 = ref_binding_pattern y [concrete = constants.%y.patt]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.227 = var_pattern %y.patt [concrete = constants.%y.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.a.b.388 = var %y.var_patt [concrete]
 // CHECK:STDOUT:   %.loc16_28: type = splice_block %struct_type.a.b.loc16 [concrete = constants.%struct_type.a.b.388] {

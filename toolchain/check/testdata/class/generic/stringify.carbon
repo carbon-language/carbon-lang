@@ -95,6 +95,8 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %EmptyParams.generic: %EmptyParams.type = struct_value () [concrete]
 // CHECK:STDOUT:   %EmptyParams: type = class_type @EmptyParams [concrete]
 // CHECK:STDOUT:   %pattern_type.c07: type = pattern_type %NoParams [concrete]
+// CHECK:STDOUT:   %v.patt: %pattern_type.c07 = ref_binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.var_patt: %pattern_type.c07 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
@@ -105,6 +107,8 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %NoParams, (%DefaultOrUnformed.impl_witness.1d3) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.c14, @T.as.DefaultOrUnformed.impl.Op(%NoParams) [concrete]
 // CHECK:STDOUT:   %pattern_type.c83: type = pattern_type %EmptyParams [concrete]
+// CHECK:STDOUT:   %w.patt: %pattern_type.c83 = ref_binding_pattern w [concrete]
+// CHECK:STDOUT:   %w.var_patt: %pattern_type.c83 = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -134,15 +138,15 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %NoParams.decl: type = class_decl @NoParams [concrete = constants.%NoParams] {} {}
 // CHECK:STDOUT:   %EmptyParams.decl: %EmptyParams.type = class_decl @EmptyParams [concrete = constants.%EmptyParams.generic] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.c07 = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.c07 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.c07 = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.c07 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %NoParams = var %v.var_patt [concrete]
 // CHECK:STDOUT:   %NoParams.ref: type = name_ref NoParams, %NoParams.decl [concrete = constants.%NoParams]
 // CHECK:STDOUT:   %v: ref %NoParams = ref_binding v, %v.var [concrete = %v.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.c83 = ref_binding_pattern w [concrete]
-// CHECK:STDOUT:     %w.var_patt: %pattern_type.c83 = var_pattern %w.patt [concrete]
+// CHECK:STDOUT:     %w.patt: %pattern_type.c83 = ref_binding_pattern w [concrete = constants.%w.patt]
+// CHECK:STDOUT:     %w.var_patt: %pattern_type.c83 = var_pattern %w.patt [concrete = constants.%w.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %EmptyParams = var %w.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15: type = splice_block %EmptyParams [concrete = constants.%EmptyParams] {
@@ -190,10 +194,12 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.d47: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Outer.type: type = generic_class_type @Outer [concrete]
 // CHECK:STDOUT:   %Outer.generic: %Outer.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Outer.dee: type = class_type @Outer, @Outer(%T.67d) [symbolic]
+// CHECK:STDOUT:   %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %Inner.type.8f7: type = generic_class_type @Inner, @Outer(%T.67d) [symbolic]
 // CHECK:STDOUT:   %Inner.generic.b3a: %Inner.type.8f7 = struct_value () [symbolic]
@@ -206,6 +212,8 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %Inner.type.626: type = generic_class_type @Inner, @Outer(%ptr.c28) [concrete]
 // CHECK:STDOUT:   %Inner.generic.93c: %Inner.type.626 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.e03: type = pattern_type %Outer.2d6 [concrete]
+// CHECK:STDOUT:   %v.patt: %pattern_type.e03 = ref_binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.var_patt: %pattern_type.e03 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.53a: %T.as.DefaultOrUnformed.impl.Op.type.150 = struct_value () [symbolic]
@@ -222,6 +230,8 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %ptr.e4c: type = ptr_type %struct_type.a [concrete]
 // CHECK:STDOUT:   %Inner.61f: type = class_type @Inner, @Inner(%ptr.c28, %ptr.e4c) [concrete]
 // CHECK:STDOUT:   %pattern_type.85f: type = pattern_type %Inner.61f [concrete]
+// CHECK:STDOUT:   %w.patt: %pattern_type.85f = ref_binding_pattern w [concrete]
+// CHECK:STDOUT:   %w.var_patt: %pattern_type.85f = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -250,7 +260,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Outer.decl: %Outer.type = class_decl @Outer [concrete = constants.%Outer.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc4_14.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt.d47)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -259,8 +269,8 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %T.loc4_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.e03 = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.e03 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.e03 = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.e03 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %Outer.2d6 = var %v.var_patt [concrete]
 // CHECK:STDOUT:   %.loc9_17: type = splice_block %Outer.loc9 [concrete = constants.%Outer.2d6] {
@@ -272,8 +282,8 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %Outer.2d6 = ref_binding v, %v.var [concrete = %v.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.85f = ref_binding_pattern w [concrete]
-// CHECK:STDOUT:     %w.var_patt: %pattern_type.85f = var_pattern %w.patt [concrete]
+// CHECK:STDOUT:     %w.patt: %pattern_type.85f = ref_binding_pattern w [concrete = constants.%w.patt]
+// CHECK:STDOUT:     %w.var_patt: %pattern_type.85f = var_pattern %w.patt [concrete = constants.%w.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %Inner.61f = var %w.var_patt [concrete]
 // CHECK:STDOUT:   %.loc19_35: type = splice_block %Inner [concrete = constants.%Inner.61f] {
@@ -293,6 +303,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Outer(%T.loc4_14.2: type) {
+// CHECK:STDOUT:   %T.patt.loc4_14.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt.d47)]
 // CHECK:STDOUT:   %T.loc4_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -301,7 +312,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Inner.decl: @Outer.%Inner.type (%Inner.type.8f7) = class_decl @Inner [symbolic = @Outer.%Inner.generic (constants.%Inner.generic.b3a)] {
-// CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1 [concrete]
+// CHECK:STDOUT:       %U.patt.loc5_16.1: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc5_16.2 (constants.%U.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc5_19.1: type = splice_block %.loc5_19.2 [concrete = type] {
 // CHECK:STDOUT:         %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -319,6 +330,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Inner(@Outer.%T.loc4_14.2: type, %U.loc5_16.2: type) {
+// CHECK:STDOUT:   %U.patt.loc5_16.2: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc5_16.2 (constants.%U.patt)]
 // CHECK:STDOUT:   %U.loc5_16.1: type = symbolic_binding U, 1 [symbolic = %U.loc5_16.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -349,14 +361,17 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%T.67d) {
+// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt.d47
 // CHECK:STDOUT:   %T.loc4_14.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%T.67d, constants.%U) {
+// CHECK:STDOUT:   %U.patt.loc5_16.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc5_16.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%ptr.c28) {
+// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt.d47
 // CHECK:STDOUT:   %T.loc4_14.1 => constants.%ptr.c28
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -365,6 +380,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%ptr.c28, constants.%ptr.e4c) {
+// CHECK:STDOUT:   %U.patt.loc5_16.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc5_16.1 => constants.%ptr.e4c
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -381,6 +397,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %N.patt.38a: %pattern_type.6b6 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %N.37f: %i32 = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
@@ -406,6 +423,8 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %int_123.2bf: %i32 = int_value 123 [concrete]
 // CHECK:STDOUT:   %C.ece: type = class_type @C, @C(%int_123.2bf) [concrete]
 // CHECK:STDOUT:   %pattern_type.b05: type = pattern_type %C.ece [concrete]
+// CHECK:STDOUT:   %v.patt: %pattern_type.b05 = ref_binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.var_patt: %pattern_type.b05 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -430,7 +449,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %N.patt: %pattern_type.6b6 = symbolic_binding_pattern N, 0 [concrete]
+// CHECK:STDOUT:     %N.patt.loc4_10.1: %pattern_type.6b6 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_10.2 (constants.%N.patt.38a)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -439,8 +458,8 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %N.loc4_10.2: %i32 = symbolic_binding N, 0 [symbolic = %N.loc4_10.1 (constants.%N.37f)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.b05 = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.b05 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.b05 = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.b05 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %C.ece = var %v.var_patt [concrete]
 // CHECK:STDOUT:   %.loc13_13.1: type = splice_block %C [concrete = constants.%C.ece] {
@@ -459,6 +478,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%N.loc4_10.2: %i32) {
+// CHECK:STDOUT:   %N.patt.loc4_10.2: %pattern_type.6b6 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_10.2 (constants.%N.patt.38a)]
 // CHECK:STDOUT:   %N.loc4_10.1: %i32 = symbolic_binding N, 0 [symbolic = %N.loc4_10.1 (constants.%N.37f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -481,10 +501,12 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%N.37f) {
+// CHECK:STDOUT:   %N.patt.loc4_10.2 => constants.%N.patt.38a
 // CHECK:STDOUT:   %N.loc4_10.1 => constants.%N.37f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_123.2bf) {
+// CHECK:STDOUT:   %N.patt.loc4_10.2 => constants.%N.patt.38a
 // CHECK:STDOUT:   %N.loc4_10.1 => constants.%int_123.2bf
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -504,6 +526,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.d8d: type = pattern_type %D [concrete]
+// CHECK:STDOUT:   %F.patt: %pattern_type.d8d = symbolic_binding_pattern F, 0 [symbolic]
 // CHECK:STDOUT:   %F: %D = symbolic_binding F, 0 [symbolic]
 // CHECK:STDOUT:   %E.type: type = generic_class_type @E [concrete]
 // CHECK:STDOUT:   %E.generic: %E.type = struct_value () [concrete]
@@ -537,6 +560,8 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %.24e: ref %D = temporary invalid, %D.val.b1d [concrete]
 // CHECK:STDOUT:   %E.7b7: type = class_type @E, @E(%D.val.b1d) [concrete]
 // CHECK:STDOUT:   %pattern_type.e71: type = pattern_type %E.7b7 [concrete]
+// CHECK:STDOUT:   %g.patt: %pattern_type.e71 = ref_binding_pattern g [concrete]
+// CHECK:STDOUT:   %g.var_patt: %pattern_type.e71 = var_pattern %g.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
@@ -576,7 +601,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %E.decl: %E.type = class_decl @E [concrete = constants.%E.generic] {
-// CHECK:STDOUT:     %F.patt: %pattern_type.d8d = symbolic_binding_pattern F, 0 [concrete]
+// CHECK:STDOUT:     %F.patt.loc9_10.1: %pattern_type.d8d = symbolic_binding_pattern F, 0 [symbolic = %F.patt.loc9_10.2 (constants.%F.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9: type = splice_block %D.ref [concrete = constants.%D] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -585,8 +610,8 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %F.loc9_10.2: %D = symbolic_binding F, 0 [symbolic = %F.loc9_10.1 (constants.%F)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %g.patt: %pattern_type.e71 = ref_binding_pattern g [concrete]
-// CHECK:STDOUT:     %g.var_patt: %pattern_type.e71 = var_pattern %g.patt [concrete]
+// CHECK:STDOUT:     %g.patt: %pattern_type.e71 = ref_binding_pattern g [concrete = constants.%g.patt]
+// CHECK:STDOUT:     %g.var_patt: %pattern_type.e71 = var_pattern %g.patt [concrete = constants.%g.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %g.var: ref %E.7b7 = var %g.var_patt [concrete]
 // CHECK:STDOUT:   %.loc18_26.1: type = splice_block %E [concrete = constants.%E.7b7] {
@@ -633,6 +658,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @E(%F.loc9_10.2: %D) {
+// CHECK:STDOUT:   %F.patt.loc9_10.2: %pattern_type.d8d = symbolic_binding_pattern F, 0 [symbolic = %F.patt.loc9_10.2 (constants.%F.patt)]
 // CHECK:STDOUT:   %F.loc9_10.1: %D = symbolic_binding F, 0 [symbolic = %F.loc9_10.1 (constants.%F)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -685,16 +711,19 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E(constants.%F) {
+// CHECK:STDOUT:   %F.patt.loc9_10.2 => constants.%F.patt
 // CHECK:STDOUT:   %F.loc9_10.1 => constants.%F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E(constants.%D.val.b1d) {
+// CHECK:STDOUT:   %F.patt.loc9_10.2 => constants.%F.patt
 // CHECK:STDOUT:   %F.loc9_10.1 => constants.%D.val.b1d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E(constants.%D.val.fbf) {
+// CHECK:STDOUT:   %F.patt.loc9_10.2 => constants.%F.patt
 // CHECK:STDOUT:   %F.loc9_10.1 => constants.%D.val.fbf
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

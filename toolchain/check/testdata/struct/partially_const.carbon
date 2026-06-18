@@ -25,9 +25,13 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %n.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type.6b6 = at_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.c.fde: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [concrete]
 // CHECK:STDOUT:   %.5b5: Core.Form = init_form %struct_type.a.b.c.fde [concrete]
 // CHECK:STDOUT:   %pattern_type.9c3: type = pattern_type %struct_type.a.b.c.fde [concrete]
+// CHECK:STDOUT:   %return.param_patt.e20: %pattern_type.9c3 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.94b: %pattern_type.9c3 = return_slot_pattern %return.param_patt.e20, %struct_type.a.b.c.fde [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
@@ -84,10 +88,10 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = at_binding_pattern n, %n.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.9c3 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.9c3 = return_slot_pattern %return.param_patt, %struct_type.a.b.c [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%n.param_patt]
+// CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = at_binding_pattern n, %n.param_patt [concrete = constants.%n.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9c3 = out_param_pattern [concrete = constants.%return.param_patt.e20]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9c3 = return_slot_pattern %return.param_patt, %struct_type.a.b.c [concrete = constants.%return.patt.94b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc15_25: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc15_34: type = type_literal constants.%i32 [concrete = constants.%i32]

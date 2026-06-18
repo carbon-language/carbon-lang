@@ -86,19 +86,19 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "private_call_a.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main.c14f6fa2d8939391", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "private_call_a.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main.c14f6fa2d8939391", scope: null, file: !1, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 7, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.C.Main.df01d416cc5a0873", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.C.Main.df01d416cc5a0873", scope: null, file: !1, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !10 = !DILocation(line: 12, column: 5, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 11, column: 3, scope: !9)
 // CHECK:STDOUT: ; ModuleID = 'private_call_b.carbon'
@@ -122,19 +122,19 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "private_call_b.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main.d20b101f33acb508", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "private_call_b.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main.d20b101f33acb508", scope: null, file: !1, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 7, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.C.Main.df01d416cc5a0873", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.C.Main.df01d416cc5a0873", scope: null, file: !1, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !10 = !DILocation(line: 12, column: 5, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 11, column: 3, scope: !9)
 // CHECK:STDOUT: ; ModuleID = 'use_a_and_b.carbon'
@@ -177,25 +177,25 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "use_a_and_b.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "use_a_and_b.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !1, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 9, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 10, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 7, column: 1, scope: !4)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "CallInA", linkageName: "_CCallInA.Main.6944efcfbb6a8360", scope: null, file: !11, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "CallInA", linkageName: "_CCallInA.Main.6944efcfbb6a8360", scope: null, file: !11, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !11 = !DIFile(filename: "private_call_a.carbon", directory: "")
 // CHECK:STDOUT: !12 = !DILocation(line: 17, column: 3, scope: !10)
 // CHECK:STDOUT: !13 = !DILocation(line: 18, column: 3, scope: !10)
 // CHECK:STDOUT: !14 = !DILocation(line: 16, column: 1, scope: !10)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "CallInB", linkageName: "_CCallInB.Main.6944efcfbb6a8360", scope: null, file: !16, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "CallInB", linkageName: "_CCallInB.Main.6944efcfbb6a8360", scope: null, file: !16, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !16 = !DIFile(filename: "private_call_b.carbon", directory: "")
 // CHECK:STDOUT: !17 = !DILocation(line: 17, column: 3, scope: !15)
 // CHECK:STDOUT: !18 = !DILocation(line: 18, column: 3, scope: !15)

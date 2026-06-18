@@ -53,17 +53,25 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.4a7: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %a.param_patt: %pattern_type.4a7 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %a.patt.023: %pattern_type.4a7 = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %.79c: Core.Form = init_form %C [concrete]
+// CHECK:STDOUT:   %return.param_patt.415: %pattern_type.4a7 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.340: %pattern_type.4a7 = return_slot_pattern %return.param_patt.415, %C [concrete]
 // CHECK:STDOUT:   %TestUnary.type: type = fn_type @TestUnary [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TestUnary: %TestUnary.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [concrete]
+// CHECK:STDOUT:   %b.param_patt: %pattern_type.4a7 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.4a7 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   %TestBinary.type: type = fn_type @TestBinary [concrete]
 // CHECK:STDOUT:   %TestBinary: %TestBinary.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AddWith.type.2ef: type = generic_interface_type @AddWith [concrete]
 // CHECK:STDOUT:   %AddWith.generic: %AddWith.type.2ef = struct_value () [concrete]
 // CHECK:STDOUT:   %TestRef.type: type = fn_type @TestRef [concrete]
 // CHECK:STDOUT:   %TestRef: %TestRef.type = struct_value () [concrete]
+// CHECK:STDOUT:   %a.patt.28f: %pattern_type.4a7 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.4a7 = var_pattern %a.patt.28f [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %AddAssignWith.type.2fb: type = generic_interface_type @AddAssignWith [concrete]
@@ -102,10 +110,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %TestUnary.decl: %TestUnary.type = fn_decl @TestUnary [concrete = constants.%TestUnary] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.4a7 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.4a7 = at_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.4a7 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.4a7 = return_slot_pattern %return.param_patt, %C.ref.loc19_23 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.4a7 = value_param_pattern [concrete = constants.%a.param_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.4a7 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt.023]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.4a7 = out_param_pattern [concrete = constants.%return.param_patt.415]
+// CHECK:STDOUT:     %return.patt: %pattern_type.4a7 = return_slot_pattern %return.param_patt, %C.ref.loc19_23 [concrete = constants.%return.patt.340]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc19_23: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc19: Core.Form = init_form %C.ref.loc19_23 [concrete = constants.%.79c]
@@ -116,12 +124,12 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestBinary.decl: %TestBinary.type = fn_decl @TestBinary [concrete = constants.%TestBinary] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.4a7 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.4a7 = at_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.4a7 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.4a7 = at_binding_pattern b, %b.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.4a7 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.4a7 = return_slot_pattern %return.param_patt, %C.ref.loc27_30 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.4a7 = value_param_pattern [concrete = constants.%a.param_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.4a7 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt.023]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.4a7 = value_param_pattern [concrete = constants.%b.param_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.4a7 = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.4a7 = out_param_pattern [concrete = constants.%return.param_patt.415]
+// CHECK:STDOUT:     %return.patt: %pattern_type.4a7 = return_slot_pattern %return.param_patt, %C.ref.loc27_30 [concrete = constants.%return.patt.340]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc27_30: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc27: Core.Form = init_form %C.ref.loc27_30 [concrete = constants.%.79c]
@@ -135,8 +143,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestRef.decl: %TestRef.type = fn_decl @TestRef [concrete = constants.%TestRef] {
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.4a7 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.4a7 = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.4a7 = value_param_pattern [concrete = constants.%b.param_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.4a7 = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc35: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -168,8 +176,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: fn @TestRef(%b.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.4a7 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.4a7 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.4a7 = ref_binding_pattern a [concrete = constants.%a.patt.28f]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.4a7 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C = var %a.var_patt
 // CHECK:STDOUT:   %.loc36_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]

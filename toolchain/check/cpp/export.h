@@ -51,13 +51,6 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void;
 auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
                       SemIR::FieldDecl field_decl) -> clang::FieldDecl*;
 
-// Get the field offset for each field in a class.
-//
-// Returns true on success, false if any error occurs.
-auto CalculateCppFieldOffsets(
-    Context& context, SemIR::ClassId class_id,
-    llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets) -> bool;
-
 // Get a `clang::FunctionDecl` that can be used to call a Carbon function.
 auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
                          SemIR::FunctionId function_id) -> clang::FunctionDecl*;

@@ -209,6 +209,8 @@ private class Redecl {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Def [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Def.val: %Def = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -227,8 +229,8 @@ private class Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Def = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %Def.ref: type = name_ref Def, imports.%Test.Def [concrete = constants.%Def]
@@ -265,8 +267,8 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete = <error>]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
@@ -301,8 +303,8 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete = <error>]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -326,6 +328,8 @@ private class Redecl {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ForwardWithDef [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %ForwardWithDef.val: %ForwardWithDef = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -344,8 +348,8 @@ private class Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %ForwardWithDef = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%Test.ForwardWithDef [concrete = constants.%ForwardWithDef]
@@ -382,8 +386,8 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete = <error>]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
@@ -418,8 +422,8 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete = <error>]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -442,6 +446,8 @@ private class Redecl {}
 // CHECK:STDOUT:   %Forward: type = class_type @Forward [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Forward [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %c.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -460,8 +466,8 @@ private class Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:     %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern [concrete = constants.%c.param_patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -500,8 +506,8 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern [concrete]
-// CHECK:STDOUT:     %c.patt: <error> = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern [concrete = <error>]
+// CHECK:STDOUT:     %c.patt: <error> = at_binding_pattern c, %c.param_patt [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {
@@ -538,8 +544,8 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern [concrete]
-// CHECK:STDOUT:     %c.patt: <error> = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern [concrete = <error>]
+// CHECK:STDOUT:     %c.patt: <error> = at_binding_pattern c, %c.param_patt [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {

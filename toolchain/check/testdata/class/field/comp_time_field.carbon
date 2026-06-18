@@ -61,6 +61,8 @@ var x: Class = {};
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %A.patt: %pattern_type = value_binding_pattern A [concrete]
+// CHECK:STDOUT:   %B.patt: %pattern_type = value_binding_pattern B [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -74,7 +76,7 @@ var x: Class = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %A.patt: %pattern_type = value_binding_pattern A [concrete]
+// CHECK:STDOUT:     %A.patt: %pattern_type = value_binding_pattern A [concrete = constants.%A.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref.loc9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %.loc9_11.1: type = splice_block %.loc9_11.2 [concrete = type] {
@@ -83,7 +85,7 @@ var x: Class = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A: type = value_binding A, %Class.ref.loc9
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %B.patt: %pattern_type = value_binding_pattern B [concrete]
+// CHECK:STDOUT:     %B.patt: %pattern_type = value_binding_pattern B [concrete = constants.%B.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref.loc15: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %.loc15_20.1: type = splice_block %.loc15_20.2 [concrete = type] {

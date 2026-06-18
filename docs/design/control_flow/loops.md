@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
     -   [`while`](#while)
     -   [`for`](#for)
+        -   [Ranged-for for user-defined types](#ranged-for-for-user-defined-types)
     -   [`break`](#break)
     -   [`continue`](#continue)
 -   [Alternatives considered](#alternatives-considered)
@@ -51,20 +52,59 @@ Print("Done!");
 `for` statements support range-based looping, typically over containers. Syntax
 is:
 
-> `for (` _var declaration_ `in` _expression_ `) {` _statements_ `}`
+> `for (` _pattern_ `in` _expression_ `) {` _statements_ `}`
+
+For consistency with function parameters and other pattern matching contexts,
+the pattern defaults to value (immutable) bindings, like `let`.
 
 For example, this prints all names in `names`:
 
 ```carbon
-for (var name: String in names) {
+for (name: strbuf in names) {
   Print(name);
 }
 ```
 
-`PrintNames()` prints each `String` in the `names` `List` in iteration order.
+This default can be overridden by adding the `var` keyword:
 
-TODO: Add semantics discussion from
-[#1885: ranged-based `for` for user-defined types](https://github.com/carbon-language/carbon-lang/pull/1885).
+```carbon
+for (var name: strbuf in names) {
+  // `name` can be modified, but this will not modify the underlying `names` container.
+}
+```
+
+Temporary entities on the right-hand side of `in` remain alive during the
+execution of the `for` loop to prevent invalid memory access.
+
+#### Ranged-for for user-defined types
+
+User types can enable support for ranged-for loops by implementing the `Iterate`
+interface:
+
+```carbon
+interface Iterate {
+  let ElementType:! type;
+  let CursorType:! type;
+  fn NewCursor(self) -> CursorType;
+  fn Next(self, ref cursor: CursorType) -> Optional(ElementType);
+}
+```
+
+The cursor tracks progression, and the `Next` method advances the cursor and
+returns an `Optional` value. An empty `Optional` indicates that we have reached
+the end.
+
+A `for` loop on a container of a type that implements `Iterate` behaves
+conceptually as (though an API for `Optional` has not been approved):
+
+```carbon
+var cursor: range.(Iterate.CursorType) = range.(Iterate.NewCursor)();
+var iter: Optional(range.(Iterate.ElementType)) = range.(Iterate.Next)(&cursor);
+while (iter.HasValue()) {
+  ExecuteForBlock(iter.Get());
+  iter = container.(Iterate.Next)(ref cursor);
+}
+```
 
 ### `break`
 
@@ -77,7 +117,7 @@ For example, this processes steps until a manual step is hit (if no manual step
 is hit, all steps are processed):
 
 ```carbon
-for (var step: Step in steps) {
+for (step: Step in steps) {
   if (step.IsManual()) {
     Print("Reached manual step!");
     break;
@@ -99,7 +139,7 @@ empty lines:
 ```carbon
 var f: File = OpenFile(path);
 while (!f.EOF()) {
-  var line: String = f.ReadLine();
+  var line: strbuf = f.ReadLine();
   if (line.IsEmpty()) {
     continue;
   }
@@ -115,6 +155,9 @@ while (!f.EOF()) {
     -   [Include semisemi `for` loops](/proposals/p000353-for-loops.md#include-semisemi-for-loops)
     -   [Multi-variable bindings](/proposals/p000353-for-loops.md#multi-variable-bindings)
     -   [`:` versus `in`](/proposals/p000618-var-ordering.md#-versus-in)
+    -   [Atomic methods for `Iterate`](/proposals/p001885-for-statement-and-user-types.md#atomic-methods-for-iterate)
+    -   [Using an iterator instead of a cursor](/proposals/p001885-for-statement-and-user-types.md#using-an-iterator-instead-of-a-cursor)
+    -   [Support getter for both `T` and `T*` with `Iterate`](/proposals/p001885-for-statement-and-user-types.md#support-getter-for-both-t-and-t-with-iterate)
 -   [Optional braces](/proposals/p000623-require-braces.md#optional-braces)
 -   [Optional parentheses](/proposals/p000623-require-braces.md#optional-parentheses)
 
@@ -128,3 +171,5 @@ while (!f.EOF()) {
     [#618: `var` ordering](https://github.com/carbon-language/carbon-lang/pull/618)
 -   Proposal
     [#623: Require braces](https://github.com/carbon-language/carbon-lang/pull/623)
+-   Proposal
+    [#1885: `for` statement and user types](https://github.com/carbon-language/carbon-lang/pull/1885)

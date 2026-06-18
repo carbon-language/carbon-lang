@@ -1,0 +1,60 @@
+From 2c7bb43e8800ef29d815f37422a2e56ee0e724b1 Mon Sep 17 00:00:00 2001
+From: Nicholas Bishop <nicholsabishop@google.com>
+Date: Wed, 10 Jun 2026 20:19:57 -0400
+Subject: [PATCH] Add empty constructor and GetSources method to
+ MultiplexExternalSemaSource
+
+---
+ .../include/clang/Sema/MultiplexExternalSemaSource.h  | 11 ++++++++++-
+ clang/lib/Sema/MultiplexExternalSemaSource.cpp        |  3 +++
+ 2 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/clang/include/clang/Sema/MultiplexExternalSemaSource.h b/clang/include/clang/Sema/MultiplexExternalSemaSource.h
+index 12015724b39f..9230d843e923 100644
+--- a/clang/include/clang/Sema/MultiplexExternalSemaSource.h
++++ b/clang/include/clang/Sema/MultiplexExternalSemaSource.h
+@@ -39,10 +39,16 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
+   /// LLVM-style RTTI.
+   static char ID;
+ 
++public:
++  using SourceVector = SmallVector<llvm::IntrusiveRefCntPtr<ExternalSemaSource>, 2>;
++
+ private:
+-  SmallVector<llvm::IntrusiveRefCntPtr<ExternalSemaSource>, 2> Sources;
++  SourceVector Sources;
+ 
+ public:
++  /// Constructs an empty multiplexing external sema source.
++  MultiplexExternalSemaSource();
++
+   /// Constructs a new multiplexing external sema source and appends the
+   /// given element to it.
+   ///
+@@ -58,6 +64,9 @@ public:
+   ///
+   void AddSource(llvm::IntrusiveRefCntPtr<ExternalSemaSource> Source);
+ 
++  /// Returns a reference to the sources vector.
++  SourceVector& GetSources() { return Sources; }
++
+   //===--------------------------------------------------------------------===//
+   // ExternalASTSource.
+   //===--------------------------------------------------------------------===//
+diff --git a/clang/lib/Sema/MultiplexExternalSemaSource.cpp b/clang/lib/Sema/MultiplexExternalSemaSource.cpp
+index be9582ce501f..4306143025c8 100644
+--- a/clang/lib/Sema/MultiplexExternalSemaSource.cpp
++++ b/clang/lib/Sema/MultiplexExternalSemaSource.cpp
+@@ -16,6 +16,9 @@ using namespace clang;
+ 
+ char MultiplexExternalSemaSource::ID;
+ 
++/// Constructs an empty multiplexing external sema source.
++MultiplexExternalSemaSource::MultiplexExternalSemaSource() {}
++
+ /// Constructs a new multiplexing external sema source and appends the
+ /// given element to it.
+ ///
+-- 
+2.54.0.1136.gdb2ca164c4-goog
+

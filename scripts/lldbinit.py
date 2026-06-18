@@ -172,7 +172,10 @@ def format_carbon_id(
     # did, it would be fairly verbose and probably more brittle.
     label = valobj.EvaluateExpression("Label.Data")
     label_size = valobj.EvaluateExpression("Label.Length")
-    if label and label_size:
+
+    # For some reason LLDB treats ID types as having an empty `Label` field
+    # when accessing an ID via a pointer, so we have to be prepared for that.
+    if label and label_size and label_size.GetValueAsUnsigned() > 0:
         # Clamp the read size, to limit the impact of memory corruption.
         # 40 chars should be enough for any legitimate ID label.
         read_size = min(label_size.GetValueAsUnsigned(), 40)

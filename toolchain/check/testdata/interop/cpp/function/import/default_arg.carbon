@@ -173,6 +173,7 @@ fn Call() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.aad: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
 // CHECK:STDOUT:   %bound_method.b7a: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_4.4eb: %i32 = int_value 4 [concrete]
+// CHECK:STDOUT:   %value.patt: %pattern_type.6b6 = value_binding_pattern value [concrete]
 // CHECK:STDOUT:   %GlobalReturnInt.cpp_overload_set.type: type = cpp_overload_set_type @GlobalReturnInt.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %GlobalReturnInt.cpp_overload_set.value: %GlobalReturnInt.cpp_overload_set.type = cpp_overload_set_value @GlobalReturnInt.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %GlobalReturnInt.type: type = fn_type @GlobalReturnInt [concrete]
@@ -286,7 +287,7 @@ fn Call() {
 // CHECK:STDOUT:   %.loc8_31.2: %i32 = converted %int_4.loc8, %.loc8_31.1 [concrete = constants.%int_4.4eb]
 // CHECK:STDOUT:   %GlobalNoReturn.call: init %empty_tuple.type = call imports.%GlobalNoReturn.decl(%.loc8_22.2, %.loc8_25.2, %.loc8_28.2, %.loc8_31.2)
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %value.patt: %pattern_type.6b6 = value_binding_pattern value [concrete]
+// CHECK:STDOUT:     %value.patt: %pattern_type.6b6 = value_binding_pattern value [concrete = constants.%value.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %GlobalReturnInt.ref: %GlobalReturnInt.cpp_overload_set.type = name_ref GlobalReturnInt, imports.%GlobalReturnInt.cpp_overload_set.value [concrete = constants.%GlobalReturnInt.cpp_overload_set.value]
@@ -323,9 +324,9 @@ fn Call() {
 // CHECK:STDOUT:   %.loc9_56.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_56 [concrete = constants.%int_4.4eb]
 // CHECK:STDOUT:   %.loc9_56.2: %i32 = converted %int_4.loc9, %.loc9_56.1 [concrete = constants.%int_4.4eb]
 // CHECK:STDOUT:   %GlobalReturnInt.call: init %i32 = call imports.%GlobalReturnInt.decl(%.loc9_47.2, %.loc9_50.2, %.loc9_53.2, %.loc9_56.2)
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc9_57.1: %i32 = value_of_initializer %GlobalReturnInt.call
 // CHECK:STDOUT:   %.loc9_57.2: %i32 = converted %GlobalReturnInt.call, %.loc9_57.1
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %value: %i32 = value_binding value, %.loc9_57.2
 // CHECK:STDOUT:   %.loc10_5.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -424,6 +425,10 @@ fn Call() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %b.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.6b6 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   %GlobalNoReturn__carbon_thunk.type.b46fe2.1: type = fn_type @GlobalNoReturn__carbon_thunk.1 [concrete]
 // CHECK:STDOUT:   %GlobalNoReturn__carbon_thunk.4bc5a6.1: %GlobalNoReturn__carbon_thunk.type.b46fe2.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
@@ -439,17 +444,22 @@ fn Call() {
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.740: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.1c5: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.740, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.094: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
+// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.953: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.0c6: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.9f3: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
 // CHECK:STDOUT:   %bound_method.3cb: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.295: %i32 = int_value 2 [concrete]
+// CHECK:STDOUT:   %value.patt: %pattern_type.6b6 = value_binding_pattern value [concrete]
 // CHECK:STDOUT:   %GlobalReturnInt.cpp_overload_set.type: type = cpp_overload_set_type @GlobalReturnInt.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %GlobalReturnInt.cpp_overload_set.value: %GlobalReturnInt.cpp_overload_set.type = cpp_overload_set_value @GlobalReturnInt.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
 // CHECK:STDOUT:   %GlobalReturnInt__carbon_thunk.type: type = fn_type @GlobalReturnInt__carbon_thunk [concrete]
 // CHECK:STDOUT:   %GlobalReturnInt__carbon_thunk: %GlobalReturnInt__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
+// CHECK:STDOUT:   %c.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.6b6 = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %GlobalNoReturn__carbon_thunk.type.b46fe2.2: type = fn_type @GlobalNoReturn__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %GlobalNoReturn__carbon_thunk.4bc5a6.2: %GlobalNoReturn__carbon_thunk.type.b46fe2.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.485: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
@@ -465,6 +475,8 @@ fn Call() {
 // CHECK:STDOUT:   %X.B.cpp_overload_set.value: %X.B.cpp_overload_set.type = cpp_overload_set_value @X.B.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %bound_method.f8c: <bound method> = bound_method %.414, %X.B.cpp_overload_set.value [concrete]
 // CHECK:STDOUT:   %pattern_type.fa7: type = pattern_type %X [concrete]
+// CHECK:STDOUT:   %this.param_patt: %pattern_type.fa7 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %this.patt: %pattern_type.fa7 = at_binding_pattern this, %this.param_patt [concrete]
 // CHECK:STDOUT:   %B__carbon_thunk.type: type = fn_type @B__carbon_thunk [concrete]
 // CHECK:STDOUT:   %B__carbon_thunk: %B__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.C.cpp_overload_set.type: type = cpp_overload_set_type @X.C.cpp_overload_set [concrete]
@@ -476,12 +488,16 @@ fn Call() {
 // CHECK:STDOUT:   %bound_method.9a8: <bound method> = bound_method %.414, %X.D.cpp_overload_set.value [concrete]
 // CHECK:STDOUT:   %ptr.ca1: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %pattern_type.cf1: type = pattern_type %ptr.ca1 [concrete]
+// CHECK:STDOUT:   %_.param_patt: %pattern_type.cf1 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %_.patt: %pattern_type.cf1 = at_binding_pattern _, %_.param_patt [concrete]
 // CHECK:STDOUT:   %D__carbon_thunk.type: type = fn_type @D__carbon_thunk [concrete]
 // CHECK:STDOUT:   %D__carbon_thunk: %D__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Self.0e7: %Destroy.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.d3e: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Self.0e7) [symbolic]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.42b: %Destroy.WithSelf.Op.type.d3e = struct_value () [symbolic]
+// CHECK:STDOUT:   %self.param_patt.a14: %pattern_type.fa7 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.37b: %pattern_type.fa7 = at_binding_pattern self, %self.param_patt.a14 [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.c5a: <witness> = custom_witness (), @Destroy [concrete]
@@ -507,10 +523,10 @@ fn Call() {
 // CHECK:STDOUT:   %GlobalNoReturn.cpp_overload_set.value: %GlobalNoReturn.cpp_overload_set.type = cpp_overload_set_value @GlobalNoReturn.cpp_overload_set [concrete = constants.%GlobalNoReturn.cpp_overload_set.value]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %GlobalNoReturn__carbon_thunk.decl.04a738.1: %GlobalNoReturn__carbon_thunk.type.b46fe2.1 = fn_decl @GlobalNoReturn__carbon_thunk.1 [concrete = constants.%GlobalNoReturn__carbon_thunk.4bc5a6.1] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%a.param_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%b.param_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.4 [concrete = constants.%i32] {
@@ -532,12 +548,12 @@ fn Call() {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.b3c = impl_witness_table (%Core.import_ref.edf), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %GlobalReturnInt.cpp_overload_set.value: %GlobalReturnInt.cpp_overload_set.type = cpp_overload_set_value @GlobalReturnInt.cpp_overload_set [concrete = constants.%GlobalReturnInt.cpp_overload_set.value]
 // CHECK:STDOUT:   %GlobalReturnInt__carbon_thunk.decl: %GlobalReturnInt__carbon_thunk.type = fn_decl @GlobalReturnInt__carbon_thunk [concrete = constants.%GlobalReturnInt__carbon_thunk] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = at_binding_pattern b, %b.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.2 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%a.param_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%b.param_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.2 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.1: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -560,12 +576,12 @@ fn Call() {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GlobalNoReturn__carbon_thunk.decl.04a738.2: %GlobalNoReturn__carbon_thunk.type.b46fe2.2 = fn_decl @GlobalNoReturn__carbon_thunk.2 [concrete = constants.%GlobalNoReturn__carbon_thunk.4bc5a6.2] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = at_binding_pattern b, %b.param_patt [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %c.patt: %pattern_type.6b6 = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%a.param_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%b.param_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%c.param_patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.6b6 = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.6 [concrete = constants.%i32] {
@@ -592,10 +608,10 @@ fn Call() {
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %X.B.cpp_overload_set.value: %X.B.cpp_overload_set.type = cpp_overload_set_value @X.B.cpp_overload_set [concrete = constants.%X.B.cpp_overload_set.value]
 // CHECK:STDOUT:   %B__carbon_thunk.decl: %B__carbon_thunk.type = fn_decl @B__carbon_thunk [concrete = constants.%B__carbon_thunk] {
-// CHECK:STDOUT:     %this.param_patt: %pattern_type.fa7 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %this.patt: %pattern_type.fa7 = at_binding_pattern this, %this.param_patt [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %this.param_patt: %pattern_type.fa7 = value_param_pattern [concrete = constants.%this.param_patt]
+// CHECK:STDOUT:     %this.patt: %pattern_type.fa7 = at_binding_pattern this, %this.param_patt [concrete = constants.%this.patt]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%a.param_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %this.param: %X = value_param call_param0
 // CHECK:STDOUT:     %this: %X = value_binding this, %this.param
@@ -609,8 +625,8 @@ fn Call() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.C.cpp_overload_set.value: %X.C.cpp_overload_set.type = cpp_overload_set_value @X.C.cpp_overload_set [concrete = constants.%X.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%a.param_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
@@ -622,10 +638,10 @@ fn Call() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.D.cpp_overload_set.value: %X.D.cpp_overload_set.type = cpp_overload_set_value @X.D.cpp_overload_set [concrete = constants.%X.D.cpp_overload_set.value]
 // CHECK:STDOUT:   %D__carbon_thunk.decl: %D__carbon_thunk.type = fn_decl @D__carbon_thunk [concrete = constants.%D__carbon_thunk] {
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.cf1 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %_.patt: %pattern_type.cf1 = at_binding_pattern _, %_.param_patt [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.cf1 = value_param_pattern [concrete = constants.%_.param_patt]
+// CHECK:STDOUT:     %_.patt: %pattern_type.cf1 = at_binding_pattern _, %_.param_patt [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%a.param_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.param: %ptr.ca1 = value_param call_param0
 // CHECK:STDOUT:     %_: %ptr.ca1 = value_binding _, %_.param
@@ -640,8 +656,8 @@ fn Call() {
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.d3e = fn_decl @Destroy.WithSelf.Op [symbolic = @Destroy.WithSelf.%Destroy.WithSelf.Op (constants.%Destroy.WithSelf.Op.42b)] {} {}
 // CHECK:STDOUT:   %X.cpp_destructor.decl: %X.cpp_destructor.type = fn_decl @X.cpp_destructor [concrete = constants.%X.cpp_destructor] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.fa7 = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.fa7 = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.fa7 = ref_param_pattern [concrete = constants.%self.param_patt.a14]
+// CHECK:STDOUT:     %self.patt: %pattern_type.fa7 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.37b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param
@@ -695,7 +711,7 @@ fn Call() {
 // CHECK:STDOUT:   %.loc8_25.2: %i32 = converted %int_2.loc8, %.loc8_25.1 [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   %GlobalNoReturn__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%GlobalNoReturn__carbon_thunk.decl.04a738.1(%.loc8_22.2, %.loc8_25.2)
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %value.patt: %pattern_type.6b6 = value_binding_pattern value [concrete]
+// CHECK:STDOUT:     %value.patt: %pattern_type.6b6 = value_binding_pattern value [concrete = constants.%value.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %GlobalReturnInt.ref: %GlobalReturnInt.cpp_overload_set.type = name_ref GlobalReturnInt, imports.%GlobalReturnInt.cpp_overload_set.value [concrete = constants.%GlobalReturnInt.cpp_overload_set.value]
@@ -716,9 +732,9 @@ fn Call() {
 // CHECK:STDOUT:   %.loc9_50.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_50 [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   %.loc9_50.2: %i32 = converted %int_2.loc9, %.loc9_50.1 [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   %GlobalReturnInt__carbon_thunk.call: init %i32 = call imports.%GlobalReturnInt__carbon_thunk.decl(%.loc9_47.2, %.loc9_50.2)
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc9_51.1: %i32 = value_of_initializer %GlobalReturnInt__carbon_thunk.call
 // CHECK:STDOUT:   %.loc9_51.2: %i32 = converted %GlobalReturnInt__carbon_thunk.call, %.loc9_51.1
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %value: %i32 = value_binding value, %.loc9_51.2
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %GlobalNoReturn.ref.loc10: %GlobalNoReturn.cpp_overload_set.type = name_ref GlobalNoReturn, imports.%GlobalNoReturn.cpp_overload_set.value [concrete = constants.%GlobalNoReturn.cpp_overload_set.value]
@@ -800,8 +816,8 @@ fn Call() {
 // CHECK:STDOUT:   %addr: %ptr.ca1 = addr_of %.loc13_7.4
 // CHECK:STDOUT:   %D__carbon_thunk.call: init %empty_tuple.type = call imports.%D__carbon_thunk.decl(%addr, %.loc13_19.2)
 // CHECK:STDOUT:   %X.Op.decl: %X.Op.type = fn_decl @X.Op [concrete = constants.%X.Op] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.fa7 = ref_param_pattern [concrete]
-// CHECK:STDOUT:     %self.patt: %pattern_type.fa7 = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:     %.1: %pattern_type.fa7 = specific_constant constants.%self.param_patt.a14, @Destroy.WithSelf.Op(constants.%Destroy.facet.761) [concrete = constants.%self.param_patt.a14]
+// CHECK:STDOUT:     %self.patt: %pattern_type.fa7 = at_binding_pattern self, %.1 [concrete = constants.%self.patt.37b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param

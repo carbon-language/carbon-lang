@@ -390,6 +390,8 @@ private export C;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9be: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct.948: %struct_type.x = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.eda: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
@@ -398,6 +400,8 @@ private export C;
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9f4: <witness> = complete_type_witness %struct_type.y [concrete]
 // CHECK:STDOUT:   %pattern_type.533: type = pattern_type %NSC [concrete]
+// CHECK:STDOUT:   %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete]
+// CHECK:STDOUT:   %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   %struct.8ce: %struct_type.y = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.e7e: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
 // CHECK:STDOUT:   %NSC.val: %NSC = struct_value (%empty_tuple) [concrete]
@@ -427,15 +431,15 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete]
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -492,6 +496,8 @@ private export C;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9be: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct.948: %struct_type.x = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.eda: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
@@ -500,6 +506,8 @@ private export C;
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9f4: <witness> = complete_type_witness %struct_type.y [concrete]
 // CHECK:STDOUT:   %pattern_type.533: type = pattern_type %NSC [concrete]
+// CHECK:STDOUT:   %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete]
+// CHECK:STDOUT:   %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   %struct.8ce: %struct_type.y = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.e7e: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
 // CHECK:STDOUT:   %NSC.val: %NSC = struct_value (%empty_tuple) [concrete]
@@ -530,15 +538,15 @@ private export C;
 // CHECK:STDOUT:   %default.import.loc2_29.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_29.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete]
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -595,6 +603,8 @@ private export C;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9be: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct.948: %struct_type.x = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.eda: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
@@ -603,6 +613,8 @@ private export C;
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9f4: <witness> = complete_type_witness %struct_type.y [concrete]
 // CHECK:STDOUT:   %pattern_type.533: type = pattern_type %NSC [concrete]
+// CHECK:STDOUT:   %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete]
+// CHECK:STDOUT:   %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   %struct.8ce: %struct_type.y = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.e7e: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
 // CHECK:STDOUT:   %NSC.val: %NSC = struct_value (%empty_tuple) [concrete]
@@ -632,15 +644,15 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete]
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -776,6 +788,8 @@ private export C;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9be: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct.948: %struct_type.x = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.eda: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
@@ -784,6 +798,8 @@ private export C;
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9f4: <witness> = complete_type_witness %struct_type.y [concrete]
 // CHECK:STDOUT:   %pattern_type.533: type = pattern_type %NSC [concrete]
+// CHECK:STDOUT:   %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete]
+// CHECK:STDOUT:   %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   %struct.8ce: %struct_type.y = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.e7e: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
 // CHECK:STDOUT:   %NSC.val: %NSC = struct_value (%empty_tuple) [concrete]
@@ -813,15 +829,15 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete]
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -878,6 +894,8 @@ private export C;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9be: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct.948: %struct_type.x = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.eda: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
@@ -886,6 +904,8 @@ private export C;
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9f4: <witness> = complete_type_witness %struct_type.y [concrete]
 // CHECK:STDOUT:   %pattern_type.533: type = pattern_type %NSC [concrete]
+// CHECK:STDOUT:   %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete]
+// CHECK:STDOUT:   %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   %struct.8ce: %struct_type.y = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.e7e: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
 // CHECK:STDOUT:   %NSC.val: %NSC = struct_value (%empty_tuple) [concrete]
@@ -915,15 +935,15 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete]
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -1035,6 +1055,8 @@ private export C;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %.eda: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
@@ -1055,8 +1077,8 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]

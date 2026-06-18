@@ -1434,3 +1434,64 @@ fn G(_:! Z where .Z2 = ()) {}
 fn F(T:! (Z where .Z1 impls (Y where .Y1 = ())) & (Z where .Z2 = .Z1.Y1)) {
   G(T);
 }
+
+// --- rewrite_in_impls_provided_by_facet_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+}
+
+fn F(_:! type where .Self impls (Z where .Z1 = {})) {}
+
+fn G(T:! Z where .Z1 = {}) {
+  F(T);
+}
+
+// --- fail_todo_rewrite_in_impls_provided_by_extend_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+}
+
+fn F(_:! type where .Self impls (Z where .Z1 = {})) {}
+
+constraint N {
+  extend require impls Z where .Z1 = {};
+}
+
+fn G(T:! N) {
+  // CHECK:STDERR: fail_todo_rewrite_in_impls_provided_by_extend_named_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `N` into type implementing `type where .Self impls Z and .(Z.Z1) = {}` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_todo_rewrite_in_impls_provided_by_extend_named_constraint.carbon:[[@LINE-10]]:6: note: initializing generic parameter `_` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(_:! type where .Self impls (Z where .Z1 = {})) {}
+  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  F(T);
+}
+
+// --- fail_todo_rewrite_in_impls_provided_by_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+}
+
+fn F(_:! type where .Self impls (Z where .Z1 = {})) {}
+
+constraint N {
+  require impls Z where .Z1 = {};
+}
+
+fn G(T:! N) {
+  // CHECK:STDERR: fail_todo_rewrite_in_impls_provided_by_named_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `N` into type implementing `type where .Self impls Z and .(Z.Z1) = {}` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_todo_rewrite_in_impls_provided_by_named_constraint.carbon:[[@LINE-10]]:6: note: initializing generic parameter `_` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(_:! type where .Self impls (Z where .Z1 = {})) {}
+  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  F(T);
+}

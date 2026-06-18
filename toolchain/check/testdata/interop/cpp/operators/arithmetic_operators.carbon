@@ -310,11 +310,15 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.429: type = pattern_type %Destroy.type [concrete]
+// CHECK:STDOUT:   %Result.patt: %pattern_type.429 = symbolic_binding_pattern Result, 0 [symbolic]
 // CHECK:STDOUT:   %Result: %Destroy.type = symbolic_binding Result, 0 [symbolic]
+// CHECK:STDOUT:   %U.patt.7a2: %pattern_type.429 = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %U.f40: %Destroy.type = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Other: type = symbolic_binding Other, 0 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.7e9: type = facet_type <@AddWith.1, @AddWith.1(%Other)> [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Self.96a: %AddWith.type.7e9 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %AddWith.assoc_type.588: type = assoc_entity_type @AddWith.1, @AddWith.1(%Other) [symbolic]
 // CHECK:STDOUT:   %AddWith.WithSelf.Op.type.28e: type = fn_type @AddWith.WithSelf.Op, @AddWith.WithSelf(%Other, %Self.96a) [symbolic]
@@ -333,11 +337,18 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Result.as_type: type = facet_access_type %Result [symbolic]
 // CHECK:STDOUT:   %facet_type.096: type = facet_type <@Destroy & @AddWith.1, @AddWith.1(%U.as_type.b61) where %impl.elem0.8bb = %Result.as_type> [symbolic]
 // CHECK:STDOUT:   %pattern_type.3fb: type = pattern_type %facet_type.096 [symbolic]
+// CHECK:STDOUT:   %T.patt.c80: %pattern_type.3fb = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %T.200: %facet_type.096 = symbolic_binding T, 2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.f4e485.2: type = pattern_type %Result.as_type [symbolic]
+// CHECK:STDOUT:   %result.param_patt.6ba: %pattern_type.f4e485.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %result.patt.748373.1: %pattern_type.f4e485.2 = at_binding_pattern result, %result.param_patt.6ba [symbolic]
 // CHECK:STDOUT:   %T.as_type.606: type = facet_access_type %T.200 [symbolic]
 // CHECK:STDOUT:   %pattern_type.82c: type = pattern_type %T.as_type.606 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.4c4: %pattern_type.82c = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.eac: %pattern_type.82c = at_binding_pattern x, %x.param_patt.4c4 [symbolic]
 // CHECK:STDOUT:   %pattern_type.753: type = pattern_type %U.as_type.b61 [symbolic]
+// CHECK:STDOUT:   %y.param_patt.740: %pattern_type.753 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %y.patt.4ae: %pattern_type.753 = at_binding_pattern y, %y.param_patt.740 [symbolic]
 // CHECK:STDOUT:   %require_complete.15e: <witness> = require_complete_type %AddWith.type.9da [symbolic]
 // CHECK:STDOUT:   %assoc1.57d: %AddWith.assoc_type.588 = assoc_entity element1, imports.%Core.import_ref.9768 [symbolic]
 // CHECK:STDOUT:   %AddWith.lookup_impl_witness.8b3: <witness> = lookup_impl_witness %T.200, @AddWith.1, @AddWith.1(%U.as_type.b61) [symbolic]
@@ -368,9 +379,12 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.0fb: type = impl_witness_access %SubWith.lookup_impl_witness.ce5, element0 [symbolic]
 // CHECK:STDOUT:   %facet_type.5a5: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%U.as_type.b61) where %impl.elem0.0fb = %Result.as_type> [symbolic]
 // CHECK:STDOUT:   %pattern_type.156: type = pattern_type %facet_type.5a5 [symbolic]
+// CHECK:STDOUT:   %T.patt.53c: %pattern_type.156 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %T.967: %facet_type.5a5 = symbolic_binding T, 2 [symbolic]
 // CHECK:STDOUT:   %T.as_type.b22: type = facet_access_type %T.967 [symbolic]
 // CHECK:STDOUT:   %pattern_type.000: type = pattern_type %T.as_type.b22 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.408: %pattern_type.000 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.a66: %pattern_type.000 = at_binding_pattern x, %x.param_patt.408 [symbolic]
 // CHECK:STDOUT:   %require_complete.6ff: <witness> = require_complete_type %SubWith.type.b5d [symbolic]
 // CHECK:STDOUT:   %assoc1.178: %SubWith.assoc_type.b0b = assoc_entity element1, imports.%Core.import_ref.b59 [symbolic]
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.07c: <witness> = lookup_impl_witness %T.967, @SubWith.1, @SubWith.1(%U.as_type.b61) [symbolic]
@@ -396,9 +410,12 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.10f: type = impl_witness_access %MulWith.lookup_impl_witness.0d7, element0 [symbolic]
 // CHECK:STDOUT:   %facet_type.c32: type = facet_type <@Destroy & @MulWith.1, @MulWith.1(%U.as_type.b61) where %impl.elem0.10f = %Result.as_type> [symbolic]
 // CHECK:STDOUT:   %pattern_type.d38: type = pattern_type %facet_type.c32 [symbolic]
+// CHECK:STDOUT:   %T.patt.881: %pattern_type.d38 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %T.546: %facet_type.c32 = symbolic_binding T, 2 [symbolic]
 // CHECK:STDOUT:   %T.as_type.427: type = facet_access_type %T.546 [symbolic]
 // CHECK:STDOUT:   %pattern_type.d10: type = pattern_type %T.as_type.427 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.df8: %pattern_type.d10 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.32c: %pattern_type.d10 = at_binding_pattern x, %x.param_patt.df8 [symbolic]
 // CHECK:STDOUT:   %require_complete.861: <witness> = require_complete_type %MulWith.type.f02 [symbolic]
 // CHECK:STDOUT:   %assoc1.8f7: %MulWith.assoc_type.7b2 = assoc_entity element1, imports.%Core.import_ref.955 [symbolic]
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.a55: <witness> = lookup_impl_witness %T.546, @MulWith.1, @MulWith.1(%U.as_type.b61) [symbolic]
@@ -424,9 +441,12 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.df8: type = impl_witness_access %DivWith.lookup_impl_witness.d63, element0 [symbolic]
 // CHECK:STDOUT:   %facet_type.2f8: type = facet_type <@Destroy & @DivWith.1, @DivWith.1(%U.as_type.b61) where %impl.elem0.df8 = %Result.as_type> [symbolic]
 // CHECK:STDOUT:   %pattern_type.297: type = pattern_type %facet_type.2f8 [symbolic]
+// CHECK:STDOUT:   %T.patt.7ab: %pattern_type.297 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %T.040: %facet_type.2f8 = symbolic_binding T, 2 [symbolic]
 // CHECK:STDOUT:   %T.as_type.a31: type = facet_access_type %T.040 [symbolic]
 // CHECK:STDOUT:   %pattern_type.126: type = pattern_type %T.as_type.a31 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.422: %pattern_type.126 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.bed: %pattern_type.126 = at_binding_pattern x, %x.param_patt.422 [symbolic]
 // CHECK:STDOUT:   %require_complete.026: <witness> = require_complete_type %DivWith.type.523 [symbolic]
 // CHECK:STDOUT:   %assoc1.7b1: %DivWith.assoc_type.d8b = assoc_entity element1, imports.%Core.import_ref.8b6 [symbolic]
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.df2: <witness> = lookup_impl_witness %T.040, @DivWith.1, @DivWith.1(%U.as_type.b61) [symbolic]
@@ -452,9 +472,12 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.36b: type = impl_witness_access %ModWith.lookup_impl_witness.4a2, element0 [symbolic]
 // CHECK:STDOUT:   %facet_type.9a0: type = facet_type <@Destroy & @ModWith.1, @ModWith.1(%U.as_type.b61) where %impl.elem0.36b = %Result.as_type> [symbolic]
 // CHECK:STDOUT:   %pattern_type.82f: type = pattern_type %facet_type.9a0 [symbolic]
+// CHECK:STDOUT:   %T.patt.74f: %pattern_type.82f = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %T.095: %facet_type.9a0 = symbolic_binding T, 2 [symbolic]
 // CHECK:STDOUT:   %T.as_type.fcd: type = facet_access_type %T.095 [symbolic]
 // CHECK:STDOUT:   %pattern_type.2e7: type = pattern_type %T.as_type.fcd [symbolic]
+// CHECK:STDOUT:   %x.param_patt.a0f: %pattern_type.2e7 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.d43: %pattern_type.2e7 = at_binding_pattern x, %x.param_patt.a0f [symbolic]
 // CHECK:STDOUT:   %require_complete.a4a: <witness> = require_complete_type %ModWith.type.937 [symbolic]
 // CHECK:STDOUT:   %assoc1.132: %ModWith.assoc_type.316 = assoc_entity element1, imports.%Core.import_ref.33c [symbolic]
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.054: <witness> = lookup_impl_witness %T.095, @ModWith.1, @ModWith.1(%U.as_type.b61) [symbolic]
@@ -472,6 +495,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
 // CHECK:STDOUT:   %pattern_type.203: type = pattern_type %i16 [concrete]
+// CHECK:STDOUT:   %x.param_patt.676: %pattern_type.203 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.26e: %pattern_type.203 = at_binding_pattern x, %x.param_patt.676 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %i16.builtin: type = int_type signed, %int_16 [concrete]
@@ -500,6 +525,11 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.a82: <witness> = complete_type_witness %facet_type.297 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.9c7: type = facet_access_type %.Self.120 [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.48e: type = pattern_type %facet_type.376 [concrete]
+// CHECK:STDOUT:   %T.patt.5cc: %pattern_type.48e = symbolic_binding_pattern T, 2 [symbolic]
+// CHECK:STDOUT:   %result.param_patt.be6: %pattern_type.785 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %result.patt.488: %pattern_type.785 = at_binding_pattern result, %result.param_patt.be6 [concrete]
+// CHECK:STDOUT:   %y.param_patt.418: %pattern_type.785 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.4e6: %pattern_type.785 = at_binding_pattern y, %y.param_patt.418 [concrete]
 // CHECK:STDOUT:   %facet_type.b15: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%Int16)> [concrete]
 // CHECK:STDOUT:   %.Self.4e4: %facet_type.b15 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.780: <witness> = lookup_impl_witness %.Self.4e4, @SubWith.1, @SubWith.1(%Int16) [symbolic_self]
@@ -516,6 +546,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.647: <witness> = complete_type_witness %facet_type.b15 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.bcf: type = facet_access_type %.Self.4e4 [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.943: type = pattern_type %facet_type.2e5 [concrete]
+// CHECK:STDOUT:   %T.patt.bc1: %pattern_type.943 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.a64: type = facet_type <@Destroy & @MulWith.1, @MulWith.1(%Int16)> [concrete]
 // CHECK:STDOUT:   %.Self.c25: %facet_type.a64 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.e32: <witness> = lookup_impl_witness %.Self.c25, @MulWith.1, @MulWith.1(%Int16) [symbolic_self]
@@ -532,6 +563,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.4d3: <witness> = complete_type_witness %facet_type.a64 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.354: type = facet_access_type %.Self.c25 [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.b79: type = pattern_type %facet_type.e71 [concrete]
+// CHECK:STDOUT:   %T.patt.544: %pattern_type.b79 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.0b4: type = facet_type <@Destroy & @DivWith.1, @DivWith.1(%Int16)> [concrete]
 // CHECK:STDOUT:   %.Self.927: %facet_type.0b4 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.ac4: <witness> = lookup_impl_witness %.Self.927, @DivWith.1, @DivWith.1(%Int16) [symbolic_self]
@@ -548,6 +580,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.acc: <witness> = complete_type_witness %facet_type.0b4 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.87a: type = facet_access_type %.Self.927 [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.abe: type = pattern_type %facet_type.84f [concrete]
+// CHECK:STDOUT:   %T.patt.15c: %pattern_type.abe = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.ee8: type = facet_type <@Destroy & @ModWith.1, @ModWith.1(%Int16)> [concrete]
 // CHECK:STDOUT:   %.Self.a1e: %facet_type.ee8 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.c0b: <witness> = lookup_impl_witness %.Self.a1e, @ModWith.1, @ModWith.1(%Int16) [symbolic_self]
@@ -564,6 +597,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.8fc: <witness> = complete_type_witness %facet_type.ee8 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.1da: type = facet_access_type %.Self.a1e [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.45b: type = pattern_type %facet_type.1b7 [concrete]
+// CHECK:STDOUT:   %T.patt.a2e: %pattern_type.45b = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.1cc: type = facet_type <@Destroy & @AddWith.1, @AddWith.1(%i16)> [concrete]
 // CHECK:STDOUT:   %.Self.b3b: %facet_type.1cc = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %AddWith.lookup_impl_witness.fc6: <witness> = lookup_impl_witness %.Self.b3b, @AddWith.1, @AddWith.1(%i16) [symbolic_self]
@@ -580,6 +614,11 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.5a6: <witness> = complete_type_witness %facet_type.1cc [concrete]
 // CHECK:STDOUT:   %.Self.as_type.552: type = facet_access_type %.Self.b3b [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.9c1: type = pattern_type %facet_type.3ae [concrete]
+// CHECK:STDOUT:   %T.patt.ec4: %pattern_type.9c1 = symbolic_binding_pattern T, 2 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.3b0: %pattern_type.785 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.b76: %pattern_type.785 = at_binding_pattern x, %x.param_patt.3b0 [concrete]
+// CHECK:STDOUT:   %y.param_patt.4b4: %pattern_type.203 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.dd3: %pattern_type.203 = at_binding_pattern y, %y.param_patt.4b4 [concrete]
 // CHECK:STDOUT:   %facet_type.cb2: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%i16)> [concrete]
 // CHECK:STDOUT:   %.Self.408: %facet_type.cb2 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.8c9: <witness> = lookup_impl_witness %.Self.408, @SubWith.1, @SubWith.1(%i16) [symbolic_self]
@@ -596,6 +635,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.090: <witness> = complete_type_witness %facet_type.cb2 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.d2a: type = facet_access_type %.Self.408 [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.612: type = pattern_type %facet_type.a54 [concrete]
+// CHECK:STDOUT:   %T.patt.c74: %pattern_type.612 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.67c: type = facet_type <@Destroy & @MulWith.1, @MulWith.1(%i16)> [concrete]
 // CHECK:STDOUT:   %.Self.3be: %facet_type.67c = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.446: <witness> = lookup_impl_witness %.Self.3be, @MulWith.1, @MulWith.1(%i16) [symbolic_self]
@@ -612,6 +652,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.a8b: <witness> = complete_type_witness %facet_type.67c [concrete]
 // CHECK:STDOUT:   %.Self.as_type.523: type = facet_access_type %.Self.3be [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.fc4: type = pattern_type %facet_type.d1d [concrete]
+// CHECK:STDOUT:   %T.patt.ce4: %pattern_type.fc4 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.86c8: type = facet_type <@Destroy & @DivWith.1, @DivWith.1(%i16)> [concrete]
 // CHECK:STDOUT:   %.Self.2ad: %facet_type.86c8 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.2b4: <witness> = lookup_impl_witness %.Self.2ad, @DivWith.1, @DivWith.1(%i16) [symbolic_self]
@@ -628,6 +669,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.1cb: <witness> = complete_type_witness %facet_type.86c8 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.445: type = facet_access_type %.Self.2ad [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.b62: type = pattern_type %facet_type.bdc [concrete]
+// CHECK:STDOUT:   %T.patt.596: %pattern_type.b62 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.afdb: type = facet_type <@Destroy & @ModWith.1, @ModWith.1(%i16)> [concrete]
 // CHECK:STDOUT:   %.Self.ceb: %facet_type.afdb = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.af5: <witness> = lookup_impl_witness %.Self.ceb, @ModWith.1, @ModWith.1(%i16) [symbolic_self]
@@ -644,6 +686,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.1f9: <witness> = complete_type_witness %facet_type.afdb [concrete]
 // CHECK:STDOUT:   %.Self.as_type.1c1: type = facet_access_type %.Self.ceb [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.9c7: type = pattern_type %facet_type.dde [concrete]
+// CHECK:STDOUT:   %T.patt.b55: %pattern_type.9c7 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %Int32.Op.type.83af6e.1: type = fn_type @Int32.Op.1 [concrete]
 // CHECK:STDOUT:   %Int32.Op.4dca31.1: %Int32.Op.type.83af6e.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.e7a31c.2: <witness> = custom_witness (%Int32.Op.4dca31.1), @Destroy [concrete]
@@ -664,6 +707,11 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.224: <witness> = complete_type_witness %facet_type.698 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.cbd: type = facet_access_type %.Self.1bc [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.44d: type = pattern_type %facet_type.cf0 [concrete]
+// CHECK:STDOUT:   %T.patt.fb1: %pattern_type.44d = symbolic_binding_pattern T, 2 [symbolic]
+// CHECK:STDOUT:   %result.param_patt.e81: %pattern_type.8b4 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %result.patt.830: %pattern_type.8b4 = at_binding_pattern result, %result.param_patt.e81 [concrete]
+// CHECK:STDOUT:   %y.param_patt.e0c: %pattern_type.8b4 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.0a3: %pattern_type.8b4 = at_binding_pattern y, %y.param_patt.e0c [concrete]
 // CHECK:STDOUT:   %facet_type.44e: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%Int32)> [concrete]
 // CHECK:STDOUT:   %.Self.4d7: %facet_type.44e = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.566: <witness> = lookup_impl_witness %.Self.4d7, @SubWith.1, @SubWith.1(%Int32) [symbolic_self]
@@ -680,6 +728,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.63f: <witness> = complete_type_witness %facet_type.44e [concrete]
 // CHECK:STDOUT:   %.Self.as_type.07c: type = facet_access_type %.Self.4d7 [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.9624: type = pattern_type %facet_type.0f8 [concrete]
+// CHECK:STDOUT:   %T.patt.bd6: %pattern_type.9624 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.ff6: type = facet_type <@Destroy & @MulWith.1, @MulWith.1(%Int32)> [concrete]
 // CHECK:STDOUT:   %.Self.a5b: %facet_type.ff6 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.a28: <witness> = lookup_impl_witness %.Self.a5b, @MulWith.1, @MulWith.1(%Int32) [symbolic_self]
@@ -696,6 +745,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.3fe: <witness> = complete_type_witness %facet_type.ff6 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.646: type = facet_access_type %.Self.a5b [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.08b: type = pattern_type %facet_type.cf6 [concrete]
+// CHECK:STDOUT:   %T.patt.1f7: %pattern_type.08b = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.d41: type = facet_type <@Destroy & @DivWith.1, @DivWith.1(%Int32)> [concrete]
 // CHECK:STDOUT:   %.Self.d8c: %facet_type.d41 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.d3c: <witness> = lookup_impl_witness %.Self.d8c, @DivWith.1, @DivWith.1(%Int32) [symbolic_self]
@@ -712,6 +762,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.11b: <witness> = complete_type_witness %facet_type.d41 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.30d: type = facet_access_type %.Self.d8c [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.379: type = pattern_type %facet_type.639 [concrete]
+// CHECK:STDOUT:   %T.patt.2d3: %pattern_type.379 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.ea8: type = facet_type <@Destroy & @ModWith.1, @ModWith.1(%Int32)> [concrete]
 // CHECK:STDOUT:   %.Self.46e: %facet_type.ea8 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.b37: <witness> = lookup_impl_witness %.Self.46e, @ModWith.1, @ModWith.1(%Int32) [symbolic_self]
@@ -728,36 +779,44 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.2aa: <witness> = complete_type_witness %facet_type.ea8 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.7e4: type = facet_access_type %.Self.46e [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.e4f: type = pattern_type %facet_type.cac [concrete]
+// CHECK:STDOUT:   %T.patt.786: %pattern_type.e4f = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.2c6: type = facet_type <@Destroy & @AddWith.1, @AddWith.1(%Int16) where %impl.elem0.7e0 = %Int32> [concrete]
 // CHECK:STDOUT:   %Int32.Op.type.83af6e.2: type = fn_type @Int32.Op.2 [concrete]
 // CHECK:STDOUT:   %Int32.Op.4dca31.2: %Int32.Op.type.83af6e.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.15f: <witness> = custom_witness (%Int32, %Int32.Op.4dca31.2), @AddWith.1, @AddWith.1(%Int16) [concrete]
 // CHECK:STDOUT:   %facet_value.aa2: %facet_type.2c6 = facet_value %Int32, (%custom_witness.e7a31c.2, %custom_witness.15f) [concrete]
 // CHECK:STDOUT:   %pattern_type.96f: type = pattern_type %facet_type.2c6 [concrete]
+// CHECK:STDOUT:   %T.patt.bd3: %pattern_type.96f = symbolic_binding_pattern T, 2 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.27c: %pattern_type.8b4 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.4c9: %pattern_type.8b4 = at_binding_pattern x, %x.param_patt.27c [concrete]
 // CHECK:STDOUT:   %facet_type.076: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%Int16) where %impl.elem0.104 = %Int32> [concrete]
 // CHECK:STDOUT:   %Int32.Op.type.83af6e.3: type = fn_type @Int32.Op.3 [concrete]
 // CHECK:STDOUT:   %Int32.Op.4dca31.3: %Int32.Op.type.83af6e.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.bb4: <witness> = custom_witness (%Int32, %Int32.Op.4dca31.3), @SubWith.1, @SubWith.1(%Int16) [concrete]
 // CHECK:STDOUT:   %facet_value.577: %facet_type.076 = facet_value %Int32, (%custom_witness.e7a31c.2, %custom_witness.bb4) [concrete]
 // CHECK:STDOUT:   %pattern_type.05c: type = pattern_type %facet_type.076 [concrete]
+// CHECK:STDOUT:   %T.patt.f98: %pattern_type.05c = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.163: type = facet_type <@Destroy & @MulWith.1, @MulWith.1(%Int16) where %impl.elem0.472 = %Int32> [concrete]
 // CHECK:STDOUT:   %Int32.Op.type.83af6e.4: type = fn_type @Int32.Op.4 [concrete]
 // CHECK:STDOUT:   %Int32.Op.4dca31.4: %Int32.Op.type.83af6e.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.0ab: <witness> = custom_witness (%Int32, %Int32.Op.4dca31.4), @MulWith.1, @MulWith.1(%Int16) [concrete]
 // CHECK:STDOUT:   %facet_value.0f9: %facet_type.163 = facet_value %Int32, (%custom_witness.e7a31c.2, %custom_witness.0ab) [concrete]
 // CHECK:STDOUT:   %pattern_type.59d: type = pattern_type %facet_type.163 [concrete]
+// CHECK:STDOUT:   %T.patt.e40: %pattern_type.59d = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.f1f: type = facet_type <@Destroy & @DivWith.1, @DivWith.1(%Int16) where %impl.elem0.6aa = %Int32> [concrete]
 // CHECK:STDOUT:   %Int32.Op.type.83af6e.5: type = fn_type @Int32.Op.5 [concrete]
 // CHECK:STDOUT:   %Int32.Op.4dca31.5: %Int32.Op.type.83af6e.5 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.3ec: <witness> = custom_witness (%Int32, %Int32.Op.4dca31.5), @DivWith.1, @DivWith.1(%Int16) [concrete]
 // CHECK:STDOUT:   %facet_value.53b: %facet_type.f1f = facet_value %Int32, (%custom_witness.e7a31c.2, %custom_witness.3ec) [concrete]
 // CHECK:STDOUT:   %pattern_type.c6c: type = pattern_type %facet_type.f1f [concrete]
+// CHECK:STDOUT:   %T.patt.361: %pattern_type.c6c = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.3eb: type = facet_type <@Destroy & @ModWith.1, @ModWith.1(%Int16) where %impl.elem0.dae = %Int32> [concrete]
 // CHECK:STDOUT:   %Int32.Op.type.83af6e.6: type = fn_type @Int32.Op.6 [concrete]
 // CHECK:STDOUT:   %Int32.Op.4dca31.6: %Int32.Op.type.83af6e.6 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.de0: <witness> = custom_witness (%Int32, %Int32.Op.4dca31.6), @ModWith.1, @ModWith.1(%Int16) [concrete]
 // CHECK:STDOUT:   %facet_value.b75a: %facet_type.3eb = facet_value %Int32, (%custom_witness.e7a31c.2, %custom_witness.de0) [concrete]
 // CHECK:STDOUT:   %pattern_type.205: type = pattern_type %facet_type.3eb [concrete]
+// CHECK:STDOUT:   %T.patt.1df: %pattern_type.205 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %Int32.Op.type.83af6e.7: type = fn_type @Int32.Op.7 [concrete]
 // CHECK:STDOUT:   %Int32.Op.4dca31.7: %Int32.Op.type.83af6e.7 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.e02e0c.2: <witness> = custom_witness (%Int32, %Int32.Op.4dca31.7), @AddWith.1, @AddWith.1(%Int32) [concrete]
@@ -787,6 +846,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddWith.lookup_impl_witness.dd9: <witness> = lookup_impl_witness %.Self.52f, @AddWith.1, @AddWith.1(%Int64) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.325: type = impl_witness_access %AddWith.lookup_impl_witness.dd9, element0 [symbolic_self]
 // CHECK:STDOUT:   %facet_type.466: type = facet_type <@Destroy & @AddWith.1, @AddWith.1(%Int64) where %impl.elem0.325 = %Int64> [concrete]
+// CHECK:STDOUT:   %y.param_patt.a08: %pattern_type.4aa = value_param_pattern [concrete]
+// CHECK:STDOUT:   %y.patt.63b: %pattern_type.4aa = at_binding_pattern y, %y.param_patt.a08 [concrete]
 // CHECK:STDOUT:   %AddWith.type.b5b: type = facet_type <@AddWith.1, @AddWith.1(%Int64)> [concrete]
 // CHECK:STDOUT:   %AddWith.assoc_type.0c5: type = assoc_entity_type @AddWith.1, @AddWith.1(%Int64) [concrete]
 // CHECK:STDOUT:   %assoc0.947: %AddWith.assoc_type.0c5 = assoc_entity element0, imports.%Core.import_ref.91f8 [concrete]
@@ -798,6 +859,9 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.412: <witness> = complete_type_witness %facet_type.afd1 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.7a8: type = facet_access_type %.Self.52f [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.a1a: type = pattern_type %facet_type.466 [concrete]
+// CHECK:STDOUT:   %T.patt.7de: %pattern_type.a1a = symbolic_binding_pattern T, 2 [symbolic]
+// CHECK:STDOUT:   %result.param_patt.1e1: %pattern_type.4aa = value_param_pattern [concrete]
+// CHECK:STDOUT:   %result.patt.41f: %pattern_type.4aa = at_binding_pattern result, %result.param_patt.1e1 [concrete]
 // CHECK:STDOUT:   %facet_type.502: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%Int64)> [concrete]
 // CHECK:STDOUT:   %.Self.26a: %facet_type.502 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.61b: <witness> = lookup_impl_witness %.Self.26a, @SubWith.1, @SubWith.1(%Int64) [symbolic_self]
@@ -814,6 +878,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.181: <witness> = complete_type_witness %facet_type.502 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.5b8: type = facet_access_type %.Self.26a [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.84a: type = pattern_type %facet_type.b42 [concrete]
+// CHECK:STDOUT:   %T.patt.726: %pattern_type.84a = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.770: type = facet_type <@Destroy & @MulWith.1, @MulWith.1(%Int64)> [concrete]
 // CHECK:STDOUT:   %.Self.700: %facet_type.770 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.6cf: <witness> = lookup_impl_witness %.Self.700, @MulWith.1, @MulWith.1(%Int64) [symbolic_self]
@@ -830,6 +895,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.16e: <witness> = complete_type_witness %facet_type.770 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.356: type = facet_access_type %.Self.700 [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.1fe: type = pattern_type %facet_type.5ef [concrete]
+// CHECK:STDOUT:   %T.patt.cb4: %pattern_type.1fe = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.c98: type = facet_type <@Destroy & @DivWith.1, @DivWith.1(%Int64)> [concrete]
 // CHECK:STDOUT:   %.Self.837: %facet_type.c98 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.7a8: <witness> = lookup_impl_witness %.Self.837, @DivWith.1, @DivWith.1(%Int64) [symbolic_self]
@@ -846,6 +912,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.621: <witness> = complete_type_witness %facet_type.c98 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.6a2: type = facet_access_type %.Self.837 [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.2d9: type = pattern_type %facet_type.be3 [concrete]
+// CHECK:STDOUT:   %T.patt.219: %pattern_type.2d9 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.f26: type = facet_type <@Destroy & @ModWith.1, @ModWith.1(%Int64)> [concrete]
 // CHECK:STDOUT:   %.Self.767: %facet_type.f26 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.e0f: <witness> = lookup_impl_witness %.Self.767, @ModWith.1, @ModWith.1(%Int64) [symbolic_self]
@@ -862,42 +929,51 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %complete_type.359: <witness> = complete_type_witness %facet_type.f26 [concrete]
 // CHECK:STDOUT:   %.Self.as_type.1a7: type = facet_access_type %.Self.767 [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.41c: type = pattern_type %facet_type.74d [concrete]
+// CHECK:STDOUT:   %T.patt.078: %pattern_type.41c = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.fdd: type = facet_type <@Destroy & @AddWith.1, @AddWith.1(%Int32) where %impl.elem0.899 = %Int64> [concrete]
 // CHECK:STDOUT:   %Op.type.442b68.11: type = fn_type @Op.11 [concrete]
 // CHECK:STDOUT:   %Op.72717c.11: %Op.type.442b68.11 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.98f: <witness> = custom_witness (%Int64, %Op.72717c.11), @AddWith.1, @AddWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %facet_value.7d0: %facet_type.fdd = facet_value %Int64, (%custom_witness.e7a31c.3, %custom_witness.98f) [concrete]
 // CHECK:STDOUT:   %pattern_type.5b4: type = pattern_type %facet_type.fdd [concrete]
+// CHECK:STDOUT:   %T.patt.688: %pattern_type.5b4 = symbolic_binding_pattern T, 2 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.e68: %pattern_type.4aa = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt.52a: %pattern_type.4aa = at_binding_pattern x, %x.param_patt.e68 [concrete]
 // CHECK:STDOUT:   %facet_type.2c4: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%Int32) where %impl.elem0.ee1 = %Int64> [concrete]
 // CHECK:STDOUT:   %Op.type.442b68.12: type = fn_type @Op.12 [concrete]
 // CHECK:STDOUT:   %Op.72717c.12: %Op.type.442b68.12 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.5c3: <witness> = custom_witness (%Int64, %Op.72717c.12), @SubWith.1, @SubWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %facet_value.51b: %facet_type.2c4 = facet_value %Int64, (%custom_witness.e7a31c.3, %custom_witness.5c3) [concrete]
 // CHECK:STDOUT:   %pattern_type.515: type = pattern_type %facet_type.2c4 [concrete]
+// CHECK:STDOUT:   %T.patt.080: %pattern_type.515 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.99c: type = facet_type <@Destroy & @MulWith.1, @MulWith.1(%Int32) where %impl.elem0.d19 = %Int64> [concrete]
 // CHECK:STDOUT:   %Op.type.442b68.13: type = fn_type @Op.13 [concrete]
 // CHECK:STDOUT:   %Op.72717c.13: %Op.type.442b68.13 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.ac0: <witness> = custom_witness (%Int64, %Op.72717c.13), @MulWith.1, @MulWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %facet_value.738: %facet_type.99c = facet_value %Int64, (%custom_witness.e7a31c.3, %custom_witness.ac0) [concrete]
 // CHECK:STDOUT:   %pattern_type.bb6: type = pattern_type %facet_type.99c [concrete]
+// CHECK:STDOUT:   %T.patt.03e: %pattern_type.bb6 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.7ce: type = facet_type <@Destroy & @DivWith.1, @DivWith.1(%Int32) where %impl.elem0.282 = %Int64> [concrete]
 // CHECK:STDOUT:   %Op.type.442b68.14: type = fn_type @Op.14 [concrete]
 // CHECK:STDOUT:   %Op.72717c.14: %Op.type.442b68.14 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.c98: <witness> = custom_witness (%Int64, %Op.72717c.14), @DivWith.1, @DivWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %facet_value.c2b: %facet_type.7ce = facet_value %Int64, (%custom_witness.e7a31c.3, %custom_witness.c98) [concrete]
 // CHECK:STDOUT:   %pattern_type.59a: type = pattern_type %facet_type.7ce [concrete]
+// CHECK:STDOUT:   %T.patt.161: %pattern_type.59a = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %facet_type.c2e: type = facet_type <@Destroy & @ModWith.1, @ModWith.1(%Int32) where %impl.elem0.32c = %Int64> [concrete]
 // CHECK:STDOUT:   %Op.type.442b68.15: type = fn_type @Op.15 [concrete]
 // CHECK:STDOUT:   %Op.72717c.15: %Op.type.442b68.15 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.e66: <witness> = custom_witness (%Int64, %Op.72717c.15), @ModWith.1, @ModWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %facet_value.606: %facet_type.c2e = facet_value %Int64, (%custom_witness.e7a31c.3, %custom_witness.e66) [concrete]
 // CHECK:STDOUT:   %pattern_type.af40: type = pattern_type %facet_type.c2e [concrete]
+// CHECK:STDOUT:   %T.patt.cb9: %pattern_type.af40 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.c2c: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.191) [concrete]
 // CHECK:STDOUT:   %.c2e: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.c2c, %Destroy.facet.191 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.b76: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.099) [concrete]
 // CHECK:STDOUT:   %.043: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.b76, %Destroy.facet.099 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.9d5: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.2cc) [concrete]
 // CHECK:STDOUT:   %.6da: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.9d5, %Destroy.facet.2cc [concrete]
+// CHECK:STDOUT:   %U.patt.d47: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U.67d: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %AddAssignWith.type.2c8890.1: type = facet_type <@AddAssignWith.1, @AddAssignWith.1(%Other)> [symbolic]
 // CHECK:STDOUT:   %Self.792732.1: %AddAssignWith.type.2c8890.1 = symbolic_binding Self, 1 [symbolic]
@@ -906,12 +982,17 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddAssignWith.WithSelf.Op.106889.1: %AddAssignWith.WithSelf.Op.type.cd574e.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %AddAssignWith.type.2c8890.2: type = facet_type <@AddAssignWith.1, @AddAssignWith.1(%U.67d)> [symbolic]
 // CHECK:STDOUT:   %pattern_type.82d: type = pattern_type %AddAssignWith.type.2c8890.2 [symbolic]
+// CHECK:STDOUT:   %T.patt.a22: %pattern_type.82d = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T.792: %AddAssignWith.type.2c8890.2 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %AddAssignWith.assoc_type.8ddaf4.2: type = assoc_entity_type @AddAssignWith.1, @AddAssignWith.1(%U.67d) [symbolic]
 // CHECK:STDOUT:   %assoc0.8c5739.2: %AddAssignWith.assoc_type.8ddaf4.2 = assoc_entity element0, imports.%Core.import_ref.3b2 [symbolic]
 // CHECK:STDOUT:   %T.as_type.50c: type = facet_access_type %T.792 [symbolic]
 // CHECK:STDOUT:   %pattern_type.643306.2: type = pattern_type %T.as_type.50c [symbolic]
+// CHECK:STDOUT:   %x.patt.227: %pattern_type.643306.2 = ref_binding_pattern x [symbolic]
+// CHECK:STDOUT:   %x.param_patt.343: %pattern_type.643306.2 = var_param_pattern %x.patt.227 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d1c4.4: type = pattern_type %U.67d [symbolic]
+// CHECK:STDOUT:   %y.param_patt.be3: %pattern_type.51d1c4.4 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %y.patt.b85: %pattern_type.51d1c4.4 = at_binding_pattern y, %y.param_patt.be3 [symbolic]
 // CHECK:STDOUT:   %require_complete.2a8: <witness> = require_complete_type %AddAssignWith.type.2c8890.2 [symbolic]
 // CHECK:STDOUT:   %assoc0.86d: %AddAssignWith.assoc_type.8ddaf4.1 = assoc_entity element0, imports.%Core.import_ref.87e [symbolic]
 // CHECK:STDOUT:   %AddAssignWith.lookup_impl_witness: <witness> = lookup_impl_witness %T.792, @AddAssignWith.1, @AddAssignWith.1(%U.67d) [symbolic]
@@ -926,11 +1007,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %SubAssignWith.WithSelf.Op.25af21.1: %SubAssignWith.WithSelf.Op.type.42f7cc.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %SubAssignWith.type.7e53cf.2: type = facet_type <@SubAssignWith.1, @SubAssignWith.1(%U.67d)> [symbolic]
 // CHECK:STDOUT:   %pattern_type.260: type = pattern_type %SubAssignWith.type.7e53cf.2 [symbolic]
+// CHECK:STDOUT:   %T.patt.f45: %pattern_type.260 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T.f6c: %SubAssignWith.type.7e53cf.2 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %SubAssignWith.assoc_type.6e3877.2: type = assoc_entity_type @SubAssignWith.1, @SubAssignWith.1(%U.67d) [symbolic]
 // CHECK:STDOUT:   %assoc0.701e5f.2: %SubAssignWith.assoc_type.6e3877.2 = assoc_entity element0, imports.%Core.import_ref.8f2 [symbolic]
 // CHECK:STDOUT:   %T.as_type.3ff: type = facet_access_type %T.f6c [symbolic]
 // CHECK:STDOUT:   %pattern_type.f08ed5.2: type = pattern_type %T.as_type.3ff [symbolic]
+// CHECK:STDOUT:   %x.patt.95a: %pattern_type.f08ed5.2 = ref_binding_pattern x [symbolic]
+// CHECK:STDOUT:   %x.param_patt.a45: %pattern_type.f08ed5.2 = var_param_pattern %x.patt.95a [symbolic]
 // CHECK:STDOUT:   %require_complete.862: <witness> = require_complete_type %SubAssignWith.type.7e53cf.2 [symbolic]
 // CHECK:STDOUT:   %assoc0.b8e: %SubAssignWith.assoc_type.6e3877.1 = assoc_entity element0, imports.%Core.import_ref.e7f [symbolic]
 // CHECK:STDOUT:   %SubAssignWith.lookup_impl_witness: <witness> = lookup_impl_witness %T.f6c, @SubAssignWith.1, @SubAssignWith.1(%U.67d) [symbolic]
@@ -945,11 +1029,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %MulAssignWith.WithSelf.Op.ee0eda.1: %MulAssignWith.WithSelf.Op.type.5df5bd.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %MulAssignWith.type.3a0e4d.2: type = facet_type <@MulAssignWith.1, @MulAssignWith.1(%U.67d)> [symbolic]
 // CHECK:STDOUT:   %pattern_type.8c2: type = pattern_type %MulAssignWith.type.3a0e4d.2 [symbolic]
+// CHECK:STDOUT:   %T.patt.db5: %pattern_type.8c2 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T.64d: %MulAssignWith.type.3a0e4d.2 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %MulAssignWith.assoc_type.9aa18f.2: type = assoc_entity_type @MulAssignWith.1, @MulAssignWith.1(%U.67d) [symbolic]
 // CHECK:STDOUT:   %assoc0.22264a.2: %MulAssignWith.assoc_type.9aa18f.2 = assoc_entity element0, imports.%Core.import_ref.ba3 [symbolic]
 // CHECK:STDOUT:   %T.as_type.1de: type = facet_access_type %T.64d [symbolic]
 // CHECK:STDOUT:   %pattern_type.8bf366.2: type = pattern_type %T.as_type.1de [symbolic]
+// CHECK:STDOUT:   %x.patt.4e9: %pattern_type.8bf366.2 = ref_binding_pattern x [symbolic]
+// CHECK:STDOUT:   %x.param_patt.6c8: %pattern_type.8bf366.2 = var_param_pattern %x.patt.4e9 [symbolic]
 // CHECK:STDOUT:   %require_complete.6b1: <witness> = require_complete_type %MulAssignWith.type.3a0e4d.2 [symbolic]
 // CHECK:STDOUT:   %assoc0.2ec: %MulAssignWith.assoc_type.9aa18f.1 = assoc_entity element0, imports.%Core.import_ref.408 [symbolic]
 // CHECK:STDOUT:   %MulAssignWith.lookup_impl_witness: <witness> = lookup_impl_witness %T.64d, @MulAssignWith.1, @MulAssignWith.1(%U.67d) [symbolic]
@@ -964,11 +1051,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %DivAssignWith.WithSelf.Op.91e0ff.1: %DivAssignWith.WithSelf.Op.type.ff5775.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %DivAssignWith.type.7e58ca.2: type = facet_type <@DivAssignWith.1, @DivAssignWith.1(%U.67d)> [symbolic]
 // CHECK:STDOUT:   %pattern_type.f74: type = pattern_type %DivAssignWith.type.7e58ca.2 [symbolic]
+// CHECK:STDOUT:   %T.patt.9a5: %pattern_type.f74 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T.c33: %DivAssignWith.type.7e58ca.2 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %DivAssignWith.assoc_type.bb68ec.2: type = assoc_entity_type @DivAssignWith.1, @DivAssignWith.1(%U.67d) [symbolic]
 // CHECK:STDOUT:   %assoc0.32f100.2: %DivAssignWith.assoc_type.bb68ec.2 = assoc_entity element0, imports.%Core.import_ref.a5d [symbolic]
 // CHECK:STDOUT:   %T.as_type.e57: type = facet_access_type %T.c33 [symbolic]
 // CHECK:STDOUT:   %pattern_type.da303b.2: type = pattern_type %T.as_type.e57 [symbolic]
+// CHECK:STDOUT:   %x.patt.cf6: %pattern_type.da303b.2 = ref_binding_pattern x [symbolic]
+// CHECK:STDOUT:   %x.param_patt.660: %pattern_type.da303b.2 = var_param_pattern %x.patt.cf6 [symbolic]
 // CHECK:STDOUT:   %require_complete.c5c: <witness> = require_complete_type %DivAssignWith.type.7e58ca.2 [symbolic]
 // CHECK:STDOUT:   %assoc0.de1: %DivAssignWith.assoc_type.bb68ec.1 = assoc_entity element0, imports.%Core.import_ref.df2 [symbolic]
 // CHECK:STDOUT:   %DivAssignWith.lookup_impl_witness: <witness> = lookup_impl_witness %T.c33, @DivAssignWith.1, @DivAssignWith.1(%U.67d) [symbolic]
@@ -983,11 +1073,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %ModAssignWith.WithSelf.Op.ac45fc.1: %ModAssignWith.WithSelf.Op.type.ec4109.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ModAssignWith.type.778d68.2: type = facet_type <@ModAssignWith.1, @ModAssignWith.1(%U.67d)> [symbolic]
 // CHECK:STDOUT:   %pattern_type.fb8: type = pattern_type %ModAssignWith.type.778d68.2 [symbolic]
+// CHECK:STDOUT:   %T.patt.c29: %pattern_type.fb8 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T.bca: %ModAssignWith.type.778d68.2 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %ModAssignWith.assoc_type.bc79ec.2: type = assoc_entity_type @ModAssignWith.1, @ModAssignWith.1(%U.67d) [symbolic]
 // CHECK:STDOUT:   %assoc0.8c0719.2: %ModAssignWith.assoc_type.bc79ec.2 = assoc_entity element0, imports.%Core.import_ref.cf6 [symbolic]
 // CHECK:STDOUT:   %T.as_type.ce6: type = facet_access_type %T.bca [symbolic]
 // CHECK:STDOUT:   %pattern_type.1d5f30.2: type = pattern_type %T.as_type.ce6 [symbolic]
+// CHECK:STDOUT:   %x.patt.fa4: %pattern_type.1d5f30.2 = ref_binding_pattern x [symbolic]
+// CHECK:STDOUT:   %x.param_patt.749: %pattern_type.1d5f30.2 = var_param_pattern %x.patt.fa4 [symbolic]
 // CHECK:STDOUT:   %require_complete.680: <witness> = require_complete_type %ModAssignWith.type.778d68.2 [symbolic]
 // CHECK:STDOUT:   %assoc0.0f3: %ModAssignWith.assoc_type.bc79ec.1 = assoc_entity element0, imports.%Core.import_ref.d29 [symbolic]
 // CHECK:STDOUT:   %ModAssignWith.lookup_impl_witness: <witness> = lookup_impl_witness %T.bca, @ModAssignWith.1, @ModAssignWith.1(%U.67d) [symbolic]
@@ -1003,6 +1096,9 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.6a0: <witness> = custom_witness (%Int16.Op.4dca31.13), @AddAssignWith.1, @AddAssignWith.1(%i16) [concrete]
 // CHECK:STDOUT:   %AddAssignWith.facet.e34: %AddAssignWith.type.2a0 = facet_value %Int16, (%custom_witness.6a0) [concrete]
 // CHECK:STDOUT:   %pattern_type.b256: type = pattern_type %AddAssignWith.type.2a0 [concrete]
+// CHECK:STDOUT:   %T.patt.d2a: %pattern_type.b256 = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %x.patt.49e: %pattern_type.785 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.param_patt.69a: %pattern_type.785 = var_param_pattern %x.patt.49e [concrete]
 // CHECK:STDOUT:   %SubAssignWith.type.e8b: type = facet_type <@SubAssignWith.1, @SubAssignWith.1(%i16)> [concrete]
 // CHECK:STDOUT:   %SubAssignWith.assoc_type.e13: type = assoc_entity_type @SubAssignWith.1, @SubAssignWith.1(%i16) [concrete]
 // CHECK:STDOUT:   %assoc0.47c: %SubAssignWith.assoc_type.e13 = assoc_entity element0, imports.%Core.import_ref.8f2 [concrete]
@@ -1011,6 +1107,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.722: <witness> = custom_witness (%Int16.Op.4dca31.14), @SubAssignWith.1, @SubAssignWith.1(%i16) [concrete]
 // CHECK:STDOUT:   %SubAssignWith.facet.a52: %SubAssignWith.type.e8b = facet_value %Int16, (%custom_witness.722) [concrete]
 // CHECK:STDOUT:   %pattern_type.c22: type = pattern_type %SubAssignWith.type.e8b [concrete]
+// CHECK:STDOUT:   %T.patt.0f1: %pattern_type.c22 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %MulAssignWith.type.7d4: type = facet_type <@MulAssignWith.1, @MulAssignWith.1(%i16)> [concrete]
 // CHECK:STDOUT:   %MulAssignWith.assoc_type.aa8: type = assoc_entity_type @MulAssignWith.1, @MulAssignWith.1(%i16) [concrete]
 // CHECK:STDOUT:   %assoc0.137: %MulAssignWith.assoc_type.aa8 = assoc_entity element0, imports.%Core.import_ref.ba3 [concrete]
@@ -1019,6 +1116,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.c67: <witness> = custom_witness (%Int16.Op.4dca31.15), @MulAssignWith.1, @MulAssignWith.1(%i16) [concrete]
 // CHECK:STDOUT:   %MulAssignWith.facet.201: %MulAssignWith.type.7d4 = facet_value %Int16, (%custom_witness.c67) [concrete]
 // CHECK:STDOUT:   %pattern_type.a24: type = pattern_type %MulAssignWith.type.7d4 [concrete]
+// CHECK:STDOUT:   %T.patt.f71: %pattern_type.a24 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %DivAssignWith.type.081: type = facet_type <@DivAssignWith.1, @DivAssignWith.1(%i16)> [concrete]
 // CHECK:STDOUT:   %DivAssignWith.assoc_type.791: type = assoc_entity_type @DivAssignWith.1, @DivAssignWith.1(%i16) [concrete]
 // CHECK:STDOUT:   %assoc0.a3b: %DivAssignWith.assoc_type.791 = assoc_entity element0, imports.%Core.import_ref.a5d [concrete]
@@ -1027,6 +1125,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.91d: <witness> = custom_witness (%Int16.Op.4dca31.16), @DivAssignWith.1, @DivAssignWith.1(%i16) [concrete]
 // CHECK:STDOUT:   %DivAssignWith.facet.a72: %DivAssignWith.type.081 = facet_value %Int16, (%custom_witness.91d) [concrete]
 // CHECK:STDOUT:   %pattern_type.c97: type = pattern_type %DivAssignWith.type.081 [concrete]
+// CHECK:STDOUT:   %T.patt.35e: %pattern_type.c97 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %ModAssignWith.type.1ea: type = facet_type <@ModAssignWith.1, @ModAssignWith.1(%i16)> [concrete]
 // CHECK:STDOUT:   %ModAssignWith.assoc_type.91d: type = assoc_entity_type @ModAssignWith.1, @ModAssignWith.1(%i16) [concrete]
 // CHECK:STDOUT:   %assoc0.b7f: %ModAssignWith.assoc_type.91d = assoc_entity element0, imports.%Core.import_ref.cf6 [concrete]
@@ -1035,6 +1134,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.17b: <witness> = custom_witness (%Int16.Op.4dca31.17), @ModAssignWith.1, @ModAssignWith.1(%i16) [concrete]
 // CHECK:STDOUT:   %ModAssignWith.facet.4a2: %ModAssignWith.type.1ea = facet_value %Int16, (%custom_witness.17b) [concrete]
 // CHECK:STDOUT:   %pattern_type.6ef: type = pattern_type %ModAssignWith.type.1ea [concrete]
+// CHECK:STDOUT:   %T.patt.dbe: %pattern_type.6ef = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %AddAssignWith.type.23a: type = facet_type <@AddAssignWith.1, @AddAssignWith.1(%Int32)> [concrete]
 // CHECK:STDOUT:   %AddAssignWith.assoc_type.4c7: type = assoc_entity_type @AddAssignWith.1, @AddAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %assoc0.114: %AddAssignWith.assoc_type.4c7 = assoc_entity element0, imports.%Core.import_ref.3b2 [concrete]
@@ -1043,6 +1143,9 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.ebf67a.1: <witness> = custom_witness (%Int32.Op.4dca31.12), @AddAssignWith.1, @AddAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %AddAssignWith.facet.348: %AddAssignWith.type.23a = facet_value %Int32, (%custom_witness.ebf67a.1) [concrete]
 // CHECK:STDOUT:   %pattern_type.5ad: type = pattern_type %AddAssignWith.type.23a [concrete]
+// CHECK:STDOUT:   %T.patt.96c: %pattern_type.5ad = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %x.patt.d79: %pattern_type.8b4 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.param_patt.0c7: %pattern_type.8b4 = var_param_pattern %x.patt.d79 [concrete]
 // CHECK:STDOUT:   %SubAssignWith.type.4fc: type = facet_type <@SubAssignWith.1, @SubAssignWith.1(%Int32)> [concrete]
 // CHECK:STDOUT:   %SubAssignWith.assoc_type.ac6: type = assoc_entity_type @SubAssignWith.1, @SubAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %assoc0.c2a: %SubAssignWith.assoc_type.ac6 = assoc_entity element0, imports.%Core.import_ref.8f2 [concrete]
@@ -1051,6 +1154,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.c2b241.1: <witness> = custom_witness (%Int32.Op.4dca31.14), @SubAssignWith.1, @SubAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %SubAssignWith.facet.e0e: %SubAssignWith.type.4fc = facet_value %Int32, (%custom_witness.c2b241.1) [concrete]
 // CHECK:STDOUT:   %pattern_type.190: type = pattern_type %SubAssignWith.type.4fc [concrete]
+// CHECK:STDOUT:   %T.patt.a39: %pattern_type.190 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %MulAssignWith.type.5fb: type = facet_type <@MulAssignWith.1, @MulAssignWith.1(%Int32)> [concrete]
 // CHECK:STDOUT:   %MulAssignWith.assoc_type.c04: type = assoc_entity_type @MulAssignWith.1, @MulAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %assoc0.2db: %MulAssignWith.assoc_type.c04 = assoc_entity element0, imports.%Core.import_ref.ba3 [concrete]
@@ -1059,6 +1163,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.ec9760.1: <witness> = custom_witness (%Int32.Op.4dca31.15), @MulAssignWith.1, @MulAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %MulAssignWith.facet.13c: %MulAssignWith.type.5fb = facet_value %Int32, (%custom_witness.ec9760.1) [concrete]
 // CHECK:STDOUT:   %pattern_type.f3b: type = pattern_type %MulAssignWith.type.5fb [concrete]
+// CHECK:STDOUT:   %T.patt.f66: %pattern_type.f3b = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %DivAssignWith.type.3ea: type = facet_type <@DivAssignWith.1, @DivAssignWith.1(%Int32)> [concrete]
 // CHECK:STDOUT:   %DivAssignWith.assoc_type.ccd: type = assoc_entity_type @DivAssignWith.1, @DivAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %assoc0.d23: %DivAssignWith.assoc_type.ccd = assoc_entity element0, imports.%Core.import_ref.a5d [concrete]
@@ -1067,6 +1172,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.9697f7.1: <witness> = custom_witness (%Int32.Op.4dca31.16), @DivAssignWith.1, @DivAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %DivAssignWith.facet.e59: %DivAssignWith.type.3ea = facet_value %Int32, (%custom_witness.9697f7.1) [concrete]
 // CHECK:STDOUT:   %pattern_type.8f3: type = pattern_type %DivAssignWith.type.3ea [concrete]
+// CHECK:STDOUT:   %T.patt.316: %pattern_type.8f3 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %ModAssignWith.type.567: type = facet_type <@ModAssignWith.1, @ModAssignWith.1(%Int32)> [concrete]
 // CHECK:STDOUT:   %ModAssignWith.assoc_type.fc5: type = assoc_entity_type @ModAssignWith.1, @ModAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %assoc0.1c63: %ModAssignWith.assoc_type.fc5 = assoc_entity element0, imports.%Core.import_ref.cf6 [concrete]
@@ -1075,10 +1181,13 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.df8f2f.1: <witness> = custom_witness (%Int32.Op.4dca31.17), @ModAssignWith.1, @ModAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %ModAssignWith.facet.dac: %ModAssignWith.type.567 = facet_value %Int32, (%custom_witness.df8f2f.1) [concrete]
 // CHECK:STDOUT:   %pattern_type.9ff: type = pattern_type %ModAssignWith.type.567 [concrete]
+// CHECK:STDOUT:   %T.patt.6f1: %pattern_type.9ff = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %Int64.Op.type.83af6e.2: type = fn_type @Int64.Op.2 [concrete]
 // CHECK:STDOUT:   %Int64.Op.4dca31.2: %Int64.Op.type.83af6e.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.ebf67a.2: <witness> = custom_witness (%Int64.Op.4dca31.2), @AddAssignWith.1, @AddAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %AddAssignWith.facet.144: %AddAssignWith.type.23a = facet_value %Int64, (%custom_witness.ebf67a.2) [concrete]
+// CHECK:STDOUT:   %x.patt.ace: %pattern_type.4aa = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.param_patt.b33: %pattern_type.4aa = var_param_pattern %x.patt.ace [concrete]
 // CHECK:STDOUT:   %Int64.Op.type.83af6e.4: type = fn_type @Int64.Op.4 [concrete]
 // CHECK:STDOUT:   %Int64.Op.4dca31.4: %Int64.Op.type.83af6e.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.c2b241.2: <witness> = custom_witness (%Int64.Op.4dca31.4), @SubAssignWith.1, @SubAssignWith.1(%Int32) [concrete]
@@ -1096,18 +1205,26 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.df8f2f.2: <witness> = custom_witness (%Int64.Op.4dca31.7), @ModAssignWith.1, @ModAssignWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %ModAssignWith.facet.342: %ModAssignWith.type.567 = facet_value %Int64, (%custom_witness.df8f2f.2) [concrete]
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
+// CHECK:STDOUT:   %pattern_type.8c1: type = pattern_type %Inc.type [concrete]
+// CHECK:STDOUT:   %T.patt.eab: %pattern_type.8c1 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.8f3: %Inc.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.232: type = facet_access_type %T.8f3 [symbolic]
 // CHECK:STDOUT:   %pattern_type.427bfc.2: type = pattern_type %T.as_type.232 [symbolic]
+// CHECK:STDOUT:   %x.patt.a75: %pattern_type.427bfc.2 = ref_binding_pattern x [symbolic]
+// CHECK:STDOUT:   %x.param_patt.5da: %pattern_type.427bfc.2 = var_param_pattern %x.patt.a75 [symbolic]
 // CHECK:STDOUT:   %Inc.lookup_impl_witness: <witness> = lookup_impl_witness %T.8f3, @Inc [symbolic]
 // CHECK:STDOUT:   %Inc.WithSelf.Op.type.e10ef6.2: type = fn_type @Inc.WithSelf.Op, @Inc.WithSelf(%T.8f3) [symbolic]
 // CHECK:STDOUT:   %.a08: type = fn_type_with_self_type %Inc.WithSelf.Op.type.e10ef6.2, %T.8f3 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.b92: %.a08 = impl_witness_access %Inc.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.855: <specific function> = specific_impl_function %impl.elem0.b92, @Inc.WithSelf.Op(%T.8f3) [symbolic]
 // CHECK:STDOUT:   %Dec.type: type = facet_type <@Dec> [concrete]
+// CHECK:STDOUT:   %pattern_type.72a: type = pattern_type %Dec.type [concrete]
+// CHECK:STDOUT:   %T.patt.de9: %pattern_type.72a = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.e8e: %Dec.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.c32: type = facet_access_type %T.e8e [symbolic]
 // CHECK:STDOUT:   %pattern_type.2754f0.2: type = pattern_type %T.as_type.c32 [symbolic]
+// CHECK:STDOUT:   %x.patt.08b: %pattern_type.2754f0.2 = ref_binding_pattern x [symbolic]
+// CHECK:STDOUT:   %x.param_patt.678: %pattern_type.2754f0.2 = var_param_pattern %x.patt.08b [symbolic]
 // CHECK:STDOUT:   %Dec.lookup_impl_witness: <witness> = lookup_impl_witness %T.e8e, @Dec [symbolic]
 // CHECK:STDOUT:   %Dec.WithSelf.Op.type.bfa830.2: type = fn_type @Dec.WithSelf.Op, @Dec.WithSelf(%T.e8e) [symbolic]
 // CHECK:STDOUT:   %.aae: type = fn_type_with_self_type %Dec.WithSelf.Op.type.bfa830.2, %T.e8e [symbolic]
@@ -1120,9 +1237,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.f9d: type = impl_witness_access %Negate.lookup_impl_witness.159, element0 [symbolic_self]
 // CHECK:STDOUT:   %facet_type.b1d: type = facet_type <@Destroy & @Negate where %impl.elem0.f9d = %Result.as_type> [symbolic]
 // CHECK:STDOUT:   %pattern_type.540: type = pattern_type %facet_type.b1d [symbolic]
+// CHECK:STDOUT:   %T.patt.e96: %pattern_type.540 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T.a9d: %facet_type.b1d = symbolic_binding T, 1 [symbolic]
+// CHECK:STDOUT:   %y.param_patt.023: %pattern_type.f4e485.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %y.patt.053: %pattern_type.f4e485.2 = at_binding_pattern y, %y.param_patt.023 [symbolic]
 // CHECK:STDOUT:   %T.as_type.a98: type = facet_access_type %T.a9d [symbolic]
 // CHECK:STDOUT:   %pattern_type.962a: type = pattern_type %T.as_type.a98 [symbolic]
+// CHECK:STDOUT:   %x.param_patt.4f4: %pattern_type.962a = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.31e: %pattern_type.962a = at_binding_pattern x, %x.param_patt.4f4 [symbolic]
 // CHECK:STDOUT:   %Negate.lookup_impl_witness.48a: <witness> = lookup_impl_witness %T.a9d, @Negate [symbolic]
 // CHECK:STDOUT:   %Negate.facet.f2f: %Negate.type = facet_value %T.as_type.a98, (%Negate.lookup_impl_witness.48a) [symbolic]
 // CHECK:STDOUT:   %Negate.WithSelf.Op.type.803: type = fn_type @Negate.WithSelf.Op, @Negate.WithSelf(%Negate.facet.f2f) [symbolic]
@@ -1143,12 +1265,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %custom_witness.100: <witness> = custom_witness (%Int64, %Int16.Op.4dca31.18), @Negate [concrete]
 // CHECK:STDOUT:   %facet_value.750: %facet_type.76b = facet_value %Int16, (%custom_witness.e7a31c.1, %custom_witness.100) [concrete]
 // CHECK:STDOUT:   %pattern_type.61c: type = pattern_type %facet_type.76b [concrete]
+// CHECK:STDOUT:   %T.patt.fd6: %pattern_type.61c = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %facet_type.49d: type = facet_type <@Destroy & @Negate where %impl.elem0.f9d = %Int32> [concrete]
 // CHECK:STDOUT:   %Int32.Op.type.83af6e.20: type = fn_type @Int32.Op.20 [concrete]
 // CHECK:STDOUT:   %Int32.Op.4dca31.20: %Int32.Op.type.83af6e.20 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.a85: <witness> = custom_witness (%Int32, %Int32.Op.4dca31.20), @Negate [concrete]
 // CHECK:STDOUT:   %facet_value.42d: %facet_type.49d = facet_value %Int32, (%custom_witness.e7a31c.2, %custom_witness.a85) [concrete]
 // CHECK:STDOUT:   %pattern_type.57c: type = pattern_type %facet_type.49d [concrete]
+// CHECK:STDOUT:   %T.patt.4fa: %pattern_type.57c = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %complete_type.7a6: <witness> = complete_type_witness %AddWith.type.b62 [concrete]
 // CHECK:STDOUT:   %AddWith.facet.ff0: %AddWith.type.b62 = facet_value %i16, (%custom_witness.248) [concrete]
 // CHECK:STDOUT:   %AddWith.WithSelf.Op.type.e1f: type = fn_type @AddWith.WithSelf.Op, @AddWith.WithSelf(%Int16, %AddWith.facet.ff0) [concrete]
@@ -1379,13 +1503,13 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddWith.lookup_impl_witness.loc126: <witness> = lookup_impl_witness %T.loc123_4.1, @AddWith.1, @AddWith.1(%U.as_type.loc123_36.1) [symbolic = %AddWith.lookup_impl_witness.loc126 (constants.%AddWith.lookup_impl_witness.8b3)]
 // CHECK:STDOUT:   %AddWith.facet: @AddWith.loc124.%AddWith.type.loc123_36.1 (%AddWith.type.9da) = facet_value %T.as_type.loc124_29.1, (%AddWith.lookup_impl_witness.loc126) [symbolic = %AddWith.facet (constants.%AddWith.facet.fc9)]
 // CHECK:STDOUT:   %AddWith.WithSelf.Op.type: type = fn_type @AddWith.WithSelf.Op, @AddWith.WithSelf(%U.as_type.loc123_36.1, %AddWith.facet) [symbolic = %AddWith.WithSelf.Op.type (constants.%AddWith.WithSelf.Op.type.eb7)]
-// CHECK:STDOUT:   %.loc126_5.5: type = fn_type_with_self_type %AddWith.WithSelf.Op.type, %AddWith.facet [symbolic = %.loc126_5.5 (constants.%.012e)]
-// CHECK:STDOUT:   %impl.elem1.loc126_5.2: @AddWith.loc124.%.loc126_5.5 (%.012e) = impl_witness_access %AddWith.lookup_impl_witness.loc126, element1 [symbolic = %impl.elem1.loc126_5.2 (constants.%impl.elem1.0c1)]
+// CHECK:STDOUT:   %.loc126_5.6: type = fn_type_with_self_type %AddWith.WithSelf.Op.type, %AddWith.facet [symbolic = %.loc126_5.6 (constants.%.012e)]
+// CHECK:STDOUT:   %impl.elem1.loc126_5.2: @AddWith.loc124.%.loc126_5.6 (%.012e) = impl_witness_access %AddWith.lookup_impl_witness.loc126, element1 [symbolic = %impl.elem1.loc126_5.2 (constants.%impl.elem1.0c1)]
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.3: <specific function> = specific_impl_function %impl.elem1.loc126_5.2, @AddWith.WithSelf.Op(%U.as_type.loc123_36.1, %AddWith.facet) [symbolic = %specific_impl_fn.loc126_5.3 (constants.%specific_impl_fn.95a)]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Result.loc121_9.1) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.d3ece9.2)]
-// CHECK:STDOUT:   %.loc126_5.6: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Result.loc121_9.1 [symbolic = %.loc126_5.6 (constants.%.53a)]
+// CHECK:STDOUT:   %.loc126_5.7: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Result.loc121_9.1 [symbolic = %.loc126_5.7 (constants.%.53a)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Result.loc121_9.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc126_5.2: @AddWith.loc124.%.loc126_5.6 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc126_5.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:   %impl.elem0.loc126_5.2: @AddWith.loc124.%.loc126_5.7 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc126_5.2 (constants.%impl.elem0.0f9)]
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.4: <specific function> = specific_impl_function %impl.elem0.loc126_5.2, @Destroy.WithSelf.Op(%Result.loc121_9.1) [symbolic = %specific_impl_fn.loc126_5.4 (constants.%specific_impl_fn.afc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%result.param: @AddWith.loc124.%Result.as_type.loc123_54.1 (%Result.as_type), %x.param: @AddWith.loc124.%T.as_type.loc124_29.1 (%T.as_type.606), %y.param: @AddWith.loc124.%U.as_type.loc123_36.1 (%U.as_type.b61)) {
@@ -1395,16 +1519,17 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %AddWith.type.loc126: type = facet_type <@AddWith.1, @AddWith.1(constants.%U.as_type.b61)> [symbolic = %AddWith.type.loc123_36.1 (constants.%AddWith.type.9da)]
 // CHECK:STDOUT:     %.loc126_5.1: @AddWith.loc124.%AddWith.assoc_type (%AddWith.assoc_type.bc8) = specific_constant imports.%Core.import_ref.5a1, @AddWith.WithSelf(constants.%U.as_type.b61, constants.%Self.96a) [symbolic = %assoc1 (constants.%assoc1.13e)]
 // CHECK:STDOUT:     %Op.ref: @AddWith.loc124.%AddWith.assoc_type (%AddWith.assoc_type.bc8) = name_ref Op, %.loc126_5.1 [symbolic = %assoc1 (constants.%assoc1.13e)]
-// CHECK:STDOUT:     %impl.elem1.loc126_5.1: @AddWith.loc124.%.loc126_5.5 (%.012e) = impl_witness_access constants.%AddWith.lookup_impl_witness.8b3, element1 [symbolic = %impl.elem1.loc126_5.2 (constants.%impl.elem1.0c1)]
+// CHECK:STDOUT:     %impl.elem1.loc126_5.1: @AddWith.loc124.%.loc126_5.6 (%.012e) = impl_witness_access constants.%AddWith.lookup_impl_witness.8b3, element1 [symbolic = %impl.elem1.loc126_5.2 (constants.%impl.elem1.0c1)]
 // CHECK:STDOUT:     %bound_method.loc126_5.1: <bound method> = bound_method %x.ref, %impl.elem1.loc126_5.1
 // CHECK:STDOUT:     %specific_impl_fn.loc126_5.1: <specific function> = specific_impl_function %impl.elem1.loc126_5.1, @AddWith.WithSelf.Op(constants.%U.as_type.b61, constants.%AddWith.facet.fc9) [symbolic = %specific_impl_fn.loc126_5.3 (constants.%specific_impl_fn.95a)]
 // CHECK:STDOUT:     %bound_method.loc126_5.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc126_5.1
 // CHECK:STDOUT:     %.loc126_5.2: ref @AddWith.loc124.%Result.as_type.loc123_54.1 (%Result.as_type) = temporary_storage
 // CHECK:STDOUT:     %AddWith.WithSelf.Op.call: init @AddWith.loc124.%Result.as_type.loc123_54.1 (%Result.as_type) to %.loc126_5.2 = call %bound_method.loc126_5.2(%x.ref, %y.ref)
 // CHECK:STDOUT:     %.loc126_5.3: ref @AddWith.loc124.%Result.as_type.loc123_54.1 (%Result.as_type) = temporary %.loc126_5.2, %AddWith.WithSelf.Op.call
-// CHECK:STDOUT:     %impl.elem0.loc126_5.1: @AddWith.loc124.%.loc126_5.6 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc126_5.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:     %impl.elem0.loc126_5.1: @AddWith.loc124.%.loc126_5.7 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc126_5.2 (constants.%impl.elem0.0f9)]
 // CHECK:STDOUT:     %bound_method.loc126_5.3: <bound method> = bound_method %.loc126_5.3, %impl.elem0.loc126_5.1
 // CHECK:STDOUT:     %.loc126_5.4: %Destroy.type = converted constants.%Result.as_type, constants.%Result [symbolic = %Result.loc121_9.1 (constants.%Result)]
+// CHECK:STDOUT:     %.loc126_5.5: %Destroy.type = converted constants.%Result.as_type, constants.%Result [symbolic = %Result.loc121_9.1 (constants.%Result)]
 // CHECK:STDOUT:     %specific_impl_fn.loc126_5.2: <specific function> = specific_impl_function %impl.elem0.loc126_5.1, @Destroy.WithSelf.Op(constants.%Result) [symbolic = %specific_impl_fn.loc126_5.4 (constants.%specific_impl_fn.afc)]
 // CHECK:STDOUT:     %bound_method.loc126_5.4: <bound method> = bound_method %.loc126_5.3, %specific_impl_fn.loc126_5.2
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc126_5.4(%.loc126_5.3)
@@ -1422,13 +1547,13 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.loc137: <witness> = lookup_impl_witness %T.loc134_4.1, @SubWith.1, @SubWith.1(%U.as_type.loc134_36.1) [symbolic = %SubWith.lookup_impl_witness.loc137 (constants.%SubWith.lookup_impl_witness.07c)]
 // CHECK:STDOUT:   %SubWith.facet: @SubWith.loc135.%SubWith.type.loc134_36.1 (%SubWith.type.b5d) = facet_value %T.as_type.loc135_29.1, (%SubWith.lookup_impl_witness.loc137) [symbolic = %SubWith.facet (constants.%SubWith.facet.44a)]
 // CHECK:STDOUT:   %SubWith.WithSelf.Op.type: type = fn_type @SubWith.WithSelf.Op, @SubWith.WithSelf(%U.as_type.loc134_36.1, %SubWith.facet) [symbolic = %SubWith.WithSelf.Op.type (constants.%SubWith.WithSelf.Op.type.1fe)]
-// CHECK:STDOUT:   %.loc137_5.5: type = fn_type_with_self_type %SubWith.WithSelf.Op.type, %SubWith.facet [symbolic = %.loc137_5.5 (constants.%.fa2)]
-// CHECK:STDOUT:   %impl.elem1.loc137_5.2: @SubWith.loc135.%.loc137_5.5 (%.fa2) = impl_witness_access %SubWith.lookup_impl_witness.loc137, element1 [symbolic = %impl.elem1.loc137_5.2 (constants.%impl.elem1.fc7)]
+// CHECK:STDOUT:   %.loc137_5.6: type = fn_type_with_self_type %SubWith.WithSelf.Op.type, %SubWith.facet [symbolic = %.loc137_5.6 (constants.%.fa2)]
+// CHECK:STDOUT:   %impl.elem1.loc137_5.2: @SubWith.loc135.%.loc137_5.6 (%.fa2) = impl_witness_access %SubWith.lookup_impl_witness.loc137, element1 [symbolic = %impl.elem1.loc137_5.2 (constants.%impl.elem1.fc7)]
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.3: <specific function> = specific_impl_function %impl.elem1.loc137_5.2, @SubWith.WithSelf.Op(%U.as_type.loc134_36.1, %SubWith.facet) [symbolic = %specific_impl_fn.loc137_5.3 (constants.%specific_impl_fn.3fc)]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Result.loc132_9.1) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.d3ece9.2)]
-// CHECK:STDOUT:   %.loc137_5.6: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Result.loc132_9.1 [symbolic = %.loc137_5.6 (constants.%.53a)]
+// CHECK:STDOUT:   %.loc137_5.7: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Result.loc132_9.1 [symbolic = %.loc137_5.7 (constants.%.53a)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Result.loc132_9.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc137_5.2: @SubWith.loc135.%.loc137_5.6 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc137_5.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:   %impl.elem0.loc137_5.2: @SubWith.loc135.%.loc137_5.7 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc137_5.2 (constants.%impl.elem0.0f9)]
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.4: <specific function> = specific_impl_function %impl.elem0.loc137_5.2, @Destroy.WithSelf.Op(%Result.loc132_9.1) [symbolic = %specific_impl_fn.loc137_5.4 (constants.%specific_impl_fn.afc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%result.param: @SubWith.loc135.%Result.as_type.loc134_54.1 (%Result.as_type), %x.param: @SubWith.loc135.%T.as_type.loc135_29.1 (%T.as_type.b22), %y.param: @SubWith.loc135.%U.as_type.loc134_36.1 (%U.as_type.b61)) {
@@ -1438,16 +1563,17 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %SubWith.type.loc137: type = facet_type <@SubWith.1, @SubWith.1(constants.%U.as_type.b61)> [symbolic = %SubWith.type.loc134_36.1 (constants.%SubWith.type.b5d)]
 // CHECK:STDOUT:     %.loc137_5.1: @SubWith.loc135.%SubWith.assoc_type (%SubWith.assoc_type.3a1) = specific_constant imports.%Core.import_ref.0f3, @SubWith.WithSelf(constants.%U.as_type.b61, constants.%Self.d6b) [symbolic = %assoc1 (constants.%assoc1.8fd)]
 // CHECK:STDOUT:     %Op.ref: @SubWith.loc135.%SubWith.assoc_type (%SubWith.assoc_type.3a1) = name_ref Op, %.loc137_5.1 [symbolic = %assoc1 (constants.%assoc1.8fd)]
-// CHECK:STDOUT:     %impl.elem1.loc137_5.1: @SubWith.loc135.%.loc137_5.5 (%.fa2) = impl_witness_access constants.%SubWith.lookup_impl_witness.07c, element1 [symbolic = %impl.elem1.loc137_5.2 (constants.%impl.elem1.fc7)]
+// CHECK:STDOUT:     %impl.elem1.loc137_5.1: @SubWith.loc135.%.loc137_5.6 (%.fa2) = impl_witness_access constants.%SubWith.lookup_impl_witness.07c, element1 [symbolic = %impl.elem1.loc137_5.2 (constants.%impl.elem1.fc7)]
 // CHECK:STDOUT:     %bound_method.loc137_5.1: <bound method> = bound_method %x.ref, %impl.elem1.loc137_5.1
 // CHECK:STDOUT:     %specific_impl_fn.loc137_5.1: <specific function> = specific_impl_function %impl.elem1.loc137_5.1, @SubWith.WithSelf.Op(constants.%U.as_type.b61, constants.%SubWith.facet.44a) [symbolic = %specific_impl_fn.loc137_5.3 (constants.%specific_impl_fn.3fc)]
 // CHECK:STDOUT:     %bound_method.loc137_5.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc137_5.1
 // CHECK:STDOUT:     %.loc137_5.2: ref @SubWith.loc135.%Result.as_type.loc134_54.1 (%Result.as_type) = temporary_storage
 // CHECK:STDOUT:     %SubWith.WithSelf.Op.call: init @SubWith.loc135.%Result.as_type.loc134_54.1 (%Result.as_type) to %.loc137_5.2 = call %bound_method.loc137_5.2(%x.ref, %y.ref)
 // CHECK:STDOUT:     %.loc137_5.3: ref @SubWith.loc135.%Result.as_type.loc134_54.1 (%Result.as_type) = temporary %.loc137_5.2, %SubWith.WithSelf.Op.call
-// CHECK:STDOUT:     %impl.elem0.loc137_5.1: @SubWith.loc135.%.loc137_5.6 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc137_5.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:     %impl.elem0.loc137_5.1: @SubWith.loc135.%.loc137_5.7 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc137_5.2 (constants.%impl.elem0.0f9)]
 // CHECK:STDOUT:     %bound_method.loc137_5.3: <bound method> = bound_method %.loc137_5.3, %impl.elem0.loc137_5.1
 // CHECK:STDOUT:     %.loc137_5.4: %Destroy.type = converted constants.%Result.as_type, constants.%Result [symbolic = %Result.loc132_9.1 (constants.%Result)]
+// CHECK:STDOUT:     %.loc137_5.5: %Destroy.type = converted constants.%Result.as_type, constants.%Result [symbolic = %Result.loc132_9.1 (constants.%Result)]
 // CHECK:STDOUT:     %specific_impl_fn.loc137_5.2: <specific function> = specific_impl_function %impl.elem0.loc137_5.1, @Destroy.WithSelf.Op(constants.%Result) [symbolic = %specific_impl_fn.loc137_5.4 (constants.%specific_impl_fn.afc)]
 // CHECK:STDOUT:     %bound_method.loc137_5.4: <bound method> = bound_method %.loc137_5.3, %specific_impl_fn.loc137_5.2
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc137_5.4(%.loc137_5.3)
@@ -1465,13 +1591,13 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.loc148: <witness> = lookup_impl_witness %T.loc145_4.1, @MulWith.1, @MulWith.1(%U.as_type.loc145_36.1) [symbolic = %MulWith.lookup_impl_witness.loc148 (constants.%MulWith.lookup_impl_witness.a55)]
 // CHECK:STDOUT:   %MulWith.facet: @MulWith.loc146.%MulWith.type.loc145_36.1 (%MulWith.type.f02) = facet_value %T.as_type.loc146_29.1, (%MulWith.lookup_impl_witness.loc148) [symbolic = %MulWith.facet (constants.%MulWith.facet.5c8)]
 // CHECK:STDOUT:   %MulWith.WithSelf.Op.type: type = fn_type @MulWith.WithSelf.Op, @MulWith.WithSelf(%U.as_type.loc145_36.1, %MulWith.facet) [symbolic = %MulWith.WithSelf.Op.type (constants.%MulWith.WithSelf.Op.type.7b0)]
-// CHECK:STDOUT:   %.loc148_5.5: type = fn_type_with_self_type %MulWith.WithSelf.Op.type, %MulWith.facet [symbolic = %.loc148_5.5 (constants.%.476)]
-// CHECK:STDOUT:   %impl.elem1.loc148_5.2: @MulWith.loc146.%.loc148_5.5 (%.476) = impl_witness_access %MulWith.lookup_impl_witness.loc148, element1 [symbolic = %impl.elem1.loc148_5.2 (constants.%impl.elem1.7c4)]
+// CHECK:STDOUT:   %.loc148_5.6: type = fn_type_with_self_type %MulWith.WithSelf.Op.type, %MulWith.facet [symbolic = %.loc148_5.6 (constants.%.476)]
+// CHECK:STDOUT:   %impl.elem1.loc148_5.2: @MulWith.loc146.%.loc148_5.6 (%.476) = impl_witness_access %MulWith.lookup_impl_witness.loc148, element1 [symbolic = %impl.elem1.loc148_5.2 (constants.%impl.elem1.7c4)]
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.3: <specific function> = specific_impl_function %impl.elem1.loc148_5.2, @MulWith.WithSelf.Op(%U.as_type.loc145_36.1, %MulWith.facet) [symbolic = %specific_impl_fn.loc148_5.3 (constants.%specific_impl_fn.57f)]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Result.loc143_9.1) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.d3ece9.2)]
-// CHECK:STDOUT:   %.loc148_5.6: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Result.loc143_9.1 [symbolic = %.loc148_5.6 (constants.%.53a)]
+// CHECK:STDOUT:   %.loc148_5.7: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Result.loc143_9.1 [symbolic = %.loc148_5.7 (constants.%.53a)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Result.loc143_9.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc148_5.2: @MulWith.loc146.%.loc148_5.6 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc148_5.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:   %impl.elem0.loc148_5.2: @MulWith.loc146.%.loc148_5.7 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc148_5.2 (constants.%impl.elem0.0f9)]
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.4: <specific function> = specific_impl_function %impl.elem0.loc148_5.2, @Destroy.WithSelf.Op(%Result.loc143_9.1) [symbolic = %specific_impl_fn.loc148_5.4 (constants.%specific_impl_fn.afc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%result.param: @MulWith.loc146.%Result.as_type.loc145_54.1 (%Result.as_type), %x.param: @MulWith.loc146.%T.as_type.loc146_29.1 (%T.as_type.427), %y.param: @MulWith.loc146.%U.as_type.loc145_36.1 (%U.as_type.b61)) {
@@ -1481,16 +1607,17 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %MulWith.type.loc148: type = facet_type <@MulWith.1, @MulWith.1(constants.%U.as_type.b61)> [symbolic = %MulWith.type.loc145_36.1 (constants.%MulWith.type.f02)]
 // CHECK:STDOUT:     %.loc148_5.1: @MulWith.loc146.%MulWith.assoc_type (%MulWith.assoc_type.a12) = specific_constant imports.%Core.import_ref.8c1, @MulWith.WithSelf(constants.%U.as_type.b61, constants.%Self.941) [symbolic = %assoc1 (constants.%assoc1.a0f)]
 // CHECK:STDOUT:     %Op.ref: @MulWith.loc146.%MulWith.assoc_type (%MulWith.assoc_type.a12) = name_ref Op, %.loc148_5.1 [symbolic = %assoc1 (constants.%assoc1.a0f)]
-// CHECK:STDOUT:     %impl.elem1.loc148_5.1: @MulWith.loc146.%.loc148_5.5 (%.476) = impl_witness_access constants.%MulWith.lookup_impl_witness.a55, element1 [symbolic = %impl.elem1.loc148_5.2 (constants.%impl.elem1.7c4)]
+// CHECK:STDOUT:     %impl.elem1.loc148_5.1: @MulWith.loc146.%.loc148_5.6 (%.476) = impl_witness_access constants.%MulWith.lookup_impl_witness.a55, element1 [symbolic = %impl.elem1.loc148_5.2 (constants.%impl.elem1.7c4)]
 // CHECK:STDOUT:     %bound_method.loc148_5.1: <bound method> = bound_method %x.ref, %impl.elem1.loc148_5.1
 // CHECK:STDOUT:     %specific_impl_fn.loc148_5.1: <specific function> = specific_impl_function %impl.elem1.loc148_5.1, @MulWith.WithSelf.Op(constants.%U.as_type.b61, constants.%MulWith.facet.5c8) [symbolic = %specific_impl_fn.loc148_5.3 (constants.%specific_impl_fn.57f)]
 // CHECK:STDOUT:     %bound_method.loc148_5.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc148_5.1
 // CHECK:STDOUT:     %.loc148_5.2: ref @MulWith.loc146.%Result.as_type.loc145_54.1 (%Result.as_type) = temporary_storage
 // CHECK:STDOUT:     %MulWith.WithSelf.Op.call: init @MulWith.loc146.%Result.as_type.loc145_54.1 (%Result.as_type) to %.loc148_5.2 = call %bound_method.loc148_5.2(%x.ref, %y.ref)
 // CHECK:STDOUT:     %.loc148_5.3: ref @MulWith.loc146.%Result.as_type.loc145_54.1 (%Result.as_type) = temporary %.loc148_5.2, %MulWith.WithSelf.Op.call
-// CHECK:STDOUT:     %impl.elem0.loc148_5.1: @MulWith.loc146.%.loc148_5.6 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc148_5.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:     %impl.elem0.loc148_5.1: @MulWith.loc146.%.loc148_5.7 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc148_5.2 (constants.%impl.elem0.0f9)]
 // CHECK:STDOUT:     %bound_method.loc148_5.3: <bound method> = bound_method %.loc148_5.3, %impl.elem0.loc148_5.1
 // CHECK:STDOUT:     %.loc148_5.4: %Destroy.type = converted constants.%Result.as_type, constants.%Result [symbolic = %Result.loc143_9.1 (constants.%Result)]
+// CHECK:STDOUT:     %.loc148_5.5: %Destroy.type = converted constants.%Result.as_type, constants.%Result [symbolic = %Result.loc143_9.1 (constants.%Result)]
 // CHECK:STDOUT:     %specific_impl_fn.loc148_5.2: <specific function> = specific_impl_function %impl.elem0.loc148_5.1, @Destroy.WithSelf.Op(constants.%Result) [symbolic = %specific_impl_fn.loc148_5.4 (constants.%specific_impl_fn.afc)]
 // CHECK:STDOUT:     %bound_method.loc148_5.4: <bound method> = bound_method %.loc148_5.3, %specific_impl_fn.loc148_5.2
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc148_5.4(%.loc148_5.3)
@@ -1508,13 +1635,13 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.loc159: <witness> = lookup_impl_witness %T.loc156_4.1, @DivWith.1, @DivWith.1(%U.as_type.loc156_36.1) [symbolic = %DivWith.lookup_impl_witness.loc159 (constants.%DivWith.lookup_impl_witness.df2)]
 // CHECK:STDOUT:   %DivWith.facet: @DivWith.loc157.%DivWith.type.loc156_36.1 (%DivWith.type.523) = facet_value %T.as_type.loc157_29.1, (%DivWith.lookup_impl_witness.loc159) [symbolic = %DivWith.facet (constants.%DivWith.facet.ac1)]
 // CHECK:STDOUT:   %DivWith.WithSelf.Op.type: type = fn_type @DivWith.WithSelf.Op, @DivWith.WithSelf(%U.as_type.loc156_36.1, %DivWith.facet) [symbolic = %DivWith.WithSelf.Op.type (constants.%DivWith.WithSelf.Op.type.cb2)]
-// CHECK:STDOUT:   %.loc159_5.5: type = fn_type_with_self_type %DivWith.WithSelf.Op.type, %DivWith.facet [symbolic = %.loc159_5.5 (constants.%.2d3)]
-// CHECK:STDOUT:   %impl.elem1.loc159_5.2: @DivWith.loc157.%.loc159_5.5 (%.2d3) = impl_witness_access %DivWith.lookup_impl_witness.loc159, element1 [symbolic = %impl.elem1.loc159_5.2 (constants.%impl.elem1.254)]
+// CHECK:STDOUT:   %.loc159_5.6: type = fn_type_with_self_type %DivWith.WithSelf.Op.type, %DivWith.facet [symbolic = %.loc159_5.6 (constants.%.2d3)]
+// CHECK:STDOUT:   %impl.elem1.loc159_5.2: @DivWith.loc157.%.loc159_5.6 (%.2d3) = impl_witness_access %DivWith.lookup_impl_witness.loc159, element1 [symbolic = %impl.elem1.loc159_5.2 (constants.%impl.elem1.254)]
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.3: <specific function> = specific_impl_function %impl.elem1.loc159_5.2, @DivWith.WithSelf.Op(%U.as_type.loc156_36.1, %DivWith.facet) [symbolic = %specific_impl_fn.loc159_5.3 (constants.%specific_impl_fn.518)]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Result.loc154_9.1) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.d3ece9.2)]
-// CHECK:STDOUT:   %.loc159_5.6: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Result.loc154_9.1 [symbolic = %.loc159_5.6 (constants.%.53a)]
+// CHECK:STDOUT:   %.loc159_5.7: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Result.loc154_9.1 [symbolic = %.loc159_5.7 (constants.%.53a)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Result.loc154_9.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc159_5.2: @DivWith.loc157.%.loc159_5.6 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc159_5.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:   %impl.elem0.loc159_5.2: @DivWith.loc157.%.loc159_5.7 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc159_5.2 (constants.%impl.elem0.0f9)]
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.4: <specific function> = specific_impl_function %impl.elem0.loc159_5.2, @Destroy.WithSelf.Op(%Result.loc154_9.1) [symbolic = %specific_impl_fn.loc159_5.4 (constants.%specific_impl_fn.afc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%result.param: @DivWith.loc157.%Result.as_type.loc156_54.1 (%Result.as_type), %x.param: @DivWith.loc157.%T.as_type.loc157_29.1 (%T.as_type.a31), %y.param: @DivWith.loc157.%U.as_type.loc156_36.1 (%U.as_type.b61)) {
@@ -1524,16 +1651,17 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %DivWith.type.loc159: type = facet_type <@DivWith.1, @DivWith.1(constants.%U.as_type.b61)> [symbolic = %DivWith.type.loc156_36.1 (constants.%DivWith.type.523)]
 // CHECK:STDOUT:     %.loc159_5.1: @DivWith.loc157.%DivWith.assoc_type (%DivWith.assoc_type.cf4) = specific_constant imports.%Core.import_ref.ca2, @DivWith.WithSelf(constants.%U.as_type.b61, constants.%Self.16a) [symbolic = %assoc1 (constants.%assoc1.4eb)]
 // CHECK:STDOUT:     %Op.ref: @DivWith.loc157.%DivWith.assoc_type (%DivWith.assoc_type.cf4) = name_ref Op, %.loc159_5.1 [symbolic = %assoc1 (constants.%assoc1.4eb)]
-// CHECK:STDOUT:     %impl.elem1.loc159_5.1: @DivWith.loc157.%.loc159_5.5 (%.2d3) = impl_witness_access constants.%DivWith.lookup_impl_witness.df2, element1 [symbolic = %impl.elem1.loc159_5.2 (constants.%impl.elem1.254)]
+// CHECK:STDOUT:     %impl.elem1.loc159_5.1: @DivWith.loc157.%.loc159_5.6 (%.2d3) = impl_witness_access constants.%DivWith.lookup_impl_witness.df2, element1 [symbolic = %impl.elem1.loc159_5.2 (constants.%impl.elem1.254)]
 // CHECK:STDOUT:     %bound_method.loc159_5.1: <bound method> = bound_method %x.ref, %impl.elem1.loc159_5.1
 // CHECK:STDOUT:     %specific_impl_fn.loc159_5.1: <specific function> = specific_impl_function %impl.elem1.loc159_5.1, @DivWith.WithSelf.Op(constants.%U.as_type.b61, constants.%DivWith.facet.ac1) [symbolic = %specific_impl_fn.loc159_5.3 (constants.%specific_impl_fn.518)]
 // CHECK:STDOUT:     %bound_method.loc159_5.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc159_5.1
 // CHECK:STDOUT:     %.loc159_5.2: ref @DivWith.loc157.%Result.as_type.loc156_54.1 (%Result.as_type) = temporary_storage
 // CHECK:STDOUT:     %DivWith.WithSelf.Op.call: init @DivWith.loc157.%Result.as_type.loc156_54.1 (%Result.as_type) to %.loc159_5.2 = call %bound_method.loc159_5.2(%x.ref, %y.ref)
 // CHECK:STDOUT:     %.loc159_5.3: ref @DivWith.loc157.%Result.as_type.loc156_54.1 (%Result.as_type) = temporary %.loc159_5.2, %DivWith.WithSelf.Op.call
-// CHECK:STDOUT:     %impl.elem0.loc159_5.1: @DivWith.loc157.%.loc159_5.6 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc159_5.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:     %impl.elem0.loc159_5.1: @DivWith.loc157.%.loc159_5.7 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc159_5.2 (constants.%impl.elem0.0f9)]
 // CHECK:STDOUT:     %bound_method.loc159_5.3: <bound method> = bound_method %.loc159_5.3, %impl.elem0.loc159_5.1
 // CHECK:STDOUT:     %.loc159_5.4: %Destroy.type = converted constants.%Result.as_type, constants.%Result [symbolic = %Result.loc154_9.1 (constants.%Result)]
+// CHECK:STDOUT:     %.loc159_5.5: %Destroy.type = converted constants.%Result.as_type, constants.%Result [symbolic = %Result.loc154_9.1 (constants.%Result)]
 // CHECK:STDOUT:     %specific_impl_fn.loc159_5.2: <specific function> = specific_impl_function %impl.elem0.loc159_5.1, @Destroy.WithSelf.Op(constants.%Result) [symbolic = %specific_impl_fn.loc159_5.4 (constants.%specific_impl_fn.afc)]
 // CHECK:STDOUT:     %bound_method.loc159_5.4: <bound method> = bound_method %.loc159_5.3, %specific_impl_fn.loc159_5.2
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc159_5.4(%.loc159_5.3)
@@ -1551,13 +1679,13 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.loc170: <witness> = lookup_impl_witness %T.loc167_4.1, @ModWith.1, @ModWith.1(%U.as_type.loc167_36.1) [symbolic = %ModWith.lookup_impl_witness.loc170 (constants.%ModWith.lookup_impl_witness.054)]
 // CHECK:STDOUT:   %ModWith.facet: @ModWith.loc168.%ModWith.type.loc167_36.1 (%ModWith.type.937) = facet_value %T.as_type.loc168_29.1, (%ModWith.lookup_impl_witness.loc170) [symbolic = %ModWith.facet (constants.%ModWith.facet.555)]
 // CHECK:STDOUT:   %ModWith.WithSelf.Op.type: type = fn_type @ModWith.WithSelf.Op, @ModWith.WithSelf(%U.as_type.loc167_36.1, %ModWith.facet) [symbolic = %ModWith.WithSelf.Op.type (constants.%ModWith.WithSelf.Op.type.cfa)]
-// CHECK:STDOUT:   %.loc170_5.5: type = fn_type_with_self_type %ModWith.WithSelf.Op.type, %ModWith.facet [symbolic = %.loc170_5.5 (constants.%.973)]
-// CHECK:STDOUT:   %impl.elem1.loc170_5.2: @ModWith.loc168.%.loc170_5.5 (%.973) = impl_witness_access %ModWith.lookup_impl_witness.loc170, element1 [symbolic = %impl.elem1.loc170_5.2 (constants.%impl.elem1.f20)]
+// CHECK:STDOUT:   %.loc170_5.6: type = fn_type_with_self_type %ModWith.WithSelf.Op.type, %ModWith.facet [symbolic = %.loc170_5.6 (constants.%.973)]
+// CHECK:STDOUT:   %impl.elem1.loc170_5.2: @ModWith.loc168.%.loc170_5.6 (%.973) = impl_witness_access %ModWith.lookup_impl_witness.loc170, element1 [symbolic = %impl.elem1.loc170_5.2 (constants.%impl.elem1.f20)]
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.3: <specific function> = specific_impl_function %impl.elem1.loc170_5.2, @ModWith.WithSelf.Op(%U.as_type.loc167_36.1, %ModWith.facet) [symbolic = %specific_impl_fn.loc170_5.3 (constants.%specific_impl_fn.37e)]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Result.loc165_9.1) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.d3ece9.2)]
-// CHECK:STDOUT:   %.loc170_5.6: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Result.loc165_9.1 [symbolic = %.loc170_5.6 (constants.%.53a)]
+// CHECK:STDOUT:   %.loc170_5.7: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Result.loc165_9.1 [symbolic = %.loc170_5.7 (constants.%.53a)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Result.loc165_9.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc170_5.2: @ModWith.loc168.%.loc170_5.6 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc170_5.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:   %impl.elem0.loc170_5.2: @ModWith.loc168.%.loc170_5.7 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc170_5.2 (constants.%impl.elem0.0f9)]
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.4: <specific function> = specific_impl_function %impl.elem0.loc170_5.2, @Destroy.WithSelf.Op(%Result.loc165_9.1) [symbolic = %specific_impl_fn.loc170_5.4 (constants.%specific_impl_fn.afc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%result.param: @ModWith.loc168.%Result.as_type.loc167_54.1 (%Result.as_type), %x.param: @ModWith.loc168.%T.as_type.loc168_29.1 (%T.as_type.fcd), %y.param: @ModWith.loc168.%U.as_type.loc167_36.1 (%U.as_type.b61)) {
@@ -1567,16 +1695,17 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %ModWith.type.loc170: type = facet_type <@ModWith.1, @ModWith.1(constants.%U.as_type.b61)> [symbolic = %ModWith.type.loc167_36.1 (constants.%ModWith.type.937)]
 // CHECK:STDOUT:     %.loc170_5.1: @ModWith.loc168.%ModWith.assoc_type (%ModWith.assoc_type.626) = specific_constant imports.%Core.import_ref.ffe, @ModWith.WithSelf(constants.%U.as_type.b61, constants.%Self.0ef) [symbolic = %assoc1 (constants.%assoc1.6d1)]
 // CHECK:STDOUT:     %Op.ref: @ModWith.loc168.%ModWith.assoc_type (%ModWith.assoc_type.626) = name_ref Op, %.loc170_5.1 [symbolic = %assoc1 (constants.%assoc1.6d1)]
-// CHECK:STDOUT:     %impl.elem1.loc170_5.1: @ModWith.loc168.%.loc170_5.5 (%.973) = impl_witness_access constants.%ModWith.lookup_impl_witness.054, element1 [symbolic = %impl.elem1.loc170_5.2 (constants.%impl.elem1.f20)]
+// CHECK:STDOUT:     %impl.elem1.loc170_5.1: @ModWith.loc168.%.loc170_5.6 (%.973) = impl_witness_access constants.%ModWith.lookup_impl_witness.054, element1 [symbolic = %impl.elem1.loc170_5.2 (constants.%impl.elem1.f20)]
 // CHECK:STDOUT:     %bound_method.loc170_5.1: <bound method> = bound_method %x.ref, %impl.elem1.loc170_5.1
 // CHECK:STDOUT:     %specific_impl_fn.loc170_5.1: <specific function> = specific_impl_function %impl.elem1.loc170_5.1, @ModWith.WithSelf.Op(constants.%U.as_type.b61, constants.%ModWith.facet.555) [symbolic = %specific_impl_fn.loc170_5.3 (constants.%specific_impl_fn.37e)]
 // CHECK:STDOUT:     %bound_method.loc170_5.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc170_5.1
 // CHECK:STDOUT:     %.loc170_5.2: ref @ModWith.loc168.%Result.as_type.loc167_54.1 (%Result.as_type) = temporary_storage
 // CHECK:STDOUT:     %ModWith.WithSelf.Op.call: init @ModWith.loc168.%Result.as_type.loc167_54.1 (%Result.as_type) to %.loc170_5.2 = call %bound_method.loc170_5.2(%x.ref, %y.ref)
 // CHECK:STDOUT:     %.loc170_5.3: ref @ModWith.loc168.%Result.as_type.loc167_54.1 (%Result.as_type) = temporary %.loc170_5.2, %ModWith.WithSelf.Op.call
-// CHECK:STDOUT:     %impl.elem0.loc170_5.1: @ModWith.loc168.%.loc170_5.6 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc170_5.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:     %impl.elem0.loc170_5.1: @ModWith.loc168.%.loc170_5.7 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc170_5.2 (constants.%impl.elem0.0f9)]
 // CHECK:STDOUT:     %bound_method.loc170_5.3: <bound method> = bound_method %.loc170_5.3, %impl.elem0.loc170_5.1
 // CHECK:STDOUT:     %.loc170_5.4: %Destroy.type = converted constants.%Result.as_type, constants.%Result [symbolic = %Result.loc165_9.1 (constants.%Result)]
+// CHECK:STDOUT:     %.loc170_5.5: %Destroy.type = converted constants.%Result.as_type, constants.%Result [symbolic = %Result.loc165_9.1 (constants.%Result)]
 // CHECK:STDOUT:     %specific_impl_fn.loc170_5.2: <specific function> = specific_impl_function %impl.elem0.loc170_5.1, @Destroy.WithSelf.Op(constants.%Result) [symbolic = %specific_impl_fn.loc170_5.4 (constants.%specific_impl_fn.afc)]
 // CHECK:STDOUT:     %bound_method.loc170_5.4: <bound method> = bound_method %.loc170_5.3, %specific_impl_fn.loc170_5.2
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc170_5.4(%.loc170_5.3)
@@ -1740,17 +1869,18 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Inc.WithSelf.Op.type: type = fn_type @Inc.WithSelf.Op, @Inc.WithSelf(%T.loc278_13.1) [symbolic = %Inc.WithSelf.Op.type (constants.%Inc.WithSelf.Op.type.e10ef6.2)]
-// CHECK:STDOUT:   %.loc280_3.2: type = fn_type_with_self_type %Inc.WithSelf.Op.type, %T.loc278_13.1 [symbolic = %.loc280_3.2 (constants.%.a08)]
+// CHECK:STDOUT:   %.loc280_3.3: type = fn_type_with_self_type %Inc.WithSelf.Op.type, %T.loc278_13.1 [symbolic = %.loc280_3.3 (constants.%.a08)]
 // CHECK:STDOUT:   %Inc.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc278_13.1, @Inc [symbolic = %Inc.lookup_impl_witness (constants.%Inc.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc280_3.2: @TestInc.%.loc280_3.2 (%.a08) = impl_witness_access %Inc.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc280_3.2 (constants.%impl.elem0.b92)]
+// CHECK:STDOUT:   %impl.elem0.loc280_3.2: @TestInc.%.loc280_3.3 (%.a08) = impl_witness_access %Inc.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc280_3.2 (constants.%impl.elem0.b92)]
 // CHECK:STDOUT:   %specific_impl_fn.loc280_3.2: <specific function> = specific_impl_function %impl.elem0.loc280_3.2, @Inc.WithSelf.Op(%T.loc278_13.1) [symbolic = %specific_impl_fn.loc280_3.2 (constants.%specific_impl_fn.855)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: ref @TestInc.%T.as_type.loc278_33.1 (%T.as_type.232)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: ref @TestInc.%T.as_type.loc278_33.1 (%T.as_type.232) = name_ref x, %x
-// CHECK:STDOUT:     %impl.elem0.loc280_3.1: @TestInc.%.loc280_3.2 (%.a08) = impl_witness_access constants.%Inc.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc280_3.2 (constants.%impl.elem0.b92)]
+// CHECK:STDOUT:     %impl.elem0.loc280_3.1: @TestInc.%.loc280_3.3 (%.a08) = impl_witness_access constants.%Inc.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc280_3.2 (constants.%impl.elem0.b92)]
 // CHECK:STDOUT:     %bound_method.loc280_3.1: <bound method> = bound_method %x.ref, %impl.elem0.loc280_3.1
 // CHECK:STDOUT:     %.loc280_3.1: %Inc.type = converted constants.%T.as_type.232, constants.%T.8f3 [symbolic = %T.loc278_13.1 (constants.%T.8f3)]
+// CHECK:STDOUT:     %.loc280_3.2: %Inc.type = converted constants.%T.as_type.232, constants.%T.8f3 [symbolic = %T.loc278_13.1 (constants.%T.8f3)]
 // CHECK:STDOUT:     %specific_impl_fn.loc280_3.1: <specific function> = specific_impl_function %impl.elem0.loc280_3.1, @Inc.WithSelf.Op(constants.%T.8f3) [symbolic = %specific_impl_fn.loc280_3.2 (constants.%specific_impl_fn.855)]
 // CHECK:STDOUT:     %bound_method.loc280_3.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc280_3.1
 // CHECK:STDOUT:     %Inc.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc280_3.2(%x.ref)
@@ -1764,17 +1894,18 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Dec.WithSelf.Op.type: type = fn_type @Dec.WithSelf.Op, @Dec.WithSelf(%T.loc284_13.1) [symbolic = %Dec.WithSelf.Op.type (constants.%Dec.WithSelf.Op.type.bfa830.2)]
-// CHECK:STDOUT:   %.loc286_3.2: type = fn_type_with_self_type %Dec.WithSelf.Op.type, %T.loc284_13.1 [symbolic = %.loc286_3.2 (constants.%.aae)]
+// CHECK:STDOUT:   %.loc286_3.3: type = fn_type_with_self_type %Dec.WithSelf.Op.type, %T.loc284_13.1 [symbolic = %.loc286_3.3 (constants.%.aae)]
 // CHECK:STDOUT:   %Dec.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc284_13.1, @Dec [symbolic = %Dec.lookup_impl_witness (constants.%Dec.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc286_3.2: @TestDec.%.loc286_3.2 (%.aae) = impl_witness_access %Dec.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc286_3.2 (constants.%impl.elem0.950)]
+// CHECK:STDOUT:   %impl.elem0.loc286_3.2: @TestDec.%.loc286_3.3 (%.aae) = impl_witness_access %Dec.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc286_3.2 (constants.%impl.elem0.950)]
 // CHECK:STDOUT:   %specific_impl_fn.loc286_3.2: <specific function> = specific_impl_function %impl.elem0.loc286_3.2, @Dec.WithSelf.Op(%T.loc284_13.1) [symbolic = %specific_impl_fn.loc286_3.2 (constants.%specific_impl_fn.539)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: ref @TestDec.%T.as_type.loc284_33.1 (%T.as_type.c32)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: ref @TestDec.%T.as_type.loc284_33.1 (%T.as_type.c32) = name_ref x, %x
-// CHECK:STDOUT:     %impl.elem0.loc286_3.1: @TestDec.%.loc286_3.2 (%.aae) = impl_witness_access constants.%Dec.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc286_3.2 (constants.%impl.elem0.950)]
+// CHECK:STDOUT:     %impl.elem0.loc286_3.1: @TestDec.%.loc286_3.3 (%.aae) = impl_witness_access constants.%Dec.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc286_3.2 (constants.%impl.elem0.950)]
 // CHECK:STDOUT:     %bound_method.loc286_3.1: <bound method> = bound_method %x.ref, %impl.elem0.loc286_3.1
 // CHECK:STDOUT:     %.loc286_3.1: %Dec.type = converted constants.%T.as_type.c32, constants.%T.e8e [symbolic = %T.loc284_13.1 (constants.%T.e8e)]
+// CHECK:STDOUT:     %.loc286_3.2: %Dec.type = converted constants.%T.as_type.c32, constants.%T.e8e [symbolic = %T.loc284_13.1 (constants.%T.e8e)]
 // CHECK:STDOUT:     %specific_impl_fn.loc286_3.1: <specific function> = specific_impl_function %impl.elem0.loc286_3.1, @Dec.WithSelf.Op(constants.%T.e8e) [symbolic = %specific_impl_fn.loc286_3.2 (constants.%specific_impl_fn.539)]
 // CHECK:STDOUT:     %bound_method.loc286_3.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc286_3.1
 // CHECK:STDOUT:     %Dec.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc286_3.2(%x.ref)
@@ -1788,41 +1919,46 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Negate.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc293_4.1, @Negate [symbolic = %Negate.lookup_impl_witness (constants.%Negate.lookup_impl_witness.48a)]
-// CHECK:STDOUT:   %Negate.facet.loc296_3.2: %Negate.type = facet_value %T.as_type.loc294_24.1, (%Negate.lookup_impl_witness) [symbolic = %Negate.facet.loc296_3.2 (constants.%Negate.facet.f2f)]
-// CHECK:STDOUT:   %Negate.WithSelf.Op.type: type = fn_type @Negate.WithSelf.Op, @Negate.WithSelf(%Negate.facet.loc296_3.2) [symbolic = %Negate.WithSelf.Op.type (constants.%Negate.WithSelf.Op.type.803)]
-// CHECK:STDOUT:   %.loc296_3.5: type = fn_type_with_self_type %Negate.WithSelf.Op.type, %Negate.facet.loc296_3.2 [symbolic = %.loc296_3.5 (constants.%.c6c)]
-// CHECK:STDOUT:   %impl.elem1.loc296_3.2: @TestNegate.%.loc296_3.5 (%.c6c) = impl_witness_access %Negate.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc296_3.2 (constants.%impl.elem1.9a8)]
-// CHECK:STDOUT:   %specific_impl_fn.loc296_3.3: <specific function> = specific_impl_function %impl.elem1.loc296_3.2, @Negate.WithSelf.Op(%Negate.facet.loc296_3.2) [symbolic = %specific_impl_fn.loc296_3.3 (constants.%specific_impl_fn.c5a)]
+// CHECK:STDOUT:   %Negate.facet.loc296_3.3: %Negate.type = facet_value %T.as_type.loc294_24.1, (%Negate.lookup_impl_witness) [symbolic = %Negate.facet.loc296_3.3 (constants.%Negate.facet.f2f)]
+// CHECK:STDOUT:   %Negate.WithSelf.Op.type: type = fn_type @Negate.WithSelf.Op, @Negate.WithSelf(%Negate.facet.loc296_3.3) [symbolic = %Negate.WithSelf.Op.type (constants.%Negate.WithSelf.Op.type.803)]
+// CHECK:STDOUT:   %.loc296_3.7: type = fn_type_with_self_type %Negate.WithSelf.Op.type, %Negate.facet.loc296_3.3 [symbolic = %.loc296_3.7 (constants.%.c6c)]
+// CHECK:STDOUT:   %impl.elem1.loc296_3.2: @TestNegate.%.loc296_3.7 (%.c6c) = impl_witness_access %Negate.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc296_3.2 (constants.%impl.elem1.9a8)]
+// CHECK:STDOUT:   %specific_impl_fn.loc296_3.3: <specific function> = specific_impl_function %impl.elem1.loc296_3.2, @Negate.WithSelf.Op(%Negate.facet.loc296_3.3) [symbolic = %specific_impl_fn.loc296_3.3 (constants.%specific_impl_fn.c5a)]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Result.loc292_9.1) [symbolic = %Destroy.WithSelf.Op.type (constants.%Destroy.WithSelf.Op.type.d3ece9.2)]
-// CHECK:STDOUT:   %.loc296_3.6: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Result.loc292_9.1 [symbolic = %.loc296_3.6 (constants.%.53a)]
+// CHECK:STDOUT:   %.loc296_3.8: type = fn_type_with_self_type %Destroy.WithSelf.Op.type, %Result.loc292_9.1 [symbolic = %.loc296_3.8 (constants.%.53a)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Result.loc292_9.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc296_3.2: @TestNegate.%.loc296_3.6 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc296_3.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:   %impl.elem0.loc296_3.2: @TestNegate.%.loc296_3.8 (%.53a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc296_3.2 (constants.%impl.elem0.0f9)]
 // CHECK:STDOUT:   %specific_impl_fn.loc296_3.4: <specific function> = specific_impl_function %impl.elem0.loc296_3.2, @Destroy.WithSelf.Op(%Result.loc292_9.1) [symbolic = %specific_impl_fn.loc296_3.4 (constants.%specific_impl_fn.afc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%y.param: @TestNegate.%Result.as_type.loc293_50.1 (%Result.as_type), %x.param: @TestNegate.%T.as_type.loc294_24.1 (%T.as_type.a98)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @TestNegate.%T.as_type.loc294_24.1 (%T.as_type.a98) = name_ref x, %x
-// CHECK:STDOUT:     %impl.elem1.loc296_3.1: @TestNegate.%.loc296_3.5 (%.c6c) = impl_witness_access constants.%Negate.lookup_impl_witness.48a, element1 [symbolic = %impl.elem1.loc296_3.2 (constants.%impl.elem1.9a8)]
+// CHECK:STDOUT:     %impl.elem1.loc296_3.1: @TestNegate.%.loc296_3.7 (%.c6c) = impl_witness_access constants.%Negate.lookup_impl_witness.48a, element1 [symbolic = %impl.elem1.loc296_3.2 (constants.%impl.elem1.9a8)]
 // CHECK:STDOUT:     %bound_method.loc296_3.1: <bound method> = bound_method %x.ref, %impl.elem1.loc296_3.1
-// CHECK:STDOUT:     %Negate.facet.loc296_3.1: %Negate.type = facet_value constants.%T.as_type.a98, (constants.%Negate.lookup_impl_witness.48a) [symbolic = %Negate.facet.loc296_3.2 (constants.%Negate.facet.f2f)]
-// CHECK:STDOUT:     %.loc296_3.1: %Negate.type = converted constants.%T.as_type.a98, %Negate.facet.loc296_3.1 [symbolic = %Negate.facet.loc296_3.2 (constants.%Negate.facet.f2f)]
+// CHECK:STDOUT:     %Negate.facet.loc296_3.1: %Negate.type = facet_value constants.%T.as_type.a98, (constants.%Negate.lookup_impl_witness.48a) [symbolic = %Negate.facet.loc296_3.3 (constants.%Negate.facet.f2f)]
+// CHECK:STDOUT:     %.loc296_3.1: %Negate.type = converted constants.%T.as_type.a98, %Negate.facet.loc296_3.1 [symbolic = %Negate.facet.loc296_3.3 (constants.%Negate.facet.f2f)]
+// CHECK:STDOUT:     %Negate.facet.loc296_3.2: %Negate.type = facet_value constants.%T.as_type.a98, (constants.%Negate.lookup_impl_witness.48a) [symbolic = %Negate.facet.loc296_3.3 (constants.%Negate.facet.f2f)]
+// CHECK:STDOUT:     %.loc296_3.2: %Negate.type = converted constants.%T.as_type.a98, %Negate.facet.loc296_3.2 [symbolic = %Negate.facet.loc296_3.3 (constants.%Negate.facet.f2f)]
 // CHECK:STDOUT:     %specific_impl_fn.loc296_3.1: <specific function> = specific_impl_function %impl.elem1.loc296_3.1, @Negate.WithSelf.Op(constants.%Negate.facet.f2f) [symbolic = %specific_impl_fn.loc296_3.3 (constants.%specific_impl_fn.c5a)]
 // CHECK:STDOUT:     %bound_method.loc296_3.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc296_3.1
-// CHECK:STDOUT:     %.loc296_3.2: ref @TestNegate.%Result.as_type.loc293_50.1 (%Result.as_type) = temporary_storage
-// CHECK:STDOUT:     %Negate.WithSelf.Op.call: init @TestNegate.%Result.as_type.loc293_50.1 (%Result.as_type) to %.loc296_3.2 = call %bound_method.loc296_3.2(%x.ref)
-// CHECK:STDOUT:     %.loc296_3.3: ref @TestNegate.%Result.as_type.loc293_50.1 (%Result.as_type) = temporary %.loc296_3.2, %Negate.WithSelf.Op.call
-// CHECK:STDOUT:     %impl.elem0.loc296_3.1: @TestNegate.%.loc296_3.6 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc296_3.2 (constants.%impl.elem0.0f9)]
-// CHECK:STDOUT:     %bound_method.loc296_3.3: <bound method> = bound_method %.loc296_3.3, %impl.elem0.loc296_3.1
-// CHECK:STDOUT:     %.loc296_3.4: %Destroy.type = converted constants.%Result.as_type, constants.%Result [symbolic = %Result.loc292_9.1 (constants.%Result)]
+// CHECK:STDOUT:     %.loc296_3.3: ref @TestNegate.%Result.as_type.loc293_50.1 (%Result.as_type) = temporary_storage
+// CHECK:STDOUT:     %Negate.WithSelf.Op.call: init @TestNegate.%Result.as_type.loc293_50.1 (%Result.as_type) to %.loc296_3.3 = call %bound_method.loc296_3.2(%x.ref)
+// CHECK:STDOUT:     %.loc296_3.4: ref @TestNegate.%Result.as_type.loc293_50.1 (%Result.as_type) = temporary %.loc296_3.3, %Negate.WithSelf.Op.call
+// CHECK:STDOUT:     %impl.elem0.loc296_3.1: @TestNegate.%.loc296_3.8 (%.53a) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc296_3.2 (constants.%impl.elem0.0f9)]
+// CHECK:STDOUT:     %bound_method.loc296_3.3: <bound method> = bound_method %.loc296_3.4, %impl.elem0.loc296_3.1
+// CHECK:STDOUT:     %.loc296_3.5: %Destroy.type = converted constants.%Result.as_type, constants.%Result [symbolic = %Result.loc292_9.1 (constants.%Result)]
+// CHECK:STDOUT:     %.loc296_3.6: %Destroy.type = converted constants.%Result.as_type, constants.%Result [symbolic = %Result.loc292_9.1 (constants.%Result)]
 // CHECK:STDOUT:     %specific_impl_fn.loc296_3.2: <specific function> = specific_impl_function %impl.elem0.loc296_3.1, @Destroy.WithSelf.Op(constants.%Result) [symbolic = %specific_impl_fn.loc296_3.4 (constants.%specific_impl_fn.afc)]
-// CHECK:STDOUT:     %bound_method.loc296_3.4: <bound method> = bound_method %.loc296_3.3, %specific_impl_fn.loc296_3.2
-// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc296_3.4(%.loc296_3.3)
+// CHECK:STDOUT:     %bound_method.loc296_3.4: <bound method> = bound_method %.loc296_3.4, %specific_impl_fn.loc296_3.2
+// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc296_3.4(%.loc296_3.4)
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.loc124(constants.%Result, constants.%U.f40, constants.%T.200) {
+// CHECK:STDOUT:   %Result.patt.loc121_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc121_9.1 => constants.%Result
+// CHECK:STDOUT:   %U.patt.loc122_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc122_4.1 => constants.%U.f40
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%U.as_type.b61
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.9da
@@ -1836,16 +1972,25 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc123_44.1 => constants.%impl.elem0.8bb
 // CHECK:STDOUT:   %Result.as_type.loc123_54.1 => constants.%Result.as_type
 // CHECK:STDOUT:   %facet_type.loc123_38 => constants.%facet_type.096
-// CHECK:STDOUT:   %T.loc123_4.1 => constants.%T.200
 // CHECK:STDOUT:   %pattern_type.loc123 => constants.%pattern_type.3fb
+// CHECK:STDOUT:   %T.patt.loc123_4.2 => constants.%T.patt.c80
+// CHECK:STDOUT:   %T.loc123_4.1 => constants.%T.200
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.f4e485.2
+// CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.6ba
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.748373.1
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%T.as_type.606
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.82c
+// CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.4c4
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.eac
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.753
+// CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.740
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.4ae
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Result, constants.%U.f40, constants.%T.967) {
+// CHECK:STDOUT:   %Result.patt.loc132_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc132_9.1 => constants.%Result
+// CHECK:STDOUT:   %U.patt.loc133_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc133_4.1 => constants.%U.f40
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%U.as_type.b61
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.b5d
@@ -1859,16 +2004,25 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc134_44.1 => constants.%impl.elem0.0fb
 // CHECK:STDOUT:   %Result.as_type.loc134_54.1 => constants.%Result.as_type
 // CHECK:STDOUT:   %facet_type.loc134_38 => constants.%facet_type.5a5
-// CHECK:STDOUT:   %T.loc134_4.1 => constants.%T.967
 // CHECK:STDOUT:   %pattern_type.loc134 => constants.%pattern_type.156
+// CHECK:STDOUT:   %T.patt.loc134_4.2 => constants.%T.patt.53c
+// CHECK:STDOUT:   %T.loc134_4.1 => constants.%T.967
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.f4e485.2
+// CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.6ba
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.748373.1
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%T.as_type.b22
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.000
+// CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.408
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.a66
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.753
+// CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.740
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.4ae
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Result, constants.%U.f40, constants.%T.546) {
+// CHECK:STDOUT:   %Result.patt.loc143_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc143_9.1 => constants.%Result
+// CHECK:STDOUT:   %U.patt.loc144_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc144_4.1 => constants.%U.f40
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%U.as_type.b61
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.f02
@@ -1882,16 +2036,25 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc145_44.1 => constants.%impl.elem0.10f
 // CHECK:STDOUT:   %Result.as_type.loc145_54.1 => constants.%Result.as_type
 // CHECK:STDOUT:   %facet_type.loc145_38 => constants.%facet_type.c32
-// CHECK:STDOUT:   %T.loc145_4.1 => constants.%T.546
 // CHECK:STDOUT:   %pattern_type.loc145 => constants.%pattern_type.d38
+// CHECK:STDOUT:   %T.patt.loc145_4.2 => constants.%T.patt.881
+// CHECK:STDOUT:   %T.loc145_4.1 => constants.%T.546
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.f4e485.2
+// CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.6ba
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.748373.1
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%T.as_type.427
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.d10
+// CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.df8
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.32c
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.753
+// CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.740
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.4ae
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Result, constants.%U.f40, constants.%T.040) {
+// CHECK:STDOUT:   %Result.patt.loc154_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc154_9.1 => constants.%Result
+// CHECK:STDOUT:   %U.patt.loc155_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc155_4.1 => constants.%U.f40
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%U.as_type.b61
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.523
@@ -1905,16 +2068,25 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc156_44.1 => constants.%impl.elem0.df8
 // CHECK:STDOUT:   %Result.as_type.loc156_54.1 => constants.%Result.as_type
 // CHECK:STDOUT:   %facet_type.loc156_38 => constants.%facet_type.2f8
-// CHECK:STDOUT:   %T.loc156_4.1 => constants.%T.040
 // CHECK:STDOUT:   %pattern_type.loc156 => constants.%pattern_type.297
+// CHECK:STDOUT:   %T.patt.loc156_4.2 => constants.%T.patt.7ab
+// CHECK:STDOUT:   %T.loc156_4.1 => constants.%T.040
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.f4e485.2
+// CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.6ba
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.748373.1
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%T.as_type.a31
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.126
+// CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.422
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.bed
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.753
+// CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.740
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.4ae
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Result, constants.%U.f40, constants.%T.095) {
+// CHECK:STDOUT:   %Result.patt.loc165_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc165_9.1 => constants.%Result
+// CHECK:STDOUT:   %U.patt.loc166_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc166_4.1 => constants.%U.f40
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%U.as_type.b61
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.937
@@ -1928,16 +2100,25 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc167_44.1 => constants.%impl.elem0.36b
 // CHECK:STDOUT:   %Result.as_type.loc167_54.1 => constants.%Result.as_type
 // CHECK:STDOUT:   %facet_type.loc167_38 => constants.%facet_type.9a0
-// CHECK:STDOUT:   %T.loc167_4.1 => constants.%T.095
 // CHECK:STDOUT:   %pattern_type.loc167 => constants.%pattern_type.82f
+// CHECK:STDOUT:   %T.patt.loc167_4.2 => constants.%T.patt.74f
+// CHECK:STDOUT:   %T.loc167_4.1 => constants.%T.095
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.f4e485.2
+// CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.6ba
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.748373.1
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%T.as_type.fcd
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.2e7
+// CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.a0f
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.d43
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.753
+// CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.740
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.4ae
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.loc124(constants.%Destroy.facet.2cc, constants.%Destroy.facet.2cc, constants.%facet_value.b750) {
+// CHECK:STDOUT:   %Result.patt.loc121_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc121_9.1 => constants.%Destroy.facet.2cc
+// CHECK:STDOUT:   %U.patt.loc122_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc122_4.1 => constants.%Destroy.facet.2cc
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%Int16
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.b62
@@ -1951,12 +2132,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc123_44.1 => constants.%impl.elem0.7e0
 // CHECK:STDOUT:   %Result.as_type.loc123_54.1 => constants.%Int16
 // CHECK:STDOUT:   %facet_type.loc123_38 => constants.%facet_type.376
-// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.b750
 // CHECK:STDOUT:   %pattern_type.loc123 => constants.%pattern_type.48e
+// CHECK:STDOUT:   %T.patt.loc123_4.2 => constants.%T.patt.5cc
+// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.b750
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.785
+// CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.be6
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.488
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%i16
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.203
+// CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.676
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.26e
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.785
+// CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.418
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.4e6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -1967,18 +2155,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddWith.lookup_impl_witness.loc126 => constants.%custom_witness.248
 // CHECK:STDOUT:   %AddWith.facet => constants.%AddWith.facet.ff0
 // CHECK:STDOUT:   %AddWith.WithSelf.Op.type => constants.%AddWith.WithSelf.Op.type.e1f
-// CHECK:STDOUT:   %.loc126_5.5 => constants.%.2c3
+// CHECK:STDOUT:   %.loc126_5.6 => constants.%.2c3
 // CHECK:STDOUT:   %impl.elem1.loc126_5.2 => constants.%Op.72717c.1
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.3 => constants.%Op.72717c.1
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.9d5
-// CHECK:STDOUT:   %.loc126_5.6 => constants.%.6da
+// CHECK:STDOUT:   %.loc126_5.7 => constants.%.6da
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.1
 // CHECK:STDOUT:   %impl.elem0.loc126_5.2 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Destroy.facet.2cc, constants.%Destroy.facet.2cc, constants.%facet_value.9fa) {
+// CHECK:STDOUT:   %Result.patt.loc132_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc132_9.1 => constants.%Destroy.facet.2cc
+// CHECK:STDOUT:   %U.patt.loc133_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc133_4.1 => constants.%Destroy.facet.2cc
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%Int16
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.b12
@@ -1992,12 +2182,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc134_44.1 => constants.%impl.elem0.104
 // CHECK:STDOUT:   %Result.as_type.loc134_54.1 => constants.%Int16
 // CHECK:STDOUT:   %facet_type.loc134_38 => constants.%facet_type.2e5
-// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.9fa
 // CHECK:STDOUT:   %pattern_type.loc134 => constants.%pattern_type.943
+// CHECK:STDOUT:   %T.patt.loc134_4.2 => constants.%T.patt.bc1
+// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.9fa
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.785
+// CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.be6
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.488
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%i16
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.203
+// CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.676
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.26e
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.785
+// CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.418
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.4e6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -2008,18 +2205,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.loc137 => constants.%custom_witness.f14
 // CHECK:STDOUT:   %SubWith.facet => constants.%SubWith.facet.49f
 // CHECK:STDOUT:   %SubWith.WithSelf.Op.type => constants.%SubWith.WithSelf.Op.type.843
-// CHECK:STDOUT:   %.loc137_5.5 => constants.%.00a
+// CHECK:STDOUT:   %.loc137_5.6 => constants.%.00a
 // CHECK:STDOUT:   %impl.elem1.loc137_5.2 => constants.%Op.72717c.2
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.3 => constants.%Op.72717c.2
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.9d5
-// CHECK:STDOUT:   %.loc137_5.6 => constants.%.6da
+// CHECK:STDOUT:   %.loc137_5.7 => constants.%.6da
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.1
 // CHECK:STDOUT:   %impl.elem0.loc137_5.2 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Destroy.facet.2cc, constants.%Destroy.facet.2cc, constants.%facet_value.074) {
+// CHECK:STDOUT:   %Result.patt.loc143_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc143_9.1 => constants.%Destroy.facet.2cc
+// CHECK:STDOUT:   %U.patt.loc144_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc144_4.1 => constants.%Destroy.facet.2cc
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%Int16
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.c18
@@ -2033,12 +2232,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc145_44.1 => constants.%impl.elem0.472
 // CHECK:STDOUT:   %Result.as_type.loc145_54.1 => constants.%Int16
 // CHECK:STDOUT:   %facet_type.loc145_38 => constants.%facet_type.e71
-// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.074
 // CHECK:STDOUT:   %pattern_type.loc145 => constants.%pattern_type.b79
+// CHECK:STDOUT:   %T.patt.loc145_4.2 => constants.%T.patt.544
+// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.074
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.785
+// CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.be6
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.488
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%i16
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.203
+// CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.676
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.26e
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.785
+// CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.418
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.4e6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -2049,18 +2255,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.loc148 => constants.%custom_witness.6bd
 // CHECK:STDOUT:   %MulWith.facet => constants.%MulWith.facet.d6e
 // CHECK:STDOUT:   %MulWith.WithSelf.Op.type => constants.%MulWith.WithSelf.Op.type.f9f
-// CHECK:STDOUT:   %.loc148_5.5 => constants.%.0ed
+// CHECK:STDOUT:   %.loc148_5.6 => constants.%.0ed
 // CHECK:STDOUT:   %impl.elem1.loc148_5.2 => constants.%Op.72717c.3
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.3 => constants.%Op.72717c.3
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.9d5
-// CHECK:STDOUT:   %.loc148_5.6 => constants.%.6da
+// CHECK:STDOUT:   %.loc148_5.7 => constants.%.6da
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.1
 // CHECK:STDOUT:   %impl.elem0.loc148_5.2 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Destroy.facet.2cc, constants.%Destroy.facet.2cc, constants.%facet_value.c41) {
+// CHECK:STDOUT:   %Result.patt.loc154_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc154_9.1 => constants.%Destroy.facet.2cc
+// CHECK:STDOUT:   %U.patt.loc155_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc155_4.1 => constants.%Destroy.facet.2cc
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%Int16
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.6f9
@@ -2074,12 +2282,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc156_44.1 => constants.%impl.elem0.6aa
 // CHECK:STDOUT:   %Result.as_type.loc156_54.1 => constants.%Int16
 // CHECK:STDOUT:   %facet_type.loc156_38 => constants.%facet_type.84f
-// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.c41
 // CHECK:STDOUT:   %pattern_type.loc156 => constants.%pattern_type.abe
+// CHECK:STDOUT:   %T.patt.loc156_4.2 => constants.%T.patt.15c
+// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.c41
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.785
+// CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.be6
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.488
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%i16
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.203
+// CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.676
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.26e
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.785
+// CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.418
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.4e6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -2090,18 +2305,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.loc159 => constants.%custom_witness.22c
 // CHECK:STDOUT:   %DivWith.facet => constants.%DivWith.facet.437
 // CHECK:STDOUT:   %DivWith.WithSelf.Op.type => constants.%DivWith.WithSelf.Op.type.51a
-// CHECK:STDOUT:   %.loc159_5.5 => constants.%.316
+// CHECK:STDOUT:   %.loc159_5.6 => constants.%.316
 // CHECK:STDOUT:   %impl.elem1.loc159_5.2 => constants.%Op.72717c.4
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.3 => constants.%Op.72717c.4
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.9d5
-// CHECK:STDOUT:   %.loc159_5.6 => constants.%.6da
+// CHECK:STDOUT:   %.loc159_5.7 => constants.%.6da
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.1
 // CHECK:STDOUT:   %impl.elem0.loc159_5.2 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Destroy.facet.2cc, constants.%Destroy.facet.2cc, constants.%facet_value.849) {
+// CHECK:STDOUT:   %Result.patt.loc165_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc165_9.1 => constants.%Destroy.facet.2cc
+// CHECK:STDOUT:   %U.patt.loc166_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc166_4.1 => constants.%Destroy.facet.2cc
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%Int16
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.763
@@ -2115,12 +2332,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc167_44.1 => constants.%impl.elem0.dae
 // CHECK:STDOUT:   %Result.as_type.loc167_54.1 => constants.%Int16
 // CHECK:STDOUT:   %facet_type.loc167_38 => constants.%facet_type.1b7
-// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.849
 // CHECK:STDOUT:   %pattern_type.loc167 => constants.%pattern_type.45b
+// CHECK:STDOUT:   %T.patt.loc167_4.2 => constants.%T.patt.a2e
+// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.849
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.785
+// CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.be6
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.488
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%i16
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.203
+// CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.676
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.26e
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.785
+// CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.418
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.4e6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -2131,18 +2355,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.loc170 => constants.%custom_witness.9e6
 // CHECK:STDOUT:   %ModWith.facet => constants.%ModWith.facet.251
 // CHECK:STDOUT:   %ModWith.WithSelf.Op.type => constants.%ModWith.WithSelf.Op.type.62d
-// CHECK:STDOUT:   %.loc170_5.5 => constants.%.9b3
+// CHECK:STDOUT:   %.loc170_5.6 => constants.%.9b3
 // CHECK:STDOUT:   %impl.elem1.loc170_5.2 => constants.%Op.72717c.5
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.3 => constants.%Op.72717c.5
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.9d5
-// CHECK:STDOUT:   %.loc170_5.6 => constants.%.6da
+// CHECK:STDOUT:   %.loc170_5.7 => constants.%.6da
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.1
 // CHECK:STDOUT:   %impl.elem0.loc170_5.2 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.loc124(constants.%Destroy.facet.2cc, constants.%Destroy.facet.e5c, constants.%facet_value.dbc) {
+// CHECK:STDOUT:   %Result.patt.loc121_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc121_9.1 => constants.%Destroy.facet.2cc
+// CHECK:STDOUT:   %U.patt.loc122_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc122_4.1 => constants.%Destroy.facet.e5c
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%i16
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.a36
@@ -2156,12 +2382,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc123_44.1 => constants.%impl.elem0.46e
 // CHECK:STDOUT:   %Result.as_type.loc123_54.1 => constants.%Int16
 // CHECK:STDOUT:   %facet_type.loc123_38 => constants.%facet_type.3ae
-// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.dbc
 // CHECK:STDOUT:   %pattern_type.loc123 => constants.%pattern_type.9c1
+// CHECK:STDOUT:   %T.patt.loc123_4.2 => constants.%T.patt.ec4
+// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.dbc
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.785
+// CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.be6
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.488
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.3b0
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.b76
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.203
+// CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.4b4
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.dd3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -2172,18 +2405,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddWith.lookup_impl_witness.loc126 => constants.%custom_witness.b17
 // CHECK:STDOUT:   %AddWith.facet => constants.%AddWith.facet.b59
 // CHECK:STDOUT:   %AddWith.WithSelf.Op.type => constants.%AddWith.WithSelf.Op.type.de7
-// CHECK:STDOUT:   %.loc126_5.5 => constants.%.c9e
+// CHECK:STDOUT:   %.loc126_5.6 => constants.%.c9e
 // CHECK:STDOUT:   %impl.elem1.loc126_5.2 => constants.%Int16.Op.4dca31.3
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.3 => constants.%Int16.Op.4dca31.3
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.9d5
-// CHECK:STDOUT:   %.loc126_5.6 => constants.%.6da
+// CHECK:STDOUT:   %.loc126_5.7 => constants.%.6da
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.1
 // CHECK:STDOUT:   %impl.elem0.loc126_5.2 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Destroy.facet.2cc, constants.%Destroy.facet.e5c, constants.%facet_value.5c8) {
+// CHECK:STDOUT:   %Result.patt.loc132_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc132_9.1 => constants.%Destroy.facet.2cc
+// CHECK:STDOUT:   %U.patt.loc133_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc133_4.1 => constants.%Destroy.facet.e5c
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%i16
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.08b
@@ -2197,12 +2432,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc134_44.1 => constants.%impl.elem0.727
 // CHECK:STDOUT:   %Result.as_type.loc134_54.1 => constants.%Int16
 // CHECK:STDOUT:   %facet_type.loc134_38 => constants.%facet_type.a54
-// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.5c8
 // CHECK:STDOUT:   %pattern_type.loc134 => constants.%pattern_type.612
+// CHECK:STDOUT:   %T.patt.loc134_4.2 => constants.%T.patt.c74
+// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.5c8
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.785
+// CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.be6
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.488
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.3b0
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.b76
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.203
+// CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.4b4
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.dd3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -2213,18 +2455,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.loc137 => constants.%custom_witness.b07
 // CHECK:STDOUT:   %SubWith.facet => constants.%SubWith.facet.ef4
 // CHECK:STDOUT:   %SubWith.WithSelf.Op.type => constants.%SubWith.WithSelf.Op.type.723
-// CHECK:STDOUT:   %.loc137_5.5 => constants.%.6f3
+// CHECK:STDOUT:   %.loc137_5.6 => constants.%.6f3
 // CHECK:STDOUT:   %impl.elem1.loc137_5.2 => constants.%Int16.Op.4dca31.4
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.3 => constants.%Int16.Op.4dca31.4
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.9d5
-// CHECK:STDOUT:   %.loc137_5.6 => constants.%.6da
+// CHECK:STDOUT:   %.loc137_5.7 => constants.%.6da
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.1
 // CHECK:STDOUT:   %impl.elem0.loc137_5.2 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Destroy.facet.2cc, constants.%Destroy.facet.e5c, constants.%facet_value.158) {
+// CHECK:STDOUT:   %Result.patt.loc143_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc143_9.1 => constants.%Destroy.facet.2cc
+// CHECK:STDOUT:   %U.patt.loc144_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc144_4.1 => constants.%Destroy.facet.e5c
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%i16
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.55d
@@ -2238,12 +2482,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc145_44.1 => constants.%impl.elem0.192
 // CHECK:STDOUT:   %Result.as_type.loc145_54.1 => constants.%Int16
 // CHECK:STDOUT:   %facet_type.loc145_38 => constants.%facet_type.d1d
-// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.158
 // CHECK:STDOUT:   %pattern_type.loc145 => constants.%pattern_type.fc4
+// CHECK:STDOUT:   %T.patt.loc145_4.2 => constants.%T.patt.ce4
+// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.158
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.785
+// CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.be6
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.488
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.3b0
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.b76
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.203
+// CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.4b4
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.dd3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -2254,18 +2505,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.loc148 => constants.%custom_witness.8bd
 // CHECK:STDOUT:   %MulWith.facet => constants.%MulWith.facet.19a
 // CHECK:STDOUT:   %MulWith.WithSelf.Op.type => constants.%MulWith.WithSelf.Op.type.7b1
-// CHECK:STDOUT:   %.loc148_5.5 => constants.%.d82
+// CHECK:STDOUT:   %.loc148_5.6 => constants.%.d82
 // CHECK:STDOUT:   %impl.elem1.loc148_5.2 => constants.%Int16.Op.4dca31.5
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.3 => constants.%Int16.Op.4dca31.5
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.9d5
-// CHECK:STDOUT:   %.loc148_5.6 => constants.%.6da
+// CHECK:STDOUT:   %.loc148_5.7 => constants.%.6da
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.1
 // CHECK:STDOUT:   %impl.elem0.loc148_5.2 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Destroy.facet.2cc, constants.%Destroy.facet.e5c, constants.%facet_value.8dc) {
+// CHECK:STDOUT:   %Result.patt.loc154_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc154_9.1 => constants.%Destroy.facet.2cc
+// CHECK:STDOUT:   %U.patt.loc155_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc155_4.1 => constants.%Destroy.facet.e5c
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%i16
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.ab0
@@ -2279,12 +2532,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc156_44.1 => constants.%impl.elem0.7e7
 // CHECK:STDOUT:   %Result.as_type.loc156_54.1 => constants.%Int16
 // CHECK:STDOUT:   %facet_type.loc156_38 => constants.%facet_type.bdc
-// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.8dc
 // CHECK:STDOUT:   %pattern_type.loc156 => constants.%pattern_type.b62
+// CHECK:STDOUT:   %T.patt.loc156_4.2 => constants.%T.patt.596
+// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.8dc
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.785
+// CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.be6
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.488
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.3b0
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.b76
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.203
+// CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.4b4
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.dd3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -2295,18 +2555,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.loc159 => constants.%custom_witness.963
 // CHECK:STDOUT:   %DivWith.facet => constants.%DivWith.facet.115
 // CHECK:STDOUT:   %DivWith.WithSelf.Op.type => constants.%DivWith.WithSelf.Op.type.a49
-// CHECK:STDOUT:   %.loc159_5.5 => constants.%.251
+// CHECK:STDOUT:   %.loc159_5.6 => constants.%.251
 // CHECK:STDOUT:   %impl.elem1.loc159_5.2 => constants.%Int16.Op.4dca31.6
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.3 => constants.%Int16.Op.4dca31.6
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.9d5
-// CHECK:STDOUT:   %.loc159_5.6 => constants.%.6da
+// CHECK:STDOUT:   %.loc159_5.7 => constants.%.6da
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.1
 // CHECK:STDOUT:   %impl.elem0.loc159_5.2 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Destroy.facet.2cc, constants.%Destroy.facet.e5c, constants.%facet_value.8657) {
+// CHECK:STDOUT:   %Result.patt.loc165_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc165_9.1 => constants.%Destroy.facet.2cc
+// CHECK:STDOUT:   %U.patt.loc166_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc166_4.1 => constants.%Destroy.facet.e5c
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%i16
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.0b2
@@ -2320,12 +2582,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc167_44.1 => constants.%impl.elem0.4a6
 // CHECK:STDOUT:   %Result.as_type.loc167_54.1 => constants.%Int16
 // CHECK:STDOUT:   %facet_type.loc167_38 => constants.%facet_type.dde
-// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.8657
 // CHECK:STDOUT:   %pattern_type.loc167 => constants.%pattern_type.9c7
+// CHECK:STDOUT:   %T.patt.loc167_4.2 => constants.%T.patt.b55
+// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.8657
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.785
+// CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.be6
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.488
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.3b0
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.b76
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.203
+// CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.4b4
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.dd3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -2336,18 +2605,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.loc170 => constants.%custom_witness.8f4
 // CHECK:STDOUT:   %ModWith.facet => constants.%ModWith.facet.925
 // CHECK:STDOUT:   %ModWith.WithSelf.Op.type => constants.%ModWith.WithSelf.Op.type.519
-// CHECK:STDOUT:   %.loc170_5.5 => constants.%.66e2
+// CHECK:STDOUT:   %.loc170_5.6 => constants.%.66e2
 // CHECK:STDOUT:   %impl.elem1.loc170_5.2 => constants.%Int16.Op.4dca31.7
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.3 => constants.%Int16.Op.4dca31.7
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.9d5
-// CHECK:STDOUT:   %.loc170_5.6 => constants.%.6da
+// CHECK:STDOUT:   %.loc170_5.7 => constants.%.6da
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.1
 // CHECK:STDOUT:   %impl.elem0.loc170_5.2 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Int16.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.loc124(constants.%Destroy.facet.099, constants.%Destroy.facet.099, constants.%facet_value.5c0) {
+// CHECK:STDOUT:   %Result.patt.loc121_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc121_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc122_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc122_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%Int32
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.c71
@@ -2361,12 +2632,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc123_44.1 => constants.%impl.elem0.899
 // CHECK:STDOUT:   %Result.as_type.loc123_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc123_38 => constants.%facet_type.cf0
-// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.5c0
 // CHECK:STDOUT:   %pattern_type.loc123 => constants.%pattern_type.44d
+// CHECK:STDOUT:   %T.patt.loc123_4.2 => constants.%T.patt.fb1
+// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.5c0
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.3b0
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.b76
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -2377,18 +2655,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddWith.lookup_impl_witness.loc126 => constants.%custom_witness.e02e0c.1
 // CHECK:STDOUT:   %AddWith.facet => constants.%AddWith.facet.007
 // CHECK:STDOUT:   %AddWith.WithSelf.Op.type => constants.%AddWith.WithSelf.Op.type.dc4
-// CHECK:STDOUT:   %.loc126_5.5 => constants.%.dbb
+// CHECK:STDOUT:   %.loc126_5.6 => constants.%.dbb
 // CHECK:STDOUT:   %impl.elem1.loc126_5.2 => constants.%Int16.Op.4dca31.8
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.3 => constants.%Int16.Op.4dca31.8
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc126_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc126_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc126_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Destroy.facet.099, constants.%Destroy.facet.099, constants.%facet_value.a20) {
+// CHECK:STDOUT:   %Result.patt.loc132_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc132_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc133_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc133_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%Int32
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.c81
@@ -2402,12 +2682,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc134_44.1 => constants.%impl.elem0.ee1
 // CHECK:STDOUT:   %Result.as_type.loc134_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc134_38 => constants.%facet_type.0f8
-// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.a20
 // CHECK:STDOUT:   %pattern_type.loc134 => constants.%pattern_type.9624
+// CHECK:STDOUT:   %T.patt.loc134_4.2 => constants.%T.patt.bd6
+// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.a20
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.3b0
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.b76
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -2418,18 +2705,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.loc137 => constants.%custom_witness.4dea15.1
 // CHECK:STDOUT:   %SubWith.facet => constants.%SubWith.facet.703
 // CHECK:STDOUT:   %SubWith.WithSelf.Op.type => constants.%SubWith.WithSelf.Op.type.6eb
-// CHECK:STDOUT:   %.loc137_5.5 => constants.%.114
+// CHECK:STDOUT:   %.loc137_5.6 => constants.%.114
 // CHECK:STDOUT:   %impl.elem1.loc137_5.2 => constants.%Int16.Op.4dca31.9
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.3 => constants.%Int16.Op.4dca31.9
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc137_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc137_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc137_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Destroy.facet.099, constants.%Destroy.facet.099, constants.%facet_value.f68) {
+// CHECK:STDOUT:   %Result.patt.loc143_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc143_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc144_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc144_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%Int32
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.eeb
@@ -2443,12 +2732,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc145_44.1 => constants.%impl.elem0.d19
 // CHECK:STDOUT:   %Result.as_type.loc145_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc145_38 => constants.%facet_type.cf6
-// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.f68
 // CHECK:STDOUT:   %pattern_type.loc145 => constants.%pattern_type.08b
+// CHECK:STDOUT:   %T.patt.loc145_4.2 => constants.%T.patt.1f7
+// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.f68
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.3b0
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.b76
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -2459,18 +2755,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.loc148 => constants.%custom_witness.337c88.1
 // CHECK:STDOUT:   %MulWith.facet => constants.%MulWith.facet.fcd
 // CHECK:STDOUT:   %MulWith.WithSelf.Op.type => constants.%MulWith.WithSelf.Op.type.99f
-// CHECK:STDOUT:   %.loc148_5.5 => constants.%.c1c
+// CHECK:STDOUT:   %.loc148_5.6 => constants.%.c1c
 // CHECK:STDOUT:   %impl.elem1.loc148_5.2 => constants.%Int16.Op.4dca31.10
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.3 => constants.%Int16.Op.4dca31.10
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc148_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc148_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc148_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Destroy.facet.099, constants.%Destroy.facet.099, constants.%facet_value.6d0) {
+// CHECK:STDOUT:   %Result.patt.loc154_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc154_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc155_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc155_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%Int32
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.fb1
@@ -2484,12 +2782,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc156_44.1 => constants.%impl.elem0.282
 // CHECK:STDOUT:   %Result.as_type.loc156_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc156_38 => constants.%facet_type.639
-// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.6d0
 // CHECK:STDOUT:   %pattern_type.loc156 => constants.%pattern_type.379
+// CHECK:STDOUT:   %T.patt.loc156_4.2 => constants.%T.patt.2d3
+// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.6d0
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.3b0
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.b76
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -2500,18 +2805,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.loc159 => constants.%custom_witness.3eb227.1
 // CHECK:STDOUT:   %DivWith.facet => constants.%DivWith.facet.3bd
 // CHECK:STDOUT:   %DivWith.WithSelf.Op.type => constants.%DivWith.WithSelf.Op.type.500
-// CHECK:STDOUT:   %.loc159_5.5 => constants.%.ebc
+// CHECK:STDOUT:   %.loc159_5.6 => constants.%.ebc
 // CHECK:STDOUT:   %impl.elem1.loc159_5.2 => constants.%Int16.Op.4dca31.11
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.3 => constants.%Int16.Op.4dca31.11
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc159_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc159_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc159_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Destroy.facet.099, constants.%Destroy.facet.099, constants.%facet_value.72f) {
+// CHECK:STDOUT:   %Result.patt.loc165_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc165_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc166_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc166_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%Int32
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.253
@@ -2525,12 +2832,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc167_44.1 => constants.%impl.elem0.32c
 // CHECK:STDOUT:   %Result.as_type.loc167_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc167_38 => constants.%facet_type.cac
-// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.72f
 // CHECK:STDOUT:   %pattern_type.loc167 => constants.%pattern_type.e4f
+// CHECK:STDOUT:   %T.patt.loc167_4.2 => constants.%T.patt.786
+// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.72f
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.3b0
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.b76
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -2541,18 +2855,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.loc170 => constants.%custom_witness.501c6d.1
 // CHECK:STDOUT:   %ModWith.facet => constants.%ModWith.facet.a29
 // CHECK:STDOUT:   %ModWith.WithSelf.Op.type => constants.%ModWith.WithSelf.Op.type.d03
-// CHECK:STDOUT:   %.loc170_5.5 => constants.%.839
+// CHECK:STDOUT:   %.loc170_5.6 => constants.%.839
 // CHECK:STDOUT:   %impl.elem1.loc170_5.2 => constants.%Int16.Op.4dca31.12
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.3 => constants.%Int16.Op.4dca31.12
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc170_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc170_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc170_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.loc124(constants.%Destroy.facet.099, constants.%Destroy.facet.2cc, constants.%facet_value.aa2) {
+// CHECK:STDOUT:   %Result.patt.loc121_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc121_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc122_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc122_4.1 => constants.%Destroy.facet.2cc
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%Int16
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.b62
@@ -2566,12 +2882,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc123_44.1 => constants.%impl.elem0.7e0
 // CHECK:STDOUT:   %Result.as_type.loc123_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc123_38 => constants.%facet_type.2c6
-// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.aa2
 // CHECK:STDOUT:   %pattern_type.loc123 => constants.%pattern_type.96f
+// CHECK:STDOUT:   %T.patt.loc123_4.2 => constants.%T.patt.bd3
+// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.aa2
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.785
+// CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.418
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.4e6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -2582,18 +2905,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddWith.lookup_impl_witness.loc126 => constants.%custom_witness.15f
 // CHECK:STDOUT:   %AddWith.facet => constants.%AddWith.facet.35b
 // CHECK:STDOUT:   %AddWith.WithSelf.Op.type => constants.%AddWith.WithSelf.Op.type.29e
-// CHECK:STDOUT:   %.loc126_5.5 => constants.%.45e
+// CHECK:STDOUT:   %.loc126_5.6 => constants.%.45e
 // CHECK:STDOUT:   %impl.elem1.loc126_5.2 => constants.%Int32.Op.4dca31.2
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.3 => constants.%Int32.Op.4dca31.2
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc126_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc126_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc126_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Destroy.facet.099, constants.%Destroy.facet.2cc, constants.%facet_value.577) {
+// CHECK:STDOUT:   %Result.patt.loc132_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc132_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc133_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc133_4.1 => constants.%Destroy.facet.2cc
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%Int16
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.b12
@@ -2607,12 +2932,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc134_44.1 => constants.%impl.elem0.104
 // CHECK:STDOUT:   %Result.as_type.loc134_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc134_38 => constants.%facet_type.076
-// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.577
 // CHECK:STDOUT:   %pattern_type.loc134 => constants.%pattern_type.05c
+// CHECK:STDOUT:   %T.patt.loc134_4.2 => constants.%T.patt.f98
+// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.577
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.785
+// CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.418
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.4e6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -2623,18 +2955,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.loc137 => constants.%custom_witness.bb4
 // CHECK:STDOUT:   %SubWith.facet => constants.%SubWith.facet.8da
 // CHECK:STDOUT:   %SubWith.WithSelf.Op.type => constants.%SubWith.WithSelf.Op.type.85b
-// CHECK:STDOUT:   %.loc137_5.5 => constants.%.db9
+// CHECK:STDOUT:   %.loc137_5.6 => constants.%.db9
 // CHECK:STDOUT:   %impl.elem1.loc137_5.2 => constants.%Int32.Op.4dca31.3
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.3 => constants.%Int32.Op.4dca31.3
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc137_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc137_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc137_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Destroy.facet.099, constants.%Destroy.facet.2cc, constants.%facet_value.0f9) {
+// CHECK:STDOUT:   %Result.patt.loc143_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc143_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc144_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc144_4.1 => constants.%Destroy.facet.2cc
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%Int16
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.c18
@@ -2648,12 +2982,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc145_44.1 => constants.%impl.elem0.472
 // CHECK:STDOUT:   %Result.as_type.loc145_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc145_38 => constants.%facet_type.163
-// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.0f9
 // CHECK:STDOUT:   %pattern_type.loc145 => constants.%pattern_type.59d
+// CHECK:STDOUT:   %T.patt.loc145_4.2 => constants.%T.patt.e40
+// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.0f9
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.785
+// CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.418
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.4e6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -2664,18 +3005,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.loc148 => constants.%custom_witness.0ab
 // CHECK:STDOUT:   %MulWith.facet => constants.%MulWith.facet.920
 // CHECK:STDOUT:   %MulWith.WithSelf.Op.type => constants.%MulWith.WithSelf.Op.type.545
-// CHECK:STDOUT:   %.loc148_5.5 => constants.%.c5e
+// CHECK:STDOUT:   %.loc148_5.6 => constants.%.c5e
 // CHECK:STDOUT:   %impl.elem1.loc148_5.2 => constants.%Int32.Op.4dca31.4
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.3 => constants.%Int32.Op.4dca31.4
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc148_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc148_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc148_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Destroy.facet.099, constants.%Destroy.facet.2cc, constants.%facet_value.53b) {
+// CHECK:STDOUT:   %Result.patt.loc154_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc154_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc155_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc155_4.1 => constants.%Destroy.facet.2cc
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%Int16
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.6f9
@@ -2689,12 +3032,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc156_44.1 => constants.%impl.elem0.6aa
 // CHECK:STDOUT:   %Result.as_type.loc156_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc156_38 => constants.%facet_type.f1f
-// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.53b
 // CHECK:STDOUT:   %pattern_type.loc156 => constants.%pattern_type.c6c
+// CHECK:STDOUT:   %T.patt.loc156_4.2 => constants.%T.patt.361
+// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.53b
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.785
+// CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.418
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.4e6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -2705,18 +3055,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.loc159 => constants.%custom_witness.3ec
 // CHECK:STDOUT:   %DivWith.facet => constants.%DivWith.facet.c79
 // CHECK:STDOUT:   %DivWith.WithSelf.Op.type => constants.%DivWith.WithSelf.Op.type.a6b
-// CHECK:STDOUT:   %.loc159_5.5 => constants.%.558
+// CHECK:STDOUT:   %.loc159_5.6 => constants.%.558
 // CHECK:STDOUT:   %impl.elem1.loc159_5.2 => constants.%Int32.Op.4dca31.5
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.3 => constants.%Int32.Op.4dca31.5
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc159_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc159_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc159_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Destroy.facet.099, constants.%Destroy.facet.2cc, constants.%facet_value.b75a) {
+// CHECK:STDOUT:   %Result.patt.loc165_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc165_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc166_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc166_4.1 => constants.%Destroy.facet.2cc
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%Int16
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.763
@@ -2730,12 +3082,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc167_44.1 => constants.%impl.elem0.dae
 // CHECK:STDOUT:   %Result.as_type.loc167_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc167_38 => constants.%facet_type.3eb
-// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.b75a
 // CHECK:STDOUT:   %pattern_type.loc167 => constants.%pattern_type.205
+// CHECK:STDOUT:   %T.patt.loc167_4.2 => constants.%T.patt.1df
+// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.b75a
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.785
+// CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.418
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.4e6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -2746,18 +3105,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.loc170 => constants.%custom_witness.de0
 // CHECK:STDOUT:   %ModWith.facet => constants.%ModWith.facet.bef
 // CHECK:STDOUT:   %ModWith.WithSelf.Op.type => constants.%ModWith.WithSelf.Op.type.d54
-// CHECK:STDOUT:   %.loc170_5.5 => constants.%.8c0
+// CHECK:STDOUT:   %.loc170_5.6 => constants.%.8c0
 // CHECK:STDOUT:   %impl.elem1.loc170_5.2 => constants.%Int32.Op.4dca31.6
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.3 => constants.%Int32.Op.4dca31.6
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc170_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc170_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc170_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.loc124(constants.%Destroy.facet.099, constants.%Destroy.facet.099, constants.%facet_value.8ac) {
+// CHECK:STDOUT:   %Result.patt.loc121_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc121_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc122_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc122_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%Int32
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.c71
@@ -2771,12 +3132,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc123_44.1 => constants.%impl.elem0.899
 // CHECK:STDOUT:   %Result.as_type.loc123_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc123_38 => constants.%facet_type.cf0
-// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.8ac
 // CHECK:STDOUT:   %pattern_type.loc123 => constants.%pattern_type.44d
+// CHECK:STDOUT:   %T.patt.loc123_4.2 => constants.%T.patt.fb1
+// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.8ac
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -2787,18 +3155,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddWith.lookup_impl_witness.loc126 => constants.%custom_witness.e02e0c.2
 // CHECK:STDOUT:   %AddWith.facet => constants.%AddWith.facet.ee1
 // CHECK:STDOUT:   %AddWith.WithSelf.Op.type => constants.%AddWith.WithSelf.Op.type.5a5
-// CHECK:STDOUT:   %.loc126_5.5 => constants.%.dcb
+// CHECK:STDOUT:   %.loc126_5.6 => constants.%.dcb
 // CHECK:STDOUT:   %impl.elem1.loc126_5.2 => constants.%Int32.Op.4dca31.7
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.3 => constants.%Int32.Op.4dca31.7
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc126_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc126_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc126_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Destroy.facet.099, constants.%Destroy.facet.099, constants.%facet_value.e83) {
+// CHECK:STDOUT:   %Result.patt.loc132_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc132_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc133_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc133_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%Int32
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.c81
@@ -2812,12 +3182,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc134_44.1 => constants.%impl.elem0.ee1
 // CHECK:STDOUT:   %Result.as_type.loc134_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc134_38 => constants.%facet_type.0f8
-// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.e83
 // CHECK:STDOUT:   %pattern_type.loc134 => constants.%pattern_type.9624
+// CHECK:STDOUT:   %T.patt.loc134_4.2 => constants.%T.patt.bd6
+// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.e83
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -2828,18 +3205,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.loc137 => constants.%custom_witness.4dea15.2
 // CHECK:STDOUT:   %SubWith.facet => constants.%SubWith.facet.3dd
 // CHECK:STDOUT:   %SubWith.WithSelf.Op.type => constants.%SubWith.WithSelf.Op.type.ccc
-// CHECK:STDOUT:   %.loc137_5.5 => constants.%.237
+// CHECK:STDOUT:   %.loc137_5.6 => constants.%.237
 // CHECK:STDOUT:   %impl.elem1.loc137_5.2 => constants.%Int32.Op.4dca31.8
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.3 => constants.%Int32.Op.4dca31.8
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc137_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc137_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc137_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Destroy.facet.099, constants.%Destroy.facet.099, constants.%facet_value.4a1) {
+// CHECK:STDOUT:   %Result.patt.loc143_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc143_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc144_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc144_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%Int32
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.eeb
@@ -2853,12 +3232,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc145_44.1 => constants.%impl.elem0.d19
 // CHECK:STDOUT:   %Result.as_type.loc145_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc145_38 => constants.%facet_type.cf6
-// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.4a1
 // CHECK:STDOUT:   %pattern_type.loc145 => constants.%pattern_type.08b
+// CHECK:STDOUT:   %T.patt.loc145_4.2 => constants.%T.patt.1f7
+// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.4a1
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -2869,18 +3255,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.loc148 => constants.%custom_witness.337c88.2
 // CHECK:STDOUT:   %MulWith.facet => constants.%MulWith.facet.4d3
 // CHECK:STDOUT:   %MulWith.WithSelf.Op.type => constants.%MulWith.WithSelf.Op.type.843
-// CHECK:STDOUT:   %.loc148_5.5 => constants.%.8c9
+// CHECK:STDOUT:   %.loc148_5.6 => constants.%.8c9
 // CHECK:STDOUT:   %impl.elem1.loc148_5.2 => constants.%Int32.Op.4dca31.9
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.3 => constants.%Int32.Op.4dca31.9
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc148_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc148_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc148_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Destroy.facet.099, constants.%Destroy.facet.099, constants.%facet_value.0bb) {
+// CHECK:STDOUT:   %Result.patt.loc154_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc154_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc155_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc155_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%Int32
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.fb1
@@ -2894,12 +3282,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc156_44.1 => constants.%impl.elem0.282
 // CHECK:STDOUT:   %Result.as_type.loc156_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc156_38 => constants.%facet_type.639
-// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.0bb
 // CHECK:STDOUT:   %pattern_type.loc156 => constants.%pattern_type.379
+// CHECK:STDOUT:   %T.patt.loc156_4.2 => constants.%T.patt.2d3
+// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.0bb
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -2910,18 +3305,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.loc159 => constants.%custom_witness.3eb227.2
 // CHECK:STDOUT:   %DivWith.facet => constants.%DivWith.facet.4fe
 // CHECK:STDOUT:   %DivWith.WithSelf.Op.type => constants.%DivWith.WithSelf.Op.type.24e
-// CHECK:STDOUT:   %.loc159_5.5 => constants.%.450
+// CHECK:STDOUT:   %.loc159_5.6 => constants.%.450
 // CHECK:STDOUT:   %impl.elem1.loc159_5.2 => constants.%Int32.Op.4dca31.10
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.3 => constants.%Int32.Op.4dca31.10
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc159_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc159_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc159_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Destroy.facet.099, constants.%Destroy.facet.099, constants.%facet_value.081) {
+// CHECK:STDOUT:   %Result.patt.loc165_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc165_9.1 => constants.%Destroy.facet.099
+// CHECK:STDOUT:   %U.patt.loc166_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc166_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%Int32
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.253
@@ -2935,12 +3332,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc167_44.1 => constants.%impl.elem0.32c
 // CHECK:STDOUT:   %Result.as_type.loc167_54.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type.loc167_38 => constants.%facet_type.cac
-// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.081
 // CHECK:STDOUT:   %pattern_type.loc167 => constants.%pattern_type.e4f
+// CHECK:STDOUT:   %T.patt.loc167_4.2 => constants.%T.patt.786
+// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.081
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.e81
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.830
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -2951,18 +3355,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.loc170 => constants.%custom_witness.501c6d.2
 // CHECK:STDOUT:   %ModWith.facet => constants.%ModWith.facet.60c
 // CHECK:STDOUT:   %ModWith.WithSelf.Op.type => constants.%ModWith.WithSelf.Op.type.bed
-// CHECK:STDOUT:   %.loc170_5.5 => constants.%.382
+// CHECK:STDOUT:   %.loc170_5.6 => constants.%.382
 // CHECK:STDOUT:   %impl.elem1.loc170_5.2 => constants.%Int32.Op.4dca31.11
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.3 => constants.%Int32.Op.4dca31.11
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc170_5.6 => constants.%.043
+// CHECK:STDOUT:   %.loc170_5.7 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc170_5.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.loc124(constants.%Destroy.facet.191, constants.%Destroy.facet.191, constants.%facet_value.aa8) {
+// CHECK:STDOUT:   %Result.patt.loc121_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc121_9.1 => constants.%Destroy.facet.191
+// CHECK:STDOUT:   %U.patt.loc122_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc122_4.1 => constants.%Destroy.facet.191
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%Int64
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.b5b
@@ -2976,12 +3382,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc123_44.1 => constants.%impl.elem0.325
 // CHECK:STDOUT:   %Result.as_type.loc123_54.1 => constants.%Int64
 // CHECK:STDOUT:   %facet_type.loc123_38 => constants.%facet_type.466
-// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.aa8
 // CHECK:STDOUT:   %pattern_type.loc123 => constants.%pattern_type.a1a
+// CHECK:STDOUT:   %T.patt.loc123_4.2 => constants.%T.patt.7de
+// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.aa8
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.1e1
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.41f
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.a08
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.63b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -2992,18 +3405,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddWith.lookup_impl_witness.loc126 => constants.%custom_witness.68d
 // CHECK:STDOUT:   %AddWith.facet => constants.%AddWith.facet.45c
 // CHECK:STDOUT:   %AddWith.WithSelf.Op.type => constants.%AddWith.WithSelf.Op.type.6ad
-// CHECK:STDOUT:   %.loc126_5.5 => constants.%.b22
+// CHECK:STDOUT:   %.loc126_5.6 => constants.%.b22
 // CHECK:STDOUT:   %impl.elem1.loc126_5.2 => constants.%Op.72717c.6
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.3 => constants.%Op.72717c.6
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.c2c
-// CHECK:STDOUT:   %.loc126_5.6 => constants.%.c2e
+// CHECK:STDOUT:   %.loc126_5.7 => constants.%.c2e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.3
 // CHECK:STDOUT:   %impl.elem0.loc126_5.2 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Destroy.facet.191, constants.%Destroy.facet.191, constants.%facet_value.f7c) {
+// CHECK:STDOUT:   %Result.patt.loc132_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc132_9.1 => constants.%Destroy.facet.191
+// CHECK:STDOUT:   %U.patt.loc133_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc133_4.1 => constants.%Destroy.facet.191
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%Int64
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.a46
@@ -3017,12 +3432,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc134_44.1 => constants.%impl.elem0.80a
 // CHECK:STDOUT:   %Result.as_type.loc134_54.1 => constants.%Int64
 // CHECK:STDOUT:   %facet_type.loc134_38 => constants.%facet_type.b42
-// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.f7c
 // CHECK:STDOUT:   %pattern_type.loc134 => constants.%pattern_type.84a
+// CHECK:STDOUT:   %T.patt.loc134_4.2 => constants.%T.patt.726
+// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.f7c
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.1e1
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.41f
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.a08
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.63b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -3033,18 +3455,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.loc137 => constants.%custom_witness.1fa
 // CHECK:STDOUT:   %SubWith.facet => constants.%SubWith.facet.3c0
 // CHECK:STDOUT:   %SubWith.WithSelf.Op.type => constants.%SubWith.WithSelf.Op.type.bdd
-// CHECK:STDOUT:   %.loc137_5.5 => constants.%.c3d
+// CHECK:STDOUT:   %.loc137_5.6 => constants.%.c3d
 // CHECK:STDOUT:   %impl.elem1.loc137_5.2 => constants.%Op.72717c.7
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.3 => constants.%Op.72717c.7
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.c2c
-// CHECK:STDOUT:   %.loc137_5.6 => constants.%.c2e
+// CHECK:STDOUT:   %.loc137_5.7 => constants.%.c2e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.3
 // CHECK:STDOUT:   %impl.elem0.loc137_5.2 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Destroy.facet.191, constants.%Destroy.facet.191, constants.%facet_value.4d0) {
+// CHECK:STDOUT:   %Result.patt.loc143_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc143_9.1 => constants.%Destroy.facet.191
+// CHECK:STDOUT:   %U.patt.loc144_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc144_4.1 => constants.%Destroy.facet.191
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%Int64
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.76f
@@ -3058,12 +3482,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc145_44.1 => constants.%impl.elem0.aad
 // CHECK:STDOUT:   %Result.as_type.loc145_54.1 => constants.%Int64
 // CHECK:STDOUT:   %facet_type.loc145_38 => constants.%facet_type.5ef
-// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.4d0
 // CHECK:STDOUT:   %pattern_type.loc145 => constants.%pattern_type.1fe
+// CHECK:STDOUT:   %T.patt.loc145_4.2 => constants.%T.patt.cb4
+// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.4d0
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.1e1
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.41f
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.a08
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.63b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -3074,18 +3505,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.loc148 => constants.%custom_witness.99d
 // CHECK:STDOUT:   %MulWith.facet => constants.%MulWith.facet.dbd
 // CHECK:STDOUT:   %MulWith.WithSelf.Op.type => constants.%MulWith.WithSelf.Op.type.cc8
-// CHECK:STDOUT:   %.loc148_5.5 => constants.%.921
+// CHECK:STDOUT:   %.loc148_5.6 => constants.%.921
 // CHECK:STDOUT:   %impl.elem1.loc148_5.2 => constants.%Op.72717c.8
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.3 => constants.%Op.72717c.8
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.c2c
-// CHECK:STDOUT:   %.loc148_5.6 => constants.%.c2e
+// CHECK:STDOUT:   %.loc148_5.7 => constants.%.c2e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.3
 // CHECK:STDOUT:   %impl.elem0.loc148_5.2 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Destroy.facet.191, constants.%Destroy.facet.191, constants.%facet_value.7d4) {
+// CHECK:STDOUT:   %Result.patt.loc154_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc154_9.1 => constants.%Destroy.facet.191
+// CHECK:STDOUT:   %U.patt.loc155_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc155_4.1 => constants.%Destroy.facet.191
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%Int64
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.095
@@ -3099,12 +3532,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc156_44.1 => constants.%impl.elem0.a9d
 // CHECK:STDOUT:   %Result.as_type.loc156_54.1 => constants.%Int64
 // CHECK:STDOUT:   %facet_type.loc156_38 => constants.%facet_type.be3
-// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.7d4
 // CHECK:STDOUT:   %pattern_type.loc156 => constants.%pattern_type.2d9
+// CHECK:STDOUT:   %T.patt.loc156_4.2 => constants.%T.patt.219
+// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.7d4
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.1e1
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.41f
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.a08
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.63b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -3115,18 +3555,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.loc159 => constants.%custom_witness.a8f
 // CHECK:STDOUT:   %DivWith.facet => constants.%DivWith.facet.91e
 // CHECK:STDOUT:   %DivWith.WithSelf.Op.type => constants.%DivWith.WithSelf.Op.type.dd6
-// CHECK:STDOUT:   %.loc159_5.5 => constants.%.26f
+// CHECK:STDOUT:   %.loc159_5.6 => constants.%.26f
 // CHECK:STDOUT:   %impl.elem1.loc159_5.2 => constants.%Op.72717c.9
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.3 => constants.%Op.72717c.9
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.c2c
-// CHECK:STDOUT:   %.loc159_5.6 => constants.%.c2e
+// CHECK:STDOUT:   %.loc159_5.7 => constants.%.c2e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.3
 // CHECK:STDOUT:   %impl.elem0.loc159_5.2 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Destroy.facet.191, constants.%Destroy.facet.191, constants.%facet_value.774) {
+// CHECK:STDOUT:   %Result.patt.loc165_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc165_9.1 => constants.%Destroy.facet.191
+// CHECK:STDOUT:   %U.patt.loc166_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc166_4.1 => constants.%Destroy.facet.191
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%Int64
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.204
@@ -3140,12 +3582,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc167_44.1 => constants.%impl.elem0.5f0
 // CHECK:STDOUT:   %Result.as_type.loc167_54.1 => constants.%Int64
 // CHECK:STDOUT:   %facet_type.loc167_38 => constants.%facet_type.74d
-// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.774
 // CHECK:STDOUT:   %pattern_type.loc167 => constants.%pattern_type.41c
+// CHECK:STDOUT:   %T.patt.loc167_4.2 => constants.%T.patt.078
+// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.774
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.1e1
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.41f
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.a08
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.63b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -3156,18 +3605,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.loc170 => constants.%custom_witness.972
 // CHECK:STDOUT:   %ModWith.facet => constants.%ModWith.facet.c38
 // CHECK:STDOUT:   %ModWith.WithSelf.Op.type => constants.%ModWith.WithSelf.Op.type.663
-// CHECK:STDOUT:   %.loc170_5.5 => constants.%.ed0
+// CHECK:STDOUT:   %.loc170_5.6 => constants.%.ed0
 // CHECK:STDOUT:   %impl.elem1.loc170_5.2 => constants.%Op.72717c.10
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.3 => constants.%Op.72717c.10
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.c2c
-// CHECK:STDOUT:   %.loc170_5.6 => constants.%.c2e
+// CHECK:STDOUT:   %.loc170_5.7 => constants.%.c2e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.3
 // CHECK:STDOUT:   %impl.elem0.loc170_5.2 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.loc124(constants.%Destroy.facet.191, constants.%Destroy.facet.099, constants.%facet_value.7d0) {
+// CHECK:STDOUT:   %Result.patt.loc121_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc121_9.1 => constants.%Destroy.facet.191
+// CHECK:STDOUT:   %U.patt.loc122_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc122_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc123_36.1 => constants.%Int32
 // CHECK:STDOUT:   %AddWith.type.loc123_36.1 => constants.%AddWith.type.c71
@@ -3181,12 +3632,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc123_44.1 => constants.%impl.elem0.899
 // CHECK:STDOUT:   %Result.as_type.loc123_54.1 => constants.%Int64
 // CHECK:STDOUT:   %facet_type.loc123_38 => constants.%facet_type.fdd
-// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.7d0
 // CHECK:STDOUT:   %pattern_type.loc123 => constants.%pattern_type.5b4
+// CHECK:STDOUT:   %T.patt.loc123_4.2 => constants.%T.patt.688
+// CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.7d0
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.1e1
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.41f
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.e68
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.52a
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -3197,18 +3655,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddWith.lookup_impl_witness.loc126 => constants.%custom_witness.98f
 // CHECK:STDOUT:   %AddWith.facet => constants.%AddWith.facet.3de
 // CHECK:STDOUT:   %AddWith.WithSelf.Op.type => constants.%AddWith.WithSelf.Op.type.1c0
-// CHECK:STDOUT:   %.loc126_5.5 => constants.%.df7
+// CHECK:STDOUT:   %.loc126_5.6 => constants.%.df7
 // CHECK:STDOUT:   %impl.elem1.loc126_5.2 => constants.%Op.72717c.11
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.3 => constants.%Op.72717c.11
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.c2c
-// CHECK:STDOUT:   %.loc126_5.6 => constants.%.c2e
+// CHECK:STDOUT:   %.loc126_5.7 => constants.%.c2e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.3
 // CHECK:STDOUT:   %impl.elem0.loc126_5.2 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Destroy.facet.191, constants.%Destroy.facet.099, constants.%facet_value.51b) {
+// CHECK:STDOUT:   %Result.patt.loc132_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc132_9.1 => constants.%Destroy.facet.191
+// CHECK:STDOUT:   %U.patt.loc133_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc133_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc134_36.1 => constants.%Int32
 // CHECK:STDOUT:   %SubWith.type.loc134_36.1 => constants.%SubWith.type.c81
@@ -3222,12 +3682,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc134_44.1 => constants.%impl.elem0.ee1
 // CHECK:STDOUT:   %Result.as_type.loc134_54.1 => constants.%Int64
 // CHECK:STDOUT:   %facet_type.loc134_38 => constants.%facet_type.2c4
-// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.51b
 // CHECK:STDOUT:   %pattern_type.loc134 => constants.%pattern_type.515
+// CHECK:STDOUT:   %T.patt.loc134_4.2 => constants.%T.patt.080
+// CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.51b
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.1e1
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.41f
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.e68
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.52a
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -3238,18 +3705,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.loc137 => constants.%custom_witness.5c3
 // CHECK:STDOUT:   %SubWith.facet => constants.%SubWith.facet.320
 // CHECK:STDOUT:   %SubWith.WithSelf.Op.type => constants.%SubWith.WithSelf.Op.type.8fd
-// CHECK:STDOUT:   %.loc137_5.5 => constants.%.ad9
+// CHECK:STDOUT:   %.loc137_5.6 => constants.%.ad9
 // CHECK:STDOUT:   %impl.elem1.loc137_5.2 => constants.%Op.72717c.12
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.3 => constants.%Op.72717c.12
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.c2c
-// CHECK:STDOUT:   %.loc137_5.6 => constants.%.c2e
+// CHECK:STDOUT:   %.loc137_5.7 => constants.%.c2e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.3
 // CHECK:STDOUT:   %impl.elem0.loc137_5.2 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Destroy.facet.191, constants.%Destroy.facet.099, constants.%facet_value.738) {
+// CHECK:STDOUT:   %Result.patt.loc143_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc143_9.1 => constants.%Destroy.facet.191
+// CHECK:STDOUT:   %U.patt.loc144_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc144_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc145_36.1 => constants.%Int32
 // CHECK:STDOUT:   %MulWith.type.loc145_36.1 => constants.%MulWith.type.eeb
@@ -3263,12 +3732,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc145_44.1 => constants.%impl.elem0.d19
 // CHECK:STDOUT:   %Result.as_type.loc145_54.1 => constants.%Int64
 // CHECK:STDOUT:   %facet_type.loc145_38 => constants.%facet_type.99c
-// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.738
 // CHECK:STDOUT:   %pattern_type.loc145 => constants.%pattern_type.bb6
+// CHECK:STDOUT:   %T.patt.loc145_4.2 => constants.%T.patt.03e
+// CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.738
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.1e1
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.41f
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.e68
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.52a
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -3279,18 +3755,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.loc148 => constants.%custom_witness.ac0
 // CHECK:STDOUT:   %MulWith.facet => constants.%MulWith.facet.d72
 // CHECK:STDOUT:   %MulWith.WithSelf.Op.type => constants.%MulWith.WithSelf.Op.type.10e
-// CHECK:STDOUT:   %.loc148_5.5 => constants.%.be6
+// CHECK:STDOUT:   %.loc148_5.6 => constants.%.be6
 // CHECK:STDOUT:   %impl.elem1.loc148_5.2 => constants.%Op.72717c.13
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.3 => constants.%Op.72717c.13
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.c2c
-// CHECK:STDOUT:   %.loc148_5.6 => constants.%.c2e
+// CHECK:STDOUT:   %.loc148_5.7 => constants.%.c2e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.3
 // CHECK:STDOUT:   %impl.elem0.loc148_5.2 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Destroy.facet.191, constants.%Destroy.facet.099, constants.%facet_value.c2b) {
+// CHECK:STDOUT:   %Result.patt.loc154_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc154_9.1 => constants.%Destroy.facet.191
+// CHECK:STDOUT:   %U.patt.loc155_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc155_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc156_36.1 => constants.%Int32
 // CHECK:STDOUT:   %DivWith.type.loc156_36.1 => constants.%DivWith.type.fb1
@@ -3304,12 +3782,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc156_44.1 => constants.%impl.elem0.282
 // CHECK:STDOUT:   %Result.as_type.loc156_54.1 => constants.%Int64
 // CHECK:STDOUT:   %facet_type.loc156_38 => constants.%facet_type.7ce
-// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.c2b
 // CHECK:STDOUT:   %pattern_type.loc156 => constants.%pattern_type.59a
+// CHECK:STDOUT:   %T.patt.loc156_4.2 => constants.%T.patt.161
+// CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.c2b
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.1e1
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.41f
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.e68
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.52a
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -3320,18 +3805,20 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.loc159 => constants.%custom_witness.c98
 // CHECK:STDOUT:   %DivWith.facet => constants.%DivWith.facet.4d9
 // CHECK:STDOUT:   %DivWith.WithSelf.Op.type => constants.%DivWith.WithSelf.Op.type.354
-// CHECK:STDOUT:   %.loc159_5.5 => constants.%.436
+// CHECK:STDOUT:   %.loc159_5.6 => constants.%.436
 // CHECK:STDOUT:   %impl.elem1.loc159_5.2 => constants.%Op.72717c.14
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.3 => constants.%Op.72717c.14
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.c2c
-// CHECK:STDOUT:   %.loc159_5.6 => constants.%.c2e
+// CHECK:STDOUT:   %.loc159_5.7 => constants.%.c2e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.3
 // CHECK:STDOUT:   %impl.elem0.loc159_5.2 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Destroy.facet.191, constants.%Destroy.facet.099, constants.%facet_value.606) {
+// CHECK:STDOUT:   %Result.patt.loc165_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc165_9.1 => constants.%Destroy.facet.191
+// CHECK:STDOUT:   %U.patt.loc166_4.2 => constants.%U.patt.7a2
 // CHECK:STDOUT:   %U.loc166_4.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %U.as_type.loc167_36.1 => constants.%Int32
 // CHECK:STDOUT:   %ModWith.type.loc167_36.1 => constants.%ModWith.type.253
@@ -3345,12 +3832,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.loc167_44.1 => constants.%impl.elem0.32c
 // CHECK:STDOUT:   %Result.as_type.loc167_54.1 => constants.%Int64
 // CHECK:STDOUT:   %facet_type.loc167_38 => constants.%facet_type.c2e
-// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.606
 // CHECK:STDOUT:   %pattern_type.loc167 => constants.%pattern_type.af40
+// CHECK:STDOUT:   %T.patt.loc167_4.2 => constants.%T.patt.cb9
+// CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.606
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.1e1
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.41f
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.e68
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.52a
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -3361,74 +3855,110 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.loc170 => constants.%custom_witness.e66
 // CHECK:STDOUT:   %ModWith.facet => constants.%ModWith.facet.ca3
 // CHECK:STDOUT:   %ModWith.WithSelf.Op.type => constants.%ModWith.WithSelf.Op.type.dcc
-// CHECK:STDOUT:   %.loc170_5.5 => constants.%.66e6
+// CHECK:STDOUT:   %.loc170_5.6 => constants.%.66e6
 // CHECK:STDOUT:   %impl.elem1.loc170_5.2 => constants.%Op.72717c.15
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.3 => constants.%Op.72717c.15
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.c2c
-// CHECK:STDOUT:   %.loc170_5.6 => constants.%.c2e
+// CHECK:STDOUT:   %.loc170_5.7 => constants.%.c2e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.3
 // CHECK:STDOUT:   %impl.elem0.loc170_5.2 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddAssignWith.loc225(constants.%U.67d, constants.%T.792) {
+// CHECK:STDOUT:   %U.patt.loc225_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc225_19.1 => constants.%U.67d
 // CHECK:STDOUT:   %AddAssignWith.type.loc225_52.1 => constants.%AddAssignWith.type.2c8890.2
-// CHECK:STDOUT:   %T.loc225_29.1 => constants.%T.792
 // CHECK:STDOUT:   %pattern_type.loc225_29 => constants.%pattern_type.82d
+// CHECK:STDOUT:   %T.patt.loc225_29.2 => constants.%T.patt.a22
+// CHECK:STDOUT:   %T.loc225_29.1 => constants.%T.792
 // CHECK:STDOUT:   %T.as_type.loc225_62.1 => constants.%T.as_type.50c
 // CHECK:STDOUT:   %pattern_type.loc225_60 => constants.%pattern_type.643306.2
+// CHECK:STDOUT:   %x.patt.loc225_60.2 => constants.%x.patt.227
+// CHECK:STDOUT:   %x.param_patt.loc225_55.2 => constants.%x.param_patt.343
 // CHECK:STDOUT:   %pattern_type.loc225_66 => constants.%pattern_type.51d1c4.4
+// CHECK:STDOUT:   %y.param_patt.loc225_66.2 => constants.%y.param_patt.be3
+// CHECK:STDOUT:   %y.patt.loc225_66.2 => constants.%y.patt.b85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubAssignWith.loc231(constants.%U.67d, constants.%T.f6c) {
+// CHECK:STDOUT:   %U.patt.loc231_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc231_19.1 => constants.%U.67d
 // CHECK:STDOUT:   %SubAssignWith.type.loc231_52.1 => constants.%SubAssignWith.type.7e53cf.2
-// CHECK:STDOUT:   %T.loc231_29.1 => constants.%T.f6c
 // CHECK:STDOUT:   %pattern_type.loc231_29 => constants.%pattern_type.260
+// CHECK:STDOUT:   %T.patt.loc231_29.2 => constants.%T.patt.f45
+// CHECK:STDOUT:   %T.loc231_29.1 => constants.%T.f6c
 // CHECK:STDOUT:   %T.as_type.loc231_62.1 => constants.%T.as_type.3ff
 // CHECK:STDOUT:   %pattern_type.loc231_60 => constants.%pattern_type.f08ed5.2
+// CHECK:STDOUT:   %x.patt.loc231_60.2 => constants.%x.patt.95a
+// CHECK:STDOUT:   %x.param_patt.loc231_55.2 => constants.%x.param_patt.a45
 // CHECK:STDOUT:   %pattern_type.loc231_66 => constants.%pattern_type.51d1c4.4
+// CHECK:STDOUT:   %y.param_patt.loc231_66.2 => constants.%y.param_patt.be3
+// CHECK:STDOUT:   %y.patt.loc231_66.2 => constants.%y.patt.b85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulAssignWith.loc237(constants.%U.67d, constants.%T.64d) {
+// CHECK:STDOUT:   %U.patt.loc237_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc237_19.1 => constants.%U.67d
 // CHECK:STDOUT:   %MulAssignWith.type.loc237_52.1 => constants.%MulAssignWith.type.3a0e4d.2
-// CHECK:STDOUT:   %T.loc237_29.1 => constants.%T.64d
 // CHECK:STDOUT:   %pattern_type.loc237_29 => constants.%pattern_type.8c2
+// CHECK:STDOUT:   %T.patt.loc237_29.2 => constants.%T.patt.db5
+// CHECK:STDOUT:   %T.loc237_29.1 => constants.%T.64d
 // CHECK:STDOUT:   %T.as_type.loc237_62.1 => constants.%T.as_type.1de
 // CHECK:STDOUT:   %pattern_type.loc237_60 => constants.%pattern_type.8bf366.2
+// CHECK:STDOUT:   %x.patt.loc237_60.2 => constants.%x.patt.4e9
+// CHECK:STDOUT:   %x.param_patt.loc237_55.2 => constants.%x.param_patt.6c8
 // CHECK:STDOUT:   %pattern_type.loc237_66 => constants.%pattern_type.51d1c4.4
+// CHECK:STDOUT:   %y.param_patt.loc237_66.2 => constants.%y.param_patt.be3
+// CHECK:STDOUT:   %y.patt.loc237_66.2 => constants.%y.patt.b85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivAssignWith.loc243(constants.%U.67d, constants.%T.c33) {
+// CHECK:STDOUT:   %U.patt.loc243_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc243_19.1 => constants.%U.67d
 // CHECK:STDOUT:   %DivAssignWith.type.loc243_52.1 => constants.%DivAssignWith.type.7e58ca.2
-// CHECK:STDOUT:   %T.loc243_29.1 => constants.%T.c33
 // CHECK:STDOUT:   %pattern_type.loc243_29 => constants.%pattern_type.f74
+// CHECK:STDOUT:   %T.patt.loc243_29.2 => constants.%T.patt.9a5
+// CHECK:STDOUT:   %T.loc243_29.1 => constants.%T.c33
 // CHECK:STDOUT:   %T.as_type.loc243_62.1 => constants.%T.as_type.e57
 // CHECK:STDOUT:   %pattern_type.loc243_60 => constants.%pattern_type.da303b.2
+// CHECK:STDOUT:   %x.patt.loc243_60.2 => constants.%x.patt.cf6
+// CHECK:STDOUT:   %x.param_patt.loc243_55.2 => constants.%x.param_patt.660
 // CHECK:STDOUT:   %pattern_type.loc243_66 => constants.%pattern_type.51d1c4.4
+// CHECK:STDOUT:   %y.param_patt.loc243_66.2 => constants.%y.param_patt.be3
+// CHECK:STDOUT:   %y.patt.loc243_66.2 => constants.%y.patt.b85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModAssignWith.loc249(constants.%U.67d, constants.%T.bca) {
+// CHECK:STDOUT:   %U.patt.loc249_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc249_19.1 => constants.%U.67d
 // CHECK:STDOUT:   %ModAssignWith.type.loc249_52.1 => constants.%ModAssignWith.type.778d68.2
-// CHECK:STDOUT:   %T.loc249_29.1 => constants.%T.bca
 // CHECK:STDOUT:   %pattern_type.loc249_29 => constants.%pattern_type.fb8
+// CHECK:STDOUT:   %T.patt.loc249_29.2 => constants.%T.patt.c29
+// CHECK:STDOUT:   %T.loc249_29.1 => constants.%T.bca
 // CHECK:STDOUT:   %T.as_type.loc249_62.1 => constants.%T.as_type.ce6
 // CHECK:STDOUT:   %pattern_type.loc249_60 => constants.%pattern_type.1d5f30.2
+// CHECK:STDOUT:   %x.patt.loc249_60.2 => constants.%x.patt.fa4
+// CHECK:STDOUT:   %x.param_patt.loc249_55.2 => constants.%x.param_patt.749
 // CHECK:STDOUT:   %pattern_type.loc249_66 => constants.%pattern_type.51d1c4.4
+// CHECK:STDOUT:   %y.param_patt.loc249_66.2 => constants.%y.param_patt.be3
+// CHECK:STDOUT:   %y.patt.loc249_66.2 => constants.%y.patt.b85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddAssignWith.loc225(constants.%i16, constants.%AddAssignWith.facet.e34) {
+// CHECK:STDOUT:   %U.patt.loc225_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc225_19.1 => constants.%i16
 // CHECK:STDOUT:   %AddAssignWith.type.loc225_52.1 => constants.%AddAssignWith.type.2a0
-// CHECK:STDOUT:   %T.loc225_29.1 => constants.%AddAssignWith.facet.e34
 // CHECK:STDOUT:   %pattern_type.loc225_29 => constants.%pattern_type.b256
+// CHECK:STDOUT:   %T.patt.loc225_29.2 => constants.%T.patt.d2a
+// CHECK:STDOUT:   %T.loc225_29.1 => constants.%AddAssignWith.facet.e34
 // CHECK:STDOUT:   %T.as_type.loc225_62.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc225_60 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.patt.loc225_60.2 => constants.%x.patt.49e
+// CHECK:STDOUT:   %x.param_patt.loc225_55.2 => constants.%x.param_patt.69a
 // CHECK:STDOUT:   %pattern_type.loc225_66 => constants.%pattern_type.203
+// CHECK:STDOUT:   %y.param_patt.loc225_66.2 => constants.%y.param_patt.4b4
+// CHECK:STDOUT:   %y.patt.loc225_66.2 => constants.%y.patt.dd3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc225_55 => constants.%complete_type.357
@@ -3444,13 +3974,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubAssignWith.loc231(constants.%i16, constants.%SubAssignWith.facet.a52) {
+// CHECK:STDOUT:   %U.patt.loc231_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc231_19.1 => constants.%i16
 // CHECK:STDOUT:   %SubAssignWith.type.loc231_52.1 => constants.%SubAssignWith.type.e8b
-// CHECK:STDOUT:   %T.loc231_29.1 => constants.%SubAssignWith.facet.a52
 // CHECK:STDOUT:   %pattern_type.loc231_29 => constants.%pattern_type.c22
+// CHECK:STDOUT:   %T.patt.loc231_29.2 => constants.%T.patt.0f1
+// CHECK:STDOUT:   %T.loc231_29.1 => constants.%SubAssignWith.facet.a52
 // CHECK:STDOUT:   %T.as_type.loc231_62.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc231_60 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.patt.loc231_60.2 => constants.%x.patt.49e
+// CHECK:STDOUT:   %x.param_patt.loc231_55.2 => constants.%x.param_patt.69a
 // CHECK:STDOUT:   %pattern_type.loc231_66 => constants.%pattern_type.203
+// CHECK:STDOUT:   %y.param_patt.loc231_66.2 => constants.%y.param_patt.4b4
+// CHECK:STDOUT:   %y.patt.loc231_66.2 => constants.%y.patt.dd3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc231_55 => constants.%complete_type.357
@@ -3466,13 +4002,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulAssignWith.loc237(constants.%i16, constants.%MulAssignWith.facet.201) {
+// CHECK:STDOUT:   %U.patt.loc237_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc237_19.1 => constants.%i16
 // CHECK:STDOUT:   %MulAssignWith.type.loc237_52.1 => constants.%MulAssignWith.type.7d4
-// CHECK:STDOUT:   %T.loc237_29.1 => constants.%MulAssignWith.facet.201
 // CHECK:STDOUT:   %pattern_type.loc237_29 => constants.%pattern_type.a24
+// CHECK:STDOUT:   %T.patt.loc237_29.2 => constants.%T.patt.f71
+// CHECK:STDOUT:   %T.loc237_29.1 => constants.%MulAssignWith.facet.201
 // CHECK:STDOUT:   %T.as_type.loc237_62.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc237_60 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.patt.loc237_60.2 => constants.%x.patt.49e
+// CHECK:STDOUT:   %x.param_patt.loc237_55.2 => constants.%x.param_patt.69a
 // CHECK:STDOUT:   %pattern_type.loc237_66 => constants.%pattern_type.203
+// CHECK:STDOUT:   %y.param_patt.loc237_66.2 => constants.%y.param_patt.4b4
+// CHECK:STDOUT:   %y.patt.loc237_66.2 => constants.%y.patt.dd3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc237_55 => constants.%complete_type.357
@@ -3488,13 +4030,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivAssignWith.loc243(constants.%i16, constants.%DivAssignWith.facet.a72) {
+// CHECK:STDOUT:   %U.patt.loc243_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc243_19.1 => constants.%i16
 // CHECK:STDOUT:   %DivAssignWith.type.loc243_52.1 => constants.%DivAssignWith.type.081
-// CHECK:STDOUT:   %T.loc243_29.1 => constants.%DivAssignWith.facet.a72
 // CHECK:STDOUT:   %pattern_type.loc243_29 => constants.%pattern_type.c97
+// CHECK:STDOUT:   %T.patt.loc243_29.2 => constants.%T.patt.35e
+// CHECK:STDOUT:   %T.loc243_29.1 => constants.%DivAssignWith.facet.a72
 // CHECK:STDOUT:   %T.as_type.loc243_62.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc243_60 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.patt.loc243_60.2 => constants.%x.patt.49e
+// CHECK:STDOUT:   %x.param_patt.loc243_55.2 => constants.%x.param_patt.69a
 // CHECK:STDOUT:   %pattern_type.loc243_66 => constants.%pattern_type.203
+// CHECK:STDOUT:   %y.param_patt.loc243_66.2 => constants.%y.param_patt.4b4
+// CHECK:STDOUT:   %y.patt.loc243_66.2 => constants.%y.patt.dd3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc243_55 => constants.%complete_type.357
@@ -3510,13 +4058,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModAssignWith.loc249(constants.%i16, constants.%ModAssignWith.facet.4a2) {
+// CHECK:STDOUT:   %U.patt.loc249_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc249_19.1 => constants.%i16
 // CHECK:STDOUT:   %ModAssignWith.type.loc249_52.1 => constants.%ModAssignWith.type.1ea
-// CHECK:STDOUT:   %T.loc249_29.1 => constants.%ModAssignWith.facet.4a2
 // CHECK:STDOUT:   %pattern_type.loc249_29 => constants.%pattern_type.6ef
+// CHECK:STDOUT:   %T.patt.loc249_29.2 => constants.%T.patt.dbe
+// CHECK:STDOUT:   %T.loc249_29.1 => constants.%ModAssignWith.facet.4a2
 // CHECK:STDOUT:   %T.as_type.loc249_62.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc249_60 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.patt.loc249_60.2 => constants.%x.patt.49e
+// CHECK:STDOUT:   %x.param_patt.loc249_55.2 => constants.%x.param_patt.69a
 // CHECK:STDOUT:   %pattern_type.loc249_66 => constants.%pattern_type.203
+// CHECK:STDOUT:   %y.param_patt.loc249_66.2 => constants.%y.param_patt.4b4
+// CHECK:STDOUT:   %y.patt.loc249_66.2 => constants.%y.patt.dd3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc249_55 => constants.%complete_type.357
@@ -3532,13 +4086,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddAssignWith.loc225(constants.%Int32, constants.%AddAssignWith.facet.348) {
+// CHECK:STDOUT:   %U.patt.loc225_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc225_19.1 => constants.%Int32
 // CHECK:STDOUT:   %AddAssignWith.type.loc225_52.1 => constants.%AddAssignWith.type.23a
-// CHECK:STDOUT:   %T.loc225_29.1 => constants.%AddAssignWith.facet.348
 // CHECK:STDOUT:   %pattern_type.loc225_29 => constants.%pattern_type.5ad
+// CHECK:STDOUT:   %T.patt.loc225_29.2 => constants.%T.patt.96c
+// CHECK:STDOUT:   %T.loc225_29.1 => constants.%AddAssignWith.facet.348
 // CHECK:STDOUT:   %T.as_type.loc225_62.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc225_60 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.patt.loc225_60.2 => constants.%x.patt.d79
+// CHECK:STDOUT:   %x.param_patt.loc225_55.2 => constants.%x.param_patt.0c7
 // CHECK:STDOUT:   %pattern_type.loc225_66 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc225_66.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc225_66.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc225_55 => constants.%complete_type.357
@@ -3554,13 +4114,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubAssignWith.loc231(constants.%Int32, constants.%SubAssignWith.facet.e0e) {
+// CHECK:STDOUT:   %U.patt.loc231_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc231_19.1 => constants.%Int32
 // CHECK:STDOUT:   %SubAssignWith.type.loc231_52.1 => constants.%SubAssignWith.type.4fc
-// CHECK:STDOUT:   %T.loc231_29.1 => constants.%SubAssignWith.facet.e0e
 // CHECK:STDOUT:   %pattern_type.loc231_29 => constants.%pattern_type.190
+// CHECK:STDOUT:   %T.patt.loc231_29.2 => constants.%T.patt.a39
+// CHECK:STDOUT:   %T.loc231_29.1 => constants.%SubAssignWith.facet.e0e
 // CHECK:STDOUT:   %T.as_type.loc231_62.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc231_60 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.patt.loc231_60.2 => constants.%x.patt.d79
+// CHECK:STDOUT:   %x.param_patt.loc231_55.2 => constants.%x.param_patt.0c7
 // CHECK:STDOUT:   %pattern_type.loc231_66 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc231_66.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc231_66.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc231_55 => constants.%complete_type.357
@@ -3576,13 +4142,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulAssignWith.loc237(constants.%Int32, constants.%MulAssignWith.facet.13c) {
+// CHECK:STDOUT:   %U.patt.loc237_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc237_19.1 => constants.%Int32
 // CHECK:STDOUT:   %MulAssignWith.type.loc237_52.1 => constants.%MulAssignWith.type.5fb
-// CHECK:STDOUT:   %T.loc237_29.1 => constants.%MulAssignWith.facet.13c
 // CHECK:STDOUT:   %pattern_type.loc237_29 => constants.%pattern_type.f3b
+// CHECK:STDOUT:   %T.patt.loc237_29.2 => constants.%T.patt.f66
+// CHECK:STDOUT:   %T.loc237_29.1 => constants.%MulAssignWith.facet.13c
 // CHECK:STDOUT:   %T.as_type.loc237_62.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc237_60 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.patt.loc237_60.2 => constants.%x.patt.d79
+// CHECK:STDOUT:   %x.param_patt.loc237_55.2 => constants.%x.param_patt.0c7
 // CHECK:STDOUT:   %pattern_type.loc237_66 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc237_66.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc237_66.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc237_55 => constants.%complete_type.357
@@ -3598,13 +4170,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivAssignWith.loc243(constants.%Int32, constants.%DivAssignWith.facet.e59) {
+// CHECK:STDOUT:   %U.patt.loc243_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc243_19.1 => constants.%Int32
 // CHECK:STDOUT:   %DivAssignWith.type.loc243_52.1 => constants.%DivAssignWith.type.3ea
-// CHECK:STDOUT:   %T.loc243_29.1 => constants.%DivAssignWith.facet.e59
 // CHECK:STDOUT:   %pattern_type.loc243_29 => constants.%pattern_type.8f3
+// CHECK:STDOUT:   %T.patt.loc243_29.2 => constants.%T.patt.316
+// CHECK:STDOUT:   %T.loc243_29.1 => constants.%DivAssignWith.facet.e59
 // CHECK:STDOUT:   %T.as_type.loc243_62.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc243_60 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.patt.loc243_60.2 => constants.%x.patt.d79
+// CHECK:STDOUT:   %x.param_patt.loc243_55.2 => constants.%x.param_patt.0c7
 // CHECK:STDOUT:   %pattern_type.loc243_66 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc243_66.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc243_66.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc243_55 => constants.%complete_type.357
@@ -3620,13 +4198,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModAssignWith.loc249(constants.%Int32, constants.%ModAssignWith.facet.dac) {
+// CHECK:STDOUT:   %U.patt.loc249_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc249_19.1 => constants.%Int32
 // CHECK:STDOUT:   %ModAssignWith.type.loc249_52.1 => constants.%ModAssignWith.type.567
-// CHECK:STDOUT:   %T.loc249_29.1 => constants.%ModAssignWith.facet.dac
 // CHECK:STDOUT:   %pattern_type.loc249_29 => constants.%pattern_type.9ff
+// CHECK:STDOUT:   %T.patt.loc249_29.2 => constants.%T.patt.6f1
+// CHECK:STDOUT:   %T.loc249_29.1 => constants.%ModAssignWith.facet.dac
 // CHECK:STDOUT:   %T.as_type.loc249_62.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc249_60 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.patt.loc249_60.2 => constants.%x.patt.d79
+// CHECK:STDOUT:   %x.param_patt.loc249_55.2 => constants.%x.param_patt.0c7
 // CHECK:STDOUT:   %pattern_type.loc249_66 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc249_66.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc249_66.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc249_55 => constants.%complete_type.357
@@ -3642,13 +4226,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddAssignWith.loc225(constants.%Int32, constants.%AddAssignWith.facet.144) {
+// CHECK:STDOUT:   %U.patt.loc225_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc225_19.1 => constants.%Int32
 // CHECK:STDOUT:   %AddAssignWith.type.loc225_52.1 => constants.%AddAssignWith.type.23a
-// CHECK:STDOUT:   %T.loc225_29.1 => constants.%AddAssignWith.facet.144
 // CHECK:STDOUT:   %pattern_type.loc225_29 => constants.%pattern_type.5ad
+// CHECK:STDOUT:   %T.patt.loc225_29.2 => constants.%T.patt.96c
+// CHECK:STDOUT:   %T.loc225_29.1 => constants.%AddAssignWith.facet.144
 // CHECK:STDOUT:   %T.as_type.loc225_62.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc225_60 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %x.patt.loc225_60.2 => constants.%x.patt.ace
+// CHECK:STDOUT:   %x.param_patt.loc225_55.2 => constants.%x.param_patt.b33
 // CHECK:STDOUT:   %pattern_type.loc225_66 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc225_66.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc225_66.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc225_55 => constants.%complete_type.357
@@ -3664,13 +4254,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubAssignWith.loc231(constants.%Int32, constants.%SubAssignWith.facet.a7e) {
+// CHECK:STDOUT:   %U.patt.loc231_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc231_19.1 => constants.%Int32
 // CHECK:STDOUT:   %SubAssignWith.type.loc231_52.1 => constants.%SubAssignWith.type.4fc
-// CHECK:STDOUT:   %T.loc231_29.1 => constants.%SubAssignWith.facet.a7e
 // CHECK:STDOUT:   %pattern_type.loc231_29 => constants.%pattern_type.190
+// CHECK:STDOUT:   %T.patt.loc231_29.2 => constants.%T.patt.a39
+// CHECK:STDOUT:   %T.loc231_29.1 => constants.%SubAssignWith.facet.a7e
 // CHECK:STDOUT:   %T.as_type.loc231_62.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc231_60 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %x.patt.loc231_60.2 => constants.%x.patt.ace
+// CHECK:STDOUT:   %x.param_patt.loc231_55.2 => constants.%x.param_patt.b33
 // CHECK:STDOUT:   %pattern_type.loc231_66 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc231_66.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc231_66.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc231_55 => constants.%complete_type.357
@@ -3686,13 +4282,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulAssignWith.loc237(constants.%Int32, constants.%MulAssignWith.facet.b35) {
+// CHECK:STDOUT:   %U.patt.loc237_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc237_19.1 => constants.%Int32
 // CHECK:STDOUT:   %MulAssignWith.type.loc237_52.1 => constants.%MulAssignWith.type.5fb
-// CHECK:STDOUT:   %T.loc237_29.1 => constants.%MulAssignWith.facet.b35
 // CHECK:STDOUT:   %pattern_type.loc237_29 => constants.%pattern_type.f3b
+// CHECK:STDOUT:   %T.patt.loc237_29.2 => constants.%T.patt.f66
+// CHECK:STDOUT:   %T.loc237_29.1 => constants.%MulAssignWith.facet.b35
 // CHECK:STDOUT:   %T.as_type.loc237_62.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc237_60 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %x.patt.loc237_60.2 => constants.%x.patt.ace
+// CHECK:STDOUT:   %x.param_patt.loc237_55.2 => constants.%x.param_patt.b33
 // CHECK:STDOUT:   %pattern_type.loc237_66 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc237_66.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc237_66.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc237_55 => constants.%complete_type.357
@@ -3708,13 +4310,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivAssignWith.loc243(constants.%Int32, constants.%DivAssignWith.facet.b1e) {
+// CHECK:STDOUT:   %U.patt.loc243_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc243_19.1 => constants.%Int32
 // CHECK:STDOUT:   %DivAssignWith.type.loc243_52.1 => constants.%DivAssignWith.type.3ea
-// CHECK:STDOUT:   %T.loc243_29.1 => constants.%DivAssignWith.facet.b1e
 // CHECK:STDOUT:   %pattern_type.loc243_29 => constants.%pattern_type.8f3
+// CHECK:STDOUT:   %T.patt.loc243_29.2 => constants.%T.patt.316
+// CHECK:STDOUT:   %T.loc243_29.1 => constants.%DivAssignWith.facet.b1e
 // CHECK:STDOUT:   %T.as_type.loc243_62.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc243_60 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %x.patt.loc243_60.2 => constants.%x.patt.ace
+// CHECK:STDOUT:   %x.param_patt.loc243_55.2 => constants.%x.param_patt.b33
 // CHECK:STDOUT:   %pattern_type.loc243_66 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc243_66.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc243_66.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc243_55 => constants.%complete_type.357
@@ -3730,13 +4338,19 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModAssignWith.loc249(constants.%Int32, constants.%ModAssignWith.facet.342) {
+// CHECK:STDOUT:   %U.patt.loc249_19.2 => constants.%U.patt.d47
 // CHECK:STDOUT:   %U.loc249_19.1 => constants.%Int32
 // CHECK:STDOUT:   %ModAssignWith.type.loc249_52.1 => constants.%ModAssignWith.type.567
-// CHECK:STDOUT:   %T.loc249_29.1 => constants.%ModAssignWith.facet.342
 // CHECK:STDOUT:   %pattern_type.loc249_29 => constants.%pattern_type.9ff
+// CHECK:STDOUT:   %T.patt.loc249_29.2 => constants.%T.patt.6f1
+// CHECK:STDOUT:   %T.loc249_29.1 => constants.%ModAssignWith.facet.342
 // CHECK:STDOUT:   %T.as_type.loc249_62.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc249_60 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %x.patt.loc249_60.2 => constants.%x.patt.ace
+// CHECK:STDOUT:   %x.param_patt.loc249_55.2 => constants.%x.param_patt.b33
 // CHECK:STDOUT:   %pattern_type.loc249_66 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc249_66.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc249_66.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc249_55 => constants.%complete_type.357
@@ -3752,103 +4366,133 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestInc(constants.%T.8f3) {
+// CHECK:STDOUT:   %T.patt.loc278_13.2 => constants.%T.patt.eab
 // CHECK:STDOUT:   %T.loc278_13.1 => constants.%T.8f3
 // CHECK:STDOUT:   %T.as_type.loc278_33.1 => constants.%T.as_type.232
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.427bfc.2
+// CHECK:STDOUT:   %x.patt.loc278_31.2 => constants.%x.patt.a75
+// CHECK:STDOUT:   %x.param_patt.loc278_26.2 => constants.%x.param_patt.5da
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestDec(constants.%T.e8e) {
+// CHECK:STDOUT:   %T.patt.loc284_13.2 => constants.%T.patt.de9
 // CHECK:STDOUT:   %T.loc284_13.1 => constants.%T.e8e
 // CHECK:STDOUT:   %T.as_type.loc284_33.1 => constants.%T.as_type.c32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2754f0.2
+// CHECK:STDOUT:   %x.patt.loc284_31.2 => constants.%x.patt.08b
+// CHECK:STDOUT:   %x.param_patt.loc284_26.2 => constants.%x.param_patt.678
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestNegate(constants.%Result, constants.%T.a9d) {
+// CHECK:STDOUT:   %Result.patt.loc292_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc292_9.1 => constants.%Result
 // CHECK:STDOUT:   %Result.as_type.loc293_50.1 => constants.%Result.as_type
 // CHECK:STDOUT:   %facet_type => constants.%facet_type.b1d
-// CHECK:STDOUT:   %T.loc293_4.1 => constants.%T.a9d
 // CHECK:STDOUT:   %pattern_type.loc293 => constants.%pattern_type.540
+// CHECK:STDOUT:   %T.patt.loc293_4.2 => constants.%T.patt.e96
+// CHECK:STDOUT:   %T.loc293_4.1 => constants.%T.a9d
 // CHECK:STDOUT:   %pattern_type.loc294_11 => constants.%pattern_type.f4e485.2
+// CHECK:STDOUT:   %y.param_patt.loc294_11.2 => constants.%y.param_patt.023
+// CHECK:STDOUT:   %y.patt.loc294_11.2 => constants.%y.patt.053
 // CHECK:STDOUT:   %T.as_type.loc294_24.1 => constants.%T.as_type.a98
 // CHECK:STDOUT:   %pattern_type.loc294_22 => constants.%pattern_type.962a
+// CHECK:STDOUT:   %x.param_patt.loc294_22.2 => constants.%x.param_patt.4f4
+// CHECK:STDOUT:   %x.patt.loc294_22.2 => constants.%x.patt.31e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestInc(constants.%Inc.facet.dd2) {
+// CHECK:STDOUT:   %T.patt.loc278_13.2 => constants.%T.patt.eab
 // CHECK:STDOUT:   %T.loc278_13.1 => constants.%Inc.facet.dd2
 // CHECK:STDOUT:   %T.as_type.loc278_33.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.patt.loc278_31.2 => constants.%x.patt.d79
+// CHECK:STDOUT:   %x.param_patt.loc278_26.2 => constants.%x.param_patt.0c7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.357
 // CHECK:STDOUT:   %Inc.WithSelf.Op.type => constants.%Inc.WithSelf.Op.type.d1d
-// CHECK:STDOUT:   %.loc280_3.2 => constants.%.176
+// CHECK:STDOUT:   %.loc280_3.3 => constants.%.176
 // CHECK:STDOUT:   %Inc.lookup_impl_witness => constants.%custom_witness.f3f
 // CHECK:STDOUT:   %impl.elem0.loc280_3.2 => constants.%Int32.Op.4dca31.18
 // CHECK:STDOUT:   %specific_impl_fn.loc280_3.2 => constants.%Int32.Op.4dca31.18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestDec(constants.%Dec.facet.e1b) {
+// CHECK:STDOUT:   %T.patt.loc284_13.2 => constants.%T.patt.de9
 // CHECK:STDOUT:   %T.loc284_13.1 => constants.%Dec.facet.e1b
 // CHECK:STDOUT:   %T.as_type.loc284_33.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.patt.loc284_31.2 => constants.%x.patt.d79
+// CHECK:STDOUT:   %x.param_patt.loc284_26.2 => constants.%x.param_patt.0c7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.357
 // CHECK:STDOUT:   %Dec.WithSelf.Op.type => constants.%Dec.WithSelf.Op.type.e55
-// CHECK:STDOUT:   %.loc286_3.2 => constants.%.d09
+// CHECK:STDOUT:   %.loc286_3.3 => constants.%.d09
 // CHECK:STDOUT:   %Dec.lookup_impl_witness => constants.%custom_witness.b24
 // CHECK:STDOUT:   %impl.elem0.loc286_3.2 => constants.%Int32.Op.4dca31.19
 // CHECK:STDOUT:   %specific_impl_fn.loc286_3.2 => constants.%Int32.Op.4dca31.19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestNegate(constants.%Destroy.facet.191, constants.%facet_value.750) {
+// CHECK:STDOUT:   %Result.patt.loc292_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc292_9.1 => constants.%Destroy.facet.191
 // CHECK:STDOUT:   %Result.as_type.loc293_50.1 => constants.%Int64
 // CHECK:STDOUT:   %facet_type => constants.%facet_type.76b
-// CHECK:STDOUT:   %T.loc293_4.1 => constants.%facet_value.750
 // CHECK:STDOUT:   %pattern_type.loc293 => constants.%pattern_type.61c
+// CHECK:STDOUT:   %T.patt.loc293_4.2 => constants.%T.patt.fd6
+// CHECK:STDOUT:   %T.loc293_4.1 => constants.%facet_value.750
 // CHECK:STDOUT:   %pattern_type.loc294_11 => constants.%pattern_type.4aa
+// CHECK:STDOUT:   %y.param_patt.loc294_11.2 => constants.%y.param_patt.a08
+// CHECK:STDOUT:   %y.patt.loc294_11.2 => constants.%y.patt.63b
 // CHECK:STDOUT:   %T.as_type.loc294_24.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc294_22 => constants.%pattern_type.785
+// CHECK:STDOUT:   %x.param_patt.loc294_22.2 => constants.%x.param_patt.3b0
+// CHECK:STDOUT:   %x.patt.loc294_22.2 => constants.%x.patt.b76
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc294_11 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc294_22 => constants.%complete_type.357
 // CHECK:STDOUT:   %Negate.lookup_impl_witness => constants.%custom_witness.100
-// CHECK:STDOUT:   %Negate.facet.loc296_3.2 => constants.%Negate.facet.8f4
+// CHECK:STDOUT:   %Negate.facet.loc296_3.3 => constants.%Negate.facet.8f4
 // CHECK:STDOUT:   %Negate.WithSelf.Op.type => constants.%Negate.WithSelf.Op.type.181
-// CHECK:STDOUT:   %.loc296_3.5 => constants.%.66a
+// CHECK:STDOUT:   %.loc296_3.7 => constants.%.66a
 // CHECK:STDOUT:   %impl.elem1.loc296_3.2 => constants.%Int16.Op.4dca31.18
 // CHECK:STDOUT:   %specific_impl_fn.loc296_3.3 => constants.%Int16.Op.4dca31.18
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.c2c
-// CHECK:STDOUT:   %.loc296_3.6 => constants.%.c2e
+// CHECK:STDOUT:   %.loc296_3.8 => constants.%.c2e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.3
 // CHECK:STDOUT:   %impl.elem0.loc296_3.2 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc296_3.4 => constants.%Int64.Op.4dca31.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestNegate(constants.%Destroy.facet.099, constants.%facet_value.42d) {
+// CHECK:STDOUT:   %Result.patt.loc292_9.2 => constants.%Result.patt
 // CHECK:STDOUT:   %Result.loc292_9.1 => constants.%Destroy.facet.099
 // CHECK:STDOUT:   %Result.as_type.loc293_50.1 => constants.%Int32
 // CHECK:STDOUT:   %facet_type => constants.%facet_type.49d
-// CHECK:STDOUT:   %T.loc293_4.1 => constants.%facet_value.42d
 // CHECK:STDOUT:   %pattern_type.loc293 => constants.%pattern_type.57c
+// CHECK:STDOUT:   %T.patt.loc293_4.2 => constants.%T.patt.4fa
+// CHECK:STDOUT:   %T.loc293_4.1 => constants.%facet_value.42d
 // CHECK:STDOUT:   %pattern_type.loc294_11 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %y.param_patt.loc294_11.2 => constants.%y.param_patt.e0c
+// CHECK:STDOUT:   %y.patt.loc294_11.2 => constants.%y.patt.0a3
 // CHECK:STDOUT:   %T.as_type.loc294_24.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc294_22 => constants.%pattern_type.8b4
+// CHECK:STDOUT:   %x.param_patt.loc294_22.2 => constants.%x.param_patt.27c
+// CHECK:STDOUT:   %x.patt.loc294_22.2 => constants.%x.patt.4c9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc294_11 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc294_22 => constants.%complete_type.357
 // CHECK:STDOUT:   %Negate.lookup_impl_witness => constants.%custom_witness.a85
-// CHECK:STDOUT:   %Negate.facet.loc296_3.2 => constants.%Negate.facet.aa9
+// CHECK:STDOUT:   %Negate.facet.loc296_3.3 => constants.%Negate.facet.aa9
 // CHECK:STDOUT:   %Negate.WithSelf.Op.type => constants.%Negate.WithSelf.Op.type.050
-// CHECK:STDOUT:   %.loc296_3.5 => constants.%.668
+// CHECK:STDOUT:   %.loc296_3.7 => constants.%.668
 // CHECK:STDOUT:   %impl.elem1.loc296_3.2 => constants.%Int32.Op.4dca31.20
 // CHECK:STDOUT:   %specific_impl_fn.loc296_3.3 => constants.%Int32.Op.4dca31.20
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type => constants.%Destroy.WithSelf.Op.type.b76
-// CHECK:STDOUT:   %.loc296_3.6 => constants.%.043
+// CHECK:STDOUT:   %.loc296_3.8 => constants.%.043
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.e7a31c.2
 // CHECK:STDOUT:   %impl.elem0.loc296_3.2 => constants.%Int32.Op.4dca31.1
 // CHECK:STDOUT:   %specific_impl_fn.loc296_3.4 => constants.%Int32.Op.4dca31.1

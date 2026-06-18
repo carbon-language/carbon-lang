@@ -6,6 +6,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp/export.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
@@ -13,7 +14,6 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
-#include "toolchain/check/name_ref.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/thunk.h"

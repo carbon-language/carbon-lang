@@ -37,20 +37,34 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.805: Core.Form = init_form type [concrete]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %return.param_patt.70e: %pattern_type.98f = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.3ae: %pattern_type.98f = return_slot_pattern %return.param_patt.70e, type [concrete]
 // CHECK:STDOUT:   %MakeIntLiteral.type: type = fn_type @MakeIntLiteral [concrete]
 // CHECK:STDOUT:   %MakeIntLiteral: %MakeIntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
+// CHECK:STDOUT:   %N.param_patt: %pattern_type.dc0 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %N.patt: %pattern_type.dc0 = at_binding_pattern N, %N.param_patt [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
+// CHECK:STDOUT:   %a.param_patt.ba0: %pattern_type.dc0 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %a.patt.442: %pattern_type.dc0 = at_binding_pattern a, %a.param_patt.ba0 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %.9cb: Core.Form = init_form %i32.builtin [concrete]
 // CHECK:STDOUT:   %pattern_type.956: type = pattern_type %i32.builtin [concrete]
+// CHECK:STDOUT:   %return.param_patt.903: %pattern_type.956 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.930: %pattern_type.956 = return_slot_pattern %return.param_patt.903, %i32.builtin [concrete]
 // CHECK:STDOUT:   %AsI32.type: type = fn_type @AsI32 [concrete]
 // CHECK:STDOUT:   %AsI32: %AsI32.type = struct_value () [concrete]
+// CHECK:STDOUT:   %a.param_patt.b97: %pattern_type.956 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %a.patt.9c9: %pattern_type.956 = at_binding_pattern a, %a.param_patt.b97 [concrete]
 // CHECK:STDOUT:   %.f7d: Core.Form = init_form Core.IntLiteral [concrete]
+// CHECK:STDOUT:   %return.param_patt.eab: %pattern_type.dc0 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.cd4: %pattern_type.dc0 = return_slot_pattern %return.param_patt.eab, Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %AsIntLiteral.type: type = fn_type @AsIntLiteral [concrete]
 // CHECK:STDOUT:   %AsIntLiteral: %AsIntLiteral.type = struct_value () [concrete]
+// CHECK:STDOUT:   %b.param_patt: %pattern_type.956 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.956 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   %TestAdd.type: type = fn_type @TestAdd [concrete]
 // CHECK:STDOUT:   %TestAdd: %TestAdd.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -65,8 +79,8 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:     .TestAdd = %TestAdd.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeIntLiteral.decl: %MakeIntLiteral.type = fn_decl @MakeIntLiteral [concrete = constants.%MakeIntLiteral] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc5_24.1 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete = constants.%return.param_patt.70e]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc5_24.1 [concrete = constants.%return.patt.3ae]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5_24.1: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %.loc5_24.2: Core.Form = init_form %.loc5_24.1 [concrete = constants.%.805]
@@ -79,10 +93,10 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:   %.loc6_35.2: type = converted %MakeIntLiteral.call, %.loc6_35.1 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:   %IntLiteral: type = alias_binding IntLiteral, %.loc6_35.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
-// CHECK:STDOUT:     %N.param_patt: %pattern_type.dc0 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = at_binding_pattern N, %N.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc7_26.1 [concrete]
+// CHECK:STDOUT:     %N.param_patt: %pattern_type.dc0 = value_param_pattern [concrete = constants.%N.param_patt]
+// CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = at_binding_pattern N, %N.param_patt [concrete = constants.%N.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete = constants.%return.param_patt.70e]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc7_26.1 [concrete = constants.%return.patt.3ae]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_26.1: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %.loc7_26.2: Core.Form = init_form %.loc7_26.1 [concrete = constants.%.805]
@@ -93,10 +107,10 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AsI32.decl: %AsI32.type = fn_decl @AsI32 [concrete = constants.%AsI32] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.dc0 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.dc0 = at_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.956 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.956 = return_slot_pattern %return.param_patt, %.loc9_28.1 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.dc0 = value_param_pattern [concrete = constants.%a.param_patt.ba0]
+// CHECK:STDOUT:     %a.patt: %pattern_type.dc0 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt.442]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.956 = out_param_pattern [concrete = constants.%return.param_patt.903]
+// CHECK:STDOUT:     %return.patt: %pattern_type.956 = return_slot_pattern %return.param_patt, %.loc9_28.1 [concrete = constants.%return.patt.930]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_28.1: type = type_literal constants.%i32.builtin [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     %.loc9_28.2: Core.Form = init_form %.loc9_28.1 [concrete = constants.%.9cb]
@@ -107,10 +121,10 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:     %return: ref %i32.builtin = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AsIntLiteral.decl: %AsIntLiteral.type = fn_decl @AsIntLiteral [concrete = constants.%AsIntLiteral] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.956 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.956 = at_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.dc0 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.dc0 = return_slot_pattern %return.param_patt, %IntLiteral.ref [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.956 = value_param_pattern [concrete = constants.%a.param_patt.b97]
+// CHECK:STDOUT:     %a.patt: %pattern_type.956 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt.9c9]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.dc0 = out_param_pattern [concrete = constants.%return.param_patt.eab]
+// CHECK:STDOUT:     %return.patt: %pattern_type.dc0 = return_slot_pattern %return.param_patt, %IntLiteral.ref [concrete = constants.%return.patt.cd4]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %IntLiteral.ref: type = name_ref IntLiteral, file.%IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc10_28: Core.Form = init_form %IntLiteral.ref [concrete = constants.%.f7d]
@@ -121,12 +135,12 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAdd.decl: %TestAdd.type = fn_decl @TestAdd [concrete = constants.%TestAdd] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.956 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.956 = at_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.956 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.956 = at_binding_pattern b, %b.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.956 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.956 = return_slot_pattern %return.param_patt, %.loc12_31.1 [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.956 = value_param_pattern [concrete = constants.%a.param_patt.b97]
+// CHECK:STDOUT:     %a.patt: %pattern_type.956 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt.9c9]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.956 = value_param_pattern [concrete = constants.%b.param_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.956 = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.956 = out_param_pattern [concrete = constants.%return.param_patt.903]
+// CHECK:STDOUT:     %return.patt: %pattern_type.956 = return_slot_pattern %return.param_patt, %.loc12_31.1 [concrete = constants.%return.patt.930]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_31.1: type = type_literal constants.%i32.builtin [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     %.loc12_31.2: Core.Form = init_form %.loc12_31.1 [concrete = constants.%.9cb]
@@ -172,6 +186,8 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_3.1ba, %i32.builtin [concrete]
 // CHECK:STDOUT:   %pattern_type.9e2: type = pattern_type %array_type [concrete]
+// CHECK:STDOUT:   %arr.patt: %pattern_type.9e2 = ref_binding_pattern arr [concrete]
+// CHECK:STDOUT:   %arr.var_patt: %pattern_type.9e2 = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%i32.builtin, %i32.builtin, %i32.builtin) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%int_1.f38, %int_2.5a1, %int_3.a0f) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
@@ -199,8 +215,8 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %arr.patt: %pattern_type.9e2 = ref_binding_pattern arr [concrete]
-// CHECK:STDOUT:     %arr.var_patt: %pattern_type.9e2 = var_pattern %arr.patt [concrete]
+// CHECK:STDOUT:     %arr.patt: %pattern_type.9e2 = ref_binding_pattern arr [concrete = constants.%arr.patt]
+// CHECK:STDOUT:     %arr.var_patt: %pattern_type.9e2 = var_pattern %arr.patt [concrete = constants.%arr.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %arr.var: ref %array_type = var %arr.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4_82: type = splice_block %array_type [concrete = constants.%array_type] {
