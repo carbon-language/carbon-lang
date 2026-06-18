@@ -181,22 +181,22 @@ fn Packed(n: i32) {
 // CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "alignment.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "alignment.carbon", directory: "")
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !{!8, !8, i64 0}
 // CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
 // CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "NaturallyAligned", linkageName: "_CNaturallyAligned.Main", scope: null, file: !6, line: 23, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !15)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "NaturallyAligned", linkageName: "_CNaturallyAligned.Main", scope: null, file: !1, line: 23, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null, !14}
 // CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -209,12 +209,12 @@ fn Packed(n: i32) {
 // CHECK:STDOUT: !21 = !{!22, !22, i64 0}
 // CHECK:STDOUT: !22 = !{!"p1 _ZTS16NaturallyAligned", !23, i64 0}
 // CHECK:STDOUT: !23 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.c846b89dd79c7366.Core:NaturallyAligned.Cpp", scope: null, file: !6, line: 7, type: !25, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.c846b89dd79c7366.Core:NaturallyAligned.Cpp", scope: null, file: !1, line: 7, type: !25, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !25 = !DISubroutineType(types: !26)
 // CHECK:STDOUT: !26 = !{!27}
 // CHECK:STDOUT: !27 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !28 = !DILocation(line: 7, column: 8, scope: !24)
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "ExtraAlignment", linkageName: "_CExtraAlignment.Main", scope: null, file: !6, line: 29, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !30)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "ExtraAlignment", linkageName: "_CExtraAlignment.Main", scope: null, file: !1, line: 29, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !30)
 // CHECK:STDOUT: !30 = !{!31}
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !29, type: !14)
 // CHECK:STDOUT: !32 = !DILocation(line: 30, column: 3, scope: !29)
@@ -223,9 +223,9 @@ fn Packed(n: i32) {
 // CHECK:STDOUT: !35 = !DILocation(line: 29, column: 1, scope: !29)
 // CHECK:STDOUT: !36 = !{!37, !37, i64 0}
 // CHECK:STDOUT: !37 = !{!"p1 _ZTS14ExtraAlignment", !23, i64 0}
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.52e7708693d29223.Core:ExtraAlignment.Cpp", scope: null, file: !6, line: 11, type: !25, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.52e7708693d29223.Core:ExtraAlignment.Cpp", scope: null, file: !1, line: 11, type: !25, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !39 = !DILocation(line: 11, column: 20, scope: !38)
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Packed", linkageName: "_CPacked.Main", scope: null, file: !6, line: 37, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !41)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Packed", linkageName: "_CPacked.Main", scope: null, file: !1, line: 37, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !41)
 // CHECK:STDOUT: !41 = !{!42}
 // CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !40, type: !14)
 // CHECK:STDOUT: !43 = !DILocation(line: 38, column: 3, scope: !40)
@@ -234,15 +234,15 @@ fn Packed(n: i32) {
 // CHECK:STDOUT: !46 = !DILocation(line: 37, column: 1, scope: !40)
 // CHECK:STDOUT: !47 = !{!48, !48, i64 0}
 // CHECK:STDOUT: !48 = !{!"p1 _ZTS6Packed", !23, i64 0}
-// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.ca2b917a39954a06.Core:Packed.Cpp", scope: null, file: !6, line: 15, type: !25, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.ca2b917a39954a06.Core:Packed.Cpp", scope: null, file: !1, line: 15, type: !25, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !50 = !DILocation(line: 15, column: 32, scope: !49)
-// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.d4cda66b3640b619", scope: null, file: !52, line: 9, type: !25, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.d4cda66b3640b619", scope: null, file: !52, line: 9, type: !25, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !52 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !53 = !DILocation(line: 9, column: 28, scope: !51)
 // CHECK:STDOUT: !54 = !DILocation(line: 9, column: 21, scope: !51)
-// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.34933c1c343bd645", scope: null, file: !52, line: 9, type: !25, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.34933c1c343bd645", scope: null, file: !52, line: 9, type: !25, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !56 = !DILocation(line: 9, column: 28, scope: !55)
 // CHECK:STDOUT: !57 = !DILocation(line: 9, column: 21, scope: !55)
-// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.3e10857902c69c1a", scope: null, file: !52, line: 9, type: !25, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.3e10857902c69c1a", scope: null, file: !52, line: 9, type: !25, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !59 = !DILocation(line: 9, column: 28, scope: !58)
 // CHECK:STDOUT: !60 = !DILocation(line: 9, column: 21, scope: !58)

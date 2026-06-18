@@ -172,21 +172,21 @@ fn Main_method_no_template () {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "self_canonical.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main_method_no_template", linkageName: "_CMain_method_no_template.Main", scope: null, file: !3, line: 79, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "self_canonical.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main_method_no_template", linkageName: "_CMain_method_no_template.Main", scope: null, file: !1, line: 79, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 80, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 82, column: 18, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 82, column: 3, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 79, column: 1, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "fourth_function", linkageName: "_Cfourth_function.Main.4da09b2222fc2513", scope: null, file: !3, line: 49, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "fourth_function", linkageName: "_Cfourth_function.Main.4da09b2222fc2513", scope: null, file: !1, line: 49, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null, !14}
 // CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -199,7 +199,7 @@ fn Main_method_no_template () {
 // CHECK:STDOUT: !21 = !DILocation(line: 54, column: 18, scope: !11)
 // CHECK:STDOUT: !22 = !DILocation(line: 54, column: 3, scope: !11)
 // CHECK:STDOUT: !23 = !DILocation(line: 49, column: 1, scope: !11)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "first_function", linkageName: "_Cfirst_function.Main.ee57965601b4d646", scope: null, file: !3, line: 57, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !25)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "first_function", linkageName: "_Cfirst_function.Main.ee57965601b4d646", scope: null, file: !1, line: 57, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !25)
 // CHECK:STDOUT: !25 = !{!26}
 // CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !24, type: !14)
 // CHECK:STDOUT: !27 = !DILocation(line: 58, column: 3, scope: !24)
@@ -208,7 +208,7 @@ fn Main_method_no_template () {
 // CHECK:STDOUT: !30 = !DILocation(line: 61, column: 27, scope: !24)
 // CHECK:STDOUT: !31 = !DILocation(line: 61, column: 3, scope: !24)
 // CHECK:STDOUT: !32 = !DILocation(line: 57, column: 1, scope: !24)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "second_function", linkageName: "_Csecond_function.Main.efd9fcdf727c9de5", scope: null, file: !3, line: 70, type: !34, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !36)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "second_function", linkageName: "_Csecond_function.Main.efd9fcdf727c9de5", scope: null, file: !1, line: 70, type: !34, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !36)
 // CHECK:STDOUT: !34 = !DISubroutineType(types: !35)
 // CHECK:STDOUT: !35 = !{null, !14, !14, !14}
 // CHECK:STDOUT: !36 = !{!37, !38, !39}
@@ -224,7 +224,7 @@ fn Main_method_no_template () {
 // CHECK:STDOUT: !46 = !DILocation(line: 76, column: 18, scope: !33)
 // CHECK:STDOUT: !47 = !DILocation(line: 76, column: 3, scope: !33)
 // CHECK:STDOUT: !48 = !DILocation(line: 70, column: 1, scope: !33)
-// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "third_function", linkageName: "_Cthird_function.Main.1c39a3b349bf66b6", scope: null, file: !3, line: 35, type: !34, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !50)
+// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "third_function", linkageName: "_Cthird_function.Main.1c39a3b349bf66b6", scope: null, file: !1, line: 35, type: !34, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !50)
 // CHECK:STDOUT: !50 = !{!51, !52, !53}
 // CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !49, type: !14)
 // CHECK:STDOUT: !52 = !DILocalVariable(arg: 2, scope: !49, type: !14)

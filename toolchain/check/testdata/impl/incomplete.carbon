@@ -90,35 +90,6 @@ impl C as J where .X = ();
 // CHECK:STDERR:
 impl C as J where .X = () {}
 
-// --- fail_todo_class_with_qualified_rewrite.carbon
-library "[[@TEST_NAME]]";
-
-interface J;
-interface K { let X:! type; }
-class C {}
-
-// TODO: There should be no error here.
-//
-// CHECK:STDERR: fail_todo_class_with_qualified_rewrite.carbon:[[@LINE+8]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
-// CHECK:STDERR: impl C as J where .Self impls K and .(K.X) = ();
-// CHECK:STDERR:                                      ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_class_with_qualified_rewrite.carbon:[[@LINE+4]]:38: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: impl C as J where .Self impls K and .(K.X) = ();
-// CHECK:STDERR:                                      ^
-// CHECK:STDERR:
-impl C as J where .Self impls K and .(K.X) = ();
-
-// TODO: The failure here should be that J is incomplete, once the rewrite of
-// `.(K.X)` works. Since any rewrite in the decl requires us to know the size of
-// the witness table which requires all interfaces to be complete.
-//
-// CHECK:STDERR: fail_todo_class_with_qualified_rewrite.carbon:[[@LINE+4]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
-// CHECK:STDERR: impl C as J where .Self impls K and .(K.X) = () {}
-// CHECK:STDERR:                                      ^
-// CHECK:STDERR:
-impl C as J where .Self impls K and .(K.X) = () {}
-
 // --- incomplete_where.carbon
 library "[[@TEST_NAME]]";
 
@@ -403,47 +374,6 @@ interface B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_class_with_qualified_rewrite.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %K.type: type = facet_type <@K> [concrete]
-// CHECK:STDOUT:   %Self: %K.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type @K [concrete]
-// CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, @K.WithSelf.%X [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @J;
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @K {
-// CHECK:STDOUT:   %Self: %K.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %K.WithSelf.decl = interface_with_self_decl @K [concrete]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %X: type = assoc_const_decl @X [concrete] {
-// CHECK:STDOUT:     %assoc0: %K.assoc_type = assoc_entity element0, @K.WithSelf.%X [concrete = constants.%assoc0]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .X = @X.%assoc0
-// CHECK:STDOUT:   witness = (@K.WithSelf.%X)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !requires:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @K.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- incomplete_where.carbon
 // CHECK:STDOUT:
