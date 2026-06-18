@@ -58,12 +58,16 @@ is:
 For example, this prints all names in `names`:
 
 ```carbon
-for (var name: String in names) {
+for (name: String in names) {
   Print(name);
 }
 ```
 
 `PrintNames()` prints each `String` in the `names` `List` in iteration order.
+
+> **Note:** A name binding in the pattern of a `for` loop is a value binding by
+> default. If a mutable loop variable is desired, the pattern can use `var`. For
+> example: `for (var x: T in range)`.
 
 To support iterating over user-defined types, the `for` loop is defined in terms
 of the `Core.Iterate` interface. A container type can implement the
@@ -108,15 +112,17 @@ values:
 {
   let range:? auto = <range>;
   var cursor: auto = range.(Iterate.NewCursor)();
-  while (let .Some(<pattern>) = range.(Iterate.Next)(cursor)) {
-    <statements>
+  while (true) {
+    match (range.(Iterate.Next)(cursor)) {
+      case .Some(<pattern>) => { <statements> }
+      default => { break; }
+    }
   }
 }
 ```
 
-> **Note:** The loop variable binding in the `for` loop is `let` (immutable) by
-> default. If a mutable loop variable is desired, the pattern can use `var` (for
-> example, `for (var x: T in range)`).
+> **Note:** Any temporaries in `<range>` will remain live until the end of the
+> loop.
 
 ### `break`
 
