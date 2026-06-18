@@ -106,15 +106,10 @@ values:
 
 ```carbon
 {
-  var cursor: range.(Iterate.CursorType) = range.(Iterate.NewCursor)();
-  while (true) {
-    var next: Optional(range.(Iterate.ElementType)) =
-        range.(Iterate.Next)(cursor);
-    if (not next.HasValue()) {
-      break;
-    }
-    let pattern: range.(Iterate.ElementType) = next.Get();
-    statements
+  let range:? auto = <range>;
+  var cursor: auto = range.(Iterate.NewCursor)();
+  while (let .Some(<pattern>) = range.(Iterate.Next)(cursor)) {
+    <statements>
   }
 }
 ```
