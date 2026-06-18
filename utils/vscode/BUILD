@@ -8,8 +8,8 @@ exports_files(
     [
         "package.json",
         "carbon.tmLanguage.json",
+        "carbon-testdata.tmLanguage.json",
         "semir.tmLanguage.json",
-        "carbon-check-test.tmLanguage.json",
         "language-configuration.json",
         "images/icon.png",
     ],
