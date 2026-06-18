@@ -231,12 +231,12 @@ abstract class Abstract {
 }
 
 fn Assign(ref a: Abstract) {
-  // CHECK:STDERR: fail_assign_to_abstract_ref.carbon:[[@LINE+7]]:3: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
+  // CHECK:STDERR: fail_assign_to_abstract_ref.carbon:[[@LINE+7]]:7: error: cannot copy value of type `Abstract` [CopyOfUncopyableType]
   // CHECK:STDERR:   a = a;
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_assign_to_abstract_ref.carbon:[[@LINE-7]]:1: note: class was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_assign_to_abstract_ref.carbon:[[@LINE+4]]:7: note: type `Abstract` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   a = a;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   a = a;
 }
@@ -1089,18 +1089,21 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Abstract [concrete]
-// CHECK:STDOUT:   %a.param_patt: %pattern_type = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %pattern_type.169: type = pattern_type %Abstract [concrete]
+// CHECK:STDOUT:   %a.param_patt: %pattern_type.169 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.169 = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %Assign.type: type = fn_type @Assign [concrete]
 // CHECK:STDOUT:   %Assign: %Assign.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Copy = %Core.Copy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1112,8 +1115,8 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
 // CHECK:STDOUT:   %Assign.decl: %Assign.type = fn_decl @Assign [concrete = constants.%Assign] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type = ref_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.169 = ref_param_pattern [concrete = constants.%a.param_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.169 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: ref %Abstract = ref_param call_param0
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
@@ -1133,6 +1136,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref.loc14_3: ref %Abstract = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc14_7: ref %Abstract = name_ref a, %a
+// CHECK:STDOUT:   %.loc14: %Abstract = acquire_value %a.ref.loc14_7
 // CHECK:STDOUT:   assign %a.ref.loc14_3, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
