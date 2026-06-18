@@ -10,6 +10,7 @@
 
 #include "common/check.h"
 #include "common/hashing.h"
+#include "common/map.h"
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "common/struct_reflection.h"
@@ -605,6 +606,23 @@ class InstStore {
     SetLocId(inst_id, loc_id_and_inst.loc_id);
   }
 
+  // Records `origin_loc_id`, a local node location, as the origin of a
+  // generated instruction whose own location is desugared and refers outside
+  // this file. This must not affect canonicalization or any other behavior; it
+  // is purely a hint for dumping SemIR.
+  auto SetDesugaredOriginLoc(InstId inst_id, LocId origin_loc_id) -> void {
+    desugared_origin_loc_ids_.Insert(inst_id, origin_loc_id);
+  }
+
+  // Returns the originating node location recorded for a generated instruction
+  // with a desugared, out-of-file location, or `LocId::None` if none.
+  auto GetDesugaredOriginLoc(InstId inst_id) const -> LocId {
+    if (auto result = desugared_origin_loc_ids_.Lookup(inst_id)) {
+      return result.value();
+    }
+    return LocId::None;
+  }
+
   // Reserves space.
   auto Reserve(size_t size) -> void {
     loc_ids_.reserve(size);
@@ -616,6 +634,8 @@ class InstStore {
       -> void {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "loc_ids_"), loc_ids_);
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "desugared_origin_loc_ids_"),
+                      desugared_origin_loc_ids_);
   }
 
   auto values() const [[clang::lifetimebound]]
@@ -649,6 +669,10 @@ class InstStore {
   File* file_;
   llvm::SmallVector<LocId> loc_ids_;
   ValueStore<InstId, Inst, Tag<CheckIRId>> values_;
+
+  // Sparse map from a generated instruction with a desugared, out-of-file
+  // location to a local location representing where it was generated.
+  Map<InstId, LocId> desugared_origin_loc_ids_;
 };
 
 // Adapts BlockValueStore for instruction blocks.

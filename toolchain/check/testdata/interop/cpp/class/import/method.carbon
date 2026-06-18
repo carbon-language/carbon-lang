@@ -285,19 +285,20 @@ import Cpp library "rvalue_method_destroys_temporary.h";
 
 fn Make() -> Cpp.WithDestructor;
 
-//@dump-sem-ir-begin
-//@dump-sem-ir-include-implicit
 fn F() {
+  //@dump-sem-ir-begin
   // `rvalue_method` is `&&`-qualified, so calling it on the temporary that
   // `Make()` returns materializes a separate `self` object to invoke it on,
-  // and both that `self` and the `Make()` temporary are destroyed here. The
-  // `Make()` temporary's destruction has an ordinary location in this file,
-  // but the materialized `self`'s location is the imported C++ type, which has
-  // no node here, so its destruction has no location in this file and is
-  // excluded from this focused dump.
+  // and both that `self` and the `Make()` temporary are destroyed before the
+  // `return`. The `Make()` temporary's destruction has an ordinary location in
+  // this file, but the materialized `self`'s destruction refers to the imported
+  // C++ type, which has no node in this file; such an out-of-file location is
+  // excluded from a focused dump, so this destruction does not appear here even
+  // though it is generated within the dumped range.
   Make().rvalue_method();
+  return;
+  //@dump-sem-ir-end
 }
-//@dump-sem-ir-end
 
 // CHECK:STDOUT: --- use_object_param_qualifiers.carbon
 // CHECK:STDOUT:
@@ -829,8 +830,6 @@ fn F() {
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %WithDestructor.rvalue_method.cpp_overload_set.type: type = cpp_overload_set_type @WithDestructor.rvalue_method.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %WithDestructor.rvalue_method.cpp_overload_set.value: %WithDestructor.rvalue_method.cpp_overload_set.type = cpp_overload_set_value @WithDestructor.rvalue_method.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %rvalue_method__carbon_thunk.type: type = fn_type @rvalue_method__carbon_thunk [concrete]
@@ -870,10 +869,6 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

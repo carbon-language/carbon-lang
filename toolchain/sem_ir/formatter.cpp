@@ -56,13 +56,12 @@ Formatter::Formatter(
     const File* sem_ir, int total_ir_count,
     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
     const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps,
-    bool use_dump_sem_ir_ranges, bool include_implicit)
+    bool use_dump_sem_ir_ranges)
     : sem_ir_(sem_ir),
       inst_namer_(sem_ir_, total_ir_count),
       get_tree_and_subtrees_(get_tree_and_subtrees),
       include_ir_in_dumps_(include_ir_in_dumps),
       use_dump_sem_ir_ranges_(use_dump_sem_ir_ranges),
-      include_implicit_(include_implicit),
       tentative_inst_chunks_(sem_ir_->insts(), FormatterChunks::None) {
   if (use_dump_sem_ir_ranges_) {
     ComputeNodeParents();
@@ -229,11 +228,19 @@ auto Formatter::ShouldFormatInst(InstId inst_id) -> bool {
     return true;
   }
 
-  // When there are dump ranges, ignore imported instructions, unless they have
-  // an implicit (desugared) location and implicit instructions are requested.
+  // When there are dump ranges, ignore imported instructions. An instruction
+  // with an implicit (desugared) location is generated within the range but has
+  // no node of its own to overlap it, so bracket it by the originating local
+  // location recorded when it was generated.
   auto loc_id = sem_ir_->insts().GetCanonicalLocId(inst_id);
   if (loc_id.kind() != LocId::Kind::NodeId) {
-    return include_implicit_ && loc_id.is_desugared();
+    if (!loc_id.is_desugared()) {
+      return false;
+    }
+    loc_id = sem_ir_->insts().GetDesugaredOriginLoc(inst_id);
+    if (loc_id.kind() != LocId::Kind::NodeId) {
+      return false;
+    }
   }
 
   auto token = sem_ir_->parse_tree().node_token(loc_id.node_id());

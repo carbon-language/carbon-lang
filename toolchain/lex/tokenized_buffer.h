@@ -248,13 +248,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   auto has_include_in_dumps() const -> bool { return has_include_in_dumps_; }
 
-  // Returns true if `//@dump-sem-ir-include-implicit` was provided, requesting
-  // that instructions with implicit (desugared) locations be included in
-  // SemIR dumps.
-  auto has_dump_sem_ir_include_implicit() const -> bool {
-    return has_dump_sem_ir_include_implicit_;
-  }
-
   // Returns true if any `DumpSemIRRange`s were provided.
   auto has_dump_sem_ir_ranges() const -> bool {
     return !dump_sem_ir_ranges_.empty();
@@ -363,12 +356,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // by `//@include-in-dumps`, and overrides other file-inclusion selection
   // choices. It can be combined with ranges.
   bool has_include_in_dumps_ = false;
-
-  // Whether instructions with implicit (desugared) locations should be included
-  // in SemIR dumps. This is marked by `//@dump-sem-ir-include-implicit`. Such
-  // instructions are normally excluded from focused dumps because they have no
-  // source location of their own to anchor the dump range.
-  bool has_dump_sem_ir_include_implicit_ = false;
 
   // A range of tokens marked by `//@dump-sem-ir-[begin|end]`.
   //

@@ -6,6 +6,7 @@
 
 #include <initializer_list>
 
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/inst.h"
@@ -147,8 +148,13 @@ auto MaybeAddCleanupForInst(Context& context, SemIR::InstId inst_id) -> void {
   context.scope_stack().destroy_id_stack().AppendToTop(inst_id);
 }
 
-// Common support for cleanup blocks.
-static auto AddCleanupBlock(Context& context) -> void {
+// Common support for cleanup blocks. `origin_loc_id` is the local location of
+// the terminator that follows the cleanup. The generated destruction
+// instructions have desugared locations referring to the destroyed values'
+// (imported) types, with no node in this file; recording `origin_loc_id` as
+// their origin lets a ranged SemIR dump still bracket them.
+static auto AddCleanupBlock(Context& context, SemIR::LocId origin_loc_id)
+    -> void {
   auto destroy_ids = context.scope_stack().destroy_id_stack().PeekArray();
 
   // If there's nothing to destroy, add the final instruction to the current
@@ -156,6 +162,13 @@ static auto AddCleanupBlock(Context& context) -> void {
   if (destroy_ids.empty()) {
     return;
   }
+
+  // The destruction instructions created below pick up `origin_loc_id` as their
+  // origin when added (see `Context::desugaring_origin_loc_id` and
+  // `AddInstInNoBlock`), so we don't have to thread it through
+  // `BuildUnaryOperator` or re-walk the generated instructions afterwards.
+  llvm::SaveAndRestore desugaring_origin(context.desugaring_origin_loc_id(),
+                                         origin_loc_id);
 
   for (auto destroy_id : llvm::reverse(destroy_ids)) {
     // TODO: This does the `Destroy` lookup and call at every cleanup block.
@@ -169,7 +182,7 @@ static auto AddCleanupBlock(Context& context) -> void {
 
 auto AddReturnCleanupBlock(Context& context,
                            SemIR::LocIdAndInst loc_id_and_inst) -> void {
-  AddCleanupBlock(context);
+  AddCleanupBlock(context, loc_id_and_inst.loc_id);
   AddInst(context, loc_id_and_inst);
 }
 

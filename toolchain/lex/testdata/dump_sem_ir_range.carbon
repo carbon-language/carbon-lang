@@ -59,21 +59,6 @@ e
 //@dump-sem-ir-begin
 //@dump-sem-ir-end
 
-// --- include_implicit.carbon
-// CHECK:STDOUT: - filename: include_implicit.carbon
-// CHECK:STDOUT:   tokens:
-
-//@dump-sem-ir-include-implicit
-a
-// CHECK:STDOUT:   - { index: 1, kind: "Identifier", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "a", identifier: 0, has_leading_space: true }
-//@dump-sem-ir-begin
-b
-// CHECK:STDOUT:   - { index: 2, kind: "Identifier", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "b", identifier: 1, has_leading_space: true }
-// CHECK:STDOUT:   has_dump_sem_ir_include_implicit: true
-// CHECK:STDOUT:   dump_sem_ir_ranges:
-// CHECK:STDOUT:   - {begin: 2, end: 2}
-//@dump-sem-ir-end
-
 // --- fail_extra_text.carbon
 // CHECK:STDOUT: - filename: fail_extra_text.carbon
 // CHECK:STDOUT:   tokens:

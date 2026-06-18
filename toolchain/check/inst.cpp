@@ -79,6 +79,19 @@ auto AddInstInNoBlock(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = context.sem_ir().insts().AddInNoBlock(loc_id_and_inst);
   CARBON_VLOG_TO(context.vlog_stream(), "AddInst: {0}\n", loc_id_and_inst.inst);
+
+  // While generating instructions for a desugared, out-of-file location (see
+  // `Context::desugaring_origin_loc_id`), attoch the generating location as its
+  // origin.
+  if (context.desugaring_origin_loc_id().has_value()) {
+    auto loc_id =
+        context.sem_ir().insts().GetCanonicalLocId(loc_id_and_inst.loc_id);
+    if (loc_id.kind() != SemIR::LocId::Kind::NodeId && loc_id.is_desugared()) {
+      context.sem_ir().insts().SetDesugaredOriginLoc(
+          inst_id, context.desugaring_origin_loc_id());
+    }
+  }
+
   FinishInst(context, inst_id, loc_id_and_inst.inst);
   return inst_id;
 }
