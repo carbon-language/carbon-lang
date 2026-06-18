@@ -96,8 +96,7 @@ function updateSplitLineNumbers(editor: TextEditor | undefined) {
 // Get an SVG image with a diagonal "C++" logo.
 const getCppSvgBase64 = (fillColor: string) => {
   const svg = [
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" ',
-    'preserveAspectRatio="none">',
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">',
     `<text x="50%" y="50%" font-size="10px" font-family="sans-serif" `,
     `fill="${fillColor}" text-anchor="middle" dominant-baseline="central" `,
     `transform="rotate(-45 10 10)">C++</text></svg>`,
@@ -116,7 +115,7 @@ const createCppDecorationType = (isWholeLine: boolean) => {
     /*border:*/ `none; ` +
     `background-image: url('data:image/svg+xml;base64,${base64}'); ` +
     `background-repeat: repeat; ` +
-    `background-size: 20px 100%;`;
+    `background-size: auto 100%;`;
   return window.createTextEditorDecorationType({
     light: { border: getBorder(lightSvgBase64) },
     dark: { border: getBorder(darkSvgBase64) },
