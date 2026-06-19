@@ -278,6 +278,8 @@ class Context {
       SemIR::ConstantId facet_type_const_id;
     };
     llvm::SmallVector<SelfImplsFacetType> impls;
+
+    SemIR::LocId loc_id;
   };
 
   auto where_stack() -> llvm::SmallVector<WhereStackEntry>& {

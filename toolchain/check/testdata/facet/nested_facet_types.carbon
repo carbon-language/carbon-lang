@@ -291,9 +291,12 @@ fn F(FF:! ((Y where .Y1 = ()) where .Self impls NZ1) where .Self impls NZ2) -> F
 // --- fail_where_nested_inside_where_impls.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_where_nested_inside_where_impls.carbon:[[@LINE+4]]:34: error: found `where` expression nested inside `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fail_where_nested_inside_where_impls.carbon:[[@LINE+7]]:34: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
 // CHECK:STDERR: fn F(_:! type where .Self impls (type where .Self impls type)) {}
 // CHECK:STDERR:                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_where_impls.carbon:[[@LINE+4]]:10: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
+// CHECK:STDERR: fn F(_:! type where .Self impls (type where .Self impls type)) {}
+// CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
 fn F(_:! type where .Self impls (type where .Self impls type)) {}
 
@@ -304,9 +307,12 @@ interface Z {
   let Z1:! type;
 }
 
-// CHECK:STDERR: fail_where_nested_inside_where_rewrite.carbon:[[@LINE+4]]:25: error: found `where` expression nested inside `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fail_where_nested_inside_where_rewrite.carbon:[[@LINE+7]]:25: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
 // CHECK:STDERR: fn F(_:! Z where .Z1 = (type where .Self impls type)) {}
 // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_where_rewrite.carbon:[[@LINE+4]]:10: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
+// CHECK:STDERR: fn F(_:! Z where .Z1 = (type where .Self impls type)) {}
+// CHECK:STDERR:          ^~~~~~~
 // CHECK:STDERR:
 fn F(_:! Z where .Z1 = (type where .Self impls type)) {}
 
@@ -316,8 +322,11 @@ library "[[@TEST_NAME]]";
 interface Z {}
 class C;
 
-// CHECK:STDERR: fail_where_nested_inside_where_same_type.carbon:[[@LINE+4]]:24: error: found `where` expression nested inside `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fail_where_nested_inside_where_same_type.carbon:[[@LINE+7]]:24: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
 // CHECK:STDERR: fn F(_:! Z where C == (type where .Self impls type)) {}
 // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_where_same_type.carbon:[[@LINE+4]]:10: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
+// CHECK:STDERR: fn F(_:! Z where C == (type where .Self impls type)) {}
+// CHECK:STDERR:          ^~~~~~~
 // CHECK:STDERR:
 fn F(_:! Z where C == (type where .Self impls type)) {}

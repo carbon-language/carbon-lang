@@ -193,6 +193,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
 CARBON_DIAGNOSTIC_KIND(ExpectedRequirementOperator)
 CARBON_DIAGNOSTIC_KIND(RequirementEqualAfterNonDesignator)
 CARBON_DIAGNOSTIC_KIND(NestedWhereInsideWhere)
+CARBON_DIAGNOSTIC_KIND(NestedWhereInsideWhereOuterNote)
 
 // ============================================================================
 // Semantics diagnostics
