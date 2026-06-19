@@ -293,8 +293,8 @@ fn F() {
   // `return`. The `Make()` temporary's destruction has an ordinary location in
   // this file, but the materialized `self`'s destruction has a desugared
   // location referring to the imported C++ type, which has no node here; it is
-  // named `.implicit` and is bracketed by the `return`'s location, so
-  // `//@dump-sem-ir-end` sits below the `return` to keep it in range.
+  // named by its original C++ source location, annotated with `[from "..."]`,
+  // and bracketed by the `return` so `//@dump-sem-ir-end` stays below it.
   Make().rvalue_method();
   return;
   //@dump-sem-ir-end
@@ -895,8 +895,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc18_8.8: init %WithDestructor to %self.var = mark_in_place_init %WithDestructor__carbon_thunk.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %rvalue_method__carbon_thunk.call: init %empty_tuple.type = call imports.%rvalue_method__carbon_thunk.decl(%self.var)
-// CHECK:STDOUT:   %WithDestructor.cpp_destructor.bound.implicit: <bound method> = bound_method %self.var, constants.%WithDestructor.cpp_destructor
-// CHECK:STDOUT:   %WithDestructor.cpp_destructor.call.implicit: init %empty_tuple.type = call %WithDestructor.cpp_destructor.bound.implicit(%self.var)
+// CHECK:STDOUT:   %WithDestructor.cpp_destructor.bound.loc6: <bound method> = bound_method %self.var, constants.%WithDestructor.cpp_destructor [from "./rvalue_method_destroys_temporary.h"]
+// CHECK:STDOUT:   %WithDestructor.cpp_destructor.call.loc6: init %empty_tuple.type = call %WithDestructor.cpp_destructor.bound.loc6(%self.var) [from "./rvalue_method_destroys_temporary.h"]
 // CHECK:STDOUT:   %WithDestructor.cpp_destructor.bound.loc18: <bound method> = bound_method %.loc18_8.2, constants.%WithDestructor.cpp_destructor
 // CHECK:STDOUT:   %WithDestructor.cpp_destructor.call.loc18: init %empty_tuple.type = call %WithDestructor.cpp_destructor.bound.loc18(%.loc18_8.2)
 // CHECK:STDOUT:   return

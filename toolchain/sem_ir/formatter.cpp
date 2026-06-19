@@ -967,9 +967,24 @@ auto Formatter::FormatInst(InstId inst_id) -> void {
       // This usually prints the constant, but when `FormatInstRhs` prints it
       // first (or for `ImportRefUnloaded`), this does nothing.
       FormatPendingConstantValue(AddSpace::Before);
+      FormatImportedFromForDesugaredLoc(inst_id);
       out() << "\n";
       return;
     }
+  }
+}
+
+auto Formatter::FormatImportedFromForDesugaredLoc(InstId inst_id) -> void {
+  // Only a desugared import location can resolve into a different file; this
+  // cheap check avoids resolving the location name for every instruction.
+  auto loc_id = sem_ir_->insts().GetCanonicalLocId(inst_id);
+  if (loc_id.kind() != LocId::Kind::ImportIRInstId || !loc_id.is_desugared()) {
+    return;
+  }
+  if (auto imported_from = inst_namer_.GetImportedFromFilename(loc_id);
+      !imported_from.empty()) {
+    pending_imported_from_ = imported_from;
+    FormatPendingImportedFrom(AddSpace::Before);
   }
 }
 

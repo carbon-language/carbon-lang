@@ -8,6 +8,8 @@
 #include <utility>
 #include <variant>
 
+#include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/SourceManager.h"
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/STLExtras.h"
@@ -18,6 +20,8 @@
 #include "toolchain/base/value_ids.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/absolute_node_ref.h"
+#include "toolchain/sem_ir/cpp_file.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/function.h"
@@ -312,54 +316,100 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
   return (GetScopeName(label_scope) + ".!" + label_name.GetFullName()).str();
 }
 
+namespace {
+// The fully original source location of a C++ location, from its Clang source
+// location.
+struct CppPresumedLoc {
+  llvm::StringRef filename;
+  int line;
+  int column;
+};
+}  // namespace
+
+// Returns the presumed Clang source location for `clang_source_loc_id` in
+// `file`, or `nullopt` if it is unavailable.
+static auto GetCppPresumedLoc(const File* file,
+                              ClangSourceLocId clang_source_loc_id)
+    -> std::optional<CppPresumedLoc> {
+  const auto* cpp_file = file->cpp_file();
+  if (!cpp_file) {
+    return std::nullopt;
+  }
+  clang::PresumedLoc presumed = cpp_file->source_manager().getPresumedLoc(
+      file->clang_source_locs().Get(clang_source_loc_id));
+  if (presumed.isInvalid()) {
+    return std::nullopt;
+  }
+  return CppPresumedLoc{.filename = presumed.getFilename(),
+                        .line = static_cast<int>(presumed.getLine()),
+                        .column = static_cast<int>(presumed.getColumn())};
+}
+
+auto InstNamer::GetImportedFromFilename(LocId loc_id) const -> llvm::StringRef {
+  if (auto loc_name = GetLocName(loc_id)) {
+    return loc_name->imported_from;
+  }
+  return {};
+}
+
 auto InstNamer::GetLocName(LocId loc_id) const -> std::optional<LocName> {
   loc_id = sem_ir_->insts().GetCanonicalLocId(loc_id);
-  const Parse::Tree* tree = nullptr;
-  Parse::NodeId node_id = Parse::NodeId::None;
-  bool mark_implicit = false;
-  switch (loc_id.kind()) {
-    case LocId::Kind::NodeId:
-      // Node locations are named the same whether or not they are desugared, so
-      // they are never marked implicit.
-      tree = &sem_ir_->parse_tree();
-      node_id = loc_id.node_id();
-      break;
-    case LocId::Kind::ImportIRInstId: {
-      // Follow one level of import to the imported IR, analogous to how
-      // `FormatImportRefRhs` names an imported instruction by its location.
-      auto import_ir_inst =
-          sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id());
-      const auto* import_ir =
-          sem_ir_->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
-      auto imported_loc_id =
-          import_ir == nullptr
-              ? LocId::None
-              : import_ir->insts().GetCanonicalLocId(import_ir_inst.inst_id());
-      if (imported_loc_id.kind() != LocId::Kind::NodeId) {
-        // There's no source node to name by: this is a C++ import, a
-        // multi-level import, or an import with no location. If it's a
-        // desugared location, we still mark it implicit so that a generated
-        // instruction is named distinctly from the imported one it came from.
-        if (loc_id.is_desugared()) {
-          return LocName{.line_and_column = std::nullopt,
-                         .mark_implicit = true};
-        }
-        return std::nullopt;
-      }
-      tree = &import_ir->parse_tree();
-      node_id = imported_loc_id.node_id();
-      mark_implicit = loc_id.is_desugared();
-      break;
-    }
-    case LocId::Kind::None:
-    case LocId::Kind::InstId:
-      return std::nullopt;
+  if (loc_id.kind() == LocId::Kind::None ||
+      loc_id.kind() == LocId::Kind::InstId) {
+    return std::nullopt;
   }
-  auto token = tree->node_token(node_id);
+
+  // A node location and a desugared node location are named the same way; only
+  // a desugared *import* location is marked implicit, so that an instruction
+  // generated at an imported location is named distinctly from the imported
+  // instruction it came from.
+  bool mark_implicit =
+      loc_id.kind() == LocId::Kind::ImportIRInstId && loc_id.is_desugared();
+
+  // Resolve through any number of import levels to the absolute origin of the
+  // location, so transitively-imported locations are still named (matching how
+  // diagnostics resolve such locations) rather than only single-level imports.
+  auto origin = GetAbsoluteNodeRef(sem_ir_, loc_id).back();
+
+  if (origin.is_cpp()) {
+    // A C++ location's original file, line, and column come from its Clang
+    // source location. Only a desugared (generated) location is named this way;
+    // a non-desugared C++ import has no name of its own.
+    if (mark_implicit) {
+      if (auto cpp_loc =
+              GetCppPresumedLoc(origin.file(), origin.clang_source_loc_id())) {
+        return LocName{
+            .line_and_column =
+                LineAndColumn{.line = cpp_loc->line, .column = cpp_loc->column},
+            .imported_from = cpp_loc->filename,
+            .mark_implicit = true};
+      }
+      return LocName{.line_and_column = std::nullopt, .mark_implicit = true};
+    }
+    return std::nullopt;
+  }
+
+  if (!origin.node_id().has_value()) {
+    // No source node to name by, such as a multi-level import with no location.
+    if (mark_implicit) {
+      return LocName{.line_and_column = std::nullopt, .mark_implicit = true};
+    }
+    return std::nullopt;
+  }
+
+  const auto* origin_file = origin.file();
+  const auto& tree = origin_file->parse_tree();
+  auto token = tree.node_token(origin.node_id());
+  // A desugared import that resolves into a different file is annotated with
+  // that file, like an imported declaration.
+  llvm::StringRef imported_from = (mark_implicit && origin_file != sem_ir_)
+                                      ? origin_file->filename()
+                                      : llvm::StringRef();
   return LocName{
       .line_and_column =
-          LineAndColumn{.line = tree->tokens().GetLineNumber(token),
-                        .column = tree->tokens().GetColumnNumber(token)},
+          LineAndColumn{.line = tree.tokens().GetLineNumber(token),
+                        .column = tree.tokens().GetColumnNumber(token)},
+      .imported_from = imported_from,
       .mark_implicit = mark_implicit};
 }
 

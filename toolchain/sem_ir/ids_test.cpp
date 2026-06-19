@@ -24,32 +24,34 @@ TEST(IdsTest, LocIdValues) {
       static_cast<LocId>(InstId(std::numeric_limits<int32_t>::max())).index,
       Eq(std::numeric_limits<int32_t>::max()));
 
+  // Locations are negative, with the canonical form at `min() + payload` and
+  // the desugared form at `-(1 << 30) + payload` (bit 30 set).
   auto min_node_id = static_cast<LocId>(Parse::NodeId(0));
-  EXPECT_THAT(min_node_id.index, Eq(-2));
-  EXPECT_THAT(min_node_id.AsDesugared().index, Eq(-2 - (1 << 24)));
+  EXPECT_THAT(min_node_id.index, Eq(std::numeric_limits<int32_t>::min()));
+  EXPECT_THAT(min_node_id.AsDesugared().index, Eq(-(1 << 30)));
   EXPECT_THAT(min_node_id.AsDesugared().index,
               Eq(min_node_id.AsDesugared().AsDesugared().index));
 
   auto max_node_id = static_cast<LocId>(Parse::NodeId(Parse::NodeId::Max - 1));
-  EXPECT_THAT(max_node_id.index, Eq(-2 - (1 << 24) + 1));
-  EXPECT_THAT(max_node_id.AsDesugared().index, Eq(-2 - (1 << 25) + 1));
+  EXPECT_THAT(max_node_id.index,
+              Eq(std::numeric_limits<int32_t>::min() + (1 << 24) - 1));
+  EXPECT_THAT(max_node_id.AsDesugared().index, Eq(-(1 << 30) + (1 << 24) - 1));
   EXPECT_THAT(max_node_id.AsDesugared().index,
               Eq(max_node_id.AsDesugared().AsDesugared().index));
 
   auto min_import_ir_inst_id = static_cast<LocId>(ImportIRInstId(0));
-  EXPECT_THAT(min_import_ir_inst_id.index, Eq(-2 - (1 << 25)));
+  EXPECT_THAT(min_import_ir_inst_id.index,
+              Eq(std::numeric_limits<int32_t>::min() + (1 << 24)));
   EXPECT_THAT(min_import_ir_inst_id.AsDesugared().index,
-              Eq(-2 - (1 << 25) - ImportIRInstId::Max));
+              Eq(-(1 << 30) + (1 << 24)));
   EXPECT_THAT(min_import_ir_inst_id.AsDesugared().index,
               Eq(min_import_ir_inst_id.AsDesugared().AsDesugared().index));
 
   auto max_import_ir_inst_id =
       static_cast<LocId>(ImportIRInstId(ImportIRInstId::Max - 1));
   EXPECT_THAT(max_import_ir_inst_id.index,
-              Eq(-2 - (1 << 25) - (ImportIRInstId::Max - 1)));
-  EXPECT_THAT(
-      max_import_ir_inst_id.AsDesugared().index,
-      Eq(-2 - (1 << 25) - ImportIRInstId::Max - (ImportIRInstId::Max - 1)));
+              Eq(std::numeric_limits<int32_t>::min() + (1 << 30) - 2));
+  EXPECT_THAT(max_import_ir_inst_id.AsDesugared().index, Eq(-2));
   EXPECT_THAT(max_import_ir_inst_id.AsDesugared().index,
               Eq(max_import_ir_inst_id.AsDesugared().AsDesugared().index));
 }

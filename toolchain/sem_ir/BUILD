@@ -213,6 +213,8 @@ cc_library(
         "inst_namer.h",
     ],
     deps = [
+        ":absolute_node_ref",
+        ":cpp_file",
         ":file",
         ":typed_insts",
         "//common:concepts",
@@ -225,6 +227,7 @@ cc_library(
         "//toolchain/base:value_ids",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:tree",
+        "@llvm-project//clang:basic",
         "@llvm-project//llvm:Support",
     ],
 )

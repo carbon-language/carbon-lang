@@ -22,9 +22,16 @@ static auto FollowImportRef(
   }
 
   const auto& import_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id());
-  CARBON_CHECK(import_ir.decl_id.has_value(),
-               "If we get `None` locations here, we may need to more "
-               "thoroughly track ImportDecls.");
+
+  // The `ImportDecl` gives the location of the `import` itself, recorded here
+  // as an intermediate step in the resolution. It is not always tracked; when
+  // it is missing, skip the intermediate location and resolve on into the
+  // imported file directly.
+  if (!import_ir.decl_id.has_value()) {
+    cursor_ir = import_ir.sem_ir;
+    cursor_inst_id = import_ir_inst.inst_id();
+    return false;
+  }
 
   auto import_loc_id = cursor_ir->insts().GetCanonicalLocId(import_ir.decl_id);
   switch (import_loc_id.kind()) {

@@ -142,6 +142,11 @@ class InstNamer {
   // Returns true if the instruction has a specific name assigned.
   auto has_name(InstId inst_id) const -> bool;
 
+  // Returns the name of the file `loc_id` resolves into, when that differs from
+  // this IR's file (so its location name refers to another file), or an empty
+  // string otherwise. See `LocName::imported_from`.
+  auto GetImportedFromFilename(LocId loc_id) const -> llvm::StringRef;
+
  private:
   // A space in which unique names can be allocated.
   class Namespace {
@@ -218,23 +223,27 @@ class InstNamer {
   };
 
   // The pieces of a location-based name disambiguator. `line_and_column` is the
-  // source position, or `nullopt` when the location has no source node to name
-  // (such as a C++ import). `mark_implicit` indicates that the name refers to a
-  // desugared (generated) location and should be marked as such; it is only set
-  // for import locations, since node locations are named the same whether or
-  // not they are desugared.
+  // source position, or `nullopt` when the location has no source node to name.
+  // `imported_from` is the name of the file the location resolves into when
+  // that differs from the file being formatted (for an imported-from
+  // annotation), and is empty otherwise. `mark_implicit` indicates that the
+  // name refers to a desugared (generated) location and should be marked as
+  // such; it is only set for import locations, since node locations are named
+  // the same whether or not they are desugared.
   struct LocName {
     std::optional<LineAndColumn> line_and_column;
+    llvm::StringRef imported_from;
     bool mark_implicit;
   };
 
   // Resolves a location to the disambiguator pieces used in an instruction's
-  // name. A `NodeId` uses the current IR's tree; an import location follows one
-  // level of import to the imported IR's tree, and is marked implicit if
-  // desugared. A desugared C++ import has no source node, so it produces a
-  // `LocName` with no line and column but still marked implicit. Returns
-  // `nullopt` when there is nothing to name by, such as a non-desugared C++
-  // import, a multi-level import, or no location.
+  // name. A `NodeId` uses the current IR's tree; an import location resolves
+  // through any number of import levels to the absolute origin, and is marked
+  // implicit if desugared. For a desugared import resolving into a different
+  // file -- including a C++ import, whose file, line, and column come from the
+  // Clang source location -- `imported_from` names that file. Returns `nullopt`
+  // when there is nothing to name by, such as a non-desugared C++ import or no
+  // location.
   auto GetLocName(LocId loc_id) const -> std::optional<LocName>;
 
   // For the given `IdT`, returns its start offset in the `ScopeId` space. Each

@@ -980,10 +980,10 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
   static constexpr llvm::StringLiteral Label = "import_ir_inst";
 
   // The maximum ID, non-inclusive. This is constrained to fit inside LocId,
-  // which reserves two equal-sized ranges of this size: one for canonical
-  // import locations and one for their desugared form.
-  static constexpr int Max =
-      -(std::numeric_limits<int32_t>::min() + 2 * Parse::NodeId::Max + 1) / 2;
+  // whose 30-bit location payload holds a `NodeId` in [0, NodeId::Max) and an
+  // `ImportIRInstId` in [NodeId::Max, NodeId::Max + Max); the all-ones payload
+  // is reserved (it would collide with the `None` sentinel).
+  static constexpr int Max = ((1 << 30) - 1) - Parse::NodeId::Max;
 
   constexpr explicit ImportIRInstId(int32_t index) : IdBase(index) {
     CARBON_DCHECK(index < Max, "Index out of range: {0}", index);
@@ -1042,20 +1042,17 @@ struct RawBundleId : public IdBase<RawBundleId> {
 //
 // The structure is:
 // - None: The standard NoneIndex for all Id types, -1.
-// - InstId: Positive values including zero; a full 31 bits.
-//   - [0, 1 << 31)
-// - NodeId: Negative values starting after None; the 24 bit NodeId range.
-//   - [-2, -2 - (1 << 24))
-// - Desugared NodeId: Another 24 bit NodeId range.
-//   - [-2 - (1 << 24), -2 - (1 << 25))
-// - ImportIRInstId: The next `ImportIRInstId::Max` negative values.
-// - Desugared ImportIRInstId: Another `ImportIRInstId::Max` negative values,
-//   filling out the remaining negative range.
+// - InstId: Non-negative values; a full 31 bits, [0, 1 << 31).
+// - NodeId and ImportIRInstId: Negative values. Bit 31 marks this location
+//   range and bit 30 flags a desugared location. The low 30 bits hold a
+//   payload: [0, NodeId::Max) selects a `NodeId`, and
+//   `[NodeId::Max, NodeId::Max + ImportIRInstId::Max)` selects an
+//   `ImportIRInstId`.
 //
-// Both `NodeId` and `ImportIRInstId` have a canonical and a desugared range; a
-// desugared location identifies the same node or import but indicates that the
-// instructions at it were generated rather than directly written there. For
-// desugaring, use `InstStore::GetLocIdForDesugaring()`.
+// A desugared location identifies the same node or import as its canonical
+// form -- they share a payload and differ only in `DesugaredBit` -- but
+// indicates that the instructions at it were generated rather than directly
+// written there. For desugaring, use `InstStore::GetLocIdForDesugaring()`.
 struct LocId : public IdBase<LocId> {
   // The contained index kind.
   enum class Kind {
@@ -1071,7 +1068,7 @@ struct LocId : public IdBase<LocId> {
 
   explicit(false) constexpr LocId(ImportIRInstId import_ir_inst_id)
       : IdBase(import_ir_inst_id.has_value()
-                   ? FirstImportIRInstId - import_ir_inst_id.index
+                   ? MakeLocation(Parse::NodeId::Max + import_ir_inst_id.index)
                    : NoneIndex) {}
 
   explicit constexpr LocId(InstId inst_id) : IdBase(inst_id.index) {}
@@ -1080,21 +1077,16 @@ struct LocId : public IdBase<LocId> {
       : IdBase(NoneIndex) {}
 
   explicit(false) constexpr LocId(Parse::NodeId node_id)
-      : IdBase(FirstNodeId - node_id.index) {}
+      : IdBase(MakeLocation(node_id.index)) {}
 
   // Forms an equivalent LocId for a desugared location. Prefer calling
   // `InstStore::GetLocIdForDesugaring`.
   auto AsDesugared() const -> LocId {
     CARBON_CHECK(kind() != Kind::InstId, "Use InstStore::GetDesugaredLocId");
-    // Shift a canonical `NodeId` or `ImportIRInstId` into its desugared range;
-    // already-desugared and `None` locations are returned unchanged.
-    if (index <= FirstNodeId && index > FirstDesugaredNodeId) {
-      return LocId(index - Parse::NodeId::Max);
-    }
-    if (index <= FirstImportIRInstId && index > FirstDesugaredImportIRInstId) {
-      return LocId(index - ImportIRInstId::Max);
-    }
-    return *this;
+    // Set the desugared bit. `None` (which has all bits set) and
+    // already-desugared locations are returned unchanged.
+    return LocId(
+        static_cast<int32_t>(static_cast<uint32_t>(index) | DesugaredBit));
   }
 
   // Returns the kind of the `LocId`.
@@ -1105,17 +1097,19 @@ struct LocId : public IdBase<LocId> {
     if (index >= 0) {
       return Kind::InstId;
     }
-    if (index <= FirstImportIRInstId) {
-      return Kind::ImportIRInstId;
-    }
-    return Kind::NodeId;
+    // A negative value is a location; its payload selects `NodeId` versus
+    // `ImportIRInstId`, regardless of whether it is desugared.
+    return location_payload() < static_cast<uint32_t>(Parse::NodeId::Max)
+               ? Kind::NodeId
+               : Kind::ImportIRInstId;
   }
 
   // Returns true if the location corresponds to desugared instructions.
   // Requires a non-`InstId` location.
   auto is_desugared() const -> bool {
-    return (index <= FirstDesugaredNodeId && index > FirstImportIRInstId) ||
-           index <= FirstDesugaredImportIRInstId;
+    // Only a location (a negative value other than `None`) can be desugared.
+    return index <= FirstLocation &&
+           (static_cast<uint32_t>(index) & DesugaredBit) != 0;
   }
 
   // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.
@@ -1127,11 +1121,9 @@ struct LocId : public IdBase<LocId> {
       return ImportIRInstId::None;
     }
     CARBON_CHECK(kind() == Kind::ImportIRInstId, "{0}", index);
-    // Decode from the canonical or desugared range, which share an id space.
-    if (index <= FirstDesugaredImportIRInstId) {
-      return ImportIRInstId(FirstDesugaredImportIRInstId - index);
-    }
-    return ImportIRInstId(FirstImportIRInstId - index);
+    // The canonical and desugared forms share a payload.
+    return ImportIRInstId(static_cast<int32_t>(location_payload()) -
+                          Parse::NodeId::Max);
   }
 
   // Returns the equivalent `InstId` when `kind()` matches or is `None`.
@@ -1146,24 +1138,37 @@ struct LocId : public IdBase<LocId> {
       return Parse::NodeId::None;
     }
     CARBON_CHECK(kind() == Kind::NodeId, "{0}", index);
-    if (index <= FirstDesugaredNodeId) {
-      return Parse::NodeId(FirstDesugaredNodeId - index);
-    } else {
-      return Parse::NodeId(FirstNodeId - index);
-    }
+    // The canonical and desugared forms share a payload.
+    return Parse::NodeId(static_cast<int32_t>(location_payload()));
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
-  // The value of the 0 index for each of `NodeId` and `ImportIRInstId`.
-  static constexpr int32_t FirstNodeId = NoneIndex - 1;
-  static constexpr int32_t FirstDesugaredNodeId =
-      FirstNodeId - Parse::NodeId::Max;
-  static constexpr int32_t FirstImportIRInstId =
-      FirstDesugaredNodeId - Parse::NodeId::Max;
-  static constexpr int32_t FirstDesugaredImportIRInstId =
-      FirstImportIRInstId - ImportIRInstId::Max;
+  // Locations occupy the negative range of the index. `LocationMarker` (bit 31)
+  // marks that range; `DesugaredBit` (bit 30) flags a desugared location; the
+  // low 30 bits hold the payload (see the comment on `LocId`). A canonical
+  // location and its desugared form share a payload and differ only in
+  // `DesugaredBit`.
+  static constexpr uint32_t LocationMarker = 1U << 31;
+  static constexpr uint32_t DesugaredBit = 1U << 30;
+  static constexpr uint32_t PayloadMask = DesugaredBit - 1;
+
+  // The largest index value that encodes a location; larger values are `None`
+  // (-1) and `InstId` (non-negative).
+  static constexpr int32_t FirstLocation = NoneIndex - 1;
+
+  // Encodes a canonical location with the given payload.
+  static constexpr auto MakeLocation(int32_t payload) -> int32_t {
+    return static_cast<int32_t>(LocationMarker |
+                                static_cast<uint32_t>(payload));
+  }
+
+  // Returns the payload of a location, shared by its canonical and desugared
+  // forms.
+  auto location_payload() const -> uint32_t {
+    return static_cast<uint32_t>(index) & PayloadMask;
+  }
 };
 
 // Polymorphic id for fields in `Any[...]` typed instruction category. Used for

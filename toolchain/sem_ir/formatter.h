@@ -193,6 +193,12 @@ class Formatter {
   // formatting.
   auto FormatInst(InstId inst_id) -> void;
 
+  // If `inst_id` was generated at a desugared location that resolves into a
+  // different file, annotates that file (reusing the imported-from annotation).
+  // Such an instruction's location name resolves to a line in another file --
+  // for a C++ import, the Clang source location -- so this indicates which.
+  auto FormatImportedFromForDesugaredLoc(InstId inst_id) -> void;
+
   // If there is a pending library name that the current instruction was
   // imported from, print it now and clear it out.
   auto FormatPendingImportedFrom(AddSpace space_where) -> void;
