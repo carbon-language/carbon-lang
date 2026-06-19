@@ -66,6 +66,13 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                  "Unexpected inst {0} for template constant int", bound_inst);
     return ConstantEvalResult::NewSamePhase(inst);
   }
+
+  auto orig_inst = context.insts().GetAs<SemIR::ArrayType>(inst_id);
+  auto error_loc =
+      context.insts().GetCanonicalLocId(orig_inst.bound_id).has_value()
+          ? orig_inst.bound_id
+          : inst_id;
+
   // TODO: We should check that the size of the resulting array type
   // fits in 64 bits, not just that the bound does. Should we use a
   // 32-bit limit for 32-bit targets?
@@ -74,17 +81,15 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
       bound_val.isNegative()) {
     CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
                       "array bound of {0} is negative", TypedInt);
-    context.emitter().Emit(
-        context.insts().GetAs<SemIR::ArrayType>(inst_id).bound_id,
-        ArrayBoundNegative, {.type = int_bound->type_id, .value = bound_val});
+    context.emitter().Emit(error_loc, ArrayBoundNegative,
+                           {.type = int_bound->type_id, .value = bound_val});
     return ConstantEvalResult::Error;
   }
   if (bound_val.getActiveBits() > 64) {
     CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
                       "array bound of {0} is too large", TypedInt);
-    context.emitter().Emit(
-        context.insts().GetAs<SemIR::ArrayType>(inst_id).bound_id,
-        ArrayBoundTooLarge, {.type = int_bound->type_id, .value = bound_val});
+    context.emitter().Emit(error_loc, ArrayBoundTooLarge,
+                           {.type = int_bound->type_id, .value = bound_val});
     return ConstantEvalResult::Error;
   }
   return ConstantEvalResult::NewSamePhase(inst);

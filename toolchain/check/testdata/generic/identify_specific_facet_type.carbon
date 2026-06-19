@@ -93,3 +93,59 @@ fn G(T:! Y) {
   // CHECK:STDERR:
   F(-1, T);
 };
+
+// --- fail_monomorphization_identify_in_call.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+interface Z {
+  let Z1:! type;
+}
+
+constraint S(N:! Core.IntLiteral) {
+  extend require impls Z where .Z1 = array((), N);
+}
+
+fn F(N:! Core.IntLiteral, _:! S(N)) {}
+
+fn G(T:! Z) {
+  // CHECK:STDERR: fail_monomorphization_identify_in_call.carbon:[[@LINE+10]]:3: error: facet type `S(-1)` can not be identified [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR:   F(-1, T);
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_monomorphization_identify_in_call.carbon:[[@LINE-9]]:24: note: array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR:   extend require impls Z where .Z1 = array((), N);
+  // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_monomorphization_identify_in_call.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn F(N:! Core.IntLiteral, _:! S(N)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  F(-1, T);
+};
+
+// --- fail_monomorphization_during_deduction_in_call.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+interface Z {
+  let Z1:! type;
+}
+
+constraint S(N:! Core.IntLiteral) {
+  extend require impls Z;
+}
+
+fn F(N:! Core.IntLiteral, _:! S(N) where .Z1 = array((), N)) {}
+
+fn G(T:! Z) {
+  // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE+10]]:3: error: constructed invalid specific for `S(N) where .(Z.Z1) = array((), N)` from argument [SubstitutingGenericParamType]
+  // CHECK:STDERR:   F(-1, T);
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE-6]]:27: note: array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR: fn F(N:! Core.IntLiteral, _:! S(N) where .Z1 = array((), N)) {}
+  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn F(N:! Core.IntLiteral, _:! S(N) where .Z1 = array((), N)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  F(-1, T);
+};
