@@ -415,7 +415,7 @@ static auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool {
               context().insts().TryGetAs<SemIR::FacetType>(inst_id)) {
         const auto& info =
             context().facet_types().Get(facet_type->facet_type_id);
-        if (!SemIR::FacetTypeInfo::IsExtendedOnly(info)) {
+        if (!info.IsExtendedOnly()) {
           *found_ = true;
           return FullySubstituted;
         }
