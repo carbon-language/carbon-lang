@@ -30,21 +30,118 @@ alias A = I where .Self == C;
 // CHECK:STDERR:
 fn F(_:! type where C(A) impls type) {}
 
-// --- fail_where_nested_inside_where_through_alias_impls_rhs.carbon
+// --- fail_where_nested_inside_where_through_alias_impls_rhs_with_self_impls_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface I {}
-class C;
 
-alias A = I where .Self == C;
+alias A = type where .Self impls I;
 
 // The use of `A` introduces a `where` expression inside the `where` written
 // here, which is an error.
 //
-// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs.carbon:[[@LINE+7]]:33: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs_with_self_impls_interface.carbon:[[@LINE+7]]:33: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
 // CHECK:STDERR: fn F(_:! type where .Self impls A) {}
 // CHECK:STDERR:                                 ^
-// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs.carbon:[[@LINE+4]]:10: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
+// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs_with_self_impls_interface.carbon:[[@LINE+4]]:10: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
+// CHECK:STDERR: fn F(_:! type where .Self impls A) {}
+// CHECK:STDERR:          ^~~~~~~~~~
+// CHECK:STDERR:
+fn F(_:! type where .Self impls A) {}
+
+// --- fail_where_nested_inside_where_through_alias_impls_rhs_with_self_impls_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+constraint N {}
+
+alias A = type where .Self impls N;
+
+// The use of `A` introduces a `where` expression inside the `where` written
+// here, which is an error.
+//
+// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs_with_self_impls_named_constraint.carbon:[[@LINE+7]]:33: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fn F(_:! type where .Self impls A) {}
+// CHECK:STDERR:                                 ^
+// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs_with_self_impls_named_constraint.carbon:[[@LINE+4]]:10: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
+// CHECK:STDERR: fn F(_:! type where .Self impls A) {}
+// CHECK:STDERR:          ^~~~~~~~~~
+// CHECK:STDERR:
+fn F(_:! type where .Self impls A) {}
+
+// --- fail_where_nested_inside_where_through_alias_impls_rhs_with_type_impls_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T:! type) {}
+class C;
+
+alias A = type where C impls I(.Self);
+
+// The use of `A` introduces a `where` expression inside the `where` written
+// here, which is an error.
+//
+// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs_with_type_impls_interface.carbon:[[@LINE+7]]:33: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fn F(_:! type where .Self impls A) {}
+// CHECK:STDERR:                                 ^
+// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs_with_type_impls_interface.carbon:[[@LINE+4]]:10: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
+// CHECK:STDERR: fn F(_:! type where .Self impls A) {}
+// CHECK:STDERR:          ^~~~~~~~~~
+// CHECK:STDERR:
+fn F(_:! type where .Self impls A) {}
+
+// --- fail_where_nested_inside_where_through_alias_impls_rhs_with_type_impls_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+constraint N(T:! type) {}
+class C;
+
+alias A = type where C impls N(.Self);
+
+// The use of `A` introduces a `where` expression inside the `where` written
+// here, which is an error.
+//
+// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs_with_type_impls_named_constraint.carbon:[[@LINE+7]]:33: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fn F(_:! type where .Self impls A) {}
+// CHECK:STDERR:                                 ^
+// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs_with_type_impls_named_constraint.carbon:[[@LINE+4]]:10: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
+// CHECK:STDERR: fn F(_:! type where .Self impls A) {}
+// CHECK:STDERR:          ^~~~~~~~~~
+// CHECK:STDERR:
+fn F(_:! type where .Self impls A) {}
+
+// --- fail_where_nested_inside_where_through_alias_impls_rhs_with_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface I { let I1:! type; }
+class C;
+
+alias A = I where .I1 = C;
+
+// The use of `A` introduces a `where` expression inside the `where` written
+// here, which is an error.
+//
+// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs_with_rewrite.carbon:[[@LINE+7]]:33: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fn F(_:! type where .Self impls A) {}
+// CHECK:STDERR:                                 ^
+// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs_with_rewrite.carbon:[[@LINE+4]]:10: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
+// CHECK:STDERR: fn F(_:! type where .Self impls A) {}
+// CHECK:STDERR:          ^~~~~~~~~~
+// CHECK:STDERR:
+fn F(_:! type where .Self impls A) {}
+
+// --- fail_where_nested_inside_where_through_alias_impls_rhs_with_equiv.carbon
+library "[[@TEST_NAME]]";
+
+class C;
+
+alias A = type where .Self == C;
+
+// The use of `A` introduces a `where` expression inside the `where` written
+// here, which is an error.
+//
+// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs_with_equiv.carbon:[[@LINE+7]]:33: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fn F(_:! type where .Self impls A) {}
+// CHECK:STDERR:                                 ^
+// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_rhs_with_equiv.carbon:[[@LINE+4]]:10: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
 // CHECK:STDERR: fn F(_:! type where .Self impls A) {}
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
