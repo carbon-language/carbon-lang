@@ -173,12 +173,35 @@ auto FacetTypeInfo::ExtendedOnly(const FacetTypeInfo& info) -> FacetTypeInfo {
           .extend_named_constraints = info.extend_named_constraints};
 }
 
-auto FacetTypeInfo::IsExtendedOnly(const FacetTypeInfo& info) -> bool {
-  return info.self_impls_constraints.empty() &&
-         info.self_impls_named_constraints.empty() &&
-         info.type_impls_interfaces.empty() &&
-         info.type_impls_named_constraints.empty() &&
-         info.rewrite_constraints.empty() && !info.other_requirements;
+auto FacetTypeInfo::TryAsSingleExtend() const
+    -> std::optional<SingleExtendFacetType> {
+  if (!IsExtendedOnly()) {
+    return std::nullopt;
+  }
+  if (extend_constraints.size() == 1 && extend_named_constraints.empty()) {
+    return extend_constraints.front();
+  }
+  if (extend_constraints.empty() && extend_named_constraints.size() == 1) {
+    return extend_named_constraints.front();
+  }
+  return std::nullopt;
+}
+
+auto FacetTypeInfo::HasNoConstraints() const -> bool {
+  return extend_constraints.empty() && extend_named_constraints.empty() &&
+         self_impls_constraints.empty() &&
+         self_impls_named_constraints.empty() &&
+         type_impls_interfaces.empty() &&
+         type_impls_named_constraints.empty() && rewrite_constraints.empty() &&
+         !other_requirements;
+}
+
+auto FacetTypeInfo::IsExtendedOnly() const -> bool {
+  return self_impls_constraints.empty() &&
+         self_impls_named_constraints.empty() &&
+         type_impls_interfaces.empty() &&
+         type_impls_named_constraints.empty() && rewrite_constraints.empty() &&
+         !other_requirements;
 }
 
 auto FacetTypeInfo::Canonicalize() -> void {
