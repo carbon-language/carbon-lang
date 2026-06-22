@@ -235,7 +235,6 @@ repos:
               compile_flags.txt|
               github_tools/requirements.txt|
               third_party/.*|
-              toolchain/check/cpp/multiplex_external_sema_source.*|
               utils/vscode/esbuild.js|
               website/.ruby-version|
               website/Gemfile.lock|
