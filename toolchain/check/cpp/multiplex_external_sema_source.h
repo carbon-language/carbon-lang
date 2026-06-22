@@ -1,3 +1,6 @@
+// TODO: Remove this once https://github.com/llvm/llvm-project/pull/204458
+// is merged.
+
 //===--- MultiplexExternalSemaSource.h - External Sema Interface-*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
