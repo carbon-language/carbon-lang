@@ -12,7 +12,7 @@
 // This file implements the event dispatching to the subscribed clients.
 //
 //===----------------------------------------------------------------------===//
-#include "toolchain/check/cpp/multiplex_external_sema_source.h"
+#include "third_party/llvm/multiplex_external_sema_source.h"
 
 #include "clang/Sema/Lookup.h"
 

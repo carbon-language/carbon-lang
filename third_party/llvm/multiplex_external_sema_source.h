@@ -12,8 +12,8 @@
 //  This file defines ExternalSemaSource interface, dispatching to all clients
 //
 //===----------------------------------------------------------------------===//
-#ifndef CARBON_TOOLCHAIN_CHECK_CPP_MULTIPLEX_EXTERNAL_SEMA_SOURCE_H_
-#define CARBON_TOOLCHAIN_CHECK_CPP_MULTIPLEX_EXTERNAL_SEMA_SOURCE_H_
+#ifndef CARBON_THIRD_PARTY_LLVM_MULTIPLEX_EXTERNAL_SEMA_SOURCE_H_
+#define CARBON_THIRD_PARTY_LLVM_MULTIPLEX_EXTERNAL_SEMA_SOURCE_H_
 
 #include <utility>
 
@@ -406,4 +406,4 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
 
 }  // end namespace clang
 
-#endif  // CARBON_TOOLCHAIN_CHECK_CPP_MULTIPLEX_EXTERNAL_SEMA_SOURCE_H_
+#endif  // CARBON_THIRD_PARTY_LLVM_MULTIPLEX_EXTERNAL_SEMA_SOURCE_H_
