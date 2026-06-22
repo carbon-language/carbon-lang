@@ -133,16 +133,6 @@ import Cpp;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 abstract class Abstract {
-  // CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor_but_virtual_fns.carbon:[[@LINE+10]]:3: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
-  // CHECK:STDERR:   abstract fn F(self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor_but_virtual_fns.carbon:[[@LINE-4]]:1: note: class was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor_but_virtual_fns.carbon:[[@LINE+4]]:17: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   abstract fn F(self);
-  // CHECK:STDERR:                 ^~~~
-  // CHECK:STDERR:
   abstract fn F(self);
 }
 

@@ -23,6 +23,7 @@ git config --global user.name "$GIT_USERNAME"
 
 declare -A MIRRORS
 MIRRORS["utils/vim"]="vim-carbon-lang"
+MIRRORS["utils/textmate"]="carbon.tmbundle"
 
 for dir in "${!MIRRORS[@]}"; do
   SRC_DIR="$dir"

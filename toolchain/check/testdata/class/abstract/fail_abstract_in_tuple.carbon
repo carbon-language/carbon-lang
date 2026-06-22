@@ -44,20 +44,13 @@ fn Var() {
   var unused v: (Abstract2,);
 }
 
-// --- fail_todo_abstract_let.carbon
+// --- abstract_let.carbon
 library "[[@TEST_NAME]]";
 
 abstract class Abstract3 {
 }
 
 fn F(a: Abstract3) {
-  // CHECK:STDERR: fail_todo_abstract_let.carbon:[[@LINE+7]]:32: error: initialization of abstract type `(Abstract3,)` [AbstractTypeInInit]
-  // CHECK:STDERR:   let unused l: (Abstract3,) = (a,);
-  // CHECK:STDERR:                                ^~~~
-  // CHECK:STDERR: fail_todo_abstract_let.carbon:[[@LINE-7]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract3 {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   let unused l: (Abstract3,) = (a,);
 }
 
@@ -237,7 +230,7 @@ fn Var5() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_abstract_let.carbon
+// CHECK:STDOUT: --- abstract_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract3: type = class_type @Abstract3 [concrete]
@@ -294,13 +287,15 @@ fn Var5() {
 // CHECK:STDOUT:     %l.patt: %pattern_type.ac0 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract3 = name_ref a, %a
-// CHECK:STDOUT:   %.loc14_35: %tuple.type.4cc = tuple_literal (%a.ref)
-// CHECK:STDOUT:   %.loc14_28.1: type = splice_block %.loc14_28.3 [concrete = constants.%tuple.type.4cc] {
-// CHECK:STDOUT:     %Abstract3.ref.loc14: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
-// CHECK:STDOUT:     %.loc14_28.2: %tuple.type.85c = tuple_literal (%Abstract3.ref.loc14) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc14_28.3: type = converted %.loc14_28.2, constants.%tuple.type.4cc [concrete = constants.%tuple.type.4cc]
+// CHECK:STDOUT:   %.loc7_35.1: %tuple.type.4cc = tuple_literal (%a.ref)
+// CHECK:STDOUT:   %tuple: %tuple.type.4cc = tuple_value (%a.ref)
+// CHECK:STDOUT:   %.loc7_35.2: %tuple.type.4cc = converted %.loc7_35.1, %tuple
+// CHECK:STDOUT:   %.loc7_28.1: type = splice_block %.loc7_28.3 [concrete = constants.%tuple.type.4cc] {
+// CHECK:STDOUT:     %Abstract3.ref.loc7: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
+// CHECK:STDOUT:     %.loc7_28.2: %tuple.type.85c = tuple_literal (%Abstract3.ref.loc7) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc7_28.3: type = converted %.loc7_28.2, constants.%tuple.type.4cc [concrete = constants.%tuple.type.4cc]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %l: %tuple.type.4cc = value_binding l, <error> [concrete = <error>]
+// CHECK:STDOUT:   %l: %tuple.type.4cc = value_binding l, %.loc7_35.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

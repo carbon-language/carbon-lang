@@ -99,7 +99,5 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Enum.Op(%self.param: %Enum) -> out %return.param: %Enum = "primitive_copy";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %Enum) = "no_op";
 // CHECK:STDOUT:

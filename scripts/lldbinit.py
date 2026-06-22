@@ -89,6 +89,7 @@ Example usage:
         "inst_block": "SemIR::MakeInstBlockId",
         "inst": "SemIR::MakeInstId",
         "interface": "SemIR::MakeInterfaceId",
+        "import_ir_inst": "SemIR::MakeImportIRInstId",
         "name": "SemIR::MakeNameId",
         "name_scope": "SemIR::MakeNameScopeId",
         "identified_facet_type": "SemIR::MakeIdentifiedFacetTypeId",

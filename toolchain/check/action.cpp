@@ -222,39 +222,67 @@ static auto AddDependentActionSpliceImpl(Context& context,
 // produces an argument that has the template-dependent parts replaced with
 // their concrete values, so that the action doesn't need to know which specific
 // it is operating on.
-static auto RefineOperand(Context& context, SemIR::LocId loc_id,
-                          SemIR::IdAndKind arg) -> int32_t {
-  if (auto inst_id = arg.TryAs<SemIR::MetaInstId>()) {
-    auto inst = context.insts().Get(*inst_id);
-    if (inst.Is<SemIR::SpliceInst>()) {
-      // The argument will evaluate to the spliced instruction, which is already
-      // refined.
-      return arg.value();
-    }
+//
+// This is the default case, for ID kinds that can't be refined.
+template <typename IdT>
+  requires SemIR::Internal::IsIdKindType<IdT>
+static auto RefineTypedOperand(Context& /*context*/, SemIR::LocId /*loc_id*/,
+                               IdT id) -> IdT {
+  return id;
+}
 
-    // If the type of the action argument is dependent, refine to an instruction
-    // with a concrete type.
-    if (OperandDependence(context, inst.type_id()) ==
-        SemIR::ConstantDependence::Template) {
-      auto type_inst_id = context.types().GetTypeInstId(inst.type_id());
-      inst_id = AddDependentActionSpliceImpl(
-          context,
-          SemIR::LocIdAndInst(
-              loc_id,
-              SemIR::RefineTypeAction{.type_id = GetSingletonType(
-                                          context, SemIR::InstType::TypeInstId),
-                                      .inst_id = *inst_id,
-                                      .inst_type_inst_id = type_inst_id}),
-          type_inst_id);
-    }
-
-    // TODO: Handle the case where the constant value of the instruction is
-    // template-dependent.
-
-    return inst_id->index;
+static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
+                               SemIR::MetaInstId inst_id) -> SemIR::MetaInstId {
+  auto inst = context.insts().Get(inst_id);
+  if (inst.Is<SemIR::SpliceInst>()) {
+    // The argument will evaluate to the spliced instruction, which is already
+    // refined.
+    return inst_id;
   }
 
-  return arg.value();
+  // If the type of the action argument is dependent, refine to an instruction
+  // with a concrete type.
+  if (OperandDependence(context, inst.type_id()) ==
+      SemIR::ConstantDependence::Template) {
+    auto type_inst_id = context.types().GetTypeInstId(inst.type_id());
+    inst_id = AddDependentActionSpliceImpl(
+        context,
+        SemIR::LocIdAndInst(
+            loc_id,
+            SemIR::RefineTypeAction{.type_id = GetSingletonType(
+                                        context, SemIR::InstType::TypeInstId),
+                                    .inst_id = inst_id,
+                                    .inst_type_inst_id = type_inst_id}),
+        type_inst_id);
+  }
+
+  // TODO: Handle the case where the constant value of the instruction is
+  // template-dependent.
+
+  return inst_id;
+}
+
+template <typename BundleT>
+static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
+                               SemIR::BundleId<BundleT> bundle_id)
+    -> SemIR::BundleId<BundleT> {
+  auto bundle_tuple = context.bundles().GetAsTuple(bundle_id);
+  BundleT refined_bundle = std::apply(
+      [&](auto... bundle_fields) {
+        // This can't actually recurse, because bundles can't contain bundle
+        // IDs.
+        return BundleT{RefineTypedOperand(context, loc_id, bundle_fields)...};
+      },
+      bundle_tuple);
+  return context.bundles().AddCanonical(refined_bundle);
+}
+
+// Dynamically dispatched wrapper for RefineTypedOperand.
+static auto RefineOperand(Context& context, SemIR::LocId loc_id,
+                          SemIR::IdAndKind arg) -> int32_t {
+  return arg.Dispatch<int32_t>([&](auto id) {
+    return SemIR::ToRaw(RefineTypedOperand(context, loc_id, id));
+  });
 }
 
 // Refine the operands of an action, ensuring that they will refer to concrete
