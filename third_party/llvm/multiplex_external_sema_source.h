@@ -29,6 +29,9 @@ class TypedefNameDecl;
 class ValueDecl;
 class VarDecl;
 
+// NOLINTBEGIN(modernize-use-trailing-return-type)
+// NOLINTBEGIN(readability-identifier-naming)
+
 /// An abstract interface that should be implemented by
 /// external AST sources that also provide information for semantic
 /// analysis.
@@ -412,6 +415,9 @@ class MultiplexExternalSemaSource : public clang::ExternalSemaSource {
   static bool classof(const clang::ExternalASTSource* S) { return S->isA(&ID); }
   /// \}
 };
+
+// NOLINTEND(readability-identifier-naming)
+// NOLINTEND(modernize-use-trailing-return-type)
 
 }  // namespace Carbon
 

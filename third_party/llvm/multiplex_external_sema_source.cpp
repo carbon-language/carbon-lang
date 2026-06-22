@@ -11,10 +11,15 @@
 
 namespace Carbon {
 
+// NOLINTBEGIN(modernize-loop-convert)
+// NOLINTBEGIN(modernize-use-trailing-return-type)
+// NOLINTBEGIN(readability-identifier-naming)
+// NOLINTBEGIN(readability-redundant-nested-if)
+
 char MultiplexExternalSemaSource::ID;
 
 /// Constructs an empty multiplexing external sema source.
-MultiplexExternalSemaSource::MultiplexExternalSemaSource() {}
+MultiplexExternalSemaSource::MultiplexExternalSemaSource() = default;
 
 /// Constructs a new multiplexing external sema source and appends the
 /// given element to it.
@@ -227,7 +232,7 @@ void MultiplexExternalSemaSource::PrintStats() {
 
 clang::Module* MultiplexExternalSemaSource::getModule(unsigned ID) {
   for (size_t i = 0; i < Sources.size(); ++i) {
-    if (auto M = Sources[i]->getModule(ID)) {
+    if (auto* M = Sources[i]->getModule(ID)) {
       return M;
     }
   }
@@ -436,5 +441,10 @@ void MultiplexExternalSemaSource::AssignedLambdaNumbering(
     Source->AssignedLambdaNumbering(Lambda);
   }
 }
+
+// NOLINTEND(readability-redundant-nested-if)
+// NOLINTEND(readability-identifier-naming)
+// NOLINTEND(modernize-use-trailing-return-type)
+// NOLINTEND(modernize-loop-convert)
 
 }  // namespace Carbon
