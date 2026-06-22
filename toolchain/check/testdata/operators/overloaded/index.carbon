@@ -505,16 +505,16 @@ fn F() {
 // CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType, %ElementType)> [symbolic = %IndexWith.type (constants.%IndexWith.type.a54)]
 // CHECK:STDOUT:   %Self: @IndexWith.WithSelf.At.%IndexWith.type (%IndexWith.type.a54) = symbolic_binding Self, 2 [symbolic = %Self (constants.%Self.799)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.194)]
-// CHECK:STDOUT:   %pattern_type.loc5_9: type = pattern_type %Self.as_type [symbolic = %pattern_type.loc5_9 (constants.%pattern_type.f87)]
-// CHECK:STDOUT:   %self.param_patt: @IndexWith.WithSelf.At.%pattern_type.loc5_9 (%pattern_type.f87) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.fd0)]
-// CHECK:STDOUT:   %self.patt: @IndexWith.WithSelf.At.%pattern_type.loc5_9 (%pattern_type.f87) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.33f)]
-// CHECK:STDOUT:   %pattern_type.loc5_24: type = pattern_type %SubscriptType [symbolic = %pattern_type.loc5_24 (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %subscript.param_patt: @IndexWith.WithSelf.At.%pattern_type.loc5_24 (%pattern_type.51d) = value_param_pattern [symbolic = %subscript.param_patt (constants.%subscript.param_patt.fd1)]
-// CHECK:STDOUT:   %subscript.patt: @IndexWith.WithSelf.At.%pattern_type.loc5_24 (%pattern_type.51d) = at_binding_pattern subscript, %subscript.param_patt [symbolic = %subscript.patt (constants.%subscript.patt.bdc)]
-// CHECK:STDOUT:   %.loc5: Core.Form = init_form %ElementType [symbolic = %.loc5 (constants.%.822)]
-// CHECK:STDOUT:   %pattern_type.loc5_44: type = pattern_type %ElementType [symbolic = %pattern_type.loc5_44 (constants.%pattern_type.946)]
-// CHECK:STDOUT:   %return.param_patt: @IndexWith.WithSelf.At.%pattern_type.loc5_44 (%pattern_type.946) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.6dd)]
-// CHECK:STDOUT:   %return.patt: @IndexWith.WithSelf.At.%pattern_type.loc5_44 (%pattern_type.946) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.fc9)]
+// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.f87)]
+// CHECK:STDOUT:   %self.param_patt: @IndexWith.WithSelf.At.%pattern_type.1 (%pattern_type.f87) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.fd0)]
+// CHECK:STDOUT:   %self.patt: @IndexWith.WithSelf.At.%pattern_type.1 (%pattern_type.f87) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.33f)]
+// CHECK:STDOUT:   %pattern_type.2: type = pattern_type %SubscriptType [symbolic = %pattern_type.2 (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %subscript.param_patt: @IndexWith.WithSelf.At.%pattern_type.2 (%pattern_type.51d) = value_param_pattern [symbolic = %subscript.param_patt (constants.%subscript.param_patt.fd1)]
+// CHECK:STDOUT:   %subscript.patt: @IndexWith.WithSelf.At.%pattern_type.2 (%pattern_type.51d) = at_binding_pattern subscript, %subscript.param_patt [symbolic = %subscript.patt (constants.%subscript.patt.bdc)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %ElementType [symbolic = %.1 (constants.%.822)]
+// CHECK:STDOUT:   %pattern_type.3: type = pattern_type %ElementType [symbolic = %pattern_type.3 (constants.%pattern_type.946)]
+// CHECK:STDOUT:   %return.param_patt: @IndexWith.WithSelf.At.%pattern_type.3 (%pattern_type.946) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.6dd)]
+// CHECK:STDOUT:   %return.patt: @IndexWith.WithSelf.At.%pattern_type.3 (%pattern_type.946) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.fc9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -568,14 +568,14 @@ fn F() {
 // CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.a54
 // CHECK:STDOUT:   %Self => constants.%Self.799
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.194
-// CHECK:STDOUT:   %pattern_type.loc5_9 => constants.%pattern_type.f87
+// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.f87
 // CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.fd0
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.33f
-// CHECK:STDOUT:   %pattern_type.loc5_24 => constants.%pattern_type.51d
+// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %subscript.param_patt => constants.%subscript.param_patt.fd1
 // CHECK:STDOUT:   %subscript.patt => constants.%subscript.patt.bdc
-// CHECK:STDOUT:   %.loc5 => constants.%.822
-// CHECK:STDOUT:   %pattern_type.loc5_44 => constants.%pattern_type.946
+// CHECK:STDOUT:   %.1 => constants.%.822
+// CHECK:STDOUT:   %pattern_type.3 => constants.%pattern_type.946
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.6dd
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.fc9
 // CHECK:STDOUT: }
@@ -621,14 +621,14 @@ fn F() {
 // CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.de8
 // CHECK:STDOUT:   %Self => constants.%IndexWith.facet
 // CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT:   %pattern_type.loc5_9 => constants.%pattern_type.98b
+// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.98b
 // CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.303
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.49a
-// CHECK:STDOUT:   %pattern_type.loc5_24 => constants.%pattern_type.cb1
+// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.cb1
 // CHECK:STDOUT:   %subscript.param_patt => constants.%subscript.param_patt.0ba
 // CHECK:STDOUT:   %subscript.patt => constants.%subscript.patt.db1
-// CHECK:STDOUT:   %.loc5 => constants.%.262
-// CHECK:STDOUT:   %pattern_type.loc5_44 => constants.%pattern_type.cb1
+// CHECK:STDOUT:   %.1 => constants.%.262
+// CHECK:STDOUT:   %pattern_type.3 => constants.%pattern_type.cb1
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.900
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.9ca
 // CHECK:STDOUT: }

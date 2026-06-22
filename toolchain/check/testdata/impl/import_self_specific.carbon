@@ -627,7 +627,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness.03b)]
 // CHECK:STDOUT:   %impl.elem0: %Y.type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0 (constants.%impl.elem0.67e)]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %impl.elem0 [symbolic = %as_type (constants.%as_type)]
-// CHECK:STDOUT:   %.loc24: require_specific_def_type = require_specific_def @U.as.Z.impl(%as_type) [symbolic = %.loc24 (constants.%.68b)]
+// CHECK:STDOUT:   %.1: require_specific_def_type = require_specific_def @U.as.Z.impl(%as_type) [symbolic = %.1 (constants.%.68b)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem0, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %as_type, (%Z.lookup_impl_witness) [symbolic = %Z.facet (constants.%Z.facet.416)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Z.facet) [symbolic = %C (constants.%C.526)]
@@ -696,7 +696,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.lookup_impl_witness.03b
 // CHECK:STDOUT:   %impl.elem0 => constants.%impl.elem0.67e
 // CHECK:STDOUT:   %as_type => constants.%as_type
-// CHECK:STDOUT:   %.loc24 => constants.%.68b
+// CHECK:STDOUT:   %.1 => constants.%.68b
 // CHECK:STDOUT:   %Z.lookup_impl_witness => constants.%Z.lookup_impl_witness
 // CHECK:STDOUT:   %Z.facet => constants.%Z.facet.416
 // CHECK:STDOUT:   %C => constants.%C.526
@@ -766,7 +766,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.impl_witness
 // CHECK:STDOUT:   %impl.elem0 => constants.%Y.facet
 // CHECK:STDOUT:   %as_type => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc24 => constants.%.dd0
+// CHECK:STDOUT:   %.1 => constants.%.dd0
 // CHECK:STDOUT:   %Z.lookup_impl_witness => constants.%Z.impl_witness.1c1
 // CHECK:STDOUT:   %Z.facet => constants.%Z.facet.39d
 // CHECK:STDOUT:   %C => constants.%C.00e

@@ -204,9 +204,9 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CBoolArg__carbon_thunk.Other(ptr %_) #2 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc3 = load i8, ptr %_, align 1, !dbg !26
-// CHECK:STDOUT:   %.loc31 = trunc i8 %.loc3 to i1, !dbg !26
-// CHECK:STDOUT:   call void @_CBoolArg.Other(i1 %.loc31), !dbg !26
+// CHECK:STDOUT:   %.1 = load i8, ptr %_, align 1, !dbg !26
+// CHECK:STDOUT:   %.11 = trunc i8 %.1 to i1, !dbg !26
+// CHECK:STDOUT:   call void @_CBoolArg.Other(i1 %.11), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -215,8 +215,8 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CIntArg__carbon_thunk.Other(ptr %_) #2 !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc6 = load i32, ptr %_, align 4, !dbg !33
-// CHECK:STDOUT:   call void @_CIntArg.Other(i32 %.loc6), !dbg !33
+// CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !33
+// CHECK:STDOUT:   call void @_CIntArg.Other(i32 %.1), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -225,8 +225,8 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CFloatArg__carbon_thunk.Other(ptr %_) #2 !dbg !34 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9 = load float, ptr %_, align 4, !dbg !37
-// CHECK:STDOUT:   call void @_CFloatArg.Other(float %.loc9), !dbg !37
+// CHECK:STDOUT:   %.1 = load float, ptr %_, align 4, !dbg !37
+// CHECK:STDOUT:   call void @_CFloatArg.Other(float %.1), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

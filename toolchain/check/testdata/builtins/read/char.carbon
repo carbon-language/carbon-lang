@@ -35,7 +35,7 @@ fn Main() {
 // CHECK:STDOUT:   %ReadChar.c25: %ReadChar.type.fc4 = struct_value () [concrete]
 // CHECK:STDOUT:   %n.patt: %pattern_type.6b6 = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   %m.patt: %pattern_type.6b6 = value_binding_pattern m [concrete]
-// CHECK:STDOUT:   %ReadChar.type.490: type = fn_type @ReadChar.loc27 [concrete]
+// CHECK:STDOUT:   %ReadChar.type.490: type = fn_type @ReadChar.1 [concrete]
 // CHECK:STDOUT:   %ReadChar.3b5: %ReadChar.type.490 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -161,18 +161,18 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:   %require_complete.4c8: <witness> = require_complete_type %OrderedWith.type.6f8 [symbolic]
 // CHECK:STDOUT:   %assoc0.13c: %OrderedWith.assoc_type.1d2 = assoc_entity element0, imports.%Core.import_ref.447 [symbolic]
 // CHECK:STDOUT:   %M: Core.IntLiteral = symbolic_binding M, 1 [symbolic]
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.type.89b: type = fn_type @Int.as.OrderedWith.impl.Less.loc100, @Int.as.OrderedWith.impl.ab3(%N, %M) [symbolic]
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.type.89b: type = fn_type @Int.as.OrderedWith.impl.Less.1, @Int.as.OrderedWith.impl.ab3(%N, %M) [symbolic]
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.050: %Int.as.OrderedWith.impl.Less.type.89b = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT:   %OrderedWith.impl_witness.339: <witness> = impl_witness imports.%OrderedWith.impl_witness_table.5c1, @Int.as.OrderedWith.impl.ab3(%N, %N) [symbolic]
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.type.f5c: type = fn_type @Int.as.OrderedWith.impl.Less.loc100, @Int.as.OrderedWith.impl.ab3(%N, %N) [symbolic]
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.type.f5c: type = fn_type @Int.as.OrderedWith.impl.Less.1, @Int.as.OrderedWith.impl.ab3(%N, %N) [symbolic]
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.13c: %Int.as.OrderedWith.impl.Less.type.f5c = struct_value () [symbolic]
 // CHECK:STDOUT:   %.4a8: require_specific_def_type = require_specific_def @Int.as.OrderedWith.impl.ab3(%N, %N) [symbolic]
 // CHECK:STDOUT:   %OrderedWith.facet.bf1: %OrderedWith.type.6f8 = facet_value %Int.67af24.1, (%OrderedWith.impl_witness.339) [symbolic]
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.c02: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%Int.67af24.1, %OrderedWith.facet.bf1) [symbolic]
 // CHECK:STDOUT:   %.08f: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.c02, %OrderedWith.facet.bf1 [symbolic]
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.specific_fn.6ce: <specific function> = specific_function %Int.as.OrderedWith.impl.Less.13c, @Int.as.OrderedWith.impl.Less.loc100(%N, %N) [symbolic]
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.specific_fn.6ce: <specific function> = specific_function %Int.as.OrderedWith.impl.Less.13c, @Int.as.OrderedWith.impl.Less.1(%N, %N) [symbolic]
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
 // CHECK:STDOUT:   %Inc.lookup_impl_witness: <witness> = lookup_impl_witness %Int.67af24.1, @Inc [symbolic]
 // CHECK:STDOUT:   %.f62: require_specific_def_type = require_specific_def @Int.as.Inc.impl(%N) [symbolic]
@@ -650,9 +650,9 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:   %OrderedWith.facet: @IntRange.as.Iterate.impl.Next.%OrderedWith.type.loc13_17.2 (%OrderedWith.type.6f8) = facet_value %Int.loc11_37.1, (%OrderedWith.impl_witness) [symbolic = %OrderedWith.facet (constants.%OrderedWith.facet.bf1)]
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%Int.loc11_37.1, %OrderedWith.facet) [symbolic = %OrderedWith.WithSelf.Less.type (constants.%OrderedWith.WithSelf.Less.type.c02)]
 // CHECK:STDOUT:   %.loc13_17.3: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type, %OrderedWith.facet [symbolic = %.loc13_17.3 (constants.%.08f)]
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.type: type = fn_type @Int.as.OrderedWith.impl.Less.loc100, @Int.as.OrderedWith.impl.ab3(%N, %N) [symbolic = %Int.as.OrderedWith.impl.Less.type (constants.%Int.as.OrderedWith.impl.Less.type.f5c)]
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.type: type = fn_type @Int.as.OrderedWith.impl.Less.1, @Int.as.OrderedWith.impl.ab3(%N, %N) [symbolic = %Int.as.OrderedWith.impl.Less.type (constants.%Int.as.OrderedWith.impl.Less.type.f5c)]
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less: @IntRange.as.Iterate.impl.Next.%Int.as.OrderedWith.impl.Less.type (%Int.as.OrderedWith.impl.Less.type.f5c) = struct_value () [symbolic = %Int.as.OrderedWith.impl.Less (constants.%Int.as.OrderedWith.impl.Less.13c)]
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.specific_fn: <specific function> = specific_function %Int.as.OrderedWith.impl.Less, @Int.as.OrderedWith.impl.Less.loc100(%N, %N) [symbolic = %Int.as.OrderedWith.impl.Less.specific_fn (constants.%Int.as.OrderedWith.impl.Less.specific_fn.6ce)]
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.specific_fn: <specific function> = specific_function %Int.as.OrderedWith.impl.Less, @Int.as.OrderedWith.impl.Less.1(%N, %N) [symbolic = %Int.as.OrderedWith.impl.Less.specific_fn (constants.%Int.as.OrderedWith.impl.Less.specific_fn.6ce)]
 // CHECK:STDOUT:   %.loc14_9.3: require_specific_def_type = require_specific_def @Int.as.Inc.impl(%N) [symbolic = %.loc14_9.3 (constants.%.f62)]
 // CHECK:STDOUT:   %Inc.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc11_37.1, @Inc [symbolic = %Inc.lookup_impl_witness (constants.%Inc.lookup_impl_witness)]
 // CHECK:STDOUT:   %Inc.facet.loc14_9.3: %Inc.type = facet_value %Int.loc11_37.1, (%Inc.lookup_impl_witness) [symbolic = %Inc.facet.loc14_9.3 (constants.%Inc.facet)]
@@ -709,7 +709,7 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:     %Less.ref: @IntRange.as.Iterate.impl.Next.%OrderedWith.assoc_type (%OrderedWith.assoc_type.e6d) = name_ref Less, %.loc13_17.1 [symbolic = %assoc0 (constants.%assoc0.ebc)]
 // CHECK:STDOUT:     %impl.elem0.loc13: @IntRange.as.Iterate.impl.Next.%.loc13_17.3 (%.08f) = impl_witness_access constants.%OrderedWith.impl_witness.339, element0 [symbolic = %Int.as.OrderedWith.impl.Less (constants.%Int.as.OrderedWith.impl.Less.13c)]
 // CHECK:STDOUT:     %bound_method.loc13_17.1: <bound method> = bound_method %value.ref.loc13, %impl.elem0.loc13
-// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0.loc13, @Int.as.OrderedWith.impl.Less.loc100(constants.%N, constants.%N) [symbolic = %Int.as.OrderedWith.impl.Less.specific_fn (constants.%Int.as.OrderedWith.impl.Less.specific_fn.6ce)]
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0.loc13, @Int.as.OrderedWith.impl.Less.1(constants.%N, constants.%N) [symbolic = %Int.as.OrderedWith.impl.Less.specific_fn (constants.%Int.as.OrderedWith.impl.Less.specific_fn.6ce)]
 // CHECK:STDOUT:     %bound_method.loc13_17.2: <bound method> = bound_method %value.ref.loc13, %specific_fn
 // CHECK:STDOUT:     %.loc13_11: @IntRange.as.Iterate.impl.Next.%Int.loc11_37.1 (%Int.67af24.1) = acquire_value %value.ref.loc13
 // CHECK:STDOUT:     %Int.as.OrderedWith.impl.Less.call: init bool = call %bound_method.loc13_17.2(%.loc13_11, %.loc13_23.2)
@@ -1143,27 +1143,27 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT: generic fn @IntRange.Make(imports.%Main.import_ref.6b552a.1: Core.IntLiteral) [from "lib.carbon"] {
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic = %Int (constants.%Int.67af24.1)]
-// CHECK:STDOUT:   %pattern_type.loc5_16: type = pattern_type %Int [symbolic = %pattern_type.loc5_16 (constants.%pattern_type.142cb7.1)]
-// CHECK:STDOUT:   %start.param_patt: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = value_param_pattern [symbolic = %start.param_patt (constants.%start.param_patt)]
-// CHECK:STDOUT:   %start.patt: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = at_binding_pattern start, %start.param_patt [symbolic = %start.patt (constants.%start.patt.9ef)]
-// CHECK:STDOUT:   %end.param_patt: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = value_param_pattern [symbolic = %end.param_patt (constants.%end.param_patt.8ab)]
-// CHECK:STDOUT:   %end.patt: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = at_binding_pattern end, %end.param_patt [symbolic = %end.patt (constants.%end.patt.960)]
+// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Int [symbolic = %pattern_type.1 (constants.%pattern_type.142cb7.1)]
+// CHECK:STDOUT:   %start.param_patt: @IntRange.Make.%pattern_type.1 (%pattern_type.142cb7.1) = value_param_pattern [symbolic = %start.param_patt (constants.%start.param_patt)]
+// CHECK:STDOUT:   %start.patt: @IntRange.Make.%pattern_type.1 (%pattern_type.142cb7.1) = at_binding_pattern start, %start.param_patt [symbolic = %start.patt (constants.%start.patt.9ef)]
+// CHECK:STDOUT:   %end.param_patt: @IntRange.Make.%pattern_type.1 (%pattern_type.142cb7.1) = value_param_pattern [symbolic = %end.param_patt (constants.%end.param_patt.8ab)]
+// CHECK:STDOUT:   %end.patt: @IntRange.Make.%pattern_type.1 (%pattern_type.142cb7.1) = at_binding_pattern end, %end.param_patt [symbolic = %end.patt (constants.%end.patt.960)]
 // CHECK:STDOUT:   %IntRange: type = class_type @IntRange, @IntRange(%N) [symbolic = %IntRange (constants.%IntRange.2c4)]
-// CHECK:STDOUT:   %.loc5: Core.Form = init_form %IntRange [symbolic = %.loc5 (constants.%.5c3)]
-// CHECK:STDOUT:   %pattern_type.loc5_52: type = pattern_type %IntRange [symbolic = %pattern_type.loc5_52 (constants.%pattern_type.1ea)]
-// CHECK:STDOUT:   %return.param_patt: @IntRange.Make.%pattern_type.loc5_52 (%pattern_type.1ea) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.262)]
-// CHECK:STDOUT:   %return.patt: @IntRange.Make.%pattern_type.loc5_52 (%pattern_type.1ea) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.ca9)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %IntRange [symbolic = %.1 (constants.%.5c3)]
+// CHECK:STDOUT:   %pattern_type.2: type = pattern_type %IntRange [symbolic = %pattern_type.2 (constants.%pattern_type.1ea)]
+// CHECK:STDOUT:   %return.param_patt: @IntRange.Make.%pattern_type.2 (%pattern_type.1ea) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.262)]
+// CHECK:STDOUT:   %return.patt: @IntRange.Make.%pattern_type.2 (%pattern_type.1ea) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.ca9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc5_16: <witness> = require_complete_type %Int [symbolic = %require_complete.loc5_16 (constants.%require_complete.4dfb92.1)]
-// CHECK:STDOUT:   %require_complete.loc5_49: <witness> = require_complete_type %IntRange [symbolic = %require_complete.loc5_49 (constants.%require_complete.5d9)]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %Int [symbolic = %require_complete.1 (constants.%require_complete.4dfb92.1)]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %IntRange [symbolic = %require_complete.2 (constants.%require_complete.5d9)]
 // CHECK:STDOUT:   %struct_type.start.end: type = struct_type {.start: @IntRange.Make.%Int (%Int.67af24.1), .end: @IntRange.Make.%Int (%Int.67af24.1)} [symbolic = %struct_type.start.end (constants.%struct_type.start.end.d4d)]
-// CHECK:STDOUT:   %.loc6_22.1: require_specific_def_type = require_specific_def @Int.as.Copy.impl(%N) [symbolic = %.loc6_22.1 (constants.%.a53)]
+// CHECK:STDOUT:   %.2: require_specific_def_type = require_specific_def @Int.as.Copy.impl(%N) [symbolic = %.2 (constants.%.a53)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.df6)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %Int, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.b83)]
-// CHECK:STDOUT:   %.loc6_22.2: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet [symbolic = %.loc6_22.2 (constants.%.c60)]
-// CHECK:STDOUT:   %impl.elem0: @IntRange.Make.%.loc6_22.2 (%.c60) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0 (constants.%impl.elem0.284)]
+// CHECK:STDOUT:   %.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet [symbolic = %.3 (constants.%.c60)]
+// CHECK:STDOUT:   %impl.elem0: @IntRange.Make.%.3 (%.c60) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0 (constants.%impl.elem0.284)]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Copy.WithSelf.Op(%Copy.facet) [symbolic = %specific_impl_fn (constants.%specific_impl_fn.f9f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
@@ -1214,14 +1214,14 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT: specific @IntRange.Make(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %Int => constants.%Int.67af24.1
-// CHECK:STDOUT:   %pattern_type.loc5_16 => constants.%pattern_type.142cb7.1
+// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.142cb7.1
 // CHECK:STDOUT:   %start.param_patt => constants.%start.param_patt
 // CHECK:STDOUT:   %start.patt => constants.%start.patt.9ef
 // CHECK:STDOUT:   %end.param_patt => constants.%end.param_patt.8ab
 // CHECK:STDOUT:   %end.patt => constants.%end.patt.960
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.2c4
-// CHECK:STDOUT:   %.loc5 => constants.%.5c3
-// CHECK:STDOUT:   %pattern_type.loc5_52 => constants.%pattern_type.1ea
+// CHECK:STDOUT:   %.1 => constants.%.5c3
+// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.1ea
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.262
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.ca9
 // CHECK:STDOUT: }

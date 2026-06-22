@@ -203,7 +203,7 @@ class B {}
 // CHECK:STDOUT: --- fail_redef_after_def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C.08d9e3.1: type = class_type @C.loc4 [concrete]
+// CHECK:STDOUT:   %C.08d9e3.1: type = class_type @C.1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %C.08d9e3.2: type = class_type @C.loc12 [concrete]
@@ -224,7 +224,7 @@ class B {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C.loc12 [concrete = constants.%C.08d9e3.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C.loc4 [from "redef_after_def.carbon"] {
+// CHECK:STDOUT: class @C.1 [from "redef_after_def.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

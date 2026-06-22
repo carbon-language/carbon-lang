@@ -204,7 +204,7 @@ fn Run() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.9f3: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
 // CHECK:STDOUT:   %bound_method.3cb: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.295: %i32 = int_value 2 [concrete]
-// CHECK:STDOUT:   %ForwardDeclared.08bd4c.1: type = class_type @ForwardDeclared.loc13_23.1 [concrete]
+// CHECK:STDOUT:   %ForwardDeclared.08bd4c.1: type = class_type @ForwardDeclared.1 [concrete]
 // CHECK:STDOUT:   %pattern_type.bdf: type = pattern_type %ForwardDeclared.08bd4c.1 [concrete]
 // CHECK:STDOUT:   %c.patt: %pattern_type.bdf = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:   %c.var_patt: %pattern_type.bdf = var_pattern %c.patt [concrete]
@@ -322,7 +322,7 @@ fn Run() {
 // CHECK:STDOUT:   .x = imports.%Main.import_ref.5c1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @ForwardDeclared.loc13_23.1 [from "a.carbon"] {
+// CHECK:STDOUT: class @ForwardDeclared.1 [from "a.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f24d3.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -331,7 +331,7 @@ fn Run() {
 // CHECK:STDOUT:   .G = imports.%Main.import_ref.341
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @ForwardDeclared.loc13_23.2 [from "a.carbon"] {
+// CHECK:STDOUT: class @ForwardDeclared.2 [from "a.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f24d3.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

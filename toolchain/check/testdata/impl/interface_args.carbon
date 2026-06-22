@@ -1413,20 +1413,20 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(%T)> [symbolic = %Factory.type (constants.%Factory.type.711)]
 // CHECK:STDOUT:   %Self: @Factory.WithSelf.Method.%Factory.type (%Factory.type.711) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.3e3)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type.loc8_13: type = pattern_type %Self.as_type [symbolic = %pattern_type.loc8_13 (constants.%pattern_type.b1a)]
-// CHECK:STDOUT:   %self.param_patt: @Factory.WithSelf.Method.%pattern_type.loc8_13 (%pattern_type.b1a) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.f89)]
-// CHECK:STDOUT:   %self.patt: @Factory.WithSelf.Method.%pattern_type.loc8_13 (%pattern_type.b1a) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.5e0)]
-// CHECK:STDOUT:   %.loc8: Core.Form = init_form %T [symbolic = %.loc8 (constants.%.184)]
-// CHECK:STDOUT:   %pattern_type.loc8_22: type = pattern_type %T [symbolic = %pattern_type.loc8_22 (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %return.param_patt: @Factory.WithSelf.Method.%pattern_type.loc8_22 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.41d)]
-// CHECK:STDOUT:   %return.patt: @Factory.WithSelf.Method.%pattern_type.loc8_22 (%pattern_type.51d) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.c39)]
+// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.b1a)]
+// CHECK:STDOUT:   %self.param_patt: @Factory.WithSelf.Method.%pattern_type.1 (%pattern_type.b1a) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.f89)]
+// CHECK:STDOUT:   %self.patt: @Factory.WithSelf.Method.%pattern_type.1 (%pattern_type.b1a) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.5e0)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %T [symbolic = %.1 (constants.%.184)]
+// CHECK:STDOUT:   %pattern_type.2: type = pattern_type %T [symbolic = %pattern_type.2 (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %return.param_patt: @Factory.WithSelf.Method.%pattern_type.2 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.41d)]
+// CHECK:STDOUT:   %return.patt: @Factory.WithSelf.Method.%pattern_type.2 (%pattern_type.51d) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.c39)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Factory.WithSelf.Make(imports.%Main.import_ref.b3bc94.3: type, imports.%Main.import_ref.0f8e01.3: @Factory.%Factory.type (%Factory.type.711)) [from "factory.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %.loc6: Core.Form = init_form %T [symbolic = %.loc6 (constants.%.184)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %T [symbolic = %.1 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %return.param_patt: @Factory.WithSelf.Make.%pattern_type (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:   %return.patt: @Factory.WithSelf.Make.%pattern_type (%pattern_type.51d) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.c39)]
@@ -1481,18 +1481,18 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.type => constants.%Factory.type.711
 // CHECK:STDOUT:   %Self => constants.%Self.3e3
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT:   %pattern_type.loc8_13 => constants.%pattern_type.b1a
+// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.b1a
 // CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.f89
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.5e0
-// CHECK:STDOUT:   %.loc8 => constants.%.184
-// CHECK:STDOUT:   %pattern_type.loc8_22 => constants.%pattern_type.51d
+// CHECK:STDOUT:   %.1 => constants.%.184
+// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.41d
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.c39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory.WithSelf.Make(constants.%T, constants.%Self.3e3) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %.loc6 => constants.%.184
+// CHECK:STDOUT:   %.1 => constants.%.184
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.41d
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.c39
@@ -1717,20 +1717,20 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(%T)> [symbolic = %Factory.type (constants.%Factory.type.711)]
 // CHECK:STDOUT:   %Self: @Factory.WithSelf.Method.%Factory.type (%Factory.type.711) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.3e3)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type.loc8_13: type = pattern_type %Self.as_type [symbolic = %pattern_type.loc8_13 (constants.%pattern_type.b1a)]
-// CHECK:STDOUT:   %self.param_patt: @Factory.WithSelf.Method.%pattern_type.loc8_13 (%pattern_type.b1a) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt)]
-// CHECK:STDOUT:   %self.patt: @Factory.WithSelf.Method.%pattern_type.loc8_13 (%pattern_type.b1a) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt)]
-// CHECK:STDOUT:   %.loc8: Core.Form = init_form %T [symbolic = %.loc8 (constants.%.184)]
-// CHECK:STDOUT:   %pattern_type.loc8_22: type = pattern_type %T [symbolic = %pattern_type.loc8_22 (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %return.param_patt: @Factory.WithSelf.Method.%pattern_type.loc8_22 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.41d)]
-// CHECK:STDOUT:   %return.patt: @Factory.WithSelf.Method.%pattern_type.loc8_22 (%pattern_type.51d) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.c39)]
+// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.b1a)]
+// CHECK:STDOUT:   %self.param_patt: @Factory.WithSelf.Method.%pattern_type.1 (%pattern_type.b1a) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt: @Factory.WithSelf.Method.%pattern_type.1 (%pattern_type.b1a) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %T [symbolic = %.1 (constants.%.184)]
+// CHECK:STDOUT:   %pattern_type.2: type = pattern_type %T [symbolic = %pattern_type.2 (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %return.param_patt: @Factory.WithSelf.Method.%pattern_type.2 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.41d)]
+// CHECK:STDOUT:   %return.patt: @Factory.WithSelf.Method.%pattern_type.2 (%pattern_type.51d) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.c39)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Factory.WithSelf.Make(imports.%Main.import_ref.b3bc94.3: type, imports.%Main.import_ref.0f8e01.3: @Factory.%Factory.type (%Factory.type.711)) [from "factory.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %.loc6: Core.Form = init_form %T [symbolic = %.loc6 (constants.%.184)]
+// CHECK:STDOUT:   %.1: Core.Form = init_form %T [symbolic = %.1 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %return.param_patt: @Factory.WithSelf.Make.%pattern_type (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:   %return.patt: @Factory.WithSelf.Make.%pattern_type (%pattern_type.51d) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.c39)]
@@ -1772,18 +1772,18 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.type => constants.%Factory.type.711
 // CHECK:STDOUT:   %Self => constants.%Self.3e3
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT:   %pattern_type.loc8_13 => constants.%pattern_type.b1a
+// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.b1a
 // CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt
 // CHECK:STDOUT:   %self.patt => constants.%self.patt
-// CHECK:STDOUT:   %.loc8 => constants.%.184
-// CHECK:STDOUT:   %pattern_type.loc8_22 => constants.%pattern_type.51d
+// CHECK:STDOUT:   %.1 => constants.%.184
+// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.41d
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.c39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory.WithSelf.Make(constants.%T, constants.%Self.3e3) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %.loc6 => constants.%.184
+// CHECK:STDOUT:   %.1 => constants.%.184
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.41d
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.c39

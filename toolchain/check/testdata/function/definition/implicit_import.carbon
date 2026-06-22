@@ -295,7 +295,7 @@ fn B() {}
 // CHECK:STDOUT: --- fail_redef_after_def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type.9f4a6d.1: type = fn_type @A.loc4 [concrete]
+// CHECK:STDOUT:   %A.type.9f4a6d.1: type = fn_type @A.1 [concrete]
 // CHECK:STDOUT:   %A.921eb9.1: %A.type.9f4a6d.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %A.type.9f4a6d.2: type = fn_type @A.loc12 [concrete]
 // CHECK:STDOUT:   %A.921eb9.2: %A.type.9f4a6d.2 = struct_value () [concrete]
@@ -314,7 +314,7 @@ fn B() {}
 // CHECK:STDOUT:   %A.decl: %A.type.9f4a6d.2 = fn_decl @A.loc12 [concrete = constants.%A.921eb9.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.loc4 [from "redef_after_def.carbon"];
+// CHECK:STDOUT: fn @A.1 [from "redef_after_def.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.loc12() {
 // CHECK:STDOUT: !entry:
