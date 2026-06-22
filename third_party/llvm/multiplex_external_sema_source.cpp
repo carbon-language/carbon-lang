@@ -9,7 +9,7 @@
 
 #include "clang/Sema/Lookup.h"
 
-using namespace clang;
+namespace Carbon {
 
 char MultiplexExternalSemaSource::ID;
 
@@ -39,23 +39,24 @@ void MultiplexExternalSemaSource::AddSource(
 // ExternalASTSource.
 //===----------------------------------------------------------------------===//
 
-Decl* MultiplexExternalSemaSource::GetExternalDecl(GlobalDeclID ID) {
+clang::Decl* MultiplexExternalSemaSource::GetExternalDecl(
+    clang::GlobalDeclID ID) {
   for (size_t i = 0; i < Sources.size(); ++i) {
-    if (Decl* Result = Sources[i]->GetExternalDecl(ID)) {
+    if (clang::Decl* Result = Sources[i]->GetExternalDecl(ID)) {
       return Result;
     }
   }
   return nullptr;
 }
 
-void MultiplexExternalSemaSource::CompleteRedeclChain(const Decl* D) {
+void MultiplexExternalSemaSource::CompleteRedeclChain(const clang::Decl* D) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->CompleteRedeclChain(D);
   }
 }
 
-Selector MultiplexExternalSemaSource::GetExternalSelector(uint32_t ID) {
-  Selector Sel;
+clang::Selector MultiplexExternalSemaSource::GetExternalSelector(uint32_t ID) {
+  clang::Selector Sel;
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sel = Sources[i]->GetExternalSelector(ID);
     if (!Sel.isNull()) {
@@ -73,19 +74,19 @@ uint32_t MultiplexExternalSemaSource::GetNumExternalSelectors() {
   return total;
 }
 
-Stmt* MultiplexExternalSemaSource::GetExternalDeclStmt(uint64_t Offset) {
+clang::Stmt* MultiplexExternalSemaSource::GetExternalDeclStmt(uint64_t Offset) {
   for (size_t i = 0; i < Sources.size(); ++i) {
-    if (Stmt* Result = Sources[i]->GetExternalDeclStmt(Offset)) {
+    if (clang::Stmt* Result = Sources[i]->GetExternalDeclStmt(Offset)) {
       return Result;
     }
   }
   return nullptr;
 }
 
-CXXBaseSpecifier* MultiplexExternalSemaSource::GetExternalCXXBaseSpecifiers(
-    uint64_t Offset) {
+clang::CXXBaseSpecifier*
+MultiplexExternalSemaSource::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
   for (size_t i = 0; i < Sources.size(); ++i) {
-    if (CXXBaseSpecifier* R =
+    if (clang::CXXBaseSpecifier* R =
             Sources[i]->GetExternalCXXBaseSpecifiers(Offset)) {
       return R;
     }
@@ -93,7 +94,7 @@ CXXBaseSpecifier* MultiplexExternalSemaSource::GetExternalCXXBaseSpecifiers(
   return nullptr;
 }
 
-CXXCtorInitializer**
+clang::CXXCtorInitializer**
 MultiplexExternalSemaSource::GetExternalCXXCtorInitializers(uint64_t Offset) {
   for (auto& S : Sources) {
     if (auto* R = S->GetExternalCXXCtorInitializers(Offset)) {
@@ -103,8 +104,8 @@ MultiplexExternalSemaSource::GetExternalCXXCtorInitializers(uint64_t Offset) {
   return nullptr;
 }
 
-ExternalASTSource::ExtKind MultiplexExternalSemaSource::hasExternalDefinitions(
-    const Decl* D) {
+clang::ExternalASTSource::ExtKind
+MultiplexExternalSemaSource::hasExternalDefinitions(const clang::Decl* D) {
   for (const auto& S : Sources) {
     if (auto EK = S->hasExternalDefinitions(D)) {
       if (EK != EK_ReplyHazy) {
@@ -116,7 +117,7 @@ ExternalASTSource::ExtKind MultiplexExternalSemaSource::hasExternalDefinitions(
 }
 
 bool MultiplexExternalSemaSource::wasThisDeclarationADefinition(
-    const FunctionDecl* FD) {
+    const clang::FunctionDecl* FD) {
   for (const auto& S : Sources) {
     if (S->wasThisDeclarationADefinition(FD)) {
       return true;
@@ -126,8 +127,8 @@ bool MultiplexExternalSemaSource::wasThisDeclarationADefinition(
 }
 
 bool MultiplexExternalSemaSource::FindExternalVisibleDeclsByName(
-    const DeclContext* DC, DeclarationName Name,
-    const DeclContext* OriginalDC) {
+    const clang::DeclContext* DC, clang::DeclarationName Name,
+    const clang::DeclContext* OriginalDC) {
   bool AnyDeclsFound = false;
   for (size_t i = 0; i < Sources.size(); ++i) {
     AnyDeclsFound |=
@@ -137,7 +138,7 @@ bool MultiplexExternalSemaSource::FindExternalVisibleDeclsByName(
 }
 
 bool MultiplexExternalSemaSource::LoadExternalSpecializations(
-    const Decl* D, bool OnlyPartial) {
+    const clang::Decl* D, bool OnlyPartial) {
   bool Loaded = false;
   for (size_t i = 0; i < Sources.size(); ++i) {
     Loaded |= Sources[i]->LoadExternalSpecializations(D, OnlyPartial);
@@ -146,7 +147,8 @@ bool MultiplexExternalSemaSource::LoadExternalSpecializations(
 }
 
 bool MultiplexExternalSemaSource::LoadExternalSpecializations(
-    const Decl* D, ArrayRef<TemplateArgument> TemplateArgs) {
+    const clang::Decl* D,
+    llvm::ArrayRef<clang::TemplateArgument> TemplateArgs) {
   bool AnyNewSpecsLoaded = false;
   for (size_t i = 0; i < Sources.size(); ++i) {
     AnyNewSpecsLoaded |=
@@ -156,35 +158,37 @@ bool MultiplexExternalSemaSource::LoadExternalSpecializations(
 }
 
 void MultiplexExternalSemaSource::completeVisibleDeclsMap(
-    const DeclContext* DC) {
+    const clang::DeclContext* DC) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->completeVisibleDeclsMap(DC);
   }
 }
 
 void MultiplexExternalSemaSource::FindExternalLexicalDecls(
-    const DeclContext* DC, llvm::function_ref<bool(Decl::Kind)> IsKindWeWant,
-    SmallVectorImpl<Decl*>& Result) {
+    const clang::DeclContext* DC,
+    llvm::function_ref<bool(clang::Decl::Kind)> IsKindWeWant,
+    llvm::SmallVectorImpl<clang::Decl*>& Result) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->FindExternalLexicalDecls(DC, IsKindWeWant, Result);
   }
 }
 
 void MultiplexExternalSemaSource::FindFileRegionDecls(
-    FileID File, unsigned Offset, unsigned Length,
-    SmallVectorImpl<Decl*>& Decls) {
+    clang::FileID File, unsigned Offset, unsigned Length,
+    llvm::SmallVectorImpl<clang::Decl*>& Decls) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->FindFileRegionDecls(File, Offset, Length, Decls);
   }
 }
 
-void MultiplexExternalSemaSource::CompleteType(TagDecl* Tag) {
+void MultiplexExternalSemaSource::CompleteType(clang::TagDecl* Tag) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->CompleteType(Tag);
   }
 }
 
-void MultiplexExternalSemaSource::CompleteType(ObjCInterfaceDecl* Class) {
+void MultiplexExternalSemaSource::CompleteType(
+    clang::ObjCInterfaceDecl* Class) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->CompleteType(Class);
   }
@@ -208,7 +212,8 @@ void MultiplexExternalSemaSource::FinishedDeserializing() {
   }
 }
 
-void MultiplexExternalSemaSource::StartTranslationUnit(ASTConsumer* Consumer) {
+void MultiplexExternalSemaSource::StartTranslationUnit(
+    clang::ASTConsumer* Consumer) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->StartTranslationUnit(Consumer);
   }
@@ -220,7 +225,7 @@ void MultiplexExternalSemaSource::PrintStats() {
   }
 }
 
-Module* MultiplexExternalSemaSource::getModule(unsigned ID) {
+clang::Module* MultiplexExternalSemaSource::getModule(unsigned ID) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     if (auto M = Sources[i]->getModule(ID)) {
       return M;
@@ -230,10 +235,11 @@ Module* MultiplexExternalSemaSource::getModule(unsigned ID) {
 }
 
 bool MultiplexExternalSemaSource::layoutRecordType(
-    const RecordDecl* Record, uint64_t& Size, uint64_t& Alignment,
-    llvm::DenseMap<const FieldDecl*, uint64_t>& FieldOffsets,
-    llvm::DenseMap<const CXXRecordDecl*, CharUnits>& BaseOffsets,
-    llvm::DenseMap<const CXXRecordDecl*, CharUnits>& VirtualBaseOffsets) {
+    const clang::RecordDecl* Record, uint64_t& Size, uint64_t& Alignment,
+    llvm::DenseMap<const clang::FieldDecl*, uint64_t>& FieldOffsets,
+    llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>& BaseOffsets,
+    llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>&
+        VirtualBaseOffsets) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     if (Sources[i]->layoutRecordType(Record, Size, Alignment, FieldOffsets,
                                      BaseOffsets, VirtualBaseOffsets)) {
@@ -254,7 +260,7 @@ void MultiplexExternalSemaSource::getMemoryBufferSizes(
 // ExternalSemaSource.
 //===----------------------------------------------------------------------===//
 
-void MultiplexExternalSemaSource::InitializeSema(Sema& S) {
+void MultiplexExternalSemaSource::InitializeSema(clang::Sema& S) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->InitializeSema(S);
   }
@@ -266,42 +272,43 @@ void MultiplexExternalSemaSource::ForgetSema() {
   }
 }
 
-void MultiplexExternalSemaSource::ReadMethodPool(Selector Sel) {
+void MultiplexExternalSemaSource::ReadMethodPool(clang::Selector Sel) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadMethodPool(Sel);
   }
 }
 
-void MultiplexExternalSemaSource::updateOutOfDateSelector(Selector Sel) {
+void MultiplexExternalSemaSource::updateOutOfDateSelector(clang::Selector Sel) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->updateOutOfDateSelector(Sel);
   }
 }
 
 void MultiplexExternalSemaSource::ReadKnownNamespaces(
-    SmallVectorImpl<NamespaceDecl*>& Namespaces) {
+    llvm::SmallVectorImpl<clang::NamespaceDecl*>& Namespaces) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadKnownNamespaces(Namespaces);
   }
 }
 
 void MultiplexExternalSemaSource::ReadUndefinedButUsed(
-    llvm::MapVector<NamedDecl*, SourceLocation>& Undefined) {
+    llvm::MapVector<clang::NamedDecl*, clang::SourceLocation>& Undefined) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadUndefinedButUsed(Undefined);
   }
 }
 
 void MultiplexExternalSemaSource::ReadMismatchingDeleteExpressions(
-    llvm::MapVector<FieldDecl*,
-                    llvm::SmallVector<std::pair<SourceLocation, bool>, 4>>&
-        Exprs) {
+    llvm::MapVector<
+        clang::FieldDecl*,
+        llvm::SmallVector<std::pair<clang::SourceLocation, bool>, 4>>& Exprs) {
   for (auto& Source : Sources) {
     Source->ReadMismatchingDeleteExpressions(Exprs);
   }
 }
 
-bool MultiplexExternalSemaSource::LookupUnqualified(LookupResult& R, Scope* S) {
+bool MultiplexExternalSemaSource::LookupUnqualified(clang::LookupResult& R,
+                                                    clang::Scope* S) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->LookupUnqualified(R, S);
   }
@@ -310,106 +317,111 @@ bool MultiplexExternalSemaSource::LookupUnqualified(LookupResult& R, Scope* S) {
 }
 
 void MultiplexExternalSemaSource::ReadTentativeDefinitions(
-    SmallVectorImpl<VarDecl*>& TentativeDefs) {
+    llvm::SmallVectorImpl<clang::VarDecl*>& TentativeDefs) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadTentativeDefinitions(TentativeDefs);
   }
 }
 
 void MultiplexExternalSemaSource::ReadUnusedFileScopedDecls(
-    SmallVectorImpl<const DeclaratorDecl*>& Decls) {
+    llvm::SmallVectorImpl<const clang::DeclaratorDecl*>& Decls) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadUnusedFileScopedDecls(Decls);
   }
 }
 
 void MultiplexExternalSemaSource::ReadDelegatingConstructors(
-    SmallVectorImpl<CXXConstructorDecl*>& Decls) {
+    llvm::SmallVectorImpl<clang::CXXConstructorDecl*>& Decls) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadDelegatingConstructors(Decls);
   }
 }
 
 void MultiplexExternalSemaSource::ReadExtVectorDecls(
-    SmallVectorImpl<TypedefNameDecl*>& Decls) {
+    llvm::SmallVectorImpl<clang::TypedefNameDecl*>& Decls) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadExtVectorDecls(Decls);
   }
 }
 
 void MultiplexExternalSemaSource::ReadDeclsToCheckForDeferredDiags(
-    llvm::SmallSetVector<Decl*, 4>& Decls) {
+    llvm::SmallSetVector<clang::Decl*, 4>& Decls) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadDeclsToCheckForDeferredDiags(Decls);
   }
 }
 
 void MultiplexExternalSemaSource::ReadUnusedLocalTypedefNameCandidates(
-    llvm::SmallSetVector<const TypedefNameDecl*, 4>& Decls) {
+    llvm::SmallSetVector<const clang::TypedefNameDecl*, 4>& Decls) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadUnusedLocalTypedefNameCandidates(Decls);
   }
 }
 
 void MultiplexExternalSemaSource::ReadReferencedSelectors(
-    SmallVectorImpl<std::pair<Selector, SourceLocation>>& Sels) {
+    llvm::SmallVectorImpl<std::pair<clang::Selector, clang::SourceLocation>>&
+        Sels) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadReferencedSelectors(Sels);
   }
 }
 
 void MultiplexExternalSemaSource::ReadWeakUndeclaredIdentifiers(
-    SmallVectorImpl<std::pair<IdentifierInfo*, WeakInfo>>& WI) {
+    llvm::SmallVectorImpl<std::pair<clang::IdentifierInfo*, clang::WeakInfo>>&
+        WI) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadWeakUndeclaredIdentifiers(WI);
   }
 }
 
 void MultiplexExternalSemaSource::ReadExtnameUndeclaredIdentifiers(
-    SmallVectorImpl<std::pair<IdentifierInfo*, AsmLabelAttr*>>& EI) {
+    llvm::SmallVectorImpl<
+        std::pair<clang::IdentifierInfo*, clang::AsmLabelAttr*>>& EI) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadExtnameUndeclaredIdentifiers(EI);
   }
 }
 
 void MultiplexExternalSemaSource::ReadUsedVTables(
-    SmallVectorImpl<ExternalVTableUse>& VTables) {
+    llvm::SmallVectorImpl<clang::ExternalVTableUse>& VTables) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadUsedVTables(VTables);
   }
 }
 
 void MultiplexExternalSemaSource::ReadPendingInstantiations(
-    SmallVectorImpl<std::pair<ValueDecl*, SourceLocation>>& Pending) {
+    llvm::SmallVectorImpl<std::pair<clang::ValueDecl*, clang::SourceLocation>>&
+        Pending) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadPendingInstantiations(Pending);
   }
 }
 
 void MultiplexExternalSemaSource::ReadLateParsedTemplates(
-    llvm::MapVector<const FunctionDecl*, std::unique_ptr<LateParsedTemplate>>&
-        LPTMap) {
+    llvm::MapVector<const clang::FunctionDecl*,
+                    std::unique_ptr<clang::LateParsedTemplate>>& LPTMap) {
   for (size_t i = 0; i < Sources.size(); ++i) {
     Sources[i]->ReadLateParsedTemplates(LPTMap);
   }
 }
 
-TypoCorrection MultiplexExternalSemaSource::CorrectTypo(
-    const DeclarationNameInfo& Typo, int LookupKind, Scope* S, CXXScopeSpec* SS,
-    CorrectionCandidateCallback& CCC, DeclContext* MemberContext,
-    bool EnteringContext, const ObjCObjectPointerType* OPT) {
+clang::TypoCorrection MultiplexExternalSemaSource::CorrectTypo(
+    const clang::DeclarationNameInfo& Typo, int LookupKind, clang::Scope* S,
+    clang::CXXScopeSpec* SS, clang::CorrectionCandidateCallback& CCC,
+    clang::DeclContext* MemberContext, bool EnteringContext,
+    const clang::ObjCObjectPointerType* OPT) {
   for (size_t I = 0, E = Sources.size(); I < E; ++I) {
-    if (TypoCorrection C =
+    if (clang::TypoCorrection C =
             Sources[I]->CorrectTypo(Typo, LookupKind, S, SS, CCC, MemberContext,
                                     EnteringContext, OPT)) {
       return C;
     }
   }
-  return TypoCorrection();
+  return clang::TypoCorrection();
 }
 
 bool MultiplexExternalSemaSource::MaybeDiagnoseMissingCompleteType(
-    SourceLocation Loc, QualType T) {
+    clang::SourceLocation Loc, clang::QualType T) {
   for (size_t I = 0, E = Sources.size(); I < E; ++I) {
     if (Sources[I]->MaybeDiagnoseMissingCompleteType(Loc, T)) {
       return true;
@@ -419,8 +431,10 @@ bool MultiplexExternalSemaSource::MaybeDiagnoseMissingCompleteType(
 }
 
 void MultiplexExternalSemaSource::AssignedLambdaNumbering(
-    CXXRecordDecl* Lambda) {
+    clang::CXXRecordDecl* Lambda) {
   for (auto& Source : Sources) {
     Source->AssignedLambdaNumbering(Lambda);
   }
 }
+
+}  // namespace Carbon

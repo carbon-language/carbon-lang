@@ -15,7 +15,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 
-namespace clang {
+namespace Carbon {
 
 class CXXConstructorDecl;
 class CXXRecordDecl;
@@ -32,12 +32,12 @@ class VarDecl;
 /// An abstract interface that should be implemented by
 /// external AST sources that also provide information for semantic
 /// analysis.
-class MultiplexExternalSemaSource : public ExternalSemaSource {
+class MultiplexExternalSemaSource : public clang::ExternalSemaSource {
   /// LLVM-style RTTI.
   static char ID;
 
  private:
-  SmallVector<llvm::IntrusiveRefCntPtr<ExternalSemaSource>, 2> Sources;
+  llvm::SmallVector<llvm::IntrusiveRefCntPtr<ExternalSemaSource>, 2> Sources;
 
  public:
   /// Constructs an empty multiplexing external sema source.
@@ -74,14 +74,14 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
 
   /// Resolve a declaration ID into a declaration, potentially
   /// building a new declaration.
-  Decl* GetExternalDecl(GlobalDeclID ID) override;
+  clang::Decl* GetExternalDecl(clang::GlobalDeclID ID) override;
 
   /// Complete the redeclaration chain if it's been extended since the
   /// previous generation of the AST source.
-  void CompleteRedeclChain(const Decl* D) override;
+  void CompleteRedeclChain(const clang::Decl* D) override;
 
   /// Resolve a selector ID into a selector.
-  Selector GetExternalSelector(uint32_t ID) override;
+  clang::Selector GetExternalSelector(uint32_t ID) override;
 
   /// Returns the number of selectors known to the external AST
   /// source.
@@ -89,34 +89,38 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
 
   /// Resolve the offset of a statement in the decl stream into
   /// a statement.
-  Stmt* GetExternalDeclStmt(uint64_t Offset) override;
+  clang::Stmt* GetExternalDeclStmt(uint64_t Offset) override;
 
   /// Resolve the offset of a set of C++ base specifiers in the decl
   /// stream into an array of specifiers.
-  CXXBaseSpecifier* GetExternalCXXBaseSpecifiers(uint64_t Offset) override;
+  clang::CXXBaseSpecifier* GetExternalCXXBaseSpecifiers(
+      uint64_t Offset) override;
 
   /// Resolve a handle to a list of ctor initializers into the list of
   /// initializers themselves.
-  CXXCtorInitializer** GetExternalCXXCtorInitializers(uint64_t Offset) override;
+  clang::CXXCtorInitializer** GetExternalCXXCtorInitializers(
+      uint64_t Offset) override;
 
-  ExtKind hasExternalDefinitions(const Decl* D) override;
+  ExtKind hasExternalDefinitions(const clang::Decl* D) override;
 
-  bool wasThisDeclarationADefinition(const FunctionDecl* FD) override;
+  bool wasThisDeclarationADefinition(const clang::FunctionDecl* FD) override;
 
   /// Find all declarations with the given name in the
   /// given context.
-  bool FindExternalVisibleDeclsByName(const DeclContext* DC,
-                                      DeclarationName Name,
-                                      const DeclContext* OriginalDC) override;
+  bool FindExternalVisibleDeclsByName(
+      const clang::DeclContext* DC, clang::DeclarationName Name,
+      const clang::DeclContext* OriginalDC) override;
 
-  bool LoadExternalSpecializations(const Decl* D, bool OnlyPartial) override;
+  bool LoadExternalSpecializations(const clang::Decl* D,
+                                   bool OnlyPartial) override;
 
   bool LoadExternalSpecializations(
-      const Decl* D, ArrayRef<TemplateArgument> TemplateArgs) override;
+      const clang::Decl* D,
+      llvm::ArrayRef<clang::TemplateArgument> TemplateArgs) override;
 
   /// Ensures that the table of all visible declarations inside this
   /// context is up to date.
-  void completeVisibleDeclsMap(const DeclContext* DC) override;
+  void completeVisibleDeclsMap(const clang::DeclContext* DC) override;
 
   /// Finds all declarations lexically contained within the given
   /// DeclContext, after applying an optional filter predicate.
@@ -124,18 +128,19 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// \param IsKindWeWant a predicate function that returns true if the passed
   /// declaration kind is one we are looking for.
   void FindExternalLexicalDecls(
-      const DeclContext* DC, llvm::function_ref<bool(Decl::Kind)> IsKindWeWant,
-      SmallVectorImpl<Decl*>& Result) override;
+      const clang::DeclContext* DC,
+      llvm::function_ref<bool(clang::Decl::Kind)> IsKindWeWant,
+      llvm::SmallVectorImpl<clang::Decl*>& Result) override;
 
   /// Get the decls that are contained in a file in the Offset/Length
   /// range. \p Length can be 0 to indicate a point at \p Offset instead of
   /// a range.
-  void FindFileRegionDecls(FileID File, unsigned Offset, unsigned Length,
-                           SmallVectorImpl<Decl*>& Decls) override;
+  void FindFileRegionDecls(clang::FileID File, unsigned Offset, unsigned Length,
+                           llvm::SmallVectorImpl<clang::Decl*>& Decls) override;
 
   /// Gives the external AST source an opportunity to complete
   /// an incomplete type.
-  void CompleteType(TagDecl* Tag) override;
+  void CompleteType(clang::TagDecl* Tag) override;
 
   /// Gives the external AST source an opportunity to complete an
   /// incomplete Objective-C class.
@@ -143,7 +148,7 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// This routine will only be invoked if the "externally completed" bit is
   /// set on the ObjCInterfaceDecl via the function
   /// \c ObjCInterfaceDecl::setExternallyCompleted().
-  void CompleteType(ObjCInterfaceDecl* Class) override;
+  void CompleteType(clang::ObjCInterfaceDecl* Class) override;
 
   /// Loads comment ranges.
   void ReadComments() override;
@@ -159,14 +164,14 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
 
   /// Function that will be invoked when we begin parsing a new
   /// translation unit involving this external AST source.
-  void StartTranslationUnit(ASTConsumer* Consumer) override;
+  void StartTranslationUnit(clang::ASTConsumer* Consumer) override;
 
   /// Print any statistics that have been gathered regarding
   /// the external AST source.
   void PrintStats() override;
 
   /// Retrieve the module that corresponds to the given module ID.
-  Module* getModule(unsigned ID) override;
+  clang::Module* getModule(unsigned ID) override;
 
   /// Perform layout on the given record.
   ///
@@ -196,11 +201,12 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   ///
   /// \returns true if the record layout was provided, false otherwise.
   bool layoutRecordType(
-      const RecordDecl* Record, uint64_t& Size, uint64_t& Alignment,
-      llvm::DenseMap<const FieldDecl*, uint64_t>& FieldOffsets,
-      llvm::DenseMap<const CXXRecordDecl*, CharUnits>& BaseOffsets,
-      llvm::DenseMap<const CXXRecordDecl*, CharUnits>& VirtualBaseOffsets)
-      override;
+      const clang::RecordDecl* Record, uint64_t& Size, uint64_t& Alignment,
+      llvm::DenseMap<const clang::FieldDecl*, uint64_t>& FieldOffsets,
+      llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>&
+          BaseOffsets,
+      llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>&
+          VirtualBaseOffsets) override;
 
   /// Return the amount of memory used by memory buffers, breaking down
   /// by heap-backed versus mmap'ed memory.
@@ -213,33 +219,34 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// Initialize the semantic source with the Sema instance
   /// being used to perform semantic analysis on the abstract syntax
   /// tree.
-  void InitializeSema(Sema& S) override;
+  void InitializeSema(clang::Sema& S) override;
 
   /// Inform the semantic consumer that Sema is no longer available.
   void ForgetSema() override;
 
   /// Load the contents of the global method pool for a given
   /// selector.
-  void ReadMethodPool(Selector Sel) override;
+  void ReadMethodPool(clang::Selector Sel) override;
 
   /// Load the contents of the global method pool for a given
   /// selector if necessary.
-  void updateOutOfDateSelector(Selector Sel) override;
+  void updateOutOfDateSelector(clang::Selector Sel) override;
 
   /// Load the set of namespaces that are known to the external source,
   /// which will be used during typo correction.
   void ReadKnownNamespaces(
-      SmallVectorImpl<NamespaceDecl*>& Namespaces) override;
+      llvm::SmallVectorImpl<clang::NamespaceDecl*>& Namespaces) override;
 
   /// Load the set of used but not defined functions or variables with
   /// internal linkage, or used but not defined inline functions.
   void ReadUndefinedButUsed(
-      llvm::MapVector<NamedDecl*, SourceLocation>& Undefined) override;
+      llvm::MapVector<clang::NamedDecl*, clang::SourceLocation>& Undefined)
+      override;
 
   void ReadMismatchingDeleteExpressions(
-      llvm::MapVector<FieldDecl*,
-                      llvm::SmallVector<std::pair<SourceLocation, bool>, 4>>&
-          Exprs) override;
+      llvm::MapVector<clang::FieldDecl*,
+                      llvm::SmallVector<std::pair<clang::SourceLocation, bool>,
+                                        4>>& Exprs) override;
 
   /// Do last resort, unqualified lookup on a LookupResult that
   /// Sema cannot find.
@@ -249,7 +256,7 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// \param S the Scope of the identifier occurrence.
   ///
   /// \return true to tell Sema to recover using the LookupResult.
-  bool LookupUnqualified(LookupResult& R, Scope* S) override;
+  bool LookupUnqualified(clang::LookupResult& R, clang::Scope* S) override;
 
   /// Read the set of tentative definitions known to the external Sema
   /// source.
@@ -258,7 +265,8 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// given vector of tentative definitions. Note that this routine may be
   /// invoked multiple times; the external source should take care not to
   /// introduce the same declarations repeatedly.
-  void ReadTentativeDefinitions(SmallVectorImpl<VarDecl*>& Defs) override;
+  void ReadTentativeDefinitions(
+      llvm::SmallVectorImpl<clang::VarDecl*>& Defs) override;
 
   /// Read the set of unused file-scope declarations known to the
   /// external Sema source.
@@ -268,7 +276,7 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// invoked multiple times; the external source should take care not to
   /// introduce the same declarations repeatedly.
   void ReadUnusedFileScopedDecls(
-      SmallVectorImpl<const DeclaratorDecl*>& Decls) override;
+      llvm::SmallVectorImpl<const clang::DeclaratorDecl*>& Decls) override;
 
   /// Read the set of delegating constructors known to the
   /// external Sema source.
@@ -278,7 +286,7 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// invoked multiple times; the external source should take care not to
   /// introduce the same declarations repeatedly.
   void ReadDelegatingConstructors(
-      SmallVectorImpl<CXXConstructorDecl*>& Decls) override;
+      llvm::SmallVectorImpl<clang::CXXConstructorDecl*>& Decls) override;
 
   /// Read the set of ext_vector type declarations known to the
   /// external Sema source.
@@ -287,7 +295,8 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// the given vector of declarations. Note that this routine may be
   /// invoked multiple times; the external source should take care not to
   /// introduce the same declarations repeatedly.
-  void ReadExtVectorDecls(SmallVectorImpl<TypedefNameDecl*>& Decls) override;
+  void ReadExtVectorDecls(
+      llvm::SmallVectorImpl<clang::TypedefNameDecl*>& Decls) override;
 
   /// Read the set of potentially unused typedefs known to the source.
   ///
@@ -296,7 +305,7 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// be invoked multiple times; the external source should take care not to
   /// introduce the same declarations repeatedly.
   void ReadUnusedLocalTypedefNameCandidates(
-      llvm::SmallSetVector<const TypedefNameDecl*, 4>& Decls) override;
+      llvm::SmallSetVector<const clang::TypedefNameDecl*, 4>& Decls) override;
 
   /// Read the set of referenced selectors known to the
   /// external Sema source.
@@ -306,7 +315,8 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// may be invoked multiple times; the external source should take care not
   /// to introduce the same selectors repeatedly.
   void ReadReferencedSelectors(
-      SmallVectorImpl<std::pair<Selector, SourceLocation>>& Sels) override;
+      llvm::SmallVectorImpl<std::pair<clang::Selector, clang::SourceLocation>>&
+          Sels) override;
 
   /// Read the set of weak, undeclared identifiers known to the
   /// external Sema source.
@@ -316,7 +326,8 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// the external source should take care not to introduce the same identifiers
   /// repeatedly.
   void ReadWeakUndeclaredIdentifiers(
-      SmallVectorImpl<std::pair<IdentifierInfo*, WeakInfo>>& WI) override;
+      llvm::SmallVectorImpl<std::pair<clang::IdentifierInfo*, clang::WeakInfo>>&
+          WI) override;
 
   /// Read the set of #pragma redefine_extname'd, undeclared identifiers known
   /// to the external Sema source.
@@ -326,14 +337,16 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// invoked multiple times; the external source should take care not to
   /// introduce the same identifiers repeatedly.
   void ReadExtnameUndeclaredIdentifiers(
-      SmallVectorImpl<std::pair<IdentifierInfo*, AsmLabelAttr*>>& EI) override;
+      llvm::SmallVectorImpl<std::pair<clang::IdentifierInfo*,
+                                      clang::AsmLabelAttr*>>& EI) override;
 
   /// Read the set of used vtables known to the external Sema source.
   ///
   /// The external source should append its own used vtables to the given
   /// vector. Note that this routine may be invoked multiple times; the external
   /// source should take care not to introduce the same vtables repeatedly.
-  void ReadUsedVTables(SmallVectorImpl<ExternalVTableUse>& VTables) override;
+  void ReadUsedVTables(
+      llvm::SmallVectorImpl<clang::ExternalVTableUse>& VTables) override;
 
   /// Read the set of pending instantiations known to the external
   /// Sema source.
@@ -343,7 +356,9 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// external source should take care not to introduce the same instantiations
   /// repeatedly.
   void ReadPendingInstantiations(
-      SmallVectorImpl<std::pair<ValueDecl*, SourceLocation>>& Pending) override;
+      llvm::SmallVectorImpl<
+          std::pair<clang::ValueDecl*, clang::SourceLocation>>& Pending)
+      override;
 
   /// Read the set of late parsed template functions for this source.
   ///
@@ -352,8 +367,9 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// external source should take care not to introduce the same map entries
   /// repeatedly.
   void ReadLateParsedTemplates(
-      llvm::MapVector<const FunctionDecl*, std::unique_ptr<LateParsedTemplate>>&
-          LPTMap) override;
+      llvm::MapVector<const clang::FunctionDecl*,
+                      std::unique_ptr<clang::LateParsedTemplate>>& LPTMap)
+      override;
 
   /// Read the set of decls to be checked for deferred diags.
   ///
@@ -362,15 +378,15 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// may be invoked multiple times; the external source should take care not to
   /// introduce the same declarations repeatedly.
   void ReadDeclsToCheckForDeferredDiags(
-      llvm::SmallSetVector<Decl*, 4>& Decls) override;
+      llvm::SmallSetVector<clang::Decl*, 4>& Decls) override;
 
   /// \copydoc ExternalSemaSource::CorrectTypo
   /// \note Returns the first nonempty correction.
-  TypoCorrection CorrectTypo(const DeclarationNameInfo& Typo, int LookupKind,
-                             Scope* S, CXXScopeSpec* SS,
-                             CorrectionCandidateCallback& CCC,
-                             DeclContext* MemberContext, bool EnteringContext,
-                             const ObjCObjectPointerType* OPT) override;
+  clang::TypoCorrection CorrectTypo(
+      const clang::DeclarationNameInfo& Typo, int LookupKind, clang::Scope* S,
+      clang::CXXScopeSpec* SS, clang::CorrectionCandidateCallback& CCC,
+      clang::DeclContext* MemberContext, bool EnteringContext,
+      const clang::ObjCObjectPointerType* OPT) override;
 
   /// Produces a diagnostic note if one of the attached sources
   /// contains a complete definition for \p T. Queries the sources in list
@@ -382,21 +398,21 @@ class MultiplexExternalSemaSource : public ExternalSemaSource {
   /// \param T the \c QualType that should have been complete at \p Loc
   ///
   /// \return true if a diagnostic was produced, false otherwise.
-  bool MaybeDiagnoseMissingCompleteType(SourceLocation Loc,
-                                        QualType T) override;
+  bool MaybeDiagnoseMissingCompleteType(clang::SourceLocation Loc,
+                                        clang::QualType T) override;
 
   // Inform all attached sources that a mangling number was assigned.
-  void AssignedLambdaNumbering(CXXRecordDecl* Lambda) override;
+  void AssignedLambdaNumbering(clang::CXXRecordDecl* Lambda) override;
 
   /// LLVM-style RTTI.
   /// \{
   bool isA(const void* ClassID) const override {
     return ClassID == &ID || ExternalSemaSource::isA(ClassID);
   }
-  static bool classof(const ExternalASTSource* S) { return S->isA(&ID); }
+  static bool classof(const clang::ExternalASTSource* S) { return S->isA(&ID); }
   /// \}
 };
 
-}  // end namespace clang
+}  // namespace Carbon
 
 #endif  // CARBON_THIRD_PARTY_LLVM_MULTIPLEX_EXTERNAL_SEMA_SOURCE_H_
