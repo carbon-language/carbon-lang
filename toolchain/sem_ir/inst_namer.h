@@ -223,13 +223,12 @@ class InstNamer {
   };
 
   // The pieces of a location-based name disambiguator. `line_and_column` is the
-  // source position, or `nullopt` when the location has no source node to name.
-  // `imported_from` is the name of the file the location resolves into when
-  // that differs from the file being formatted (for an imported-from
-  // annotation), and is empty otherwise. `mark_implicit` indicates that the
-  // name refers to a desugared (generated) location and should be marked as
-  // such; it is only set for import locations, since node locations are named
-  // the same whether or not they are desugared.
+  // source position, or `nullopt` when there is no source position to name by.
+  // `imported_from` is the file a desugared C++ location came from (for an
+  // imported-from annotation), and is empty otherwise. `mark_implicit`
+  // indicates that the name refers to a desugared (generated) location and
+  // should be marked as such; it is only set for import locations, since node
+  // locations are named the same whether or not they are desugared.
   struct LocName {
     std::optional<LineAndColumn> line_and_column;
     llvm::StringRef imported_from;
@@ -237,13 +236,12 @@ class InstNamer {
   };
 
   // Resolves a location to the disambiguator pieces used in an instruction's
-  // name. A `NodeId` uses the current IR's tree; an import location resolves
-  // through any number of import levels to the absolute origin, and is marked
-  // implicit if desugared. For a desugared import resolving into a different
-  // file -- including a C++ import, whose file, line, and column come from the
-  // Clang source location -- `imported_from` names that file. Returns `nullopt`
-  // when there is nothing to name by, such as a non-desugared C++ import or no
-  // location.
+  // name. A location in this file (`NodeId`) is named by its line and column,
+  // and a desugared C++ location by its Clang source location (with
+  // `imported_from` naming the file). Other imported instructions are not named
+  // by their imported location -- see the TODO in `GetLocName` -- so they get
+  // only a numeric disambiguator (and an implicit marker if desugared). Returns
+  // `nullopt` when there is nothing to name by.
   auto GetLocName(LocId loc_id) const -> std::optional<LocName>;
 
   // For the given `IdT`, returns its start offset in the `ScopeId` space. Each

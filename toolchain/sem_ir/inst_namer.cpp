@@ -366,9 +366,8 @@ auto InstNamer::GetLocName(LocId loc_id) const -> std::optional<LocName> {
   bool mark_implicit =
       loc_id.kind() == LocId::Kind::ImportIRInstId && loc_id.is_desugared();
 
-  // Resolve through any number of import levels to the absolute origin of the
-  // location, so transitively-imported locations are still named (matching how
-  // diagnostics resolve such locations) rather than only single-level imports.
+  // Resolve through any number of import levels to the absolute origin of this
+  // location.
   auto origin = GetAbsoluteNodeRef(sem_ir_, loc_id).back();
 
   if (origin.is_cpp()) {
@@ -389,27 +388,33 @@ auto InstNamer::GetLocName(LocId loc_id) const -> std::optional<LocName> {
     return std::nullopt;
   }
 
-  if (!origin.node_id().has_value()) {
-    // No source node to name by, such as a multi-level import with no location.
+  // Only name an instruction by a source line and column when that location is
+  // in this file.
+  //
+  // TODO: An imported instruction is deliberately *not* named by its imported
+  // location. Resolving an imported location through the import graph is not
+  // stable across environments (notably for C++ interop): the same instruction
+  // can resolve to a source location on one machine and to none on another,
+  // which would make instruction names -- and therefore testdata --
+  // environment-dependent. So imported instructions get a numeric disambiguator
+  // instead (as they did before location-based naming was extended to imports),
+  // still marked implicit if desugared. If imported-location resolution is made
+  // stable, name imported instructions by it here -- `origin` above already
+  // resolves to the absolute origin -- and update the affected testdata.
+  const auto* origin_file = origin.file();
+  if (origin_file != sem_ir_ || !origin.node_id().has_value()) {
     if (mark_implicit) {
       return LocName{.line_and_column = std::nullopt, .mark_implicit = true};
     }
     return std::nullopt;
   }
 
-  const auto* origin_file = origin.file();
   const auto& tree = origin_file->parse_tree();
   auto token = tree.node_token(origin.node_id());
-  // A desugared import that resolves into a different file is annotated with
-  // that file, like an imported declaration.
-  llvm::StringRef imported_from = (mark_implicit && origin_file != sem_ir_)
-                                      ? origin_file->filename()
-                                      : llvm::StringRef();
   return LocName{
       .line_and_column =
           LineAndColumn{.line = tree.tokens().GetLineNumber(token),
                         .column = tree.tokens().GetColumnNumber(token)},
-      .imported_from = imported_from,
       .mark_implicit = mark_implicit};
 }
 
