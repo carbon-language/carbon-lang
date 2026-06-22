@@ -21,12 +21,15 @@ struct S {
 const S& Get();
 ''';
 
-fn F() -> i32 {
-  // CHECK:STDERR: const_member_access.carbon:[[@LINE+4]]:10: error: type `const Cpp.S` does not support qualified expressions [QualifiedExprUnsupported]
-  // CHECK:STDERR:   return Cpp.Get().x;
-  // CHECK:STDERR:          ^~~~~~~~~~~
+fn F() {
+  // CHECK:STDERR: const_member_access.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `const Cpp.S` to `Cpp.S` [ConversionFailure]
+  // CHECK:STDERR:   Cpp.Get().x;
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR: const_member_access.carbon:[[@LINE+4]]:3: note: type `const Cpp.S` does not implement interface `Core.ImplicitAs(Cpp.S)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   Cpp.Get().x;
+  // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
-  return Cpp.Get().x;
+  Cpp.Get().x;
 }
 
 // --- fail_const_member_assign.carbon
@@ -41,7 +44,10 @@ const S& Get();
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+4]]:3: error: type `const Cpp.S` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `const Cpp.S` to `Cpp.S` [ConversionFailure]
+  // CHECK:STDERR:   Cpp.Get().x = 123;
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+4]]:3: note: type `const Cpp.S` does not implement interface `Core.ImplicitAs(Cpp.S)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   Cpp.Get().x = 123;
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:

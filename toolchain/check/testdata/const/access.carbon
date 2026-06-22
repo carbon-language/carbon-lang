@@ -18,10 +18,6 @@ class C {
 }
 
 fn F(c: const C) {
-  // CHECK:STDERR: const_member_access.carbon:[[@LINE+4]]:3: error: type `const C` does not support qualified expressions [QualifiedExprUnsupported]
-  // CHECK:STDERR:   c.x;
-  // CHECK:STDERR:   ^~~
-  // CHECK:STDERR:
   c.x;
 }
 
@@ -33,7 +29,7 @@ class C {
 }
 
 fn F(c: const C) {
-  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+4]]:3: error: type `const C` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
   // CHECK:STDERR:   c.x = ();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
