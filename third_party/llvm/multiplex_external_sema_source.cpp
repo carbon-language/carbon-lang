@@ -1,17 +1,10 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 // TODO: Remove this once https://github.com/llvm/llvm-project/pull/204458
 // is merged.
 
-//===--- MultiplexExternalSemaSource.cpp  ---------------------------------===//
-//
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements the event dispatching to the subscribed clients.
-//
-//===----------------------------------------------------------------------===//
 #include "third_party/llvm/multiplex_external_sema_source.h"
 
 #include "clang/Sema/Lookup.h"

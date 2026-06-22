@@ -1,17 +1,10 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 // TODO: Remove this once https://github.com/llvm/llvm-project/pull/204458
 // is merged.
 
-//===--- MultiplexExternalSemaSource.h - External Sema Interface-*- C++ -*-===//
-//
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-//===----------------------------------------------------------------------===//
-//
-//  This file defines ExternalSemaSource interface, dispatching to all clients
-//
-//===----------------------------------------------------------------------===//
 #ifndef CARBON_THIRD_PARTY_LLVM_MULTIPLEX_EXTERNAL_SEMA_SOURCE_H_
 #define CARBON_THIRD_PARTY_LLVM_MULTIPLEX_EXTERNAL_SEMA_SOURCE_H_
 
