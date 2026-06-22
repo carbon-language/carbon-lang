@@ -451,7 +451,7 @@ auto CompileOptions::ValidateTarget(Diagnostics::NoLocEmitter& emitter)
   return target;
 }
 
-auto CompileOptions::BuildClangInvocation(DriverEnv& driver_env)
+auto CompileOptions::BuildClangInvocation(DriverEnv* driver_env)
     -> ErrorOr<std::shared_ptr<clang::CompilerInvocation>> {
   // TODO: Move this into `BuildClangInvocation` when it can accept an
   // optimization level.
@@ -463,7 +463,7 @@ auto CompileOptions::BuildClangInvocation(DriverEnv& driver_env)
   };
   all_clang_args.append(clang_args);
   auto clang_invocation = Carbon::BuildClangInvocation(
-      *driver_env.consumer, driver_env.fs, *driver_env.installation,
+      *driver_env->consumer, driver_env->fs, *driver_env->installation,
       codegen_options->target, all_clang_args);
   if (!clang_invocation) {
     return ErrorBuilder() << "Failed to build a valid clang invocation.";

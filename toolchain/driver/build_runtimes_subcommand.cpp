@@ -5,6 +5,7 @@
 #include "toolchain/driver/build_runtimes_subcommand.h"
 
 #include "llvm/TargetParser/Triple.h"
+#include "toolchain/driver/carbon_runtimes.h"
 #include "toolchain/driver/clang_runner.h"
 #include "toolchain/driver/clang_runtimes.h"
 
@@ -33,7 +34,8 @@ This will **remove** the provided output path and re-create it from scratch.
       },
       [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&force); });
 
-  codegen_options.Build(b);
+  codegen_options = std::make_shared<CodegenOptions>();
+  codegen_options->Build(b);
 }
 
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
@@ -82,7 +84,7 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
                      driver_env.vlog_stream);
 
   Runtimes::Cache::Features features = {
-      .target = options_.codegen_options.target.str()};
+      .target = options_.codegen_options->target.str()};
 
   bool is_cache = options_.directory.empty();
   std::filesystem::path output_path = options_.directory.str();
@@ -97,6 +99,7 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
     CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::ClangResourceDir));
     CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::LibUnwind));
     CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::Libcxx));
+    CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::CarbonCore));
   }
 
   ClangResourceDirBuilder resource_dir_builder(&runner, driver_env.thread_pool,
@@ -108,10 +111,13 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
   ClangArchiveRuntimesBuilder<Runtimes::Libcxx> libcxx_builder(
       &runner, driver_env.thread_pool, llvm::Triple(features.target),
       &runtimes);
+  CarbonPreludeBuilder prelude_builder(&driver_env, options_.codegen_options,
+                                       &runtimes);
 
   CARBON_RETURN_IF_ERROR(std::move(resource_dir_builder).Wait());
   CARBON_RETURN_IF_ERROR(std::move(lib_unwind_builder).Wait());
   CARBON_RETURN_IF_ERROR(std::move(libcxx_builder).Wait());
+  CARBON_RETURN_IF_ERROR(std::move(prelude_builder).Build());
 
   return runtimes.base_path();
 }

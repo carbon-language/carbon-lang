@@ -87,7 +87,7 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   auto compile_driver = CompileDriver(&options_.compile_options);
   if (!compile_driver.Initialize(
-          driver_env, [&](llvm::StringRef input_filename) -> std::string {
+          &driver_env, [&](llvm::StringRef input_filename) -> std::string {
             return (temp_dir_path /
                     llvm::formatv("{0:x16}.o", HashValue(input_filename)).str())
                 .string();
@@ -95,7 +95,7 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return {.success = false};
   }
 
-  auto compile_result = compile_driver.Compile(driver_env);
+  auto compile_result = compile_driver.Compile(&driver_env);
   if (!compile_result.success) {
     return compile_result;
   }

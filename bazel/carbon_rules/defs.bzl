@@ -253,8 +253,10 @@ _carbon_binary_internal = rule(
 _carbon_library_internal = rule(
     implementation = _carbon_library_impl,
     attrs = {
+        "api": attr.label(allow_single_file = True),
         "deps": attr.label_list(allow_files = True),
         "flags": attr.string_list(),
+        "impls": attr.label_list(allow_files = [".carbon"]),
 
         # The exec config toolchain attributes. These will be `None` when using
         # the target config and populated when using the exec config. We have to
@@ -290,8 +292,6 @@ _carbon_library_internal = rule(
             cfg = "target",
         ),
         "prelude_srcs": attr.label_list(allow_files = [".carbon"]),
-        "api": attr.label(allow_single_file = True),
-        "impls": attr.label_list(allow_files = [".carbon"]),
         "_cc_toolchain": attr.label(default = "//toolchain/install:carbon_stage1_cc_toolchain"),
     },
     executable = False,

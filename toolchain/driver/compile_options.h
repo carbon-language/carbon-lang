@@ -62,7 +62,7 @@ struct CompileOptions {
   // the C++ and Carbon parts of the compilation.
   // TODO: Share any arguments we specify here with the `carbon clang`
   // subcommand.
-  auto BuildClangInvocation(DriverEnv& driver_env)
+  auto BuildClangInvocation(DriverEnv* driver_env)
       -> ErrorOr<std::shared_ptr<clang::CompilerInvocation>>;
 
   Lower::OptimizationLevel opt_level = Lower::OptimizationLevel::Debug;
@@ -97,7 +97,7 @@ struct CompileOptions {
   bool stream_errors = false;
   bool preorder_parse_tree = false;
   bool builtin_sem_ir = false;
-  bool prelude_import = false;
+  bool prelude_import = true;
   bool output_last_input_only = false;
 
   llvm::SmallVector<llvm::StringRef> exclude_dump_file_prefixes;
