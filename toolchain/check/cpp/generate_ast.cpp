@@ -18,7 +18,6 @@
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/ExternalSemaSource.h"
-#include "clang/Sema/MultiplexExternalSemaSource.h"
 #include "clang/Sema/Sema.h"
 #include "common/check.h"
 #include "common/map.h"
@@ -33,6 +32,7 @@
 #include "toolchain/check/cpp/export.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
+#include "toolchain/check/cpp/multiplex_external_sema_source.h"
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/name_lookup.h"
@@ -967,8 +967,7 @@ auto FinishAst(Context& context) -> void {
   // will not remain valid.
   auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
       context.ast_context().getExternalSource());
-  auto& child_sources = multiplex_source->GetSources();
-  llvm::erase_if(child_sources, [](const auto& src) {
+  multiplex_source->EraseIf([](const auto& src) {
     // `CarbonExternalASTSource` inherits from `ReadOnlyASTSource`.
     return llvm::isa<SemIR::ReadOnlyASTSource>(src.get());
   });
