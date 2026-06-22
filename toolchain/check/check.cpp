@@ -7,11 +7,16 @@
 #include <string>
 #include <utility>
 
+#include "clang/AST/ASTContext.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Sema/MultiplexExternalSemaSource.h"
+#include "clang/Sema/Sema.h"
 #include "common/check.h"
 #include "common/map.h"
 #include "common/pretty_stack_trace_function.h"
 #include "toolchain/check/check_unit.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/cpp/generate_ast.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/diagnostic_emitter.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -23,6 +28,7 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/formatter.h"
+#include "toolchain/sem_ir/read_only_ast_source.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -492,6 +498,10 @@ auto CheckParseTrees(
     }
   }
 
+  // Shared Clang state used across files when compiling with a single
+  // ASTContext.
+  std::shared_ptr<SharedClangState> shared_clang_state;
+
   // Check everything with no dependencies. Earlier entries with dependencies
   // will be checked as soon as all their dependencies have been checked.
   for (int check_index = 0;
@@ -499,7 +509,8 @@ auto CheckParseTrees(
     auto* unit_info = ready_to_check[check_index];
     CheckUnit(unit_info, &tree_and_subtrees_getters, fs,
               unit_info->unit->llvm_context, clang_invocation,
-              options.vlog_stream, options.mangle_string_fingerprint)
+              options.vlog_stream, options.mangle_string_fingerprint,
+              options.share_cpp_ast ? &shared_clang_state : nullptr)
         .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
@@ -549,10 +560,17 @@ auto CheckParseTrees(
       if (unit_info.imports_remaining > 0) {
         CheckUnit(&unit_info, &tree_and_subtrees_getters, fs,
                   unit_info.unit->llvm_context, clang_invocation,
-                  options.vlog_stream, options.mangle_string_fingerprint)
+                  options.vlog_stream, options.mangle_string_fingerprint,
+                  options.share_cpp_ast ? &shared_clang_state : nullptr)
             .Run();
       }
     }
+  }
+
+  // Finalize C++ AST compilation at the end of checking all files.
+  if (options.share_cpp_ast && shared_clang_state &&
+      shared_clang_state->clang_instance) {
+    shared_clang_state->clang_instance->getSema().ActOnEndOfTranslationUnit();
   }
 
   MaybeDumpSemIR(units, tree_and_subtrees_getters, options);

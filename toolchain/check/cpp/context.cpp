@@ -11,7 +11,7 @@
 namespace Carbon::Check {
 
 CppContext::CppContext(clang::CompilerInstance& instance,
-                       std::unique_ptr<clang::Parser> parser)
+                       std::shared_ptr<clang::Parser> parser)
     : ast_context_(&instance.getASTContext()),
       sema_(&instance.getSema()),
       parser_(std::move(parser)) {}

@@ -32,6 +32,8 @@ struct Unit {
   int total_ir_count;
 };
 
+struct SharedClangState;
+
 struct CheckParseTreesOptions {
   // Options must be set individually, not through initialization.
   explicit CheckParseTreesOptions() = default;
@@ -79,6 +81,9 @@ struct CheckParseTreesOptions {
   // Whether to use the string form of the fingerprint from mangling instead of
   // the hash form.
   bool mangle_string_fingerprint = false;
+
+  // Whether to share a single Clang ASTContext across all files.
+  bool share_cpp_ast = false;
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of

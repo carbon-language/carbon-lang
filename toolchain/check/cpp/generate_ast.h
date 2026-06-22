@@ -17,9 +17,18 @@
 
 namespace clang {
 class CompilerInvocation;
+class CompilerInstance;
+class Parser;
+class ExternalSemaSource;
 }  // namespace clang
 
 namespace Carbon::Check {
+
+// Shared Clang state used across files when compiling with a single ASTContext.
+struct SharedClangState {
+  std::shared_ptr<clang::CompilerInstance> clang_instance;
+  std::shared_ptr<clang::Parser> parser;
+};
 
 // Generates a Clang AST for the given C++ imports and sets it as the context's
 // `cpp_context` and the SemIR's `cpp_file`. Returns a bool that represents
@@ -28,7 +37,8 @@ auto GenerateAst(Context& context,
                  llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                  llvm::LLVMContext* llvm_context,
-                 std::shared_ptr<clang::CompilerInvocation> base_invocation)
+                 std::shared_ptr<clang::CompilerInvocation> base_invocation,
+                 std::shared_ptr<SharedClangState>* shared_state = nullptr)
     -> bool;
 
 // Injects C++ code from `inline Cpp` into the active Clang AST context.

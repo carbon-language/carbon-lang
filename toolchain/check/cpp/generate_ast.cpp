@@ -657,7 +657,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     clang_instance.createSema(getTranslationUnitKind(),
                               /*CompletionConsumer=*/nullptr);
 
-    auto parser_ptr = std::make_unique<clang::Parser>(
+    auto parser_ptr = std::make_shared<clang::Parser>(
         clang_instance.getPreprocessor(), clang_instance.getSema(),
         /*SkipFunctionBodies=*/false);
     auto& parser = *parser_ptr;
@@ -690,103 +690,158 @@ auto GenerateAst(Context& context,
                  llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                  llvm::LLVMContext* llvm_context,
-                 std::shared_ptr<clang::CompilerInvocation> base_invocation)
+                 std::shared_ptr<clang::CompilerInvocation> base_invocation,
+                 std::shared_ptr<SharedClangState>* shared_clang_state)
     -> bool {
   CARBON_CHECK(!context.cpp_context());
   CARBON_CHECK(!context.sem_ir().cpp_file());
 
-  auto invocation =
-      std::make_shared<ShallowCopyCompilerInvocation>(*base_invocation);
-
-  // Ask Clang to not leak memory.
-  invocation->getFrontendOpts().DisableFree = false;
-
-  auto diagnostic_consumer =
-      MakeDiagnosticConsumer(context.emitter().consumer(), invocation);
-  auto* diagnostic_consumer_ptr = diagnostic_consumer.get();
-
-  // Build a diagnostics engine.
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(
-      clang::CompilerInstance::createDiagnostics(
-          *fs, invocation->getDiagnosticOpts(), diagnostic_consumer.release(),
-          /*ShouldOwnClient=*/true));
-
-  // Extract the input from the frontend invocation and make sure it makes
-  // sense.
-  const auto& inputs = invocation->getFrontendOpts().Inputs;
-  CARBON_CHECK(inputs.size() == 1 &&
-               inputs[0].getKind().getLanguage() == clang::Language::CXX &&
-               inputs[0].getKind().getFormat() == clang::InputKind::Source);
-  llvm::StringRef file_name = inputs[0].getFile();
-
-  // Remap the imports file name to the corresponding `#include`s.
-  // TODO: Modify the frontend options to specify this memory buffer as input
-  // instead of remapping the file.
-  std::string includes = GenerateCppIncludesHeaderCode(context, imports);
-  auto includes_buffer =
-      llvm::MemoryBuffer::getMemBufferCopy(includes, file_name);
-  invocation->getPreprocessorOpts().addRemappedFile(file_name,
-                                                    includes_buffer.release());
-
-  auto clang_instance_ptr =
-      std::make_unique<clang::CompilerInstance>(invocation);
-  auto& clang_instance = *clang_instance_ptr;
-  context.sem_ir().set_cpp_file(std::make_unique<SemIR::CppFile>(
-      std::move(clang_instance_ptr), llvm_context));
-
-  // Register an annotation scope to flush any Clang diagnostics when we return.
-  // This ensures C++ diagnostics get flushed before `diags` is destroyed, and
-  // that diagnostics created here don't interleave with later Carbon
-  // diagnostics.
+  // Register an annotation scope to flush any Clang diagnostics when we
+  // return. This ensures C++ diagnostics get flushed before `diags` is
+  // destroyed, and that diagnostics created here don't interleave with later
+  // Carbon diagnostics.
   Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
                                                     [](auto& /*builder*/) {});
 
-  clang_instance.setDiagnostics(diags);
-  clang_instance.setVirtualFileSystem(fs);
-  clang_instance.createFileManager();
-  clang_instance.createSourceManager();
-  if (!clang_instance.createTarget()) {
+  std::shared_ptr<clang::CompilerInstance> clang_instance;
+  std::shared_ptr<clang::Parser> parser;
+
+  if (!shared_clang_state || !*shared_clang_state) {
+    // Build a new invocation.
+    auto invocation =
+        std::make_shared<ShallowCopyCompilerInvocation>(*base_invocation);
+
+    // Ask Clang to not leak memory.
+    invocation->getFrontendOpts().DisableFree = false;
+
+    auto diagnostic_consumer =
+        MakeDiagnosticConsumer(context.emitter().consumer(), invocation);
+    auto* diagnostic_consumer_ptr = diagnostic_consumer.get();
+
+    // Build a diagnostics engine.
+    llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(
+        clang::CompilerInstance::createDiagnostics(
+            *fs, invocation->getDiagnosticOpts(),
+            diagnostic_consumer.release(), /*ShouldOwnClient=*/true));
+
+    // Extract the input from the frontend invocation and make sure it makes
+    // sense.
+    const auto& inputs = invocation->getFrontendOpts().Inputs;
+    CARBON_CHECK(inputs.size() == 1 &&
+                 inputs[0].getKind().getLanguage() == clang::Language::CXX &&
+                 inputs[0].getKind().getFormat() == clang::InputKind::Source);
+    llvm::StringRef file_name = inputs[0].getFile();
+
+    // Remap the input file to a dummy buffer containing a semicolon to start
+    // with an empty AST. Clang requires at least one token in the main file
+    // to avoid assertion failures if it later encounters module declarations.
+    // TODO: See if we can fix this by injecting code into the main file rather
+    // than entering nested buffers.
+    auto empty_buffer = llvm::MemoryBuffer::getMemBuffer(";");
+    invocation->getPreprocessorOpts().addRemappedFile(file_name,
+                                                      empty_buffer.release());
+
+    auto clang_instance_ptr =
+        std::make_shared<clang::CompilerInstance>(invocation);
+    clang_instance = clang_instance_ptr;
+    context.sem_ir().set_cpp_file(std::make_unique<SemIR::CppFile>(
+        clang_instance_ptr, llvm_context, shared_clang_state != nullptr));
+
+    clang_instance->setDiagnostics(diags);
+    clang_instance->setVirtualFileSystem(fs);
+    clang_instance->createFileManager();
+    clang_instance->createSourceManager();
+    if (!clang_instance->createTarget()) {
+      return false;
+    }
+
+    GenerateASTAction action(context, MakeContextDiagnosticListener(
+                                          *diagnostic_consumer_ptr, context));
+    if (!action.BeginSourceFile(*clang_instance, inputs[0])) {
+      return false;
+    }
+
+    // The AST context is now available, so the mangle context (used to compute
+    // stable identities for imported C++ types) can be created.
+    context.sem_ir().cpp_file()->CreateMangleContext();
+
+    auto& ast = clang_instance->getASTContext();
+
+    // Always build a multiplex source, even if there's only one child
+    // source. During lowering, the `CarbonExternalASTSource` can no longer be
+    // used (because it uses `Check::Context`), so a `ReadOnlyASTSource` is
+    // installed instead. However, clang internally keeps pointers to the
+    // top-level `ExternalASTSource` installed via `setExternalSource`, and
+    // those pointers aren't updated if `setExternalSource` is called again. By
+    // using `MultiplexExternalSemaSource`, we can keep the top-level
+    // `ExternalASTSource` pointer the same, and only update its children.
+    auto multiplex_source_ref_cnt_ptr =
+        llvm::makeIntrusiveRefCnt<clang::MultiplexExternalSemaSource>();
+    auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
+        multiplex_source_ref_cnt_ptr.get());
+    if (auto* existing_source = llvm::cast_or_null<clang::ExternalSemaSource>(
+            ast.getExternalSource())) {
+      multiplex_source->AddSource(existing_source);
+    }
+    auto ast_source =
+        llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context);
+    multiplex_source->AddSource(ast_source);
+    ast.setExternalSource(std::move(multiplex_source_ref_cnt_ptr));
+
+    if (llvm::Error error = action.Execute()) {
+      // `Execute` currently never fails, but its contract allows it to.
+      context.TODO(SemIR::LocId::None, "failed to execute clang action: " +
+                                           llvm::toString(std::move(error)));
+      return false;
+    }
+
+    auto* cpp_context = context.cpp_context();
+    CARBON_CHECK(cpp_context);
+    parser = cpp_context->parser_ptr();
+
+    // Initialize the shared state if requested.
+    if (shared_clang_state) {
+      *shared_clang_state = std::make_shared<SharedClangState>(SharedClangState{
+          .clang_instance = clang_instance_ptr, .parser = parser});
+    }
+  } else {
+    auto& state = **shared_clang_state;
+    clang_instance = state.clang_instance;
+    parser = state.parser;
+
+    context.sem_ir().set_cpp_file(std::make_unique<SemIR::CppFile>(
+        clang_instance, llvm_context, /*share_cpp_ast=*/true));
+    auto cpp_context = std::make_unique<CppContext>(*clang_instance, parser);
+    cpp_context->set_diagnostic_listener(MakeContextDiagnosticListener(
+        *clang_instance->getDiagnostics().getClient(), context));
+    context.set_cpp_context(std::move(cpp_context));
+
+    // Add an external source referring to this context.
+    auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
+        context.ast_context().getExternalSource());
+    auto ast_source =
+        llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context);
+    multiplex_source->AddSource(ast_source);
+  }
+
+  // Inject the imports-as-#includes buffer.
+  std::string includes = GenerateCppIncludesHeaderCode(context, imports);
+  auto buffer =
+      llvm::MemoryBuffer::getMemBufferCopy(includes, "<shared cpp imports>");
+
+  clang::Preprocessor& preprocessor = clang_instance->getPreprocessor();
+  clang::Sema& sema = clang_instance->getSema();
+
+  clang::FileID file_id =
+      preprocessor.getSourceManager().createFileID(std::move(buffer));
+  if (preprocessor.EnterSourceFile(file_id, nullptr, clang::SourceLocation())) {
     return false;
   }
 
-  GenerateASTAction action(context, MakeContextDiagnosticListener(
-                                        *diagnostic_consumer_ptr, context));
-  if (!action.BeginSourceFile(clang_instance, inputs[0])) {
-    return false;
+  if (parser->getCurToken().is(clang::tok::eof)) {
+    parser->ConsumeToken();
   }
-
-  // The AST context is now available, so the mangle context (used to compute
-  // stable identities for imported C++ types) can be created.
-  context.sem_ir().cpp_file()->CreateMangleContext();
-
-  auto& ast = clang_instance.getASTContext();
-
-  // Always build a multiplex source, even if there's only one child
-  // source. During lowering, the `CarbonExternalASTSource` can no longer be
-  // used (because it uses `Check::Context`), so a `ReadOnlyASTSource` is
-  // installed instead. However, clang internally keeps pointers to the
-  // top-level `ExternalASTSource` installed via `setExternalSource`, and
-  // those pointers aren't updated if `setExternalSource` is called again. By
-  // using `MultiplexExternalSemaSource`, we can keep the top-level
-  // `ExternalASTSource` pointer the same, and only update its children.
-  auto multiplex_source_ref_cnt_ptr =
-      llvm::makeIntrusiveRefCnt<clang::MultiplexExternalSemaSource>();
-  auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
-      multiplex_source_ref_cnt_ptr.get());
-  if (auto* existing_source = llvm::cast_or_null<clang::ExternalSemaSource>(
-          ast.getExternalSource())) {
-    multiplex_source->AddSource(existing_source);
-  }
-  multiplex_source->AddSource(
-      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context));
-  ast.setExternalSource(std::move(multiplex_source_ref_cnt_ptr));
-
-  if (llvm::Error error = action.Execute()) {
-    // `Execute` currently never fails, but its contract allows it to.
-    context.TODO(SemIR::LocId::None, "failed to execute clang action: " +
-                                         llvm::toString(std::move(error)));
-    return false;
-  }
+  ParseTopLevelDecls(*parser, sema.getASTConsumer());
 
   return true;
 }
@@ -830,7 +885,15 @@ auto FinishAst(Context& context) -> void {
     return;
   }
 
-  context.cpp_context()->sema().ActOnEndOfTranslationUnit();
+  if (context.sem_ir().cpp_file() &&
+      context.sem_ir().cpp_file()->share_cpp_ast()) {
+    // TODO: Clang doesn't let us ActOnEndOfTranslationUnit more than once. But
+    // at least trigger any delayed template instantiations now.
+    context.cpp_context()->sema().ActOnEndOfTranslationUnitFragment(
+        clang::TUFragmentKind::Normal);
+  } else {
+    context.cpp_context()->sema().ActOnEndOfTranslationUnit();
+  }
   context.emitter().Flush();
 
   // Remove the `CarbonExternalASTSource` installed in `GenerateAst` and
@@ -841,8 +904,7 @@ auto FinishAst(Context& context) -> void {
   auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
       context.ast_context().getExternalSource());
   multiplex_source->EraseIf([](const auto& src) {
-    // `CarbonExternalASTSource` inherits from `ReadOnlyASTSource`.
-    return llvm::isa<SemIR::ReadOnlyASTSource>(src.get());
+    return llvm::isa<CarbonExternalASTSource>(src.get());
   });
   multiplex_source->AddSource(
       llvm::makeIntrusiveRefCnt<SemIR::ReadOnlyASTSource>(context.sem_ir()));

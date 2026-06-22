@@ -31,12 +31,13 @@ namespace Carbon::Check {
 class CppContext {
  public:
   explicit CppContext(clang::CompilerInstance& instance,
-                      std::unique_ptr<clang::Parser> parser);
+                      std::shared_ptr<clang::Parser> parser);
   ~CppContext();
 
   auto ast_context() -> clang::ASTContext& { return *ast_context_; }
   auto sema() -> clang::Sema& { return *sema_; }
   auto parser() -> clang::Parser& { return *parser_; }
+  auto parser_ptr() const -> std::shared_ptr<clang::Parser> { return parser_; }
 
   auto clang_mangle_context() -> clang::MangleContext&;
 
@@ -65,7 +66,7 @@ class CppContext {
   clang::Sema* sema_;
 
   // The Clang parser.
-  std::unique_ptr<clang::Parser> parser_;
+  std::shared_ptr<clang::Parser> parser_;
 
   // Per-Carbon-file start locations for corresponding Clang source buffers.
   // Owned and managed by code in location.cpp.

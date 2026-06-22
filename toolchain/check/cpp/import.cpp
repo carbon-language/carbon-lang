@@ -116,11 +116,13 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
       .add_result.name_scope_id;
 }
 
-auto ImportCpp(Context& context,
-               llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-               llvm::LLVMContext* llvm_context,
-               std::shared_ptr<clang::CompilerInvocation> invocation) -> void {
+auto ImportCpp(
+    Context& context, llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::LLVMContext* llvm_context,
+    std::shared_ptr<clang::CompilerInvocation> invocation,
+    std::shared_ptr<SharedClangState>* shared_state)
+    -> void {
   if (imports.empty()) {
     // TODO: Consider always having a (non-null) AST even if there are no Cpp
     // imports.
@@ -137,7 +139,8 @@ auto ImportCpp(Context& context,
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
 
-  if (GenerateAst(context, imports, fs, llvm_context, std::move(invocation))) {
+  if (GenerateAst(context, imports, fs, llvm_context, std::move(invocation),
+                  shared_state)) {
     name_scope.set_clang_decl_context_id(
         context.clang_decls().Add(
             {.key = SemIR::ClangDeclKey(
