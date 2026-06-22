@@ -406,11 +406,21 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
   if (auto unbound_element_type =
           context.types().TryGetAs<SemIR::UnboundElementType>(
               context.insts().Get(member_id).type_id())) {
+    // Check whether the type of `base_id` is const. If so, this const
+    // is propagated to the unbound element's class type and element
+    // type below.
+    auto base_type_id = context.insts().Get(base_id).type_id();
+    bool is_base_const = context.insts().Is<SemIR::ConstType>(
+        context.types().GetTypeInstId(base_type_id));
+
     // Convert the base to the type of the element if necessary.
-    base_id = ConvertToValueOrRefOfType(
-        context, loc_id, base_id,
-        context.types().GetTypeIdForTypeInstId(
-            unbound_element_type->class_type_inst_id));
+    auto element_class_type_id =
+        is_base_const
+            ? GetConstType(context, unbound_element_type->class_type_inst_id)
+            : context.types().GetTypeIdForTypeInstId(
+                  unbound_element_type->class_type_inst_id);
+    base_id = ConvertToValueOrRefOfType(context, loc_id, base_id,
+                                        element_class_type_id);
 
     // Find the specified element, which could be either a field or a base
     // class, and build an element access expression.
@@ -419,12 +429,14 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                  "Non-constant value {0} of unbound element type",
                  context.insts().Get(member_id));
     auto index = GetClassElementIndex(context, element_id);
+    auto access_type_id =
+        is_base_const
+            ? GetConstType(context, unbound_element_type->element_type_inst_id)
+            : context.types().GetTypeIdForTypeInstId(
+                  unbound_element_type->element_type_inst_id);
     auto access_id = GetOrAddInst<SemIR::ClassElementAccess>(
         context, loc_id,
-        {.type_id = context.types().GetTypeIdForTypeInstId(
-             unbound_element_type->element_type_inst_id),
-         .base_id = base_id,
-         .index = index});
+        {.type_id = access_type_id, .base_id = base_id, .index = index});
     if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
             SemIR::ExprCategory::Value &&
         SemIR::GetExprCategory(context.sem_ir(), access_id) !=

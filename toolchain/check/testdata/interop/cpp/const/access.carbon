@@ -22,13 +22,6 @@ const S& Get();
 ''';
 
 fn F() {
-  // CHECK:STDERR: const_member_access.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `const Cpp.S` to `Cpp.S` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.Get().x;
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: const_member_access.carbon:[[@LINE+4]]:3: note: type `const Cpp.S` does not implement interface `Core.ImplicitAs(Cpp.S)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   Cpp.Get().x;
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.Get().x;
 }
 
@@ -44,12 +37,12 @@ const S& Get();
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `const Cpp.S` to `Cpp.S` [ConversionFailure]
+  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Core.IntLiteral` to `const i32` [ConversionFailure]
   // CHECK:STDERR:   Cpp.Get().x = 123;
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+4]]:3: note: type `const Cpp.S` does not implement interface `Core.ImplicitAs(Cpp.S)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(const i32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   Cpp.Get().x = 123;
-  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.Get().x = 123;
 }
