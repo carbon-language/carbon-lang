@@ -594,14 +594,11 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   base_id = ConvertToValueOrRefExpr(context, base_id);
   base_type_id = context.insts().Get(base_id).type_id();
 
-  auto lookup_const_id = context.types().GetConstantId(base_type_id);
-
-  // If the type is const, use the inner type for lookup.
-  if (auto const_type = context.insts().TryGetAs<SemIR::ConstType>(
-          context.types().GetTypeInstId(base_type_id))) {
-    lookup_const_id = context.types().GetConstantId(
-        context.types().GetTypeIdForTypeInstId(const_type->inner_id));
-  }
+  // If the type has qualifiers, use the unqualified type for lookup.
+  auto unqualified_base_type_id =
+      context.types().GetUnqualifiedTypeAndQualifiers(base_type_id).first;
+  auto lookup_const_id =
+      context.types().GetConstantId(unqualified_base_type_id);
 
   // TODO: If the type is a facet, we look through it into the facet's type (a
   // FacetType) for names. According to the design, we shouldn't need to do
