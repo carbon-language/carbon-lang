@@ -228,7 +228,11 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
           // Given `I where .Self == ()`, the type of `.Self` is `I` and we're
           // replacing `.Self` with some `T` that must also implement `I`.
           // However `I` can be a generic with arbitrary complexity and the
-          // replacement with `T` may fail monomoprhization.
+          // replacement with `T` may fail monomorphization.
+          //
+          // We don't have any better context to add here really, but we
+          // need to accept that errors happen rather than CHECKing that
+          // they don't.
         });
     if (!identified_period_self_type_id.has_value()) {
       return SemIR::ErrorInst::InstId;
