@@ -316,9 +316,6 @@ auto VisitTupleElementForms(const File& sem_ir, FormInfo form,
   auto element_type_inst_ids =
       sem_ir.inst_blocks().Get(tuple_type.type_elements_id);
 
-  llvm::SmallVector<FormInfo> result;
-  result.reserve(element_type_inst_ids.size());
-
   auto tuple_const_inst = sem_ir.insts().TryGetAsIfValid<TupleValue>(
       sem_ir.constant_values().GetInstIdIfValid(form.constant_id));
   auto tuple_const_inst_ids =
@@ -350,9 +347,6 @@ auto VisitStructElementForms(const File& sem_ir, FormInfo form,
   // Otherwise, decompose the type and, if available, the constant value.
   auto struct_type = sem_ir.types().GetAs<StructType>(form.type_id);
   auto fields = sem_ir.struct_type_fields().Get(struct_type.fields_id);
-
-  llvm::SmallVector<FormInfo> result;
-  result.reserve(fields.size());
 
   auto struct_const_inst = sem_ir.insts().TryGetAsIfValid<StructValue>(
       sem_ir.constant_values().GetInstIdIfValid(form.constant_id));
