@@ -813,12 +813,29 @@ auto MatchContext::DoPostWork(State /*state*/,
   results_stack_.AppendToTop(tuple_value_id);
 }
 
-auto MatchContext::DoPreWork(State state, SemIR::SpliceInst splice,
+auto MatchContext::DoPreWork(State state, SemIR::SpliceInst /*splice*/,
                              SemIR::InstId scrutinee_id, WorkItem entry)
     -> void {
+  auto specific_pattern_const_id = SemIR::GetConstantValueInSpecific(
+      context_.sem_ir(), specific_id_stack_.back(), entry.pattern_id);
+  auto specific_pattern_id =
+      context_.constant_values().GetInstId(specific_pattern_const_id);
   CARBON_KIND_SWITCH(state) {
-    case CARBON_KIND(CallerState* _): {
-      CARBON_FATAL("TODO: support caller-side matching of pattern splices");
+    case CARBON_KIND(CallerState* caller_state): {
+      // TODO: find a way to defer adding the bundle until we know we're
+      // adding the action.
+      auto args_id = context_.bundles()
+                         .AddCanonical<SemIR::CallerPatternMatchAction::Args>(
+                             {.pattern_id = specific_pattern_id,
+                              .arg_id = scrutinee_id,
+                              .callee_specific_id = specific_id_stack_.back()});
+      caller_state->call_args.push_back(
+          HandleAction<SemIR::CallerPatternMatchAction>(
+              context_, SemIR::LocId(entry.pattern_id),
+              context_.types().GetTypeInstId(GetScrutineeTypeInSpecific(
+                  context_, entry.pattern_id, specific_id_stack_.back())),
+              {.type_id = SemIR::InstType::TypeId, .args_id = args_id}));
+      break;
     }
     case CARBON_KIND(ThunkState* _): {
       CARBON_FATAL("TODO: support thunk matching of pattern splices");
@@ -830,12 +847,13 @@ auto MatchContext::DoPreWork(State state, SemIR::SpliceInst splice,
       CARBON_CHECK(!scrutinee_id.has_value());
       auto result_id = HandleAction<SemIR::CalleePatternMatchAction>(
           context_, SemIR::LocId(entry.pattern_id),
-          context_.types().GetTypeInstId(splice.type_id),
+          context_.types().GetTypeInstId(GetScrutineeTypeInSpecific(
+              context_, entry.pattern_id, specific_id_stack_.back())),
           {.type_id = SemIR::InstType::TypeId,
            .args_id =
                context_.bundles()
                    .AddCanonical<SemIR::CalleePatternMatchAction::Args>(
-                       {.pattern_id = entry.pattern_id,
+                       {.pattern_id = specific_pattern_id,
                         .parent_index = callee_state->index.Allocate()})});
       callee_state->PushCallParamPattern(
           context_, SemIR::LocId(entry.pattern_id), entry.pattern_id,
@@ -1095,6 +1113,22 @@ auto ThunkPatternMatch(Context& context,
 
   return {.syntactic_args = std::move(inner_args),
           .ignored_call_args = state.outer_call_args};
+}
+
+auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
+                   SemIR::CallerPatternMatchAction action) -> SemIR::InstId {
+  auto args = context.bundles().Get(action.args_id);
+  CallerState state;
+  MatchContext match(context, args.callee_specific_id);
+
+  match.Match(&state,
+              {.pattern_id = args.pattern_id,
+               .work = MatchContext::PreWork{.scrutinee_id = args.arg_id},
+               .allow_unmarked_ref = false});
+
+  CARBON_CHECK(state.call_args.size() == 1,
+               "TODO: add support for composite forms");
+  return state.call_args[0];
 }
 
 auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,

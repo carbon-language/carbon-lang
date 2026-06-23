@@ -126,6 +126,16 @@ auto EvalConstantInst(Context& /*context*/, SemIR::ValueBinding /*inst*/)
   return ConstantEvalResult::NotConstant;
 }
 
+auto EvalConstantInst(Context& context, SemIR::WrapperBinding inst)
+    -> ConstantEvalResult {
+  // A wrapper binding evaluates to the value it's bound to.
+  if (inst.value_id.has_value()) {
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(inst.value_id));
+  }
+  return ConstantEvalResult::NotConstant;
+}
+
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::AcquireValue inst) -> ConstantEvalResult {
   SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;

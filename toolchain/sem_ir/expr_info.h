@@ -42,9 +42,15 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
 // Information about the form of an expression.
 struct FormInfo {
   enum Kind : int8_t {
+    // A primitive form (which has independent type, category, phase, and
+    // value).
     Primitive,
+    // A tuple form.
     Tuple,
+    // A struct form.
     Struct,
+    // A form whose kind depends on the value of one or more symbolic bindings.
+    Dependent,
   };
 
   // The kind of the form.
@@ -57,6 +63,9 @@ struct FormInfo {
   SemIR::TypeId type_id;
   // The constant value component of the form.
   SemIR::ConstantId constant_id;
+  // For a Dependent form, this is an inst whose constant value represents
+  // the form. Otherwise, it is None.
+  SemIR::InstId form_inst_id;
   // The location of the expression whose form this is.
   SemIR::LocId loc_id;
   // The underlying instruction, if there is one. This is only present in order

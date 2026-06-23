@@ -130,6 +130,9 @@ auto AddBindingForPattern(Context& context, SemIR::LocId name_loc,
         case SemIR::ValueParamPattern::Kind:
           bind_name_kind = SemIR::ValueBinding::Kind;
           break;
+        case SemIR::SpliceInst::Kind:
+          bind_name_kind = SemIR::WrapperBinding::Kind;
+          break;
         default:
           CARBON_FATAL("Unexpected subpattern kind for at_binding_pattern: {0}",
                        subpattern);

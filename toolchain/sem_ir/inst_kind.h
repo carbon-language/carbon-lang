@@ -439,7 +439,9 @@ class InstKind::Definition : public InstKind {
     // kind is always symbolic when it's a value, then it's always symbolic when
     // it's a type.
     return is_type() != InstIsType::Never &&
-           (constant_kind() == InstConstantKind::SymbolicOnly ||
+           (constant_kind() == InstConstantKind::Indirect ||
+            constant_kind() == InstConstantKind::ConstantInstAction ||
+            constant_kind() == InstConstantKind::SymbolicOnly ||
             constant_kind() == InstConstantKind::SymbolicOrReference);
   }
 

@@ -30,6 +30,10 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::OutFormParamPatternAction action) -> SemIR::InstId;
 
+// Performs a caller pattern match action. Defined in pattern_match.cpp.
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::CallerPatternMatchAction action) -> SemIR::InstId;
+
 // Performs a callee pattern match action. Defined in pattern_match.cpp.
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::CalleePatternMatchAction action) -> SemIR::InstId;
