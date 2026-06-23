@@ -47,8 +47,11 @@ for dir in "${!MIRRORS[@]}"; do
   # Copy the basic framework from the origin repository.
   cp "$ORIGIN_DIR/.gitignore" \
     "$ORIGIN_DIR/CODE_OF_CONDUCT.md" \
-    "$ORIGIN_DIR/LICENSE" \
     .
+
+  # The LLVM exception is not relevant to the mirrors, so use the simplified
+  # but compatible Apache 2.0 license.
+  cp "$ORIGIN_DIR/LICENSE.no-llvm-exception" LICENSE
 
   # Copy the mirrored directory. We use `rsync` to get a more reliable way of
   # handling the mirroring of the contents of a directory. We also make this
