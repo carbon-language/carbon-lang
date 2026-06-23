@@ -42,20 +42,13 @@ abstract class Abstract2 {}
 // CHECK:STDERR:
 var v: {.m2: Abstract2};
 
-// --- fail_todo_abstract_let.carbon
+// --- abstract_let.carbon
 library "[[@TEST_NAME]]";
 
 abstract class Abstract3 {
 }
 
 fn F(a: Abstract3) {
-  // CHECK:STDERR: fail_todo_abstract_let.carbon:[[@LINE+7]]:36: error: initialization of abstract type `{.m3: Abstract3}` [AbstractTypeInInit]
-  // CHECK:STDERR:   let unused l: {.m3: Abstract3} = {.m3 = a};
-  // CHECK:STDERR:                                    ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_abstract_let.carbon:[[@LINE-7]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract3 {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   let unused l: {.m3: Abstract3} = {.m3 = a};
 }
 
@@ -200,7 +193,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_abstract_let.carbon
+// CHECK:STDOUT: --- abstract_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract3: type = class_type @Abstract3 [concrete]
@@ -246,12 +239,14 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     %l.patt: %pattern_type.2be = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract3 = name_ref a, %a
-// CHECK:STDOUT:   %.loc14_44: %struct_type.m3.937 = struct_literal (%a.ref)
-// CHECK:STDOUT:   %.loc14_32: type = splice_block %struct_type.m3 [concrete = constants.%struct_type.m3.937] {
-// CHECK:STDOUT:     %Abstract3.ref.loc14: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
+// CHECK:STDOUT:   %.loc7_44.1: %struct_type.m3.937 = struct_literal (%a.ref)
+// CHECK:STDOUT:   %struct: %struct_type.m3.937 = struct_value (%a.ref)
+// CHECK:STDOUT:   %.loc7_44.2: %struct_type.m3.937 = converted %.loc7_44.1, %struct
+// CHECK:STDOUT:   %.loc7_32: type = splice_block %struct_type.m3 [concrete = constants.%struct_type.m3.937] {
+// CHECK:STDOUT:     %Abstract3.ref.loc7: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
 // CHECK:STDOUT:     %struct_type.m3: type = struct_type {.m3: %Abstract3} [concrete = constants.%struct_type.m3.937]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %l: %struct_type.m3.937 = value_binding l, <error> [concrete = <error>]
+// CHECK:STDOUT:   %l: %struct_type.m3.937 = value_binding l, %.loc7_44.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

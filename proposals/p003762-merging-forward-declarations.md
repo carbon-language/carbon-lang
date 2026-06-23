@@ -96,7 +96,7 @@ Example rules for forward declarations in the current design:
 
 -   [High-level](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/README.md#declarations-definitions-and-scopes)
 -   [Classes](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#forward-declaration)
--   [Functions](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/functions.md#function-declarations)
+-   [Functions](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/functions.md#forward-declarationss)
 -   Generics:
     -   [`impl`](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/generics/details.md#forward-impl-declaration)
     -   [`interface`](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/generics/details.md#declaring-interfaces-and-named-constraints)

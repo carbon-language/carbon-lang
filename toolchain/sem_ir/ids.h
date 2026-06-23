@@ -1027,6 +1027,7 @@ struct BundleId : public IdBase<BundleId<BundleT>> {
   explicit BundleId(RawBundleId raw_id)
       : IdBase<BundleId<BundleT>>(raw_id.index) {}
 
+  // NOLINTNEXTLINE(google-explicit-constructor)
   explicit(false) operator RawBundleId() const {
     return RawBundleId(this->index);
   }

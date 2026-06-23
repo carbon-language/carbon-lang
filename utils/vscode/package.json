@@ -19,6 +19,16 @@
   "contributes": {
     "languages": [
       {
+        "id": "carbon-testdata",
+        "aliases": [
+          "Carbon Testdata"
+        ],
+        "filenamePatterns": [
+          "**/testdata/**/*.carbon"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
         "id": "carbon",
         "aliases": [
           "Carbon"
@@ -40,6 +50,11 @@
     ],
     "grammars": [
       {
+        "language": "carbon-testdata",
+        "scopeName": "source.carbon-testdata",
+        "path": "./carbon-testdata.tmLanguage.json"
+      },
+      {
         "language": "carbon",
         "scopeName": "source.carbon",
         "path": "./carbon.tmLanguage.json"
@@ -48,13 +63,6 @@
         "language": "semir",
         "scopeName": "source.carbon-semir",
         "path": "./semir.tmLanguage.json"
-      },
-      {
-        "scopeName": "source.carbon-check-test",
-        "path": "./carbon-check-test.tmLanguage.json",
-        "injectTo": [
-          "source.carbon"
-        ]
       }
     ],
     "configuration": {

@@ -740,7 +740,7 @@ base class WidgetBase {
   alias Draw = Renderable.Draw;
 
   fn DrawAll[T:! Renderable](v: Vector(T)) {
-    for (var w: T in v) {
+    for (w: T in v) {
       // ✅ OK. Unqualified lookup for `Draw` finds alias `WidgetBase.Draw`
       // to `Renderable.Draw`, which does not perform `impl` lookup yet.
       // Then the compound member access expression performs `impl` lookup
@@ -1018,8 +1018,10 @@ fn Use(a: A) {
 }
 ```
 
-Member access has lower precedence than primary expressions, and higher
-precedence than all other expression forms.
+Member access has [lower precedence](README.md#precedence) than primary
+expressions (literals, unqualified names, and expressions in parentheses, as in
+[C++](https://cppreference.com/cpp/language/expressions#Primary_expressions)),
+and higher precedence than all other expression forms.
 
 ```
 // ✅ OK, `*` has lower precedence than `.`. Same as `(A.B)*`.

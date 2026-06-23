@@ -1313,7 +1313,7 @@ fn Positive(a: i64) -> auto {
 > References:
 >
 > -   [Type inference](type_inference.md)
-> -   [Function return clause](functions.md#return-clause)
+> -   [Function return specification](functions.md#return-specification)
 > -   Proposal
 >     [#826: Function return type inference](https://github.com/carbon-language/carbon-lang/pull/826)
 
@@ -1450,7 +1450,7 @@ Core.Print("Done!");
 example, this prints each `String` value in `names`:
 
 ```carbon
-for (var name: String in names) {
+for (name: String in names) {
   Core.Print(name);
 }
 ```
@@ -1471,7 +1471,7 @@ steps until a manual step is hit (if no manual step is hit, all steps are
 processed):
 
 ```carbon
-for (var step: Step in steps) {
+for (step: Step in steps) {
   if (step.IsManual()) {
     Core.Print("Reached manual step!");
     break;
