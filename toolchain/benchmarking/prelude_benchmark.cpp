@@ -45,19 +45,19 @@ enum class Import : uint8_t {
   NonTrivialAmount,
 };
 
-// Returns the source code for a given input variation.
-static auto VariationSource(Variation variation) -> llvm::StringRef {
-  switch (variation) {
-    case Variation::Empty:
+// Returns the source code for a given import variation.
+static auto ImportSource(Import import) -> llvm::StringRef {
+  switch (import) {
+    case Import::Nothing:
       return "fn F() {}\n";
-    case Variation::SingleType:
+    case Import::SingleType:
       return "fn F(n: i32) -> i32 { return n; }\n";
-    case Variation::ManyImpls:
+    case Import::ManyTypesManyImpls:
       return "fn F(a: i32, b: i64, c: u32, d: f64) -> bool {\n"
              "  return ((a + a - a) == a) and ((b * b) > b) and\n"
              "         ((c / c) <= c) and (d < d);\n"
              "}\n";
-    case Variation::WideUse:
+    case Import::NonTrivialAmount:
       return "fn F(a: array(i32, 3), s: str) -> i32 {\n"
              "  var n: i32 = s.Size() as i32;\n"
              "  for (x: i32 in a) { n = (n + x) * x; }\n"
@@ -165,9 +165,9 @@ class PreludeCompileBenchmark {
   const InstallPaths installation_;
 };
 
-template <Variation V>
+template <Import V>
 static auto BM_PreludeCompile(benchmark::State& state) -> void {
-  PreludeCompileBenchmark bench(VariationSource(V));
+  PreludeCompileBenchmark bench(ImportSource(V));
   bench.RecordMemoryCounters(state);
 
   for (auto _ : state) {
@@ -177,13 +177,14 @@ static auto BM_PreludeCompile(benchmark::State& state) -> void {
   }
 }
 
-BENCHMARK(BM_PreludeCompile<Variation::Empty>)->Name("BM_PreludeCompile/Empty");
-BENCHMARK(BM_PreludeCompile<Variation::SingleType>)
+BENCHMARK(BM_PreludeCompile<Import::Nothing>)
+    ->Name("BM_PreludeCompile/Nothing");
+BENCHMARK(BM_PreludeCompile<Import::SingleType>)
     ->Name("BM_PreludeCompile/SingleType");
-BENCHMARK(BM_PreludeCompile<Variation::ManyImpls>)
-    ->Name("BM_PreludeCompile/ManyImpls");
-BENCHMARK(BM_PreludeCompile<Variation::WideUse>)
-    ->Name("BM_PreludeCompile/WideUse");
+BENCHMARK(BM_PreludeCompile<Import::ManyTypesManyImpls>)
+    ->Name("BM_PreludeCompile/ManyTypesManyImpls");
+BENCHMARK(BM_PreludeCompile<Import::NonTrivialAmount>)
+    ->Name("BM_PreludeCompile/NonTrivialAmount");
 
 }  // namespace
 }  // namespace Carbon::Testing
