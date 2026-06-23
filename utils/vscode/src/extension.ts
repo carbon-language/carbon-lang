@@ -36,7 +36,7 @@ function updateSplitLineNumbers(editor: TextEditor | undefined) {
     return;
   }
   const document = editor.document;
-  if (!document.fileName.includes('/testdata/')) {
+  if (document.languageId !== 'carbon-testdata') {
     return;
   }
 
@@ -91,6 +91,99 @@ function updateSplitLineNumbers(editor: TextEditor | undefined) {
   }
 
   editor.setDecorations(splitLineNumberDecorationType, decorations);
+}
+
+// Get an SVG image with a diagonal "C++" logo.
+const getCppSvgBase64 = (fillColor: string) => {
+  const svg = [
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">',
+    `<text x="50%" y="50%" font-size="10px" font-family="sans-serif" `,
+    `fill="${fillColor}" text-anchor="middle" dominant-baseline="central" `,
+    `transform="rotate(-45 10 10)">C++</text></svg>`,
+  ].join('');
+  return Buffer.from(svg).toString('base64');
+};
+
+const lightSvgBase64 = getCppSvgBase64('rgba(0,0,0,0.05)');
+const darkSvgBase64 = getCppSvgBase64('rgba(255,255,255,0.06)');
+
+// Create a decoration type for C++ code embedded in Carbon.
+const createCppDecorationType = (isWholeLine: boolean) => {
+  // We can't directly set a background image on a decoration, but we can set it
+  // via a CSS escape in the border property.
+  const getBorder = (base64: string) =>
+    /*border:*/ `none; ` +
+    `background-image: url('data:image/svg+xml;base64,${base64}'); ` +
+    `background-repeat: repeat; ` +
+    `background-size: auto 100%;`;
+  return window.createTextEditorDecorationType({
+    light: { border: getBorder(lightSvgBase64) },
+    dark: { border: getBorder(darkSvgBase64) },
+    isWholeLine,
+  });
+};
+
+const cppBlockDecorationType = createCppDecorationType(true);
+const cppInlineDecorationType = createCppDecorationType(false);
+
+function updateCppInlineDecorations(editor: TextEditor | undefined) {
+  if (!editor) {
+    return;
+  }
+  const document = editor.document;
+  if (document.languageId !== 'carbon' &&
+      document.languageId !== 'carbon-testdata') {
+    return;
+  }
+
+  const text = document.getText();
+  const blockDecorations: DecorationOptions[] = [];
+  const inlineDecorations: DecorationOptions[] = [];
+
+  // 1. Triple-quoted blocks
+  const tripleRegex = /(?:import\s+Cpp\s+inline|inline\s+Cpp)\s*('''[^\s'#]*\n?([\s\S]*?)''')\s*;/g;
+  let match;
+  while ((match = tripleRegex.exec(text)) !== null) {
+    const content = match[2];
+    if (content) {
+      const startOffset = match.index + match[0].indexOf(content);
+      let endOffset = startOffset + content.length;
+
+      // If the content ends with a newline, exclude it from the range so that the
+      // line containing the closing quotes is not highlighted.
+      if (content.endsWith('\r\n')) {
+        endOffset -= 2;
+      } else if (content.endsWith('\n')) {
+        endOffset--;
+      }
+
+      blockDecorations.push({
+        range: new Range(
+          document.positionAt(startOffset),
+          document.positionAt(endOffset)
+        )
+      });
+    }
+  }
+
+  // 2. Double-quoted inline strings
+  const doubleRegex = /(?:import\s+Cpp\s+inline|inline\s+Cpp)\s*("((?:[^"\\]|\\.)*)")\s*;/g;
+  while ((match = doubleRegex.exec(text)) !== null) {
+    const content = match[2];
+    if (content) {
+      const startOffset = match.index + match[0].indexOf(content);
+      const endOffset = startOffset + content.length;
+      inlineDecorations.push({
+        range: new Range(
+          document.positionAt(startOffset),
+          document.positionAt(endOffset)
+        )
+      });
+    }
+  }
+
+  editor.setDecorations(cppBlockDecorationType, blockDecorations);
+  editor.setDecorations(cppInlineDecorationType, inlineDecorations);
 }
 
 /**
@@ -189,7 +282,10 @@ export function activate(context: ExtensionContext) {
   };
 
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [{ language: 'carbon' }],
+    documentSelector: [
+      { language: 'carbon' },
+      { language: 'carbon-testdata' },
+    ],
   };
 
   // Create and start the client.
@@ -211,6 +307,7 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(
     window.onDidChangeActiveTextEditor((editor: TextEditor | undefined) => {
       updateSplitLineNumbers(editor);
+      updateCppInlineDecorations(editor);
     })
   );
 
@@ -219,6 +316,7 @@ export function activate(context: ExtensionContext) {
     workspace.onDidChangeTextDocument((event: TextDocumentChangeEvent) => {
       if (window.activeTextEditor && event.document === window.activeTextEditor.document) {
         updateSplitLineNumbers(window.activeTextEditor);
+        updateCppInlineDecorations(window.activeTextEditor);
       }
     })
   );
@@ -226,6 +324,7 @@ export function activate(context: ExtensionContext) {
   // Initial update
   if (window.activeTextEditor) {
     updateSplitLineNumbers(window.activeTextEditor);
+    updateCppInlineDecorations(window.activeTextEditor);
   }
 }
 

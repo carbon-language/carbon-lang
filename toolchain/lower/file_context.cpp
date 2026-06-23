@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>
 
+#include "clang/AST/BaseSubobject.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "common/check.h"
 #include "common/pretty_stack_trace_function.h"
@@ -648,6 +649,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     function_lowering.LowerBlockContents(block_id);
   };
 
+  CARBON_CHECK(function_lowering.llvm_function().isDeclaration());
   lower_block(decl_block_id);
 
   // If the decl block is empty, reuse it as the first body block. We don't do
@@ -764,11 +766,16 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
 
 auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
                               SemIR::SpecificId specific_id)
-    -> llvm::GlobalVariable* {
-  if (!vtable.carbon_native_vtable) {
-    return nullptr;
-  }
+    -> llvm::Constant* {
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
+  if (!vtable.carbon_native_vtable) {
+    auto* cxx_record_decl = cast<clang::CXXRecordDecl>(
+        sem_ir().clang_decls().Lookup(class_info.latest_decl_id())->key.decl);
+    return cpp_code_generator_->GetAddrOfVTable(
+        clang::BaseSubobject(cxx_record_decl,
+                             clang::CharUnits::fromQuantity(0)),
+        cxx_record_decl);
+  }
 
   SemIR::Mangler m(sem_ir(), context().total_ir_count(),
                    context().mangle_string_fingerprint());

@@ -184,14 +184,14 @@ fn M() {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "call_recursive_mutual.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "M", linkageName: "_CM.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "call_recursive_mutual.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "M", linkageName: "_CM.Main", scope: null, file: !1, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 33, column: 3, scope: !4)
@@ -207,21 +207,21 @@ fn M() {
 // CHECK:STDOUT: !17 = !DILocation(line: 41, column: 5, scope: !4)
 // CHECK:STDOUT: !18 = !DILocation(line: 41, column: 3, scope: !4)
 // CHECK:STDOUT: !19 = !DILocation(line: 32, column: 1, scope: !4)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Op", linkageName: "_COp.30d8007fdcc57f83:core.Destroy.Core", scope: null, file: !3, line: 34, type: !21, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !24)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Op", linkageName: "_COp.30d8007fdcc57f83:core.Destroy.Core", scope: null, file: !1, line: 34, type: !21, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !24)
 // CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
 // CHECK:STDOUT: !22 = !{null, !23}
 // CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !20, type: !23)
 // CHECK:STDOUT: !26 = !DILocation(line: 34, column: 3, scope: !20)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !3, line: 33, type: !28, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !31)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !1, line: 33, type: !28, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !31)
 // CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
 // CHECK:STDOUT: !29 = !{null, !30}
 // CHECK:STDOUT: !30 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !27, type: !30)
 // CHECK:STDOUT: !33 = !DILocation(line: 33, column: 3, scope: !27)
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.5bd8d5767580997a", scope: null, file: !3, line: 18, type: !35, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !37)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.5bd8d5767580997a", scope: null, file: !1, line: 18, type: !35, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !37)
 // CHECK:STDOUT: !35 = !DISubroutineType(types: !36)
 // CHECK:STDOUT: !36 = !{!30, !30, !30}
 // CHECK:STDOUT: !37 = !{!38, !39}
@@ -233,7 +233,7 @@ fn M() {
 // CHECK:STDOUT: !43 = !DILocation(line: 22, column: 15, scope: !34)
 // CHECK:STDOUT: !44 = !DILocation(line: 22, column: 10, scope: !34)
 // CHECK:STDOUT: !45 = !DILocation(line: 22, column: 3, scope: !34)
-// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.c27b765f2159c9a0", scope: null, file: !3, line: 18, type: !47, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !49)
+// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.c27b765f2159c9a0", scope: null, file: !1, line: 18, type: !47, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !49)
 // CHECK:STDOUT: !47 = !DISubroutineType(types: !48)
 // CHECK:STDOUT: !48 = !{!23, !23, !30}
 // CHECK:STDOUT: !49 = !{!50, !51}
@@ -245,7 +245,7 @@ fn M() {
 // CHECK:STDOUT: !55 = !DILocation(line: 22, column: 15, scope: !46)
 // CHECK:STDOUT: !56 = !DILocation(line: 22, column: 10, scope: !46)
 // CHECK:STDOUT: !57 = !DILocation(line: 22, column: 3, scope: !46)
-// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.2621742a01881e29", scope: null, file: !3, line: 18, type: !47, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !59)
+// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.2621742a01881e29", scope: null, file: !1, line: 18, type: !47, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !59)
 // CHECK:STDOUT: !59 = !{!60, !61}
 // CHECK:STDOUT: !60 = !DILocalVariable(arg: 1, scope: !58, type: !23)
 // CHECK:STDOUT: !61 = !DILocalVariable(arg: 2, scope: !58, type: !30)
@@ -255,7 +255,7 @@ fn M() {
 // CHECK:STDOUT: !65 = !DILocation(line: 22, column: 15, scope: !58)
 // CHECK:STDOUT: !66 = !DILocation(line: 22, column: 10, scope: !58)
 // CHECK:STDOUT: !67 = !DILocation(line: 22, column: 3, scope: !58)
-// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.5bd8d5767580997a", scope: null, file: !3, line: 25, type: !35, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !69)
+// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.5bd8d5767580997a", scope: null, file: !1, line: 25, type: !35, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !69)
 // CHECK:STDOUT: !69 = !{!70, !71}
 // CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !68, type: !30)
 // CHECK:STDOUT: !71 = !DILocalVariable(arg: 2, scope: !68, type: !30)
@@ -265,7 +265,7 @@ fn M() {
 // CHECK:STDOUT: !75 = !DILocation(line: 29, column: 15, scope: !68)
 // CHECK:STDOUT: !76 = !DILocation(line: 29, column: 10, scope: !68)
 // CHECK:STDOUT: !77 = !DILocation(line: 29, column: 3, scope: !68)
-// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.c27b765f2159c9a0", scope: null, file: !3, line: 25, type: !47, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !79)
+// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.c27b765f2159c9a0", scope: null, file: !1, line: 25, type: !47, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !79)
 // CHECK:STDOUT: !79 = !{!80, !81}
 // CHECK:STDOUT: !80 = !DILocalVariable(arg: 1, scope: !78, type: !23)
 // CHECK:STDOUT: !81 = !DILocalVariable(arg: 2, scope: !78, type: !30)
@@ -275,7 +275,7 @@ fn M() {
 // CHECK:STDOUT: !85 = !DILocation(line: 29, column: 15, scope: !78)
 // CHECK:STDOUT: !86 = !DILocation(line: 29, column: 10, scope: !78)
 // CHECK:STDOUT: !87 = !DILocation(line: 29, column: 3, scope: !78)
-// CHECK:STDOUT: !88 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.2621742a01881e29", scope: null, file: !3, line: 25, type: !47, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !89)
+// CHECK:STDOUT: !88 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.2621742a01881e29", scope: null, file: !1, line: 25, type: !47, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !89)
 // CHECK:STDOUT: !89 = !{!90, !91}
 // CHECK:STDOUT: !90 = !DILocalVariable(arg: 1, scope: !88, type: !23)
 // CHECK:STDOUT: !91 = !DILocalVariable(arg: 2, scope: !88, type: !30)

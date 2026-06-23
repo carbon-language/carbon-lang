@@ -78,14 +78,14 @@ fn TestConvertU64ToF128(a: u64) -> f128 { return ConvertU64ToF128(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "int_to_float.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestConvertI32ToF32", linkageName: "_CTestConvertI32ToF32.Main", scope: null, file: !3, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !9)
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "int_to_float.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestConvertI32ToF32", linkageName: "_CTestConvertI32ToF32.Main", scope: null, file: !1, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !9)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7, !8}
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -94,7 +94,7 @@ fn TestConvertU64ToF128(a: u64) -> f128 { return ConvertU64ToF128(a); }
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
 // CHECK:STDOUT: !11 = !DILocation(line: 4, column: 48, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 4, column: 41, scope: !4)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "TestConvertU32ToF32", linkageName: "_CTestConvertU32ToF32.Main", scope: null, file: !3, line: 7, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "TestConvertU32ToF32", linkageName: "_CTestConvertU32ToF32.Main", scope: null, file: !1, line: 7, type: !14, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !17)
 // CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
 // CHECK:STDOUT: !15 = !{!7, !16}
 // CHECK:STDOUT: !16 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_unsigned)
@@ -102,17 +102,17 @@ fn TestConvertU64ToF128(a: u64) -> f128 { return ConvertU64ToF128(a); }
 // CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !13, type: !16)
 // CHECK:STDOUT: !19 = !DILocation(line: 7, column: 48, scope: !13)
 // CHECK:STDOUT: !20 = !DILocation(line: 7, column: 41, scope: !13)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestConvertI32ToF64", linkageName: "_CTestConvertI32ToF64.Main", scope: null, file: !3, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !22)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestConvertI32ToF64", linkageName: "_CTestConvertI32ToF64.Main", scope: null, file: !1, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !22)
 // CHECK:STDOUT: !22 = !{!23}
 // CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !21, type: !8)
 // CHECK:STDOUT: !24 = !DILocation(line: 10, column: 48, scope: !21)
 // CHECK:STDOUT: !25 = !DILocation(line: 10, column: 41, scope: !21)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "TestConvertU32ToF64", linkageName: "_CTestConvertU32ToF64.Main", scope: null, file: !3, line: 13, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !27)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "TestConvertU32ToF64", linkageName: "_CTestConvertU32ToF64.Main", scope: null, file: !1, line: 13, type: !14, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !27)
 // CHECK:STDOUT: !27 = !{!28}
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !26, type: !16)
 // CHECK:STDOUT: !29 = !DILocation(line: 13, column: 48, scope: !26)
 // CHECK:STDOUT: !30 = !DILocation(line: 13, column: 41, scope: !26)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "TestConvertI64ToF128", linkageName: "_CTestConvertI64ToF128.Main", scope: null, file: !3, line: 16, type: !32, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !35)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "TestConvertI64ToF128", linkageName: "_CTestConvertI64ToF128.Main", scope: null, file: !1, line: 16, type: !32, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !35)
 // CHECK:STDOUT: !32 = !DISubroutineType(types: !33)
 // CHECK:STDOUT: !33 = !{!7, !34}
 // CHECK:STDOUT: !34 = !DIBasicType(name: "int", size: 64, encoding: DW_ATE_signed)
@@ -120,7 +120,7 @@ fn TestConvertU64ToF128(a: u64) -> f128 { return ConvertU64ToF128(a); }
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !31, type: !34)
 // CHECK:STDOUT: !37 = !DILocation(line: 16, column: 50, scope: !31)
 // CHECK:STDOUT: !38 = !DILocation(line: 16, column: 43, scope: !31)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "TestConvertU64ToF128", linkageName: "_CTestConvertU64ToF128.Main", scope: null, file: !3, line: 19, type: !40, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !43)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "TestConvertU64ToF128", linkageName: "_CTestConvertU64ToF128.Main", scope: null, file: !1, line: 19, type: !40, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !43)
 // CHECK:STDOUT: !40 = !DISubroutineType(types: !41)
 // CHECK:STDOUT: !41 = !{!7, !42}
 // CHECK:STDOUT: !42 = !DIBasicType(name: "int", size: 64, encoding: DW_ATE_unsigned)

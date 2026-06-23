@@ -640,6 +640,9 @@ LLVM_DUMP_METHOD static auto MakeIdentifiedFacetTypeId(int id)
     -> IdentifiedFacetTypeId {
   return IdentifiedFacetTypeId(id);
 }
+LLVM_DUMP_METHOD static auto MakeImportIRInstId(int id) -> ImportIRInstId {
+  return ImportIRInstId(id);
+}
 LLVM_DUMP_METHOD static auto MakeNamedConstraintId(int id)
     -> NamedConstraintId {
   return NamedConstraintId(id);

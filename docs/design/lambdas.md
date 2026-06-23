@@ -23,10 +23,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Captures](#captures)
     -   [Capture modes](#capture-modes)
     -   [Default capture mode](#default-capture-mode)
--   [Function fields in lambdas](#function-fields-in-lambdas)
+-   [Function fields](#function-fields)
 -   [Copy semantics](#copy-semantics)
 -   [Self and recursion](#self-and-recursion)
 -   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -66,8 +67,8 @@ PushBack(my_list, fn -> T { return T.Make() });
 ### Return type
 
 There are three options for how a lambda expresses its return type, parallel to
-[how function declarations express returns](functions.md#return-clause): using a
-return expression, using an explicit return type, or having no return.
+[how function declarations express returns](functions.md#return-specification):
+using a return expression, using an explicit return type, or having no return.
 
 #### Return expression
 
@@ -124,8 +125,8 @@ Foo(fn { Print(T.Make()); });
 
 ### Implicit parameters in square brackets
 
-Lambdas support [captures](#captures), [fields](#function-fields-in-lambdas) and
-deduced parameters in the square brackets.
+Lambdas support [captures](#captures), [fields](#function-fields) and deduced
+parameters in the square brackets.
 
 ```carbon
 fn Foo(x: i32) {
@@ -215,18 +216,18 @@ To understand how the syntax between lambdas and function declarations is
 reasonably "continuous", refer to this table of syntactic positions and the
 following code examples.
 
-| Syntactic Position |                         Syntax Allowed in Given Position (optional, unless otherwise stated)                         |
-| :----------------: | :------------------------------------------------------------------------------------------------------------------: |
-|         A1         |                Required Returned Expression ([positional parameters](#positional-parameters) allowed)                |
-|         A2         |              Required Returned Expression ([positional parameters](#positional-parameters) disallowed)               |
-|         B          |                                    [Default capture mode](#default-capture-mode)                                     |
-|         C          | Explicit [Captures](#captures), [Function fields](#function-fields-in-lambdas) and Deduced Parameters (in any order) |
-|         D          |                                                 Explicit Parameters                                                  |
-|         E1         |            Body of Statements (no return value) ([positional parameters](#positional-parameters) allowed)            |
-|         E2         |           Body of Statements (with return value) ([positional parameters](#positional-parameters) allowed)           |
-|         E3         |          Body of Statements (no return value) ([positional parameters](#positional-parameters) disallowed)           |
-|         E4         |         Body of Statements (with return value) ([positional parameters](#positional-parameters) disallowed)          |
-|         F          |                                                 Required Return Type                                                 |
+| Syntactic Position |                   Syntax Allowed in Given Position (optional, unless otherwise stated)                    |
+| :----------------: | :-------------------------------------------------------------------------------------------------------: |
+|         A1         |          Required Returned Expression ([positional parameters](#positional-parameters) allowed)           |
+|         A2         |         Required Returned Expression ([positional parameters](#positional-parameters) disallowed)         |
+|         B          |                               [Default capture mode](#default-capture-mode)                               |
+|         C          | Explicit [Captures](#captures), [Function fields](#function-fields) and Deduced Parameters (in any order) |
+|         D          |                                            Explicit Parameters                                            |
+|         E1         |      Body of Statements (no return value) ([positional parameters](#positional-parameters) allowed)       |
+|         E2         |     Body of Statements (with return value) ([positional parameters](#positional-parameters) allowed)      |
+|         E3         |     Body of Statements (no return value) ([positional parameters](#positional-parameters) disallowed)     |
+|         E4         |    Body of Statements (with return value) ([positional parameters](#positional-parameters) disallowed)    |
+|         F          |                                           Required Return Type                                            |
 
 ```carbon
 // Lambdas (all the following are in an expression context and are
@@ -260,20 +261,20 @@ fn [B, C](D) -> F { E4; }
 ## Positional parameters
 
 Positional parameters, denoted by a dollar sign followed by a non-negative
-integer (for example, $3), are auto-typed parameters defined within the lambda's
-body.
+integer (for example, $3), are auto-typed parameters defined within the function
+or lambda body.
 
 ```carbon
 let lambda: auto = fn => $0
 ```
 
-They can be used in any lambda declaration that lacks an explicit parameter list
-(parentheses). They are variadic by design, meaning an unbounded number of
-arguments can be passed to any function that lacks an explicit parameter list.
-Only the parameters that are named in the body will be read from, meaning the
-highest named parameter denotes the minimum number of arguments required by the
-function. The lambda body is free to omit lower-numbered parameters (ex:
-`fn { Print($10); }`).
+They can be used in any lambda or function definition that lacks an explicit
+parameter list (parentheses). They are variadic by design, meaning an unbounded
+number of arguments can be passed to any function that lacks an explicit
+parameter list. Only the parameters that are named in the body will be read
+from, meaning the highest named parameter denotes the minimum number of
+arguments required by the function. The body is free to omit lower-numbered
+parameters (for example, `fn { Print($10); }`).
 
 This syntax was inpsired by Swift's
 [Shorthand Argument Names](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/closures/#Shorthand-Argument-Names).
@@ -427,13 +428,13 @@ fn Foo2() {
 }
 ```
 
-## Function fields in lambdas
+## Function fields
 
-Function fields in lambdas mirror the behavior of init captures in C++. A
-function field definition consists of an irrefutable pattern, `=`, and an
-initializer. It matches the pattern with the initializer when the lambda
-definition is evaluated. The bindings in the pattern have the same lifetime as
-the function, and their scope extends to the end of the function body.
+Function fields mirror the behavior of init captures in C++. A function field
+definition consists of an irrefutable pattern, `=`, and an initializer. It
+matches the pattern with the initializer when the function definition is
+evaluated. The bindings in the pattern have the same lifetime as the function,
+and their scope extends to the end of the function body.
 
 ```carbon
 fn Foo() {
@@ -449,10 +450,11 @@ fn Foo() {
 
 ## Copy semantics
 
-To mirror the behavior of C++, lambdas will be as copyable as their contained
-function fields and function captures. This means that, if a function holds a
-by-object function field, if the type of the field is copyable, so too is the
-function that contains it. This also applies to captures.
+To mirror the behavior of C++, lambdas and functions with captures or function
+fields will be as copyable as their contained function fields and function
+captures. This means that, if a function holds a by-object function field, if
+the type of the field is copyable, so too is the function that contains it. This
+also applies to captures.
 
 The other case is by-value function fields. Since C++ const references, when
 made into fields of a class, prevent the class from being copied assigned, so
@@ -485,3 +487,8 @@ function fields with a `self` parameter.
 -   [Sigil](/proposals/p003848-lambdas.md#alternative-considered-sigil)
 -   [Additional Positional Parameter Restriction](/proposals/p003848-lambdas.md#alternative-considered-additional-positional-parameter-restriction)
 -   [Recursive Self](/proposals/p003848-lambdas.md#alternative-considered-recursive-self)
+
+## References
+
+-   Proposal
+    [#3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)

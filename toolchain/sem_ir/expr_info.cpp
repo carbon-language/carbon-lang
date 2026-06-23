@@ -144,9 +144,22 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
 auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
                                   bool allow_transitive) -> InstId {
+  const File* ir = &sem_ir;
   while (true) {
-    Inst init_untyped = sem_ir.insts().Get(init_id);
+    Inst init_untyped = ir->insts().Get(init_id);
     CARBON_KIND_SWITCH(init_untyped) {
+      case CARBON_KIND(ImportRefLoaded init): {
+        auto import_ir_inst = ir->import_ir_insts().Get(init.import_ir_inst_id);
+        ir = ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+        init_id = import_ir_inst.inst_id();
+        continue;
+      }
+      case CARBON_KIND(ImportRefUnloaded init): {
+        auto import_ir_inst = ir->import_ir_insts().Get(init.import_ir_inst_id);
+        ir = ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+        init_id = import_ir_inst.inst_id();
+        continue;
+      }
       case CARBON_KIND(AsCompatible init): {
         if (!allow_transitive) {
           return InstId::None;
@@ -187,22 +200,21 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
         return init.dest_id;
       }
       case CARBON_KIND(Call call): {
-        auto callee_function = GetCalleeAsFunction(sem_ir, call.callee_id);
-        const auto& function =
-            sem_ir.functions().Get(callee_function.function_id);
+        auto callee_function = GetCalleeAsFunction(*ir, call.callee_id);
+        const auto& function = ir->functions().Get(callee_function.function_id);
         if (!function.return_form_inst_id.has_value()) {
           return InstId::None;
         }
         auto return_form_constant_id = GetConstantValueInSpecific(
-            sem_ir, callee_function.resolved_specific_id,
+            *ir, callee_function.resolved_specific_id,
             function.return_form_inst_id);
-        auto return_form = sem_ir.insts().Get(
-            sem_ir.constant_values().GetInstId(return_form_constant_id));
+        auto return_form = ir->insts().Get(
+            ir->constant_values().GetInstId(return_form_constant_id));
         CARBON_KIND_SWITCH(return_form) {
           case CARBON_KIND(InitForm init_form): {
-            auto type_id = sem_ir.types().GetTypeIdForTypeInstId(
+            auto type_id = ir->types().GetTypeIdForTypeInstId(
                 init_form.type_component_inst_id);
-            if (!InitRepr::ForType(sem_ir, type_id).MightBeInPlace()) {
+            if (!InitRepr::ForType(*ir, type_id).MightBeInPlace()) {
               return InstId::None;
             }
 
@@ -213,7 +225,7 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
 
             CARBON_CHECK(function.call_param_ranges.return_size() == 1,
                          "Unexpected number of output parameters on function");
-            return sem_ir.inst_blocks().Get(
+            return ir->inst_blocks().Get(
                 call.args_id)[function.call_param_ranges.return_begin().index];
           }
           case CARBON_KIND(RefForm _): {
