@@ -35,3 +35,14 @@ fn F(c: const C) {
   // CHECK:STDERR:
   c.x = ();
 }
+
+// --- fail_const_ref_member_assign.carbon
+library "[[@TEST_NAME]]";
+
+class C {
+  var x: ();
+}
+
+fn F(ref c: const C) {
+  c.x = ();
+}

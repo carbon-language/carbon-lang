@@ -46,3 +46,18 @@ fn F() {
   // CHECK:STDERR:
   Cpp.Get().x = 123;
 }
+
+// --- fail_const_member_assign_cast.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+struct S {
+  int x;
+};
+
+const S& Get();
+''';
+
+fn F() {
+  Cpp.Get().x = 123 as i32;
+}
