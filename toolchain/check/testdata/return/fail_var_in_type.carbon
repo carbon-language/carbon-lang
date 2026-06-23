@@ -68,7 +68,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref type = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %x: ref type = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref type = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {

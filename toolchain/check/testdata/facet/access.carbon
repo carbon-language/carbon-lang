@@ -628,7 +628,7 @@ fn F(T:! Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:       %T.as_type.loc9_18.2: type = facet_access_type %T.ref.loc9_18 [symbolic = %T.as_type.loc9_18.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc9_18.2: type = converted %T.ref.loc9_18, %T.as_type.loc9_18.2 [symbolic = %T.as_type.loc9_18.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @Use.%T.as_type.loc9_18.1 (%T.as_type) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @Use.%T.as_type.loc9_18.1 (%T.as_type) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @Use.%T.as_type.loc9_18.1 (%T.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @Use.%T.as_type.loc9_18.1 (%T.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }

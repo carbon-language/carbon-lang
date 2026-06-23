@@ -169,7 +169,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:       %i32.loc9_15: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %Class: type = class_type @Class, @Class(constants.%i32) [concrete = constants.%Class.1b7]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %Class.1b7 = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %Class.1b7 = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -198,7 +198,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:       %.loc13_31.2: type = converted %T.ref.loc13_30, %T.as_type.loc13_31.2 [symbolic = %T.as_type.loc13_31.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %Class.loc13_31.2: type = class_type @Class, @Class(constants.%T.as_type) [symbolic = %Class.loc13_31.1 (constants.%Class.c74ef3.1)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: @G.%Class.loc13_31.1 (%Class.c74ef3.1) = value_binding c, %c.param
+// CHECK:STDOUT:     %c: @G.%Class.loc13_31.1 (%Class.c74ef3.1) = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref @G.%T.as_type.loc13_31.1 (%T.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @G.%T.as_type.loc13_31.1 (%T.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -227,7 +227,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:       %.loc17_31.2: type = converted %U.ref.loc17_30, %U.as_type.loc17_31.2 [symbolic = %U.as_type.loc17_31.1 (constants.%U.as_type.c1c)]
 // CHECK:STDOUT:       %Class.loc17_31.2: type = class_type @Class, @Class(constants.%U.as_type.c1c) [symbolic = %Class.loc17_31.1 (constants.%Class.c74ef3.2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: @H.%Class.loc17_31.1 (%Class.c74ef3.2) = value_binding c, %c.param
+// CHECK:STDOUT:     %c: @H.%Class.loc17_31.1 (%Class.c74ef3.2) = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref @H.%U.as_type.loc17_31.1 (%U.as_type.c1c) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @H.%U.as_type.loc17_31.1 (%U.as_type.c1c) = return_slot %return.param
 // CHECK:STDOUT:   }

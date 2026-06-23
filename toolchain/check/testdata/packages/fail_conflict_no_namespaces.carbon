@@ -111,7 +111,7 @@ import library "var";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.var: ref %i32 = var %Foo.var_patt [concrete]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %Foo: ref %i32 = ref_binding Foo, %Foo.var [concrete = %Foo.var]
+// CHECK:STDOUT:   %Foo: ref %i32 = wrapper_binding Foo, %Foo.var [concrete = %Foo.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -79,7 +79,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     %.loc4_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc4_17.3: type = converted %.loc4_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %empty_tuple.type = ref_binding v, %v.var [concrete = %v.var]
+// CHECK:STDOUT:   %v: ref %empty_tuple.type = wrapper_binding v, %v.var [concrete = %v.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -124,7 +124,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     %.loc4_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v2: ref %empty_tuple.type = ref_binding v2, %v2.var [concrete = %v2.var]
+// CHECK:STDOUT:   %v2: ref %empty_tuple.type = wrapper_binding v2, %v2.var [concrete = %v2.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -161,7 +161,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     %.loc10_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v2: ref %empty_tuple.type = ref_binding v2, %v2.var [concrete = %v2.var]
+// CHECK:STDOUT:   %v2: ref %empty_tuple.type = wrapper_binding v2, %v2.var [concrete = %v2.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -203,7 +203,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     %.loc10_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v2: ref %empty_tuple.type = ref_binding v2, %v2.var [concrete = %v2.var]
+// CHECK:STDOUT:   %v2: ref %empty_tuple.type = wrapper_binding v2, %v2.var [concrete = %v2.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

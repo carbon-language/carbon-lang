@@ -232,7 +232,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "other_define.carbon"] {
@@ -288,7 +288,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref <error> = ref_binding c, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c: <error> = wrapper_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "other_extern.carbon"];
@@ -345,7 +345,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "other_define.carbon"] {
@@ -409,7 +409,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "other_define.carbon"] {

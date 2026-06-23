@@ -271,7 +271,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Core = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %Core.ref: type = name_ref r#Core, %Core.decl [concrete = constants.%Core]
-// CHECK:STDOUT:   %c: ref %Core = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %Core = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Core {

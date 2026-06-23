@@ -162,7 +162,7 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8: Core.Form = init_form constants.%initializer_list [concrete = constants.%.0ee]
 // CHECK:STDOUT:     %_.param: %array_type = value_param call_param0
-// CHECK:STDOUT:     %_: %array_type = value_binding _, %_.param
+// CHECK:STDOUT:     %_: %array_type = wrapper_binding _, %_.param
 // CHECK:STDOUT:     %return.param: ref %initializer_list = out_param call_param1
 // CHECK:STDOUT:     %return: ref %initializer_list = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -174,7 +174,7 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10: Core.Form = init_form constants.%initializer_list [concrete = constants.%.0ee]
 // CHECK:STDOUT:     %_.param: %array_type = value_param call_param0
-// CHECK:STDOUT:     %_: %array_type = value_binding _, %_.param
+// CHECK:STDOUT:     %_: %array_type = wrapper_binding _, %_.param
 // CHECK:STDOUT:     %return.param: ref %initializer_list = out_param call_param1
 // CHECK:STDOUT:     %return: ref %initializer_list = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -186,7 +186,7 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12: Core.Form = init_form constants.%initializer_list [concrete = constants.%.0ee]
 // CHECK:STDOUT:     %_.param: %array_type = value_param call_param0
-// CHECK:STDOUT:     %_: %array_type = value_binding _, %_.param
+// CHECK:STDOUT:     %_: %array_type = wrapper_binding _, %_.param
 // CHECK:STDOUT:     %return.param: ref %initializer_list = out_param call_param1
 // CHECK:STDOUT:     %return: ref %initializer_list = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -246,7 +246,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_50.18: ref %initializer_list = temporary %.loc8_50.2, %.loc8_50.17
 // CHECK:STDOUT:   %.loc8_50.19: %initializer_list = acquire_value %.loc8_50.18
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %_.loc8: %initializer_list = value_binding _, %.loc8_50.19
+// CHECK:STDOUT:   %_.loc8: %initializer_list = wrapper_binding _, %.loc8_50.19
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Consume.ref: %Consume.cpp_overload_set.type = name_ref Consume, imports.%Consume.cpp_overload_set.value [concrete = constants.%Consume.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1.loc10_16: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -356,7 +356,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %InitListConstructor.ref: type = name_ref InitListConstructor, imports.%InitListConstructor.decl [concrete = constants.%InitListConstructor]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc12: %InitListConstructor = value_binding _, %.loc12_44.25
+// CHECK:STDOUT:   %_.loc12: %InitListConstructor = wrapper_binding _, %.loc12_44.25
 // CHECK:STDOUT:   %InitListConstructor.cpp_destructor.bound: <bound method> = bound_method %.loc12_44.24, constants.%InitListConstructor.cpp_destructor
 // CHECK:STDOUT:   %InitListConstructor.cpp_destructor.call: init %empty_tuple.type = call %InitListConstructor.cpp_destructor.bound(%.loc12_44.24)
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc12: <bound method> = bound_method %.loc12_44.19, constants.%initializer_list.cpp_destructor

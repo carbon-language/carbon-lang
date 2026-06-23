@@ -95,7 +95,7 @@ fn F() -> i32 { return n; }
 // CHECK:STDOUT:   %.loc15_14.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %.loc15_14.2: %i32 = converted @__global_init.%int_1, %.loc15_14.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %n: %i32 = value_binding n, %.loc15_14.2
+// CHECK:STDOUT:   %n: %i32 = wrapper_binding n, %.loc15_14.2
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]

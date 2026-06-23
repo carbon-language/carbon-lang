@@ -189,7 +189,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:     %.loc5_13.2: %tuple.type.85c = tuple_literal (%i32.loc5) [concrete = constants.%tuple.19c]
 // CHECK:STDOUT:     %.loc5_13.3: type = converted %.loc5_13.2, constants.%tuple.type.a8a [concrete = constants.%tuple.type.a8a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %tuple.type.a8a = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %tuple.type.a8a = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.05e = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.05e = var_pattern %b.patt [concrete = constants.%b.var_patt]
@@ -209,7 +209,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:     %.loc6_34.5: type = converted constants.%tuple.b59, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
 // CHECK:STDOUT:     %.loc6_34.6: type = converted %.loc6_34.2, constants.%tuple.type.e23 [concrete = constants.%tuple.type.e23]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %tuple.type.e23 = ref_binding b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %tuple.type.e23 = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.717 = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.717 = var_pattern %c.patt [concrete = constants.%c.var_patt]
@@ -238,7 +238,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:     %.loc7_16.2: %tuple.type.e55 = converted %.loc7_15.1, %tuple [concrete = constants.%tuple.102]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%tuple.102) [concrete = constants.%C.372]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C.372 = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C.372 = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -138,7 +138,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %.loc26: Core.Form = init_form %i32.loc26 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param.loc26: %Base = value_param call_param0
 // CHECK:STDOUT:     %Base.ref.loc26: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:     %self.loc26: %Base = value_binding self, %self.param.loc26
+// CHECK:STDOUT:     %self.loc26: %Base = wrapper_binding self, %self.param.loc26
 // CHECK:STDOUT:     %return.param.loc26: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc26: ref %i32 = return_slot %return.param.loc26
 // CHECK:STDOUT:   }
@@ -148,7 +148,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc30: ref %Base = ref_param call_param0
 // CHECK:STDOUT:     %Base.ref.loc30: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:     %self.loc30: ref %Base = ref_binding self, %self.param.loc30
+// CHECK:STDOUT:     %self.loc30: ref %Base = wrapper_binding self, %self.param.loc30
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.56c = value_param_pattern [concrete = constants.%p.param_patt]
@@ -163,7 +163,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Derived.ref [concrete = constants.%ptr.64c]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.64c = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.64c = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -193,7 +193,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %.loc22: Core.Form = init_form %i32.loc22 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param.loc22: %Base = value_param call_param0
 // CHECK:STDOUT:     %Base.ref.loc22: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:     %self.loc22: %Base = value_binding self, %self.param.loc22
+// CHECK:STDOUT:     %self.loc22: %Base = wrapper_binding self, %self.param.loc22
 // CHECK:STDOUT:     %return.param.loc22: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc22: ref %i32 = return_slot %return.param.loc22
 // CHECK:STDOUT:   }
@@ -203,7 +203,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc23: ref %Base = ref_param call_param0
 // CHECK:STDOUT:     %Base.ref.loc23: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:     %self.loc23: ref %Base = ref_binding self, %self.param.loc23
+// CHECK:STDOUT:     %self.loc23: ref %Base = wrapper_binding self, %self.param.loc23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.cae [concrete = constants.%complete_type.c02]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

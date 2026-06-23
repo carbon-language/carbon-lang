@@ -99,7 +99,7 @@ class C {
 // CHECK:STDOUT:       %Self.as_type.loc18_17.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc18_17.1 (constants.%Self.as_type.0fa)]
 // CHECK:STDOUT:       %.loc18_17.2: type = converted %Self.ref, %Self.as_type.loc18_17.2 [symbolic = %Self.as_type.loc18_17.1 (constants.%Self.as_type.0fa)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc18_17.1 (%Self.as_type.0fa) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc18_17.1 (%Self.as_type.0fa) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.F.decl [concrete = constants.%assoc0.08d]
 // CHECK:STDOUT:
@@ -122,7 +122,7 @@ class C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.I.impl.%C.ref [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%C.as.I.impl.F.decl), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
@@ -170,7 +170,7 @@ class C {
 // CHECK:STDOUT:     %.loc20_7: init %C = converted %.loc20_19.1, %.loc20_19.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:     assign %c.var, %.loc20_7
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %c: ref %C = ref_binding c, %c.var
+// CHECK:STDOUT:     %c: ref %C = wrapper_binding c, %c.var
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0.08d]

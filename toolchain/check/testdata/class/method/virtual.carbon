@@ -581,7 +581,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
-// CHECK:STDOUT:     %self: %Base = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %Base = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %vtable_decl: ref %ptr = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type]
@@ -600,7 +600,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Abstract [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %self: %Abstract = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %Abstract = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Abstract.K.decl: %Abstract.K.type = fn_decl @Abstract.K [concrete = constants.%Abstract.K] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.0e2 = value_param_pattern [concrete = constants.%self.param_patt.950]
@@ -608,7 +608,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Abstract [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %self: %Abstract = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %Abstract = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %vtable_decl: ref %ptr = vtable_decl @Abstract.vtable [concrete = constants.%Abstract.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type]
@@ -696,7 +696,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
-// CHECK:STDOUT:     %self: %Derived = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %Derived = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.H.decl.loc9_22.2: %Derived.H.type.1f42d4.2 = fn_decl @Derived.H.loc9_22.2 [concrete = constants.%Derived.H.a6796b.2] {
 // CHECK:STDOUT:     <elided>
@@ -762,7 +762,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc15_3: init %Derived = converted %.loc15_38.1, %.loc15_38.9
 // CHECK:STDOUT:   assign %d.var, %.loc15_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %d: ref %Derived = ref_binding d, %d.var
+// CHECK:STDOUT:   %d: ref %Derived = wrapper_binding d, %d.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %d.var, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%d.var)
 // CHECK:STDOUT:   <elided>
@@ -840,7 +840,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Modifiers.ref: <namespace> = name_ref Modifiers, imports.%Modifiers [concrete = imports.%Modifiers]
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, imports.%Modifiers.Base [concrete = constants.%Base]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %Base = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %Base = wrapper_binding v, %v.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   <elided>
@@ -957,7 +957,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc14_3: init %Base = converted %.loc14_35.1, %.loc14_35.8
 // CHECK:STDOUT:   assign %b1.var, %.loc14_3
 // CHECK:STDOUT:   %Base.ref.loc14: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:   %b1: ref %Base = ref_binding b1, %b1.var
+// CHECK:STDOUT:   %b1: ref %Base = wrapper_binding b1, %b1.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b2.patt: %pattern_type.912 = ref_binding_pattern b2 [concrete = constants.%b2.patt]
 // CHECK:STDOUT:     %b2.var_patt: %pattern_type.912 = var_pattern %b2.patt [concrete = constants.%b2.var_patt]
@@ -989,7 +989,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc15_3: init %Base = converted %.loc15_42.1, %.loc15_42.10 [concrete = constants.%Base.val]
 // CHECK:STDOUT:   assign %b2.var, %.loc15_3
 // CHECK:STDOUT:   %Base.ref.loc15: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:   %b2: ref %Base = ref_binding b2, %b2.var
+// CHECK:STDOUT:   %b2: ref %Base = wrapper_binding b2, %b2.var
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Destroy.Op.bound.loc15: <bound method> = bound_method %b2.var, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call.loc15: init %empty_tuple.type = call %Destroy.Op.bound.loc15(%b2.var)
@@ -1043,7 +1043,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
-// CHECK:STDOUT:     %self: %Derived = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %Derived = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.F.decl.loc15_22.2: %Derived.F.type.48cdab.2 = fn_decl @Derived.F.loc15_22.2 [concrete = constants.%Derived.F.bd5be1.2] {
 // CHECK:STDOUT:     <elided>
@@ -1114,7 +1114,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
-// CHECK:STDOUT:     %self: %Derived = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %Derived = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.F.decl.loc15_22.2: %Derived.F.type.48cdab.2 = fn_decl @Derived.F.loc15_22.2 [concrete = constants.%Derived.F.bd5be1.2] {
 // CHECK:STDOUT:     <elided>
@@ -1193,7 +1193,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %.loc23: Core.Form = init_form %T2.ref.loc23 [concrete = constants.%.617]
 // CHECK:STDOUT:     %self.param.loc23: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc23: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
-// CHECK:STDOUT:     %self.loc23: %Derived = value_binding self, %self.param.loc23
+// CHECK:STDOUT:     %self.loc23: %Derived = wrapper_binding self, %self.param.loc23
 // CHECK:STDOUT:     %return.param.loc23: ref %T2 = out_param call_param1
 // CHECK:STDOUT:     %return.loc23: ref %T2 = return_slot %return.param.loc23
 // CHECK:STDOUT:   }
@@ -1286,7 +1286,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:         %.loc6_23.2: type = specific_constant constants.%T1, @T1(constants.%T) [symbolic = %T1 (constants.%T1)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_23.2 [symbolic = %T1 (constants.%T1)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @T1.F.%T1 (%T1) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @T1.F.%T1 (%T1) = wrapper_binding self, %self.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -1379,10 +1379,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:         %.loc6_23.2: type = specific_constant constants.%T1, @T1(constants.%T) [symbolic = %T1 (constants.%T1)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_23.2 [symbolic = %T1 (constants.%T1)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @T1.F.%T1 (%T1) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @T1.F.%T1 (%T1) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @T1.F.%T (%T) = value_param call_param1
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @T1.%T.loc4_16.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %t: @T1.F.%T (%T) = value_binding t, %t.param
+// CHECK:STDOUT:       %t: @T1.F.%T (%T) = wrapper_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -1476,7 +1476,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %D1 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%D1 [concrete = constants.%D1]
-// CHECK:STDOUT:     %self: %D1 = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %D1 = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %t.param: %ptr.2ee = value_param call_param1
 // CHECK:STDOUT:     %.loc11: type = splice_block %ptr [concrete = constants.%ptr.2ee] {
 // CHECK:STDOUT:       %Base.ref: %Base.type = name_ref Base, file.%Base.decl [concrete = constants.%Base.generic]
@@ -1484,7 +1484,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %Base: type = class_type @Base, @Base(constants.%T1) [concrete = constants.%Base.5b2]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Base [concrete = constants.%ptr.2ee]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: %ptr.2ee = value_binding t, %t.param
+// CHECK:STDOUT:     %t: %ptr.2ee = wrapper_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D1.F.decl.loc11_51.2: %D1.F.type.48cdab.2 = fn_decl @D1.F.loc11_51.2 [concrete = constants.%D1.F.bd5be1.2] {
 // CHECK:STDOUT:     <elided>
@@ -1587,13 +1587,13 @@ class T2(G2:! type) {
 // CHECK:STDOUT:         %.loc10_24.2: type = specific_constant constants.%Derived, @Derived(constants.%T) [symbolic = %Derived (constants.%Derived)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_24.2 [symbolic = %Derived (constants.%Derived)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Derived.F.loc10_44.1.%Derived (%Derived) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @Derived.F.loc10_44.1.%Derived (%Derived) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @Derived.F.loc10_44.1.%ptr.loc10_41.1 (%ptr.e8f) = value_param call_param1
 // CHECK:STDOUT:       %.loc10_41: type = splice_block %ptr.loc10_41.2 [symbolic = %ptr.loc10_41.1 (constants.%ptr.e8f)] {
 // CHECK:STDOUT:         %T.ref: type = name_ref T, @Derived.%T.loc7_16.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:         %ptr.loc10_41.2: type = ptr_type %T.ref [symbolic = %ptr.loc10_41.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %t: @Derived.F.loc10_44.1.%ptr.loc10_41.1 (%ptr.e8f) = value_binding t, %t.param
+// CHECK:STDOUT:       %t: @Derived.F.loc10_44.1.%ptr.loc10_41.1 (%ptr.e8f) = wrapper_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Derived.F.decl.loc10_44.2: @Derived.%Derived.F.type.loc10_44.2 (%Derived.F.type.77405e.2) = fn_decl @Derived.F.loc10_44.2 [symbolic = @Derived.%Derived.F.loc10_44.2 (constants.%Derived.F.d85493.2)] {
 // CHECK:STDOUT:       <elided>

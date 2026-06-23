@@ -186,7 +186,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc14_25.4: ref %SubscriptType.f8f = temporary %.loc14_25.1, %.loc14_25.3 [concrete = constants.%.b1d]
 // CHECK:STDOUT:   %.loc14_25.5: %SubscriptType.f8f = acquire_value %.loc14_25.4 [concrete = constants.%SubscriptType.val]
 // CHECK:STDOUT:   %SubscriptType.ref: type = name_ref SubscriptType, %SubscriptType.decl [concrete = constants.%SubscriptType.f8f]
-// CHECK:STDOUT:   %s: %SubscriptType.f8f = value_binding s, %.loc14_25.5
+// CHECK:STDOUT:   %s: %SubscriptType.f8f = wrapper_binding s, %.loc14_25.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
@@ -196,14 +196,14 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc15_13.4: ref %C = temporary %.loc15_13.1, %.loc15_13.3 [concrete = constants.%.115]
 // CHECK:STDOUT:   %.loc15_13.5: %C = acquire_value %.loc15_13.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: %C = value_binding c, %.loc15_13.5
+// CHECK:STDOUT:   %c: %C = wrapper_binding c, %.loc15_13.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.67c = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_25.1: ref %ElementType = temporary @__global_init.%.loc16, @__global_init.%C.as.IndexWith.impl.At.call
 // CHECK:STDOUT:   %.loc16_25.2: %ElementType = acquire_value %.loc16_25.1
 // CHECK:STDOUT:   %ElementType.ref: type = name_ref ElementType, %ElementType.decl [concrete = constants.%ElementType]
-// CHECK:STDOUT:   %x: %ElementType = value_binding x, %.loc16_25.2
+// CHECK:STDOUT:   %x: %ElementType = wrapper_binding x, %.loc16_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %.loc8_41 {
@@ -222,10 +222,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %.loc9_58.2: Core.Form = init_form %ElementType.ref [concrete = constants.%.4d0]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.IndexWith.impl.%C.ref [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %subscript.param: %SubscriptType.f8f = value_param call_param1
 // CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [concrete = constants.%SubscriptType.f8f]
-// CHECK:STDOUT:     %subscript: %SubscriptType.f8f = value_binding subscript, %subscript.param
+// CHECK:STDOUT:     %subscript: %SubscriptType.f8f = wrapper_binding subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %ElementType = out_param call_param2
 // CHECK:STDOUT:     %return: ref %ElementType = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -390,7 +390,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %.loc14_13.2: %tuple.type.24b = tuple_literal (%C.ref.loc14_9, %C.ref.loc14_12) [concrete = constants.%tuple.d95]
 // CHECK:STDOUT:     %.loc14_13.3: type = converted %.loc14_13.2, constants.%tuple.type.748 [concrete = constants.%tuple.type.748]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: %tuple.type.748 = value_binding s, %.loc14_34
+// CHECK:STDOUT:   %s: %tuple.type.748 = wrapper_binding s, %.loc14_34
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.98b = value_binding_pattern e [concrete = constants.%e.patt]
 // CHECK:STDOUT:   }
@@ -401,7 +401,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc15_15.4: %C = as_compatible %tuple.loc15 [concrete = constants.%empty_tuple.4db]
 // CHECK:STDOUT:   %.loc15_15.5: %C = converted @__global_init.%tuple.type.as.IndexWith.impl.At.call, %.loc15_15.4 [concrete = constants.%empty_tuple.4db]
 // CHECK:STDOUT:   %C.ref.loc15: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %e: %C = value_binding e, %.loc15_15.5
+// CHECK:STDOUT:   %e: %C = wrapper_binding e, %.loc15_15.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @tuple.type.as.IndexWith.impl: %.loc8_11.2 as %.loc8_48 {
@@ -417,13 +417,13 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %.loc9_53: Core.Form = init_form %C.ref [concrete = constants.%.a44]
 // CHECK:STDOUT:     %self.param: %tuple.type.748 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @tuple.type.as.IndexWith.impl.%.loc8_11.2 [concrete = constants.%tuple.type.748]
-// CHECK:STDOUT:     %self: %tuple.type.748 = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %tuple.type.748 = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %subscript.param: Core.IntLiteral = value_param call_param1
 // CHECK:STDOUT:     %.loc9_37: type = splice_block %IntLiteral.ref [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %subscript: Core.IntLiteral = value_binding subscript, %subscript.param
+// CHECK:STDOUT:     %subscript: Core.IntLiteral = wrapper_binding subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -580,12 +580,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc14_13.4: ref %C = temporary %.loc14_13.1, %.loc14_13.3 [concrete = constants.%.115]
 // CHECK:STDOUT:   %.loc14_13.5: %C = acquire_value %.loc14_13.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: %C = value_binding c, %.loc14_13.5
+// CHECK:STDOUT:   %c: %C = wrapper_binding c, %.loc14_13.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.67c = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ElementType.ref: type = name_ref ElementType, %ElementType.decl [concrete = constants.%ElementType]
-// CHECK:STDOUT:   %x: %ElementType = value_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: %ElementType = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %.loc8_41 {
@@ -604,10 +604,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %.loc9_58.2: Core.Form = init_form %ElementType.ref [concrete = constants.%.4d0]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.IndexWith.impl.%C.ref [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %subscript.param: %SubscriptType.f8f = value_param call_param1
 // CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [concrete = constants.%SubscriptType.f8f]
-// CHECK:STDOUT:     %subscript: %SubscriptType.f8f = value_binding subscript, %subscript.param
+// CHECK:STDOUT:     %subscript: %SubscriptType.f8f = wrapper_binding subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %ElementType = out_param call_param2
 // CHECK:STDOUT:     %return: ref %ElementType = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -714,12 +714,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc6_13.4: ref %C = temporary %.loc6_13.1, %.loc6_13.3 [concrete = constants.%.115]
 // CHECK:STDOUT:   %.loc6_13.5: %C = acquire_value %.loc6_13.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: %C = value_binding c, %.loc6_13.5
+// CHECK:STDOUT:   %c: %C = wrapper_binding c, %.loc6_13.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x: %i32 = value_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

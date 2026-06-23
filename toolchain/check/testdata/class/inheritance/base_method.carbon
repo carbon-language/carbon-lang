@@ -104,7 +104,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc21: ref %Base = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Base [concrete = constants.%Base]
-// CHECK:STDOUT:     %self.loc21: ref %Base = ref_binding self, %self.param.loc21
+// CHECK:STDOUT:     %self.loc21: ref %Base = wrapper_binding self, %self.param.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {
@@ -116,7 +116,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Derived.ref [concrete = constants.%ptr.64c]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.64c = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.64c = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -128,7 +128,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc18: ref %Base = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Base [concrete = constants.%Base]
-// CHECK:STDOUT:     %self.loc18: ref %Base = ref_binding self, %self.param.loc18
+// CHECK:STDOUT:     %self.loc18: ref %Base = wrapper_binding self, %self.param.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a [concrete = constants.%complete_type.388]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

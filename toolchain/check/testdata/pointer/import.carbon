@@ -102,7 +102,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_orig.var: ref %i32 = var %a_orig.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc4: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a_orig: ref %i32 = ref_binding a_orig, %a_orig.var [concrete = %a_orig.var]
+// CHECK:STDOUT:   %a_orig: ref %i32 = wrapper_binding a_orig, %a_orig.var [concrete = %a_orig.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_ref.patt: %pattern_type.f00 = ref_binding_pattern a_ref [concrete = constants.%a_ref.patt]
 // CHECK:STDOUT:     %a_ref.var_patt: %pattern_type.f00 = var_pattern %a_ref.patt [concrete = constants.%a_ref.var_patt]
@@ -112,7 +112,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc5 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a_ref: ref %ptr.d08 = ref_binding a_ref, %a_ref.var [concrete = %a_ref.var]
+// CHECK:STDOUT:   %a_ref: ref %ptr.d08 = wrapper_binding a_ref, %a_ref.var [concrete = %a_ref.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -197,7 +197,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %ptr.d08 = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %ptr.d08 = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

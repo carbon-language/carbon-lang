@@ -628,7 +628,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [concrete = constants.%CompleteClass.d55]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %CompleteClass.d55 = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %CompleteClass.d55 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   %v.ref: ref %CompleteClass.d55 = name_ref v, %v
 // CHECK:STDOUT:   %.loc7: %CompleteClass.F.type.dac = specific_constant imports.%Main.import_ref.895, @CompleteClass(constants.%i32) [concrete = constants.%CompleteClass.F.623]
 // CHECK:STDOUT:   %F.ref.loc7: %CompleteClass.F.type.dac = name_ref F, %.loc7 [concrete = constants.%CompleteClass.F.623]
@@ -680,7 +680,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [concrete = constants.%CompleteClass.d55]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %CompleteClass.d55 = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %CompleteClass.d55 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   %v.ref: ref %CompleteClass.d55 = name_ref v, %v
 // CHECK:STDOUT:   %n.ref: %CompleteClass.elem.2cc = name_ref n, imports.%Main.import_ref.111 [concrete = imports.%.5a2]
 // CHECK:STDOUT:   %.loc12_11.1: ref %i32 = class_element_access %v.ref, element0
@@ -839,7 +839,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:     %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%ptr.d08) [concrete = constants.%CompleteClass.22b]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %CompleteClass.22b = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %CompleteClass.22b = wrapper_binding v, %v.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   return

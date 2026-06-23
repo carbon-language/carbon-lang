@@ -715,7 +715,7 @@ fn F() {
 // CHECK:STDOUT:     %N.ref.loc10: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %S.ref.loc10: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %S = ref_binding x, %x.var
+// CHECK:STDOUT:   %x: ref %S = wrapper_binding x, %x.var
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%x.var)
 // CHECK:STDOUT:   <elided>
@@ -839,7 +839,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %O.ref.loc9: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %O = ref_binding x, %x.var
+// CHECK:STDOUT:   %x: ref %O = wrapper_binding x, %x.var
 // CHECK:STDOUT:   %O.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%O.cpp_destructor
 // CHECK:STDOUT:   %O.cpp_destructor.call: init %empty_tuple.type = call %O.cpp_destructor.bound(%x.var)
 // CHECK:STDOUT:   <elided>

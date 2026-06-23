@@ -207,7 +207,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:     %.loc32_34: Core.Form = init_form %i32.loc32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %t.param: type = value_param call_param0
 // CHECK:STDOUT:     %.loc32_25: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %t: type = value_binding t, %t.param
+// CHECK:STDOUT:     %t: type = wrapper_binding t, %t.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -330,7 +330,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !.loc27_8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc27_8:
-// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.f00 = ref_binding_pattern w [concrete = constants.%w.patt]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.f00 = var_pattern %w.patt [concrete = constants.%w.var_patt]
@@ -364,7 +364,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !.loc28_8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc28_8:
-// CHECK:STDOUT:   %w: ref %ptr.d08 = ref_binding w, %w.var
+// CHECK:STDOUT:   %w: ref %ptr.d08 = wrapper_binding w, %w.var
 // CHECK:STDOUT:   %w.ref: ref %ptr.d08 = name_ref w, %w
 // CHECK:STDOUT:   %.loc29_11: %ptr.d08 = acquire_value %w.ref
 // CHECK:STDOUT:   %.loc29_10.1: ref %i32 = deref %.loc29_11
@@ -424,7 +424,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !.loc33_8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc33_8:
-// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.f00 = ref_binding_pattern w [concrete = constants.%w.patt]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.f00 = var_pattern %w.patt [concrete = constants.%w.var_patt]
@@ -458,7 +458,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !.loc34_8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc34_8:
-// CHECK:STDOUT:   %w: ref %ptr.d08 = ref_binding w, %w.var
+// CHECK:STDOUT:   %w: ref %ptr.d08 = wrapper_binding w, %w.var
 // CHECK:STDOUT:   %w.ref: ref %ptr.d08 = name_ref w, %w
 // CHECK:STDOUT:   %.loc35_11: %ptr.d08 = acquire_value %w.ref
 // CHECK:STDOUT:   %.loc35_10.1: ref %i32 = deref %.loc35_11

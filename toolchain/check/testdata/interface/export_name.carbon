@@ -128,7 +128,7 @@ fn UseEmpty(unused i: I) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %I.type = value_param call_param0
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
-// CHECK:STDOUT:     %i: %I.type = value_binding i, %i.param
+// CHECK:STDOUT:     %i: %I.type = wrapper_binding i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -112,10 +112,10 @@ interface I {
 // CHECK:STDOUT:     %.loc18: Core.Form = init_form %i32.loc18_27 [concrete = constants.%.795]
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc18_11: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i32 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc18_19: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %i32 = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

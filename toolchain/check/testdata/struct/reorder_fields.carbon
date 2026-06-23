@@ -158,7 +158,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %f64.loc19: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:     %struct_type.a.b.loc19: type = struct_type {.a: %i32, .b: %f64.dc1} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %struct_type.a.b = value_binding x, %.loc19_62.6
+// CHECK:STDOUT:   %x: %struct_type.a.b = wrapper_binding x, %.loc19_62.6
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.cc6 = value_binding_pattern y [concrete = constants.%y.patt]
 // CHECK:STDOUT:   }
@@ -172,7 +172,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.b.a: type = struct_type {.b: %f64.dc1, .a: %i32} [concrete = constants.%struct_type.b.a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: %struct_type.b.a = value_binding y, %.loc20_31.3
+// CHECK:STDOUT:   %y: %struct_type.b.a = wrapper_binding y, %.loc20_31.3
 // CHECK:STDOUT:   %y.ref: %struct_type.b.a = name_ref y, %y
 // CHECK:STDOUT:   %.loc21_10.1: %i32 = struct_access %y.ref, element1
 // CHECK:STDOUT:   %impl.elem0.loc21_10.1: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

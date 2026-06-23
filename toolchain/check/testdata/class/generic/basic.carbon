@@ -154,7 +154,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:         %.loc6_18.2: type = specific_constant constants.%Class, @Class(constants.%T.f84) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_18.2 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: ref @Class.GetAddr.%Class (%Class) = ref_binding self, %self.param
+// CHECK:STDOUT:       %self: ref @Class.GetAddr.%Class (%Class) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @Class.GetAddr.%ptr.loc6_28.1 (%ptr.215) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Class.GetAddr.%ptr.loc6_28.1 (%ptr.215) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -173,7 +173,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:         %.loc10_15.2: type = specific_constant constants.%Class, @Class(constants.%T.f84) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_15.2 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Class.GetValue.%Class (%Class) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @Class.GetValue.%Class (%Class) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @Class.GetValue.%T.as_type.loc10_24.1 (%T.as_type) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Class.GetValue.%T.as_type.loc10_24.1 (%T.as_type) = return_slot %return.param
 // CHECK:STDOUT:     }

@@ -139,7 +139,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc16: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   assign %n.var, %.loc16
 // CHECK:STDOUT:   %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %n: ref %i32 = ref_binding n, %n.var
+// CHECK:STDOUT:   %n: ref %i32 = wrapper_binding n, %n.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type.f00 = ref_binding_pattern p [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.f00 = var_pattern %p.patt [concrete = constants.%p.var_patt]
@@ -157,7 +157,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:     %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc17 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: ref %ptr.d08 = ref_binding p, %p.var
+// CHECK:STDOUT:   %p: ref %ptr.d08 = wrapper_binding p, %p.var
 // CHECK:STDOUT:   %p.ref: ref %ptr.d08 = name_ref p, %p
 // CHECK:STDOUT:   %.loc19_11: %ptr.d08 = acquire_value %p.ref
 // CHECK:STDOUT:   %.loc19_10.1: ref %i32 = deref %.loc19_11

@@ -100,7 +100,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:     %.loc11_24.2: type = value_of_initializer %MakeUnformed.call.loc11 [concrete = constants.%.b2d]
 // CHECK:STDOUT:     %.loc11_24.3: type = converted %MakeUnformed.call.loc11, %.loc11_24.2 [concrete = constants.%.b2d]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: %.b2d = value_binding s, %.loc11_48.2
+// CHECK:STDOUT:   %s: %.b2d = wrapper_binding s, %.loc11_48.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.e22 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
@@ -114,7 +114,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:     %.loc12_23.2: type = value_of_initializer %MakeUnformed.call.loc12 [concrete = constants.%.9e8]
 // CHECK:STDOUT:     %.loc12_23.3: type = converted %MakeUnformed.call.loc12, %.loc12_23.2 [concrete = constants.%.9e8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %.9e8 = value_binding c, %.loc12_37.2
+// CHECK:STDOUT:   %c: %.9e8 = wrapper_binding c, %.loc12_37.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -163,7 +163,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:     %.loc10_24.2: type = value_of_initializer %MakeUnformed.call.loc10 [concrete = constants.%.b2d]
 // CHECK:STDOUT:     %.loc10_24.3: type = converted %MakeUnformed.call.loc10, %.loc10_24.2 [concrete = constants.%.b2d]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: %.b2d = value_binding s, %.loc10_39.2
+// CHECK:STDOUT:   %s: %.b2d = wrapper_binding s, %.loc10_39.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.e22 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
@@ -177,7 +177,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:     %.loc11_23.2: type = value_of_initializer %MakeUnformed.call.loc11 [concrete = constants.%.9e8]
 // CHECK:STDOUT:     %.loc11_23.3: type = converted %MakeUnformed.call.loc11, %.loc11_23.2 [concrete = constants.%.9e8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %.9e8 = value_binding c, %.loc11_37.2
+// CHECK:STDOUT:   %c: %.9e8 = wrapper_binding c, %.loc11_37.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

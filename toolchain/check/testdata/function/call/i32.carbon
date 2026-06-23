@@ -110,7 +110,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc15: Core.Form = init_form %i32.loc15_20 [concrete = constants.%.795]
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc15_12: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i32 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -147,7 +147,7 @@ fn Main() {
 // CHECK:STDOUT:   %Echo.call: init %i32 = call %Echo.ref(%.loc20_28.2)
 // CHECK:STDOUT:   assign %b.var, %Echo.call
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %b: ref %i32 = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %i32 = wrapper_binding b, %b.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%b.var)
 // CHECK:STDOUT:   return

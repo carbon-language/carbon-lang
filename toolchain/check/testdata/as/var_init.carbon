@@ -66,7 +66,7 @@ fn Convert(unused t: ()) {
 // CHECK:STDOUT:   %.loc12_3.2: init %X = converted %.loc12_22.1, %empty_tuple.type.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   assign %x.var, %.loc12_3.2
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %x: ref %X = ref_binding x, %x.var
+// CHECK:STDOUT:   %x: ref %X = wrapper_binding x, %x.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:   <elided>

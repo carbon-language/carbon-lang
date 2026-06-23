@@ -123,21 +123,21 @@ let c: CharLiteral = ConvertFromIntLiteral(0x110000);
 // CHECK:STDOUT:   %.loc14_46.1: Core.CharLiteral = value_of_initializer @__global_init.%ConvertFromIntLiteral.call [concrete = constants.%.54f]
 // CHECK:STDOUT:   %.loc14_46.2: Core.CharLiteral = converted @__global_init.%ConvertFromIntLiteral.call, %.loc14_46.1 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %CharLiteral.ref.loc14: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %a: Core.CharLiteral = value_binding a, %.loc14_46.2
+// CHECK:STDOUT:   %a: Core.CharLiteral = wrapper_binding a, %.loc14_46.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.8c6 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_39.1: Core.CharLiteral = value_of_initializer @__global_init.%ConvertFromI32.call [concrete = constants.%.711]
 // CHECK:STDOUT:   %.loc15_39.2: Core.CharLiteral = converted @__global_init.%ConvertFromI32.call, %.loc15_39.1 [concrete = constants.%.711]
 // CHECK:STDOUT:   %CharLiteral.ref.loc15: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %b: Core.CharLiteral = value_binding b, %.loc15_39.2
+// CHECK:STDOUT:   %b: Core.CharLiteral = wrapper_binding b, %.loc15_39.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.8c6 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_39.1: Core.CharLiteral = value_of_initializer @__global_init.%ConvertFromU32.call [concrete = constants.%.b9b]
 // CHECK:STDOUT:   %.loc16_39.2: Core.CharLiteral = converted @__global_init.%ConvertFromU32.call, %.loc16_39.1 [concrete = constants.%.b9b]
 // CHECK:STDOUT:   %CharLiteral.ref.loc16: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %c: Core.CharLiteral = value_binding c, %.loc16_39.2
+// CHECK:STDOUT:   %c: Core.CharLiteral = wrapper_binding c, %.loc16_39.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

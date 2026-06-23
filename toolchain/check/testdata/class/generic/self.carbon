@@ -223,7 +223,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc15_14.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Class.loc21_26.1: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc21_26.2 (constants.%Class)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: ref @Class.F.%Class.loc21_26.2 (%Class) = ref_binding c, %c.var
+// CHECK:STDOUT:     %c: ref @Class.F.%Class.loc21_26.2 (%Class) = wrapper_binding c, %c.var
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %s.patt.loc22_17.1: @Class.F.%pattern_type (%pattern_type.36e) = ref_binding_pattern s [symbolic = %s.patt.loc22_17.2 (constants.%s.patt)]
 // CHECK:STDOUT:       %s.var_patt.loc22_5.1: @Class.F.%pattern_type (%pattern_type.36e) = var_pattern %s.patt.loc22_17.1 [symbolic = %s.var_patt.loc22_5.2 (constants.%s.var_patt)]
@@ -239,7 +239,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %.loc22_19.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class.loc21_26.2 (constants.%Class)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc22_19.2 [symbolic = %Class.loc21_26.2 (constants.%Class)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %s: ref @Class.F.%Class.loc21_26.2 (%Class) = ref_binding s, %s.var
+// CHECK:STDOUT:     %s: ref @Class.F.%Class.loc21_26.2 (%Class) = wrapper_binding s, %s.var
 // CHECK:STDOUT:     %impl.elem0.loc22_5.1: @Class.F.%.loc22_5.4 (%.73f) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc22_5.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc22_5.1: <bound method> = bound_method %s.var, %impl.elem0.loc22_5.1
 // CHECK:STDOUT:     %Destroy.facet.loc22_5.1: %Destroy.type = facet_value constants.%Class, (constants.%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc22_5.3 (constants.%Destroy.facet.86d)]

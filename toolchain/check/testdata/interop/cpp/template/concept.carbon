@@ -87,7 +87,7 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:     %X.loc11: type = class_type @X, @X(constants.%false) [concrete = constants.%X.541]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x1: ref %X.541 = ref_binding x1, %x1.var [concrete = %x1.var]
+// CHECK:STDOUT:   %x1: ref %X.541 = wrapper_binding x1, %x1.var [concrete = %x1.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x2.patt: %pattern_type.795 = ref_binding_pattern x2 [concrete = constants.%x2.patt]
 // CHECK:STDOUT:     %x2.var_patt: %pattern_type.795 = var_pattern %x2.patt [concrete = constants.%x2.var_patt]
@@ -102,7 +102,7 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:     %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:     %X.loc12: type = class_type @X, @X(constants.%true) [concrete = constants.%X.7b4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x2: ref %X.7b4 = ref_binding x2, %x2.var [concrete = %x2.var]
+// CHECK:STDOUT:   %x2: ref %X.7b4 = wrapper_binding x2, %x2.var [concrete = %x2.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -150,7 +150,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc18: init %i32 = converted %int_3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_3.410]
 // CHECK:STDOUT:   assign %a.var, %.loc18
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: ref %i32 = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %i32 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc23_3: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc23_7: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc23_10: ref %i32 = name_ref a, %a

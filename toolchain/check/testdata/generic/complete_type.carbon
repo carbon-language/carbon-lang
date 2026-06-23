@@ -148,7 +148,7 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl.loc4 [concrete = constants.%B]
 // CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%B) [concrete = constants.%A.d32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %A.d32 = value_binding x, %x.param
+// CHECK:STDOUT:     %x: %A.d32 = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc29: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }
@@ -272,7 +272,7 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_7.2 [symbolic = %T.loc6_7.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc6_20.2: type = ptr_type %T.ref [symbolic = %ptr.loc6_20.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: @F.%ptr.loc6_20.1 (%ptr.e8f) = value_binding v, %v.param
+// CHECK:STDOUT:     %v: @F.%ptr.loc6_20.1 (%ptr.e8f) = wrapper_binding v, %v.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.3c8 = value_param_pattern [concrete = constants.%p.param_patt]
@@ -283,7 +283,7 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:       %B.ref.loc11_9: type = name_ref B, file.%B.decl.loc4 [concrete = constants.%B]
 // CHECK:STDOUT:       %ptr: type = ptr_type %B.ref.loc11_9 [concrete = constants.%ptr.432]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.432 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.432 = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc13: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }
@@ -409,7 +409,7 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:       %T.ref.loc6: type = name_ref T, %T.loc6_7.2 [symbolic = %T.loc6_7.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc6_20.2: type = ptr_type %T.ref.loc6 [symbolic = %ptr.loc6_20.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: @F.%ptr.loc6_20.1 (%ptr.e8f) = value_binding p, %p.param
+// CHECK:STDOUT:     %p: @F.%ptr.loc6_20.1 (%ptr.e8f) = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.3c8 = value_param_pattern [concrete = constants.%p.param_patt.436]
@@ -420,7 +420,7 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:       %B.ref.loc20_9: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:       %ptr: type = ptr_type %B.ref.loc20_9 [concrete = constants.%ptr.432]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.432 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.432 = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -449,7 +449,7 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:     %.loc7_14.1: ref @F.%T.loc6_7.1 (%T) = deref %p.ref
 // CHECK:STDOUT:     %.loc7_14.2: @F.%T.loc6_7.1 (%T) = acquire_value %.loc7_14.1
 // CHECK:STDOUT:     %T.ref.loc7: type = name_ref T, %T.loc6_7.2 [symbolic = %T.loc6_7.1 (constants.%T)]
-// CHECK:STDOUT:     %_: @F.%T.loc6_7.1 (%T) = value_binding _, %.loc7_14.2
+// CHECK:STDOUT:     %_: @F.%T.loc6_7.1 (%T) = wrapper_binding _, %.loc7_14.2
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

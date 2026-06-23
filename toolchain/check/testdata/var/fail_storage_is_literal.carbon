@@ -67,7 +67,7 @@ fn Main() {
 // CHECK:STDOUT:     %int_1.loc23_17: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %.loc23: type = converted %int_1.loc23_17, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref <error> = ref_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: <error> = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

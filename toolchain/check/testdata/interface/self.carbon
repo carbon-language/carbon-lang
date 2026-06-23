@@ -63,7 +63,7 @@ interface UseSelf {
 // CHECK:STDOUT:       %Self.as_type.loc16_8.2: type = facet_access_type %Self.ref.loc16_8 [symbolic = %Self.as_type.loc16_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc16_8.2: type = converted %Self.ref.loc16_8, %Self.as_type.loc16_8.2 [symbolic = %Self.as_type.loc16_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @UseSelf.WithSelf.F.%Self.as_type.loc16_8.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @UseSelf.WithSelf.F.%Self.as_type.loc16_8.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref @UseSelf.WithSelf.F.%Self.as_type.loc16_8.1 (%Self.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @UseSelf.WithSelf.F.%Self.as_type.loc16_8.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }

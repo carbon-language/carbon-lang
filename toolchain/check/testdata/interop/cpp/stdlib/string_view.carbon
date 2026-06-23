@@ -213,10 +213,10 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:     %.loc7_34.2: Core.Form = init_form %.loc7_34.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %a.param: %str = value_param call_param0
 // CHECK:STDOUT:     %str.loc7_18: type = type_literal constants.%str [concrete = constants.%str]
-// CHECK:STDOUT:     %a: %str = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %str = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %str = value_param call_param1
 // CHECK:STDOUT:     %str.loc7_26: type = type_literal constants.%str [concrete = constants.%str]
-// CHECK:STDOUT:     %b: %str = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %str = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }

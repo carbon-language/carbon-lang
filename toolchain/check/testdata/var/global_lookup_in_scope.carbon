@@ -66,7 +66,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc2_14.2: type = converted %.loc2_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %struct_type.v = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %struct_type.v = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -90,7 +90,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc5_23.2: type = converted %.loc5_23.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %struct_type.v = ref_binding y, %y.var
+// CHECK:STDOUT:   %y: ref %struct_type.v = wrapper_binding y, %y.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %y.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%y.var)
 // CHECK:STDOUT:   return

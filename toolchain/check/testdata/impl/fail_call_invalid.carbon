@@ -93,7 +93,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
+// CHECK:STDOUT:     %n: %i32 = wrapper_binding n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -112,7 +112,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:       %Self.as_type.loc16_8.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc16_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc16_8.2: type = converted %Self.ref, %Self.as_type.loc16_8.2 [symbolic = %Self.as_type.loc16_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Simple.WithSelf.G.%Self.as_type.loc16_8.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @Simple.WithSelf.G.%Self.as_type.loc16_8.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, %Simple.WithSelf.G.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -132,14 +132,14 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %Undeclared.ref: <error> = name_ref Undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:     %self: <error> = value_binding self, <error> [concrete = <error>]
+// CHECK:STDOUT:     %self: <error> = wrapper_binding self, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.decl.loc24_25.2: %i32.as.Simple.impl.G.type.321a2c.2 = fn_decl @i32.as.Simple.impl.G.loc24_25.2 [concrete = constants.%i32.as.Simple.impl.G.d407b2.2] {
 // CHECK:STDOUT:     %.1: %pattern_type.6b6 = specific_constant constants.%self.param_patt.049, @Simple.WithSelf.G(constants.%Simple.facet) [concrete = constants.%self.param_patt.049]
 // CHECK:STDOUT:     %self.patt: %pattern_type.6b6 = at_binding_pattern self, %.1 [concrete = constants.%self.patt.f6c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %self: %i32 = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %i32 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (%i32.as.Simple.impl.G.decl.loc24_25.2), @i32.as.Simple.impl [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]

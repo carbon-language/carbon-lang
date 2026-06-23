@@ -229,7 +229,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc10_12.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc10_12.3: type = converted %.loc10_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %empty_tuple.type = value_binding x, %.loc10_17.2
+// CHECK:STDOUT:   %x: %empty_tuple.type = wrapper_binding x, %.loc10_17.2
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -294,7 +294,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc9_12.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc9_12.3: type = converted %.loc9_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %empty_tuple.type = value_binding x, %.loc9_17.2
+// CHECK:STDOUT:   %x: %empty_tuple.type = wrapper_binding x, %.loc9_17.2
 // CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete = constants.%return.param_patt]
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc10_14.2 [concrete = constants.%return.patt]
@@ -359,7 +359,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc9_12.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc9_12.3: type = converted %.loc9_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc9_17.2
+// CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc9_17.2
 // CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {
 // CHECK:STDOUT:     %b.patt.loc10_9.1: %pattern_type.559 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
@@ -398,7 +398,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc26_22.5: type = converted constants.%empty_tuple, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc26_22.6: type = converted %.loc26_22.2, constants.%tuple.type.2d5 [concrete = constants.%tuple.type.2d5]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: %tuple.type.2d5 = value_binding d, %.loc26_37.5
+// CHECK:STDOUT:   %d: %tuple.type.2d5 = wrapper_binding d, %.loc26_37.5
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -642,7 +642,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc9_11.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T: type = value_binding T, %i32
+// CHECK:STDOUT:   %T: type = wrapper_binding T, %i32
 // CHECK:STDOUT:   %I.F.decl: %I.F.type = fn_decl @I.F [concrete = constants.%I.F] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
@@ -698,7 +698,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc8_9.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T: type = value_binding T, @__global_init.%i32
+// CHECK:STDOUT:   %T: type = wrapper_binding T, @__global_init.%i32
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
@@ -802,7 +802,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Zero: %i32 = value_binding Zero, %.loc11_20.2
+// CHECK:STDOUT:   %Zero: %i32 = wrapper_binding Zero, %.loc11_20.2
 // CHECK:STDOUT:   %Empty.impl_witness_table = impl_witness_table (), @i32.as.Empty.impl [concrete]
 // CHECK:STDOUT:   %Empty.impl_witness: <witness> = impl_witness %Empty.impl_witness_table [concrete = constants.%Empty.impl_witness]
 // CHECK:STDOUT:

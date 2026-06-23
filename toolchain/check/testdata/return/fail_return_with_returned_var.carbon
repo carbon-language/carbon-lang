@@ -171,7 +171,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc16: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   assign %v.var, %.loc16
 // CHECK:STDOUT:   %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
@@ -214,7 +214,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc29_12: init %C = converted %.loc29_38.1, %.loc29_38.8 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %return.param, %.loc29_12
 // CHECK:STDOUT:   %C.ref.loc29: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %return.param
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %return.param
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

@@ -70,7 +70,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.ref.loc7: ref %i32 = name_ref b, %b
 // CHECK:STDOUT:   %i32.loc7: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %c: ref %i32 = ref_binding c, %b.ref.loc7
+// CHECK:STDOUT:   %c: ref %i32 = wrapper_binding c, %b.ref.loc7
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.6b6 = ref_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:     %e.patt: %pattern_type.6b6 = ref_binding_pattern e [concrete = constants.%e.patt]
@@ -80,9 +80,9 @@ fn F() {
 // CHECK:STDOUT:   %c.ref: ref %i32 = name_ref c, %c
 // CHECK:STDOUT:   %.loc8_53: %tuple.type.e55 = tuple_literal (%b.ref.loc8, %c.ref)
 // CHECK:STDOUT:   %i32.loc8_22: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %d: ref %i32 = ref_binding d, %b.ref.loc8
+// CHECK:STDOUT:   %d: ref %i32 = wrapper_binding d, %b.ref.loc8
 // CHECK:STDOUT:   %i32.loc8_41: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %e: ref %i32 = ref_binding e, %c.ref
+// CHECK:STDOUT:   %e: ref %i32 = wrapper_binding e, %c.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

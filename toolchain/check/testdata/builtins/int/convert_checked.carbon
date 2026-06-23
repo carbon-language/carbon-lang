@@ -320,21 +320,21 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   %.loc6_42.1: %u32 = value_of_initializer @__global_init.%Int32ToUint32.call [concrete = constants.%int_1.92d]
 // CHECK:STDOUT:   %.loc6_42.2: %u32 = converted @__global_init.%Int32ToUint32.call, %.loc6_42.1 [concrete = constants.%int_1.92d]
 // CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %SizePreserving: %u32 = value_binding SizePreserving, %.loc6_42.2
+// CHECK:STDOUT:   %SizePreserving: %u32 = wrapper_binding SizePreserving, %.loc6_42.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Narrowing.patt: %pattern_type.203 = value_binding_pattern Narrowing [concrete = constants.%Narrowing.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_36.1: %i16 = value_of_initializer @__global_init.%Int32ToInt16.call [concrete = constants.%int_1.d17]
 // CHECK:STDOUT:   %.loc7_36.2: %i16 = converted @__global_init.%Int32ToInt16.call, %.loc7_36.1 [concrete = constants.%int_1.d17]
 // CHECK:STDOUT:   %i16: type = type_literal constants.%i16 [concrete = constants.%i16]
-// CHECK:STDOUT:   %Narrowing: %i16 = value_binding Narrowing, %.loc7_36.2
+// CHECK:STDOUT:   %Narrowing: %i16 = wrapper_binding Narrowing, %.loc7_36.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Widening.patt: %pattern_type.f57 = value_binding_pattern Widening [concrete = constants.%Widening.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_35.1: %i64 = value_of_initializer @__global_init.%Int32ToInt64.call [concrete = constants.%int_1.d98]
 // CHECK:STDOUT:   %.loc8_35.2: %i64 = converted @__global_init.%Int32ToInt64.call, %.loc8_35.1 [concrete = constants.%int_1.d98]
 // CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
-// CHECK:STDOUT:   %Widening: %i64 = value_binding Widening, %.loc8_35.2
+// CHECK:STDOUT:   %Widening: %i64 = wrapper_binding Widening, %.loc8_35.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -177,7 +177,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc16: init %i32 = converted %int_12, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc16 [concrete = constants.%int_12.8c7]
 // CHECK:STDOUT:   assign %a.var, %.loc16
 // CHECK:STDOUT:   %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: ref %i32 = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %i32 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc17: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9.988]
 // CHECK:STDOUT:   %impl.elem0.loc17: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
@@ -220,7 +220,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc19_19.2: %tuple.type.24b = tuple_literal (%i32.loc19_11, %i32.loc19_16) [concrete = constants.%tuple.b59]
 // CHECK:STDOUT:     %.loc19_19.3: type = converted %.loc19_19.2, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %tuple.type.e55 = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %tuple.type.e55 = wrapper_binding b, %b.var
 // CHECK:STDOUT:   %b.ref.loc20: ref %tuple.type.e55 = name_ref b, %b
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %tuple.elem0.loc20: ref %i32 = tuple_access %b.ref.loc20, element0
@@ -275,7 +275,7 @@ fn Main() {
 // CHECK:STDOUT:     %i32.loc23_24: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.b4c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %struct_type.a.b.b4c = ref_binding c, %c.var
+// CHECK:STDOUT:   %c: ref %struct_type.a.b.b4c = wrapper_binding c, %c.var
 // CHECK:STDOUT:   %c.ref.loc24: ref %struct_type.a.b.b4c = name_ref c, %c
 // CHECK:STDOUT:   %.loc24_4: ref %i32 = struct_access %c.ref.loc24, element0
 // CHECK:STDOUT:   %int_3.loc24: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -313,7 +313,7 @@ fn Main() {
 // CHECK:STDOUT:     %i32.loc27: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc27 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: ref %ptr.d08 = ref_binding p, %p.var
+// CHECK:STDOUT:   %p: ref %ptr.d08 = wrapper_binding p, %p.var
 // CHECK:STDOUT:   %p.ref.loc28: ref %ptr.d08 = name_ref p, %p
 // CHECK:STDOUT:   %.loc28_4: %ptr.d08 = acquire_value %p.ref.loc28
 // CHECK:STDOUT:   %.loc28_3: ref %i32 = deref %.loc28_4

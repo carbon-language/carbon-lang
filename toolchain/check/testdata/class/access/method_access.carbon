@@ -57,7 +57,7 @@ fn G(x: X) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %X = value_param call_param0
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %x: %X = value_binding x, %x.param
+// CHECK:STDOUT:     %x: %X = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +68,7 @@ fn G(x: X) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %X = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
-// CHECK:STDOUT:     %self: %X = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %X = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

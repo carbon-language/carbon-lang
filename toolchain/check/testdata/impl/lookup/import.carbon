@@ -288,7 +288,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:       %Self.as_type.loc5_8.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc5_8.2: type = converted %Self.ref, %Self.as_type.loc5_8.2 [symbolic = %Self.as_type.loc5_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @HasF.WithSelf.F.%Self.as_type.loc5_8.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @HasF.WithSelf.F.%Self.as_type.loc5_8.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %HasF.assoc_type = assoc_entity element0, %HasF.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -307,7 +307,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.HasF.impl.%C.ref [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasF.impl_witness_table = impl_witness_table (%C.as.HasF.impl.F.decl), @C.as.HasF.impl [concrete]
 // CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness %HasF.impl_witness_table [concrete = constants.%HasF.impl_witness]
@@ -484,7 +484,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:       %Self.as_type.loc7_8.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc7_8.1 (constants.%Self.as_type.dd3)]
 // CHECK:STDOUT:       %.loc7_8.2: type = converted %Self.ref, %Self.as_type.loc7_8.2 [symbolic = %Self.as_type.loc7_8.1 (constants.%Self.as_type.dd3)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @HasG.WithSelf.G.%Self.as_type.loc7_8.1 (%Self.as_type.dd3) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @HasG.WithSelf.G.%Self.as_type.loc7_8.1 (%Self.as_type.dd3) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %HasG.assoc_type = assoc_entity element0, %HasG.WithSelf.G.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -512,7 +512,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.HasG.impl.%C.ref [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasG.impl_witness_table = impl_witness_table (%C.as.HasG.impl.G.decl), @C.as.HasG.impl [concrete]
 // CHECK:STDOUT:   %HasG.impl_witness: <witness> = impl_witness %HasG.impl_witness_table [concrete = constants.%HasG.impl_witness.992]
@@ -530,7 +530,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %D = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @D.as.HasF.impl.%D.ref [concrete = constants.%D]
-// CHECK:STDOUT:     %self: %D = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %D = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasF.impl_witness_table = impl_witness_table (%D.as.HasF.impl.F.decl), @D.as.HasF.impl [concrete]
 // CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness %HasF.impl_witness_table [concrete = constants.%HasF.impl_witness]
@@ -548,7 +548,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %D = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @D.as.HasG.impl.%D.ref [concrete = constants.%D]
-// CHECK:STDOUT:     %self: %D = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %D = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasG.impl_witness_table = impl_witness_table (%D.as.HasG.impl.G.decl), @D.as.HasG.impl [concrete]
 // CHECK:STDOUT:   %HasG.impl_witness: <witness> = impl_witness %HasG.impl_witness_table [concrete = constants.%HasG.impl_witness.e55]
@@ -758,7 +758,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:       %PackageA.ref.loc6: <namespace> = name_ref PackageA, imports.%PackageA [concrete = imports.%PackageA]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, imports.%PackageA.C [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %C = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %C = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -914,7 +914,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:       %PackageB.ref: <namespace> = name_ref PackageB, imports.%PackageB [concrete = imports.%PackageB]
 // CHECK:STDOUT:       %D.ref: type = name_ref D, imports.%PackageB.D [concrete = constants.%D]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %d: %D = value_binding d, %d.param
+// CHECK:STDOUT:     %d: %D = wrapper_binding d, %d.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1082,7 +1082,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:       %PackageA.ref: <namespace> = name_ref PackageA, imports.%PackageA [concrete = imports.%PackageA]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, imports.%PackageA.C [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %C = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %C = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1245,7 +1245,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:       %PackageB.ref.loc6: <namespace> = name_ref PackageB, imports.%PackageB [concrete = imports.%PackageB]
 // CHECK:STDOUT:       %D.ref: type = name_ref D, imports.%PackageB.D [concrete = constants.%D]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %d: %D = value_binding d, %d.param
+// CHECK:STDOUT:     %d: %D = wrapper_binding d, %d.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1390,7 +1390,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:       %Self.as_type.loc5_8.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc5_8.2: type = converted %Self.ref, %Self.as_type.loc5_8.2 [symbolic = %Self.as_type.loc5_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Z.WithSelf.H.%Self.as_type.loc5_8.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @Z.WithSelf.H.%Self.as_type.loc5_8.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.WithSelf.H.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -1409,7 +1409,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @empty_tuple.type.as.Z.impl.%.loc8_7.2 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %self: %empty_tuple.type = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %empty_tuple.type = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (%empty_tuple.type.as.Z.impl.H.decl), @empty_tuple.type.as.Z.impl [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
@@ -1663,7 +1663,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:       %Self.as_type.loc7_15.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc7_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc7_15.2: type = converted %Self.ref, %Self.as_type.loc7_15.2 [symbolic = %Self.as_type.loc7_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Y.WithSelf.K.%Self.as_type.loc7_15.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @Y.WithSelf.K.%Self.as_type.loc7_15.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Y.assoc_type = assoc_entity element0, %Y.WithSelf.K.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -1879,7 +1879,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %AnyParam.591 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @AnyParam.as.Y.impl.%AnyParam [concrete = constants.%AnyParam.591]
-// CHECK:STDOUT:     %self: %AnyParam.591 = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %AnyParam.591 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Y.impl_witness_table = impl_witness_table (%AnyParam.as.Y.impl.K.decl), @AnyParam.as.Y.impl [concrete]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness %Y.impl_witness_table [concrete = constants.%Y.impl_witness]
@@ -1942,7 +1942,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type.cd1 = name_ref GenericInterface, file.%GenericInterface.decl [concrete = constants.%GenericInterface.generic]
 // CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericInterface.type.cd1, constants.%GenericInterface.generic) [concrete = constants.%AnyParam.591]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %obj: ref %AnyParam.591 = ref_binding obj, %obj.var
+// CHECK:STDOUT:   %obj: ref %AnyParam.591 = wrapper_binding obj, %obj.var
 // CHECK:STDOUT:   %obj.ref: ref %AnyParam.591 = name_ref obj, %obj
 // CHECK:STDOUT:   %PackageHasParam.ref.loc14: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
@@ -2187,7 +2187,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type.cd1 = name_ref GenericInterface, imports.%PackageGenericInterface.GenericInterface [concrete = constants.%GenericInterface.generic]
 // CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericInterface.type.cd1, constants.%GenericInterface.generic) [concrete = constants.%AnyParam.591]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %obj: ref %AnyParam.591 = ref_binding obj, %obj.var
+// CHECK:STDOUT:   %obj: ref %AnyParam.591 = wrapper_binding obj, %obj.var
 // CHECK:STDOUT:   %obj.ref: ref %AnyParam.591 = name_ref obj, %obj
 // CHECK:STDOUT:   %PackageHasParam.ref.loc10: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
@@ -2396,7 +2396,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %AnyParam.21c = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @AnyParam.as.Y.impl.%AnyParam [concrete = constants.%AnyParam.21c]
-// CHECK:STDOUT:     %self: %AnyParam.21c = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %AnyParam.21c = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Y.impl_witness_table = impl_witness_table (%AnyParam.as.Y.impl.K.decl), @AnyParam.as.Y.impl [concrete]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness %Y.impl_witness_table [concrete = constants.%Y.impl_witness]
@@ -2474,7 +2474,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %GenericClass.ref: %GenericClass.type = name_ref GenericClass, file.%GenericClass.decl [concrete = constants.%GenericClass.generic]
 // CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericClass.type, constants.%GenericClass.generic) [concrete = constants.%AnyParam.21c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %obj: ref %AnyParam.21c = ref_binding obj, %obj.var
+// CHECK:STDOUT:   %obj: ref %AnyParam.21c = wrapper_binding obj, %obj.var
 // CHECK:STDOUT:   %obj.ref: ref %AnyParam.21c = name_ref obj, %obj
 // CHECK:STDOUT:   %PackageHasParam.ref.loc14: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
@@ -2713,7 +2713,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %GenericClass.ref: %GenericClass.type = name_ref GenericClass, imports.%PackageGenericClass.GenericClass [concrete = constants.%GenericClass.generic]
 // CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericClass.type, constants.%GenericClass.generic) [concrete = constants.%AnyParam.21c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %obj: ref %AnyParam.21c = ref_binding obj, %obj.var
+// CHECK:STDOUT:   %obj: ref %AnyParam.21c = wrapper_binding obj, %obj.var
 // CHECK:STDOUT:   %obj.ref: ref %AnyParam.21c = name_ref obj, %obj
 // CHECK:STDOUT:   %PackageHasParam.ref.loc9: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
@@ -3008,7 +3008,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:       %Self.as_type.loc14_20.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc14_20.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc14_20.2: type = converted %Self.ref, %Self.as_type.loc14_20.2 [symbolic = %Self.as_type.loc14_20.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc14_20.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc14_20.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -3027,7 +3027,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C.279 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.I.impl.%C [concrete = constants.%C.279]
-// CHECK:STDOUT:     %self: %C.279 = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C.279 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%C.as.I.impl.F.decl), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
@@ -3224,7 +3224,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:       %.loc5_33: type = type_literal type [concrete = type]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(type) [concrete = constants.%C.62c]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %C.62c = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %C.62c = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

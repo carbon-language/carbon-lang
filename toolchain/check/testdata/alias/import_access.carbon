@@ -116,7 +116,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref %C = var %inst.var_patt [concrete]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Test.A [concrete = constants.%C]
-// CHECK:STDOUT:   %inst: ref %C = ref_binding inst, %inst.var [concrete = %inst.var]
+// CHECK:STDOUT:   %inst: ref %C = wrapper_binding inst, %inst.var [concrete = %inst.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "def.carbon"] {
@@ -159,7 +159,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref <error> = var %inst.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [concrete = <error>]
-// CHECK:STDOUT:   %inst: ref <error> = ref_binding inst, <error> [concrete = <error>]
+// CHECK:STDOUT:   %inst: <error> = wrapper_binding inst, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -198,7 +198,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:     %A.ref: <error> = name_ref A, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst: ref <error> = ref_binding inst, <error> [concrete = <error>]
+// CHECK:STDOUT:   %inst: <error> = wrapper_binding inst, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -156,7 +156,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:     %.loc18_11.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc18_11.3: type = converted %.loc18_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %empty_tuple.type = ref_binding c, %c.var
+// CHECK:STDOUT:   %c: ref %empty_tuple.type = wrapper_binding c, %c.var
 // CHECK:STDOUT:   %c.ref.loc19: ref %empty_tuple.type = name_ref c, %c
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %B.call: init %empty_tuple.type = call %B.ref()

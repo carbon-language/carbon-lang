@@ -126,7 +126,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %S = ref_binding s, %s.var
+// CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %s.var
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstS.ref: %TakesConstS.cpp_overload_set.type = name_ref TakesConstS, imports.%TakesConstS.cpp_overload_set.value [concrete = constants.%TakesConstS.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s

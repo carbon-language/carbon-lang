@@ -187,7 +187,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %void.ref: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
 // CHECK:STDOUT:     %ptr.loc10: type = ptr_type %void.ref [concrete = constants.%ptr.00a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.00a = value_binding p, %.loc10_29.2
+// CHECK:STDOUT:   %p: %ptr.00a = wrapper_binding p, %.loc10_29.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -240,7 +240,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %void.ref: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
 // CHECK:STDOUT:     %ptr.loc10: type = ptr_type %void.ref [concrete = constants.%ptr.00a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.00a = value_binding p, %.loc10_29.2
+// CHECK:STDOUT:   %p: %ptr.00a = wrapper_binding p, %.loc10_29.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -308,7 +308,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %void.ref.loc10_20: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
 // CHECK:STDOUT:     %ptr.loc10_25: type = ptr_type %void.ref.loc10_20 [concrete = constants.%ptr.00a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.00a = value_binding p, %.loc10_35.2
+// CHECK:STDOUT:   %p: %ptr.00a = wrapper_binding p, %.loc10_35.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -374,7 +374,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %void.ref.loc10_20: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
 // CHECK:STDOUT:     %ptr.loc10_25: type = ptr_type %void.ref.loc10_20 [concrete = constants.%ptr.00a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.00a = value_binding p, %.loc10_35.2
+// CHECK:STDOUT:   %p: %ptr.00a = wrapper_binding p, %.loc10_35.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -413,7 +413,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %S.ref.loc17_20: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:     %ptr.loc17_22: type = ptr_type %S.ref.loc17_20 [concrete = constants.%ptr.037]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.037 = value_binding p, <error> [concrete = <error>]
+// CHECK:STDOUT:   %p: %ptr.037 = wrapper_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -441,7 +441,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %C.ref.loc17_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc17_18: type = ptr_type %C.ref.loc17_17 [concrete = constants.%ptr.6b6]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.6b6 = value_binding p, <error> [concrete = <error>]
+// CHECK:STDOUT:   %p: %ptr.6b6 = wrapper_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -500,7 +500,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %S.ref.loc10_20: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:     %ptr.loc10_22: type = ptr_type %S.ref.loc10_20 [concrete = constants.%ptr.037]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.037 = value_binding p, %.loc10_39.2
+// CHECK:STDOUT:   %p: %ptr.037 = wrapper_binding p, %.loc10_39.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -551,7 +551,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %C.ref.loc10_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc10_18: type = ptr_type %C.ref.loc10_17 [concrete = constants.%ptr.6b6]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr.6b6 = value_binding p, %.loc10_35.2
+// CHECK:STDOUT:   %p: %ptr.6b6 = wrapper_binding p, %.loc10_35.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

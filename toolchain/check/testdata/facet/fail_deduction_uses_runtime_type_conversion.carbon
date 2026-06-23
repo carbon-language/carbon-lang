@@ -174,7 +174,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:       %T.ref.loc27_56: %tuple.type = name_ref T, %T.loc27_7.2 [symbolic = %T.loc27_7.1 (constants.%T)]
 // CHECK:STDOUT:       %HoldsType.loc27_57.2: type = class_type @HoldsType, @HoldsType(constants.%T) [symbolic = %HoldsType.loc27_57.1 (constants.%HoldsType.a83)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @F.%HoldsType.loc27_57.1 (%HoldsType.a83) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @F.%HoldsType.loc27_57.1 (%HoldsType.a83) = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %holds_to.param_patt: %pattern_type.905 = value_param_pattern [concrete = constants.%holds_to.param_patt]
@@ -190,7 +190,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:       %.loc29_46.2: %tuple.type = converted %.loc29_45, %tuple.loc29 [concrete = constants.%tuple.162]
 // CHECK:STDOUT:       %HoldsType: type = class_type @HoldsType, @HoldsType(constants.%tuple.162) [concrete = constants.%HoldsType.9f2]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %holds_to: %HoldsType.9f2 = value_binding holds_to, %holds_to.param
+// CHECK:STDOUT:     %holds_to: %HoldsType.9f2 = wrapper_binding holds_to, %holds_to.param
 // CHECK:STDOUT:     %.loc29_56: type = splice_block %RuntimeConvertFrom.ref [concrete = constants.%RuntimeConvertFrom] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %RuntimeConvertFrom.ref: type = name_ref RuntimeConvertFrom, file.%RuntimeConvertFrom.decl [concrete = constants.%RuntimeConvertFrom]
@@ -210,7 +210,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:     %.loc24_30: Core.Form = init_form %RuntimeConvertTo.ref [concrete = constants.%.aac]
 // CHECK:STDOUT:     %self.param: %RuntimeConvertFrom = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @RuntimeConvertFrom.as.ImplicitAs.impl.%RuntimeConvertFrom.ref [concrete = constants.%RuntimeConvertFrom]
-// CHECK:STDOUT:     %self: %RuntimeConvertFrom = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %RuntimeConvertFrom = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %RuntimeConvertTo = out_param call_param1
 // CHECK:STDOUT:     %return: ref %RuntimeConvertTo = return_slot %return.param
 // CHECK:STDOUT:   }

@@ -177,7 +177,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:         %Self.as_type.loc4_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:         %.loc4_14.3: type = converted %Self.ref, %Self.as_type.loc4_14.2 [symbolic = %Self.as_type.loc4_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc4_14.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc4_14.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @ImplicitAs.WithSelf.Convert.%Dest (%Dest) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @ImplicitAs.WithSelf.Convert.%Dest (%Dest) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -320,7 +320,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %a: %A = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %A = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -348,7 +348,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:         %Self.as_type.loc5_9.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:         %.loc5_9.3: type = converted %Self.ref, %Self.as_type.loc5_9.2 [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Action.WithSelf.Op.%Self.as_type.loc5_9.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @Action.WithSelf.Op.%Self.as_type.loc5_9.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc5_14.1: @Action.WithSelf.%Action.assoc_type (%Action.assoc_type.1c3) = assoc_entity element0, %Action.WithSelf.Op.decl [symbolic = %assoc0.loc5_14.2 (constants.%assoc0.26f)]
 // CHECK:STDOUT:
@@ -368,7 +368,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %A = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @A.as.Action.impl.%A.ref [concrete = constants.%A]
-// CHECK:STDOUT:     %self: %A = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %A = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Action.impl_witness_table = impl_witness_table (%A.as.Action.impl.Op.decl), @A.as.Action.impl [concrete]
 // CHECK:STDOUT:   %Action.impl_witness: <witness> = impl_witness %Action.impl_witness_table [concrete = constants.%Action.impl_witness]
@@ -585,7 +585,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
-// CHECK:STDOUT:     %a: %A = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %A = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -792,7 +792,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
-// CHECK:STDOUT:     %a: %A = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %A = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1042,7 +1042,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:         %Self.as_type.loc8_13.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc8_13.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:         %.loc8_13.3: type = converted %Self.ref, %Self.as_type.loc8_13.2 [symbolic = %Self.as_type.loc8_13.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Factory.WithSelf.Method.%Self.as_type.loc8_13.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @Factory.WithSelf.Method.%Self.as_type.loc8_13.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @Factory.WithSelf.Method.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Factory.WithSelf.Method.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -1081,7 +1081,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %.loc16: Core.Form = init_form %B.ref [concrete = constants.%.d83]
 // CHECK:STDOUT:     %self.param: %A = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @A.as.Factory.impl.%A.ref [concrete = constants.%A]
-// CHECK:STDOUT:     %self: %A = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %A = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %B = out_param call_param1
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1361,7 +1361,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %.loc7_23.2: Core.Form = init_form %B.ref.loc7 [concrete = constants.%.d83]
 // CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
-// CHECK:STDOUT:     %a: %A = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %A = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %B = out_param call_param1
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1657,7 +1657,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %.loc16: Core.Form = init_form %C.ref.loc16 [concrete = constants.%.a44]
 // CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
-// CHECK:STDOUT:     %a: %A = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %A = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }

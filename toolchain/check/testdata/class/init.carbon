@@ -112,13 +112,13 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %.loc20_34: Core.Form = init_form %Class.ref.loc20_34 [concrete = constants.%.d76]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
+// CHECK:STDOUT:     %n: %i32 = wrapper_binding n, %n.param
 // CHECK:STDOUT:     %next.param: %ptr.7ee = value_param call_param1
 // CHECK:STDOUT:     %.loc20_28: type = splice_block %ptr [concrete = constants.%ptr.7ee] {
 // CHECK:STDOUT:       %Class.ref.loc20_23: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref.loc20_23 [concrete = constants.%ptr.7ee]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %next: %ptr.7ee = value_binding next, %next.param
+// CHECK:STDOUT:     %next: %ptr.7ee = wrapper_binding next, %next.param
 // CHECK:STDOUT:     %return.param: ref %Class = out_param call_param2
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -134,13 +134,13 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %.loc24_41: Core.Form = init_form %Class.ref.loc24_41 [concrete = constants.%.d76]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
+// CHECK:STDOUT:     %n: %i32 = wrapper_binding n, %n.param
 // CHECK:STDOUT:     %next.param: %ptr.7ee = value_param call_param1
 // CHECK:STDOUT:     %.loc24_35: type = splice_block %ptr [concrete = constants.%ptr.7ee] {
 // CHECK:STDOUT:       %Class.ref.loc24_30: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref.loc24_30 [concrete = constants.%ptr.7ee]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %next: %ptr.7ee = value_binding next, %next.param
+// CHECK:STDOUT:     %next: %ptr.7ee = wrapper_binding next, %next.param
 // CHECK:STDOUT:     %return.param: ref %Class = out_param call_param2
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }

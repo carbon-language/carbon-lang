@@ -149,7 +149,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc4_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc4: %empty_struct_type = value_binding _, %.loc4_14
+// CHECK:STDOUT:   %_.loc4: %empty_struct_type = wrapper_binding _, %.loc4_14
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt.loc5: %pattern_type.a96 = ref_binding_pattern _ [concrete = constants.%_.patt.7e8]
 // CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc5 [concrete = constants.%_.var_patt.d5b]
@@ -159,7 +159,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc5_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc5: ref %empty_struct_type = ref_binding _, %_.var
+// CHECK:STDOUT:   %_.loc5: ref %empty_struct_type = wrapper_binding _, %_.var
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -175,7 +175,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc8_11.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc8_11.3: type = converted %.loc8_11.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc8: %empty_struct_type = value_binding _, %.loc8_16.2
+// CHECK:STDOUT:   %_.loc8: %empty_struct_type = wrapper_binding _, %.loc8_16.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt.loc9: %pattern_type.a96 = ref_binding_pattern _ [concrete = constants.%_.patt.3b4]
 // CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc9 [concrete = constants.%_.var_patt.f52]
@@ -189,7 +189,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc9_11.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc9_11.3: type = converted %.loc9_11.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc9: ref %empty_struct_type = ref_binding _, %_.var
+// CHECK:STDOUT:   %_.loc9: ref %empty_struct_type = wrapper_binding _, %_.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %_.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%_.var)
 // CHECK:STDOUT:   return
@@ -248,7 +248,7 @@ fn F() -> {} {
 // CHECK:STDOUT:       %.loc4_10.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_: %empty_struct_type = value_binding _, %_.param
+// CHECK:STDOUT:     %_: %empty_struct_type = wrapper_binding _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern [concrete = constants.%_.param_patt]
@@ -259,7 +259,7 @@ fn F() -> {} {
 // CHECK:STDOUT:       %.loc6_10.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc6_10.3: type = converted %.loc6_10.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_: %empty_struct_type = value_binding _, %_.param
+// CHECK:STDOUT:     %_: %empty_struct_type = wrapper_binding _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {}
 // CHECK:STDOUT: }

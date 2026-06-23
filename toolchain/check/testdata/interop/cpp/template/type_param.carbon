@@ -95,7 +95,7 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.83a = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %TwoTypes = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %x: ref %TwoTypes = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %TwoTypes = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -142,7 +142,7 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.0c3 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %TwoTypes = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %x: ref %TwoTypes = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %TwoTypes = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

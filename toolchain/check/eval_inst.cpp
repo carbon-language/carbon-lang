@@ -115,26 +115,11 @@ auto EvalConstantInst(Context& context, SemIR::AliasBinding inst)
       context.constant_values().Get(inst.value_id));
 }
 
-auto EvalConstantInst(Context& context, SemIR::RefBinding inst)
-    -> ConstantEvalResult {
-  // A reference binding evaluates to the value it's bound to.
-  if (inst.value_id.has_value()) {
-    return ConstantEvalResult::Existing(
-        context.constant_values().Get(inst.value_id));
-  }
-  return ConstantEvalResult::NotConstant;
-}
-
-auto EvalConstantInst(Context& /*context*/, SemIR::ValueBinding /*inst*/)
-    -> ConstantEvalResult {
-  // Non-`:!` value bindings are not constant.
-  return ConstantEvalResult::NotConstant;
-}
-
 auto EvalConstantInst(Context& context, SemIR::WrapperBinding inst)
     -> ConstantEvalResult {
-  // A wrapper binding evaluates to the value it's bound to.
-  if (inst.value_id.has_value()) {
+  // A reference binding evaluates to the value it's bound to.
+  if (inst.value_id.has_value() && SemIR::IsRefCategory(SemIR::GetExprCategory(
+                                       context.sem_ir(), inst.value_id))) {
     return ConstantEvalResult::Existing(
         context.constant_values().Get(inst.value_id));
   }

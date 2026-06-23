@@ -76,7 +76,7 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:     %.loc12_24.3: bool = converted %Eq.call.loc12, %.loc12_24.2 [concrete = constants.%true]
 // CHECK:STDOUT:     %C.loc12: type = class_type @C, @C(constants.%true) [concrete = constants.%C.ac4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.ac4 = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %C.ac4 = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -133,7 +133,7 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:     %.loc10_22.3: bool = converted %bool.as.EqWith.impl.Equal.call.loc10, %.loc10_22.2 [concrete = constants.%true]
 // CHECK:STDOUT:     %C.loc10: type = class_type @C, @C(constants.%true) [concrete = constants.%C.ac4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.ac4 = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %C.ac4 = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

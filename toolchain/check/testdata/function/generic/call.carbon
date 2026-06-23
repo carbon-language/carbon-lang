@@ -171,7 +171,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:       %T.as_type.loc5_31.2: type = facet_access_type %T.ref.loc5_31 [symbolic = %T.as_type.loc5_31.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc5_31.2: type = converted %T.ref.loc5_31, %T.as_type.loc5_31.2 [symbolic = %T.as_type.loc5_31.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @Function.%T.as_type.loc5_31.1 (%T.as_type) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @Function.%T.as_type.loc5_31.1 (%T.as_type) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @Function.%T.as_type.loc5_31.1 (%T.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @Function.%T.as_type.loc5_31.1 (%T.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -461,7 +461,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:       %T.as_type.loc5_31.2: type = facet_access_type %T.ref.loc5_31 [symbolic = %T.as_type.loc5_31.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc5_31.2: type = converted %T.ref.loc5_31, %T.as_type.loc5_31.2 [symbolic = %T.as_type.loc5_31.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @Function.%T.as_type.loc5_31.1 (%T.as_type) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @Function.%T.as_type.loc5_31.1 (%T.as_type) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @Function.%T.as_type.loc5_31.1 (%T.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @Function.%T.as_type.loc5_31.1 (%T.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }

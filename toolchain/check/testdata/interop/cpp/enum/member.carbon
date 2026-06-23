@@ -72,7 +72,7 @@ fn F() {
 // CHECK:STDOUT:     %A.ref.loc8_20: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %E.ref.loc8: type = name_ref E, imports.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %E = value_binding a, %a.ref
+// CHECK:STDOUT:   %a: %E = wrapper_binding a, %a.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
@@ -85,7 +85,7 @@ fn F() {
 // CHECK:STDOUT:     %A.ref.loc9_20: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %E.ref.loc9_22: type = name_ref E, imports.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %E = value_binding b, %b.ref
+// CHECK:STDOUT:   %b: %E = wrapper_binding b, %b.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

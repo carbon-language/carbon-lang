@@ -125,7 +125,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %.loc25_34: Core.Form = init_form %i32.loc25 [concrete = constants.%.795]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc25_25: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -151,7 +151,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc17: init %i32 = converted %int_0.loc17, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17 [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   assign %v.var, %.loc17
 // CHECK:STDOUT:   %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   br !if.else.loc16
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc16:
@@ -173,7 +173,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc20: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc20 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   assign %w.var, %.loc20
 // CHECK:STDOUT:   %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %w: ref %i32 = ref_binding w, %w.var
+// CHECK:STDOUT:   %w: ref %i32 = wrapper_binding w, %w.var
 // CHECK:STDOUT:   br !if.else.loc19
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc19:
@@ -218,7 +218,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc27_14: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc27 [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   assign %v.var, %.loc27_14
 // CHECK:STDOUT:   %i32.loc27: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   %.loc27_19: %i32 = acquire_value %v
 // CHECK:STDOUT:   %Destroy.Op.bound.loc27_14.1: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc27_14.1: init %empty_tuple.type = call %Destroy.Op.bound.loc27_14.1(%v.var)
@@ -239,7 +239,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc30_12: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc30 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   assign %w.var, %.loc30_12
 // CHECK:STDOUT:   %i32.loc30: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %w: ref %i32 = ref_binding w, %w.var
+// CHECK:STDOUT:   %w: ref %i32 = wrapper_binding w, %w.var
 // CHECK:STDOUT:   %.loc30_17: %i32 = acquire_value %w
 // CHECK:STDOUT:   %Destroy.Op.bound.loc30: <bound method> = bound_method %w.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc30: init %empty_tuple.type = call %Destroy.Op.bound.loc30(%w.var)

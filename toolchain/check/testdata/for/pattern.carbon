@@ -256,7 +256,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_36.10: ref %C = temporary %.loc10_36.8, %Optional.Get.call
 // CHECK:STDOUT:   %.loc10_36.11: %C = acquire_value %.loc10_36.10
 // CHECK:STDOUT:   %C.ref.loc10_11: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: %C = value_binding c, %.loc10_36.11
+// CHECK:STDOUT:   %c: %C = wrapper_binding c, %.loc10_36.11
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref(%c.ref)
@@ -439,7 +439,7 @@ fn Run() {
 // CHECK:STDOUT:   %Optional.Get.call: init %C to %.loc10_8 = call %bound_method.loc10_40.6(%.loc10_40.8)
 // CHECK:STDOUT:   assign %c.var, %Optional.Get.call
 // CHECK:STDOUT:   %C.ref.loc10_15: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %addr.loc11: %ptr.6b6 = addr_of %c.ref
@@ -637,10 +637,10 @@ fn Run() {
 // CHECK:STDOUT:   %tuple.elem1: ref bool = tuple_access %.loc10_61.10, element1
 // CHECK:STDOUT:   %.loc10_61.11: bool = acquire_value %tuple.elem0
 // CHECK:STDOUT:   %.loc10_12: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %a: bool = value_binding a, %.loc10_61.11
+// CHECK:STDOUT:   %a: bool = wrapper_binding a, %.loc10_61.11
 // CHECK:STDOUT:   %.loc10_61.12: bool = acquire_value %tuple.elem1
 // CHECK:STDOUT:   %.loc10_21: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %b: bool = value_binding b, %.loc10_61.12
+// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc10_61.12
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %a.ref: bool = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
@@ -840,10 +840,10 @@ fn Run() {
 // CHECK:STDOUT:   %tuple.elem1: ref %C = tuple_access %.loc10_49.10, element1
 // CHECK:STDOUT:   %.loc10_49.11: %C = acquire_value %tuple.elem0
 // CHECK:STDOUT:   %C.ref.loc10_12: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %a: %C = value_binding a, %.loc10_49.11
+// CHECK:STDOUT:   %a: %C = wrapper_binding a, %.loc10_49.11
 // CHECK:STDOUT:   %.loc10_49.12: %C = acquire_value %tuple.elem1
 // CHECK:STDOUT:   %C.ref.loc10_18: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %b: %C = value_binding b, %.loc10_49.12
+// CHECK:STDOUT:   %b: %C = wrapper_binding b, %.loc10_49.12
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b

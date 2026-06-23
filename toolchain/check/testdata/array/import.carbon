@@ -160,7 +160,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32.loc7 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %array_type = value_binding a, %impl.elem0.loc7
+// CHECK:STDOUT:   %a: %array_type = wrapper_binding a, %impl.elem0.loc7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

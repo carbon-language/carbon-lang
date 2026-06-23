@@ -94,7 +94,7 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:       %array_type.loc15_30.2: type = array_type %.loc15_29.2, %i32.loc15_24 [symbolic = %array_type.loc15_30.1 (constants.%array_type)]
 // CHECK:STDOUT:       %ptr.loc15_31.2: type = ptr_type %array_type.loc15_30.2 [symbolic = %ptr.loc15_31.1 (constants.%ptr)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%ptr.loc15_31.1 (%ptr) = value_binding a, %a.param
+// CHECK:STDOUT:     %a: @F.%ptr.loc15_31.1 (%ptr) = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

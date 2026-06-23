@@ -163,7 +163,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:       %int_3.loc17: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:       %array_type.loc17: type = array_type %int_3.loc17, %i32.loc17 [concrete = constants.%array_type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %array_type = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %array_type = wrapper_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ValueBinding.decl: %ValueBinding.type = fn_decl @ValueBinding [concrete = constants.%ValueBinding] {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.771 = value_param_pattern [concrete = constants.%b.param_patt]
@@ -175,7 +175,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:       %int_3.loc25: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:       %array_type.loc25: type = array_type %int_3.loc25, %i32.loc25 [concrete = constants.%array_type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %array_type = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %array_type = wrapper_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -227,7 +227,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:     %int_3.loc18_21: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type.loc18: type = array_type %int_3.loc18_21, %i32.loc18 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pa.patt: %pattern_type.f00 = ref_binding_pattern pa [concrete = constants.%pa.patt]
 // CHECK:STDOUT:     %pa.var_patt: %pattern_type.f00 = var_pattern %pa.patt [concrete = constants.%pa.var_patt]
@@ -254,7 +254,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:     %i32.loc21: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc21 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pa: ref %ptr.d08 = ref_binding pa, %pa.var
+// CHECK:STDOUT:   %pa: ref %ptr.d08 = wrapper_binding pa, %pa.var
 // CHECK:STDOUT:   %a.ref.loc22: ref %array_type = name_ref a, %a
 // CHECK:STDOUT:   %int_0.loc22: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc22_5: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
@@ -340,7 +340,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:     %int_3.loc26_21: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type.loc26: type = array_type %int_3.loc26_21, %i32.loc26 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %array_type = name_ref a, %a
 // CHECK:STDOUT:   %int_0.loc30: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc30: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]

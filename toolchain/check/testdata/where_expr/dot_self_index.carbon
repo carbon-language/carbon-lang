@@ -102,7 +102,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc21_41.2, %ptr.loc21_47.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.e78) = value_binding U, %U.param
+// CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.e78) = wrapper_binding U, %U.param
 // CHECK:STDOUT:     %.loc21_61.1: type = splice_block %.loc21_61.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.loc21_58: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
 // CHECK:STDOUT:       %.loc21_61.2: type = type_literal type [concrete = type]

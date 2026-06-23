@@ -138,7 +138,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc29: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %x: bool = value_binding x, %x.param
+// CHECK:STDOUT:     %x: bool = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -225,7 +225,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !.loc23_15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc23_15:
-// CHECK:STDOUT:   %a: ref bool = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref bool = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.cb1 = var_pattern %b.patt [concrete = constants.%b.var_patt]
@@ -264,7 +264,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !.loc24_15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc24_15:
-// CHECK:STDOUT:   %b: ref %empty_tuple.type = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %empty_tuple.type = wrapper_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.cb1 = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.cb1 = var_pattern %c.patt [concrete = constants.%c.var_patt]
@@ -303,7 +303,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !.loc25_15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc25_15:
-// CHECK:STDOUT:   %c: ref %empty_tuple.type = ref_binding c, %c.var
+// CHECK:STDOUT:   %c: ref %empty_tuple.type = wrapper_binding c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.cb1 = ref_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.cb1 = var_pattern %d.patt [concrete = constants.%d.var_patt]
@@ -342,7 +342,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !.loc26_15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc26_15:
-// CHECK:STDOUT:   %d: ref %empty_tuple.type = ref_binding d, %d.var
+// CHECK:STDOUT:   %d: ref %empty_tuple.type = wrapper_binding d, %d.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc26: <bound method> = bound_method %d.var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc26: init %empty_tuple.type = call %Destroy.Op.bound.loc26(%d.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc25: <bound method> = bound_method %c.var, constants.%Destroy.Op.1a2547.1
@@ -398,7 +398,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !.loc30_15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc30_15:
-// CHECK:STDOUT:   %a: ref %empty_tuple.type = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   return

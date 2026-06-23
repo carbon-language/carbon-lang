@@ -140,7 +140,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:       %T.ref.loc6_19: type = name_ref T, %T.loc6_7.2 [symbolic = %T.loc6_7.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc6_20.2: type = ptr_type %T.ref.loc6_19 [symbolic = %ptr.loc6_20.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: @F.%ptr.loc6_20.1 (%ptr.e8f) = value_binding p, %p.param
+// CHECK:STDOUT:     %p: @F.%ptr.loc6_20.1 (%ptr.e8f) = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref @F.%T.loc6_7.1 (%T) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_7.1 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -157,7 +157,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:       %C.ref.loc8_9: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr: type = ptr_type %C.ref.loc8_9 [concrete = constants.%ptr.6b6]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.6b6 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.6b6 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -321,7 +321,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:       %const.loc6_19.2: type = const_type %T.ref.loc6_25 [symbolic = %const.loc6_19.1 (constants.%const.4ff)]
 // CHECK:STDOUT:       %ptr.loc6_26.2: type = ptr_type %const.loc6_19.2 [symbolic = %ptr.loc6_26.1 (constants.%ptr.a15)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: @F.%ptr.loc6_26.1 (%ptr.a15) = value_binding p, %p.param
+// CHECK:STDOUT:     %p: @F.%ptr.loc6_26.1 (%ptr.a15) = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref @F.%T.loc6_7.1 (%T) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_7.1 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -339,7 +339,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:       %const: type = const_type %C.ref.loc8_15 [concrete = constants.%const.13f]
 // CHECK:STDOUT:       %ptr: type = ptr_type %const [concrete = constants.%ptr.77f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.77f = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.77f = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -504,7 +504,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:       %T.ref.loc6_19: type = name_ref T, %T.loc6_7.2 [symbolic = %T.loc6_7.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc6_20.2: type = ptr_type %T.ref.loc6_19 [symbolic = %ptr.loc6_20.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: @F.%ptr.loc6_20.1 (%ptr.e8f) = value_binding p, %p.param
+// CHECK:STDOUT:     %p: @F.%ptr.loc6_20.1 (%ptr.e8f) = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref @F.%T.loc6_7.1 (%T) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_7.1 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -523,7 +523,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:       %const.loc8_9: type = const_type %C.ref.loc8_15 [concrete = constants.%const]
 // CHECK:STDOUT:       %ptr: type = ptr_type %const.loc8_9 [concrete = constants.%ptr.77f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.77f = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.77f = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const = out_param call_param1
 // CHECK:STDOUT:     %return: ref %const = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -685,7 +685,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:       %const.loc6_19.2: type = const_type %T.ref.loc6_25 [symbolic = %const.loc6_19.1 (constants.%const.4ff)]
 // CHECK:STDOUT:       %ptr.loc6_26.2: type = ptr_type %const.loc6_19.2 [symbolic = %ptr.loc6_26.1 (constants.%ptr.a15)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: @F.%ptr.loc6_26.1 (%ptr.a15) = value_binding p, %p.param
+// CHECK:STDOUT:     %p: @F.%ptr.loc6_26.1 (%ptr.a15) = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref @F.%T.loc6_7.1 (%T) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_7.1 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -703,7 +703,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:       %C.ref.loc8_9: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr: type = ptr_type %C.ref.loc8_9 [concrete = constants.%ptr.6b6]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.6b6 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.6b6 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.13f = out_param call_param1
 // CHECK:STDOUT:     %return: ref %const.13f = return_slot %return.param
 // CHECK:STDOUT:   }

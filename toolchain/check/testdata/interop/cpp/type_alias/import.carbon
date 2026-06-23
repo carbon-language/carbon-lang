@@ -127,7 +127,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %foo.ref: type = name_ref foo, %i32.4 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %i32 = ref_binding n, %n.var
+// CHECK:STDOUT:   %n: ref %i32 = wrapper_binding n, %n.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type.f00 = ref_binding_pattern p [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.f00 = var_pattern %p.patt [concrete = constants.%p.var_patt]
@@ -147,7 +147,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:     %bar.ref: type = name_ref bar, %i32.2 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %bar.ref [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: ref %ptr.d08 = ref_binding p, %p.var
+// CHECK:STDOUT:   %p: ref %ptr.d08 = wrapper_binding p, %p.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10: <bound method> = bound_method %p.var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc10: init %empty_tuple.type = call %Destroy.Op.bound.loc10(%p.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc8: <bound method> = bound_method %n.var, constants.%Destroy.Op.1a2547.3
@@ -221,7 +221,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:     %D.ref.loc9: type = name_ref D, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %D.ref.loc9 [concrete = constants.%ptr.0a2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pd: ref %ptr.0a2 = ref_binding pd, %pd.var
+// CHECK:STDOUT:   %pd: ref %ptr.0a2 = wrapper_binding pd, %pd.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pc.patt: %pattern_type.8fa = ref_binding_pattern pc [concrete = constants.%pc.patt]
 // CHECK:STDOUT:     %pc.var_patt: %pattern_type.8fa = var_pattern %pc.patt [concrete = constants.%pc.var_patt]
@@ -240,7 +240,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc10: type = ptr_type %C.ref.loc10 [concrete = constants.%ptr.0a2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pc: ref %ptr.0a2 = ref_binding pc, %pc.var
+// CHECK:STDOUT:   %pc: ref %ptr.0a2 = wrapper_binding pc, %pc.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10: <bound method> = bound_method %pc.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc10: init %empty_tuple.type = call %Destroy.Op.bound.loc10(%pc.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc9: <bound method> = bound_method %pd.var, constants.%Destroy.Op

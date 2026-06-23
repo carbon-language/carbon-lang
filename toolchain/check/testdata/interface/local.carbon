@@ -74,7 +74,7 @@ fn F() {
 // CHECK:STDOUT:       %Self.as_type.loc17_10.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc17_10.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc17_10.2: type = converted %Self.ref, %Self.as_type.loc17_10.2 [symbolic = %Self.as_type.loc17_10.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.G.%Self.as_type.loc17_10.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.G.%Self.as_type.loc17_10.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.G.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -93,7 +93,7 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @empty_tuple.type.as.I.impl.%.loc19_9.2 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %self: %empty_tuple.type = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %empty_tuple.type = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%empty_tuple.type.as.I.impl.G.decl), @empty_tuple.type.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]

@@ -158,7 +158,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:       %Self.as_type.loc8_9.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc8_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc8_9.2: type = converted %Self.ref, %Self.as_type.loc8_9.2 [symbolic = %Self.as_type.loc8_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.Op.%Self.as_type.loc8_9.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.Op.%Self.as_type.loc8_9.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.Op.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -277,7 +277,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:     %c: %C = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %C = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -399,7 +399,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:     %c: %C = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %C = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -189,7 +189,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc16: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
+// CHECK:STDOUT:     %d: %Derived = wrapper_binding d, %d.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -388,7 +388,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, imports.%Main.Derived [concrete = constants.%Derived]
-// CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
+// CHECK:STDOUT:     %d: %Derived = wrapper_binding d, %d.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -772,7 +772,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc13_32.1: %i32 = value_of_initializer %X.G.call
 // CHECK:STDOUT:   %.loc13_32.2: %i32 = converted %X.G.call, %.loc13_32.1
 // CHECK:STDOUT:   %i32.loc13_17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %i: %i32 = value_binding i, %.loc13_32.2
+// CHECK:STDOUT:   %i: %i32 = wrapper_binding i, %.loc13_32.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -990,7 +990,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc7_32.1: %i32 = value_of_initializer %X.G.call
 // CHECK:STDOUT:   %.loc7_32.2: %i32 = converted %X.G.call, %.loc7_32.1
 // CHECK:STDOUT:   %i32.loc7_17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %j: %i32 = value_binding j, %.loc7_32.2
+// CHECK:STDOUT:   %j: %i32 = wrapper_binding j, %.loc7_32.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

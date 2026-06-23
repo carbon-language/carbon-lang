@@ -253,7 +253,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr.loc19_20: type = ptr_type %C.ref [concrete = constants.%ptr.6b6]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.6b6 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.6b6 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.432 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.432 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -271,7 +271,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:       %ptr.loc20_20: type = ptr_type %B.ref [concrete = constants.%ptr.432]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.432 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.432 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.d43 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.d43 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -289,7 +289,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr.loc21_20: type = ptr_type %C.ref [concrete = constants.%ptr.6b6]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.6b6 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.6b6 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.d43 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.d43 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -299,7 +299,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %c: %C = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %C = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertRef.decl: %ConvertRef.type = fn_decl @ConvertRef [concrete = constants.%ConvertRef] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.fcb = value_param_pattern [concrete = constants.%c.param_patt.200]
@@ -315,7 +315,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr.loc27_19: type = ptr_type %C.ref [concrete = constants.%ptr.6b6]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %ptr.6b6 = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %ptr.6b6 = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %ptr.d43 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.d43 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -380,7 +380,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %.loc24_21.4: ref %A = converted %c.ref, %.loc24_21.3
 // CHECK:STDOUT:   %.loc24_21.5: %A = acquire_value %.loc24_21.4
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %a: %A = value_binding a, %.loc24_21.5
+// CHECK:STDOUT:   %a: %A = wrapper_binding a, %.loc24_21.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -456,7 +456,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %.loc32_66.6: ref %A = converted %.loc32_66.1, %.loc32_66.5 [concrete = constants.%.79d]
 // CHECK:STDOUT:   %.loc32_66.7: %A = acquire_value %.loc32_66.6
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %a: %A = value_binding a, %.loc32_66.7
+// CHECK:STDOUT:   %a: %A = wrapper_binding a, %.loc32_66.7
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.320)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -107,38 +107,14 @@ auto AddBindingForPattern(Context& context, SemIR::LocId name_loc,
     -> SemIR::InstId {
   SemIR::InstKind bind_name_kind;
   switch (pattern.kind) {
-    case SemIR::RefBindingPattern::Kind:
-      bind_name_kind = SemIR::RefBinding::Kind;
-      break;
     case SemIR::SymbolicBindingPattern::Kind:
       bind_name_kind = SemIR::SymbolicBinding::Kind;
       break;
+    case SemIR::RefBindingPattern::Kind:
     case SemIR::ValueBindingPattern::Kind:
-      bind_name_kind = SemIR::ValueBinding::Kind;
+    case SemIR::WrapperBindingPattern::Kind:
+      bind_name_kind = SemIR::WrapperBinding::Kind;
       break;
-    case SemIR::WrapperBindingPattern::Kind: {
-      auto subpattern = context.insts().Get(pattern.subpattern_id);
-      if (subpattern.Is<SemIR::SpecificConstant>()) {
-        subpattern = context.constant_values().GetInst(
-            context.constant_values().Get(pattern.subpattern_id));
-      }
-      CARBON_KIND_SWITCH(subpattern) {
-        case SemIR::RefParamPattern::Kind:
-        case SemIR::VarPattern::Kind:
-          bind_name_kind = SemIR::RefBinding::Kind;
-          break;
-        case SemIR::ValueParamPattern::Kind:
-          bind_name_kind = SemIR::ValueBinding::Kind;
-          break;
-        case SemIR::SpliceInst::Kind:
-          bind_name_kind = SemIR::WrapperBinding::Kind;
-          break;
-        default:
-          CARBON_FATAL("Unexpected subpattern kind for at_binding_pattern: {0}",
-                       subpattern);
-      }
-      break;
-    }
     default:
       CARBON_FATAL("pattern_kind {0} is not a binding pattern kind",
                    pattern.kind);

@@ -531,7 +531,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %S = ref_binding s, %s.var
+// CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %s.var
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
@@ -616,7 +616,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %S = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %S = wrapper_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = value_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:   }
@@ -626,7 +626,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc9: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: %S = value_binding s, %.loc9_18
+// CHECK:STDOUT:   %s: %S = wrapper_binding s, %.loc9_18
 // CHECK:STDOUT:   %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref.loc18: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref.loc18: %S = name_ref s, %s
@@ -655,7 +655,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %Cpp.ref.loc30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T.ed0]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t: ref %T.ed0 = ref_binding t, %t.var
+// CHECK:STDOUT:   %t: ref %T.ed0 = wrapper_binding t, %t.var
 // CHECK:STDOUT:   %Cpp.ref.loc39: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref.loc39: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T.ed0 = name_ref t, %t
@@ -676,7 +676,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %Cpp.ref.loc41: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc41: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %u: ref %S = ref_binding u, %u.var
+// CHECK:STDOUT:   %u: ref %S = wrapper_binding u, %u.var
 // CHECK:STDOUT:   %Cpp.ref.loc50_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref.loc50: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: ref %S = name_ref u, %u
@@ -815,7 +815,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %S = ref_binding s, %s.var
+// CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %s.var
 // CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesRValue.ref.loc17: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
@@ -836,7 +836,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T.ed0]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t: ref %T.ed0 = ref_binding t, %t.var
+// CHECK:STDOUT:   %t: ref %T.ed0 = wrapper_binding t, %t.var
 // CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesRValue.ref.loc28: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T.ed0 = name_ref t, %t
@@ -912,7 +912,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %S = ref_binding s, %s.var
+// CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %s.var
 // CHECK:STDOUT:   %Cpp.ref.loc9_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstLValue.ref.loc9: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref.loc9: ref %S = name_ref s, %s
@@ -993,7 +993,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: %S = value_binding s, %.loc8_19.6
+// CHECK:STDOUT:   %s: %S = wrapper_binding s, %.loc8_19.6
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstLValue.ref.loc9: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref.loc9: %S = name_ref s, %s
@@ -1142,7 +1142,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %S = ref_binding s, %s.var
+// CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %s.var
 // CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstRValue.ref.loc17: %TakesConstRValue.cpp_overload_set.type = name_ref TakesConstRValue, imports.%TakesConstRValue.cpp_overload_set.value [concrete = constants.%TakesConstRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
@@ -1163,7 +1163,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T.ed0]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t: ref %T.ed0 = ref_binding t, %t.var
+// CHECK:STDOUT:   %t: ref %T.ed0 = wrapper_binding t, %t.var
 // CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstRValue.ref.loc28: %TakesConstRValue.cpp_overload_set.type = name_ref TakesConstRValue, imports.%TakesConstRValue.cpp_overload_set.value [concrete = constants.%TakesConstRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T.ed0 = name_ref t, %t
@@ -1209,7 +1209,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %S = ref_binding s, %ReturnsLValue.call
+// CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %ReturnsLValue.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1248,7 +1248,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %S = ref_binding s, %ReturnsRValue.call
+// CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %ReturnsRValue.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1289,7 +1289,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:     %const: type = const_type %S.ref [concrete = constants.%const]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %const = ref_binding s, %ReturnConstLValue.call
+// CHECK:STDOUT:   %s: ref %const = wrapper_binding s, %ReturnConstLValue.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

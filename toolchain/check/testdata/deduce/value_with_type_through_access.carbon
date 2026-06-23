@@ -202,14 +202,14 @@ fn G() {
 // CHECK:STDOUT:       %T.ref.loc8_40: %tuple.type = name_ref T, %T.loc8_7.2 [symbolic = %T.loc8_7.1 (constants.%T)]
 // CHECK:STDOUT:       %HoldsType.loc8_41.2: type = class_type @HoldsType, @HoldsType(constants.%T) [symbolic = %HoldsType.loc8_41.1 (constants.%HoldsType.a83)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @F.%HoldsType.loc8_41.1 (%HoldsType.a83) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @F.%HoldsType.loc8_41.1 (%HoldsType.a83) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %a.param: @F.%tuple.elem0.loc8_55.1 (%tuple.elem0) = value_param call_param1
 // CHECK:STDOUT:     %.loc8_55: type = splice_block %tuple.elem0.loc8_55.2 [symbolic = %tuple.elem0.loc8_55.1 (constants.%tuple.elem0)] {
 // CHECK:STDOUT:       %T.ref.loc8_54: %tuple.type = name_ref T, %T.loc8_7.2 [symbolic = %T.loc8_7.1 (constants.%T)]
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:       %tuple.elem0.loc8_55.2: type = tuple_access %T.ref.loc8_54, element0 [symbolic = %tuple.elem0.loc8_55.1 (constants.%tuple.elem0)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%tuple.elem0.loc8_55.1 (%tuple.elem0) = value_binding a, %a.param
+// CHECK:STDOUT:     %a: @F.%tuple.elem0.loc8_55.1 (%tuple.elem0) = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
@@ -443,13 +443,13 @@ fn G() {
 // CHECK:STDOUT:       %T.ref.loc8_42: %struct_type.t = name_ref T, %T.loc8_7.2 [symbolic = %T.loc8_7.1 (constants.%T)]
 // CHECK:STDOUT:       %HoldsType.loc8_43.2: type = class_type @HoldsType, @HoldsType(constants.%T) [symbolic = %HoldsType.loc8_43.1 (constants.%HoldsType.07e)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @F.%HoldsType.loc8_43.1 (%HoldsType.07e) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @F.%HoldsType.loc8_43.1 (%HoldsType.07e) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %a.param: @F.%.loc8_57.1 (%.424) = value_param call_param1
 // CHECK:STDOUT:     %.loc8_57.2: type = splice_block %.loc8_57.3 [symbolic = %.loc8_57.1 (constants.%.424)] {
 // CHECK:STDOUT:       %T.ref.loc8_56: %struct_type.t = name_ref T, %T.loc8_7.2 [symbolic = %T.loc8_7.1 (constants.%T)]
 // CHECK:STDOUT:       %.loc8_57.3: type = struct_access %T.ref.loc8_56, element0 [symbolic = %.loc8_57.1 (constants.%.424)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%.loc8_57.1 (%.424) = value_binding a, %a.param
+// CHECK:STDOUT:     %a: @F.%.loc8_57.1 (%.424) = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
@@ -692,7 +692,7 @@ fn G() {
 // CHECK:STDOUT:       %T.ref.loc21_37: %Class = name_ref T, %T.loc21_7.2 [symbolic = %T.loc21_7.1 (constants.%T.f25)]
 // CHECK:STDOUT:       %HoldsType.loc21_38.2: type = class_type @HoldsType, @HoldsType(constants.%T.f25) [symbolic = %HoldsType.loc21_38.1 (constants.%HoldsType.3500da.1)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @F.%HoldsType.loc21_38.1 (%HoldsType.3500da.1) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @F.%HoldsType.loc21_38.1 (%HoldsType.3500da.1) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %a.param: <error> = value_param call_param1
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %T.ref.loc21_51: %Class = name_ref T, %T.loc21_7.2 [symbolic = %T.loc21_7.1 (constants.%T.f25)]
@@ -700,7 +700,7 @@ fn G() {
 // CHECK:STDOUT:       %.loc21_52.2: ref type = class_element_access %T.ref.loc21_51, element0 [symbolic = %.loc21_52.1 (constants.%.9dd)]
 // CHECK:STDOUT:       %.loc21_52.3: type = acquire_value %.loc21_52.2
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: <error> = value_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:     %a: <error> = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
@@ -995,7 +995,7 @@ fn G() {
 // CHECK:STDOUT:       %T.ref.loc12_46: %array_type = name_ref T, %T.loc12_7.2 [symbolic = %T.loc12_7.1 (constants.%T.9b7)]
 // CHECK:STDOUT:       %HoldsType.loc12_47.2: type = class_type @HoldsType, @HoldsType(constants.%T.9b7) [symbolic = %HoldsType.loc12_47.1 (constants.%HoldsType.881)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @F.%HoldsType.loc12_47.1 (%HoldsType.881) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @F.%HoldsType.loc12_47.1 (%HoldsType.881) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %a.param: <error> = value_param call_param1
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %T.ref.loc12_60: %array_type = name_ref T, %T.loc12_7.2 [symbolic = %T.loc12_7.1 (constants.%T.9b7)]
@@ -1011,7 +1011,7 @@ fn G() {
 // CHECK:STDOUT:       %.loc12_63.2: ref type = array_index %.loc12_63.1, %.loc12_62.2
 // CHECK:STDOUT:       %.loc12_63.3: type = acquire_value %.loc12_63.2
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: <error> = value_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:     %a: <error> = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}

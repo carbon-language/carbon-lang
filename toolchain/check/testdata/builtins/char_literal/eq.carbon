@@ -43,14 +43,14 @@ let b: bool = Eq('a', 'b');
 // CHECK:STDOUT:   %.loc21_26.1: bool = value_of_initializer @__global_init.%Eq.call.loc21 [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc21_26.2: bool = converted @__global_init.%Eq.call.loc21, %.loc21_26.1 [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc21_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %a: bool = value_binding a, %.loc21_26.2
+// CHECK:STDOUT:   %a: bool = wrapper_binding a, %.loc21_26.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt.438]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_26.1: bool = value_of_initializer @__global_init.%Eq.call.loc22 [concrete = constants.%false]
 // CHECK:STDOUT:   %.loc22_26.2: bool = converted @__global_init.%Eq.call.loc22, %.loc22_26.1 [concrete = constants.%false]
 // CHECK:STDOUT:   %.loc22_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %b: bool = value_binding b, %.loc22_26.2
+// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc22_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

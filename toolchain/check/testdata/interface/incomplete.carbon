@@ -264,7 +264,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:       %U.as_type.loc9_16.2: type = facet_access_type %U.ref [symbolic = %U.as_type.loc9_16.1 (constants.%U.as_type)]
 // CHECK:STDOUT:       %.loc9_16.2: type = converted %U.ref, %U.as_type.loc9_16.2 [symbolic = %U.as_type.loc9_16.1 (constants.%U.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%U.as_type.loc9_16.1 (%U.as_type) = value_binding a, %a.param
+// CHECK:STDOUT:     %a: @F.%U.as_type.loc9_16.1 (%U.as_type) = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

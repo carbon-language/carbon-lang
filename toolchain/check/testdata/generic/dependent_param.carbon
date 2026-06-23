@@ -122,7 +122,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %i32 = var %n.var_patt [concrete]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %n: ref %i32 = ref_binding n, %n.var [concrete = %n.var]
+// CHECK:STDOUT:   %n: ref %i32 = wrapper_binding n, %n.var [concrete = %n.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Outer(%T.loc4_14.2: %Copy.type) {

@@ -256,7 +256,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc33: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc33 [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   assign %n.var, %.loc33
 // CHECK:STDOUT:   %i32.loc33: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %n: ref %i32 = ref_binding n, %n.var
+// CHECK:STDOUT:   %n: ref %i32 = wrapper_binding n, %n.var
 // CHECK:STDOUT:   %n.ref.loc38_4: ref %i32 = name_ref n, %n
 // CHECK:STDOUT:   %n.ref.loc38_7: ref %i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc38_8.1: %tuple.type.e55 = tuple_literal (%n.ref.loc38_4, %n.ref.loc38_7)
@@ -362,7 +362,7 @@ fn Main() {
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %i32 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %a.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   %i32.loc56: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: ref %i32 = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %i32 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %true.loc61: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true.loc61 br !if.expr.then.loc61 else br !if.expr.else.loc61
 // CHECK:STDOUT:

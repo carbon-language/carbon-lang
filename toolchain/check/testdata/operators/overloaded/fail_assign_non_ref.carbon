@@ -121,7 +121,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a: %C = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %C = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAddAssignNonRef.decl: %TestAddAssignNonRef.type = fn_decl @TestAddAssignNonRef [concrete = constants.%TestAddAssignNonRef] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.4a7 = value_param_pattern [concrete = constants.%a.param_patt]
@@ -131,10 +131,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc37_27: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a: %C = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %C = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %C = value_param call_param1
 // CHECK:STDOUT:     %C.ref.loc37_33: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %b: %C = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %C = wrapper_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -145,7 +145,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %self: ref %C = ref_binding self, %self.param
+// CHECK:STDOUT:     %self: ref %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Inc.impl_witness_table = impl_witness_table (%C.as.Inc.impl.Op.decl), @C.as.Inc.impl [concrete]
 // CHECK:STDOUT:   %Inc.impl_witness: <witness> = impl_witness %Inc.impl_witness_table [concrete = constants.%Inc.impl_witness]
@@ -166,10 +166,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
 // CHECK:STDOUT:     %C.ref.loc23_19: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %self: ref %C = ref_binding self, %self.param
+// CHECK:STDOUT:     %self: ref %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %other.param: %C = value_param call_param1
 // CHECK:STDOUT:     %C.ref.loc23_29: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %other: %C = value_binding other, %other.param
+// CHECK:STDOUT:     %other: %C = wrapper_binding other, %other.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddAssignWith.impl_witness_table = impl_witness_table (%C.as.AddAssignWith.impl.Op.decl), @C.as.AddAssignWith.impl [concrete]
 // CHECK:STDOUT:   %AddAssignWith.impl_witness: <witness> = impl_witness %AddAssignWith.impl_witness_table [concrete = constants.%AddAssignWith.impl_witness]

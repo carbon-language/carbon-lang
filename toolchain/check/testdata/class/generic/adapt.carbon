@@ -217,7 +217,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %.loc12: Core.Form = init_form %i32.loc12 [concrete = constants.%.795]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, file.%Adapter.decl [concrete = constants.%Adapter]
-// CHECK:STDOUT:     %a: %Adapter = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %Adapter = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -391,7 +391,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32.loc6 [concrete = constants.%.795]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%Main.Adapter [concrete = constants.%Adapter]
-// CHECK:STDOUT:     %a: %Adapter = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %Adapter = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -545,7 +545,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %.loc12: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, file.%Adapter.decl [concrete = constants.%Adapter]
-// CHECK:STDOUT:     %a: %Adapter = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %Adapter = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -815,7 +815,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%Main.Adapter [concrete = constants.%Adapter]
-// CHECK:STDOUT:     %a: %Adapter = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %Adapter = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -966,7 +966,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:       %i32.loc8_23: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%i32) [concrete = constants.%Adapter.0d1]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %Adapter.0d1 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %Adapter.0d1 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1114,7 +1114,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:       %i32.loc6_31: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%i32) [concrete = constants.%Adapter.0d1]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %Adapter.0d1 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %Adapter.0d1 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1133,7 +1133,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:       %C.ref.loc14: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%C) [concrete = constants.%Adapter.347]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %Adapter.347 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %Adapter.347 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

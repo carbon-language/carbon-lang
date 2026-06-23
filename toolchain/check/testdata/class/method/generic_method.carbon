@@ -85,10 +85,10 @@ fn Class(T:! type).F(unused self, unused n: T) {}
 // CHECK:STDOUT:       %.loc20_29.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       %Self.ref.loc20: type = name_ref Self, %.loc20_29.2 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self.loc20: @Class.F.%Class (%Class) = value_binding self, %self.param.loc20
+// CHECK:STDOUT:     %self.loc20: @Class.F.%Class (%Class) = wrapper_binding self, %self.param.loc20
 // CHECK:STDOUT:     %n.param.loc20: @Class.F.%T.loc17 (%T) = value_param call_param1
 // CHECK:STDOUT:     %T.ref.loc20: type = name_ref T, %T.loc20 [symbolic = %T.loc17 (constants.%T)]
-// CHECK:STDOUT:     %n.loc20: @Class.F.%T.loc17 (%T) = value_binding n, %n.param.loc20
+// CHECK:STDOUT:     %n.loc20: @Class.F.%T.loc17 (%T) = wrapper_binding n, %n.param.loc20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -120,10 +120,10 @@ fn Class(T:! type).F(unused self, unused n: T) {}
 // CHECK:STDOUT:         %.loc17_8.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:         %Self.ref.loc17: type = name_ref Self, %.loc17_8.2 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self.loc17: @Class.F.%Class (%Class) = value_binding self, %self.param.loc17
+// CHECK:STDOUT:       %self.loc17: @Class.F.%Class (%Class) = wrapper_binding self, %self.param.loc17
 // CHECK:STDOUT:       %n.param.loc17: @Class.F.%T.loc17 (%T) = value_param call_param1
 // CHECK:STDOUT:       %T.ref.loc17: type = name_ref T, @Class.%T.loc15_14.2 [symbolic = %T.loc17 (constants.%T)]
-// CHECK:STDOUT:       %n.loc17: @Class.F.%T.loc17 (%T) = value_binding n, %n.param.loc17
+// CHECK:STDOUT:       %n.loc17: @Class.F.%T.loc17 (%T) = wrapper_binding n, %n.param.loc17
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc18_1.1: <witness> = complete_type_witness constants.%struct_type.a [symbolic = %complete_type.loc18_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc18_1.1

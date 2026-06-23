@@ -128,7 +128,7 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %empty_tuple.type = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type = var_pattern %b.patt [concrete = constants.%b.var_patt]
@@ -138,7 +138,7 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     %.loc5_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %empty_tuple.type = ref_binding b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %empty_tuple.type = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %package_a.patt: %pattern_type = ref_binding_pattern package_a [concrete = constants.%package_a.patt]
 // CHECK:STDOUT:     %package_a.var_patt: %pattern_type = var_pattern %package_a.patt [concrete = constants.%package_a.var_patt]
@@ -148,7 +148,7 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     %.loc7_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_17.3: type = converted %.loc7_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %package_a: ref %empty_tuple.type = ref_binding package_a, %package_a.var [concrete = %package_a.var]
+// CHECK:STDOUT:   %package_a: ref %empty_tuple.type = wrapper_binding package_a, %package_a.var [concrete = %package_a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %package_b.patt: %pattern_type = ref_binding_pattern package_b [concrete = constants.%package_b.patt]
 // CHECK:STDOUT:     %package_b.var_patt: %pattern_type = var_pattern %package_b.patt [concrete = constants.%package_b.var_patt]
@@ -158,7 +158,7 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     %.loc8_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_17.3: type = converted %.loc8_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %package_b: ref %empty_tuple.type = ref_binding package_b, %package_b.var [concrete = %package_b.var]
+// CHECK:STDOUT:   %package_b: ref %empty_tuple.type = wrapper_binding package_b, %package_b.var [concrete = %package_b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A [from "implicit.carbon"];

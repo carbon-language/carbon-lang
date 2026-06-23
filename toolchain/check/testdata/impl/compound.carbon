@@ -190,7 +190,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:         %Self.as_type.loc4_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:         %.loc4_14.3: type = converted %Self.ref, %Self.as_type.loc4_14.2 [symbolic = %Self.as_type.loc4_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc4_14.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc4_14.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @ImplicitAs.WithSelf.Convert.%Dest (%Dest) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @ImplicitAs.WithSelf.Convert.%Dest (%Dest) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -440,7 +440,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:       %.loc13_30.2: type = converted %.loc13_30.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %struct_type.b: type = struct_type {.b: %empty_tuple.type} [concrete = constants.%struct_type.b]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: %struct_type.b = value_binding n, %n.param
+// CHECK:STDOUT:     %n: %struct_type.b = wrapper_binding n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -674,7 +674,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:       %struct_type.c: type = struct_type {.c: %empty_tuple.type} [concrete = constants.%struct_type.c]
 // CHECK:STDOUT:       %ptr: type = ptr_type %struct_type.c [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -879,7 +879,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:       %.loc11_26.2: type = converted %.loc11_26.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %struct_type.d: type = struct_type {.d: %empty_tuple.type} [concrete = constants.%struct_type.d]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: %struct_type.d = value_binding n, %n.param
+// CHECK:STDOUT:     %n: %struct_type.d = wrapper_binding n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceCallIndirect.decl: %InstanceCallIndirect.type = fn_decl @InstanceCallIndirect [concrete = constants.%InstanceCallIndirect] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.8d6 = value_param_pattern [concrete = constants.%p.param_patt]
@@ -892,7 +892,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:       %struct_type.d: type = struct_type {.d: %empty_tuple.type} [concrete = constants.%struct_type.d]
 // CHECK:STDOUT:       %ptr: type = ptr_type %struct_type.d [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -911,7 +911,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:       %Self.as_type.loc4_9.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc4_9.2: type = converted %Self.ref, %Self.as_type.loc4_9.2 [symbolic = %Self.as_type.loc4_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Instance1.WithSelf.G1.%Self.as_type.loc4_9.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @Instance1.WithSelf.G1.%Self.as_type.loc4_9.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Instance1.assoc_type = assoc_entity element0, %Instance1.WithSelf.G1.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -930,7 +930,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %struct_type.d = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @struct_type.d.as.Instance1.impl.%struct_type.d [concrete = constants.%struct_type.d]
-// CHECK:STDOUT:     %self: %struct_type.d = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %struct_type.d = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Instance1.impl_witness_table = impl_witness_table (%struct_type.d.as.Instance1.impl.G1.decl), @struct_type.d.as.Instance1.impl [concrete]
 // CHECK:STDOUT:   %Instance1.impl_witness: <witness> = impl_witness %Instance1.impl_witness_table [concrete = constants.%Instance1.impl_witness]
@@ -1073,7 +1073,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:       %Self.as_type.loc4_9.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc4_9.2: type = converted %Self.ref, %Self.as_type.loc4_9.2 [symbolic = %Self.as_type.loc4_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Instance2.WithSelf.G2.%Self.as_type.loc4_9.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @Instance2.WithSelf.G2.%Self.as_type.loc4_9.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Instance2.assoc_type = assoc_entity element0, %Instance2.WithSelf.G2.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -1092,7 +1092,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %struct_type.e = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @struct_type.e.as.Instance2.impl.%struct_type.e [concrete = constants.%struct_type.e]
-// CHECK:STDOUT:     %self: %struct_type.e = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %struct_type.e = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Instance2.impl_witness_table = impl_witness_table (%struct_type.e.as.Instance2.impl.G2.decl), @struct_type.e.as.Instance2.impl [concrete]
 // CHECK:STDOUT:   %Instance2.impl_witness: <witness> = impl_witness %Instance2.impl_witness_table [concrete = constants.%Instance2.impl_witness]

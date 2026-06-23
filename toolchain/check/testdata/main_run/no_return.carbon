@@ -93,13 +93,13 @@ fn Run(unused argc: i32, unused argv: i32*) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %argc.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc5_21: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %argc: %i32 = value_binding argc, %argc.param
+// CHECK:STDOUT:     %argc: %i32 = wrapper_binding argc, %argc.param
 // CHECK:STDOUT:     %argv.param: %ptr = value_param call_param1
 // CHECK:STDOUT:     %.loc5: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %i32.loc5_39: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %ptr: type = ptr_type %i32.loc5_39 [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %argv: %ptr = value_binding argv, %argv.param
+// CHECK:STDOUT:     %argv: %ptr = wrapper_binding argv, %argv.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

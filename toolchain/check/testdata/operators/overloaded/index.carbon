@@ -263,10 +263,10 @@ fn F() {
 // CHECK:STDOUT:         %Self.as_type.loc5_9.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:         %.loc5_9.3: type = converted %Self.ref, %Self.as_type.loc5_9.2 [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @IndexWith.WithSelf.At.%Self.as_type.loc5_9.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @IndexWith.WithSelf.At.%Self.as_type.loc5_9.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %subscript.param: @IndexWith.WithSelf.At.%SubscriptType (%SubscriptType) = value_param call_param1
 // CHECK:STDOUT:       %SubscriptType.ref: type = name_ref SubscriptType, @IndexWith.%SubscriptType.loc4_34.2 [symbolic = %SubscriptType (constants.%SubscriptType)]
-// CHECK:STDOUT:       %subscript: @IndexWith.WithSelf.At.%SubscriptType (%SubscriptType) = value_binding subscript, %subscript.param
+// CHECK:STDOUT:       %subscript: @IndexWith.WithSelf.At.%SubscriptType (%SubscriptType) = wrapper_binding subscript, %subscript.param
 // CHECK:STDOUT:       %return.param: ref @IndexWith.WithSelf.At.%ElementType (%ElementType) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @IndexWith.WithSelf.At.%ElementType (%ElementType) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -472,13 +472,13 @@ fn F() {
 // CHECK:STDOUT:     %.loc9_48.3: Core.Form = init_form %.loc9_48.2 [concrete = constants.%.262]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.IndexWith.impl.%C.ref [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %subscript.param: %empty_tuple.type = value_param call_param1
 // CHECK:STDOUT:     %.loc9_41.1: type = splice_block %.loc9_41.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc9_41.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc9_41.3: type = converted %.loc9_41.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %subscript: %empty_tuple.type = value_binding subscript, %subscript.param
+// CHECK:STDOUT:     %subscript: %empty_tuple.type = wrapper_binding subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param2
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -539,7 +539,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_15.5: ref %C = temporary %.loc15_15.2, %.loc15_15.4 [concrete = constants.%.115]
 // CHECK:STDOUT:   %.loc15_15.6: %C = acquire_value %.loc15_15.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: %C = value_binding c, %.loc15_15.6
+// CHECK:STDOUT:   %c: %C = wrapper_binding c, %.loc15_15.6
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc23: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.115)

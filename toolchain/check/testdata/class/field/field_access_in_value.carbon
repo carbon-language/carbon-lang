@@ -160,7 +160,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %Class to %.loc21_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %cv.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   %Class.ref.loc21: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %cv: ref %Class = ref_binding cv, %cv.var
+// CHECK:STDOUT:   %cv: ref %Class = wrapper_binding cv, %cv.var
 // CHECK:STDOUT:   %cv.ref.loc22: ref %Class = name_ref cv, %cv
 // CHECK:STDOUT:   %j.ref.loc22: %Class.elem = name_ref j, @Class.%.loc16 [concrete = @Class.%.loc16]
 // CHECK:STDOUT:   %.loc22_5: ref %i32 = class_element_access %cv.ref.loc22, element0
@@ -189,7 +189,7 @@ fn Test() {
 // CHECK:STDOUT:   %cv.ref.loc24: ref %Class = name_ref cv, %cv
 // CHECK:STDOUT:   %.loc24: %Class = acquire_value %cv.ref.loc24
 // CHECK:STDOUT:   %Class.ref.loc24: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %c: %Class = value_binding c, %.loc24
+// CHECK:STDOUT:   %c: %Class = wrapper_binding c, %.loc24
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cj.patt: %pattern_type.6b6 = ref_binding_pattern cj [concrete = constants.%cj.patt]
 // CHECK:STDOUT:     %cj.var_patt: %pattern_type.6b6 = var_pattern %cj.patt [concrete = constants.%cj.var_patt]
@@ -206,7 +206,7 @@ fn Test() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc25: init %i32 = call %bound_method.loc25_25.2(%.loc25_25.2)
 // CHECK:STDOUT:   assign %cj.var, %Int.as.Copy.impl.Op.call.loc25
 // CHECK:STDOUT:   %i32.loc25: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %cj: ref %i32 = ref_binding cj, %cj.var
+// CHECK:STDOUT:   %cj: ref %i32 = wrapper_binding cj, %cj.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %ck.patt: %pattern_type.6b6 = ref_binding_pattern ck [concrete = constants.%ck.patt]
 // CHECK:STDOUT:     %ck.var_patt: %pattern_type.6b6 = var_pattern %ck.patt [concrete = constants.%ck.var_patt]
@@ -223,7 +223,7 @@ fn Test() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc26: init %i32 = call %bound_method.loc26_25.2(%.loc26_25.2)
 // CHECK:STDOUT:   assign %ck.var, %Int.as.Copy.impl.Op.call.loc26
 // CHECK:STDOUT:   %i32.loc26: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %ck: ref %i32 = ref_binding ck, %ck.var
+// CHECK:STDOUT:   %ck: ref %i32 = wrapper_binding ck, %ck.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc26: <bound method> = bound_method %ck.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc26: init %empty_tuple.type = call %Destroy.Op.bound.loc26(%ck.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc25: <bound method> = bound_method %cj.var, constants.%Destroy.Op.1a2547.2

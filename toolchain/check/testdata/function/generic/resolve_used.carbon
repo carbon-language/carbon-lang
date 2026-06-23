@@ -181,7 +181,7 @@ fn CallNegative() {
 // CHECK:STDOUT:       %N.ref: Core.IntLiteral = name_ref N, %N.loc4_20.2 [symbolic = %N.loc4_20.1 (constants.%N)]
 // CHECK:STDOUT:       %Int.loc9_27.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc9_27.2 (constants.%Int)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: ref @ErrorIfNIsZero.%Int.loc9_27.2 (%Int) = ref_binding v, %v.var
+// CHECK:STDOUT:     %v: ref @ErrorIfNIsZero.%Int.loc9_27.2 (%Int) = wrapper_binding v, %v.var
 // CHECK:STDOUT:     %impl.elem0.loc9_3.1: @ErrorIfNIsZero.%.loc9_3.3 (%.2c6) = impl_witness_access constants.%Destroy.lookup_impl_witness.173, element0 [symbolic = %impl.elem0.loc9_3.2 (constants.%impl.elem0.604)]
 // CHECK:STDOUT:     %bound_method.loc9_3.1: <bound method> = bound_method %v.var, %impl.elem0.loc9_3.1
 // CHECK:STDOUT:     %Destroy.facet.loc9_3.1: %Destroy.type = facet_value constants.%Int, (constants.%Destroy.lookup_impl_witness.173) [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet.7bb)]

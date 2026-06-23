@@ -78,7 +78,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:       %const.loc15_21: type = const_type %.loc15_21 [concrete = constants.%const.c48]
 // CHECK:STDOUT:       %ptr.loc15_29: type = ptr_type %const.loc15_21 [concrete = constants.%ptr.bf9]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.bf9 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.bf9 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.987 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %const.987 = return_slot %return.param
 // CHECK:STDOUT:   }
