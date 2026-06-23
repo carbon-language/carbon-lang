@@ -258,7 +258,7 @@ fn Min[T:! Comparable & Value](first: T, ... each next: T) -> T {
 
 ```carbon
 // Invokes f, with the tuple `args` as its arguments.
-fn Apply[... each T:! type, F:! CallableWith(... each T)]
+fn Apply[... each T:! type, F:! Call(... each T)]
     (f: F, args: (... each T)) -> auto {
   return f(...expand args);
 }

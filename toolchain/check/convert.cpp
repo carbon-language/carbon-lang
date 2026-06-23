@@ -428,6 +428,9 @@ static auto ConvertTupleToType(Context& context, SemIR::LocId loc_id,
                                SemIR::TypeId value_type_id,
                                ConversionTarget target) -> SemIR::TypeInstId {
   auto value_const_id = context.constant_values().Get(value_id);
+  if (value_const_id == SemIR::ErrorInst::ConstantId) {
+    return SemIR::ErrorInst::TypeInstId;
+  }
   if (!value_const_id.is_constant()) {
     // Types are constants. The input value must have a constant value to
     // convert.
@@ -865,8 +868,12 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                target.storage_id.has_value());
   PendingBlock target_block(&context);
   auto& dest_class_info = context.classes().Get(dest_type.class_id);
-  CARBON_CHECK(is_partial ||
-               dest_class_info.inheritance_kind != SemIR::Class::Abstract);
+  if (!is_partial &&
+      dest_class_info.inheritance_kind == SemIR::Class::Abstract) {
+    CARBON_DIAGNOSTIC(AbstractTypeInInit, Error,
+                      "initialization of abstract class {0}", SemIR::TypeId);
+    context.emitter().Emit(value_id, AbstractTypeInInit, target.type_id);
+  }
   auto object_repr_id =
       dest_class_info.GetObjectRepr(context.sem_ir(), dest_type.specific_id);
   if (object_repr_id == SemIR::ErrorInst::TypeId) {
@@ -1767,9 +1774,7 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
       if (target_.is_initializer()) {
         // Overwrite the initializer's storage argument with the inst currently
         // at target_.storage_id, if both are present and the storage argument
-        // hasn't already been set. However, we skip this if the type is a C++
-        // enum: in that case, we don't actually have an initializing
-        // expression, we're just pretending we do.
+        // hasn't already been set.
         auto new_storage_id =
             OverwriteTemporaryStorageArg(sem_ir_, expr_id, target_);
 
@@ -1956,15 +1961,12 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
   auto original_inner_expr_id = expr_id;
 
-  // TODO: Allow abstract but complete types if the conversion is just a
-  // same-type value acqisition.
   // TODO: Push this check down to the points where we perform operations that
   // need the type to be complete.
   if (ConversionNeedsCompleteTarget(context, expr_id, target)) {
     if (target.diagnose) {
-      if (!RequireConcreteType(
-              context, target.type_id, loc_id,
-              [&](auto& builder) {
+      if (!RequireCompleteType(
+              context, target.type_id, loc_id, [&](auto& builder) {
                 CARBON_CHECK(
                     !target.is_initializer(),
                     "Initialization of incomplete types is expected to be "
@@ -1980,17 +1982,11 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                                     ? IncompleteTypeInValueConversion
                                     : IncompleteTypeInConversion,
                                 target.type_id);
-              },
-              [&](auto& builder) {
-                CARBON_DIAGNOSTIC(AbstractTypeInInit, Context,
-                                  "initialization of abstract type {0}",
-                                  SemIR::TypeId);
-                builder.Context(loc_id, AbstractTypeInInit, target.type_id);
               })) {
         return SemIR::ErrorInst::InstId;
       }
     } else {
-      if (!TryIsConcreteType(context, target.type_id, loc_id)) {
+      if (!TryToCompleteType(context, target.type_id, loc_id)) {
         return SemIR::ErrorInst::InstId;
       }
     }

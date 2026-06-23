@@ -83,17 +83,26 @@ auto AddDependentActionSplice(Context& context, LocT loc, InstT inst,
 // to act as the type of the splice.
 template <typename ActionT, typename LocIdT>
 auto HandleAction(Context& context, LocIdT loc_id,
-                  SemIR::TypeInstId result_type_inst_id, ActionT action_inst)
-    -> SemIR::InstId {
+                  SemIR::TypeInstId expected_result_type_inst_id,
+                  ActionT action_inst) -> SemIR::InstId {
   CARBON_CHECK(action_inst.type_id == SemIR::InstType::TypeId);
   if (!ActionIsPerformable(context, action_inst)) {
     return AddDependentActionSplice(context,
                                     SemIR::LocIdAndInst::RuntimeVerified(
                                         context.sem_ir(), loc_id, action_inst),
-                                    result_type_inst_id);
+                                    expected_result_type_inst_id);
   }
 
-  return PerformAction(context, loc_id, action_inst);
+  auto expected_result_type_id =
+      expected_result_type_inst_id.has_value()
+          ? context.types().GetTypeIdForTypeInstId(expected_result_type_inst_id)
+          : SemIR::TypeId::None;
+  auto result_id = PerformAction(context, loc_id, action_inst);
+  auto result_type_id = context.insts().Get(result_id).type_id();
+  CARBON_CHECK(expected_result_type_id == SemIR::TypeId::None ||
+               result_type_id == SemIR::ErrorInst::TypeId ||
+               result_type_id == expected_result_type_id);
+  return result_id;
 }
 
 namespace Internal {

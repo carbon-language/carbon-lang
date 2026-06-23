@@ -18,7 +18,6 @@
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/ExternalSemaSource.h"
-#include "clang/Sema/MultiplexExternalSemaSource.h"
 #include "clang/Sema/Sema.h"
 #include "common/check.h"
 #include "common/map.h"
@@ -27,6 +26,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "third_party/llvm/multiplex_external_sema_source.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/cpp/access.h"
@@ -898,9 +898,9 @@ auto GenerateAst(Context& context,
   // using `MultiplexExternalSemaSource`, we can keep the top-level
   // `ExternalASTSource` pointer the same, and only update its children.
   auto multiplex_source_ref_cnt_ptr =
-      llvm::makeIntrusiveRefCnt<clang::MultiplexExternalSemaSource>();
-  auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
-      multiplex_source_ref_cnt_ptr.get());
+      llvm::makeIntrusiveRefCnt<MultiplexExternalSemaSource>();
+  auto* multiplex_source =
+      cast<MultiplexExternalSemaSource>(multiplex_source_ref_cnt_ptr.get());
   if (auto* existing_source = llvm::cast_or_null<clang::ExternalSemaSource>(
           ast.getExternalSource())) {
     multiplex_source->AddSource(existing_source);
@@ -965,10 +965,9 @@ auto FinishAst(Context& context) -> void {
   // the source may be accessed later during lowering, but the
   // `CarbonExternalASTSource` has a pointer to `Check::Context` that
   // will not remain valid.
-  auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
+  auto* multiplex_source = cast<MultiplexExternalSemaSource>(
       context.ast_context().getExternalSource());
-  auto& child_sources = multiplex_source->GetSources();
-  llvm::erase_if(child_sources, [](const auto& src) {
+  multiplex_source->EraseIf([](const auto& src) {
     // `CarbonExternalASTSource` inherits from `ReadOnlyASTSource`.
     return llvm::isa<SemIR::ReadOnlyASTSource>(src.get());
   });
