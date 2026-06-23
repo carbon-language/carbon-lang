@@ -189,11 +189,7 @@ auto FacetTypeInfo::TryAsSingleExtend() const
 
 auto FacetTypeInfo::HasNoConstraints() const -> bool {
   return extend_constraints.empty() && extend_named_constraints.empty() &&
-         self_impls_constraints.empty() &&
-         self_impls_named_constraints.empty() &&
-         type_impls_interfaces.empty() &&
-         type_impls_named_constraints.empty() && rewrite_constraints.empty() &&
-         !other_requirements;
+         IsExtendedOnly();
 }
 
 auto FacetTypeInfo::IsExtendedOnly() const -> bool {
