@@ -524,6 +524,8 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   auto* decl = cast<clang::Decl>(
       const_cast<clang::DeclContext*>(decl_context->getPrimaryContext()));
   if (isa<clang::FunctionDecl>(decl)) {
+    // Functions don't meaningfully have visible decls, but bail out early since
+    // we can't form a `ClangDeclKey` for a function in the abstract.
     return false;
   }
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
@@ -533,6 +535,8 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   }
   auto clang_decl = context_->clang_decls().Get(decl_id);
   if (clang_decl.is_imported) {
+    // This is imported from C++, presumably from a Clang AST file, so it's not
+    // our responsibility to provide its name lookup results.
     return false;
   }
 
