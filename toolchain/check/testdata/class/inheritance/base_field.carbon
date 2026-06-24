@@ -149,10 +149,11 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %p.ref: %ptr.64c = name_ref p, %p
 // CHECK:STDOUT:   %.loc29_12: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %c.ref: %Base.elem = name_ref c, @Base.%.loc18 [concrete = @Base.%.loc18]
-// CHECK:STDOUT:   %.loc29_15.1: ref %Base = class_element_access %.loc29_12, element0
-// CHECK:STDOUT:   %.loc29_15.2: ref %Base = converted %.loc29_12, %.loc29_15.1
-// CHECK:STDOUT:   %.loc29_15.3: ref %i32 = class_element_access %.loc29_15.2, element2
-// CHECK:STDOUT:   %addr: %ptr.d08 = addr_of %.loc29_15.3
+// CHECK:STDOUT:   %.loc29_15.1: ref %Base = as_compatible %.loc29_12
+// CHECK:STDOUT:   %.loc29_15.2: ref %Base = class_element_access %.loc29_15.1, element0
+// CHECK:STDOUT:   %.loc29_15.3: ref %Base = converted %.loc29_12, %.loc29_15.2
+// CHECK:STDOUT:   %.loc29_15.4: ref %i32 = class_element_access %.loc29_15.3, element2
+// CHECK:STDOUT:   %addr: %ptr.d08 = addr_of %.loc29_15.4
 // CHECK:STDOUT:   %impl.elem0: %.ac9 = impl_witness_access constants.%Copy.impl_witness.ce1, element0 [concrete = constants.%ptr.as.Copy.impl.Op.d1c]
 // CHECK:STDOUT:   %bound_method.loc29_10.1: <bound method> = bound_method %addr, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%i32) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]

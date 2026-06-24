@@ -111,8 +111,8 @@ fn DoThing() {
 // CHECK:STDOUT:   %.loc31_44.8.base = getelementptr inbounds nuw [16 x i8], ptr %.loc31_44.7.base, i32 0, i32 0, !dbg !33
 // CHECK:STDOUT:   %.loc31_44.9.vptr = getelementptr inbounds nuw [8 x i8], ptr %.loc31_44.8.base, i32 0, i32 0, !dbg !33
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) ({ [5 x ptr] }, ptr @_ZTVN6Carbon7DerivedE, i32 0, i32 0, i32 2), ptr %.loc31_44.9.vptr, align 8, !dbg !33
-// CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !35
-// CHECK:STDOUT:   call void @_Z3UseR4Base(ptr %.loc32_11.2.base), !dbg !36
+// CHECK:STDOUT:   %.loc32_11.3.base = getelementptr inbounds nuw [16 x i8], ptr %d.var, i32 0, i32 0, !dbg !35
+// CHECK:STDOUT:   call void @_Z3UseR4Base(ptr %.loc32_11.3.base), !dbg !36
 // CHECK:STDOUT:   call void @"_COp.8185e3504351afa8:core.Destroy.Core"(ptr %d.var), !dbg !32
 // CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }

@@ -249,9 +249,10 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %.loc37_4.1: ref %D = deref %d.ref
 // CHECK:STDOUT:   %F.ref.loc37: %B.F.type = name_ref F, @B.%B.F.decl [concrete = constants.%B.F]
 // CHECK:STDOUT:   %B.F.bound.loc37: <bound method> = bound_method %.loc37_4.1, %F.ref.loc37
-// CHECK:STDOUT:   %.loc37_4.2: ref %B = class_element_access %.loc37_4.1, element0
-// CHECK:STDOUT:   %.loc37_4.3: ref %B = converted %.loc37_4.1, %.loc37_4.2
-// CHECK:STDOUT:   %B.F.call.loc37: init %empty_tuple.type = call %B.F.bound.loc37(%.loc37_4.3)
+// CHECK:STDOUT:   %.loc37_4.2: ref %B = as_compatible %.loc37_4.1
+// CHECK:STDOUT:   %.loc37_4.3: ref %B = class_element_access %.loc37_4.2, element0
+// CHECK:STDOUT:   %.loc37_4.4: ref %B = converted %.loc37_4.1, %.loc37_4.3
+// CHECK:STDOUT:   %B.F.call.loc37: init %empty_tuple.type = call %B.F.bound.loc37(%.loc37_4.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
