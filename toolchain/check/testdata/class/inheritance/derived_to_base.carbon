@@ -71,7 +71,7 @@ fn PassConstBPtr(p: const B*) {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_qualified_non_ptr.carbon
+// --- fail_todo_const_qualified_non_ptr.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -86,13 +86,13 @@ fn TakeConstA(p: const A);
 
 fn PassNonConstB(p: B) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+10]]:14: error: cannot implicitly convert expression of type `B` to `const A` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_const_qualified_non_ptr.carbon:[[@LINE+10]]:14: error: cannot implicitly convert expression of type `B` to `const A` [ConversionFailure]
   // CHECK:STDERR:   TakeConstA(p);
   // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+7]]:14: note: type `B` does not implement interface `Core.ImplicitAs(const A)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_todo_const_qualified_non_ptr.carbon:[[@LINE+7]]:14: note: type `B` does not implement interface `Core.ImplicitAs(const A)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   TakeConstA(p);
   // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE-10]]:15: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_const_qualified_non_ptr.carbon:[[@LINE-10]]:15: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: fn TakeConstA(p: const A);
   // CHECK:STDERR:               ^~~~~~~~~~
   // CHECK:STDERR:
@@ -102,17 +102,62 @@ fn PassNonConstB(p: B) {
 
 fn PassConstB(p: const B) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+10]]:14: error: cannot implicitly convert expression of type `const B` to `const A` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_const_qualified_non_ptr.carbon:[[@LINE+10]]:14: error: cannot implicitly convert expression of type `const B` to `const A` [ConversionFailure]
   // CHECK:STDERR:   TakeConstA(p);
   // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+7]]:14: note: type `const B` does not implement interface `Core.ImplicitAs(const A)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_todo_const_qualified_non_ptr.carbon:[[@LINE+7]]:14: note: type `const B` does not implement interface `Core.ImplicitAs(const A)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   TakeConstA(p);
   // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE-26]]:15: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_const_qualified_non_ptr.carbon:[[@LINE-26]]:15: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: fn TakeConstA(p: const A);
   // CHECK:STDERR:               ^~~~~~~~~~
   // CHECK:STDERR:
   TakeConstA(p);
+  //@dump-sem-ir-end
+}
+
+// --- fail_todo_partial_qualified_non_ptr.carbon
+
+library "[[@TEST_NAME]]";
+
+base class A {
+}
+
+base class B {
+  extend base: A;
+}
+
+fn TakePartialA(p: partial A);
+
+fn PassNonPartialB(b: B) {
+  //@dump-sem-ir-begin
+  // CHECK:STDERR: fail_todo_partial_qualified_non_ptr.carbon:[[@LINE+10]]:16: error: cannot implicitly convert expression of type `B` to `partial A` [ConversionFailure]
+  // CHECK:STDERR:   TakePartialA(b);
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR: fail_todo_partial_qualified_non_ptr.carbon:[[@LINE+7]]:16: note: type `B` does not implement interface `Core.ImplicitAs(partial A)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   TakePartialA(b);
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR: fail_todo_partial_qualified_non_ptr.carbon:[[@LINE-10]]:17: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fn TakePartialA(p: partial A);
+  // CHECK:STDERR:                 ^~~~~~~~~~~~
+  // CHECK:STDERR:
+  TakePartialA(b);
+  //@dump-sem-ir-end
+}
+
+fn PassPartialB(b: partial B) {
+  //@dump-sem-ir-begin
+  // CHECK:STDERR: fail_todo_partial_qualified_non_ptr.carbon:[[@LINE+10]]:16: error: cannot implicitly convert expression of type `partial B` to `partial A` [ConversionFailure]
+  // CHECK:STDERR:   TakePartialA(b);
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR: fail_todo_partial_qualified_non_ptr.carbon:[[@LINE+7]]:16: note: type `partial B` does not implement interface `Core.ImplicitAs(partial A)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   TakePartialA(b);
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR: fail_todo_partial_qualified_non_ptr.carbon:[[@LINE-26]]:17: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fn TakePartialA(p: partial A);
+  // CHECK:STDERR:                 ^~~~~~~~~~~~
+  // CHECK:STDERR:
+  TakePartialA(b);
   //@dump-sem-ir-end
 }
 
@@ -531,7 +576,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_qualified_non_ptr.carbon
+// CHECK:STDOUT: --- fail_todo_const_qualified_non_ptr.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
@@ -558,6 +603,36 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %p.ref: %const.825 = name_ref p, %p
 // CHECK:STDOUT:   %.loc41: %const.b97 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %TakeConstA.call: init %empty_tuple.type = call %TakeConstA.ref(<error>)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_partial_qualified_non_ptr.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.3d6: type = partial_type %A [concrete]
+// CHECK:STDOUT:   %TakePartialA.type: type = fn_type @TakePartialA [concrete]
+// CHECK:STDOUT:   %TakePartialA: %TakePartialA.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.640: type = partial_type %B [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @PassNonPartialB(%b.param: %B) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %TakePartialA.ref: %TakePartialA.type = name_ref TakePartialA, file.%TakePartialA.decl [concrete = constants.%TakePartialA]
+// CHECK:STDOUT:   %b.ref: %B = name_ref b, %b
+// CHECK:STDOUT:   %.loc25: %.3d6 = converted %b.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %TakePartialA.call: init %empty_tuple.type = call %TakePartialA.ref(<error>)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @PassPartialB(%b.param: %.640) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %TakePartialA.ref: %TakePartialA.type = name_ref TakePartialA, file.%TakePartialA.decl [concrete = constants.%TakePartialA]
+// CHECK:STDOUT:   %b.ref: %.640 = name_ref b, %b
+// CHECK:STDOUT:   %.loc41: %.3d6 = converted %b.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %TakePartialA.call: init %empty_tuple.type = call %TakePartialA.ref(<error>)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
