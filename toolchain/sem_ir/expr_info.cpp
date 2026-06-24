@@ -39,14 +39,6 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
     auto untyped_inst = ir->insts().Get(inst_id);
     auto category_from_kind = untyped_inst.kind().expr_category();
 
-    // If this instruction kind has a fixed category, return it.
-    if (auto fixed_category = category_from_kind.TryAsFixedCategory()) {
-      return {.category = *fixed_category == ExprCategory::Value
-                              ? value_category
-                              : *fixed_category,
-              .inner_inst_id = inst_id};
-    }
-
     // Handle any special cases that use
     // ComputedExprCategory::DependsOnOperands.
     auto handle_special_case =
@@ -102,38 +94,60 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
             return ExprCategory::ReprInitializing;
           }
         }
+      } else if constexpr (std::same_as<TypedInstT, SpliceInst>) {
+        auto action = ir->insts().Get(inst.inst_id);
+        if (auto* action_category = std::get_if<ActionExprCategory>(
+                &action.kind().expr_category())) {
+          if (action_category->category == ExprCategory::Value) {
+            return value_category;
+          } else {
+            return action_category->category;
+          }
+        } else {
+          CARBON_FATAL("Inst doesn't have action category: {0}", action);
+        }
       } else {
         static_assert(
-            TypedInstT::Kind.expr_category().TryAsComputedCategory() !=
-                ComputedExprCategory::DependsOnOperands,
+            TypedInstT::Kind.expr_category() !=
+                InstExprCategory(ComputedExprCategory::DependsOnOperands),
             "Missing expression category computation for type");
       }
       CARBON_FATAL("Unreachable");
     };
 
-    // If the category depends on the operands of the instruction, determine it.
-    // Usually this means the category is the same as the category of an
-    // operand.
-    switch (*category_from_kind.TryAsComputedCategory()) {
-      case ComputedExprCategory::ValueIfHasType: {
-        return {.category = untyped_inst.kind().has_type()
+    CARBON_KIND_SWITCH(category_from_kind) {
+      case CARBON_KIND(ExprCategory fixed_category): {
+        // If this instruction kind has a fixed category, return it.
+        return {.category = fixed_category == ExprCategory::Value
                                 ? value_category
-                                : ExprCategory::NotExpr,
+                                : fixed_category,
                 .inner_inst_id = inst_id};
       }
-
-      case ComputedExprCategory::SameAsFirstOperand: {
-        inst_id = AsAnyInstId(untyped_inst.arg0_and_kind());
-        break;
+      case CARBON_KIND(ActionExprCategory _): {
+        // Actions are always value expressions.
+        return {.category = value_category, .inner_inst_id = inst_id};
       }
-
-      case ComputedExprCategory::SameAsSecondOperand: {
-        inst_id = AsAnyInstId(untyped_inst.arg1_and_kind());
-        break;
-      }
-
-      case ComputedExprCategory::DependsOnOperands: {
-        switch (untyped_inst.kind()) {
+      case CARBON_KIND(ComputedExprCategory computed_category): {
+        // If the category depends on the operands of the instruction, determine
+        // it. Usually this means the category is the same as the category of an
+        // operand.
+        switch (computed_category) {
+          case ComputedExprCategory::ValueIfHasType: {
+            return {.category = untyped_inst.kind().has_type()
+                                    ? value_category
+                                    : ExprCategory::NotExpr,
+                    .inner_inst_id = inst_id};
+          }
+          case ComputedExprCategory::SameAsFirstOperand: {
+            inst_id = AsAnyInstId(untyped_inst.arg0_and_kind());
+            break;
+          }
+          case ComputedExprCategory::SameAsSecondOperand: {
+            inst_id = AsAnyInstId(untyped_inst.arg1_and_kind());
+            break;
+          }
+          case ComputedExprCategory::DependsOnOperands: {
+            switch (untyped_inst.kind()) {
 #define CARBON_SEM_IR_INST_KIND(TypedInstT)                             \
   case TypedInstT::Kind: {                                              \
     auto category = handle_special_case(untyped_inst.As<TypedInstT>()); \
@@ -143,6 +157,8 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
     break;                                                              \
   }
 #include "toolchain/sem_ir/inst_kind.def"
+            }
+          }
         }
       }
     }

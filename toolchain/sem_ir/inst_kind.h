@@ -119,37 +119,24 @@ enum ComputedExprCategory : int8_t {
   DependsOnOperands = -4,
 };
 
+// A tag type that specifies the category of the inst that will be produced by
+// a given kind of action. This also implicitly specifies the category of the
+// action itself, because all actions have category `Value`.
+struct ActionExprCategory {
+  // The category of insts produced by this kind of action. This should be
+  // `Dependent` if the action can produce insts with different categories.
+  ExprCategory category;
+
+  friend constexpr auto operator==(const ActionExprCategory& lhs,
+                                   const ActionExprCategory& rhs)
+      -> bool = default;
+};
+
 // What kind of expression category an instruction kind produces. The expression
 // category in general may depend on the operands of the instruction, but we can
 // handle most cases based on the instruction kind alone.
-class InstExprCategory {
- public:
-  constexpr explicit(false) InstExprCategory(ExprCategory cat)
-      : kind_(static_cast<int8_t>(cat)) {}
-  constexpr explicit(false) InstExprCategory(ComputedExprCategory kind)
-      : kind_(static_cast<int8_t>(kind)) {}
-
-  // If this instruction always has the same category, returns that category.
-  // Otherwise returns nullopt.
-  constexpr auto TryAsFixedCategory() const -> std::optional<ExprCategory> {
-    return kind_ >= 0 ? std::optional(static_cast<ExprCategory>(kind_))
-                      : std::nullopt;
-  }
-
-  // If the category of this instruction depends on its operands, returns the
-  // kind of computation to use to determine the category. Otherwise returns
-  // nullopt.
-  constexpr auto TryAsComputedCategory() const
-      -> std::optional<ComputedExprCategory> {
-    return kind_ < 0 ? std::optional(static_cast<ComputedExprCategory>(kind_))
-                     : std::nullopt;
-  }
-
- private:
-  // A value from either the `ExprCategory` or `ComputedExprCategory`
-  // enumerations.
-  int8_t kind_;
-};
+using InstExprCategory =
+    std::variant<ExprCategory, ComputedExprCategory, ActionExprCategory>;
 
 // Whether an instruction defines a type.
 enum class InstIsType : int8_t {
@@ -324,7 +311,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   }
 
   // Returns the category of expression represented by this instruction kind.
-  auto expr_category() const -> InstExprCategory {
+  auto expr_category() const -> const InstExprCategory& {
     return definition_info(*this).expr_category;
   }
 

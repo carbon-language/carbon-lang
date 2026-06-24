@@ -3453,8 +3453,8 @@ template <typename InstT>
 static auto TryExecTypedInst(FunctionExecContext& eval_context,
                              SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
-  if constexpr (InstT::Kind.expr_category().TryAsFixedCategory() ==
-                SemIR::ExprCategory::NotExpr) {
+  if constexpr (InstT::Kind.expr_category() ==
+                SemIR::InstExprCategory(SemIR::ExprCategory::NotExpr)) {
     // Instructions in this category are assumed to not have a runtime effect.
     // This includes some kinds of declaration.
     return SemIR::ConstantId::None;

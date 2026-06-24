@@ -213,15 +213,15 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:       0:               inst7000002E
 // CHECK:STDOUT:     inst_block70000009:
 // CHECK:STDOUT:       0:               inst70000019
-// CHECK:STDOUT:       1:               inst70000029
+// CHECK:STDOUT:       1:               inst70000025
+// CHECK:STDOUT:       2:               inst70000029
 // CHECK:STDOUT:     inst_block7000000A:
 // CHECK:STDOUT:       0:               inst7000001F
 // CHECK:STDOUT:       1:               inst70000020
-// CHECK:STDOUT:       2:               inst70000025
-// CHECK:STDOUT:       3:               inst7000002C
-// CHECK:STDOUT:       4:               inst7000001C
-// CHECK:STDOUT:       5:               inst7000002E
-// CHECK:STDOUT:       6:               inst7000002F
+// CHECK:STDOUT:       2:               inst7000002C
+// CHECK:STDOUT:       3:               inst7000001C
+// CHECK:STDOUT:       4:               inst7000002E
+// CHECK:STDOUT:       5:               inst7000002F
 // CHECK:STDOUT:     inst_block7000000B:
 // CHECK:STDOUT:       0:               inst7000001C
 // CHECK:STDOUT:     inst_block7000000C:

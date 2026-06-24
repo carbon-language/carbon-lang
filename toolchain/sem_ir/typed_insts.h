@@ -80,6 +80,7 @@ struct AccessMemberAction {
   static constexpr auto Kind =
       InstKind::AccessMemberAction.Define<Parse::NodeId>(
           {.ir_name = "access_member_action",
+           .expr_category = ActionExprCategory(ExprCategory::Dependent),
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
@@ -94,6 +95,7 @@ struct AccessOptionalMemberAction {
   static constexpr auto Kind =
       InstKind::AccessOptionalMemberAction.Define<Parse::NodeId>(
           {.ir_name = "access_optional_member_action",
+           .expr_category = ActionExprCategory(ExprCategory::Dependent),
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
@@ -394,7 +396,7 @@ struct CalleePatternMatchAction {
   static constexpr auto Kind =
       InstKind::CalleePatternMatchAction.Define<Parse::NodeId>(
           {.ir_name = "callee_pattern_match_action",
-           .expr_category = ExprCategory::Dependent,
+           .expr_category = ActionExprCategory(ExprCategory::Dependent),
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
@@ -418,7 +420,7 @@ struct CallerPatternMatchAction {
   static constexpr auto Kind =
       InstKind::CallerPatternMatchAction.Define<Parse::NodeId>(
           {.ir_name = "caller_pattern_match_action",
-           .expr_category = ExprCategory::Dependent,
+           .expr_category = ActionExprCategory(ExprCategory::Dependent),
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
@@ -561,6 +563,7 @@ struct ConvertToValueAction {
   static constexpr auto Kind =
       InstKind::ConvertToValueAction.Define<Parse::NodeId>(
           {.ir_name = "convert_to_value_action",
+           .expr_category = ActionExprCategory(ExprCategory::Value),
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
@@ -825,7 +828,7 @@ struct FormParamPatternAction {
   static constexpr auto Kind =
       InstKind::FormParamPatternAction.Define<Parse::FormBindingPatternId>(
           {.ir_name = "form_param_pattern_action",
-           .expr_category = ExprCategory::Value,
+           .expr_category = ActionExprCategory(ExprCategory::Pattern),
            .constant_kind = InstConstantKind::ConstantInstAction,
            .is_lowered = false});
 
@@ -1387,7 +1390,7 @@ struct OutFormParamPatternAction {
       InstKind::OutFormParamPatternAction
           .Define<Parse::NodeIdOneOf<Parse::ReturnFormId, Parse::ReturnTypeId>>(
               {.ir_name = "out_form_param_pattern_action",
-               .expr_category = ExprCategory::Value,
+               .expr_category = ActionExprCategory(ExprCategory::Pattern),
                .constant_kind = InstConstantKind::ConstantInstAction,
                .is_lowered = false});
 
@@ -1482,6 +1485,7 @@ struct RefBinding {
 struct RefineTypeAction {
   static constexpr auto Kind = InstKind::RefineTypeAction.Define<Parse::NodeId>(
       {.ir_name = "refine_type_action",
+       .expr_category = ActionExprCategory(ExprCategory::Dependent),
        .constant_kind = InstConstantKind::InstAction,
        .is_lowered = false});
 
@@ -1873,7 +1877,7 @@ struct SpliceBlock {
 struct SpliceInst {
   static constexpr auto Kind = InstKind::SpliceInst.Define<Parse::NodeId>(
       {.ir_name = "splice_inst",
-       .expr_category = ExprCategory::Dependent,
+       .expr_category = ComputedExprCategory::DependsOnOperands,
        .constant_kind = InstConstantKind::Indirect});
 
   TypeId type_id;
