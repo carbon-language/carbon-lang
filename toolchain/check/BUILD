@@ -164,7 +164,6 @@ cc_library(
         "//common:raw_string_ostream",
         "//common:set",
         "//common:vlog",
-        "//third_party/llvm:multiplex_external_sema_source",
         "//toolchain/base:canonical_value_store",
         "//toolchain/base:index_base",
         "//toolchain/base:int",

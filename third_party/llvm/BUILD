@@ -20,14 +20,3 @@ cc_library(
         "@llvm-project//llvm:Support",
     ],
 )
-
-cc_library(
-    name = "multiplex_external_sema_source",
-    srcs = ["multiplex_external_sema_source.cpp"],
-    hdrs = ["multiplex_external_sema_source.h"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "@llvm-project//clang:sema",
-        "@llvm-project//llvm:Support",
-    ],
-)
