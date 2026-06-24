@@ -44,5 +44,9 @@ class C {
 }
 
 fn F(ref c: const C) {
+  // CHECK:STDERR: fail_const_ref_member_assign.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:   c.x = ();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:
   c.x = ();
 }
