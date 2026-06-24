@@ -82,7 +82,7 @@ void f2() {
 // CHECK:STDOUT: @a = external global [10 x i8], align 1
 // CHECK:STDOUT: @b = dso_local global ptr @a, align 8
 // CHECK:STDOUT: @_ZN2t3IiE1iE = linkonce_odr dso_local global i32 0, comdat, align 4
-// CHECK:STDOUT: @_ZTV2t1 = dso_local unnamed_addr constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI2t1, ptr @_ZN2t12f1Ev] }, align 8
+// CHECK:STDOUT: @_ZTV2t1 = dso_local constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI2t1, ptr @_ZN2t12f1Ev] }, align 8
 // CHECK:STDOUT: @_ZTI2t1 = dso_local constant { ptr, ptr } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv117__class_type_infoE, i64 2), ptr @_ZTS2t1 }, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv117__class_type_infoE = external global [0 x ptr]
 // CHECK:STDOUT: @_ZTS2t1 = dso_local constant [4 x i8] c"2t1\00", align 1

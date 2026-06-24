@@ -225,12 +225,18 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
         context(), loc_id_,
         context().constant_values().Get(replacement_self_inst_id),
         period_self_facet_type, [&](auto& /*builder*/) {
-          // The facet type containing this `.Self` should have already been
-          // identified, which would ensure that the type of `.Self` can be
-          // identified since it can only depend on things to the left of it
-          // inside the same facet type.
-          CARBON_FATAL("could not identify type of `.Self`");
+          // Given `I where .Self == ()`, the type of `.Self` is `I` and we're
+          // replacing `.Self` with some `T` that must also implement `I`.
+          // However `I` can be a generic with arbitrary complexity and the
+          // replacement with `T` may fail monomorphization.
+          //
+          // We don't have any better context to add here really, but we
+          // need to accept that errors happen rather than CHECKing that
+          // they don't.
         });
+    if (!identified_period_self_type_id.has_value()) {
+      return SemIR::ErrorInst::InstId;
+    }
     const auto& identified_period_self_type =
         context().identified_facet_types().Get(identified_period_self_type_id);
     auto required_impls = identified_period_self_type.required_impls();

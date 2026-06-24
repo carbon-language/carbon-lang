@@ -71,7 +71,7 @@ fn PassConstBPtr(p: const B*) {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_qualified_non_ptr.carbon
+// --- const_qualified_non_ptr.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -86,33 +86,38 @@ fn TakeConstA(p: const A);
 
 fn PassNonConstB(p: B) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+10]]:14: error: cannot implicitly convert expression of type `B` to `const A` [ConversionFailure]
-  // CHECK:STDERR:   TakeConstA(p);
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+7]]:14: note: type `B` does not implement interface `Core.ImplicitAs(const A)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   TakeConstA(p);
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE-10]]:15: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn TakeConstA(p: const A);
-  // CHECK:STDERR:               ^~~~~~~~~~
-  // CHECK:STDERR:
   TakeConstA(p);
   //@dump-sem-ir-end
 }
 
 fn PassConstB(p: const B) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+10]]:14: error: cannot implicitly convert expression of type `const B` to `const A` [ConversionFailure]
-  // CHECK:STDERR:   TakeConstA(p);
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE+7]]:14: note: type `const B` does not implement interface `Core.ImplicitAs(const A)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   TakeConstA(p);
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_todo_qualified_non_ptr.carbon:[[@LINE-26]]:15: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn TakeConstA(p: const A);
-  // CHECK:STDERR:               ^~~~~~~~~~
-  // CHECK:STDERR:
   TakeConstA(p);
+  //@dump-sem-ir-end
+}
+
+// --- partial_qualified_non_ptr.carbon
+
+library "[[@TEST_NAME]]";
+
+base class A {
+}
+
+base class B {
+  extend base: A;
+}
+
+fn TakePartialA(p: partial A);
+
+fn PassNonPartialB(b: B) {
+  //@dump-sem-ir-begin
+  TakePartialA(b);
+  //@dump-sem-ir-end
+}
+
+fn PassPartialB(b: partial B) {
+  //@dump-sem-ir-begin
+  TakePartialA(b);
   //@dump-sem-ir-end
 }
 
@@ -126,9 +131,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a92: type = struct_type {.a: %i32} [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
-// CHECK:STDOUT:   %struct_type.base.b.6c4: type = struct_type {.base: %A, .b: %i32} [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %struct_type.base.c.faf: type = struct_type {.base: %B, .c: %i32} [concrete]
 // CHECK:STDOUT:   %ptr.6b6: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.fcb: type = pattern_type %ptr.6b6 [concrete]
 // CHECK:STDOUT:   %p.param_patt.9b8: %pattern_type.fcb = value_param_pattern [concrete]
@@ -209,22 +212,23 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %bound_method.953: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.0c6: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct.7e2: %.3d6 = struct_value (%int_1.0c6) [concrete]
-// CHECK:STDOUT:   %A.val: %A = struct_value (%int_1.0c6) [concrete]
+// CHECK:STDOUT:   %A.val.f6a: %A = struct_value (%int_1.0c6) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.9f3: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
 // CHECK:STDOUT:   %bound_method.3cb: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.295: %i32 = int_value 2 [concrete]
-// CHECK:STDOUT:   %struct.a8a: %.640 = struct_value (%A.val, %int_2.295) [concrete]
-// CHECK:STDOUT:   %B.val: %B = struct_value (%A.val, %int_2.295) [concrete]
+// CHECK:STDOUT:   %struct.a8a: %.640 = struct_value (%A.val.f6a, %int_2.295) [concrete]
+// CHECK:STDOUT:   %B.val: %B = struct_value (%A.val.f6a, %int_2.295) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.485: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
 // CHECK:STDOUT:   %bound_method.763: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.410: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%B.val, %int_3.410) [concrete]
-// CHECK:STDOUT:   %.084: ref %C = temporary invalid, %C.val [concrete]
-// CHECK:STDOUT:   %.107: ref %B = class_element_access %.084, element0 [concrete]
-// CHECK:STDOUT:   %.5ce: ref %A = class_element_access %.107, element0 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.8: type = fn_type @Destroy.Op.loc32_66.8 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.8: %Destroy.Op.type.1d8f74.8 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.084, %Destroy.Op.1a2547.8 [concrete]
+// CHECK:STDOUT:   %A.val.985: %A = struct_value (%B.val, %int_3.410) [concrete]
+// CHECK:STDOUT:   %.320: ref %A = temporary invalid, %A.val.985 [concrete]
+// CHECK:STDOUT:   %.38f: ref %B = class_element_access %.320, element0 [concrete]
+// CHECK:STDOUT:   %.79d: ref %A = class_element_access %.38f, element0 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc32_66.4 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.320, %Destroy.Op.1a2547.4 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -370,12 +374,13 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:     %a.patt: %pattern_type.9ef = value_binding_pattern a [concrete = constants.%a.patt.bb7b23.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %.loc24_21.1: ref %B = class_element_access %c.ref, element0
-// CHECK:STDOUT:   %.loc24_21.2: ref %A = class_element_access %.loc24_21.1, element0
-// CHECK:STDOUT:   %.loc24_21.3: ref %A = converted %c.ref, %.loc24_21.2
-// CHECK:STDOUT:   %.loc24_21.4: %A = acquire_value %.loc24_21.3
+// CHECK:STDOUT:   %.loc24_21.1: %A = as_compatible %c.ref
+// CHECK:STDOUT:   %.loc24_21.2: ref %B = class_element_access %.loc24_21.1, element0
+// CHECK:STDOUT:   %.loc24_21.3: ref %A = class_element_access %.loc24_21.2, element0
+// CHECK:STDOUT:   %.loc24_21.4: ref %A = converted %c.ref, %.loc24_21.3
+// CHECK:STDOUT:   %.loc24_21.5: %A = acquire_value %.loc24_21.4
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %a: %A = value_binding a, %.loc24_21.4
+// CHECK:STDOUT:   %a: %A = value_binding a, %.loc24_21.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -384,10 +389,11 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %c.ref: %ptr.6b6 = name_ref c, %c
 // CHECK:STDOUT:   %.loc28_12: ref %C = deref %c.ref
 // CHECK:STDOUT:   %A.ref.loc28: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc28_15.1: ref %B = class_element_access %.loc28_12, element0
-// CHECK:STDOUT:   %.loc28_15.2: ref %A = class_element_access %.loc28_15.1, element0
-// CHECK:STDOUT:   %.loc28_15.3: ref %A = converted %.loc28_12, %.loc28_15.2
-// CHECK:STDOUT:   %addr: %ptr.d43 = addr_of %.loc28_15.3
+// CHECK:STDOUT:   %.loc28_15.1: ref %A = as_compatible %.loc28_12
+// CHECK:STDOUT:   %.loc28_15.2: ref %B = class_element_access %.loc28_15.1, element0
+// CHECK:STDOUT:   %.loc28_15.3: ref %A = class_element_access %.loc28_15.2, element0
+// CHECK:STDOUT:   %.loc28_15.4: ref %A = converted %.loc28_12, %.loc28_15.3
+// CHECK:STDOUT:   %addr: %ptr.d43 = addr_of %.loc28_15.4
 // CHECK:STDOUT:   %impl.elem0: %.e91 = impl_witness_access constants.%Copy.impl_witness.d19, element0 [concrete = constants.%ptr.as.Copy.impl.Op.5a8]
 // CHECK:STDOUT:   %bound_method.loc28_10.1: <bound method> = bound_method %addr, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%A) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.d1a]
@@ -421,7 +427,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %.loc32_46.4: init %i32 to %.loc32_46.3 = in_place_init %.loc32_46.2 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %.loc32_46.5: init %.3d6 to %.loc32_55.2 = class_init (%.loc32_46.4) [concrete = constants.%struct.7e2]
 // CHECK:STDOUT:   %.loc32_55.3: init %.3d6 = converted %.loc32_46.1, %.loc32_46.5 [concrete = constants.%struct.7e2]
-// CHECK:STDOUT:   %.loc32_55.4: init %A = as_compatible %.loc32_55.3 [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc32_55.4: init %A = as_compatible %.loc32_55.3 [concrete = constants.%A.val.f6a]
 // CHECK:STDOUT:   %impl.elem0.loc32_55: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc32_55.1: <bound method> = bound_method %int_2, %impl.elem0.loc32_55 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.9f3]
 // CHECK:STDOUT:   %specific_fn.loc32_55: <specific function> = specific_function %impl.elem0.loc32_55, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -443,14 +449,15 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %.loc32_64.8: init %i32 to %.loc32_64.7 = in_place_init %.loc32_64.6 [concrete = constants.%int_3.410]
 // CHECK:STDOUT:   %.loc32_64.9: init %C to %.loc32_64.2 = class_init (%.loc32_64.5, %.loc32_64.8) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc32_66.1: init %C = converted %.loc32_64.1, %.loc32_64.9 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc32_66.2: ref %C = temporary %.loc32_64.2, %.loc32_66.1 [concrete = constants.%.084]
-// CHECK:STDOUT:   %.loc32_66.3: ref %B = class_element_access %.loc32_66.2, element0 [concrete = constants.%.107]
-// CHECK:STDOUT:   %.loc32_66.4: ref %A = class_element_access %.loc32_66.3, element0 [concrete = constants.%.5ce]
-// CHECK:STDOUT:   %.loc32_66.5: ref %A = converted %.loc32_66.1, %.loc32_66.4 [concrete = constants.%.5ce]
-// CHECK:STDOUT:   %.loc32_66.6: %A = acquire_value %.loc32_66.5
+// CHECK:STDOUT:   %.loc32_66.2: init %A = as_compatible %.loc32_66.1 [concrete = constants.%A.val.985]
+// CHECK:STDOUT:   %.loc32_66.3: ref %A = temporary %.loc32_64.2, %.loc32_66.2 [concrete = constants.%.320]
+// CHECK:STDOUT:   %.loc32_66.4: ref %B = class_element_access %.loc32_66.3, element0 [concrete = constants.%.38f]
+// CHECK:STDOUT:   %.loc32_66.5: ref %A = class_element_access %.loc32_66.4, element0 [concrete = constants.%.79d]
+// CHECK:STDOUT:   %.loc32_66.6: ref %A = converted %.loc32_66.1, %.loc32_66.5 [concrete = constants.%.79d]
+// CHECK:STDOUT:   %.loc32_66.7: %A = acquire_value %.loc32_66.6
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %a: %A = value_binding a, %.loc32_66.6
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.084)
+// CHECK:STDOUT:   %a: %A = value_binding a, %.loc32_66.7
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.320)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -467,26 +474,6 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc32_66.4(%self.param: ref %A) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc32_66.5(%self.param: ref %struct_type.base.b.6c4) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc32_66.6(%self.param: ref %B) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc32_66.7(%self.param: ref %struct_type.base.c.faf) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc32_66.8(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -531,7 +518,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_qualified_non_ptr.carbon
+// CHECK:STDOUT: --- const_qualified_non_ptr.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
@@ -547,8 +534,11 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeConstA.ref: %TakeConstA.type = name_ref TakeConstA, file.%TakeConstA.decl [concrete = constants.%TakeConstA]
 // CHECK:STDOUT:   %p.ref: %B = name_ref p, %p
-// CHECK:STDOUT:   %.loc25: %const.b97 = converted %p.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %TakeConstA.call: init %empty_tuple.type = call %TakeConstA.ref(<error>)
+// CHECK:STDOUT:   %.loc15_14.1: %const.b97 = as_compatible %p.ref
+// CHECK:STDOUT:   %.loc15_14.2: ref %const.b97 = class_element_access %.loc15_14.1, element0
+// CHECK:STDOUT:   %.loc15_14.3: ref %const.b97 = converted %p.ref, %.loc15_14.2
+// CHECK:STDOUT:   %.loc15_14.4: %const.b97 = acquire_value %.loc15_14.3
+// CHECK:STDOUT:   %TakeConstA.call: init %empty_tuple.type = call %TakeConstA.ref(%.loc15_14.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -556,8 +546,47 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeConstA.ref: %TakeConstA.type = name_ref TakeConstA, file.%TakeConstA.decl [concrete = constants.%TakeConstA]
 // CHECK:STDOUT:   %p.ref: %const.825 = name_ref p, %p
-// CHECK:STDOUT:   %.loc41: %const.b97 = converted %p.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %TakeConstA.call: init %empty_tuple.type = call %TakeConstA.ref(<error>)
+// CHECK:STDOUT:   %.loc21_14.1: %const.b97 = as_compatible %p.ref
+// CHECK:STDOUT:   %.loc21_14.2: ref %const.b97 = class_element_access %.loc21_14.1, element0
+// CHECK:STDOUT:   %.loc21_14.3: ref %const.b97 = converted %p.ref, %.loc21_14.2
+// CHECK:STDOUT:   %.loc21_14.4: %const.b97 = acquire_value %.loc21_14.3
+// CHECK:STDOUT:   %TakeConstA.call: init %empty_tuple.type = call %TakeConstA.ref(%.loc21_14.4)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- partial_qualified_non_ptr.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.3d6: type = partial_type %A [concrete]
+// CHECK:STDOUT:   %TakePartialA.type: type = fn_type @TakePartialA [concrete]
+// CHECK:STDOUT:   %TakePartialA: %TakePartialA.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.640: type = partial_type %B [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @PassNonPartialB(%b.param: %B) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %TakePartialA.ref: %TakePartialA.type = name_ref TakePartialA, file.%TakePartialA.decl [concrete = constants.%TakePartialA]
+// CHECK:STDOUT:   %b.ref: %B = name_ref b, %b
+// CHECK:STDOUT:   %.loc15_16.1: %.3d6 = as_compatible %b.ref
+// CHECK:STDOUT:   %.loc15_16.2: ref %.3d6 = class_element_access %.loc15_16.1, element0
+// CHECK:STDOUT:   %.loc15_16.3: ref %.3d6 = converted %b.ref, %.loc15_16.2
+// CHECK:STDOUT:   %.loc15_16.4: %.3d6 = acquire_value %.loc15_16.3
+// CHECK:STDOUT:   %TakePartialA.call: init %empty_tuple.type = call %TakePartialA.ref(%.loc15_16.4)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @PassPartialB(%b.param: %.640) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %TakePartialA.ref: %TakePartialA.type = name_ref TakePartialA, file.%TakePartialA.decl [concrete = constants.%TakePartialA]
+// CHECK:STDOUT:   %b.ref: %.640 = name_ref b, %b
+// CHECK:STDOUT:   %.loc21_16.1: %.3d6 = as_compatible %b.ref
+// CHECK:STDOUT:   %.loc21_16.2: ref %.3d6 = class_element_access %.loc21_16.1, element0
+// CHECK:STDOUT:   %.loc21_16.3: ref %.3d6 = converted %b.ref, %.loc21_16.2
+// CHECK:STDOUT:   %.loc21_16.4: %.3d6 = acquire_value %.loc21_16.3
+// CHECK:STDOUT:   %TakePartialA.call: init %empty_tuple.type = call %TakePartialA.ref(%.loc21_16.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

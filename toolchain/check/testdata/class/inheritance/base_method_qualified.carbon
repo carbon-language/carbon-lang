@@ -261,10 +261,11 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %F.ref: %Base.F.type = name_ref F, @Base.%Base.F.decl [concrete = constants.%Base.F]
 // CHECK:STDOUT:   %Base.F.bound: <bound method> = bound_method %a.ref, %F.ref
-// CHECK:STDOUT:   %.loc30_10.1: ref %Base = class_element_access %a.ref, element0
-// CHECK:STDOUT:   %.loc30_10.2: ref %Base = converted %a.ref, %.loc30_10.1
-// CHECK:STDOUT:   %.loc30_10.3: %Base = acquire_value %.loc30_10.2
-// CHECK:STDOUT:   %Base.F.call: init %i32 = call %Base.F.bound(%.loc30_10.3)
+// CHECK:STDOUT:   %.loc30_10.1: %Base = as_compatible %a.ref
+// CHECK:STDOUT:   %.loc30_10.2: ref %Base = class_element_access %.loc30_10.1, element0
+// CHECK:STDOUT:   %.loc30_10.3: ref %Base = converted %a.ref, %.loc30_10.2
+// CHECK:STDOUT:   %.loc30_10.4: %Base = acquire_value %.loc30_10.3
+// CHECK:STDOUT:   %Base.F.call: init %i32 = call %Base.F.bound(%.loc30_10.4)
 // CHECK:STDOUT:   return %Base.F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -275,10 +276,11 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %F.ref: %Base.F.type = name_ref F, @Base.%Base.F.decl [concrete = constants.%Base.F]
 // CHECK:STDOUT:   %.loc34_11.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %Base.F.bound: <bound method> = bound_method %.loc34_11.1, %F.ref
-// CHECK:STDOUT:   %.loc34_11.2: ref %Base = class_element_access %.loc34_11.1, element0
-// CHECK:STDOUT:   %.loc34_11.3: ref %Base = converted %.loc34_11.1, %.loc34_11.2
-// CHECK:STDOUT:   %.loc34_11.4: %Base = acquire_value %.loc34_11.3
-// CHECK:STDOUT:   %Base.F.call: init %i32 = call %Base.F.bound(%.loc34_11.4)
+// CHECK:STDOUT:   %.loc34_11.2: ref %Base = as_compatible %.loc34_11.1
+// CHECK:STDOUT:   %.loc34_11.3: ref %Base = class_element_access %.loc34_11.2, element0
+// CHECK:STDOUT:   %.loc34_11.4: ref %Base = converted %.loc34_11.1, %.loc34_11.3
+// CHECK:STDOUT:   %.loc34_11.5: %Base = acquire_value %.loc34_11.4
+// CHECK:STDOUT:   %Base.F.call: init %i32 = call %Base.F.bound(%.loc34_11.5)
 // CHECK:STDOUT:   return %Base.F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

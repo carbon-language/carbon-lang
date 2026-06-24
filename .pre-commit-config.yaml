@@ -232,6 +232,7 @@ repos:
               .bazelversion|
               .github/pull_request_template.md|
               .python-version|
+              LICENSE.*|
               compile_flags.txt|
               github_tools/requirements.txt|
               third_party/.*|

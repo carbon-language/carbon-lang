@@ -83,8 +83,8 @@ git_override(
     build_file_content = "# empty",
     # We pin to specific upstream commits and try to track top-of-tree
     # reasonably closely rather than pinning to a specific release.
-    # HEAD as of 2026-05-14.
-    commit = "9a4faee1068c09efbf837cfb7b0f5693b24635f4",
+    # HEAD as of 2026-06-23.
+    commit = "bab165ecb0d64686849dfa14d1798589eee7b66e",
     patch_cmds = ["echo \"module(name='llvm-raw')\" > MODULE.bazel"],
     patch_strip = 1,
     patches = [
@@ -93,7 +93,6 @@ git_override(
         "//bazel/llvm_project:0004_Introduce_basic_sources_exporting_for_libunwind.patch",
         "//bazel/llvm_project:0005_Introduce_basic_sources_exporting_for_libcxx_and_libcxxabi.patch",
         "//bazel/llvm_project:0009_Introduce_starlark_exporting_compiler-rt_build_information.patch",
-        "//bazel/llvm_project:0010_Expose_vptr_init.patch",
     ],
     remote = "https://github.com/llvm/llvm-project.git",
 )

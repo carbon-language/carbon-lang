@@ -253,17 +253,19 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc35_4.1: ref %Derived = deref %p.ref.loc35
 // CHECK:STDOUT:   %RefSelfBase.ref: %Derived.RefSelfBase.type = name_ref RefSelfBase, @Derived.%Derived.RefSelfBase.decl [concrete = constants.%Derived.RefSelfBase]
 // CHECK:STDOUT:   %Derived.RefSelfBase.bound: <bound method> = bound_method %.loc35_4.1, %RefSelfBase.ref
-// CHECK:STDOUT:   %.loc35_4.2: ref %Base = class_element_access %.loc35_4.1, element0
-// CHECK:STDOUT:   %.loc35_4.3: ref %Base = converted %.loc35_4.1, %.loc35_4.2
-// CHECK:STDOUT:   %Derived.RefSelfBase.call: init %empty_tuple.type = call %Derived.RefSelfBase.bound(%.loc35_4.3)
+// CHECK:STDOUT:   %.loc35_4.2: ref %Base = as_compatible %.loc35_4.1
+// CHECK:STDOUT:   %.loc35_4.3: ref %Base = class_element_access %.loc35_4.2, element0
+// CHECK:STDOUT:   %.loc35_4.4: ref %Base = converted %.loc35_4.1, %.loc35_4.3
+// CHECK:STDOUT:   %Derived.RefSelfBase.call: init %empty_tuple.type = call %Derived.RefSelfBase.bound(%.loc35_4.4)
 // CHECK:STDOUT:   %p.ref.loc36: %ptr.64c = name_ref p, %p
 // CHECK:STDOUT:   %.loc36_11.1: ref %Derived = deref %p.ref.loc36
 // CHECK:STDOUT:   %SelfBase.ref: %Derived.SelfBase.type = name_ref SelfBase, @Derived.%Derived.SelfBase.decl [concrete = constants.%Derived.SelfBase]
 // CHECK:STDOUT:   %Derived.SelfBase.bound: <bound method> = bound_method %.loc36_11.1, %SelfBase.ref
-// CHECK:STDOUT:   %.loc36_11.2: ref %Base = class_element_access %.loc36_11.1, element0
-// CHECK:STDOUT:   %.loc36_11.3: ref %Base = converted %.loc36_11.1, %.loc36_11.2
-// CHECK:STDOUT:   %.loc36_11.4: %Base = acquire_value %.loc36_11.3
-// CHECK:STDOUT:   %Derived.SelfBase.call: init %i32 = call %Derived.SelfBase.bound(%.loc36_11.4)
+// CHECK:STDOUT:   %.loc36_11.2: ref %Base = as_compatible %.loc36_11.1
+// CHECK:STDOUT:   %.loc36_11.3: ref %Base = class_element_access %.loc36_11.2, element0
+// CHECK:STDOUT:   %.loc36_11.4: ref %Base = converted %.loc36_11.1, %.loc36_11.3
+// CHECK:STDOUT:   %.loc36_11.5: %Base = acquire_value %.loc36_11.4
+// CHECK:STDOUT:   %Derived.SelfBase.call: init %i32 = call %Derived.SelfBase.bound(%.loc36_11.5)
 // CHECK:STDOUT:   return %Derived.SelfBase.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

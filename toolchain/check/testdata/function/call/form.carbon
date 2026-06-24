@@ -566,19 +566,14 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT:   %pattern_type.13f: type = pattern_type Core.Form [concrete]
 // CHECK:STDOUT:   %Form.patt: %pattern_type.13f = symbolic_binding_pattern Form, 0 [symbolic]
 // CHECK:STDOUT:   %Form: Core.Form = symbolic_binding Form, 0 [symbolic]
-// CHECK:STDOUT:   %.344: Core.Form = splice_inst @F.%.loc4_28.1 [template]
-// CHECK:STDOUT:   %.82f: type = type_component_of %.344 [template]
-// CHECK:STDOUT:   %pattern_type.ec7: type = pattern_type %.82f [template]
-// CHECK:STDOUT:   %.b9b: %pattern_type.ec7 = splice_inst @F.%.loc4_24.2 [template]
-// CHECK:STDOUT:   %return.patt.96f: %pattern_type.ec7 = return_slot_pattern %.b9b, %.82f [template]
-// CHECK:STDOUT:   %.33d: <instruction> = refine_form_action %Form [template]
-// CHECK:STDOUT:   %.80a: Core.Form = splice_inst %.33d [template]
-// CHECK:STDOUT:   %.af3: <instruction> = out_form_param_pattern_action %.80a [template]
-// CHECK:STDOUT:   %.465: type = type_component_of %.80a [template]
-// CHECK:STDOUT:   %pattern_type.a51: type = pattern_type %.465 [template]
-// CHECK:STDOUT:   %.3c2: %pattern_type.a51 = splice_inst %.af3 [template]
-// CHECK:STDOUT:   %return.patt.de0: %pattern_type.a51 = return_slot_pattern %.3c2, %.465 [template]
-// CHECK:STDOUT:   %.849: <instruction> = callee_pattern_match_action %.3c2, call_param0 [template]
+// CHECK:STDOUT:   %.42f: type = type_component_of %Form [symbolic]
+// CHECK:STDOUT:   %pattern_type.177: type = pattern_type %.42f [symbolic]
+// CHECK:STDOUT:   %.35a: %pattern_type.177 = splice_inst @F.%.loc4_24.2 [template]
+// CHECK:STDOUT:   %return.patt.5b7: %pattern_type.177 = return_slot_pattern %.35a, %.42f [template]
+// CHECK:STDOUT:   %.94f: <instruction> = out_form_param_pattern_action %Form [template]
+// CHECK:STDOUT:   %.1ac: %pattern_type.177 = splice_inst %.94f [template]
+// CHECK:STDOUT:   %return.patt.333: %pattern_type.177 = return_slot_pattern %.1ac, %.42f [template]
+// CHECK:STDOUT:   %.82b: <instruction> = callee_pattern_match_action %.1ac, call_param0 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -595,47 +590,42 @@ fn F(Form:! Core.Form) ->? Form;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %Form.patt.loc4_10.1: %pattern_type.13f = symbolic_binding_pattern Form, 0 [symbolic = %Form.patt.loc4_10.2 (constants.%Form.patt)]
-// CHECK:STDOUT:     %return.patt.loc4_24.1: @F.%pattern_type (%pattern_type.ec7) = return_slot_pattern %.loc4_24.6, constants.%.82f [template = %return.patt.loc4_24.2 (constants.%return.patt.96f)]
+// CHECK:STDOUT:     %return.patt.loc4_24.1: @F.%pattern_type (%pattern_type.177) = return_slot_pattern %.loc4_24.6, constants.%.42f [template = %return.patt.loc4_24.2 (constants.%return.patt.5b7)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Form.ref.loc4_28: Core.Form = name_ref Form, %Form.loc4_10.2 [symbolic = %Form.loc4_10.1 (constants.%Form)]
-// CHECK:STDOUT:     %.loc4_28.3: Core.Form = splice_inst %.loc4_28.1 [template = %.loc4_28.2 (constants.%.344)]
-// CHECK:STDOUT:     %.loc4_24.6: @F.%pattern_type (%pattern_type.ec7) = splice_inst %.loc4_24.2 [template = %.loc4_24.4 (constants.%.b9b)]
+// CHECK:STDOUT:     %.loc4_24.6: @F.%pattern_type (%pattern_type.177) = splice_inst %.loc4_24.2 [template = %.loc4_24.4 (constants.%.35a)]
 // CHECK:STDOUT:     %.loc4_17: type = splice_block %Form.ref.loc4_17 [concrete = Core.Form] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Form.ref.loc4_17: type = name_ref Form, imports.%Core.Form [concrete = Core.Form]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Form.loc4_10.2: Core.Form = symbolic_binding Form, 0 [symbolic = %Form.loc4_10.1 (constants.%Form)]
-// CHECK:STDOUT:     %.loc4_24.1: @F.%pattern_type (%pattern_type.ec7) = splice_inst %.loc4_24.5
-// CHECK:STDOUT:     %return: @F.%.loc4_24.3 (%.82f) = return_slot %.loc4_24.1
+// CHECK:STDOUT:     %.loc4_24.1: @F.%pattern_type (%pattern_type.177) = splice_inst %.loc4_24.5
+// CHECK:STDOUT:     %return: @F.%.loc4_24.3 (%.42f) = return_slot %.loc4_24.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%Form.loc4_10.2: Core.Form) {
 // CHECK:STDOUT:   %Form.patt.loc4_10.2: %pattern_type.13f = symbolic_binding_pattern Form, 0 [symbolic = %Form.patt.loc4_10.2 (constants.%Form.patt)]
 // CHECK:STDOUT:   %Form.loc4_10.1: Core.Form = symbolic_binding Form, 0 [symbolic = %Form.loc4_10.1 (constants.%Form)]
-// CHECK:STDOUT:   %.loc4_28.1: <instruction> = refine_form_action %Form.ref.loc4_28 [template]
-// CHECK:STDOUT:   %.loc4_28.2: Core.Form = splice_inst %.loc4_28.1 [template = %.loc4_28.2 (constants.%.344)]
-// CHECK:STDOUT:   %.loc4_24.2: <instruction> = out_form_param_pattern_action %.loc4_28.3 [template]
-// CHECK:STDOUT:   %.loc4_24.3: type = type_component_of %.loc4_28.2 [template = %.loc4_24.3 (constants.%.82f)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %.loc4_24.3 [template = %pattern_type (constants.%pattern_type.ec7)]
-// CHECK:STDOUT:   %.loc4_24.4: @F.%pattern_type (%pattern_type.ec7) = splice_inst %.loc4_24.2 [template = %.loc4_24.4 (constants.%.b9b)]
-// CHECK:STDOUT:   %return.patt.loc4_24.2: @F.%pattern_type (%pattern_type.ec7) = return_slot_pattern %.loc4_24.4, %.loc4_24.3 [template = %return.patt.loc4_24.2 (constants.%return.patt.96f)]
+// CHECK:STDOUT:   %.loc4_24.2: <instruction> = out_form_param_pattern_action %Form.ref.loc4_28 [template]
+// CHECK:STDOUT:   %.loc4_24.3: type = type_component_of %Form.loc4_10.1 [symbolic = %.loc4_24.3 (constants.%.42f)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %.loc4_24.3 [symbolic = %pattern_type (constants.%pattern_type.177)]
+// CHECK:STDOUT:   %.loc4_24.4: @F.%pattern_type (%pattern_type.177) = splice_inst %.loc4_24.2 [template = %.loc4_24.4 (constants.%.35a)]
+// CHECK:STDOUT:   %return.patt.loc4_24.2: @F.%pattern_type (%pattern_type.177) = return_slot_pattern %.loc4_24.4, %.loc4_24.3 [template = %return.patt.loc4_24.2 (constants.%return.patt.5b7)]
 // CHECK:STDOUT:   %.loc4_24.5: <instruction> = callee_pattern_match_action %.loc4_24.6, call_param0 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> out %.loc4_24.1:? @F.%.loc4_28.1 (@F.%.loc4_28.1);
+// CHECK:STDOUT:   fn() -> out %.loc4_24.1:? %Form;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Form) {
 // CHECK:STDOUT:   %Form.patt.loc4_10.2 => constants.%Form.patt
 // CHECK:STDOUT:   %Form.loc4_10.1 => constants.%Form
-// CHECK:STDOUT:   %.loc4_28.1 => constants.%.33d
-// CHECK:STDOUT:   %.loc4_28.2 => constants.%.80a
-// CHECK:STDOUT:   %.loc4_24.2 => constants.%.af3
-// CHECK:STDOUT:   %.loc4_24.3 => constants.%.465
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a51
-// CHECK:STDOUT:   %.loc4_24.4 => constants.%.3c2
-// CHECK:STDOUT:   %return.patt.loc4_24.2 => constants.%return.patt.de0
-// CHECK:STDOUT:   %.loc4_24.5 => constants.%.849
+// CHECK:STDOUT:   %.loc4_24.2 => constants.%.94f
+// CHECK:STDOUT:   %.loc4_24.3 => constants.%.42f
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.177
+// CHECK:STDOUT:   %.loc4_24.4 => constants.%.1ac
+// CHECK:STDOUT:   %return.patt.loc4_24.2 => constants.%return.patt.333
+// CHECK:STDOUT:   %.loc4_24.5 => constants.%.82b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

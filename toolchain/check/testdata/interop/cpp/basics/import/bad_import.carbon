@@ -24,9 +24,19 @@ import Cpp library "";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+4]]:10: error: '\"foo.h\"' file not found [CppInteropParseError]
-// CHECK:STDERR:     8 | #include "\"foo.h\""
-// CHECK:STDERR:       |          ^~~~~~~~~~~
+// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+14]]:10: error: '\' file not found [CppInteropParseError]
+// CHECK:STDERR:    18 | #include "\"foo.h\""
+// CHECK:STDERR:       |          ^~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+10]]:13: error: invalid suffix on literal; C++11 requires a space between literal and identifier [CppInteropParseError]
+// CHECK:STDERR:    18 | #include "\"foo.h\""
+// CHECK:STDERR:       |             ^
+// CHECK:STDERR:       |              {{}}
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+5]]:13: warning: extra tokens at end of #include directive [CppInteropParseWarning]
+// CHECK:STDERR:    18 | #include "\"foo.h\""
+// CHECK:STDERR:       |             ^
+// CHECK:STDERR:       |             //
 // CHECK:STDERR:
 import Cpp library "\"foo.h\"";
 
