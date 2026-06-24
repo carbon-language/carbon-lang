@@ -98,8 +98,8 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZNK1A6by_valEv = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: @_ZTV1A = available_externally unnamed_addr constant { [4 x ptr] } { [4 x ptr] [ptr null, ptr @_ZTI1A, ptr @_ZN4Base5virt0Ev, ptr @_ZN1A5virt1Ev] }, align 8
-// CHECK:STDOUT: @_ZTV4Base = available_externally unnamed_addr constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI4Base, ptr @_ZN4Base5virt0Ev] }, align 8
+// CHECK:STDOUT: @_ZTV1A = available_externally constant { [4 x ptr] } { [4 x ptr] [ptr null, ptr @_ZTI1A, ptr @_ZN4Base5virt0Ev, ptr @_ZN1A5virt1Ev] }, align 8
+// CHECK:STDOUT: @_ZTV4Base = available_externally constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI4Base, ptr @_ZN4Base5virt0Ev] }, align 8
 // CHECK:STDOUT: @_ZTI1A = external constant ptr
 // CHECK:STDOUT: @_ZTI4Base = external constant ptr
 // CHECK:STDOUT:
@@ -185,8 +185,8 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN1A6by_refEv = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: @_ZTV1A = available_externally unnamed_addr constant { [4 x ptr] } { [4 x ptr] [ptr null, ptr @_ZTI1A, ptr @_ZN4Base5virt0Ev, ptr @_ZN1A5virt1Ev] }, align 8
-// CHECK:STDOUT: @_ZTV4Base = available_externally unnamed_addr constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI4Base, ptr @_ZN4Base5virt0Ev] }, align 8
+// CHECK:STDOUT: @_ZTV1A = available_externally constant { [4 x ptr] } { [4 x ptr] [ptr null, ptr @_ZTI1A, ptr @_ZN4Base5virt0Ev, ptr @_ZN1A5virt1Ev] }, align 8
+// CHECK:STDOUT: @_ZTV4Base = available_externally constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI4Base, ptr @_ZN4Base5virt0Ev] }, align 8
 // CHECK:STDOUT: @_ZTI1A = external constant ptr
 // CHECK:STDOUT: @_ZTI4Base = external constant ptr
 // CHECK:STDOUT:
@@ -254,8 +254,8 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @_ZTV1A = available_externally unnamed_addr constant { [4 x ptr] } { [4 x ptr] [ptr null, ptr @_ZTI1A, ptr @_ZN4Base5virt0Ev, ptr @_ZN1A5virt1Ev] }, align 8
-// CHECK:STDOUT: @_ZTV4Base = available_externally unnamed_addr constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI4Base, ptr @_ZN4Base5virt0Ev] }, align 8
+// CHECK:STDOUT: @_ZTV1A = available_externally constant { [4 x ptr] } { [4 x ptr] [ptr null, ptr @_ZTI1A, ptr @_ZN4Base5virt0Ev, ptr @_ZN1A5virt1Ev] }, align 8
+// CHECK:STDOUT: @_ZTV4Base = available_externally constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI4Base, ptr @_ZN4Base5virt0Ev] }, align 8
 // CHECK:STDOUT: @_ZTI1A = external constant ptr
 // CHECK:STDOUT: @_ZTI4Base = external constant ptr
 // CHECK:STDOUT:

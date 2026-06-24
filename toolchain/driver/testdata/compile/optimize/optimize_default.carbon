@@ -59,7 +59,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nofree norecurse nosync nounwind memory(argmem: readwrite)
-// CHECK:STDOUT: define void @_CVectorizedWithOptSpeed.Main(ptr captures(none) %a) local_unnamed_addr #1 !dbg !16 {
+// CHECK:STDOUT: define void @_CVectorizedWithOptSpeed.Main(ptr nofree captures(none) %a) local_unnamed_addr #1 !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br label %while.body, !dbg !22
 // CHECK:STDOUT:
