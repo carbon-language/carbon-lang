@@ -1473,7 +1473,7 @@ static auto MakeSelfParamPatternBlockId(
   const auto* method_decl = cast<clang::CXXMethodDecl>(&clang_decl);
 
   // Build a `self` parameter from the object parameter.
-  BeginSubpattern(context);
+  BeginExprRegionForPattern(context);
 
   clang::QualType param_type =
       method_decl->getFunctionObjectParameterReferenceType();
@@ -1483,9 +1483,9 @@ static auto MakeSelfParamPatternBlockId(
   auto param_info = MapParameterType(context, loc_id, param_type, passing_mode);
   auto [type_inst_id, type_id] = param_info.type;
   SemIR::ExprRegionId type_expr_region_id =
-      ConsumeSubpatternExpr(context, type_inst_id);
+      ConsumeExprRegionForPattern(context, type_inst_id);
 
-  EndEmptySubpattern(context);
+  EndEmptyExprRegionForPattern(context);
 
   if (!type_id.has_value()) {
     context.TODO(loc_id,
@@ -1538,8 +1538,8 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
         ClangGetUnqualifiedTypePreserveNonNull(context, orig_param_type);
 
     // Mark the start of a region of insts, needed for the type expression
-    // created later with the call of `ConsumeSubpatternExpr()`.
-    BeginSubpattern(context);
+    // created later with the call of `ConsumeExprRegionForPattern()`.
+    BeginExprRegionForPattern(context);
     auto param_info = MapParameterType(context, loc_id, param_type,
                                        signature.GetPassingMode(i));
     auto [type_inst_id, type_id] = param_info.type;
@@ -1547,8 +1547,8 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // region that allows control flow in the type expression e.g. fn F(x: if C
     // then i32 else i64).
     SemIR::ExprRegionId type_expr_region_id =
-        ConsumeSubpatternExpr(context, type_inst_id);
-    EndEmptySubpattern(context);
+        ConsumeExprRegionForPattern(context, type_inst_id);
+    EndEmptyExprRegionForPattern(context);
 
     if (!type_id.has_value()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
