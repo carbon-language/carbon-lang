@@ -236,11 +236,14 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
 
   compile_driver_ = std::make_unique<CompileDriver>(&options_);
   auto map_input = [](llvm::StringRef) -> std::string { return ""; };
-  if (!compile_driver_->Initialize(driver_env, map_input)) {
+  if (!compile_driver_->Initialize(&driver_env, map_input)) {
     context.PublishDiagnostics(consumer.params());
     return;
   }
-  compile_driver_->Compile(driver_env);
+  if (!compile_driver_->Compile(&driver_env).success) {
+    context.PublishDiagnostics(consumer.params());
+    return;
+  }
 
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing

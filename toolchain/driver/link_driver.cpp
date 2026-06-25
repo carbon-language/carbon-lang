@@ -4,6 +4,10 @@
 
 #include "toolchain/driver/link_driver.h"
 
+#include "common/filesystem.h"
+#include "toolchain/base/runtimes_build_info.h"
+#include "toolchain/driver/carbon_runtimes.h"
+
 namespace Carbon {
 
 LinkDriver::LinkDriver(LinkOptions* options) : options_(options) {}
@@ -45,6 +49,40 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
     return {.success = false};
   }
 
+  // Find or build the Carbon Core runtimes for linking the prelude into the
+  // binary.
+  std::optional<std::filesystem::path> core_path;
+  std::optional<Filesystem::DirRef> runtimes_dir;
+  if (driver_env.prebuilt_runtimes) {
+    auto error_or_path =
+        driver_env.prebuilt_runtimes->Get(Runtimes::CarbonCore);
+    CARBON_CHECK(error_or_path.ok(),
+                 "Prebuilt runtimes failed to fetch for Carbon prelude: {}",
+                 error_or_path.error().message());
+    core_path = std::move(*error_or_path);
+    runtimes_dir = driver_env.prebuilt_runtimes->base_dir();
+  } else if (driver_env.build_runtimes_on_demand) {
+    Runtimes::Cache::Features features = {
+        .target = options_->codegen_options->target.str()};
+    auto runtimes_or_error = driver_env.runtimes_cache.Lookup(features);
+    CARBON_CHECK(runtimes_or_error.ok(), "Runtimes cache lookup failed: {}",
+                 runtimes_or_error.error().message());
+    auto runtimes = std::move(*runtimes_or_error);
+    runtimes_dir = runtimes.base_dir();
+    CarbonPreludeBuilder prelude_builder(&driver_env, options_->codegen_options,
+                                         &runtimes);
+    auto path_or_error = std::move(prelude_builder).Build();
+    if (!path_or_error.ok()) {
+      CARBON_DIAGNOSTIC(FailureBuildingRuntimes, Error,
+                        "Failed to build Carbon prelude during linking: {0}",
+                        std::string);
+      driver_env.emitter.Emit(FailureBuildingRuntimes,
+                              path_or_error.error().message());
+      return {.success = false};
+    }
+    core_path = std::move(*path_or_error);
+  }
+
   // Note that we append any extra Clang args before our object filenames. This
   // allows us to propagate object filenames that collide with Clang flags using
   // `--` before the filenames. While in theory, this could create a problem in
@@ -53,6 +91,27 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
   clang_args.append(options_->extra_clang_args.begin(),
                     options_->extra_clang_args.end());
   clang_args.push_back("--");
+
+  // Append the Carbon prelude object files to the link.
+  llvm::SmallVector<std::filesystem::path> prelude_paths;
+  if (core_path) {
+    auto core_dir_or_error = runtimes_dir->OpenDir(*core_path);
+    CARBON_CHECK(core_dir_or_error.ok());
+    auto core_dir = std::move(*core_dir_or_error);
+    CARBON_CHECK(core_dir
+                     .AppendEntriesIf(prelude_paths,
+                                      [](llvm::StringRef name) -> bool {
+                                        auto entry_path =
+                                            std::filesystem::path(name.str());
+                                        return entry_path.extension() == ".o";
+                                      })
+                     .ok());
+    llvm::for_each(prelude_paths, [&](std::filesystem::path path) -> void {
+      llvm::errs() << path << "\n";
+      clang_args.push_back(llvm::StringRef(path));
+    });
+  }
+
   clang_args.append(options_->object_filenames.begin(),
                     options_->object_filenames.end());
 
