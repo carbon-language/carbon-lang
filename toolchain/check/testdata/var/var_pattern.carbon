@@ -82,9 +82,13 @@ fn G() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:41: error: `var` nested within another `var` [NestedVar]
+  // CHECK:STDERR: fail_nested.carbon:[[@LINE+8]]:41: error: `var` nested within another `var` [NestedVar]
   // CHECK:STDERR:   let (unused x: (), var (unused y: (), var unused z: ())) = ((), ((), ()));
   // CHECK:STDERR:                                         ^~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:41: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   let (unused x: (), var (unused y: (), var unused z: ())) = ((), ((), ()));
+  // CHECK:STDERR:                                         ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let (unused x: (), var (unused y: (), var unused z: ())) = ((), ((), ()));
 }
@@ -755,114 +759,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_nested.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:   %y.patt: %pattern_type.cb1 = ref_binding_pattern y [concrete]
-// CHECK:STDOUT:   %z.patt: %pattern_type.cb1 = ref_binding_pattern z [concrete]
-// CHECK:STDOUT:   %z.var_patt: %pattern_type.cb1 = var_pattern %z.patt [concrete]
-// CHECK:STDOUT:   %tuple.type.bcd: type = tuple_type (%empty_tuple.type, %empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %pattern_type.5b8: type = pattern_type %tuple.type.bcd [concrete]
-// CHECK:STDOUT:   %.e9e: %pattern_type.5b8 = tuple_pattern (%y.patt, %z.var_patt) [concrete]
-// CHECK:STDOUT:   %.var_patt: %pattern_type.5b8 = var_pattern %.e9e [concrete]
-// CHECK:STDOUT:   %tuple.type.a21: type = tuple_type (%empty_tuple.type, %tuple.type.bcd) [concrete]
-// CHECK:STDOUT:   %pattern_type.c6c: type = pattern_type %tuple.type.a21 [concrete]
-// CHECK:STDOUT:   %.441: %pattern_type.c6c = tuple_pattern (%x.patt, %.var_patt) [concrete]
-// CHECK:STDOUT:   %tuple.d8f: %tuple.type.bcd = tuple_value (%empty_tuple, %empty_tuple) [concrete]
-// CHECK:STDOUT:   %tuple.c9e: %tuple.type.a21 = tuple_value (%empty_tuple, %tuple.d8f) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.1: type = fn_type @Destroy.Op.loc9_22.1 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.1: %Destroy.Op.type.1d8f74.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc9_22.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %y.patt: %pattern_type.cb1 = ref_binding_pattern y [concrete = constants.%y.patt]
-// CHECK:STDOUT:     %z.patt: %pattern_type.cb1 = ref_binding_pattern z [concrete = constants.%z.patt]
-// CHECK:STDOUT:     %z.var_patt: %pattern_type.cb1 = var_pattern %z.patt [concrete = constants.%z.var_patt]
-// CHECK:STDOUT:     %.loc9_57: %pattern_type.5b8 = tuple_pattern (%y.patt, %z.var_patt) [concrete = constants.%.e9e]
-// CHECK:STDOUT:     %.var_patt: %pattern_type.5b8 = var_pattern %.loc9_57 [concrete = constants.%.var_patt]
-// CHECK:STDOUT:     %.loc9_58: %pattern_type.c6c = tuple_pattern (%x.patt, %.var_patt) [concrete = constants.%.441]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %z.var: ref %empty_tuple.type = var %z.var_patt
-// CHECK:STDOUT:   %.var: ref %tuple.type.bcd = var %.var_patt
-// CHECK:STDOUT:   %.loc9_64.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_69.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_73.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_74.1: %tuple.type.bcd = tuple_literal (%.loc9_69.1, %.loc9_73.1) [concrete = constants.%tuple.d8f]
-// CHECK:STDOUT:   %.loc9_75: %tuple.type.a21 = tuple_literal (%.loc9_64.1, %.loc9_74.1) [concrete = constants.%tuple.c9e]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_64.2: %empty_tuple.type = converted %.loc9_64.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_19.1: type = splice_block %.loc9_19.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc9_19.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc9_19.3: type = converted %.loc9_19.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %empty_tuple.type = value_binding x, %.loc9_64.2
-// CHECK:STDOUT:   %tuple.elem0.loc9_74: ref %empty_tuple.type = tuple_access %.var, element0
-// CHECK:STDOUT:   %.loc9_69.2: init %empty_tuple.type to %tuple.elem0.loc9_74 = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_74.2: init %empty_tuple.type = converted %.loc9_69.1, %.loc9_69.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_74.3: init %empty_tuple.type to %tuple.elem0.loc9_74 = in_place_init %.loc9_74.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %tuple.elem1.loc9_74: ref %empty_tuple.type = tuple_access %.var, element1
-// CHECK:STDOUT:   %.loc9_73.2: init %empty_tuple.type to %tuple.elem1.loc9_74 = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_74.4: init %empty_tuple.type = converted %.loc9_73.1, %.loc9_73.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_74.5: init %empty_tuple.type to %tuple.elem1.loc9_74 = in_place_init %.loc9_74.4 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_74.6: init %tuple.type.bcd to %.var = tuple_init (%.loc9_74.3, %.loc9_74.5) [concrete = constants.%tuple.d8f]
-// CHECK:STDOUT:   %.loc9_22.1: init %tuple.type.bcd = converted %.loc9_74.1, %.loc9_74.6 [concrete = constants.%tuple.d8f]
-// CHECK:STDOUT:   assign %.var, %.loc9_22.1
-// CHECK:STDOUT:   %tuple.elem0.loc9_22: ref %empty_tuple.type = tuple_access %.var, element0
-// CHECK:STDOUT:   %tuple.elem1.loc9_22: ref %empty_tuple.type = tuple_access %.var, element1
-// CHECK:STDOUT:   %.loc9_38.1: type = splice_block %.loc9_38.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc9_38.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc9_38.3: type = converted %.loc9_38.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %empty_tuple.type = ref_binding y, %tuple.elem0.loc9_22
-// CHECK:STDOUT:   %.loc9_22.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_41: init %empty_tuple.type = converted %tuple.elem1.loc9_22, %.loc9_22.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %z.var, %.loc9_41
-// CHECK:STDOUT:   %.loc9_56.1: type = splice_block %.loc9_56.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc9_56.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc9_56.3: type = converted %.loc9_56.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %z: ref %empty_tuple.type = ref_binding z, %z.var
-// CHECK:STDOUT:   %Destroy.Op.bound.loc9_22: <bound method> = bound_method %.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc9_22: init %empty_tuple.type = call %Destroy.Op.bound.loc9_22(%.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc9_41: <bound method> = bound_method %z.var, constants.%Destroy.Op.1a2547.1
-// CHECK:STDOUT:   %Destroy.Op.call.loc9_41: init %empty_tuple.type = call %Destroy.Op.bound.loc9_41(%z.var)
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc9_22.1(%self.param: ref %empty_tuple.type) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc9_22.2(%self.param: ref %tuple.type.bcd) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_compile_time.carbon
 // CHECK:STDOUT:

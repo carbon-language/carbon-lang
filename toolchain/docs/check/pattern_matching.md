@@ -110,11 +110,13 @@ instruction IDs:
     `Context::bind_name_map` stores these `ValueBinding`s, keyed by the
     corresponding `ValueBindingPattern` instruction.
 -   A `var` pattern allocates storage during matching, which is represented by a
-    `VarStorage` instruction. This instruction must be allocated during the
-    pattern step, so that it can be used as the output parameter of scrutinee
-    expression evaluation during the scrutinee step. `Context::var_storage_map`
-    stores these `VarStorage` instructions, keyed by the corresponding
-    `VarPattern` instruction.
+    `VarStorage` instruction. For local and class-scope `var` patterns, this
+    instruction must be allocated at the end of the pattern step, so that it can
+    be used as the output parameter of scrutinee expression evaluation during
+    the scrutinee step, but doesn't get added to the instruction block that's
+    meant to capture sub-expressions (see below). `FullPatternStack` is
+    responsible for the mapping from `VarPattern` insts to the corresponding
+    `VarStorage` insts.
 
 As noted earlier, the pattern step can also emit non-pattern instructions to
 evaluate expressions that are embedded in the pattern, such as the type
