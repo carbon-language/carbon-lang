@@ -67,8 +67,9 @@ constraint S(N: Core.IntLiteral) {
   extend require impls CanFailToMonomorphize(N);
 }
 
-// When we identify `T as (S(N) where .Z2 impls Y)`
-// - we replace `.Self of type S(N)` with `T`
+// When we call `F` and convert `T` to `S(N) where .Z2 impls Y`:
+// - we identify `T as (S(N) where .Z2 impls Y)` for impl lookup
+// - that replaces `.Self of type S(N)` with `T`
 // - that identifies `T as S(N)`
 // If the N is invalid, the identify fails in the middle of SubstPeriodSelf
 //
