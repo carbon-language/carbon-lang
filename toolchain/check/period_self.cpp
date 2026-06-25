@@ -225,14 +225,14 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
         context(), loc_id_,
         context().constant_values().Get(replacement_self_inst_id),
         period_self_facet_type, [&](auto& /*builder*/) {
-          // Given `I where .Self == ()`, the type of `.Self` is `I` and we're
-          // replacing `.Self` with some `T` that must also implement `I`.
-          // However `I` can be a generic with arbitrary complexity and the
-          // replacement with `T` may fail monomorphization.
+          // Given `I(...) where .Self == ()`, the type of `.Self` is `I(...)`
+          // and we're replacing `.Self` with some `T` that must also implement
+          // `I(...)`. However since `I(...)` can be a generic that uses `.Self`
+          // in arbitrary ways inside its parameters, the replacement of `.Self`
+          // with `T` may fail monomorphization.
           //
-          // We don't have any better context to add here really, but we
-          // need to accept that errors happen rather than CHECKing that
-          // they don't.
+          // We don't have any better context to add here really, but we need to
+          // accept that errors happen rather than CHECKing that they don't.
         });
     if (!identified_period_self_type_id.has_value()) {
       return SemIR::ErrorInst::InstId;
