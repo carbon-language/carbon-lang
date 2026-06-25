@@ -35,6 +35,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -56,11 +58,12 @@ jobs:
       - name: Build with Jekyll
         env:
           JEKYLL_ENV: production
+          STEPS_PAGES_OUTPUTS_BASE_PATH: ${{ steps.pages.outputs.base_path }}
         run: |
           bundle exec jekyll build --verbose \
             --source ./ \
             --destination ./_site \
-            --baseurl "${{ steps.pages.outputs.base_path }}"
+            --baseurl "${STEPS_PAGES_OUTPUTS_BASE_PATH}"
       - name: Upload artifact
         # Automatically uploads an artifact from the './_site' directory by
         # default.
