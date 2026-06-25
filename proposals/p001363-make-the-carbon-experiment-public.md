@@ -23,7 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Too many cooks in the kitchen](#too-many-cooks-in-the-kitchen)
         -   [Community management overload](#community-management-overload)
         -   [Added distraction or confusion to the C++ evolution process](#added-distraction-or-confusion-to-the-c-evolution-process)
-        -   [Added distractions from existing new programming languages.](#added-distractions-from-existing-new-programming-languages)
+        -   [Added distractions from existing new programming languages](#added-distractions-from-existing-new-programming-languages)
         -   [Friction with existing LLVM and Clang communities](#friction-with-existing-llvm-and-clang-communities)
         -   [Labeled as vaporware](#labeled-as-vaporware)
 -   [Rationale](#rationale)

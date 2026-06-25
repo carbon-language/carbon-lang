@@ -6,7 +6,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Problem
+## Context
 
 For generics, users will define _interfaces_ that describe types. These
 interfaces may have associated types (see

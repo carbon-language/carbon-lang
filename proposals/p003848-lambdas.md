@@ -13,25 +13,26 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Abstract](#abstract)
--   [Syntax Overview](#syntax-overview)
-    -   [Syntax Defined](#syntax-defined)
--   [Introducer](#introducer)
--   [Positional Parameters](#positional-parameters)
-    -   [Positional Parameter Restrictions](#positional-parameter-restrictions)
--   [Function Captures](#function-captures)
-    -   [Capture Modes](#capture-modes)
-    -   [Default Capture Mode](#default-capture-mode)
--   [Function Fields](#function-fields)
--   [Copy Semantics](#copy-semantics)
--   [Self and Recursion](#self-and-recursion)
--   [Rationale](#rationale)
--   [Alternatives Considered](#alternatives-considered)
-    -   [Alternative Considered: Terse vs Elaborated](#alternative-considered-terse-vs-elaborated)
-    -   [Alternative Considered: Sigil](#alternative-considered-sigil)
-    -   [Alternative Considered: Additional Positional Parameter Restriction](#alternative-considered-additional-positional-parameter-restriction)
-    -   [Alternative Considered: Recursive Self](#alternative-considered-recursive-self)
--   [Future Work](#future-work)
-    -   [Future Work: Reference Captures](#future-work-reference-captures)
+-   [Background](#background)
+    -   [Syntax Overview](#syntax-overview)
+        -   [Syntax Defined](#syntax-defined)
+    -   [Introducer](#introducer)
+    -   [Positional Parameters](#positional-parameters)
+        -   [Positional Parameter Restrictions](#positional-parameter-restrictions)
+    -   [Function Captures](#function-captures)
+        -   [Capture Modes](#capture-modes)
+        -   [Default Capture Mode](#default-capture-mode)
+    -   [Function Fields](#function-fields)
+    -   [Copy Semantics](#copy-semantics)
+    -   [Self and Recursion](#self-and-recursion)
+    -   [Rationale](#rationale)
+    -   [Alternatives Considered](#alternatives-considered)
+        -   [Alternative Considered: Terse vs Elaborated](#alternative-considered-terse-vs-elaborated)
+        -   [Alternative Considered: Sigil](#alternative-considered-sigil)
+        -   [Alternative Considered: Additional Positional Parameter Restriction](#alternative-considered-additional-positional-parameter-restriction)
+        -   [Alternative Considered: Recursive Self](#alternative-considered-recursive-self)
+    -   [Future Work](#future-work)
+        -   [Future Work: Reference Captures](#future-work-reference-captures)
 
 <!-- tocstop -->
 
@@ -55,7 +56,7 @@ Associated discussion docs:
 -   [Lambdas Discussion 3](https://docs.google.com/document/d/1VVOlRuPGt8GQpjsygMwH2B7Wd0mBsS3Qif8Ve2yhX_A/)
 -   [Lambdas Discussion 4](https://docs.google.com/document/d/1Sevhvjo06Bc6wTigNL1pK-mlF3IXvzmU1lI2X1W9OYA/)
 
-# Background
+## Background
 
 Refer to the following documentation about lambdas in other languages. What
 separates these three and makes them more analegous to Carbon's direction is the

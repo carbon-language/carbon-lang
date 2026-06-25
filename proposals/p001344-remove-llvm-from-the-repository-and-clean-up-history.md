@@ -26,7 +26,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
     -   [Do nothing](#do-nothing)
-    -   [Don't rewrite the repository history.](#dont-rewrite-the-repository-history)
+    -   [Don't rewrite the repository history](#dont-rewrite-the-repository-history)
     -   [Go back to submodules](#go-back-to-submodules)
     -   [Rename the repository, and create a new one](#rename-the-repository-and-create-a-new-one)
     -   [Manually extract and archive some review comments](#manually-extract-and-archive-some-review-comments)

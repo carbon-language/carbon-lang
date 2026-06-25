@@ -22,10 +22,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Long-Term Stable (LTS) versions and standardization](#long-term-stable-lts-versions-and-standardization)
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
-    -   [Do nothing, or just talk about a minimal nightly version.](#do-nothing-or-just-talk-about-a-minimal-nightly-version)
-    -   [Make no breaking changes past 1.0.](#make-no-breaking-changes-past-10)
-    -   [Version different parts of the language separately.](#version-different-parts-of-the-language-separately)
-    -   [Use a custom versioning scheme rather than SemVer.](#use-a-custom-versioning-scheme-rather-than-semver)
+    -   [Do nothing, or just talk about a minimal nightly version](#do-nothing-or-just-talk-about-a-minimal-nightly-version)
+    -   [Make no breaking changes past 1.0](#make-no-breaking-changes-past-10)
+    -   [Version different parts of the language separately](#version-different-parts-of-the-language-separately)
+    -   [Use a custom versioning scheme rather than SemVer](#use-a-custom-versioning-scheme-rather-than-semver)
     -   [Include more pre-release variations](#include-more-pre-release-variations)
 
 <!-- tocstop -->

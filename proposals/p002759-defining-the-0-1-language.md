@@ -19,9 +19,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
-    -   [Narrowing the proposed milestone definitions to just 0.1 initially.](#narrowing-the-proposed-milestone-definitions-to-just-01-initially)
-    -   [Make a more incremental, less ambitious initial milestone.](#make-a-more-incremental-less-ambitious-initial-milestone)
-    -   [Skip the 0.1 milestone and aim for feature completeness.](#skip-the-01-milestone-and-aim-for-feature-completeness)
+    -   [Narrowing the proposed milestone definitions to just 0.1 initially](#narrowing-the-proposed-milestone-definitions-to-just-01-initially)
+    -   [Make a more incremental, less ambitious initial milestone](#make-a-more-incremental-less-ambitious-initial-milestone)
+    -   [Skip the 0.1 milestone and aim for feature completeness](#skip-the-01-milestone-and-aim-for-feature-completeness)
 
 <!-- tocstop -->
 

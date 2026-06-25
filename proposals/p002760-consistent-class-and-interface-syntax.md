@@ -310,9 +310,10 @@ An `impl` declaration, with this proposal, must have one of these two forms:
 -   Without an `extend` keyword prefix, used for non-extended `impl`
     declarations and for all `impl` declarations outside of a class body:
 
-    <!-- prettier-ignore -->
+    <!-- rumdl-disable -->
     > `impl` [`forall` `[` _deduced-parameters_ `]`] [_type-expression_] `as`
     > _facet-type-expression_ (`;`|`{` _impl-body_ `}`)
+    <!-- rumdl-enable -->
 
     The _type-expression_ is required outside of a class body, otherwise it
     defaults to `Self`.
@@ -524,9 +525,10 @@ class C {
 The declaration that a class uses a mixin is called a "mix" declaration. The
 syntax of a mix declaration is:
 
-<!-- prettier-ignore -->
+<!-- rumdl-disable -->
 > `extend` [`private`|`protected`] (`_`|_id_) `:` _mixin-expression_ [`=`
 > _initializer-expression_] `;`
+<!-- rumdl-enable -->
 
 The _id_ part of the mix declaration defines the name assigned to that mixin
 subobject. This name is may be used to access members of the mixin and to

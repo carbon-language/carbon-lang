@@ -23,7 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Alternatives considered](#alternatives-considered)
     -   [Considering a facet type of a named constraint to be identified in its definition](#considering-a-facet-type-of-a-named-constraint-to-be-identified-in-its-definition)
     -   [Restricting to `Self`](#restricting-to-self)
-    -   [Allowing limited conversions to partially identified facet types.](#allowing-limited-conversions-to-partially-identified-facet-types)
+    -   [Allowing limited conversions to partially identified facet types](#allowing-limited-conversions-to-partially-identified-facet-types)
 
 <!-- tocstop -->
 

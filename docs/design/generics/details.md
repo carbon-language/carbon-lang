@@ -4276,14 +4276,8 @@ includes:
 
 The syntax for an out-of-line parameterized `impl` declaration is:
 
-<!-- prettier-ignore-start -->
-
-<!-- The following triggers a bug in prettier where it adds an `>` -->
-
-> `impl forall [`_<parameter-bindings>_`]` _<type-expression>_ `as`
+> `impl forall [` _<parameter-bindings>_ `]` _<type-expression>_ `as`
 > _<facet-type-expression> [_ `where` _<optional-rewrite-constraints> ]_ `;`
-
-<!-- prettier-ignore-end -->
 
 This may also be called a _generic `impl` declaration_.
 
@@ -5040,17 +5034,11 @@ let U:! B = bool;
 let V:! B = i32;
 ```
 
-<!-- prettier-ignore-start -->
-
-<!-- The following triggers a bug in prettier where it adds an `>` -->
-
 > **Note:**
-> [Issue #2880](https://github.com/carbon-language/carbon-lang/issues/2880) is a
-> tracking bug for known issues with this "strictly more complex" rule for
+> [Issue #2880](https://github.com/carbon-language/carbon-lang/issues/2880) is
+> a tracking bug for known issues with this "strictly more complex" rule for
 > `impl` termination. We are using that issue to track any code that arises in
 > practice that would terminate but is rejected by this rule.
-
-<!-- prettier-ignore-end -->
 
 > **Comparison with other languages:** Rust solves this problem by imposing a
 > recursion limit, much like C++ compilers use to terminate template recursion.

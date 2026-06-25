@@ -12,45 +12,45 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Abstract](#abstract)
--   [Problem](#problem)
--   [Background](#background)
-    -   [Other languages](#other-languages)
-        -   [C++](#c)
-        -   [Python](#python)
-        -   [Rust](#rust)
-        -   [Typescript](#typescript)
-        -   [Go](#go)
--   [Proposal](#proposal)
--   [Details](#details)
-    -   [`for` with immutable values](#for-with-immutable-values)
-        -   [`Iterate` interface](#iterate-interface)
-        -   [`let` by default](#let-by-default)
-        -   [Lifetime of rvalues on right-hand side of `:`](#lifetime-of-rvalues-on-right-hand-side-of-)
-    -   [Use cases](#use-cases)
-        -   [Mutable and immutable elements](#mutable-and-immutable-elements)
-        -   [Random access containers](#random-access-containers)
-        -   [Maps, hash maps, and other containers](#maps-hash-maps-and-other-containers)
-        -   [R-value containers](#r-value-containers)
-        -   [Synthetic data](#synthetic-data)
-        -   [Large containers](#large-containers)
-        -   [Filtering, transforming, and reversing](#filtering-transforming-and-reversing)
-        -   [Interoperability with C++ types and containers](#interoperability-with-c-types-and-containers)
--   [Future work](#future-work)
-    -   [`for` with mutable values](#for-with-mutable-values)
-    -   [Speculative mixin usage](#speculative-mixin-usage)
-        -   [Mutable values](#mutable-values)
-        -   [Alternative views](#alternative-views)
-    -   [Large elements and Optional](#large-elements-and-optional)
-    -   [C++ interoperability](#c-interoperability)
-        -   [Iterating over C++ types in Carbon](#iterating-over-c-types-in-carbon)
-        -   [Iterating over Carbon types in C++](#iterating-over-carbon-types-in-c)
-    -   [Inversion of control](#inversion-of-control)
--   [Rationale](#rationale)
--   [Alternatives considered](#alternatives-considered)
-    -   [Atomic methods for `Iterate`](#atomic-methods-for-iterate)
-    -   [Using an iterator instead of a cursor](#using-an-iterator-instead-of-a-cursor)
-    -   [Support getter for both `T` and `T*` with `Iterate`](#support-getter-for-both-t-and-t-with-iterate)
+- [Abstract](#abstract)
+- [Problem](#problem)
+- [Background](#background)
+    - [Other languages](#other-languages)
+        - [C++](#c)
+        - [Python](#python)
+        - [Rust](#rust)
+        - [Typescript](#typescript)
+        - [Go](#go)
+- [Proposal](#proposal)
+- [Details](#details)
+    - [`for` with immutable values](#for-with-immutable-values)
+        - [`Iterate` interface](#iterate-interface)
+        - [`let` by default](#let-by-default)
+        - [Lifetime of rvalues on right-hand side of `:`](#lifetime-of-rvalues-on-right-hand-side-of-)
+    - [Use cases](#use-cases)
+        - [Mutable and immutable elements](#mutable-and-immutable-elements)
+        - [Random access containers](#random-access-containers)
+        - [Maps, hash maps, and other containers](#maps-hash-maps-and-other-containers)
+        - [R-value containers](#r-value-containers)
+        - [Synthetic data](#synthetic-data)
+        - [Large containers](#large-containers)
+        - [Filtering, transforming, and reversing](#filtering-transforming-and-reversing)
+        - [Interoperability with C++ types and containers](#interoperability-with-c-types-and-containers)
+- [Future work](#future-work)
+    - [`for` with mutable values](#for-with-mutable-values)
+    - [Speculative mixin usage](#speculative-mixin-usage)
+        - [Mutable values](#mutable-values)
+        - [Alternative views](#alternative-views)
+    - [Large elements and Optional](#large-elements-and-optional)
+    - [C++ interoperability](#c-interoperability)
+        - [Iterating over C++ types in Carbon](#iterating-over-c-types-in-carbon)
+        - [Iterating over Carbon types in C++](#iterating-over-carbon-types-in-c)
+    - [Inversion of control](#inversion-of-control)
+- [Rationale](#rationale)
+- [Alternatives considered](#alternatives-considered)
+    - [Atomic methods for `Iterate`](#atomic-methods-for-iterate)
+    - [Using an iterator instead of a cursor](#using-an-iterator-instead-of-a-cursor)
+    - [Support getter for both `T` and `T*` with `Iterate`](#support-getter-for-both-t-and-t-with-iterate)
 
 <!-- tocstop -->
 
@@ -66,20 +66,20 @@ range-based `for` loops.
 
 Examples of use cases for `for` loops include iterating over:
 
--   Mutable and immutable elements
--   Random access containers
--   Maps, hash maps, and complex containers
--   R-value containers
--   Synthetic data
--   Large containers, and large elements
--   Filtering, transforming, and reversing
--   Interoperability with C++ types and containers
+- Mutable and immutable elements
+- Random access containers
+- Maps, hash maps, and complex containers
+- R-value containers
+- Synthetic data
+- Large containers, and large elements
+- Filtering, transforming, and reversing
+- Interoperability with C++ types and containers
 
 The goals for the solution includes:
 
--   Easy to support for user types, with minimal requirements
--   Simple and clear usage
--   Minimal performance overhead
+- Easy to support for user types, with minimal requirements
+- Simple and clear usage
+- Minimal performance overhead
 
 ## Background
 
@@ -131,8 +131,8 @@ for n in generate():
 Rust supports iterating over a container with
 [for](https://doc.rust-lang.org/rust-by-example/flow_control/for.html) using
 
--   ranges `for n in 1..100`
--   iterators `for element in container.iter()` or `.iter_mut()`
+- ranges `for n in 1..100`
+- iterators `for element in container.iter()` or `.iter_mut()`
 
 The `Iterator` type can be used with custom types using the
 [following syntax](https://doc.rust-lang.org/rust-by-example/trait/iter.html)
@@ -204,9 +204,9 @@ ranged-for loops.
 
 We propose:
 
--   A new `Iterate` interface to support for loops
--   Using a cursor-based approach
--   Making the `for` loop value `let` by default, that is, non-reassignable
+- A new `Iterate` interface to support for loops
+- Using a cursor-based approach
+- Making the `for` loop value `let` by default, that is, non-reassignable
 
 Below is a high-level example of this concept:
 
@@ -232,11 +232,11 @@ for (item: auto in my_range) {
 
 This proposal exposes a new `Iterate`. This interface:
 
--   Relies on a cursor-based approach: minimize implementation effort for
-    developers, could support R-values.
--   Expects an `ElementType` and `CursorType`.
--   Combines "advance", "get", and "bounds check" into a single `Next(cursor)`
-    method that returns an optional value.
+- Relies on a cursor-based approach: minimize implementation effort for
+  developers, could support R-values.
+- Expects an `ElementType` and `CursorType`.
+- Combines "advance", "get", and "bounds check" into a single `Next(cursor)`
+  method that returns an optional value.
 
 The `Iterate` interface is:
 
@@ -376,7 +376,7 @@ could be a hashmap index, a string, or pointer to a node, without changing the
 usage for users.
 
 The `ElementType` can be a tuple, such as a `(key, value)` for maps, or a single
-value. See [Future work][#future-work] for other examples.
+value. See [Future work](#future-work) for other examples.
 
 #### R-value containers
 
@@ -542,10 +542,10 @@ class MyIntContainer {
 Mixins are currently in early design stages. This section highlights possible
 uses speculating on the final design. Some may include:
 
--   Improved semantics for views compared to getter methods: no direct side
-    effect from using the view
--   Facilitate code reuse, compared to reimplementing an interface
--   Direct access to `self`, limiting needs for pointers and address resolution
+- Improved semantics for views compared to getter methods: no direct side effect
+  from using the view
+- Facilitate code reuse, compared to reimplementing an interface
+- Direct access to `self`, limiting needs for pointers and address resolution
 
 #### Mutable values
 
@@ -623,9 +623,9 @@ author chooses between value and reference).
 
 For reference, range-based `for` loops in C++ requires:
 
--   `begin()` and `end()` methods or free functions, and
--   the type returned supports pre-increment `++`, indirection `*`, and
-    inequality `!=` operations
+- `begin()` and `end()` methods or free functions, and
+- the type returned supports pre-increment `++`, indirection `*`, and inequality
+  `!=` operations
 
 See [range-based for statement](https://eel.is/c++draft/stmt.iter#stmt.ranged)
 for more details.
@@ -635,14 +635,14 @@ adaptation to interoperate with the C++ iterator model. The adapter would be a
 Carbon type that satisfies the Cursor interface, implemented in terms of a C++
 iterator.
 
--   `NewCursor` providing the "start iterator" returned by `begin()`
--   `Next` doing the "increment, bounds check, and returning value"
+- `NewCursor` providing the "start iterator" returned by `begin()`
+- `Next` doing the "increment, bounds check, and returning value"
 
 Two different approaches are identified:
 
--   One is to have a templated `impl` of `Iterate`, for anything with the right
-    method signatures (`begin`, `end`, and so on)
--   Another is a templated adapter that implements `Iterate` when requested
+- One is to have a templated `impl` of `Iterate`, for anything with the right
+  method signatures (`begin`, `end`, and so on)
+- Another is a templated adapter that implements `Iterate` when requested
 
 ```carbon
 // Template impl approach
@@ -799,28 +799,28 @@ This would work similarly to [Python generator functions](#python).
 
 This has the following advantages:
 
--   Removes the need for an `Optional`, and the associated overheads, copies,
-    and unwrapping.
--   No boundary checks needed at the `for` level
--   Compatible with R-value containers
+- Removes the need for an `Optional`, and the associated overheads, copies, and
+  unwrapping.
+- No boundary checks needed at the `for` level
+- Compatible with R-value containers
 
 Limitations:
 
--   The context needed by the `for` body will needs to be available or provided
--   No optimizer known to the team can reliably produce efficient code for this
-    construct.
+- The context needed by the `for` body will needs to be available or provided
+- No optimizer known to the team can reliably produce efficient code for this
+  construct.
 
 ## Rationale
 
 This proposal offers a first step to support a needed way to iterate using a
 `for` loop. More specifically:
 
--   Requires a single interface to be implemented with a combined `Next` method,
-    uses cursors instead of their more complex iterator counterpart, and defines
-    loop values as `let` by default to be less error prone
-    ([Code that is easy to read, understand, and write](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write)).
--   Makes use of
-    [Library APIs only](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/principles/library_apis_only.md).
+- Requires a single interface to be implemented with a combined `Next` method,
+  uses cursors instead of their more complex iterator counterpart, and defines
+  loop values as `let` by default to be less error prone
+  ([Code that is easy to read, understand, and write](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write)).
+- Makes use of
+  [Library APIs only](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/principles/library_apis_only.md).
 
 ## Alternatives considered
 
@@ -838,9 +838,9 @@ approach.
 The combined `Next` method forces us to return an `Optional`, which has
 downsides:
 
--   potential performance overhead to wrapping and unwrapping,
--   storage overhead for `Optional` itself, and
--   may require additional copying of the value wrapped.
+- potential performance overhead to wrapping and unwrapping,
+- storage overhead for `Optional` itself, and
+- may require additional copying of the value wrapped.
 
 Those may be mitigated by leveraging unused bit patterns, passing a view of the
 value, or [inverting control](#inversion-of-control).
@@ -850,15 +850,15 @@ value, or [inverting control](#inversion-of-control).
 The iterator approach was considered but proved to have key limitations that a
 cursor approach does not have:
 
--   It requires implementing 2 interfaces instead of 1, and is more complex due
-    to having the iteration logic separated from the container itself
--   More difficult to harden or troubleshoot, compared to a cursor that allows
-    bounds checking in debug & hardened build modes
--   Can pose problems with ranges that consumes their input (See Barry Revzin’s
-    "take(5)" presentation from C++Now 2023), when compared to a combined
-    `Next()` approach.
--   Higher overhead
--   Proves to be difficult to support for R-values
+- It requires implementing 2 interfaces instead of 1, and is more complex due to
+  having the iteration logic separated from the container itself
+- More difficult to harden or troubleshoot, compared to a cursor that allows
+  bounds checking in debug & hardened build modes
+- Can pose problems with ranges that consumes their input (See Barry Revzin’s
+  "take(5)" presentation from C++Now 2023), when compared to a combined `Next()`
+  approach.
+- Higher overhead
+- Proves to be difficult to support for R-values
 
 On the other hand, the cursor approach deviates more from C++ than iterator, and
 may require some more effort for C++ interoperability.
