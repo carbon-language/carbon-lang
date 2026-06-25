@@ -405,7 +405,7 @@ respectful, and don't drown out other discussion.
 Changes to Carbon documentation follow the
 [Google developer documentation style guide](https://developers.google.com/style).
 
-Markdown files should additionally use [Prettier](https://prettier.io) for
+Markdown files should additionally use [rumdl](https://github.com/rvben/rumdl) for
 formatting, which we automate with
 [prek](/docs/project/contribution_tools.md#running-prek).
 
