@@ -464,6 +464,8 @@ A type that _extends_ the implementation of an interface has all the named
 members of the interface as named members of the type. This means that the
 members of the interface are available by way of both
 [simple member access and qualified member access expressions](#member-access).
+See
+[how `extend` affects member access](../expressions/member_access.md#extend).
 
 If a type implements an interface without extending, the members of the
 interface may only be accessed using
@@ -648,7 +650,8 @@ also has the member names of its constraint. Effectively it is considered to
 An interface can be extended by defining an interface that includes the full API
 of another interface, plus some additional API. Types implementing the extended
 interface should automatically be considered to have implemented the narrower
-interface.
+interface. See
+[how `extend` affects member access](../expressions/member_access.md#extend).
 
 ## Dynamic-dispatch witness table
 

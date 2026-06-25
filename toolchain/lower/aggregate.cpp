@@ -124,6 +124,28 @@ auto GetAggregateElement(FunctionContext& context, SemIR::InstId aggr_inst_id,
   }
 }
 
+auto GetEnclosingAggregate(FunctionContext& context,
+                           FunctionContext::TypeInFile aggr_type,
+                           SemIR::InstId element_id, SemIR::ElementIndex index)
+    -> llvm::Value* {
+  auto object_repr = FunctionContext::TypeInFile{
+      .file = aggr_type.file,
+      .type_id = aggr_type.file->types().GetObjectRepr(aggr_type.type_id)};
+  auto* llvm_object_type =
+      llvm::cast<llvm::StructType>(context.GetType(object_repr));
+  const auto* object_layout =
+      context.llvm_module().getDataLayout().getStructLayout(llvm_object_type);
+  llvm::APInt offset(
+      64, object_layout->getElementOffset(GetElementIndex(object_repr, index)),
+      /*isSigned=*/true);
+
+  auto* element_addr = context.GetValue(element_id);
+  if (offset == 0) {
+    return element_addr;
+  }
+  CARBON_FATAL("TODO: emit a getelementptr with a negative offset");
+}
+
 auto EmitAggregateValueRepr(FunctionContext& context,
                             SemIR::InstId value_inst_id,
                             SemIR::InstBlockId refs_id) -> llvm::Value* {
@@ -154,13 +176,14 @@ auto EmitAggregateValueRepr(FunctionContext& context,
     }
 
     case SemIR::ValueRepr::Pointer: {
-      auto* llvm_value_rep_type = context.GetType(GetPointeeType(value_type));
+      auto pointee_type = GetPointeeType(value_type);
 
       // Write the value representation to a local alloca so we can produce a
       // pointer to it as the value representation of the struct or tuple.
-      auto* alloca = context.builder().CreateAlloca(llvm_value_rep_type);
+      auto* alloca = context.CreateAlloca(pointee_type);
       for (auto [i, ref_id] :
            llvm::enumerate(context.sem_ir().inst_blocks().Get(refs_id))) {
+        auto* llvm_value_rep_type = context.GetType(pointee_type);
         context.StoreObject(
             context.GetValueRepr(context.GetTypeIdOfInst(ref_id)).type(),
             context.GetValue(ref_id),

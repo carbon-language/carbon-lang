@@ -88,7 +88,7 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %BeingDefined.WithSelf.H.decl: @BeingDefined.WithSelf.%BeingDefined.WithSelf.H.type (%BeingDefined.WithSelf.H.type) = fn_decl @BeingDefined.WithSelf.H [symbolic = @BeingDefined.WithSelf.%BeingDefined.WithSelf.H (constants.%BeingDefined.WithSelf.H)] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete]
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %BeingDefined.ref: type = name_ref BeingDefined, file.%BeingDefined.decl [concrete = constants.%BeingDefined.type]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [concrete = <error>]

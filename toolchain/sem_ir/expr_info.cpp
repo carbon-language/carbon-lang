@@ -144,9 +144,22 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
 auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
                                   bool allow_transitive) -> InstId {
+  const File* ir = &sem_ir;
   while (true) {
-    Inst init_untyped = sem_ir.insts().Get(init_id);
+    Inst init_untyped = ir->insts().Get(init_id);
     CARBON_KIND_SWITCH(init_untyped) {
+      case CARBON_KIND(ImportRefLoaded init): {
+        auto import_ir_inst = ir->import_ir_insts().Get(init.import_ir_inst_id);
+        ir = ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+        init_id = import_ir_inst.inst_id();
+        continue;
+      }
+      case CARBON_KIND(ImportRefUnloaded init): {
+        auto import_ir_inst = ir->import_ir_insts().Get(init.import_ir_inst_id);
+        ir = ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+        init_id = import_ir_inst.inst_id();
+        continue;
+      }
       case CARBON_KIND(AsCompatible init): {
         if (!allow_transitive) {
           return InstId::None;
@@ -187,22 +200,21 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
         return init.dest_id;
       }
       case CARBON_KIND(Call call): {
-        auto callee_function = GetCalleeAsFunction(sem_ir, call.callee_id);
-        const auto& function =
-            sem_ir.functions().Get(callee_function.function_id);
+        auto callee_function = GetCalleeAsFunction(*ir, call.callee_id);
+        const auto& function = ir->functions().Get(callee_function.function_id);
         if (!function.return_form_inst_id.has_value()) {
           return InstId::None;
         }
         auto return_form_constant_id = GetConstantValueInSpecific(
-            sem_ir, callee_function.resolved_specific_id,
+            *ir, callee_function.resolved_specific_id,
             function.return_form_inst_id);
-        auto return_form = sem_ir.insts().Get(
-            sem_ir.constant_values().GetInstId(return_form_constant_id));
+        auto return_form = ir->insts().Get(
+            ir->constant_values().GetInstId(return_form_constant_id));
         CARBON_KIND_SWITCH(return_form) {
           case CARBON_KIND(InitForm init_form): {
-            auto type_id = sem_ir.types().GetTypeIdForTypeInstId(
+            auto type_id = ir->types().GetTypeIdForTypeInstId(
                 init_form.type_component_inst_id);
-            if (!InitRepr::ForType(sem_ir, type_id).MightBeInPlace()) {
+            if (!InitRepr::ForType(*ir, type_id).MightBeInPlace()) {
               return InstId::None;
             }
 
@@ -213,7 +225,7 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
 
             CARBON_CHECK(function.call_param_ranges.return_size() == 1,
                          "Unexpected number of output parameters on function");
-            return sem_ir.inst_blocks().Get(
+            return ir->inst_blocks().Get(
                 call.args_id)[function.call_param_ranges.return_begin().index];
           }
           case CARBON_KIND(RefForm _): {
@@ -229,6 +241,131 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
       default:
         CARBON_FATAL("Initialization from unexpected inst {0}", init_untyped);
     }
+  }
+}
+
+// Given a type, determines the category of the decomposed form of an expression
+// of that type. This is Primitive if the type does not support form
+// decomposition.
+static auto GetDecomposedFormKindForType(const File& sem_ir, TypeId type_id)
+    -> FormInfo::Kind {
+  if (sem_ir.types().Is<TupleType>(type_id)) {
+    return FormInfo::Tuple;
+  }
+  if (sem_ir.types().Is<StructType>(type_id)) {
+    return FormInfo::Struct;
+  }
+  return FormInfo::Primitive;
+}
+
+auto GetFormInfo(const File& sem_ir, InstId inst_id) -> FormInfo {
+  auto inst = sem_ir.insts().Get(inst_id);
+
+  ExprCategory category = GetExprCategory(sem_ir, inst_id);
+  if (inst.type_id() == ErrorInst::TypeId) {
+    // TODO: Should `GetExprCategory` do this?
+    category = ExprCategory::Error;
+  }
+
+  FormInfo::Kind kind = FormInfo::Primitive;
+  if (category == ExprCategory::Mixed) {
+    kind = GetDecomposedFormKindForType(sem_ir, inst.type_id());
+    CARBON_CHECK(kind != FormInfo::Primitive,
+                 "Unexpected type {0} for mixed category",
+                 sem_ir.types().GetAsInst(inst.type_id()));
+  }
+
+  return {.kind = kind,
+          .category = category,
+          .type_id = inst.type_id(),
+          .constant_id = sem_ir.constant_values().Get(inst_id),
+          .loc_id = LocId(inst_id),
+          .inst_id = inst_id};
+}
+
+auto DecomposeForm(const File& sem_ir, FormInfo form) -> FormInfo {
+  if (form.kind == FormInfo::Primitive) {
+    form.kind = GetDecomposedFormKindForType(sem_ir, form.type_id);
+    // TODO: Should we replace a category of Initializing with
+    // EphemeralReference here to model temporary materialization if we
+    // performed decomposition?
+  }
+  return form;
+}
+
+// Gets information about the forms of the instructions in a block.
+static auto VisitFormInfos(const File& sem_ir, InstBlockId inst_block_id,
+                           FormVisitor visitor) -> void {
+  auto inst_ids = sem_ir.inst_blocks().Get(inst_block_id);
+  for (auto inst_id : inst_ids) {
+    visitor(GetFormInfo(sem_ir, inst_id));
+  }
+}
+
+auto VisitTupleElementForms(const File& sem_ir, FormInfo form,
+                            FormVisitor visitor) -> void {
+  // If we have a tuple literal, directly grab the forms of its elements.
+  if (auto tuple_lit_inst =
+          sem_ir.insts().TryGetAsIfValid<TupleLiteral>(form.inst_id)) {
+    VisitFormInfos(sem_ir, tuple_lit_inst->elements_id, visitor);
+    return;
+  }
+
+  // Otherwise, decompose the type and, if available, the constant value.
+  auto tuple_type = sem_ir.types().GetAs<TupleType>(form.type_id);
+  auto element_type_inst_ids =
+      sem_ir.inst_blocks().Get(tuple_type.type_elements_id);
+
+  auto tuple_const_inst = sem_ir.insts().TryGetAsIfValid<TupleValue>(
+      sem_ir.constant_values().GetInstIdIfValid(form.constant_id));
+  auto tuple_const_inst_ids =
+      tuple_const_inst ? sem_ir.inst_blocks().Get(tuple_const_inst->elements_id)
+                       : llvm::ArrayRef<InstId>();
+
+  for (auto [type_inst_id, const_inst_id] :
+       llvm::zip_longest(element_type_inst_ids, tuple_const_inst_ids)) {
+    visitor({.kind = FormInfo::Primitive,
+             .category = form.category,
+             .type_id = sem_ir.types().GetTypeIdForTypeInstId(*type_inst_id),
+             .constant_id = const_inst_id
+                                ? sem_ir.constant_values().Get(*const_inst_id)
+                                : ConstantId::NotConstant,
+             .loc_id = form.loc_id,
+             .inst_id = InstId::None});
+  }
+}
+
+auto VisitStructElementForms(const File& sem_ir, FormInfo form,
+                             FormVisitor visitor) -> void {
+  // If we have a struct literal, directly grab the forms of its elements.
+  if (auto struct_lit_inst =
+          sem_ir.insts().TryGetAsIfValid<StructLiteral>(form.inst_id)) {
+    VisitFormInfos(sem_ir, struct_lit_inst->elements_id, visitor);
+    return;
+  }
+
+  // Otherwise, decompose the type and, if available, the constant value.
+  auto struct_type = sem_ir.types().GetAs<StructType>(form.type_id);
+  auto fields = sem_ir.struct_type_fields().Get(struct_type.fields_id);
+
+  auto struct_const_inst = sem_ir.insts().TryGetAsIfValid<StructValue>(
+      sem_ir.constant_values().GetInstIdIfValid(form.constant_id));
+  auto struct_const_inst_ids =
+      struct_const_inst
+          ? sem_ir.inst_blocks().Get(struct_const_inst->elements_id)
+          : llvm::ArrayRef<InstId>();
+
+  for (auto [field, const_inst_id] :
+       llvm::zip_longest(fields, struct_const_inst_ids)) {
+    visitor(
+        {.kind = FormInfo::Primitive,
+         .category = form.category,
+         .type_id = sem_ir.types().GetTypeIdForTypeInstId(field->type_inst_id),
+         .constant_id = const_inst_id
+                            ? sem_ir.constant_values().Get(*const_inst_id)
+                            : ConstantId::NotConstant,
+         .loc_id = form.loc_id,
+         .inst_id = InstId::None});
   }
 }
 

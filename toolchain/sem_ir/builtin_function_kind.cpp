@@ -461,10 +461,75 @@ constexpr BuiltinInfo MaybeUnformedMakeType = {
 constexpr BuiltinInfo FormMakeType = {"form.make_type",
                                       ValidateSignature<auto()->Type>};
 
-// Converts between char types, with a diagnostic if the value doesn't fit.
-constexpr BuiltinInfo CharConvertChecked = {
-    "char.convert_checked",
+// Converts a character literal to a character type, with a diagnostic if the
+// value doesn't fit.
+constexpr BuiltinInfo CharLiteralConvertChar = {
+    "char_literal.convert_char",
     ValidateSignature<auto(CharLiteral)->CharCompatible>};
+
+// Converts a character literal to a sized integer type, with a diagnostic if
+// the value doesn't fit.
+constexpr BuiltinInfo CharLiteralConvertInt = {
+    "char_literal.convert_int",
+    ValidateSignature<auto(CharLiteral)->AnySizedInt>};
+
+// Converts an integer type to a character literal, with a diagnostic if the
+// value is not a valid Unicode code point.
+constexpr BuiltinInfo IntConvertCharLiteral = {
+    "int.convert_char_literal", ValidateSignature<auto(AnyInt)->CharLiteral>};
+
+// Determines if two character literals are equal.
+constexpr BuiltinInfo CharLiteralEq = {
+    "char_literal.eq", ValidateSignature<auto(CharLiteral, CharLiteral)->Bool>};
+
+// Determines if two character literals are not equal.
+constexpr BuiltinInfo CharLiteralNeq = {
+    "char_literal.neq",
+    ValidateSignature<auto(CharLiteral, CharLiteral)->Bool>};
+
+// Determines if one character literal is less than another.
+constexpr BuiltinInfo CharLiteralLess = {
+    "char_literal.less",
+    ValidateSignature<auto(CharLiteral, CharLiteral)->Bool>};
+
+// Determines if one character literal is less than or equal to another.
+constexpr BuiltinInfo CharLiteralLessEq = {
+    "char_literal.less_eq",
+    ValidateSignature<auto(CharLiteral, CharLiteral)->Bool>};
+
+// Determines if one character literal is greater than another.
+constexpr BuiltinInfo CharLiteralGreater = {
+    "char_literal.greater",
+    ValidateSignature<auto(CharLiteral, CharLiteral)->Bool>};
+
+// Determines if one character literal is greater than or equal to another.
+constexpr BuiltinInfo CharLiteralGreaterEq = {
+    "char_literal.greater_eq",
+    ValidateSignature<auto(CharLiteral, CharLiteral)->Bool>};
+
+// Adds an integer to a character literal, with a diagnostic on overflow or
+// if the result is not a valid Unicode code point.
+constexpr BuiltinInfo CharLiteralAdd = {
+    "char_literal.add",
+    ValidateSignature<auto(CharLiteral, AnyInt)->CharLiteral>};
+
+// Adds a character literal to an integer, with a diagnostic on overflow or
+// if the result is not a valid Unicode code point.
+constexpr BuiltinInfo IntAddCharLiteral = {
+    "int.add_char_literal",
+    ValidateSignature<auto(AnyInt, CharLiteral)->CharLiteral>};
+
+// Subtracts an integer from a character literal, with a diagnostic on
+// overflow or if the result is not a valid Unicode code point.
+constexpr BuiltinInfo CharLiteralSubInt = {
+    "char_literal.sub_int",
+    ValidateSignature<auto(CharLiteral, AnyInt)->CharLiteral>};
+
+// Subtracts one character literal from another, returning the distance as
+// an integer.
+constexpr BuiltinInfo CharLiteralSubChar = {
+    "char_literal.sub_char",
+    ValidateSignature<auto(CharLiteral, CharLiteral)->AnyInt>};
 
 // Converts from an integer type to a char-compatible type (u8/adapted Char).
 constexpr BuiltinInfo IntConvertChar = {
@@ -477,6 +542,15 @@ constexpr BuiltinInfo IntConvert = {"int.convert",
 // Converts between integer types, with a diagnostic if the value doesn't fit.
 constexpr BuiltinInfo IntConvertChecked = {
     "int.convert_checked", ValidateSignature<auto(AnyInt)->AnyInt>};
+
+// Converts an integer type to a floating-point type.
+constexpr BuiltinInfo IntConvertFloat = {
+    "int.convert_float", ValidateSignature<auto(AnyInt)->AnyFloat>};
+
+// Converts an integer type to a floating-point type, checking for loss of
+// precision.
+constexpr BuiltinInfo IntConvertFloatChecked = {
+    "int.convert_float_checked", ValidateSignature<auto(AnyInt)->AnyFloat>};
 
 // "int.snegate": integer negation.
 constexpr BuiltinInfo IntSNegate = {"int.snegate",
@@ -693,10 +767,18 @@ constexpr BuiltinInfo FloatDivAssign = {
     "float.div_assign",
     ValidateSignature<auto(ByRef<SizedFloatT>, SizedFloatT)->NoReturn>};
 
+// Converts between floating-point types, without checking.
+constexpr BuiltinInfo FloatConvert = {"float.convert",
+                                      ValidateSignature<auto(FloatT)->FloatU>};
+
 // Converts between floating-point types, with a diagnostic if the value doesn't
 // fit.
 constexpr BuiltinInfo FloatConvertChecked = {
     "float.convert_checked", ValidateSignature<auto(FloatT)->FloatU>};
+
+// Converts a floating-point type to an integer type.
+constexpr BuiltinInfo FloatConvertInt = {
+    "float.convert_int", ValidateSignature<auto(AnyFloat)->AnyInt>};
 
 // "float.eq": float equality comparison.
 constexpr BuiltinInfo FloatEq = {
@@ -795,7 +877,8 @@ static auto IsLiteralType(const File& sem_ir, TypeId type_id) -> bool {
   // Unwrap adapters.
   type_id = sem_ir.types().GetTransitiveAdaptedType(type_id);
   auto type_inst_id = sem_ir.types().GetAsInst(type_id);
-  return type_inst_id.IsOneOf<IntLiteralType, FloatLiteralType>();
+  return type_inst_id
+      .IsOneOf<IntLiteralType, FloatLiteralType, CharLiteralType>();
 }
 
 // Determines whether a builtin call involves an integer or floating-point
@@ -806,7 +889,7 @@ static auto IsLiteralType(const File& sem_ir, TypeId type_id) -> bool {
 // runtime value of such a type may not have a value available for the builtin
 // to use. For example, given:
 //
-// var n: Core.IntLiteral() = 123;
+// var n: Core.IntLiteral = 123;
 //
 // we would be unable to lower a runtime operation such as `(1 as i32) << n`
 // because the runtime representation of `n` doesn't track its value at all.
@@ -839,14 +922,34 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
                                          llvm::ArrayRef<InstId> arg_ids,
                                          TypeId return_type_id) const -> bool {
   switch (*this) {
-    case CharConvertChecked:
     case FloatConvertChecked:
     case IntConvertChecked:
+    case IntConvertFloatChecked:
       // Checked conversions are compile-time only.
       return true;
 
+    case CharLiteralAdd:
+    case CharLiteralConvertChar:
+    case CharLiteralConvertInt:
+    case CharLiteralEq:
+    case CharLiteralGreater:
+    case CharLiteralGreaterEq:
+    case CharLiteralLess:
+    case CharLiteralLessEq:
+    case CharLiteralNeq:
+    case CharLiteralSubChar:
+    case CharLiteralSubInt:
+    case IntAddCharLiteral:
+    case IntConvertCharLiteral:
+      // These operations always involve a literal type.
+      // See AnyLiteralTypes comment for explanation.
+      return true;
+
+    case FloatConvert:
+    case FloatConvertInt:
     case IntConvert:
     case IntConvertChar:
+    case IntConvertFloat:
     case IntSNegate:
     case IntComplement:
     case IntSAdd:

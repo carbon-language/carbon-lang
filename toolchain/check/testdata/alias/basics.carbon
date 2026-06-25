@@ -177,9 +177,10 @@ extern alias C = Class;
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %d.patt: %pattern_type = value_binding_pattern d [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %.4a1: ref %C = temporary invalid, %C.val [concrete]
+// CHECK:STDOUT:   %.115: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -190,14 +191,14 @@ extern alias C = Class;
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [concrete = constants.%C]
 // CHECK:STDOUT:   %c: type = alias_binding c, %b.ref [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type = value_binding_pattern d [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type = value_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.ref: type = name_ref c, %c [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc10_13.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc10_13.2: init %C to %.loc10_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc10_13.3: init %C = converted @__global_init.%.loc10, %.loc10_13.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc10_13.4: ref %C = temporary %.loc10_13.1, %.loc10_13.3 [concrete = constants.%.4a1]
+// CHECK:STDOUT:   %.loc10_13.4: ref %C = temporary %.loc10_13.1, %.loc10_13.3 [concrete = constants.%.115]
 // CHECK:STDOUT:   %.loc10_13.5: %C = acquire_value %.loc10_13.4 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %c.ref: type = name_ref c, %c [concrete = constants.%C]
 // CHECK:STDOUT:   %d: %C = value_binding d, %.loc10_13.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -214,15 +215,15 @@ extern alias C = Class;
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %A.9fd: type = class_type @A, @A(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %A.940: type = class_type @A, @A(%empty_struct_type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:   %.loc7_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc7_15: type = converted %.loc7_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %A: type = class_type @A, @A(constants.%empty_struct_type) [concrete = constants.%A.9fd]
-// CHECK:STDOUT:   %a: type = alias_binding a, %A [concrete = constants.%A.9fd]
+// CHECK:STDOUT:   %A: type = class_type @A, @A(constants.%empty_struct_type) [concrete = constants.%A.940]
+// CHECK:STDOUT:   %a: type = alias_binding a, %A [concrete = constants.%A.940]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

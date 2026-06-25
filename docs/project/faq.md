@@ -350,9 +350,9 @@ In all cases, the brackets indicate deduction, not the compile-time versus
 runtime phase.
 
 See
-[Proposal #7254](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md)
+[proposal #7254](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md)
 for details on the syntax using keywords and defaults, and
-[Proposal #676](/proposals/p0676.md) for the original background on avoiding
+[proposal #676](/proposals/p000676-generic-syntax.md) for the original background on avoiding
 angle brackets.
 
 ### Why do variable declarations have to start with `var` or `let`?
@@ -405,8 +405,8 @@ match `42` with the value of the expression `the_answer`, which requires a
 variable named `the_answer` to already exist.
 
 The pattern matching proposal details alternative
-[shorthand for `auto`](/proposals/p2188.md#shorthand-for-auto) and the tradeoffs
-that were considered.
+[shorthand for `auto`](/proposals/p002188-pattern-matching-syntax-and-semantics.md#shorthand-for-auto)
+and the tradeoffs that were considered.
 
 References:
 

@@ -47,9 +47,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT: --- fail_non_constant_condition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %b.param_patt: %pattern_type.831 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   %ConditionIsNonConstant.type: type = fn_type @ConditionIsNonConstant [concrete]
 // CHECK:STDOUT:   %ConditionIsNonConstant: %ConditionIsNonConstant.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -68,7 +68,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = constants.%Bool]
+// CHECK:STDOUT:   %Core.Bool: type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = bool]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
@@ -80,8 +80,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ConditionIsNonConstant.decl: %ConditionIsNonConstant.type = fn_decl @ConditionIsNonConstant [concrete = constants.%ConditionIsNonConstant] {
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern [concrete = constants.%b.param_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = type_literal bool [concrete = bool]
@@ -92,8 +92,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT: fn @ConditionIsNonConstant(%b.param: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete = <error>]
+// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
@@ -125,6 +125,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %t.param_patt: %pattern_type.98f = value_param_pattern [concrete]
+// CHECK:STDOUT:   %t.patt: %pattern_type.98f = at_binding_pattern t, %t.param_patt [concrete]
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant.type: type = fn_type @ChosenBranchIsNonConstant [concrete]
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant: %ChosenBranchIsNonConstant.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
@@ -155,8 +157,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant.decl: %ChosenBranchIsNonConstant.type = fn_decl @ChosenBranchIsNonConstant [concrete = constants.%ChosenBranchIsNonConstant] {
-// CHECK:STDOUT:     %t.param_patt: %pattern_type.98f = value_param_pattern [concrete]
-// CHECK:STDOUT:     %t.patt: %pattern_type.98f = at_binding_pattern t, %t.param_patt [concrete]
+// CHECK:STDOUT:     %t.param_patt: %pattern_type.98f = value_param_pattern [concrete = constants.%t.param_patt]
+// CHECK:STDOUT:     %t.patt: %pattern_type.98f = at_binding_pattern t, %t.param_patt [concrete = constants.%t.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %t.param: type = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = type_literal type [concrete = type]
@@ -167,8 +169,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT: fn @ChosenBranchIsNonConstant(%t.param: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete]
-// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete = <error>]
+// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
@@ -194,8 +196,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT: !.loc9_15:
 // CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: <error> = ref_binding_pattern w [concrete]
-// CHECK:STDOUT:     %w.var_patt: <error> = var_pattern %w.patt [concrete]
+// CHECK:STDOUT:     %w.patt: <error> = ref_binding_pattern w [concrete = <error>]
+// CHECK:STDOUT:     %w.var_patt: <error> = var_pattern %w.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref <error> = var %w.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc14: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]

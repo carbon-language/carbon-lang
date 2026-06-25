@@ -50,10 +50,10 @@ let c: i32 = Div(-0x8000_0000, -1);
 
 library "[[@TEST_NAME]]";
 
-fn Div(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.sdiv";
+fn Div(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.sdiv";
 
-class Expect(N:! Core.IntLiteral()) {}
-fn Test(N:! Core.IntLiteral()) -> Expect(N) { return {}; }
+class Expect(N:! Core.IntLiteral) {}
+fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Div(-0x8000_0000, -1)) as Expect(0x8000_0000);
@@ -65,7 +65,7 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn Div(a: i32, b: i32) -> i32 = "int.sdiv";
-fn DivLit(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.sdiv";
+fn DivLit(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.sdiv";
 
 // CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:14: error: division by zero [CompileTimeDivisionByZero]
 // CHECK:STDERR: let a: i32 = Div(1, 0);
@@ -80,17 +80,17 @@ let a: i32 = Div(1, 0);
 let b: i32 = Div(0, 0);
 
 // IntLiteral allows "overflow" by widening its representation, but not overflow to infinity.
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:28: error: division by zero [CompileTimeDivisionByZero]
-// CHECK:STDERR: let c: Core.IntLiteral() = DivLit(1, 0);
-// CHECK:STDERR:                            ^~~~~~~~~~~~
+// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:26: error: division by zero [CompileTimeDivisionByZero]
+// CHECK:STDERR: let c: Core.IntLiteral = DivLit(1, 0);
+// CHECK:STDERR:                          ^~~~~~~~~~~~
 // CHECK:STDERR:
-let c: Core.IntLiteral() = DivLit(1, 0);
+let c: Core.IntLiteral = DivLit(1, 0);
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:28: error: division by zero [CompileTimeDivisionByZero]
-// CHECK:STDERR: let d: Core.IntLiteral() = DivLit(0, 0);
-// CHECK:STDERR:                            ^~~~~~~~~~~~
+// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:26: error: division by zero [CompileTimeDivisionByZero]
+// CHECK:STDERR: let d: Core.IntLiteral = DivLit(0, 0);
+// CHECK:STDERR:                          ^~~~~~~~~~~~
 // CHECK:STDERR:
-let d: Core.IntLiteral() = DivLit(0, 0);
+let d: Core.IntLiteral = DivLit(0, 0);
 
 // CHECK:STDOUT: --- int_div.carbon
 // CHECK:STDOUT:

@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>
 
+#include "clang/AST/BaseSubobject.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "common/check.h"
 #include "common/pretty_stack_trace_function.h"
@@ -139,12 +140,45 @@ auto FileContext::LowerDefinitions() -> void {
   // variables.
   if (auto global_ctor_id = sem_ir().global_ctor_id();
       global_ctor_id.has_value()) {
-    auto llvm_function = BuildFunctionDecl(global_ctor_id);
-    functions_.Set(global_ctor_id, llvm_function);
+    // This is basically an inlined and specialized version of
+    // `BuildFunctionDecl` because global_ctor is a bit special (it has no
+    // declarations, for one thing).
+    // TODO: Consider making the global ctor not a function at all, but a
+    // special block.
+    auto function_type_info = BuildFunctionTypeInfo(
+        {{this, global_ctor_id, SemIR::SpecificId::None}});
+    std::string mangled_name = "_C__global_init.";
+    auto package_id = sem_ir().package_id();
+    if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
+      mangled_name += sem_ir().identifiers().Get(ident_id);
+    } else {
+      mangled_name += package_id.AsSpecialName();
+    }
+
+    auto* llvm_function = llvm_module().getFunction(mangled_name);
+
+    if (!llvm_function) {
+      llvm_function = llvm::Function::Create(function_type_info.type,
+                                             llvm::Function::InternalLinkage,
+                                             mangled_name, llvm_module());
+      CARBON_CHECK(llvm_function->getName() == mangled_name,
+                   "Mangled name collision: {0}", mangled_name);
+    }
+    FunctionInfo function_info = {
+        .type = function_type_info.type,
+        .di_type = function_type_info.di_type,
+        .lowered_param_indices =
+            std::move(function_type_info.lowered_param_indices),
+        .unused_param_indices =
+            std::move(function_type_info.unused_param_indices),
+        .llvm_function = llvm_function,
+        .inexact = function_type_info.inexact};
+    functions_.Set(global_ctor_id, function_info);
+
     const auto& global_ctor = sem_ir().functions().Get(global_ctor_id);
     BuildFunctionBody(global_ctor_id, SemIR::SpecificId::None, global_ctor,
                       *this, global_ctor);
-    llvm::appendToGlobalCtors(llvm_module(), llvm_function->llvm_function,
+    llvm::appendToGlobalCtors(llvm_module(), llvm_function,
                               /*Priority=*/0);
   }
 }
@@ -314,12 +348,18 @@ auto FileContext::GetOrCreateLLVMFunction(
     const FunctionTypeInfo& function_type_info, SemIR::FunctionId function_id,
     SemIR::SpecificId specific_id) -> llvm::Function* {
   // If this is a C++ function, tell Clang that we referenced it.
-  if (auto clang_decl_id = sem_ir().functions().Get(function_id).clang_decl_id;
-      clang_decl_id.has_value()) {
-    CARBON_CHECK(!specific_id.has_value(),
-                 "Specific functions cannot have C++ definitions");
-    return HandleReferencedCppFunction(
-        sem_ir().clang_decls().Get(clang_decl_id).key.decl->getAsFunction());
+  // The global_ctor function can't be a C++ function (but doesn't have any
+  // decl_id so it doesn't fall out naturally from the handling below)
+  if (function_id != sem_ir().global_ctor_id()) {
+    const auto& function = sem_ir().functions().Get(function_id);
+    if (const auto* clang_decl =
+            sem_ir().clang_decls().Lookup(function.first_decl_id())) {
+      if (clang_decl->is_imported) {
+        CARBON_CHECK(!specific_id.has_value(),
+                     "Specific functions cannot have C++ definitions");
+        return HandleReferencedCppFunction(clang_decl->decl()->getAsFunction());
+      }
+    }
   }
 
   SemIR::Mangler m(sem_ir(), context().total_ir_count(),
@@ -544,6 +584,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
       // Otherwise, always inline thunks.
       if (definition_function.special_function_kind ==
           SemIR::Function::SpecialFunctionKind::Thunk) {
+        // TODO: emit the thunk as an alias instead of a separate function,
+        // when that would be correct.
         attr_builder.addAttribute(llvm::Attribute::AlwaysInline);
       }
 
@@ -607,6 +649,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     function_lowering.LowerBlockContents(block_id);
   };
 
+  CARBON_CHECK(function_lowering.llvm_function().isDeclaration());
   lower_block(decl_block_id);
 
   // If the decl block is empty, reuse it as the first body block. We don't do
@@ -672,19 +715,20 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
 
 auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::Constant* {
-  auto var_name_id =
-      SemIR::GetFirstBindingNameFromPatternId(sem_ir(), var_storage.pattern_id);
-  if (auto cpp_global_var_id =
-          sem_ir().cpp_global_vars().Lookup({.entity_name_id = var_name_id});
-      cpp_global_var_id.has_value()) {
-    SemIR::ClangDeclId clang_decl_id =
-        sem_ir().cpp_global_vars().Get(cpp_global_var_id).clang_decl_id;
-    CARBON_CHECK(clang_decl_id.has_value(),
-                 "CppGlobalVar should have a clang_decl_id");
-    return cpp_code_generator_->GetAddrOfGlobal(
-        cast<clang::VarDecl>(
-            sem_ir().clang_decls().Get(clang_decl_id).key.decl),
+  // Check if an llvm::GlobalVariable already exists and use it if so.
+  //
+  // This happens for C++ variables imported into Carbon. It also
+  // happens when a Carbon variable is exported and used from C++; code
+  // generation for the C++ code may have already created an
+  // llvm::GlobalVariable.
+  if (const auto* clang_decl =
+          sem_ir().clang_decls().Lookup(var_storage.pattern_id)) {
+    auto* constant = cpp_code_generator_->GetAddrOfGlobal(
+        CreateGlobalDecl(cast<clang::NamedDecl>(clang_decl->decl())),
         /*isForDefinition=*/false);
+    if (constant) {
+      return constant;
+    }
   }
 
   return BuildNonCppGlobalVariableDecl(var_storage);
@@ -722,11 +766,16 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
 
 auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
                               SemIR::SpecificId specific_id)
-    -> llvm::GlobalVariable* {
-  if (!vtable.carbon_native_vtable) {
-    return nullptr;
-  }
+    -> llvm::Constant* {
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
+  if (!vtable.carbon_native_vtable) {
+    auto* cxx_record_decl = cast<clang::CXXRecordDecl>(
+        sem_ir().clang_decls().Lookup(class_info.latest_decl_id())->key.decl);
+    return cpp_code_generator_->GetAddrOfVTable(
+        clang::BaseSubobject(cxx_record_decl,
+                             clang::CharUnits::fromQuantity(0)),
+        cxx_record_decl);
+  }
 
   SemIR::Mangler m(sem_ir(), context().total_ir_count(),
                    context().mangle_string_fingerprint());

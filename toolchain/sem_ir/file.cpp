@@ -8,6 +8,9 @@
 #include <string>
 #include <utility>
 
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/Mangle.h"
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -37,11 +40,11 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       value_stores_(&value_stores),
       filename_(std::move(filename)),
       entity_names_(check_ir_id),
-      cpp_global_vars_(check_ir_id),
       functions_(check_ir_id),
       cpp_overload_sets_(check_ir_id),
       thunks_(check_ir_id),
       classes_(check_ir_id),
+      fields_(check_ir_id),
       interfaces_(check_ir_id),
       named_constraints_(check_ir_id),
       require_impls_(check_ir_id),
@@ -155,7 +158,6 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
           map.Add("clang_decl_signatures", clang_decl_signatures_.OutputYaml());
           map.Add("name_scopes", name_scopes_.OutputYaml());
           map.Add("entity_names", entity_names_.OutputYaml());
-          map.Add("cpp_global_vars", cpp_global_vars_.OutputYaml());
           map.Add("functions", functions_.OutputYaml());
           map.Add("classes", classes_.OutputYaml());
           map.Add("interfaces", interfaces_.OutputYaml());
@@ -191,8 +193,6 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "entity_names_"),
                     entity_names_);
-  mem_usage.Collect(MemUsage::ConcatLabel(label, "cpp_global_vars_"),
-                    cpp_global_vars_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "thunks_"), thunks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "classes_"), classes_);
@@ -219,6 +219,32 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
 
 auto File::set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void {
   cpp_file_ = std::move(cpp_file);
+}
+
+auto File::AppendCppMangledTypeName(ClassId class_id,
+                                    llvm::raw_ostream& out) const -> bool {
+  // Only classes imported *from* C++ need this. A C++ scope records the Clang
+  // declaration it came from; note that a Carbon class exported *to* C++ also
+  // has an associated Clang declaration, but its scope is not a C++ scope and
+  // it is already uniquely identified by its name and parent scope.
+  auto scope_id = classes().Get(class_id).scope_id;
+  if (!scope_id.has_value()) {
+    return false;
+  }
+  const auto& scope = name_scopes().Get(scope_id);
+  if (!scope.is_cpp_scope()) {
+    return false;
+  }
+  auto clang_decl_id = scope.clang_decl_context_id();
+  if (!clang_decl_id.has_value()) {
+    return false;
+  }
+  // A C++ class's scope always maps to a Clang tag declaration.
+  auto* tag_decl =
+      clang::cast<clang::TagDecl>(clang_decls().Get(clang_decl_id).decl());
+  cpp_file_->mangle_context().mangleCanonicalTypeName(
+      cpp_file_->ast_context().getCanonicalTagType(tag_decl), out);
+  return true;
 }
 
 }  // namespace Carbon::SemIR

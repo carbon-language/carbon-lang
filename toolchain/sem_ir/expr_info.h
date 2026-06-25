@@ -39,6 +39,54 @@ inline auto IsInitializerCategory(ExprCategory cat) -> bool {
 auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
                                   bool allow_transitive = true) -> InstId;
 
+// Information about the form of an expression.
+struct FormInfo {
+  enum Kind : int8_t {
+    Primitive,
+    Tuple,
+    Struct,
+  };
+
+  // The kind of the form.
+  Kind kind;
+  // The category component of the form. For a composite form, if this is not
+  // `Mixed` it represents the category component of all primitive sub-forms
+  // of this form.
+  SemIR::ExprCategory category;
+  // The type component of the form.
+  SemIR::TypeId type_id;
+  // The constant value component of the form.
+  SemIR::ConstantId constant_id;
+  // The location of the expression whose form this is.
+  SemIR::LocId loc_id;
+  // The underlying instruction, if there is one. This is only present in order
+  // to support lazy form decomposition, and should not be used for other
+  // purposes. May be `None` if this is not the form of a tuple or struct
+  // literal that can be decomposed further.
+  SemIR::InstId inst_id;
+
+  // Returns whether this is a compound form.
+  auto is_compound() const -> bool { return kind == Tuple || kind == Struct; }
+};
+
+// Gets information about the form of an instruction.
+auto GetFormInfo(const File& sem_ir, SemIR::InstId inst_id) -> FormInfo;
+
+// Given a form, attempts to perform form decomposition, converting it from a
+// primitive form into a compound form if possible. Otherwise, returns the form
+// unchanged.
+auto DecomposeForm(const File& sem_ir, FormInfo form) -> FormInfo;
+
+using FormVisitor = llvm::function_ref<auto(FormInfo)->void>;
+
+// Given a tuple form, visits the forms of the elements.
+auto VisitTupleElementForms(const File& sem_ir, FormInfo form,
+                            FormVisitor visitor) -> void;
+
+// Given a struct form, returns the forms of the elements.
+auto VisitStructElementForms(const File& sem_ir, FormInfo form,
+                             FormVisitor visitor) -> void;
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_EXPR_INFO_H_

@@ -103,6 +103,15 @@ class FileContext {
     return GetTypeAndDIType(type_id).llvm_ir_type;
   }
 
+  // Returns the alignment of the given type_id. This adds the alignment to the
+  // fingerprint.
+  auto GetAlignment(SemIR::TypeId type_id) -> llvm::Align {
+    return llvm::Align(sem_ir()
+                           .types()
+                           .GetCompleteTypeInfo(type_id)
+                           .object_layout.alignment.bytes());
+  }
+
   // Returns both the lowered llvm IR type and the lowered llvm IR debug info
   // type for the given type_id.
   auto GetTypeAndDIType(SemIR::TypeId type_id) const -> LoweredTypes {
@@ -135,7 +144,7 @@ class FileContext {
       -> llvm::Value*;
 
   auto GetVtable(SemIR::VtableId vtable_id, SemIR::SpecificId specific_id)
-      -> llvm::GlobalVariable* {
+      -> llvm::Constant* {
     if (!specific_id.has_value()) {
       return vtables_.Get(vtable_id);
     }
@@ -243,7 +252,7 @@ class FileContext {
       -> llvm::DISubprogram*;
 
   auto BuildVtable(const SemIR::Vtable& vtable, SemIR::SpecificId specific_id)
-      -> llvm::GlobalVariable*;
+      -> llvm::Constant*;
 
   // Records a specific that was lowered for a generic. These are added one
   // by one while lowering their definitions.
@@ -303,11 +312,9 @@ class FileContext {
 
   SpecificCoalescer coalescer_;
 
-  FixedSizeValueStore<SemIR::VtableId, llvm::GlobalVariable*,
-                      Tag<SemIR::CheckIRId>>
+  FixedSizeValueStore<SemIR::VtableId, llvm::Constant*, Tag<SemIR::CheckIRId>>
       vtables_;
-  FixedSizeValueStore<SemIR::SpecificId, llvm::GlobalVariable*,
-                      Tag<SemIR::CheckIRId>>
+  FixedSizeValueStore<SemIR::SpecificId, llvm::Constant*, Tag<SemIR::CheckIRId>>
       specific_vtables_;
 };
 

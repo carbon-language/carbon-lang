@@ -1,0 +1,78 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: prek
+
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches: [trunk]
+
+permissions:
+  contents: read # For actions/checkout.
+
+jobs:
+  prek:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
+        with:
+          egress-policy: block
+          # When adding endpoints, see README.md.
+          # prettier-ignore
+          allowed-endpoints: >
+            *.blob.storage.azure.net:443
+            *.githubapp.com:443
+            *.sourceforge.net:443
+            api.github.com:443
+            api.ipify.org:443
+            bcr.bazel.build:443
+            downloads.sourceforge.net:443
+            files.pythonhosted.org:443
+            github.com:443
+            go.dev:443
+            mirror.bazel.build:443
+            mirrors.kernel.org:443
+            nodejs.org:443
+            oauth2.googleapis.com:443
+            objects.githubusercontent.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            releases.astral.sh:443
+            releases.bazel.build:443
+            storage.googleapis.com:443
+            uploads.github.com:443
+            www.googleapis.com:443
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Ensure LLVM is set up consistently.
+      - uses: ./.github/actions/build-setup-common
+        with:
+          matrix_runner: ubuntu-22.04
+          remote_cache_upload: '--remote_upload_local_results=false'
+
+      - uses: j178/prek-action@01345c78b7de7d79edf368729212760396ba9345 # v2
+
+      # We want to automatically create github suggestions for prek file
+      # changes for a pull request. But `pull_request` actions never have write
+      # permissions to the repository, so we create the suggestions in a separate
+      # privileged `workflow_run` action in prek_suggestions.yaml. Here,
+      # we upload the diffs and event configuration to an artifact for use by
+      # that action.
+      - name: Collect prek output
+        if: failure()
+        run: |
+          mkdir -p prek-output
+          git diff > prek-output/diff
+          cp $GITHUB_EVENT_PATH prek-output/event
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        if: failure()
+        with:
+          name: prek output
+          path: prek-output/*

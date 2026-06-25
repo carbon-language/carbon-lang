@@ -25,45 +25,6 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
        .source_id = action.inst_id});
 }
 
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::RefineFormAction action) -> SemIR::InstId {
-  auto expr_const_id = context.constant_values().Get(action.form_id);
-  if (!expr_const_id.is_constant()) {
-    // This is an error which will be diagnosed elsewhere, so we should just
-    // get out of its way.
-    return action.form_id;
-  }
-  auto expr =
-      context.insts().Get(context.constant_values().GetInstId(expr_const_id));
-  CARBON_KIND_SWITCH(expr) {
-    case SemIR::InitForm::Kind:
-    case SemIR::RefForm::Kind:
-    case SemIR::ValueForm::Kind:
-      // Primitive forms have no form operands, so the action is a no-op.
-      return action.form_id;
-    case CARBON_KIND(SemIR::TupleValue tuple_value): {
-      SemIR::CopyOnWriteInstBlock new_inst_block(&context.sem_ir(),
-                                                 tuple_value.elements_id);
-      for (auto [i, element_id] : llvm::enumerate(
-               context.inst_blocks().Get(tuple_value.elements_id))) {
-        new_inst_block.Set(i, HandleAction<SemIR::RefineFormAction>(
-                                  context, loc_id, SemIR::FormType::TypeInstId,
-                                  {.type_id = SemIR::InstType::TypeId,
-                                   .form_id = element_id}));
-      }
-      auto new_inst_block_id = new_inst_block.GetCanonical();
-      if (new_inst_block_id == tuple_value.elements_id) {
-        return action.form_id;
-      }
-      return AddInst<SemIR::TupleValue>(context, loc_id,
-                                        {.type_id = SemIR::FormType::TypeId,
-                                         .elements_id = new_inst_block_id});
-    }
-    default:
-      CARBON_FATAL("Unexpected kind for non-dependent form constant {0}", expr);
-  }
-}
-
 static auto OperandDependence(Context& context, SemIR::ConstantId const_id)
     -> SemIR::ConstantDependence {
   // A type operand makes the instruction dependent if it is a
@@ -147,35 +108,6 @@ auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool {
            SemIR::ConstantDependence::Template;
   }
 
-  if (auto refine_action = action_inst.TryAs<SemIR::RefineFormAction>()) {
-    auto form_const_id = context.constant_values().Get(refine_action->form_id);
-    auto form_id = context.constant_values().GetInstIdIfValid(form_const_id);
-    if (!form_id.has_value()) {
-      // This is an error which will be diagnosed elsewhere, so we should just
-      // get out of its way.
-      return true;
-    }
-    // A RefineFormAction can be performed if we can identify all of the
-    // subexpressions of `form_id` that are in form positions.
-    CARBON_KIND_SWITCH(context.insts().Get(form_id)) {
-      case SemIR::InitForm::Kind:
-      case SemIR::RefForm::Kind:
-      case SemIR::ValueForm::Kind:
-      case SemIR::TupleValue::Kind:
-        // These inst kinds are not rewritten by constant evaluation except to
-        // substitute values for their operands (i.e. their constant kind is
-        // WheneverPossible, Always, or AlwaysUnique), so we can identify all of
-        // their form subexpressions.
-        return true;
-      default:
-        // All other inst kinds either can't appear in a form position, or
-        // may be rewritten by constant evaluation, so we can't identify
-        // their form subexpressions unless they are already concrete.
-        return OperandDependence(context, form_const_id) ==
-               SemIR::ConstantDependence::None;
-    }
-  }
-
   // A form-parameterized action is performable if we can see at least the top
   // level of its form's structure (i.e. it is not an action or a splice).
   if (auto form_parameterized_action =
@@ -188,8 +120,16 @@ auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool {
       // get out of its way.
       return true;
     }
-    return !context.insts().Is<SemIR::RefineFormAction>(form_id) &&
-           !context.insts().Is<SemIR::SpliceInst>(form_id);
+    auto form_inst = context.insts().Get(form_id);
+    switch (form_inst.kind()) {
+      case SemIR::InitForm::Kind:
+      case SemIR::RefForm::Kind:
+      case SemIR::ValueForm::Kind:
+      case SemIR::ErrorInst::Kind:
+        return true;
+      default:
+        return false;
+    }
   }
 
   return OperandDependence(context, action_inst.type_id()) <
@@ -222,39 +162,67 @@ static auto AddDependentActionSpliceImpl(Context& context,
 // produces an argument that has the template-dependent parts replaced with
 // their concrete values, so that the action doesn't need to know which specific
 // it is operating on.
-static auto RefineOperand(Context& context, SemIR::LocId loc_id,
-                          SemIR::IdAndKind arg) -> int32_t {
-  if (auto inst_id = arg.TryAs<SemIR::MetaInstId>()) {
-    auto inst = context.insts().Get(*inst_id);
-    if (inst.Is<SemIR::SpliceInst>()) {
-      // The argument will evaluate to the spliced instruction, which is already
-      // refined.
-      return arg.value();
-    }
+//
+// This is the default case, for ID kinds that can't be refined.
+template <typename IdT>
+  requires SemIR::Internal::IsIdKindType<IdT>
+static auto RefineTypedOperand(Context& /*context*/, SemIR::LocId /*loc_id*/,
+                               IdT id) -> IdT {
+  return id;
+}
 
-    // If the type of the action argument is dependent, refine to an instruction
-    // with a concrete type.
-    if (OperandDependence(context, inst.type_id()) ==
-        SemIR::ConstantDependence::Template) {
-      auto type_inst_id = context.types().GetTypeInstId(inst.type_id());
-      inst_id = AddDependentActionSpliceImpl(
-          context,
-          SemIR::LocIdAndInst(
-              loc_id,
-              SemIR::RefineTypeAction{.type_id = GetSingletonType(
-                                          context, SemIR::InstType::TypeInstId),
-                                      .inst_id = *inst_id,
-                                      .inst_type_inst_id = type_inst_id}),
-          type_inst_id);
-    }
-
-    // TODO: Handle the case where the constant value of the instruction is
-    // template-dependent.
-
-    return inst_id->index;
+static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
+                               SemIR::MetaInstId inst_id) -> SemIR::MetaInstId {
+  auto inst = context.insts().Get(inst_id);
+  if (inst.Is<SemIR::SpliceInst>()) {
+    // The argument will evaluate to the spliced instruction, which is already
+    // refined.
+    return inst_id;
   }
 
-  return arg.value();
+  // If the type of the action argument is dependent, refine to an instruction
+  // with a concrete type.
+  if (OperandDependence(context, inst.type_id()) ==
+      SemIR::ConstantDependence::Template) {
+    auto type_inst_id = context.types().GetTypeInstId(inst.type_id());
+    inst_id = AddDependentActionSpliceImpl(
+        context,
+        SemIR::LocIdAndInst(
+            loc_id,
+            SemIR::RefineTypeAction{.type_id = GetSingletonType(
+                                        context, SemIR::InstType::TypeInstId),
+                                    .inst_id = inst_id,
+                                    .inst_type_inst_id = type_inst_id}),
+        type_inst_id);
+  }
+
+  // TODO: Handle the case where the constant value of the instruction is
+  // template-dependent.
+
+  return inst_id;
+}
+
+template <typename BundleT>
+static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
+                               SemIR::BundleId<BundleT> bundle_id)
+    -> SemIR::BundleId<BundleT> {
+  auto bundle_tuple = context.bundles().GetAsTuple(bundle_id);
+  BundleT refined_bundle = std::apply(
+      [&](auto... bundle_fields) {
+        // This can't actually recurse, because bundles can't contain bundle
+        // IDs.
+        return BundleT{RefineTypedOperand(context, loc_id, bundle_fields)...};
+      },
+      bundle_tuple);
+  return context.bundles().AddCanonical(refined_bundle);
+}
+
+// Dynamically dispatched wrapper for RefineTypedOperand.
+static auto RefineOperand(Context& context, SemIR::LocId loc_id,
+                          SemIR::IdAndKind arg) -> int32_t {
+  return arg.Dispatch<int32_t>([&](auto id) {
+    return SemIR::ToRaw(RefineTypedOperand(context, loc_id, id));
+  });
 }
 
 // Refine the operands of an action, ensuring that they will refer to concrete

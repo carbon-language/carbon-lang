@@ -44,7 +44,7 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 
 library "[[@TEST_NAME]]";
 
-fn Eq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.eq";
+fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
 
 class Expect(B:! bool) {}
 fn Test(B:! bool) -> Expect(B) { return {}; }
@@ -60,7 +60,7 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-fn Eq(a: Core.IntLiteral(), b: i32) -> bool = "int.eq";
+fn Eq(a: Core.IntLiteral, b: i32) -> bool = "int.eq";
 
 class Expect(B:! bool) {}
 fn Test(B:! bool) -> Expect(B) { return {}; }
@@ -76,33 +76,33 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-fn Eq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.eq";
+fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
 
-fn Test(n: Core.IntLiteral()) {
+fn Test(n: Core.IntLiteral) {
   // OK
   Eq(1, 1);
   // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
   // CHECK:STDERR:   Eq(n, 1);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-8]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR: fn Eq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.eq";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Eq(n, 1);
   // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
   // CHECK:STDERR:   Eq(1, n);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-16]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR: fn Eq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.eq";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Eq(1, n);
   // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
   // CHECK:STDERR:   Eq(n, n);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-24]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR: fn Eq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.eq";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Eq(n, n);
 }

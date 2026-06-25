@@ -30,6 +30,7 @@
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -517,8 +518,21 @@ static auto BuildFunctionDecl(Context& context,
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
 
-  auto self_param_id =
-      FindSelfPattern(context, name.implicit_param_patterns_id);
+  auto self_param_id = FindSelfPattern(context, name.implicit_param_patterns_id,
+                                       name.param_patterns_id);
+
+  // `self` must be the first explicit parameter. (Declaring it in the implicit
+  // parameter list or outside any parameter list is diagnosed earlier.)
+  if (self_param_id.has_value()) {
+    auto explicit_params =
+        context.inst_blocks().GetOrEmpty(name.param_patterns_id);
+    if (!explicit_params.empty() && explicit_params.front() != self_param_id &&
+        llvm::is_contained(explicit_params, self_param_id)) {
+      CARBON_DIAGNOSTIC(SelfNotFirstParam, Error,
+                        "`self` must be the first explicit parameter");
+      context.emitter().Emit(SemIR::LocId(self_param_id), SelfNotFirstParam);
+    }
+  }
 
   // Process modifiers.
   auto [parent_scope_inst_id, parent_scope_inst] =
@@ -609,8 +623,8 @@ static auto BuildFunctionDecl(Context& context,
   return {function_decl.function_id, decl_id};
 }
 
-// Checks that "unused" marker is only used in definitions, and emits a
-// diagnostic for every binding that is marked unused.
+// Checks that the `unused` modifier is only used when there is a definition,
+// and emits a diagnostic for every binding that is marked `unused`.
 static auto CheckUnusedBindingsInPattern(Context& context,
                                          SemIR::InstId pattern_id) -> void {
   llvm::SmallVector<SemIR::InstId> work_list;
@@ -626,12 +640,12 @@ static auto CheckUnusedBindingsInPattern(Context& context,
       case CARBON_KIND_ANY(SemIR::AnyBindingPattern, bind): {
         auto& entity_name = context.entity_names().Get(bind.entity_name_id);
         // We need special treatment for the name "_" which is implicitly
-        // unused but actually permitted in declarations.
+        // unused but actually permitted without a definition.
         if (entity_name.is_unused &&
             entity_name.name_id != SemIR::NameId::Underscore) {
-          CARBON_DIAGNOSTIC(UnusedModifierOnDeclaration, Error,
-                            "`unused` modifier on declaration");
-          context.emitter().Emit(current_id, UnusedModifierOnDeclaration);
+          CARBON_DIAGNOSTIC(UnusedModifierWithoutDefinition, Error,
+                            "`unused` modifier without a definition");
+          context.emitter().Emit(current_id, UnusedModifierWithoutDefinition);
         }
         if (bind.kind == SemIR::WrapperBindingPattern::Kind) {
           work_list.push_back(bind.subpattern_id);
@@ -655,14 +669,19 @@ static auto CheckUnusedBindingsInPattern(Context& context,
   }
 }
 
-static auto DiagnoseUnusedMarkersInDeclaration(Context& context,
-                                               SemIR::FunctionId function_id)
-    -> void {
+static auto DiagnoseUnusedMarkersWithoutDefinition(
+    Context& context, SemIR::FunctionId function_id) -> void {
   const auto& function = context.functions().Get(function_id);
-  if (function.param_patterns_id.has_value()) {
-    for (auto pattern_id :
-         context.inst_blocks().Get(function.param_patterns_id)) {
-      CheckUnusedBindingsInPattern(context, pattern_id);
+  // The `unused` modifier requires a definition, so it is not valid on any
+  // parameter when there is none. This applies to implicit parameters (such as
+  // `T:! type` introduced by `[...]`) too, so check the implicit parameter list
+  // as well as the explicit one.
+  for (auto param_patterns_id :
+       {function.implicit_param_patterns_id, function.param_patterns_id}) {
+    if (param_patterns_id.has_value()) {
+      for (auto pattern_id : context.inst_blocks().Get(param_patterns_id)) {
+        CheckUnusedBindingsInPattern(context, pattern_id);
+      }
     }
   }
 }
@@ -670,7 +689,7 @@ static auto DiagnoseUnusedMarkersInDeclaration(Context& context,
 auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
   auto [function_id, decl_id] =
       BuildFunctionDecl(context, node_id, /*is_definition=*/false);
-  DiagnoseUnusedMarkersInDeclaration(context, function_id);
+  DiagnoseUnusedMarkersWithoutDefinition(context, function_id);
   context.decl_name_stack().PopScope();
   return true;
 }

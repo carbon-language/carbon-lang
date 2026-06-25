@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 
-#include "clang/AST/DeclBase.h"
 #include "common/map.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/ids.h"
@@ -418,6 +417,25 @@ class NameScopeStore {
     return scope_id == NameScopeId::Package ||
            (scope_id.has_value() && Get(scope_id).is_imported_package());
   }
+
+  // Returns true if the entity named `name_id` in the given scope is a private
+  // namespace member. This partially indicates whether the entity is private to
+  // its library. If this returns false, the entity may still be private to its
+  // library if it's within an enclosing entity that is a private namespace
+  // member.
+  auto IsPrivateWithinNamespace(NameId name_id,
+                                NameScopeId parent_scope_id) const -> bool;
+
+  // Returns the name and parent scope of the given scope. If the scope is
+  // a class, interface, named constraint, or impl, resolves its declaration
+  // instruction to retrieve its name and parent scope.
+  auto GetScopeNameAndParent(NameScopeId scope_id) const
+      -> std::pair<NameId, NameScopeId>;
+
+  // Returns true if the entity is private to its library. This is the case if
+  // the entity or an enclosing scope is private within a namespace.
+  auto IsPrivateToLibrary(NameId name_id, NameScopeId parent_scope_id) const
+      -> bool;
 
   auto OutputYaml() const -> Yaml::OutputMapping {
     return values_.OutputYaml();

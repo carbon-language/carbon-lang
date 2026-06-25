@@ -39,6 +39,7 @@ let a: T = 0;
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = value_binding_pattern T [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -61,7 +62,7 @@ let a: T = 0;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = value_binding_pattern T [concrete]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = value_binding_pattern T [concrete = constants.%T.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_9.1: type = splice_block %.loc8_9.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -100,7 +101,7 @@ let a: T = 0;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: <error> = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: <error> = value_binding_pattern a [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.ref: type = name_ref T, imports.%Implicit.T
 // CHECK:STDOUT:   %a: <error> = value_binding a, <error> [concrete = <error>]

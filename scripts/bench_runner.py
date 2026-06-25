@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.12"
 # dependencies = [
 #     "numpy",
 #     "rich",
@@ -66,15 +66,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import argparse
 import json
 import math
-import numpy as np  # type: ignore
 import re
-import scipy as sp  # type: ignore
 import subprocess
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from typing import Any, Optional, override
+
+import numpy as np  # type: ignore
+import scipy as sp  # type: ignore
 from quantiphy import Quantity  # type: ignore
 from rich.console import Console
 from rich.padding import Padding
@@ -82,7 +84,6 @@ from rich.progress import track
 from rich.table import Column, Table
 from rich.text import Text
 from rich.theme import Theme
-from typing import Optional
 
 
 def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
@@ -287,6 +288,7 @@ class DeltaKind(Enum):
     REGRESSION = "[slower]👎[/slower]"
     NOISE = ""
 
+    @override
     def __str__(self) -> str:
         return self.value
 
@@ -685,7 +687,7 @@ def run_benchmark_binary(
     specific_args: list[str],
     num_runs: int,
     console: Console,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Runs a benchmark binary multiple times and collects results.
 
     The results are parsed out of the JSON output from each run, and returned as
@@ -739,7 +741,7 @@ def run_benchmark_binary(
 def print_run_context(
     console: Console,
     num_runs: int,
-    exp_runs: list[dict],
+    exp_runs: list[dict[str, Any]],
     has_baseline: bool,
 ) -> None:
     """Prints the context from the benchmark runs.
@@ -776,8 +778,8 @@ def print_run_context(
 def get_benchmark_names_and_metrics(
     console: Console,
     parsed_args: argparse.Namespace,
-    exp_runs: list[dict],
-    base_runs: list[dict],
+    exp_runs: list[dict[str, Any]],
+    base_runs: list[dict[str, Any]],
 ) -> tuple[list[str], list[str]]:
     """Extracts benchmark names and metrics from benchmark run results.
 
@@ -851,8 +853,8 @@ def get_benchmark_names_and_metrics(
 def collect_benchmark_metrics(
     benchmark_names: list[str],
     metrics: list[str],
-    exp_runs: list[dict],
-    base_runs: list[dict],
+    exp_runs: list[dict[str, Any]],
+    base_runs: list[dict[str, Any]],
     comp_mapping: ComparableBenchmarkMapping,
 ) -> dict[str, dict[str, BenchmarkRunMetrics]]:
     """Collects and organizes all benchmark metrics from raw run data.
@@ -1069,7 +1071,7 @@ def main() -> None:
     # Run the benchmark(s) and collect the results into a data structure for
     # processing.
     num_runs = parsed_args.runs
-    base_runs: list[dict] = []
+    base_runs: list[dict[str, Any]] = []
     has_baseline = bool(parsed_args.base_benchmark)
     if has_baseline:
         base_runs = run_benchmark_binary(

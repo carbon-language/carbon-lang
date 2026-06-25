@@ -184,7 +184,16 @@ class Context {
 
   auto generated() -> llvm::SmallVector<SemIR::InstId>& { return generated_; }
 
-  // Pre-computed parts of a binding pattern.
+  // Map from the IDs of binding patterns to the IDs of the corresponding
+  // bindings, and related information. The binding insts must be created early,
+  // well before we have a block to put them in, because they have to be added
+  // to name lookup in case they are referenced later in the pattern. See
+  // docs/check/pattern_matching.md for details.
+  //
+  // This is only populated for "ordinary" binding pattern insts, not insts
+  // produced by constant evaluation, because the latter do not have a unique
+  // identity, and cannot be referenced by name in any event.
+  //
   // TODO: Consider putting this behind a narrower API to guard against emitting
   // multiple times.
   struct BindingPatternInfo {
@@ -328,14 +337,12 @@ class Context {
   auto entity_names() -> SemIR::EntityNameStore& {
     return sem_ir().entity_names();
   }
-  auto cpp_global_names() -> SemIR::CppGlobalVarStore& {
-    return sem_ir().cpp_global_vars();
-  }
   auto cpp_overload_sets() -> SemIR::CppOverloadSetStore& {
     return sem_ir().cpp_overload_sets();
   }
   auto functions() -> SemIR::FunctionStore& { return sem_ir().functions(); }
   auto classes() -> SemIR::ClassStore& { return sem_ir().classes(); }
+  auto fields() -> SemIR::FieldStore& { return sem_ir().fields(); }
   auto vtables() -> SemIR::VtableStore& { return sem_ir().vtables(); }
   auto interfaces() -> SemIR::InterfaceStore& { return sem_ir().interfaces(); }
   auto named_constraints() -> SemIR::NamedConstraintStore& {
@@ -352,9 +359,6 @@ class Context {
   }
   auto facet_types() -> SemIR::FacetTypeInfoStore& {
     return sem_ir().facet_types();
-  }
-  auto field_initializers() -> SemIR::File::FieldInitializerMap& {
-    return sem_ir().field_initializers();
   }
   auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();

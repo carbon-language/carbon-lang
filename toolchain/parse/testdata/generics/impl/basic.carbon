@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/impl/basic.carbon
 
 impl i32 as Interface {
-  fn Add[self: Self](b: Self) -> Self;
+  fn Add(self, b: Self) -> Self;
 }
 
 // CHECK:STDOUT: - filename: basic.carbon
@@ -22,19 +22,17 @@ impl i32 as Interface {
 // CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Add'},
-// CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:             {kind: 'SelfValueName', text: 'self'},
-// CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:             {kind: 'SelfValueName', text: 'self'},
+// CHECK:STDOUT:           {kind: 'SelfBindingPattern', text: 'self', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
 // CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 8},
 // CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 15},
-// CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 21},
+// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 13},
+// CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 19},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

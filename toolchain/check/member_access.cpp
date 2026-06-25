@@ -39,7 +39,7 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
     -> SemIR::ElementIndex {
   auto element_inst = context.insts().Get(element_id);
   if (auto field = element_inst.TryAs<SemIR::FieldDecl>()) {
-    return field->index;
+    return context.fields().Get(field->field_id).index;
   }
   if (auto base = element_inst.TryAs<SemIR::BaseDecl>()) {
     return base->index;
@@ -48,7 +48,7 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
 }
 
 // Returns whether `function_id` is an instance method: in other words, whether
-// it has an implicit `self` parameter.
+// it has a `self` parameter (the first explicit parameter).
 static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
   const auto& function = sem_ir.functions().Get(function_id);
@@ -326,7 +326,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  // TODO: This duplicates the work that HandleNameAsExpr does. Factor this out.
+  // TODO: Find a way to use `WrapInstForSpecific` here.
   auto type_id =
       SemIR::GetTypeOfInstInSpecific(context.sem_ir(), result.specific_id,
                                      result.scope_result.target_inst_id());

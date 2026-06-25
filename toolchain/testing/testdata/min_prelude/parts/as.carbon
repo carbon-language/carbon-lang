@@ -15,23 +15,23 @@ export import library "prelude/parts/destroy";
 export import library "prelude/parts/form";
 
 interface UnsafeAs(Dest:! type) {
-  fn Convert[self: Self]() -> Dest;
+  fn Convert(self) -> Dest;
 }
 
 interface As(Dest:! type) {
   // TODO: extend UnsafeAs(Dest);
-  fn Convert[self: Self]() -> Dest;
+  fn Convert(self) -> Dest;
 }
 
 interface ImplicitAs(Dest:! type) {
   // TODO: extend As(Dest);
-  fn Convert[self: Self]() -> Dest;
+  fn Convert(self) -> Dest;
 }
 
 interface BitAndWith(Other:! type) {
-  fn Op[self: Self](other: Other) -> Self;
+  fn Op(self, other: Other) -> Self;
 }
 
 impl type as BitAndWith(type) {
-  fn Op[self: Self](other: Self) -> Self = "type.and";
+  fn Op(self, other: Self) -> Self = "type.and";
 }

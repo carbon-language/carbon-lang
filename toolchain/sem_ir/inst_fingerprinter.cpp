@@ -12,15 +12,18 @@
 #include "common/concepts.h"
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -279,6 +282,11 @@ struct Worklist {
       Add(entity_name.name_id);
     }
     Add(entity_name.parent_scope_id);
+
+    if (sem_ir->name_scopes().IsPrivateWithinNamespace(
+            entity_name.name_id, entity_name.parent_scope_id)) {
+      AddLibrary(sem_ir);
+    }
   }
 
   auto AddInFile(const File* file, InstId inner_id) -> void {
@@ -353,19 +361,10 @@ struct Worklist {
   }
 
   auto AddPackage(NameScopeId name_scope_id) -> void {
-    if (name_scope_id == NameScopeId::Package) {
-      AddLibrary(sem_ir);
-      return;
-    }
-
-    const auto& scope = sem_ir->name_scopes().Get(name_scope_id);
-    CARBON_CHECK(scope.is_imported_package());
-    if (!scope.import_ir_scopes().empty()) {
-      auto import_ir_id = scope.import_ir_scopes().front().first;
-      AddLibrary(sem_ir->import_irs().Get(import_ir_id).sem_ir);
-    } else {
-      AddInvalid();
-    }
+    CARBON_CHECK(sem_ir->name_scopes().IsPackage(name_scope_id));
+    Add(name_scope_id == NameScopeId::Package
+            ? NameId::ForPackageName(sem_ir->package_id())
+            : sem_ir->name_scopes().Get(name_scope_id).name_id());
   }
 
   auto Add(NameScopeId name_scope_id) -> void {
@@ -375,9 +374,12 @@ struct Worklist {
     }
 
     // If this is the current package or an imported package, add the package
-    // and library name.
+    // name.
     if (sem_ir->name_scopes().IsPackage(name_scope_id)) {
       AddPackage(name_scope_id);
+      // Add a placeholder parent scope to match the fingerprinting we'd use for
+      // a non-package scope.
+      AddString("<package root>");
       return;
     }
 
@@ -401,8 +403,11 @@ struct Worklist {
   template <typename EntityT = EntityWithParamsBase>
   auto AddEntity(const std::type_identity_t<EntityT>& entity) -> void {
     Add(entity.name_id);
-    if (entity.parent_scope_id.has_value()) {
-      Add(entity.parent_scope_id);
+    Add(entity.parent_scope_id);
+
+    if (sem_ir->name_scopes().IsPrivateWithinNamespace(
+            entity.name_id, entity.parent_scope_id)) {
+      AddLibrary(sem_ir);
     }
   }
 
@@ -414,9 +419,7 @@ struct Worklist {
     const CppOverloadSet& cpp_overload_set =
         sem_ir->cpp_overload_sets().Get(cpp_overload_set_id);
     Add(cpp_overload_set.name_id);
-    if (cpp_overload_set.parent_scope_id.has_value()) {
-      Add(cpp_overload_set.parent_scope_id);
-    }
+    Add(cpp_overload_set.parent_scope_id);
   }
 
   auto Add(ClangDeclId /*decl_id*/) -> void {
@@ -429,12 +432,31 @@ struct Worklist {
 
   auto Add(ClassId class_id) -> void {
     AddEntity(sem_ir->classes().Get(class_id));
+    // Imported C++ classes are not uniquely identified by their name and parent
+    // scope, so we also include the Clang mangled type name, which is computed
+    // on demand. The Clang type name is unique, as it is the canonical C++
+    // identity. Carbon classes rely on the name and scope from `AddEntity`.
+    llvm::SmallString<128> cpp_mangled_name;
+    llvm::raw_svector_ostream os(cpp_mangled_name);
+    if (sem_ir->AppendCppMangledTypeName(class_id, os)) {
+      AddString(cpp_mangled_name);
+    } else {
+      AddInvalid();
+    }
+  }
+
+  auto Add(FieldId field_id) -> void {
+    const auto& field = sem_ir->fields().Get(field_id);
+    Add(field.index);
+    Add(field.initializer_id);
   }
 
   auto Add(VtableId vtable_id) -> void {
     const auto& vtable = sem_ir->vtables().Get(vtable_id);
     if (vtable.class_id.has_value()) {
       Add(vtable.class_id);
+    } else {
+      AddInvalid();
     }
     Add(vtable.virtual_functions_id);
   }
@@ -478,8 +500,12 @@ struct Worklist {
     // decl block don't change the identity of the declaration.
   }
 
-  auto Add(LabelId /*block_id*/) -> void {
-    CARBON_FATAL("Should never fingerprint a label");
+  auto Add(LabelId block_id) -> void {
+    // TODO: Find a more stable way to assign fingerprints to labels. Possibly
+    // we could just number them sequentially, in the order we encounter them,
+    // but that would require a persistent cache to ensure we use the same
+    // number on subsequent encounters.
+    store->AddInteger(block_id.index);
   }
 
   auto Add(FacetTypeId facet_type_id) -> void {
@@ -542,13 +568,7 @@ struct Worklist {
   }
 
   auto Add(PackageNameId package_id) -> void {
-    if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
-      AddString(sem_ir->identifiers().Get(ident_id));
-    } else {
-      // TODO: May collide with a user package of the same name. Consider using
-      // a different value.
-      AddString(package_id.AsSpecialName());
-    }
+    Add(NameId::ForPackageName(package_id));
   }
 
   auto Add(LibraryNameId lib_name_id) -> void {
@@ -563,14 +583,23 @@ struct Worklist {
     }
   }
 
+  // Adds just the library name to the fingerprint. Does not add the package
+  // name, as it is typically already included as the outermost scope name. The
+  // caller is responsible for ensuring the package name is added somehow.
   auto AddLibrary(const File* file) -> void {
     llvm::SaveAndRestore in_file(sem_ir, file);
-    Add(file->package_id());
+    // Add a marker to prevent collisions with scope names.
+    AddString("<library>");
     Add(file->library_id());
   }
 
   auto Add(ImportIRId ir_id) -> void {
-    AddLibrary(sem_ir->import_irs().Get(ir_id).sem_ir);
+    // TODO: Is the ImportIRId for an ImportRef always the same IR for the same
+    // entity (eg, always the owning IR, or always the first-declaring IR)?
+    const auto* file = sem_ir->import_irs().Get(ir_id).sem_ir;
+    llvm::SaveAndRestore in_file(sem_ir, file);
+    AddPackage(NameScopeId::Package);
+    Add(file->library_id());
   }
 
   auto Add(ImportIRInstId ir_inst_id) -> void {
@@ -597,8 +626,16 @@ struct Worklist {
     store->AddInteger(arg.index);
   }
 
+  auto Add(ExprRegionId region_id) -> void {
+    auto region = sem_ir->expr_regions().Get(region_id);
+    for (auto block_id : region.block_ids) {
+      Add(block_id);
+    }
+    Add(region.result_id);
+  }
+
   template <typename T>
-    requires(SameAsOneOf<T, AnyRawId, ExprRegionId, LocId>)
+    requires(SameAsOneOf<T, AnyRawId, LocId>)
   auto Add(T /*arg*/) -> void {
     CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
   }

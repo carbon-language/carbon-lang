@@ -376,6 +376,8 @@ These operators act like unary postfix operators for purposes of precedence:
     again puts them in parentheses that clearly separate them for precedence
     purposes.
 
+The operand or result of a suffix operator is called a _suffix expression_.
+
 ## Conversions and casts
 
 When an expression appears in a context in which an expression of a specific
@@ -420,9 +422,9 @@ These are referred to as
 Other expression documents will list more alternatives; this lists alternatives
 not noted elsewhere.
 
--   [Total order](/proposals/p0555.md#total-order)
--   [Different precedence for different operands](/proposals/p0555.md#different-precedence-for-different-operands)
--   [Require less than a partial order](/proposals/p0555.md#require-less-than-a-partial-order)
+-   [Total order](/proposals/p000555-operator-precedence.md#total-order)
+-   [Different precedence for different operands](/proposals/p000555-operator-precedence.md#different-precedence-for-different-operands)
+-   [Require less than a partial order](/proposals/p000555-operator-precedence.md#require-less-than-a-partial-order)
 
 ## References
 

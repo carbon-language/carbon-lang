@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Member resolution](#member-resolution)
     -   [Package and namespace members](#package-and-namespace-members)
     -   [Types, extended types, and facets](#types-extended-types-and-facets)
+        -   [`extend`](#extend)
     -   [Tuple indexing](#tuple-indexing)
     -   [Values](#values)
     -   [Facet binding](#facet-binding)
@@ -33,11 +34,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-> **TODO:** [p3720: Member binding operators](/proposals/p3720.md) introduces an
-> additional "member binding" step, redefines simple member access in terms of
-> compound member access, and defines compound member access in terms of calls
-> to user-implementable interface methods. This document must be updated to
-> reflect those changes.
+> **TODO:** >
+> [#3720: Member binding operators](/proposals/p003720-member-binding-operators.md)
+> introduces an additional "member binding" step, redefines simple member access
+> in terms of compound member access, and defines compound member access in
+> terms of calls to user-implementable interface methods. This document must be
+> updated to reflect those changes.
 
 A _qualified name_ is a [word](../lexical_conventions/words.md) that is preceded
 by a period or a rightward arrow. The name is found within a contextually
@@ -98,6 +100,10 @@ fn Widgets.GrowSomeCogs() {
   cog_pointer->(Widget.Grow)(1.2);
 }
 ```
+
+Note that `.` is used consistently for member access, whether it is applied to
+an object, type, or namespace. This is in contrast to C++, which uses `::` for
+types and namespaces.
 
 Pointer member access expressions are those using a `->` instead of a `.` and
 their semantics are exactly what would result from first dereferencing the
@@ -236,6 +242,85 @@ implementation for `Avatar`, ignoring `Renderable.Draw`.
 
 Similarly, an extended type has members, specifically the members of the
 extended type's type component.
+
+#### `extend`
+
+An `extend` declaration declares that the enclosing scope extends the scope
+associated with any target entity named in the declaration. That is to say name
+lookups into the enclosing scope will also look into the scopes which are
+nominated by the `extend` declaration. The `extend` declaration requires that
+the target scopes named in an `extend` declaration are complete, or if the
+target is a generic parameter, requires the type of the parameter to be
+complete.
+
+To `extend` an entity `Y` with another `Z` means that name lookups into `Y` will
+also look into `Z`. Immediately after the `extend` operation, members of `Z`
+should also be found when doing name lookup into `Y`, both from outside and from
+inside the definition of `Y`. In order to be able to perform lookups into `Z`,
+we require that `extend` operations only target scopes that are complete.
+
+This requirement functions recursively. Given an interface `B` that extends
+another interface `A`: By naming `A` in an extend declaration, we require `A` is
+complete. This provides that its entire definition is known, and thus its
+`extend` relationship to `B`. The `extend` relationship there also provides that
+`B` is complete.
+
+If the target scope of an `extend` declaration is a generic parameter, its type
+must be complete where the `extend` declaration is written, as name lookups into
+the extended scope will look into the type of the generic parameter.
+
+```carbon
+interface I {
+  fn F();
+}
+
+class C(T:! I) {
+  extend base: T;
+  // `F` names `T.F` here, found in `I`.
+  fn G() { F(); }
+}
+```
+
+As any generic parameter in the enclosing scope is replaced by a more specific
+value, extended scopes that depend on a generic parameter must remain complete.
+This includes forming a specific for the extended scope involving the parameter
+in order to surface any monomorphization errors in the resulting specific.
+
+In the next example, the `extend` declaration in interface `A(N)` names a
+symbolic facet type which can produce monomorphization errors when a negative
+value is provided for `N`. When a more specific value for the target `B(N)` is
+provided, we require the specific value to be complete as well by forming the
+specific. A diagnostic error would be produced while checking `C(-1)` for
+completeness, as it requires `A(-1)` to be complete, which requires
+`B(array(i32, -1))` to be complete, and that contains an invalid type.
+
+```carbon
+interface B(T:! type) {}
+
+interface A(N:! i32) {
+  // Requires `B(N)` to be complete.
+  extend require impls B(array(i32, N)) {}
+}
+
+class C(N! i32) {
+  // Requires `A(N)` to be complete, which requires `B(N)` to be complete.
+  extend impl as A(N);
+}
+
+fn F() {
+  // Requires `C(-1)` to be complete, which requires `A(-1)` to be complete, which requires `B(array(i32, -1))` to be complete.
+  var c: C(-1);
+}
+```
+
+These rules prohibit an `extend` declaration from naming its enclosing scope,
+since by being part of the definition of that scope, it is implied that the
+enclosing scope is not complete. This seems reasonable as all names available
+inside the enclosing interface or named constraint are already available or
+would conflict with the ones that are.
+
+> **Alternative considered:** >
+> [Not requiring the target scope to be complete immediately](/proposals/p006395-type-completeness-in-extend.md#alternatives-considered).
 
 ### Tuple indexing
 
@@ -655,7 +740,7 @@ base class WidgetBase {
   alias Draw = Renderable.Draw;
 
   fn DrawAll[T:! Renderable](v: Vector(T)) {
-    for (var w: T in v) {
+    for (w: T in v) {
       // ✅ OK. Unqualified lookup for `Draw` finds alias `WidgetBase.Draw`
       // to `Renderable.Draw`, which does not perform `impl` lookup yet.
       // Then the compound member access expression performs `impl` lookup
@@ -934,8 +1019,10 @@ fn Use(a: A) {
 }
 ```
 
-Member access has lower precedence than primary expressions, and higher
-precedence than all other expression forms.
+Member access has [lower precedence](README.md#precedence) than primary
+expressions (literals, unqualified names, and expressions in parentheses, as in
+[C++](https://cppreference.com/cpp/language/expressions#Primary_expressions)),
+and higher precedence than all other expression forms.
 
 ```
 // ✅ OK, `*` has lower precedence than `.`. Same as `(A.B)*`.
@@ -946,9 +1033,9 @@ var n: i32 = 1 + X.Y;
 
 ## Alternatives considered
 
--   [Separate syntax for static versus dynamic access, such as `::` versus `.`](/proposals/p0989.md#separate-syntax-for-static-versus-dynamic-access)
--   [Use a different lookup rule for names in templates](/proposals/p0989.md#use-a-different-lookup-rule-in-templates)
--   [Meaning of `Type.Interface`](/proposals/p0989.md#meaning-of-typeinterface)
+-   [Separate syntax for static versus dynamic access, such as `::` versus `.`](/proposals/p000989-member-access-expressions.md#separate-syntax-for-static-versus-dynamic-access)
+-   [Use a different lookup rule for names in templates](/proposals/p000989-member-access-expressions.md#use-a-different-lookup-rule-in-templates)
+-   [Meaning of `Type.Interface`](/proposals/p000989-member-access-expressions.md#meaning-of-typeinterface)
 
 ## References
 
@@ -959,3 +1046,5 @@ var n: i32 = 1 + X.Y;
     [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
 -   Proposal
     [#2550: Simplified package declaration for the `Main` package](https://github.com/carbon-language/carbon-lang/pull/2550)
+-   Proposal
+    [#6395: Type completeness in extend](https://github.com/carbon-language/carbon-lang/pull/6395)

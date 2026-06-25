@@ -623,6 +623,20 @@ struct Deref {
   InstId pointer_id;
 };
 
+// A reference to the class instance which has `element_id` at index `index`.
+struct EnclosingClassAccess {
+  static constexpr auto Kind =
+      // This is created from other insts, not from a node.
+      InstKind::EnclosingClassAccess.Define<Parse::NodeId>(
+          {.ir_name = "enclosing_class_access",
+           .expr_category = ComputedExprCategory::SameAsFirstOperand,
+           .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  InstId element_id;
+  ElementIndex index;
+};
+
 // Used when a semantic error has been detected, and a SemIR InstId is still
 // required. For example, when there is a type checking issue, this will be used
 // in the type_id. It's typically used as a cue that semantic checking doesn't
@@ -655,6 +669,7 @@ struct ExprPattern {
   static constexpr auto Kind = InstKind::ExprPattern.Define<Parse::NodeId>(
       {.ir_name = "expr_pattern",
        .expr_category = ExprCategory::Pattern,
+       // TODO: Figure out how constant evaluation should work for ExprPatterns.
        .constant_kind = InstConstantKind::AlwaysUnique,
        .is_lowered = false});
 
@@ -724,7 +739,7 @@ struct FieldDecl {
 
   TypeId type_id;
   NameId name_id;
-  ElementIndex index;
+  FieldId field_id;
 };
 
 // The float literal type.
@@ -1374,7 +1389,7 @@ struct OutParamPattern {
   static constexpr auto Kind = InstKind::OutParamPattern.Define<Parse::NodeId>(
       {.ir_name = "out_param_pattern",
        .expr_category = ExprCategory::Pattern,
-       .constant_kind = InstConstantKind::AlwaysUnique,
+       .constant_kind = InstConstantKind::Always,
        .is_lowered = false});
 
   TypeId type_id;
@@ -1435,35 +1450,6 @@ struct RefBinding {
   InstId value_id;
 };
 
-// An action that performs form refinement of the form expression `form_id`:
-// for each operand of `form_id` in a position where a form is expected, if the
-// operand is not a concrete constant, it is wrapped in a `RefineFormAction`.
-// A `RefineFormAction` can be performed (i.e. is non-template-dependent) if we
-// can identify the form operands of `form_id`, which is typically possible only
-// if it will not be rewritten by constant evaluation except to substitute
-// values for its operands. As usual when creating Actions, if possible the
-// nested `RefineFormActions` are performed immediately, and not added to the
-// SemIR.
-//
-// This ensures that a form expression is template-dependent if it depends on
-// any non-concrete constants in form positions, even if those constants are not
-// themselves template-dependent. Unlike type refinement, form refinement does
-// not necessarily produce a concrete result, but it moves as far as possible
-// toward a state where non-concrete constants occur only in type positions, and
-// so the structure of the form is concretely known even if its type component
-// remains symbolic.
-struct RefineFormAction {
-  static constexpr auto Kind = InstKind::RefineFormAction.Define<Parse::NodeId>(
-      {.ir_name = "refine_form_action",
-       .constant_kind = InstConstantKind::ConstantInstAction,
-       .is_lowered = false});
-
-  // Always `Core.Form`.
-  TypeId type_id;
-
-  MetaInstId form_id;
-};
-
 // An action that performs type refinement for an instruction, by creating an
 // instruction that converts from a template symbolic type to a concrete type.
 struct RefineTypeAction {
@@ -1484,7 +1470,7 @@ struct RefBindingPattern {
       InstKind::RefBindingPattern.Define<Parse::NodeId>(
           {.ir_name = "ref_binding_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   TypeId type_id;
@@ -1524,7 +1510,7 @@ struct RefParamPattern {
   static constexpr auto Kind = InstKind::RefParamPattern.Define<Parse::NodeId>(
       {.ir_name = "ref_param_pattern",
        .expr_category = ExprCategory::Pattern,
-       .constant_kind = InstConstantKind::AlwaysUnique,
+       .constant_kind = InstConstantKind::Always,
        .is_lowered = false});
 
   TypeId type_id;
@@ -1551,7 +1537,7 @@ struct RefReturnPattern {
   static constexpr auto Kind = InstKind::RefReturnPattern.Define<Parse::NodeId>(
       {.ir_name = "ref_return_pattern",
        .expr_category = ExprCategory::Pattern,
-       .constant_kind = InstConstantKind::AlwaysUnique,
+       .constant_kind = InstConstantKind::Always,
        .is_lowered = false});
 
   TypeId type_id;
@@ -1706,6 +1692,14 @@ struct Return {
 //
 // If `expr_id` is an initializer, this consumes it. If `dest_id` is not `None`
 // and `expr_id` has a storage argument, the storage argument must be `dest_id`.
+//
+// The interpretation of the `ReturnExpr` depends on the category of `expr_id`:
+//
+// * If it is an initializing expression, we're performing a normal
+//   by-initialization return.
+// * If it is a reference, we're performing a `ref` return.
+// * If it is a value expression, we're performing a `return var;`, and it's the
+//   value of the returned variable.
 struct ReturnExpr {
   static constexpr auto Kind = InstKind::ReturnExpr.Define<Parse::NodeId>(
       {.ir_name = "return",
@@ -1748,7 +1742,7 @@ struct ReturnSlotPattern {
       InstKind::ReturnSlotPattern.Define<Parse::NodeId>(
           {.ir_name = "return_slot_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   // Always a PatternType whose scrutinee type is the return type of the
@@ -1954,7 +1948,7 @@ struct SymbolicBindingPattern {
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
           .ir_name = "symbolic_binding_pattern",
           .expr_category = ExprCategory::Pattern,
-          .constant_kind = InstConstantKind::AlwaysUnique,
+          .constant_kind = InstConstantKind::Always,
           .is_lowered = false,
       });
 
@@ -2033,7 +2027,7 @@ struct TuplePattern {
       InstKind::TuplePattern.Define<Parse::TuplePatternId>(
           {.ir_name = "tuple_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   // Always a PatternType whose scrutinee type is a tuple of the scrutinee
@@ -2204,7 +2198,7 @@ struct ValueBindingPattern {
       InstKind::ValueBindingPattern.Define<Parse::NodeId>(
           {.ir_name = "value_binding_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   TypeId type_id;
@@ -2224,8 +2218,9 @@ struct ValueForm {
 };
 
 // Converts an initializing expression to a value expression, in the case
-// where the initializing representation is the same as the value
-// representation.
+// where the initializing representation used by that expression is a copy of
+// the value representation. Note that this implies the expression must be a
+// repr initializing expression.
 struct ValueOfInitializer {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
@@ -2255,7 +2250,7 @@ struct ValueParamPattern {
       InstKind::ValueParamPattern.Define<Parse::NodeId>(
           {.ir_name = "value_param_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   TypeId type_id;
@@ -2283,7 +2278,7 @@ struct ValueReturnPattern {
       InstKind::ValueReturnPattern.Define<Parse::NodeId>(
           {.ir_name = "value_return_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   TypeId type_id;
@@ -2299,7 +2294,7 @@ struct VarParamPattern {
       InstKind::VarParamPattern.Define<Parse::VariablePatternId>(
           {.ir_name = "var_param_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   TypeId type_id;
@@ -2312,7 +2307,7 @@ struct VarPattern {
       Parse::VariablePatternId, Parse::FormBindingPatternId>>(
       {.ir_name = "var_pattern",
        .expr_category = ExprCategory::Pattern,
-       .constant_kind = InstConstantKind::AlwaysUnique,
+       .constant_kind = InstConstantKind::Always,
        .is_lowered = false});
 
   // Always a PatternType that represents the same type as the type of
@@ -2396,7 +2391,7 @@ struct WrapperBindingPattern {
       InstKind::WrapperBindingPattern.Define<Parse::NodeId>(
           {.ir_name = "at_binding_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::AlwaysUnique,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   TypeId type_id;

@@ -12,9 +12,9 @@
 
 interface I(_:! type) {
   // TODO: Use `default` here.
-  fn F[ref self: Self]() -> Self*;
+  fn F(ref self) -> Self*;
 }
 
-fn I(_:! type).F[ref self: Self]() -> Self* {
+fn I(_:! type).F(ref self) -> Self* {
   return &self;
 }

@@ -95,14 +95,11 @@ struct DeclParams {
 
 // Checks that the parameters in a redeclaration of an entity match the
 // parameters in the prior declaration. If not, produces a diagnostic if
-// `diagnose` is true, and returns false. If `self_type_override_id` is
-// specified, the type of `self` will be compared against that type instead of
-// the `self` type from `prev_entity`.
-auto CheckRedeclParamsMatch(
-    Context& context, const DeclParams& new_entity,
-    const DeclParams& prev_entity, SemIR::SpecificId prev_specific_id,
-    bool diagnose, bool check_syntax,
-    SemIR::TypeId self_type_override_id = SemIR::TypeId::None) -> bool;
+// `diagnose` is true, and returns false.
+auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
+                            const DeclParams& prev_entity,
+                            SemIR::SpecificId prev_specific_id, bool diagnose,
+                            bool check_syntax) -> bool;
 
 inline auto CheckRedeclParamsMatch(Context& context,
                                    const DeclParams& new_entity,

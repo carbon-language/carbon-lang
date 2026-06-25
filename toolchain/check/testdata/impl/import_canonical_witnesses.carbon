@@ -36,11 +36,11 @@ library "[[@TEST_NAME]]";
 
 // An interface with a trivial function and blanket impl for pointers.
 interface SimpleOp {
-  fn Op[self: Self]();
+  fn Op(self);
 }
 
 impl forall [T:! type] T as SimpleOp {
-  fn Op[unused self: Self]() {}
+  fn Op(unused self) {}
 }
 
 // An empty interface with blanket impl for pointers.
@@ -49,7 +49,7 @@ impl forall [T:! type] T as Empty {}
 
 // Class with a use of `SimpleOp.Op`.
 class InterfaceWrap(T:! SimpleOp & Empty) {
-  fn UseSimpleOp[unused self: Self](value:! T) {
+  fn UseSimpleOp(unused self, value:! T) {
     value.(SimpleOp.Op)();
   }
 }
@@ -58,13 +58,13 @@ class InterfaceWrap(T:! SimpleOp & Empty) {
 // particularly use an associated constant.
 interface CombinedFacet {
   let T:! SimpleOp & Empty;
-  fn GetInterfaceWrap[self: Self]() -> InterfaceWrap(T);
+  fn GetInterfaceWrap(self) -> InterfaceWrap(T);
 }
 
 // A wrapper providing `CombinedFacet`.
 class TypeWrap(T:! type) {
   impl as CombinedFacet where .T = T {
-    fn GetInterfaceWrap[unused self: Self]() -> InterfaceWrap(T) {
+    fn GetInterfaceWrap(unused self) -> InterfaceWrap(T) {
       return {};
     }
   }

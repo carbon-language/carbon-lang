@@ -1,0 +1,68 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Create PR suggestions based on problems found by prek action.
+name: 'Add prek suggestions'
+
+# This action is run whenever the `prek` action finishes. Because the
+# `prek` action is an unprivileged action running on (for example) the
+# `pull_request` event, it's run without write permissions to the repository, so
+# we use a separate privileged `workflow_run` action here to pick up its results
+# and convert them into suggestion comments.
+#
+# This action is only run from the workflow file on the trunk branch. Changes to
+# this file will not take effect until they are merged to trunk.
+on:
+  workflow_run:
+    workflows: [prek]
+    types:
+      - completed
+
+# Note reviewdog/reviewdog has its own token.
+permissions:
+  contents: read # For actions/checkout.
+
+jobs:
+  pull-request-suggestions:
+    # Only generate suggestions if prek for a PR failed.
+    if: |
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          # prettier-ignore
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            raw.githubusercontent.com:443
+
+      - uses: reviewdog/action-setup@3f401fe1d58fe77e10d665ab713057375e39b887 # v1.3.0
+        with:
+          reviewdog_version: latest
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Download prek output
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: prek output
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      # Use https://github.com/reviewdog/reviewdog to create PR suggestions
+      # matching the diff that prek created.
+      - name: Create suggestions
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN:
+            ${{ secrets.CARBON_INFRA_BOT_FOR_REVIEWDOG }}
+        run: |
+          cat ./diff | \
+          GITHUB_EVENT_PATH=./event \
+            reviewdog -f=diff -f.diff.strip=1 -reporter=github-pr-review

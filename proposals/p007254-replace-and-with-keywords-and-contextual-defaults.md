@@ -73,8 +73,8 @@ We propose to:
 1.  Remove `:!` syntax for generics and templates.
 2.  Introduce contextual defaults for phase:
     -   Parameters to compile-time entities (interfaces, impls, classes) are
-        checked by default.
-    -   Deduced function parameters are checked by default.
+        checked generic parameters by default.
+    -   Deduced function parameters are checked generic parameters by default.
     -   Explicit function parameters are runtime by default.
 3.  Allow overriding defaults with keywords `template`, `generic`, and
     `runtime`.
@@ -88,8 +88,17 @@ We propose to:
 
 ### Phase Keywords and Contextual Defaults
 
-The keywords `generic`, `template`, and `runtime` are used to specify the phase
-of parameters.
+Parameter phase is primarily determined by the context of the parameter:
+
+-   Parameters to compile-time entities (interfaces, impls, classes) are checked generic parameters by default.
+-   Deduced function parameters are checked generic parameters by default.
+-   Explicit function parameters are runtime by default.
+
+These defaults can be overridden where meaningful by using one of the following keywords:
+
+-   `runtime`: Causes a parameter to be a runtime parameter in the deduced parameter context, if we ever decide to support runtime deduced parameters.
+-   `generic`: Causes a parameter to be a checked generic when in an explicit function parameter context.
+-   `template`: Causes a parameter to be a template generic in any of the three contexts.
 
 #### Contextual Defaults
 
@@ -136,11 +145,11 @@ of parameters.
     fn F(generic T: type, arg: T); // T is generic
     ```
 
-Keywords matching the contextual default are **disallowed** to avoid confusion
-and ensure consistency.
+Keywords are only allowed where needed to override the contextual default. This
+avoids confusion and ensures consistency.
 
-The `generic` default for deduced parameters applies only to declared parameters
-in the `[]` list. Lambda captures, which also appear in `[]` but are
+The checked generic default for deduced parameters applies only to declared
+parameters in the `[]` list. Lambda captures, which also appear in `[]` but are
 syntactically distinguished (they are not declared names), are not affected by
 this default. Instead, a capture retains the phase of the expression being
 captured, which we expect to be important for the usability of lambdas.

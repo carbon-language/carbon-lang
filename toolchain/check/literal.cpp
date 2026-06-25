@@ -37,7 +37,6 @@ auto MakeBoolTypeLiteral(Context& context, Parse::NodeId node_id)
   auto desugared_loc_id = SemIR::LocId(node_id).AsDesugared();
   auto inst_id =
       LookupNameInCore(context, desugared_loc_id, CoreIdentifier::Bool);
-  inst_id = PerformCall(context, desugared_loc_id, inst_id, {});
   return MakeTypeLiteral(context, node_id, inst_id);
 }
 

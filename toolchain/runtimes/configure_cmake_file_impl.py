@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-
-__copyright__ = """
-Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-Exceptions. See /LICENSE for license information.
-SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-"""
-
 """Script to apply a set of defines to a CMake-style configure file.
 
 This serves as the action implementation for `configure_cmake_file.bzl`. See the
 documentation in the rule of that file for more details about how to use this,
 or `--help` on the script.
+"""
+
+__copyright__ = """
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse
@@ -56,7 +55,7 @@ def _is_cmake_true(value: str) -> bool:
 def _substitute_variables(text: str, defines: Dict[str, str]) -> str:
     """Substitutes @VAR@ and ${VAR} style variables in a string."""
 
-    def repl(m: re.Match) -> str:
+    def repl(m: re.Match[str]) -> str:
         return defines.get(str(m.group(1)), "")
 
     return re.sub(

@@ -313,7 +313,7 @@ impl () as Y {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %B.decl: %B.type = constraint_decl @B [concrete = constants.%empty_struct] {
-// CHECK:STDOUT:     %X.patt: <error> = symbolic_binding_pattern X, 0 [concrete]
+// CHECK:STDOUT:     %X.patt: <error> = symbolic_binding_pattern X, 0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %X: <error> = symbolic_binding X, 0 [concrete = <error>]

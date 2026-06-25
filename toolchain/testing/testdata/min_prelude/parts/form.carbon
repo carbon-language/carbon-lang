@@ -6,4 +6,5 @@
 
 package Core library "prelude/parts/form";
 
-fn Form() -> type = "form.make_type";
+private fn MakeForm() -> type = "form.make_type";
+alias Form = MakeForm();

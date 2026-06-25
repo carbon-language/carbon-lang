@@ -784,12 +784,12 @@ auto Formatter::FormatFunctionSignature(InstBlockId params_id,
         FormatInstAsType(return_form_id);
         break;
       }
-      case CARBON_KIND(SpliceInst splice): {
+      case CARBON_KIND(SymbolicBinding _): {
         out() << "out ";
         FormatName(params[i]);
         out() << ":? ";
         // A form isn't a type, but it's close enough for formatting purposes.
-        FormatInstAsType(splice.inst_id);
+        FormatInstAsType(return_form_id);
         ++i;
         break;
       }
@@ -1560,6 +1560,15 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
     }
   }
   out() << ">";
+}
+
+auto Formatter::FormatArg(FieldId id) -> void {
+  const auto& field = sem_ir_->fields().Get(id);
+  out() << field.index;
+  if (field.initializer_id.has_value()) {
+    out() << ", initializer = ";
+    out() << field.initializer_id;
+  }
 }
 
 auto Formatter::FormatArg(ImportIRId id) -> void {

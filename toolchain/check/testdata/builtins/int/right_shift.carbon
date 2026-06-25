@@ -65,10 +65,10 @@ fn RuntimeCall(a: u32, b: i32) -> u32 {
 
 library "[[@TEST_NAME]]";
 
-fn RightShift(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.right_shift";
+fn RightShift(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.right_shift";
 
-class Expect(N:! Core.IntLiteral()) {}
-fn Test(N:! Core.IntLiteral()) -> Expect(N) { return {}; }
+class Expect(N:! Core.IntLiteral) {}
+fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(RightShift(0, 31)) as Expect(0);
@@ -95,7 +95,7 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn RightShift(a: i32, b: i32) -> i32 = "int.right_shift";
-fn RightShiftLit(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.right_shift";
+fn RightShiftLit(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.right_shift";
 
 // Shift greater than size is disallowed for sized types.
 let size_1: i32 = RightShift(1, 31);
@@ -121,16 +121,16 @@ let negative: i32 = RightShift(1, -1);
 // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let negative_zero: i32 = RightShift(0, -1);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:39: error: shift distance negative in `1 >> -1` [CompileTimeShiftNegative]
-// CHECK:STDERR: let negative_lit: Core.IntLiteral() = RightShiftLit(1, -1);
-// CHECK:STDERR:                                       ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:37: error: shift distance negative in `1 >> -1` [CompileTimeShiftNegative]
+// CHECK:STDERR: let negative_lit: Core.IntLiteral = RightShiftLit(1, -1);
+// CHECK:STDERR:                                     ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-let negative_lit: Core.IntLiteral() = RightShiftLit(1, -1);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:44: error: shift distance negative in `0 >> -1` [CompileTimeShiftNegative]
-// CHECK:STDERR: let negative_lit_zero: Core.IntLiteral() = RightShiftLit(0, -1);
-// CHECK:STDERR:                                            ^~~~~~~~~~~~~~~~~~~~
+let negative_lit: Core.IntLiteral = RightShiftLit(1, -1);
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:42: error: shift distance negative in `0 >> -1` [CompileTimeShiftNegative]
+// CHECK:STDERR: let negative_lit_zero: Core.IntLiteral = RightShiftLit(0, -1);
+// CHECK:STDERR:                                          ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-let negative_lit_zero: Core.IntLiteral() = RightShiftLit(0, -1);
+let negative_lit_zero: Core.IntLiteral = RightShiftLit(0, -1);
 
 // CHECK:STDOUT: --- i32.carbon
 // CHECK:STDOUT:

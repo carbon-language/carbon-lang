@@ -6,10 +6,12 @@
 #define CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 
 #include <limits>
+#include <optional>
 
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APInt.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/diagnostics/emitter.h"
@@ -266,13 +268,6 @@ struct EntityNameId : public IdBase<EntityNameId> {
   using IdBase::IdBase;
 };
 
-// The ID of a C++ global variable.
-struct CppGlobalVarId : public IdBase<CppGlobalVarId> {
-  static constexpr llvm::StringLiteral Label = "cpp_global_var";
-
-  using IdBase::IdBase;
-};
-
 // The index of a compile-time binding. This is the de Bruijn level for the
 // binding -- that is, this is the number of other compile time bindings whose
 // scope encloses this binding.
@@ -326,6 +321,13 @@ struct CheckIRId : public IdBase<CheckIRId> {
 // The ID of a `Class`.
 struct ClassId : public IdBase<ClassId> {
   static constexpr llvm::StringLiteral Label = "class";
+
+  using IdBase::IdBase;
+};
+
+// The ID of a `Field`.
+struct FieldId : public IdBase<FieldId> {
+  static constexpr llvm::StringLiteral Label = "field";
 
   using IdBase::IdBase;
 };
@@ -532,6 +534,12 @@ struct CharId : public IdBase<CharId> {
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void;
+
+  // Returns the CharId corresponding to a particular Unicode code point,
+  // or std::nullopt if the value is not a valid Unicode code point. Assumes
+  // `code_point` is signed.
+  static auto ForCodePoint(const llvm::APInt& code_point)
+      -> std::optional<CharId>;
 };
 
 // An integer kind value -- either "signed" or "unsigned".
@@ -1002,26 +1010,26 @@ struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
 inline constexpr RequireImplsBlockId RequireImplsBlockId::Empty =
     RequireImplsBlockId(0);
 
+// The ID of a bundle of arguments with an unspecified type.
+struct RawBundleId : public IdBase<RawBundleId> {
+  static constexpr llvm::StringLiteral Label = "bundle";
+
+  using IdBase::IdBase;
+};
+
 // The ID of a bundle of arguments with type `BundleT`.
 template <typename BundleT>
 struct BundleId : public IdBase<BundleId<BundleT>> {
   static constexpr llvm::StringLiteral Label = "bundle";
 
   using IdBase<BundleId<BundleT>>::IdBase;
-};
 
-// The ID of a bundle of arguments with an unspecified type.
-struct RawBundleId : public IdBase<RawBundleId> {
-  static constexpr llvm::StringLiteral Label = "bundle";
+  explicit BundleId(RawBundleId raw_id)
+      : IdBase<BundleId<BundleT>>(raw_id.index) {}
 
-  template <typename BundleT>
-  explicit(false) RawBundleId(BundleId<BundleT> bundle_id)
-      : IdBase(bundle_id.index) {}
-  using IdBase::IdBase;
-
-  template <typename BundleT>
-  explicit operator BundleId<BundleT>() const {
-    return BundleId<BundleT>(index);
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  explicit(false) operator RawBundleId() const {
+    return RawBundleId(this->index);
   }
 };
 

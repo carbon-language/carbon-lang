@@ -275,7 +275,10 @@ static auto EstimateAvgFunctionDeclLines(SourceGen::FunctionDeclParams params)
 static auto EstimateAvgMethodDeclLines(SourceGen::MethodDeclParams params)
     -> double {
   // Currently model a uniform distribution [0, max] parameters. Assume a line
-  // break before the first parameter for >2 and after every 4th.
+  // break before the first parameter for >2 and after every 4th. A Carbon
+  // method also emits a leading `self`, but `self` only rarely tips a method
+  // onto an additional wrapped line, so the estimate ignores it; this stays
+  // calibrated against the emitter (see `source_gen_test`).
   int param_lines = 0;
   for (int num_params : llvm::seq_inclusive(0, params.max_params)) {
     if (num_params > NumSingleLineMethodParams) {
@@ -797,10 +800,6 @@ auto SourceGen::GenerateFunctionDecl(
   os << indent << "// TODO: make better comment text\n";
   if (!IsCpp()) {
     os << indent << (is_private ? "private " : "") << "fn " << name;
-
-    if (is_method) {
-      os << "[self: Self]";
-    }
   } else {
     os << indent;
     if (!is_method) {
@@ -815,10 +814,19 @@ auto SourceGen::GenerateFunctionDecl(
       (is_method ? NumSingleLineMethodParams : NumSingleLineFunctionParams)) {
     os << "\n" << indent << "    ";
   }
+  // For Carbon methods, `self` is the first explicit parameter. Its type is
+  // omitted, which defaults it to `Self`.
+  bool is_carbon_method = is_method && !IsCpp();
+  if (is_carbon_method) {
+    os << "self";
+  }
   UniqueIdentifierPopper unique_param_names(*this, param_names);
   for (int i : llvm::seq(param_count)) {
-    if (i > 0) {
-      if ((i % MaxParamsPerLine) == 0) {
+    // `self` occupies the first slot for Carbon methods, so shift the index
+    // used for separators and line wrapping.
+    int slot = i + (is_carbon_method ? 1 : 0);
+    if (slot > 0) {
+      if ((slot % MaxParamsPerLine) == 0) {
         os << ",\n" << indent << "    ";
       } else {
         os << ", ";

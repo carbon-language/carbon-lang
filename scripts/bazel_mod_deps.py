@@ -1,6 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 
-"""Run `bazel mod deps` for pre-commit. Lets pre-commit handle modifications."""
+# /// script
+# requires-python = ">=3.12"
+# ///
+
+
+"""Run `bazel mod deps` for prek. Lets prek handle modifications."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM

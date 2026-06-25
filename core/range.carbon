@@ -16,14 +16,14 @@ import library "prelude/types/int";
 import library "prelude/types/int_literal";
 import library "prelude/types/optional";
 
-class IntRange(N:! IntLiteral()) {
+class IntRange(N:! IntLiteral) {
   fn Make(start: Int(N), end: Int(N)) -> Self {
     return {.start = start, .end = end};
   }
 
   impl as Iterate where .CursorType = Int(N) and .ElementType = Int(N) {
-    fn NewCursor[self: Self]() -> Int(N) { return self.start; }
-    fn Next[self: Self](cursor: Int(N)*) -> Optional(Int(N)) {
+    fn NewCursor(self) -> Int(N) { return self.start; }
+    fn Next(self, cursor: Int(N)*) -> Optional(Int(N)) {
       var value: Int(N) = *cursor;
       if (value < self.end) {
         ++*cursor;
