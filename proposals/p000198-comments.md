@@ -379,7 +379,7 @@ context of the complete language design.
 ### Multi-line text comments
 
 No support is provided for multi-line text comments. Instead, the intent is that
-such comments are expressed by prepending each line with the same `// ` comment
+such comments are expressed by prepending each line with the same `//` comment
 marker.
 
 Requiring each line to repeat the comment marker will improve readability, by

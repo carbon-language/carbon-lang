@@ -249,7 +249,7 @@ A couple keyword alternatives discussed (alongside placement options) were:
 We see several options for `export name` placement. This compares them, focusing
 on advantages and disadvantages for each option.
 
-1. `export name` with `import`s
+1.  `export name` with `import`s
 
     `export name` can (only) appear in the preamble, with the imports, and
     cannot appear with the other declarations in the library. Note this option
@@ -259,44 +259,44 @@ on advantages and disadvantages for each option.
 
     Advantages:
 
-    - No need to teach developers they cannot (don't need to) `export` locally
-      introduced names.
+     -   No need to teach developers they cannot (don't need to) `export` locally
+         introduced names.
 
     Disadvantages:
 
-    - Although the restricted placement might imply placement is tied to
-      specific libraries, that's not the case. This could mislead developers.
-        - In theory, we could enforce this, but then we could end up breaking
-          code if the path a name is imported through changes.
+     -   Although the restricted placement might imply placement is tied to
+         specific libraries, that's not the case. This could mislead developers.
+           -   In theory, we could enforce this, but then we could end up breaking
+               code if the path a name is imported through changes.
 
-2. `export name` with other declarations
+2.  `export name` with other declarations
 
     `export name` can only appear after imports. This means that all names valid
     for `export` will already be made available.
 
     Advantages:
 
-    - `import` remains very special.
-    - Makes it unambiguous that names valid for `export` are already imported.
+     -   `import` remains very special.
+     -   Makes it unambiguous that names valid for `export` are already imported.
 
     Disadvantages:
 
-    - Prevents placing `export name` next to the import that is expected to add
-      the name.
-    - Means `export import` and `export name` will be in different sections: no
-      single place to look for re-exports.
+     -   Prevents placing `export name` next to the import that is expected to add
+         the name.
+     -   Means `export import` and `export name` will be in different sections: no
+         single place to look for re-exports.
 
-3. No ordering for `export name`
+3.  No ordering for `export name`
 
     Let developers choose what the prefer.
 
     Advantages:
 
-    - Maximum flexibility, HOA rule.
+     -   Maximum flexibility, HOA rule.
 
     Disadvantages:
 
-    - Most inconsistent with the desire to treat `import` as special.
+     -   Most inconsistent with the desire to treat `import` as special.
 
 We're choosing option (2). The name lookup issues avoided by requiring `export`
 be below `import` directives seem worthwhile.

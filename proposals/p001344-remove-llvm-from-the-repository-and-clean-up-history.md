@@ -1,4 +1,4 @@
-# Remove LLVM from the repository, and clean up history.
+# Remove LLVM from the repository, and clean up history
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -266,7 +266,7 @@ Disadvantages:
 
 We think this problem is worth solving.
 
-### Don't rewrite the repository history.
+### Don't rewrite the repository history
 
 We could fix this without rewriting history. If we choose not to rewrite history
 now, it should be noted that the cost of rewriting history only grows and so we

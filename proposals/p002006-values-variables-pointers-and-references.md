@@ -730,8 +730,8 @@ that should be covered by the proposed design.
 C++ provides overlapping but importantly separable semantic models which
 interact with `const` references.
 
-1. An _immutable view_ of a value
-2. A _thread-safe interface_ of a [thread-compatible type][]
+1.  An _immutable view_ of a value
+2.  A _thread-safe interface_ of a [thread-compatible type][]
 
 [thread-compatible type]:
     https://abseil.io/blog/20180531-regular-types#:~:text=restrictions%20or%20both,No%20concurrent%20call

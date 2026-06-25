@@ -2705,10 +2705,13 @@ binary operator:
 And there are two positions that `where` can be written:
 
 -   At the end of an `impl as` declaration, before the body of the impl.
+
     ```carbon
     impl Class as Interface where .A = i32 { ... }
     ```
+
 -   Inside a type expression.
+
     ```carbon
     fn F[T: Interface where .A impls OtherInterface](t: T) { ... }
     ```

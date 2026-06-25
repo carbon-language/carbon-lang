@@ -296,7 +296,7 @@ Planned mitigations:
     as possible from the Carbon experiment and incorporate any and all of our
     ideas into C++ where they see a path to do so.
 
-#### Added distractions from existing new programming languages.
+#### Added distractions from existing new programming languages
 
 -   Another programming language in the world might dilute some of the efforts
     going towards new and exciting but existing languages, especially ones with

@@ -29,13 +29,13 @@ concepts.
 
 The SemIR for a pattern-matching operation is emitted in three steps:
 
-1. **Pattern:** Traverse the parse tree of the pattern to emit SemIR that
-   abstractly describes the pattern.
-2. **Scrutinee:** Traverse the parse tree of the scrutinee expression to emit
-   SemIR that evaluates it.
-3. **Match:** Traverse the pattern SemIR from step 1 (sometimes in conjunction
-   with the scrutinee SemIR) to emit SemIR that actually performs pattern
-   matching.
+1.  **Pattern:** Traverse the parse tree of the pattern to emit SemIR that
+    abstractly describes the pattern.
+2.  **Scrutinee:** Traverse the parse tree of the scrutinee expression to emit
+    SemIR that evaluates it.
+3.  **Match:** Traverse the pattern SemIR from step 1 (sometimes in conjunction
+    with the scrutinee SemIR) to emit SemIR that actually performs pattern
+    matching.
 
 ## Pattern instructions
 
@@ -98,10 +98,12 @@ Currently this happens in two cases, which are handled using two maps in
 instruction IDs:
 
 -   A name binding can be used within the same pattern that declares it:
+
     ```carbon
     match (x) {
       case (n: i32, n) => ...
     ```
+
     For this to work, the name `n` needs to be added to the scope as soon as we
     handle its declaration, and it needs to resolve to the `ValueBinding`
     instruction that binds a value to that name. This means that the

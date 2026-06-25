@@ -109,11 +109,11 @@ support for debugging the toolchain tests. To set that up:
 
 A typical debug session looks like:
 
-1. `bazel build -c dbg //toolchain/testing:file_test`
-2. Open a `.carbon` testdata file to debug. This must be the active file in VS
-   Code.
-3. Go to the "Run and debug" panel in VS Code.
-4. Select and run the `file_test (lldb)` configuration.
+1.  `bazel build -c dbg //toolchain/testing:file_test`
+2.  Open a `.carbon` testdata file to debug. This must be the active file in VS
+    Code.
+3.  Go to the "Run and debug" panel in VS Code.
+4.  Select and run the `file_test (lldb)` configuration.
 
 For debugging on MacOS using VSCode, some people have had success using the
 CodeLLDB extension. In order for LLDB to connect the project source files with
@@ -176,11 +176,11 @@ support for debugging the toolchain tests. To set that up:
 
 A typical debug session looks like:
 
-1. `bazel build -c dbg --features=-lldb_flags --features=gdb_flags //toolchain/testing:file_test`
-2. Open a `.carbon` testdata file to debug. This must be the active file in VS
-   Code.
-3. Go to the "Run and debug" panel in VS Code.
-4. Select and run the `file_test (gdb)` configuration.
+1.  `bazel build -c dbg --features=-lldb_flags --features=gdb_flags //toolchain/testing:file_test`
+2.  Open a `.carbon` testdata file to debug. This must be the active file in VS
+    Code.
+3.  Go to the "Run and debug" panel in VS Code.
+4.  Select and run the `file_test (gdb)` configuration.
 
 ## Toolchain-specific debugging techniques
 

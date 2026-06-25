@@ -250,7 +250,6 @@ supported in `Check` diagnostics are:
 
     -   `InstIdAsRawType`
     -   `TypeIdAsRawType`
-
 -   For integer constants, `TypedInt` can be used to format an `APInt` given its
     type. The type is used to determine the signedness to use for the value.
 

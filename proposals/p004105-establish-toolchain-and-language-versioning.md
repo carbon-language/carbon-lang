@@ -195,7 +195,7 @@ to meet the needs of candidate Carbon users.
 
 ## Alternatives considered
 
-### Do nothing, or just talk about a minimal nightly version.
+### Do nothing, or just talk about a minimal nightly version
 
 Advantages:
 
@@ -219,7 +219,7 @@ and all of this if and when we need to. This does not lock Carbon into using
 this exact versioning scheme. We will listen to any feedback from potential
 users and can adapt our approach if needed.
 
-### Make no breaking changes past 1.0.
+### Make no breaking changes past 1.0
 
 Advantages:
 
@@ -239,7 +239,7 @@ Disadvantages:
         This complexity inherently comes with an increased risk and importance
         of being able to improve and fix issues.
 
-### Version different parts of the language separately.
+### Version different parts of the language separately
 
 Advantages:
 
@@ -260,7 +260,7 @@ Disadvantages:
     over the years. As a consequence, while it is tempting to hope for a sharp
     difference here we don't in practice anticipate one.
 
-### Use a custom versioning scheme rather than SemVer.
+### Use a custom versioning scheme rather than SemVer
 
 Advantages:
 

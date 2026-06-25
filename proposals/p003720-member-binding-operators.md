@@ -229,20 +229,20 @@ Assert((r as __Binding_C_Static).(Call(()).Op)() == 2);
 
 How does this arise?
 
-1. First the simple member access is resolved using the type of the receiver: \
-   `v.F` -> `v.(C.F)`, `v.Static` -> `v.(C.Static)`, `r.F` -> `r.(C.F)`,
-   `r.Static` -> `r.(C.Static)`. \
-   Note that `C.F` is `__C_F` with type `__TypeOf_C_F`, and `C.Static` is
-   `__C_Static` with type `__TypeOf_C_Static`.
-2. It then looks at the expression to the left of the `.`:
-    - If it is a facet value, the "member binding to type" (`BindToType`)
-      operator is applied.
-    - If it is a reference expression, the "member binding to reference"
-      (`BindToRef`) operator is applied.
-    - If it is a value expression, the "member binding to value" (`BindToValue`)
-      operator is applied.
-3. The result of the member binding has a type that implements the call
-   interface.
+1.  First the simple member access is resolved using the type of the receiver: \
+    `v.F` -> `v.(C.F)`, `v.Static` -> `v.(C.Static)`, `r.F` -> `r.(C.F)`,
+    `r.Static` -> `r.(C.Static)`. \
+    Note that `C.F` is `__C_F` with type `__TypeOf_C_F`, and `C.Static` is
+    `__C_Static` with type `__TypeOf_C_Static`.
+2.  It then looks at the expression to the left of the `.`:
+     -   If it is a facet value, the "member binding to type" (`BindToType`)
+         operator is applied.
+     -   If it is a reference expression, the "member binding to reference"
+         (`BindToRef`) operator is applied.
+     -   If it is a value expression, the "member binding to value" (`BindToValue`)
+         operator is applied.
+3.  The result of the member binding has a type that implements the call
+    interface.
 
 > **Note:** The current wording in
 > [member_access.md](/docs/design/expressions/member_access.md) says that

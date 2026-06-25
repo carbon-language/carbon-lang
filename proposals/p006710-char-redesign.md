@@ -310,7 +310,7 @@ Alternatives were discussed in
 
 The comment notes that three options were proposed:
 
-1. `char` is fully aligned with C++.
+1.  `char` is fully aligned with C++.
 
     There is no universal convention for what the value in a `char` means, and
     the numerical encoding of Unicode characters into `char` sequences might
@@ -324,8 +324,8 @@ The comment notes that three options were proposed:
     `char`. It might also be reasonable to use an array of `char` for things
     that aren't necessarily text, such as file contents.
 
-2. `char` models a UTF-8 code unit, although it may not necessarily be valid,
-   and may appear in a sequence that is not a valid UTF-8 encoding.
+2.  `char` models a UTF-8 code unit, although it may not necessarily be valid,
+    and may appear in a sequence that is not a valid UTF-8 encoding.
 
     As with the first option, `char` can represent an integer in [0, 255], although
     it is not an integer type. Higher-level abstractions would likely (eventually)
@@ -335,8 +335,8 @@ The comment notes that three options were proposed:
     UTF-8 encoding, and would need to consider how to handle invalid `char`s and
     invalid `char` sequences.
 
-3. Use a foundation that enforces Unicode string validity, for some definition
-   of "Unicode string validity".
+3.  Use a foundation that enforces Unicode string validity, for some definition
+    of "Unicode string validity".
 
     The `char` type is a Unicode character. Strings would notionally be a
     sequence of Unicode characters, possibly also maintaining some higher-level

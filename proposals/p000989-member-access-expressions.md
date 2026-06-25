@@ -175,6 +175,7 @@ Disadvantages:
     for them in practice.
 -   Likely to result in complexity and inconsistency for operations falling
     between the two options. For example, in C++:
+
     ```
     struct A {
       static void F();
@@ -187,6 +188,7 @@ Disadvantages:
       b.e;   // Error.
     }
     ```
+
 -   Does not provide an obvious syntax for `impl` lookup.
     `Type::Interface::method` would be ambiguous and `Type.Interface::method`
     would be inconsistent with using `::` for static lookup, so we would likely

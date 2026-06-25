@@ -194,15 +194,15 @@ replacement for [pre-commit](https://pre-commit.com/).
 
 To use it:
 
-1. Install it by way of `cargo install --locked prek`.
-2. Run `prek install` to set up the git hooks.
+1.  Install it by way of `cargo install --locked prek`.
+2.  Run `prek install` to set up the git hooks.
 
 A typical commit workflow looks like:
 
-1. `git commit` to try committing files. This automatically executes `prek run`,
-   which may fail and leave files modified for cleanup.
-2. `git add .` to add the automatic modifications done by hooks.
-3. `git commit` again.
+1.  `git commit` to try committing files. This automatically executes `prek run`,
+    which may fail and leave files modified for cleanup.
+2.  `git add .` to add the automatic modifications done by hooks.
+3.  `git commit` again.
 
 You can also use `prek run` to check pending changes without `git commit`, or
 `prek run -a` to run on all files in the repository.

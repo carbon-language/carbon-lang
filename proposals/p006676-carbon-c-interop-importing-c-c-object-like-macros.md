@@ -231,14 +231,14 @@ imported. For example, the following macro won’t have a Carbon equivalent:
 
 ### Implementation
 
-1. _Name lookup_: When a C++ macro name is encountered in Carbon it is looked-up
-   before any other name. Following the C++ rules, this allows the macro to be
-   found in case there is a non-macro with the same name (for example named
-   variable).
+1.  _Name lookup_: When a C++ macro name is encountered in Carbon it is looked-up
+    before any other name. Following the C++ rules, this allows the macro to be
+    found in case there is a non-macro with the same name (for example named
+    variable).
 
-2. _Macro import_: If a macro is found, it is imported as a constant to Carbon,
-   by parsing the tokens of the replacement list to a constant expression and
-   evaluating the result.
+2.  _Macro import_: If a macro is found, it is imported as a constant to Carbon,
+    by parsing the tokens of the replacement list to a constant expression and
+    evaluating the result.
 
 For example, given a macro:
 

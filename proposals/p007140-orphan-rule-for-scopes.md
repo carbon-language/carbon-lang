@@ -162,7 +162,7 @@ interface Z {}
 
 There are three cases allowed by the new rule:
 
-1. An anchor name is introduced by the scope containing the `impl` declaration.
+1.  An anchor name is introduced by the scope containing the `impl` declaration.
 
 ```carbon
 fn F() {
@@ -176,7 +176,7 @@ Here the `Self` is resolved to `C`, and `C` is being introduced by the scope
 containing the `impl` declaration. If `C` is generic, any use of the impl will
 require naming a specific `C`.
 
-2. A name is introduced in the same scope as the `impl` declaration.
+2.  A name is introduced in the same scope as the `impl` declaration.
 
 ```carbon
 fn F() {
@@ -191,8 +191,8 @@ will have to be inside `F` since it uses the name `C` which is introduced inside
 the scope of `F`. Thus if `F` is generic, all users of the `impl` will share a
 consistent view of any generic bindings used by the `impl` declaration.
 
-3. A name is introduced in a scope nested within the scope containing the `impl`
-   declaration.
+3.  A name is introduced in a scope nested within the scope containing the `impl`
+    declaration.
 
 ```carbon
 fn F() {
@@ -214,8 +214,8 @@ bindings used by the `impl` declaration.
 
 This rule forbids the following:
 
-1. An `impl` declaration where all names are declared outside the scope
-   containing the `impl`.
+1.  An `impl` declaration where all names are declared outside the scope
+    containing the `impl`.
 
 ```carbon
 class A {}
@@ -250,8 +250,8 @@ fn G() {
 }
 ```
 
-2. An `impl` declaration where all names have their owning declaration in a
-   different file than the `impl`.
+2.  An `impl` declaration where all names have their owning declaration in a
+    different file than the `impl`.
 
 ```carbon
 // Library api file.

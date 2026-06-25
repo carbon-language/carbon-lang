@@ -43,17 +43,17 @@ The main components are:
 -   [Diagnostics](diagnostics.md): Produces diagnostic output.
 -   Compilation flow:
 
-    1. Source: Load the file into a
-       [SourceBuffer](/toolchain/source/source_buffer.h).
-    2. [Lex](lex.md): Transform a SourceBuffer into a
-       [Lex::TokenizedBuffer](/toolchain/lex/tokenized_buffer.h).
-    3. [Parse](parse.md): Transform a TokenizedBuffer into a
-       [Parse::Tree](/toolchain/parse/tree.h).
-    4. [Check](check): Transform a Tree to produce
-       [SemIR::File](/toolchain/sem_ir/file.h).
-    5. [Lower](lower.md): Transform the SemIR to an
-       [LLVM Module](https://llvm.org/doxygen/classllvm_1_1Module.html).
-    6. CodeGen: Transform the LLVM Module into an Object File.
+    1.  Source: Load the file into a
+        [SourceBuffer](/toolchain/source/source_buffer.h).
+    2.  [Lex](lex.md): Transform a SourceBuffer into a
+        [Lex::TokenizedBuffer](/toolchain/lex/tokenized_buffer.h).
+    3.  [Parse](parse.md): Transform a TokenizedBuffer into a
+        [Parse::Tree](/toolchain/parse/tree.h).
+    4.  [Check](check): Transform a Tree to produce
+        [SemIR::File](/toolchain/sem_ir/file.h).
+    5.  [Lower](lower.md): Transform the SemIR to an
+        [LLVM Module](https://llvm.org/doxygen/classllvm_1_1Module.html).
+    6.  CodeGen: Transform the LLVM Module into an Object File.
 
 ### Design patterns
 

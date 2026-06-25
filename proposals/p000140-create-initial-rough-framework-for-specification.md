@@ -65,7 +65,7 @@ Hyperlinks between sections of the specification are used liberally.
 
 ## Alternatives considered
 
-### Maintain the specification in a different language.
+### Maintain the specification in a different language
 
 Advantages:
 

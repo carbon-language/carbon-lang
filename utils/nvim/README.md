@@ -11,8 +11,8 @@ Treesitter based syntax highlighting and language server client for Neovim.
 This requires neovim >= 0.9 and
 [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig) to be installed.
 
-1. Run `bazel build //toolchain` in project root.
-2. Run `utils/nvim/setup.sh`.
-3. Start nvim in carbon-lang root folder and open a carbon file.
-4. View document symbols. If you have telescope.nvim installed, you can use
-   `:Telescope lsp_document_symbols`
+1.  Run `bazel build //toolchain` in project root.
+2.  Run `utils/nvim/setup.sh`.
+3.  Start nvim in carbon-lang root folder and open a carbon file.
+4.  View document symbols. If you have telescope.nvim installed, you can use
+    `:Telescope lsp_document_symbols`

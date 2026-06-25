@@ -488,7 +488,6 @@ Notes:
     a `require` declaration must use `Self`, either to the left or right of
     `impls`. Note that `require` only supports this subset of `where` clause
     expressions. Adding other kinds of constraints is future work.
-
 -   Syntax for an `extend` declaration in an interface or named constraint:
 
     > `extend` _facet-type-expression_ `;`
