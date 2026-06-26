@@ -137,10 +137,13 @@ These defaults can be overridden where meaningful by using one of the following 
 
 -   **Explicit function parameters**: Parameters in `()` for functions default
     to `runtime`.
+
     ```carbon
     fn F(arg: i32); // arg is runtime
     ```
+
     They can be marked as `generic` or `template`:
+
     ```carbon
     fn F(generic T: type, arg: T); // T is generic
     ```
@@ -282,6 +285,8 @@ For `generic`, the key candidates considered were:
 For `runtime`, the main candidate discussed was:
 
 -   **`dynamic`**: Reflects that values are dynamically determined at runtime.
+
+Looking across these options:
 
 -   **Advantages**:
     -   `symbolic` is more technically precise for compiler experts as it
