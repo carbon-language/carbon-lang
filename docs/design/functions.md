@@ -20,7 +20,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Unused parameters](#unused-parameters)
     -   [`return` statements](#return-statements)
 -   [Positional parameters](#positional-parameters)
-    -   [Positional parameter restrictions](#positional-parameter-restrictions)
 -   [Captures](#captures)
     -   [Capture restrictions on named functions](#capture-restrictions-on-named-functions)
     -   [Capture modes](#capture-modes)
@@ -242,19 +241,21 @@ statement must have an expression that is convertible to the return type, and a
 Positional parameters, denoted by a dollar sign followed by a non-negative
 integer (for example, `$3`), are auto-typed parameters defined within the
 function or lambda body when the explicit parameter list (parentheses) is
-omitted. They are variadic by design, meaning an unbounded number of arguments
-can be passed to any function or lambda that lacks an explicit parameter list.
-Only the parameters that are named in the body will be read from, meaning the
-highest named parameter denotes the minimum number of arguments required by the
+omitted.
+
+```carbon
+let lambda: auto = fn => $0
+```
+
+They are variadic by design, meaning an unbounded number of arguments can be
+passed to any function or lambda that lacks an explicit parameter list. Only the
+parameters that are named in the body will be read from, meaning the highest
+named parameter denotes the minimum number of arguments required by the
 function. The body is free to omit lower-numbered parameters (for example,
 `fn { Print($10); }`).
 
 This syntax was inspired by Swift's
 [Shorthand Argument Names](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/closures/#Shorthand-Argument-Names).
-
-```carbon
-let lambda: auto = fn => $0
-```
 
 ```carbon
 // A lambda that takes two positional parameters being used as a comparator
@@ -266,106 +267,36 @@ When positional parameters are used in a nested function definition, exactly one
 of the enclosing functions must omit the explicit parameter list, and they are
 interpreted as parameters of that function:
 
-### Positional parameter restrictions
+```carbon
+fn F {
+  fn G[let]() -> auto {
+    // `$0` is a parameter of `F` that is captured by `G`,
+    // not a parameter of `G`.
+    return $0;
+  }
+}
+```
 
-Lambdas and named function definitions with positional parameters have the
-following restrictions:
+This means that a single function or lambda cannot have both named and
+positional parameters:
 
--   They can only be used with function definitions, not forward declarations.
--   A single function or lambda cannot have both named and positional
-    parameters. For example, if an explicit parameter list is provided
-    (parentheses), positional parameters cannot be used:
+```carbon
+fn Foo(x: i32) -> i32 {
+  // ❌ Invalid since `Foo` is already using named parameters.
+  return $0;
+}
+```
 
-    ```carbon
-    fn Foo() {
-      // In a variable:
-      let lambda: auto = fn (v: auto) { Print(v); };
-      // Equivalent in C++23:
-      // const auto lambda = [](v: auto) -> void { Print(v); };
-
-      // As an argument to a function call:
-      Foo(fn (v: auto) { Print(v); });
-      // Equivalent in C++23:
-      // Foo([](v: auto) { Print(v); });
-    }
-    ```
-
-    However, deduced parameters in the implicit parameter list are always
-    permitted:
-
-    ```carbon
-    fn Foo() {
-      let lambda: auto = fn [T:! Printable](t: T) { Print(t); };
-    }
-    ```
-
--   Positional parameters can only be used in a context where there is exactly
-    one enclosing function or lambda that has no explicit parameter list. For
-    example:
-
-    ```carbon
-    fn Foo1 {
-      // ❌ Invalid: Foo1 is already using positional parameters
-      let lambda: auto = fn => $0 < $1
-    }
-
-    fn Foo2 {
-      my_list.Sort(
-        // ❌ Invalid: Foo2 is already using positional parameters
-        fn => $0 < $1
-      );
-    }
-
-    fn Foo3() {
-      my_list.Sort(
-        // ✅ Valid: Foo3 has explicit parameters
-        fn => $0 < $1
-      );
-    }
-
-    fn Foo4() {
-      let lambda: auto = fn -> bool {
-        // ❌ Invalid: Outer lambda is already using positional parameters
-        return (fn => $0 < $1)($0, $1);
-      };
-    }
-
-    fn Foo5() {
-      let lambda: auto = fn (x: i32, y: i32) -> bool {
-        // ✅ Valid: Outer lambda has explicit parameters
-        return (fn => $0 < $1)(x, y);
-      };
-    }
-    ```
+Positional parameters can only be used with function definitions, not forward
+declarations.
 
 ## Captures
 
 Captures in Carbon mirror the non-init captures of C++. A capture declaration
 consists of a capture mode (for `var` captures) followed by the name of a
 binding from the enclosing scope, and makes that identifier available in the
-inner function body. The lifetime of a capture is the lifetime of the function
-in which it exists. For example:
-
-```carbon
-fn Foo() {
-  let handle: Handle = Handle.Get();
-  var thread: Thread = Thread.Make(fn [var handle] { handle.Process(); });
-  thread.Join();
-}
-```
-
-```carbon
-fn Foo() {
-  let handle: Handle = Handle.Get();
-  fn MyThread[handle]() { handle.Process(); }
-  var thread: Thread = Thread.Make(MyThread);
-  thread.Join();
-}
-```
-
-For both named functions and lambdas, these captures (and function fields) are
-specified in square brackets `[`...`]` as part of the implicit parameter list.
-For example:
+inner function body. These captures are specified in square brackets `[`...`]`
+as part of the implicit parameter list.
 
 ```carbon
 fn Foo(x: i32) {
@@ -375,9 +306,29 @@ fn Foo(x: i32) {
   // const auto lambda = [x, y = int32_t{0}] mutable -> void { Print(++x, ++y); };
 
   // As an argument to a function call:
-  Foo(fn [var x, var y: i32 = 0] { Print(++x, ++y); });
+  Bar(fn [var x, var y: i32 = 0] { Print(++x, ++y); });
   // Equivalent in C++23:
-  // Foo([x, y = int32_t{0}] mutable -> void { Print(++x, ++y); });
+  // Bar([x, y = int32_t{0}] mutable -> void { Print(++x, ++y); });
+}
+```
+
+The lifetime of a capture is the lifetime of the function in which it exists.
+For example:
+
+```carbon
+fn InLambda() {
+  let handle: Handle = Handle.Get();
+  var thread: Thread = Thread.Make(fn [var handle] { handle.Process(); });
+  thread.Join();
+}
+```
+
+```carbon
+fn InNamedFunction() {
+  let handle: Handle = Handle.Get();
+  fn MyThread[handle]() { handle.Process(); }
+  var thread: Thread = Thread.Make(MyThread);
+  thread.Join();
 }
 ```
 
@@ -470,13 +421,13 @@ fn Foo2() {
 
 ### Function fields
 
-Function fields mirror the behavior of init captures in C++. Function fields
-are defined in the implicit parameter list, and are allowed only where
-captures are allowed. A function field
-definition consists of an irrefutable pattern, `=`, and an initializer. It
-matches the pattern with the initializer when the function definition is
-evaluated. The bindings in the pattern have the same lifetime as the function,
-and their scope extends to the end of the function body.
+Function fields mirror the behavior of init captures in C++. Function fields are
+defined in the implicit parameter list, and are allowed only where captures are
+allowed. A function field definition consists of an irrefutable pattern, `=`,
+and an initializer. It matches the pattern with the initializer when the
+function definition is evaluated. The bindings in the pattern have the same
+lifetime as the function, and their scope extends to the end of the function
+body.
 
 ```carbon
 fn Foo() {
@@ -539,8 +490,8 @@ PushBack(my_list, fn -> T { return T.Make() });
 ### Lambdas may not take `self` as a parameter
 
 To mirror C++'s use of capturing `this`, `self` should always come from the
-outer scope as a capture. `self` is never permitted in the explicit
-parameter list of a lambda.
+outer scope as a capture. `self` is never permitted in the explicit parameter
+list of a lambda.
 
 ```carbon
 // ❌ Not allowed, lambdas can't be methods.
@@ -576,10 +527,10 @@ following code examples.
 |         E4         |    Body of Statements (with return value) ([positional parameters](#positional-parameters) disallowed)    |
 |         F          |                                           Required Return Type                                            |
 
-```carbon
-// Lambdas (all the following are in an expression context and are
-// themselves expressions)
+Lambdas (all the following are in an expression context and are themselves
+expressions):
 
+```carbon
 fn => A1
 
 fn [B, C] => A1
@@ -605,10 +556,10 @@ fn [B, C](D) { E3; }
 fn [B, C](D) -> F { E4; }
 ```
 
-```carbon
-// Function Declarations (all the following are allowed as statements in a
-// function body or as declarations in other scopes)
+Function Declarations (all the following are allowed as statements in a function
+body or as declarations in other scopes):
 
+```carbon
 fn G => A1;
 
 fn G[B, C] => A1;
