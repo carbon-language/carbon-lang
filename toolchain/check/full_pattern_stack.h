@@ -143,7 +143,8 @@ class FullPatternStack {
     bind_name_stack_.PopArray();
     int index = next_var_index_stack_.pop_back_val();
     CARBON_CHECK(index < 0 || static_cast<size_t>(index) ==
-                                  var_pattern_stack_.PeekArray().size());
+                                  var_pattern_stack_.PeekArray().size(),
+                 "`GetLocalVarStorage` not called for all var patterns");
     var_pattern_stack_.PopArray();
   }
 
@@ -207,13 +208,20 @@ class FullPatternStack {
   // The kinds of the currently pending full patterns.
   llvm::SmallVector<Kind> kind_stack_;
 
-  struct LookupEntry {
+  // Locally stashed name-lookup information about a binding.
+  struct BindingInfo {
+    // The name of the binding.
     SemIR::NameId name_id;
+    // While handling the initializer, name lookup for `name_id` in `lookup_`
+    // temporarily resolves to `InitTombstone`. During that time, this records
+    // the inst that it resolved to before the initializer, so that it can
+    // be restored afterward. This is `InitTombstone` while not handling the
+    // initializer, or if `name_id` doesn't resolve in `lookup_`.
     SemIR::InstId inst_id;
   };
 
-  // The name bindings introduced by the currenttly pending full-patterns.
-  ArrayStack<LookupEntry> bind_name_stack_;
+  // The name bindings introduced by the currently pending full-patterns.
+  ArrayStack<BindingInfo> bind_name_stack_;
 
   struct VarInfo {
     SemIR::InstId pattern_id;

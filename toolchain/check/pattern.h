@@ -68,9 +68,9 @@ auto AddBindingForPattern(Context& context, SemIR::LocId name_loc,
                           SemIR::TypeId binding_type_id, SemIR::InstId value_id)
     -> SemIR::InstId;
 
-// Returns a VarStorage inst for the given `var` pattern. If the pattern
-// is the body of a returned var, this reuses the return parameter, and
-// otherwise it adds a new inst.
+// Returns a VarStorage inst for the given `var` pattern. `is_returned_var`
+// indicates whether the pattern is the `var` part of a `returned var`; if so,
+// this reuses the return parameter, and otherwise it adds a new inst.
 auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
                         bool is_returned_var) -> SemIR::InstId;
 
