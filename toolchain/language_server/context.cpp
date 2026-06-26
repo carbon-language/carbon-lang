@@ -216,15 +216,13 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   // TODO: Make the processing asynchronous, to better handle rapid text
   // updates.
 
-  llvm::SmallVector<char, 0> output_buffer;
-  llvm::raw_svector_ostream output_stream(output_buffer);
-  llvm::SmallVector<char, 0> error_buffer;
-  llvm::raw_svector_ostream error_stream(error_buffer);
-
+  llvm::raw_null_ostream null_stream;
   DriverEnv driver_env(context.vfs(), &context.installation(),
-                       /*input_stream=*/nullptr, &output_stream, &error_stream,
+                       /*input_stream=*/nullptr, &null_stream, &null_stream,
                        /*fuzzing=*/false,
                        /*enable_leaking=*/false, &consumer);
+  // TODO: Either use `raw_pwrite_stream` for all vlog streams or stop requiring
+  // one in DriverEnv.
   driver_env.vlog_stream =
       static_cast<llvm::raw_pwrite_stream*>(context.vlog_stream());
 
