@@ -31,9 +31,9 @@ This document explains the rationale for choosing to make
 ## Rewrite constraints
 
 Rewrite constraints are [`where` clauses](details.md#where-constraints) of the
-form `.AssociatedConstant = Value`. Given a checked generic binding `T: A where .B = C`,
-references to `T.(A.B)` are rewritten to `C`. This appendix describes the
-precise rules governing them.
+form `.AssociatedConstant = Value`. Given a checked generic binding
+`T: A where .B = C`, references to `T.(A.B)` are rewritten to `C`. This appendix
+describes the precise rules governing them.
 
 ## Combining constraints with `&`
 

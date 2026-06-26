@@ -70,19 +70,19 @@ CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(IntConvertFloat)
 Inside
 [builtin_function_kind.cpp](../../../toolchain/sem_ir/builtin_function_kind.cpp):
 
-1.  **Define Parameter Constraints**: If the parameter requires novel constraints
-    (e.g. "must be a float type"), define a template constraint struct checking
-    the matching `SemIR` type instruction (such as `FloatType` or
-    `FloatLiteralType`). Use pre-established semantic helpers:
+1.  **Define Parameter Constraints**: If the parameter requires novel
+    constraints (e.g. "must be a float type"), define a template constraint
+    struct checking the matching `SemIR` type instruction (such as `FloatType`
+    or `FloatLiteralType`). Use pre-established semantic helpers:
 
-    -   `TypeParam<I, T>`: Ensures different parameters resolve to identical type
-        structures (e.g., generic constraint matching).
+    -   `TypeParam<I, T>`: Ensures different parameters resolve to identical
+        type structures (e.g., generic constraint matching).
     -   `AnyInt`, `AnyFloat`, `AnySizedInt`, `AnySizedFloat`, `CharCompatible`,
         `StdInitializerList`, `NoReturn`.
 
-2.  **Map Literal Name & Register Constraint Signature**: Declare a `BuiltinInfo`
-    constant inside `namespace BuiltinFunctionInfo` matching the macro-defined
-    name:
+2.  **Map Literal Name & Register Constraint Signature**: Declare a
+    `BuiltinInfo` constant inside `namespace BuiltinFunctionInfo` matching the
+    macro-defined name:
 
      ```cpp
      // toolchain/sem_ir/builtin_function_kind.cpp
@@ -116,18 +116,19 @@ execute compile-time computations:
     -   Confirm type validation phase is `Phase::Concrete` to reject incomplete
         bindings:
 
-           ```cpp
-           case SemIR::BuiltinFunctionKind::IntConvertFloat: {
-             if (phase != Phase::Concrete) {
-               return MakeConstantResult(context, call, phase);
-             }
-             return PerformIntToFloatConvert(context, loc_id, arg_ids[0], call.type_id,
-                                             /*require_exact=*/false);
-           }
-           ```
+        ```cpp
+        case SemIR::BuiltinFunctionKind::IntConvertFloat: {
+          if (phase != Phase::Concrete) {
+            return MakeConstantResult(context, call, phase);
+          }
+          return PerformIntToFloatConvert(context, loc_id, arg_ids[0], call.type_id,
+                                          /*require_exact=*/false);
+        }
+        ```
 
     -   Extract inputs safely from local value stores (e.g.
-        `context.ints().Get(arg.int_id)` or `context.floats().Get(arg.float_id)`).
+        `context.ints().Get(arg.int_id)` or
+        `context.floats().Get(arg.float_id)`).
     -   Leverage high-precision LLVM mathematical structures (`llvm::APInt`,
         `llvm::APFloat`, `llvm::APSInt`) to handle custom bits and signedness
         safely.
@@ -137,23 +138,23 @@ execute compile-time computations:
     -   Define compile-time diagnostics inside
         [kind.def](../../../toolchain/diagnostics/kind.def):
 
-           ```cpp
-           // toolchain/diagnostics/kind.def
-           CARBON_DIAGNOSTIC_KIND(IntTooLargeForFloatType)
-           ```
+        ```cpp
+        // toolchain/diagnostics/kind.def
+        CARBON_DIAGNOSTIC_KIND(IntTooLargeForFloatType)
+        ```
 
-    -   Emplace localized diagnostic formatting messages where they are caught in
-        `eval.cpp`:
+    -   Emplace localized diagnostic formatting messages where they are caught
+        in `eval.cpp`:
 
-           ```cpp
-           CARBON_DIAGNOSTIC(IntTooLargeForFloatType, Error,
-                             "integer value {0} too large for floating-point type {1}",
-                             llvm::APSInt, SemIR::TypeId);
-           context.emitter().Emit(loc_id, IntTooLargeForFloatType, val, dest_type_id);
-           ```
+        ```cpp
+        CARBON_DIAGNOSTIC(IntTooLargeForFloatType, Error,
+                          "integer value {0} too large for floating-point type {1}",
+                          llvm::APSInt, SemIR::TypeId);
+        context.emitter().Emit(loc_id, IntTooLargeForFloatType, val, dest_type_id);
+        ```
 
-    -   Return `SemIR::ErrorInst::ConstantId` to gracefully abort invalid constant
-        generation rather than crashing the compiler.
+    -   Return `SemIR::ErrorInst::ConstantId` to gracefully abort invalid
+        constant generation rather than crashing the compiler.
 
 3.  **Fast-Path Range Limits**:
     -   Before evaluating expensive math operations on giant exponents (e.g.
@@ -177,8 +178,20 @@ Inside [handle_call.cpp](../../../toolchain/lower/handle_call.cpp):
        bool is_signed = IsSignedInt(context, arg_ids[0]);
        context.SetLocal(
            inst_id, is_signed
-                        ? context.builder().CreateSIToFP(operand, dest_type)
-                        : context.builder().CreateUIToFP(operand, dest_type));
+    ```
+
+    ```
+                ? context.builder().CreateSIToFP(operand, dest_type)
+    ```
+
+    ```
+        : context.builder().CreateUIToFP(operand, dest_type));
+    ```
+
+    ```
+    ```
+
+    ```
        return;
      }
      ```
@@ -187,14 +200,14 @@ Inside [handle_call.cpp](../../../toolchain/lower/handle_call.cpp):
     lowering-cases for checked validator builtins that should never hit code
     generation:
 
-     ```cpp
-     case SemIR::BuiltinFunctionKind::IntConvertFloatChecked: {
-       CARBON_CHECK(builtin_kind.IsCompTimeOnly(
-           context.sem_ir(), arg_ids,
-           context.sem_ir().insts().Get(inst_id).type_id()));
-       CARBON_FATAL("Missing constant value for call to comptime-only function");
-     }
-     ```
+```cpp
+case SemIR::BuiltinFunctionKind::IntConvertFloatChecked: {
+CARBON_CHECK(builtin_kind.IsCompTimeOnly(
+context.sem_ir(), arg_ids,
+context.sem_ir().insts().Get(inst_id).type_id()));
+CARBON_FATAL("Missing constant value for call to comptime-only function");
+}
+```
 
 ---
 
@@ -244,11 +257,11 @@ Create validation splits under
     `toolchain/check/testdata/builtins/char_literal/convert.carbon`.
 -   **Minimal Prelude & Direct Call Isolation**: Builtin tests must **not** test
     the prelude library or operators. They must use the minimal primitive
-    prelude
-    (`// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon`)
-    or a smaller prelude, and explicitly declare and call the builtin functions
-    under test directly (e.g., `fn Add(a: f64, b: f64) -> f64 = "float.add";`).
-    This isolates the testing of compiler builtins from the library prelude.
+    prelude (`// INCLUDE-FILE:
+    toolchain/testing/testdata/min_prelude/primitives.carbon`) or a smaller
+    prelude, and explicitly declare and call the builtin functions under test
+    directly (e.g., `fn Add(a: f64, b: f64) -> f64 = "float.add";`). This
+    isolates the testing of compiler builtins from the library prelude.
 -   **Min-Prelude Limitations**: Standard operators (like `+`, `-`, `/`, `<`,
     etc.) are **not** available in minimized preludes because the core operators
     library isn't imported. To write tests with a minimal footprint, call

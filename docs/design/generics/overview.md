@@ -142,8 +142,8 @@ fn SortVector(generic T: Comparable, a: Vector(T)*) { ... }
 ```
 
 The syntax above uses the `generic` keyword to indicate that the parameter named
-`T` is a _checked generic_ parameter. The `template` keyword may be added instead to
-make it a _template generic_.
+`T` is a _checked generic_ parameter. The `template` keyword may be added
+instead to make it a _template generic_.
 
 Given an `i32` vector `iv`, `SortVector(i32, &iv)` is equivalent to
 `SortInt32Vector(&iv)`. Similarly for a `String` vector `sv`,
@@ -370,13 +370,13 @@ type using a
 
 A function can have a mix of checked, template, and runtime parameters. Each
 kind of parameter is defined using a different syntax: a checked parameter uses
-a checked binding pattern, a template parameter uses a template binding
-pattern, and a runtime parameter uses a runtime binding pattern. Likewise, it's
-allowed to pass a symbolic or template constant value to a checked or runtime
-parameter. _We have decided to support passing a symbolic constant to a template
-parameter, see
-[leads issue #2153: Checked generics calling templates](https://github.com/carbon-language/carbon-lang/issues/2153),
-but incorporating it into the design is future work._
+a checked binding pattern, a template parameter uses a template binding pattern,
+and a runtime parameter uses a runtime binding pattern. Likewise, it's allowed
+to pass a symbolic or template constant value to a checked or runtime parameter.
+_We have decided to support passing a symbolic constant to a template parameter,
+see [leads issue #2153: Checked generics calling
+templates](https://github.com/carbon-language/carbon-lang/issues/2153), but
+incorporating it into the design is future work._
 
 ### Requiring or extending another interface
 
@@ -527,9 +527,10 @@ cast from `T` to `CDCover`.
 ### Adapting types
 
 Carbon has a mechanism called [adapting types](/docs/design/classes.md#adapters)
-to create new types that are [compatible](/docs/design/classes.md#compatible-types) with
-existing types but with different interface implementations. This could be used
-to add or replace implementations, or define implementations for reuse.
+to create new types that are
+[compatible](/docs/design/classes.md#compatible-types) with existing types but
+with different interface implementations. This could be used to add or replace
+implementations, or define implementations for reuse.
 
 In this example, we have multiple ways of sorting a collection of `Song` values.
 

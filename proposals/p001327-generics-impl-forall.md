@@ -86,26 +86,26 @@ the code, in support of these goals:
 >
 > 1.  Just make it work as-is: `impl [a; b]` parses as an array type,
 >     `impl [a, b]` parses as an implicit parameter. Theoretically this is
->     unambiguous given that a `;` is required inside the `[`...`]` in the former
->     and disallowed in the latter. Concerns: it's likely to be visually
+>     unambiguous given that a `;` is required inside the `[`...`]` in the
+>     former and disallowed in the latter. Concerns: it's likely to be visually
 >     ambiguous.
 > 2.  Add mandatory parentheses: `impl [T:! Type] (Vector(T) as Container)`.
 >     Concerns: it's hard to avoid requiring them in cases that don't start with
->     a `[` if we want an unambiguous grammar. Requiring them always would impose
->     a small ergonomic hit.
+>     a `[` if we want an unambiguous grammar. Requiring them always would
+>     impose a small ergonomic hit.
 > 3.  Add an introducer keyword for implicit parameters:
 >     `impl where [T:! Type] Vector(T) as Container`. Unambiguous. Concerns:
->     still some visual ambiguity due to reuse of `[`...`]`, concern over whether
->     we'd uniformly use this syntax (`fn F where [T:! Type](x: T)`) or have
->     non-uniform syntax for implicit parameters.
+>     still some visual ambiguity due to reuse of `[`...`]`, concern over
+>     whether we'd uniformly use this syntax (`fn F where [T:! Type](x: T)`) or
+>     have non-uniform syntax for implicit parameters.
 > 4.  Use a different syntax for array types in general:
->     `impl Array(T) as Container` or `impl Array[N] as Container`. Concerns: may
->     want a first-class syntax here, especially if (per @geoffromer 's variadics
->     work, we want some special behavior for a deduced bound), and there's a
->     strong convention to use `[`...`]` for this. The latter syntax is messy
->     because of our types-as-expressions approach, but we could imagine
->     providing a `impl Type as Indexable where .Result = Type` to construct
->     array types. `T[]` might be a special case of some kind.
+>     `impl Array(T) as Container` or `impl Array[N] as Container`. Concerns:
+>     may want a first-class syntax here, especially if (per @geoffromer 's
+>     variadics work, we want some special behavior for a deduced bound), and
+>     there's a strong convention to use `[`...`]` for this. The latter syntax
+>     is messy because of our types-as-expressions approach, but we could
+>     imagine providing a `impl Type as Indexable where .Result = Type` to
+>     construct array types. `T[]` might be a special case of some kind.
 > 5.  Use a different syntax for implicit parameters in general:
 >     `impl<T:! Type> Vector(T) as Container`. Concerns: we don't have many
 >     delimiter options unless we start using multi-character delimiters; `()`,

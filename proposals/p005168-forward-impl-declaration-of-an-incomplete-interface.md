@@ -283,7 +283,8 @@ satisfy requirements in more situations. In particular, we make these changes:
     -   No part of the `impl` declaration will be excluded from syntactic match.
     -   Every `impl` must be defined in the same file (not just the same
         library) as its declaration.
-        -   However, the definitions of its member functions may be separate in
+        -   However, the definitions of its member functions may be separate
+            in
             the impl file, out of line, as provided in
             [proposal #3763](/proposals/p003763-matching-redeclarations.md#out-of-line-definitions-of-associated-functions).
 -   An `impl` may be forward declared without the interface being defined.
@@ -859,28 +860,28 @@ we found a number of problems with that approach:
 
 -   There are multiple possible semantics you might want, and having a single
     `impl` does not provide the affordances for choosing between those options,
-    where one `impl` per interface would. For example, in
-    `impl forall [T:! type] C(T) as I & J where .(I.x) = i32 and .(J.y) = .(I.x)`,
-    if there is a specialization of `C(T)` for `I`, will `J.y` have the value
-    `i32` or the `I.x` from the specialization? In practice, the semantics of
-    rewrites mean that `.(I.x)` is replaced with `i32` at an early stage in the
-    compiler (to support things like `.(J.y) = .(I.x).D`), and so only the first
-    option is consistent. This is a particular concern for the "Independent
-    impls" option above. If this `impl` is split into two, then the different
-    possible meanings have different spellings:
+    where one `impl` per interface would. For example, in `impl forall [T:!
+    type] C(T) as I & J where .(I.x) = i32 and .(J.y) = .(I.x)`, if there is a
+    specialization of `C(T)` for `I`, will `J.y` have the value `i32` or the
+    `I.x` from the specialization? In practice, the semantics of rewrites mean
+    that `.(I.x)` is replaced with `i32` at an early stage in the compiler (to
+    support things like `.(J.y) = .(I.x).D`), and so only the first option is
+    consistent. This is a particular concern for the "Independent impls" option
+    above. If this `impl` is split into two, then the different possible
+    meanings have different spellings:
 
     -   `impl forall [T:! type] C(T) as J where .(J.y) = i32` means `J.y` will
         be `i32` independent of any specialization of `C(T)` for `I`
 
-    -   `impl forall [T:! type where C(T) impls I] C(T) as J where .(J.y) = .(I.x)`
-        means `J.y` matches `I.x` even if `C(T)` is specialized
+    -   `impl forall [T:! type where C(T) impls I] C(T) as J where .(J.y) =
+        .(I.x)` means `J.y` matches `I.x` even if `C(T)` is specialized
 
-    -   `impl forall [T:! type where C(T) impls (I where .x = i32)] C(T) as J where .(J.y) = .(I.x)`
-        means this impl won't be used unless `I.x` is `i32`. Note this last form
-        approximates the "Constrained impls" approach above, but with an
-        explicit ordering to determine the semantics, and the existing language
-        rules preventing the code from declaring cycles that would make it
-        ambiguous.
+    -   `impl forall [T:! type where C(T) impls (I where .x = i32)] C(T) as J
+        where .(J.y) = .(I.x)` means this impl won't be used unless `I.x` is
+        `i32`. Note this last form approximates the "Constrained impls" approach
+        above, but with an explicit ordering to determine the semantics, and the
+        existing language rules preventing the code from declaring cycles that
+        would make it ambiguous.
 
 -   If an interface `J` extends `I` but they are defined in distinct libraries,
     there is no guarantee that an implementation of `J` belongs in the same
