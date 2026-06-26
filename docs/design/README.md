@@ -1056,10 +1056,10 @@ To minimize keyword noise, Carbon uses contextual defaults to determine the
 phase (compile-time vs runtime) of a binding in parameter lists:
 
 -   Parameters to compile-time entities (such as `interface`, `impl`, and
-    `class`) are `generic` by default.
--   Deduced function parameters (declared in `[]`) are `generic` by default.
+    `class`) are checked generics by default.
+-   Deduced function parameters (declared in `[]`) are checked generics by default.
 -   Explicit function parameters and local bindings (declared in `()`) are
-    `runtime` by default.
+    runtime by default.
 
 These defaults can be overridden by using the `template`, `generic`, or
 `runtime` keywords. However, using a keyword that matches the contextual default
@@ -3073,9 +3073,9 @@ Many Carbon entities, not just functions, may be made generic by adding
 #### Generic Classes
 
 Classes may be defined with an optional explicit parameter list. All parameters
-to a class must be compile-time, and are `generic` by default, or can be marked
-as `template`. For example, to define a stack that can hold values of any type
-`T`:
+to a class must be compile-time, and are checked generic parameters by default,
+or can be marked with the `template` keyword. For example, to define a stack
+that can hold values of any type `T`:
 
 ```carbon
 class Stack(T:! type) {

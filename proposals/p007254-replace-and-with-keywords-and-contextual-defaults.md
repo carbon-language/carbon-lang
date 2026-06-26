@@ -103,49 +103,49 @@ These defaults can be overridden where meaningful by using one of the following 
 #### Contextual Defaults
 
 -   **Compile-time entities**: Parameters to entities like `interface`, `impl`,
-    and `class` are `generic` by default.
+    and `class` are checked generic parameters by default.
 
     ```carbon
-    interface I(T: type) { ... } // T is generic
+    interface I(T: type) { ... } // T is a checked generic parameter
     ```
 
     They can be marked as `template`:
 
     ```carbon
-    class C(template T: type) { ... } // T is template
+    class C(template T: type) { ... } // T is a template generic parameter
     ```
 
 -   **Deduced function parameters**: Parameters in `[]` for functions default to
-    `generic`.
+    checked generic parameters.
 
     ```carbon
-    fn F[T: type](arg: T); // T is generic
+    fn F[T: type](arg: T); // T is a checked generic parameter
     ```
 
     They can be marked as `template`:
 
     ```carbon
-    fn F[template T: type](arg: T); // T is template
+    fn F[template T: type](arg: T); // T is a template generic parameter
     ```
 
     If we ever add deduced runtime parameters (anticipated for scoped parameters
-    like allocators), they will use `runtime`:
+    like allocators), they would be marked with the `runtime` keyword:
 
     ```carbon
-    fn F[runtime heap: Heap](T: type, arg: T) -> T*; // heap is runtime
+    fn F[runtime heap: Heap](T: type, arg: T) -> T*; // heap is a runtime parameter
     ```
 
 -   **Explicit function parameters**: Parameters in `()` for functions default
-    to `runtime`.
+    to runtime parameters.
 
     ```carbon
-    fn F(arg: i32); // arg is runtime
+    fn F(arg: i32); // arg is a runtime parameter
     ```
 
     They can be marked as `generic` or `template`:
 
     ```carbon
-    fn F(generic T: type, arg: T); // T is generic
+    fn F(generic T: type, arg: T); // T is a checked generic parameter
     ```
 
 Keywords are only allowed where needed to override the contextual default. This
@@ -247,7 +247,7 @@ This proposal advances the following Carbon goals and principles:
 ### Keep the `:!` syntax
 
 One alternative was to retain the existing punctuation-based syntax where `:!`
-is used to denote generic and template parameters.
+is used to denote checked generic parameters and template generic parameters.
 
 -   **Advantages**:
     -   Maintains continuity with the previously established design.
@@ -316,16 +316,16 @@ Looking across these options:
 ### Use `template generic` instead of just `template`
 
 An alternative considered was to require `template generic` (two keywords) for
-template parameters, and `generic` for checked parameters, to make it clear that
-templates _are_ generics.
+template generic parameters, and `generic` for checked generic parameters, to
+make it clear that templates _are_ generics.
 
-Under this model, the terminology is that we have "generics" that come in two
-semantic forms: "checked generics" and "template generics". Both of these are
-considered "generics". The _default_ semantic is checked generics, so when a
-parameter is marked `generic` (or defaults to it), it gets that semantic. The
-rejected alternative would be to use both keywords as `template generic` for the
-template case, rather than omitting the `generic` keyword and just using
-`template`.
+Under this model, the terminology is that we have "generic parameters" that
+come in two semantic forms: "checked generic parameters" and "template generic
+parameters". Both of these are considered "generic parameters". The _default_
+semantic is checked generic parameters, so when a parameter is marked `generic`
+(or defaults to it), it gets that semantic. The rejected alternative would be
+to use both keywords as `template generic` for the template case, rather than
+omitting the `generic` keyword and just using `template`.
 
 -   **Advantages**:
     -   The syntax would more strictly reflect the terminology that templates
@@ -372,7 +372,7 @@ self-contained.
 -   **Decision**: Rejected in favor of contextual defaults. The chosen defaults
     align with what nearly all code does in practice (most explicit function
     parameters are runtime, and most parameters to interfaces and classes are
-    generic), so keywords remain sparse while still being explicit when
+    checked generics), so keywords remain sparse while still being explicit when
     non-default behavior is needed. The `static` keyword in particular was found
     to have significant overloading concerns coming from C++.
 
@@ -403,8 +403,8 @@ inherently generic by context.
 
 -   **Advantages**:
     -   "Erased" is technically accurate in certain respects: when using Carbon
-        checked generics (as opposed to templates), the specific type bound to a
-        generic parameter is not available at runtime.
+        checked generics (as opposed to template generics), the specific type
+        bound to a checked generic parameter is not available at runtime.
     -   Connects to a concept familiar from type erasure literature and
         languages like Java, where this is the standard implementation model for
         generics.
@@ -435,9 +435,9 @@ inherently generic by context.
 ### Context-sensitive defaults based on parameter type
 
 One alternative suggested was to make explicit function parameters default to
-`generic` if they cannot be represented at runtime (such as types). This would
-allow omitting `generic` even in the explicit `()` parameter list when the
-parameter type makes the phase unambiguous:
+checked generic if they cannot be represented at runtime (such as types). This
+would allow omitting `generic` even in the explicit `()` parameter list when
+the parameter type makes the phase unambiguous:
 
 ```carbon
 fn F1[Q: type](arg1: Q, QQ: type, arg2: QQ) -> (Q, QQ);
@@ -469,7 +469,7 @@ fn F1[Q: type](arg1: Q, QQ: type, arg2: QQ) -> (Q, QQ);
 
 Another alternative was to allow keywords matching the contextual default to be
 used optionally, for example allowing `generic T: type` in a deduced parameter
-list where `generic` is already the default.
+list where checked generic is already the default semantic.
 
 -   **Advantages**:
     -   Provides a simpler mental model for beginners: the rule would be "just

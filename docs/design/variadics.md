@@ -226,9 +226,9 @@ _modifier_ `each` _name_.
 For example:
 
 -   `... generic each T: type`
--   `... runtime ref each x: i32` (Note: `runtime` is the default for explicit
-    parameters so this would only come up in a hypothetical case where we allow
-    this in deduced parameters).
+-   `... runtime ref each x: i32` (Note: runtime parameters are the default for
+    explicit parameters so this would only come up in a hypothetical case where
+    we allow this in deduced parameters).
 
 This ensures that `each` remains most tightly attached to the binding name.
 

@@ -321,7 +321,7 @@ in scope.
 
 It's also worth noting that Carbon distinguishes between parameters based on
 whether they are _deduced_ or _explicit_, rather than using different brackets
-for generic or template parameters.
+for checked or template generic parameters.
 
 We use square brackets `[]` to mark _deduced_ parameters, as in:
 
@@ -338,12 +338,12 @@ specified at the call site, it must be an explicit parameter in `()`. As a
 consequence, even if we used `<` / `>` delimiters, they would mean something
 different from their meaning in C++.
 
-By default, deduced parameters are `generic` and explicit parameters (in `()`)
-are `runtime`. We can use keywords to override these defaults:
+By default, deduced parameters are checked generics and explicit parameters (in
+`()`) are runtime. We can use keywords to override these defaults:
 
--   Use `template` in `[]` for deduced template parameters (for example,
+-   Use `template` in `[]` for deduced template generic parameters (for example,
     `fn F[template T: type](...)`).
--   Use `generic` in `()` for explicit generic parameters (for example,
+-   Use `generic` in `()` for explicit checked generic parameters (for example,
     `fn G(generic T: type, ...)`).
 
 In all cases, the brackets indicate deduction, not the compile-time versus
@@ -352,8 +352,8 @@ runtime phase.
 See
 [proposal #7254](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md)
 for details on the syntax using keywords and defaults, and
-[proposal #676](/proposals/p000676-generic-syntax.md) for the original background on avoiding
-angle brackets.
+[proposal #676](/proposals/p000676-generic-syntax.md) for the original
+background on avoiding angle brackets.
 
 ### Why do variable declarations have to start with `var` or `let`?
 

@@ -151,15 +151,26 @@ which is the immediate subpattern of its enclosing `var` pattern.
 > expected to be the only difference between variable binding patterns and other
 > reference binding patterns.
 
-A binding pattern is a _compile-time binding pattern_ if it uses the `generic`
-or `template` keyword, or appears in a compile-time context (such as parameters
-to compile-time entities). Otherwise, it is a _runtime binding pattern_. A
-compile-time binding pattern cannot appear inside a `var` pattern. It is either
-a _symbolic binding pattern_ or a _template binding pattern_, depending on
-whether it is prefixed with `template`.
+A binding pattern has a phase, which is either runtime, symbolic compile-time,
+or template compile-time:
 
-> **TODO:** Document the explicit `runtime` phase keyword adopted in
-> [p7254](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md).
+-   A _runtime binding pattern_ binds to a dynamic value at runtime. It is the
+    default for explicit function parameters and local bindings.
+-   A _symbolic binding pattern_ (or generic binding pattern) binds to a
+    compile-time value that is not known when type checking. It is the default
+    for deduced function parameters and parameters to compile-time entities.
+    Explicit function parameters are only symbolic binding patterns if they are
+    declared using the `generic` keyword.
+-   A _template binding pattern_ binds to a compile-time value that is known
+    when type checking. It is declared using the `template` keyword.
+
+> **Future work:** If Carbon supports deduced runtime parameters in the future,
+> the `runtime` keyword will be used to explicitly declare those runtime binding
+> patterns.
+
+A symbolic or template binding pattern is collectively called a _compile-time
+binding pattern_. A compile-time binding pattern cannot appear inside a `var`
+pattern.
 
 The binding declared by a binding pattern has a
 [primitive extended type](values.md#extended-types) with the following

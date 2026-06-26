@@ -84,17 +84,17 @@ example, Rust supports
 
 When we distinguish between checked and template generics in Carbon, it is on a
 parameter by parameter basis. A single function can take a mix of runtime,
-checked, and template parameters.
+checked generic, and template generic parameters.
 
 -   **Runtime parameters** are the default for explicit function parameter lists
     (`()`) and locals. They can be explicitly marked with the `runtime` keyword
     in a context where they are not the default.
--   **Checked parameters**, or "generic parameters", are the default in deduced
+-   **Checked generic parameters** are the default in deduced
     parameter lists (`[]`) and parameters to compile-time entities (like
     `interface` or `class`). They can be explicitly marked with the `generic`
     keyword when used in explicit parameter lists (`()`).
--   **Template parameters** are designated by prefixing the parameter with the
-    `template` keyword and are never the default.
+-   **Template generic parameters** are designated by prefixing the parameter
+    with the `template` keyword and are never the default.
 
 Keywords matching the contextual default are disallowed to ensure consistency.
 
