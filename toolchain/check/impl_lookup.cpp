@@ -371,9 +371,31 @@ static auto CollectFacetWitnessSources(
     auto type_id = context.insts().Get(facet).type_id();
     if (type_id != SemIR::TypeType::TypeId) {
       auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
+
+      // When we identify the facet type within a facet in the query, we also
+      // replace `.Self` with the `facet_const_id`, which has the same type as
+      // the facet type we're identifying. If that `.Self` replacement is in a
+      // `LookupImplWitness` instruction, it will evaluate and look for a final
+      // impl. When we find a generic `final impl` and try to deduce its
+      // parameters, we may end up trying to convert the `facet_const_id` which
+      // does an impl lookup and comes back here. If we replace `.Self` again,
+      // we just cycle indefinitely identifying and substituting
+      // `facet_const_id` into its type. We break that cycle here by preventing
+      // `final impl` lookups while replacing `.Self`.
+      //
+      // TODO: This prevents some legitimate code from working, as we can't find
+      // some witnesses that involve concrete associated constants from a
+      // symbolic facet. We could consider another approach: When we identify
+      // and replace `.Self` with `facet_const_id` in each constraint in its
+      // facet type, remove that constraint from the type of `facet_const_id`.
+      // Then each cycle back through to `facet_const_id` will have a smaller
+      // type until it runs out of constraints.
+      context.impl_lookup_no_symbolic_final_lookups()++;
       auto identified_id =
           TryToIdentifyFacetType(context, loc_id, facet_const_id, facet_type,
                                  allow_partially_identified);
+      context.impl_lookup_no_symbolic_final_lookups()--;
+
       if (identified_id.has_value()) {
         witnesses.push_back({.facet_const_id = facet_const_id,
                              .identified_facet_type_id = identified_id});
@@ -1194,6 +1216,9 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
 
   bool query_is_concrete =
       QueryIsConcrete(context, query_self_const_id, query_specific_interface);
+  if (!query_is_concrete && context.impl_lookup_no_symbolic_final_lookups()) {
+    return SemIR::ConstantId::None;
+  }
 
   auto query_type_structure = BuildTypeStructure(
       context, context.constant_values().GetInstId(query_self_const_id),

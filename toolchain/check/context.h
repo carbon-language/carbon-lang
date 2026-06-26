@@ -242,6 +242,10 @@ class Context {
   using ImplLookupCacheMap = Map<ImplLookupCacheKey, SemIR::ConstantId>;
   auto impl_lookup_cache() -> ImplLookupCacheMap& { return impl_lookup_cache_; }
 
+  auto impl_lookup_no_symbolic_final_lookups() -> int& {
+    return impl_lookup_no_symbolic_final_lookups_;
+  }
+
   // An impl lookup query that resulted in a concrete witness from finding an
   // `impl` declaration (not though a facet value), and its result. Used to look
   // for conflicting `impl` declarations.
@@ -545,6 +549,12 @@ class Context {
   // Tracks a mapping from (self, interface) to witness, for queries that had
   // final results.
   ImplLookupCacheMap impl_lookup_cache_;
+
+  // While non-zero, symbolic lookups for final impls are prevented in order to
+  // prevent cycles. This is incremented while replacing `.Self` in a facet type
+  // from an impl lookup query that we are searching for a witness for the
+  // query.
+  int impl_lookup_no_symbolic_final_lookups_ = 0;
 
   // Tracks impl lookup queries that lead to concrete witness results, along
   // with those results. Used to verify that the same queries produce the same

@@ -293,6 +293,241 @@ fn F() {
   C as (Z where .Z1 impls Y);
 }
 
+// --- fail_infinite_cycle_identifying_associated_constant_as_impls_type_missing_impls_m.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W:! type; }
+
+interface M {}
+final impl forall [T:! M] T as L where .W = {} {}
+
+interface Z {}
+
+// This is missing `.Self impls M` so the `final impl` is not used, through
+// deduction is attempted.
+//
+// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_as_impls_type_missing_impls_m.carbon:[[@LINE+7]]:46: error: cannot implicitly convert expression of type `T.(L.W)` to `{}` [ConversionFailure]
+// CHECK:STDERR: fn F(T:! L where .W impls Z, a: T.W) -> {} { return a; }
+// CHECK:STDERR:                                              ^~~~~~~~~
+// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_as_impls_type_missing_impls_m.carbon:[[@LINE+4]]:46: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fn F(T:! L where .W impls Z, a: T.W) -> {} { return a; }
+// CHECK:STDERR:                                              ^~~~~~~~~
+// CHECK:STDERR:
+fn F(T:! L where .W impls Z, a: T.W) -> {} { return a; }
+
+// --- infinite_cycle_identifying_associated_constant_as_impls_type.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W:! type; }
+
+interface M {}
+final impl forall [T:! M] T as L where .W = {} {}
+
+interface Z {}
+
+// This can make an infinite cycle in the toolchain:
+// 0. `T.W` looks for a witness for `L` in the facet type of `T`
+// 1. We identify the facet type of `T` and replace `.Self` with `T` throughout.
+// 2. The `.W` becomes `T.W` which is evaluated and does an impl lookup `T as L`.
+// 3. We find the final impl for `T:! M` and try to convert `T as M`.
+// 4. We look for a witness for `M` in the facet type of `T`.
+// 5. Go to step 1.
+//
+// Because the `.W` is part of an `impls` constraint, it is substituted as part
+// of identifying.
+fn F(T:! L where .W impls Z and .Self impls M, a: T.W) -> {} { return a; }
+
+// --- fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_type_missing_m.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W:! type; }
+
+interface M {}
+final impl forall [T:! M] T as L where .W = () {}
+
+interface Z(T:! type) {}
+
+// This is missing `.Self impls M` so the `final impl` is not used, through
+// deduction is attempted.
+//
+// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_type_missing_m.carbon:[[@LINE+7]]:53: error: cannot implicitly convert expression of type `T.(L.W)` to `()` [ConversionFailure]
+// CHECK:STDERR: fn F(T:! L where .Self impls Z(.W), a: T.W) -> () { return a; }
+// CHECK:STDERR:                                                     ^~~~~~~~~
+// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_type_missing_m.carbon:[[@LINE+4]]:53: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs(())` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fn F(T:! L where .Self impls Z(.W), a: T.W) -> () { return a; }
+// CHECK:STDERR:                                                     ^~~~~~~~~
+// CHECK:STDERR:
+fn F(T:! L where .Self impls Z(.W), a: T.W) -> () { return a; }
+
+// --- infinite_cycle_identifying_associated_constant_in_impls_interface_as_type.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W:! type; }
+
+interface M {}
+final impl forall [T:! M] T as L where .W = () {}
+
+interface Z(T:! type) {}
+
+// This can make an infinite cycle in the toolchain:
+// 0. `T.W` looks for a witness for `L` in the facet type of `T`
+// 1. We identify the facet type of `T` and replace `.Self` with `T` throughout.
+// 2. The `.W` becomes `T.W` which is evaluated and does an impl lookup `T as L`.
+// 3. We find the final impl for `T:! M` and try to convert `T as M`.
+// 4. We look for a witness for `M` in the facet type of `T`.
+// 5. Go to step 1.
+//
+// Because the `.W` is part of an `impls` constraint, it is substituted as part
+// of identifying. In this case it is inside a FacetAccessType instruction.
+fn F(T:! L where .Self impls Z(.W) and .Self impls M, a: T.W) -> () { return a; }
+
+// --- fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type_missing_m.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W:! type; }
+
+interface M {}
+final impl forall [T:! M] T as L where .W = () {}
+
+interface Y {}
+interface Z(T:! Y) {}
+
+// This is missing `.Self impls M` so the `final impl` is not used, through
+// deduction is attempted.
+//
+// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type_missing_m.carbon:[[@LINE+7]]:68: error: cannot implicitly convert expression of type `T.(L.W)` to `()` [ConversionFailure]
+// CHECK:STDERR: fn F(T:! L where .W impls Y and .Self impls Z(.W), a: T.W) -> () { return a; }
+// CHECK:STDERR:                                                                    ^~~~~~~~~
+// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type_missing_m.carbon:[[@LINE+4]]:68: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs(())` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fn F(T:! L where .W impls Y and .Self impls Z(.W), a: T.W) -> () { return a; }
+// CHECK:STDERR:                                                                    ^~~~~~~~~
+// CHECK:STDERR:
+fn F(T:! L where .W impls Y and .Self impls Z(.W), a: T.W) -> () { return a; }
+
+// --- infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W:! type; }
+
+interface M {}
+final impl forall [T:! M] T as L where .W = () {}
+
+interface Y {}
+interface Z(T:! Y) {}
+
+// This can make an infinite cycle in the toolchain:
+// 0. `T.W` looks for a witness for `L` in the facet type of `T`
+// 1. We identify the facet type of `T` and replace `.Self` with `T` throughout.
+// 2. The `.W` becomes `T.W` which is evaluated and does an impl lookup `T as L`.
+// 3. We find the final impl for `T:! M` and try to convert `T as M`.
+// 4. We look for a witness for `M` in the facet type of `T`.
+// 5. Go to step 1.
+//
+// Because the `.W` is part of an `impls` constraint, it is substituted as part
+// of identifying. In this case it is inside a FacetValue instruction, which is
+// converting it to `Y`.
+fn F(T:! L where .W impls Y and .Self impls Z(.W) and .Self impls M, a: T.W) -> () { return a; }
+
+// --- concrete_access_witness_m_in_extend_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W:! type; }
+
+interface M {}
+final impl forall [T:! M] T as L where .W = () {}
+
+interface Z(Z1:! type) {}
+
+class C(C1:! type);
+
+// Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
+// (since the type of `.Self` contains `M`) and the `final impl`. So we can get
+// a witness for `C(())` from `T`.
+fn I(T:! (L & M) where C(.W) impls Z(.Self)) {
+  C(()) as Z(T);
+}
+
+// --- fail_todo_concrete_access_witness_m_in_impls_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W:! type; }
+
+interface M {}
+final impl forall [T:! M] T as L where .W = () {}
+
+interface Z(Z1:! type) {}
+
+class C(C1:! type);
+
+// Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
+// (since the type of `.Self` contains `M`) and the `final impl`. So we can get
+// a witness for `C(())` from `T`.
+//
+// TODO: How come we don't get `.W` evaluating to `()` when `M` comes from a
+// non-extend constraint?
+fn H(T:! (L where .Self impls M) where C(.W) impls Z(.Self)) {
+  // CHECK:STDERR: fail_todo_concrete_access_witness_m_in_impls_constraint.carbon:[[@LINE+4]]:3: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   C(()) as Z(T);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  C(()) as Z(T);
+}
+
+// --- fail_todo_concrete_access_witness_m_in_earlier_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W:! type; }
+
+interface M {}
+final impl forall [T:! M] T as L where .W = () {}
+
+interface Z(Z1:! type) {}
+
+class C(C1:! type);
+
+
+// Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
+// (since the type of `.Self` contains `M`) and the `final impl`. So we can get
+// a witness for `C(())` from `T`.
+//
+// TODO: How come we don't get `.W` evaluating to `()` when `M` comes from an
+// earlier constraint? Is the `where_stack` not working with `.Self`?
+fn G(T:! L where .Self impls M and C(.W) impls Z(.Self)) {
+  // CHECK:STDERR: fail_todo_concrete_access_witness_m_in_earlier_constraint.carbon:[[@LINE+4]]:3: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   C(()) as Z(T);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  C(()) as Z(T);
+}
+
+// --- fail_todo_concrete_access_witness.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W:! type; }
+
+interface M {}
+final impl forall [T:! M] T as L where .W = () {}
+
+interface Z(Z1:! type) {}
+
+class C(C1:! type);
+
+// This does not pass because `.W` can't resolve to `()` where it is written.
+// The fact that `T impls M` comes later in the facet type. And we don't allow
+// `.W` to evaluate to `()` later when identifying the type of `T` to look for a
+// witness for `C(()) as Z(T)` in order to avoid cycles.
+//
+// TODO: We would like this to pass though, without introducing an infinite
+// cycle that identifies `T`, which deduces `T:! M` for the `impl`, which
+// identifies `T`. See TODO in CollectFacetWitnessSources for ideas.
+fn F(T:! L where C(.W) impls Z(.Self) and .Self impls M) {
+  // CHECK:STDERR: fail_todo_concrete_access_witness.carbon:[[@LINE+4]]:3: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   C(()) as Z(T);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  C(()) as Z(T);
+}
+
 // CHECK:STDOUT: --- period_self_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
