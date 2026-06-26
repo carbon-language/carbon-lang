@@ -25,7 +25,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [`impl` lookup for compound member access](#impl-lookup-for-compound-member-access)
 -   [Instance binding](#instance-binding)
 -   [Non-instance members](#non-instance-members)
--   [Non-vacuous member access restriction](#non-vacuous-member-access-restriction)
+-   [Vacuous member access](#vacuous-member-access)
+-   [Member binding interfaces](#member-binding-interfaces)
+    -   [Compiler implementation of binding interfaces](#compiler-implementation-of-binding-interfaces)
+        -   [Methods](#methods)
+        -   [Fields](#fields)
+        -   [Non-instance members](#non-instance-members-1)
+        -   [Interface members and `impl` lookup](#interface-members-and-impl-lookup)
+    -   [Member binding restrictions](#member-binding-restrictions)
 -   [Precedence and associativity](#precedence-and-associativity)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -33,13 +40,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <!-- tocstop -->
 
 ## Overview
-
-> **TODO:** >
-> [#3720: Member binding operators](/proposals/p003720-member-binding-operators.md)
-> introduces an additional "member binding" step, redefines simple member access
-> in terms of compound member access, and defines compound member access in
-> terms of calls to user-implementable interface methods. This document must be
-> updated to reflect those changes.
 
 A _qualified name_ is a [word](../lexical_conventions/words.md) that is preceded
 by a period or a rightward arrow. The name is found within a contextually
@@ -128,6 +128,10 @@ A member access expression is processed using the following steps:
 -   If [instance binding is not performed](#non-instance-members), the result is
     `M`.
 
+Under the hood, these steps are implemented by rewriting member access
+expressions into calls to methods of user-implementable
+[member binding interfaces](#member-binding-interfaces).
+
 ## Member resolution
 
 The process of _member resolution_ determines which member `M` a member access
@@ -162,7 +166,7 @@ member with that name.
 An expression that names a package or namespace can only be used as the first
 operand of a member access or as the target of an `alias` declaration.
 
-```
+```carbon
 namespace MyNamespace;
 fn MyNamespace.MyFunction() {}
 
@@ -332,7 +336,7 @@ _integer-literal_ is required to exactly match one of those names, and the
 result of member resolution is an instance member that refers to the
 corresponding element of the tuple.
 
-```
+```carbon
 // ✅ `a == 42`.
 let a: i32 = (41, 42, 43).1;
 // ❌ Error: no tuple element named `0x1`.
@@ -353,7 +357,7 @@ be a non-negative template constant that is less than the number of tuple
 elements, and the result is an instance member that refers to the corresponding
 positional element of the tuple.
 
-```
+```carbon
 // ✅ `d == 43`.
 let d: i32 = (41, 42, 43).(1 + 1);
 // ✅ `e == 2`.
@@ -410,7 +414,7 @@ of the facet `T` of facet type `C`.
 
 For example:
 
-```
+```carbon
 interface Printable {
   fn Print(self);
 }
@@ -953,14 +957,40 @@ fn CallStaticMethod(c: C) {
 }
 ```
 
-## Non-vacuous member access restriction
+## Vacuous member access
 
-The first operand of a member access expression must be used in some way: a
-compound member access must result in `impl` lookup, instance binding, or both.
-In a simple member access, this always holds, because the first operand is
-always used for lookup.
+A compound member access expression where the first operand is not used for
+`impl` lookup or instance binding is valid, even though the first operand is
+redundant.
 
+Instead, tools such as linters can highlight such code as suspicious on a
+best-effort basis, particularly when the issue is contained in a single
+expression. Such tools may still allow code that performs the same operation
+across multiple statements, as in:
+
+```carbon
+class C {
+  fn NonInstance();
+}
+
+let M:! auto = C.NonInstance;
+
+let v: C = {};
+// ✅ Allowed, even though `v.` is not used.
+v.(M)();
 ```
+
+> **Note:** Earlier wording restricted vacuous member access by making
+> expressions such as `v.(C.NonInstance)` invalid because the `v.`
+> portion is redundant. That rule was removed by proposal
+> [#3720: Member binding operators](/proposals/p003720-member-binding-operators.md#details).
+
+In the case where `M` is an overloaded name, it could be an instance member in some
+cases and a non-instance member in others, depending on the arguments passed.
+This is another reason to delegate this to linters analyzing a whole expression
+on a best-effort basis, rather than a strict rule just about member binding.
+
+```carbon
 interface Printable {
   fn Print(self);
 }
@@ -986,19 +1016,285 @@ impl i32 as Factory;
 
 // ✅ OK, member `Make` of interface `Factory`.
 alias X1 = Factory.Make;
-// ❌ Error, compound access without impl lookup or instance binding.
+// ⚠️ Suspicious (linter warning), but valid: compound access without impl
+// lookup or instance binding.
 alias X2 = Factory.(Factory.Make);
 // ✅ OK, member `Make` of `impl i32 as Factory`.
 alias X3 = (i32 as Factory).Make;
-// ❌ Error, compound access without impl lookup or instance binding.
+// ⚠️ Suspicious (linter warning), but valid: compound access without impl
+// lookup or instance binding.
 alias X4 = i32.((i32 as Factory).Make);
 ```
+
+## Member binding interfaces
+
+To support advanced customization, such as user-defined properties, custom smart
+pointers, and pointer-to-member conversions, Carbon implements the conceptual
+steps of member access (like `impl` lookup and instance binding) by rewriting
+compound member access expressions into calls to methods on user-implementable
+interfaces.
+
+This does not change how typical member access is written or read in Carbon code. Under the hood, for a compound member access
+expression `x.(y)` where `x` has type `T` and `y` has type `U`, the compiler
+rewrites the expression into a call to an interface method on one of three
+interfaces:
+
+```carbon
+// An interface to identify the result type of member binding.
+// Both `BindToValue` and `BindToRef` extend this to ensure they produce the
+// same type regardless of expression category.
+interface Bind(T: type) {
+  let Result: type;
+}
+
+// Used when `x` is a value expression.
+// `x.(y)` is rewritten to: `y.((U as BindToValue(T)).Op)(x)`
+interface BindToValue(T: type) {
+  extend Bind(T);
+  fn Op(self, x: T) -> Result;
+}
+
+// Used when `x` is a reference expression.
+// `x.(y)` is rewritten to: `y.((U as BindToRef(T)).Op)(ref x)`
+interface BindToRef(T: type) {
+  extend Bind(T);
+  fn Op(self, ref p: T) -> ref Result;
+}
+
+// Used when `x` is a type or facet value.
+// `x.(y)` is rewritten to: `y.((U as BindToType(x)).Op)()`
+interface BindToType(T: type) {
+  let Result: type;
+  fn Op(self) -> Result;
+}
+```
+
+The other member access operators -- `x.y`, `x->y`, and `x->(y)` -- are defined
+by how they rewrite into the `x.(y)` form using these two rules:
+
+-   `x.y` is interpreted using the [member resolution rules](#member-resolution).
+    For example, `x.y` is treated as `x.(T.y)` for non-type values `x` with type
+    `T`.
+    -   Simple member access of a facet `T`, as in `T.y`, is not rewritten into
+        the `T.(`\_\_\_`)` form.
+-   `x->y` and `x->(y)` are interpreted as `(*x).y` and `(*x).(y)` respectively.
+
+These interfaces may be used as constraints, allowing a generic function to perform binding.
+
+```carbon
+fn CallsMethodWithValueBinding
+    [T: type, U: BindToValue(T) where .Result impls Call(())](x: T, y: U) {
+  // Equivalent to: y.Op(x)();
+  x.(y)();
+}
+```
+
+This generic function may be called with the name of any method that is callable on `x` with no arguments, as in:
+
+```carbon
+interface I {
+  fn F(self);
+}
+
+class C {
+  fn G(self);
+  impl as I {
+    fn F(self);
+  }
+}
+
+let x: C = {};
+// Calls `x.G()`.
+CallsMethodWithValueBinding(x, C.G);
+
+// Calls `x.(I.F)()`.
+CallsMethodWithValueBinding(x, I.F);
+
+// ❌ Invalid, `x.G` doesn't implement `BindToValue(C)`,
+// since methods may only be bound to an instance once.
+CallsMethodWithValueBinding(x, x.G);
+```
+
+### Compiler implementation of binding interfaces
+
+The compiler automatically provides implementations of these interfaces for the
+types associated with class, interface, and built-in type members.
+
+#### Methods
+
+Consider a method `F` in class `C`:
+
+```carbon
+class C {
+  fn F(self) -> i32;
+}
+
+let x: C = {};
+x.F();
+```
+
+-   The member `C.F` has a unique, empty type which is unnamed, but we will refer to as `__TypeOf_C_F`.
+-   An adapter type is generated to adapt `C`, which we will refer to as `__Binding_C_F`.
+-   `__TypeOf_C_F` implements `BindToValue(C)` and `BindToRef(C)` with `Op` returning
+    `__Binding_C_F`.
+-   The implementation of the member binding interfaces allow implicit conversions, to support
+    calling a method from a base type on an object of a derived type. See
+    ["Inheritance and other implicit conversions" in proposal #3720](/proposals/p003720-member-binding-operators.md#inheritance-and-other-implicit-conversions).
+-   `__Binding_C_F` implements the `Call(())` interface, which maps to the
+    actual method implementation body:
+
+```carbon
+impl __Binding_C_F as Call(()) with .Result = i32 {
+  fn Op(self) -> i32 {
+    return inlined_method_call_compiler_intrinsic(
+        <function body C.F>, self as C, ());
+  }
+}
+```
+
+Note that the implementation of the `Call` operator needs to use a compiler
+intrinsic to avoid recursive application of these same rules.
+
+The result is that the expression `x.F` is a bound method value of type `__Binding_C_F`
+(adapting `x`) that can be called like a function.
+
+#### Fields
+
+For a field `var m: i32` in class `C`:
+
+```carbon
+class C {
+  var m: i32;
+}
+
+var x: C = {.m = 7};
+x.m = 42;
+```
+
+-   The member `C.m` has an unnamed unique type which we will call `__TypeOf_C_m`.
+-   `__TypeOf_C_m` implements `BindToValue(C)` with `.Result = i32`, returning
+    the value of `m` by way of a compiler intrinsic:
+
+    ```carbon
+    impl __TypeOf_C_m as BindToValue(C) where .Result = i32 {
+      fn Op(self, x: C) -> i32 {
+        return value_compiler_intrinsic(x, __OffsetOf_C_m, i32);
+      }
+    }
+    ```
+
+-   `__TypeOf_C_m` implements `BindToRef(C)` with `.Result = i32`, returning a
+    reference to `m` by way of a compiler offset intrinsic:
+
+    ```carbon
+    impl __TypeOf_C_m as BindToRef(C) where .Result = i32 {
+      fn Op(self, ref p: C) -> ref i32 {
+        return offset_compiler_intrinsic(ref p, __OffsetOf_C_m, i32);
+      }
+    }
+    ```
+
+This ensures that if `x` is a reference expression of type `C`, then `x.m`
+(rewritten using `BindToRef`) evaluates to a reference
+expression referring to the subobject `m` inside `x.m`.
+
+Tuple types and struct types have their fields implemented in the same way.
+
+#### Non-instance members
+
+Classes may also have non-instance members. This includes non-instance member functions and static member variables, as in:
+
+```carbon
+class C {
+  fn NonInstance();
+  static var s: i32 = 0;
+}
+
+C.NonInstance();
+C.s = 3;
+```
+
+Non-instance members use `BindToType` when accessed on a type facet:
+
+-   For `fn NonInstance()` in class `C`, its type `__TypeOf_C_NonInstance` implements
+    `BindToType(C)` with `.Result = __TypeBinding_C_NonInstance`.
+-   To support calling directly on a type facet, `__TypeOf_C_NonInstance` also
+    implements `Call(())` directly (supporting `C.NonInstance()`).
+-   To support calling on value/reference instances `x.NonInstance()`,
+    `__TypeOf_C_NonInstance` implements `BindToValue(C)` and `BindToRef(C)` returning
+    a bound adapter whose `Call` implementation ignores its `self` argument,
+    effectively discarding the evaluated instance `x`.
+
+#### Interface members and `impl` lookup
+
+For members of an interface, such as `F` in
+
+```carbon
+interface I {
+  fn F(self);
+}
+
+class C {
+  impl as I {
+    fn F(self);
+  }
+}
+```
+
+-   The `I.F` member has an unnamed unique type, which we will refer to a `__TypeOf_I_F`.
+-   `__TypeOf_I_F` implements `BindToValue(T)` for all types `T impls I` returning
+    `__Binding_I_F(T)` (which adapts `T`).
+-   The actual implementation of `I` for `T` is resolved during generic matching
+    when `Call.Op` is called on the adapter:
+
+    ```carbon
+    impl forall [T: I] __TypeOf_I_F as BindToValue(T) {
+      where .Result = __Binding_I_F(T);
+      fn Op(self, x: T) -> __Binding_I_F(T) {
+        return x as __Binding_I_F(T);
+      }
+    }
+
+    // If C implements I:
+    impl __Binding_I_F(C) as Call(()) where .Result = () {
+      fn Op(self) {
+        inlined_method_call_compiler_intrinsic(
+            <function body (C as I).F>, self as C, ());
+      }
+    }
+    ```
+
+-   The type of an interface method taking `ref self` would also implement `BindToRef(T)`.
+-   In all cases, the type of an interface member would implement `BindToType(T)` for all types `T impls I`. The result would depend on the specifics of the member, but generally would be a value of a unique empty type associated with the specific interface member, parameterized by `T`. This value could then be bound to an instance of `T` in a succeeding operation.
+
+### Member binding restrictions
+
+The restrictions that only certain compound member accesses are valid are naturally enforced by whether the
+member's type implements the required `BindToValue`, `BindToRef`, or `BindToType` interfaces.
+
+```carbon
+class C {
+  fn F(self);
+}
+
+let v: C = {};
+// ❌ Invalid, instance binding to something already bound.
+v.(v.F)();
+// ✅ Allowed, even though `C.(C.F)` is redundant.
+v.(C.(C.F))();
+```
+
+`v.(v.F)` fails because the bound method
+adapter does not implement member binding interfaces, following the rules of [instance binding](#instance-binding).
+
+However, `C.(C.F)` is an allowed [vacuous member access](#vacuous-member-access),
+so `__TypeOf_C_F` needs to implement `BindToType(C)` in addition to `BindToValue(C)` and `BindToRef(C)`.
 
 ## Precedence and associativity
 
 Member access expressions associate left-to-right:
 
-```
+```carbon
 class A {
   class B {
     fn F();
@@ -1024,7 +1320,7 @@ expressions (literals, unqualified names, and expressions in parentheses, as in
 [C++](https://cppreference.com/cpp/language/expressions#Primary_expressions)),
 and higher precedence than all other expression forms.
 
-```
+```carbon
 // ✅ OK, `*` has lower precedence than `.`. Same as `(A.B)*`.
 var p: A.B*;
 // ✅ OK, `1 + (X.Y)` not `(1 + X).Y`.
@@ -1036,6 +1332,14 @@ var n: i32 = 1 + X.Y;
 -   [Separate syntax for static versus dynamic access, such as `::` versus `.`](/proposals/p000989-member-access-expressions.md#separate-syntax-for-static-versus-dynamic-access)
 -   [Use a different lookup rule for names in templates](/proposals/p000989-member-access-expressions.md#use-a-different-lookup-rule-in-templates)
 -   [Meaning of `Type.Interface`](/proposals/p000989-member-access-expressions.md#meaning-of-typeinterface)
+-   [Non-vacuous member access restriction](/proposals/p003720-member-binding-operators.md#proposal)
+-   [Swap the member binding interface parameters](/proposals/p003720-member-binding-operators.md#swap-the-member-binding-interface-parameters)
+-   [Member binding to references produces a value that wraps a pointer](/proposals/p003720-member-binding-operators.md#member-binding-to-references-produces-a-value-that-wraps-a-pointer)
+-   [Separate interface for compile-time member binding instead of type member binding](/proposals/p003720-member-binding-operators.md#separate-interface-for-compile-time-member-binding-instead-of-type-member-binding)
+-   [Non-instance members are idempotent under member binding](/proposals/p003720-member-binding-operators.md#non-instance-members-are-idempotent-under-member-binding)
+-   [Separate `Result` types for `BindToValue` and `BindToRef`](/proposals/p003720-member-binding-operators.md#separate-result-types-for-bindtovalue-and-bindtoref)
+-   [`BindToValue` is a subtype of `BindToRef`](/proposals/p003720-member-binding-operators.md#bindtovalue-is-a-subtype-of-bindtoref)
+-   [Directly rewrite all calls to interface member functions to method call intrinsics](/proposals/p003720-member-binding-operators.md#directly-rewrite-all-calls-to-interface-member-functions-to-method-call-intrinsics)
 
 ## References
 
@@ -1046,5 +1350,7 @@ var n: i32 = 1 + X.Y;
     [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
 -   Proposal
     [#2550: Simplified package declaration for the `Main` package](https://github.com/carbon-language/carbon-lang/pull/2550)
+-   Proposal
+    [#3720: Member binding operators](https://github.com/carbon-language/carbon-lang/pull/3720)
 -   Proposal
     [#6395: Type completeness in extend](https://github.com/carbon-language/carbon-lang/pull/6395)
