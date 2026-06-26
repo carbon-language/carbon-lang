@@ -21,6 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Contextual Defaults](#contextual-defaults)
     -   [Associated Constants](#associated-constants)
     -   [Extended Types](#extended-types)
+        -   [Future Work on Extended Types](#future-work-on-extended-types)
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
     -   [Keep the `:!` syntax](#keep-the--syntax)
@@ -38,7 +39,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 This proposal removes the `:!` syntax for generics and templates in favor of
 keywords (`generic`, `template`, `runtime`) and contextual defaults for phase.
-It also replaces `:?` with `fwd` and introduces `exttype` for extended types.
+It also suggests replacing `:?` from proposal #5389 with `fwd` and renaming
+"forms" to "extended types".
 
 ## Problem
 
@@ -90,15 +92,20 @@ We propose to:
 
 Parameter phase is primarily determined by the context of the parameter:
 
--   Parameters to compile-time entities (interfaces, impls, classes) are checked generic parameters by default.
+-   Parameters to compile-time entities (interfaces, impls, classes) are checked
+    generic parameters by default.
 -   Deduced function parameters are checked generic parameters by default.
 -   Explicit function parameters are runtime by default.
 
-These defaults can be overridden where meaningful by using one of the following keywords:
+These defaults can be overridden where meaningful by using one of the following
+keywords:
 
--   `runtime`: Causes a parameter to be a runtime parameter in the deduced parameter context, if we ever decide to support runtime deduced parameters.
--   `generic`: Causes a parameter to be a checked generic when in an explicit function parameter context.
--   `template`: Causes a parameter to be a template generic in any of the three contexts.
+-   `runtime`: Causes a parameter to be a runtime parameter in the deduced
+    parameter context, if we ever decide to support runtime deduced parameters.
+-   `generic`: Causes a parameter to be a checked generic when in an explicit
+    function parameter context.
+-   `template`: Causes a parameter to be a template generic in any of the three
+    contexts.
 
 #### Contextual Defaults
 
@@ -182,13 +189,13 @@ to the type system while preserving `type` for standard object types.
 
 Under this new design:
 
--   `exttype` is the keyword for the type of extended types (analogous to `type`
-    for object types).
+-   The literal expression `form(expr)` is renamed to `exttype(expr)`.
+-   The type of extended types is `Core.ExtType` (replacing `Core.Form`).
 -   The previous `:?` syntax for deduced form bindings is suggested to be
     replaced by a binding modifier `fwd`. This modifier causes the
-    right-hand-side of the binding's `:` to be converted to `exttype` rather
-    than `type`. This is a suggested (but not fully decided) direction for
-    pending proposal #5389 to go with the syntax.
+    right-hand-side of the binding's `:` to be converted to `Core.ExtType`
+    rather than `type`. This is a suggested (but not fully decided) direction
+    for pending proposal #5389 to go with the syntax.
 -   `fwd` is also suggested for use in the return signature (for example,
     `-> fwd T`) to forward the extended type information. Note that this may end
     up being more significant than just a syntactic replacement: it remains to
@@ -204,12 +211,20 @@ punctuated syntax for advanced generic programming.
 Example:
 
 ```carbon
-fn F[T: exttype](fwd arg: T) -> fwd T;
+fn F[T: Core.ExtType](fwd arg: T) -> fwd T;
 ```
 
 > **Open question:** Should we require the `fwd` modifier on call arguments as
 > well, analogously to how `ref` is required on arguments for reference
 > parameters?
+
+#### Future Work on Extended Types
+
+Once the design for extended types in proposal #5389 is more complete, we may
+also want to replace `Core.ExtType` with a new built-in keyword `exttype` for
+the type of extended types, and potentially replace `exttype(expr)` literals
+with library entities. This would make `exttype` analogous to `type` in the
+grammar.
 
 ## Rationale
 
@@ -319,12 +334,12 @@ An alternative considered was to require `template generic` (two keywords) for
 template generic parameters, and `generic` for checked generic parameters, to
 make it clear that templates _are_ generics.
 
-Under this model, the terminology is that we have "generic parameters" that
-come in two semantic forms: "checked generic parameters" and "template generic
+Under this model, the terminology is that we have "generic parameters" that come
+in two semantic forms: "checked generic parameters" and "template generic
 parameters". Both of these are considered "generic parameters". The _default_
 semantic is checked generic parameters, so when a parameter is marked `generic`
-(or defaults to it), it gets that semantic. The rejected alternative would be
-to use both keywords as `template generic` for the template case, rather than
+(or defaults to it), it gets that semantic. The rejected alternative would be to
+use both keywords as `template generic` for the template case, rather than
 omitting the `generic` keyword and just using `template`.
 
 -   **Advantages**:
@@ -436,8 +451,8 @@ inherently generic by context.
 
 One alternative suggested was to make explicit function parameters default to
 checked generic if they cannot be represented at runtime (such as types). This
-would allow omitting `generic` even in the explicit `()` parameter list when
-the parameter type makes the phase unambiguous:
+would allow omitting `generic` even in the explicit `()` parameter list when the
+parameter type makes the phase unambiguous:
 
 ```carbon
 fn F1[Q: type](arg1: Q, QQ: type, arg2: QQ) -> (Q, QQ);
@@ -514,7 +529,7 @@ modifier.
         that this matches the _evaluated_ expression.
 -   **Decision**: This alternative was rejected in favor of the **Extended
     Types** model. The team preferred "extended types" as the terminology anchor
-    (yielding `exttype`). For the binding modifier, `fwd` was chosen because it
-    connects to the use case of forwarding extended type information (similar to
-    C++ `std::forward`) and fits well as a three-letter keyword similar to
-    `ref`, `var`, and `val`.
+    (yielding `Core.ExtType`). For the binding modifier, `fwd` was chosen
+    because it connects to the use case of forwarding extended type information
+    (similar to C++ `std::forward`) and fits well as a three-letter keyword
+    similar to `ref`, `var`, and `val`.

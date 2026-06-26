@@ -1057,7 +1057,8 @@ phase (compile-time vs runtime) of a binding in parameter lists:
 
 -   Parameters to compile-time entities (such as `interface`, `impl`, and
     `class`) are checked generics by default.
--   Deduced function parameters (declared in `[]`) are checked generics by default.
+-   Deduced function parameters (declared in `[]`) are checked generics by
+    default.
 -   Explicit function parameters and local bindings (declared in `()`) are
     runtime by default.
 

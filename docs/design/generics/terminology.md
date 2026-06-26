@@ -89,10 +89,10 @@ checked generic, and template generic parameters.
 -   **Runtime parameters** are the default for explicit function parameter lists
     (`()`) and locals. They can be explicitly marked with the `runtime` keyword
     in a context where they are not the default.
--   **Checked generic parameters** are the default in deduced
-    parameter lists (`[]`) and parameters to compile-time entities (like
-    `interface` or `class`). They can be explicitly marked with the `generic`
-    keyword when used in explicit parameter lists (`()`).
+-   **Checked generic parameters** are the default in deduced parameter lists
+    (`[]`) and parameters to compile-time entities (like `interface` or
+    `class`). They can be explicitly marked with the `generic` keyword when used
+    in explicit parameter lists (`()`).
 -   **Template generic parameters** are designated by prefixing the parameter
     with the `template` keyword and are never the default.
 

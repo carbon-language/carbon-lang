@@ -155,7 +155,7 @@ it can be deduced using a signature return expression (`=>`).
     -   Because the return type is deduced and not explicitly known, functions
         defined using `=>` cannot have a separate forward declaration.
 
-> **TODO:** Update this section to cover return extended types, as discussed
+> **TODO:** Update this section to cover return `exttype`s, as discussed
 > [here](values.md#function-calls-and-returns).
 
 #### Unused parameters
