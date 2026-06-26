@@ -2392,8 +2392,7 @@ using WitnessType = SingletonTypeInst<InstKind::WitnessType, "<witness>">;
 struct WrapperBinding {
   static constexpr auto Kind = InstKind::WrapperBinding.Define<Parse::NodeId>(
       {.ir_name = "wrapper_binding",
-       .expr_category = ComputedExprCategory::DependsOnOperands,
-       .constant_kind = InstConstantKind::Indirect});
+       .expr_category = ComputedExprCategory::DependsOnOperands});
   TypeId type_id;
   EntityNameId entity_name_id;
   InstId value_id;
