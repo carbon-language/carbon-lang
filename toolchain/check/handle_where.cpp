@@ -481,6 +481,30 @@ static auto CheckForNestedWhereInRequirementsAfterEval(
       context.inst_blocks().Get(requirements_id));
 
   for (auto& inst_id : checked_requirements) {
+    // Searches the `lhs_id` and `rhs_id` operands of the requirement inst. If a
+    // nested `where` is found and diagnosed, the requirement is rebuilt with an
+    // ErrorInst in its place and it replaces the `inst_id` in the requirements
+    // block.
+    auto find_and_diagnose_nested_where = [&](auto req_inst, bool check_lhs) {
+      bool found = false;
+      if (check_lhs &&
+          FindWhere(context, context.constant_values().Get(req_inst.lhs_id))) {
+        DiagnoseNestedWhere(context, SemIR::LocId(req_inst.lhs_id), where_loc);
+        req_inst.lhs_id = SemIR::ErrorInst::InstId;
+        found = diagnosed = true;
+      }
+      if (FindWhere(context, context.constant_values().Get(req_inst.rhs_id))) {
+        DiagnoseNestedWhere(context, SemIR::LocId(req_inst.rhs_id), where_loc);
+        req_inst.rhs_id = SemIR::ErrorInst::InstId;
+        found = diagnosed = true;
+      }
+      if (found) {
+        inst_id = AddInstInNoBlock(
+            context, SemIR::LocIdAndInst::RuntimeVerified(
+                         context.sem_ir(), SemIR::LocId(inst_id), req_inst));
+      }
+    };
+
     auto inst = context.insts().Get(inst_id);
     CARBON_KIND_SWITCH(inst) {
       case CARBON_KIND(SemIR::RequirementBaseFacetType _): {
@@ -488,52 +512,17 @@ static auto CheckForNestedWhereInRequirementsAfterEval(
         break;
       }
       case CARBON_KIND(SemIR::RequirementImpls impls): {
-        if (FindWhere(context, context.constant_values().Get(impls.lhs_id))) {
-          DiagnoseNestedWhere(context, SemIR::LocId(impls.lhs_id), where_loc);
-          impls.lhs_id = SemIR::ErrorInst::InstId;
-          inst_id = AddInstInNoBlock(
-              context, SemIR::LocIdAndInst::RuntimeVerified(
-                           context.sem_ir(), SemIR::LocId(inst_id), impls));
-          diagnosed = true;
-        }
-        if (FindWhere(context, context.constant_values().Get(impls.rhs_id))) {
-          DiagnoseNestedWhere(context, SemIR::LocId(impls.rhs_id), where_loc);
-          impls.rhs_id = SemIR::ErrorInst::InstId;
-          inst_id = AddInstInNoBlock(
-              context, SemIR::LocIdAndInst::RuntimeVerified(
-                           context.sem_ir(), SemIR::LocId(inst_id), impls));
-          diagnosed = true;
-        }
+        find_and_diagnose_nested_where(impls, true);
         break;
       }
       case CARBON_KIND(SemIR::RequirementRewrite rewrite): {
-        if (FindWhere(context, context.constant_values().Get(rewrite.rhs_id))) {
-          DiagnoseNestedWhere(context, SemIR::LocId(rewrite.rhs_id), where_loc);
-          rewrite.rhs_id = SemIR::ErrorInst::InstId;
-          inst_id = AddInstInNoBlock(
-              context, SemIR::LocIdAndInst::RuntimeVerified(
-                           context.sem_ir(), SemIR::LocId(inst_id), rewrite));
-          diagnosed = true;
-        }
+        // The LHS of a rewrite can't have a `where` inside it, so we skip
+        // checking it.
+        find_and_diagnose_nested_where(rewrite, false);
         break;
       }
       case CARBON_KIND(SemIR::RequirementEquivalent equiv): {
-        if (FindWhere(context, context.constant_values().Get(equiv.lhs_id))) {
-          DiagnoseNestedWhere(context, SemIR::LocId(equiv.lhs_id), where_loc);
-          equiv.lhs_id = SemIR::ErrorInst::InstId;
-          inst_id = AddInstInNoBlock(
-              context, SemIR::LocIdAndInst::RuntimeVerified(
-                           context.sem_ir(), SemIR::LocId(inst_id), equiv));
-          diagnosed = true;
-        }
-        if (FindWhere(context, context.constant_values().Get(equiv.rhs_id))) {
-          DiagnoseNestedWhere(context, SemIR::LocId(equiv.rhs_id), where_loc);
-          equiv.rhs_id = SemIR::ErrorInst::InstId;
-          inst_id = AddInstInNoBlock(
-              context, SemIR::LocIdAndInst::RuntimeVerified(
-                           context.sem_ir(), SemIR::LocId(inst_id), equiv));
-          diagnosed = true;
-        }
+        find_and_diagnose_nested_where(equiv, true);
         break;
       }
       default:
