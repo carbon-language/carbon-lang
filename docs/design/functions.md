@@ -55,7 +55,7 @@ forms (where items in square brackets are optional and independent):
 -   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] `=>` _expression_ `;`
 -   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_] `{`
     _statements_ `}`
--   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_] `;`
+-   `fn` _name_ [_implicit-parameters_] _tuple-pattern_ [`->` _return-form_] `;`
 
 A lambda expression has one of the following syntactic forms:
 
@@ -262,6 +262,10 @@ Sort(my_list, fn => $0.val < $1.val);
 // In Swift: { $0.val < $1.val }
 ```
 
+When positional parameters are used in a nested function definition, exactly one
+of the enclosing functions must omit the explicit parameter list, and they are
+interpreted as parameters of that function:
+
 ### Positional parameter restrictions
 
 Lambdas and named function definitions with positional parameters have the
@@ -385,8 +389,7 @@ captures (and function fields) with these restrictions:
 -   They can only be used on functions where the definition is attached to the
     declaration (so they cannot be forward declared).
 -   Captures and function fields are only supported on local function
-    definitions immediately defined inside the body of another function. They
-    are not supported on member functions of classes/interfaces.
+    definitions immediately defined inside the body of another function.
 
 ### Capture modes
 
@@ -467,7 +470,9 @@ fn Foo2() {
 
 ### Function fields
 
-Function fields mirror the behavior of init captures in C++. A function field
+Function fields mirror the behavior of init captures in C++. Function fields
+are defined in the implicit parameter list, and are allowed only where
+captures are allowed. A function field
 definition consists of an irrefutable pattern, `=`, and an initializer. It
 matches the pattern with the initializer when the function definition is
 evaluated. The bindings in the pattern have the same lifetime as the function,
@@ -534,7 +539,8 @@ PushBack(my_list, fn -> T { return T.Make() });
 ### Lambdas may not take `self` as a parameter
 
 To mirror C++'s use of capturing `this`, `self` should always come from the
-outer scope as a capture. `self: Self` is never permitted on lambdas.
+outer scope as a capture. `self` is never permitted in the explicit
+parameter list of a lambda.
 
 ```carbon
 // ❌ Not allowed, lambdas can't be methods.
