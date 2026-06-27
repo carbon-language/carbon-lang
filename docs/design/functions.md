@@ -296,23 +296,9 @@ Captures in Carbon mirror the non-init captures of C++. A capture declaration
 consists of a capture mode (for `var` captures) followed by the name of a
 binding from the enclosing scope, and makes that identifier available in the
 inner function body. These captures are specified in square brackets `[`...`]`
-as part of the implicit parameter list.
+as part of the implicit parameter list. The lifetime of a capture is the
+lifetime of the function in which it exists.
 
-```carbon
-fn Foo(x: i32) {
-  // In a variable:
-  let lambda: auto = fn [var x, var y: i32 = 0] { Print(++x, ++y); };
-  // Equivalent in C++23:
-  // const auto lambda = [x, y = int32_t{0}] mutable -> void { Print(++x, ++y); };
-
-  // As an argument to a function call:
-  Bar(fn [var x, var y: i32 = 0] { Print(++x, ++y); });
-  // Equivalent in C++23:
-  // Bar([x, y = int32_t{0}] mutable -> void { Print(++x, ++y); });
-}
-```
-
-The lifetime of a capture is the lifetime of the function in which it exists.
 For example:
 
 ```carbon
