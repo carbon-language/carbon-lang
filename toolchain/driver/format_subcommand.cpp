@@ -11,6 +11,7 @@
 #include "toolchain/diagnostics/consumer.h"
 #include "toolchain/format/format.h"
 #include "toolchain/lex/lex.h"
+#include "toolchain/parse/parse.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
@@ -86,16 +87,22 @@ auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     lex_options.consumer = driver_env.consumer;
     auto tokens = Lex::Lex(value_stores, *source, lex_options);
 
+    Parse::ParseOptions parse_options;
+    parse_options.consumer = driver_env.consumer;
+    auto tree = Parse::Parse(tokens, parse_options);
+
+    // Formatting is best-effort: it always produces output, even for input with
+    // errors. The return value reports whether the input was error-free; the
+    // best-effort output is used regardless, but a file with errors is still
+    // marked as a failure (for example, for the exit code).
     RawStringOstream buffer;
-    if (Format::Format(tokens, buffer)) {
-      // TODO: Figure out a multi-file output setup that supports good
-      // multi-file testing.
-      // TODO: Use --output values (and default to overwrite).
-      *driver_env.output_stream << buffer.TakeStr();
-    } else {
-      buffer.clear();
+    bool formatted_cleanly = Format::Format(tree, buffer);
+    // TODO: Figure out a multi-file output setup that supports good multi-file
+    // testing.
+    // TODO: Use --output values (and default to overwrite).
+    *driver_env.output_stream << buffer.TakeStr();
+    if (!formatted_cleanly) {
       mark_per_file_error();
-      *driver_env.output_stream << source->text();
     }
   }
 

@@ -6,14 +6,15 @@
 #define CARBON_TOOLCHAIN_FORMAT_FORMAT_H_
 
 #include "common/ostream.h"
-#include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/tree.h"
 
 namespace Carbon::Format {
 
-// Formats file content (based on tokens) to the out stream. Returns false if
-// there was an error during formatting, and the formatted stream shouldn't be
-// used (in that case, the caller might want to use the original content).
-auto Format(const Lex::TokenizedBuffer& tokens, llvm::raw_ostream& out) -> bool;
+// Formats file content to the out stream, driven by the parse tree (and the
+// tokens it references). Returns false if the input had lex or parse errors;
+// best-effort formatted output is still produced, and the caller decides
+// whether to use it (the driver does, and reflects errors in its exit code).
+auto Format(const Parse::Tree& tree, llvm::raw_ostream& out) -> bool;
 
 }  // namespace Carbon::Format
 

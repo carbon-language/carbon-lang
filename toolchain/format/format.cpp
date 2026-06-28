@@ -8,9 +8,8 @@
 
 namespace Carbon::Format {
 
-auto Format(const Lex::TokenizedBuffer& tokens, llvm::raw_ostream& out)
-    -> bool {
-  return Formatter(&tokens, &out).Run();
+auto Format(const Parse::Tree& tree, llvm::raw_ostream& out) -> bool {
+  return Formatter(&tree, &out).Run();
 }
 
 }  // namespace Carbon::Format
