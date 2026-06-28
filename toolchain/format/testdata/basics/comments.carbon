@@ -37,13 +37,13 @@ class C {
 // CHECK:STDOUT: // Another comment
 // CHECK:STDOUT:
 // CHECK:STDOUT: // Block
-// CHECK:STDOUT:   // comment
+// CHECK:STDOUT: // comment
 // CHECK:STDOUT:
 // CHECK:STDOUT: class C {
 // CHECK:STDOUT:   // Internal comment
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: // Another
-// CHECK:STDOUT:   // Block
-// CHECK:STDOUT:   //
-// CHECK:STDOUT:   // Comment
+// CHECK:STDOUT: // Block
+// CHECK:STDOUT: //
+// CHECK:STDOUT: // Comment

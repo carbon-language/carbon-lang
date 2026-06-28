@@ -37,7 +37,15 @@ class Formatter {
  private:
   // Renders the buffered line (if any) at the current indent, with inter-token
   // spacing and any preceding blank line, then ends it and clears the buffer.
+  // Any trailing comment that shares the line's last physical line is attached
+  // before the line ends (see `AttachTrailingComments`).
   auto FlushLine() -> void;
+
+  // Appends any trailing comments at `comment_it_` that share the physical line
+  // of the code just rendered, each separated by a single space, advancing past
+  // them. A trailing comment is one that follows other content on its line; it
+  // is kept on that line rather than emitted on its own.
+  auto AttachTrailingComments() -> void;
 
   // Emits a single blank line if the original source had one or more blank
   // lines before the content starting at `next_start_byte`, unless that would
@@ -57,6 +65,11 @@ class Formatter {
 
   // The output stream for formatted content.
   llvm::raw_ostream* out_;
+
+  // The next comment to emit and one past the last, walked in source order as
+  // tokens are formatted.
+  Lex::CommentIterator comment_it_;
+  Lex::CommentIterator comments_end_;
 
   // The per-token formatting information (role, width, and the
   // operator-precedence break and alignment data), indexed by token and

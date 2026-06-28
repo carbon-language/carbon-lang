@@ -44,6 +44,26 @@ cc_test(
 )
 
 cc_library(
+    name = "comment",
+    srcs = ["comment.cpp"],
+    hdrs = ["comment.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "comment_test",
+    size = "small",
+    srcs = ["comment_test.cpp"],
+    deps = [
+        ":comment",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "line_wrapper",
     srcs = ["line_wrapper.cpp"],
     hdrs = ["line_wrapper.h"],
@@ -83,6 +103,7 @@ cc_library(
     ],
     hdrs = ["format.h"],
     deps = [
+        ":comment",
         ":line_wrapper",
         ":token_info",
         "//common:check",

@@ -12,10 +12,18 @@
 
 //f
 
+//================= an over-long non-wrappable divider comment that is kept verbatim, not word-wrapped
+
 // --- AUTOUPDATE-SPLIT
 
 // CHECK:STDERR: fail_test.carbon:2:3: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
 // CHECK:STDERR: //f
 // CHECK:STDERR:   ^
 // CHECK:STDERR:
+// CHECK:STDERR: fail_test.carbon:4:3: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
+// CHECK:STDERR: //================= an over-long non-wrappable divider comment that is kept verbatim, not word-wrapped
+// CHECK:STDERR:   ^
+// CHECK:STDERR:
 // CHECK:STDOUT: //f
+// CHECK:STDOUT:
+// CHECK:STDOUT: //================= an over-long non-wrappable divider comment that is kept verbatim, not word-wrapped

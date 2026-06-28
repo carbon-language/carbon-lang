@@ -39,6 +39,12 @@ constexpr llvm::StringLiteral Inputs[] = {
     // An operator chain long enough to wrap, exercising operand alignment.
     "fn F() {\n  return aaaaaaaaaa * bbbbbbbbbb + cccccccccc * dddddddddd +"
     " eeeeeeeeee * ffffffffff;\n}",
+    // Comments that need re-indentation and wrapping.
+    "fn F() {\n        // over-indented comment\n  // a very long comment line"
+    " that runs well past the eighty column limit and therefore has to wrap"
+    " around;\n  var x: i32 = 1;\n}",
+    // Trailing comments kept on their code lines.
+    "var x: i32 = 1; // a\nvar yyyy: i32 = 22; // b\n",
     // Overflowing declarations that must break before `->` or after a binding
     // colon rather than splitting at a keyword.
     "class C { private fn Configure() -> "
@@ -126,6 +132,15 @@ TEST(FormatterTest, PreservesTokens) {
         << "tokens changed for input:\n"
         << input;
   }
+}
+
+// A trailing comment is kept on the line of the code it follows, separated by a
+// single space (a stray double space is normalized). Lining up runs of trailing
+// comments into a column comes later, with the whitespace manager.
+TEST(FormatterTest, TrailingCommentStaysOnCodeLine) {
+  Testing::CompileHelper helper;
+  EXPECT_EQ(FormatText(helper, "var x: i32 = 0;// c\n"),
+            "var x: i32 = 0; // c\n");
 }
 
 }  // namespace

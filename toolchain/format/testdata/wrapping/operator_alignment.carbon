@@ -15,7 +15,7 @@ fn F() {
   // and aligns the continued operands under the first operand.
   return aaaaaaaaaa * bbbbbbbbbb + cccccccccc * dddddddddd + eeeeeeeeee * ffffffffff;
 
-  // Keeps the right-hand side on the `=` line and breaks within it, aligning the
+  // Keeps the right-hand side on the `=` line and breaks within it, aligning
   // operands under the first operand rather than the assignment continuation.
   total_value_xyz = aaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb * ccccc;
 
@@ -31,7 +31,7 @@ fn F() {
 // CHECK:STDOUT:   return aaaaaaaaaa * bbbbbbbbbb + cccccccccc * dddddddddd +
 // CHECK:STDOUT:          eeeeeeeeee * ffffffffff;
 // CHECK:STDOUT:
-// CHECK:STDOUT:   // Keeps the right-hand side on the `=` line and breaks within it, aligning the
+// CHECK:STDOUT:   // Keeps the right-hand side on the `=` line and breaks within it, aligning
 // CHECK:STDOUT:   // operands under the first operand rather than the assignment continuation.
 // CHECK:STDOUT:   total_value_xyz =
 // CHECK:STDOUT:       aaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbb * ccccc;
