@@ -28,8 +28,13 @@ namespace {
 // The outcome of formatting one source text, recorded for the invariant checks
 // below.
 struct FormatResult {
-  // The formatted text.
+  // The formatted text, from the whole-text `Format` path.
   std::string formatted;
+  // The formatted text, reconstructed from the minimal-edit
+  // `FormatReplacements` path. Equal to `formatted` for any input.
+  std::string via_replacements;
+  // Whether `FormatReplacements` produced any edits.
+  bool has_replacements;
   // Whether the input was free of lex and parse errors.
   bool clean;
   // The kinds of the input's tokens, in order, for the token-preservation
@@ -39,8 +44,9 @@ struct FormatResult {
 
 }  // namespace
 
-// Lexes, parses, and formats `text`, returning the results. Returns nullopt
-// only when no source buffer can be made for `text` or when it has lex errors.
+// Lexes, parses, and formats `text` both ways, returning the results. Returns
+// nullopt only when no source buffer can be made for `text` or when it has lex
+// errors.
 static auto FormatOnce(llvm::StringRef text) -> std::optional<FormatResult> {
   std::optional<SourceBuffer> source = SourceBuffer::MakeFromStringCopy(
       "fuzz.carbon", text, Diagnostics::NullConsumer());
@@ -73,6 +79,11 @@ static auto FormatOnce(llvm::StringRef text) -> std::optional<FormatResult> {
   RawStringOstream out;
   Format::Format(tree, out);
   result.formatted = out.TakeStr();
+
+  llvm::SmallVector<Format::Replacement> replacements;
+  Format::FormatReplacements(tree, replacements);
+  result.has_replacements = !replacements.empty();
+  result.via_replacements = Format::ApplyReplacements(text, replacements);
   return result;
 }
 
@@ -100,9 +111,9 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
   }
   llvm::StringRef input(reinterpret_cast<const char*>(data), size);
 
-  // Run the formatter -- including its best-effort handling of parse errors --
-  // to catch crashes, assertion failures, and sanitizer errors. `FormatOnce`
-  // returns nullopt for input with no source buffer or with lex errors.
+  // Run the formatter both ways -- whole-text and minimal-edit -- to catch
+  // crashes, assertion failures, and sanitizer errors. `FormatOnce` returns
+  // nullopt for input with no source buffer or with lex errors.
   std::optional<FormatResult> first = FormatOnce(input);
   if (!first) {
     return 0;
@@ -116,12 +127,19 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
     return 0;
   }
 
+  // The minimal-edit path reconstructs the same text as the whole-text path.
+  CARBON_CHECK(first->via_replacements == first->formatted,
+               "minimal-edit output did not match whole-text output");
+
   std::optional<FormatResult> second = FormatOnce(first->formatted);
   CARBON_CHECK(second, "formatted output could not be re-read");
 
-  // Idempotency: formatting already-formatted output changes nothing.
+  // Idempotency: formatting already-formatted output changes nothing, and
+  // produces no edits.
   CARBON_CHECK(second->formatted == first->formatted,
                "formatting is not idempotent");
+  CARBON_CHECK(!second->has_replacements,
+               "re-formatting already-formatted output produced edits");
 
   // Token preservation: formatting only changes whitespace and comments, so the
   // output lexes to the same token kinds as the input.

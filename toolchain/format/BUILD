@@ -95,6 +95,17 @@ cc_test(
 )
 
 cc_library(
+    name = "whitespace_manager",
+    srcs = ["whitespace_manager.cpp"],
+    hdrs = ["whitespace_manager.h"],
+    deps = [
+        "//toolchain/lex:token_index",
+        "//toolchain/lex:tokenized_buffer",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "format",
     srcs = [
         "format.cpp",
@@ -106,6 +117,7 @@ cc_library(
         ":comment",
         ":line_wrapper",
         ":token_info",
+        ":whitespace_manager",
         "//common:check",
         "//common:ostream",
         "//toolchain/lex:token_index",
@@ -128,6 +140,7 @@ cc_test(
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/testing:compile_helper",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 

@@ -10,12 +10,10 @@
 
 namespace Carbon::Format {
 
-Formatter::Formatter(const Parse::Tree* tree, llvm::raw_ostream* out)
+Formatter::Formatter(const Parse::Tree* tree)
     : tree_(tree),
       tokens_(&tree->tokens()),
-      out_(out),
-      comment_it_(tokens_->comments().begin()),
-      comments_end_(tokens_->comments().end()),
+      whitespace_(tokens_),
       token_infos_(
           TokenInfoStore::MakeWithExplicitSize(tokens_->size(), TokenInfo())) {
   // Derive per-token formatting data from the tokens and the parse tree. Each
@@ -102,21 +100,20 @@ Formatter::Formatter(const Parse::Tree* tree, llvm::raw_ostream* out)
   }
 }
 
-auto Formatter::MaybeBlankLine(int next_start_byte, bool is_block_end) -> void {
+auto Formatter::ComputeBlankLines(int next_start_byte, bool is_block_end)
+    -> int {
   // The gap can be empty or inverted after a lexer-inserted recovery token,
   // whose synthesized byte offset can overlap the next real token; there is no
   // blank line to keep in that case.
   if (!last_end_byte_ || after_open_brace_ || is_block_end ||
       next_start_byte <= *last_end_byte_) {
-    return;
+    return 0;
   }
   llvm::StringRef gap = tokens_->source().text().substr(
       *last_end_byte_, next_start_byte - *last_end_byte_);
   // Two or more newlines between the previous content and this means there was
   // at least one blank line; keep a single one.
-  if (gap.count('\n') >= 2) {
-    *out_ << "\n";
-  }
+  return gap.count('\n') >= 2 ? 1 : 0;
 }
 
 auto Formatter::FlushLine() -> void {
@@ -125,8 +122,9 @@ auto Formatter::FlushLine() -> void {
   }
 
   Lex::TokenIndex first = current_line_.front();
-  MaybeBlankLine(tokens_->GetByteOffset(first),
-                 tokens_->GetKind(first) == Lex::TokenKind::CloseCurlyBrace);
+  int leading_newlines = LeadingNewlines(
+      tokens_->GetByteOffset(first),
+      tokens_->GetKind(first) == Lex::TokenKind::CloseCurlyBrace);
 
   // Decide where line breaks go. A line that already fits needs none: this is
   // both the common case and a fast path that keeps short output byte-for-byte
@@ -140,53 +138,35 @@ auto Formatter::FlushLine() -> void {
         SolveLineBreaks(*tokens_, token_infos_, current_line_, indent_);
   }
 
-  out_->indent(indent_);
-
+  // Record each token's leading whitespace. The line's first token carries the
+  // blank-line allowance and the break ending the previous line; a wrapped
+  // token carries its own break and continuation indent; everything else its
+  // inter-token spacing.
   std::optional<Lex::TokenIndex> previous;
   for (int i = 0; i < static_cast<int>(current_line_.size()); ++i) {
     Lex::TokenIndex token = current_line_[i];
-    if (previous) {
-      if (newline_indents[i] >= 0) {
-        // A line break before this token, then its continuation indent.
-        *out_ << "\n";
-        out_->indent(newline_indents[i]);
-      } else {
-        out_->indent(SpacesBefore(*tokens_, token_infos_, *previous, token));
-      }
+    int newlines;
+    int spaces;
+    if (!previous) {
+      newlines = leading_newlines;
+      spaces = indent_;
+    } else if (newline_indents[i] >= 0) {
+      newlines = 1;
+      spaces = newline_indents[i];
+    } else {
+      newlines = 0;
+      spaces = SpacesBefore(*tokens_, token_infos_, *previous, token);
     }
-    *out_ << tokens_->GetTokenText(token);
+    whitespace_.AddToken(newlines, spaces, token);
     previous = token;
   }
+  started_ = true;
 
   Lex::TokenIndex last = current_line_.back();
   last_end_byte_ =
       tokens_->GetByteOffset(last) + tokens_->GetTokenText(last).size();
   after_open_brace_ = tokens_->GetKind(last) == Lex::TokenKind::OpenCurlyBrace;
-  // Keep any trailing comment on this line, then end it.
-  AttachTrailingComments();
-  *out_ << "\n";
   current_line_.clear();
-}
-
-auto Formatter::AttachTrailingComments() -> void {
-  llvm::StringRef source = tokens_->source().text();
-  while (comment_it_ != comments_end_ &&
-         tokens_->IsTrailingComment(*comment_it_)) {
-    llvm::StringRef text = tokens_->GetCommentText(*comment_it_);
-    int start_byte = text.data() - source.data();
-    // A trailing comment attaches only if it directly follows the code just
-    // rendered: nothing but horizontal whitespace between the last token and
-    // the comment. Checking for a line break alone is not enough: with
-    // several statements on one source line, the comment must attach to the
-    // last of them, not to the first to be flushed.
-    if (!source.slice(*last_end_byte_, start_byte).trim(" \t").empty()) {
-      break;
-    }
-    *out_ << " " << text.rtrim();
-    last_end_byte_ = start_byte + text.rtrim().size();
-    after_open_brace_ = false;
-    ++comment_it_;
-  }
 }
 
 auto Formatter::Run() -> bool {
@@ -205,34 +185,40 @@ auto Formatter::Run() -> bool {
   // recorded as comments, so output reconstructed from tokens and comments
   // silently drops them. Surface them through the lexer's comment records, or
   // detect and preserve them here.
+  auto comments = tokens_->comments();
+  auto comment_it = comments.begin();
+
   for (auto token : tokens_->tokens()) {
     // Emit any comments that sort before this token. A full-line comment block
     // is re-indented to the current code indent and wrapped to the column
     // limit; a trailing comment stays on the line of the code it follows.
-    while (comment_it_ != comments_end_ &&
-           tokens_->IsAfterComment(token, *comment_it_)) {
-      if (tokens_->IsTrailingComment(*comment_it_) && !current_line_.empty()) {
-        // The comment trails code still buffered in the current line (a comment
-        // mid-way through a wrapped statement); flush it so the comment
-        // attaches to that line. A trailing comment at the end of a statement
-        // was already attached when its terminator flushed the line, so it
-        // never reaches here. If the comment cannot attach (no open line), it
-        // falls through to own-line emission below.
-        FlushLine();
-        continue;
-      }
-      FlushLine();
-      llvm::StringRef text = tokens_->GetCommentText(*comment_it_);
+    while (comment_it != comments.end() &&
+           tokens_->IsAfterComment(token, *comment_it)) {
+      llvm::StringRef text = tokens_->GetCommentText(*comment_it);
       int start_byte = text.data() - tokens_->source().text().data();
-      MaybeBlankLine(start_byte, /*is_block_end=*/false);
-      *out_ << CommentText(text, indent_, ColumnLimit) << "\n";
+      if (tokens_->IsTrailingComment(*comment_it)) {
+        // Flush the code line so its tokens are recorded, then append the
+        // comment to it. The comment's trailing newline is dropped, as line
+        // breaks are attributed to the following content.
+        FlushLine();
+        whitespace_.AddTrailingComment(text.rtrim().str());
+      } else {
+        FlushLine();
+        int leading_newlines =
+            LeadingNewlines(start_byte, /*is_block_end=*/false);
+        // Join the formatted comment lines with internal newlines but no
+        // trailing one, and record the block as raw, verbatim text.
+        whitespace_.AddRaw(leading_newlines,
+                           CommentText(text, indent_, ColumnLimit));
+      }
+      started_ = true;
       // Comment text includes its trailing newline (though a comment ending
       // the file may lack it); exclude it from the byte baseline so a
       // following blank line is counted consistently with tokens (whose text
       // has no trailing newline).
       last_end_byte_ = start_byte + text.rtrim().size();
       after_open_brace_ = false;
-      ++comment_it_;
+      ++comment_it;
     }
 
     switch (tokens_->GetKind(token)) {
@@ -251,8 +237,8 @@ auto Formatter::Run() -> bool {
         // as content, so the block still expands.
         auto close = tokens_->GetMatchedClosingToken(token);
         bool has_inner_token = NextToken(token) != close;
-        bool has_inner_comment = comment_it_ != comments_end_ &&
-                                 tokens_->GetCommentText(*comment_it_).data() -
+        bool has_inner_comment = comment_it != comments.end() &&
+                                 tokens_->GetCommentText(*comment_it).data() -
                                          tokens_->source().text().data() <
                                      tokens_->GetByteOffset(close);
         if (has_inner_token || has_inner_comment) {
@@ -296,7 +282,39 @@ auto Formatter::Run() -> bool {
         break;
     }
   }
+
+  output_ = whitespace_.Generate(token_map_);
   return !tokens_->has_errors() && !tree_->has_errors();
+}
+
+auto Formatter::ComputeReplacements() const -> llvm::SmallVector<Replacement> {
+  llvm::StringRef source = tokens_->source().text();
+  llvm::StringRef output = output_;
+
+  llvm::SmallVector<Replacement> replacements;
+  auto maybe_add_gap = [&](int32_t source_begin, int32_t source_end,
+                           int32_t output_begin, int32_t output_end) {
+    llvm::StringRef source_gap =
+        source.substr(source_begin, source_end - source_begin);
+    llvm::StringRef output_gap =
+        output.substr(output_begin, output_end - output_begin);
+    if (source_gap != output_gap) {
+      replacements.push_back({.offset = source_begin,
+                              .length = source_end - source_begin,
+                              .text = output_gap.str()});
+    }
+  };
+
+  int32_t source_pos = 0;
+  int32_t output_pos = 0;
+  for (const TokenSpan& span : token_map_) {
+    maybe_add_gap(source_pos, span.source_begin, output_pos, span.output_begin);
+    // The token text itself is copied verbatim, so skip over it in both.
+    source_pos = span.source_begin + span.length;
+    output_pos = span.output_begin + span.length;
+  }
+  maybe_add_gap(source_pos, source.size(), output_pos, output.size());
+  return replacements;
 }
 
 }  // namespace Carbon::Format

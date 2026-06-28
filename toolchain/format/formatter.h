@@ -5,11 +5,14 @@
 #ifndef CARBON_TOOLCHAIN_FORMAT_FORMATTER_H_
 #define CARBON_TOOLCHAIN_FORMAT_FORMATTER_H_
 
+#include <cstdint>
 #include <optional>
+#include <string>
 
-#include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/format/format.h"
 #include "toolchain/format/token_info.h"
+#include "toolchain/format/whitespace_manager.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 
@@ -23,34 +26,47 @@ namespace Carbon::Format {
 // out as a unit, wrapped across physical lines by the solver in
 // `line_wrapper.h` when it exceeds the column limit.
 //
+// `Run()` records each token's leading whitespace into a `WhitespaceManager`,
+// then generates the full formatted text from it and records where each token
+// landed. The result is then available either as the whole text (`TakeOutput`)
+// or as a minimal set of edits against the original source
+// (`ComputeReplacements`).
+//
 // TODO: Drive indentation and line structure from the parse tree rather than
 // from brace nesting.
-//
-// TODO: Add support for formatting line ranges (will need flags too).
 class Formatter {
  public:
-  explicit Formatter(const Parse::Tree* tree, llvm::raw_ostream* out);
+  explicit Formatter(const Parse::Tree* tree);
 
-  // See class comments.
+  // Formats into the internal buffer; see class comments. Must be called once
+  // before `TakeOutput` or `ComputeReplacements`.
   auto Run() -> bool;
 
+  // Returns the full formatted text, leaving the formatter empty.
+  auto TakeOutput() -> std::string { return std::move(output_); }
+
+  // Returns the edits that turn the original source into the formatted text:
+  // one per changed run of whitespace/comments between tokens (see `format.h`).
+  auto ComputeReplacements() const -> llvm::SmallVector<Replacement>;
+
  private:
-  // Renders the buffered line (if any) at the current indent, with inter-token
-  // spacing and any preceding blank line, then ends it and clears the buffer.
-  // Any trailing comment that shares the line's last physical line is attached
-  // before the line ends (see `AttachTrailingComments`).
+  // Lays out the buffered line (if any): decides its line breaks, then records
+  // each token's leading whitespace into the whitespace manager, prefixed by
+  // any blank line the source had before it. Clears the line buffer.
   auto FlushLine() -> void;
 
-  // Appends any trailing comments at `comment_it_` that share the physical line
-  // of the code just rendered, each separated by a single space, advancing past
-  // them. A trailing comment is one that follows other content on its line; it
-  // is kept on that line rather than emitted on its own.
-  auto AttachTrailingComments() -> void;
+  // Returns the number of blank lines to keep before the content starting at
+  // `next_start_byte`: one if the source had one or more there, else zero,
+  // except none at the start or end of a block.
+  auto ComputeBlankLines(int next_start_byte, bool is_block_end) -> int;
 
-  // Emits a single blank line if the original source had one or more blank
-  // lines before the content starting at `next_start_byte`, unless that would
-  // fall at the start or end of a block. At most one blank line is kept.
-  auto MaybeBlankLine(int next_start_byte, bool is_block_end) -> void;
+  // The leading newline count for the next content: a blank-line allowance plus
+  // the single break that ends the previous line, or zero before the first
+  // content of the file.
+  auto LeadingNewlines(int next_start_byte, bool is_block_end) -> int {
+    return (started_ ? 1 : 0) +
+           ComputeBlankLines(next_start_byte, is_block_end);
+  }
 
   // Returns the next token index.
   static auto NextToken(Lex::TokenIndex token) -> Lex::TokenIndex {
@@ -63,13 +79,14 @@ class Formatter {
   // The tokens being formatted, referenced by the parse tree.
   const Lex::TokenizedBuffer* tokens_;
 
-  // The output stream for formatted content.
-  llvm::raw_ostream* out_;
+  // Collects each token's whitespace and generates the formatted text.
+  WhitespaceManager whitespace_;
 
-  // The next comment to emit and one past the last, walked in source order as
-  // tokens are formatted.
-  Lex::CommentIterator comment_it_;
-  Lex::CommentIterator comments_end_;
+  // The formatted text, populated when `Run()` finishes.
+  std::string output_;
+
+  // Where each emitted token landed in the source and the output, in order.
+  llvm::SmallVector<TokenSpan> token_map_;
 
   // The per-token formatting information (role, width, and the
   // operator-precedence break and alignment data), indexed by token and
@@ -86,6 +103,10 @@ class Formatter {
   // Whether the last rendered line ended with an opening `{`, so a blank line
   // at the start of a block is dropped.
   bool after_open_brace_ = false;
+
+  // Whether any content has been recorded yet, so the first line gets no
+  // leading newline.
+  bool started_ = false;
 
   // The current code indent level, in spaces, added to new lines.
   int indent_ = 0;

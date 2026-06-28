@@ -7,6 +7,7 @@
 #include <string>
 
 #include "common/raw_string_ostream.h"
+#include "llvm/ADT/SmallVector.h"
 #include "toolchain/format/format.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/testing/compile_helper.h"
@@ -141,6 +142,65 @@ TEST(FormatterTest, TrailingCommentStaysOnCodeLine) {
   Testing::CompileHelper helper;
   EXPECT_EQ(FormatText(helper, "var x: i32 = 0;// c\n"),
             "var x: i32 = 0; // c\n");
+}
+
+// Formats `text` via `FormatReplacements` + `ApplyReplacements`.
+auto FormatViaReplacements(Testing::CompileHelper& helper, llvm::StringRef text)
+    -> std::string {
+  llvm::SmallVector<Replacement> replacements;
+  FormatReplacements(helper.GetTree(text), replacements);
+  return ApplyReplacements(text, replacements);
+}
+
+// Applying the whole-document replacements must reproduce `Format`'s output.
+TEST(FormatterTest, ReplacementsReproduceFormat) {
+  Testing::CompileHelper helper;
+  for (llvm::StringRef input : Inputs) {
+    EXPECT_EQ(FormatViaReplacements(helper, input), FormatText(helper, input))
+        << "replacements diverged from Format for input:\n"
+        << input;
+  }
+}
+
+// The replacement invariant holds even for lex-broken input whose recovery
+// inserts tokens: a recovery token's text exists in no source byte range, so it
+// is not an edit anchor and must flow into a neighboring gap's edit instead.
+// The two inputs cover a single recovery token and two at the same offset.
+TEST(FormatterTest, ReplacementsReproduceFormatOnRecoveredInput) {
+  Testing::CompileHelper helper;
+  for (llvm::StringRef input : {"class C { fn F( }", "class C { fn F( [ }"}) {
+    EXPECT_EQ(FormatViaReplacements(helper, input), FormatText(helper, input))
+        << "replacements diverged from Format for input:\n"
+        << input;
+  }
+}
+
+// Already-formatted input produces no edits at all.
+TEST(FormatterTest, NoReplacementsWhenAlreadyFormatted) {
+  Testing::CompileHelper helper;
+  for (llvm::StringRef input : Inputs) {
+    std::string formatted = FormatText(helper, input);
+    llvm::SmallVector<Replacement> replacements;
+    FormatReplacements(helper.GetTree(formatted), replacements);
+    EXPECT_TRUE(replacements.empty()) << "expected no edits re-formatting:\n"
+                                      << formatted;
+  }
+}
+
+// A single localized change yields a single small edit, not a whole-file
+// rewrite.
+TEST(FormatterTest, ProducesMinimalEdits) {
+  Testing::CompileHelper helper;
+  llvm::SmallVector<Replacement> replacements;
+  // Only the spacing around `+` on the middle line is wrong (the input is
+  // otherwise already formatted, including its trailing newline).
+  FormatReplacements(
+      helper.GetTree("fn F() {\n  var x: i32 = 1+2;\n  return x;\n}\n"),
+      replacements);
+  ASSERT_EQ(replacements.size(), 2);
+  for (const Replacement& replacement : replacements) {
+    EXPECT_EQ(replacement.text, " ");
+  }
 }
 
 }  // namespace
