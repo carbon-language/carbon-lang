@@ -22,6 +22,7 @@ cc_library(
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -43,6 +44,37 @@ cc_test(
 )
 
 cc_library(
+    name = "line_wrapper",
+    srcs = ["line_wrapper.cpp"],
+    hdrs = ["line_wrapper.h"],
+    deps = [
+        ":token_info",
+        "//common:hashing",
+        "//common:set",
+        "//toolchain/lex:token_kind",
+        "//toolchain/lex:tokenized_buffer",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "line_wrapper_test",
+    size = "small",
+    srcs = ["line_wrapper_test.cpp"],
+    deps = [
+        ":token_info",
+        ":line_wrapper",
+        "//testing/base:gtest_main",
+        "//toolchain/lex:token_index",
+        "//toolchain/lex:token_kind",
+        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/testing:compile_helper",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "format",
     srcs = [
         "format.cpp",
@@ -51,6 +83,7 @@ cc_library(
     ],
     hdrs = ["format.h"],
     deps = [
+        ":line_wrapper",
         ":token_info",
         "//common:ostream",
         "//toolchain/lex:token_index",

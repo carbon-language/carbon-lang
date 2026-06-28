@@ -28,6 +28,14 @@ constexpr llvm::StringLiteral Inputs[] = {
     "fn F(color: Color) -> i32 { match (color) { case .Red => { return 1; } "
     "default => { return 0; } } }",
     "var v: auto = { .a = 1,.b = 2 };",
+    // Lines long enough to force the wrapping solver to break them, so the
+    // invariants below also cover wrapped output.
+    "fn RegisterHandler(event_name: String, priority: i32, callback: Callback)"
+    " -> bool { return true; }",
+    "fn F() {\n  RegisterHandler(event_name, default_priority, my_callback,"
+    " extra_argument_value);\n}",
+    "fn F() {\n  var is_valid: bool = has_permission and is_authenticated and"
+    " not is_token_expired;\n}",
 };
 
 // Formats `text` and returns the result.

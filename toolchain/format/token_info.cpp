@@ -4,6 +4,8 @@
 
 #include "toolchain/format/token_info.h"
 
+#include <optional>
+
 namespace Carbon::Format {
 
 auto RoleForNodeKind(Parse::NodeKind kind) -> TokenRole {
@@ -102,6 +104,68 @@ auto SpacesBefore(const Lex::TokenizedBuffer& tokens,
     return 0;
   }
   return 1;
+}
+
+auto CanBreakBefore(const Lex::TokenizedBuffer& tokens,
+                    const TokenInfoStore& token_infos, Lex::TokenIndex /*left*/,
+                    Lex::TokenIndex right) -> bool {
+  // Separators and closing brackets hug the preceding token, so a break before
+  // them is never allowed.
+  if (tokens.GetKind(right).IsOneOf(
+          {Lex::TokenKind::Comma, Lex::TokenKind::Semi,
+           Lex::TokenKind::CloseParen, Lex::TokenKind::CloseSquareBracket,
+           Lex::TokenKind::CloseCurlyBrace})) {
+    return false;
+  }
+  // A call, parameter-list, or subscript bracket stays with its callee or name.
+  if (token_infos.Get(right).role == TokenRole::PostfixBracket) {
+    return false;
+  }
+  // Anywhere else a break is allowed; the split penalty steers where breaks
+  // actually land.
+  return true;
+}
+
+auto SplitPenalty(const Lex::TokenizedBuffer& tokens,
+                  const TokenInfoStore& /*token_infos*/, Lex::TokenIndex left,
+                  Lex::TokenIndex right) -> int {
+  Lex::TokenKind left_kind = tokens.GetKind(left);
+  // Cheap, encouraged breaks.
+  if (left_kind == Lex::TokenKind::Comma) {
+    // After a comma, between list elements.
+    return 1;
+  }
+  if (left_kind == Lex::TokenKind::Equal) {
+    // After `=`, onto the right-hand side of an assignment.
+    return 2;
+  }
+  if (left_kind.IsOneOf(
+          {Lex::TokenKind::OpenParen, Lex::TokenKind::OpenSquareBracket})) {
+    // After an opening bracket, before the first element.
+    return 19;
+  }
+  // Expensive, discouraged breaks.
+  if (tokens.GetKind(right) == Lex::TokenKind::Period) {
+    // Before a member access in a chain.
+    return 150;
+  }
+  // Default.
+  return 3;
+}
+
+auto RenderedWidth(const Lex::TokenizedBuffer& tokens,
+                   const TokenInfoStore& token_infos,
+                   llvm::ArrayRef<Lex::TokenIndex> line) -> int {
+  int width = 0;
+  std::optional<Lex::TokenIndex> previous;
+  for (Lex::TokenIndex token : line) {
+    if (previous) {
+      width += SpacesBefore(tokens, token_infos, *previous, token);
+    }
+    width += token_infos.Get(token).column_width;
+    previous = token;
+  }
+  return width;
 }
 
 }  // namespace Carbon::Format

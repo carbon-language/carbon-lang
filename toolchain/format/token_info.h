@@ -7,6 +7,7 @@
 
 #include <cstdint>
 
+#include "llvm/ADT/ArrayRef.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -55,6 +56,16 @@ auto RoleForNodeKind(Parse::NodeKind kind) -> TokenRole;
 struct TokenInfo {
   // The token's syntactic role, derived from the parse tree.
   TokenRole role = TokenRole::Unknown;
+  // The display width, in columns, the token occupies on the line it starts:
+  // the byte length of its text, or of just its first physical line for a
+  // multi-line token (such as a multi-line string literal).
+  // TODO: Use the true display width (encoding-aware) for wide or multi-byte
+  // tokens, the way clang-format's `column_width` does.
+  // TODO: Also track a multi-line token's last physical line width (the analog
+  // of clang-format's `LastLineColumnWidth`): the column after such a token is
+  // currently computed from `column_width`, so later tokens on its unwrapped
+  // line are placed from a fictitious column.
+  int column_width = 0;
 };
 
 // The per-token formatting information, indexed by the token. The `Formatter`
@@ -70,6 +81,26 @@ using TokenInfoStore = FixedSizeValueStore<Lex::TokenIndex, TokenInfo>;
 auto SpacesBefore(const Lex::TokenizedBuffer& tokens,
                   const TokenInfoStore& token_infos, Lex::TokenIndex left,
                   Lex::TokenIndex right) -> int;
+
+// Returns whether a line break is allowed before `right`, given the preceding
+// token `left`. This rules out only the positions where a break is never
+// allowed; the split penalty discourages the merely-undesirable ones.
+auto CanBreakBefore(const Lex::TokenizedBuffer& tokens,
+                    const TokenInfoStore& token_infos, Lex::TokenIndex left,
+                    Lex::TokenIndex right) -> bool;
+
+// Returns the penalty for breaking the line before `right`, given the preceding
+// token `left`. Lower is cheaper, so the layout solver prefers low-penalty
+// break points. These are starting values, tuned against the test corpus.
+auto SplitPenalty(const Lex::TokenizedBuffer& tokens,
+                  const TokenInfoStore& token_infos, Lex::TokenIndex left,
+                  Lex::TokenIndex right) -> int;
+
+// Returns the width, in columns, of `line` laid out on a single line: the sum
+// of the token widths and the spaces between them, excluding indentation.
+auto RenderedWidth(const Lex::TokenizedBuffer& tokens,
+                   const TokenInfoStore& token_infos,
+                   llvm::ArrayRef<Lex::TokenIndex> line) -> int;
 
 }  // namespace Carbon::Format
 

@@ -8,6 +8,7 @@
 #include <optional>
 
 #include "common/ostream.h"
+#include "llvm/ADT/SmallVector.h"
 #include "toolchain/format/token_info.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
@@ -17,8 +18,10 @@ namespace Carbon::Format {
 // Implements Format(); see format.h. It's intended to be constructed and
 // `Run()` once, then destructed.
 //
-// This walks the token stream, using the parse tree to drive spacing decisions
-// (and, in the future, indentation, line breaking, and wrapping).
+// This walks the token stream, using the parse tree to drive spacing decisions.
+// Tokens are buffered into the current unwrapped line; each line is then laid
+// out as a unit, wrapped across physical lines by the solver in
+// `line_wrapper.h` when it exceeds the column limit.
 //
 // TODO: Drive indentation and line structure from the parse tree rather than
 // from brace nesting.
@@ -32,12 +35,9 @@ class Formatter {
   auto Run() -> bool;
 
  private:
-  // Emits a token on the current line, preceded by indentation if the line is
-  // empty, or by inter-token spacing otherwise.
-  auto EmitToken(Lex::TokenIndex token) -> void;
-
-  // Ends the current line.
-  auto Newline() -> void;
+  // Renders the buffered line (if any) at the current indent, with inter-token
+  // spacing and any preceding blank line, then ends it and clears the buffer.
+  auto FlushLine() -> void;
 
   // Emits a single blank line if the original source had one or more blank
   // lines before the content starting at `next_start_byte`, unless that would
@@ -58,23 +58,19 @@ class Formatter {
   // The output stream for formatted content.
   llvm::raw_ostream* out_;
 
-  // The per-token formatting information, indexed by token and derived from
-  // the parse tree.
+  // The per-token formatting information (role and width), indexed by token
+  // and derived from the parse tree.
   TokenInfoStore token_infos_;
 
-  // Whether the current output line has no content yet, so the next token needs
-  // indentation rather than inter-token spacing.
-  bool at_line_start_ = true;
-
-  // The previous token emitted on the current line, if any.
-  std::optional<Lex::TokenIndex> previous_;
+  // Tokens buffered for the current physical line, not yet rendered.
+  llvm::SmallVector<Lex::TokenIndex> current_line_;
 
   // The source byte offset just past the last emitted token or comment, used to
   // find blank lines in the original source. Empty before any output.
   std::optional<int> last_end_byte_;
 
-  // Whether the last emitted token was an opening `{`, so a blank line at the
-  // start of a block is dropped.
+  // Whether the last rendered line ended with an opening `{`, so a blank line
+  // at the start of a block is dropped.
   bool after_open_brace_ = false;
 
   // The current code indent level, in spaces, added to new lines.

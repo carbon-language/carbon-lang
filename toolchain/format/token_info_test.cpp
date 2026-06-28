@@ -14,10 +14,11 @@
 namespace Carbon::Format {
 namespace {
 
-// Wraps a lexed source string for spacing tests: `Token(i)` is the i-th token
-// of `source` (skipping the file start and end tokens), `SetRole` annotates a
-// token in the info store the way the formatter would from the parse tree, and
-// `Spaces` runs `SpacesBefore` over the store.
+// Wraps a lexed source string for layout-decision tests: `Token(i)` is the
+// i-th token of `source` (skipping the file start and end tokens), `SetRole`
+// annotates a token in the info store the way the formatter would from the
+// parse tree, and the remaining helpers run the layout decisions over the
+// store. Token widths are filled from the token text, as in the formatter.
 class TokenTester {
  public:
   explicit TokenTester(llvm::StringRef source)
@@ -25,6 +26,8 @@ class TokenTester {
         token_infos_(
             TokenInfoStore::MakeWithExplicitSize(tokens_.size(), TokenInfo())) {
     for (auto token : tokens_.tokens()) {
+      token_infos_.Get(token).column_width =
+          static_cast<int>(tokens_.GetTokenText(token).size());
       if (!tokens_.GetKind(token).IsOneOf(
               {Lex::TokenKind::FileStart, Lex::TokenKind::FileEnd})) {
         source_tokens_.push_back(token);
@@ -40,6 +43,18 @@ class TokenTester {
 
   auto Spaces(int left, int right) -> int {
     return SpacesBefore(tokens_, token_infos_, Token(left), Token(right));
+  }
+
+  auto CanBreak(int left, int right) -> bool {
+    return CanBreakBefore(tokens_, token_infos_, Token(left), Token(right));
+  }
+
+  auto Penalty(int left, int right) -> int {
+    return SplitPenalty(tokens_, token_infos_, Token(left), Token(right));
+  }
+
+  auto Width() -> int {
+    return RenderedWidth(tokens_, token_infos_, source_tokens_);
   }
 
  private:
@@ -174,6 +189,47 @@ TEST(SpacesBeforeTest, DefaultIsOneSpace) {
   TokenTester t("a b + c");
   EXPECT_EQ(t.Spaces(0, 1), 1);
   EXPECT_EQ(t.Spaces(1, 2), 1);
+}
+
+TEST(CanBreakBeforeTest, NeverBeforeSeparatorsOrClosers) {
+  TokenTester t("F(a, b); c[d]; {}");
+  EXPECT_FALSE(t.CanBreak(2, 3));    // Before `,`.
+  EXPECT_FALSE(t.CanBreak(4, 5));    // Before `)`.
+  EXPECT_FALSE(t.CanBreak(5, 6));    // Before `;`.
+  EXPECT_FALSE(t.CanBreak(9, 10));   // Before `]`.
+  EXPECT_FALSE(t.CanBreak(12, 13));  // Before `}`.
+}
+
+TEST(CanBreakBeforeTest, NeverBeforePostfixBracket) {
+  TokenTester t("F(x)");
+  t.SetRole(1, TokenRole::PostfixBracket);
+  EXPECT_FALSE(t.CanBreak(0, 1));
+}
+
+TEST(CanBreakBeforeTest, AllowedElsewhere) {
+  TokenTester t("a b, c");
+  EXPECT_TRUE(t.CanBreak(0, 1));  // Between two words.
+  EXPECT_TRUE(t.CanBreak(2, 3));  // After a comma.
+}
+
+TEST(SplitPenaltyTest, Values) {
+  TokenTester t("a, b = c (d) e.f g h");
+  // Cheap: after a comma or `=`, or the first element after a bracket.
+  EXPECT_EQ(t.Penalty(1, 2), 1);
+  EXPECT_EQ(t.Penalty(3, 4), 2);
+  EXPECT_EQ(t.Penalty(5, 6), 19);
+  // Expensive: before a member access.
+  EXPECT_EQ(t.Penalty(8, 9), 150);
+  // Default.
+  EXPECT_EQ(t.Penalty(11, 12), 3);
+}
+
+TEST(RenderedWidthTest, SumsWidthsAndSpaces) {
+  // `fn F()` is 6 columns: widths 2 + 1 + 1 + 1, plus a single space after `fn`
+  // (none before the call paren or before the close paren).
+  TokenTester t("fn F()");
+  t.SetRole(2, TokenRole::PostfixBracket);
+  EXPECT_EQ(t.Width(), 6);
 }
 
 }  // namespace
