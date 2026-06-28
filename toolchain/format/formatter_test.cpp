@@ -8,8 +8,12 @@
 #include <string>
 
 #include "common/raw_string_ostream.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "toolchain/format/format.h"
+#include "toolchain/format/style.h"
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/testing/compile_helper.h"
 
@@ -240,6 +244,49 @@ TEST(FormatterTest, RangeFormattingRewrapsWholeUnwrappedLine) {
       FormatViaReplacements(helper, "fn F() {\n  var x: i32 =\n      1+1;\n}\n",
                             LineRange{.first_line = 2, .last_line = 2}),
       "fn F() {\n  var x: i32 = 1 + 1;\n}\n");
+}
+
+// Formats `text` with a specific style.
+auto FormatTextWithStyle(Testing::CompileHelper& helper, llvm::StringRef text,
+                         const Style& style) -> std::string {
+  RawStringOstream out;
+  Format(helper.GetTree(text), out, style);
+  return out.TakeStr();
+}
+
+// `indent_width` controls how far each brace level indents.
+TEST(FormatterTest, StyleIndentWidth) {
+  Testing::CompileHelper helper;
+  Style style;
+  style.indent_width = 4;
+  EXPECT_EQ(FormatTextWithStyle(helper, "fn F() {\n  return x;\n}\n", style),
+            "fn F() {\n    return x;\n}\n");
+}
+
+// A narrower `column_limit` wraps a line that fits at the default limit.
+TEST(FormatterTest, StyleColumnLimitControlsWrapping) {
+  Testing::CompileHelper helper;
+  llvm::StringRef input = "fn F() {\n  foo(aaaa, bbbb, cccc);\n}\n";
+  Style narrow;
+  narrow.column_limit = 20;
+  std::string wide = FormatTextWithStyle(helper, input, Style());
+  std::string tight = FormatTextWithStyle(helper, input, narrow);
+  EXPECT_LT(llvm::count(wide, '\n'), llvm::count(tight, '\n'))
+      << "narrow limit did not add line breaks; tight output:\n"
+      << tight;
+}
+
+// `max_empty_lines_to_keep` bounds the blank lines kept between statements.
+TEST(FormatterTest, StyleMaxEmptyLinesToKeep) {
+  Testing::CompileHelper helper;
+  llvm::StringRef input =
+      "fn F() {\n  var x: i32 = 1;\n\n\n  var y: i32 = 2;\n}\n";
+  EXPECT_EQ(FormatTextWithStyle(helper, input, Style()),
+            "fn F() {\n  var x: i32 = 1;\n\n  var y: i32 = 2;\n}\n");
+  Style keep_two;
+  keep_two.max_empty_lines_to_keep = 2;
+  EXPECT_EQ(FormatTextWithStyle(helper, input, keep_two),
+            "fn F() {\n  var x: i32 = 1;\n\n\n  var y: i32 = 2;\n}\n");
 }
 
 }  // namespace

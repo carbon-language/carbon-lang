@@ -19,13 +19,6 @@
 
 namespace Carbon::Format {
 
-// Each column past the column limit costs this much penalty. It dwarfs every
-// split penalty, which is what makes the limit "soft": the solver prefers any
-// legal break over overrunning, yet can still exceed the limit when no break
-// helps, producing best-effort output rather than failing. Matches
-// clang-format's `PenaltyExcessCharacter`.
-constexpr int64_t PenaltyExcessCharacter = 1'000'000;
-
 // An upper bound on the number of search states generated (roughly twice the
 // number explored) before giving up and leaving the line unwrapped. Ordinary
 // lines generate far fewer; this only bounds the cost of pathological inputs
@@ -115,19 +108,20 @@ static auto StateKey(const State& state) -> llvm::SmallVector<int> {
 }
 
 // Returns the excess-character penalty for extending a line from `from_column`
-// to `to_column`, charging `PenaltyExcessCharacter` for each column past the
-// limit. Phrasing it as a delta over the line's prior extent counts each excess
-// column exactly once across the tokens that share a line.
-static auto ExcessPenalty(int from_column, int to_column) -> int64_t {
-  int excess = std::max(0, to_column - ColumnLimit) -
-               std::max(0, from_column - ColumnLimit);
-  return PenaltyExcessCharacter * excess;
+// to `to_column`, charging `style.penalty_excess_character` for each column
+// past the limit. Phrasing it as a delta over the line's prior extent counts
+// each excess column exactly once across the tokens that share a line.
+static auto ExcessPenalty(int from_column, int to_column, const Style& style)
+    -> int64_t {
+  int excess = std::max(0, to_column - style.column_limit) -
+               std::max(0, from_column - style.column_limit);
+  return style.penalty_excess_character * excess;
 }
 
 auto SolveLineBreaks(const Lex::TokenizedBuffer& tokens,
                      const TokenInfoStore& token_infos,
-                     llvm::ArrayRef<Lex::TokenIndex> line, int indent)
-    -> llvm::SmallVector<int> {
+                     llvm::ArrayRef<Lex::TokenIndex> line, int indent,
+                     const Style& style) -> llvm::SmallVector<int> {
   int token_count = line.size();
   llvm::SmallVector<int> breaks(token_count, -1);
   if (token_count <= 1) {
@@ -141,7 +135,7 @@ auto SolveLineBreaks(const Lex::TokenizedBuffer& tokens,
     llvm::SmallVector<int, 8> stack;
     // The statement-level continuation indent, used for breaks outside any
     // bracket.
-    stack.push_back(indent + ContinuationIndentWidth);
+    stack.push_back(indent + style.continuation_indent_width);
     int column = indent + token_infos.Get(line[0]).column_width;
     ApplyTokenScopes(tokens.GetKind(line[0]), token_infos.Get(line[0]),
                      /*start_column=*/indent, /*end_column=*/column, stack);
@@ -194,7 +188,7 @@ auto SolveLineBreaks(const Lex::TokenizedBuffer& tokens,
       int start_column =
           column + SpacesBefore(tokens, token_infos, previous, token);
       int end_column = start_column + token_width;
-      int64_t step = ExcessPenalty(column, end_column);
+      int64_t step = ExcessPenalty(column, end_column, style);
       llvm::SmallVector<int, 8> next_stack(stack);
       ApplyTokenScopes(token_kind, token_infos.Get(token), start_column,
                        end_column, next_stack);
@@ -215,9 +209,9 @@ auto SolveLineBreaks(const Lex::TokenizedBuffer& tokens,
       // to the limit so that when the anchor itself sits past the limit the
       // indentation columns beyond it are still charged and a deep-anchor
       // break is not undercharged.
-      int64_t step =
-          SplitPenalty(tokens, token_infos, previous, token) +
-          ExcessPenalty(std::min(break_indent, ColumnLimit), end_column);
+      int64_t step = SplitPenalty(tokens, token_infos, previous, token, style) +
+                     ExcessPenalty(std::min(break_indent, style.column_limit),
+                                   end_column, style);
       llvm::SmallVector<int, 8> next_stack(std::move(stack));
       ApplyTokenScopes(token_kind, token_infos.Get(token), break_indent,
                        end_column, next_stack);

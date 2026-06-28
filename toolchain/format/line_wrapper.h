@@ -7,25 +7,15 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/format/style.h"
 #include "toolchain/format/token_info.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/tokenized_buffer.h"
 
 namespace Carbon::Format {
 
-// The column lines are laid out to fit within where possible. This is a soft
-// limit: the solver overruns it only when no legal set of breaks avoids it (see
-// `SolveLineBreaks`). LLVM-style default; a future configurable style object
-// will replace this constant. See toolchain/docs/format.md.
-inline constexpr int ColumnLimit = 80;
-
-// The number of columns a continuation line is indented past its statement's
-// own indentation, when no nearer alignment anchor (such as an open bracket)
-// applies. LLVM-style default.
-inline constexpr int ContinuationIndentWidth = 4;
-
 // Solves the layout of one unwrapped line, choosing where to insert line breaks
-// so as to minimize a penalty under the soft column limit. This is a
+// so as to minimize a penalty under the soft column limit (`style`). This is a
 // uniform-cost (Dijkstra) shortest-path search over layout states, mirroring
 // clang-format's `ContinuationIndenter`; see toolchain/docs/format.md.
 //
@@ -36,8 +26,8 @@ inline constexpr int ContinuationIndentWidth = 4;
 // token's entry is always -1 (the caller positions it at `indent`).
 auto SolveLineBreaks(const Lex::TokenizedBuffer& tokens,
                      const TokenInfoStore& token_infos,
-                     llvm::ArrayRef<Lex::TokenIndex> line, int indent)
-    -> llvm::SmallVector<int>;
+                     llvm::ArrayRef<Lex::TokenIndex> line, int indent,
+                     const Style& style) -> llvm::SmallVector<int>;
 
 }  // namespace Carbon::Format
 

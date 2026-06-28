@@ -12,8 +12,9 @@
 
 namespace Carbon::Format {
 
-auto Format(const Parse::Tree& tree, llvm::raw_ostream& out) -> bool {
-  Formatter formatter(&tree);
+auto Format(const Parse::Tree& tree, llvm::raw_ostream& out, const Style& style)
+    -> bool {
+  Formatter formatter(&tree, style);
   bool formatted_cleanly = formatter.Run();
   out << formatter.TakeOutput();
   return formatted_cleanly;
@@ -21,8 +22,9 @@ auto Format(const Parse::Tree& tree, llvm::raw_ostream& out) -> bool {
 
 auto FormatReplacements(const Parse::Tree& tree,
                         llvm::SmallVectorImpl<Replacement>& replacements,
-                        std::optional<LineRange> lines) -> bool {
-  Formatter formatter(&tree);
+                        std::optional<LineRange> lines, const Style& style)
+    -> bool {
+  Formatter formatter(&tree, style);
   bool formatted_cleanly = formatter.Run();
   for (Replacement& replacement : formatter.ComputeReplacements(lines)) {
     replacements.push_back(std::move(replacement));

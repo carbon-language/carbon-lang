@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/format/style.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/testing/compile_helper.h"
@@ -52,7 +53,8 @@ class TokenTester {
   }
 
   auto Penalty(int left, int right) -> int {
-    return SplitPenalty(tokens_, token_infos_, Token(left), Token(right));
+    return SplitPenalty(tokens_, token_infos_, Token(left), Token(right),
+                        style_);
   }
 
   auto Width() -> int {
@@ -64,6 +66,8 @@ class TokenTester {
   Lex::TokenizedBuffer& tokens_;
   TokenInfoStore token_infos_;
   llvm::SmallVector<Lex::TokenIndex> source_tokens_;
+  // The canonical style, used by the penalty tests below.
+  Style style_;
 };
 
 TEST(RoleForNodeKindTest, PostfixBrackets) {
@@ -265,26 +269,29 @@ TEST(SplitPenaltyTest, BindingColonAndDeclKeywords) {
 TEST(OperatorInfoTest, BinaryOperators) {
   // Tighter-binding operators get a larger break penalty, so the loosest breaks
   // first. Non-assignment operators align their operands; assignments do not.
-  auto mul = OperatorInfoForNodeKind(Parse::NodeKind::InfixOperatorStar);
+  Style style;
+  auto mul = OperatorInfoForNodeKind(Parse::NodeKind::InfixOperatorStar, style);
   EXPECT_EQ(mul.break_penalty, 14);
   EXPECT_TRUE(mul.aligns_operands);
 
-  auto add = OperatorInfoForNodeKind(Parse::NodeKind::InfixOperatorPlus);
+  auto add = OperatorInfoForNodeKind(Parse::NodeKind::InfixOperatorPlus, style);
   EXPECT_EQ(add.break_penalty, 13);
   EXPECT_LT(add.break_penalty, mul.break_penalty);
 
   auto logical_and =
-      OperatorInfoForNodeKind(Parse::NodeKind::ShortCircuitOperatorAnd);
+      OperatorInfoForNodeKind(Parse::NodeKind::ShortCircuitOperatorAnd, style);
   EXPECT_TRUE(logical_and.aligns_operands);
   EXPECT_LT(logical_and.break_penalty, add.break_penalty);
 
-  auto assign = OperatorInfoForNodeKind(Parse::NodeKind::InfixOperatorEqual);
-  EXPECT_EQ(assign.break_penalty, 2);
+  auto assign =
+      OperatorInfoForNodeKind(Parse::NodeKind::InfixOperatorEqual, style);
+  EXPECT_EQ(assign.break_penalty, style.penalty_break_assignment);
   EXPECT_FALSE(assign.aligns_operands);
 
   // A non-operator node is not classified.
-  EXPECT_EQ(OperatorInfoForNodeKind(Parse::NodeKind::IntLiteral).break_penalty,
-            -1);
+  EXPECT_EQ(
+      OperatorInfoForNodeKind(Parse::NodeKind::IntLiteral, style).break_penalty,
+      -1);
 }
 
 TEST(SplitPenaltyTest, InfixOperatorUsesItsBreakPenalty) {
@@ -294,11 +301,12 @@ TEST(SplitPenaltyTest, InfixOperatorUsesItsBreakPenalty) {
 }
 
 TEST(SplitPenaltyTest, Values) {
+  Style style;
   TokenTester t("a, b = c (d) e.f g h");
   // Cheap: after a comma or `=`, or the first element after a bracket.
   EXPECT_EQ(t.Penalty(1, 2), 1);
-  EXPECT_EQ(t.Penalty(3, 4), 2);
-  EXPECT_EQ(t.Penalty(5, 6), 19);
+  EXPECT_EQ(t.Penalty(3, 4), style.penalty_break_assignment);
+  EXPECT_EQ(t.Penalty(5, 6), style.penalty_break_before_first_call_parameter);
   // Expensive: before a member access.
   EXPECT_EQ(t.Penalty(8, 9), 150);
   // Default.

@@ -4,6 +4,8 @@
 
 #include "toolchain/format/formatter.h"
 
+#include <algorithm>
+
 #include "common/check.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
@@ -12,9 +14,10 @@
 
 namespace Carbon::Format {
 
-Formatter::Formatter(const Parse::Tree* tree)
+Formatter::Formatter(const Parse::Tree* tree, const Style& style)
     : tree_(tree),
       tokens_(&tree->tokens()),
+      style_(style),
       whitespace_(tokens_),
       token_infos_(
           TokenInfoStore::MakeWithExplicitSize(tokens_->size(), TokenInfo())) {
@@ -90,7 +93,7 @@ Formatter::Formatter(const Parse::Tree* tree)
       }
     }
 
-    auto op_info = OperatorInfoForNodeKind(kind);
+    auto op_info = OperatorInfoForNodeKind(kind, style_);
     if (op_info.break_penalty >= 0 && token.has_value()) {
       token_infos_.Get(token).break_penalty_after = op_info.break_penalty;
       if (op_info.aligns_operands) {
@@ -113,9 +116,14 @@ auto Formatter::ComputeBlankLines(int next_start_byte, bool is_block_end)
   }
   llvm::StringRef gap = tokens_->source().text().substr(
       *last_end_byte_, next_start_byte - *last_end_byte_);
-  // Two or more newlines between the previous content and this means there was
-  // at least one blank line; keep a single one.
-  return gap.count('\n') >= 2 ? 1 : 0;
+  // The blank lines between the previous content and this are the newlines in
+  // the gap beyond the one that ends the previous line; keep up to the style's
+  // maximum. A gap with no newline at all (content sharing the previous
+  // source line) has no blank lines either; without the clamp the -1 would
+  // cancel the structural line break in `LeadingNewlines` and glue the
+  // content onto the previous line.
+  return std::clamp(static_cast<int>(gap.count('\n')) - 1, 0,
+                    style_.max_empty_lines_to_keep);
 }
 
 auto Formatter::FlushLine() -> void {
@@ -133,11 +141,11 @@ auto Formatter::FlushLine() -> void {
   // stable. A longer line goes to the wrapping solver.
   llvm::SmallVector<int> newline_indents;
   if (indent_ + RenderedWidth(*tokens_, token_infos_, current_line_) <=
-      ColumnLimit) {
+      style_.column_limit) {
     newline_indents.assign(current_line_.size(), -1);
   } else {
     newline_indents =
-        SolveLineBreaks(*tokens_, token_infos_, current_line_, indent_);
+        SolveLineBreaks(*tokens_, token_infos_, current_line_, indent_, style_);
   }
 
   // Record each token's leading whitespace. The line's first token carries the
@@ -215,7 +223,7 @@ auto Formatter::Run() -> bool {
         // Join the formatted comment lines with internal newlines but no
         // trailing one, and record the block as raw, verbatim text.
         whitespace_.AddRaw(leading_newlines,
-                           CommentText(text, indent_, ColumnLimit));
+                           CommentText(text, indent_, style_.column_limit));
       }
       started_ = true;
       // Comment text includes its trailing newline (though a comment ending
@@ -250,7 +258,7 @@ auto Formatter::Run() -> bool {
         if (has_inner_token || has_inner_comment) {
           FlushLine();
         }
-        indent_ += 2;
+        indent_ += style_.indent_width;
         break;
       }
 
@@ -264,7 +272,7 @@ auto Formatter::Run() -> bool {
             current_line_.back() != tokens_->GetMatchedOpeningToken(token)) {
           FlushLine();
         }
-        indent_ -= 2;
+        indent_ -= style_.indent_width;
         current_line_.push_back(token);
         // A separator, an `=`, or `else` continues the close-brace line
         // (`};`, `} else {`) rather than starting its own, so only flush when

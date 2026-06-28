@@ -13,10 +13,16 @@ filegroup(
 )
 
 cc_library(
+    name = "style",
+    hdrs = ["style.h"],
+)
+
+cc_library(
     name = "token_info",
     srcs = ["token_info.cpp"],
     hdrs = ["token_info.h"],
     deps = [
+        ":style",
         "//toolchain/base:fixed_size_value_store",
         "//toolchain/lex:token_index",
         "//toolchain/lex:token_kind",
@@ -31,6 +37,7 @@ cc_test(
     size = "small",
     srcs = ["token_info_test.cpp"],
     deps = [
+        ":style",
         ":token_info",
         "//testing/base:gtest_main",
         "//toolchain/lex:token_index",
@@ -68,6 +75,7 @@ cc_library(
     srcs = ["line_wrapper.cpp"],
     hdrs = ["line_wrapper.h"],
     deps = [
+        ":style",
         ":token_info",
         "//common:hashing",
         "//common:set",
@@ -116,6 +124,7 @@ cc_library(
     deps = [
         ":comment",
         ":line_wrapper",
+        ":style",
         ":token_info",
         ":whitespace_manager",
         "//common:check",
@@ -134,6 +143,7 @@ cc_test(
     srcs = ["formatter_test.cpp"],
     deps = [
         ":format",
+        ":style",
         "//common:raw_string_ostream",
         "//testing/base:gtest_main",
         "//toolchain/lex:token_kind",

@@ -46,7 +46,8 @@ auto RoleForNodeKind(Parse::NodeKind kind) -> TokenRole {
   }
 }
 
-auto OperatorInfoForNodeKind(Parse::NodeKind kind) -> OperatorInfo {
+auto OperatorInfoForNodeKind(Parse::NodeKind kind, const Style& style)
+    -> OperatorInfo {
   // The break penalty is the operator's precedence as a "looseness" rank: a
   // lower value for a looser-binding operator, so the solver breaks the loosest
   // operator in an expression first. The values mirror Carbon's precedence
@@ -67,7 +68,8 @@ auto OperatorInfoForNodeKind(Parse::NodeKind kind) -> OperatorInfo {
     case Parse::NodeKind::InfixOperatorCaretEqual:
     case Parse::NodeKind::InfixOperatorLessLessEqual:
     case Parse::NodeKind::InfixOperatorGreaterGreaterEqual:
-      return {.break_penalty = 2, .aligns_operands = false};
+      return {.break_penalty = style.penalty_break_assignment,
+              .aligns_operands = false};
     // Logical, loosest of the operand-aligning operators.
     case Parse::NodeKind::ShortCircuitOperatorOr:
       return {.break_penalty = 4, .aligns_operands = true};
@@ -219,7 +221,7 @@ auto CanBreakBefore(const Lex::TokenizedBuffer& tokens,
 
 auto SplitPenalty(const Lex::TokenizedBuffer& tokens,
                   const TokenInfoStore& token_infos, Lex::TokenIndex left,
-                  Lex::TokenIndex right) -> int {
+                  Lex::TokenIndex right, const Style& style) -> int {
   Lex::TokenKind left_kind = tokens.GetKind(left);
   // Cheap, encouraged breaks.
   if (left_kind == Lex::TokenKind::Comma) {
@@ -236,12 +238,12 @@ auto SplitPenalty(const Lex::TokenizedBuffer& tokens,
   if (left_kind == Lex::TokenKind::Equal) {
     // After a `=` initializer that is not an infix-operator node (so has no
     // `break_penalty_after`), onto the right-hand side.
-    return 2;
+    return style.penalty_break_assignment;
   }
   if (left_kind.IsOneOf(
           {Lex::TokenKind::OpenParen, Lex::TokenKind::OpenSquareBracket})) {
     // After an opening bracket, before the first element.
-    return 19;
+    return style.penalty_break_before_first_call_parameter;
   }
   // Expensive, discouraged breaks.
   if (token_infos.Get(left).role == TokenRole::PrefixOperator) {

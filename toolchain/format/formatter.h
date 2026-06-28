@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/format/format.h"
+#include "toolchain/format/style.h"
 #include "toolchain/format/token_info.h"
 #include "toolchain/format/whitespace_manager.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -37,7 +38,7 @@ namespace Carbon::Format {
 // from brace nesting.
 class Formatter {
  public:
-  explicit Formatter(const Parse::Tree* tree);
+  explicit Formatter(const Parse::Tree* tree, const Style& style);
 
   // Formats into the internal buffer; see class comments. Must be called once
   // before `TakeOutput` or `ComputeReplacements`.
@@ -69,7 +70,7 @@ class Formatter {
 
   // Returns the number of blank lines to keep before the content starting at
   // `next_start_byte`: one if the source had one or more there, else zero,
-  // except none at the start or end of a block.
+  // except none at the start or end of a block. Capped at the style maximum.
   auto ComputeBlankLines(int next_start_byte, bool is_block_end) -> int;
 
   // The leading newline count for the next content: a blank-line allowance plus
@@ -90,6 +91,9 @@ class Formatter {
 
   // The tokens being formatted, referenced by the parse tree.
   const Lex::TokenizedBuffer* tokens_;
+
+  // The style controlling layout knobs and penalties.
+  Style style_;
 
   // Collects each token's whitespace and generates the formatted text.
   WhitespaceManager whitespace_;

@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/format/style.h"
 #include "toolchain/format/token_info.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_kind.h"
@@ -17,6 +18,9 @@ namespace Carbon::Format {
 namespace {
 
 using ::testing::ElementsAre;
+
+// The canonical style, used by the tests below.
+const Style CanonicalStyle;
 
 // A solver input built by lexing `source`: the line is the source's tokens
 // (skipping the file start and end tokens), with kinds read from the lexed
@@ -46,7 +50,7 @@ struct TestLine {
   auto Info(int i) -> TokenInfo& { return token_infos.Get(tokens[i]); }
 
   auto Solve(int indent) -> llvm::SmallVector<int> {
-    return SolveLineBreaks(buffer, token_infos, tokens, indent);
+    return SolveLineBreaks(buffer, token_infos, tokens, indent, CanonicalStyle);
   }
 
   Testing::CompileHelper helper;
@@ -75,7 +79,8 @@ TEST(SolveLineBreaksTest, BreaksAnOverlongLine) {
   TestLine line("a b");
   line.Info(0).column_width = 50;
   line.Info(1).column_width = 50;
-  EXPECT_THAT(line.Solve(0), ElementsAre(-1, ContinuationIndentWidth));
+  EXPECT_THAT(line.Solve(0),
+              ElementsAre(-1, CanonicalStyle.continuation_indent_width));
 }
 
 TEST(SolveLineBreaksTest, ContinuationIndentTracksStatementIndent) {
@@ -83,7 +88,8 @@ TEST(SolveLineBreaksTest, ContinuationIndentTracksStatementIndent) {
   TestLine line("a b");
   line.Info(0).column_width = 50;
   line.Info(1).column_width = 50;
-  EXPECT_THAT(line.Solve(2), ElementsAre(-1, 2 + ContinuationIndentWidth));
+  EXPECT_THAT(line.Solve(2),
+              ElementsAre(-1, 2 + CanonicalStyle.continuation_indent_width));
 }
 
 TEST(SolveLineBreaksTest, WrapsArgumentAlignedAfterOpenBracket) {
@@ -119,8 +125,10 @@ TEST(SolveLineBreaksTest, ClosedBracketRevertsToEnclosingAnchor) {
   line.Info(1).role = TokenRole::PostfixBracket;
   line.Info(4).column_width = 40;
   line.Info(5).column_width = 40;
-  EXPECT_THAT(line.Solve(0), ElementsAre(-1, -1, -1, -1, -1,
-                                         /*reverted=*/ContinuationIndentWidth));
+  EXPECT_THAT(
+      line.Solve(0),
+      ElementsAre(-1, -1, -1, -1, -1,
+                  /*reverted=*/CanonicalStyle.continuation_indent_width));
 }
 
 TEST(SolveLineBreaksTest, StrayClosingBracketIsSafe) {
@@ -130,7 +138,8 @@ TEST(SolveLineBreaksTest, StrayClosingBracketIsSafe) {
   TestLine line("() a b", /*drop_prefix=*/1);
   line.Info(1).column_width = 50;
   line.Info(2).column_width = 50;
-  EXPECT_THAT(line.Solve(0), ElementsAre(-1, -1, ContinuationIndentWidth));
+  EXPECT_THAT(line.Solve(0),
+              ElementsAre(-1, -1, CanonicalStyle.continuation_indent_width));
 }
 
 TEST(SolveLineBreaksTest, PrefersTheCheaperBreak) {
@@ -142,8 +151,10 @@ TEST(SolveLineBreaksTest, PrefersTheCheaperBreak) {
   line.Info(0).column_width = 30;
   line.Info(2).column_width = 25;
   line.Info(3).column_width = 25;
-  EXPECT_THAT(line.Solve(0),
-              ElementsAre(-1, -1, /*after `=`*/ ContinuationIndentWidth, -1));
+  EXPECT_THAT(
+      line.Solve(0),
+      ElementsAre(-1, -1,
+                  /*after `=`*/ CanonicalStyle.continuation_indent_width, -1));
 }
 
 TEST(SolveLineBreaksTest, AlignsOperandsUnderFirstOperand) {
@@ -171,8 +182,9 @@ TEST(SolveLineBreaksTest, OperandAlignmentNeverTighterThanContinuation) {
   line.Info(1).break_penalty_after = 13;
   line.Info(2).column_width = 50;
   line.Info(2).close_scopes = 1;
-  EXPECT_THAT(line.Solve(0),
-              ElementsAre(-1, -1, /*bbbb=*/ContinuationIndentWidth));
+  EXPECT_THAT(
+      line.Solve(0),
+      ElementsAre(-1, -1, /*bbbb=*/CanonicalStyle.continuation_indent_width));
 }
 
 }  // namespace

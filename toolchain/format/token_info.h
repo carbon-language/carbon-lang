@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "toolchain/base/fixed_size_value_store.h"
+#include "toolchain/format/style.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
@@ -68,7 +69,8 @@ struct OperatorInfo {
 // Returns the formatting information for a binary-operator node kind (any
 // `InfixOperator*` or `ShortCircuitOperator*`). For every other node kind the
 // result's `break_penalty` is -1.
-auto OperatorInfoForNodeKind(Parse::NodeKind kind) -> OperatorInfo;
+auto OperatorInfoForNodeKind(Parse::NodeKind kind, const Style& style)
+    -> OperatorInfo;
 
 // The formatting information about one token that formatting decisions need.
 // This currently holds only what spacing and wrapping require, and grows with
@@ -124,10 +126,11 @@ auto CanBreakBefore(const Lex::TokenizedBuffer& tokens,
 
 // Returns the penalty for breaking the line before `right`, given the preceding
 // token `left`. Lower is cheaper, so the layout solver prefers low-penalty
-// break points. These are starting values, tuned against the test corpus.
+// break points. These are starting values, tuned against the test corpus;
+// `style` supplies the ones that are configurable.
 auto SplitPenalty(const Lex::TokenizedBuffer& tokens,
                   const TokenInfoStore& token_infos, Lex::TokenIndex left,
-                  Lex::TokenIndex right) -> int;
+                  Lex::TokenIndex right, const Style& style) -> int;
 
 // Returns the width, in columns, of `line` laid out on a single line: the sum
 // of the token widths and the spaces between them, excluding indentation.
