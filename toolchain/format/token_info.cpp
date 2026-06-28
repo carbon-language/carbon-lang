@@ -46,6 +46,71 @@ auto RoleForNodeKind(Parse::NodeKind kind) -> TokenRole {
   }
 }
 
+auto OperatorInfoForNodeKind(Parse::NodeKind kind) -> OperatorInfo {
+  // The break penalty is the operator's precedence as a "looseness" rank: a
+  // lower value for a looser-binding operator, so the solver breaks the loosest
+  // operator in an expression first. The values mirror Carbon's precedence
+  // ladder (see toolchain/parse/precedence.h) the way clang-format uses the
+  // precedence level as the split penalty. They are starting values, tuned
+  // against the test corpus rather than fixed by policy.
+  switch (kind) {
+    // Assignment, including compound assignment: the right-hand side is
+    // continuation-indented, not operand-aligned.
+    case Parse::NodeKind::InfixOperatorEqual:
+    case Parse::NodeKind::InfixOperatorPlusEqual:
+    case Parse::NodeKind::InfixOperatorMinusEqual:
+    case Parse::NodeKind::InfixOperatorStarEqual:
+    case Parse::NodeKind::InfixOperatorSlashEqual:
+    case Parse::NodeKind::InfixOperatorPercentEqual:
+    case Parse::NodeKind::InfixOperatorAmpEqual:
+    case Parse::NodeKind::InfixOperatorPipeEqual:
+    case Parse::NodeKind::InfixOperatorCaretEqual:
+    case Parse::NodeKind::InfixOperatorLessLessEqual:
+    case Parse::NodeKind::InfixOperatorGreaterGreaterEqual:
+      return {.break_penalty = 2, .aligns_operands = false};
+    // Logical, loosest of the operand-aligning operators.
+    case Parse::NodeKind::ShortCircuitOperatorOr:
+      return {.break_penalty = 4, .aligns_operands = true};
+    case Parse::NodeKind::ShortCircuitOperatorAnd:
+      return {.break_penalty = 5, .aligns_operands = true};
+    // Bitwise.
+    case Parse::NodeKind::InfixOperatorPipe:
+      return {.break_penalty = 6, .aligns_operands = true};
+    case Parse::NodeKind::InfixOperatorCaret:
+      return {.break_penalty = 7, .aligns_operands = true};
+    case Parse::NodeKind::InfixOperatorAmp:
+      return {.break_penalty = 8, .aligns_operands = true};
+    // Equality and relational.
+    case Parse::NodeKind::InfixOperatorEqualEqual:
+    case Parse::NodeKind::InfixOperatorExclaimEqual:
+      return {.break_penalty = 9, .aligns_operands = true};
+    case Parse::NodeKind::InfixOperatorLess:
+    case Parse::NodeKind::InfixOperatorLessEqual:
+    case Parse::NodeKind::InfixOperatorGreater:
+    case Parse::NodeKind::InfixOperatorGreaterEqual:
+    case Parse::NodeKind::InfixOperatorLessEqualGreater:
+      return {.break_penalty = 10, .aligns_operands = true};
+    // Cast.
+    case Parse::NodeKind::InfixOperatorAs:
+      return {.break_penalty = 11, .aligns_operands = true};
+    // Bit shift.
+    case Parse::NodeKind::InfixOperatorLessLess:
+    case Parse::NodeKind::InfixOperatorGreaterGreater:
+      return {.break_penalty = 12, .aligns_operands = true};
+    // Additive.
+    case Parse::NodeKind::InfixOperatorPlus:
+    case Parse::NodeKind::InfixOperatorMinus:
+      return {.break_penalty = 13, .aligns_operands = true};
+    // Multiplicative, tightest binding.
+    case Parse::NodeKind::InfixOperatorStar:
+    case Parse::NodeKind::InfixOperatorSlash:
+    case Parse::NodeKind::InfixOperatorPercent:
+      return {.break_penalty = 14, .aligns_operands = true};
+    default:
+      return {.break_penalty = -1, .aligns_operands = false};
+  }
+}
+
 auto SpacesBefore(const Lex::TokenizedBuffer& tokens,
                   const TokenInfoStore& token_infos, Lex::TokenIndex left,
                   Lex::TokenIndex right) -> int {
@@ -121,13 +186,23 @@ auto CanBreakBefore(const Lex::TokenizedBuffer& tokens,
   if (token_infos.Get(right).role == TokenRole::PostfixBracket) {
     return false;
   }
+  // Never break before `=`: assignments and initializers keep the `=` on the
+  // left and break after it.
+  if (tokens.GetKind(right) == Lex::TokenKind::Equal) {
+    return false;
+  }
+  // Never break before an infix operator. With break-after-operator style the
+  // split point is after the operator, before its right operand.
+  if (token_infos.Get(right).break_penalty_after >= 0) {
+    return false;
+  }
   // Anywhere else a break is allowed; the split penalty steers where breaks
   // actually land.
   return true;
 }
 
 auto SplitPenalty(const Lex::TokenizedBuffer& tokens,
-                  const TokenInfoStore& /*token_infos*/, Lex::TokenIndex left,
+                  const TokenInfoStore& token_infos, Lex::TokenIndex left,
                   Lex::TokenIndex right) -> int {
   Lex::TokenKind left_kind = tokens.GetKind(left);
   // Cheap, encouraged breaks.
@@ -135,8 +210,16 @@ auto SplitPenalty(const Lex::TokenizedBuffer& tokens,
     // After a comma, between list elements.
     return 1;
   }
+  // After an infix operator, before its right operand. The penalty is the
+  // operator's precedence-based break penalty, so the loosest operator in an
+  // expression is broken first.
+  int left_break_penalty_after = token_infos.Get(left).break_penalty_after;
+  if (left_break_penalty_after >= 0) {
+    return left_break_penalty_after;
+  }
   if (left_kind == Lex::TokenKind::Equal) {
-    // After `=`, onto the right-hand side of an assignment.
+    // After a `=` initializer that is not an infix-operator node (so has no
+    // `break_penalty_after`), onto the right-hand side.
     return 2;
   }
   if (left_kind.IsOneOf(

@@ -37,9 +37,11 @@ class TokenTester {
 
   auto Token(int i) -> Lex::TokenIndex { return source_tokens_[i]; }
 
-  auto SetRole(int i, TokenRole role) -> void {
-    token_infos_.Get(Token(i)).role = role;
-  }
+  // The formatter's annotations for the i-th token, mutable so a test can set
+  // roles and penalties directly.
+  auto Info(int i) -> TokenInfo& { return token_infos_.Get(Token(i)); }
+
+  auto SetRole(int i, TokenRole role) -> void { Info(i).role = role; }
 
   auto Spaces(int left, int right) -> int {
     return SpacesBefore(tokens_, token_infos_, Token(left), Token(right));
@@ -210,6 +212,47 @@ TEST(CanBreakBeforeTest, AllowedElsewhere) {
   TokenTester t("a b, c");
   EXPECT_TRUE(t.CanBreak(0, 1));  // Between two words.
   EXPECT_TRUE(t.CanBreak(2, 3));  // After a comma.
+}
+
+TEST(CanBreakBeforeTest, NeverBeforeEqualOrInfixOperator) {
+  TokenTester t("a = b + c");
+  // A `=` keeps to the previous line; the break goes after it.
+  EXPECT_FALSE(t.CanBreak(0, 1));
+  // An infix operator (marked by `break_penalty_after`) is the same: break
+  // after it, before the right operand.
+  t.Info(3).break_penalty_after = 13;
+  EXPECT_FALSE(t.CanBreak(2, 3));
+}
+
+TEST(OperatorInfoTest, BinaryOperators) {
+  // Tighter-binding operators get a larger break penalty, so the loosest breaks
+  // first. Non-assignment operators align their operands; assignments do not.
+  auto mul = OperatorInfoForNodeKind(Parse::NodeKind::InfixOperatorStar);
+  EXPECT_EQ(mul.break_penalty, 14);
+  EXPECT_TRUE(mul.aligns_operands);
+
+  auto add = OperatorInfoForNodeKind(Parse::NodeKind::InfixOperatorPlus);
+  EXPECT_EQ(add.break_penalty, 13);
+  EXPECT_LT(add.break_penalty, mul.break_penalty);
+
+  auto logical_and =
+      OperatorInfoForNodeKind(Parse::NodeKind::ShortCircuitOperatorAnd);
+  EXPECT_TRUE(logical_and.aligns_operands);
+  EXPECT_LT(logical_and.break_penalty, add.break_penalty);
+
+  auto assign = OperatorInfoForNodeKind(Parse::NodeKind::InfixOperatorEqual);
+  EXPECT_EQ(assign.break_penalty, 2);
+  EXPECT_FALSE(assign.aligns_operands);
+
+  // A non-operator node is not classified.
+  EXPECT_EQ(OperatorInfoForNodeKind(Parse::NodeKind::IntLiteral).break_penalty,
+            -1);
+}
+
+TEST(SplitPenaltyTest, InfixOperatorUsesItsBreakPenalty) {
+  TokenTester t("a + b");
+  t.Info(1).break_penalty_after = 13;
+  EXPECT_EQ(t.Penalty(1, 2), 13);
 }
 
 TEST(SplitPenaltyTest, Values) {

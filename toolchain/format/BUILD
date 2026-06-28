@@ -85,6 +85,7 @@ cc_library(
     deps = [
         ":line_wrapper",
         ":token_info",
+        "//common:check",
         "//common:ostream",
         "//toolchain/lex:token_index",
         "//toolchain/lex:token_kind",

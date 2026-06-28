@@ -146,5 +146,34 @@ TEST(SolveLineBreaksTest, PrefersTheCheaperBreak) {
               ElementsAre(-1, -1, /*after `=`*/ ContinuationIndentWidth, -1));
 }
 
+TEST(SolveLineBreaksTest, AlignsOperandsUnderFirstOperand) {
+  // `kw aaaa + bbbb` overflowing: the break goes after the operator (never
+  // before it), and the wrapped operand aligns under the first operand. With a
+  // 6-wide leading token and a space, the first operand starts at column 7, so
+  // the second wraps to column 7, not to the statement continuation indent.
+  TestLine line("kw aaaa + bbbb");
+  line.Info(0).column_width = 6;
+  line.Info(1).column_width = 40;
+  line.Info(1).open_scopes = 1;
+  line.Info(2).break_penalty_after = 13;
+  line.Info(3).column_width = 40;
+  line.Info(3).close_scopes = 1;
+  EXPECT_THAT(line.Solve(0), ElementsAre(-1, -1, -1, /*bbbb=*/7));
+}
+
+TEST(SolveLineBreaksTest, OperandAlignmentNeverTighterThanContinuation) {
+  // The same operator chain starting at the very beginning of the line:
+  // aligning the operands under the first operand would put them at column 0,
+  // so the continuation indent (0 + 4) is used as a floor instead.
+  TestLine line("aaaa + bbbb");
+  line.Info(0).column_width = 50;
+  line.Info(0).open_scopes = 1;
+  line.Info(1).break_penalty_after = 13;
+  line.Info(2).column_width = 50;
+  line.Info(2).close_scopes = 1;
+  EXPECT_THAT(line.Solve(0),
+              ElementsAre(-1, -1, /*bbbb=*/ContinuationIndentWidth));
+}
+
 }  // namespace
 }  // namespace Carbon::Format

@@ -36,6 +36,9 @@ constexpr llvm::StringLiteral Inputs[] = {
     " extra_argument_value);\n}",
     "fn F() {\n  var is_valid: bool = has_permission and is_authenticated and"
     " not is_token_expired;\n}",
+    // An operator chain long enough to wrap, exercising operand alignment.
+    "fn F() {\n  return aaaaaaaaaa * bbbbbbbbbb + cccccccccc * dddddddddd +"
+    " eeeeeeeeee * ffffffffff;\n}",
 };
 
 // Formats `text` and returns the result.

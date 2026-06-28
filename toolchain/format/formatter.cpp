@@ -4,6 +4,7 @@
 
 #include "toolchain/format/formatter.h"
 
+#include "common/check.h"
 #include "toolchain/format/line_wrapper.h"
 
 namespace Carbon::Format {
@@ -14,10 +15,23 @@ Formatter::Formatter(const Parse::Tree* tree, llvm::raw_ostream* out)
       out_(out),
       token_infos_(
           TokenInfoStore::MakeWithExplicitSize(tokens_->size(), TokenInfo())) {
-  // Cache each token's width, then derive its role from the parse node it is
-  // the root of. Multiple nodes can map to one token (virtual tokens, error
+  // Derive per-token formatting data from the tokens and the parse tree. Each
+  // token's width is cached first. The role of each owned token then comes
+  // from its node; multiple nodes can map to one token (virtual tokens, error
   // trees), so only a distinguishing role is recorded and the rest keep the
-  // default `Unknown`.
+  // default `Unknown`. Binary-operator nodes additionally contribute the
+  // operator-precedence data that drives operand alignment and break
+  // penalties: each such node's operator token gets a break-after penalty, and
+  // each operand-aligning operator opens an alignment scope at the first token
+  // of its operand span and closes it at the last.
+  //
+  // Operand spans are the operator nodes' subtree token ranges, computed
+  // within the same postorder pass: a stack of completed subtree ranges merges
+  // children into parents in linear time (each node pops exactly its children,
+  // identified by its kind's child count or bracketing node kind, the same
+  // walk `Parse::TreeAndSubtrees` uses to compute subtree sizes), where
+  // calling `GetSubtreeTokenRange` per operator node would walk each operand
+  // subtree again (quadratic for a long operator chain).
   for (auto token : tokens_->tokens()) {
     // A multi-line token (such as a multi-line string literal) occupies its
     // first physical line where it sits; the rest take their own lines. So its
@@ -25,12 +39,63 @@ Formatter::Formatter(const Parse::Tree* tree, llvm::raw_ostream* out)
     token_infos_.Get(token).column_width =
         static_cast<int>(tokens_->GetTokenText(token).split('\n').first.size());
   }
+  // A completed subtree's root node kind (used to match its parent's
+  // bracketing node kind) and inclusive token range; the range is `None` for
+  // a subtree with no valued tokens.
+  struct SubtreeRange {
+    Parse::NodeKind kind;
+    Lex::TokenIndex min = Lex::TokenIndex::None;
+    Lex::TokenIndex max = Lex::TokenIndex::None;
+  };
+  llvm::SmallVector<SubtreeRange> range_stack;
   for (auto node_id : tree_->postorder()) {
-    TokenRole role = RoleForNodeKind(tree_->node_kind(node_id));
+    auto kind = tree_->node_kind(node_id);
     Lex::TokenIndex token = tree_->node_token(node_id);
+    TokenRole role = RoleForNodeKind(kind);
     if (role != TokenRole::Unknown && token.has_value()) {
       token_infos_.Get(token).role = role;
     }
+
+    // Fold the node's own token and its children's completed ranges into its
+    // range, popping exactly the children off the stack: a fixed number for a
+    // node kind with a child count, or entries back through the bracketing
+    // node kind otherwise.
+    SubtreeRange range = {.kind = kind};
+    if (token.has_value()) {
+      range.min = range.max = token;
+    }
+    auto fold_child = [&]() -> Parse::NodeKind {
+      CARBON_CHECK(!range_stack.empty(), "NodeId {0} ({1}) is missing children",
+                   node_id, kind);
+      SubtreeRange child = range_stack.pop_back_val();
+      if (child.min.has_value() &&
+          (!range.min.has_value() || child.min < range.min)) {
+        range.min = child.min;
+      }
+      if (child.max.has_value() &&
+          (!range.max.has_value() || child.max > range.max)) {
+        range.max = child.max;
+      }
+      return child.kind;
+    };
+    if (kind.has_child_count()) {
+      for (int i = 0; i < kind.child_count(); ++i) {
+        fold_child();
+      }
+    } else {
+      while (fold_child() != kind.bracket()) {
+      }
+    }
+
+    auto op_info = OperatorInfoForNodeKind(kind);
+    if (op_info.break_penalty >= 0 && token.has_value()) {
+      token_infos_.Get(token).break_penalty_after = op_info.break_penalty;
+      if (op_info.aligns_operands) {
+        ++token_infos_.Get(range.min).open_scopes;
+        ++token_infos_.Get(range.max).close_scopes;
+      }
+    }
+    range_stack.push_back(range);
   }
 }
 

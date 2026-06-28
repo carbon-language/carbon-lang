@@ -58,8 +58,9 @@ class Formatter {
   // The output stream for formatted content.
   llvm::raw_ostream* out_;
 
-  // The per-token formatting information (role and width), indexed by token
-  // and derived from the parse tree.
+  // The per-token formatting information (role, width, and the
+  // operator-precedence break and alignment data), indexed by token and
+  // derived from the parse tree. See `TokenInfo`.
   TokenInfoStore token_infos_;
 
   // Tokens buffered for the current physical line, not yet rendered.

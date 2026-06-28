@@ -49,10 +49,31 @@ enum class TokenRole : uint8_t {
 // Maps a parse node kind to the role of the token at the root of that node.
 auto RoleForNodeKind(Parse::NodeKind kind) -> TokenRole;
 
+// Formatting information about a binary-operator parse node, derived from its
+// node kind. See `OperatorInfoForNodeKind`.
+struct OperatorInfo {
+  // The penalty for breaking the line after this operator (before its right
+  // operand), or -1 if the node is not a binary operator. Looser-binding
+  // operators get a lower penalty, so the solver breaks the loosest one first,
+  // mirroring clang-format, which uses the operator precedence level as the
+  // penalty. Assignment operators use the assignment break penalty.
+  int break_penalty = -1;
+  // Whether the operator's operands are aligned with each other when the
+  // expression wraps (clang-format's `AlignOperands`). True for every binary
+  // operator except the assignment family, whose right-hand side is instead
+  // continuation-indented.
+  bool aligns_operands = false;
+};
+
+// Returns the formatting information for a binary-operator node kind (any
+// `InfixOperator*` or `ShortCircuitOperator*`). For every other node kind the
+// result's `break_penalty` is -1.
+auto OperatorInfoForNodeKind(Parse::NodeKind kind) -> OperatorInfo;
+
 // The formatting information about one token that formatting decisions need.
-// This currently holds only what spacing requires, and grows with the
-// formatter. Information the tokenized buffer already provides, such as the
-// token's kind, is read from it rather than copied here.
+// This currently holds only what spacing and wrapping require, and grows with
+// the formatter. Information the tokenized buffer already provides, such as
+// the token's kind, is read from it rather than copied here.
 struct TokenInfo {
   // The token's syntactic role, derived from the parse tree.
   TokenRole role = TokenRole::Unknown;
@@ -66,6 +87,18 @@ struct TokenInfo {
   // currently computed from `column_width`, so later tokens on its unwrapped
   // line are placed from a fictitious column.
   int column_width = 0;
+  // The number of operator-precedence operand groups (the analog of
+  // clang-format's fake parentheses) that open at this token because it is the
+  // first token of their operand span, and that close at it because it is the
+  // last. Each open starts an operand-alignment scope in the wrapping solver.
+  int open_scopes = 0;
+  int close_scopes = 0;
+  // If non-negative, this token is an infix operator after which a line break
+  // is the canonical split point, and the value is the penalty for breaking
+  // there; a break *before* such a token is disallowed. -1 means the token is
+  // not such an operator; in particular an initializer's `=` is not an
+  // infix-operator node and is priced by a `SplitPenalty` fallback instead.
+  int break_penalty_after = -1;
 };
 
 // The per-token formatting information, indexed by the token. The `Formatter`

@@ -32,15 +32,28 @@ constexpr int64_t PenaltyExcessCharacter = 1'000'000;
 // (very long, deeply nested lines).
 constexpr int MaxStatesGenerated = 100'000;
 
-// Updates the continuation-indent stack for the bracket nesting that a token
-// of kind `kind` introduces, given that the token's text ends at `end_column`.
-// An opening bracket pushes the column just past it as the alignment anchor
-// for its contents (`AlignAfterOpenBracket = Align`); a closing bracket pops
-// back to the enclosing level. The bottom entry (the statement-level
-// continuation indent) is never popped, so a stray closing bracket in
-// malformed input can't empty the stack.
-static auto ApplyBracket(Lex::TokenKind kind, int end_column,
-                         llvm::SmallVectorImpl<int>& stack) -> void {
+// Updates the continuation-indent stack for the scopes that a token opens and
+// closes, given that its text runs from `start_column` to `end_column`, with
+// `kind` the token's kind and `token` the formatter's annotations for it.
+// There are two kinds of scope, both stored as the column their continuation
+// lines indent to:
+//
+//   - Operand-alignment scopes (the analog of clang-format's fake parentheses)
+//     open at the first token of a binary-operator's operand span and align the
+//     operands under it, but never tighter than the enclosing scope, so an
+//     operator at the very start of a line indents by the continuation width
+//     rather than aligning at column 0 (`AlignOperands = Align`).
+//   - A real bracket aligns its contents just after the bracket
+//     (`AlignAfterOpenBracket = Align`).
+//
+// The bottom entry (the statement-level continuation indent) is never popped,
+// so unbalanced scopes from malformed input can't empty the stack.
+static auto ApplyTokenScopes(Lex::TokenKind kind, const TokenInfo& token,
+                             int start_column, int end_column,
+                             llvm::SmallVectorImpl<int>& stack) -> void {
+  for (int i = 0; i < token.open_scopes; ++i) {
+    stack.push_back(std::max(start_column, stack.back()));
+  }
   if (kind.IsOneOf({Lex::TokenKind::OpenParen,
                     Lex::TokenKind::OpenSquareBracket,
                     Lex::TokenKind::OpenCurlyBrace})) {
@@ -53,6 +66,9 @@ static auto ApplyBracket(Lex::TokenKind kind, int end_column,
                            Lex::TokenKind::CloseSquareBracket,
                            Lex::TokenKind::CloseCurlyBrace}) &&
              stack.size() > 1) {
+    stack.pop_back();
+  }
+  for (int i = 0; i < token.close_scopes && stack.size() > 1; ++i) {
     stack.pop_back();
   }
 }
@@ -127,7 +143,8 @@ auto SolveLineBreaks(const Lex::TokenizedBuffer& tokens,
     // bracket.
     stack.push_back(indent + ContinuationIndentWidth);
     int column = indent + token_infos.Get(line[0]).column_width;
-    ApplyBracket(tokens.GetKind(line[0]), column, stack);
+    ApplyTokenScopes(tokens.GetKind(line[0]), token_infos.Get(line[0]),
+                     /*start_column=*/indent, /*end_column=*/column, stack);
     nodes.push_back({.index = 1,
                      .column = column,
                      .stack = std::move(stack),
@@ -174,12 +191,13 @@ auto SolveLineBreaks(const Lex::TokenizedBuffer& tokens,
 
     // Option 1: keep `token` on the current line.
     {
-      int end_column = column +
-                       SpacesBefore(tokens, token_infos, previous, token) +
-                       token_width;
+      int start_column =
+          column + SpacesBefore(tokens, token_infos, previous, token);
+      int end_column = start_column + token_width;
       int64_t step = ExcessPenalty(column, end_column);
       llvm::SmallVector<int, 8> next_stack(stack);
-      ApplyBracket(token_kind, end_column, next_stack);
+      ApplyTokenScopes(token_kind, token_infos.Get(token), start_column,
+                       end_column, next_stack);
       nodes.push_back({.index = index + 1,
                        .column = end_column,
                        .stack = std::move(next_stack),
@@ -201,7 +219,8 @@ auto SolveLineBreaks(const Lex::TokenizedBuffer& tokens,
           SplitPenalty(tokens, token_infos, previous, token) +
           ExcessPenalty(std::min(break_indent, ColumnLimit), end_column);
       llvm::SmallVector<int, 8> next_stack(std::move(stack));
-      ApplyBracket(token_kind, end_column, next_stack);
+      ApplyTokenScopes(token_kind, token_infos.Get(token), break_indent,
+                       end_column, next_stack);
       nodes.push_back({.index = index + 1,
                        .column = end_column,
                        .stack = std::move(next_stack),
