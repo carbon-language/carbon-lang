@@ -4,6 +4,7 @@
 
 #include "toolchain/driver/format_subcommand.h"
 
+#include <optional>
 #include <string>
 
 #include "common/raw_string_ostream.h"
@@ -44,6 +45,16 @@ Not valid when multiple files are passed for formatting.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&output_filename); });
+  b.AddStringOption(
+      {
+          .name = "lines",
+          .value_name = "START:END",
+          .help = R"""(
+Format only the given inclusive range of 1-based line numbers, leaving the rest
+of the file unchanged. By default the whole file is formatted.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&lines); });
 }
 
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
@@ -52,6 +63,20 @@ static constexpr CommandLine::CommandInfo SubcommandInfo = {
 Format Carbon source code.
 )""",
 };
+
+// Parses a `START:END` line-range argument, returning nullopt if it is
+// malformed (non-numeric, or not 1 <= START <= END).
+static auto ParseLineRange(llvm::StringRef arg)
+    -> std::optional<Format::LineRange> {
+  auto [first_str, last_str] = arg.split(':');
+  int first = 0;
+  int last = 0;
+  if (first_str.getAsInteger(10, first) || last_str.getAsInteger(10, last) ||
+      first < 1 || last < first) {
+    return std::nullopt;
+  }
+  return Format::LineRange{.first_line = first, .last_line = last};
+}
 
 FormatSubcommand::FormatSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
@@ -65,6 +90,21 @@ auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     driver_env.emitter.Emit(FormatMultipleFilesToOneOutput);
     result.success = false;
     return result;
+  }
+
+  // Parse `--lines` once up front; it applies to every input file.
+  std::optional<Format::LineRange> lines;
+  if (!options_.lines.empty()) {
+    lines = ParseLineRange(options_.lines);
+    if (!lines) {
+      CARBON_DIAGNOSTIC(FormatInvalidLineRange, Error,
+                        "invalid `--lines` value `{0}`; expected `START:END` "
+                        "with 1 <= START <= END",
+                        std::string);
+      driver_env.emitter.Emit(FormatInvalidLineRange, options_.lines.str());
+      result.success = false;
+      return result;
+    }
   }
 
   auto mark_per_file_error = [&]() {
@@ -97,9 +137,20 @@ auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     // errors. The return value reports whether the input was error-free; the
     // best-effort output is used regardless, but a file with errors is still
     // marked as a failure (for example, for the exit code).
-    RawStringOstream buffer;
-    bool formatted_cleanly = Format::Format(tree, buffer);
-    std::string formatted = buffer.TakeStr();
+    std::string formatted;
+    bool formatted_cleanly = true;
+    if (!lines) {
+      // Format the whole file.
+      RawStringOstream buffer;
+      formatted_cleanly = Format::Format(tree, buffer);
+      formatted = buffer.TakeStr();
+    } else {
+      // Format only the requested line range, leaving the rest unchanged.
+      llvm::SmallVector<Format::Replacement> replacements;
+      formatted_cleanly =
+          Format::FormatReplacements(tree, replacements, *lines);
+      formatted = Format::ApplyReplacements(source->text(), replacements);
+    }
 
     // Decide where the formatted output goes:
     //   --output=-     -> stdout,

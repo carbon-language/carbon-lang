@@ -18,6 +18,7 @@ struct FormatOptions {
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
   llvm::StringRef output_filename;
+  llvm::StringRef lines;
   llvm::SmallVector<llvm::StringRef> input_filenames;
 };
 

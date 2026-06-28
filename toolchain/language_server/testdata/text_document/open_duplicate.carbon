@@ -25,13 +25,15 @@
 
 // CHECK:STDERR: /test.carbon: warning: duplicate open file request; updating content [LanguageServerOpenDuplicateFile]
 // CHECK:STDERR:
-// CHECK:STDOUT: Content-Length: 146{{\r}}
+// CHECK:STDOUT: Content-Length: 235{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": {
 // CHECK:STDOUT:     "capabilities": {
+// CHECK:STDOUT:       "documentFormattingProvider": true,
+// CHECK:STDOUT:       "documentRangeFormattingProvider": true,
 // CHECK:STDOUT:       "documentSymbolProvider": true,
 // CHECK:STDOUT:       "textDocumentSync": 2
 // CHECK:STDOUT:     }

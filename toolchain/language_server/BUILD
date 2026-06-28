@@ -61,7 +61,9 @@ cc_library(
     deps = [
         ":context",
         "//common:check",
+        "//common:raw_string_ostream",
         "//toolchain/base:shared_value_stores",
+        "//toolchain/format",
         "//toolchain/lex",
         "//toolchain/lex:token_index",
         "//toolchain/lex:token_kind",
@@ -70,6 +72,7 @@ cc_library(
         "//toolchain/parse:tree",
         "//toolchain/source:source_buffer",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
+        "@llvm-project//llvm:Support",
     ],
 )
 
