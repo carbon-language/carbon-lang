@@ -122,3 +122,39 @@ sh_test(
     args = ["--benchmark_dry_run"],
     env = cc_env(),
 )
+
+cc_binary(
+    name = "format_benchmark",
+    testonly = 1,
+    srcs = ["format_benchmark.cpp"],
+    deps = [
+        ":source_gen_lib",
+        "//common:check",
+        "//common:raw_string_ostream",
+        "//testing/base:benchmark_main",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/diagnostics:null_diagnostics",
+        "//toolchain/format",
+        "//toolchain/lex",
+        "//toolchain/parse",
+        "//toolchain/parse:tree",
+        "//toolchain/source:source_buffer",
+        "//toolchain/testing:compile_helper",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//clang:format",
+        "@llvm-project//clang:tooling_core",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+sh_test(
+    name = "format_benchmark_test",
+    size = "small",
+    srcs = [":format_benchmark"],
+    args = [
+        "--benchmark_dry_run",
+        # The `$$` is repeated for Bazel escaping of `$`.
+        "--benchmark_filter=/256$$",
+    ],
+    env = cc_env(),
+)
