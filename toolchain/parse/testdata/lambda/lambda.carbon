@@ -65,6 +65,19 @@ fn G() {
   var x: auto = fn -> i32 ;
 }
 
+// --- fail_lambda_no_body_in_binary_op.carbon
+
+// Tests that a lambda without a body used as a binary operator operand
+// inside a function body does not cause a FATAL verification error.
+
+fn H() {
+    // CHECK:STDERR: fail_lambda_no_body_in_binary_op.carbon:[[@LINE+4]]:14: error: expected `->`, `=>`, or `{` [ExpectedLambdaBody]
+    // CHECK:STDERR:     p > fn() ;
+    // CHECK:STDERR:              ^
+    // CHECK:STDERR:
+    p > fn() ;
+}
+
 // CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -155,9 +168,10 @@ fn G() {
 // CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'LambdaIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', has_error: yes, subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
+// CHECK:STDOUT:           {kind: 'LambdaIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'Lambda', text: 'fn', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 15},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_expected_body_after_return_type.carbon
@@ -181,5 +195,23 @@ fn G() {
 // CHECK:STDOUT:         {kind: 'Lambda', text: 'fn', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 12},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 18},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_lambda_no_body_in_binary_op.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'H'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'p'},
+// CHECK:STDOUT:             {kind: 'LambdaIntroducer', text: 'fn'},
+// CHECK:STDOUT:               {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:             {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'Lambda', text: 'fn', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'InfixOperatorGreater', text: '>', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 13},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

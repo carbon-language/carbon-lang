@@ -63,7 +63,10 @@ auto HandleLambdaAfterParams(Context& context) -> void {
                       "expected `->`, `=>`, or `{{`");
     context.emitter().Emit(*context.position(), ExpectedLambdaBody);
     state.has_error = true;
-    context.ReturnErrorOnState();
+
+    // Add a dummy lambda node with the error state to the parent
+    // to ensure parsing continues without the lambda body.
+    context.AddNode(NodeKind::Lambda, state.token, state.has_error);
   }
 }
 
