@@ -14,7 +14,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
     -   [`while`](#while)
     -   [`for`](#for)
-        -   [Ranged-for for user-defined types](#ranged-for-for-user-defined-types)
+        -   [`Iterate` interface](#iterate-interface)
+        -   [Loop desugaring](#loop-desugaring)
     -   [`break`](#break)
     -   [`continue`](#continue)
 -   [Alternatives considered](#alternatives-considered)
@@ -54,9 +55,6 @@ is:
 
 > `for (` _pattern_ `in` _expression_ `) {` _statements_ `}`
 
-For consistency with function parameters and other pattern matching contexts,
-the pattern defaults to value (immutable) bindings, like `let`.
-
 For example, this prints all names in `names`:
 
 ```carbon
@@ -65,46 +63,64 @@ for (name: strbuf in names) {
 }
 ```
 
-This default can be overridden by adding the `var` keyword:
+> **Note:** A name binding in the pattern of a `for` loop is a value binding by
+> default. If a mutable loop variable is desired, the pattern can use `var`. For
+> example: `for (var x: T in range)`.
 
-```carbon
-for (var name: strbuf in names) {
-  // `name` can be modified, but this will not modify the underlying `names` container.
-}
-```
+To support iterating over user-defined types, the `for` loop is defined in terms
+of the `Core.Iterate` interface. A container type can implement the
+`Core.Iterate` interface to make it iterable with `for`.
 
-Temporary entities on the right-hand side of `in` remain alive during the
-execution of the `for` loop to prevent invalid memory access.
+#### `Iterate` interface
 
-#### Ranged-for for user-defined types
-
-User types can enable support for ranged-for loops by implementing the `Iterate`
-interface:
+The `Core.Iterate` interface is defined as:
 
 ```carbon
 interface Iterate {
-  let ElementType:! type;
-  let CursorType:! type;
+  let ElementType:! Copy & Destroy;
+  let CursorType:! Destroy;
   fn NewCursor(self) -> CursorType;
   fn Next(self, ref cursor: CursorType) -> Optional(ElementType);
 }
 ```
 
-The cursor tracks progression, and the `Next` method advances the cursor and
-returns an `Optional` value. An empty `Optional` indicates that we have reached
-the end.
+-   **`CursorType`**: A type that represents the current position in the
+    iteration.
+-   **`ElementType`**: The type of the elements returned by the iteration.
+-   **`NewCursor`**: Returns a new cursor initialized to the start of iteration.
+-   **`Next`**: Advances the cursor and returns the next element, or `None` if
+    the end of iteration has been reached. It takes the cursor by reference
+    (`ref cursor: CursorType`), allowing the method to modify the cursor
+    in-place.
 
-A `for` loop on a container of a type that implements `Iterate` behaves
-conceptually as (though an API for `Optional` has not been approved):
+#### Loop desugaring
+
+A `for` loop of the form:
 
 ```carbon
-var cursor: range.(Iterate.CursorType) = range.(Iterate.NewCursor)();
-var iter: Optional(range.(Iterate.ElementType)) = range.(Iterate.Next)(&cursor);
-while (iter.HasValue()) {
-  ExecuteForBlock(iter.Get());
-  iter = container.(Iterate.Next)(ref cursor);
+for (<pattern> in <range>) {
+  <statements>
 }
 ```
+
+is desugared to a loop that manages the cursor and checks the optional return
+values:
+
+```carbon
+{
+  let range:? auto = <range>;
+  var cursor: auto = range.(Iterate.NewCursor)();
+  while (true) {
+    match (range.(Iterate.Next)(cursor)) {
+      case .Some(<pattern>) => { <statements> }
+      default => { break; }
+    }
+  }
+}
+```
+
+> **Note:** Any temporaries in `<range>` will remain live until the end of the
+> loop.
 
 ### `break`
 
@@ -173,3 +189,5 @@ while (!f.EOF()) {
     [#623: Require braces](https://github.com/carbon-language/carbon-lang/pull/623)
 -   Proposal
     [#1885: `for` statement and user types](https://github.com/carbon-language/carbon-lang/pull/1885)
+-   Proposal
+    [#7381: Adopt `ref` in `Core.Iterate.Next`](https://github.com/carbon-language/carbon-lang/pull/7381)

@@ -185,17 +185,12 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   // Start emitting the loop header block.
   auto loop_header_id = StartLoopHeader(context, start_node_id);
 
-  // Call `<range>.(Iterate.Next)(&cursor)`.
-  auto cursor_type_inst_id = context.types().GetTypeInstId(cursor_type_id);
-  auto cursor_addr_id = AddInst<SemIR::AddrOf>(
-      context, node_id,
-      {.type_id = GetPointerType(context, cursor_type_inst_id),
-       .lvalue_id = cursor_var_id});
+  // Call `<range>.(Iterate.Next)(ref cursor)`.
   auto element_id =
       BuildBinaryOperator(context, node_id,
                           {.interface_name = CoreIdentifier::Iterate,
                            .op_name = CoreIdentifier::Next},
-                          range_id, cursor_addr_id);
+                          range_id, cursor_var_id);
   // We need to convert away from an initializing expression in order to call
   // `HasValue` and then separately pattern-match against the element.
   // TODO: Instead, form a `.Some(pattern_id)` pattern and pattern-match against

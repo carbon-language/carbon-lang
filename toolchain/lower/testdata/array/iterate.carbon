@@ -281,10 +281,10 @@ fn F() {
 // CHECK:STDOUT: !52 = !DILocation(line: 23, column: 38, scope: !46)
 // CHECK:STDOUT: !53 = distinct !DISubprogram(name: "Next", linkageName: "_CNext.e163a239f9fa927c:Iterate.Core.620427d555024fe2", scope: null, file: !47, line: 24, type: !54, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !56)
 // CHECK:STDOUT: !54 = !DISubroutineType(types: !55)
-// CHECK:STDOUT: !55 = !{!22, !22, !22}
+// CHECK:STDOUT: !55 = !{!22, !22, !15}
 // CHECK:STDOUT: !56 = !{!57, !58}
 // CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !53, type: !22)
-// CHECK:STDOUT: !58 = !DILocalVariable(arg: 2, scope: !53, type: !22)
+// CHECK:STDOUT: !58 = !DILocalVariable(arg: 2, scope: !53, type: !15)
 // CHECK:STDOUT: !59 = !DILocation(line: 25, column: 9, scope: !53)
 // CHECK:STDOUT: !60 = !DILocation(line: 25, column: 8, scope: !53)
 // CHECK:STDOUT: !61 = !DILocation(line: 26, column: 7, scope: !53)
