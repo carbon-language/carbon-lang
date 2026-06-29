@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
+load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -72,5 +73,28 @@ cc_test(
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/testing:compile_helper",
         "@googletest//:gtest",
+    ],
+)
+
+cc_fuzz_test(
+    name = "format_fuzzer",
+    size = "small",
+    srcs = ["format_fuzzer.cpp"],
+    corpus = glob(["fuzzer_corpus/*"]),
+    deps = [
+        ":format",
+        "//common:check",
+        "//common:raw_string_ostream",
+        "//testing/fuzzing:libfuzzer_header",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/diagnostics:null_diagnostics",
+        "//toolchain/lex",
+        "//toolchain/lex:token_index",
+        "//toolchain/lex:token_kind",
+        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/parse",
+        "//toolchain/parse:tree",
+        "//toolchain/source:source_buffer",
+        "@llvm-project//llvm:Support",
     ],
 )
