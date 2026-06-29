@@ -524,6 +524,13 @@ Other designs build upon basic function syntax to add advanced features:
 -   [Allow separate declaration and definition](/proposals/p000826-function-return-type-inference.md#allow-separate-declaration-and-definition)
 -   [Signature-based function types](/proposals/p002875-functions-function-types-and-function-calls.md#signature-based-function-types)
 -   [Make direct and indirect calls behave uniformly](/proposals/p002875-functions-function-types-and-function-calls.md#make-direct-and-indirect-calls-behave-uniformly)
+-   [Keep the `:!` syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#keep-the--syntax)
+-   [Alternative keyword names](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#alternative-keyword-names)
+-   [Use `template generic` instead of just `template`](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#use-template-generic-instead-of-just-template)
+-   [Context-independent syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#context-independent-syntax)
+-   [Erased model for generics](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#erased-model-for-generics)
+-   [Context-sensitive defaults based on parameter type](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#context-sensitive-defaults-based-on-parameter-type)
+-   [Allow redundant phase keywords](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#allow-redundant-phase-keywords)
 
 ## References
 
@@ -543,3 +550,5 @@ Other designs build upon basic function syntax to add advanced features:
     [#3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
 -   Proposal
     [#5434: `ref` parameters, arguments, returns and `val` returns](https://github.com/carbon-language/carbon-lang/pull/5434)
+-   Proposal
+    [#7254: Replace `:!` and `:?` with keywords and contextual defaults](https://github.com/carbon-language/carbon-lang/pull/7254)

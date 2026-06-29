@@ -1526,6 +1526,7 @@ itself.
 -   [Alternative syntaxes for locals](/proposals/p002006-values-variables-pointers-and-references.md#alternative-syntaxes-for-locals)
 -   [Mixed expression categories](/proposals/p005545-expression-form-basics.md#mixed-expression-categories)
 -   [Don't implicitly convert to less-primitive forms](/proposals/p005545-expression-form-basics.md#dont-implicitly-convert-to-less-primitive-forms)
+-   [Use `exprtype` and `expr` keywords](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#use-exprtype-and-expr-keywords)
 
 ## References
 
@@ -1535,6 +1536,8 @@ itself.
 -   [Proposal #851: auto keyword for vars][#851]
 -   [Proposal #2006: Values, variables, and pointers][#2006]
 -   [Proposal #5545: Expression form basics][#5545]
+-   [Proposal #7254: Replace `:!` and `:?` with keywords and contextual
+    defaults][#7254]
 
 [#257]: /proposals/p000257-initialization-of-memory-and-variables.md
 [#339]: /proposals/p000339-var-statement.md
@@ -1542,3 +1545,4 @@ itself.
 [#851]: /proposals/p000851-variable-type-inference.md
 [#2006]: /proposals/p002006-values-variables-pointers-and-references.md
 [#5545]: /proposals/p005545-expression-form-basics.md
+[#7254]: /proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md
