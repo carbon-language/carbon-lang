@@ -85,34 +85,29 @@ void G() { F(); }
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+9]]:1: in import [InImport]
+// CHECK:STDERR: other.carbon:7:1: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
+// CHECK:STDERR: fn HasGenericArg(T:! type, a: T) { a; }
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+5]]:1: in import [InImport]
+// CHECK:STDERR: other.carbon:7:1: note: calling function declared here [InCallToEntity]
+// CHECK:STDERR: fn HasGenericArg(T:! type, a: T) { a; }
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 import Other;
 import Cpp inline '''
 void G() {
-  // CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+7]]:3: error: no matching function for call to 'HasGenericArg' [CppInteropParseError]
-  // CHECK:STDERR:    20 |   Carbon::Other::HasGenericArg<int>(123);
-  // CHECK:STDERR:       |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: other.carbon:7:34: note: candidate template ignored: substitution failure [with T = int] [CppInteropParseNote]
-  // CHECK:STDERR:     7 | fn HasGenericArg(T:! type, a: T) { a; }
-  // CHECK:STDERR:       |                                  ^
-  // CHECK:STDERR:
   Carbon::Other::HasGenericArg<int>(123);
 }
 ''';
 
-// --- fail_todo_deduced.carbon
+// --- deduced.carbon
 
 library "[[@TEST_NAME]]";
 
 import Other;
 import Cpp inline '''
 void G() {
-  // CHECK:STDERR: fail_todo_deduced.carbon:[[@LINE+7]]:3: error: no matching function for call to 'HasDeducedArg' [CppInteropParseError]
-  // CHECK:STDERR:    16 |   Carbon::Other::HasDeducedArg(123);
-  // CHECK:STDERR:       |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: other.carbon:8:34: note: candidate template ignored: substitution failure [with T = int] [CppInteropParseNote]
-  // CHECK:STDERR:     8 | fn HasDeducedArg[T:! type](a: T) { a; }
-  // CHECK:STDERR:       |                                  ^
-  // CHECK:STDERR:
   Carbon::Other::HasDeducedArg(123);
 }
 ''';

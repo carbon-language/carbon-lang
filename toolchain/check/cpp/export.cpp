@@ -8,6 +8,7 @@
 #include <string_view>
 
 #include "clang/AST/ASTConsumer.h"
+#include "clang/Sema/EnterExpressionEvaluationContext.h"
 #include "clang/Sema/Sema.h"
 #include "llvm/Support/Casting.h"
 #include "toolchain/check/cpp/access.h"
@@ -688,6 +689,10 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
   // Build the thunk function body.
   clang::Sema& sema = context.clang_sema();
   clang::Sema::ContextRAII context_raii(sema, thunk_function_decl);
+  // Ensure that the evaluation context is not `Unevaluated`, as that
+  // would cause code generation to fail.
+  clang::EnterExpressionEvaluationContext evaluated(
+      sema, clang::Sema::ExpressionEvaluationContext::PotentiallyEvaluated);
   sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
   clang::StmtResult body = BuildCppToCarbonThunkBody(
       sema, target, thunk_function_decl, carbon_function_decl);
@@ -774,6 +779,93 @@ auto ExportNonGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
       context, loc_id, target,
       context.names().GetFormatted(target.function.name_id),
       carbon_function_decl);
+}
+
+auto ExportFunctionSpecializationToCpp(
+    Context& context, clang::FunctionTemplateDecl* function_template_decl,
+    llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool {
+  // Map from the `clang::FunctionTemplateDecl` to the Carbon `FunctionDecl`.
+  auto clang_decl_id = context.clang_decls().LookupId(
+      SemIR::ClangDeclKey(function_template_decl));
+  if (clang_decl_id == SemIR::ClangDeclId::None) {
+    return false;
+  }
+  SemIR::InstId inst_id = context.clang_decls().Get(clang_decl_id).inst_id;
+  CARBON_CHECK(inst_id.has_value());
+  auto target_function_decl =
+      context.insts().GetAs<SemIR::FunctionDecl>(inst_id);
+  auto target_function =
+      context.functions().Get(target_function_decl.function_id);
+
+  auto* decl_context = function_template_decl->getDeclContext();
+  FunctionInfo target(context, target_function_decl.function_id,
+                      target_function, decl_context);
+  SemIR::LocId loc_id(target.function.first_decl_id());
+
+  const auto& generic = context.generics().Get(target.function.generic_id);
+  auto bindings = context.inst_blocks().Get(generic.bindings_id);
+  CARBON_CHECK(bindings.size() == template_args.size());
+
+  // This name will be appended to the thunk name to disambiguate
+  // between specializations.
+  std::string extra_name;
+
+  // Create a mapping from Carbon generic parameters to the
+  // corresponding C++ type in `template_args`.
+  Map<SemIR::InstId, SemIR::TypeId> symbolic_to_actual;
+  for (auto [binding_inst_id, clang_template_arg] :
+       llvm::zip(bindings, template_args)) {
+    auto type_expr =
+        ImportCppType(context, loc_id, clang_template_arg.getAsType());
+    if (type_expr.type_id == SemIR::ErrorInst::TypeId) {
+      context.TODO(loc_id, "failed to import C++ type");
+      return false;
+    }
+
+    auto binding_const_inst_id =
+        context.constant_values().GetConstantInstId(binding_inst_id);
+    symbolic_to_actual.Insert(binding_const_inst_id, type_expr.type_id);
+
+    // TODO: this generates a pretty ugly name.
+    extra_name += std::string(llvm::formatv("{}", type_expr.inst_id));
+  }
+
+  // Replace symbolic explicit parameters with a concrete Carbon type.
+  for (auto& param : target.explicit_params) {
+    auto param_type_inst_id = context.types().GetTypeInstId(param.type_id);
+    SemIR::InstId symbolic_inst_id = SemIR::InstId::None;
+    if (auto symbolic_binding =
+            context.insts().TryGetAs<SemIR::SymbolicBinding>(
+                param_type_inst_id)) {
+      symbolic_inst_id = param_type_inst_id;
+    } else if (auto facet_access_type =
+                   context.insts().TryGetAs<SemIR::FacetAccessType>(
+                       param_type_inst_id)) {
+      symbolic_inst_id = facet_access_type->facet_value_inst_id;
+    }
+
+    if (symbolic_inst_id.has_value()) {
+      if (auto lookup = symbolic_to_actual.Lookup(symbolic_inst_id)) {
+        param.type_id = lookup.value();
+      }
+    }
+  }
+
+  // TODO: handle generic return type.
+
+  // Build the thunks. Mark the C++ thunk as a template specialization.
+  auto* function_decl =
+      ExportNonGenericFunctionToCpp(context, loc_id, target, extra_name);
+  if (!function_decl) {
+    return false;
+  }
+  auto* template_arg_list = clang::TemplateArgumentList::CreateCopy(
+      context.ast_context(), template_args);
+  function_decl->setFunctionTemplateSpecialization(
+      function_template_decl, template_arg_list,
+      /*InsertPos=*/nullptr, clang::TSK_ExplicitSpecialization);
+
+  return true;
 }
 
 // Creates a `clang::FunctionTemplateDecl` for a generic Carbon function.
