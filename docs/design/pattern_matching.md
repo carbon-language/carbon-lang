@@ -968,6 +968,10 @@ pattern matching machinery, what (if any) restrictions are imposed, etc.
 
 -   [Type pattern matching](/proposals/p002188-pattern-matching-syntax-and-semantics.md#type-pattern-matching)
 -   [Allow guards on arbitrary patterns](/proposals/p002188-pattern-matching-syntax-and-semantics.md#allow-guards-on-arbitrary-patterns)
+-   [Keep the `:!` syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#keep-the--syntax)
+-   [Alternative keyword names](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#alternative-keyword-names)
+-   [Use `template generic` instead of just `template`](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#use-template-generic-instead-of-just-template)
+-   [Allow redundant phase keywords](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#allow-redundant-phase-keywords)
 
 ## References
 
@@ -975,3 +979,5 @@ pattern matching machinery, what (if any) restrictions are imposed, etc.
     [#2022: Unused Pattern Bindings (Unused Function Parameters)](https://github.com/carbon-language/carbon-lang/pull/2022)
 -   Proposal
     [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
+-   Proposal
+    [#7254: Replace `:!` and `:?` with keywords and contextual defaults](https://github.com/carbon-language/carbon-lang/pull/7254)
