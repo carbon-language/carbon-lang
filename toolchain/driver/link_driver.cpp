@@ -12,6 +12,45 @@ namespace Carbon {
 
 LinkDriver::LinkDriver(LinkOptions* options) : options_(options) {}
 
+namespace {
+
+auto object_search(Filesystem::DirRef base_dir, std::filesystem::path base_path,
+                   llvm::SmallVector<std::string>& prelude_paths) -> void {
+  llvm::SmallVector<std::filesystem::path> work_paths({"."});
+  while (!work_paths.empty()) {
+    auto relative_path = work_paths.back();
+    work_paths.pop_back();
+    auto relative_dir = base_dir.OpenDir(relative_path);
+    CARBON_CHECK(relative_dir.ok());
+    llvm::SmallVector<std::filesystem::path> relative_sub_paths;
+    llvm::SmallVector<std::filesystem::path> relative_file_paths;
+    CARBON_CHECK(
+        relative_dir
+            ->AppendEntriesIf(relative_sub_paths, relative_file_paths,
+                              [&relative_dir](llvm::StringRef name) -> bool {
+                                auto path = std::filesystem::path(name.str());
+                                auto stat = relative_dir->Stat(path);
+                                CARBON_CHECK(stat.ok());
+                                if (stat->is_dir()) {
+                                  return true;
+                                }
+                                return path.extension() == ".o";
+                              })
+            .ok());
+    llvm::for_each(relative_sub_paths, [relative_path, &work_paths](
+                                           std::filesystem::path sub_path) {
+      work_paths.push_back(relative_path / sub_path);
+    });
+    llvm::for_each(relative_file_paths, [relative_path, base_path,
+                                         &prelude_paths](
+                                            std::filesystem::path file_path) {
+      prelude_paths.push_back((base_path / relative_path / file_path).string());
+    });
+  }
+}
+
+}  // namespace
+
 auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
   // TODO: Currently we use the Clang driver to link. This works well on Unix
   // OSes but we likely need to directly build logic to invoke `link.exe` on
@@ -51,8 +90,9 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
 
   // Find or build the Carbon Core runtimes for linking the prelude into the
   // binary.
-  std::optional<std::filesystem::path> core_path;
-  std::optional<Filesystem::DirRef> runtimes_dir;
+  std::filesystem::path core_path;
+  Filesystem::DirRef runtimes_dir;
+  std::filesystem::path runtimes_path;
   if (driver_env.prebuilt_runtimes) {
     auto error_or_path =
         driver_env.prebuilt_runtimes->Get(Runtimes::CarbonCore);
@@ -61,6 +101,7 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
                  error_or_path.error().message());
     core_path = std::move(*error_or_path);
     runtimes_dir = driver_env.prebuilt_runtimes->base_dir();
+    runtimes_path = driver_env.prebuilt_runtimes->base_path();
   } else if (driver_env.build_runtimes_on_demand) {
     Runtimes::Cache::Features features = {
         .target = options_->codegen_options->target.str()};
@@ -68,7 +109,6 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
     CARBON_CHECK(runtimes_or_error.ok(), "Runtimes cache lookup failed: {}",
                  runtimes_or_error.error().message());
     auto runtimes = std::move(*runtimes_or_error);
-    runtimes_dir = runtimes.base_dir();
     CarbonPreludeBuilder prelude_builder(&driver_env, options_->codegen_options,
                                          &runtimes);
     auto path_or_error = std::move(prelude_builder).Build();
@@ -81,6 +121,11 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
       return {.success = false};
     }
     core_path = std::move(*path_or_error);
+    runtimes_dir = runtimes.base_dir();
+    runtimes_path = runtimes.base_path();
+  } else {
+    // TODO: emit diagnostic
+    return {.success = false};
   }
 
   // Note that we append any extra Clang args before our object filenames. This
@@ -93,24 +138,22 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
   clang_args.push_back("--");
 
   // Append the Carbon prelude object files to the link.
-  llvm::SmallVector<std::filesystem::path> prelude_paths;
-  if (core_path) {
-    auto core_dir_or_error = runtimes_dir->OpenDir(*core_path);
-    CARBON_CHECK(core_dir_or_error.ok());
-    auto core_dir = std::move(*core_dir_or_error);
-    CARBON_CHECK(core_dir
-                     .AppendEntriesIf(prelude_paths,
-                                      [](llvm::StringRef name) -> bool {
-                                        auto entry_path =
-                                            std::filesystem::path(name.str());
-                                        return entry_path.extension() == ".o";
-                                      })
-                     .ok());
-    llvm::for_each(prelude_paths, [&](std::filesystem::path path) -> void {
-      llvm::errs() << path << "\n";
-      clang_args.push_back(llvm::StringRef(path));
-    });
-  }
+  llvm::SmallVector<std::string> prelude_paths;
+  // Open subdirectory specifically for the object files relative to the
+  // runtimes base path.
+  auto relative_path = core_path.lexically_relative(runtimes_path);
+  auto core_dir_or_error = runtimes_dir.OpenDir(relative_path);
+  CARBON_CHECK(core_dir_or_error.ok(),
+               "Failed to open prelude binaries directory at {}",
+               core_dir_or_error.error());
+  auto core_dir = std::move(*core_dir_or_error);
+  object_search(core_dir, core_path, prelude_paths);
+  CARBON_CHECK(!prelude_paths.empty(),
+               "runtimes_path: {}, core_path: {}, relative_path: {}",
+               runtimes_path, core_path, relative_path);
+  llvm::for_each(prelude_paths, [&](std::string path) -> void {
+    clang_args.push_back(llvm::StringRef(path));
+  });
 
   clang_args.append(options_->object_filenames.begin(),
                     options_->object_filenames.end());

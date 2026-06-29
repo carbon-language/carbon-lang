@@ -11,6 +11,7 @@ load(
     "flag_group",
     "flag_set",
     "tool",
+    "tool_path",
 )
 load(
     "@rules_cc//cc:defs.bzl",
@@ -110,15 +111,15 @@ def _carbon_cc_toolchain_config_impl(ctx):
         llvm_ar = tool(path = llvm_bindir + "/llvm-ar"),
         llvm_strip = tool(path = llvm_bindir + "/llvm-strip"),
     )
+    carbon_busybox_bin = None
     if ctx.attr.bins:
-        carbon_busybox = None
         clang = None
         clangpp = None
         llvm_ar = None
         llvm_strip = None
         for f in ctx.files.bins:
             if f.basename == "carbon-busybox":
-                carbon_busybox = f
+                carbon_busybox_bin = f
             elif f.basename == "clang":
                 clang = f
             elif f.basename == "clang++":
@@ -127,12 +128,12 @@ def _carbon_cc_toolchain_config_impl(ctx):
                 llvm_ar = f
             elif f.basename == "llvm-strip":
                 llvm_strip = f
-        if not all([carbon_busybox, clang, clangpp, llvm_ar, llvm_strip]):
+        if not all([carbon_busybox_bin, clang, clangpp, llvm_ar, llvm_strip]):
             fail("Missing required tool in bins: {0}".format(ctx.attr.bins))
         llvm_bindir = llvm_ar.dirname
         clang_bindir = clang.dirname
         tools = struct(
-            carbon_busybox = tool(tool = carbon_busybox),
+            carbon_busybox = tool(tool = carbon_busybox_bin),
             clang = tool(tool = clang),
             clangpp = tool(tool = clangpp),
             llvm_ar = tool(tool = llvm_ar),
@@ -162,6 +163,7 @@ def _carbon_cc_toolchain_config_impl(ctx):
         ctx.attr.target_cpu,
         ctx.attr.target_os,
     )
+
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
         features = clang_cc_toolchain_features(
@@ -197,7 +199,7 @@ def _carbon_cc_toolchain_config_impl(ctx):
 
         # Pass in our tool paths to expose Make variables like $(NM) and
         # $(OBJCOPY).
-        tool_paths = llvm_tool_paths(llvm_bindir, clang_bindir),
+        tool_paths = llvm_tool_paths(llvm_bindir, clang_bindir) + [tool_path(name = "carbon-busybox", path = "carbon-busybox")],
     )
 
 carbon_cc_toolchain_config = rule(

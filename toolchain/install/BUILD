@@ -34,6 +34,7 @@ load(
 load("@llvm-project//libcxx:libcxx_library.bzl", "libcxx_and_abi_copts")
 load("@llvm-project//libunwind:libunwind_library.bzl", "libunwind_copts")
 load("@rules_python//python:defs.bzl", "py_test")
+load("//bazel/carbon_rules:defs.bzl", "carbon_prelude")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load(
     "//bazel/cc_toolchains:carbon_bootstrapping.bzl",
@@ -483,6 +484,15 @@ filegroup(
     output_group = "archive",
 )
 
+carbon_prelude(
+    name = "carbon_prelude",
+    srcs = [":core"],
+    target_compatible_with = select({
+        ":is_runtimes_build": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
 cc_library(
     name = "libunwind",
     srcs = [":libunwind_srcs"],
@@ -576,6 +586,7 @@ filegroup(
 carbon_runtimes_config(
     name = "runtimes_cfg",
     builtins_archive = ":builtins_archive",
+    carbon_prelude_prebuilt = ":carbon_prelude",
     clang_hdrs_prefix = "llvm/lib/clang/{0}/include/".format(LLVM_VERSION_MAJOR),
     crt_copts = crt_copts + [
         # Disable all sanitizers for CRT objects.

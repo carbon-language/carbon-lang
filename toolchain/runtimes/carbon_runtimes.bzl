@@ -48,6 +48,7 @@ CarbonRuntimesConfigInfo = provider(
     """,
     fields = [
         "builtins_archive",
+        "carbon_prelude_prebuilt",
         "clang_hdrs_prefix",
         "crt_copts",
         "crtbegin_src",
@@ -63,6 +64,7 @@ def _carbon_runtimes_config_impl(ctx):
     return [
         CarbonRuntimesConfigInfo(
             builtins_archive = ctx.files.builtins_archive[0],
+            carbon_prelude_prebuilt = ctx.files.carbon_prelude_prebuilt,
             clang_hdrs_prefix = ctx.attr.clang_hdrs_prefix,
             crt_copts = ctx.attr.crt_copts,
             crtbegin_src = ctx.files.crtbegin_src[0] if ctx.files.crtbegin_src else None,
@@ -78,6 +80,7 @@ carbon_runtimes_config = rule(
     implementation = _carbon_runtimes_config_impl,
     attrs = {
         "builtins_archive": attr.label(mandatory = True, allow_files = [".a"]),
+        "carbon_prelude_prebuilt": attr.label(mandatory = True, allow_files = [".o"]),
         "clang_hdrs_prefix": attr.string(default = "include/"),
         "crt_copts": attr.string_list(default = []),
         "crtbegin_src": attr.label(allow_files = [".c"]),
@@ -169,6 +172,14 @@ def _carbon_runtimes_build_impl(ctx):
         )
         ctx.actions.symlink(output = out_hdr, target_file = hdr)
         outputs.append(out_hdr)
+
+    for obj in config.carbon_prelude_prebuilt:
+        rel_path = obj.path
+        out_obj = ctx.actions.declare_file(
+            "{0}/core/{1}".format(prefix, rel_path),
+        )
+        ctx.actions.symlink(output = out_obj, target_file = obj)
+        outputs.append(out_obj)
 
     return [DefaultInfo(files = depset(outputs))]
 

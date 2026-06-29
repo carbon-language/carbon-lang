@@ -4,6 +4,7 @@
 
 """Provides rules for building Carbon files using the toolchain."""
 
+load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
@@ -203,6 +204,34 @@ def _carbon_library_impl(ctx):
 
     return [CarbonLibraryInfo(api = ctx.files.api[0], objs = depset(objs))]
 
+def _carbon_prelude_impl(ctx):
+    cc_toolchain = find_cpp_toolchain(ctx)
+
+    # TODO: find a less terrible way to figure this out
+    toolchain_root = str(cc_toolchain.compiler_executable).removeprefix(cc_toolchain._crosstool_top_path + "/").removesuffix("toolchain/install/llvm/bin/clang++")
+    carbon_busybox = toolchain_root + cc_toolchain._tool_paths["carbon-busybox"]
+    srcs = [s for s in ctx.files.srcs if s.extension == "carbon"]
+    objs = []
+    for src in srcs:
+        out = ctx.actions.declare_file("_objs/{0}/{1}o".format(
+            ctx.label.name,
+            src.short_path.removeprefix(ctx.label.package).removesuffix(src.extension),
+        ))
+        objs.append(out)
+        srcs_reordered = [s for s in srcs if s != src] + [src]
+        ctx.actions.run(
+            outputs = [out],
+            inputs = depset(direct = srcs_reordered),
+            tools = depset(transitive = [cc_toolchain.all_files]),
+            executable = carbon_busybox,
+            arguments = ["compile", "--output=" + out.path, "--output-last-input-only", "--no-prelude-import"] +
+                        [s.path for s in srcs_reordered] + ctx.attr.flags,
+            mnemonic = "CarbonPrelude",
+            progress_message = "Precompiling prelude file " + src.short_path,
+        )
+
+    return DefaultInfo(files = depset(objs))
+
 _carbon_binary_internal = rule(
     implementation = _carbon_binary_impl,
     attrs = {
@@ -295,6 +324,19 @@ _carbon_library_internal = rule(
         "_cc_toolchain": attr.label(default = "//toolchain/install:carbon_stage1_cc_toolchain"),
     },
     executable = False,
+    fragments = ["cpp"],
+)
+
+carbon_prelude = rule(
+    implementation = _carbon_prelude_impl,
+    attrs = {
+        "srcs": attr.label_list(allow_files = [".carbon"]),
+        "flags": attr.string_list(),
+        "_cc_toolchain": attr.label(
+            default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
+        ),
+    },
+    toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
     fragments = ["cpp"],
 )
 
