@@ -30,7 +30,7 @@ auto LanguageServerSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   bool success =
       LanguageServer::Run(*driver_env.installation, driver_env.input_stream,
                           *driver_env.output_stream, *driver_env.error_stream,
-                          driver_env.vlog_stream, driver_env.consumer);
+                          driver_env.vlog_stream, *driver_env.consumer);
   return {.success = success};
 }
 

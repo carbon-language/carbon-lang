@@ -339,9 +339,9 @@ same type due to the different spellings of the types in C++ being the same:
 
         -   `Cpp.[unsigned_](long_long|long|int|short|double|float)`
 
-        that is signedness, then size keyword(s), then a type keyword only if
-        there are no size keywords. For example `Cpp.unsigned_int` not
-        `Cpp.unsigned`, `Cpp.long` not `Cpp.long_int`.
+    that is signedness, then size keyword(s), then a type keyword only if
+    there are no size keywords. For example `Cpp.unsigned_int` not
+    `Cpp.unsigned`, `Cpp.long` not `Cpp.long_int`.
 
     -   They will be available when an `import Cpp` declaration is present.
 
@@ -365,7 +365,6 @@ same type due to the different spellings of the types in C++ being the same:
 
     -   `Cpp.float` and `Cpp.double` will be the same type as `f32` and `f64`
         correspondingly.
-
 -   The type aliases `[u]int_fastN_t`, `[u]int_leastN_t`, `[u]intmax_t`,
     `[u]intptr_t`, `ptrdiff_t` and `size_t` will be available in Carbon in the
     `Cpp` namespace if the C++ header declaring them is imported (for example

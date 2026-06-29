@@ -10,14 +10,25 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/facet/validate_impl_constraints.carbon
 
-// --- self_impls_modifies_assoc_constant.carbon
+// --- fail_todo_self_impls_modifies_assoc_constant.carbon
 library "[[@TEST_NAME]]";
 
 interface I { let X:! type; }
 
 fn F(unused T:! I where .X = ()) {}
 
-fn G(T:! I where .Self impls (I where .X = ())) {
+constraint N {
+  extend require impls I where .X = ();
+}
+
+fn G(T:! I where .Self impls N) {
+  // CHECK:STDERR: fail_todo_self_impls_modifies_assoc_constant.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .Self impls N` into type implementing `I where .(I.X) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_todo_self_impls_modifies_assoc_constant.carbon:[[@LINE-10]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused T:! I where .X = ()) {}
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   F(T);
 }
 
@@ -28,18 +39,22 @@ interface I { let X:! type; }
 
 fn F(unused T:! I where .X = ()) {}
 
-fn G(T:! I where .Self impls (I where .X = {})) {
-  // CHECK:STDERR: fail_self_impls_modifies_assoc_constant_type_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = {}` into type implementing `I where .(I.X) = ()` [ConversionFailureFacetToFacet]
+constraint N {
+  extend require impls I where .X = {};
+}
+
+fn G(T:! I where .Self impls N) {
+  // CHECK:STDERR: fail_self_impls_modifies_assoc_constant_type_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .Self impls N` into type implementing `I where .(I.X) = ()` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_self_impls_modifies_assoc_constant_type_differs.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fail_self_impls_modifies_assoc_constant_type_differs.carbon:[[@LINE-10]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(unused T:! I where .X = ()) {}
   // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
 
-// --- fail_where_impls_tests_associated_constant_of_generic_type_non_final_impl.carbon
+// --- todo_fail_where_impls_tests_associated_constant_of_generic_type_non_final_impl.carbon
 library "[[@TEST_NAME]]";
 
 class C(U:! type) {}
@@ -49,23 +64,22 @@ interface L {}
 interface M { let M0:! type; }
 impl forall [U:! L] C(U) as M where .M0 = {} {}
 
+constraint M0IsStruct {
+  extend require impls M where .M0 = {};
+}
+
 // U requires that C(.Self) impls M.
 // - C(.Self) impls M can be rewritten as C(U) impls M.
 // - C(U) impls M if U impls L => Requires U impls L.
-fn F(unused U:! type where C(.Self) impls (M where .M0 = {})) {}
+fn F(unused U:! type where C(.Self) impls M0IsStruct) {}
 
 fn G(T:! L) {
   // We have no final impl for `C(T) as M`, so we don't know the value of
   // `(C(T) as M).M0` concretely, so we don't know that it is `{}` and we can't
   // convert assuming it is.
   //
-  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_non_final_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where C(.Self) impls M and C(.Self).(M.M0) = {}` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   F(T);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_non_final_impl.carbon:[[@LINE-10]]:13: note: initializing generic parameter `U` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused U:! type where C(.Self) impls (M where .M0 = {})) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
+  // TODO: This should fail. The rewrite constraint from `M0IsStruct` is not
+  // being checked.
   F(T);
 }
 
@@ -79,16 +93,20 @@ interface L {}
 interface M { let M0:! type; }
 final impl forall [U:! L] C(U) as M where .M0 = {} {}
 
+constraint M0IsStruct {
+  extend require impls M where .M0 = {};
+}
+
 // U requires that C(.Self) impls M.
 // - C(.Self) impls M can be rewritten as C(U) impls M.
 // - C(U) impls M if U impls L => Requires U impls L.
-fn F(unused U:! type where C(.Self) impls (M where .M0 = {})) {}
+fn F(unused U:! type where C(.Self) impls M0IsStruct) {}
 
 fn G(T:! L) {
   F(T);
 }
 
-// --- fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon
+// --- todo_fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon
 library "[[@TEST_NAME]]";
 
 class C(U:! type) {}
@@ -98,23 +116,23 @@ interface L {}
 interface M { let M0:! type; }
 final impl forall [U:! L] C(U) as M where .M0 = () {}
 
+constraint M0IsStruct {
+  extend require impls M where .M0 = {};
+}
+
 // U requires that C(.Self) impls M.
 // - C(.Self) impls M can be rewritten as C(U) impls M.
 // - C(U) impls M if U impls L => Requires U impls L.
-fn F(unused U:! type where C(.Self) impls (M where .M0 = {})) {}
+fn F(unused U:! type where C(.Self) impls M0IsStruct) {}
 
 fn G(T:! L) {
-  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where C(.Self) impls M and C(.Self).(M.M0) = {}` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   F(T);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon:[[@LINE-6]]:13: note: initializing generic parameter `U` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused U:! type where C(.Self) impls (M where .M0 = {})) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
+  // F requires .M0 = {}, but the final impl provides .M0 = ().
+  //
+  // TODO: This should fail.
   F(T);
 }
 
-// --- fail_where_impls_tests_associated_constant_of_generic_interface_non_final_impl.carbon
+// --- todo_fail_where_impls_tests_associated_constant_of_generic_interface_non_final_impl.carbon
 library "[[@TEST_NAME]]";
 
 class C {}
@@ -124,23 +142,21 @@ interface L {}
 interface M(U:! type) { let M0:! type; }
 impl forall [U:! L] C as M(U) where .M0 = {} {}
 
+constraint M0IsStruct(PeriodSelf:! type) {
+  extend require impls M(PeriodSelf) where .M0 = {};
+}
+
 // U requires that C impls M(.Self).
 // - C impls M(.Self) can be rewritten as C impls M(U).
 // - C impls M(U) if U impls L => Requires U impls L.
-fn F(unused U:! type where C impls (M(.Self) where .M0 = {})) {}
+fn F(unused U:! type where C impls M0IsStruct(.Self)) {}
 
 fn G(T:! L) {
   // We have no final impl for `C as M(T)`, so we don't know the value of
   // `(C as M(T)).M0` concretely, so we don't know that it is `{}` and we can't
   // convert assuming it is.
   //
-  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_non_final_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where C impls M(.Self) and C.(M(.Self).M0) = {}` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   F(T);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_non_final_impl.carbon:[[@LINE-10]]:13: note: initializing generic parameter `U` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused U:! type where C impls (M(.Self) where .M0 = {})) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
+  // TODO: This should fail.
   F(T);
 }
 
@@ -154,16 +170,20 @@ interface L {}
 interface M(U:! type) { let M0:! type; }
 final impl forall [U:! L] C as M(U) where .M0 = {} {}
 
+constraint M0IsStruct(PeriodSelf:! type) {
+  extend require impls M(PeriodSelf) where .M0 = {};
+}
+
 // U requires that C impls M(.Self).
 // - C impls M(.Self) can be rewritten as C impls M(U).
 // - C impls M(U) if U impls L => Requires U impls L.
-fn F(unused U:! type where C impls (M(.Self) where .M0 = {})) {}
+fn F(unused U:! type where C impls M0IsStruct(.Self)) {}
 
 fn G(T:! L) {
   F(T);
 }
 
-// --- fail_where_impls_tests_associated_constant_of_generic_interface_type_differs.carbon
+// --- todo_fail_where_impls_tests_associated_constant_of_generic_interface_type_differs.carbon
 library "[[@TEST_NAME]]";
 
 class C {}
@@ -173,19 +193,19 @@ interface L {}
 interface M(U:! type) { let M0:! type; }
 final impl forall [U:! L] C as M(U) where .M0 = () {}
 
+constraint M0IsStruct(PeriodSelf:! type) {
+  extend require impls M(PeriodSelf) where .M0 = {};
+}
+
 // U requires that C impls M(.Self).
 // - C impls M(.Self) can be rewritten as C impls M(U).
 // - C impls M(U) if U impls L => Requires U impls L.
-fn F(unused U:! type where C impls (M(.Self) where .M0 = {})) {}
+fn F(unused U:! type where C impls M0IsStruct(.Self)) {}
 
 fn G(T:! L) {
-  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_type_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where C impls M(.Self) and C.(M(.Self).M0) = {}` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   F(T);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_type_differs.carbon:[[@LINE-6]]:13: note: initializing generic parameter `U` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused U:! type where C impls (M(.Self) where .M0 = {})) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
+  // F requires that .M0 = {} but the final impl provides that .M0 = ().
+  //
+  // TODO: This should fail.
   F(T);
 }
 
@@ -273,39 +293,6 @@ fn G() {
   impl C as Z {}
   impl C as Y {}
   impl R(C) as X(C) {}
-  F(C);
-}
-
-// --- fail_todo_where_period_self_rhs_impls_nested_period_self.carbon
-library "[[@TEST_NAME]]";
-
-interface Z {}
-interface Y {}
-interface X(T:! Z & Y) {}
-
-constraint N {
-  require impls Y;
-}
-
-// TODO: The inner nested facet type (`N where...`) does not know about
-// constraints on the outer facet type (`Z where...`). But it should produce an
-// implied constraint that `.Self impls Z & Y` that is checked once the full
-// facet type is known.
-//
-// CHECK:STDERR: fail_todo_where_period_self_rhs_impls_nested_period_self.carbon:[[@LINE+7]]:51: error: cannot convert type `.Self` that implements `N` into type implementing `Z & Y` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fn F(_:! Z where .Self impls (N where .Self impls X(.Self))) {}
-// CHECK:STDERR:                                                   ^~~~~~~~
-// CHECK:STDERR: fail_todo_where_period_self_rhs_impls_nested_period_self.carbon:[[@LINE-14]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-// CHECK:STDERR: interface X(T:! Z & Y) {}
-// CHECK:STDERR:             ^~~~~~~~~
-// CHECK:STDERR:
-fn F(_:! Z where .Self impls (N where .Self impls X(.Self))) {}
-
-fn G() {
-  class C;
-  impl C as Z {}
-  impl C as Y {}
-  impl C as X(C) {}
   F(C);
 }
 

@@ -12,7 +12,6 @@
 #include "toolchain/diagnostics/sorting_consumer.h"
 #include "toolchain/driver/compile_options.h"
 #include "toolchain/driver/driver_env.h"
-#include "toolchain/driver/driver_subcommand.h"
 
 namespace Carbon {
 
@@ -76,13 +75,20 @@ class CompilationUnit {
     return *tree_and_subtrees_getter_;
   }
 
+  auto source() const -> const SourceBuffer& { return *source_; }
+  auto tokens() const -> const Lex::TokenizedBuffer& { return *tokens_; }
+  auto parse_tree() const -> const Parse::Tree& { return *parse_tree_; }
+  auto parse_tree_and_subtrees() const -> const Parse::TreeAndSubtrees& {
+    return GetParseTreeAndSubtrees();
+  }
+
  private:
   // Do codegen. Returns true on success.
   auto RunCodeGenHelper() -> bool;
 
   // The TreeAndSubtrees is mainly used for debugging and diagnostics, and has
   // significant overhead. Avoid constructing it when unused.
-  auto GetParseTreeAndSubtrees() -> const Parse::TreeAndSubtrees&;
+  auto GetParseTreeAndSubtrees() const -> const Parse::TreeAndSubtrees&;
 
   // Wraps a call with log statements to indicate start and end. Typically logs
   // with the actual function name, but marks timings with the appropriate
@@ -128,7 +134,7 @@ class CompilationUnit {
   // Initialized by `SetMultiUnitCache`.
   MultiUnitCache* cache_ = nullptr;
   // Tracks memory usage of the compile.
-  std::optional<MemUsage> mem_usage_;
+  mutable std::optional<MemUsage> mem_usage_;
   // Tracks timings of the compile.
   std::optional<Timings> timings_;
 
@@ -136,7 +142,7 @@ class CompilationUnit {
   std::optional<SourceBuffer> source_;
   std::optional<Lex::TokenizedBuffer> tokens_;
   std::optional<Parse::Tree> parse_tree_;
-  std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
+  mutable std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
   std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
       tree_and_subtrees_getter_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;

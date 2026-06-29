@@ -82,13 +82,13 @@ static auto ComputeClangConfig(DriverEnv& driver_env,
   // Build a library invocation of Clang in order to query its header search
   // paths.
   std::shared_ptr clang_invocation =
-      BuildClangInvocation(driver_env.consumer, driver_env.fs,
+      BuildClangInvocation(*driver_env.consumer, driver_env.fs,
                            *driver_env.installation, target_str, {});
   clang_invocation->getFrontendOpts().DisableFree = false;
 
   // Setup up a driver-style diagnostic engine for the compiler invocation and
   // instance below as we won't go past that while computing the include dirs.
-  Diagnostics::ErrorTrackingConsumer error_tracker(driver_env.consumer);
+  Diagnostics::ErrorTrackingConsumer error_tracker(*driver_env.consumer);
   Diagnostics::NoLocEmitter emitter(&error_tracker);
   ClangDriverDiagnosticConsumer diagnostic_consumer(&emitter);
   llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(

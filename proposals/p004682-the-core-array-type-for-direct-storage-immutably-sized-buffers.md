@@ -351,7 +351,7 @@ without requiring special-casing.
 
 We introduced some more specific sub-goals above:
 
-1. Privileging the most common type names
+1.  Privileging the most common type names
 
 This proposal privileges `Core.Array` as it will appear frequently in code, by
 placing it in the `prelude` library. This avoids the need for developers to
@@ -367,7 +367,7 @@ In this proposal, we avoid introducing additional syntax (such as with `[T; N]`
 or `(1, 2)`) because the frequency of use of arrays will be lower than that of
 fundamental types and tuples.
 
-2. Absence of syntax should make clear defaults
+2.  Absence of syntax should make clear defaults
 
 We introduce a type name, with a keyword that has a clear relationship to the
 generic type name, rather than making arrays look more like slices but without
@@ -375,7 +375,7 @@ being a pointer. This is maent to avoid the confusion raised when removing
 syntax changes the meaning significantly, and especially in ways that differ
 from defaults/options for a single language concept.
 
-3. Avoiding confusion with other languages
+3.  Avoiding confusion with other languages
 
 We propose using the `Array` type name, and `array` shorthand, in line with how
 other languages use the same term. When a direct-storage array type is part of
@@ -386,7 +386,7 @@ Most importantly, the name is consistent with the meaning in C++ and its
 standard library (`std::array<T, N>`) as well as with Rust, the languages which
 we expect Carbon code to interact with the most.
 
-4. Avoiding confusion with other domains
+4.  Avoiding confusion with other domains
 
 The name `Vector` is a possible choice for a fixed-length set of values, due to
 its mathematical meaning, as was originally proposed for the direct-storage

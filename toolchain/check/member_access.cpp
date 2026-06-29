@@ -406,11 +406,18 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
   if (auto unbound_element_type =
           context.types().TryGetAs<SemIR::UnboundElementType>(
               context.insts().Get(member_id).type_id())) {
+    auto base_type_id = context.insts().Get(base_id).type_id();
+    auto [unqualified_base_type_id, qualifiers] =
+        context.types().GetUnqualifiedTypeAndQualifiers(base_type_id);
+
     // Convert the base to the type of the element if necessary.
-    base_id = ConvertToValueOrRefOfType(
-        context, loc_id, base_id,
-        context.types().GetTypeIdForTypeInstId(
-            unbound_element_type->class_type_inst_id));
+    auto element_class_type_id =
+        GetQualifiedType(context,
+                         context.types().GetTypeIdForTypeInstId(
+                             unbound_element_type->class_type_inst_id),
+                         qualifiers);
+    base_id = ConvertToValueOrRefOfType(context, loc_id, base_id,
+                                        element_class_type_id);
 
     // Find the specified element, which could be either a field or a base
     // class, and build an element access expression.
@@ -419,12 +426,18 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                  "Non-constant value {0} of unbound element type",
                  context.insts().Get(member_id));
     auto index = GetClassElementIndex(context, element_id);
+    // Only propagate the `partial` qualifier to the `base` field.
+    if (!context.insts().Is<SemIR::BaseDecl>(element_id)) {
+      qualifiers.Remove(SemIR::TypeQualifiers::Partial);
+    }
+    auto access_type_id =
+        GetQualifiedType(context,
+                         context.types().GetTypeIdForTypeInstId(
+                             unbound_element_type->element_type_inst_id),
+                         qualifiers);
     auto access_id = GetOrAddInst<SemIR::ClassElementAccess>(
         context, loc_id,
-        {.type_id = context.types().GetTypeIdForTypeInstId(
-             unbound_element_type->element_type_inst_id),
-         .base_id = base_id,
-         .index = index});
+        {.type_id = access_type_id, .base_id = base_id, .index = index});
     if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
             SemIR::ExprCategory::Value &&
         SemIR::GetExprCategory(context.sem_ir(), access_id) !=
@@ -582,7 +595,11 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   base_id = ConvertToValueOrRefExpr(context, base_id);
   base_type_id = context.insts().Get(base_id).type_id();
 
-  auto lookup_const_id = context.types().GetConstantId(base_type_id);
+  // If the type has qualifiers, use the unqualified type for lookup.
+  auto unqualified_base_type_id =
+      context.types().GetUnqualifiedTypeAndQualifiers(base_type_id).first;
+  auto lookup_const_id =
+      context.types().GetConstantId(unqualified_base_type_id);
 
   // TODO: If the type is a facet, we look through it into the facet's type (a
   // FacetType) for names. According to the design, we shouldn't need to do

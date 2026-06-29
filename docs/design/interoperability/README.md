@@ -144,9 +144,11 @@ This syntax is used for both standard library headers and user-defined headers:
     This import makes entities like `putchar` available.
 
 -   **C++ User-Defined Header:**
+
     ```carbon
     import Cpp library "circle.h";
     ```
+
     This import makes user-defined declarations and definitions available.
 
 ### TODO: Importing C++ code (inline)

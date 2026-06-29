@@ -120,8 +120,8 @@ equally for moved-from objects and objects without an explicit initializer:
 
 We propose two fundamental concepts:
 
-1. An _unformed state_ for objects.
-2. Raw, uninitialized storage.
+1.  An _unformed state_ for objects.
+2.  Raw, uninitialized storage.
 
 The first of these is a new concept and is discussed in detail below. However,
 uninitialized storage in Carbon should work in the same way as an uninitialized
@@ -555,14 +555,14 @@ fn ReturnVarWithControlFlow() -> Point {
 We propose a set of restrictions to give simple and understandable behavior
 which remains reasonably expressive.
 
-1. Once a `returned var` is in scope, another `returned var` cannot be declared.
-2. Any `return` with a `returned var` in scope must be `return var;` and returns
-   the declared `returned var`.
-3. If control flow exits the scope of a `returned var` in any way other than a
-   `return var;`, it ends the lifetime of the declared `returned var` exactly
-   like it would end the lifetime of a `var` declaration.
-4. There must be a `returned var` declaration in scope when the function does a
-   `return var;`.
+1.  Once a `returned var` is in scope, another `returned var` cannot be declared.
+2.  Any `return` with a `returned var` in scope must be `return var;` and returns
+    the declared `returned var`.
+3.  If control flow exits the scope of a `returned var` in any way other than a
+    `return var;`, it ends the lifetime of the declared `returned var` exactly
+    like it would end the lifetime of a `var` declaration.
+4.  There must be a `returned var` declaration in scope when the function does a
+    `return var;`.
 
 A consequence of these rules allows code like:
 

@@ -556,9 +556,9 @@ library "[[@TEST_NAME]]";
 interface I { let X:! type; }
 interface K(Y:! type) {  }
 
-fn F(unused T:! I where .X = {.k: K(I where .X = ())}) {}
+fn F(unused T:! I where .X = {.k: K(I)}) {}
 
-fn G(T:! I where .X = {.k: K(I where .X = ())}) {
+fn G(T:! I where .X = {.k: K(I)}) {
   F(T);
 }
 
@@ -717,25 +717,6 @@ fn H(T:! I where .X1 = .Self and .X2 = .X1.X3 and .X3 = ()) {
   G(T);
 }
 
-// --- associated_constant_is_facet_type_of_same_interface.carbon
-library "[[@TEST_NAME]]";
-
-interface I {
-  let A:! type;
-  let X:! type;
-}
-
-class C;
-
-// This looks for a bug where `.Self.A` resolves to `C` from `.T.A` in the
-// incoming facet value, which is incorrect. It should be `.T.X.A` which
-// resolves to `{}`.
-fn F(unused U:! I where .X = (I where .A = {})) {}
-
-fn G(T:! I where .X = (I where .A = {}) and .A = C) {
-  F(T);
-}
-
 // --- rewrite_requires_subst_in_rhs.carbon
 library "[[@TEST_NAME]]";
 
@@ -752,58 +733,6 @@ fn G(T:! I where .X = C({}) and .Y = {}) {
   F(T);
 }
 
-// --- fail_todo_rewrite_requires_subst_in_nested_facet_type.carbon
-library "[[@TEST_NAME]]";
-
-interface I(T:! type) {
-  let X:! type;
-  let Y:! type;
-}
-
-class C;
-
-fn F(unused T:! I(C) where .X = (I(.Y) where .Y = ())) {}
-
-fn G(T:! I(C) where .X = (I({}) where .Y = ()) and .Y = {}) {
-  // TODO: The T in G should match the T in F, once the .Self reference to the
-  // top level facet value in `I(.Y)` is correctly substituted by tracking that
-  // it is a .Self reference to the top level Self.
-  // CHECK:STDERR: fail_todo_rewrite_requires_subst_in_nested_facet_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I(C) where .(I(C).X) = I({}) where .(I({}).Y) = () and .(I(C).Y) = {}` into type implementing `I(C) where .(I(C).X) = I(.(I(C).Y)) where .(I(.(I(C).Y)).Y) = ()` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   F(T);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_todo_rewrite_requires_subst_in_nested_facet_type.carbon:[[@LINE-9]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I(C) where .X = (I(.Y) where .Y = ())) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  F(T);
-}
-
-fn G2(T:! I(C) where .X = (I(.Y) where .Y = ()) and .Y = {}) {
-  F(T);
-}
-
-// --- fail_rewrite_requires_subst_in_nested_facet_type_types_differ.carbon
-library "[[@TEST_NAME]]";
-
-interface I(T:! type) {
-  let X:! type;
-  let Y:! type;
-}
-
-fn F(unused T:! I({}) where .X = (I(.Y) where .X = ())) {}
-
-// I(.Y) is I({}) which doesn't match I(()).
-fn G(T:! I({}) where .X = (I(()) where .X = ()) and .Y = {}) {
-  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_facet_type_types_differ.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I({}) where .(I({}).X) = I(()) where .(I(()).X) = () and .(I({}).Y) = {}` into type implementing `I({}) where .(I({}).X) = I(.(I({}).Y)) where .(I(.(I({}).Y)).X) = ()` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   F(T);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_facet_type_types_differ.carbon:[[@LINE-7]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I({}) where .X = (I(.Y) where .X = ())) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  F(T);
-}
-
 // --- facet_type_in_assoc_constant.carbon
 library "[[@TEST_NAME]]";
 
@@ -811,10 +740,11 @@ interface I {
   let X:! type;
   let Y:! type;
 }
+interface J(T:! type) {}
 
-fn F(unused T:! I where .X = (I where .X = () and .Y = ())) {}
+fn F(unused T:! I where .X = J(())) {}
 
-fn G(T:! I where .X = (I where .X = .Y and .Y = ())) {
+fn G(T:! I where .X = J(()) and .Y = ()) {
   F(T);
 }
 
@@ -826,187 +756,19 @@ interface I {
   let Y:! type;
   let Z:! type;
 }
+interface J(T:! type) {}
 
-fn F(unused T:! I where .X = (I where .X = .Y)) {}
+fn F(unused T:! I where .X = J(())) {}
 
-fn G(T:! I where .X = (I where .X = () and .Y = () and .Z = {})) {
-  // CHECK:STDERR: fail_facet_type_in_assoc_constant_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = I where .(I.X) = () and .(I.Y) = () and .(I.Z) = {}` into type implementing `I where .(I.X) = I where .(I.X) = .(I.Y)` [ConversionFailureFacetToFacet]
+fn G(T:! I where .X = J({}) and .Y = ()) {
+  // CHECK:STDERR: fail_facet_type_in_assoc_constant_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = J({}) and .(I.Y) = ()` into type implementing `I where .(I.X) = J(())` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_facet_type_in_assoc_constant_differs.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .X = (I where .X = .Y)) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn F(unused T:! I where .X = J(())) {}
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
-}
-
-// --- nested_facet_type_in_assoc_constant.carbon
-library "[[@TEST_NAME]]";
-
-interface I {
-  let X:! type;
-  let Y:! type;
-  let Z:! type;
-}
-
-fn F(unused T:! I where .X = (I where .Y = (I where .X = () and .Y = ()))) {}
-
-fn G(T:! I where .X = (I where .Y = (I where .X = .Y and .Y = ()))) {
-  F(T);
-}
-
-// --- fail_nested_facet_type_assigns_same_assoc_constant.carbon
-library "[[@TEST_NAME]]";
-
-interface I {
-  let X:! type;
-  let Y:! type;
-}
-
-fn F(unused T:! I where .Y = ()) {}
-
-// The `.Y = ()` is on a different `.Self` than `T` (an unattached self), so
-// should not satisfy `F`.
-fn G(T:! I where .X = (I where .Y = ())) {
-  // CHECK:STDERR: fail_nested_facet_type_assigns_same_assoc_constant.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = I where .(I.Y) = ()` into type implementing `I where .(I.Y) = ()` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   F(T);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_nested_facet_type_assigns_same_assoc_constant.carbon:[[@LINE-8]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .Y = ()) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  F(T);
-}
-
-// --- fail_nested_facet_type_in_assoc_constant_differs.carbon
-library "[[@TEST_NAME]]";
-
-interface I {
-  let X:! type;
-  let Y:! type;
-  let Z:! type;
-}
-
-fn F(unused T:! I where .X = (I where .Y = (I where .X = .Y))) {}
-
-// `.X = .Y` does not match `.X = () and .Y = ()` as they are different resolved
-// facet types.
-fn G(T:! I where .X = (I where .Y = (I where .X = () and .Y = ()))) {
-  // CHECK:STDERR: fail_nested_facet_type_in_assoc_constant_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = I where .(I.Y) = I where .(I.X) = () and .(I.Y) = ()` into type implementing `I where .(I.X) = I where .(I.Y) = I where .(I.X) = .(I.Y)` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   F(T);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_nested_facet_type_in_assoc_constant_differs.carbon:[[@LINE-8]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .X = (I where .Y = (I where .X = .Y))) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  F(T);
-}
-
-// The extra .Z rewrite makes a different resolved facet type which does not
-// match.
-fn G2(T:! I where .X = (I where .Y = (I where .X = .Y and .Z = {}))) {
-  // CHECK:STDERR: fail_nested_facet_type_in_assoc_constant_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = I where .(I.Y) = I where .(I.X) = .(I.Y) and .(I.Z) = {}` into type implementing `I where .(I.X) = I where .(I.Y) = I where .(I.X) = .(I.Y)` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   F(T);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_nested_facet_type_in_assoc_constant_differs.carbon:[[@LINE-21]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .X = (I where .Y = (I where .X = .Y))) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  F(T);
-}
-
-// --- fail_nested_facet_type_from_constant.carbon
-library "[[@TEST_NAME]]";
-
-interface I {
-  let X:! type;
-  let Y:! type;
-}
-
-fn F(unused T:! I where .X = (I where .Y = (I where .X = .Y, ))) {}
-
-// References to named constants in a facet type don't work at all. If they did,
-// then when the `Constant` facet type is put into the RHS of a rewrite
-// constraint, its references to `.Self` must be modified to not refer to the
-// top level `.Self` which is `T`. If done correctly, they will match the
-// `.Self` references in the same position in the parameter of `F`. If not, the
-// `.X` within becomes self-referential and makes a cycle.
-
-fn G1() {
-  // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let Constant:! type = I where .X = .Y;
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  let Constant:! type = I where .X = .Y;
-
-  fn G(T:! I where .X = (I where .Y = (Constant, ))) {
-    F(T);
-  }
-}
-
-fn G2() {
-  let Constant:! type = (I where .X = .Y, );
-
-  fn G(T:! I where .X = (I where .Y = Constant)) {
-    F(T);
-  }
-}
-
-fn G3() {
-  let Constant:! type = I where .Y = (I where .X = .Y, );
-
-  fn G(T:! I where .X = Constant) {
-    F(T);
-  }
-}
-
-fn G4() {
-  let Constant2:! type = (I where .X = .Y, );
-  let Constant:! type = Constant2;
-
-  fn G(T:! I where .X = (I where .Y = Constant)) {
-    F(T);
-  }
-}
-
-fn G5() {
-  let Constant2:! type = I where .X = .Y;
-  let Constant:! type = (Constant2, );
-
-  fn G(T:! I where .X = (I where .Y = Constant)) {
-    F(T);
-  }
-}
-
-fn G6() {
-  let Constant2:! type = (I where .X = .Y, );
-  let Constant:! type = I where .Y = Constant2;
-
-  fn G(T:! I where .X = Constant) {
-    F(T);
-  }
-}
-
-// --- fail_nested_facet_type_from_constant_differs.carbon
-library "[[@TEST_NAME]]";
-
-interface I {
-  let X:! type;
-  let Y:! type;
-}
-
-fn F(unused T:! I where .X = (I where .Y = (I where .X = .Y, ))) {}
-
-fn G1() {
-  // CHECK:STDERR: fail_nested_facet_type_from_constant_differs.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let Constant:! type = I where .X = () and .Y = ();
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  let Constant:! type = I where .X = () and .Y = ();
-
-  fn G(T:! I where .X = (I where .Y = (Constant, ))) {
-    F(T);
-  }
 }
 
 // --- rewrite_rhs_satisfies_lhs_requirement.carbon
@@ -1335,7 +1097,7 @@ fn G(T:! I where .I1 = .I2) {
   F(T);
 }
 
-// --- nested_facet_type_used_as_root_facet_type.carbon
+// --- nested_facet_type_used_as_root_facet_type_in_callee.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -1343,9 +1105,118 @@ interface I {
   let Y:! type;
 }
 
-fn F(T:! I where .X = (I where .Y = {}), unused U:! T.X) {}
+constraint NI(V:! type) {
+  extend require impls I where .Y = V;
+}
 
-fn G(T:! I where .X = (I where .Y = {}), U:! I where .Y = {}) {
+fn F(T:! I where .X = NI({}), unused U:! T.X) {}
+
+fn G(T:! I where .X = NI({}), U:! I where .Y = {}) {
+  F(T, U);
+}
+
+// --- fail_todo_nested_facet_type_used_as_root_facet_type_in_caller.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  let Y:! type;
+}
+
+constraint NI(V:! type) {
+  extend require impls I where .Y = V;
+}
+
+fn F(unused T:! I where .X = NI({}), unused U:! I where .Y = {}) {}
+
+fn G(T:! I where .X = NI({}), U:! T.X) {
+  // TODO: This should pass, the rewrite in the constraint `NI` should be visible.
+  // CHECK:STDERR: fail_todo_nested_facet_type_used_as_root_facet_type_in_caller.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `NI({})` into type implementing `I where .(I.Y) = {}` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T, U);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_nested_facet_type_used_as_root_facet_type_in_caller.carbon:[[@LINE-7]]:45: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused T:! I where .X = NI({}), unused U:! I where .Y = {}) {}
+  // CHECK:STDERR:                                             ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  F(T, U);
+}
+
+// --- fail_nested_facet_type_used_as_root_facet_type_differs_in_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  let Y:! type;
+}
+interface J {
+  let X:! type;
+  let Y:! type;
+}
+
+constraint NI(V:! type) {
+  extend require impls I where .Y = V;
+}
+
+fn F(T:! I where .X = NI({}), unused U:! T.X) {}
+
+fn G(T:! I where .X = NI({}), U:! J where .Y = ()) {
+  // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_interface.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `J where .(J.Y) = ()` into type implementing `NI({})` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T, U);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_interface.carbon:[[@LINE-6]]:38: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(T:! I where .X = NI({}), unused U:! T.X) {}
+  // CHECK:STDERR:                                      ^~~~~~~
+  // CHECK:STDERR:
+  F(T, U);
+}
+
+// --- todo_fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_callee_access.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  let Y:! type;
+}
+
+constraint NI(V:! type) {
+  extend require impls I where .Y = V;
+}
+
+fn F(T:! I where .X = NI({}), unused U:! T.X) {}
+
+fn G(T:! I where .X = NI({}), U:! I where .Y = ()) {
+  // The caller's `U` has type `I where .Y = ()` but the callee wants something
+  // of type `I where .Y = {}`.
+  //
+  // TODO: This should fail.
+  F(T, U);
+}
+
+// --- fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_caller_access.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  let Y:! type;
+}
+
+constraint NI(V:! type) {
+  extend require impls I where .Y = V;
+}
+
+fn F(unused T:! I where .X = NI({}), unused U:! I where .Y = ()) {}
+
+fn G(T:! I where .X = NI({}), U:! T.X) {
+  // The caller's `U` has type `I where .Y = {}` but the callee wants something
+  // of type `I where .Y = ()`.
+  //
+  // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_caller_access.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `NI({})` into type implementing `I where .(I.Y) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T, U);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_caller_access.carbon:[[@LINE-9]]:45: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused T:! I where .X = NI({}), unused U:! I where .Y = ()) {}
+  // CHECK:STDERR:                                             ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   F(T, U);
 }
 
@@ -1417,81 +1288,141 @@ fn G(T:! I where .I1 = {}) {
 // --- resolve_nested_impl_witness_access.carbon
 library "[[@TEST_NAME]]";
 
-interface Y {
-  let Y1:! type;
-}
 interface Z {
-  let Z1:! Y;
+  let Z1:! type;
   let Z2:! type;
 }
 
 fn G(_:! Z where .Z2 = ()) {}
 
-// Split the assignment of .Y1 and the use of it into separate facet types so
-// that the early rewrite application doesn't get to see the value of .Y1 where
+// Split the assignment of .Z1 and the use of it into separate facet types so
+// that the early rewrite application doesn't get to see the value of .Z1 where
 // it's used. Then rewrite constraint resolution has to do the replacement of
-// .Z1.Y1 so that we know .Z2 = () as required by G.
-fn F(T:! (Z where .Z1 impls (Y where .Y1 = ())) & (Z where .Z2 = .Z1.Y1)) {
+// .Z1 so that we know .Z2 = () as required by G.
+fn F(T:! (Z where .Z1 = ()) & (Z where .Z2 = .Z1)) {
   G(T);
 }
 
-// --- rewrite_in_impls_provided_by_facet_type.carbon
+// --- rewrite_provided_by_facet_type.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
   let Z1:! type;
+  let Z2:! type;
 }
 
-fn F(_:! type where .Self impls (Z where .Z1 = {})) {}
+fn F(_:! Z where .Z1 = {}) {}
 
-fn G(T:! Z where .Z1 = {}) {
+fn G(T:! Z where .Z1 = {} and .Z2 = {}) {
+  //@dump-sem-ir-begin
+  // We should see a conversion happen so we know the rewrite constraint is
+  // being validated.
   F(T);
+  //@dump-sem-ir-end
 }
 
-// --- fail_todo_rewrite_in_impls_provided_by_extend_named_constraint.carbon
+// --- fail_todo_rewrite_provided_by_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
   let Z1:! type;
 }
 
-fn F(_:! type where .Self impls (Z where .Z1 = {})) {}
+fn F(_:! Z where .Z1 = {}) {}
 
 constraint N {
+  // The extend means that the rewrite constraint is propagated out of `N`, so
+  // it can satisfy the requirement in `F` that `.Z1` is rewritten to `{}`.
   extend require impls Z where .Z1 = {};
 }
 
 fn G(T:! N) {
-  // CHECK:STDERR: fail_todo_rewrite_in_impls_provided_by_extend_named_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `N` into type implementing `type where .Self impls Z and .(Z.Z1) = {}` [ConversionFailureFacetToFacet]
+  // TODO: This should pass.
+  // CHECK:STDERR: fail_todo_rewrite_provided_by_named_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `N` into type implementing `Z where .(Z.Z1) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_todo_rewrite_in_impls_provided_by_extend_named_constraint.carbon:[[@LINE-10]]:6: note: initializing generic parameter `_` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(_:! type where .Self impls (Z where .Z1 = {})) {}
-  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_rewrite_provided_by_named_constraint.carbon:[[@LINE-13]]:6: note: initializing generic parameter `_` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(_:! Z where .Z1 = {}) {}
+  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
 
-// --- fail_todo_rewrite_in_impls_provided_by_named_constraint.carbon
+// --- fail_rewrite_not_provided_by_named_constraint_without_extend.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
   let Z1:! type;
 }
 
-fn F(_:! type where .Self impls (Z where .Z1 = {})) {}
+fn F(_:! Z where .Z1 = {}) {}
 
 constraint N {
+  // Without extend, this does not actually rewrite `.Z1 = {}`, it provides the
+  // equivalent of `.Z1 == {}` which allows conversion of `.Z1` to `{}` but is
+  // not enough to satisfy the requirement of `F` that `.Z1` is rewritten to
+  // `{}`.
   require impls Z where .Z1 = {};
 }
 
 fn G(T:! N) {
-  // CHECK:STDERR: fail_todo_rewrite_in_impls_provided_by_named_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `N` into type implementing `type where .Self impls Z and .(Z.Z1) = {}` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_rewrite_not_provided_by_named_constraint_without_extend.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `N` into type implementing `Z where .(Z.Z1) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_todo_rewrite_in_impls_provided_by_named_constraint.carbon:[[@LINE-10]]:6: note: initializing generic parameter `_` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(_:! type where .Self impls (Z where .Z1 = {})) {}
-  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_not_provided_by_named_constraint_without_extend.carbon:[[@LINE-14]]:6: note: initializing generic parameter `_` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(_:! Z where .Z1 = {}) {}
+  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
+
+// CHECK:STDOUT: --- rewrite_provided_by_facet_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
+// CHECK:STDOUT:   %.Self.94e: %Z.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %Z.lookup_impl_witness.e2b: <witness> = lookup_impl_witness %.Self.94e, @Z [symbolic_self]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %Z.lookup_impl_witness.e2b, element0 [symbolic_self]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Z_where.type.767: type = facet_type <@Z where %impl.elem0 = %empty_struct_type> [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %Z.lookup_impl_witness.e2b, element1 [symbolic_self]
+// CHECK:STDOUT:   %Z_where.type.a88: type = facet_type <@Z where %impl.elem0 = %empty_struct_type and %impl.elem1 = %empty_struct_type> [concrete]
+// CHECK:STDOUT:   %pattern_type.d22: type = pattern_type %Z_where.type.a88 [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.d22 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T: %Z_where.type.a88 = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
+// CHECK:STDOUT:   %Z.lookup_impl_witness.d70: <witness> = lookup_impl_witness %T, @Z [symbolic]
+// CHECK:STDOUT:   %facet_value: %Z_where.type.767 = facet_value %T.as_type, (%Z.lookup_impl_witness.d70) [symbolic]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%facet_value) [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @G(%T.loc10_7.2: %Z_where.type.a88) {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T.as_type.loc14_6.2: type = facet_access_type %T.loc10_7.1 [symbolic = %T.as_type.loc14_6.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc10_7.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness.d70)]
+// CHECK:STDOUT:   %facet_value.loc14_6.2: %Z_where.type.767 = facet_value %T.as_type.loc14_6.2, (%Z.lookup_impl_witness) [symbolic = %facet_value.loc14_6.2 (constants.%facet_value)]
+// CHECK:STDOUT:   %F.specific_fn.loc14_3.2: <specific function> = specific_function constants.%F, @F(%facet_value.loc14_6.2) [symbolic = %F.specific_fn.loc14_3.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:     %T.ref: %Z_where.type.a88 = name_ref T, %T.loc10_7.2 [symbolic = %T.loc10_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.as_type.loc14_6.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc14_6.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %facet_value.loc14_6.1: %Z_where.type.767 = facet_value %T.as_type.loc14_6.1, (constants.%Z.lookup_impl_witness.d70) [symbolic = %facet_value.loc14_6.2 (constants.%facet_value)]
+// CHECK:STDOUT:     %.loc14: %Z_where.type.767 = converted %T.ref, %facet_value.loc14_6.1 [symbolic = %facet_value.loc14_6.2 (constants.%facet_value)]
+// CHECK:STDOUT:     %F.specific_fn.loc14_3.1: <specific function> = specific_function %F.ref, @F(constants.%facet_value) [symbolic = %F.specific_fn.loc14_3.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc14_3.1()
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @G(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc10_7.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc10_7.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

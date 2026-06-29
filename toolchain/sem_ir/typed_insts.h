@@ -80,6 +80,7 @@ struct AccessMemberAction {
   static constexpr auto Kind =
       InstKind::AccessMemberAction.Define<Parse::NodeId>(
           {.ir_name = "access_member_action",
+           .expr_category = ActionExprCategory(ExprCategory::Dependent),
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
@@ -94,6 +95,7 @@ struct AccessOptionalMemberAction {
   static constexpr auto Kind =
       InstKind::AccessOptionalMemberAction.Define<Parse::NodeId>(
           {.ir_name = "access_optional_member_action",
+           .expr_category = ActionExprCategory(ExprCategory::Dependent),
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
@@ -388,11 +390,13 @@ struct Call {
   InstBlockId args_id;
 };
 
+// An action that performs callee-side pattern matching for a single syntactic
+// parameter.
 struct CalleePatternMatchAction {
   static constexpr auto Kind =
       InstKind::CalleePatternMatchAction.Define<Parse::NodeId>(
           {.ir_name = "callee_pattern_match_action",
-           .expr_category = ExprCategory::Value,
+           .expr_category = ActionExprCategory(ExprCategory::Dependent),
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
@@ -400,11 +404,36 @@ struct CalleePatternMatchAction {
   // a bundle to validate `BundleStore` until a followup PR introduces a
   // "real" use case.
   struct Args {
+    // The parameter pattern to be matched.
     MetaInstId pattern_id;
+    // The index of the parameter in the `Call` parameter list.
     CallParamIndex parent_index;
   };
 
   TypeId type_id;
+  BundleId<Args> args_id;
+};
+
+// An action that performs caller-side pattern matching for a single syntactic
+// parameter.
+struct CallerPatternMatchAction {
+  static constexpr auto Kind =
+      InstKind::CallerPatternMatchAction.Define<Parse::NodeId>(
+          {.ir_name = "caller_pattern_match_action",
+           .expr_category = ActionExprCategory(ExprCategory::Dependent),
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
+
+  TypeId type_id;
+
+  struct Args {
+    // The parameter pattern to be matched.
+    MetaInstId pattern_id;
+    // The corresponding syntactic argument.
+    MetaInstId arg_id;
+    // The specific to substitute into the parameter pattern.
+    SpecificId callee_specific_id;
+  };
   BundleId<Args> args_id;
 };
 
@@ -534,6 +563,7 @@ struct ConvertToValueAction {
   static constexpr auto Kind =
       InstKind::ConvertToValueAction.Define<Parse::NodeId>(
           {.ir_name = "convert_to_value_action",
+           .expr_category = ActionExprCategory(ExprCategory::Value),
            .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
@@ -798,7 +828,7 @@ struct FormParamPatternAction {
   static constexpr auto Kind =
       InstKind::FormParamPatternAction.Define<Parse::FormBindingPatternId>(
           {.ir_name = "form_param_pattern_action",
-           .expr_category = ExprCategory::Value,
+           .expr_category = ActionExprCategory(ExprCategory::Pattern),
            .constant_kind = InstConstantKind::ConstantInstAction,
            .is_lowered = false});
 
@@ -1360,7 +1390,7 @@ struct OutFormParamPatternAction {
       InstKind::OutFormParamPatternAction
           .Define<Parse::NodeIdOneOf<Parse::ReturnFormId, Parse::ReturnTypeId>>(
               {.ir_name = "out_form_param_pattern_action",
-               .expr_category = ExprCategory::Value,
+               .expr_category = ActionExprCategory(ExprCategory::Pattern),
                .constant_kind = InstConstantKind::ConstantInstAction,
                .is_lowered = false});
 
@@ -1455,6 +1485,7 @@ struct RefBinding {
 struct RefineTypeAction {
   static constexpr auto Kind = InstKind::RefineTypeAction.Define<Parse::NodeId>(
       {.ir_name = "refine_type_action",
+       .expr_category = ActionExprCategory(ExprCategory::Dependent),
        .constant_kind = InstConstantKind::InstAction,
        .is_lowered = false});
 
@@ -1846,7 +1877,7 @@ struct SpliceBlock {
 struct SpliceInst {
   static constexpr auto Kind = InstKind::SpliceInst.Define<Parse::NodeId>(
       {.ir_name = "splice_inst",
-       .expr_category = ExprCategory::Dependent,
+       .expr_category = ComputedExprCategory::DependsOnOperands,
        .constant_kind = InstConstantKind::Indirect});
 
   TypeId type_id;
@@ -2062,12 +2093,11 @@ struct TupleValue {
 // Extracts the type component of `form_inst_id`, which must have type
 // `Core.Form`.
 struct TypeComponentOf {
-  static constexpr auto Kind =
-      InstKind::TypeComponentOf.Define<Parse::NoneNodeId>(
-          {.ir_name = "type_component_of",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::SymbolicOnly,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::TypeComponentOf.Define<Parse::NodeId>(
+      {.ir_name = "type_component_of",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::SymbolicOnly,
+       .is_lowered = false});
 
   // Always TypeType.
   TypeId type_id;
@@ -2381,6 +2411,20 @@ struct WhereExpr {
 // This is a singleton instruction. However, it may still evolve into a more
 // standard type and be removed.
 using WitnessType = SingletonTypeInst<InstKind::WitnessType, "<witness>">;
+
+// Binds a name to a result (which must not be an initializing expression),
+// forwarding its type and category. See `AnyBinding` for member documentation.
+//
+// TODO: replace RefBinding and ValueBinding (and possibly SymbolicBinding) with
+// WrapperBinding.
+struct WrapperBinding {
+  static constexpr auto Kind = InstKind::WrapperBinding.Define<Parse::NodeId>(
+      {.ir_name = "wrapper_binding",
+       .expr_category = ComputedExprCategory::SameAsSecondOperand});
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId value_id;
+};
 
 // A binding pattern that binds a name to the result of matching
 // `subpattern_id` against this pattern's scrutinee. Currently there is no

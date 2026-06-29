@@ -2290,8 +2290,12 @@ auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
     return Context::FormExpr::Error;
   }
 
-  auto type_id = GetTypeComponent(context, form_inst_id);
-  auto type_inst_id = context.types().GetTypeInstId(type_id);
+  auto type_inst_id = context.types().GetAsTypeInstId(AddInst(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), loc_id,
+                   SemIR::TypeComponentOf{.type_id = SemIR::TypeType::TypeId,
+                                          .form_inst_id = form_inst_id})));
+  auto type_id = context.types().GetTypeIdForTypeInstId(type_inst_id);
   return {.form_inst_id = form_inst_id,
           .type_component_inst_id = type_inst_id,
           .type_component_id = type_id};

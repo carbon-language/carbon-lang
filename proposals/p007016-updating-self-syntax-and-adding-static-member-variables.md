@@ -242,18 +242,18 @@ parameters of any kind, implicit or explicit.
 1.  We could place `self` in an independent position with a different set of
     delimiters such as:
 
-        ```carbon
-        class Point {
-          var x: i32;
-          var y: i32;
+    ```carbon
+    class Point {
+      var x: i32;
+      var y: i32;
 
-          // `self` as a separate component, likely in between the implicit and
-          // explicit parameter lists.
-          fn Create[T:! type]<self>(x: T) -> Self {
-            return {.x = x as i32, .y = 0};
-          }
-        }
-        ```
+      // `self` as a separate component, likely in between the implicit and
+      // explicit parameter lists.
+      fn Create[T:! type]<self>(x: T) -> Self {
+        return {.x = x as i32, .y = 0};
+      }
+    }
+    ```
 
 2.  We could make `self` implicit, similar to C++.
 

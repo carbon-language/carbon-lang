@@ -28,6 +28,15 @@ repos:
         exclude: '^(.*/fuzzer_corpus/.*|.*\.svg)$'
       - id: trailing-whitespace
         exclude: '^(.*/fuzzer_corpus/.*|.*/testdata/.*\.golden|.*\.svg)$'
+
+  # Run markdown linting early so that doc style and table-of-contents see the
+  # linted state.
+  - repo: https://github.com/rvben/rumdl-pre-commit
+    rev: v0.2.22
+    hooks:
+      - id: rumdl
+        args: [--fix]
+
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: efaea7c61c774c0b1a9805fd999e754a2d19dbd1 # frozen: v1.2.5
     hooks:
@@ -38,6 +47,15 @@ repos:
             .*AGENTS.md
           )$
       - id: markdown-toc
+
+  # Re-run markdown linting to fix any issues caused by doc style and TOC. This
+  # is very fast, so it shouldn't be problematic to run twice.
+  - repo: https://github.com/rvben/rumdl-pre-commit
+    rev: v0.2.22
+    hooks:
+      - id: rumdl
+        args: [--fix]
+
   - repo: local
     hooks:
       - id: fix-cc-deps
@@ -79,7 +97,7 @@ repos:
         # TODO: Not upgrading to/past 3.4.0 due to list indent changes that may
         # get fixed. See: https://github.com/prettier/prettier/issues/16929
         additional_dependencies: ['prettier@3.3.3']
-        types_or: [html, javascript, json, markdown, yaml]
+        types_or: [html, javascript, json, yaml]
         entry: npx prettier@3.3.3 --write --log-level=warn
   - repo: local
     hooks:

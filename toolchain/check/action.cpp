@@ -86,6 +86,16 @@ static auto OperandDependence(Context& context,
       context.bundles().GetAsTuple(bundle_id));
 }
 
+static auto OperandDependence(Context& context, SemIR::SpecificId specific_id)
+    -> SemIR::ConstantDependence {
+  auto specific = context.specifics().Get(specific_id);
+  auto result = SemIR::ConstantDependence::None;
+  for (auto arg_id : context.inst_blocks().Get(specific.args_id)) {
+    result = std::max(result, OperandDependence(context, arg_id));
+  }
+  return result;
+}
+
 template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT>
 static auto OperandDependence(Context& /*context*/, IdT /*id*/)
@@ -273,7 +283,7 @@ auto Internal::EndPerformDelayedAction(Context& context,
   } else {
     // TODO: pattern insts can depend on non-pattern insts, so we'll probably
     // eventually need to support actions that produce both.
-    CARBON_CHECK(!contents.empty());
+    CARBON_CHECK(contents.empty());
     block_id = context.pattern_block_stack().Pop();
     context.inst_block_stack().PopAndDiscard();
   }

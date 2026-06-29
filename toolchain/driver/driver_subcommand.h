@@ -13,16 +13,6 @@
 
 namespace Carbon {
 
-// The result of a driver run.
-struct DriverResult {
-  // Overall success result.
-  bool success;
-
-  // Per-file success results. May be empty if files aren't individually
-  // processed.
-  llvm::SmallVector<std::pair<std::string, bool>> per_file_success = {};
-};
-
 // A subcommand for the driver.
 class DriverSubcommand {
  public:

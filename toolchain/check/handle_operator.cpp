@@ -104,9 +104,13 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorEqualId node_id)
 
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
+  auto lhs_type_id = context.insts().Get(lhs_id).type_id();
+  auto lhs_quals =
+      context.types().GetUnqualifiedTypeAndQualifiers(lhs_type_id).second;
   if (auto lhs_cat = SemIR::GetExprCategory(context.sem_ir(), lhs_id);
-      lhs_cat != SemIR::ExprCategory::DurableRef &&
-      lhs_cat != SemIR::ExprCategory::Error) {
+      (lhs_cat != SemIR::ExprCategory::DurableRef &&
+       lhs_cat != SemIR::ExprCategory::Error) ||
+      lhs_quals.HasAnyOf(SemIR::TypeQualifiers::Const)) {
     CARBON_DIAGNOSTIC(AssignmentToNonAssignable, Error,
                       "expression is not assignable");
     context.emitter().Emit(lhs_node, AssignmentToNonAssignable);

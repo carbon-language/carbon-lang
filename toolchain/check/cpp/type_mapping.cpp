@@ -444,6 +444,7 @@ static auto InventCompoundClangArg(Context& context, SemIR::FormInfo form,
 
   switch (form.kind) {
     case SemIR::FormInfo::Primitive:
+    case SemIR::FormInfo::Dependent:
       CARBON_FATAL("Not a compound form");
 
     case SemIR::FormInfo::Tuple: {
@@ -534,6 +535,13 @@ auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
             }
             // Reverse the added elements so that we pop them in element order.
             std::reverse(worklist.begin() + initial_size, worklist.end());
+            break;
+          }
+          case SemIR::FormInfo::Dependent: {
+            context.TODO(
+                arg_id,
+                "Support passing form-dependent args to C++ functions.");
+            pending_results.push_back(nullptr);
             break;
           }
         }

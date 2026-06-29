@@ -192,11 +192,11 @@ declaration, only access modifiers are valid (see
 
 When considering whether a declaration is allowed, we apply the rules:
 
-1. A declaration should always add new information.
-    - No declarations after a definition.
-2. Only one library can declare an entity without `extern`.
-3. Support moving declarations between already-imported `api` files without
-   affecting compilation of client libraries.
+1.  A declaration should always add new information.
+     -   No declarations after a definition.
+2.  Only one library can declare an entity without `extern`.
+3.  Support moving declarations between already-imported `api` files without
+    affecting compilation of client libraries.
 
 #### No forward declarations after declarations
 

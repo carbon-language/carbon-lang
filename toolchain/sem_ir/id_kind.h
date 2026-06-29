@@ -33,6 +33,7 @@ using IdKind = TypeEnum<
     AssociatedConstantId,
     BoolValue,
     BundleId<CalleePatternMatchAction::Args>,
+    BundleId<CallerPatternMatchAction::Args>,
     CallParamIndex,
     CharId,
     ClangDeclId,

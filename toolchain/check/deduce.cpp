@@ -543,13 +543,6 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
     // that incorrectly.
     auto binding_type_id = context().insts().Get(binding_id).type_id();
     if (binding_type_id.is_symbolic()) {
-      auto param_type_const_id =
-          SubstConstant(context(), SemIR::LocId(binding_id),
-                        binding_type_id.AsConstantId(), substitutions_);
-      CARBON_CHECK(param_type_const_id.has_value());
-      binding_type_id =
-          context().types().GetTypeIdForTypeConstantId(param_type_const_id);
-
       Diagnostics::AnnotationScope annotate_diagnostics(
           &context().emitter(), [&](auto& builder) {
             if (diagnose_) {
@@ -557,6 +550,25 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
                                     builder);
             }
           });
+
+      {
+        Diagnostics::ContextScope diag_context(
+            &context().emitter(), [&](auto& builder) {
+              CARBON_DIAGNOSTIC(
+                  SubstitutingGenericParamType, Context,
+                  "constructed invalid specific for {0} from argument",
+                  SemIR::TypeId);
+              builder.Context(loc_id_, SubstitutingGenericParamType,
+                              binding_type_id);
+            });
+        auto param_type_const_id =
+            SubstConstant(context(), SemIR::LocId(binding_id),
+                          binding_type_id.AsConstantId(), substitutions_);
+        CARBON_CHECK(param_type_const_id.has_value());
+        binding_type_id =
+            context().types().GetTypeIdForTypeConstantId(param_type_const_id);
+      }
+
       auto converted_arg_id =
           diagnose_ ? ConvertToValueOfType(context(), loc_id_, deduced_arg_id,
                                            binding_type_id)

@@ -194,15 +194,15 @@ replacement for [pre-commit](https://pre-commit.com/).
 
 To use it:
 
-1. Install it by way of `cargo install --locked prek`.
-2. Run `prek install` to set up the git hooks.
+1.  Install it by way of `cargo install --locked prek`.
+2.  Run `prek install` to set up the git hooks.
 
 A typical commit workflow looks like:
 
-1. `git commit` to try committing files. This automatically executes `prek run`,
-   which may fail and leave files modified for cleanup.
-2. `git add .` to add the automatic modifications done by hooks.
-3. `git commit` again.
+1.  `git commit` to try committing files. This automatically executes `prek run`,
+    which may fail and leave files modified for cleanup.
+2.  `git add .` to add the automatic modifications done by hooks.
+3.  `git commit` again.
 
 You can also use `prek run` to check pending changes without `git commit`, or
 `prek run -a` to run on all files in the repository.
@@ -224,12 +224,24 @@ considering if they fit your workflow.
     -   **WARNING**: Bugs in `rs-git-fsmonitor` and/or Watchman can result in
         `prek` deleting files. If you see files being deleted, disable
         `rs-git-fsmonitor` with `git config --unset core.fsmonitor`.
+-   [rumdl](https://github.com/rvben/rumdl): A Markdown formatter, which we use for
+    formatting Markdown files. If you want to format files directly or use it in
+    your editor, you can install it:
+    -   With `cargo` (preferred): `cargo install --locked rumdl`
+    -   With `brew` (on macOS): `brew install rumdl`
+    -   For Vim/Neovim, it is recommended to connect using its built-in Language
+        Server Protocol (LSP) capabilities (by way of `rumdl server`). It is supported
+        by [Mason](https://github.com/williamboman/mason.nvim) (as `rumdl`) and
+        can be configured by way of `nvim-lspconfig` or formatting plugins like
+        `conform.nvim`. For more details, see the
+        [rumdl editor integration documentation](https://github.com/rvben/rumdl#editor-integration).
 -   [vim-prettier](https://github.com/prettier/vim-prettier): A vim integration
     for [Prettier](https://prettier.io/), which we use for formatting.
 -   [Visual Studio Code](https://code.visualstudio.com/): A code editor.
     -   We provide [recommended extensions](/.vscode/extensions.json) to assist
         Carbon development. Some settings changes must be made separately:
         -   Python › Formatting: Provider: `ruff`
+        -   Markdown › Formatting: Default Formatter: `rumdl`
     -   **WARNING:** Visual Studio Code modifies the `PATH` environment
         variable, particularly in the terminals it creates. The `PATH`
         difference can cause `bazel` to detect different startup options,

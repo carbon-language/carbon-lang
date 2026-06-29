@@ -367,61 +367,7 @@ fn F(U:! W, V:! Z(.Self) where .Z1 impls Y(U)) {
   V.(Z(V).Z1).(Y(U).Y1).(X.X1) as W;
 }
 
-// --- find_access_value_in_second_nested_access.carbon
-library "[[@TEST_NAME]]";
-
-interface W {}
-interface X {
-  let X1:! type;
-}
-interface Y(T:! type) {
-  let Y0:! type;
-  let Y1:! type;
-  let Y2:! type;
-}
-interface Z(U:! type, PeriodSelf:! type) {
-  let Z1:! Y(PeriodSelf) where .Y0 impls (X where .X1 = ())
-                           and .Y1 impls (X where .X1 = U)
-                           and .Y2 impls (X where .X1 = ()) ;
-}
-
-fn F(U:! W, V:! Z(U, .Self)) {
-  // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
-  // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, then `V.Z1`, where
-  // it finds the rewrite of `.Y1.X1 = U`.
-  //
-  // Only U impls W so we use `as W` to test that the LHS is U.
-  V.(Z(U, V).Z1).(Y(V).Y1).(X.X1) as W;
-}
-
-// --- find_access_value_in_third_nested_access.carbon
-library "[[@TEST_NAME]]";
-
-interface W {}
-interface X {
-  let X1:! type;
-}
-interface Y {
-  let Y1:! type;
-}
-interface Z(T:! type) {
-  let Z0:! type;
-  let Z1:! type;
-  let Z2:! type;
-}
-
-fn F(U:! W, V:! Z(.Self) where .Z0 impls (Y where .Y1 impls (X where .X1 = ()))
-                           and .Z1 impls (Y where .Y1 impls (X where .X1 = U))
-                           and .Z2 impls (Y where .Y1 impls (X where .X1 = ()))) {
-  // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
-  // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, then `V.Z1`, then
-  // `V` where it finds the rewrite of `.Z1.Y1.X1 = U`.
-  //
-  // Only U impls W so we use `as W` to test that the LHS is U.
-  V.(Z(V).Z1).(Y.Y1).(X.X1) as W;
-}
-
-// --- fail_todo_find_access_value_in_second_nested_access_through_named_constraint.carbon
+// --- fail_todo_find_access_value_in_second_nested_access.carbon
 library "[[@TEST_NAME]]";
 
 interface W {}
@@ -451,17 +397,17 @@ fn F(V:! Z(.Self)) {
   //
   // TODO: The identified facet type `NX` includes `X` and should provide a
   // same-type constraint `X.X1 == {}` which would allow this conversion.
-  // CHECK:STDERR: fail_todo_find_access_value_in_second_nested_access_through_named_constraint.carbon:[[@LINE+7]]:3: error: cannot convert expression of type `{}` to `V.(Z(V).Z1).(Y(V).Y1).(X.X1)` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_find_access_value_in_second_nested_access.carbon:[[@LINE+7]]:3: error: cannot convert expression of type `{}` to `V.(Z(V).Z1).(Y(V).Y1).(X.X1)` with `as` [ConversionFailure]
   // CHECK:STDERR:   {} as V.(Z(V).Z1).(Y(V).Y1).(X.X1);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_find_access_value_in_second_nested_access_through_named_constraint.carbon:[[@LINE+4]]:3: note: type `{}` does not implement interface `Core.As(V.(Z(V).Z1).(Y(V).Y1).(X.X1))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_todo_find_access_value_in_second_nested_access.carbon:[[@LINE+4]]:3: note: type `{}` does not implement interface `Core.As(V.(Z(V).Z1).(Y(V).Y1).(X.X1))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   {} as V.(Z(V).Z1).(Y(V).Y1).(X.X1);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   {} as V.(Z(V).Z1).(Y(V).Y1).(X.X1);
 }
 
-// --- fail_todo_find_access_value_in_third_nested_access_through_named_constraint.carbon
+// --- fail_todo_find_access_value_in_third_nested_access.carbon
 library "[[@TEST_NAME]]";
 
 interface W {}
@@ -481,21 +427,22 @@ constraint NX(V:! type) {
   extend require impls X where .X1 = V;
 }
 
-fn F(V:! Z(.Self) where .Z0 impls (Y where .Y1 impls NX(()))
-                    and .Z1 impls (Y where .Y1 impls NX({}))
-                    and .Z2 impls (Y where .Y1 impls NX(()))) {
+constraint NY(V:! type) {
+  extend require impls Y where .Y1 = NX(V);
+}
+
+fn F(V:! Z(.Self) where .Z0 impls NY(())
+                    and .Z1 impls NY({})
+                    and .Z2 impls NY(())) {
   // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
   // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, then `V.Z1`, then
   // `V` where it finds the rewrite of `.Z1.Y1.X1 = {}`.
   //
   // TODO: The identified facet type `NX` includes `X` and should provide a
   // same-type constraint `X.X1 == V` which would allow this conversion.
-  // CHECK:STDERR: fail_todo_find_access_value_in_third_nested_access_through_named_constraint.carbon:[[@LINE+7]]:3: error: cannot convert expression of type `{}` to `V.(Z(V).Z1).(Y.Y1).(X.X1)` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_find_access_value_in_third_nested_access.carbon:[[@LINE+4]]:9: error: cannot convert type `V.(Z(V).Z1).(Y.Y1)` into type implementing `X` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   {} as V.(Z(V).Z1).(Y.Y1).(X.X1);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_find_access_value_in_third_nested_access_through_named_constraint.carbon:[[@LINE+4]]:3: note: type `{}` does not implement interface `Core.As(V.(Z(V).Z1).(Y.Y1).(X.X1))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   {} as V.(Z(V).Z1).(Y.Y1).(X.X1);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   {} as V.(Z(V).Z1).(Y.Y1).(X.X1);
 }
@@ -509,10 +456,14 @@ interface Y(T:! type) {
 }
 class C;
 
-// TODO: We need to look in `T` for the rewrite in the access of `(C as
-// Y(T)).Y1` but we currently only look in `C`. See the TODO in
+constraint NY(PeriodSelf:! type) {
+  extend require impls Y(PeriodSelf) where .Y1 = {};
+}
+
+// TODO: We need to look in `T` for the rewrite in the access of
+// `(C as Y(T)).Y1` but we currently only look in `C`. See the TODO in
 // `TryFindValueInRewriteConstraints()`.
-fn F(T:! Z where C impls (Y(.Self) where .Y1 = {})) -> C.(Y(T).Y1) {
+fn F(T:! Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
   // CHECK:STDERR: fail_todo_find_access_value_in_facet_from_specific_interface.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `{}` to `C.(Y(T).Y1)` [ConversionFailure]
   // CHECK:STDERR:   return {};
   // CHECK:STDERR:   ^~~~~~~~~~

@@ -120,33 +120,15 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // interface with no other requirements. This returns the single interface or
   // named constraint that this facet type represents, or `std::nullopt` if it
   // has any other requirements.
-  auto TryAsSingleExtend() const -> std::optional<SingleExtendFacetType> {
-    if (!self_impls_constraints.empty() ||
-        !self_impls_named_constraints.empty() ||
-        !type_impls_interfaces.empty() ||
-        !type_impls_named_constraints.empty() || !rewrite_constraints.empty() ||
-        other_requirements) {
-      return std::nullopt;
-    }
-    if (extend_constraints.size() == 1 && extend_named_constraints.empty()) {
-      return extend_constraints.front();
-    }
-    if (extend_constraints.empty() && extend_named_constraints.size() == 1) {
-      return extend_named_constraints.front();
-    }
-    return std::nullopt;
-  }
+  auto TryAsSingleExtend() const -> std::optional<SingleExtendFacetType>;
 
   // Returns whether the facet type has no constraints, making it the facet type
   // version of `TypeType`.
-  auto HasNoConstraints() const -> bool {
-    return extend_constraints.empty() && extend_named_constraints.empty() &&
-           self_impls_constraints.empty() &&
-           self_impls_named_constraints.empty() &&
-           type_impls_interfaces.empty() &&
-           type_impls_named_constraints.empty() &&
-           rewrite_constraints.empty() && !other_requirements;
-  }
+  auto HasNoConstraints() const -> bool;
+
+  // Returns whether the facet type only contains constraints that are extended
+  // by the facet type. If true, `ExtendedOnly()` would be a no-op.
+  auto IsExtendedOnly() const -> bool;
 
   friend auto operator==(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
       -> bool {
