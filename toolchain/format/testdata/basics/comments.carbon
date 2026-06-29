@@ -29,6 +29,15 @@ class C {
   //
   // Comment
 
+// A trailing comment may follow a variable, a function call, or a closing
+// brace, and the formatter keeps it on the line it annotates.
+var count: i32 = 0;          // a) A local variable,
+
+fn Render(frame: Frame) {
+  Draw(frame);               // b) A function call,
+  Flush();
+}                            // c) And a closing brace.
+
 // --- AUTOUPDATE-SPLIT
 
 // CHECK:STDOUT: // A comment
@@ -43,3 +52,10 @@ class C {
 // CHECK:STDOUT:   // Block
 // CHECK:STDOUT:   //
 // CHECK:STDOUT:   // Comment
+// CHECK:STDOUT: // A trailing comment may follow a variable, a function call, or a closing
+// CHECK:STDOUT: // brace, and the formatter keeps it on the line it annotates.
+// CHECK:STDOUT: var count: i32 = 0; // a) A local variable,
+// CHECK:STDOUT: fn Render (frame: Frame) {
+// CHECK:STDOUT:   Draw (frame); // b) A function call,
+// CHECK:STDOUT:   Flush ();
+// CHECK:STDOUT: } // c) And a closing brace.

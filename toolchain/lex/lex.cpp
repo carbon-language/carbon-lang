@@ -951,43 +951,42 @@ auto Lexer::EndDumpSemIRRangeIfIncomplete(const char* diag_loc) -> void {
 auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   CARBON_DCHECK(source_text.substr(position).starts_with("//"));
   int32_t comment_start = position;
-
-  // Any comment must be the only non-whitespace on the line.
   const auto line_info = current_line_info();
-  if (LLVM_UNLIKELY(position != line_info.start + line_info.indent)) {
-    CARBON_DIAGNOSTIC(TrailingComment, Error,
-                      "trailing comments are not permitted");
 
-    emitter_.Emit(source_text.begin() + position, TrailingComment);
-
-    // Note that we cannot fall-through here as the logic below doesn't handle
-    // trailing comments. Instead, we treat trailing comments as vertical
-    // whitespace, which already is designed to skip over any erroneous text at
-    // the end of the line.
-    LexVerticalWhitespace(source_text, position);
-    buffer_.AddComment(line_info.indent, comment_start, position);
-    return;
-  }
+  // A comment is _trailing_ when it follows other content on its line, rather
+  // than being the only non-whitespace on the line. Both kinds of comment are
+  // lexed identically -- they run from `//` to the end of the line -- but we
+  // record the distinction so that tooling can tell a comment annotating the
+  // code on its line apart from one introducing the code below it.
+  //
+  // `line_info.indent` is the width of the line's leading whitespace, so
+  // `line_info.start + line_info.indent` is the line's first non-whitespace
+  // byte.
+  const bool is_trailing = position != line_info.start + line_info.indent;
 
   // The introducer '//' must be followed by whitespace or EOF.
   bool is_valid_after_slashes = true;
   if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
       LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
     llvm::StringRef comment_text = source_text.substr(position);
-    if (comment_text.starts_with("//@include-in-dumps\n")) {
-      buffer_.has_include_in_dumps_ = true;
-      AdvanceToLine(source_text, position, next_line());
-      return;
-    }
-    if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
-      BeginDumpSemIRRange(comment_text.begin());
-      AdvanceToLine(source_text, position, next_line());
-      return;
-    }
-    if (comment_text.starts_with("//@dump-sem-ir-end\n")) {
-      EndDumpSemIRRange(comment_text.begin());
-      AdvanceToLine(source_text, position, next_line());
-      return;
+    // The `//@...` directives are tooling markers that are only meaningful as
+    // full-line comments, so we only recognize them when not trailing.
+    if (!is_trailing) {
+      if (comment_text.starts_with("//@include-in-dumps\n")) {
+        buffer_.has_include_in_dumps_ = true;
+        AdvanceToLine(source_text, position, next_line());
+        return;
+      }
+      if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
+        BeginDumpSemIRRange(comment_text.begin());
+        AdvanceToLine(source_text, position, next_line());
+        return;
+      }
+      if (comment_text.starts_with("//@dump-sem-ir-end\n")) {
+        EndDumpSemIRRange(comment_text.begin());
+        AdvanceToLine(source_text, position, next_line());
+        return;
+      }
     }
     CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                       "whitespace is required after '//'");
@@ -1000,6 +999,22 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   // Skip over this line.
   LineIndex line_index = next_line();
   position = buffer_.line_infos_.Get(line_index).start;
+
+  // A trailing comment runs to the end of its line. Unlike a full-line comment,
+  // it can never be part of a block of identical comment lines, so we skip the
+  // block-skipping optimization below and simply advance past this one line. We
+  // also don't optimize for the case of a trailing comment as we expect them to
+  // be relatively rare compared to other comment structures.
+  if (LLVM_UNLIKELY(is_trailing)) {
+    buffer_.AddComment(line_info.indent, comment_start, position,
+                       /*is_trailing=*/true);
+    // Unlike a full-line comment, a trailing comment can directly follow a
+    // token that cleared the leading-whitespace flag (`x;// y`), so restore it
+    // here for the next line's first token.
+    NoteWhitespace();
+    AdvanceToLine(source_text, position, line_index);
+    return;
+  }
 
   // A very common pattern is a long block of comment lines all with the same
   // indent and comment start. We skip these comment blocks in bulk both for
@@ -1083,7 +1098,7 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     }
   }
 
-  buffer_.AddComment(indent, comment_start, position);
+  buffer_.AddComment(indent, comment_start, position, /*is_trailing=*/false);
   AdvanceToLine(source_text, position, line_index);
 }
 
@@ -1151,7 +1166,6 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
 
   // Capture the position before we step past the token.
   int32_t byte_offset = position;
-  int string_column = byte_offset - current_line_info().start;
   position += literal->text().size();
 
   // Helper for error paths.
@@ -1174,13 +1188,22 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
 
   // Update line and column information.
   if (literal->kind() != StringLiteral::Kind::SingleLine) {
+    // Record the actual indentation -- the width of the leading horizontal
+    // whitespace -- of each line the literal spans, the same as for any other
+    // line. In particular, the line on which the literal ends can be followed
+    // by further tokens and comments, which rely on its indent being correct
+    // (for example, to detect a trailing comment). Parser error recovery, which
+    // wants to treat tokens after the literal as a continuation of the
+    // construct the literal began, instead consults the literal's opening line;
+    // see `Context::SkipPastLikelyEnd`. This is all on the cold path, as
+    // multi-line literals are rare.
     while (next_line_info().start < position) {
       ++line_index_.index;
-      current_line_info().indent = string_column;
+      auto& spanned_line_info = current_line_info();
+      ssize_t indent_end = spanned_line_info.start;
+      SkipHorizontalWhitespace(source_text, indent_end);
+      spanned_line_info.indent = indent_end - spanned_line_info.start;
     }
-    // Note that we've updated the current line at this point, but
-    // `set_indent_` is already true from above. That remains correct as the
-    // last line of the multi-line literal *also* has its indent set.
   }
 
   if (!literal->is_terminated()) {
