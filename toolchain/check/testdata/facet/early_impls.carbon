@@ -58,7 +58,7 @@ class C(T:! type);
 
 fn F(_:! Z where C(.Self) impls Y and .Z1 = C(.Self).(Y.Y1)) {}
 
-// --- fail_todo_early_class_impls_generic_interface.carbon
+// --- early_class_impls_generic_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -70,10 +70,6 @@ class C;
 
 // Needs to identify `C as Y(.Self)` without replacing this `.Self` with `C`,
 // since it refers to `T`.
-// CHECK:STDERR: fail_todo_early_class_impls_generic_interface.carbon:[[@LINE+4]]:53: error: cannot convert type `C` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn F(unused T:! Z where C impls Y(.Self) and .Z1 = (C as Y(.Self))) {}
-// CHECK:STDERR:                                                     ^~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(unused T:! Z where C impls Y(.Self) and .Z1 = (C as Y(.Self))) {}
 
 class D(V:! type);
@@ -82,16 +78,9 @@ class D(V:! type);
 // `.Self` to `D` since it refers to `T`. But we _do_ need to replace the
 // `.Self` in the type of `U`, since it refers to `U` which is being replaced by
 // `D(.Self)` in this specific.
-// CHECK:STDERR: fail_todo_early_class_impls_generic_interface.carbon:[[@LINE+7]]:71: error: cannot convert type `D(.Self)` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn G(unused T:! Z where D(.Self) impls Y(D(.Self)) and D(.Self) impls X(D(.Self))) {}
-// CHECK:STDERR:                                                                       ^~~~~~~~~~~
-// CHECK:STDERR: fail_todo_early_class_impls_generic_interface.carbon:[[@LINE-20]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR: interface X(U:! Y(.Self)) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn G(unused T:! Z where D(.Self) impls Y(D(.Self)) and D(.Self) impls X(D(.Self))) {}
 
-// --- fail_todo_early_class_impls_generic_interface_with_member_designator.carbon
+// --- early_class_impls_generic_interface_with_member_designator.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -103,13 +92,9 @@ interface Y(T:! type) {
 }
 class C;
 
-// CHECK:STDERR: fail_todo_early_class_impls_generic_interface_with_member_designator.carbon:[[@LINE+4]]:43: error: cannot convert type `C` into type implementing `Y(.(Z.Z2))` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn F(_:! Z where C impls Y(.Z2) and .Z1 = C.(Y(.Z2).Y1)) {}
-// CHECK:STDERR:                                           ^~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(_:! Z where C impls Y(.Z2) and .Z1 = C.(Y(.Z2).Y1)) {}
 
-// --- fail_todo_early_tuple_impls_generic_interface.carbon
+// --- early_tuple_impls_generic_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -123,33 +108,13 @@ interface X {
 }
 class C;
 
-// CHECK:STDERR: fail_todo_early_tuple_impls_generic_interface.carbon:[[@LINE+4]]:46: error: cannot convert type `()` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn F(_:! Z where () impls Y(.Self) and .Z1 = ().(Y(.Self).Y1)) {}
-// CHECK:STDERR:                                              ^~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(_:! Z where () impls Y(.Self) and .Z1 = ().(Y(.Self).Y1)) {}
 
-// CHECK:STDERR: fail_todo_early_tuple_impls_generic_interface.carbon:[[@LINE+4]]:49: error: cannot convert type `(C,)` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn G(_:! Z where (C, ) impls Y(.Self) and .Z1 = (C, ).(Y(.Self).Y1)) {}
-// CHECK:STDERR:                                                 ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn G(_:! Z where (C, ) impls Y(.Self) and .Z1 = (C, ).(Y(.Self).Y1)) {}
-
-// TODO: Can merge with the next test once they both pass.
-
-// --- early_tuple_impls.carbon
-library "[[@TEST_NAME]]";
-
-interface Z {
-  let Z1:! type;
-}
-interface X {
-  let X1:! type;
-}
 
 fn H(_:! Z where (.Self, ) impls X and .Z1 = (.Self, ).(X.X1)) {}
 
-// --- fail_todo_early_struct_impls.carbon
+// --- early_struct_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -163,13 +128,9 @@ interface X {
 }
 class C;
 
-// CHECK:STDERR: fail_todo_early_struct_impls.carbon:[[@LINE+4]]:46: error: cannot convert type `{}` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn F(_:! Z where {} impls Y(.Self) and .Z1 = {}.(Y(.Self).Y1)) {}
-// CHECK:STDERR:                                              ^~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(_:! Z where {} impls Y(.Self) and .Z1 = {}.(Y(.Self).Y1)) {}
 
-// --- fail_todo_early_concrete_impls.carbon
+// --- early_concrete_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -183,10 +144,6 @@ interface Y(T:! type) {
 fn MakeIntLiteral() -> type = "int_literal.make_type";
 alias IntLiteral = MakeIntLiteral();
 
-// CHECK:STDERR: fail_todo_early_concrete_impls.carbon:[[@LINE+4]]:54: error: cannot convert type `IntLiteral` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn F(_:! Z where IntLiteral impls Y(.Self) and .Z1 = IntLiteral.(Y(.Self).Y1)) {}
-// CHECK:STDERR:                                                      ^~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(_:! Z where IntLiteral impls Y(.Self) and .Z1 = IntLiteral.(Y(.Self).Y1)) {}
 
 // --- early_impl_named_constraint.carbon
@@ -244,7 +201,7 @@ constraint N(V:! type) {
 // CHECK:STDERR:
 fn F(_:! Z(.Self) where C impls N(.Z1) and .Z2 = (.Z1 as Y(.Self))) {}
 
-// --- fail_todo_early_type_impls_nested_self_impls.carbon
+// --- early_type_impls_nested_self_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -265,11 +222,32 @@ constraint NY {
 // A lookup of `C(V).(Y.Y1) as X` requires us to see that the `.Y1 impls X`
 // constraint is visible through the `C(.Self) impls NY` constraint and that
 // `C(.Self)` is used as the implied `.Self` in `.Y1 impls X`.
-// CHECK:STDERR: fail_todo_early_type_impls_nested_self_impls.carbon:[[@LINE+7]]:53: error: cannot convert type `C(.Self).(Y.Y1)` into type implementing `X` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn F(unused V:! Z where C(.Self) impls NY and .Z1 = D(C(.Self).(Y.Y1))) {}
-// CHECK:STDERR:                                                     ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_early_type_impls_nested_self_impls.carbon:[[@LINE-12]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-// CHECK:STDERR: class D(T:! X);
-// CHECK:STDERR:         ^~~~~
-// CHECK:STDERR:
 fn F(unused V:! Z where C(.Self) impls NY and .Z1 = D(C(.Self).(Y.Y1))) {}
+
+// --- period_self_impls_named_constraint_used_in_later_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface X {}
+interface Y {
+  let Y1:! type;
+}
+
+constraint ConstraintForY {
+  require impls Y where .Y1 impls X;
+}
+
+interface Z {
+  let Z1:! type;
+}
+
+private constraint ConstraintForZ {
+  extend require impls Z where .Z1 impls ConstraintForY;
+}
+
+// If we replace `.Self` inside the named constraint `ConstraintForY`, we end up
+// replacing `.Self` in the `.Z1` from the specific args for the named
+// constraint, which replaces `Self` in the named constraint. Doing this is
+// incorrect and was leading to an infinite loop of `.Self` substitution.
+fn F(_:! ConstraintForZ where
+           .Z1 impls ConstraintForY and
+           .Z1.(Y.Y1) == ()) {}

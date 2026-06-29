@@ -391,9 +391,9 @@ static auto CollectFacetWitnessSources(
       // Then each cycle back through to `facet_const_id` will have a smaller
       // type until it runs out of constraints.
       context.impl_lookup_no_symbolic_final_lookups()++;
-      auto identified_id =
-          TryToIdentifyFacetType(context, loc_id, facet_const_id, facet_type,
-                                 allow_partially_identified);
+      auto identified_id = TryToIdentifyFacetType(
+          context, loc_id, facet_const_id, facet_type,
+          allow_partially_identified, /*subst_period_self=*/true);
       context.impl_lookup_no_symbolic_final_lookups()--;
 
       if (identified_id.has_value()) {
@@ -475,7 +475,8 @@ static auto CollectFacetWitnessSources(
           facet_type_const_id);
       auto identified_id = TryToIdentifyFacetType(
           context, loc_id, canon_self_const_id, facet_type,
-          /*allow_partially_identified=*/true);
+          /*allow_partially_identified=*/true,
+          /*subst_period_self=*/false);
       if (identified_id.has_value()) {
         witnesses.push_back({.facet_const_id = canon_self_const_id,
                              .identified_facet_type_id = identified_id});
