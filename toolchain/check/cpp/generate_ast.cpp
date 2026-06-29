@@ -249,14 +249,19 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
       return cast<clang::NamedDecl>(decl_context);
     }
     case SemIR::StructValue::Kind: {
+      auto type_inst_id =
+          context_->types().GetTypeInstId(target_inst.type_id());
       auto callee = GetCallee(context_->sem_ir(), target_inst_id);
-      auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee);
-      if (!callee_function) {
-        return nullptr;
+      if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
+        return GetOrExportFunctionToCpp(target_inst_id,
+                                        callee_function->function_id);
+      } else if (auto generic_class =
+                     context_->insts().TryGetAs<SemIR::GenericClassType>(
+                         type_inst_id)) {
+        return ExportGenericClassToCpp(*context_, type_inst_id, *generic_class);
       }
 
-      return GetOrExportFunctionToCpp(target_inst_id,
-                                      callee_function->function_id);
+      return nullptr;
     }
     case CARBON_KIND(SemIR::FieldDecl field_decl): {
       return ExportFieldToCpp(*context_, target_inst_id, field_decl);

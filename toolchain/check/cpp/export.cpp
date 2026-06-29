@@ -298,6 +298,16 @@ static auto MakeSpecificForTemplateArgs(
   return MakeSpecific(context, loc_id, generic_id, specific_arg_ids);
 }
 
+auto ExportGenericClassToCpp(Context& context, SemIR::InstId inst_id,
+                             SemIR::GenericClassType generic_class_type)
+    -> clang::ClassTemplateDecl* {
+  // TODO
+  (void)context;
+  (void)inst_id;
+  (void)generic_class_type;
+  return nullptr;
+}
+
 static auto SetCppClassMemberAccess(const SemIR::NameScope& class_scope,
                                     SemIR::NameId member_name_id,
                                     clang::Decl* member) -> void {
