@@ -807,6 +807,19 @@ TEST_F(LexerTest, Identifiers) {
               }));
 }
 
+TEST_F(LexerTest, RawIdentifierIntroducerAtEndOfFile) {
+  // `r#` at the very end of the source is not a raw identifier -- there is no
+  // identifier after the `#` -- but the leading `r` is still an identifier
+  // whose text begins with `r#`. Computing that text checks for the raw form
+  // and must not read past the end of the buffer.
+  auto& buffer = compile_helper_.GetTokenizedBuffer("r#");
+  for (TokenIndex token : buffer.tokens()) {
+    if (buffer.GetKind(token) == TokenKind::Identifier) {
+      EXPECT_EQ(buffer.GetTokenText(token), "r");
+    }
+  }
+}
+
 TEST_F(LexerTest, StringLiterals) {
   llvm::StringLiteral testcase = R"(
     "hello world\n"
