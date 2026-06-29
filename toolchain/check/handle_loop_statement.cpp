@@ -211,10 +211,6 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   // should be in scope.
   context.full_pattern_stack().EndPatternInitializer();
 
-  // Create storage for var patterns now.
-  context.full_pattern_stack().BuildLocalVarStorage(context,
-                                                    /*is_returned_var=*/false);
-
   // Initialize the pattern from `<element>.Get()`.
   auto element_value_id =
       CallOptionalAccessor(context, node_id, element_id, CoreIdentifier::Get);

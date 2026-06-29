@@ -352,11 +352,11 @@ fn Run() {
 // CHECK:STDOUT:   %struct_type.has_value.value.9e7: type = struct_type {.has_value: bool, .value: %C} [concrete]
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %Optional.HasValue.a88, @Optional.HasValue(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.d5d, @Optional.Get(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.1: type = fn_type @Destroy.Op.loc10_8.1 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.1: %Destroy.Op.type.1d8f74.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc10_8.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc10_40.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.5: type = fn_type @Destroy.Op.loc10_40.3 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc10_40.3 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.5: type = fn_type @Destroy.Op.loc10_40.5 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.5: %Destroy.Op.type.1d8f74.5 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.6: type = fn_type @Destroy.Op.loc10_39 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.6: %Destroy.Op.type.1d8f74.6 = struct_value () [concrete]
@@ -381,6 +381,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt.dd0]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
@@ -428,7 +429,6 @@ fn Run() {
 // CHECK:STDOUT:   if %.loc10_40.6 br !for.body else br !for.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.body:
-// CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt
 // CHECK:STDOUT:   %.loc10_40.7: %Optional.Get.type.0a8 = specific_constant imports.%Core.import_ref.73b, @Optional(constants.%Copy.facet) [concrete = constants.%Optional.Get.d5d]
 // CHECK:STDOUT:   %Get.ref: %Optional.Get.type.0a8 = name_ref Get, %.loc10_40.7 [concrete = constants.%Optional.Get.d5d]
 // CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc10_40.2, %Get.ref
@@ -447,32 +447,32 @@ fn Run() {
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_8: <bound method> = bound_method %c.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_8: init %empty_tuple.type = call %Destroy.Op.bound.loc10_8(%c.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_40.1: <bound method> = bound_method %.loc10_40.2, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_40.1: init %empty_tuple.type = call %Destroy.Op.bound.loc10_40.1(%.loc10_40.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_40.2: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.1
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_40.2: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_40.2: init %empty_tuple.type = call %Destroy.Op.bound.loc10_40.2(%var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_39: <bound method> = bound_method %.loc10_39.2, constants.%Destroy.Op.1a2547.6
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_39: init %empty_tuple.type = call %Destroy.Op.bound.loc10_39(%.loc10_39.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_8: <bound method> = bound_method %c.var, constants.%Destroy.Op.1a2547.3
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_8: init %empty_tuple.type = call %Destroy.Op.bound.loc10_8(%c.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_8.1(%self.param: ref %empty_struct_type) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_8.2(%self.param: ref %C) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_40.1(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_40.2(%self.param: ref %struct_type.has_value.value.9e7) {
+// CHECK:STDOUT: fn @Destroy.Op.loc10_40.2(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc10_40.3(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_40.3(%self.param: ref %Optional.f82) {
+// CHECK:STDOUT: fn @Destroy.Op.loc10_40.4(%self.param: ref %struct_type.has_value.value.9e7) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc10_40.5(%self.param: ref %Optional.f82) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
