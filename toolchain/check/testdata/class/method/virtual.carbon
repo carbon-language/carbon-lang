@@ -202,13 +202,10 @@ base class Base {
 
 class Derived {
   extend base: Base;
-  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+10]]:3: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
+  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+7]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
   // CHECK:STDERR:   override fn F(self, v: i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+7]]:3: note: calling function declared here [InCallToEntity]
-  // CHECK:STDERR:   override fn F(self, v: i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE-11]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE-8]]:3: note: candidate function has 1 parameter including `self`, but override has 2 [OverrideCandidateArityMismatch]
   // CHECK:STDERR:   virtual fn F(self);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
