@@ -5,6 +5,8 @@
 #include "toolchain/format/formatter.h"
 
 #include "common/check.h"
+#include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "toolchain/format/comment.h"
 #include "toolchain/format/line_wrapper.h"
 
@@ -166,6 +168,10 @@ auto Formatter::FlushLine() -> void {
   last_end_byte_ =
       tokens_->GetByteOffset(last) + tokens_->GetTokenText(last).size();
   after_open_brace_ = tokens_->GetKind(last) == Lex::TokenKind::OpenCurlyBrace;
+  // Record the unwrapped line's source-line extent for range expansion; see
+  // `AffectedByteRanges`.
+  unwrapped_line_extents_.push_back(
+      {tokens_->GetLineNumber(first), tokens_->GetLineNumber(last)});
   current_line_.clear();
 }
 
@@ -287,9 +293,152 @@ auto Formatter::Run() -> bool {
   return !tokens_->has_errors() && !tree_->has_errors();
 }
 
-auto Formatter::ComputeReplacements() const -> llvm::SmallVector<Replacement> {
+auto Formatter::AffectedByteRanges(LineRange lines) const
+    -> llvm::SmallVector<std::pair<int32_t, int32_t>> {
+  llvm::StringRef source = tokens_->source().text();
+
+  // Work in whole source lines. The requested lines seed the set, and two
+  // kinds of layout coupling expand it:
+  //
+  //   - A unwrapped line -- one flushed statement or line, possibly wrapped
+  //     over several source lines -- lays out as a unit, so a partially
+  //     affected one is wholly affected; otherwise a re-wrap could be applied
+  //     in part and produce output full formatting never would.
+  //   - A brace whose matching brace is affected becomes affected, so range
+  //     formatting fixes a dangling brace.
+  //
+  // A worklist visits each newly affected line once, applying every coupling
+  // that touches it; couplings chain (a brace inside a wrapped line), so this
+  // reaches the fixed point in linear time.
+
+  // Precompute the start byte of every 1-based line, plus one entry for the
+  // end of the source, so line/byte conversions don't rescan the source.
+  llvm::SmallVector<int32_t> line_starts;
+  line_starts.push_back(0);
+  for (size_t newline = source.find('\n'); newline != llvm::StringRef::npos;
+       newline = source.find('\n', newline + 1)) {
+    line_starts.push_back(newline + 1);
+  }
+  if (line_starts.back() != static_cast<int32_t>(source.size())) {
+    line_starts.push_back(source.size());
+  }
+  int line_count = line_starts.size() - 1;
+
+  // Collect the brace pairs. A lexer-inserted recovery token's synthesized
+  // offset is not a real source position, so such a pair has no source line
+  // to expand to and is skipped.
+  struct BracePair {
+    int open_line;
+    int close_line;
+  };
+  llvm::SmallVector<BracePair> pairs;
+  for (auto token : tokens_->tokens()) {
+    if (tokens_->GetKind(token) == Lex::TokenKind::OpenCurlyBrace) {
+      auto close = tokens_->GetMatchedClosingToken(token);
+      if (tokens_->IsRecoveryToken(token) || tokens_->IsRecoveryToken(close)) {
+        continue;
+      }
+      pairs.push_back({.open_line = tokens_->GetLineNumber(token),
+                       .close_line = tokens_->GetLineNumber(close)});
+    }
+  }
+
+  // Index the couplings by line: a non-negative id is a unwrapped-line extent,
+  // and `~id` a brace pair.
+  llvm::SmallVector<llvm::SmallVector<int32_t, 2>> couplings(line_count + 1);
+  for (auto [i, extent] : llvm::enumerate(unwrapped_line_extents_)) {
+    for (int line = extent.first; line <= extent.second; ++line) {
+      couplings[line].push_back(static_cast<int32_t>(i));
+    }
+  }
+  for (auto [i, pair] : llvm::enumerate(pairs)) {
+    couplings[pair.open_line].push_back(~static_cast<int32_t>(i));
+    couplings[pair.close_line].push_back(~static_cast<int32_t>(i));
+  }
+
+  llvm::BitVector affected(line_count + 1);
+  llvm::SmallVector<int> worklist;
+  auto add_line = [&](int line) {
+    if (line >= 1 && line <= line_count && !affected[line]) {
+      affected.set(line);
+      worklist.push_back(line);
+    }
+  };
+  for (int line = lines.first_line;
+       line <= std::min(lines.last_line, line_count); ++line) {
+    add_line(line);
+  }
+  while (!worklist.empty()) {
+    int line = worklist.pop_back_val();
+    for (int32_t id : couplings[line]) {
+      if (id >= 0) {
+        auto [extent_begin, extent_end] = unwrapped_line_extents_[id];
+        for (int l = extent_begin; l <= extent_end; ++l) {
+          add_line(l);
+        }
+      } else {
+        const BracePair& pair = pairs[~id];
+        add_line(pair.open_line);
+        add_line(pair.close_line);
+      }
+    }
+  }
+
+  // Convert the affected lines to merged byte ranges.
+  llvm::SmallVector<std::pair<int32_t, int32_t>> ranges;
+  for (int line = 1; line <= line_count; ++line) {
+    if (!affected[line]) {
+      continue;
+    }
+    int32_t begin = line_starts[line - 1];
+    int32_t end = line_starts[line];
+    if (!ranges.empty() && ranges.back().second == begin) {
+      ranges.back().second = end;
+    } else {
+      ranges.push_back({begin, end});
+    }
+  }
+  return ranges;
+}
+
+auto Formatter::ComputeReplacements(std::optional<LineRange> lines) const
+    -> llvm::SmallVector<Replacement> {
   llvm::StringRef source = tokens_->source().text();
   llvm::StringRef output = output_;
+
+  // When a line range is requested, lower it to the byte ranges it affects (the
+  // requested lines plus matching braces). An edit is kept when the gap it
+  // rewrites lies in one of those ranges.
+  llvm::SmallVector<std::pair<int32_t, int32_t>> affected;
+  if (lines) {
+    affected = AffectedByteRanges(*lines);
+  }
+  int32_t source_size = source.size();
+  auto in_requested_lines = [&](int32_t begin, int32_t end) -> bool {
+    if (!lines) {
+      return true;
+    }
+    if (begin != end) {
+      // A non-empty gap is in range if it overlaps an affected byte range.
+      for (auto [range_begin, range_end] : affected) {
+        if (begin < range_end && end > range_begin) {
+          return true;
+        }
+      }
+      return false;
+    }
+    // A zero-width gap is an insertion point; it is in range if it sits inside
+    // an affected range, or exactly at end-of-source when an affected range
+    // runs to the last line (so a missing trailing newline is still added).
+    for (auto [range_begin, range_end] : affected) {
+      if (begin >= range_begin &&
+          (begin < range_end ||
+           (begin == range_end && range_end == source_size))) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   llvm::SmallVector<Replacement> replacements;
   auto maybe_add_gap = [&](int32_t source_begin, int32_t source_end,
@@ -298,7 +447,8 @@ auto Formatter::ComputeReplacements() const -> llvm::SmallVector<Replacement> {
         source.substr(source_begin, source_end - source_begin);
     llvm::StringRef output_gap =
         output.substr(output_begin, output_end - output_begin);
-    if (source_gap != output_gap) {
+    if (source_gap != output_gap &&
+        in_requested_lines(source_begin, source_end)) {
       replacements.push_back({.offset = source_begin,
                               .length = source_end - source_begin,
                               .text = output_gap.str()});

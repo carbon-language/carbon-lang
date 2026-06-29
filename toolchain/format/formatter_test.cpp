@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 
+#include <optional>
 #include <string>
 
 #include "common/raw_string_ostream.h"
@@ -145,10 +146,11 @@ TEST(FormatterTest, TrailingCommentStaysOnCodeLine) {
 }
 
 // Formats `text` via `FormatReplacements` + `ApplyReplacements`.
-auto FormatViaReplacements(Testing::CompileHelper& helper, llvm::StringRef text)
+auto FormatViaReplacements(Testing::CompileHelper& helper, llvm::StringRef text,
+                           std::optional<LineRange> lines = std::nullopt)
     -> std::string {
   llvm::SmallVector<Replacement> replacements;
-  FormatReplacements(helper.GetTree(text), replacements);
+  FormatReplacements(helper.GetTree(text), replacements, lines);
   return ApplyReplacements(text, replacements);
 }
 
@@ -201,6 +203,43 @@ TEST(FormatterTest, ProducesMinimalEdits) {
   for (const Replacement& replacement : replacements) {
     EXPECT_EQ(replacement.text, " ");
   }
+}
+
+// A line range restricts edits to that range, leaving other lines untouched.
+TEST(FormatterTest, RangeFormattingTouchesOnlyTheRange) {
+  Testing::CompileHelper helper;
+  llvm::StringRef input =
+      "fn F() {\n  var x: i32 = 1+1;\n  var y: i32 = 2+2;\n}\n";
+  // Line 2 is reformatted; line 3 keeps its `2+2`.
+  EXPECT_EQ(FormatViaReplacements(helper, input,
+                                  LineRange{.first_line = 2, .last_line = 2}),
+            "fn F() {\n  var x: i32 = 1 + 1;\n  var y: i32 = 2+2;\n}\n");
+  // The complementary range reformats line 3 only.
+  EXPECT_EQ(FormatViaReplacements(helper, input,
+                                  LineRange{.first_line = 3, .last_line = 3}),
+            "fn F() {\n  var x: i32 = 1+1;\n  var y: i32 = 2 + 2;\n}\n");
+}
+
+// Range formatting expands to a matching brace: the over-indented `}` on line 3
+// is out of the requested range -- and its own gap starts on line 2, also out
+// of range -- but its matching `{` (line 1) is in range, so it is fixed too.
+TEST(FormatterTest, RangeFormattingExpandsToMatchingBrace) {
+  Testing::CompileHelper helper;
+  EXPECT_EQ(
+      FormatViaReplacements(helper, "fn F() {\n  var x: i32 = 1;\n      }\n",
+                            LineRange{.first_line = 1, .last_line = 1}),
+      "fn F() {\n  var x: i32 = 1;\n}\n");
+}
+
+// Range formatting expands to whole unwrapped lines: a statement wrapped over
+// source lines 2-3 re-wraps as a unit even when only line 2 is requested, so
+// the applied edits match what full formatting would produce for it.
+TEST(FormatterTest, RangeFormattingRewrapsWholeUnwrappedLine) {
+  Testing::CompileHelper helper;
+  EXPECT_EQ(
+      FormatViaReplacements(helper, "fn F() {\n  var x: i32 =\n      1+1;\n}\n",
+                            LineRange{.first_line = 2, .last_line = 2}),
+      "fn F() {\n  var x: i32 = 1 + 1;\n}\n");
 }
 
 }  // namespace

@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_FORMAT_FORMAT_H_
 
 #include <cstdint>
+#include <optional>
 #include <string>
 
 #include "common/ostream.h"
@@ -25,6 +26,13 @@ struct Replacement {
   std::string text;
 };
 
+// An inclusive range of 1-based source line numbers, used to restrict
+// formatting to part of a file.
+struct LineRange {
+  int first_line;
+  int last_line;
+};
+
 // Formats file content to the out stream, driven by the parse tree (and the
 // tokens it references). Returns false if the input had lex or parse errors;
 // best-effort formatted output is still produced, and the caller decides
@@ -36,11 +44,13 @@ auto Format(const Parse::Tree& tree, llvm::raw_ostream& out) -> bool;
 // -- never the tokens themselves -- each edit covers one changed run of
 // whitespace/comments between two tokens; unchanged runs produce no edit.
 // Applying the result to the source yields the same text `Format` would write.
-// The return value matches `Format`: false if the input had errors, though
-// best-effort edits are produced regardless.
+//
+// If `lines` is set, only edits touching that line range are produced (the rest
+// of the file is left unchanged). The return value matches `Format`: false if
+// the input had errors, though best-effort edits are produced regardless.
 auto FormatReplacements(const Parse::Tree& tree,
-                        llvm::SmallVectorImpl<Replacement>& replacements)
-    -> bool;
+                        llvm::SmallVectorImpl<Replacement>& replacements,
+                        std::optional<LineRange> lines = std::nullopt) -> bool;
 
 // Applies `replacements` (as produced by `FormatReplacements`: ordered by
 // offset and non-overlapping) to `source`, returning the edited text.

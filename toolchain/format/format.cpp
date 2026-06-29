@@ -20,11 +20,11 @@ auto Format(const Parse::Tree& tree, llvm::raw_ostream& out) -> bool {
 }
 
 auto FormatReplacements(const Parse::Tree& tree,
-                        llvm::SmallVectorImpl<Replacement>& replacements)
-    -> bool {
+                        llvm::SmallVectorImpl<Replacement>& replacements,
+                        std::optional<LineRange> lines) -> bool {
   Formatter formatter(&tree);
   bool formatted_cleanly = formatter.Run();
-  for (Replacement& replacement : formatter.ComputeReplacements()) {
+  for (Replacement& replacement : formatter.ComputeReplacements(lines)) {
     replacements.push_back(std::move(replacement));
   }
   return formatted_cleanly;

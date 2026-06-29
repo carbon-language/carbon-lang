@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <utility>
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/format/format.h"
@@ -47,9 +48,20 @@ class Formatter {
 
   // Returns the edits that turn the original source into the formatted text:
   // one per changed run of whitespace/comments between tokens (see `format.h`).
-  auto ComputeReplacements() const -> llvm::SmallVector<Replacement>;
+  // If `lines` is set, only edits touching that 1-based inclusive line range
+  // are returned.
+  auto ComputeReplacements(std::optional<LineRange> lines) const
+      -> llvm::SmallVector<Replacement>;
 
  private:
+  // Returns the source byte ranges affected when formatting `lines`: the
+  // requested lines, expanded (to a fixed point) over two layout couplings.
+  // A partially affected unwrapped line is wholly affected, since it re-wraps
+  // as a unit, and a brace whose matching brace is affected is affected too, so
+  // range formatting fixes a dangling brace. See toolchain/docs/format.md.
+  auto AffectedByteRanges(LineRange lines) const
+      -> llvm::SmallVector<std::pair<int32_t, int32_t>>;
+
   // Lays out the buffered line (if any): decides its line breaks, then records
   // each token's leading whitespace into the whitespace manager, prefixed by
   // any blank line the source had before it. Clears the line buffer.
@@ -84,6 +96,11 @@ class Formatter {
 
   // The formatted text, populated when `Run()` finishes.
   std::string output_;
+
+  // The source-line extent (first and last 1-based line) of each flushed
+  // unwrapped line, in order; used by `AffectedByteRanges` to expand a range to
+  // whole unwrapped lines.
+  llvm::SmallVector<std::pair<int, int>> unwrapped_line_extents_;
 
   // Where each emitted token landed in the source and the output, in order.
   llvm::SmallVector<TokenSpan> token_map_;
