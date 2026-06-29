@@ -384,7 +384,7 @@ fn G(T:! J where .J1 = D) {
   F(T);
 }
 
-// --- early_rewrite_from_previous_impls_constraint.carbon
+// --- fail_todo_early_rewrite_from_previous_impls_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -399,7 +399,18 @@ interface Tuple {}
 impl () as Tuple {}
 class C(U:! Tuple);
 
-fn F(unused T:! Z where .Z1 impls (Y where .Y1 = ()) and .Z2 = C(.Z1.(Y.Y1))) {}
+constraint NY(V:! type) {
+  extend require impls Y where .Y1 = V;
+}
+
+// CHECK:STDERR: fail_todo_early_rewrite_from_previous_impls_constraint.carbon:[[@LINE+7]]:52: error: cannot convert type `.(Z.Z1).(Y.Y1)` into type implementing `Tuple` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fn F(unused T:! Z where .Z1 impls NY(()) and .Z2 = C(.Z1.(Y.Y1))) {}
+// CHECK:STDERR:                                                    ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_early_rewrite_from_previous_impls_constraint.carbon:[[@LINE-9]]:9: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+// CHECK:STDERR: class C(U:! Tuple);
+// CHECK:STDERR:         ^~~~~~~~~
+// CHECK:STDERR:
+fn F(unused T:! Z where .Z1 impls NY(()) and .Z2 = C(.Z1.(Y.Y1))) {}
 
 // --- fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_period_self.carbon
 library "[[@TEST_NAME]]";
@@ -416,17 +427,21 @@ interface Tuple {}
 impl () as Tuple {}
 class C(U:! Tuple);
 
+constraint NY(V:! type) {
+  extend require impls Y where .Y1 = V;
+}
+
 // This should fail: `T.(Y.Y1)` is rewritten to be `()` but `T.(Z.Z1).(Y.Y1)`
 // is used in the argument to `C`.
 //
-// CHECK:STDERR: fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_period_self.carbon:[[@LINE+7]]:82: error: cannot convert type `.(Z.Z1).(Y.Y1)` into type implementing `Tuple` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn F(unused T:! Z where .Self impls (Y where .Y1 = ()) and .Z1 impls Y and .Z2 = C(.Z1.(Y.Y1))) {}
-// CHECK:STDERR:                                                                                  ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_period_self.carbon:[[@LINE-8]]:9: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+// CHECK:STDERR: fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_period_self.carbon:[[@LINE+7]]:70: error: cannot convert type `.(Z.Z1).(Y.Y1)` into type implementing `Tuple` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fn F(unused T:! Z where .Self impls NY(()) and .Z1 impls Y and .Z2 = C(.Z1.(Y.Y1))) {}
+// CHECK:STDERR:                                                                      ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_period_self.carbon:[[@LINE-12]]:9: note: initializing generic parameter `U` declared here [InitializingGenericParam]
 // CHECK:STDERR: class C(U:! Tuple);
 // CHECK:STDERR:         ^~~~~~~~~
 // CHECK:STDERR:
-fn F(unused T:! Z where .Self impls (Y where .Y1 = ()) and .Z1 impls Y and .Z2 = C(.Z1.(Y.Y1))) {}
+fn F(unused T:! Z where .Self impls NY(()) and .Z1 impls Y and .Z2 = C(.Z1.(Y.Y1))) {}
 
 // --- fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_associated_constant.carbon
 library "[[@TEST_NAME]]";
@@ -443,14 +458,18 @@ interface Tuple {}
 impl () as Tuple {}
 class C(U:! Tuple);
 
+constraint NY(V:! type) {
+  extend require impls Y where .Y1 = V;
+}
+
 // This should fail: `T.(Z.Z1).(Y.Y1)` is rewritten to be `()` but `T.(Y.Y1)` is used
 // in the argument to `C`.
 //
-// CHECK:STDERR: fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_associated_constant.carbon:[[@LINE+4]]:84: error: name `Self` not found [NameNotFound]
-// CHECK:STDERR: fn G(unused T:! Z where .Z1 impls (Y where .Y1 = ()) and .Self impls Y and .Z2 = C(Self.(Y.Y1))) {}
-// CHECK:STDERR:                                                                                    ^~~~
+// CHECK:STDERR: fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_associated_constant.carbon:[[@LINE+4]]:72: error: name `Self` not found [NameNotFound]
+// CHECK:STDERR: fn G(unused T:! Z where .Z1 impls NY(()) and .Self impls Y and .Z2 = C(Self.(Y.Y1))) {}
+// CHECK:STDERR:                                                                        ^~~~
 // CHECK:STDERR:
-fn G(unused T:! Z where .Z1 impls (Y where .Y1 = ()) and .Self impls Y and .Z2 = C(Self.(Y.Y1))) {}
+fn G(unused T:! Z where .Z1 impls NY(()) and .Self impls Y and .Z2 = C(Self.(Y.Y1))) {}
 
 // --- fail_nested_facet_type_in_rewrite_does_not_use_rewrite_from_outside.carbon
 library "[[@TEST_NAME]]";
@@ -460,17 +479,18 @@ interface Z {
   let Y:! type;
 }
 
-// TODO: Does the `.X = .Y` contain an ambiguous `.Self` in `.Y`? See
-// https://github.com/carbon-language/carbon-lang/issues/7138.
+constraint NZ(PeriodY:! type) {
+  extend require impls Z where .X = PeriodY;
+}
 
-fn F(T:! Z where .Y = {} and .X = (Z where .X = .Y), U:! T.X) -> U.(Z.X) {
+fn F(T:! Z where .Y = {} and .X = NZ(.Y), U:! T.X) -> U.(Z.X) {
   // This should fail: `U:! T.X` contains a rewrite `.X = .Y` in its type, but
   // the value of `U.(Z.Y)` is not known. Only `T.(Z.Y)` is rewritten to `{}`.
   //
-  // CHECK:STDERR: fail_nested_facet_type_in_rewrite_does_not_use_rewrite_from_outside.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `{}` to `U.(Z.Y)` [ConversionFailure]
+  // CHECK:STDERR: fail_nested_facet_type_in_rewrite_does_not_use_rewrite_from_outside.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `{}` to `U.(Z.X)` [ConversionFailure]
   // CHECK:STDERR:   return {};
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_nested_facet_type_in_rewrite_does_not_use_rewrite_from_outside.carbon:[[@LINE+4]]:3: note: type `{}` does not implement interface `Core.ImplicitAs(U.(Z.Y))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_nested_facet_type_in_rewrite_does_not_use_rewrite_from_outside.carbon:[[@LINE+4]]:3: note: type `{}` does not implement interface `Core.ImplicitAs(U.(Z.X))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   return {};
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:

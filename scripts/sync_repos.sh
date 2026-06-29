@@ -44,10 +44,13 @@ for dir in "${!MIRRORS[@]}"; do
   git rm --ignore-unmatch -r .
   git status
 
+  # Restore the license file. The mirrors use the Apache 2.0 license, which is
+  # compatible with our license but excludes the LLVM exception.
+  git checkout HEAD LICENSE
+
   # Copy the basic framework from the origin repository.
   cp "$ORIGIN_DIR/.gitignore" \
     "$ORIGIN_DIR/CODE_OF_CONDUCT.md" \
-    "$ORIGIN_DIR/LICENSE" \
     .
 
   # Copy the mirrored directory. We use `rsync` to get a more reliable way of

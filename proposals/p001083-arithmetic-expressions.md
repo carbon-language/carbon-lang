@@ -530,7 +530,7 @@ signed integers (whether we provide those operations as operators or library
 functions). Assuming operator notation for now, and that we define modulo as
 `a % b == a - a / b * b`, the following options all have merit:
 
-<!-- prettier-ignore -->
+<!-- rumdl-disable -->
 | Property                             | Round towards zero (truncating division) | Round towards negative infinity (floor division) | Round based on sign of divisor\[1] (Euclidean division) |
 | ------------------------------------ | -------- | -------- | --------- |
 | `(-a) / b ==`<br>` a / (-b)`         | :+1: Yes | :+1: Yes | No        |
@@ -541,6 +541,7 @@ functions). Assuming operator notation for now, and that we define modulo as
 | x86 instruction?                     | :+1: Yes: `cqo` (or similar) + `idiv` | First option + fixup:<br> `s * (a / (s * b))` where `s` is `sign(a) * sign(b)`[2] | First option + fixup:<br>`a / b - (a % b < 0)` |
 | LLVM IR + optimization support       | :+1: Yes | No       | No        |
 | Use in existing languages            | C, C++, Rust, Swift <br> `quotRem` in Haskell | `//` and `%` in Python <br> `/` in Python 2 only <br> `divMod` in Haskell | None? |
+<!-- rumdl-enable -->
 
 The cells marked :+1: suggest generally desirable properties. For further
 reading, see

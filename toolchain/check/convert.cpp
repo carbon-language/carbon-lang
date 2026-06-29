@@ -1322,7 +1322,12 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
         target.is_explicit_as()
             ? context.types().GetTransitiveUnqualifiedAdaptedType(value_type_id)
             : context.types().GetUnqualifiedTypeAndQualifiers(value_type_id);
-    if (target_foundation_id == value_foundation_id) {
+    auto inheritance_path = ComputeInheritancePath(
+        context, loc_id, value_foundation_id, target_foundation_id);
+    if (inheritance_path && inheritance_path->empty()) {
+      inheritance_path = std::nullopt;
+    }
+    if (target_foundation_id == value_foundation_id || inheritance_path) {
       auto category = SemIR::GetExprCategory(context.sem_ir(), value_id);
       auto added_quals = target_quals & ~value_quals;
       auto removed_quals = value_quals & ~target_quals;
@@ -1378,6 +1383,13 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
               context, loc_id,
               {.type_id = target.type_id, .value_id = value_id});
         }
+
+        // An expression of type T converts to U if T is a class derived from U.
+        if (inheritance_path) {
+          value_id = ConvertDerivedToBase(context, loc_id, value_id,
+                                          *inheritance_path);
+        }
+
         return value_id;
       } else {
         // TODO: Produce a custom diagnostic explaining that we can't perform
@@ -1447,16 +1459,6 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
             context, *src_struct_type, *target_class_type, value_id, target,
             target_quals.HasAnyOf(SemIR::TypeQualifiers::Partial));
       }
-    }
-
-    // An expression of type T converts to U if T is a class derived from U.
-    //
-    // TODO: Combine this with the qualifiers and adapter conversion logic above
-    // to allow qualifiers and inheritance conversions to be performed together.
-    if (auto path = ComputeInheritancePath(context, loc_id, value_type_id,
-                                           target.type_id);
-        path && !path->empty()) {
-      return ConvertDerivedToBase(context, loc_id, value_id, *path);
     }
   }
 
@@ -2280,10 +2282,6 @@ auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
     return Context::FormExpr::Error;
   }
 
-  form_inst_id = HandleAction<SemIR::RefineFormAction>(
-      context, loc_id, SemIR::FormType::TypeInstId,
-      {.type_id = SemIR::InstType::TypeId, .form_id = form_inst_id});
-
   auto form_const_id = context.constant_values().Get(form_inst_id);
   if (!form_const_id.is_constant()) {
     CARBON_DIAGNOSTIC(FormExprEvaluationFailure, Error,
@@ -2292,8 +2290,12 @@ auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
     return Context::FormExpr::Error;
   }
 
-  auto type_id = GetTypeComponent(context, form_inst_id);
-  auto type_inst_id = context.types().GetTypeInstId(type_id);
+  auto type_inst_id = context.types().GetAsTypeInstId(AddInst(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), loc_id,
+                   SemIR::TypeComponentOf{.type_id = SemIR::TypeType::TypeId,
+                                          .form_inst_id = form_inst_id})));
+  auto type_id = context.types().GetTypeIdForTypeInstId(type_inst_id);
   return {.form_inst_id = form_inst_id,
           .type_component_inst_id = type_inst_id,
           .type_component_id = type_id};

@@ -289,9 +289,10 @@ fn Run() {
 // CHECK:STDOUT:   %a: ref %Child = ref_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc8: ref %Child = name_ref a, %a
 // CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, imports.%Main.import_ref.230 [concrete = imports.%.11f]
-// CHECK:STDOUT:   %.loc8_4.1: ref %Base = class_element_access %a.ref.loc8, element0
-// CHECK:STDOUT:   %.loc8_4.2: ref %Base = converted %a.ref.loc8, %.loc8_4.1
-// CHECK:STDOUT:   %.loc8_4.3: ref %i32 = class_element_access %.loc8_4.2, element0
+// CHECK:STDOUT:   %.loc8_4.1: ref %Base = as_compatible %a.ref.loc8
+// CHECK:STDOUT:   %.loc8_4.2: ref %Base = class_element_access %.loc8_4.1, element0
+// CHECK:STDOUT:   %.loc8_4.3: ref %Base = converted %a.ref.loc8, %.loc8_4.2
+// CHECK:STDOUT:   %.loc8_4.4: ref %i32 = class_element_access %.loc8_4.3, element0
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0.loc8: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc8_7.1: <bound method> = bound_method %int_2, %impl.elem0.loc8 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.9f3]
@@ -299,14 +300,15 @@ fn Run() {
 // CHECK:STDOUT:   %bound_method.loc8_7.2: <bound method> = bound_method %int_2, %specific_fn.loc8 [concrete = constants.%bound_method.3cb]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8: init %i32 = call %bound_method.loc8_7.2(%int_2) [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   %.loc8_7: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8 [concrete = constants.%int_2.295]
-// CHECK:STDOUT:   assign %.loc8_4.3, %.loc8_7
+// CHECK:STDOUT:   assign %.loc8_4.4, %.loc8_7
 // CHECK:STDOUT:   %a.ref.loc9: ref %Child = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %Base.F.type = name_ref F, imports.%Main.import_ref.bc9 [concrete = constants.%Base.F]
 // CHECK:STDOUT:   %Base.F.bound: <bound method> = bound_method %a.ref.loc9, %F.ref
-// CHECK:STDOUT:   %.loc9_3.1: ref %Base = class_element_access %a.ref.loc9, element0
-// CHECK:STDOUT:   %.loc9_3.2: ref %Base = converted %a.ref.loc9, %.loc9_3.1
-// CHECK:STDOUT:   %.loc9_3.3: %Base = acquire_value %.loc9_3.2
-// CHECK:STDOUT:   %Base.F.call: init %empty_tuple.type = call %Base.F.bound(%.loc9_3.3)
+// CHECK:STDOUT:   %.loc9_3.1: ref %Base = as_compatible %a.ref.loc9
+// CHECK:STDOUT:   %.loc9_3.2: ref %Base = class_element_access %.loc9_3.1, element0
+// CHECK:STDOUT:   %.loc9_3.3: ref %Base = converted %a.ref.loc9, %.loc9_3.2
+// CHECK:STDOUT:   %.loc9_3.4: %Base = acquire_value %.loc9_3.3
+// CHECK:STDOUT:   %Base.F.call: init %empty_tuple.type = call %Base.F.bound(%.loc9_3.4)
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.6
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   return

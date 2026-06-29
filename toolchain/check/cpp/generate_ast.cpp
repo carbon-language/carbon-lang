@@ -18,6 +18,7 @@
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/ExternalSemaSource.h"
+#include "clang/Sema/MultiplexExternalSemaSource.h"
 #include "clang/Sema/Sema.h"
 #include "common/check.h"
 #include "common/map.h"
@@ -26,7 +27,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
-#include "third_party/llvm/multiplex_external_sema_source.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/cpp/access.h"
@@ -523,12 +523,22 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   // Find the Carbon declaration corresponding to this Clang declaration.
   auto* decl = cast<clang::Decl>(
       const_cast<clang::DeclContext*>(decl_context->getPrimaryContext()));
+  if (isa<clang::FunctionDecl>(decl)) {
+    // Functions don't meaningfully have visible decls, but bail out early since
+    // we can't form a `ClangDeclKey` for a function in the abstract.
+    return false;
+  }
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
   auto decl_id = context_->clang_decls().LookupId(key);
-  CARBON_CHECK(
-      decl_id.has_value(),
-      "The DeclContext should already be associated with a Carbon InstId.");
-  auto decl_context_inst_id = context_->clang_decls().Get(decl_id).inst_id;
+  if (!decl_id.has_value()) {
+    return false;
+  }
+  auto clang_decl = context_->clang_decls().Get(decl_id);
+  if (clang_decl.is_imported) {
+    // This is imported from C++, presumably from a Clang AST file, so it's not
+    // our responsibility to provide its name lookup results.
+    return false;
+  }
 
   llvm::SmallVector<Check::LookupScope> lookup_scopes;
 
@@ -536,7 +546,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   // here - completeness should've been checked by clang before this point.
   if (!AppendLookupScopesForConstant(
           *context_, SemIR::LocId::None,
-          context_->constant_values().Get(decl_context_inst_id),
+          context_->constant_values().Get(clang_decl.inst_id),
           SemIR::ConstantId::None, /*extended_scope=*/false, &lookup_scopes)) {
     return false;
   }
@@ -898,9 +908,9 @@ auto GenerateAst(Context& context,
   // using `MultiplexExternalSemaSource`, we can keep the top-level
   // `ExternalASTSource` pointer the same, and only update its children.
   auto multiplex_source_ref_cnt_ptr =
-      llvm::makeIntrusiveRefCnt<MultiplexExternalSemaSource>();
-  auto* multiplex_source =
-      cast<MultiplexExternalSemaSource>(multiplex_source_ref_cnt_ptr.get());
+      llvm::makeIntrusiveRefCnt<clang::MultiplexExternalSemaSource>();
+  auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
+      multiplex_source_ref_cnt_ptr.get());
   if (auto* existing_source = llvm::cast_or_null<clang::ExternalSemaSource>(
           ast.getExternalSource())) {
     multiplex_source->AddSource(existing_source);
@@ -965,7 +975,7 @@ auto FinishAst(Context& context) -> void {
   // the source may be accessed later during lowering, but the
   // `CarbonExternalASTSource` has a pointer to `Check::Context` that
   // will not remain valid.
-  auto* multiplex_source = cast<MultiplexExternalSemaSource>(
+  auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
       context.ast_context().getExternalSource());
   multiplex_source->EraseIf([](const auto& src) {
     // `CarbonExternalASTSource` inherits from `ReadOnlyASTSource`.

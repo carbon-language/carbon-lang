@@ -68,11 +68,11 @@ auto AddBindingForPattern(Context& context, SemIR::LocId name_loc,
                           SemIR::TypeId binding_type_id, SemIR::InstId value_id)
     -> SemIR::InstId;
 
-// Creates storage for `var` patterns nested within the given pattern at the
-// current location in the output SemIR. For a `returned var`, this
-// reuses the function's return slot when present.
-auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
-                          bool is_returned_var) -> void;
+// Returns a VarStorage inst for the given `var` pattern. `is_returned_var`
+// indicates whether the pattern is the `var` part of a `returned var`; if so,
+// this reuses the return parameter, and otherwise it adds a new inst.
+auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
+                        bool is_returned_var) -> SemIR::InstId;
 
 // Kinds of parameters that can be added by `AddParamPattern`.
 enum class ParamPatternKind {

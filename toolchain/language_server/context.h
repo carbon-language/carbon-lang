@@ -15,10 +15,10 @@
 #include "toolchain/diagnostics/consumer.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/file_diagnostics.h"
+#include "toolchain/driver/compile_driver.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
-#include "toolchain/source/source_buffer.h"
 
 namespace Carbon::LanguageServer {
 
@@ -28,40 +28,43 @@ class Context {
   // Cached information for an open file.
   class File {
    public:
-    explicit File(clang::clangd::URIForFile uri) : uri_(std::move(uri)) {}
+    explicit File(clang::clangd::URIForFile uri)
+        : uri_(std::move(uri)), filename_(uri_.file().str()) {}
 
     // Changes the file's text, updating dependent state.
     auto SetText(Context& context, std::optional<int64_t> version,
                  llvm::StringRef text) -> void;
 
-    auto text() const -> llvm::StringRef { return source_->text(); }
+    auto filename() const -> llvm::StringRef { return filename_; }
+    auto text() const -> llvm::StringRef { return text_; }
 
     auto tree_and_subtrees() const -> const Parse::TreeAndSubtrees& {
-      return *tree_and_subtrees_;
+      CARBON_CHECK(compile_driver_);
+      return compile_driver_->units()[compile_driver_->first_input_index()]
+          ->parse_tree_and_subtrees();
     }
 
    private:
     // The filename, stable across instances.
     clang::clangd::URIForFile uri_;
+    std::string filename_;
 
     // Current file content, and derived values.
-    std::unique_ptr<SourceBuffer> source_;
-    std::unique_ptr<SharedValueStores> value_stores_;
-    std::unique_ptr<Lex::TokenizedBuffer> tokens_;
-    std::unique_ptr<Parse::Tree> tree_;
-    std::unique_ptr<Parse::TreeAndSubtrees> tree_and_subtrees_;
+    std::string text_;
+    CompileOptions options_;
+    std::unique_ptr<CompileDriver> compile_driver_;
   };
 
   // `vlog_stream` is optional; other parameters are required.
   explicit Context(const InstallPaths* installation,
                    llvm::raw_ostream* vlog_stream,
                    Diagnostics::Consumer* consumer,
-                   clang::clangd::LSPBinder::RawOutgoing* outgoing)
-      : installation_(installation),
-        vlog_stream_(vlog_stream),
-        file_emitter_(consumer),
-        no_loc_emitter_(consumer),
-        outgoing_(outgoing) {}
+                   clang::clangd::LSPBinder::RawOutgoing* outgoing);
+
+  // Returns the virtual filesystem.
+  auto vfs() -> llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem>& {
+    return vfs_;
+  }
 
   // Returns a reference to the file if it's known, or diagnoses and returns
   // null.
@@ -91,6 +94,9 @@ class Context {
   Diagnostics::FileEmitter file_emitter_;
   Diagnostics::NoLocEmitter no_loc_emitter_;
   clang::clangd::LSPBinder::RawOutgoing* outgoing_;
+
+  // Shared virtual filesystem.
+  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> vfs_;
 
   // Content of files managed by the language client.
   Map<std::string, File> files_;

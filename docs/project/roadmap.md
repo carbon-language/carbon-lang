@@ -28,9 +28,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 We have two areas of focus for 2025:
 
-1. Get a major chunk of our C++ interop working to the point where we can
-   demonstrate it in realistic scenarios.
-2. Build a concrete and specific design for memory safety in Carbon.
+1.  Get a major chunk of our C++ interop working to the point where we can
+    demonstrate it in realistic scenarios.
+2.  Build a concrete and specific design for memory safety in Carbon.
 
 We will scope the first one to non-template C++ APIs, and prioritize accessing
 C++ APIs from Carbon. This still will require major progress on the

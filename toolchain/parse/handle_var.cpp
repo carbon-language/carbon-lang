@@ -93,7 +93,8 @@ auto HandleVariablePattern(Context& context) -> void {
     context.emitter().Emit(*context.position(), NestedVar);
     state.has_error = true;
   }
-  context.PushState(StateKind::FinishVariablePattern);
+  state.kind = StateKind::FinishVariablePattern;
+  context.PushState(state);
   context.ConsumeChecked(Lex::TokenKind::Var);
 
   context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true,

@@ -774,10 +774,10 @@ fn Use() {
 // CHECK:STDOUT:   %.loc14_32.7.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc14_32.6.base, i32 0, i32 0, !dbg !15
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %v.var, ptr align 8 @Derived.val.loc14_32.5, i64 8, i1 false), !dbg !15
 // CHECK:STDOUT:   store ptr @"_CDerived.Main.$vtable", ptr %.loc14_32.7.vptr, align 8, !dbg !15
-// CHECK:STDOUT:   %.loc15_3.1.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !17
-// CHECK:STDOUT:   %Base.F.call.vtable = load ptr, ptr %.loc15_3.1.base, align 8, !dbg !17
+// CHECK:STDOUT:   %.loc15_3.2.vptr = getelementptr inbounds nuw { ptr }, ptr %v.var, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   %Base.F.call.vtable = load ptr, ptr %.loc15_3.2.vptr, align 8, !dbg !17
 // CHECK:STDOUT:   %Base.F.call = call ptr @llvm.load.relative.i32(ptr %Base.F.call.vtable, i32 0), !dbg !17
-// CHECK:STDOUT:   call void %Base.F.call(ptr %.loc15_3.1.base), !dbg !17
+// CHECK:STDOUT:   call void %Base.F.call(ptr %.loc15_3.2.vptr), !dbg !17
 // CHECK:STDOUT:   call void @"_COp.8185e3504351afa8:core.Destroy.Core"(ptr %v.var), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }

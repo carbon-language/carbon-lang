@@ -98,7 +98,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
 
   // Add a context stack for tracking constraints, that will be used to allow
   // later constraints to read from them eagerly.
-  context.where_stack().emplace_back();
+  context.where_stack().push_back({.loc_id = node_id});
 
   // Make rewrite constraints from the self facet type available immediately to
   // expressions in rewrite constraints for this `where` expression.
@@ -339,12 +339,6 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   // TODO: For things like `HashSet(.T) as type`, add an implied constraint
   // that `.T impls Hash`.
 
-  if (FindAndDiagnoseAmbiguousPeriodSelf(context, lhs_as_type.inst_id,
-                                         rhs_id)) {
-    rhs_as_type.type_id = SemIR::ErrorInst::TypeId;
-    rhs_as_type.inst_id = SemIR::ErrorInst::TypeInstId;
-  }
-
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
       AddInstInNoBlock<SemIR::RequirementImpls>(
@@ -387,16 +381,182 @@ auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
   return true;
 }
 
+// Returns whether the constant value `const_id` contains a facet type
+// instruction with a `where` expression.
+//
+// This search ignores the type_id of insts, and just looks at the `const_id`
+// and its non-type operands recursively. Any use of a symbolic facet may have a
+// type with an arbitrary facet type (including a `where` expression). But we
+// are looking for a nested `where` that is part of the current `WhereExpr`
+// being checked.
+static auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool {
+  class FindWhereCallbacks : public SubstInstCallbacks {
+   public:
+    FindWhereCallbacks(Context* context, bool* found)
+        : SubstInstCallbacks(context), found_(found) {}
+
+    auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+      if (skip_type_next_) {
+        skip_type_next_ = false;
+        return FullySubstituted;
+      }
+      if (*found_ || inst_id == SemIR::TypeType::TypeInstId ||
+          inst_id == SemIR::ErrorInst::InstId) {
+        return FullySubstituted;
+      }
+
+      // Facet types can contain many references to the same value. Only search
+      // a given constant one time to avoid exponential costs.
+      if (!searched_.Insert(inst_id).is_inserted()) {
+        return FullySubstituted;
+      }
+
+      if (auto facet_type =
+              context().insts().TryGetAs<SemIR::FacetType>(inst_id)) {
+        const auto& info =
+            context().facet_types().Get(facet_type->facet_type_id);
+        if (!info.IsExtendedOnly()) {
+          *found_ = true;
+          return FullySubstituted;
+        }
+      }
+
+      auto type_id = context().insts().Get(inst_id).type_id();
+      if (type_id.has_value() &&
+          context().types().Is<SemIR::FacetType>(type_id)) {
+        skip_type_next_ = true;
+      }
+
+      return SubstOperands;
+    }
+
+    auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst /*new_inst*/)
+        -> SemIR::InstId override {
+      CARBON_FATAL("unexpected rebuild of inst {0}",
+                   context().insts().Get(orig_inst_id));
+    }
+
+   private:
+    bool* found_;
+    bool skip_type_next_ = false;
+    Set<SemIR::InstId> searched_;
+  };
+
+  if (!const_id.is_constant()) {
+    return false;
+  }
+
+  bool found = false;
+  FindWhereCallbacks callbacks(&context, &found);
+  SubstInst(context, context.constant_values().GetInstId(const_id), callbacks);
+  return found;
+}
+
+// There are two ways to nest `where` expressions, this diagnoses a `where`
+// expression inside the RHS of another `where` expression.
+//
+// Whereas it is valid to nest a `where` expression on the LHS of another
+// `where` expression.
+static auto DiagnoseNestedWhere(Context& context, SemIR::LocId loc_id,
+                                SemIR::LocId outer_loc_id) -> void {
+  CARBON_DIAGNOSTIC(
+      NestedWhereInsideWhere, Error,
+      "found `where` expression nested on the right-hand side of `where`");
+  auto builder = context.emitter().Build(loc_id, NestedWhereInsideWhere);
+  CARBON_DIAGNOSTIC(NestedWhereInsideWhereOuterNote, Note,
+                    "on right-hand side of `where` here");
+  builder.Note(outer_loc_id, NestedWhereInsideWhereOuterNote);
+  builder.Emit();
+}
+
+// Look for nested `where` expressions on the RHS of the current `where` after
+// eval. If found, it is diagnosed and replaced with ErrorInst.
+static auto CheckForNestedWhereInRequirementsAfterEval(
+    Context& context, SemIR::LocId where_loc,
+    SemIR::InstBlockId requirements_id) -> SemIR::InstBlockId {
+  bool diagnosed = false;
+
+  // The requirements block, but we replace invalid operands with ErrorInst.
+  llvm::SmallVector<SemIR::InstId> checked_requirements(
+      context.inst_blocks().Get(requirements_id));
+
+  for (auto& inst_id : checked_requirements) {
+    // Searches the `lhs_id` and `rhs_id` operands of the requirement inst. If a
+    // nested `where` is found and diagnosed, the requirement is rebuilt with an
+    // ErrorInst in its place and it replaces the `inst_id` in the requirements
+    // block.
+    auto find_and_diagnose_nested_where = [&](auto req_inst, bool check_lhs) {
+      bool found = false;
+      if (check_lhs &&
+          FindWhere(context, context.constant_values().Get(req_inst.lhs_id))) {
+        DiagnoseNestedWhere(context, SemIR::LocId(req_inst.lhs_id), where_loc);
+        req_inst.lhs_id = SemIR::ErrorInst::InstId;
+        found = diagnosed = true;
+      }
+      if (FindWhere(context, context.constant_values().Get(req_inst.rhs_id))) {
+        DiagnoseNestedWhere(context, SemIR::LocId(req_inst.rhs_id), where_loc);
+        req_inst.rhs_id = SemIR::ErrorInst::InstId;
+        found = diagnosed = true;
+      }
+      if (found) {
+        inst_id = AddInstInNoBlock(
+            context, SemIR::LocIdAndInst::RuntimeVerified(
+                         context.sem_ir(), SemIR::LocId(inst_id), req_inst));
+      }
+    };
+
+    auto inst = context.insts().Get(inst_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::RequirementBaseFacetType _): {
+        // Nested `where` is allowed on the LHS of a `where` expression.
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementImpls impls): {
+        find_and_diagnose_nested_where(impls, true);
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementRewrite rewrite): {
+        // The LHS of a rewrite can't have a `where` inside it, so we skip
+        // checking it.
+        find_and_diagnose_nested_where(rewrite, false);
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementEquivalent equiv): {
+        find_and_diagnose_nested_where(equiv, true);
+        break;
+      }
+      default:
+        CARBON_FATAL("unexpected `where` requirement inst {0}", inst);
+    }
+  }
+
+  if (!diagnosed) {
+    return requirements_id;
+  }
+  return context.inst_blocks().Add(checked_requirements);
+}
+
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
+  auto where_loc = context.where_stack().back().loc_id;
   context.where_stack().pop_back();
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
   context.scope_stack().Pop(/*check_unused=*/true);
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
 
+  auto type_id = SemIR::TypeType::TypeId;
+  if (!context.where_stack().empty()) {
+    // This `where` expression is nested on the RHS of another `where`, which is
+    // an error.
+    DiagnoseNestedWhere(context, node_id, context.where_stack().back().loc_id);
+    type_id = SemIR::ErrorInst::TypeId;
+  }
+  requirements_id = CheckForNestedWhereInRequirementsAfterEval(
+      context, where_loc, requirements_id);
+
   AddInstAndPush<SemIR::WhereExpr>(
       context, node_id,
-      {.type_id = SemIR::TypeType::TypeId, .requirements_id = requirements_id});
+      {.type_id = type_id, .requirements_id = requirements_id});
   return true;
 }
 

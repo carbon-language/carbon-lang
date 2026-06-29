@@ -552,17 +552,21 @@ following conditions hold:
     declarations. For example, we can't apply this rewrite to `⟬X, each Y⟭` in
     this code, because the resulting signature would have return type `X` but no
     declaration of `X`:
+
     ```carbon
     fn F[... ⟬X, each Y⟭:! «type; ‖each next‖+1»]
         (... each __args: each ⟬X, each Y⟭) -> X;
     ```
+
 -   The pack expansions being rewritten do not contain any pack literals other
     than the name pack being replaced. For example, we can't apply this rewrite
     to `⟬X, each Y⟭` in this code, because the pack expansion in the deduced
     parameter list also contains the pack literal `⟬I, each type⟭`:
+
     ```carbon
     fn F[... ⟬X, each Y⟭:! ⟬I, each type⟭](... each __args: each ⟬X, each Y⟭);
     ```
+
     Notice that as a corollary of this rule, all the names in the name pack must
     have the same type.
 

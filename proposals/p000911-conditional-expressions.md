@@ -48,21 +48,29 @@ C-family languages provide a `cond ? value1 : value2` operator.
 -   This operator has confusing syntax, because both `cond` and `value2` are
     undelimited, and it's often unclear to developers how much of the adjacent
     expressions are part of the conditional expression. For example:
+
     ```
     int n = has_thing1 && cond ? has_thing2 : has_thing3 && has_thing4;
     ```
+
     is parsed as
+
     ```
     int n = (has_thing1 && cond) ? has_thing2 : (has_thing3 && has_thing4);
     ```
+
     Also, `value1` and `value2` are parsed with different rules:
+
     ```
     cond ? f(), g() : h(), i();
     ```
+
     is parsed as
+
     ```
     (cond ? f(), g() : h()), i();
     ```
+
 -   In C++, this operator has confusing semantics, due to having a complicated
     set of rules governing how the target type is determined.
 -   Despite the complications of the rules, the result type of `?:` is not
@@ -89,7 +97,6 @@ being an important case of this: `Use(if cond { v1 } else { v2 })`.
     ```
 
     ... because the two arms of the `if` don't have the same type.
-
 -   We have already
     [decided](https://github.com/carbon-language/carbon-lang/issues/430) that we
     do not want Carbon to treat statements such as `if` as being expressions
@@ -201,6 +208,7 @@ We could provide no conditional expression, and instead ask people to use a
 different mechanism to achieve this functionality. Some options include:
 
 -   Use of an `if` statement:
+
     ```
     var v: Result;
     if (cond) {
@@ -210,15 +218,21 @@ different mechanism to achieve this functionality. Some options include:
     }
     Use(v);
     ```
+
 -   A function call syntax:
+
     ```
     Use(cond.Select(value1, value2));
     ```
+
     or, with short-circuiting and lambdas:
+
     ```
     Use(cond.LazySelect($(value1), $(value2)));
     ```
+
 -   An `if` statement in a lambda:
+
     ```
     Use(${ if (cond) { return value1; } else { return value2; } });
     ```
@@ -278,6 +292,7 @@ Advantages:
 -   Looks more like an `if` statement, albeit one with unbraced operands.
 -   Slightly shorter.
 -   Better line-wrapping for chained `if` expressions:
+
     ```
     Print(if (guess < value)
             "Too low!"
@@ -286,7 +301,9 @@ Advantages:
           else
             "Correct!")
     ```
+
     may be more readable than
+
     ```
     Print(if guess < value
           then "Too low!"
@@ -294,7 +311,9 @@ Advantages:
           then "Too high!"
           else "Correct!")
     ```
+
     or
+
     ```
     Print(if guess < value
             then "Too low!"
@@ -308,18 +327,22 @@ Disadvantages:
 -   Potentially worse line wrapping. The `else` would presumably be wrapped onto
     a line by itself, wasting vertical space, whereas `then` and `else` when
     paired can both comfortably precede their values on the same line; consider
+
     ```
     F(if (cond)
         value1
       else
         value2)
     ```
+
     occupies more space than
+
     ```
     F(if cond
       then value1
       else value2)
     ```
+
 -   May create confusion between `if` statements and `if` expressions by
     resembling an `if` statement but not matching the semantics.
 -   May cause evolutionary problems due to syntactic conflict if we ever make
@@ -410,6 +433,7 @@ ambiguous. If the author of `A` or `B` wishes to change this behavior:
     provided specifying the common type is `B`.
 -   If the common type should be something else, then both `impl`s need to be
     provided:
+
     ```
     impl A as CommonTypeWith(B) { let Result:! Type = C; }
     impl B as CommonTypeWith(A) { let Result:! Type = C; }
@@ -503,13 +527,17 @@ Disadvantages:
 -   Mutable inputs to operations ("out parameters") in Carbon are expected to be
     expressed as pointers under #821, so there will be a `&` somewhere anyway;
     given the choice between an lvalue conditional:
+
     ```
     F(&(if cond then a else b));
     ```
+
     and an rvalue-only conditional:
+
     ```
     F(if cond then &a else &b);
     ```
+
     the latter option would likely be preferred even if the former were
     available.
 -   This would create an inconsistency in behavior, which would be particularly

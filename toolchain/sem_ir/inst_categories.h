@@ -143,7 +143,8 @@ struct AnyBindingPattern {
   X(::Carbon::SemIR::AliasBinding) Sep()        \
   X(::Carbon::SemIR::RefBinding) Sep()          \
   X(::Carbon::SemIR::SymbolicBinding) Sep()     \
-  X(::Carbon::SemIR::ValueBinding)
+  X(::Carbon::SemIR::ValueBinding) Sep()        \
+  X(::Carbon::SemIR::WrapperBinding)
 // clang-format on
 
 #define AnyBinding_CARBON_KIND_ANY_EXPAND \
@@ -160,6 +161,7 @@ struct AnyBinding {
 
   // The value is inline in the inst so that value access doesn't require an
   // indirection.
+  // TODO: rename to `result_id` since it's not necessarily a value.
   InstId value_id;
 };
 

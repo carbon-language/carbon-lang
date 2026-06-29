@@ -30,6 +30,10 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::OutFormParamPatternAction action) -> SemIR::InstId;
 
+// Performs a caller pattern match action. Defined in pattern_match.cpp.
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::CallerPatternMatchAction action) -> SemIR::InstId;
+
 // Performs a callee pattern match action. Defined in pattern_match.cpp.
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::CalleePatternMatchAction action) -> SemIR::InstId;
@@ -39,10 +43,6 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 // instantiated type.
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::RefineTypeAction action) -> SemIR::InstId;
-
-// Performs a form refinement action.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::RefineFormAction action) -> SemIR::InstId;
 
 // Determines whether the given action can be performed immediately (i.e.
 // whether it is non-template-dependent).

@@ -384,7 +384,7 @@ auto CheckFunctionDefinitionSignature(Context& context,
 
     // The parameter types need to be complete.
     RequireCompleteType(
-        context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
+        context, context.insts().Get(param_ref_id).type_id(),
         SemIR::LocId(param_ref_id), [&](auto& builder) {
           CARBON_DIAGNOSTIC(
               IncompleteTypeInFunctionParam, Context,
@@ -406,10 +406,9 @@ auto CheckFunctionDefinitionSignature(Context& context,
     if (return_call_param.has_value()) {
       // TODO: If the types are already checked for completeness then this does
       // nothing?
-      TryToCompleteType(
-          context,
-          context.insts().GetAs<SemIR::AnyParam>(return_call_param).type_id,
-          SemIR::LocId(return_call_param));
+      TryToCompleteType(context,
+                        context.insts().Get(return_call_param).type_id(),
+                        SemIR::LocId(return_call_param));
     }
   }
 }

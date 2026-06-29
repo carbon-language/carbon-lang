@@ -130,12 +130,11 @@ Leads questions which informed the design proposed here:
 -   [What syntax should we use for pointer types? (#523)][#523]
 
 It also builds on the design of the proposal ["Initialization of memory and
-variables"][#257] ([#257]), implementing part of [#1993].
+variables" (#257)][#257], implementing part of [#1993].
 
 [#257]: https://github.com/carbon-language/carbon-lang/pull/257
 [#523]: https://github.com/carbon-language/carbon-lang/issues/523
 [#1993]: https://github.com/carbon-language/carbon-lang/issues/1993
-[#257]: /proposals/p000257-initialization-of-memory-and-variables.md
 
 ## Proposal
 
@@ -468,8 +467,6 @@ memory is accessed and potentially mutated.
 The syntax both for declaring a pointer type and dereferencing a pointer has
 been extensively discussed in the leads question [#523].
 
-[#523]: https://github.com/carbon-language/carbon-lang/issues/523
-
 The primary sources of concern over a C++-based syntax:
 
 1.  A prefix dereference operator composes poorly with postfix and infix
@@ -733,8 +730,8 @@ that should be covered by the proposed design.
 C++ provides overlapping but importantly separable semantic models which
 interact with `const` references.
 
-1. An _immutable view_ of a value
-2. A _thread-safe interface_ of a [thread-compatible type][]
+1.  An _immutable view_ of a value
+2.  A _thread-safe interface_ of a [thread-compatible type][]
 
 [thread-compatible type]:
     https://abseil.io/blog/20180531-regular-types#:~:text=restrictions%20or%20both,No%20concurrent%20call

@@ -453,6 +453,11 @@ class Stringifier {
                       ">");
   }
 
+  auto StringifyInst(InstId /*inst_id*/, SpliceInst inst) -> void {
+    *out_ << "<splice of ";
+    step_stack_->Push(inst.inst_id, ">");
+  }
+
   // Determine the specific interface that an impl witness instruction provides
   // an implementation of.
   // TODO: Should we track this in the type?

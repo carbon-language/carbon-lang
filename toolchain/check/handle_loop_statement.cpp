@@ -130,7 +130,6 @@ auto HandleParseNode(Context& context, Parse::ForInId node_id) -> bool {
                                   {.pattern_block_id = pattern_block_id});
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
   context.full_pattern_stack().StartPatternInitializer();
-  context.node_stack().Push(node_id, pattern_block_id);
   return true;
 }
 
@@ -147,7 +146,6 @@ static auto CallOptionalAccessor(Context& context, Parse::NodeId node_id,
 
 auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   auto range_id = context.node_stack().PopExpr();
-  auto pattern_block_id = context.node_stack().Pop<Parse::NodeKind::ForIn>();
   auto pattern_id = context.node_stack().PopPattern();
   auto start_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ForHeaderStart>();
@@ -212,15 +210,16 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   // The loop pattern's initializer is now complete, and any bindings in it
   // should be in scope.
   context.full_pattern_stack().EndPatternInitializer();
-  context.full_pattern_stack().PopFullPattern();
 
   // Create storage for var patterns now.
-  AddPatternVarStorage(context, pattern_block_id, /*is_returned_var=*/false);
+  context.full_pattern_stack().BuildLocalVarStorage(context,
+                                                    /*is_returned_var=*/false);
 
   // Initialize the pattern from `<element>.Get()`.
   auto element_value_id =
       CallOptionalAccessor(context, node_id, element_id, CoreIdentifier::Get);
   LocalPatternMatch(context, pattern_id, element_value_id);
+  context.full_pattern_stack().PopFullPattern();
   return true;
 }
 

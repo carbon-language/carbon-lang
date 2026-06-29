@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Object-like macros](#object-like-macros)
         -   [Function-like macros](#function-like-macros)
         -   [Predefined macros](#predefined-macros)
-    -   [Swift / C interop [GitHub][documentation]](#swift--c-interop-githubdocumentation)
+    -   [Swift / C interop](#swift--c-interop)
 -   [Proposal](#proposal)
 -   [Details](#details)
     -   [Namespace](#namespace)
@@ -111,7 +111,11 @@ In function-like macros, the operators `#` and `##` enable:
 There are also predefined macros available in every translation unit. Examples
 include: `__cplusplus`, `__FILE__`, `__LINE__`, `__DATE__`, `__TIME__` etc.
 
-### Swift / C interop [[GitHub](https://github.com/swiftlang/swift/blob/main/lib/ClangImporter/ImportMacro.cpp)][[documentation](https://developer.apple.com/documentation/swift/using-imported-c-macros-in-swift)]
+### Swift / C interop
+
+See the Swift
+[implementation](https://github.com/swiftlang/swift/blob/main/lib/ClangImporter/ImportMacro.cpp)
+and [documentation](https://developer.apple.com/documentation/swift/using-imported-c-macros-in-swift).
 
 Swift supports importing object-like C macros as global constants. Macros that
 use integer, floating-point and string literals are supported. Also simple
@@ -227,14 +231,14 @@ imported. For example, the following macro won’t have a Carbon equivalent:
 
 ### Implementation
 
-1. _Name lookup_: When a C++ macro name is encountered in Carbon it is looked-up
-   before any other name. Following the C++ rules, this allows the macro to be
-   found in case there is a non-macro with the same name (for example named
-   variable).
+1.  _Name lookup_: When a C++ macro name is encountered in Carbon it is looked-up
+    before any other name. Following the C++ rules, this allows the macro to be
+    found in case there is a non-macro with the same name (for example named
+    variable).
 
-2. _Macro import_: If a macro is found, it is imported as a constant to Carbon,
-   by parsing the tokens of the replacement list to a constant expression and
-   evaluating the result.
+2.  _Macro import_: If a macro is found, it is imported as a constant to Carbon,
+    by parsing the tokens of the replacement list to a constant expression and
+    evaluating the result.
 
 For example, given a macro:
 
