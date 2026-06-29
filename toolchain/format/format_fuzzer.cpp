@@ -76,12 +76,21 @@ static auto FormatOnce(llvm::StringRef text) -> std::optional<FormatResult> {
     result.token_kinds.push_back(tokens.GetKind(token));
   }
 
+  // Fuzz the Carbon formatter itself, not its embedded-C++ path: that path
+  // hands snippet bodies to clang-format, a third-party tool whose debug
+  // assertions fire on the arbitrary, non-C++ text a fuzzer produces. Those are
+  // clang-format's own checks -- not Carbon defects, and never reached in a
+  // release build -- so the path is covered directly by `cpp_snippet_test`
+  // instead.
+  Format::Style style;
+  style.format_cpp_snippets = false;
+
   RawStringOstream out;
-  Format::Format(tree, out);
+  Format::Format(tree, out, style);
   result.formatted = out.TakeStr();
 
   llvm::SmallVector<Format::Replacement> replacements;
-  Format::FormatReplacements(tree, replacements);
+  Format::FormatReplacements(tree, replacements, /*lines=*/std::nullopt, style);
   result.has_replacements = !replacements.empty();
   result.via_replacements = Format::ApplyReplacements(text, replacements);
   return result;

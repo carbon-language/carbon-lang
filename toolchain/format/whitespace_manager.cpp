@@ -17,14 +17,15 @@
 namespace Carbon::Format {
 
 auto WhitespaceManager::AddToken(int newlines, int spaces, int indent_level,
-                                 int nesting_level, Lex::TokenIndex token)
-    -> void {
+                                 int nesting_level, Lex::TokenIndex token,
+                                 llvm::StringRef rewritten) -> void {
   changes_.push_back({.is_token = true,
                       .newlines = newlines,
                       .spaces = spaces,
                       .token = token,
                       .indent_level = indent_level,
-                      .nesting_level = nesting_level});
+                      .nesting_level = nesting_level,
+                      .rewritten = rewritten.str()});
 }
 
 auto WhitespaceManager::AddRaw(int newlines, std::string text) -> void {
@@ -179,6 +180,13 @@ auto WhitespaceManager::Generate(llvm::SmallVectorImpl<TokenSpan>& token_map)
       continue;
     }
     output.append(change.spaces + change.padding, ' ');
+    if (!change.rewritten.empty()) {
+      // A rewritten token (for example a reformatted C++ snippet) is emitted in
+      // place of its source text and is not a `TokenSpan` anchor, so its edit
+      // folds into the surrounding gap in `ComputeReplacements`.
+      output.append(change.rewritten);
+      continue;
+    }
     llvm::StringRef text = tokens_->GetTokenText(change.token);
     // A lexer-inserted recovery token's text does not exist in the source (its
     // byte offset is synthesized, and can even overlap a neighboring token),

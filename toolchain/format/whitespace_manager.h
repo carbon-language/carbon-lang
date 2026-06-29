@@ -49,8 +49,13 @@ class WhitespaceManager {
   // spaces of indentation. `indent_level` is the unwrapped line's indentation
   // column and `nesting_level` the bracket-nesting depth within the line; the
   // alignment pass groups tokens that share both.
+  //
+  // If `rewritten` is non-empty, it is emitted in place of the token's source
+  // text (for example a reformatted embedded C++ snippet). A rewritten token is
+  // not an alignment or replacement anchor, so its edit folds into the
+  // surrounding gap when computing minimal replacements.
   auto AddToken(int newlines, int spaces, int indent_level, int nesting_level,
-                Lex::TokenIndex token) -> void;
+                Lex::TokenIndex token, llvm::StringRef rewritten = "") -> void;
 
   // Records `text` (a formatted comment block, which ends with a newline)
   // preceded by `newlines` line breaks. It is emitted verbatim.
@@ -96,6 +101,10 @@ class WhitespaceManager {
     // The column the token starts at, filled in while generating and refreshed
     // before each alignment pass.
     int start_column = 0;
+    // Text to emit in place of the token's verbatim source spelling, or empty
+    // to emit the token verbatim. A rewritten token is not recorded as a
+    // `TokenSpan` anchor.
+    std::string rewritten;
 
     // Raw changes only: the verbatim text to emit.
     std::string raw;

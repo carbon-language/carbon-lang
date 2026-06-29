@@ -54,6 +54,9 @@ constexpr llvm::StringLiteral Inputs[] = {
     // A member-access chain long enough to wrap before a `.`.
     "fn F() {\n  receiverrrrrrrrrrr.aaaaaaaaaaaaaaaaa().bbbbbbbbbbbbbbbbb()"
     ".cccccccccccccccc();\n}",
+    // An embedded C++ snippet, reformatted in place: the invariants below cover
+    // that a rewritten token stays idempotent and round-trips through edits.
+    "fn F() {\n  var s: String = '''cpp\n  int  x=1+2 ;\n  ''';\n}",
     // Overflowing declarations that must break before `->` or after a binding
     // colon rather than splitting at a keyword.
     "class C { private fn Configure() -> "
@@ -131,8 +134,9 @@ TEST(FormatterTest, EndsWithSingleNewline) {
   }
 }
 
-// Formatting only changes whitespace, so re-lexing the output must yield the
-// same token sequence as the input.
+// Formatting only changes whitespace (a reformatted C++ snippet is still one
+// string literal), so re-lexing the output must yield the same token sequence
+// as the input.
 TEST(FormatterTest, PreservesTokens) {
   Testing::CompileHelper helper;
   for (llvm::StringRef input : Inputs) {

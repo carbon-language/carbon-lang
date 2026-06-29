@@ -44,8 +44,10 @@ auto Format(const Parse::Tree& tree, llvm::raw_ostream& out,
 
 // Computes the edits that format the document, appending them to
 // `replacements`. Because formatting only ever changes whitespace and comments
-// -- never the tokens themselves -- each edit covers one changed run of
-// whitespace/comments between two tokens; unchanged runs produce no edit.
+// -- never the tokens themselves, except an embedded C++ snippet literal whose
+// rewrite folds into the surrounding edit (see toolchain/docs/format.md) --
+// each edit covers one changed run of whitespace/comments between two tokens;
+// unchanged runs produce no edit.
 // Applying the result to the source yields the same text `Format` would write.
 //
 // If `lines` is set, only edits touching that line range are produced (the rest

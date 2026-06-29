@@ -1,0 +1,3 @@
+import Cpp inline '''
+i+ ;
+''';

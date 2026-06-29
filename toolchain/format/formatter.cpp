@@ -11,6 +11,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/format/comment.h"
+#include "toolchain/format/cpp_snippet.h"
 #include "toolchain/format/line_wrapper.h"
 
 namespace Carbon::Format {
@@ -39,6 +40,8 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
   // walk `Parse::TreeAndSubtrees` uses to compute subtree sizes), where
   // calling `GetSubtreeTokenRange` per operator node would walk each operand
   // subtree again (quadratic for a long operator chain).
+  // The string literal body of an `inline Cpp` (or `import Cpp inline`)
+  // declaration holds C++ code; see the postorder pass below.
   for (auto token : tokens_->tokens()) {
     // A multi-line token (such as a multi-line string literal) occupies its
     // first physical line where it sits; the rest take their own lines. So its
@@ -66,6 +69,12 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
     TokenRole role = RoleForNodeKind(kind);
     if (role != TokenRole::Unknown && token.has_value()) {
       token_infos_.Get(token).role = role;
+    }
+
+    // The string literal body of an `inline Cpp` (or `import Cpp inline`)
+    // declaration holds C++ code, reformatted regardless of its indicator.
+    if (kind == Parse::NodeKind::InlineImportBody && token.has_value()) {
+      token_infos_.Get(token).is_cpp_string = true;
     }
 
     // Fold the node's own token and its children's completed ranges into its
@@ -203,7 +212,23 @@ auto Formatter::FlushLine() -> void {
         nesting_level > 0) {
       --nesting_level;
     }
-    whitespace_.AddToken(newlines, spaces, indent_, nesting_level, token);
+    // A multi-line string literal that holds C++ (one with a `'''cpp` file
+    // type indicator, or the body of an `inline Cpp` declaration) has its
+    // body reformatted by clang-format and re-encoded in place; see
+    // `cpp_snippet.h`. The body and closing delimiter indent to the statement.
+    llvm::StringRef rewritten;
+    std::optional<std::string> cpp_snippet;
+    if (style_.format_cpp_snippets && kind == Lex::TokenKind::StringLiteral) {
+      cpp_snippet = CppSnippet(tokens_->GetTokenText(token), indent_, style_,
+                               token_infos_.Get(token).is_cpp_string);
+      // An already-formatted snippet is not a rewrite: keeping the token as a
+      // plain anchor keeps the edits around it minimal.
+      if (cpp_snippet && *cpp_snippet != tokens_->GetTokenText(token)) {
+        rewritten = *cpp_snippet;
+      }
+    }
+    whitespace_.AddToken(newlines, spaces, indent_, nesting_level, token,
+                         rewritten);
     if (kind.IsOneOf({Lex::TokenKind::OpenParen,
                       Lex::TokenKind::OpenSquareBracket,
                       Lex::TokenKind::OpenCurlyBrace})) {

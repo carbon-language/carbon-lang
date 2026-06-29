@@ -124,6 +124,10 @@ struct TokenInfo {
   // chain for receiver-anchored indentation and fluent all-or-nothing breaking.
   // -1 means the token is not a member-access operator.
   int member_chain_id = -1;
+  // Whether the token is the string literal body of an `inline Cpp` (or
+  // `import Cpp inline`) declaration. Such a literal holds C++ and is
+  // reformatted even without a `'''cpp` file type indicator.
+  bool is_cpp_string = false;
 };
 
 // The per-token formatting information, indexed by the token. The `Formatter`

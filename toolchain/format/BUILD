@@ -71,6 +71,31 @@ cc_test(
 )
 
 cc_library(
+    name = "cpp_snippet",
+    srcs = ["cpp_snippet.cpp"],
+    hdrs = ["cpp_snippet.h"],
+    deps = [
+        ":style",
+        "@llvm-project//clang:format",
+        "@llvm-project//clang:tooling_core",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "cpp_snippet_test",
+    size = "small",
+    srcs = ["cpp_snippet_test.cpp"],
+    deps = [
+        ":cpp_snippet",
+        ":style",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "line_wrapper",
     srcs = ["line_wrapper.cpp"],
     hdrs = ["line_wrapper.h"],
@@ -80,6 +105,7 @@ cc_library(
         "//common:hashing",
         "//common:map",
         "//common:set",
+        "//toolchain/lex:token_index",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
@@ -91,8 +117,9 @@ cc_test(
     size = "small",
     srcs = ["line_wrapper_test.cpp"],
     deps = [
-        ":token_info",
         ":line_wrapper",
+        ":style",
+        ":token_info",
         "//testing/base:gtest_main",
         "//toolchain/lex:token_index",
         "//toolchain/lex:token_kind",
@@ -126,6 +153,7 @@ cc_library(
     hdrs = ["format.h"],
     deps = [
         ":comment",
+        ":cpp_snippet",
         ":line_wrapper",
         ":style",
         ":token_info",

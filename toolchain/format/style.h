@@ -50,6 +50,13 @@ struct Style {
   // style follows. A trailing comment that is the only one in its run keeps the
   // single space before it.
   bool align_trailing_comments = true;
+
+  // Whether to reformat the body of a multi-line string literal that holds C++
+  // (one whose file type indicator names C++, for example `'''cpp`, or the
+  // body of an `inline Cpp` / `import Cpp inline` declaration) with
+  // clang-format. There is no clang-format analog; this is unique to Carbon's
+  // embedded C++ interop.
+  bool format_cpp_snippets = true;
 };
 
 }  // namespace Carbon::Format
