@@ -23,6 +23,7 @@
 #include "llvm/Passes/OptimizationLevel.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/StandardInstrumentations.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
@@ -70,7 +71,10 @@ auto CompilationUnit::SetMultiUnitCache(MultiUnitCache* cache) -> void {
   CARBON_CHECK(!cache_, "Called SetMultiUnitCache twice");
   cache_ = cache;
 
-  if (options_->dump_mem_usage && IncludeInDumps()) {
+  // Collect memory usage if this unit dumps it, or if the caller provided a
+  // `MemUsage` to merge it into (see `PostCompile`).
+  if ((options_->dump_mem_usage || driver_env_->mem_usage) &&
+      IncludeInDumps()) {
     CARBON_CHECK(!mem_usage_);
     mem_usage_ = MemUsage();
   }
@@ -321,8 +325,15 @@ auto CompilationUnit::PostCompile() -> void {
   }
   if (mem_usage_) {
     mem_usage_->Collect("value_stores_", value_stores_);
-    Yaml::Print(*driver_env_->output_stream,
-                mem_usage_->OutputYaml(input_filename_));
+    if (options_->dump_mem_usage && IncludeInDumps()) {
+      Yaml::Print(*driver_env_->output_stream,
+                  mem_usage_->OutputYaml(input_filename_));
+    }
+    // Merge this file's usage into the caller-provided sink, if any, so it can
+    // be queried programmatically.
+    if (driver_env_->mem_usage) {
+      driver_env_->mem_usage->Add(*mem_usage_);
+    }
   }
   if (timings_) {
     Yaml::Print(*driver_env_->output_stream,
@@ -403,7 +414,7 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
   return true;
 }
 
-auto CompilationUnit::GetParseTreeAndSubtrees()
+auto CompilationUnit::GetParseTreeAndSubtrees() const
     -> const Parse::TreeAndSubtrees& {
   if (!parse_tree_and_subtrees_) {
     parse_tree_and_subtrees_ = Parse::TreeAndSubtrees(*tokens_, *parse_tree_);
@@ -475,7 +486,7 @@ auto CompileDriver::Initialize(
     ++unit_index;
     return std::make_unique<CompilationUnit>(
         SemIR::CheckIRId(unit_index), total_unit_count, &driver_env, options_,
-        &driver_env.consumer, filename, map_input(filename), target);
+        driver_env.consumer, filename, map_input(filename), target);
   };
   llvm::append_range(units_, llvm::map_range(prelude, unit_builder));
   input_filenames_index_ = units_.size();
@@ -500,7 +511,7 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
       unit->PostCompile();
     }
 
-    driver_env.consumer.Flush();
+    driver_env.consumer->Flush();
   });
 
   PrettyStackTraceFunction flush_on_crash([&](llvm::raw_ostream& out) {
@@ -512,14 +523,19 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
       out << "Flushing diagnostics\n";
     } else {
       out << "Pending diagnostics:\n";
-      driver_env.consumer.set_stream(&out);
     }
+
+    // In non-streaming mode, swap out the consumer for one that writes to the
+    // given ostream before flushing the diagnostics.
+    Diagnostics::StreamConsumer stack_trace_consumer(&out);
+    llvm::SaveAndRestore<Diagnostics::Consumer*> restore(
+        driver_env.consumer,
+        options_->stream_errors ? driver_env.consumer : &stack_trace_consumer);
 
     for (auto& unit : units_) {
       unit->FlushForStackTrace();
     }
-    driver_env.consumer.Flush();
-    driver_env.consumer.set_stream(driver_env.error_stream);
+    driver_env.consumer->Flush();
   });
 
   // Returns a DriverResult object. Called whenever Compile returns.

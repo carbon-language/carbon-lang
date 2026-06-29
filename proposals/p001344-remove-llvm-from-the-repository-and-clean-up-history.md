@@ -1,4 +1,4 @@
-# Remove LLVM from the repository, and clean up history.
+# Remove LLVM from the repository, and clean up history
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -26,7 +26,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
     -   [Do nothing](#do-nothing)
-    -   [Don't rewrite the repository history.](#dont-rewrite-the-repository-history)
+    -   [Don't rewrite the repository history](#dont-rewrite-the-repository-history)
     -   [Go back to submodules](#go-back-to-submodules)
     -   [Rename the repository, and create a new one](#rename-the-repository-and-create-a-new-one)
     -   [Manually extract and archive some review comments](#manually-extract-and-archive-some-review-comments)
@@ -266,7 +266,7 @@ Disadvantages:
 
 We think this problem is worth solving.
 
-### Don't rewrite the repository history.
+### Don't rewrite the repository history
 
 We could fix this without rewriting history. If we choose not to rewrite history
 now, it should be noted that the cost of rewriting history only grows and so we

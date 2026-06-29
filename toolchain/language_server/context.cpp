@@ -10,6 +10,7 @@
 
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Host.h"
 #include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/shared_value_stores.h"
@@ -17,6 +18,8 @@
 #include "toolchain/diagnostics/consumer.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/driver/compile_driver.h"
+#include "toolchain/driver/compile_options.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/parse.h"
@@ -104,76 +107,138 @@ class DiagnosticConsumer : public Diagnostics::Consumer {
   Context* context_;
   clang::clangd::PublishDiagnosticsParams params_;
 };
+
+// A virtual file corresponding to a file that has been opened and potentially
+// edited by the language client.
+class VirtualFile : public llvm::vfs::File {
+ public:
+  explicit VirtualFile(const Context::File* file) : file_(file) {}
+
+  auto status() -> llvm::ErrorOr<llvm::vfs::Status> override {
+    return llvm::vfs::Status(
+        file_->filename(), llvm::sys::fs::UniqueID(0, 0),
+        std::chrono::system_clock::now(), 0, 0, file_->text().size(),
+        llvm::sys::fs::file_type::regular_file, llvm::sys::fs::all_all);
+  }
+
+  auto getBuffer(const llvm::Twine& /*name*/, int64_t /*file_size*/,
+                 bool /*requires_null_terminator*/, bool /*is_volatile*/)
+      -> llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> override {
+    return llvm::MemoryBuffer::getMemBuffer(file_->text(), file_->filename());
+  }
+
+  auto close() -> std::error_code override { return std::error_code(); }
+
+ private:
+  const Context::File* file_;
+};
+
+// A virtual file system containing the documents whose contents were customized
+// by the language client. We can't use InMemoryFileSystem for this, because it
+// only supports setting the contents for each file once.
+//
+// TODO: Investigate whether we can replace this with clangd's `DraftStore`.
+class VirtualFileSystem : public llvm::vfs::FileSystem {
+ public:
+  explicit VirtualFileSystem(Context* context) : context_(context) {}
+
+  auto status(const llvm::Twine& path)
+      -> llvm::ErrorOr<llvm::vfs::Status> override {
+    std::string path_str = path.str();
+    if (auto lookup_result = context_->files().Lookup(path_str)) {
+      return llvm::vfs::Status(path_str, llvm::sys::fs::UniqueID(0, 0),
+                               std::chrono::system_clock::now(), /*User=*/0,
+                               /*Group=*/0, lookup_result.value().text().size(),
+                               llvm::sys::fs::file_type::regular_file,
+                               llvm::sys::fs::all_all);
+    }
+    return std::make_error_code(std::errc::no_such_file_or_directory);
+  }
+
+  auto openFileForRead(const llvm::Twine& path)
+      -> llvm::ErrorOr<std::unique_ptr<llvm::vfs::File>> override {
+    std::string path_str = path.str();
+    if (auto lookup_result = context_->files().Lookup(path_str)) {
+      return std::unique_ptr<llvm::vfs::File>(
+          new VirtualFile(&lookup_result.value()));
+    }
+    return std::make_error_code(std::errc::no_such_file_or_directory);
+  }
+
+  auto dir_begin(const llvm::Twine& /*dir*/, std::error_code& ec)
+      -> llvm::vfs::directory_iterator override {
+    ec = std::make_error_code(std::errc::no_such_file_or_directory);
+    return llvm::vfs::directory_iterator();
+  }
+
+  auto getCurrentWorkingDirectory() const
+      -> llvm::ErrorOr<std::string> override {
+    return std::string("");
+  }
+
+  auto setCurrentWorkingDirectory(const llvm::Twine& /*path*/)
+      -> std::error_code override {
+    return std::error_code();
+  }
+
+ private:
+  Context* context_;
+};
+
 }  // namespace
+
+Context::Context(const InstallPaths* installation,
+                 llvm::raw_ostream* vlog_stream,
+                 Diagnostics::Consumer* consumer,
+                 clang::clangd::LSPBinder::RawOutgoing* outgoing)
+    : installation_(installation),
+      vlog_stream_(vlog_stream),
+      file_emitter_(consumer),
+      no_loc_emitter_(consumer),
+      outgoing_(outgoing) {
+  auto ls_fs = llvm::makeIntrusiveRefCnt<VirtualFileSystem>(this);
+  auto vfs = llvm::makeIntrusiveRefCnt<llvm::vfs::OverlayFileSystem>(
+      llvm::vfs::getRealFileSystem());
+  vfs->pushOverlay(ls_fs);
+  vfs_ = vfs;
+}
 
 auto Context::File::SetText(Context& context, std::optional<int64_t> version,
                             llvm::StringRef text) -> void {
   // Clear state dependent on the source text.
-  tree_and_subtrees_.reset();
-  tree_.reset();
-  tokens_.reset();
-  value_stores_.reset();
-  source_.reset();
+  compile_driver_.reset();
+
+  text_ = text.str();
 
   // A consumer to gather diagnostics for the file.
   DiagnosticConsumer consumer(&context, uri_, version);
 
   // TODO: Make the processing asynchronous, to better handle rapid text
   // updates.
-  CARBON_CHECK(!source_ && !value_stores_ && !tokens_ && !tree_,
-               "We currently cache everything together");
-  // TODO: Diagnostics should be passed to the LSP instead of dropped.
-  std::optional source =
-      SourceBuffer::MakeFromStringCopy(uri_.file(), text, consumer);
-  if (!source) {
-    // Failing here should be rare, but provide stub data for recovery so that
-    // we can have a simple API.
-    source = SourceBuffer::MakeFromStringCopy(uri_.file(), "", consumer);
-    CARBON_CHECK(source, "Making an empty buffer should always succeed");
+
+  llvm::raw_null_ostream null_stream;
+  DriverEnv driver_env(context.vfs(), &context.installation(),
+                       /*input_stream=*/nullptr, &null_stream, &null_stream,
+                       /*fuzzing=*/false,
+                       /*enable_leaking=*/false, &consumer);
+  // TODO: Either use `raw_pwrite_stream` for all vlog streams or stop requiring
+  // one in DriverEnv.
+  driver_env.vlog_stream =
+      static_cast<llvm::raw_pwrite_stream*>(context.vlog_stream());
+
+  options_ = CompileOptions();
+  options_.codegen_options->target = options_.codegen_options->host;
+  options_.phase = CompileOptions::Phase::Check;
+  options_.input_filenames.push_back(filename());
+  options_.prelude_import = true;
+
+  compile_driver_ = std::make_unique<CompileDriver>(&options_);
+  auto map_input = [](llvm::StringRef) -> std::string { return ""; };
+  if (!compile_driver_->Initialize(driver_env, map_input)) {
+    context.PublishDiagnostics(consumer.params());
+    return;
   }
-  source_ = std::make_unique<SourceBuffer>(std::move(*source));
-  value_stores_ = std::make_unique<SharedValueStores>();
-
-  Lex::LexOptions lex_options;
-  lex_options.consumer = &consumer;
-  tokens_ = std::make_unique<Lex::TokenizedBuffer>(
-      Lex::Lex(*value_stores_, *source_, lex_options));
-
-  Parse::ParseOptions parse_options;
-  parse_options.consumer = &consumer;
-  parse_options.vlog_stream = context.vlog_stream();
-  tree_ = std::make_unique<Parse::Tree>(Parse::Parse(*tokens_, parse_options));
-  tree_and_subtrees_ =
-      std::make_unique<Parse::TreeAndSubtrees>(*tokens_, *tree_);
-
-  SemIR::File sem_ir(tree_.get(), SemIR::CheckIRId(0), tree_->packaging_decl(),
-                     *value_stores_, uri_.file().str());
-  // TODO: Support cross-file checking when multiple files have edits.
-  llvm::SmallVector<Check::Unit> units = {{{.consumer = &consumer,
-                                            .value_stores = value_stores_.get(),
-                                            .timings = nullptr,
-                                            .sem_ir = &sem_ir,
-                                            .total_ir_count = 1}}};
-
-  auto getter = [this]() -> const Parse::TreeAndSubtrees& {
-    return *tree_and_subtrees_;
-  };
-  // TODO: Include any unsaved files as an overlay on the real file system.
-  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs =
-      llvm::vfs::getRealFileSystem();
-
-  // TODO: Include the prelude. Make sure `total_ir_count` includes the files.
-  Check::CheckParseTreesOptions check_options;
-  check_options.vlog_stream = context.vlog_stream();
-  auto getters =
-      Parse::GetTreeAndSubtreesStore::MakeWithExplicitSize(1, getter);
-
-  auto clang_invocation =
-      BuildClangInvocation(consumer, fs, context.installation(),
-                           llvm::sys::getDefaultTargetTriple());
-
-  Check::CheckParseTrees(units, getters, fs, check_options,
-                         std::move(clang_invocation));
+  compile_driver_->Compile(driver_env);
 
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing

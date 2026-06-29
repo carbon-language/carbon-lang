@@ -463,7 +463,7 @@ auto CompileOptions::BuildClangInvocation(DriverEnv& driver_env)
   };
   all_clang_args.append(clang_args);
   auto clang_invocation = Carbon::BuildClangInvocation(
-      driver_env.consumer, driver_env.fs, *driver_env.installation,
+      *driver_env.consumer, driver_env.fs, *driver_env.installation,
       codegen_options->target, all_clang_args);
   if (!clang_invocation) {
     return ErrorBuilder() << "Failed to build a valid clang invocation.";

@@ -85,17 +85,17 @@ integration, and bisection. This means we typically squash pull requests into a
 single commit when landing. We use two fundamental guides for deciding how to
 split up pull requests:
 
-1. Ensure that each pull request builds and passes any tests cleanly when you
-   request review and when it lands. This will ensure bisection and continuous
-   integration can effectively process them.
+1.  Ensure that each pull request builds and passes any tests cleanly when you
+    request review and when it lands. This will ensure bisection and continuous
+    integration can effectively process them.
 
-2. Without violating the first point, try to get each pull request to be "just
-   right": not too big, not too small. You don't want to separate a pattern of
-   tightly related changes into separate requests when they're easier to review
-   as a set or batch, and you don't want to bundle unrelated changes together.
-   Typically you should try to keep the pull request as small as you can without
-   breaking apart tightly coupled changes. However, listen to your code reviewer
-   if they ask to split things up or combine them.
+2.  Without violating the first point, try to get each pull request to be "just
+    right": not too big, not too small. You don't want to separate a pattern of
+    tightly related changes into separate requests when they're easier to review
+    as a set or batch, and you don't want to bundle unrelated changes together.
+    Typically you should try to keep the pull request as small as you can without
+    breaking apart tightly coupled changes. However, listen to your code reviewer
+    if they ask to split things up or combine them.
 
 While the default is to squash pull requests into a single commit, _during_ the
 review you typically want to leave the development history undisturbed until the

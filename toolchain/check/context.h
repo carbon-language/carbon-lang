@@ -206,10 +206,6 @@ class Context {
     return bind_name_map_;
   }
 
-  auto var_storage_map() -> Map<SemIR::InstId, SemIR::InstId>& {
-    return var_storage_map_;
-  }
-
   // During Choice typechecking, each alternative turns into a name binding on
   // the Choice type, but this can't be done until the full Choice type is
   // known. This represents each binding to be done at the end of checking the
@@ -530,11 +526,6 @@ class Context {
   // Map from an AnyBindingPattern inst to precomputed parts of the
   // pattern-match SemIR for it.
   Map<SemIR::InstId, BindingPatternInfo> bind_name_map_;
-
-  // Map from VarPattern insts to the corresponding VarStorage insts. The
-  // VarStorage insts are allocated, emitted, and stored in the map after
-  // processing the enclosing full-pattern.
-  Map<SemIR::InstId, SemIR::InstId> var_storage_map_;
 
   // Each alternative in a Choice gets an entry here, they are stored in
   // declaration order. The vector is consumed and emptied at the end of the

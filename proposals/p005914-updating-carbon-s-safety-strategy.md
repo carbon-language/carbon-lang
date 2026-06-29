@@ -72,10 +72,10 @@ but also on C and even Rust.
 
 We plan to support a two step migration process:
 
-1. Highly automated, minimal supervision migration from C++ to a dialect of
-   Carbon designed for C++ interop and migration.
-2. Incremental refactoring of the Carbon code to adopt memory safe designs,
-   patterns, and APIs.
+1.  Highly automated, minimal supervision migration from C++ to a dialect of
+    Carbon designed for C++ interop and migration.
+2.  Incremental refactoring of the Carbon code to adopt memory safe designs,
+    patterns, and APIs.
 
 From this framing of our problem statement and end-goal, we can extract detailed
 requirements on the memory safety design in Carbon:

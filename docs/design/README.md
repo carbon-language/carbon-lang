@@ -942,6 +942,7 @@ Some common expressions in Carbon include:
     -   [Move](#move): `~x`
 
 -   [Conditionals](expressions/if.md): `if c then t else f`
+
 -   Parentheses: `(7 + 8) * (3 - 1)`
 
 When an expression appears in a context in which an expression of a specific

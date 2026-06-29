@@ -182,13 +182,13 @@ There are no suffixes for the integer literal types.
 
 Carbon supports **decimal and hexadecimal** floating-point literals. Example:
 
-1. Decimal:
+1.  Decimal:
 
-    - `123.456`
-    - `1.23456e791`
+     -   `123.456`
+     -   `1.23456e791`
 
-2. Hexadecimal:
-    - `0x1.Ap123`
+2.  Hexadecimal:
+     -   `0x1.Ap123`
 
 #### Literal types
 

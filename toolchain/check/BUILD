@@ -43,6 +43,7 @@ cc_library(
         "eval.cpp",
         "eval_inst.cpp",
         "facet_type.cpp",
+        "full_pattern_stack.cpp",
         "function.cpp",
         "generic.cpp",
         "global_init.cpp",

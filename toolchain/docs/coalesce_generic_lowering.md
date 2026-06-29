@@ -96,10 +96,10 @@ complexity in the number of specifics for that generic.
 
 We define two fingerprints for each specific:
 
-1. `specific_fingerprint`: Includes all specific-dependent information.
-2. `common_fingerprint`: Includes the same except for `specific_id` information,
-   as `specific_id`s can only be determined to be equivalent after building an
-   equivalence SCC.
+1.  `specific_fingerprint`: Includes all specific-dependent information.
+2.  `common_fingerprint`: Includes the same except for `specific_id` information,
+    as `specific_id`s can only be determined to be equivalent after building an
+    equivalence SCC.
 
 Two specific functions are equivalent if their `specific_fingerprint`s are equal
 and are not equivalent if their `common_fingerprint`s differs. If the

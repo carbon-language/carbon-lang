@@ -8,8 +8,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 [Pull request](https://github.com/carbon-language/carbon-lang/pull/157)
 
-## Table of contents
-
 <!-- toc -->
 
 ## Table of contents

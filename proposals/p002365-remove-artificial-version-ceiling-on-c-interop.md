@@ -1,4 +1,4 @@
-# Remove artificial version ceiling on C++ interop.
+# Remove artificial version ceiling on C++ interop
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM

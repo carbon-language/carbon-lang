@@ -100,18 +100,18 @@ convert source files to NFC as necessary to satisfy this constraint.
 
 The choice to require NFC is really four choices:
 
-1. Equivalence classes: we use a canonical normalization form rather than a
-   compatibility normalization form or no normalization form at all.
+1.  Equivalence classes: we use a canonical normalization form rather than a
+    compatibility normalization form or no normalization form at all.
 
-    - If we use no normalization, invisibly-different ways of representing the
-      same glyph, such as with pre-combined diacritics versus with diacritics
-      expressed as separate combining characters, or with combining characters
-      in a different order, would be considered different characters.
-    - If we use a canonical normalization form, all ways of encoding diacritics
-      are considered to form the same character, but ligatures such as `ﬃ` are
-      considered distinct from the character sequence that they decompose into.
-    - If we use a compatibility normalization form, ligatures are considered
-      equivalent to the character sequence that they decompose into.
+     -   If we use no normalization, invisibly-different ways of representing the
+         same glyph, such as with pre-combined diacritics versus with diacritics
+         expressed as separate combining characters, or with combining characters
+         in a different order, would be considered different characters.
+     -   If we use a canonical normalization form, all ways of encoding diacritics
+         are considered to form the same character, but ligatures such as `ﬃ` are
+         considered distinct from the character sequence that they decompose into.
+     -   If we use a compatibility normalization form, ligatures are considered
+         equivalent to the character sequence that they decompose into.
 
     For a fixed-width font, a canonical normalization form is most likely to
     consider characters to be the same if they look the same. Unicode annexes
@@ -123,20 +123,20 @@ The choice to require NFC is really four choices:
 
     See also the discussion of [homoglyphs](#homoglyphs) below.
 
-2. Composition: we use a composed normalization form rather than a decomposed
-   normalization form. For example, `ō` is encoded as U+014D (LATIN SMALL LETTER
-   O WITH MACRON) in a composed form and as U+006F (LATIN SMALL LETTER O),
-   U+0304 (COMBINING MACRON) in a decomposed form. The composed form results in
-   smaller representations whenever the two differ, but the decomposed form is a
-   little easier for algorithmic processing (for example, typo correction and
-   homoglyph detection).
+2.  Composition: we use a composed normalization form rather than a decomposed
+    normalization form. For example, `ō` is encoded as U+014D (LATIN SMALL LETTER
+    O WITH MACRON) in a composed form and as U+006F (LATIN SMALL LETTER O),
+    U+0304 (COMBINING MACRON) in a decomposed form. The composed form results in
+    smaller representations whenever the two differ, but the decomposed form is a
+    little easier for algorithmic processing (for example, typo correction and
+    homoglyph detection).
 
-3. We require source files to be in our chosen form, rather than converting to
-   that form as necessary.
+3.  We require source files to be in our chosen form, rather than converting to
+    that form as necessary.
 
-4. We require that the entire contents of the file be normalized, rather than
-   restricting our attention to only identifiers, or only identifiers and string
-   literals.
+4.  We require that the entire contents of the file be normalized, rather than
+    restricting our attention to only identifiers, or only identifiers and string
+    literals.
 
 ### Characters in identifiers and whitespace
 
@@ -297,7 +297,6 @@ Con:
     and do the conversion only when necessary. However, if non-canonical source
     is formally valid, there are more stringent performance constraints on such
     conversion than if it is only done for error recovery.
-
 -   Tools such as `grep` do not perform normalization themselves, and so would
     be unreliable when applied to a codebase with inconsistent normalization.
 -   GCC already diagnoses identifiers that are not in NFC, and WG21 is in the

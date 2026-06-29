@@ -626,9 +626,9 @@ library.
 For example, it may preprocess files to split out an API, reducing the number of
 imports propagated for _actual_ APIs. For example:
 
-1. Extract `api` declarations within the `api` file.
-2. Remove all implementation bodies.
-3. Add only the imports that are referenced.
+1.  Extract `api` declarations within the `api` file.
+2.  Remove all implementation bodies.
+3.  Add only the imports that are referenced.
 
 Even under the proposed model, compilation will do some of this work as an
 optimization. However, determining which imports are referenced requires

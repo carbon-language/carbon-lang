@@ -19,9 +19,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
-    -   [Narrowing the proposed milestone definitions to just 0.1 initially.](#narrowing-the-proposed-milestone-definitions-to-just-01-initially)
-    -   [Make a more incremental, less ambitious initial milestone.](#make-a-more-incremental-less-ambitious-initial-milestone)
-    -   [Skip the 0.1 milestone and aim for feature completeness.](#skip-the-01-milestone-and-aim-for-feature-completeness)
+    -   [Narrowing the proposed milestone definitions to just 0.1 initially](#narrowing-the-proposed-milestone-definitions-to-just-01-initially)
+    -   [Make a more incremental, less ambitious initial milestone](#make-a-more-incremental-less-ambitious-initial-milestone)
+    -   [Skip the 0.1 milestone and aim for feature completeness](#skip-the-01-milestone-and-aim-for-feature-completeness)
 
 <!-- tocstop -->
 
@@ -123,7 +123,7 @@ on-going language evolution:
 
 ## Alternatives considered
 
-### Narrowing the proposed milestone definitions to just 0.1 initially.
+### Narrowing the proposed milestone definitions to just 0.1 initially
 
 While this would narrow the scope of the proposal and remove some of the more
 vague aspects, it would make it difficult for readers to understand when
@@ -134,7 +134,7 @@ We also expect that explicitly deferring things in this way will make it easier
 to focus our energy and efforts on the next milestone by avoiding distractions
 of features that _might_ be interesting absent that deferral.
 
-### Make a more incremental, less ambitious initial milestone.
+### Make a more incremental, less ambitious initial milestone
 
 The initial milestone currently proposed is relatively ambitious, and much
 larger than most programming language MVPs. Carbon could have a much less
@@ -147,7 +147,7 @@ end up in somewhat of an "apples versus oranges" comparison where the feature
 sets are so different as to thwart any attempt at in-depth comparison and
 evaluation.
 
-### Skip the 0.1 milestone and aim for feature completeness.
+### Skip the 0.1 milestone and aim for feature completeness
 
 We could have fewer milestones overall and aim for the more ambitious goal. We
 know that 0.1 will be insufficient to finish most real evaluations of the Carbon

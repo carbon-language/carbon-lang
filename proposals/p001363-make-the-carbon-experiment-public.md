@@ -23,7 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Too many cooks in the kitchen](#too-many-cooks-in-the-kitchen)
         -   [Community management overload](#community-management-overload)
         -   [Added distraction or confusion to the C++ evolution process](#added-distraction-or-confusion-to-the-c-evolution-process)
-        -   [Added distractions from existing new programming languages.](#added-distractions-from-existing-new-programming-languages)
+        -   [Added distractions from existing new programming languages](#added-distractions-from-existing-new-programming-languages)
         -   [Friction with existing LLVM and Clang communities](#friction-with-existing-llvm-and-clang-communities)
         -   [Labeled as vaporware](#labeled-as-vaporware)
 -   [Rationale](#rationale)
@@ -296,7 +296,7 @@ Planned mitigations:
     as possible from the Carbon experiment and incorporate any and all of our
     ideas into C++ where they see a path to do so.
 
-#### Added distractions from existing new programming languages.
+#### Added distractions from existing new programming languages
 
 -   Another programming language in the world might dilute some of the efforts
     going towards new and exciting but existing languages, especially ones with

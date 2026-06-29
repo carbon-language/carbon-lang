@@ -36,18 +36,18 @@ graph TD
 
 Adding a builtin function involves a 5-step integration:
 
-1. **Define the Builtin Kind**: Register the enum in
-   [builtin_function_kind.def](../../../toolchain/sem_ir/builtin_function_kind.def).
-2. **Signature & Compile-Time Registry**: Declare the mapping name, parameter
-   constraints, and compile-time evaluation residency in
-   [builtin_function_kind.cpp](../../../toolchain/sem_ir/builtin_function_kind.cpp).
-3. **Compile-Time Interpreter Support**: Wire constant evaluation hooks and
-   bounds/exception diagnostics in
-   [eval.cpp](../../../toolchain/check/eval.cpp).
-4. **LLVM IR Lowering Support**: Connect target machine generation in
-   [handle_call.cpp](../../../toolchain/lower/handle_call.cpp).
-5. **Prelude Library Mapping**: Bind primitive interfaces to named builtins
-   under [core/prelude/](../../../core/prelude/).
+1.  **Define the Builtin Kind**: Register the enum in
+    [builtin_function_kind.def](../../../toolchain/sem_ir/builtin_function_kind.def).
+2.  **Signature & Compile-Time Registry**: Declare the mapping name, parameter
+    constraints, and compile-time evaluation residency in
+    [builtin_function_kind.cpp](../../../toolchain/sem_ir/builtin_function_kind.cpp).
+3.  **Compile-Time Interpreter Support**: Wire constant evaluation hooks and
+    bounds/exception diagnostics in
+    [eval.cpp](../../../toolchain/check/eval.cpp).
+4.  **LLVM IR Lowering Support**: Connect target machine generation in
+    [handle_call.cpp](../../../toolchain/lower/handle_call.cpp).
+5.  **Prelude Library Mapping**: Bind primitive interfaces to named builtins
+    under [core/prelude/](../../../core/prelude/).
 
 ---
 
@@ -70,37 +70,37 @@ CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(IntConvertFloat)
 Inside
 [builtin_function_kind.cpp](../../../toolchain/sem_ir/builtin_function_kind.cpp):
 
-1. **Define Parameter Constraints**: If the parameter requires novel constraints
-   (e.g. "must be a float type"), define a template constraint struct checking
-   the matching `SemIR` type instruction (such as `FloatType` or
-   `FloatLiteralType`). Use pre-established semantic helpers:
+1.  **Define Parameter Constraints**: If the parameter requires novel constraints
+    (e.g. "must be a float type"), define a template constraint struct checking
+    the matching `SemIR` type instruction (such as `FloatType` or
+    `FloatLiteralType`). Use pre-established semantic helpers:
 
-    - `TypeParam<I, T>`: Ensures different parameters resolve to identical type
-      structures (e.g., generic constraint matching).
-    - `AnyInt`, `AnyFloat`, `AnySizedInt`, `AnySizedFloat`, `CharCompatible`,
-      `StdInitializerList`, `NoReturn`.
+     -   `TypeParam<I, T>`: Ensures different parameters resolve to identical type
+         structures (e.g., generic constraint matching).
+     -   `AnyInt`, `AnyFloat`, `AnySizedInt`, `AnySizedFloat`, `CharCompatible`,
+         `StdInitializerList`, `NoReturn`.
 
-2. **Map Literal Name & Register Constraint Signature**: Declare a `BuiltinInfo`
-   constant inside `namespace BuiltinFunctionInfo` matching the macro-defined
-   name:
+2.  **Map Literal Name & Register Constraint Signature**: Declare a `BuiltinInfo`
+    constant inside `namespace BuiltinFunctionInfo` matching the macro-defined
+    name:
 
-    ```cpp
-    // toolchain/sem_ir/builtin_function_kind.cpp
+     ```cpp
+     // toolchain/sem_ir/builtin_function_kind.cpp
 
-    constexpr BuiltinInfo IntConvertFloat = {
-        "int.convert_float", ValidateSignature<auto(AnyInt)->AnyFloat>};
-    ```
+     constexpr BuiltinInfo IntConvertFloat = {
+         "int.convert_float", ValidateSignature<auto(AnyInt)->AnyFloat>};
+     ```
 
-3. **Establish Compile-Time Residency Status**: Update
-   `BuiltinFunctionKind::IsCompTimeOnly` to determine if a call requires
-   compile-time evaluation:
-    - **Checked/Diagnostics Primitives**: Return `true` immediately. Runtime
-      lowering of these is illegal (e.g. `IntConvertFloatChecked`).
-    - **Runtime Primitives**: Return
-      `AnyLiteralTypes(sem_ir, arg_ids, return_type_id)` to enforce that
-      expressions involving unsized literal values (like `IntLiteral` or
-      `FloatLiteral`) are evaluated exclusively at compile-time (as they lack
-      runtime representation).
+3.  **Establish Compile-Time Residency Status**: Update
+    `BuiltinFunctionKind::IsCompTimeOnly` to determine if a call requires
+    compile-time evaluation:
+     -   **Checked/Diagnostics Primitives**: Return `true` immediately. Runtime
+         lowering of these is illegal (e.g. `IntConvertFloatChecked`).
+     -   **Runtime Primitives**: Return
+         `AnyLiteralTypes(sem_ir, arg_ids, return_type_id)` to enforce that
+         expressions involving unsized literal values (like `IntLiteral` or
+         `FloatLiteral`) are evaluated exclusively at compile-time (as they lack
+         runtime representation).
 
 ---
 
@@ -109,51 +109,57 @@ Inside
 Wire the interpreter inside [eval.cpp](../../../toolchain/check/eval.cpp) to
 execute compile-time computations:
 
-1. **Implement Constant Evaluation Logic**:
+1.  **Implement Constant Evaluation Logic**:
 
-    - Handle the builtin case inside `MakeConstantForBuiltinCall` (which
-      processes the compile-time execution of the call).
-    - Confirm type validation phase is `Phase::Concrete` to reject incomplete
-      bindings:
-        ```cpp
-        case SemIR::BuiltinFunctionKind::IntConvertFloat: {
-          if (phase != Phase::Concrete) {
-            return MakeConstantResult(context, call, phase);
-          }
-          return PerformIntToFloatConvert(context, loc_id, arg_ids[0], call.type_id,
-                                          /*require_exact=*/false);
-        }
-        ```
-    - Extract inputs safely from local value stores (e.g.
-      `context.ints().Get(arg.int_id)` or `context.floats().Get(arg.float_id)`).
-    - Leverage high-precision LLVM mathematical structures (`llvm::APInt`,
-      `llvm::APFloat`, `llvm::APSInt`) to handle custom bits and signedness
-      safely.
+     -   Handle the builtin case inside `MakeConstantForBuiltinCall` (which
+         processes the compile-time execution of the call).
+     -   Confirm type validation phase is `Phase::Concrete` to reject incomplete
+         bindings:
 
-2. **Diagnose Invalid Parameters or Exceptions**:
+           ```cpp
+           case SemIR::BuiltinFunctionKind::IntConvertFloat: {
+             if (phase != Phase::Concrete) {
+               return MakeConstantResult(context, call, phase);
+             }
+             return PerformIntToFloatConvert(context, loc_id, arg_ids[0], call.type_id,
+                                             /*require_exact=*/false);
+           }
+           ```
 
-    - Define compile-time diagnostics inside
-      [kind.def](../../../toolchain/diagnostics/kind.def):
-        ```cpp
-        // toolchain/diagnostics/kind.def
-        CARBON_DIAGNOSTIC_KIND(IntTooLargeForFloatType)
-        ```
-    - Emplace localized diagnostic formatting messages where they are caught in
-      `eval.cpp`:
-        ```cpp
-        CARBON_DIAGNOSTIC(IntTooLargeForFloatType, Error,
-                          "integer value {0} too large for floating-point type {1}",
-                          llvm::APSInt, SemIR::TypeId);
-        context.emitter().Emit(loc_id, IntTooLargeForFloatType, val, dest_type_id);
-        ```
-    - Return `SemIR::ErrorInst::ConstantId` to gracefully abort invalid constant
-      generation rather than crashing the compiler.
+     -   Extract inputs safely from local value stores (e.g.
+         `context.ints().Get(arg.int_id)` or `context.floats().Get(arg.float_id)`).
+     -   Leverage high-precision LLVM mathematical structures (`llvm::APInt`,
+         `llvm::APFloat`, `llvm::APSInt`) to handle custom bits and signedness
+         safely.
 
-3. **Fast-Path Range Limits**:
-    - Before evaluating expensive math operations on giant exponents (e.g.
-      `1.0e1000000`), executing range limits check against `dest_width + 64`
-      (sized) or `IntStore::MaxIntWidth` (unsized) is mandatory to prevent
-      out-of-bounds calculations and compile-time memory exhaustion.
+2.  **Diagnose Invalid Parameters or Exceptions**:
+
+     -   Define compile-time diagnostics inside
+         [kind.def](../../../toolchain/diagnostics/kind.def):
+
+           ```cpp
+           // toolchain/diagnostics/kind.def
+           CARBON_DIAGNOSTIC_KIND(IntTooLargeForFloatType)
+           ```
+
+     -   Emplace localized diagnostic formatting messages where they are caught in
+         `eval.cpp`:
+
+           ```cpp
+           CARBON_DIAGNOSTIC(IntTooLargeForFloatType, Error,
+                             "integer value {0} too large for floating-point type {1}",
+                             llvm::APSInt, SemIR::TypeId);
+           context.emitter().Emit(loc_id, IntTooLargeForFloatType, val, dest_type_id);
+           ```
+
+     -   Return `SemIR::ErrorInst::ConstantId` to gracefully abort invalid constant
+         generation rather than crashing the compiler.
+
+3.  **Fast-Path Range Limits**:
+     -   Before evaluating expensive math operations on giant exponents (e.g.
+         `1.0e1000000`), executing range limits check against `dest_width + 64`
+         (sized) or `IntStore::MaxIntWidth` (unsized) is mandatory to prevent
+         out-of-bounds calculations and compile-time memory exhaustion.
 
 ---
 
@@ -161,33 +167,34 @@ execute compile-time computations:
 
 Inside [handle_call.cpp](../../../toolchain/lower/handle_call.cpp):
 
-1. **Map to Native LLVM Instructions**: For runtime-eligible builtins, map the
-   call inside `HandleBuiltinCall` to native LLVM IR builder methods:
+1.  **Map to Native LLVM Instructions**: For runtime-eligible builtins, map the
+    call inside `HandleBuiltinCall` to native LLVM IR builder methods:
 
-    ```cpp
-    case SemIR::BuiltinFunctionKind::IntConvertFloat: {
-      auto* operand = context.GetValue(arg_ids[0]);
-      auto* dest_type = context.GetTypeOfInst(inst_id);
-      bool is_signed = IsSignedInt(context, arg_ids[0]);
-      context.SetLocal(
-          inst_id, is_signed
-                       ? context.builder().CreateSIToFP(operand, dest_type)
-                       : context.builder().CreateUIToFP(operand, dest_type));
-      return;
-    }
-    ```
+     ```cpp
+     case SemIR::BuiltinFunctionKind::IntConvertFloat: {
+       auto* operand = context.GetValue(arg_ids[0]);
+       auto* dest_type = context.GetTypeOfInst(inst_id);
+       bool is_signed = IsSignedInt(context, arg_ids[0]);
+       context.SetLocal(
+           inst_id, is_signed
+                        ? context.builder().CreateSIToFP(operand, dest_type)
+                        : context.builder().CreateUIToFP(operand, dest_type));
+       return;
+     }
+     ```
 
-2. **Assert on Compile-Time-Only Builtins**: Throw a hard assertion on
-   lowering-cases for checked validator builtins that should never hit code
-   generation:
-    ```cpp
-    case SemIR::BuiltinFunctionKind::IntConvertFloatChecked: {
-      CARBON_CHECK(builtin_kind.IsCompTimeOnly(
-          context.sem_ir(), arg_ids,
-          context.sem_ir().insts().Get(inst_id).type_id()));
-      CARBON_FATAL("Missing constant value for call to comptime-only function");
-    }
-    ```
+2.  **Assert on Compile-Time-Only Builtins**: Throw a hard assertion on
+    lowering-cases for checked validator builtins that should never hit code
+    generation:
+
+     ```cpp
+     case SemIR::BuiltinFunctionKind::IntConvertFloatChecked: {
+       CARBON_CHECK(builtin_kind.IsCompTimeOnly(
+           context.sem_ir(), arg_ids,
+           context.sem_ir().insts().Get(inst_id).type_id()));
+       CARBON_FATAL("Missing constant value for call to comptime-only function");
+     }
+     ```
 
 ---
 
@@ -198,9 +205,11 @@ builtins under [core/prelude/](../../../core/prelude/):
 
 -   **Primitive Mappings**: Bind Carbon methods directly to string-literal
     builtin equivalents:
+
     ```carbon
     fn Convert[self: Self]() -> Float(To) = "int.convert_float";
     ```
+
 -   **Strict Orphan Rule Compliance**: Carbon's orphan rules prohibit
     implementing interfaces where neither the type nor the interface is locally
     defined in the backing source module.

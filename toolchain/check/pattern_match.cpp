@@ -674,9 +674,8 @@ auto MatchContext::DoVarPreWorkImpl(State state,
 
       // In a `var`/`let` declaration, the `VarStorage` inst is created before
       // we start pattern matching.
-      auto lookup_result = context_.var_storage_map().Lookup(entry.pattern_id);
-      CARBON_CHECK(lookup_result);
-      auto storage_id = lookup_result.value();
+      auto storage_id =
+          context_.full_pattern_stack().GetLocalVarStorage(entry.pattern_id);
       if (scrutinee_id.has_value()) {
         auto init_id =
             InitializeExisting(context_, SemIR::LocId(entry.pattern_id),

@@ -182,11 +182,8 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
   return {.pattern_id = binding_pattern_id, .bind_id = bind_id};
 }
 
-// Returns a VarStorage inst for the given `var` pattern. If the pattern
-// is the body of a returned var, this reuses the return parameter, and
-// otherwise it adds a new inst.
-static auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
-                               bool is_returned_var) -> SemIR::InstId {
+auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
+                        bool is_returned_var) -> SemIR::InstId {
   if (is_returned_var) {
     if (auto return_param_id =
             GetReturnedVarParam(context, GetCurrentFunctionForReturn(context));
@@ -201,21 +198,6 @@ static auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
       SemIR::VarStorage{.type_id = ExtractScrutineeType(context.sem_ir(),
                                                         pattern.inst.type_id()),
                         .pattern_id = var_pattern_id});
-}
-
-auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
-                          bool is_returned_var) -> void {
-  // We need to emit the VarStorage insts early, because they may be output
-  // arguments for the initializer. However, we can't emit them when we emit
-  // the corresponding `AnyVarPattern`s because they're part of the pattern
-  // match, not part of the pattern.
-  // TODO: Find a way to do this without walking the whole pattern block.
-  for (auto inst_id : context.inst_blocks().Get(pattern_block_id)) {
-    if (context.insts().Is<SemIR::AnyVarPattern>(inst_id)) {
-      context.var_storage_map().Insert(
-          inst_id, GetOrAddVarStorage(context, inst_id, is_returned_var));
-    }
-  }
 }
 
 auto GetParamPatternKind(Context& context, SemIR::InstId param_inst_id)
