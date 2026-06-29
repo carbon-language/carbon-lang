@@ -101,7 +101,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc7_19.2: %tuple.type.24b = tuple_literal (%i32.loc7_11, %i32.loc7_16) [concrete = constants.%tuple.b59]
 // CHECK:STDOUT:     %.loc7_19.3: type = converted %.loc7_19.2, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %tuple.type.e55 = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %tuple.type.e55 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   %v.ref: ref %tuple.type.e55 = name_ref v, %v
 // CHECK:STDOUT:   %F.ref.loc8: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc8: ref %tuple.type.e55 = splice_block %v.ref {}
@@ -232,7 +232,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc7_50.4: type = converted constants.%tuple.04d, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
 // CHECK:STDOUT:     %.loc7_50.5: type = converted %.loc7_50.2, constants.%tuple.type.015 [concrete = constants.%tuple.type.015]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %tuple.type.015 = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %tuple.type.015 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   <elided>
@@ -298,7 +298,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc13_43.3: type = converted constants.%tuple.04d, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
 // CHECK:STDOUT:     %.loc13_43.4: type = converted %.loc13_43.2, constants.%tuple.type.b7e [concrete = constants.%tuple.type.b7e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %tuple.type.b7e = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %tuple.type.b7e = wrapper_binding v, %v.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   <elided>

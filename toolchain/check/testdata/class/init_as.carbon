@@ -175,7 +175,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc26_35: init %Class = converted %.loc26_33.1, %.loc26_33.8 [concrete = constants.%Class.val]
 // CHECK:STDOUT:   assign %v.var, %.loc26_35
 // CHECK:STDOUT:   %Class.ref.loc26_10: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %v: ref %Class = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %Class = wrapper_binding v, %v.var
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)

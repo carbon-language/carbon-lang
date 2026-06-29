@@ -3569,11 +3569,11 @@ auto TryExecTypedInst<SemIR::ValueParam>(FunctionExecContext& eval_context,
 }
 
 template <>
-auto TryExecTypedInst<SemIR::ValueBinding>(FunctionExecContext& eval_context,
-                                           SemIR::InstId inst_id,
-                                           SemIR::Inst inst)
+auto TryExecTypedInst<SemIR::WrapperBinding>(FunctionExecContext& eval_context,
+                                             SemIR::InstId inst_id,
+                                             SemIR::Inst inst)
     -> SemIR::ConstantId {
-  auto value_binding = inst.As<SemIR::ValueBinding>();
+  auto value_binding = inst.As<SemIR::WrapperBinding>();
   auto local_value_id = eval_context.GetConstantValue(value_binding.value_id);
   eval_context.locals().Insert(inst_id, local_value_id);
   return SemIR::ConstantId::None;

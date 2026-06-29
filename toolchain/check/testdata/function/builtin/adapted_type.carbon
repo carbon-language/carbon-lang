@@ -132,7 +132,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %.loc11_28.2: Core.Form = init_form %.loc11_28.1 [concrete = constants.%.805]
 // CHECK:STDOUT:     %N.param: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
-// CHECK:STDOUT:     %N: %MyIntLiteral = value_binding N, %N.param
+// CHECK:STDOUT:     %N: %MyIntLiteral = wrapper_binding N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -147,7 +147,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %.loc19: Core.Form = init_form %MyInt32.ref.loc19 [concrete = constants.%.6a2]
 // CHECK:STDOUT:     %a.param.loc19: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref.loc19: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
-// CHECK:STDOUT:     %a.loc19: %MyIntLiteral = value_binding a, %a.param.loc19
+// CHECK:STDOUT:     %a.loc19: %MyIntLiteral = wrapper_binding a, %a.param.loc19
 // CHECK:STDOUT:     %return.param.loc19: ref %MyInt32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc19: ref %MyInt32 = return_slot %return.param.loc19
 // CHECK:STDOUT:   }
@@ -163,10 +163,10 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %.loc21: Core.Form = init_form %MyInt32.ref.loc21_37 [concrete = constants.%.6a2]
 // CHECK:STDOUT:     %a.param: %MyInt32 = value_param call_param0
 // CHECK:STDOUT:     %MyInt32.ref.loc21_13: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
-// CHECK:STDOUT:     %a: %MyInt32 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %MyInt32 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %MyInt32 = value_param call_param1
 // CHECK:STDOUT:     %MyInt32.ref.loc21_25: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
-// CHECK:STDOUT:     %b: %MyInt32 = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %MyInt32 = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %MyInt32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %MyInt32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -176,7 +176,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %MyInt32 = var %v.var_patt [concrete]
 // CHECK:STDOUT:   %MyInt32.ref: type = name_ref MyInt32, %MyInt32.decl [concrete = constants.%MyInt32]
-// CHECK:STDOUT:   %v: ref %MyInt32 = ref_binding v, %v.var [concrete = %v.var]
+// CHECK:STDOUT:   %v: ref %MyInt32 = wrapper_binding v, %v.var [concrete = %v.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MyIntLiteral {
@@ -210,7 +210,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %.loc16: Core.Form = init_form %MyInt32.ref.loc16 [concrete = constants.%.6a2]
 // CHECK:STDOUT:     %a.param.loc16: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref.loc16: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
-// CHECK:STDOUT:     %a.loc16: %MyIntLiteral = value_binding a, %a.param.loc16
+// CHECK:STDOUT:     %a.loc16: %MyIntLiteral = wrapper_binding a, %a.param.loc16
 // CHECK:STDOUT:     %return.param.loc16: ref %MyInt32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc16: ref %MyInt32 = return_slot %return.param.loc16
 // CHECK:STDOUT:   }
@@ -293,7 +293,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %.loc12_28.2: Core.Form = init_form %.loc12_28.1 [concrete = constants.%.805]
 // CHECK:STDOUT:     %N.param: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
-// CHECK:STDOUT:     %N: %MyIntLiteral = value_binding N, %N.param
+// CHECK:STDOUT:     %N: %MyIntLiteral = wrapper_binding N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }

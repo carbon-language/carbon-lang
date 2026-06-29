@@ -498,7 +498,7 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = value_param call_param0
 // CHECK:STDOUT:     %.loc10: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %T: type = value_binding T, %T.param
+// CHECK:STDOUT:     %T: type = wrapper_binding T, %T.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -650,7 +650,7 @@ fn F() {
 // CHECK:STDOUT:     %T.loc6_28.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_28.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @ExplicitAndAlsoDeduced.%T.loc6_28.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc6_40: type = name_ref T, %T.loc6_28.2 [symbolic = %T.loc6_28.1 (constants.%T)]
-// CHECK:STDOUT:     %x: @ExplicitAndAlsoDeduced.%T.loc6_28.1 (%T) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @ExplicitAndAlsoDeduced.%T.loc6_28.1 (%T) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @ExplicitAndAlsoDeduced.%ptr.loc6_47.1 (%ptr.e8f) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @ExplicitAndAlsoDeduced.%ptr.loc6_47.1 (%ptr.e8f) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -837,7 +837,7 @@ fn F() {
 // CHECK:STDOUT:     %T.loc4_26.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_26.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @ImplicitGenericParam.%T.loc4_26.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc4_38: type = name_ref T, %T.loc4_26.2 [symbolic = %T.loc4_26.1 (constants.%T)]
-// CHECK:STDOUT:     %x: @ImplicitGenericParam.%T.loc4_26.1 (%T) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @ImplicitGenericParam.%T.loc4_26.1 (%T) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @ImplicitGenericParam.%ptr.loc4_45.1 (%ptr.e8f) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @ImplicitGenericParam.%ptr.loc4_45.1 (%ptr.e8f) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -852,7 +852,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc6: Core.Form = init_form %ptr [concrete = constants.%.952]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc6_32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
+// CHECK:STDOUT:     %n: %i32 = wrapper_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref %ptr.d08 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.d08 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1021,7 +1021,7 @@ fn F() {
 // CHECK:STDOUT:       %.loc4_42.2: %tuple.type.24b = tuple_literal (%T.ref, %i32) [symbolic = %tuple (constants.%tuple.43e)]
 // CHECK:STDOUT:       %.loc4_42.3: type = converted %.loc4_42.2, constants.%tuple.type.2d8 [symbolic = %tuple.type (constants.%tuple.type.2d8)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @TupleParam.%tuple.type (%tuple.type.2d8) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @TupleParam.%tuple.type (%tuple.type.2d8) = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallTupleParam.decl: %CallTupleParam.type = fn_decl @CallTupleParam [concrete = constants.%CallTupleParam] {} {}
 // CHECK:STDOUT: }
@@ -1174,7 +1174,7 @@ fn F() {
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.a.b.loc4_51.2: type = struct_type {.a: @StructParam.%T.loc4_17.1 (%T), .b: %i32} [symbolic = %struct_type.a.b.loc4_51.1 (constants.%struct_type.a.b.3aa)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @StructParam.%struct_type.a.b.loc4_51.1 (%struct_type.a.b.3aa) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @StructParam.%struct_type.a.b.loc4_51.1 (%struct_type.a.b.3aa) = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallStructParam.decl: %CallStructParam.type = fn_decl @CallStructParam [concrete = constants.%CallStructParam] {} {}
 // CHECK:STDOUT: }
@@ -1297,7 +1297,7 @@ fn F() {
 // CHECK:STDOUT:       %i32.loc4_60: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.c.d.e.loc4_63.2: type = struct_type {.c: @BigStructParam.%T.loc4_20.1 (%T), .d: %i32, .e: %i32} [symbolic = %struct_type.c.d.e.loc4_63.1 (constants.%struct_type.c.d.e)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @BigStructParam.%struct_type.c.d.e.loc4_63.1 (%struct_type.c.d.e) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @BigStructParam.%struct_type.c.d.e.loc4_63.1 (%struct_type.c.d.e) = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallBigStructParam.decl: %CallBigStructParam.type = fn_decl @CallBigStructParam [concrete = constants.%CallBigStructParam] {} {}
 // CHECK:STDOUT: }
@@ -1397,7 +1397,7 @@ fn F() {
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.f.g.loc4_56.2: type = struct_type {.f: @SmallStructParam.%T.loc4_22.1 (%T), .g: %i32} [symbolic = %struct_type.f.g.loc4_56.1 (constants.%struct_type.f.g)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @SmallStructParam.%struct_type.f.g.loc4_56.1 (%struct_type.f.g) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @SmallStructParam.%struct_type.f.g.loc4_56.1 (%struct_type.f.g) = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallSmallStructParam.decl: %CallSmallStructParam.type = fn_decl @CallSmallStructParam [concrete = constants.%CallSmallStructParam] {} {}
 // CHECK:STDOUT: }
@@ -1497,7 +1497,7 @@ fn F() {
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.i.different.loc4_68.2: type = struct_type {.i: @WrongNameStructParam.%T.loc4_26.1 (%T), .different: %i32} [symbolic = %struct_type.i.different.loc4_68.1 (constants.%struct_type.i.different)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @WrongNameStructParam.%struct_type.i.different.loc4_68.1 (%struct_type.i.different) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @WrongNameStructParam.%struct_type.i.different.loc4_68.1 (%struct_type.i.different) = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallWrongNameStructParam.decl: %CallWrongNameStructParam.type = fn_decl @CallWrongNameStructParam [concrete = constants.%CallWrongNameStructParam] {} {}
 // CHECK:STDOUT: }
@@ -1596,7 +1596,7 @@ fn F() {
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.first.second.loc4_70.2: type = struct_type {.first: @WrongOrderStructParam.%T.loc4_27.1 (%T), .second: %i32} [symbolic = %struct_type.first.second.loc4_70.1 (constants.%struct_type.first.second)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @WrongOrderStructParam.%struct_type.first.second.loc4_70.1 (%struct_type.first.second) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @WrongOrderStructParam.%struct_type.first.second.loc4_70.1 (%struct_type.first.second) = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallWrongOrderStructParam.decl: %CallWrongOrderStructParam.type = fn_decl @CallWrongOrderStructParam [concrete = constants.%CallWrongOrderStructParam] {} {}
 // CHECK:STDOUT: }
@@ -1696,7 +1696,7 @@ fn F() {
 // CHECK:STDOUT:     %U.loc6_36.2: type = symbolic_binding U, 1 [symbolic = %U.loc6_36.1 (constants.%U)]
 // CHECK:STDOUT:     %x.param: @ImplicitNotDeducible.%T.loc6_26.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_26.2 [symbolic = %T.loc6_26.1 (constants.%T)]
-// CHECK:STDOUT:     %x: @ImplicitNotDeducible.%T.loc6_26.1 (%T) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @ImplicitNotDeducible.%T.loc6_26.1 (%T) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @ImplicitNotDeducible.%U.loc6_36.1 (%U) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @ImplicitNotDeducible.%U.loc6_36.1 (%U) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1798,10 +1798,10 @@ fn F() {
 // CHECK:STDOUT:     %T.loc4_26.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_26.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @ImplicitNotDeducible.%T.loc4_26.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc4_38: type = name_ref T, %T.loc4_26.2 [symbolic = %T.loc4_26.1 (constants.%T)]
-// CHECK:STDOUT:     %x: @ImplicitNotDeducible.%T.loc4_26.1 (%T) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @ImplicitNotDeducible.%T.loc4_26.1 (%T) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %y.param: @ImplicitNotDeducible.%T.loc4_26.1 (%T) = value_param call_param1
 // CHECK:STDOUT:     %T.ref.loc4_44: type = name_ref T, %T.loc4_26.2 [symbolic = %T.loc4_26.1 (constants.%T)]
-// CHECK:STDOUT:     %y: @ImplicitNotDeducible.%T.loc4_26.1 (%T) = value_binding y, %y.param
+// CHECK:STDOUT:     %y: @ImplicitNotDeducible.%T.loc4_26.1 (%T) = wrapper_binding y, %y.param
 // CHECK:STDOUT:     %return.param: ref @ImplicitNotDeducible.%T.loc4_26.1 (%T) = out_param call_param2
 // CHECK:STDOUT:     %return: ref @ImplicitNotDeducible.%T.loc4_26.1 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }

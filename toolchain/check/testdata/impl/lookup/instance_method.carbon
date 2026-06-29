@@ -103,7 +103,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %.loc27: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc15 [concrete = constants.%C]
-// CHECK:STDOUT:     %c: %C = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %C = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -128,7 +128,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:       %Self.as_type.loc18_8.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc18_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc18_8.2: type = converted %Self.ref, %Self.as_type.loc18_8.2 [symbolic = %Self.as_type.loc18_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc18_8.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc18_8.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -153,7 +153,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %.loc23: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

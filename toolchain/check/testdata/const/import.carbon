@@ -83,7 +83,7 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT:     %const.loc6: type = const_type %C.ref.loc6 [concrete = constants.%const.13f]
 // CHECK:STDOUT:     %ptr.loc6: type = ptr_type %const.loc6 [concrete = constants.%ptr.77f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %ptr.77f = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %ptr.77f = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_ptr.patt: %pattern_type.7d2 = ref_binding_pattern a_ptr [concrete = constants.%a_ptr.patt]
 // CHECK:STDOUT:     %a_ptr.var_patt: %pattern_type.7d2 = var_pattern %a_ptr.patt [concrete = constants.%a_ptr.var_patt]
@@ -94,7 +94,7 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT:     %const.loc7: type = const_type %C.ref.loc7 [concrete = constants.%const.13f]
 // CHECK:STDOUT:     %ptr.loc7: type = ptr_type %const.loc7 [concrete = constants.%ptr.77f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a_ptr: ref %ptr.77f = ref_binding a_ptr, %a_ptr.var [concrete = %a_ptr.var]
+// CHECK:STDOUT:   %a_ptr: ref %ptr.77f = wrapper_binding a_ptr, %a_ptr.var [concrete = %a_ptr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

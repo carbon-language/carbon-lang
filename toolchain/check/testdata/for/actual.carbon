@@ -310,7 +310,7 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:     %.loc26_34.2: Core.Form = init_form %IntRange.loc26 [concrete = constants.%.9fd]
 // CHECK:STDOUT:     %end.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %end: %i32 = value_binding end, %end.param
+// CHECK:STDOUT:     %end: %i32 = wrapper_binding end, %end.param
 // CHECK:STDOUT:     %return.param: ref %IntRange.bbd = out_param call_param1
 // CHECK:STDOUT:     %return: ref %IntRange.bbd = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -352,7 +352,7 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:         %.loc10_18.2: type = specific_constant constants.%IntRange.2c4, @IntRange(constants.%N) [symbolic = %IntRange (constants.%IntRange.2c4)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_18.2 [symbolic = %IntRange (constants.%IntRange.2c4)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @IntRange.as.Iterate.impl.NewCursor.%IntRange (%IntRange.2c4) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @IntRange.as.Iterate.impl.NewCursor.%IntRange (%IntRange.2c4) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @IntRange.as.Iterate.impl.NewCursor.%Int.loc10_37.1 (%Int.67af24.1) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @IntRange.as.Iterate.impl.NewCursor.%Int.loc10_37.1 (%Int.67af24.1) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -379,7 +379,7 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:         %.loc11_13.2: type = specific_constant constants.%IntRange.2c4, @IntRange(constants.%N) [symbolic = %IntRange (constants.%IntRange.2c4)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc11_13.2 [symbolic = %IntRange (constants.%IntRange.2c4)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @IntRange.as.Iterate.impl.Next.%IntRange (%IntRange.2c4) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @IntRange.as.Iterate.impl.Next.%IntRange (%IntRange.2c4) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %cursor.param: @IntRange.as.Iterate.impl.Next.%ptr.loc11_38.1 (%ptr.41e) = value_param call_param1
 // CHECK:STDOUT:       %.loc11_38: type = splice_block %ptr.loc11_38.2 [symbolic = %ptr.loc11_38.1 (constants.%ptr.41e)] {
 // CHECK:STDOUT:         %Core.ref.loc11_27: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -388,7 +388,7 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:         %Int.loc11_37.2: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc11_37.1 (constants.%Int.67af24.1)]
 // CHECK:STDOUT:         %ptr.loc11_38.2: type = ptr_type %Int.loc11_37.2 [symbolic = %ptr.loc11_38.1 (constants.%ptr.41e)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %cursor: @IntRange.as.Iterate.impl.Next.%ptr.loc11_38.1 (%ptr.41e) = value_binding cursor, %cursor.param
+// CHECK:STDOUT:       %cursor: @IntRange.as.Iterate.impl.Next.%ptr.loc11_38.1 (%ptr.41e) = wrapper_binding cursor, %cursor.param
 // CHECK:STDOUT:       %return.param: ref @IntRange.as.Iterate.impl.Next.%Optional.loc11_69.1 (%Optional.5ec) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @IntRange.as.Iterate.impl.Next.%Optional.loc11_69.1 (%Optional.5ec) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -442,7 +442,7 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:         %N.ref.loc5_27: Core.IntLiteral = name_ref N, @IntRange.%N.loc4_17.2 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:         %Int.loc5_28.2: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc5_28.1 (constants.%Int.67af24.1)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %start: @IntRange.Make.%Int.loc5_28.1 (%Int.67af24.1) = value_binding start, %start.param
+// CHECK:STDOUT:       %start: @IntRange.Make.%Int.loc5_28.1 (%Int.67af24.1) = wrapper_binding start, %start.param
 // CHECK:STDOUT:       %end.param: @IntRange.Make.%Int.loc5_28.1 (%Int.67af24.1) = value_param call_param1
 // CHECK:STDOUT:       %.loc5_46: type = splice_block %Int.loc5_46 [symbolic = %Int.loc5_28.1 (constants.%Int.67af24.1)] {
 // CHECK:STDOUT:         %Core.ref.loc5_36: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -450,7 +450,7 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:         %N.ref.loc5_45: Core.IntLiteral = name_ref N, @IntRange.%N.loc4_17.2 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:         %Int.loc5_46: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc5_28.1 (constants.%Int.67af24.1)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %end: @IntRange.Make.%Int.loc5_28.1 (%Int.67af24.1) = value_binding end, %end.param
+// CHECK:STDOUT:       %end: @IntRange.Make.%Int.loc5_28.1 (%Int.67af24.1) = wrapper_binding end, %end.param
 // CHECK:STDOUT:       %return.param: ref @IntRange.Make.%IntRange (%IntRange.2c4) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @IntRange.Make.%IntRange (%IntRange.2c4) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -698,7 +698,7 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:       %N.ref.loc12: Core.IntLiteral = name_ref N, @IntRange.%N.loc4_17.2 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:       %Int.loc12: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc11_37.1 (constants.%Int.67af24.1)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %value: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_37.1 (%Int.67af24.1) = ref_binding value, %value.var
+// CHECK:STDOUT:     %value: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_37.1 (%Int.67af24.1) = wrapper_binding value, %value.var
 // CHECK:STDOUT:     %value.ref.loc13: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_37.1 (%Int.67af24.1) = name_ref value, %value
 // CHECK:STDOUT:     %self.ref: @IntRange.as.Iterate.impl.Next.%IntRange (%IntRange.2c4) = name_ref self, %self
 // CHECK:STDOUT:     %end.ref: @IntRange.as.Iterate.impl.Next.%IntRange.elem (%IntRange.elem.bed) = name_ref end, @IntRange.%.loc23 [concrete = @IntRange.%.loc23]
@@ -1133,7 +1133,7 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %IntRange: type = class_type @IntRange, @IntRange(constants.%int_32) [concrete = constants.%IntRange.bbd]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: ref %IntRange.bbd = ref_binding x, %x.var
+// CHECK:STDOUT:     %x: ref %IntRange.bbd = wrapper_binding x, %x.var
 // CHECK:STDOUT:     %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:     return

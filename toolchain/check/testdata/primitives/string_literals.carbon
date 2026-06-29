@@ -132,7 +132,7 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:     %x.patt: %pattern_type.adf = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %str: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
-// CHECK:STDOUT:   %x: %str.3d4 = value_binding x, @__global_init.%String.val
+// CHECK:STDOUT:   %x: %str.3d4 = wrapper_binding x, @__global_init.%String.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -160,7 +160,7 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:     %x.patt: %pattern_type.adf = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %str: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
-// CHECK:STDOUT:   %x: %str.3d4 = value_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: %str.3d4 = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

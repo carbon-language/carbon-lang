@@ -118,7 +118,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %.loc25: Core.Form = init_form %i32.loc25_23 [concrete = constants.%.795]
 // CHECK:STDOUT:     %n.param.loc25: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc25_15: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n.loc25: %i32 = value_binding n, %n.param.loc25
+// CHECK:STDOUT:     %n.loc25: %i32 = wrapper_binding n, %n.param.loc25
 // CHECK:STDOUT:     %return.param.loc25: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc25: ref %i32 = return_slot %return.param.loc25
 // CHECK:STDOUT:   }
@@ -144,7 +144,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %.loc16: Core.Form = init_form %i32.loc16_19 [concrete = constants.%.795]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc16_11: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
+// CHECK:STDOUT:     %n: %i32 = wrapper_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -158,7 +158,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %.loc20: Core.Form = init_form %i32.loc20_19 [concrete = constants.%.795]
 // CHECK:STDOUT:     %n.param.loc20: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc20_11: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n.loc20: %i32 = value_binding n, %n.param.loc20
+// CHECK:STDOUT:     %n.loc20: %i32 = wrapper_binding n, %n.param.loc20
 // CHECK:STDOUT:     %return.param.loc20: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc20: ref %i32 = return_slot %return.param.loc20
 // CHECK:STDOUT:   }

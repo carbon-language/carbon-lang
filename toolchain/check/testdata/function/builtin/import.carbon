@@ -102,7 +102,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:     %.loc7_26.2: Core.Form = init_form %.loc7_26.1 [concrete = constants.%.805]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %IntLiteral.ref: type = name_ref IntLiteral, file.%IntLiteral [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %N: Core.IntLiteral = value_binding N, %N.param
+// CHECK:STDOUT:     %N: Core.IntLiteral = wrapper_binding N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -116,7 +116,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:     %.loc9_28.2: Core.Form = init_form %.loc9_28.1 [concrete = constants.%.9cb]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %IntLiteral.ref: type = name_ref IntLiteral, file.%IntLiteral [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %a: Core.IntLiteral = value_binding a, %a.param
+// CHECK:STDOUT:     %a: Core.IntLiteral = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32.builtin = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32.builtin = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -130,7 +130,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:     %.loc10_28: Core.Form = init_form %IntLiteral.ref [concrete = constants.%.f7d]
 // CHECK:STDOUT:     %a.param: %i32.builtin = value_param call_param0
 // CHECK:STDOUT:     %.loc10_20: type = type_literal constants.%i32.builtin [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:     %a: %i32.builtin = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i32.builtin = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -146,10 +146,10 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:     %.loc12_31.2: Core.Form = init_form %.loc12_31.1 [concrete = constants.%.9cb]
 // CHECK:STDOUT:     %a.param: %i32.builtin = value_param call_param0
 // CHECK:STDOUT:     %.loc12_15: type = type_literal constants.%i32.builtin [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:     %a: %i32.builtin = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i32.builtin = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32.builtin = value_param call_param1
 // CHECK:STDOUT:     %.loc12_23: type = type_literal constants.%i32.builtin [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:     %b: %i32.builtin = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %i32.builtin = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32.builtin = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32.builtin = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -245,7 +245,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:     %.loc4_81.2: Core.IntLiteral = converted %AsIntLiteral.call, %.loc4_81.1 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type: type = array_type %.loc4_81.2, %.loc4_16 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %arr: ref %array_type = ref_binding arr, %arr.var [concrete = %arr.var]
+// CHECK:STDOUT:   %arr: ref %array_type = wrapper_binding arr, %arr.var [concrete = %arr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int = "int.make_type_signed" [from "core.carbon"];

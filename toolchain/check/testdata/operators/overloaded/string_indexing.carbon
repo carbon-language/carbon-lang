@@ -167,7 +167,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %.loc5_32.3: %char = value_of_initializer %str.as.IndexWith.impl.At.call.loc5 [concrete = constants.%int_84]
 // CHECK:STDOUT:   %.loc5_32.4: %char = converted %str.as.IndexWith.impl.At.call.loc5, %.loc5_32.3 [concrete = constants.%int_84]
 // CHECK:STDOUT:   %char.loc5: type = type_literal constants.%char [concrete = constants.%char]
-// CHECK:STDOUT:   %c: %char = value_binding c, %.loc5_32.4
+// CHECK:STDOUT:   %c: %char = wrapper_binding c, %.loc5_32.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.2ff = value_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:   }
@@ -187,7 +187,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %.loc6_32.3: %char = value_of_initializer %str.as.IndexWith.impl.At.call.loc6 [concrete = constants.%int_116]
 // CHECK:STDOUT:   %.loc6_32.4: %char = converted %str.as.IndexWith.impl.At.call.loc6, %.loc6_32.3 [concrete = constants.%int_116]
 // CHECK:STDOUT:   %char.loc6: type = type_literal constants.%char [concrete = constants.%char]
-// CHECK:STDOUT:   %d: %char = value_binding d, %.loc6_32.4
+// CHECK:STDOUT:   %d: %char = wrapper_binding d, %.loc6_32.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

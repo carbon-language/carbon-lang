@@ -197,7 +197,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc20: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %c: %C = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %C = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -328,7 +328,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.loc21_28.1: ref %i32 = class_element_access %.loc21_27.2, element0
 // CHECK:STDOUT:   %.loc21_28.2: %i32 = acquire_value %.loc21_28.1
 // CHECK:STDOUT:   %i32.loc21: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: %i32 = value_binding a, %.loc21_28.2
+// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %.loc21_28.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.6b6 = var_pattern %b.patt [concrete = constants.%b.var_patt]
@@ -351,7 +351,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc22_28.2(%.loc22_28.2)
 // CHECK:STDOUT:   assign %b.var, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %b: ref %i32 = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %i32 = wrapper_binding b, %b.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc22_27: <bound method> = bound_method %.loc22_27.2, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc22_27: init %empty_tuple.type = call %Destroy.Op.bound.loc22_27(%.loc22_27.2)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc22_3: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.2
@@ -556,10 +556,10 @@ class X(U:! type) {
 // CHECK:STDOUT:         %Self.as_type.loc5_8.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:         %.loc5_8.3: type = converted %Self.ref, %Self.as_type.loc5_8.2 [symbolic = %Self.as_type.loc5_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @I.WithSelf.F.%Self.as_type.loc5_8.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @I.WithSelf.F.%Self.as_type.loc5_8.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @I.WithSelf.F.%T (%T) = value_param call_param1
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @I.%T.loc4_14.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %t: @I.WithSelf.F.%T (%T) = value_binding t, %t.param
+// CHECK:STDOUT:       %t: @I.WithSelf.F.%T (%T) = wrapper_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc5_19.1: @I.WithSelf.%I.assoc_type (%I.assoc_type.b71f2b.1) = assoc_entity element0, %I.WithSelf.F.decl [symbolic = %assoc0.loc5_19.2 (constants.%assoc0.13b5f8.1)]
 // CHECK:STDOUT:
@@ -598,10 +598,10 @@ class X(U:! type) {
 // CHECK:STDOUT:         %.loc10_17.2: type = specific_constant constants.%X, @X(constants.%U) [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_17.2 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @X.as.I.impl.F.%X (%X) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @X.as.I.impl.F.%X (%X) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @X.as.I.impl.F.%U (%U) = value_param call_param1
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @X.%U.loc8_10.2 [symbolic = %U (constants.%U)]
-// CHECK:STDOUT:       %t: @X.as.I.impl.F.%U (%U) = value_binding t, %t.param
+// CHECK:STDOUT:       %t: @X.as.I.impl.F.%U (%U) = wrapper_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (%X.as.I.impl.F.decl), @X.as.I.impl [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc9_23.1: <witness> = impl_witness %I.impl_witness_table, @X.as.I.impl(constants.%U) [symbolic = %I.impl_witness.loc9_23.2 (constants.%I.impl_witness)]

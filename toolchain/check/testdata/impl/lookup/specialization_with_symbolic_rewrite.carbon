@@ -258,7 +258,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:       %T.as_type.loc13_19.2: type = facet_access_type %T.ref.loc13 [symbolic = %T.as_type.loc13_19.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc13_19.2: type = converted %T.ref.loc13, %T.as_type.loc13_19.2 [symbolic = %T.as_type.loc13_19.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: @F.%T.as_type.loc13_19.1 (%T.as_type) = value_binding t, %t.param
+// CHECK:STDOUT:     %t: @F.%T.as_type.loc13_19.1 (%T.as_type) = wrapper_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -373,7 +373,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:       %X.ref: %Z.assoc_type.f4d = name_ref X, %.loc15_18.3 [concrete = constants.%assoc0.169]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%Z.impl_witness.597, element0 [symbolic = %T.as_type.loc13_19.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%T.as_type.loc13_19.1 (%T.as_type) = value_binding a, %t.ref
+// CHECK:STDOUT:     %a: @F.%T.as_type.loc13_19.1 (%T.as_type) = wrapper_binding a, %t.ref
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -680,7 +680,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:       %T.as_type.loc14_19.2: type = facet_access_type %T.ref.loc14 [symbolic = %T.as_type.loc14_19.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc14_19.2: type = converted %T.ref.loc14, %T.as_type.loc14_19.2 [symbolic = %T.as_type.loc14_19.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: @F.%T.as_type.loc14_19.1 (%T.as_type) = value_binding t, %t.param
+// CHECK:STDOUT:     %t: @F.%T.as_type.loc14_19.1 (%T.as_type) = wrapper_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -817,7 +817,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:       %X.ref: %Z.assoc_type.f4d = name_ref X, %.loc22_18.3 [concrete = constants.%assoc0.169]
 // CHECK:STDOUT:       %impl.elem0.loc22_18.1: type = impl_witness_access constants.%Z.lookup_impl_witness.89c, element0 [symbolic = %impl.elem0.loc22_18.2 (constants.%impl.elem0.aab)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%impl.elem0.loc22_18.2 (%impl.elem0.aab) = value_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:     %a: @F.%impl.elem0.loc22_18.2 (%impl.elem0.aab) = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1042,7 +1042,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %T.loc9_7.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_7.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %t.param: ref @F.%T.loc9_7.1 (%T.67d) = ref_param call_param0
 // CHECK:STDOUT:     %T.ref.loc9_23: type = name_ref T, %T.loc9_7.2 [symbolic = %T.loc9_7.1 (constants.%T.67d)]
-// CHECK:STDOUT:     %t: ref @F.%T.loc9_7.1 (%T.67d) = ref_binding t, %t.param
+// CHECK:STDOUT:     %t: ref @F.%T.loc9_7.1 (%T.67d) = wrapper_binding t, %t.param
 // CHECK:STDOUT:     %return.param: ref @F.%ptr (%ptr.e8f8f9.2) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%ptr (%ptr.e8f8f9.2) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1295,7 +1295,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:       %T.as_type.loc9_22.2: type = facet_access_type %T.ref.loc9_22 [symbolic = %T.as_type.loc9_22.1 (constants.%T.as_type.468)]
 // CHECK:STDOUT:       %.loc9_22.2: type = converted %T.ref.loc9_22, %T.as_type.loc9_22.2 [symbolic = %T.as_type.loc9_22.1 (constants.%T.as_type.468)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: ref @F.%T.as_type.loc9_22.1 (%T.as_type.468) = ref_binding t, %t.param
+// CHECK:STDOUT:     %t: ref @F.%T.as_type.loc9_22.1 (%T.as_type.468) = wrapper_binding t, %t.param
 // CHECK:STDOUT:     %return.param: ref @F.%ptr (%ptr.ac4) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%ptr (%ptr.ac4) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1545,7 +1545,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:       %T.as_type.loc9_22.2: type = facet_access_type %T.ref.loc9_22 [symbolic = %T.as_type.loc9_22.1 (constants.%T.as_type.468)]
 // CHECK:STDOUT:       %.loc9_22.2: type = converted %T.ref.loc9_22, %T.as_type.loc9_22.2 [symbolic = %T.as_type.loc9_22.1 (constants.%T.as_type.468)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: ref @F.%T.as_type.loc9_22.1 (%T.as_type.468) = ref_binding t, %t.param
+// CHECK:STDOUT:     %t: ref @F.%T.as_type.loc9_22.1 (%T.as_type.468) = wrapper_binding t, %t.param
 // CHECK:STDOUT:     %return.param: ref @F.%ptr (%ptr.ac4) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%ptr (%ptr.ac4) = return_slot %return.param
 // CHECK:STDOUT:   }

@@ -84,7 +84,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:       %ptr.loc5_29.2: type = ptr_type %T.ref.loc5_28 [template = %ptr.loc5_29.1 (constants.%ptr.e8f8f9.1)]
 // CHECK:STDOUT:       %ptr.loc5_30.2: type = ptr_type %ptr.loc5_29.2 [template = %ptr.loc5_30.1 (constants.%ptr.125)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @F.%ptr.loc5_30.1 (%ptr.125) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @F.%ptr.loc5_30.1 (%ptr.125) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @F.%ptr.loc5_29.1 (%ptr.e8f8f9.1) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%ptr.loc5_29.1 (%ptr.e8f8f9.1) = return_slot %return.param
 // CHECK:STDOUT:   }

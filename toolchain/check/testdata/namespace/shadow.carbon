@@ -159,7 +159,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %.loc26: init %i32 = converted %int_0.loc26, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc26 [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   assign %A.var, %.loc26
 // CHECK:STDOUT:   %i32.loc26: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %A: ref %i32 = ref_binding A, %A.var
+// CHECK:STDOUT:   %A: ref %i32 = wrapper_binding A, %A.var
 // CHECK:STDOUT:   %A.ref.loc29: ref %i32 = name_ref A, %A
 // CHECK:STDOUT:   %.loc29: %i32 = acquire_value %A.ref.loc29
 // CHECK:STDOUT:   %impl.elem0.loc29: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

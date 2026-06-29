@@ -1466,20 +1466,6 @@ struct PointerType {
   TypeInstId pointee_id;
 };
 
-// Binds a name as a reference expression, such as `x` in `var x: i32`.
-// See AnyBinding for member documentation.
-struct RefBinding {
-  // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::RefBinding.Define<Parse::NodeId>(
-      {.ir_name = "ref_binding",
-       .expr_category = ExprCategory::DurableRef,
-       .constant_kind = InstConstantKind::Indirect});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
-  InstId value_id;
-};
-
 // An action that performs type refinement for an instruction, by creating an
 // instruction that converts from a template symbolic type to a concrete type.
 struct RefineTypeAction {
@@ -2208,19 +2194,6 @@ struct ValueAsRef {
   InstId value_id;
 };
 
-// Binds a name as a value expression, such as `x` in `let x: i32`. See
-// AnyBinding for member documentation.
-struct ValueBinding {
-  // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::ValueBinding.Define<Parse::NodeId>(
-      {.ir_name = "value_binding",
-       .constant_kind = InstConstantKind::Indirect});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
-  InstId value_id;
-};
-
 // Represents a value binding pattern that is not a parameter. See
 // `AnyBindingPattern` for member documentation.
 struct ValueBindingPattern {
@@ -2415,12 +2388,11 @@ using WitnessType = SingletonTypeInst<InstKind::WitnessType, "<witness>">;
 // Binds a name to a result (which must not be an initializing expression),
 // forwarding its type and category. See `AnyBinding` for member documentation.
 //
-// TODO: replace RefBinding and ValueBinding (and possibly SymbolicBinding) with
-// WrapperBinding.
+// TODO: replace SymbolicBinding with WrapperBinding.
 struct WrapperBinding {
   static constexpr auto Kind = InstKind::WrapperBinding.Define<Parse::NodeId>(
       {.ir_name = "wrapper_binding",
-       .expr_category = ComputedExprCategory::SameAsSecondOperand});
+       .expr_category = ComputedExprCategory::DependsOnOperands});
   TypeId type_id;
   EntityNameId entity_name_id;
   InstId value_id;

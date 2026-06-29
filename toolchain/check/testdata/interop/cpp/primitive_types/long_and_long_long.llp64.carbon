@@ -796,13 +796,13 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %long_long.ref.loc8: type = name_ref long_long, %i64.2 [concrete = constants.%i64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_long_long: %i64 = value_binding cpp_long_long, %.loc8_38.2
+// CHECK:STDOUT:   %cpp_long_long: %i64 = wrapper_binding cpp_long_long, %.loc8_38.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_long_long.patt: %pattern_type.f57 = value_binding_pattern carbon_long_long [concrete = constants.%carbon_long_long.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_long_long.ref: %i64 = name_ref cpp_long_long, %cpp_long_long
 // CHECK:STDOUT:   %i64.loc9: type = type_literal constants.%i64 [concrete = constants.%i64]
-// CHECK:STDOUT:   %carbon_long_long: %i64 = value_binding carbon_long_long, %cpp_long_long.ref
+// CHECK:STDOUT:   %carbon_long_long: %i64 = wrapper_binding carbon_long_long, %cpp_long_long.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.18b = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.18b = var_pattern %a.patt [concrete = constants.%a.var_patt]
@@ -843,7 +843,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %.loc11_30.4: Core.IntLiteral = converted %.loc11_30.2, %.loc11_30.3 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type: type = array_type %.loc11_30.4, %f32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>
@@ -973,13 +973,13 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %unsigned_long_long.ref.loc8: type = name_ref unsigned_long_long, %u64.2 [concrete = constants.%u64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_long_long: %u64 = value_binding cpp_unsigned_long_long, %.loc8_56.2
+// CHECK:STDOUT:   %cpp_unsigned_long_long: %u64 = wrapper_binding cpp_unsigned_long_long, %.loc8_56.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_unsigned_long_long.patt: %pattern_type.b35 = value_binding_pattern carbon_unsigned_long_long [concrete = constants.%carbon_unsigned_long_long.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_unsigned_long_long.ref: %u64 = name_ref cpp_unsigned_long_long, %cpp_unsigned_long_long
 // CHECK:STDOUT:   %u64.loc9: type = type_literal constants.%u64 [concrete = constants.%u64]
-// CHECK:STDOUT:   %carbon_unsigned_long_long: %u64 = value_binding carbon_unsigned_long_long, %cpp_unsigned_long_long.ref
+// CHECK:STDOUT:   %carbon_unsigned_long_long: %u64 = wrapper_binding carbon_unsigned_long_long, %cpp_unsigned_long_long.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.18b = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.18b = var_pattern %a.patt [concrete = constants.%a.var_patt]
@@ -1020,7 +1020,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %.loc11_30.4: Core.IntLiteral = converted %.loc11_30.2, %.loc11_30.3 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type: type = array_type %.loc11_30.4, %f32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>
@@ -1214,7 +1214,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc15: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_long: %Cpp.long = value_binding cpp_long, %.loc15_28.2
+// CHECK:STDOUT:   %cpp_long: %Cpp.long = wrapper_binding cpp_long, %.loc15_28.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_long_result.patt: %pattern_type.142c0 = value_binding_pattern cpp_long_result [concrete = constants.%cpp_long_result.patt]
 // CHECK:STDOUT:   }
@@ -1231,7 +1231,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc16_31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %LongResult.ref.loc16: type = name_ref LongResult, imports.%LongResult.decl [concrete = constants.%LongResult]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_long_result: %LongResult = value_binding cpp_long_result, %.loc16_69.4
+// CHECK:STDOUT:   %cpp_long_result: %LongResult = wrapper_binding cpp_long_result, %.loc16_69.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_compat_long.patt: %pattern_type.25e = value_binding_pattern cpp_compat_long [concrete = constants.%cpp_compat_long.patt]
 // CHECK:STDOUT:   }
@@ -1241,7 +1241,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %CppCompat.ref: <namespace> = name_ref CppCompat, imports.%CppCompat.f0dbf9.1 [concrete = imports.%CppCompat.f0dbf9.1]
 // CHECK:STDOUT:     %Long32.ref: type = name_ref Long32, imports.%Core.Long32 [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_compat_long: %Cpp.long = value_binding cpp_compat_long, %cpp_long.ref.loc18
+// CHECK:STDOUT:   %cpp_compat_long: %Cpp.long = wrapper_binding cpp_compat_long, %cpp_long.ref.loc18
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_compat_long_result.patt: %pattern_type.142c0 = value_binding_pattern cpp_compat_long_result [concrete = constants.%cpp_compat_long_result.patt]
 // CHECK:STDOUT:   }
@@ -1258,7 +1258,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc19_38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %LongResult.ref.loc19: type = name_ref LongResult, imports.%LongResult.decl [concrete = constants.%LongResult]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_compat_long_result: %LongResult = value_binding cpp_compat_long_result, %.loc19_83.4
+// CHECK:STDOUT:   %cpp_compat_long_result: %LongResult = wrapper_binding cpp_compat_long_result, %.loc19_83.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_i32.patt: %pattern_type.6b6 = value_binding_pattern carbon_i32 [concrete = constants.%carbon_i32.patt]
 // CHECK:STDOUT:   }
@@ -1267,7 +1267,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.loc21_34.1: %i32 = as_compatible %cpp_long.ref.loc21
 // CHECK:STDOUT:   %.loc21_34.2: %i32 = converted %cpp_long.ref.loc21, %.loc21_34.1
 // CHECK:STDOUT:   %i32.loc21_19: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %carbon_i32: %i32 = value_binding carbon_i32, %.loc21_34.2
+// CHECK:STDOUT:   %carbon_i32: %i32 = wrapper_binding carbon_i32, %.loc21_34.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_i32_result.patt: %pattern_type.596 = value_binding_pattern carbon_i32_result [concrete = constants.%carbon_i32_result.patt]
 // CHECK:STDOUT:   }
@@ -1284,7 +1284,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc22_33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %IntResult.ref: type = name_ref IntResult, imports.%IntResult.decl [concrete = constants.%IntResult]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_i32_result: %IntResult = value_binding carbon_i32_result, %.loc22_72.4
+// CHECK:STDOUT:   %carbon_i32_result: %IntResult = wrapper_binding carbon_i32_result, %.loc22_72.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_i64.patt: %pattern_type.f57 = value_binding_pattern carbon_i64 [concrete = constants.%carbon_i64.patt]
 // CHECK:STDOUT:   }
@@ -1295,7 +1295,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.loc24_32.1: %i64 = value_of_initializer %Cpp.long.as.ImplicitAs.impl.Convert.call.loc24
 // CHECK:STDOUT:   %.loc24_32.2: %i64 = converted %cpp_long.ref.loc24, %.loc24_32.1
 // CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
-// CHECK:STDOUT:   %carbon_i64: %i64 = value_binding carbon_i64, %.loc24_32.2
+// CHECK:STDOUT:   %carbon_i64: %i64 = wrapper_binding carbon_i64, %.loc24_32.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.18b = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.18b = var_pattern %a.patt [concrete = constants.%a.var_patt]
@@ -1332,7 +1332,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %.loc26_30.4: Core.IntLiteral = converted %.loc26_30.2, %.loc26_30.3 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type: type = array_type %.loc26_30.4, %f32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   %IntResult.cpp_destructor.bound: <bound method> = bound_method %.loc22_72.3, constants.%IntResult.cpp_destructor
@@ -1418,7 +1418,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc8: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %Cpp.long = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Cpp.long = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.25e = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.25e = var_pattern %b.patt [concrete = constants.%b.var_patt]
@@ -1434,7 +1434,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc9: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %Cpp.long = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %Cpp.long = wrapper_binding b, %b.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc9: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc9: init %empty_tuple.type = call %Destroy.Op.bound.loc9(%b.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc8: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
@@ -1535,7 +1535,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc8: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %Cpp.long = value_binding a, %.loc8_21.2
+// CHECK:STDOUT:   %a: %Cpp.long = wrapper_binding a, %.loc8_21.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.25e = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
@@ -1549,7 +1549,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc9: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %Cpp.long = value_binding b, %.loc9_21.2
+// CHECK:STDOUT:   %b: %Cpp.long = wrapper_binding b, %.loc9_21.2
 // CHECK:STDOUT:   %a.ref.loc10: %Cpp.long = name_ref a, %a
 // CHECK:STDOUT:   %b.ref.loc10: %Cpp.long = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc10: %.b25 = impl_witness_access constants.%EqWith.impl_witness.cd4, element0 [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.1ca]
@@ -1783,7 +1783,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %Cpp.long = value_binding a, %.loc9_21.2
+// CHECK:STDOUT:   %a: %Cpp.long = wrapper_binding a, %.loc9_21.2
 // CHECK:STDOUT:   %a.ref.loc10: %Cpp.long = name_ref a, %a
 // CHECK:STDOUT:   %b.ref.loc10: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc10_5: %.ad3 = impl_witness_access constants.%EqWith.impl_witness.f8a, element0 [concrete = constants.%Cpp.long.as.EqWith.impl.Equal.1a881e.2]
@@ -2261,7 +2261,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %Cpp.long = value_binding a, %.loc9_21.2
+// CHECK:STDOUT:   %a: %Cpp.long = wrapper_binding a, %.loc9_21.2
 // CHECK:STDOUT:   %b.ref.loc10: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %a.ref.loc10: %Cpp.long = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem0.loc10_5: %.a04 = impl_witness_access constants.%EqWith.impl_witness.95d, element0 [concrete = constants.%T.as_type.as.EqWith.impl.Equal.f0911b.2]
@@ -2626,7 +2626,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc8: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %Cpp.long = value_binding x, %.loc8_21.2
+// CHECK:STDOUT:   %x: %Cpp.long = wrapper_binding x, %.loc8_21.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.25e = value_binding_pattern y [concrete = constants.%y.patt]
 // CHECK:STDOUT:   }
@@ -2640,7 +2640,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc9: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: %Cpp.long = value_binding y, %.loc9_21.2
+// CHECK:STDOUT:   %y: %Cpp.long = wrapper_binding y, %.loc9_21.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.25e = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
@@ -2654,7 +2654,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc11: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %Cpp.long = value_binding a, %.loc11_28.2
+// CHECK:STDOUT:   %a: %Cpp.long = wrapper_binding a, %.loc11_28.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.25e = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
@@ -2669,7 +2669,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc12: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %Cpp.long = value_binding b, %.loc12_30.2
+// CHECK:STDOUT:   %b: %Cpp.long = wrapper_binding b, %.loc12_30.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.25e = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
@@ -2684,7 +2684,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc13: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %Cpp.long = value_binding c, %.loc13_30.2
+// CHECK:STDOUT:   %c: %Cpp.long = wrapper_binding c, %.loc13_30.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.25e = value_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:   }
@@ -2699,7 +2699,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc14: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: %Cpp.long = value_binding d, %.loc14_30.2
+// CHECK:STDOUT:   %d: %Cpp.long = wrapper_binding d, %.loc14_30.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.25e = value_binding_pattern e [concrete = constants.%e.patt]
 // CHECK:STDOUT:   }
@@ -2714,7 +2714,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc15: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e: %Cpp.long = value_binding e, %.loc15_30.2
+// CHECK:STDOUT:   %e: %Cpp.long = wrapper_binding e, %.loc15_30.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.25e = value_binding_pattern f [concrete = constants.%f.patt]
 // CHECK:STDOUT:   }
@@ -2729,7 +2729,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc16: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: %Cpp.long = value_binding f, %.loc16_30.2
+// CHECK:STDOUT:   %f: %Cpp.long = wrapper_binding f, %.loc16_30.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2981,7 +2981,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc8: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %Cpp.long = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Cpp.long = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.25e = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.25e = var_pattern %b.patt [concrete = constants.%b.var_patt]
@@ -2997,7 +2997,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc9: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %Cpp.long = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %Cpp.long = wrapper_binding b, %b.var
 // CHECK:STDOUT:   %a.ref.loc11: ref %Cpp.long = name_ref a, %a
 // CHECK:STDOUT:   %b.ref.loc11: ref %Cpp.long = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc11: %.705 = impl_witness_access constants.%AddAssignWith.impl_witness.515, element0 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.3976e1.2]
@@ -3428,7 +3428,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %Cpp.long = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Cpp.long = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc10: ref %Cpp.long = name_ref a, %a
 // CHECK:STDOUT:   %b.ref.loc10: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc10_5: %.68d = impl_witness_access constants.%AddAssignWith.impl_witness.b48, element0 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.d3c936.2]
@@ -3726,7 +3726,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %Cpp.long = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Cpp.long = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %Cpp.long = name_ref a, %a
 // CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc9_5: %.f86 = impl_witness_access constants.%AddAssignWith.impl_witness.e58, element0 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.2303e0.2]
@@ -3861,7 +3861,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %Cpp.long = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Cpp.long = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
@@ -3874,7 +3874,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.loc9_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %.loc9_16.2: %i32 = converted %int_1.loc9, %.loc9_16.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %b: %i32 = value_binding b, %.loc9_16.2
+// CHECK:STDOUT:   %b: %i32 = wrapper_binding b, %.loc9_16.2
 // CHECK:STDOUT:   %a.ref: ref %Cpp.long = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0.loc10_5: %.68d = impl_witness_access constants.%AddAssignWith.impl_witness.b48, element0 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op.d3c936.2]
@@ -3982,7 +3982,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %Cpp.long = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Cpp.long = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc9: ref %Cpp.long = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem0.loc9: %.466 = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%Cpp.long.as.Inc.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %a.ref.loc9, %impl.elem0.loc9
@@ -4187,7 +4187,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %unsigned_long.ref.loc15: type = name_ref unsigned_long, constants.%Cpp.unsigned_long [concrete = constants.%Cpp.unsigned_long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_long: %Cpp.unsigned_long = value_binding cpp_unsigned_long, %.loc15_46.2
+// CHECK:STDOUT:   %cpp_unsigned_long: %Cpp.unsigned_long = wrapper_binding cpp_unsigned_long, %.loc15_46.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_unsigned_long_result.patt: %pattern_type.f8a = value_binding_pattern cpp_unsigned_long_result [concrete = constants.%cpp_unsigned_long_result.patt]
 // CHECK:STDOUT:   }
@@ -4204,7 +4204,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc16_40: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ULongResult.ref.loc16: type = name_ref ULongResult, imports.%ULongResult.decl [concrete = constants.%ULongResult]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_long_result: %ULongResult = value_binding cpp_unsigned_long_result, %.loc16_89.4
+// CHECK:STDOUT:   %cpp_unsigned_long_result: %ULongResult = wrapper_binding cpp_unsigned_long_result, %.loc16_89.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_compat_ulong.patt: %pattern_type.1a0 = value_binding_pattern cpp_compat_ulong [concrete = constants.%cpp_compat_ulong.patt]
 // CHECK:STDOUT:   }
@@ -4214,7 +4214,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %CppCompat.ref: <namespace> = name_ref CppCompat, imports.%CppCompat.f0dbf9.1 [concrete = imports.%CppCompat.f0dbf9.1]
 // CHECK:STDOUT:     %ULong32.ref: type = name_ref ULong32, imports.%Core.ULong32 [concrete = constants.%Cpp.unsigned_long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_compat_ulong: %Cpp.unsigned_long = value_binding cpp_compat_ulong, %cpp_unsigned_long.ref.loc18
+// CHECK:STDOUT:   %cpp_compat_ulong: %Cpp.unsigned_long = wrapper_binding cpp_compat_ulong, %cpp_unsigned_long.ref.loc18
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_compat_ulong_result.patt: %pattern_type.f8a = value_binding_pattern cpp_compat_ulong_result [concrete = constants.%cpp_compat_ulong_result.patt]
 // CHECK:STDOUT:   }
@@ -4231,7 +4231,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc19_39: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ULongResult.ref.loc19: type = name_ref ULongResult, imports.%ULongResult.decl [concrete = constants.%ULongResult]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_compat_ulong_result: %ULongResult = value_binding cpp_compat_ulong_result, %.loc19_87.4
+// CHECK:STDOUT:   %cpp_compat_ulong_result: %ULongResult = wrapper_binding cpp_compat_ulong_result, %.loc19_87.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_u32.patt: %pattern_type.668 = value_binding_pattern carbon_u32 [concrete = constants.%carbon_u32.patt]
 // CHECK:STDOUT:   }
@@ -4244,7 +4244,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.loc21_25.1: %u32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21 [concrete = constants.%int_1.92d]
 // CHECK:STDOUT:   %.loc21_25.2: %u32 = converted %int_1.loc21, %.loc21_25.1 [concrete = constants.%int_1.92d]
 // CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %carbon_u32: %u32 = value_binding carbon_u32, %.loc21_25.2
+// CHECK:STDOUT:   %carbon_u32: %u32 = wrapper_binding carbon_u32, %.loc21_25.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_u32_result.patt: %pattern_type.116 = value_binding_pattern carbon_u32_result [concrete = constants.%carbon_u32_result.patt]
 // CHECK:STDOUT:   }
@@ -4261,7 +4261,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc22_33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %UIntResult.ref: type = name_ref UIntResult, imports.%UIntResult.decl [concrete = constants.%UIntResult]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_u32_result: %UIntResult = value_binding carbon_u32_result, %.loc22_74.4
+// CHECK:STDOUT:   %carbon_u32_result: %UIntResult = wrapper_binding carbon_u32_result, %.loc22_74.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.18b = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.18b = var_pattern %a.patt [concrete = constants.%a.var_patt]
@@ -4298,7 +4298,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %.loc24_30.4: Core.IntLiteral = converted %.loc24_30.2, %.loc24_30.3 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type: type = array_type %.loc24_30.4, %f32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   %UIntResult.cpp_destructor.bound: <bound method> = bound_method %.loc22_74.3, constants.%UIntResult.cpp_destructor
@@ -4384,7 +4384,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %unsigned_long.ref.loc8: type = name_ref unsigned_long, constants.%Cpp.unsigned_long [concrete = constants.%Cpp.unsigned_long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %Cpp.unsigned_long = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Cpp.unsigned_long = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.1a0 = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.1a0 = var_pattern %b.patt [concrete = constants.%b.var_patt]
@@ -4400,7 +4400,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %unsigned_long.ref.loc9: type = name_ref unsigned_long, constants.%Cpp.unsigned_long [concrete = constants.%Cpp.unsigned_long]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %Cpp.unsigned_long = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %Cpp.unsigned_long = wrapper_binding b, %b.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc9: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc9: init %empty_tuple.type = call %Destroy.Op.bound.loc9(%b.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc8: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3

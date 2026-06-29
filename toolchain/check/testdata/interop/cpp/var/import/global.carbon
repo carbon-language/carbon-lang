@@ -153,7 +153,7 @@ fn MyF() {
 // CHECK:STDOUT:     %Cpp.ref.loc7_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %local: %C = value_binding local, %.loc7_32
+// CHECK:STDOUT:   %local: %C = wrapper_binding local, %.loc7_32
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %local_ptr.patt: %pattern_type.8fa = value_binding_pattern local_ptr [concrete = constants.%local_ptr.patt]
 // CHECK:STDOUT:   }
@@ -165,7 +165,7 @@ fn MyF() {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc8: type = ptr_type %C.ref.loc8 [concrete = constants.%ptr.0a2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %local_ptr: %ptr.0a2 = value_binding local_ptr, %.loc8_37
+// CHECK:STDOUT:   %local_ptr: %ptr.0a2 = wrapper_binding local_ptr, %.loc8_37
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %local_ref.patt: %pattern_type.8fa = value_binding_pattern local_ref [concrete = constants.%local_ref.patt]
 // CHECK:STDOUT:   }
@@ -180,7 +180,7 @@ fn MyF() {
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %C.ref.loc9 [concrete = constants.%ptr.0a2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %local_ref: %ptr.0a2 = value_binding local_ref, %.loc9_37.3
+// CHECK:STDOUT:   %local_ref: %ptr.0a2 = wrapper_binding local_ref, %.loc9_37.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -227,7 +227,7 @@ fn MyF() {
 // CHECK:STDOUT:     %Cpp.ref.loc22_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %UnusupportedType.ref: <error> = name_ref UnusupportedType, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %local: <error> = value_binding local, <error> [concrete = <error>]
+// CHECK:STDOUT:   %local: <error> = wrapper_binding local, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

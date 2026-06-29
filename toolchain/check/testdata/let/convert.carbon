@@ -78,7 +78,7 @@ fn G() {
 // CHECK:STDOUT:     %.loc8_24.2: %tuple.type.ff9 = tuple_literal (%i32.loc8_11, %i32.loc8_16, %i32.loc8_21) [concrete = constants.%tuple.04d]
 // CHECK:STDOUT:     %.loc8_24.3: type = converted %.loc8_24.2, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: %tuple.type.555 = value_binding w, %.loc8_28.4
+// CHECK:STDOUT:   %w: %tuple.type.555 = wrapper_binding w, %.loc8_28.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

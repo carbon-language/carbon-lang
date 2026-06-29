@@ -177,7 +177,7 @@ impl i32 as I {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.37e)]
 // CHECK:STDOUT:       %C.loc21_17.2: type = class_type @C, @C(constants.%I.type, constants.%Self.37e) [symbolic = %C.loc21_17.1 (constants.%C.a21)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: @I.WithSelf.F.%C.loc21_17.1 (%C.a21) = value_binding c, %c.param
+// CHECK:STDOUT:     %c: @I.WithSelf.F.%C.loc21_17.1 (%C.a21) = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.F.decl [concrete = constants.%assoc0.6c9]
 // CHECK:STDOUT:
@@ -206,7 +206,7 @@ impl i32 as I {
 // CHECK:STDOUT:       %.loc28_18: %I.type = converted %.loc28_13, %I.facet [concrete = constants.%I.facet.11c]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%I.type, constants.%I.facet.11c) [concrete = constants.%C.071]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %C.071 = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %C.071 = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%bool.as.I.impl.F.decl), @bool.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.020]
@@ -230,14 +230,14 @@ impl i32 as I {
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(type, constants.%i32) [concrete = constants.%C.8dc]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %C.8dc = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %C.8dc = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i32.as.I.impl.F.decl.loc39_18.2: %i32.as.I.impl.F.type.48cdab.2 = fn_decl @i32.as.I.impl.F.loc39_18.2 [concrete = constants.%i32.as.I.impl.F.bd5be1.2] {
 // CHECK:STDOUT:     %.1: %pattern_type.b7c = specific_constant constants.%c.param_patt.fb1, @I.WithSelf.F(constants.%I.facet.858) [concrete = constants.%c.param_patt.fb1]
 // CHECK:STDOUT:     %c.patt: %pattern_type.b7c = at_binding_pattern c, %.1 [concrete = constants.%c.patt.d03]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C.efa = value_param call_param0
-// CHECK:STDOUT:     %c: %C.efa = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %C.efa = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%i32.as.I.impl.F.decl.loc39_18.2), @i32.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.903]

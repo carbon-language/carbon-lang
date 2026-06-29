@@ -174,7 +174,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:       %.loc22_18.2: type = converted %T.ref, %T.as_type.loc22_18.1 [symbolic = %T.as_type.loc22_18.2 (constants.%T.as_type.22c)]
 // CHECK:STDOUT:       %ptr.loc22_18.1: type = ptr_type %.loc22_18.2 [symbolic = %ptr.loc22_18.2 (constants.%ptr)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: ref @F.%ptr.loc22_18.2 (%ptr) = ref_binding x, %x.var
+// CHECK:STDOUT:     %x: ref @F.%ptr.loc22_18.2 (%ptr) = wrapper_binding x, %x.var
 // CHECK:STDOUT:     %impl.elem0.loc22_3.1: @F.%.loc22_3.3 (%.0f5) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc22_3.2 (constants.%impl.elem0.584)]
 // CHECK:STDOUT:     %bound_method.loc22_3.1: <bound method> = bound_method %x.var, %impl.elem0.loc22_3.1
 // CHECK:STDOUT:     %Destroy.facet.loc22_3.1: %Destroy.type = facet_value constants.%ptr, (constants.%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc22_3.3 (constants.%Destroy.facet)]

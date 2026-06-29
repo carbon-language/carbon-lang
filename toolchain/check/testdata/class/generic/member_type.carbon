@@ -232,7 +232,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:         %T.as_type.loc9_11.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc9_11.1 (constants.%T.as_type)]
 // CHECK:STDOUT:         %.loc9_11.2: type = converted %T.ref, %T.as_type.loc9_11.2 [symbolic = %T.as_type.loc9_11.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %n: @Outer.F.%T.as_type.loc9_11.1 (%T.as_type) = value_binding n, %n.param
+// CHECK:STDOUT:       %n: @Outer.F.%T.as_type.loc9_11.1 (%T.as_type) = wrapper_binding n, %n.param
 // CHECK:STDOUT:       %return.param: ref @Outer.F.%Inner (%Inner.06b) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Outer.F.%Inner (%Inner.06b) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -351,7 +351,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %.loc13_20.2: type = specific_constant @Outer.%Inner.decl, @Outer(constants.%Copy.facet.987) [concrete = constants.%Inner.096]
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, %.loc13_20.2 [concrete = constants.%Inner.096]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %Inner.096 = ref_binding c, %c.var
+// CHECK:STDOUT:   %c: ref %Inner.096 = wrapper_binding c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %Inner.096 = name_ref c, %c
 // CHECK:STDOUT:   %n.ref: %Inner.elem.362 = name_ref n, @Inner.%.loc6 [concrete = @Inner.%.loc6]
 // CHECK:STDOUT:   %.loc14_11.1: ref %i32 = class_element_access %c.ref, element0
@@ -632,7 +632,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:         %Self.as_type.loc6_10.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc6_10.1 (constants.%Self.as_type.abe)]
 // CHECK:STDOUT:         %.loc6_10.3: type = converted %Self.ref, %Self.as_type.loc6_10.2 [symbolic = %Self.as_type.loc6_10.1 (constants.%Self.as_type.abe)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Inner.WithSelf.F.%Self.as_type.loc6_10.1 (%Self.as_type.abe) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @Inner.WithSelf.F.%Self.as_type.loc6_10.1 (%Self.as_type.abe) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @Inner.WithSelf.F.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Inner.WithSelf.F.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -677,7 +677,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:         %.loc11_18.2: type = specific_constant @Outer.%C.decl, @Outer(constants.%T) [symbolic = %C (constants.%C.7d7)]
 // CHECK:STDOUT:         %C.ref: type = name_ref C, %.loc11_18.2 [symbolic = %C (constants.%C.7d7)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @C.as.Inner.impl.F.%C (%C.7d7) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @C.as.Inner.impl.F.%C (%C.7d7) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @C.as.Inner.impl.F.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @C.as.Inner.impl.F.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -705,7 +705,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %.loc18: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %self: %D = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %D = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -858,7 +858,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %.loc23_20.2: type = specific_constant @Outer.%C.decl, @Outer(constants.%i32) [concrete = constants.%C.b7f]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %.loc23_20.2 [concrete = constants.%C.b7f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C.b7f = ref_binding c, %c.var
+// CHECK:STDOUT:   %c: ref %C.b7f = wrapper_binding c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %C.b7f = name_ref c, %c
 // CHECK:STDOUT:   %Outer.ref.loc24: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:   %i32.loc24: type = type_literal constants.%i32 [concrete = constants.%i32]

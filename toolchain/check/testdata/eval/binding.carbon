@@ -185,7 +185,7 @@ let n: array(i32, G()) = (1, 2, 3);
 // CHECK:STDOUT:     %.loc11_22.4: Core.IntLiteral = converted %F.call, %.loc11_22.3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type: type = array_type %.loc11_22.4, %i32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: %array_type = value_binding n, %.loc11_35.14
+// CHECK:STDOUT:   %n: %array_type = wrapper_binding n, %.loc11_35.14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

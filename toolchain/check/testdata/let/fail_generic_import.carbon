@@ -68,7 +68,7 @@ let a: T = 0;
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc8_9.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T: type = value_binding T, @__global_init.%i32
+// CHECK:STDOUT:   %T: type = wrapper_binding T, @__global_init.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -104,7 +104,7 @@ let a: T = 0;
 // CHECK:STDOUT:     %a.patt: <error> = value_binding_pattern a [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.ref: type = name_ref T, imports.%Implicit.T
-// CHECK:STDOUT:   %a: <error> = value_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: <error> = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

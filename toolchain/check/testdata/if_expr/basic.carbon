@@ -121,13 +121,13 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:     %.loc15_34: Core.Form = init_form %i32.loc15_34 [concrete = constants.%.795]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc15_9: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc15_18: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
+// CHECK:STDOUT:     %n: %i32 = wrapper_binding n, %n.param
 // CHECK:STDOUT:     %m.param: %i32 = value_param call_param2
 // CHECK:STDOUT:     %i32.loc15_26: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %m: %i32 = value_binding m, %m.param
+// CHECK:STDOUT:     %m: %i32 = wrapper_binding m, %m.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param3
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -159,7 +159,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32.loc16 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %array_type = ref_binding x, %x.var
+// CHECK:STDOUT:   %x: ref %array_type = wrapper_binding x, %x.var
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:

@@ -52,7 +52,7 @@ fn A() {
 // CHECK:STDOUT:     %.loc18_20.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc18_20.3: type = converted %.loc18_20.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.loc18_17: ref %empty_tuple.type = ref_binding n, %n.var.loc18_5
+// CHECK:STDOUT:   %n.loc18_17: ref %empty_tuple.type = wrapper_binding n, %n.var.loc18_5
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
@@ -69,7 +69,7 @@ fn A() {
 // CHECK:STDOUT:     %.loc18_52.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc18_52.3: type = converted %.loc18_52.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.loc18_49: ref %empty_tuple.type = ref_binding n, %n.var.loc18_37
+// CHECK:STDOUT:   %n.loc18_49: ref %empty_tuple.type = wrapper_binding n, %n.var.loc18_37
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:

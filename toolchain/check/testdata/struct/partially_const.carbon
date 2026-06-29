@@ -100,7 +100,7 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:     %.loc15: Core.Form = init_form %struct_type.a.b.c [concrete = constants.%.5b5]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc15_12: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
+// CHECK:STDOUT:     %n: %i32 = wrapper_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.a.b.c.fde = out_param call_param1
 // CHECK:STDOUT:     %return: ref %struct_type.a.b.c.fde = return_slot %return.param
 // CHECK:STDOUT:   }

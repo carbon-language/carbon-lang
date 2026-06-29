@@ -195,7 +195,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:       %.loc13_22.2: Core.Form = init_form %ptr.loc13_22.2 [symbolic = %.loc13_22.1 (constants.%.cb6cb9.2)]
 // CHECK:STDOUT:       %self.param: ref @A.as.I.impl.F.%A (%A.47a1de.2) = ref_param call_param0
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, @A.as.I.impl.%A.loc12_27.2 [symbolic = %A (constants.%A.47a1de.2)]
-// CHECK:STDOUT:       %self: ref @A.as.I.impl.F.%A (%A.47a1de.2) = ref_binding self, %self.param
+// CHECK:STDOUT:       %self: ref @A.as.I.impl.F.%A (%A.47a1de.2) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @A.as.I.impl.F.%ptr.loc13_22.1 (%ptr.e8f8f9.2) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @A.as.I.impl.F.%ptr.loc13_22.1 (%ptr.e8f8f9.2) = return_slot %return.param
 // CHECK:STDOUT:     }

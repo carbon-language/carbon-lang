@@ -103,7 +103,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %.loc14_14.2: type = value_of_initializer %F.call.loc14 [concrete = constants.%A]
 // CHECK:STDOUT:     %.loc14_14.3: type = converted %F.call.loc14, %.loc14_14.2 [concrete = constants.%A]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %A = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.e39 = ref_binding_pattern b [concrete = constants.%b.patt.492]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.e39 = var_pattern %b.patt [concrete = constants.%b.var_patt]
@@ -116,7 +116,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %.loc15_15.2: type = value_of_initializer %F.call.loc15 [concrete = constants.%B]
 // CHECK:STDOUT:     %.loc15_15.3: type = converted %F.call.loc15, %.loc15_15.2 [concrete = constants.%B]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %B = ref_binding b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %B = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -171,7 +171,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %.loc10_14.2: type = value_of_initializer %F.call.loc10 [concrete = constants.%A]
 // CHECK:STDOUT:     %.loc10_14.3: type = converted %F.call.loc10, %.loc10_14.2 [concrete = constants.%A]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %A = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.e39 = ref_binding_pattern b [concrete = constants.%b.patt.492]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.e39 = var_pattern %b.patt [concrete = constants.%b.var_patt]
@@ -184,7 +184,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %.loc11_15.2: type = value_of_initializer %F.call.loc11 [concrete = constants.%B]
 // CHECK:STDOUT:     %.loc11_15.3: type = converted %F.call.loc11, %.loc11_15.2 [concrete = constants.%B]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %B = ref_binding b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %B = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

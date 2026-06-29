@@ -551,10 +551,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc103_44.2: Core.Form = init_form %.loc103_44.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc103_26: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %self: bool = value_binding self, %self.param
+// CHECK:STDOUT:     %self: bool = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
 // CHECK:STDOUT:     %.loc103_35: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -599,7 +599,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:       %.loc199_38.2: %tuple.type.24b = tuple_literal (%ptr.loc199_16.2, %struct_type.x.y.loc199_37.2) [symbolic = %tuple (constants.%tuple.b6a)]
 // CHECK:STDOUT:       %.loc199_38.3: type = converted %.loc199_38.2, constants.%tuple.type.c49 [symbolic = %tuple.type (constants.%tuple.type.c49)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @SelfNested.WithSelf.F.%tuple.type (%tuple.type.c49) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @SelfNested.WithSelf.F.%tuple.type (%tuple.type.c49) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @SelfNested.WithSelf.F.%array_type.loc199_57.1 (%array_type.4e4) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @SelfNested.WithSelf.F.%array_type.loc199_57.1 (%array_type.4e4) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -656,7 +656,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc69: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %FExtraParam.as.I.impl.F.decl.loc69_18.2: %FExtraParam.as.I.impl.F.type.ec7b0b.2 = fn_decl @FExtraParam.as.I.impl.F.loc69_18.2 [concrete = constants.%FExtraParam.as.I.impl.F.ef9801.2] {} {}
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%FExtraParam.as.I.impl.F.decl.loc69_18.2), @FExtraParam.as.I.impl [concrete]
@@ -675,7 +675,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %FExtraImplicitParam = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FExtraImplicitParam [concrete = constants.%FExtraImplicitParam]
-// CHECK:STDOUT:     %self: %FExtraImplicitParam = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %FExtraImplicitParam = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %FExtraImplicitParam.as.I.impl.F.decl.loc85_15.2: %FExtraImplicitParam.as.I.impl.F.type.54cac2.2 = fn_decl @FExtraImplicitParam.as.I.impl.F.loc85_15.2 [concrete = constants.%FExtraImplicitParam.as.I.impl.F.a42f35.2] {} {}
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%FExtraImplicitParam.as.I.impl.F.decl.loc85_15.2), @FExtraImplicitParam.as.I.impl [concrete]
@@ -717,7 +717,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc117_25.2: Core.Form = init_form %.loc117_25.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc117_16: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %self: bool = value_binding self, %self.param
+// CHECK:STDOUT:     %self: bool = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -731,9 +731,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.3: %pattern_type.831 = specific_constant constants.%return.patt.c0c, @J.WithSelf.F(constants.%J.facet.d77) [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
-// CHECK:STDOUT:     %self: bool = value_binding self, %self.param
+// CHECK:STDOUT:     %self: bool = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -757,7 +757,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc130_22.2: Core.Form = init_form %.loc130_22.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc130_13: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -771,9 +771,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.3: %pattern_type.831 = specific_constant constants.%return.patt.c0c, @J.WithSelf.F(constants.%J.facet.3f0) [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
-// CHECK:STDOUT:     %self: bool = value_binding self, %self.param
+// CHECK:STDOUT:     %self: bool = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -795,10 +795,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc148_16: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %self: bool = value_binding self, %self.param
+// CHECK:STDOUT:     %self: bool = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
 // CHECK:STDOUT:     %.loc148_25: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc103_44.1: type = specific_constant @J.WithSelf.F.%.loc103_44.1, @J.WithSelf.F(constants.%J.facet.c42) [concrete = bool]
 // CHECK:STDOUT:   %.loc103_44.2: Core.Form = specific_constant @J.WithSelf.F.%.loc103_44.2, @J.WithSelf.F(constants.%J.facet.c42) [concrete = constants.%.f34]
@@ -810,9 +810,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.3: %pattern_type.831 = specific_constant constants.%return.patt.c0c, @J.WithSelf.F(constants.%J.facet.c42) [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
-// CHECK:STDOUT:     %self: bool = value_binding self, %self.param
+// CHECK:STDOUT:     %self: bool = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -838,10 +838,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc163_34.2: Core.Form = init_form %.loc163_34.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc163_16: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %self: bool = value_binding self, %self.param
+// CHECK:STDOUT:     %self: bool = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %b.param: %FDifferentParamType = value_param call_param1
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FDifferentParamType [concrete = constants.%FDifferentParamType]
-// CHECK:STDOUT:     %b: %FDifferentParamType = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %FDifferentParamType = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -855,9 +855,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.3: %pattern_type.831 = specific_constant constants.%return.patt.c0c, @J.WithSelf.F(constants.%J.facet.47a) [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
-// CHECK:STDOUT:     %self: bool = value_binding self, %self.param
+// CHECK:STDOUT:     %self: bool = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -883,10 +883,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc176_28.2: Core.Form = init_form %.loc176_28.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %self.param: %FDifferentImplicitParamType = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FDifferentImplicitParamType [concrete = constants.%FDifferentImplicitParamType]
-// CHECK:STDOUT:     %self: %FDifferentImplicitParamType = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %FDifferentImplicitParamType = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
 // CHECK:STDOUT:     %.loc176_19: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -900,9 +900,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.3: %pattern_type.831 = specific_constant constants.%return.patt.c0c, @J.WithSelf.F(constants.%J.facet.929) [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
-// CHECK:STDOUT:     %self: bool = value_binding self, %self.param
+// CHECK:STDOUT:     %self: bool = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -928,10 +928,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc194_34: Core.Form = init_form %Self.ref [concrete = constants.%.1f5]
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc194_16: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %self: bool = value_binding self, %self.param
+// CHECK:STDOUT:     %self: bool = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
 // CHECK:STDOUT:     %.loc194_25: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %FDifferentReturnType = out_param call_param2
 // CHECK:STDOUT:     %return: ref %FDifferentReturnType = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -945,9 +945,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.3: %pattern_type.831 = specific_constant constants.%return.patt.c0c, @J.WithSelf.F(constants.%J.facet.b85) [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
-// CHECK:STDOUT:     %self: bool = value_binding self, %self.param
+// CHECK:STDOUT:     %self: bool = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -981,7 +981,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:       %.loc211_53.2: %tuple.type.24b = tuple_literal (%ptr, %struct_type.x.y) [concrete = constants.%tuple.991]
 // CHECK:STDOUT:       %.loc211_53.3: type = converted %.loc211_53.2, constants.%tuple.type.e57 [concrete = constants.%tuple.type.e57]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %tuple.type.e57 = value_binding x, %x.param
+// CHECK:STDOUT:     %x: %tuple.type.e57 = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref %array_type.291 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %array_type.291 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -993,7 +993,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.2: %pattern_type.3a0 = specific_constant constants.%return.patt.98a, @SelfNested.WithSelf.F(constants.%SelfNested.facet.fc6) [concrete = constants.%return.patt.98a]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %tuple.type.9ab = value_param call_param0
-// CHECK:STDOUT:     %x: %tuple.type.9ab = value_binding x, %x.param
+// CHECK:STDOUT:     %x: %tuple.type.9ab = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref %array_type.291 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %array_type.291 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1028,7 +1028,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:       %.loc227_78.2: %tuple.type.24b = tuple_literal (%ptr, %struct_type.x.y) [concrete = constants.%tuple.96d]
 // CHECK:STDOUT:       %.loc227_78.3: type = converted %.loc227_78.2, constants.%tuple.type.829 [concrete = constants.%tuple.type.829]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %tuple.type.829 = value_binding x, %x.param
+// CHECK:STDOUT:     %x: %tuple.type.829 = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref %array_type.291 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %array_type.291 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1040,7 +1040,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.2: %pattern_type.f0d = specific_constant constants.%return.patt.3c4, @SelfNested.WithSelf.F(constants.%SelfNested.facet.68c) [concrete = constants.%return.patt.3c4]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %tuple.type.829 = value_param call_param0
-// CHECK:STDOUT:     %x: %tuple.type.829 = value_binding x, %x.param
+// CHECK:STDOUT:     %x: %tuple.type.829 = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref %array_type.a08 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %array_type.a08 = return_slot %return.param
 // CHECK:STDOUT:   }

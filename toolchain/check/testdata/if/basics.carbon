@@ -131,7 +131,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -178,7 +178,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -238,7 +238,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:     %.loc4_19.2: Core.Form = init_form %.loc4_19.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4_10: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }

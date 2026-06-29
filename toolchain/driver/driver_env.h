@@ -18,6 +18,8 @@
 
 namespace Carbon {
 
+class MemUsage;
+
 // The result of a driver run.
 struct DriverResult {
   // Overall success result.
@@ -27,7 +29,6 @@ struct DriverResult {
   // processed.
   llvm::SmallVector<std::pair<std::string, bool>> per_file_success = {};
 };
-
 // Driver environment information, encapsulated for easy passing to subcommands.
 struct DriverEnv {
   explicit DriverEnv(llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
@@ -83,6 +84,11 @@ struct DriverEnv {
 
   // For CARBON_VLOG.
   llvm::raw_pwrite_stream* vlog_stream = nullptr;
+
+  // If set, a compile action collects each file's memory usage into this, so it
+  // can be queried programmatically (for example, by benchmarks) without being
+  // dumped. See `Driver::set_mem_usage`.
+  MemUsage* mem_usage = nullptr;
 
   // Cached runtimes.
   Runtimes::Cache runtimes_cache;

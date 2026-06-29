@@ -89,7 +89,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 Reference bindings have come up multiple times:
 
 -   as a better alternative to `addr self: Self*`;
--   for use in [lambda captures](/docs/design/lambdas.md);
+-   for use in [lambda captures](/docs/design/functions.md#captures);
 -   to model different kinds of C++ references for interop and migration;
 -   to support nested bindings within a destructured `var`, see
     [issue #5250](https://github.com/carbon-language/carbon-lang/issues/5250)

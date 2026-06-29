@@ -66,7 +66,7 @@ let lossy: f32 = ConvertIntLiteralToF32(123456789);
 // CHECK:STDOUT:   %.loc9_50.1: %f32.c73 = value_of_initializer @__global_init.%ConvertIntLiteralToF32.call [concrete = <error>]
 // CHECK:STDOUT:   %.loc9_50.2: %f32.c73 = converted @__global_init.%ConvertIntLiteralToF32.call, %.loc9_50.1 [concrete = <error>]
 // CHECK:STDOUT:   %f32: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
-// CHECK:STDOUT:   %lossy: %f32.c73 = value_binding lossy, %.loc9_50.2 [concrete = <error>]
+// CHECK:STDOUT:   %lossy: %f32.c73 = wrapper_binding lossy, %.loc9_50.2 [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

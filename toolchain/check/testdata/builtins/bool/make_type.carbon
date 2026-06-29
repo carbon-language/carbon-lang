@@ -50,7 +50,7 @@ let b: Bool() = false;
 // CHECK:STDOUT:     %.loc7_13.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:     %.loc7_13.3: type = converted %Bool.call, %.loc7_13.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: bool = value_binding b, @__global_init.%false
+// CHECK:STDOUT:   %b: bool = wrapper_binding b, @__global_init.%false
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

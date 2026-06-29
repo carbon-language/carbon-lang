@@ -40,7 +40,7 @@ fn F(unused e: Empty) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Empty.type = value_param call_param0
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.type]
-// CHECK:STDOUT:     %e: %Empty.type = value_binding e, %e.param
+// CHECK:STDOUT:     %e: %Empty.type = wrapper_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -186,7 +186,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %t.patt: %pattern_type = value_binding_pattern t [concrete = constants.%t.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %t: type = value_binding t, @__global_init.%.loc5_24.3
+// CHECK:STDOUT:   %t: type = wrapper_binding t, @__global_init.%.loc5_24.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -250,7 +250,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %.loc13_22.2: %tuple.type.24b = tuple_literal (%X.ref.loc13_18, %X.ref.loc13_21) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc13_22.3: type = converted %.loc13_22.2, constants.%tuple.type.359 [concrete = constants.%tuple.type.359]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %tuple.type.359 = value_binding a, %.loc13_41.2
+// CHECK:STDOUT:   %a: %tuple.type.359 = wrapper_binding a, %.loc13_41.2
 // CHECK:STDOUT:   %Destroy.Op.bound.loc13_40: <bound method> = bound_method %.loc13_40.2, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc13_40: init %empty_tuple.type = call %Destroy.Op.bound.loc13_40(%.loc13_40.2)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc13_32: <bound method> = bound_method %.loc13_32.2, constants.%Destroy.Op.1a2547.2
@@ -292,7 +292,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %.loc20_22.2: %tuple.type.24b = tuple_literal (%X.ref.loc20_18, %X.ref.loc20_21) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc20_22.3: type = converted %.loc20_22.2, constants.%tuple.type.359 [concrete = constants.%tuple.type.359]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %tuple.type.359 = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %tuple.type.359 = wrapper_binding b, %b.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%b.var)
 // CHECK:STDOUT:   <elided>
@@ -330,7 +330,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %n.ref: %X = name_ref n, %n
 // CHECK:STDOUT:   %X.ref.loc10_26: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %X.ref.loc10_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %m: %X = value_binding m, %n.ref
+// CHECK:STDOUT:   %m: %X = wrapper_binding m, %n.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -347,7 +347,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %X.ref.loc16_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %ptr.loc16: type = ptr_type %X.ref.loc16_17 [concrete = constants.%ptr.db8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %q: %ptr.db8 = value_binding q, %addr
+// CHECK:STDOUT:   %q: %ptr.db8 = wrapper_binding q, %addr
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -364,7 +364,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %X.ref.loc24_32: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   assign %x.var, %Make.call
 // CHECK:STDOUT:   %X.ref.loc24_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %x: ref %X = ref_binding x, %x.var
+// CHECK:STDOUT:   %x: ref %X = wrapper_binding x, %x.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:   <elided>
@@ -407,7 +407,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary @__global_init.%.loc19_29.1, @__global_init.%.loc19_29.2
 // CHECK:STDOUT:   %.loc19_29.2: %Y = acquire_value %.loc19_29.1
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, %Y.decl [concrete = constants.%Y]
-// CHECK:STDOUT:   %n: %Y = value_binding n, %.loc19_29.2
+// CHECK:STDOUT:   %n: %Y = wrapper_binding n, %.loc19_29.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

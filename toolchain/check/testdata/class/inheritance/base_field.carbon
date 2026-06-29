@@ -106,7 +106,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr.loc28_21: type = ptr_type %Derived.ref [concrete = constants.%ptr.64c]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.64c = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.64c = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.d08 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.d08 = return_slot %return.param
 // CHECK:STDOUT:   }

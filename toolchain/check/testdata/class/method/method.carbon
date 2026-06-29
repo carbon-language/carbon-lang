@@ -214,7 +214,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %.loc24: Core.Form = init_form %i32.loc24 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param.loc24: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc24: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc24: %Class = value_binding self, %self.param.loc24
+// CHECK:STDOUT:     %self.loc24: %Class = wrapper_binding self, %self.param.loc24
 // CHECK:STDOUT:     %return.param.loc24: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc24: ref %i32 = return_slot %return.param.loc24
 // CHECK:STDOUT:   }
@@ -228,7 +228,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %.loc28: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %c.param: %Class = value_param call_param0
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:     %c: %Class = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %Class = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -242,7 +242,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %.loc34: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %c.param: %Class = value_param call_param0
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:     %c: %Class = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %Class = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -277,7 +277,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr.7ee]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.7ee = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.7ee = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -294,7 +294,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr.7ee]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.7ee = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.7ee = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -338,7 +338,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %.loc16: Core.Form = init_form %i32.loc16 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param.loc16: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc16: %Class = value_binding self, %self.param.loc16
+// CHECK:STDOUT:     %self.loc16: %Class = wrapper_binding self, %self.param.loc16
 // CHECK:STDOUT:     %return.param.loc16: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc16: ref %i32 = return_slot %return.param.loc16
 // CHECK:STDOUT:   }
@@ -352,7 +352,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %.loc17: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param: ref %Class = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self: ref %Class = ref_binding self, %self.param
+// CHECK:STDOUT:     %self: ref %Class = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -462,7 +462,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %Class to %.loc43_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %c.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %c: ref %Class = ref_binding c, %c.var
+// CHECK:STDOUT:   %c: ref %Class = wrapper_binding c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %G.ref: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
 // CHECK:STDOUT:   %Class.G.bound: <bound method> = bound_method %c.ref, %G.ref

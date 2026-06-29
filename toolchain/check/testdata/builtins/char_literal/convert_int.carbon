@@ -111,42 +111,42 @@ let g: u8 = ConvertToU8('\u{100}');
 // CHECK:STDOUT:   %.loc14_30.1: %i32 = value_of_initializer @__global_init.%ConvertToI32.call [concrete = constants.%int_97]
 // CHECK:STDOUT:   %.loc14_30.2: %i32 = converted @__global_init.%ConvertToI32.call, %.loc14_30.1 [concrete = constants.%int_97]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: %i32 = value_binding a, %.loc14_30.2
+// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %.loc14_30.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.668 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_30.1: %u32 = value_of_initializer @__global_init.%ConvertToU32.call [concrete = constants.%int_98]
 // CHECK:STDOUT:   %.loc15_30.2: %u32 = converted @__global_init.%ConvertToU32.call, %.loc15_30.1 [concrete = constants.%int_98]
 // CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %b: %u32 = value_binding b, %.loc15_30.2
+// CHECK:STDOUT:   %b: %u32 = wrapper_binding b, %.loc15_30.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.f57 = value_binding_pattern c [concrete = constants.%c.patt.a8f]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_39.1: %i64 = value_of_initializer @__global_init.%ConvertToI64.call [concrete = constants.%int_1114111]
 // CHECK:STDOUT:   %.loc16_39.2: %i64 = converted @__global_init.%ConvertToI64.call, %.loc16_39.1 [concrete = constants.%int_1114111]
 // CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
-// CHECK:STDOUT:   %c: %i64 = value_binding c, %.loc16_39.2
+// CHECK:STDOUT:   %c: %i64 = wrapper_binding c, %.loc16_39.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.b35 = value_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc17_31.1: %u64 = value_of_initializer @__global_init.%ConvertToU64.call [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc17_31.2: %u64 = converted @__global_init.%ConvertToU64.call, %.loc17_31.1 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %u64: type = type_literal constants.%u64 [concrete = constants.%u64]
-// CHECK:STDOUT:   %d: %u64 = value_binding d, %.loc17_31.2
+// CHECK:STDOUT:   %d: %u64 = wrapper_binding d, %.loc17_31.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.186 = value_binding_pattern e [concrete = constants.%e.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19_33.1: %u8 = value_of_initializer @__global_init.%ConvertToU8.call.loc19 [concrete = constants.%int_128]
 // CHECK:STDOUT:   %.loc19_33.2: %u8 = converted @__global_init.%ConvertToU8.call.loc19, %.loc19_33.1 [concrete = constants.%int_128]
 // CHECK:STDOUT:   %u8.loc19: type = type_literal constants.%u8 [concrete = constants.%u8]
-// CHECK:STDOUT:   %e: %u8 = value_binding e, %.loc19_33.2
+// CHECK:STDOUT:   %e: %u8 = wrapper_binding e, %.loc19_33.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.186 = value_binding_pattern f [concrete = constants.%f.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc20_33.1: %u8 = value_of_initializer @__global_init.%ConvertToU8.call.loc20 [concrete = constants.%int_255]
 // CHECK:STDOUT:   %.loc20_33.2: %u8 = converted @__global_init.%ConvertToU8.call.loc20, %.loc20_33.1 [concrete = constants.%int_255]
 // CHECK:STDOUT:   %u8.loc20: type = type_literal constants.%u8 [concrete = constants.%u8]
-// CHECK:STDOUT:   %f: %u8 = value_binding f, %.loc20_33.2
+// CHECK:STDOUT:   %f: %u8 = wrapper_binding f, %.loc20_33.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

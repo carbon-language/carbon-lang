@@ -102,7 +102,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc18_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Color.ref.loc18_23: type = name_ref Color, imports.%Color.decl [concrete = constants.%Color]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %col: %Color = value_binding col, %Red.ref
+// CHECK:STDOUT:   %col: %Color = wrapper_binding col, %Red.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %colb.patt: %pattern_type.732 = value_binding_pattern colb [concrete = constants.%colb.patt]
 // CHECK:STDOUT:   }
@@ -112,7 +112,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc19_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Color.ref.loc19: type = name_ref Color, imports.%Color.decl [concrete = constants.%Color]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %colb: %Color = value_binding colb, %Blue.ref
+// CHECK:STDOUT:   %colb: %Color = wrapper_binding colb, %Blue.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pet.patt: %pattern_type.8cd = value_binding_pattern pet [concrete = constants.%pet.patt]
 // CHECK:STDOUT:   }
@@ -125,7 +125,7 @@ fn F() {
 // CHECK:STDOUT:     %Zoo.ref.loc20_23: type = name_ref Zoo, imports.%Zoo.decl [concrete = constants.%Zoo]
 // CHECK:STDOUT:     %Animal.ref.loc20_27: type = name_ref Animal, imports.%Animal.decl [concrete = constants.%Animal]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pet: %Animal = value_binding pet, %Cat.ref
+// CHECK:STDOUT:   %pet: %Animal = wrapper_binding pet, %Cat.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pet2.patt: %pattern_type.8cd = value_binding_pattern pet2 [concrete = constants.%pet2.patt]
 // CHECK:STDOUT:   }
@@ -136,7 +136,7 @@ fn F() {
 // CHECK:STDOUT:     %Zoo.ref.loc21: type = name_ref Zoo, imports.%Zoo.decl [concrete = constants.%Zoo]
 // CHECK:STDOUT:     %Animal.ref.loc21: type = name_ref Animal, imports.%Animal.decl [concrete = constants.%Animal]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pet2: %Animal = value_binding pet2, %Dog.ref
+// CHECK:STDOUT:   %pet2: %Animal = wrapper_binding pet2, %Dog.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

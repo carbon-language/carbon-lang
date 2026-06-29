@@ -46,7 +46,7 @@ let f: Form = form(var ());
 // CHECK:STDOUT:     %f.patt: %pattern_type = value_binding_pattern f [concrete = constants.%f.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Form.ref: type = name_ref Form, imports.%Main.Form [concrete = Core.Form]
-// CHECK:STDOUT:   %f: Core.Form = value_binding f, @__global_init.%.loc7_20
+// CHECK:STDOUT:   %f: Core.Form = wrapper_binding f, @__global_init.%.loc7_20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

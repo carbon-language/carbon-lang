@@ -113,7 +113,7 @@ fn G() {
 // CHECK:STDOUT:     %.loc18_57.2: type = converted %.loc18_57.1, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
 // CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %tuple.type.555, .b: %tuple.type.555} [concrete = constants.%struct_type.a.b.2a0]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %struct_type.a.b.2a0 = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %struct_type.a.b.2a0 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   return

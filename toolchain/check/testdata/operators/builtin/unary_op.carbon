@@ -97,7 +97,7 @@ fn Constant() {
 // CHECK:STDOUT:     %.loc15_20.2: Core.Form = init_form %.loc15_20.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc15_11: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -105,12 +105,12 @@ fn Constant() {
 // CHECK:STDOUT:     %not_true.patt: %pattern_type.831 = value_binding_pattern not_true [concrete = constants.%not_true.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %not_true: bool = value_binding not_true, @__global_init.%.loc19
+// CHECK:STDOUT:   %not_true: bool = wrapper_binding not_true, @__global_init.%.loc19
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_false.patt: %pattern_type.831 = value_binding_pattern not_false [concrete = constants.%not_false.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc20: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %not_false: bool = value_binding not_false, @__global_init.%.loc20
+// CHECK:STDOUT:   %not_false: bool = wrapper_binding not_false, @__global_init.%.loc20
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [concrete = constants.%Constant] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -156,7 +156,7 @@ fn Constant() {
 // CHECK:STDOUT:   br !.loc23_15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc23_15:
-// CHECK:STDOUT:   %a: ref %empty_tuple.type = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = ref_binding_pattern b [concrete = constants.%b.patt.454]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.831 = var_pattern %b.patt [concrete = constants.%b.var_patt]
@@ -188,7 +188,7 @@ fn Constant() {
 // CHECK:STDOUT:   br !.loc24_15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc24_15:
-// CHECK:STDOUT:   %b: ref bool = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref bool = wrapper_binding b, %b.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc24: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc24: init %empty_tuple.type = call %Destroy.Op.bound.loc24(%b.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc23: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2

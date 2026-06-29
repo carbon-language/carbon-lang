@@ -289,13 +289,13 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %signed_char.ref: type = name_ref signed_char, %i8.2 [concrete = constants.%i8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_signed_char: %i8 = value_binding cpp_signed_char, %.loc8_45.2
+// CHECK:STDOUT:   %cpp_signed_char: %i8 = wrapper_binding cpp_signed_char, %.loc8_45.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_signed_char.patt: %pattern_type.0cf = value_binding_pattern carbon_signed_char [concrete = constants.%carbon_signed_char.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_signed_char.ref: %i8 = name_ref cpp_signed_char, %cpp_signed_char
 // CHECK:STDOUT:   %i8.loc9: type = type_literal constants.%i8 [concrete = constants.%i8]
-// CHECK:STDOUT:   %carbon_signed_char: %i8 = value_binding carbon_signed_char, %cpp_signed_char.ref
+// CHECK:STDOUT:   %carbon_signed_char: %i8 = wrapper_binding carbon_signed_char, %cpp_signed_char.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_short.patt: %pattern_type.203 = value_binding_pattern cpp_short [concrete = constants.%cpp_short.patt]
 // CHECK:STDOUT:   }
@@ -313,13 +313,13 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %short.ref: type = name_ref short, %i16.2 [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_short: %i16 = value_binding cpp_short, %.loc11_33.2
+// CHECK:STDOUT:   %cpp_short: %i16 = wrapper_binding cpp_short, %.loc11_33.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_short.patt: %pattern_type.203 = value_binding_pattern carbon_short [concrete = constants.%carbon_short.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_short.ref: %i16 = name_ref cpp_short, %cpp_short
 // CHECK:STDOUT:   %i16.loc12: type = type_literal constants.%i16 [concrete = constants.%i16]
-// CHECK:STDOUT:   %carbon_short: %i16 = value_binding carbon_short, %cpp_short.ref
+// CHECK:STDOUT:   %carbon_short: %i16 = wrapper_binding carbon_short, %cpp_short.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_int.patt: %pattern_type.6b6 = value_binding_pattern cpp_int [concrete = constants.%cpp_int.patt]
 // CHECK:STDOUT:   }
@@ -337,13 +337,13 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %int.ref: type = name_ref int, %i32.2 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_int: %i32 = value_binding cpp_int, %.loc14_29.2
+// CHECK:STDOUT:   %cpp_int: %i32 = wrapper_binding cpp_int, %.loc14_29.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_int.patt: %pattern_type.6b6 = value_binding_pattern carbon_int [concrete = constants.%carbon_int.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_int.ref: %i32 = name_ref cpp_int, %cpp_int
 // CHECK:STDOUT:   %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %carbon_int: %i32 = value_binding carbon_int, %cpp_int.ref
+// CHECK:STDOUT:   %carbon_int: %i32 = wrapper_binding carbon_int, %cpp_int.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_unsigned_char.patt: %pattern_type.186 = value_binding_pattern cpp_unsigned_char [concrete = constants.%cpp_unsigned_char.patt]
 // CHECK:STDOUT:   }
@@ -361,13 +361,13 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %unsigned_char.ref: type = name_ref unsigned_char, %u8.2 [concrete = constants.%u8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_char: %u8 = value_binding cpp_unsigned_char, %.loc17_49.2
+// CHECK:STDOUT:   %cpp_unsigned_char: %u8 = wrapper_binding cpp_unsigned_char, %.loc17_49.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_unsigned_char.patt: %pattern_type.186 = value_binding_pattern carbon_unsigned_char [concrete = constants.%carbon_unsigned_char.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_unsigned_char.ref: %u8 = name_ref cpp_unsigned_char, %cpp_unsigned_char
 // CHECK:STDOUT:   %u8.loc18: type = type_literal constants.%u8 [concrete = constants.%u8]
-// CHECK:STDOUT:   %carbon_unsigned_char: %u8 = value_binding carbon_unsigned_char, %cpp_unsigned_char.ref
+// CHECK:STDOUT:   %carbon_unsigned_char: %u8 = wrapper_binding carbon_unsigned_char, %cpp_unsigned_char.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_unsigned_short.patt: %pattern_type.17c = value_binding_pattern cpp_unsigned_short [concrete = constants.%cpp_unsigned_short.patt]
 // CHECK:STDOUT:   }
@@ -385,13 +385,13 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %unsigned_short.ref: type = name_ref unsigned_short, %u16.2 [concrete = constants.%u16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_short: %u16 = value_binding cpp_unsigned_short, %.loc20_51.2
+// CHECK:STDOUT:   %cpp_unsigned_short: %u16 = wrapper_binding cpp_unsigned_short, %.loc20_51.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_unsigned_short.patt: %pattern_type.17c = value_binding_pattern carbon_unsigned_short [concrete = constants.%carbon_unsigned_short.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_unsigned_short.ref: %u16 = name_ref cpp_unsigned_short, %cpp_unsigned_short
 // CHECK:STDOUT:   %u16.loc21: type = type_literal constants.%u16 [concrete = constants.%u16]
-// CHECK:STDOUT:   %carbon_unsigned_short: %u16 = value_binding carbon_unsigned_short, %cpp_unsigned_short.ref
+// CHECK:STDOUT:   %carbon_unsigned_short: %u16 = wrapper_binding carbon_unsigned_short, %cpp_unsigned_short.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_unsigned_int.patt: %pattern_type.668 = value_binding_pattern cpp_unsigned_int [concrete = constants.%cpp_unsigned_int.patt]
 // CHECK:STDOUT:   }
@@ -409,13 +409,13 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %unsigned_int.ref: type = name_ref unsigned_int, %u32.2 [concrete = constants.%u32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_int: %u32 = value_binding cpp_unsigned_int, %.loc23_47.2
+// CHECK:STDOUT:   %cpp_unsigned_int: %u32 = wrapper_binding cpp_unsigned_int, %.loc23_47.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_unsigned_int.patt: %pattern_type.668 = value_binding_pattern carbon_unsigned_int [concrete = constants.%carbon_unsigned_int.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_unsigned_int.ref: %u32 = name_ref cpp_unsigned_int, %cpp_unsigned_int
 // CHECK:STDOUT:   %u32.loc24: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %carbon_unsigned_int: %u32 = value_binding carbon_unsigned_int, %cpp_unsigned_int.ref
+// CHECK:STDOUT:   %carbon_unsigned_int: %u32 = wrapper_binding carbon_unsigned_int, %cpp_unsigned_int.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_float.patt: %pattern_type.240 = value_binding_pattern cpp_float [concrete = constants.%cpp_float.patt]
 // CHECK:STDOUT:   }
@@ -433,13 +433,13 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %float.ref: type = name_ref float, %f32.2 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_float: %f32.c73 = value_binding cpp_float, %.loc26_35.2
+// CHECK:STDOUT:   %cpp_float: %f32.c73 = wrapper_binding cpp_float, %.loc26_35.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_float.patt: %pattern_type.240 = value_binding_pattern carbon_float [concrete = constants.%carbon_float.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_float.ref: %f32.c73 = name_ref cpp_float, %cpp_float
 // CHECK:STDOUT:   %f32.loc27: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
-// CHECK:STDOUT:   %carbon_float: %f32.c73 = value_binding carbon_float, %cpp_float.ref
+// CHECK:STDOUT:   %carbon_float: %f32.c73 = wrapper_binding carbon_float, %cpp_float.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_double.patt: %pattern_type.fb7 = value_binding_pattern cpp_double [concrete = constants.%cpp_double.patt]
 // CHECK:STDOUT:   }
@@ -457,13 +457,13 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %double.ref: type = name_ref double, %f64.2 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_double: %f64.dc1 = value_binding cpp_double, %.loc29_37.2
+// CHECK:STDOUT:   %cpp_double: %f64.dc1 = wrapper_binding cpp_double, %.loc29_37.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_double.patt: %pattern_type.fb7 = value_binding_pattern carbon_double [concrete = constants.%carbon_double.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_double.ref: %f64.dc1 = name_ref cpp_double, %cpp_double
 // CHECK:STDOUT:   %f64.loc30: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %carbon_double: %f64.dc1 = value_binding carbon_double, %cpp_double.ref
+// CHECK:STDOUT:   %carbon_double: %f64.dc1 = wrapper_binding carbon_double, %cpp_double.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -511,13 +511,13 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_47.1: %f64.dc1 = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call [concrete = constants.%float.3b9]
 // CHECK:STDOUT:   %.loc15_47.2: %f64.dc1 = converted %float, %.loc15_47.1 [concrete = constants.%float.3b9]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %cpp_long_double: <error> = value_binding cpp_long_double, <error> [concrete = <error>]
+// CHECK:STDOUT:   %cpp_long_double: <error> = wrapper_binding cpp_long_double, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_long_double.patt: %pattern_type.fb7 = value_binding_pattern carbon_long_double [concrete = constants.%carbon_long_double.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_long_double.ref: <error> = name_ref cpp_long_double, %cpp_long_double [concrete = <error>]
 // CHECK:STDOUT:   %f64.loc16: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %carbon_long_double: %f64.dc1 = value_binding carbon_long_double, <error> [concrete = <error>]
+// CHECK:STDOUT:   %carbon_long_double: %f64.dc1 = wrapper_binding carbon_long_double, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -587,7 +587,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %unsigned_int.ref.loc12: type = name_ref unsigned_int, imports.%unsigned_int.decl [concrete = constants.%unsigned_int]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %unsigned_int: ref %unsigned_int = ref_binding unsigned_int, %unsigned_int.var
+// CHECK:STDOUT:   %unsigned_int: ref %unsigned_int = wrapper_binding unsigned_int, %unsigned_int.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.668 = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
@@ -598,7 +598,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_40.1: %u32 = value_of_initializer %unsigned_int.foo.call
 // CHECK:STDOUT:   %.loc13_40.2: %u32 = converted %unsigned_int.foo.call, %.loc13_40.1
 // CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %x: %u32 = value_binding x, %.loc13_40.2
+// CHECK:STDOUT:   %x: %u32 = wrapper_binding x, %.loc13_40.2
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor.bound: <bound method> = bound_method %unsigned_int.var, constants.%unsigned_int.cpp_destructor
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor.call: init %empty_tuple.type = call %unsigned_int.cpp_destructor.bound(%unsigned_int.var)
 // CHECK:STDOUT:   <elided>

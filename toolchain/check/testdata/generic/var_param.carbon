@@ -92,7 +92,7 @@ fn Test(x: i32) {
 // CHECK:STDOUT:       %T.as_type.loc22_32.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc22_32.1 (constants.%T.as_type.b38)]
 // CHECK:STDOUT:       %.loc22_32.2: type = converted %T.ref, %T.as_type.loc22_32.2 [symbolic = %T.as_type.loc22_32.1 (constants.%T.as_type.b38)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: ref @TestOp.%T.as_type.loc22_32.1 (%T.as_type.b38) = ref_binding x, %x.param
+// CHECK:STDOUT:     %x: ref @TestOp.%T.as_type.loc22_32.1 (%T.as_type.b38) = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

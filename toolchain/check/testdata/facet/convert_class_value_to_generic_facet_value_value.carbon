@@ -245,10 +245,10 @@ fn B() {
 // CHECK:STDOUT:       %U.as_type.loc15_58.2: type = facet_access_type %U.ref.loc15 [symbolic = %U.as_type.loc15_58.1 (constants.%U.as_type)]
 // CHECK:STDOUT:       %.loc15_58.2: type = converted %U.ref.loc15, %U.as_type.loc15_58.2 [symbolic = %U.as_type.loc15_58.1 (constants.%U.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @CallGenericMethod.%U.as_type.loc15_58.1 (%U.as_type) = value_binding a, %a.param
+// CHECK:STDOUT:     %a: @CallGenericMethod.%U.as_type.loc15_58.1 (%U.as_type) = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %s.param: @CallGenericMethod.%T.loc15_23.1 (%T) = value_param call_param1
 // CHECK:STDOUT:     %T.ref.loc15_71: type = name_ref T, %T.loc15_23.2 [symbolic = %T.loc15_23.1 (constants.%T)]
-// CHECK:STDOUT:     %s: @CallGenericMethod.%T.loc15_23.1 (%T) = value_binding s, %s.param
+// CHECK:STDOUT:     %s: @CallGenericMethod.%T.loc15_23.1 (%T) = wrapper_binding s, %s.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
@@ -638,7 +638,7 @@ fn B() {
 // CHECK:STDOUT:       %T.as_type.loc9_31.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc9_31.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc9_31.2: type = converted %T.ref, %T.as_type.loc9_31.2 [symbolic = %T.as_type.loc9_31.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: @A.%T.as_type.loc9_31.1 (%T.as_type) = value_binding t, %t.param
+// CHECK:STDOUT:     %t: @A.%T.as_type.loc9_31.1 (%T.as_type) = wrapper_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }
@@ -929,7 +929,7 @@ fn B() {
 // CHECK:STDOUT:       %T.as_type.loc9_31.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc9_31.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc9_31.2: type = converted %T.ref, %T.as_type.loc9_31.2 [symbolic = %T.as_type.loc9_31.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: @A.%T.as_type.loc9_31.1 (%T.as_type) = value_binding t, %t.param
+// CHECK:STDOUT:     %t: @A.%T.as_type.loc9_31.1 (%T.as_type) = wrapper_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }
@@ -1174,7 +1174,7 @@ fn B() {
 // CHECK:STDOUT:       %T.as_type.loc9_23.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc9_23.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc9_23.2: type = converted %T.ref, %T.as_type.loc9_23.2 [symbolic = %T.as_type.loc9_23.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: @A.%T.as_type.loc9_23.1 (%T.as_type) = value_binding t, %t.param
+// CHECK:STDOUT:     %t: @A.%T.as_type.loc9_23.1 (%T.as_type) = wrapper_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }

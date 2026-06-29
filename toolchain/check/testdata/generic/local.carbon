@@ -190,7 +190,7 @@ class C(C:! type) {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.8eb]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %C.8eb = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %C.8eb = wrapper_binding v, %v.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   return

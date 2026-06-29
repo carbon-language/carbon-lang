@@ -151,7 +151,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_34.1: %i16 = as_compatible %a.ref.loc8 [concrete = constants.%int_0.a8d]
 // CHECK:STDOUT:   %.loc8_34.2: %i16 = converted %a.ref.loc8, %.loc8_34.1 [concrete = constants.%int_0.a8d]
 // CHECK:STDOUT:   %i16.loc8_17: type = type_literal constants.%i16 [concrete = constants.%i16]
-// CHECK:STDOUT:   %a: %i16 = value_binding a, %.loc8_34.2
+// CHECK:STDOUT:   %a: %i16 = wrapper_binding a, %.loc8_34.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.926 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
@@ -172,7 +172,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc9_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Enum.ref.loc9_20: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %Enum = value_binding b, %.loc9_40.2
+// CHECK:STDOUT:   %b: %Enum = wrapper_binding b, %.loc9_40.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.d91 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
@@ -186,7 +186,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc10_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Other.ref.loc10_20: type = name_ref Other, imports.%Other.decl [concrete = constants.%Other]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %Other = value_binding c, %.loc10_35.2
+// CHECK:STDOUT:   %c: %Other = wrapper_binding c, %.loc10_35.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

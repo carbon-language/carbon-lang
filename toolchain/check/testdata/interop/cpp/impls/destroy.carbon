@@ -281,7 +281,7 @@ fn F() {
 // CHECK:STDOUT:     %self.patt: %pattern_type.a12 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.b81]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %TrivialDestructor = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %TrivialDestructor = ref_binding self, %self.param
+// CHECK:STDOUT:     %self: ref %TrivialDestructor = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -333,7 +333,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %PublicDestructor.ref: type = name_ref PublicDestructor, imports.%PublicDestructor.decl [concrete = constants.%PublicDestructor]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %PublicDestructor = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %PublicDestructor = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %PublicDestructor.cpp_destructor.bound: <bound method> = bound_method %a.var, constants.%PublicDestructor.cpp_destructor
 // CHECK:STDOUT:   %PublicDestructor.cpp_destructor.call: init %empty_tuple.type = call %PublicDestructor.cpp_destructor.bound(%a.var)
 // CHECK:STDOUT:   return
@@ -356,13 +356,13 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %TrivialDestructor.ref: type = name_ref TrivialDestructor, imports.%TrivialDestructor.decl [concrete = constants.%TrivialDestructor]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %TrivialDestructor = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %TrivialDestructor = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %TrivialDestructor.Op.decl: %TrivialDestructor.Op.type = fn_decl @TrivialDestructor.Op [concrete = constants.%TrivialDestructor.Op] {
 // CHECK:STDOUT:     %.1: %pattern_type.a12 = specific_constant constants.%self.param_patt.e73, @Destroy.WithSelf.Op(constants.%Destroy.facet.c09) [concrete = constants.%self.param_patt.e73]
 // CHECK:STDOUT:     %self.patt: %pattern_type.a12 = at_binding_pattern self, %.1 [concrete = constants.%self.patt.b81]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %TrivialDestructor = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %TrivialDestructor = ref_binding self, %self.param
+// CHECK:STDOUT:     %self: ref %TrivialDestructor = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TrivialDestructor.Op.bound: <bound method> = bound_method %a.var, constants.%TrivialDestructor.Op
 // CHECK:STDOUT:   %Op.ref: %TrivialDestructor.cpp_destructor.type = name_ref Op, imports.%TrivialDestructor.cpp_destructor.decl [concrete = constants.%TrivialDestructor.cpp_destructor]
@@ -420,7 +420,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc20_3: init %Derived = converted %.loc20_38.1, %.loc20_38.5 [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   assign %a.var, %.loc20_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %a: ref %Derived = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Derived = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>
@@ -475,7 +475,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc21_3: init %Derived = converted %.loc21_38.1, %.loc21_38.5 [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   assign %a.var, %.loc21_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %a: ref %Derived = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Derived = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>

@@ -532,7 +532,7 @@ class V {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr.loc7_29: type = ptr_type %Derived.ref [concrete = constants.%ptr.976]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %d: %ptr.976 = value_binding d, %d.param
+// CHECK:STDOUT:     %d: %ptr.976 = wrapper_binding d, %d.param
 // CHECK:STDOUT:     %return.param: ref %ptr.0e0 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.0e0 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -545,7 +545,7 @@ class V {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
+// CHECK:STDOUT:     %d: %Derived = wrapper_binding d, %d.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

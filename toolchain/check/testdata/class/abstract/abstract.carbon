@@ -333,7 +333,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v: <error> = wrapper_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -368,7 +368,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.param: ref <error> = ref_param call_param0
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %_: ref <error> = ref_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:     %_: <error> = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -420,7 +420,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Abstract.ref.loc6: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %a: %Abstract = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %Abstract = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -439,7 +439,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract = name_ref a, %a
 // CHECK:STDOUT:   %Abstract.ref.loc7: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = value_binding l, %a.ref
+// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %a.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -529,7 +529,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %a: %Abstract = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %Abstract = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern [concrete = constants.%p.param_patt]
@@ -537,7 +537,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %p: %Abstract = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %Abstract = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -702,7 +702,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:     %.loc19: Core.Form = init_form %Abstract.ref.loc19_27 [concrete = constants.%.749]
 // CHECK:STDOUT:     %a.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Abstract.ref.loc19_14: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %a: %Abstract = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %Abstract = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %Abstract = out_param call_param1
 // CHECK:STDOUT:     %return: ref %Abstract = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -793,7 +793,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:     %.loc13_34.3: Core.Form = init_form %.loc13_34.2 [concrete = constants.%.469]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
+// CHECK:STDOUT:     %d: %Derived = wrapper_binding d, %d.param
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -808,7 +808,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:     %.loc17_27.3: Core.Form = init_form %.loc17_27.2 [concrete = constants.%.469]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
+// CHECK:STDOUT:     %d: %Derived = wrapper_binding d, %d.param
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -924,7 +924,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %.loc15_29.5: ref %Abstract = temporary %.loc15_29.2, %.loc15_29.4 [concrete = constants.%.69a]
 // CHECK:STDOUT:   %.loc15_29.6: %Abstract = acquire_value %.loc15_29.5 [concrete = constants.%Abstract.val]
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = value_binding l, %.loc15_29.6
+// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc15_29.6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1019,7 +1019,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %.loc17_41.5: ref %Abstract = converted %.loc17_41.1, %.loc17_41.4 [concrete = constants.%.27a]
 // CHECK:STDOUT:   %.loc17_41.6: %Abstract = acquire_value %.loc17_41.5
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = value_binding l, %.loc17_41.6
+// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc17_41.6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1121,7 +1121,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: ref %Abstract = ref_param call_param0
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %a: ref %Abstract = ref_binding a, %a.param
+// CHECK:STDOUT:     %a: ref %Abstract = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

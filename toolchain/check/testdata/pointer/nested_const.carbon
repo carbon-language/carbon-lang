@@ -96,7 +96,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:       %ptr.loc16_34: type = ptr_type %const.loc16_16 [concrete = constants.%ptr.f93]
 // CHECK:STDOUT:       %const.loc16_9: type = const_type %ptr.loc16_34 [concrete = constants.%const.99e]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %const.99e = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %const.99e = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.6a8 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %const.6a8 = return_slot %return.param
 // CHECK:STDOUT:   }

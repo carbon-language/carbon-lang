@@ -71,7 +71,10 @@ auto CompilationUnit::SetMultiUnitCache(MultiUnitCache* cache) -> void {
   CARBON_CHECK(!cache_, "Called SetMultiUnitCache twice");
   cache_ = cache;
 
-  if (options_->dump_mem_usage && IncludeInDumps()) {
+  // Collect memory usage if this unit dumps it, or if the caller provided a
+  // `MemUsage` to merge it into (see `PostCompile`).
+  if ((options_->dump_mem_usage || driver_env_->mem_usage) &&
+      IncludeInDumps()) {
     CARBON_CHECK(!mem_usage_);
     mem_usage_ = MemUsage();
   }
@@ -322,8 +325,15 @@ auto CompilationUnit::PostCompile() -> void {
   }
   if (mem_usage_) {
     mem_usage_->Collect("value_stores_", value_stores_);
-    Yaml::Print(*driver_env_->output_stream,
-                mem_usage_->OutputYaml(input_filename_));
+    if (options_->dump_mem_usage && IncludeInDumps()) {
+      Yaml::Print(*driver_env_->output_stream,
+                  mem_usage_->OutputYaml(input_filename_));
+    }
+    // Merge this file's usage into the caller-provided sink, if any, so it can
+    // be queried programmatically.
+    if (driver_env_->mem_usage) {
+      driver_env_->mem_usage->Add(*mem_usage_);
+    }
   }
   if (timings_) {
     Yaml::Print(*driver_env_->output_stream,

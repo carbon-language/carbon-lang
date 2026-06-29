@@ -97,7 +97,7 @@ fn M() {
 // CHECK:STDOUT:     %T.loc19_7.2: type = symbolic_binding T, 0 [symbolic = %T.loc19_7.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @F.%T.loc19_7.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc19_7.2 [symbolic = %T.loc19_7.1 (constants.%T)]
-// CHECK:STDOUT:     %x: @F.%T.loc19_7.1 (%T) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @F.%T.loc19_7.1 (%T) = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

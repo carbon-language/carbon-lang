@@ -100,7 +100,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:       %i32.loc15_11: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %ptr.loc15_14: type = ptr_type %i32.loc15_11 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.d08 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.d08 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.d08 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.d08 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -120,7 +120,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:       %const.loc19_16: type = const_type %i32.loc19_22 [concrete = constants.%const.6a8]
 // CHECK:STDOUT:       %ptr.loc19_25: type = ptr_type %const.loc19_16 [concrete = constants.%ptr.774]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.774 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.774 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.774 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.774 = return_slot %return.param
 // CHECK:STDOUT:   }

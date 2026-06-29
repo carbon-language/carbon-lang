@@ -137,7 +137,7 @@ let n: type = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref <error> = var %n.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc8: type = type_literal <error> [concrete = <error>]
-// CHECK:STDOUT:   %n: ref <error> = ref_binding n, <error> [concrete = <error>]
+// CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -173,7 +173,7 @@ let n: type = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref <error> = var %n.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc10: type = type_literal <error> [concrete = <error>]
-// CHECK:STDOUT:   %n: ref <error> = ref_binding n, <error> [concrete = <error>]
+// CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -288,7 +288,7 @@ let n: type = i32;
 // CHECK:STDOUT:         %Self.as_type.loc9_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc9_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:         %.loc9_14.3: type = converted %Self.ref, %Self.as_type.loc9_14.2 [symbolic = %Self.as_type.loc9_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_14.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_14.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @ImplicitAs.WithSelf.Convert.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @ImplicitAs.WithSelf.Convert.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -463,7 +463,7 @@ let n: type = i32;
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Core.X [concrete = constants.%X]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: %X = value_binding n, <error> [concrete = <error>]
+// CHECK:STDOUT:   %n: %X = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.b3bc94.4: type) [from "prelude_fake_int.carbon"] {
@@ -664,7 +664,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %.loc8_15.4: ref %Int.382 = temporary %.loc8_15.1, %.loc8_15.3 [concrete = constants.%.d67]
 // CHECK:STDOUT:   %.loc8_15.5: %Int.382 = acquire_value %.loc8_15.4 [concrete = constants.%Int.val]
 // CHECK:STDOUT:   %.loc8_8: type = type_literal constants.%Int.382 [concrete = constants.%Int.382]
-// CHECK:STDOUT:   %n: %Int.382 = value_binding n, %.loc8_15.5
+// CHECK:STDOUT:   %n: %Int.382 = wrapper_binding n, %.loc8_15.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Int(%T.loc6_12.2: type, %N.loc6_29.2: @Int.%T.loc6_12.1 (%T)) {

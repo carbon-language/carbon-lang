@@ -57,7 +57,7 @@ fn NotGenericF(unused U: I where .T == i32) {}
 // CHECK:STDOUT:         requirement_equivalent %impl.elem0, %i32
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U: %I_where.type = value_binding U, %U.param
+// CHECK:STDOUT:     %U: %I_where.type = wrapper_binding U, %U.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

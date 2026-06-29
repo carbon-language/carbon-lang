@@ -87,7 +87,7 @@ fn Run() {
 // CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %ptr} [concrete = constants.%struct_type.b]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %struct_type.b = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %struct_type.b = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   %Cycle.decl.loc8: type = class_decl @Cycle [concrete = constants.%Cycle] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

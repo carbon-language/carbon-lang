@@ -192,7 +192,7 @@ auto TokenizedBuffer::IsRawIdentifier(TokenIndex token) const -> bool {
   // starting with `#`. It suffices to check that character is the first
   // character of the identifier.
   auto token_text = source_->text().substr(token_info.byte_offset());
-  return token_text.starts_with("r#") &&
+  return token_text.size() > 2 && token_text.starts_with("r#") &&
          token_text[2] ==
              value_stores_->identifiers().Get(token_info.ident_id()).front();
 }

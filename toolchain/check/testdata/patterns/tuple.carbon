@@ -84,14 +84,14 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT:     %.loc5_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_10.3: type = converted %.loc5_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc5_24
+// CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc5_24
 // CHECK:STDOUT:   %empty_tuple.loc5_28: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_28: %empty_tuple.type = converted @__global_init.%.loc5_28, %empty_tuple.loc5_28 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_17.1: type = splice_block %.loc5_17.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc5_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_17.3: type = converted %.loc5_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %empty_tuple.type = value_binding b, %.loc5_28
+// CHECK:STDOUT:   %b: %empty_tuple.type = wrapper_binding b, %.loc5_28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -132,14 +132,14 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT:     %.loc7_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_10.3: type = converted %.loc7_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc7_24.2
+// CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc7_24.2
 // CHECK:STDOUT:   %tuple.loc7_24.2: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_24.3: %empty_tuple.type = converted %tuple.elem1, %tuple.loc7_24.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_17.1: type = splice_block %.loc7_17.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc7_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_17.3: type = converted %.loc7_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %empty_tuple.type = value_binding b, %.loc7_24.3
+// CHECK:STDOUT:   %b: %empty_tuple.type = wrapper_binding b, %.loc7_24.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -179,14 +179,14 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT:     %.loc6_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc6_10.3: type = converted %.loc6_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc6_22.1
+// CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc6_22.1
 // CHECK:STDOUT:   %tuple.loc6_22.2: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_22.2: %empty_tuple.type = converted %tuple.elem1, %tuple.loc6_22.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_17.1: type = splice_block %.loc6_17.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc6_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc6_17.3: type = converted %.loc6_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %empty_tuple.type = value_binding b, %.loc6_22.2
+// CHECK:STDOUT:   %b: %empty_tuple.type = wrapper_binding b, %.loc6_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -216,7 +216,7 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT:     %.loc5_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_10.3: type = converted %.loc5_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc5_16
+// CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc5_16
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
@@ -226,7 +226,7 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT:     %.loc6_12.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc6_12.3: type = converted %.loc6_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %empty_tuple.type = value_binding b, %.loc6_20
+// CHECK:STDOUT:   %b: %empty_tuple.type = wrapper_binding b, %.loc6_20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -262,7 +262,7 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT:     %.loc5_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_10.3: type = converted %.loc5_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc5_18
+// CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc5_18
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %.loc6_15: %pattern_type.559 = tuple_pattern (%b.patt) [concrete = constants.%.00b]
@@ -273,7 +273,7 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT:     %.loc6_12.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc6_12.3: type = converted %.loc6_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %empty_tuple.type = value_binding b, %.loc6_22
+// CHECK:STDOUT:   %b: %empty_tuple.type = wrapper_binding b, %.loc6_22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

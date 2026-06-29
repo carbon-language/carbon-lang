@@ -179,7 +179,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:       %A.ref.loc24_31: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:       %Class: type = class_type @Class, @Class(constants.%A) [concrete = constants.%Class.30a]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %Class.30a = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %Class.30a = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.1e7 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.1e7 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -200,7 +200,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:       %A.ref.loc28_50: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:       %Class: type = class_type @Class, @Class(constants.%A) [concrete = constants.%Class.30a]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %Class.30a = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %Class.30a = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.1e7 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.1e7 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -218,7 +218,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:       %A.ref.loc32_34: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:       %Class: type = class_type @Class, @Class(constants.%A) [concrete = constants.%Class.30a]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %Class.30a = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %Class.30a = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %A = out_param call_param1
 // CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -285,7 +285,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:       %.loc20_42.5: Core.Form = init_form %.loc20_42.4 [symbolic = %.loc20_42.2 (constants.%.f18)]
 // CHECK:STDOUT:       %x.param: @Class.GetNoDeduce.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref.loc20_21: type = name_ref T, @Class.%T.loc18_14.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %x: @Class.GetNoDeduce.%T (%T) = value_binding x, %x.param
+// CHECK:STDOUT:       %x: @Class.GetNoDeduce.%T (%T) = wrapper_binding x, %x.param
 // CHECK:STDOUT:       %.loc20_28.1: type = splice_block %.loc20_28.2 [concrete = type] {
 // CHECK:STDOUT:         %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:         %.loc20_28.2: type = type_literal type [concrete = type]
@@ -314,7 +314,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:         %U.ref.loc21_30: type = name_ref U, %U.loc21_9.2 [symbolic = %U.loc21_9.1 (constants.%U)]
 // CHECK:STDOUT:         %Class.loc21_31.2: type = class_type @Class, @Class(constants.%U) [symbolic = %Class.loc21_31.1 (constants.%Class.d74)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Class.F.%Class.loc21_31.1 (%Class.d74) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @Class.F.%Class.loc21_31.1 (%Class.d74) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @Class.F.%U.loc21_9.1 (%U) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Class.F.%U.loc21_9.1 (%U) = return_slot %return.param
 // CHECK:STDOUT:     }
