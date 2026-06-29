@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.12"
+# ///
+
 
 """Checks diagnostic use.
 
@@ -13,13 +18,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import collections
-from concurrent import futures
 import itertools
 import os
-from pathlib import Path
 import re
 import sys
-from typing import Dict, List, NamedTuple, Set
+from concurrent import futures
+from pathlib import Path
+from typing import Dict, List, NamedTuple, Set, override
 
 # Example or test diagnostics, ignored because they're expected to not pass.
 IGNORED = set(
@@ -36,6 +41,7 @@ IGNORED = set(
 class Loc(NamedTuple):
     """A location for a diagnostic."""
 
+    @override
     def __str__(self) -> str:
         return f"{str(self.path)}:{self.line}"
 

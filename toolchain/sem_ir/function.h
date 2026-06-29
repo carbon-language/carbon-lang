@@ -142,8 +142,8 @@ struct FunctionFields {
   // function.
   EvaluationMode evaluation_mode = EvaluationMode::None;
 
-  // The implicit self parameter pattern, if any, in
-  // implicit_param_patterns_id from EntityWithParamsBase.
+  // The `self` parameter pattern, if any. This is the first pattern in
+  // `param_patterns_id` (from EntityWithParamsBase).
   InstId self_param_id = InstId::None;
 
   // Data that is specific to the special function kind. Use
@@ -157,12 +157,6 @@ struct FunctionFields {
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
   llvm::SmallVector<InstBlockId> body_block_ids = {};
-
-  // If the function is imported from C++, the Clang function declaration. Used
-  // for mangling and inline function definition code generation. The AST is
-  // owned by `CompileSubcommand` so we expect it to be live from `Function`
-  // creation to mangling.
-  ClangDeclId clang_decl_id = ClangDeclId::None;
 };
 
 inline constexpr FunctionFields::CallParamIndexRanges

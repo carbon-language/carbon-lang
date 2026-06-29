@@ -155,9 +155,11 @@ fn G() {
 // CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'LambdaIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', has_error: yes, subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
+// CHECK:STDOUT:           {kind: 'LambdaIntroducer', text: 'fn'},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
+// CHECK:STDOUT:         {kind: 'Lambda', text: 'fn', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 10},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_expected_body_after_return_type.carbon

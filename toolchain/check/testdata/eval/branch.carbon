@@ -72,11 +72,15 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
-// CHECK:STDOUT:   %pattern_type.29a: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.9ef = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.9ef = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %MakeA.type: type = fn_type @MakeA [concrete]
 // CHECK:STDOUT:   %MakeA: %MakeA.type = struct_value () [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
-// CHECK:STDOUT:   %pattern_type.82f: type = pattern_type %B [concrete]
+// CHECK:STDOUT:   %pattern_type.e39: type = pattern_type %B [concrete]
+// CHECK:STDOUT:   %b.patt.492: %pattern_type.e39 = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt: %pattern_type.e39 = var_pattern %b.patt.492 [concrete]
 // CHECK:STDOUT:   %MakeB.type: type = fn_type @MakeB [concrete]
 // CHECK:STDOUT:   %MakeB: %MakeB.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -88,8 +92,8 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.29a = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.29a = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.9ef = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.9ef = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc14_14.1: type = splice_block %.loc14_14.3 [concrete = constants.%A] {
@@ -99,10 +103,10 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %.loc14_14.2: type = value_of_initializer %F.call.loc14 [concrete = constants.%A]
 // CHECK:STDOUT:     %.loc14_14.3: type = converted %F.call.loc14, %.loc14_14.2 [concrete = constants.%A]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %A = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.82f = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.82f = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.e39 = ref_binding_pattern b [concrete = constants.%b.patt.492]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.e39 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %B = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15_15.1: type = splice_block %.loc15_15.3 [concrete = constants.%B] {
@@ -112,7 +116,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %.loc15_15.2: type = value_of_initializer %F.call.loc15 [concrete = constants.%B]
 // CHECK:STDOUT:     %.loc15_15.3: type = converted %F.call.loc15, %.loc15_15.2 [concrete = constants.%B]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %B = ref_binding b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %B = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -136,11 +140,15 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
-// CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.9ef = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.9ef = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %MakeA.type: type = fn_type @MakeA [concrete]
 // CHECK:STDOUT:   %MakeA: %MakeA.type = struct_value () [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
-// CHECK:STDOUT:   %pattern_type.61d: type = pattern_type %B [concrete]
+// CHECK:STDOUT:   %pattern_type.e39: type = pattern_type %B [concrete]
+// CHECK:STDOUT:   %b.patt.492: %pattern_type.e39 = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt: %pattern_type.e39 = var_pattern %b.patt.492 [concrete]
 // CHECK:STDOUT:   %MakeB.type: type = fn_type @MakeB [concrete]
 // CHECK:STDOUT:   %MakeB: %MakeB.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -152,8 +160,8 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.fe8 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.fe8 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.9ef = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.9ef = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_14.1: type = splice_block %.loc10_14.3 [concrete = constants.%A] {
@@ -163,10 +171,10 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %.loc10_14.2: type = value_of_initializer %F.call.loc10 [concrete = constants.%A]
 // CHECK:STDOUT:     %.loc10_14.3: type = converted %F.call.loc10, %.loc10_14.2 [concrete = constants.%A]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %A = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.61d = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.61d = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.e39 = ref_binding_pattern b [concrete = constants.%b.patt.492]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.e39 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %B = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc11_15.1: type = splice_block %.loc11_15.3 [concrete = constants.%B] {
@@ -176,7 +184,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %.loc11_15.2: type = value_of_initializer %F.call.loc11 [concrete = constants.%B]
 // CHECK:STDOUT:     %.loc11_15.3: type = converted %F.call.loc11, %.loc11_15.2 [concrete = constants.%B]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %B = ref_binding b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %B = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

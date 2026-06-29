@@ -12,23 +12,26 @@
 namespace Carbon::Check {
 
 // Given a function signature and a callee function, build a thunk that matches
-// the given signature and calls the specified callee. Returns the callee
-// unchanged if it can be used directly.
+// the given signature and calls the specified callee. If
+// `override_self_type_id` is not `None`, this thunk wraps a virtual function
+// override declared in the given type. Returns the callee unchanged if it can
+// be used directly.
 auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                 SemIR::SpecificId signature_specific_id,
-                SemIR::TypeId signature_self_type_override_id,
-                SemIR::InstId callee_id, bool defer_definition)
-    -> SemIR::InstId;
+                SemIR::TypeId override_self_type_id, SemIR::InstId callee_id,
+                bool defer_definition) -> SemIR::InstId;
 
-// Builds a call to a function that forwards a call argument list built for
-// `function_id` to a call to `callee_id`, for use when building a call from a
-// thunk to its target. This is like `PerformCall`, except that it takes a list
-// of call arguments for `function_id`, not a syntactic argument list.
+// Builds a call to a function that forwards a call argument list `call_arg_ids`
+// built for `function_id` to a call to `callee_id`, for use when building a
+// call from a thunk to its target. `param_pattern_ids` contains the parameter
+// patterns of `function_id`. If `override_self_type_id` is not `None`,
+// `callee_id` refers to a virtual function override declared in the given type.
 auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
                       SemIR::FunctionId function_id,
                       llvm::ArrayRef<SemIR::InstId> param_pattern_ids,
                       llvm::ArrayRef<SemIR::InstId> call_arg_ids,
-                      SemIR::InstId callee_id) -> SemIR::InstId;
+                      SemIR::InstId callee_id,
+                      SemIR::TypeId override_self_type_id) -> SemIR::InstId;
 
 // Builds the definition for a thunk whose definition was deferred until the end
 // of the enclosing scope.

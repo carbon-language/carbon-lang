@@ -88,3 +88,31 @@ sh_test(
     ],
     env = cc_env(),
 )
+
+cc_binary(
+    name = "prelude_benchmark",
+    testonly = 1,
+    srcs = ["prelude_benchmark.cpp"],
+    deps = [
+        "//common:all_llvm_targets",
+        "//common:check",
+        "//testing/base:benchmark_main",
+        "//testing/base:global_exe_path",
+        "//toolchain/base:install_paths",
+        "//toolchain/base:install_paths_test_helpers",
+        "//toolchain/base:mem_usage",
+        "//toolchain/driver",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+sh_test(
+    name = "prelude_benchmark_test",
+    size = "small",
+    srcs = [":prelude_benchmark"],
+    # No `--benchmark_filter` is needed (unlike `compile_benchmark_test`): the
+    # benchmarks aren't `Range()`-parameterized, so a dry run is already cheap.
+    args = ["--benchmark_dry_run"],
+    env = cc_env(),
+)

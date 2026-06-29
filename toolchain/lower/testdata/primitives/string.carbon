@@ -40,29 +40,29 @@ fn Copy(s: str) -> str {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @0 = private unnamed_addr constant [6 x i8] c"Hello\00", align 1
 // CHECK:STDOUT: @1 = private unnamed_addr constant [6 x i8] c"World\00", align 1
-// CHECK:STDOUT: @String.val.397.String.val = internal constant { ptr, i64 } { ptr @0, i64 5 }
-// CHECK:STDOUT: @String.val.6d0.String.val = internal constant { ptr, i64 } { ptr @1, i64 5 }
+// CHECK:STDOUT: @String.val.75d.String.val = internal constant { ptr, i64 } { ptr @0, i64 5 }
+// CHECK:STDOUT: @String.val.2f1.String.val = internal constant { ptr, i64 } { ptr @1, i64 5 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CG.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.397.String.val), !dbg !7
+// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.75d.String.val), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CH.Main() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.397.String.val), !dbg !10
+// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.75d.String.val), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CI.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.6d0.String.val), !dbg !13
+// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.2f1.String.val), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -77,25 +77,25 @@ fn Copy(s: str) -> str {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "string.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "string.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !1, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 19, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 18, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !1, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !10 = !DILocation(line: 25, column: 3, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 22, column: 1, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "I", linkageName: "_CI.Main", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "I", linkageName: "_CI.Main", scope: null, file: !1, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !13 = !DILocation(line: 31, column: 3, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 28, column: 1, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Copy", linkageName: "_CCopy.Main", scope: null, file: !3, line: 34, type: !16, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !19)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Copy", linkageName: "_CCopy.Main", scope: null, file: !1, line: 34, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !19)
 // CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
 // CHECK:STDOUT: !17 = !{!18, !18}
 // CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)

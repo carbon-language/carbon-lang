@@ -271,11 +271,11 @@ to give the semantics described above.
 
 ## Alternatives considered
 
--   [Use different symbols for bitwise operators](/proposals/p1191.md#use-different-symbols-for-bitwise-operators)
--   [Provide different operators for arithmetic and logical shifts](/proposals/p1191.md#provide-different-operators-for-arithmetic-and-logical-shifts)
--   [Provide rotate operators](/proposals/p1191.md#provide-rotate-operators)
--   [Guarantee the behavior of large shifts](/proposals/p1191.md#guarantee-behavior-of-large-shifts)
--   [Support shifting a constant by a variable](/proposals/p1191.md#support-shifting-a-constant-by-a-variable)
+-   [Use different symbols for bitwise operators](/proposals/p001191-bitwise-and-shift-operators.md#use-different-symbols-for-bitwise-operators)
+-   [Provide different operators for arithmetic and logical shifts](/proposals/p001191-bitwise-and-shift-operators.md#provide-different-operators-for-arithmetic-and-logical-shifts)
+-   [Provide rotate operators](/proposals/p001191-bitwise-and-shift-operators.md#provide-rotate-operators)
+-   [Guarantee the behavior of large shifts](/proposals/p001191-bitwise-and-shift-operators.md#guarantee-behavior-of-large-shifts)
+-   [Support shifting a constant by a variable](/proposals/p001191-bitwise-and-shift-operators.md#support-shifting-a-constant-by-a-variable)
 
 ## References
 

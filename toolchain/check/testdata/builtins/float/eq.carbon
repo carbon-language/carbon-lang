@@ -43,25 +43,25 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.eq" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Eq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.eq";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn Eq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.eq";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Eq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.eq";
+fn Eq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.eq";
 
 // CHECK:STDOUT: --- float_eq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %f64.9a0: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Eq.type: type = fn_type @Eq [concrete]
 // CHECK:STDOUT:   %Eq: %Eq.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.9a0, %b.param: %f64.9a0) -> out %return.param: bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.dc1, %b.param: %f64.dc1) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Eq.ref: %Eq.type = name_ref Eq, file.%Eq.decl [concrete = constants.%Eq]
-// CHECK:STDOUT:   %a.ref: %f64.9a0 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %f64.9a0 = name_ref b, %b
+// CHECK:STDOUT:   %a.ref: %f64.dc1 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.dc1 = name_ref b, %b
 // CHECK:STDOUT:   %Eq.call: init bool = call %Eq.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Eq.call
 // CHECK:STDOUT: }

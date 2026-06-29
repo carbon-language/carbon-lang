@@ -1,6 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 
-"""Verify that the bazel build graph is in a valid state, for pre-commit."""
+# /// script
+# requires-python = ">=3.12"
+# ///
+
+
+"""Verify that the bazel build graph is in a valid state, for prek."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM

@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [TODO: Importing C++ code (inline)](#todo-importing-c-code-inline)
     -   [Accessing built-in C++ entities (file-less)](#accessing-built-in-c-entities-file-less)
     -   [The `Cpp` package](#the-cpp-package)
-    -   [TODO: Importing C++ macros](#todo-importing-c-macros)
+    -   [Importing C++ macros](#importing-c-macros)
 -   [Calling C++ code from Carbon](#calling-c-code-from-carbon)
     -   [Function call syntax and semantics](#function-call-syntax-and-semantics)
     -   [TODO: Overload resolution](#todo-overload-resolution)
@@ -28,9 +28,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [TODO: Struct literals](#todo-struct-literals)
 -   [TODO: Accessing C++ classes, structs, and members](#todo-accessing-c-classes-structs-and-members)
 -   [TODO: Accessing global variables](#todo-accessing-global-variables)
--   [TODO: Bi-directional type mapping: primitives and core types](#todo-bi-directional-type-mapping-primitives-and-core-types)
+-   [Bi-directional type mapping: primitives and core types](#bi-directional-type-mapping-primitives-and-core-types)
+    -   [TODO: Integers](#todo-integers)
+    -   [Literals](#literals)
+    -   [Character types](#character-types)
 -   [TODO: Advanced type mapping: pointers, references, and `const`](#todo-advanced-type-mapping-pointers-references-and-const)
--   [TODO: Bi-directional type mapping: standard library types](#todo-bi-directional-type-mapping-standard-library-types)
+-   [Bi-directional type mapping: standard library types](#bi-directional-type-mapping-standard-library-types)
+    -   [`std::string_view` and `str`](#stdstring_view-and-str)
 -   [TODO: The operator interoperability model](#todo-the-operator-interoperability-model)
 
 <!-- tocstop -->
@@ -140,9 +144,11 @@ This syntax is used for both standard library headers and user-defined headers:
     This import makes entities like `putchar` available.
 
 -   **C++ User-Defined Header:**
+
     ```carbon
     import Cpp library "circle.h";
     ```
+
     This import makes user-defined declarations and definitions available.
 
 ### TODO: Importing C++ code (inline)
@@ -166,7 +172,12 @@ namespaces) are contained in the `Cpp` package.
 The `Cpp.` prefix makes the _origin_ of every symbol explicit and unambiguous.
 It ensures that C++ entities cannot collide with Carbon code.
 
-### TODO: Importing C++ macros
+### Importing C++ macros
+
+An object-like C/C++ macro that evaluates to a constant expression is imported
+from C++ as a constant in Carbon.
+
+See [Importing C/C++ macros](macros.md) for details.
 
 ## Calling C++ code from Carbon
 
@@ -206,10 +217,58 @@ fn Run() {
 
 ## TODO: Accessing global variables
 
-## TODO: Bi-directional type mapping: primitives and core types
+## Bi-directional type mapping: primitives and core types
+
+### TODO: Integers
+
+### Literals
+
+Carbon and C++ support bi-directional mapping for the types of integer and
+floating-point literals. Because Carbon literals do not have suffixes, they
+typically follow C++ rules for unsuffixed decimal literals, but can also be
+explicitly cast. C++ literals map to corresponding Carbon types based on their
+suffixes.
+
+For details, see [literals](literals.md).
+
+### Character types
+
+Carbon's `char` type transparently maps to C++'s `char` type. Carbon's `char`
+type is always unsigned. When compiling C++ using Carbon's toolchain, C++ `char`
+is treated as `unsigned` by default (`-funsigned-char`). When interoperating
+with a signed C++ `char` type (`-fno-unsigned-char`), Carbon will maintain
+interoperability, though bits will be interpreted differently in each language.
+
+> References:
+>
+> -   Proposal
+>     [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)
 
 ## TODO: Advanced type mapping: pointers, references, and `const`
 
-## TODO: Bi-directional type mapping: standard library types
+## Bi-directional type mapping: standard library types
+
+TODO: C++ view types such as `std::span` and other standard library types will
+have corresponding types in Carbon.
+
+### `std::string_view` and `str`
+
+C++'s `std::string_view` maps directly to Carbon's `str` (which is an alias for
+`Core.Str`) when importing C++ headers. The Carbon compiler treats
+`std::string_view` as a type alias for `str` at the ABI level, with identical
+memory representation.
+
+This direct mapping is initially enabled only on 64-bit targets (since `str` has
+a 64-bit size field, whereas C++ `std::string_view` uses `size_t`, which is
+32-bit on 32-bit platforms) and where the standard library representation
+matches the pointer-first-then-size layout of `str` (such as `libc++` used by
+Clang and MSVC STL). For platforms with other layout conventions (like
+`libstdc++`'s size-first-then-pointer layout), this mapping is disabled by
+default until layout compatibility is established.
+
+> References:
+>
+> -   Proposal
+>     [#6177: C++ Interop: Mapping `std::string_view` to `Core.Str`](https://github.com/carbon-language/carbon-lang/pull/6177)
 
 ## TODO: The operator interoperability model

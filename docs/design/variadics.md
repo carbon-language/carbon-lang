@@ -226,12 +226,11 @@ _modifier_ `each` _name_.
 For example:
 
 -   `... generic each T: type`
--   `... runtime ref each x: i32` (Note: `runtime` is the default for explicit
-    parameters so this would only come up in a hypothetical case where we allow
-    this in deduced parameters).
+-   `... runtime ref each x: i32` (Note: runtime parameters are the default for
+    explicit parameters so this would only come up in a hypothetical case where
+    we allow this in deduced parameters).
 
 This ensures that `each` remains most tightly attached to the binding name.
-
 > **Future work:** That restriction can probably be relaxed, but we currently
 > don't have motivating use cases to constrain the design.
 
@@ -271,7 +270,7 @@ fn Min[T: Comparable & Value](first: T, ... each next: T) -> T {
 
 ```carbon
 // Invokes f, with the tuple `args` as its arguments.
-fn Apply[... each T: type, F: CallableWith(... each T)]
+fn Apply[... each T: type, F: Call(... each T)]
     (f: F, args: (... each T)) -> auto {
   return f(...expand args);
 }
@@ -565,17 +564,21 @@ following conditions hold:
     declarations. For example, we can't apply this rewrite to `⟬X, each Y⟭` in
     this code, because the resulting signature would have return type `X` but no
     declaration of `X`:
+
     ```carbon
     fn F[... ⟬X, each Y⟭: «type; ‖each next‖+1»]
         (... each __args: each ⟬X, each Y⟭) -> X;
     ```
+
 -   The pack expansions being rewritten do not contain any pack literals other
     than the name pack being replaced. For example, we can't apply this rewrite
     to `⟬X, each Y⟭` in this code, because the pack expansion in the deduced
     parameter list also contains the pack literal `⟬I, each type⟭`:
+
     ```carbon
     fn F[... ⟬X, each Y⟭: ⟬I, each type⟭](... each __args: each ⟬X, each Y⟭);
     ```
+
     Notice that as a corollary of this rule, all the names in the name pack must
     have the same type.
 
@@ -934,25 +937,25 @@ any further merging, so this must be the canonical form.
 
 ## Alternatives considered
 
--   [Member packs](/proposals/p2240.md#member-packs)
--   [Single semantic model for pack expansions](/proposals/p2240.md#single-semantic-model-for-pack-expansions)
--   [Generalize `expand`](/proposals/p2240.md#generalize-expand)
--   [Omit `expand`](/proposals/p2240.md#omit-expand)
--   [Support expanding arrays](/proposals/p2240.md#support-expanding-arrays)
--   [Omit each-names](/proposals/p2240.md#omit-each-names)
-    -   [Disallow pack-type bindings](/proposals/p2240.md#disallow-pack-type-bindings)
--   [Fold expressions](/proposals/p2240.md#fold-expressions)
--   [Allow multiple pack expansions in a tuple pattern](/proposals/p2240.md#allow-multiple-pack-expansions-in-a-tuple-pattern)
--   [Allow nested pack expansions](/proposals/p2240.md#allow-nested-pack-expansions)
--   [Use postfix instead of prefix `...`](/proposals/p2240.md#use-postfix-instead-of-prefix-)
--   [Avoid context-sensitity in pack expansions](/proposals/p2240.md#avoid-context-sensitity-in-pack-expansions)
-    -   [Fold-like syntax](/proposals/p2240.md#fold-like-syntax)
-    -   [Variadic blocks](/proposals/p2240.md#variadic-blocks)
-    -   [Keyword syntax](/proposals/p2240.md#keyword-syntax)
--   [Require parentheses around `each`](/proposals/p2240.md#require-parentheses-around-each)
--   [Fused expansion tokens](/proposals/p2240.md#fused-expansion-tokens)
--   [No parameter merging](/proposals/p2240.md#no-parameter-merging)
--   [Exhaustive function call typechecking](/proposals/p2240.md#exhaustive-function-call-typechecking)
+-   [Member packs](/proposals/p002240-variadics.md#member-packs)
+-   [Single semantic model for pack expansions](/proposals/p002240-variadics.md#single-semantic-model-for-pack-expansions)
+-   [Generalize `expand`](/proposals/p002240-variadics.md#generalize-expand)
+-   [Omit `expand`](/proposals/p002240-variadics.md#omit-expand)
+-   [Support expanding arrays](/proposals/p002240-variadics.md#support-expanding-arrays)
+-   [Omit each-names](/proposals/p002240-variadics.md#omit-each-names)
+    -   [Disallow pack-type bindings](/proposals/p002240-variadics.md#disallow-pack-type-bindings)
+-   [Fold expressions](/proposals/p002240-variadics.md#fold-expressions)
+-   [Allow multiple pack expansions in a tuple pattern](/proposals/p002240-variadics.md#allow-multiple-pack-expansions-in-a-tuple-pattern)
+-   [Allow nested pack expansions](/proposals/p002240-variadics.md#allow-nested-pack-expansions)
+-   [Use postfix instead of prefix `...`](/proposals/p002240-variadics.md#use-postfix-instead-of-prefix-)
+-   [Avoid context-sensitity in pack expansions](/proposals/p002240-variadics.md#avoid-context-sensitity-in-pack-expansions)
+    -   [Fold-like syntax](/proposals/p002240-variadics.md#fold-like-syntax)
+    -   [Variadic blocks](/proposals/p002240-variadics.md#variadic-blocks)
+    -   [Keyword syntax](/proposals/p002240-variadics.md#keyword-syntax)
+-   [Require parentheses around `each`](/proposals/p002240-variadics.md#require-parentheses-around-each)
+-   [Fused expansion tokens](/proposals/p002240-variadics.md#fused-expansion-tokens)
+-   [No parameter merging](/proposals/p002240-variadics.md#no-parameter-merging)
+-   [Exhaustive function call typechecking](/proposals/p002240-variadics.md#exhaustive-function-call-typechecking)
 
 ## References
 

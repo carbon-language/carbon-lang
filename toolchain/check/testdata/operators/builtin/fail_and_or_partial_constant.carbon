@@ -51,9 +51,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: --- fail_non_constant_result.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.831 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.831 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %PartialConstant.type: type = fn_type @PartialConstant [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %PartialConstant: %PartialConstant.type = struct_value () [concrete]
@@ -70,7 +70,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = constants.%Bool]
+// CHECK:STDOUT:   %Core.Bool: type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = bool]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -81,20 +81,20 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %PartialConstant.decl: %PartialConstant.type = fn_decl @PartialConstant [concrete = constants.%PartialConstant] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type.831 = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern [concrete = constants.%x.param_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.831 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %x: bool = value_binding x, %x.param
+// CHECK:STDOUT:     %x: bool = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PartialConstant(%x.param: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: <error> = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: <error> = ref_binding_pattern a [concrete = <error>]
+// CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %a.var, <error>
@@ -127,10 +127,10 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !.loc9_15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc9_15:
-// CHECK:STDOUT:   %a: ref <error> = ref_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: <error> = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: <error> = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: <error> = ref_binding_pattern b [concrete = <error>]
+// CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var %b.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %b.var, <error>
@@ -164,16 +164,16 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !.loc14_15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc14_15:
-// CHECK:STDOUT:   %b: ref <error> = ref_binding b, <error> [concrete = <error>]
+// CHECK:STDOUT:   %b: <error> = wrapper_binding b, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_despite_known_result.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.831 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.831 = at_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %KnownValueButNonConstantCondition.type: type = fn_type @KnownValueButNonConstantCondition [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %KnownValueButNonConstantCondition: %KnownValueButNonConstantCondition.type = struct_value () [concrete]
@@ -190,7 +190,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = constants.%Bool]
+// CHECK:STDOUT:   %Core.Bool: type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = bool]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -201,20 +201,20 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %KnownValueButNonConstantCondition.decl: %KnownValueButNonConstantCondition.type = fn_decl @KnownValueButNonConstantCondition [concrete = constants.%KnownValueButNonConstantCondition] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type.831 = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern [concrete = constants.%x.param_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.831 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %x: bool = value_binding x, %x.param
+// CHECK:STDOUT:     %x: bool = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @KnownValueButNonConstantCondition(%x.param: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete = <error>]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %c.var, <error>
@@ -247,10 +247,10 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !.loc11_15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc11_15:
-// CHECK:STDOUT:   %c: ref <error> = ref_binding c, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c: <error> = wrapper_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: <error> = ref_binding_pattern d [concrete]
-// CHECK:STDOUT:     %d.var_patt: <error> = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.patt: <error> = ref_binding_pattern d [concrete = <error>]
+// CHECK:STDOUT:     %d.var_patt: <error> = var_pattern %d.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref <error> = var %d.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %d.var, <error>
@@ -284,7 +284,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !.loc16_15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc16_15:
-// CHECK:STDOUT:   %d: ref <error> = ref_binding d, <error> [concrete = <error>]
+// CHECK:STDOUT:   %d: <error> = wrapper_binding d, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

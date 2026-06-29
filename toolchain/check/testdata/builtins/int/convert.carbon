@@ -19,23 +19,23 @@ fn Int32ToInt32(a: i32) -> i32 = "int.convert";
 fn Int32ToUint32(a: i32) -> u32 = "int.convert";
 fn Uint32ToInt32(a: u32) -> i32 = "int.convert";
 fn Uint32ToUint32(a: u32) -> u32 = "int.convert";
-fn IntLiteralToIntLiteral(a: Core.IntLiteral()) -> Core.IntLiteral() = "int.convert";
+fn IntLiteralToIntLiteral(a: Core.IntLiteral) -> Core.IntLiteral = "int.convert";
 
 // Narrowing
 fn Int32ToInt16(a: i32) -> i16 = "int.convert";
 fn Int32ToUint16(a: i32) -> u16 = "int.convert";
 fn Uint32ToInt16(a: u32) -> i16 = "int.convert";
 fn Uint32ToUint16(a: u32) -> u16 = "int.convert";
-fn IntLiteralToInt16(a: Core.IntLiteral()) -> i16 = "int.convert";
-fn IntLiteralToUint16(a: Core.IntLiteral()) -> u16 = "int.convert";
+fn IntLiteralToInt16(a: Core.IntLiteral) -> i16 = "int.convert";
+fn IntLiteralToUint16(a: Core.IntLiteral) -> u16 = "int.convert";
 
 // Widening
 fn Int32ToInt64(a: i32) -> i64 = "int.convert";
 fn Int32ToUint64(a: i32) -> u64 = "int.convert";
 fn Uint32ToInt64(a: u32) -> i64 = "int.convert";
 fn Uint32ToUint64(a: u32) -> u64 = "int.convert";
-fn Int32ToIntLiteral(a: i32) -> Core.IntLiteral() = "int.convert";
-fn Uint32ToIntLiteral(a: u32) -> Core.IntLiteral() = "int.convert";
+fn Int32ToIntLiteral(a: i32) -> Core.IntLiteral = "int.convert";
+fn Uint32ToIntLiteral(a: u32) -> Core.IntLiteral = "int.convert";
 
 // char conversion
 fn UInt8ToChar(a: u8)   -> u8 = "int.convert_char";
@@ -243,15 +243,15 @@ fn F() {
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-let not_constant: Core.IntLiteral() = 0;
+let not_constant: Core.IntLiteral = 0;
 
 // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+8]]:33: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
 // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_not_constant.carbon:[[@LINE-7]]:1: in import [InImport]
 // CHECK:STDERR: int_ops.carbon:16:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn IntLiteralToInt16(a: Core.IntLiteral()) -> i16 = "int.convert";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn IntLiteralToInt16(a: Core.IntLiteral) -> i16 = "int.convert";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
 

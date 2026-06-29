@@ -16,8 +16,11 @@
 #include "clang/AST/UnresolvedSet.h"
 #include "clang/AST/VTableBuilder.h"
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Lex/MacroInfo.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Overload.h"
+#include "clang/Sema/Sema.h"
 #include "common/check.h"
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
@@ -149,7 +152,8 @@ auto ImportCpp(Context& context,
         context.clang_decls().Add(
             {.key = SemIR::ClangDeclKey(
                  context.ast_context().getTranslationUnitDecl()),
-             .inst_id = name_scope.inst_id()}),
+             .inst_id = name_scope.inst_id(),
+             .is_imported = true}),
         /*is_cpp_scope=*/true);
   } else {
     name_scope.set_has_error();
@@ -377,7 +381,7 @@ static auto GetDeclContext(Context& context, SemIR::NameScopeId scope_id)
   auto scope_clang_decl_context_id =
       context.name_scopes().Get(scope_id).clang_decl_context_id();
   return dyn_cast<clang::DeclContext>(
-      context.clang_decls().Get(scope_clang_decl_context_id).key.decl);
+      context.clang_decls().Get(scope_clang_decl_context_id).decl());
 }
 
 // Returns true if the given Clang declaration is the implicit injected class
@@ -398,8 +402,7 @@ static auto IsDeclInjectedClassName(Context& context,
 
   const SemIR::ClangDecl& clang_decl = context.clang_decls().Get(
       context.name_scopes().Get(scope_id).clang_decl_context_id());
-  const auto* scope_record_decl =
-      cast<clang::CXXRecordDecl>(clang_decl.key.decl);
+  const auto* scope_record_decl = cast<clang::CXXRecordDecl>(clang_decl.decl());
 
   const clang::ASTContext& ast_context = context.ast_context();
   CARBON_CHECK(ast_context.getCanonicalTagType(scope_record_decl) ==
@@ -440,7 +443,7 @@ static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
 // Returns whether `decl` already mapped to an instruction.
 static auto IsClangDeclImported(Context& context, SemIR::ClangDeclKey key)
     -> bool {
-  return context.clang_decls().Lookup(key).has_value();
+  return context.clang_decls().LookupId(key).has_value();
 }
 
 // If `decl` already mapped to an instruction, returns that instruction.
@@ -448,7 +451,7 @@ static auto IsClangDeclImported(Context& context, SemIR::ClangDeclKey key)
 static auto LookupClangDeclInstId(Context& context, SemIR::ClangDeclKey key)
     -> SemIR::InstId {
   const auto& clang_decls = context.clang_decls();
-  if (auto context_clang_decl_id = clang_decls.Lookup(key);
+  if (auto context_clang_decl_id = clang_decls.LookupId(key);
       context_clang_decl_id.has_value()) {
     return clang_decls.Get(context_clang_decl_id).inst_id;
   }
@@ -524,7 +527,8 @@ static auto ImportNamespaceDecl(Context& context,
   context.name_scopes()
       .Get(result.name_scope_id)
       .set_clang_decl_context_id(
-          context.clang_decls().Add({.key = key, .inst_id = result.inst_id}),
+          context.clang_decls().Add(
+              {.key = key, .inst_id = result.inst_id, .is_imported = true}),
           /*is_cpp_scope=*/true);
   return result.inst_id;
 }
@@ -587,8 +591,8 @@ static auto ImportTagDecl(Context& context, clang::TagDecl* clang_decl)
 
   // TODO: The caller does the same lookup. Avoid doing it twice.
   auto key = SemIR::ClangDeclKey(clang_decl);
-  auto clang_decl_id =
-      context.clang_decls().Add({.key = key, .inst_id = class_inst_id});
+  auto clang_decl_id = context.clang_decls().Add(
+      {.key = key, .inst_id = class_inst_id, .is_imported = true});
 
   // Name lookup into the Carbon class looks in the C++ class definition.
   auto& class_info = context.classes().Get(class_id);
@@ -683,7 +687,14 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   static_assert(SemIR::CustomLayoutId::FirstFieldIndex == 2);
 
-  // TODO: Import vptr(s).
+  if (context.ast_context().getASTRecordLayout(clang_def).hasOwnVFPtr()) {
+    // Add a virtual function pointer to the beginning of the layout.
+    layout.push_back(SemIR::ObjectSize::Bytes(0));
+    fields.push_back(
+        {.name_id = SemIR::NameId::Vptr,
+         .type_inst_id = context.types().GetTypeInstId(
+             GetPointerType(context, SemIR::VtableType::TypeInstId))});
+  }
 
   // The kind of base class we've picked so far. These are ordered in increasing
   // preference order.
@@ -798,6 +809,10 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
     // Create a field now, as we know the index to use.
     // TODO: Consider doing this lazily instead.
+    auto field_id =
+        context.fields().Add({.index = SemIR::ElementIndex(fields.size()),
+                              // TODO: import initializers.
+                              .initializer_id = SemIR::InstId::None});
     auto field_decl_id = AddInst(
         context, SemIR::LocIdAndInst::RuntimeVerified(
                      context.sem_ir(), import_ir_inst_id,
@@ -805,11 +820,13 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                          .type_id = GetUnboundElementType(
                              context, class_type_inst_id, field_type_inst_id),
                          .name_id = field_name_id,
-                         .index = SemIR::ElementIndex(fields.size())}));
+                         .field_id = field_id,
+                     }));
     // The imported SemIR::FieldDecl represents the original declaration `decl`,
     // which is either the field or the indirect field declaration.
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
-    context.clang_decls().Add({.key = key, .inst_id = field_decl_id});
+    context.clang_decls().Add(
+        {.key = key, .inst_id = field_decl_id, .is_imported = true});
 
     // Compute the offset to the field that appears directly in the class.
     uint64_t offset = clang_layout.getFieldOffset(
@@ -1058,13 +1075,15 @@ static auto ImportEnumConstantDecl(Context& context,
                    context.sem_ir(), import_ir_inst_id,
                    SemIR::IntValue{.type_id = type_id, .int_id = int_id}));
   context.imports().push_back(inst_id);
-  context.clang_decls().Add({.key = key, .inst_id = inst_id});
+  context.clang_decls().Add(
+      {.key = key, .inst_id = inst_id, .is_imported = true});
   return inst_id;
 }
 
 // Mark the given `key` as failed in `clang_decls`.
 static auto MarkFailedDecl(Context& context, SemIR::ClangDeclKey key) {
-  context.clang_decls().Add({.key = key, .inst_id = SemIR::ErrorInst::InstId});
+  context.clang_decls().Add(
+      {.key = key, .inst_id = SemIR::ErrorInst::InstId, .is_imported = true});
 }
 
 // Creates an integer type of the given size.
@@ -1210,7 +1229,8 @@ static auto MapTagType(Context& context, const clang::TagType& type)
     if (auto* record_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl)) {
       auto custom_type = LookupCustomRecordType(context, record_decl);
       if (custom_type.inst_id.has_value()) {
-        context.clang_decls().Add({.key = key, .inst_id = custom_type.inst_id});
+        context.clang_decls().Add(
+            {.key = key, .inst_id = custom_type.inst_id, .is_imported = true});
         return custom_type;
       }
     }
@@ -1329,6 +1349,26 @@ static auto MapReferenceType(Context& context, clang::QualType type,
   return TypeExpr::ForUnsugared(context, pointer_type_id);
 }
 
+// Maps a C++ array type to a Carbon array type.
+static auto MapArrayType(Context& context, const clang::ArrayType* array_type,
+                         TypeExpr element_type_expr) -> TypeExpr {
+  if (const auto* constant_array_type =
+          llvm::dyn_cast<clang::ConstantArrayType>(array_type)) {
+    auto bound_const_id = TryEvalInst(
+        context,
+        SemIR::IntValue{.type_id = GetSingletonType(
+                            context, SemIR::IntLiteralType::TypeInstId),
+                        .int_id = context.ints().AddUnsigned(
+                            constant_array_type->getSize())});
+    auto bound_inst_id = context.constant_values().GetInstId(bound_const_id);
+    auto array_type_id =
+        GetArrayType(context, bound_inst_id, element_type_expr.inst_id);
+    return TypeExpr::ForUnsugared(context, array_type_id);
+  }
+
+  return TypeExpr::None;
+}
+
 // Maps a C++ type to a Carbon type. `type` should not be canonicalized because
 // we check for pointer nullability and nullability will be lost by
 // canonicalization.
@@ -1344,6 +1384,8 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
       type = type->getPointeeType();
     } else if (type->isReferenceType()) {
       type = type.getNonReferenceType();
+    } else if (const auto* array_type = type->getAsArrayTypeUnsafe()) {
+      type = array_type->getElementType();
     } else {
       break;
     }
@@ -1364,6 +1406,8 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
       mapped = MapPointerType(context, loc_id, wrapper, mapped);
     } else if (wrapper->isReferenceType()) {
       mapped = MapReferenceType(context, wrapper, mapped);
+    } else if (const auto* array_type = wrapper->getAsArrayTypeUnsafe()) {
+      mapped = MapArrayType(context, array_type, mapped);
     } else {
       CARBON_FATAL("Unexpected wrapper type {0}", wrapper.getAsString());
     }
@@ -1415,11 +1459,10 @@ static auto MapParameterType(
           .kind = GetParamPatternKindForPassingMode(passing_mode)};
 }
 
-// Returns a block for the implicit parameters of the given function
-// declaration. Because function templates are not yet supported, this currently
-// only contains the `self` parameter. On error, produces a diagnostic and
-// returns None.
-static auto MakeImplicitParamPatternsBlockId(
+// Returns a block containing the `self` parameter pattern for the given
+// function declaration, or `Empty` if it is not a method.
+// Returns `None` on error.
+static auto MakeSelfParamPatternBlockId(
     Context& context, SemIR::LocId loc_id,
     SemIR::ImportIRInstId import_ir_inst_id,
     const clang::FunctionDecl& clang_decl,
@@ -1704,30 +1747,46 @@ static auto CreateFunctionSignatureInsts(
     SemIR::ImportIRInstId import_ir_inst_id, clang::FunctionDecl* clang_decl,
     SemIR::ClangDeclSignatureId signature_id)
     -> std::optional<FunctionSignatureInsts> {
-  context.full_pattern_stack().StartImplicitParamList();
-  auto implicit_param_patterns_id = MakeImplicitParamPatternsBlockId(
+  // The `self` parameter of a method (proposal #7016) is the
+  // first entry in the explicit parameter list. Build it (if any) first, then
+  // the remaining explicit parameters, and concatenate them into a single
+  // explicit parameter list.
+  context.full_pattern_stack().StartExplicitParamList();
+  auto self_param_patterns_id = MakeSelfParamPatternBlockId(
       context, loc_id, import_ir_inst_id, *clang_decl, signature_id);
-  if (!implicit_param_patterns_id.has_value()) {
+  if (!self_param_patterns_id.has_value()) {
     return std::nullopt;
   }
-  context.full_pattern_stack().EndImplicitParamList();
-  context.full_pattern_stack().StartExplicitParamList();
-  auto param_patterns_id = MakeParamPatternsBlockId(
+  auto explicit_param_patterns_id = MakeParamPatternsBlockId(
       context, loc_id, import_ir_inst_id, *clang_decl, signature_id);
-  if (!param_patterns_id.has_value()) {
+  if (!explicit_param_patterns_id.has_value()) {
     return std::nullopt;
   }
   context.full_pattern_stack().EndExplicitParamList();
+
+  auto self_param_patterns =
+      context.inst_blocks().GetOrEmpty(self_param_patterns_id);
+  auto param_patterns_id = explicit_param_patterns_id;
+  if (!self_param_patterns.empty()) {
+    llvm::SmallVector<SemIR::InstId> combined(self_param_patterns);
+    llvm::append_range(
+        combined, context.inst_blocks().GetOrEmpty(explicit_param_patterns_id));
+    param_patterns_id = context.inst_blocks().Add(combined);
+  }
+
   auto [return_type_inst_id, return_form_inst_id, return_pattern_id] =
       GetReturnInfo(context, loc_id, clang_decl);
   if (return_type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return std::nullopt;
   }
 
-  auto match_results = CalleePatternMatch(context, implicit_param_patterns_id,
+  // C++ functions have no implicit parameters. Use `None` rather than an empty
+  // block so that the signature matches a Carbon function with no implicit
+  // parameter list.
+  auto match_results = CalleePatternMatch(context, SemIR::InstBlockId::None,
                                           param_patterns_id, return_pattern_id);
 
-  return {{.implicit_param_patterns_id = implicit_param_patterns_id,
+  return {{.implicit_param_patterns_id = SemIR::InstBlockId::None,
            .param_patterns_id = param_patterns_id,
            .return_type_inst_id = return_type_inst_id,
            .return_form_inst_id = return_form_inst_id,
@@ -1855,14 +1914,15 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .virtual_index = virtual_index,
               .evaluation_mode = evaluation_mode,
               .self_param_id = FindSelfPattern(
-                  context, function_params_insts->implicit_param_patterns_id),
+                  context, function_params_insts->implicit_param_patterns_id,
+                  function_params_insts->param_patterns_id),
           }});
   context.imports().push_back(decl_id);
 
-  context.functions().Get(function_id).clang_decl_id =
-      context.clang_decls().Add({.key = SemIR::ClangDeclKey::ForFunctionDecl(
-                                     clang_decl, signature_id),
-                                 .inst_id = decl_id});
+  context.clang_decls().Add(
+      {.key = SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature_id),
+       .inst_id = decl_id,
+       .is_imported = true});
 
   return function_id;
 }
@@ -2097,12 +2157,11 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
                                           .pattern_id = pattern_id}});
   context.imports().push_back(var_storage_inst_id);
 
-  // Register the variable so we don't create it again, and track the
-  // corresponding declaration to use for mangling.
-  auto clang_decl_id = context.clang_decls().Add(
-      {.key = SemIR::ClangDeclKey(var_decl), .inst_id = var_storage_inst_id});
-  context.cpp_global_names().Add({.key = {.entity_name_id = entity_name_id},
-                                  .clang_decl_id = clang_decl_id});
+  // Register the variable so we don't create it again.
+  context.clang_decls().AddVar({.key = SemIR::ClangDeclKey(var_decl),
+                                .inst_id = var_storage_inst_id,
+                                .is_imported = true},
+                               pattern_id);
 
   // Inform Clang that the variable has been referenced.
   context.clang_sema().MarkVariableReferenced(GetCppLocation(context, loc_id),
@@ -2136,7 +2195,8 @@ static auto ImportTemplateDecl(Context& context,
   auto name_id = context.entity_names().Add(
       {.name_id = AddIdentifierName(context, template_decl->getName()),
        .parent_scope_id = GetParentNameScopeId(context, template_decl)});
-  auto decl_id = context.clang_decls().Add({.key = key, .inst_id = inst_id});
+  auto decl_id = context.clang_decls().Add(
+      {.key = key, .inst_id = inst_id, .is_imported = true});
   value.type_id = GetCppTemplateNameType(context, name_id, decl_id);
 
   // Update the value with its type.
@@ -2167,7 +2227,8 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
                                  type.getAsString()));
       return SemIR::ErrorInst::InstId;
     }
-    context.clang_decls().Add({.key = key, .inst_id = type_inst_id});
+    context.clang_decls().Add(
+        {.key = key, .inst_id = type_inst_id, .is_imported = true});
     return type_inst_id;
   }
   if (isa<clang::FieldDecl, clang::IndirectFieldDecl>(clang_decl)) {
@@ -2298,7 +2359,7 @@ static auto LookupBuiltinName(Context& context, SemIR::LocId loc_id,
   const clang::ASTContext& ast_context = context.ast_context();
 
   // List of types based on
-  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p5448.md#details
+  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p005448.md#details
   auto builtin_type =
       llvm::StringSwitch<clang::QualType>(*name)
           .Case("signed_char", ast_context.SignedCharTy)
@@ -2340,7 +2401,7 @@ auto ImportCppOverloadSet(
     Context& context, SemIR::LocId loc_id, SemIR::NameScopeId scope_id,
     SemIR::NameId name_id, clang::CXXRecordDecl* naming_class,
     clang::UnresolvedSet<4>&& overload_set,
-    clang::OverloadCandidateSet::OperatorRewriteInfo operator_rewrite_info)
+    SemIR::CppOverloadSet::OperatorRewriteInfo operator_rewrite_info)
     -> SemIR::InstId {
   SemIR::CppOverloadSetId overload_set_id = context.cpp_overload_sets().Add(
       SemIR::CppOverloadSet{.name_id = name_id,
@@ -2566,7 +2627,7 @@ auto ImportClassDefinitionForClangDecl(Context& context,
   CARBON_CHECK(cpp_file);
 
   auto* clang_decl =
-      cast<clang::TagDecl>(context.clang_decls().Get(clang_decl_id).key.decl);
+      cast<clang::TagDecl>(context.clang_decls().Get(clang_decl_id).decl());
   auto class_inst_id = context.types().GetAsTypeInstId(
       context.classes().Get(class_id).first_owning_decl_id);
 
@@ -2601,17 +2662,9 @@ auto GetAsClangVarDecl(Context& context, SemIR::InstId inst_id)
     -> clang::VarDecl* {
   if (const auto& var_storage =
           context.insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
-    auto var_name_id = SemIR::GetFirstBindingNameFromPatternId(
-        context.sem_ir(), var_storage->pattern_id);
-    if (auto cpp_global_var_id = context.sem_ir().cpp_global_vars().Lookup(
-            {.entity_name_id = var_name_id});
-        cpp_global_var_id.has_value()) {
-      SemIR::ClangDeclId clang_decl_id = context.sem_ir()
-                                             .cpp_global_vars()
-                                             .Get(cpp_global_var_id)
-                                             .clang_decl_id;
-      return cast<clang::VarDecl>(
-          context.clang_decls().Get(clang_decl_id).key.decl);
+    if (const auto* clang_decl =
+            context.clang_decls().Lookup(var_storage->pattern_id)) {
+      return cast<clang::VarDecl>(clang_decl->decl());
     }
   }
 

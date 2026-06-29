@@ -35,10 +35,10 @@ fn CallMixed(ref a: i32, b: i64) {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_unsized.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.left_shift_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Builtin(ref a: Core.IntLiteral(), b: Core.IntLiteral()) = "int.left_shift_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.left_shift_assign";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Builtin(ref a: Core.IntLiteral(), b: Core.IntLiteral()) = "int.left_shift_assign";
+fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.left_shift_assign";
 
 // --- fail_bad_decl.carbon
 
@@ -70,7 +70,7 @@ fn NotRef(a: i32, b: i32) = "int.left_shift_assign";
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %.loc8: %i32 = ref_tag %a.ref
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %Builtin.call: init %empty_tuple.type = call %Builtin.ref(%.loc8, %b.ref)
+// CHECK:STDOUT:   %Builtin.call: init %empty_tuple.type = call %Builtin.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,7 +80,7 @@ fn NotRef(a: i32, b: i32) = "int.left_shift_assign";
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %.loc16: %i32 = ref_tag %a.ref
 // CHECK:STDOUT:   %b.ref: %i64 = name_ref b, %b
-// CHECK:STDOUT:   %MixedTypes.call: init %empty_tuple.type = call %MixedTypes.ref(%.loc16, %b.ref)
+// CHECK:STDOUT:   %MixedTypes.call: init %empty_tuple.type = call %MixedTypes.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

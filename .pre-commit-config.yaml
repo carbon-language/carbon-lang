@@ -11,8 +11,7 @@ default_language_version:
   python: python3 # Defaults to python2, so override it.
 
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
+  - repo: builtin
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -29,6 +28,15 @@ repos:
         exclude: '^(.*/fuzzer_corpus/.*|.*\.svg)$'
       - id: trailing-whitespace
         exclude: '^(.*/fuzzer_corpus/.*|.*/testdata/.*\.golden|.*\.svg)$'
+
+  # Run markdown linting early so that doc style and table-of-contents see the
+  # linted state.
+  - repo: https://github.com/rvben/rumdl-pre-commit
+    rev: v0.2.22
+    hooks:
+      - id: rumdl
+        args: [--fix]
+
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: efaea7c61c774c0b1a9805fd999e754a2d19dbd1 # frozen: v1.2.5
     hooks:
@@ -39,6 +47,15 @@ repos:
             .*AGENTS.md
           )$
       - id: markdown-toc
+
+  # Re-run markdown linting to fix any issues caused by doc style and TOC. This
+  # is very fast, so it shouldn't be problematic to run twice.
+  - repo: https://github.com/rvben/rumdl-pre-commit
+    rev: v0.2.22
+    hooks:
+      - id: rumdl
+        args: [--fix]
+
   - repo: local
     hooks:
       - id: fix-cc-deps
@@ -49,10 +66,29 @@ repos:
         pass_filenames: false
 
   # Formatters should be run late so that they can re-format any prior changes.
-  - repo: https://github.com/psf/black
-    rev: c6755bb741b6481d6b3d3bb563c83fa060db96c9 # frozen: 26.3.1
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 0c7b6c989466a93942def1f84baf36ddfcd60c83 # frozen: v0.15.14
     hooks:
-      - id: black
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty
+        entry: ty check --no-progress
+        language: python
+        additional_dependencies:
+          - ty==0.0.46
+          - rich
+          - 'gql>=2.0.0,<3.0.0'
+          - PyGitHub
+          - types-requests
+          - requests
+        types: [python]
+        pass_filenames: false
+
   - repo: local
     hooks:
       - id: prettier
@@ -61,7 +97,7 @@ repos:
         # TODO: Not upgrading to/past 3.4.0 due to list indent changes that may
         # get fixed. See: https://github.com/prettier/prettier/issues/16929
         additional_dependencies: ['prettier@3.3.3']
-        types_or: [html, javascript, json, markdown, yaml]
+        types_or: [html, javascript, json, yaml]
         entry: npx prettier@3.3.3 --write --log-level=warn
   - repo: local
     hooks:
@@ -69,7 +105,7 @@ repos:
         name: Bazel buildifier
         entry: scripts/run_buildifier.py
         # Beyond just formatting, explicitly fix lint warnings.
-        args: ['--lint=fix', '--warnings=all', '-r', '.']
+        args: ['--lint=fix', '--warnings=all']
         language: python
         files: |
           (?x)^(
@@ -112,6 +148,23 @@ repos:
         entry: scripts/check_sha_filenames.py
         language: python
         files: ^.*/fuzzer_corpus/.*$
+      - id: check-proposal-names
+        name: Check proposal names
+        entry: proposals/scripts/check_proposal_names.py
+        language: python
+        files: ^proposals/p.*\.md$
+        # This edits files other than the ones passed to it, so we need each
+        # chunk of files to be run through the script serially.
+        require_serial: true
+        # This also renames files, invalidating the list of files provided to
+        # subsequent checks so we fail-fast if this makes changes.
+        fail_fast: true
+      - id: build-textmate-grammar
+        name: Build TextMate grammar
+        entry: scripts/update_tm_language.py
+        language: system
+        files: ^utils/vscode/carbon\.tmLanguage\.json$
+        pass_filenames: false
       - id: check-toolchain-diagnostics
         name: Check toolchain diagnostics
         entry: toolchain/diagnostics/check_diagnostics.py
@@ -134,36 +187,6 @@ repos:
         language: python
         files: ^.*/BUILD$
         pass_filenames: false
-  - repo: https://github.com/PyCQA/flake8
-    rev: d93590f5be797aabb60e3b09f2f52dddb02f349f # frozen: 7.3.0
-    hooks:
-      - id: flake8
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'fc0f09a29bb495f4a91f00266155d6282d52485d' # frozen: v1.20.2
-    hooks:
-      - id: mypy
-        # Use setup.cfg to match the command line.
-        args:
-          - --config-file=setup.cfg
-        # This should match the requirements added in the WORKSPACE pip_install.
-        additional_dependencies:
-          - gql >= 2.0.0, < 3.0.0
-          - PyGitHub
-          - rich
-          - types-requests
-        # Exclusions are:
-        # - p#### scripts because they're not tested or maintained.
-        # - lit.cfg.py because it has multiple copies, breaking mypy.
-        # - `bazel_test_runner.py` which depends on Bazel-specific imports.
-        # - Unit tests because they sometimes violate typing, such as by
-        #   assigning a mock to a function.
-        exclude: |
-          (?x)^(
-              proposals/(?!scripts/).*|
-              .*/lit\.cfg\.py|
-              examples/bazel_test_runner\.py|
-              .*_test\.py
-          )$
   - repo: https://github.com/codespell-project/codespell
     rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a # frozen: v2.4.2
     hooks:
@@ -203,7 +226,7 @@ repos:
           - ''
           - '*/'
           - --custom_format
-          - '\.(plist)$'
+          - '\.(plist|tmLanguage)$'
           - '<!--'
           - ''
           - '\-->'
@@ -227,6 +250,7 @@ repos:
               .bazelversion|
               .github/pull_request_template.md|
               .python-version|
+              LICENSE.*|
               compile_flags.txt|
               github_tools/requirements.txt|
               third_party/.*|
@@ -258,6 +282,7 @@ repos:
 # This excludes third-party code, and patches to third-party code.
 exclude: |
   (?x)^(
+      \.jj/.*|
       MODULE.bazel.lock|
       .*package-lock\.json|
       bazel/bazel_clang_tidy/.*\.patch|

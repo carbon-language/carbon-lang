@@ -341,8 +341,11 @@ impl CD as IF where .F = 0 {
 library "[[@TEST_NAME]]";
 
 interface M { let X:! type; }
+constraint N {
+  extend require impls M where .X = {};
+}
 
-impl () as M where .X = (M where .X = (M where .X = {})) {}
+impl () as M where .X = N {}
 
 // --- fail_todo_period_self_impl_lookup.carbon
 library "[[@TEST_NAME]]";

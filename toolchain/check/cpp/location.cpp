@@ -4,6 +4,8 @@
 
 #include "toolchain/check/cpp/location.h"
 
+#include "clang/AST/ASTContext.h"
+#include "clang/Basic/SourceManager.h"
 #include "toolchain/sem_ir/absolute_node_ref.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -68,6 +70,13 @@ auto GetCppLocation(Context& context, SemIR::LocId loc_id)
   if (final_node.is_cpp()) {
     return final_node.file()->clang_source_locs().Get(
         final_node.clang_source_loc_id());
+  }
+
+  if (!final_node.node_id().has_value()) {
+    // A non-existent NodeID implies our C++ is compiler-synthesised. Synthetic
+    // code doesn't have a physical source location to retrieve, so the Clang
+    // mapping is empty.
+    return clang::SourceLocation();
   }
 
   // This is a location in Carbon code; get or create a corresponding file in

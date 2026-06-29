@@ -175,7 +175,7 @@ The scope mangling scheme is as follows:
 ```carbon
 package P1;
 interface Interface {
-  fn Op[self: Self]();
+  fn Op(self);
 }
 ```
 
@@ -185,7 +185,7 @@ class NameSpace.Implementation {
   // Mangled as:
   // `_COp.Implementation.NameSpace.Main:Interface.P1`
   impl as P1.Interface {
-    fn Op[self: Self]() {
+    fn Op(self) {
     }
   }
 }

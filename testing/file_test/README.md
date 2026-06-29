@@ -84,6 +84,9 @@ they have an associated error. An exception is that the main test file may omit
 
 ## Content replacement
 
+<!-- TODO: Re-enable once rumdl's bugs with complex nested lists are fixed. -->
+<!-- rumdl-disable -->
+
 Some keywords can be inserted for content:
 
 -   ```
@@ -288,6 +291,8 @@ Supported comment markers are:
     Tips like this are added by autoupdate, for example providing commands to
     run the test directly. Tips have no impact on validation; the marker informs
     autoupdate that it can update or remove them as needed.
+
+<!-- rumdl-enable -->
 
 <!--
 {% endraw %}

@@ -6,4 +6,5 @@
 
 package Core library "prelude/parts/float_literal";
 
-fn FloatLiteral() -> type = "float_literal.make_type";
+private fn MakeFloatLiteral() -> type = "float_literal.make_type";
+alias FloatLiteral = MakeFloatLiteral();

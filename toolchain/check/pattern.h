@@ -52,17 +52,27 @@ auto AddBindingEntityName(Context& context, SemIR::NameId name_id,
                           BindingPhase phase) -> SemIR::EntityNameId;
 
 // Creates a binding pattern and the associated binding inst, and returns their
-// IDs. `type_region_id` is the region representing the binding's type
-// expression.
+// IDs. `scrutinee_type_id` is the type of the binding, and `type_region_id` is
+// the region representing that type expression. The binding is added to
+// `context.bind_name_map()`, with a placeholder value.
 auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::ExprRegionId type_region_id,
+                       SemIR::TypeId scrutinee_type_id,
                        SemIR::AnyBindingPattern pattern) -> BindingPatternInfo;
 
-// Creates storage for `var` patterns nested within the given pattern at the
-// current location in the output SemIR. For a `returned var`, this
-// reuses the function's return slot when present.
-auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
-                          bool is_returned_var) -> void;
+// Creates a binding inst with the given type and value, to represent the result
+// of matching the given binding pattern. The binding is not added to any block,
+// or to `context.bind_name_map()`.
+auto AddBindingForPattern(Context& context, SemIR::LocId name_loc,
+                          SemIR::AnyBindingPattern pattern,
+                          SemIR::TypeId binding_type_id, SemIR::InstId value_id)
+    -> SemIR::InstId;
+
+// Returns a VarStorage inst for the given `var` pattern. `is_returned_var`
+// indicates whether the pattern is the `var` part of a `returned var`; if so,
+// this reuses the return parameter, and otherwise it adds a new inst.
+auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
+                        bool is_returned_var) -> SemIR::InstId;
 
 // Kinds of parameters that can be added by `AddParamPattern`.
 enum class ParamPatternKind {
@@ -73,6 +83,10 @@ enum class ParamPatternKind {
   // A variable parameter, `var x: T`.
   Var,
 };
+
+// Returns the `ParamPatternKind` of the parameter instruction `param_inst_id`.
+auto GetParamPatternKind(Context& context, SemIR::InstId param_inst_id)
+    -> ParamPatternKind;
 
 // Adds a parameter pattern with the specified name and type information. The
 // pattern emulates `x: T`, `ref x: T`, or `var x: T` depending on the value of

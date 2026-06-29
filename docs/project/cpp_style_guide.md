@@ -14,12 +14,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Baseline](#baseline)
 -   [Carbon-local guidance](#carbon-local-guidance)
     -   [General naming rules](#general-naming-rules)
+    -   [Variable names](#variable-names)
     -   [File names](#file-names)
     -   [Syntax and formatting](#syntax-and-formatting)
         -   [Line comments](#line-comments)
         -   [Initialization](#initialization)
         -   [Passing addresses](#passing-addresses)
-    -   [Naming variable types and the use of `auto`](#naming-variable-types-and-the-use-of-auto)
+    -   [Use of `auto`](#use-of-auto)
     -   [Copyable and movable types](#copyable-and-movable-types)
     -   [Static and global variables](#static-and-global-variables)
     -   [Foundational libraries and data types](#foundational-libraries-and-data-types)
@@ -81,6 +82,14 @@ serves to simplify it.
     -   The exceptions are `LLVM` and `IR`, which we capitalize.
 -   For abbreviations, there is a list of
     [common toolchain abbreviations](/toolchain/docs/idioms.md#abbreviations-used-in-the-code-aka-carbon-abbreviation-decoder-ring).
+
+### Variable names
+
+When naming variables, we typically suffix `_id` for ID types. When needed, we
+can also resolve ambiguity by referring to the full type name in the variable
+name; for example, if there's a `ClassId`, `InstId`, and `TypeId` for the same
+class entity, we might call these `class_id`, `class_inst_id`, and
+`class_type_id`. Similarly, we might call an `Inst` `class_inst`.
 
 ### File names
 
@@ -207,7 +216,7 @@ the following cases applies:
         };
         ```
 
-### Naming variable types and the use of `auto`
+### Use of `auto`
 
 We generally use `auto` for most local variables when a type can be inferred,
 except for primitive types such as `bool` and `int`. It is not required to use
@@ -216,12 +225,6 @@ though they could be inferred. Naming the type can be helpful in cases where the
 type would be obscure and can not be explained with the variable name. Function
 parameters generally name the type of each parameter, though lambdas may use
 `auto` if it's helpful.
-
-When naming variables, we typically suffix `_id` for ID types. When needed, we
-can also resolve ambiguity by referring to the full type name in the variable
-name; for example, if there's a `ClassId`, `InstId`, and `TypeId` for the same
-class entity, we might call these `class_id`, `class_inst_id`, and
-`class_type_id`. Similarly, we might call an `Inst` `class_inst`.
 
 ### Copyable and movable types
 

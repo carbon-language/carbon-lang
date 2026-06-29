@@ -9,6 +9,11 @@
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 
+namespace clang {
+class CXXDestructorDecl;
+class CXXRecordDecl;
+}  // namespace clang
+
 namespace Carbon::Check {
 
 // Exports a Carbon name scope into C++ as a namespace or class, or returns the
@@ -46,13 +51,6 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void;
 auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
                       SemIR::FieldDecl field_decl) -> clang::FieldDecl*;
 
-// Get the field offset for each field in a class.
-//
-// Returns true on success, false if any error occurs.
-auto CalculateCppFieldOffsets(
-    Context& context, SemIR::ClassId class_id,
-    llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets) -> bool;
-
 // Get a `clang::FunctionDecl` that can be used to call a Carbon function.
 auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
                          SemIR::FunctionId function_id) -> clang::FunctionDecl*;
@@ -63,6 +61,13 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
 auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
                            clang::CXXRecordDecl* record_decl)
     -> clang::CXXDestructorDecl*;
+
+// Export a Carbon variable into C++.
+//
+// Returns nullptr if the variable could not be exported an an error was
+// diagnosed.
+auto ExportVarToCpp(Context& context, SemIR::InstId inst_id,
+                    SemIR::VarStorage var_storage) -> clang::VarDecl*;
 
 }  // namespace Carbon::Check
 

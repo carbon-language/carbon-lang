@@ -53,6 +53,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Conditional conformance](#conditional-conformance)
 -   [Interface parameters and associated constants](#interface-parameters-and-associated-constants)
 -   [Type constraints](#type-constraints)
+-   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -84,17 +85,17 @@ example, Rust supports
 
 When we distinguish between checked and template generics in Carbon, it is on a
 parameter by parameter basis. A single function can take a mix of runtime,
-checked, and template parameters.
+checked generic, and template generic parameters.
 
 -   **Runtime parameters** are the default for explicit function parameter lists
     (`()`) and locals. They can be explicitly marked with the `runtime` keyword
     in a context where they are not the default.
--   **Checked parameters**, or "generic parameters", are the default in deduced
-    parameter lists (`[]`) and parameters to compile-time entities (like
-    `interface` or `class`). They can be explicitly marked with the `generic`
-    keyword when used in explicit parameter lists (`()`).
--   **Template parameters** are designated by prefixing the parameter with the
-    `template` keyword and are never the default.
+-   **Checked generic parameters** are the default in deduced parameter lists
+    (`[]`) and parameters to compile-time entities (like `interface` or
+    `class`). They can be explicitly marked with the `generic` keyword when used
+    in explicit parameter lists (`()`).
+-   **Template generic parameters** are designated by prefixing the parameter
+    with the `template` keyword and are never the default.
 
 Keywords matching the contextual default are disallowed to ensure consistency.
 
@@ -366,8 +367,8 @@ cases, we are concerned with the type value after the implicit conversion.
 We use the term _facet binding_ to refer to the name introduced by a
 [compile-time binding pattern](#bindings) (indicated by context or keywords like
 `generic` or `template`) where the declared type is a [facet type](#facet-type).
-In the binding pattern `T: Hashable`, `T` is a facet binding, and the value of
-`T` is a [facet](#facet).
+In the binding pattern `generic T: Hashable`, `T` is a facet binding, and the
+value of `T` is a [facet](#facet).
 
 ## Deduced parameter
 
@@ -465,6 +466,8 @@ A type that _extends_ the implementation of an interface has all the named
 members of the interface as named members of the type. This means that the
 members of the interface are available by way of both
 [simple member access and qualified member access expressions](#member-access).
+See
+[how `extend` affects member access](../expressions/member_access.md#extend).
 
 If a type implements an interface without extending, the members of the
 interface may only be accessed using
@@ -649,7 +652,8 @@ also has the member names of its constraint. Effectively it is considered to
 An interface can be extended by defining an interface that includes the full API
 of another interface, plus some additional API. Types implementing the extended
 interface should automatically be considered to have implemented the narrower
-interface.
+interface. See
+[how `extend` affects member access](../expressions/member_access.md#extend).
 
 ## Dynamic-dispatch witness table
 
@@ -855,6 +859,16 @@ express, for example:
 Note that type constraints can be a restriction on one facet parameter or
 associated facet, or can define a relationship between multiple facets.
 
+## Alternatives considered
+
+-   [Keep the `:!` syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#keep-the--syntax)
+-   [Alternative keyword names](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#alternative-keyword-names)
+-   [Use `template generic` instead of just `template`](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#use-template-generic-instead-of-just-template)
+-   [Context-independent syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#context-independent-syntax)
+-   [Erased model for generics](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#erased-model-for-generics)
+-   [Context-sensitive defaults based on parameter type](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#context-sensitive-defaults-based-on-parameter-type)
+-   [Allow redundant phase keywords](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#allow-redundant-phase-keywords)
+
 ## References
 
 -   [#447: Generics terminology](https://github.com/carbon-language/carbon-lang/pull/447)
@@ -864,3 +878,4 @@ associated facet, or can define a relationship between multiple facets.
 -   [#2138: Checked and template generic terminology](https://github.com/carbon-language/carbon-lang/pull/2138)
 -   [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
+-   [#7254: Replace `:!` and `:?` with keywords and contextual defaults](https://github.com/carbon-language/carbon-lang/pull/7254)

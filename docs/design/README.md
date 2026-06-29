@@ -35,7 +35,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Tuples](#tuples)
     -   [Struct types](#struct-types)
     -   [Pointer types](#pointer-types)
-    -   [Arrays and slices](#arrays-and-slices)
+    -   [Arrays and buffers](#arrays-and-buffers)
+    -   [Slices](#slices)
 -   [Expressions](#expressions)
 -   [Declarations, Definitions, and Scopes](#declarations-definitions-and-scopes)
 -   [Patterns](#patterns)
@@ -486,7 +487,7 @@ intended for bit manipulation or modular arithmetic as often found in
 [PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator) use cases.
 Values which can never be negative, like sizes, but for which wrapping does not
 make sense
-[should use signed integer types](/proposals/p1083.md#dont-let-unsigned-arithmetic-wrap).
+[should use signed integer types](/proposals/p001083-arithmetic-expressions.md#dont-let-unsigned-arithmetic-wrap).
 
 Identifiers of the form `iN` and `uN` are _type literals_, resulting in the
 corresponding type.
@@ -861,35 +862,49 @@ or restrictions on casts between pointers and integers.
 > -   Proposal
 >     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
-### Arrays and slices
+### Arrays and buffers
 
-> **TODO:** The provisional array syntax documented here has been superseded by
-> [p4682: The Core.Array type for direct-storage immutably-sized buffers](/proposals/p4682.md).
+The type of a direct-storage immutably sized array holding `N` values of type
+`T` is written `array(T, N)`, which is a shorthand for the library type
+`Core.Array(T, N)`. This type is defined in the prelude.
 
-The type of an array of holding 4 `i32` values is written `[i32; 4]`. There is
-an [implicit conversion](expressions/implicit_conversions.md) from tuples to
-arrays of the same length as long as every component of the tuple may be
-implicitly converted to the destination element type. In cases where the size of
-the array may be deduced, it may be omitted, as in:
+There is an [implicit conversion](expressions/implicit_conversions.md) from
+tuples to arrays of the same length as long as every component of the tuple may
+be implicitly converted to the destination element type. For example:
 
 ```carbon
 var i: i32 = 1;
-// `[i32;]` equivalent to `[i32; 3]` here.
-var a: [i32;] = (i, i, i);
+var a: array(i32, 3) = (i, i, i);
 ```
 
-Elements of an array may be accessed using square brackets (`[`...`]`), as in
-`a[i]`:
+A heap-allocated dynamically sized array is written `buf(T)`, which is a
+shorthand for the library type `Core.Buf(T)`.
+
+Elements of an `array` or `buf` may be accessed using square brackets
+(`[`...`]`), as in `a[i]`:
 
 ```carbon
 a[i] = 2;
 Core.Print(a[0]);
 ```
 
-> **TODO:** Slices
+> Alternatives considered:
+>
+> -   [`[T; N]` builtin syntax](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#t-n-builtin-syntax)
+> -   [`array [T; N]` builtin syntax](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#array-t-n-builtin-syntax)
+> -   [Just the `Core.Array(T, N)` library type](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#just-the-corearrayt-n-library-type)
+> -   [Implicitly importing `Core.Array(T, N)` to the file scope](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#implicitly-importing-corearrayt-n-to-the-file-scope)
 
-> **Note:** This is provisional, no design for arrays has been through the
-> proposal process yet.
+> References:
+>
+> -   Leads issue
+>     [#5969: Core type names and keywords for string types](https://github.com/carbon-language/carbon-lang/issues/5969)
+> -   Proposal
+>     [#4682: The Core.Array type for direct-storage immutably-sized buffers](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md)
+
+### Slices
+
+> **TODO:** Slices
 
 ## Expressions
 
@@ -920,12 +935,14 @@ Some common expressions in Carbon include:
     -   [Conversion](expressions/as_expressions.md): `2 as i32`
     -   [Logical](expressions/logical_operators.md): `a and b`, `c or d`,
         `not e`
-    -   [Indexing](#arrays-and-slices): `a[3]`
+    -   [Indexing](expressions/indexing.md): `a[3]`
     -   [Function](#functions) call: `f(4)`
     -   [Pointer](expressions/pointer_operators.md): `*p`, `p->m`, `&x`
+    -   [Type](expressions/type_operators.md): `T*`, `const T`
     -   [Move](#move): `~x`
 
 -   [Conditionals](expressions/if.md): `if c then t else f`
+
 -   Parentheses: `(7 + 8) * (3 - 1)`
 
 When an expression appears in a context in which an expression of a specific
@@ -1032,6 +1049,25 @@ name. It can only match values that may be
 underscore (`_`) may be used instead of the name to match a value but without
 binding any name to it.
 
+Every binding pattern has a _phase_ (either compile-time or runtime). A
+[compile-time binding](#checked-and-template-parameters) can only match
+[compile-time constants](#expression-phases), not run-time values.
+
+To minimize keyword noise, Carbon uses contextual defaults to determine the
+phase (compile-time vs runtime) of a binding in parameter lists:
+
+-   Parameters to compile-time entities (such as `interface`, `impl`, and
+    `class`) are checked generics by default.
+-   Deduced function parameters (declared in `[]`) are checked generics by
+    default.
+-   Explicit function parameters and local bindings (declared in `()`) are
+    runtime by default.
+
+These defaults can be overridden by using the `template`, `generic`, or
+`runtime` keywords. However, using a keyword that matches the contextual default
+is disallowed to maintain consistency. A `template` keyword before the binding
+selects a template binding instead of a symbolic binding.
+
 Binding patterns default to _`let` bindings_. The `var` keyword is used to make
 it a _`var` binding_.
 
@@ -1051,12 +1087,6 @@ implementation's choice among these options may be indirectly observable, for
 example through side effects of the destructor, copy, and move operations, but
 the program's correctness must not depend on which option the Carbon
 implementation chooses.
-
-A [compile-time binding](#checked-and-template-parameters) is indicated by
-context or by keywords like `generic` or `template`, and can only match
-[compile-time constants](#expression-phases), not run-time values. A `template`
-keyword before the binding selects a template binding instead of a symbolic
-binding.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
@@ -1298,7 +1328,7 @@ fn Positive(a: i64) -> auto {
 > References:
 >
 > -   [Type inference](type_inference.md)
-> -   [Function return clause](functions.md#return-clause)
+> -   [Function return specification](functions.md#return-specification)
 > -   Proposal
 >     [#826: Function return type inference](https://github.com/carbon-language/carbon-lang/pull/826)
 
@@ -1435,7 +1465,7 @@ Core.Print("Done!");
 example, this prints each `String` value in `names`:
 
 ```carbon
-for (var name: String in names) {
+for (name: String in names) {
   Core.Print(name);
 }
 ```
@@ -1456,7 +1486,7 @@ steps until a manual step is hit (if no manual step is hit, all steps are
 processed):
 
 ```carbon
-for (var step: Step in steps) {
+for (step: Step in steps) {
   if (step.IsManual()) {
     Core.Print("Reached manual step!");
     break;
@@ -2713,10 +2743,13 @@ not itself a type.
 
 ### Checked and template parameters
 
-Compile-time parameters like types may either be _checked_ (marked `generic` or
-defaulting to it) or _template_ (marked `template` and never the default).
-Parameters in the deduced parameter list of functions `[]` default to being
-checked generic parameters without a `generic` keyword.
+Compile-time bindings may either be _checked_ or _template_ bindings and are
+often used as _parameters_ to generic entities. A binding pattern declares a
+checked binding if it's marked `generic`, or appears in a context that only
+supports compile-time bindings, such as the deduced parameter list `[]` of a
+function, the parameter list of a `class` or `interface`, or an associated
+constant declaration. A binding pattern declares a template binding if it's
+marked `template`.
 
 "Checked" here means that the body of `Min` is type checked when the function is
 defined, independent of the specific values `T` is instantiated with, and name
@@ -3042,16 +3075,16 @@ Many Carbon entities, not just functions, may be made generic by adding
 #### Generic Classes
 
 Classes may be defined with an optional explicit parameter list. All parameters
-to a class must be compile-time, and are `generic` by default, or can be marked
-as `template`. For example, to define a stack that can hold values of any type
-`T`:
+to a class must be compile-time, and are checked generic parameters by default,
+or can be marked with the `template` keyword. For example, to define a stack
+that can hold values of any type `T`:
 
 ```carbon
 class Stack(T: type) {
   fn Push(ref self, value: T);
   fn Pop(ref self) -> T;
 
-  var storage: Array(T);
+  var storage: buf(T);
 }
 
 var int_stack: Stack(i32);
@@ -3062,7 +3095,7 @@ In this example:
 -   `Stack` is a type parameterized by a type `T`.
 -   `T` may be used within the definition of `Stack` anywhere a normal type
     would be used.
--   `Array(T)` instantiates generic type `Array` with its argument set to `T`.
+-   `buf(T)` instantiates generic type `buf` with its argument set to `T`.
 -   `Stack(i32)` instantiates `Stack` with `T` set to `i32`.
 
 The values of type parameters are part of a type's value, and so may be deduced
@@ -3525,7 +3558,7 @@ ABI compatibility.
 > References:
 >
 > -   [Goals: Stable language and library ABI non-goal](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/goals.md#stable-language-and-library-abi)
-> -   [#175: C++ interoperability goals: Support mixing Carbon and C++ toolchains](/proposals/p0175.md#support-mixing-carbon-and-c-toolchains)
+> -   [#175: C++ interoperability goals: Support mixing Carbon and C++ toolchains](/proposals/p000175-c-interoperability-goals.md#support-mixing-carbon-and-c-toolchains)
 
 ### Operator overloading
 
@@ -3613,7 +3646,7 @@ provided by `<stdint.h>` or `<cstdint>`. The basic C and C++ integer types like
 namespace given an `import Cpp;` declaration, with names like `Cpp.int`,
 `Cpp.char`, and `Cpp.unsigned_long`. C++ types are considered different if C++
 considers them different, so C++ overloads are resolved the same way. Carbon
-[conventions for implicit conversions between integer types](expressions/implicit_conversions.md#data-types)
+[conventions for implicit conversions between integer types](expressions/implicit_conversions.md#numeric-types)
 apply here, allowing them whenever the numerical value for all inputs may be
 preserved by the conversion.
 
@@ -3625,18 +3658,20 @@ Other C and C++ types are equal to Carbon types as follows:
 | `float`  | `f32`          |
 | `double` | `f64`          |
 | `T*`     | `Optional(T*)` |
-| `T[4]`   | `[T; 4]`       |
+| `T[4]`   | `array(T, 4)`  |
 
 Further, C++ reference types like `T&` will be translated to `T*` in Carbon,
 which is Carbon's non-null pointer type.
 
 Carbon will work to have idiomatic vocabulary _view_ types for common data
-structures, like `std::string_view` and `std::span`, map transparently between
-C++ and the Carbon equivalents. This will include data layout so that even
-pointers to these types translate seamlessly, contingent on a suitable C++ ABI
-for those types, potentially by re-compiling the C++ code with a customized ABI.
-We will also explore how to expand coverage to similar view types in other
-libraries.
+structures map transparently between C++ and the Carbon equivalents. For
+instance, C++'s `std::string_view` maps directly to Carbon's `Core.Str` (see
+[here](interoperability/README.md#stdstring_view-and-str)). Other view types,
+like `std::span`, are intended to map similarly. This includes matching the data
+layout so that even pointers to these types translate seamlessly, contingent on
+a compatible standard library ABI (potentially by re-compiling the C++ code with
+a customized ABI). We will also explore how to expand coverage to similar view
+types in other libraries.
 
 However, Carbon's containers will be distinct from the C++ standard library
 containers in order to maximize our ability to improve performance and leverage
@@ -3650,6 +3685,11 @@ containers without performance loss or constraining the Carbon container
 implementations. In the other direction, Carbon containers will satisfy C++
 container requirements, so templated C++ code can operate directly on Carbon
 containers as well.
+
+> References:
+>
+> -   Proposal
+>     [#6177: C++ Interop: Mapping `std::string_view` to `Core.Str`](https://github.com/carbon-language/carbon-lang/pull/6177)
 
 ### Inheritance
 
@@ -3801,7 +3841,7 @@ the critical underpinnings of such abstractions.
 > **TODO:** References need to be evolved. Needs a detailed design and a high
 > level summary provided inline.
 
-> References: [Lambdas](lambdas.md),
+> References: [Functions](functions.md),
 > [Proposal #3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
 
 #### Co-routines

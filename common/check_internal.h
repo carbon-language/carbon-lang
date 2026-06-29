@@ -31,25 +31,29 @@ CheckCondition(bool condition)
 // Implements the check failure message printing.
 //
 // This is out-of-line and will arrange to stop the program, print any debugging
-// information and this string. In `!NDEBUG` mode (`dbg` and `fastbuild`), check
-// failures can be made non-fatal by a build flag, so this is not `[[noreturn]]`
-// in that case.
+// information and the failure message. In `!NDEBUG` mode (`dbg` and
+// `fastbuild`), check failures can be made non-fatal by a build flag, so this
+// is not `[[noreturn]]` in that case.
 //
 // This API uses `const char*` C string arguments rather than `llvm::StringRef`
 // because we know that these are available as C strings and passing them that
 // way lets the code size of calling it be smaller: it only needs to materialize
 // a single pointer argument for each. The runtime cost of re-computing the size
-// should be minimal. The extra message however might not be compile-time
-// guaranteed to be a C string so we use a normal `StringRef` there.
+// should be minimal.
+//
+// The user can provide an extra format string along with an array of
+// type-erased format adapters. This will be rendered into the final message.
 #ifdef NDEBUG
 [[noreturn]]
 #endif
-auto CheckFailImpl(const char* kind, const char* file, int line,
-                   const char* condition_str, llvm::StringRef extra_message)
+auto CheckFailImpl(
+    const char* kind, const char* file, int line, const char* condition_str,
+    const char* extra_format,
+    llvm::ArrayRef<llvm::support::detail::format_adapter*> extra_adapters)
     -> void;
 
-// Allow converting format values; the default behaviour is to just pass them
-// through.
+// Allow custom conversion of format values; the default behaviour is to just
+// pass them through.
 template <typename T>
 auto ConvertFormatValue(T&& t) -> T&& {
   return std::forward<T>(t);
@@ -70,35 +74,64 @@ auto ConvertFormatValue(T&& t) -> auto {
   }
 }
 
+// Helper to compute a pointer to the base class of a given LLVM
+// `format_adapter` object. This both handles converting to the base class and
+// allows taking the address of temporaries within arguments to another function
+// call.
+template <typename T>
+auto CheckFailFormatAdapterAddr(T&& adapter)
+    -> llvm::support::detail::format_adapter* {
+  return &adapter;
+}
+
+// Builds one type-erased format adapter per value -- forwarding each value
+// through the conversion machinery. The address of the base classes of each of
+// these are then collected into an init list that can be accessed with an
+// `ArrayRef`. All of this is then passed to the out-of-line rendering function
+// `CheckFailImpl`.
+//
+// This is templated only on the value types, not on the per-check-site
+// metadata (file, line, etc., which are passed as ordinary arguments), so the
+// adapter-building is instantiated once per distinct sequence of value types in
+// the TU.
+template <typename... Ts>
+#ifdef NDEBUG
+[[noreturn]]
+#endif
+auto CheckFailFormat(const char* kind, const char* file, int line,
+                     const char* condition_str, const char* extra_format,
+                     Ts&&... values) -> void {
+  CheckFailImpl(
+      kind, file, line, condition_str, extra_format,
+      {CheckFailFormatAdapterAddr(llvm::support::detail::build_format_adapter(
+          ConvertFormatValue(std::forward<Ts>(values))))...});
+}
+
 // Prints a check failure, including rendering any user-provided message using
 // a format string.
 //
-// Most of the parameters are passed as compile-time template strings to avoid
-// runtime cost of parameter setup in optimized builds. Each of these are passed
-// along to the underlying implementation to include in the final printed
-// message.
-//
-// Any user-provided format string and values are directly passed to
-// `llvm::formatv` which handles all of the formatting of output.
+// The check-site metadata is passed as compile-time template strings to avoid
+// runtime cost of parameter setup in optimized builds. This function is
+// instantiated once per check site (its template arguments are unique to the
+// site), so it is kept trivial: it just lowers those template strings to
+// ordinary arguments and forwards everything to `CheckFailFormat`, where the
+// adapter-building is shared across sites with the same value types.
 template <TemplateString Kind, TemplateString File, int Line,
           TemplateString ConditionStr, TemplateString FormatStr, typename... Ts>
 #ifdef NDEBUG
 [[noreturn]]
 #endif
 [[gnu::cold, clang::noinline]] auto CheckFail(Ts&&... values) -> void {
-  if constexpr (llvm::StringRef(FormatStr).empty()) {
-    // Skip the format string rendering if empty. Note that we don't skip it
-    // even if there are no values as we want to have consistent handling of
-    // `{}`s in the format string. This case is about when there is no message
-    // at all, just the condition.
-    CheckFailImpl(Kind.c_str(), File.c_str(), Line, ConditionStr.c_str(), "");
-  } else {
-    CheckFailImpl(Kind.c_str(), File.c_str(), Line, ConditionStr.c_str(),
-                  llvm::formatv(FormatStr.c_str(),
-                                ConvertFormatValue(std::forward<Ts>(values))...)
-                      .str());
-  }
+  CheckFailFormat(Kind.c_str(), File.c_str(), Line, ConditionStr.c_str(),
+                  FormatStr.c_str(), std::forward<Ts>(values)...);
 }
+
+// Type-checks the arguments of a `DCHECK` in optimized builds, where the check
+// itself is dead code, without instantiating any formatting machinery for them
+// and without provoking unused-variable warnings. It is only ever named from
+// dead code, so it is never actually called.
+template <typename... Ts>
+auto IgnoreDeadCheckArgs(Ts&&... /*values*/) -> void {}
 
 }  // namespace Carbon::Internal
 
@@ -148,21 +181,23 @@ template <TemplateString Kind, TemplateString File, int Line,
    CARBON_INTERNAL_FATAL_NORETURN_SUFFIX())
 
 #ifdef NDEBUG
-// For `DCHECK` in optimized builds we have a dead check that we want to
-// potentially "use" arguments, but otherwise have the minimal overhead. We
-// avoid forming interesting format strings here so that we don't have to
-// repeatedly instantiate the `Check` function above. This format string would
-// be an error if actually used.
+// For `DCHECK` in optimized builds the check is dead code, but we still want to
+// type-check its arguments so they can't bitrot. We route them through
+// `IgnoreDeadCheckArgs`, which uses the arguments (avoiding unused-variable
+// warnings) but builds no format adapters, so the dead check doesn't pull in
+// the formatting machinery -- in particular not the per-value-type adapters
+// that the live `CheckFail` path would. The format string is a literal, so it
+// needs no type-checking and is dropped.
 #define CARBON_INTERNAL_DEAD_DCHECK(condition, ...) \
   CARBON_INTERNAL_DEAD_DCHECK_IMPL##__VA_OPT__(_FORMAT)(__VA_ARGS__)
 
 #define CARBON_INTERNAL_DEAD_DCHECK_IMPL() \
-  Carbon::Internal::CheckFail<"", "", 0, "", "">()
+  Carbon::Internal::IgnoreDeadCheckArgs()
 
 #define CARBON_INTERNAL_DEAD_DCHECK_IMPL_FORMAT(format_str, ...) \
-  Carbon::Internal::CheckFail<"", "", 0, "", "">(__VA_ARGS__)
+  Carbon::Internal::IgnoreDeadCheckArgs(__VA_ARGS__)
 
-// The CheckFail function itself is noreturn in NDEBUG.
+// The `CheckFail` function itself is noreturn in NDEBUG.
 #define CARBON_INTERNAL_FATAL_NORETURN_SUFFIX() void()
 #else
 #define CARBON_INTERNAL_FATAL_NORETURN_SUFFIX() std::abort()

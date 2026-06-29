@@ -5,9 +5,13 @@
 #include "toolchain/check/cpp/impl_lookup.h"
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
@@ -19,6 +23,7 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -61,7 +66,7 @@ static auto TypeAsTagDecl(Context& context,
     return nullptr;
   }
 
-  return dyn_cast<clang::TagDecl>(context.clang_decls().Get(decl_id).key.decl);
+  return dyn_cast<clang::TagDecl>(context.clang_decls().Get(decl_id).decl());
 }
 
 // If the given type is a C++ class type, returns the corresponding class
@@ -187,8 +192,8 @@ static auto BuildCppUnsafeDerefWitness(
 
   // TODO: Parameterize the interface by the form of the operand and compute the
   // appropriate passing mode here.
-  SemIR::ClangDeclSignatureId signature_id =
-      MakeSignature(context, {}, SemIR::ClangDeclSignature::PassingMode::ByRef);
+  SemIR::ClangDeclSignatureId signature_id = MakeSignature(
+      context, {}, SemIR::ClangDeclSignature::PassingMode::ByValue);
 
   auto decl_info =
       DeclInfo{.decl = *candidates.begin(), .signature_id = signature_id};
@@ -197,17 +202,15 @@ static auto BuildCppUnsafeDerefWitness(
     return fn_id;
   }
 
-  auto result_type_id =
+  auto result_type_inst_id =
       context.functions()
           .Get(context.insts().GetAs<SemIR::FunctionDecl>(fn_id).function_id)
           .return_type_inst_id;
-  if (result_type_id == SemIR::ErrorInst::InstId) {
-    return SemIR::ErrorInst::InstId;
-  }
-
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id,
-                            {result_type_id, fn_id});
+  return BuildCustomWitness(
+      context, loc_id, query_self_const_id, query_specific_interface_id,
+      {context.types().GetTypeInstId(context.types().GetUnqualifiedType(
+           context.types().GetTypeIdForTypeInstId(result_type_inst_id))),
+       fn_id});
 }
 
 static auto BuildDefaultWitness(
@@ -245,11 +248,14 @@ static auto BuildDestroyWitness(
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
-  // TODO: This should provide `Destroy` for enums and other trivially
-  // destructible types.
-  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
-  if (!class_decl) {
+  auto* tag_decl = TypeAsTagDecl(context, query_self_const_id);
+  if (!tag_decl) {
     return SemIR::InstId::None;
+  }
+  auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
+  if (!class_decl) {
+    return BuildTrivialDestroyWitness(context, loc_id, query_self_const_id,
+                                      query_specific_interface_id);
   }
   SemIR::ClangDeclSignatureId signature_id = MakeSignature(context, {});
 
@@ -417,15 +423,6 @@ static auto LookupCppUnqualified(Context& context, clang::Sema& clang_sema,
                                  clang::CXXRecordDecl* /*class_decl*/,
                                  SemIR::ConstantId query_self_const_id)
     -> SemIR::InstId {
-  auto lookup_result = clang_sema.CreateUnresolvedLookupExpr(
-      /*NamingClass=*/nullptr, clang::NestedNameSpecifierLoc(), name_info,
-      clang::UnresolvedSet<0>());
-  if (lookup_result.isInvalid()) {
-    return SemIR::ErrorInst::InstId;
-  }
-
-  auto* function = llvm::cast<clang::UnresolvedLookupExpr>(lookup_result.get());
-
   auto candidate_set = clang::OverloadCandidateSet(
       clang::SourceLocation(),
       clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal);
@@ -466,7 +463,7 @@ static auto LookupCppUnqualified(Context& context, clang::Sema& clang_sema,
       auto decl_info = DeclInfo{
           .decl = best_candidate->Function,
           .signature_id = ComputeClangDeclSignatureFromBestViableFunction(
-              context, best_candidate, function, args),
+              context, best_candidate, nullptr, args),
       };
       return GetFunctionId(context, loc_id, decl_info);
     }
@@ -611,8 +608,9 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
       return BuildCppRangeForIterateWitness(
           context, loc_id, query_self_const_id, query_specific_interface_id);
 
-    // IntFitsIn is for Carbon integer types only.
+    // *FitsIn are implemented only by Carbon primitive types.
     case SemIR::CoreInterface::IntFitsIn:
+    case SemIR::CoreInterface::FloatFitsIn:
       return SemIR::InstId::None;
 
     case SemIR::CoreInterface::Unknown:

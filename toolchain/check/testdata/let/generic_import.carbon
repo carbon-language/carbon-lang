@@ -43,6 +43,7 @@ var b: T = *a;
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = value_binding_pattern T [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -65,13 +66,13 @@ var b: T = *a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = value_binding_pattern T [concrete]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = value_binding_pattern T [concrete = constants.%T.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_9.1: type = splice_block %.loc8_9.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc8_9.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T: type = value_binding T, @__global_init.%i32
+// CHECK:STDOUT:   %T: type = wrapper_binding T, @__global_init.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -101,28 +102,28 @@ var b: T = *a;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: <error> = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: <error> = ref_binding_pattern a [concrete = <error>]
+// CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc8: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:     %T.ref.loc8: type = name_ref T, imports.%Implicit.T
 // CHECK:STDOUT:     %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref <error> = ref_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: <error> = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: <error> = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: <error> = ref_binding_pattern b [concrete = <error>]
+// CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var %b.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, imports.%Implicit.T
-// CHECK:STDOUT:   %b: ref <error> = ref_binding b, <error> [concrete = <error>]
+// CHECK:STDOUT:   %b: <error> = wrapper_binding b, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%a.var, <error>
-// CHECK:STDOUT:   %a.ref: ref <error> = name_ref a, file.%a [concrete = <error>]
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, file.%a [concrete = <error>]
 // CHECK:STDOUT:   %.loc13: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return

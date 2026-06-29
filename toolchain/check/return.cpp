@@ -9,6 +9,7 @@
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -169,8 +170,8 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     diag.Emit();
     expr_id = SemIR::ErrorInst::InstId;
   } else {
-    auto return_form =
-        context.insts().Get(function.GetDeclaredReturnForm(context.sem_ir()));
+    auto return_form_id = function.GetDeclaredReturnForm(context.sem_ir());
+    auto return_form = context.insts().Get(return_form_id);
     CARBON_KIND_SWITCH(return_form) {
       case CARBON_KIND(SemIR::InitForm _): {
         if (!SemIR::InitRepr::ForType(context.sem_ir(), return_type_id)
@@ -210,6 +211,29 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
         expr_id = SemIR::ErrorInst::InstId;
         break;
       }
+      case CARBON_KIND(SemIR::SymbolicBinding _): {
+        auto expr_form_info = SemIR::GetFormInfo(context.sem_ir(), expr_id);
+        if (expr_form_info.kind != SemIR::FormInfo::Dependent) {
+          context.TODO(loc_id,
+                       "support nontrivial conversions between symbolic forms");
+          expr_id = SemIR::ErrorInst::InstId;
+          break;
+        }
+        auto expr_form_const_id = SemIR::GetConstantValueInSpecific(
+            context.sem_ir(), SemIR::SpecificId::None,
+            expr_form_info.form_inst_id);
+        auto declared_form_const_id = SemIR::GetConstantValueInSpecific(
+            context.sem_ir(), SemIR::SpecificId::None, return_form_id);
+        if (expr_form_const_id != declared_form_const_id) {
+          context.TODO(loc_id,
+                       "support nontrivial conversions between symbolic forms");
+          expr_id = SemIR::ErrorInst::InstId;
+          break;
+        }
+        // expr_id's form is identical to the expected form, so we can use it
+        // directly.
+        break;
+      }
       default:
         CARBON_FATAL("Unexpected inst kind: {0}", return_form);
     }
@@ -231,11 +255,10 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
   }
 
   auto return_param_id = GetReturnedVarParam(context, function);
-  if (!return_param_id.has_value()) {
-    // If we don't have a return slot, we're returning by value. Convert to a
-    // value expression.
-    returned_var_id = ConvertToValueExpr(context, returned_var_id);
-  }
+
+  // Convert to a value expression in case the return logic needs a value, and
+  // to indicate that this was a `return var`, not a reference return.
+  returned_var_id = ConvertToValueExpr(context, returned_var_id);
 
   AddReturnCleanupBlockWithExpr(
       context, node_id,

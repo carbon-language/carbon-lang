@@ -96,10 +96,10 @@ complexity in the number of specifics for that generic.
 
 We define two fingerprints for each specific:
 
-1. `specific_fingerprint`: Includes all specific-dependent information.
-2. `common_fingerprint`: Includes the same except for `specific_id` information,
-   as `specific_id`s can only be determined to be equivalent after building an
-   equivalence SCC.
+1.  `specific_fingerprint`: Includes all specific-dependent information.
+2.  `common_fingerprint`: Includes the same except for `specific_id` information,
+    as `specific_id`s can only be determined to be equivalent after building an
+    equivalence SCC.
 
 Two specific functions are equivalent if their `specific_fingerprint`s are equal
 and are not equivalent if their `common_fingerprint`s differs. If the
@@ -115,7 +115,7 @@ quadratic pass walking all calls instructions and comparing if the `specific_id`
 information is equivalent. These optimizations are not currently implemented.
 
 Note that this does not
-[coalesce non-specifics](/proposals/p6716.md#coalescing-duplicate-non-specific-functions).
+[coalesce non-specifics](/proposals/p006716-move-toolchain-alternatives-to-proposals.md#coalescing-duplicate-non-specific-functions).
 
 ### Canonical specific to use
 
@@ -253,7 +253,7 @@ respectively).
 
 ## Alternatives considered
 
--   [Coalescing in the front-end vs back-end?](/proposals/p6716.md#coalescing-in-the-front-end-vs-back-end)
--   [When to do coalescing in the front-end?](/proposals/p6716.md#when-to-do-coalescing-in-the-front-end)
--   [Compile-time trade-offs](/proposals/p6716.md#compile-time-trade-offs)
--   [Coalescing duplicate non-specific functions](/proposals/p6716.md#coalescing-duplicate-non-specific-functions)
+-   [Coalescing in the front-end vs back-end?](/proposals/p006716-move-toolchain-alternatives-to-proposals.md#coalescing-in-the-front-end-vs-back-end)
+-   [When to do coalescing in the front-end?](/proposals/p006716-move-toolchain-alternatives-to-proposals.md#when-to-do-coalescing-in-the-front-end)
+-   [Compile-time trade-offs](/proposals/p006716-move-toolchain-alternatives-to-proposals.md#compile-time-trade-offs)
+-   [Coalescing duplicate non-specific functions](/proposals/p006716-move-toolchain-alternatives-to-proposals.md#coalescing-duplicate-non-specific-functions)

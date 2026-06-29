@@ -27,8 +27,9 @@ jobs:
       matrix.config.name) || '' }} (${{ matrix.runner }})
     strategy:
       matrix:
-        # Test a recent version of each supported OS.
-        runner: ['ubuntu-22.04', 'macos-14']
+        # Test a recent version of each supported OS, covering both x86-64 and
+        # AArch64: Linux on x86-64 and AArch64, and macOS on AArch64.
+        runner: ['ubuntu-22.04', 'ubuntu-22.04-arm', 'macos-14']
         # Create a synthetic matrix dimension with the event name for filtering.
         event: ['${{ github.event_name }}']
         config:
@@ -70,14 +71,18 @@ jobs:
             oauth2.googleapis.com:443
             objects.githubusercontent.com:443
             pypi.org:443
+            raw.githubusercontent.com:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
+            releases.astral.sh:443
             releases.bazel.build:443
             storage.googleapis.com:443
             uploads.github.com:443
             www.googleapis.com:443
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - id: test-setup
         uses: ./.github/actions/test-setup

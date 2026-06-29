@@ -46,11 +46,11 @@ line in the region.
 
 ## Alternatives considered
 
--   [Intra-line comments](/proposals/p0198.md#intra-line-comments)
--   [Multi-line text comments](/proposals/p0198.md#multi-line-text-comments)
--   [Block comments](/proposals/p0198.md#block-comments-2)
--   [Documentation comments](/proposals/p0198.md#documentation-comments)
--   [Code folding comments](/proposals/p0198.md#code-folding-comments)
+-   [Intra-line comments](/proposals/p000198-comments.md#intra-line-comments)
+-   [Multi-line text comments](/proposals/p000198-comments.md#multi-line-text-comments)
+-   [Block comments](/proposals/p000198-comments.md#block-comments-2)
+-   [Documentation comments](/proposals/p000198-comments.md#documentation-comments)
+-   [Code folding comments](/proposals/p000198-comments.md#code-folding-comments)
 
 ## References
 

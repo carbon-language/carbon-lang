@@ -123,7 +123,7 @@ would, in the cases where they overlap.
 
 #### Alternatives considered
 
--   [Introducer syntax for expression patterns](/proposals/p2188.md#introducer-syntax-for-expression-patterns)
+-   [Introducer syntax for expression patterns](/proposals/p002188-pattern-matching-syntax-and-semantics.md#introducer-syntax-for-expression-patterns)
 
 ### Binding patterns
 
@@ -151,12 +151,26 @@ which is the immediate subpattern of its enclosing `var` pattern.
 > expected to be the only difference between variable binding patterns and other
 > reference binding patterns.
 
-A binding pattern is a _compile-time binding pattern_ if it uses the `generic`
-or `template` keyword, or appears in a compile-time context (such as parameters
-to compile-time entities). Otherwise, it is a _runtime binding pattern_. A
-compile-time binding pattern cannot appear inside a `var` pattern. It is either
-a _symbolic binding pattern_ or a _template binding pattern_, depending on
-whether it is prefixed with `template`.
+A binding pattern has a phase, which is either runtime, symbolic compile-time,
+or template compile-time:
+
+-   A _runtime binding pattern_ binds to a dynamic value at runtime. It is the
+    default for explicit function parameters and local bindings.
+-   A _symbolic binding pattern_ (or generic binding pattern) binds to a
+    compile-time value that is not known when type checking. It is the default
+    for deduced function parameters and parameters to compile-time entities.
+    Explicit function parameters are only symbolic binding patterns if they are
+    declared using the `generic` keyword.
+-   A _template binding pattern_ binds to a compile-time value that is known
+    when type checking. It is declared using the `template` keyword.
+
+> **Future work:** If Carbon supports deduced runtime parameters in the future,
+> the `runtime` keyword will be used to explicitly declare those runtime binding
+> patterns.
+
+A symbolic or template binding pattern is collectively called a _compile-time
+binding pattern_. A compile-time binding pattern cannot appear inside a `var`
+pattern.
 
 The binding declared by a binding pattern has a
 [primitive extended type](values.md#extended-types) with the following
@@ -228,8 +242,10 @@ fn F(n: i32) {
 }
 ```
 
-As specified in [#1084](/proposals/p1084.md), function redeclarations may
-replace binding names with `_`s but may not use different names.
+As specified in
+[#1084](/proposals/p001084-generics-details-9-forward-declarations.md), function
+redeclarations may replace binding names with `_`s but may not use different
+names.
 
 ```carbon
 fn G(n: i32);
@@ -244,11 +260,11 @@ fn H(m: i32) {}
 
 ##### Alternatives considered
 
--   [Commented names](/proposals/p2022.md#commented-names)
--   [Only short form support with `_`](/proposals/p2022.md#only-short-form-support-with-_)
--   [Named identifiers prefixed with `_`](/proposals/p2022.md#named-identifiers-prefixed-with-_)
--   [Anonymous, named identifiers](/proposals/p2022.md#anonymous-named-identifiers)
--   [Attributes](/proposals/p2022.md#attributes)
+-   [Commented names](/proposals/p002022-unused-pattern-bindings-unused-function-parameters.md#commented-names)
+-   [Only short form support with `_`](/proposals/p002022-unused-pattern-bindings-unused-function-parameters.md#only-short-form-support-with-_)
+-   [Named identifiers prefixed with `_`](/proposals/p002022-unused-pattern-bindings-unused-function-parameters.md#named-identifiers-prefixed-with-_)
+-   [Anonymous, named identifiers](/proposals/p002022-unused-pattern-bindings-unused-function-parameters.md#anonymous-named-identifiers)
+-   [Attributes](/proposals/p002022-unused-pattern-bindings-unused-function-parameters.md#attributes)
 
 #### `auto` and type deduction
 
@@ -293,7 +309,7 @@ specified.
 
 #### Alternatives considered
 
--   [Shorthand for `auto`](/proposals/p2188.md#shorthand-for-auto)
+-   [Shorthand for `auto`](/proposals/p002188-pattern-matching-syntax-and-semantics.md#shorthand-for-auto)
 
 ### `var`
 
@@ -331,9 +347,9 @@ _pattern_ `=` _expression_ `;`.
 
 #### Alternatives considered
 
--   [Treat all bindings under `var` as variable bindings](/proposals/p5164.md#treat-all-bindings-under-var-as-variable-bindings)
--   [Make `var` a binding pattern modifier](/proposals/p5164.md#make-var-a-binding-pattern-modifier)
--   [Initialize storage once pattern matching succeeds](/proposals/p5164.md#initialize-storage-once-pattern-matching-succeeds)
+-   [Treat all bindings under `var` as variable bindings](/proposals/p005164-updates-to-pattern-matching-for-objects.md#treat-all-bindings-under-var-as-variable-bindings)
+-   [Make `var` a binding pattern modifier](/proposals/p005164-updates-to-pattern-matching-for-objects.md#make-var-a-binding-pattern-modifier)
+-   [Initialize storage once pattern matching succeeds](/proposals/p005164-updates-to-pattern-matching-for-objects.md#initialize-storage-once-pattern-matching-succeeds)
 
 ### `unused`
 
@@ -353,10 +369,10 @@ bindings in a pattern. Nesting `unused` markers is an error. When an `unused`
 marker applies only to anonymous bindings `_` and is thus redundant, a warning
 is produced. `var` and `unused` may appear in any order in a pattern.
 
-As specified in [#3763](/proposals/p3763.md), `unused` markers may only appear
-on definitions, not on non-defining declarations. Function redeclarations that
-are also definitions may have difference due to `unused` markers, but they may
-not have different names.
+As specified in [#3763](/proposals/p003763-matching-redeclarations.md), `unused`
+markers may only appear on definitions, not on non-defining declarations.
+Function redeclarations that are also definitions may have difference due to
+`unused` markers, but they may not have different names.
 
 ```carbon
 fn J(n: i32);
@@ -449,7 +465,7 @@ This is valid even if all fields are actually named in the pattern.
 
 #### Alternatives considered
 
--   [Struct pattern syntax](/proposals/p2188.md#struct-pattern-syntax)
+-   [Struct pattern syntax](/proposals/p002188-pattern-matching-syntax-and-semantics.md#struct-pattern-syntax)
 
 ### Alternative patterns
 
@@ -682,8 +698,8 @@ We will diagnose the following situations:
 
 #### Alternatives considered
 
--   [Treat expression patterns as exhaustive if they cover all possible values](/proposals/p2188.md#treat-expression-patterns-as-exhaustive-if-they-cover-all-possible-values)
--   [Allow non-exhaustive `match` statements](/proposals/p2188.md#allow-non-exhaustive-match-statements)
+-   [Treat expression patterns as exhaustive if they cover all possible values](/proposals/p002188-pattern-matching-syntax-and-semantics.md#treat-expression-patterns-as-exhaustive-if-they-cover-all-possible-values)
+-   [Allow non-exhaustive `match` statements](/proposals/p002188-pattern-matching-syntax-and-semantics.md#allow-non-exhaustive-match-statements)
 
 ## Pattern usage
 
@@ -773,7 +789,7 @@ fn F(x: X) {
 
 #### Alternatives considered
 
--   [Allow variable binding patterns to alias across `case`s](/proposals/p5164.md#allow-variable-binding-patterns-to-alias-across-cases)
+-   [Allow variable binding patterns to alias across `case`s](/proposals/p005164-updates-to-pattern-matching-for-objects.md#allow-variable-binding-patterns-to-alias-across-cases)
 
 #### Guards
 
@@ -837,14 +853,14 @@ var cd: (C, D) = (MakeA(), MakeB());
 
 Evaluation of the last line involves 6 function calls:
 
-1. Call `MakeA`.
-2. Call `A.(Core.ImplicitAsPrimitive(C)).Convert`, to convert the `A` object to
-   a `C` value, as part of type conversion.
-3. Call `A.(Core.Copy).Op` to copy the `C` value into the storage for `cd.0`, as
-   part of category conversion.
-4. Call `MakeB`.
-5. Call `B.(Core.ImplicitAsPrimitive(D)).Convert`.
-6. Call `B.(Core.Copy).Op`.
+1.  Call `MakeA`.
+2.  Call `A.(Core.ImplicitAsPrimitive(C)).Convert`, to convert the `A` object to
+    a `C` value, as part of type conversion.
+3.  Call `A.(Core.Copy).Op` to copy the `C` value into the storage for `cd.0`, as
+    part of category conversion.
+4.  Call `MakeB`.
+5.  Call `B.(Core.ImplicitAsPrimitive(D)).Convert`.
+6.  Call `B.(Core.Copy).Op`.
 
 > **Note:** These `Core` interfaces haven't been specified yet, and their
 > details may change.
@@ -933,8 +949,8 @@ evaluation order will be evaluated.
 
 ### Alternatives considered
 
--   [Breadth-first evaluation order](/proposals/p5545.md#breadth-first-evaluation-order)
--   [Depth-first evaluation with a different "horizontal" order](/proposals/p5545.md#depth-first-evaluation-with-a-different-horizontal-order)
+-   [Breadth-first evaluation order](/proposals/p005545-expression-form-basics.md#breadth-first-evaluation-order)
+-   [Depth-first evaluation with a different "horizontal" order](/proposals/p005545-expression-form-basics.md#depth-first-evaluation-with-a-different-horizontal-order)
 
 ## Open questions
 
@@ -950,8 +966,12 @@ pattern matching machinery, what (if any) restrictions are imposed, etc.
 
 ## Alternatives considered
 
--   [Type pattern matching](/proposals/p2188.md#type-pattern-matching)
--   [Allow guards on arbitrary patterns](/proposals/p2188.md#allow-guards-on-arbitrary-patterns)
+-   [Type pattern matching](/proposals/p002188-pattern-matching-syntax-and-semantics.md#type-pattern-matching)
+-   [Allow guards on arbitrary patterns](/proposals/p002188-pattern-matching-syntax-and-semantics.md#allow-guards-on-arbitrary-patterns)
+-   [Keep the `:!` syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#keep-the--syntax)
+-   [Alternative keyword names](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#alternative-keyword-names)
+-   [Use `template generic` instead of just `template`](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#use-template-generic-instead-of-just-template)
+-   [Allow redundant phase keywords](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#allow-redundant-phase-keywords)
 
 ## References
 
@@ -959,3 +979,5 @@ pattern matching machinery, what (if any) restrictions are imposed, etc.
     [#2022: Unused Pattern Bindings (Unused Function Parameters)](https://github.com/carbon-language/carbon-lang/pull/2022)
 -   Proposal
     [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
+-   Proposal
+    [#7254: Replace `:!` and `:?` with keywords and contextual defaults](https://github.com/carbon-language/carbon-lang/pull/7254)

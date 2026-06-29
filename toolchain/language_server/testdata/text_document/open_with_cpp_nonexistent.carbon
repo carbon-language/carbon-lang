@@ -44,8 +44,8 @@
 // CHECK:STDOUT:         "message": "'nonexistent.h' file not found",
 // CHECK:STDOUT:         "range": {
 // CHECK:STDOUT:           "end": {
-// CHECK:STDOUT:             "character": 11,
-// CHECK:STDOUT:             "line": 1
+// CHECK:STDOUT:             "character": 10,
+// CHECK:STDOUT:             "line": 0
 // CHECK:STDOUT:           },
 // CHECK:STDOUT:           "start": {
 // CHECK:STDOUT:             "character": 9,

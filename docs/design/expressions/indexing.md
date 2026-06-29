@@ -101,7 +101,7 @@ its own definitions of `IndexWith.At` and `IndexWith.Ref`.
 An array type could implement subscripting like so:
 
 ```
-class Array(template T: type) {
+class Array(template T: type, template N: i64) {
   impl as IndexWith(like i64) {
     let ElementType: type = T;
     fn At(bound self, subscript: i64) -> val T;
@@ -123,11 +123,11 @@ class Span(T: type) {
 
 ## Alternatives considered
 
--   [Different subscripting syntaxes](/proposals/p2274.md#different-subscripting-syntaxes)
--   [Multiple indices](/proposals/p2274.md#multiple-indices)
--   [Read-only subscripting](/proposals/p2274.md#read-only-subscripting)
--   [Rvalue-only subscripting](/proposals/p2274.md#rvalue-only-subscripting)
--   [Map-like subscripting](/proposals/p2274.md#map-like-subscripting)
+-   [Different subscripting syntaxes](/proposals/p002274-subscript-syntax-and-semantics.md#different-subscripting-syntaxes)
+-   [Multiple indices](/proposals/p002274-subscript-syntax-and-semantics.md#multiple-indices)
+-   [Read-only subscripting](/proposals/p002274-subscript-syntax-and-semantics.md#read-only-subscripting)
+-   [Rvalue-only subscripting](/proposals/p002274-subscript-syntax-and-semantics.md#rvalue-only-subscripting)
+-   [Map-like subscripting](/proposals/p002274-subscript-syntax-and-semantics.md#map-like-subscripting)
 
 ## References
 

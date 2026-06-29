@@ -44,10 +44,10 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:     .T = %T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %T.patt: <error> = value_binding_pattern T [concrete]
+// CHECK:STDOUT:     %T.patt: <error> = value_binding_pattern T [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %T: <error> = value_binding T, <error> [concrete = <error>]
+// CHECK:STDOUT:   %T: <error> = wrapper_binding T, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -71,7 +71,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:     .U = %U
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %U.patt: <error> = value_binding_pattern U [concrete]
+// CHECK:STDOUT:     %U.patt: <error> = value_binding_pattern U [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %.loc8_9: type = type_literal type [concrete = type]
@@ -86,7 +86,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %missing.ref: <error> = name_ref missing, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %U: <error> = value_binding U, <error> [concrete = <error>]
+// CHECK:STDOUT:   %U: <error> = wrapper_binding U, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

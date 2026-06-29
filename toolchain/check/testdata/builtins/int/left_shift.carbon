@@ -66,10 +66,10 @@ fn RuntimeCall(a: u32, b: i32) -> u32 {
 
 library "[[@TEST_NAME]]";
 
-fn LeftShift(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.left_shift";
+fn LeftShift(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.left_shift";
 
-class Expect(N:! Core.IntLiteral()) {}
-fn Test(N:! Core.IntLiteral()) -> Expect(N) { return {}; }
+class Expect(N:! Core.IntLiteral) {}
+fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   // Zero can be shifted by any amount.
@@ -107,7 +107,7 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn LeftShift(a: i32, b: i32) -> i32 = "int.left_shift";
-fn LeftShiftLit(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.left_shift";
+fn LeftShiftLit(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.left_shift";
 
 // Shift greater than size is disallowed for sized types.
 let size_1: i32 = LeftShift(1, 31);
@@ -149,22 +149,22 @@ let negative: i32 = LeftShift(1, -1);
 // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let negative_zero: i32 = LeftShift(0, -1);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:39: error: shift distance negative in `1 << -1` [CompileTimeShiftNegative]
-// CHECK:STDERR: let negative_lit: Core.IntLiteral() = LeftShiftLit(1, -1);
-// CHECK:STDERR:                                       ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:37: error: shift distance negative in `1 << -1` [CompileTimeShiftNegative]
+// CHECK:STDERR: let negative_lit: Core.IntLiteral = LeftShiftLit(1, -1);
+// CHECK:STDERR:                                     ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-let negative_lit: Core.IntLiteral() = LeftShiftLit(1, -1);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:44: error: shift distance negative in `0 << -1` [CompileTimeShiftNegative]
-// CHECK:STDERR: let negative_lit_zero: Core.IntLiteral() = LeftShiftLit(0, -1);
-// CHECK:STDERR:                                            ^~~~~~~~~~~~~~~~~~~
+let negative_lit: Core.IntLiteral = LeftShiftLit(1, -1);
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:42: error: shift distance negative in `0 << -1` [CompileTimeShiftNegative]
+// CHECK:STDERR: let negative_lit_zero: Core.IntLiteral = LeftShiftLit(0, -1);
+// CHECK:STDERR:                                          ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-let negative_lit_zero: Core.IntLiteral() = LeftShiftLit(0, -1);
+let negative_lit_zero: Core.IntLiteral = LeftShiftLit(0, -1);
 
 // --- fail_literal_overflow.carbon
 
 library "[[@TEST_NAME]]";
 
-fn LeftShift(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.left_shift";
+fn LeftShift(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.left_shift";
 
 // CHECK:STDERR: fail_literal_overflow.carbon:[[@LINE+4]]:16: error: shift distance of 1000000000 would result in an integer whose width is greater than the maximum supported width of 8388608 [CompileTimeUnsizedShiftOutOfRange]
 // CHECK:STDERR: let bad: i32 = LeftShift(1, 1_000_000_000);
@@ -182,10 +182,10 @@ let bad_negative: i32 = LeftShift(-1, 1_000_000_000);
 
 library "[[@TEST_NAME]]";
 
-fn LeftShiftByLit(a: i32, b: Core.IntLiteral()) -> i32 = "int.left_shift";
-fn LeftShiftOfLit(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.left_shift";
+fn LeftShiftByLit(a: i32, b: Core.IntLiteral) -> i32 = "int.left_shift";
+fn LeftShiftOfLit(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.left_shift";
 
-var a_lit: Core.IntLiteral() = 12;
+var a_lit: Core.IntLiteral = 12;
 var an_i32: i32 = 34;
 
 // This can't be valid: we don't have a compile-time or runtime integer value for `a_lit`.
@@ -193,40 +193,40 @@ var an_i32: i32 = 34;
 // CHECK:STDERR: let bad1: i32 = LeftShiftByLit(an_i32, a_lit);
 // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE-10]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn LeftShiftByLit(a: i32, b: Core.IntLiteral()) -> i32 = "int.left_shift";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn LeftShiftByLit(a: i32, b: Core.IntLiteral) -> i32 = "int.left_shift";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let bad1: i32 = LeftShiftByLit(an_i32, a_lit);
 
 // TODO: This could be valid because we don't actually need the return value at runtime.
-// CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE+7]]:31: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: let bad2: Core.IntLiteral() = LeftShiftOfLit(a_lit, an_i32);
-// CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE+7]]:29: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR: let bad2: Core.IntLiteral = LeftShiftOfLit(a_lit, an_i32);
+// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE-19]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn LeftShiftOfLit(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.left_shift";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn LeftShiftOfLit(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.left_shift";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-let bad2: Core.IntLiteral() = LeftShiftOfLit(a_lit, an_i32);
+let bad2: Core.IntLiteral = LeftShiftOfLit(a_lit, an_i32);
 
 // TODO: This could be valid because the literal argument has a constant value.
 // CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE+7]]:17: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: let bad3: i32 = LeftShiftByLit(an_i32, 12);
 // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE-30]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn LeftShiftByLit(a: i32, b: Core.IntLiteral()) -> i32 = "int.left_shift";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn LeftShiftByLit(a: i32, b: Core.IntLiteral) -> i32 = "int.left_shift";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let bad3: i32 = LeftShiftByLit(an_i32, 12);
 
 // TODO: This could be valid because we don't actually need the return value at runtime.
-// CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE+7]]:31: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
-// CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE+7]]:29: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR: let bad4: Core.IntLiteral = LeftShiftOfLit(12, an_i32);
+// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE-39]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn LeftShiftOfLit(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.left_shift";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn LeftShiftOfLit(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.left_shift";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
+let bad4: Core.IntLiteral = LeftShiftOfLit(12, an_i32);
 
 // CHECK:STDOUT: --- i32.carbon
 // CHECK:STDOUT:

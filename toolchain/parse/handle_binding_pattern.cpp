@@ -35,13 +35,15 @@ auto HandleBindingPattern(Context& context) -> void {
   }
 
   // The first item should be an identifier, the placeholder `_`, or `self`.
+  std::optional<Lex::TokenIndex> self_token;
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
     context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
                         *identifier);
   } else if (auto self =
                  context.ConsumeIf(Lex::TokenKind::SelfValueIdentifier)) {
-    // Checking will validate the `self` is only declared in the implicit
-    // parameter list of a function.
+    // Checking will validate where `self` may be declared. Its type may be
+    // omitted, in which case it defaults to `Self` (see below).
+    self_token = *self;
     context.AddLeafNode(NodeKind::SelfValueName, *self);
   } else if (auto underscore = context.ConsumeIf(Lex::TokenKind::Underscore)) {
     context.AddLeafNode(NodeKind::UnderscoreName, *underscore);
@@ -116,6 +118,17 @@ auto HandleBindingPattern(Context& context) -> void {
 
     context.PushState(state);
     context.PushStateForExpr(PrecedenceGroup::ForType());
+  } else if (self_token && !template_token) {
+    // A `self` binding may omit its type; checking supplies the implicit `Self`
+    // type. There is no type node, so this produces a `SelfBindingPattern`
+    // rather than a `LetBindingPattern`.
+    if (ref_token) {
+      context.AddNode(NodeKind::RefBindingName, *ref_token, state.has_error);
+    }
+    context.AddNode(NodeKind::SelfBindingPattern, *self_token, state.has_error);
+    if (state.has_error) {
+      context.ReturnErrorOnState();
+    }
   } else {
     on_error(/*expected_name=*/false);
     // Add a substitute for a type node.

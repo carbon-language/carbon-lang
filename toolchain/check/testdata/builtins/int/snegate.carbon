@@ -31,11 +31,11 @@ fn RuntimeCallIsValid(a: i32, unused b: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-fn Negate(a: Core.IntLiteral()) -> Core.IntLiteral() = "int.snegate";
-fn Sub(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.ssub";
+fn Negate(a: Core.IntLiteral) -> Core.IntLiteral = "int.snegate";
+fn Sub(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.ssub";
 
-class Expect(N:! Core.IntLiteral()) {}
-fn Test(N:! Core.IntLiteral()) -> Expect(N) { return {}; }
+class Expect(N:! Core.IntLiteral) {}
+fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Negate(0)) as Expect(0);

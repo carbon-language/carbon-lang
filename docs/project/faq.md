@@ -321,7 +321,7 @@ in scope.
 
 It's also worth noting that Carbon distinguishes between parameters based on
 whether they are _deduced_ or _explicit_, rather than using different brackets
-for generic or template parameters.
+for checked or template generic parameters.
 
 We use square brackets `[]` to mark _deduced_ parameters, as in:
 
@@ -338,22 +338,22 @@ specified at the call site, it must be an explicit parameter in `()`. As a
 consequence, even if we used `<` / `>` delimiters, they would mean something
 different from their meaning in C++.
 
-By default, deduced parameters are `generic` and explicit parameters (in `()`)
-are `runtime`. We can use keywords to override these defaults:
+By default, deduced parameters are checked generics and explicit parameters (in
+`()`) are runtime. We can use keywords to override these defaults:
 
--   Use `template` in `[]` for deduced template parameters (for example,
+-   Use `template` in `[]` for deduced template generic parameters (for example,
     `fn F[template T: type](...)`).
--   Use `generic` in `()` for explicit generic parameters (for example,
+-   Use `generic` in `()` for explicit checked generic parameters (for example,
     `fn G(generic T: type, ...)`).
 
 In all cases, the brackets indicate deduction, not the compile-time versus
 runtime phase.
 
 See
-[Proposal #7254](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md)
+[proposal #7254](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md)
 for details on the syntax using keywords and defaults, and
-[Proposal #676](/proposals/p0676.md) for the original background on avoiding
-angle brackets.
+[proposal #676](/proposals/p000676-generic-syntax.md) for the original
+background on avoiding angle brackets.
 
 ### Why do variable declarations have to start with `var` or `let`?
 
@@ -405,8 +405,8 @@ match `42` with the value of the expression `the_answer`, which requires a
 variable named `the_answer` to already exist.
 
 The pattern matching proposal details alternative
-[shorthand for `auto`](/proposals/p2188.md#shorthand-for-auto) and the tradeoffs
-that were considered.
+[shorthand for `auto`](/proposals/p002188-pattern-matching-syntax-and-semantics.md#shorthand-for-auto)
+and the tradeoffs that were considered.
 
 References:
 

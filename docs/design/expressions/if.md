@@ -212,18 +212,20 @@ var also_my_string: auto = if cond then my_string else your_string;
 
 ## Alternatives considered
 
--   [Provide no conditional expression](/proposals/p0911.md#no-conditional-expression)
+-   [Provide no conditional expression](/proposals/p000911-conditional-expressions.md#no-conditional-expression)
 -   Use
-    [`cond ? expr1 : expr2`, like in C and C++](/proposals/p0911.md#use-c-syntax)
+    [`cond ? expr1 : expr2`, like in C and C++](/proposals/p000911-conditional-expressions.md#use-c-syntax)
     syntax
--   Use [`if (cond) expr1 else expr2`](/proposals/p0911.md#no-then) syntax
 -   Use
-    [`if (cond) then expr1 else expr2`](/proposals/p0911.md#require-parentheses-around-the-condition)
+    [`if (cond) expr1 else expr2`](/proposals/p000911-conditional-expressions.md#no-then)
+    syntax
+-   Use
+    [`if (cond) then expr1 else expr2`](/proposals/p000911-conditional-expressions.md#require-parentheses-around-the-condition)
     syntax
 -   Allow
-    [`1 + if cond then expr1 else expr2`](/proposals/p0911.md#never-require-enclosing-parentheses)
--   [Only require one `impl` to specify the common type if implicit conversions in both directions are possible](/proposals/p0911.md#implicit-conversions-in-both-directions)
--   [Introduce special rules for lvalue conditionals](/proposals/p0911.md#support-lvalue-conditionals)
+    [`1 + if cond then expr1 else expr2`](/proposals/p000911-conditional-expressions.md#never-require-enclosing-parentheses)
+-   [Only require one `impl` to specify the common type if implicit conversions in both directions are possible](/proposals/p000911-conditional-expressions.md#implicit-conversions-in-both-directions)
+-   [Introduce special rules for lvalue conditionals](/proposals/p000911-conditional-expressions.md#support-lvalue-conditionals)
 
 ## References
 

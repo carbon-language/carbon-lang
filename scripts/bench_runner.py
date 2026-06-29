@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.12"
 # dependencies = [
 #     "numpy",
 #     "rich",
@@ -66,15 +66,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import argparse
 import json
 import math
-import numpy as np  # type: ignore
 import re
-import scipy as sp  # type: ignore
 import subprocess
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from typing import Any, Optional, override
+
+import numpy as np  # type: ignore
+import scipy as sp  # type: ignore
 from quantiphy import Quantity  # type: ignore
 from rich.console import Console
 from rich.padding import Padding
@@ -82,7 +84,6 @@ from rich.progress import track
 from rich.table import Column, Table
 from rich.text import Text
 from rich.theme import Theme
-from typing import Optional
 
 
 def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
@@ -235,6 +236,12 @@ COST_METRIC_PATTERNS = [
         r"(?i)cycles",
         r"(?i)instructions",
         r"(?i)time",
+        # Memory-size metrics, by convention named with a `Mem` prefix. Unlike
+        # the patterns above, this is anchored and case-sensitive so it matches
+        # only those counters and not an arbitrary "mem"/"memory" substring. We
+        # don't match a bare `bytes` because byte-rate throughput counters (such
+        # as `Bytes` in `compile_benchmark`) measure speed, not cost.
+        r"^Mem",
     ]
 ]
 
@@ -287,6 +294,7 @@ class DeltaKind(Enum):
     REGRESSION = "[slower]👎[/slower]"
     NOISE = ""
 
+    @override
     def __str__(self) -> str:
         return self.value
 
@@ -493,6 +501,10 @@ def render_metric(
     else:
         style_prefix = "exp_"
 
+    # This benchmark didn't report this metric; render an empty cell.
+    if not times:
+        return RenderedMetric("", "")
+
     units = times[0].units
     if all(x == times[0] for x in times):
         with Quantity.prefs(number_fmt="{whole:>3}{frac:<4} {units}"):
@@ -537,6 +549,12 @@ def render_delta(
         base: The baseline measurements.
         exp: The experiment measurements.
     """
+    # Skip any delta when either side has no data, which happens when a metric
+    # is missing from one side: reported by only one of the two binaries, or
+    # absent for this particular benchmark.
+    if not base or not exp:
+        return RenderedDelta(DeltaKind.NEUTRAL, "", "")
+
     # Skip any delta when all the data is zero. This typically occurs for
     # uninteresting metrics or metrics that weren't collected for a given run.
     if all(b == 0 for b in base) and all(e == 0 for e in exp):
@@ -685,7 +703,7 @@ def run_benchmark_binary(
     specific_args: list[str],
     num_runs: int,
     console: Console,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Runs a benchmark binary multiple times and collects results.
 
     The results are parsed out of the JSON output from each run, and returned as
@@ -739,7 +757,7 @@ def run_benchmark_binary(
 def print_run_context(
     console: Console,
     num_runs: int,
-    exp_runs: list[dict],
+    exp_runs: list[dict[str, Any]],
     has_baseline: bool,
 ) -> None:
     """Prints the context from the benchmark runs.
@@ -776,8 +794,8 @@ def print_run_context(
 def get_benchmark_names_and_metrics(
     console: Console,
     parsed_args: argparse.Namespace,
-    exp_runs: list[dict],
-    base_runs: list[dict],
+    exp_runs: list[dict[str, Any]],
+    base_runs: list[dict[str, Any]],
 ) -> tuple[list[str], list[str]]:
     """Extracts benchmark names and metrics from benchmark run results.
 
@@ -851,8 +869,8 @@ def get_benchmark_names_and_metrics(
 def collect_benchmark_metrics(
     benchmark_names: list[str],
     metrics: list[str],
-    exp_runs: list[dict],
-    base_runs: list[dict],
+    exp_runs: list[dict[str, Any]],
+    base_runs: list[dict[str, Any]],
     comp_mapping: ComparableBenchmarkMapping,
 ) -> dict[str, dict[str, BenchmarkRunMetrics]]:
     """Collects and organizes all benchmark metrics from raw run data.
@@ -885,6 +903,10 @@ def collect_benchmark_metrics(
         for b in run["benchmarks"]:
             name = b["name"]
             for metric in metrics:
+                # Not every benchmark reports every metric; skip metrics this
+                # benchmark didn't produce rather than failing.
+                if metric not in b:
+                    continue
                 # Time metrics have a `time_unit` field that needs to be
                 # appended for correct parsing by the Quantity library.
                 unit = b.get("time_unit", "") if "time" in metric else ""
@@ -913,6 +935,10 @@ def collect_benchmark_metrics(
             # to populate the 'base' list for main benchmarks.
             if name in benchmark_names:
                 for metric in metrics:
+                    # Not every benchmark reports every metric; skip metrics
+                    # this benchmark didn't produce rather than failing.
+                    if metric not in b:
+                        continue
                     unit = b.get("time_unit", "") if "time" in metric else ""
                     benchmark_metrics[metric][name].base.append(
                         Quantity(f"{b[metric]}{unit}")
@@ -1069,7 +1095,7 @@ def main() -> None:
     # Run the benchmark(s) and collect the results into a data structure for
     # processing.
     num_runs = parsed_args.runs
-    base_runs: list[dict] = []
+    base_runs: list[dict[str, Any]] = []
     has_baseline = bool(parsed_args.base_benchmark)
     if has_baseline:
         base_runs = run_benchmark_binary(

@@ -4,7 +4,9 @@
 
 #include "toolchain/check/custom_witness.h"
 
+#include "llvm/ADT/APFloat.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
@@ -42,24 +44,30 @@ static auto GetFacetAsType(Context& context,
   return context.types().GetTypeIdForTypeInstId(facet_or_type_id);
 }
 
-// Returns a manufactured `Copy.Op` function with the `self` parameter typed
-// to `self_type_id`.
-static auto MakeCopyOpFunction(Context& context, SemIR::LocId loc_id,
-                               SemIR::TypeId self_type_id,
-                               SemIR::NameScopeId parent_scope_id)
+// Returns a manufactured operator function.
+auto MakeBuiltinOperatorFunction(Context& context,
+                                 llvm::ArrayRef<SemIR::TypeId> param_types,
+                                 SemIR::TypeId return_type_id,
+                                 CoreIdentifier op_name,
+                                 SemIR::BuiltinFunctionKind builtin_kind,
+                                 SemIR::NameScopeId parent_scope_id)
     -> SemIR::InstId {
-  auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
+  CARBON_CHECK(!param_types.empty());
+  auto self_type_id = param_types.front();
+  auto name_id = context.core_identifiers().AddNameId(op_name);
 
   auto [decl_id, function_id] =
-      MakeGeneratedFunctionDecl(context, loc_id,
+      MakeGeneratedFunctionDecl(context, SemIR::LocId::None,
                                 {.parent_scope_id = parent_scope_id,
                                  .name_id = name_id,
                                  .self_type_id = self_type_id,
                                  .self_kind = ParamPatternKind::Value,
-                                 .return_type_id = self_type_id});
+                                 .param_type_ids = param_types.drop_front(),
+                                 .param_kind = ParamPatternKind::Value,
+                                 .return_type_id = return_type_id});
 
   auto& function = context.functions().Get(function_id);
-  function.SetCoreWitness(SemIR::BuiltinFunctionKind::PrimitiveCopy);
+  function.SetCoreWitness(builtin_kind);
 
   return decl_id;
 }
@@ -151,7 +159,12 @@ static auto CanDestroyClass(
   }
 
   auto object_repr_id =
-      class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
+      class_info.GetAdaptedType(context.sem_ir(), class_type.specific_id);
+  if (!object_repr_id.has_value()) {
+    object_repr_id =
+        class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
+  }
+
   return HasWitnessForOneField(context, loc_id,
                                context.types().GetTypeInstId(object_repr_id),
                                query_specific_interface_id);
@@ -213,8 +226,8 @@ static auto CanDestroyType(
     }
 
     case SemIR::Call::Kind:
-      // TODO: These seem like they shouldn't be getting directly queried for
-      // destroy. The use is in a test that was TODO before this TODO.
+      // Dependent type constructor calls that cannot be resolved under the
+      // generic context.
       return DestroyFormat::NoDestroy;
 
     case CARBON_KIND(SemIR::ClassType class_type): {
@@ -287,6 +300,7 @@ static auto CanDestroyType(
     case SemIR::BoolType::Kind:
     case SemIR::FacetType::Kind:
     case SemIR::FloatType::Kind:
+    case SemIR::FormType::Kind:
     case SemIR::IntLiteralType::Kind:
     case SemIR::IntType::Kind:
     case SemIR::PointerType::Kind:
@@ -579,12 +593,40 @@ auto BuildPrimitiveCopyWitness(
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto self_type_id = GetFacetAsType(context, query_self_const_id);
-  auto op_id =
-      MakeCopyOpFunction(context, loc_id, self_type_id, parent_scope_id);
+  auto op_id = MakeBuiltinOperatorFunction(
+      context, {self_type_id}, self_type_id, CoreIdentifier::Op,
+      SemIR::BuiltinFunctionKind::PrimitiveCopy, parent_scope_id);
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {op_id});
 }
-static auto MakeDestroyWitness(
+
+// Builds and returns a custom witness that performs the specified kind of
+// destruction for the given type.
+static auto BuildDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id,
+    DestroyFormat format) -> SemIR::InstId {
+  CARBON_CHECK(format != DestroyFormat::NoDestroy);
+
+  // Mark functions with the interface's scope as a hint to mangling. This
+  // does not add them to the scope.
+  auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
+  auto parent_scope_id = context.interfaces()
+                             .Get(query_specific_interface.interface_id)
+                             .scope_without_self_id;
+
+  auto self_type_id = GetFacetAsType(context, query_self_const_id);
+  auto op_id = MakeDestroyOpFunction(context, loc_id, self_type_id,
+                                     parent_scope_id, format);
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {op_id});
+}
+
+// Returns the custom witness to use for destruction of the given type. See
+// `LookupCustomWitness`.
+static auto LookupDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id, bool build_witness)
@@ -600,19 +642,17 @@ static auto MakeDestroyWitness(
     return SemIR::InstId::None;
   }
 
-  // Mark functions with the interface's scope as a hint to mangling. This
-  // does not add them to the scope.
-  auto query_specific_interface =
-      context.specific_interfaces().Get(query_specific_interface_id);
-  auto parent_scope_id = context.interfaces()
-                             .Get(query_specific_interface.interface_id)
-                             .scope_without_self_id;
+  return BuildDestroyWitness(context, loc_id, query_self_const_id,
+                             query_specific_interface_id, format);
+}
 
-  auto self_type_id = GetFacetAsType(context, query_self_const_id);
-  auto op_id = MakeDestroyOpFunction(context, loc_id, self_type_id,
-                                     parent_scope_id, format);
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {op_id});
+auto BuildTrivialDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+  return BuildDestroyWitness(context, loc_id, query_self_const_id,
+                             query_specific_interface_id,
+                             DestroyFormat::Trivial);
 }
 
 static auto MakeIntFitsInWitness(
@@ -648,9 +688,34 @@ static auto MakeIntFitsInWitness(
   }
 
   auto src_info = context.types().TryGetIntTypeInfo(src_type_id);
-  auto dest_info = context.types().TryGetIntTypeInfo(dest_type_id);
+  if (!src_info) {
+    return std::nullopt;
+  }
 
-  if (!src_info || !dest_info) {
+  auto dest_info = context.types().TryGetIntTypeInfo(dest_type_id);
+  if (!dest_info) {
+    if (src_info->bit_width == IntId::None) {
+      return std::nullopt;
+    }
+    // Check if the destination is a floating-point type.
+    auto dest_object_rep_id = context.types().GetObjectRepr(dest_type_id);
+    if (auto dest_float_type =
+            context.types().TryGetAs<SemIR::FloatType>(dest_object_rep_id)) {
+      const auto& src_width = context.ints().Get(src_info->bit_width);
+      unsigned int float_precision = llvm::APFloat::semanticsPrecision(
+          dest_float_type->float_kind.Semantics());
+      // For iN we need one fewer bit. We don't need to worry about the value
+      // -2^(N-1) needing all N bits, as it can always be represented exactly.
+      if (src_width.sgt(src_info->is_signed ? float_precision + 1
+                                            : float_precision)) {
+        return std::nullopt;
+      }
+      if (!build_witness) {
+        return SemIR::InstId::None;
+      }
+      return BuildCustomWitness(context, loc_id, query_self_const_id,
+                                query_specific_interface_id, {});
+    }
     return std::nullopt;
   }
 
@@ -689,6 +754,78 @@ static auto MakeIntFitsInWitness(
                             query_specific_interface_id, {});
 }
 
+static auto MakeFloatFitsInWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterfaceId query_specific_interface_id, bool build_witness)
+    -> std::optional<SemIR::InstId> {
+  auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
+
+  auto args_id = query_specific_interface.specific_id;
+  if (!args_id.has_value()) {
+    return std::nullopt;
+  }
+  auto args_block_id = context.specifics().Get(args_id).args_id;
+  auto args_block = context.inst_blocks().Get(args_block_id);
+  if (args_block.size() != 1) {
+    return std::nullopt;
+  }
+
+  auto dest_const_id = context.constant_values().Get(args_block[0]);
+  if (!dest_const_id.is_constant()) {
+    return std::nullopt;
+  }
+
+  auto src_type_id = GetFacetAsType(context, query_self_const_id);
+  auto dest_type_id = GetFacetAsType(context, dest_const_id);
+
+  auto context_fn = [](DiagnosticContextBuilder& /*builder*/) -> void {};
+  if (!RequireCompleteType(context, src_type_id, loc_id, context_fn) ||
+      !RequireCompleteType(context, dest_type_id, loc_id, context_fn)) {
+    return std::nullopt;
+  }
+
+  // Ensure both are actually floating-point types.
+  auto src_object_rep_id = context.types().GetObjectRepr(src_type_id);
+  auto src_float_type =
+      context.types().TryGetAs<SemIR::FloatType>(src_object_rep_id);
+  if (!src_float_type) {
+    return std::nullopt;
+  }
+
+  auto dest_object_rep_id = context.types().GetObjectRepr(dest_type_id);
+  auto dest_float_type =
+      context.types().TryGetAs<SemIR::FloatType>(dest_object_rep_id);
+  if (!dest_float_type) {
+    return std::nullopt;
+  }
+
+  // Get their bit widths.
+  auto src_width_opt =
+      context.sem_ir().GetZExtIntValue(src_float_type->bit_width_id);
+  auto dest_width_opt =
+      context.sem_ir().GetZExtIntValue(dest_float_type->bit_width_id);
+
+  if (!src_width_opt || !dest_width_opt) {
+    // If the bit width is unknown (e.g. symbolic), we can't decide yet.
+    return std::nullopt;
+  }
+
+  const auto& src_semantics = src_float_type->float_kind.Semantics();
+  const auto& dest_semantics = dest_float_type->float_kind.Semantics();
+  if (!llvm::APFloat::isRepresentableBy(src_semantics, dest_semantics)) {
+    return std::nullopt;
+  }
+
+  if (!build_witness) {
+    return SemIR::InstId::None;
+  }
+
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {});
+}
+
 auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          SemIR::CoreInterface core_interface,
                          SemIR::ConstantId query_self_const_id,
@@ -696,8 +833,11 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          bool build_witness) -> std::optional<SemIR::InstId> {
   switch (core_interface) {
     case SemIR::CoreInterface::Destroy:
-      return MakeDestroyWitness(context, loc_id, query_self_const_id,
-                                query_specific_interface_id, build_witness);
+      return LookupDestroyWitness(context, loc_id, query_self_const_id,
+                                  query_specific_interface_id, build_witness);
+    case SemIR::CoreInterface::FloatFitsIn:
+      return MakeFloatFitsInWitness(context, loc_id, query_self_const_id,
+                                    query_specific_interface_id, build_witness);
     case SemIR::CoreInterface::IntFitsIn:
       return MakeIntFitsInWitness(context, loc_id, query_self_const_id,
                                   query_specific_interface_id, build_witness);

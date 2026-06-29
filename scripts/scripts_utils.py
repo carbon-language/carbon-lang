@@ -6,17 +6,17 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-from enum import Enum
 import fcntl
 import hashlib
 import os
-from pathlib import Path
 import platform
 import shutil
 import tempfile
 import time
-from typing import NamedTuple, Optional
 import urllib.request
+from enum import Enum
+from pathlib import Path
+from typing import NamedTuple, Optional
 
 
 # The tools we track releases for.
@@ -129,7 +129,7 @@ def _get_cached_binary(name: str, url: str, want_hash: str) -> str:
     cache_dir.mkdir(parents=True, exist_ok=True)
 
     # Hold a lock while checksumming and downloading the path. Otherwise,
-    # parallel runs by pre-commit may conflict with one another with
+    # parallel runs by prek may conflict with one another with
     # simultaneous downloads.
     with open(cache_dir.joinpath(f"{name}.lock"), "w") as lock_file:
         fcntl.lockf(lock_file.fileno(), fcntl.LOCK_EX)

@@ -119,6 +119,7 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
       pattern_id = AddInst<SemIR::VarPattern>(
           context, node_id,
           {.type_id = type_id, .subpattern_id = subpattern_id});
+      context.full_pattern_stack().AddLocalVarPattern(pattern_id);
       break;
     case FullPatternStack::Kind::ClassScopeVarDecl:
       if (InStaticClassScopeVar(context)) {
@@ -126,6 +127,7 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
         pattern_id = AddInst<SemIR::VarPattern>(
             context, node_id,
             {.type_id = type_id, .subpattern_id = subpattern_id});
+        context.full_pattern_stack().AddLocalVarPattern(pattern_id);
       } else {
         // For non-static class fields, a `FieldDecl` was created in
         // `AddBindingPattern`. Use that as the `pattern_id` so that
@@ -167,7 +169,7 @@ static auto EndFullPattern(Context& context) -> void {
   bool returned =
       context.decl_introducer_state_stack().innermost().modifier_set.HasAnyOf(
           KeywordModifierSet::Returned);
-  AddPatternVarStorage(context, pattern_block_id, returned);
+  context.full_pattern_stack().BuildLocalVarStorage(context, returned);
 }
 
 static auto StartPatternInitializer(Context& context) -> bool {
@@ -315,7 +317,6 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
                  Parse::NodeKind::LetInitializer>(context, node_id);
-  context.full_pattern_stack().PopFullPattern();
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
 
   LimitModifiersOnDecl(
@@ -337,6 +338,7 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
     context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
                            ExpectedInitializerAfterLet);
   }
+  context.full_pattern_stack().PopFullPattern();
   return true;
 }
 

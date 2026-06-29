@@ -290,21 +290,21 @@ class W(T:! type) {
   adapt {};
 }
 
-interface A(N:! Core.IntLiteral()) {
+interface A(N:! Core.IntLiteral) {
   fn AA() -> W(array((), N));
 }
-interface B(N:! Core.IntLiteral()) {
+interface B(N:! Core.IntLiteral) {
   require impls A(N);
 }
-interface C(N:! Core.IntLiteral()) {
+interface C(N:! Core.IntLiteral) {
   require impls B(N);
 }
 
-impl forall [N:! Core.IntLiteral(), T:! B(N)] T as A(N) {
+impl forall [N:! Core.IntLiteral, T:! B(N)] T as A(N) {
   fn AA() -> W(array((), N)) { return {} as W(array((), N)); }
 }
 
-impl forall [N:! Core.IntLiteral(), T:! C(N)] T as B(N) {
+impl forall [N:! Core.IntLiteral, T:! C(N)] T as B(N) {
   // The definition here does not contain the lookups verifying that C(N) impls
   // `A(N)`, so they do not get re-evaluated for a specific `N`. That doesn't
   // prevent us from producing a reasonable diagnostic when that `N` causes an

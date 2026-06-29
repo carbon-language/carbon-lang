@@ -6,17 +6,17 @@ library "sort";
 
 interface Ordered {
   // extend require impls Core.OrderedWith(Self);
-  fn Less[self: Self](other: Self) -> bool;
-  fn LessOrEquivalent[self: Self](other: Self) -> bool;
-  fn Greater[self: Self](other: Self) -> bool;
-  fn GreaterOrEquivalent[self: Self](other: Self) -> bool;
+  fn Less(self, other: Self) -> bool;
+  fn LessOrEquivalent(self, other: Self) -> bool;
+  fn Greater(self, other: Self) -> bool;
+  fn GreaterOrEquivalent(self, other: Self) -> bool;
 }
 
 impl i32 as Ordered {
-  fn Less[self: Self](other: Self) -> bool { return self < other; }
-  fn LessOrEquivalent[self: Self](other: Self) -> bool { return self <= other; }
-  fn Greater[self: Self](other: Self) -> bool { return self > other; }
-  fn GreaterOrEquivalent[self: Self](other: Self) -> bool { return self >= other; }
+  fn Less(self, other: Self) -> bool { return self < other; }
+  fn LessOrEquivalent(self, other: Self) -> bool { return self <= other; }
+  fn Greater(self, other: Self) -> bool { return self > other; }
+  fn GreaterOrEquivalent(self, other: Self) -> bool { return self >= other; }
 }
 
 fn Swap[T:! Core.Copy & Core.Destroy](ref from: T, ref to: T) {
@@ -26,7 +26,7 @@ fn Swap[T:! Core.Copy & Core.Destroy](ref from: T, ref to: T) {
 }
 
 fn Partition
-    [T:! Core.Copy & Core.Destroy & Ordered, N:! Core.IntLiteral()]
+    [T:! Core.Copy & Core.Destroy & Ordered, N:! Core.IntLiteral]
     (ref a: array(T, N), from_in: i32, to_in: i32) -> i32 {
   var pivot_index: i32 = from_in;
   let pivot: T = a[pivot_index];
@@ -52,7 +52,7 @@ fn Partition
 }
 
 fn Quicksort
-    [T:! Core.Copy & Core.Destroy & Ordered, N:! Core.IntLiteral()]
+    [T:! Core.Copy & Core.Destroy & Ordered, N:! Core.IntLiteral]
     (ref a: array(T, N), from: i32, to: i32) {
   if (from + 1 >= to) { return; }
   var pivot: i32 = Partition(ref a, from, to);

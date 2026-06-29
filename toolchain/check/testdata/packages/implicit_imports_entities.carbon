@@ -329,11 +329,15 @@ import Other library "o1";
 // CHECK:STDOUT:   %C1: type = class_type @C1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %pattern_type.e7a: type = pattern_type %C1 [concrete]
+// CHECK:STDOUT:   %pattern_type.0b2: type = pattern_type %C1 [concrete]
+// CHECK:STDOUT:   %c1.patt: %pattern_type.0b2 = ref_binding_pattern c1 [concrete]
+// CHECK:STDOUT:   %c1.var_patt: %pattern_type.0b2 = var_pattern %c1.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C1.val: %C1 = struct_value () [concrete]
 // CHECK:STDOUT:   %C2: type = class_type @C2 [concrete]
-// CHECK:STDOUT:   %pattern_type.68a: type = pattern_type %C2 [concrete]
+// CHECK:STDOUT:   %pattern_type.5ca: type = pattern_type %C2 [concrete]
+// CHECK:STDOUT:   %c2.patt: %pattern_type.5ca = ref_binding_pattern c2 [concrete]
+// CHECK:STDOUT:   %c2.var_patt: %pattern_type.5ca = var_pattern %c2.patt [concrete]
 // CHECK:STDOUT:   %C2.val: %C2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -341,9 +345,9 @@ import Other library "o1";
 // CHECK:STDOUT:   %Main.C1: type = import_ref Main//mix_current_package, C1, loaded [concrete = constants.%C1]
 // CHECK:STDOUT:   %Main.C2: type = import_ref Main//c2, C2, loaded [concrete = constants.%C2]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//c1, loc4_11, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.a3b = import_ref Main//c1, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.3af = import_ref Main//c1, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//c2, loc4_11, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.504 = import_ref Main//c2, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.74b = import_ref Main//c2, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -356,33 +360,33 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import.loc2_35.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_35.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.e7a = ref_binding_pattern c1 [concrete]
-// CHECK:STDOUT:     %c1.var_patt: %pattern_type.e7a = var_pattern %c1.patt [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.0b2 = ref_binding_pattern c1 [concrete = constants.%c1.patt]
+// CHECK:STDOUT:     %c1.var_patt: %pattern_type.0b2 = var_pattern %c1.patt [concrete = constants.%c1.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.var: ref %C1 = var %c1.var_patt [concrete]
 // CHECK:STDOUT:   %C1.ref: type = name_ref C1, imports.%Main.C1 [concrete = constants.%C1]
-// CHECK:STDOUT:   %c1: ref %C1 = ref_binding c1, %c1.var [concrete = %c1.var]
+// CHECK:STDOUT:   %c1: ref %C1 = wrapper_binding c1, %c1.var [concrete = %c1.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.68a = ref_binding_pattern c2 [concrete]
-// CHECK:STDOUT:     %c2.var_patt: %pattern_type.68a = var_pattern %c2.patt [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.5ca = ref_binding_pattern c2 [concrete = constants.%c2.patt]
+// CHECK:STDOUT:     %c2.var_patt: %pattern_type.5ca = var_pattern %c2.patt [concrete = constants.%c2.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2.var: ref %C2 = var %c2.var_patt [concrete]
 // CHECK:STDOUT:   %C2.ref: type = name_ref C2, imports.%Main.C2 [concrete = constants.%C2]
-// CHECK:STDOUT:   %c2: ref %C2 = ref_binding c2, %c2.var [concrete = %c2.var]
+// CHECK:STDOUT:   %c2: ref %C2 = wrapper_binding c2, %c2.var [concrete = %c2.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 [from "c1.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f24d3.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.a3b
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.3af
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 [from "c2.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f24d3.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.504
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.74b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -418,6 +422,8 @@ import Other library "o1";
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C1 [concrete]
+// CHECK:STDOUT:   %c1.patt: %pattern_type = ref_binding_pattern c1 [concrete]
+// CHECK:STDOUT:   %c1.var_patt: %pattern_type = var_pattern %c1.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C1.val: %C1 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -425,7 +431,7 @@ import Other library "o1";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C1: type = import_ref Main//dup_c1, C1, loaded [concrete = constants.%C1]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//c1, loc4_11, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.a3b = import_ref Main//c1, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.3af = import_ref Main//c1, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -436,19 +442,19 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import.loc2_22.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_22.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type = ref_binding_pattern c1 [concrete]
-// CHECK:STDOUT:     %c1.var_patt: %pattern_type = var_pattern %c1.patt [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type = ref_binding_pattern c1 [concrete = constants.%c1.patt]
+// CHECK:STDOUT:     %c1.var_patt: %pattern_type = var_pattern %c1.patt [concrete = constants.%c1.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.var: ref %C1 = var %c1.var_patt [concrete]
 // CHECK:STDOUT:   %C1.ref: type = name_ref C1, imports.%Main.C1 [concrete = constants.%C1]
-// CHECK:STDOUT:   %c1: ref %C1 = ref_binding c1, %c1.var [concrete = %c1.var]
+// CHECK:STDOUT:   %c1: ref %C1 = wrapper_binding c1, %c1.var [concrete = %c1.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 [from "c1.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.a3b
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.3af
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -484,44 +490,46 @@ import Other library "o1";
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.NS: <namespace> = import_ref Main//use_ns, NS, loaded
-// CHECK:STDOUT:   %NS.935: <namespace> = namespace %Main.NS, [concrete] {
+// CHECK:STDOUT:   %NS.7ae: <namespace> = namespace %Main.NS, [concrete] {
 // CHECK:STDOUT:     .C = %Main.C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//use_ns, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//ns, loc5_13, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.f5f = import_ref Main//ns, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.3e6 = import_ref Main//ns, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .NS = imports.%NS.935
+// CHECK:STDOUT:     .NS = imports.%NS.7ae
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_22.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_22.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS.935 [concrete = imports.%NS.935]
+// CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS.7ae [concrete = imports.%NS.7ae]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "ns.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.f5f
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.3e6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -554,11 +562,15 @@ import Other library "o1";
 // CHECK:STDOUT:   %O1: type = class_type @O1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %pattern_type.5da: type = pattern_type %O1 [concrete]
+// CHECK:STDOUT:   %pattern_type.1e6: type = pattern_type %O1 [concrete]
+// CHECK:STDOUT:   %o1.patt: %pattern_type.1e6 = ref_binding_pattern o1 [concrete]
+// CHECK:STDOUT:   %o1.var_patt: %pattern_type.1e6 = var_pattern %o1.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %O1.val: %O1 = struct_value () [concrete]
 // CHECK:STDOUT:   %O2: type = class_type @O2 [concrete]
-// CHECK:STDOUT:   %pattern_type.c00: type = pattern_type %O2 [concrete]
+// CHECK:STDOUT:   %pattern_type.327: type = pattern_type %O2 [concrete]
+// CHECK:STDOUT:   %o2.patt: %pattern_type.327 = ref_binding_pattern o2 [concrete]
+// CHECK:STDOUT:   %o2.var_patt: %pattern_type.327 = var_pattern %o2.patt [concrete]
 // CHECK:STDOUT:   %O2.val: %O2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -571,10 +583,10 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.O1: type = import_ref Other//o1, O1, loaded [concrete = constants.%O1]
 // CHECK:STDOUT:   %Other.import_ref.8f24d3.1: <witness> = import_ref Other//o1, loc4_11, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.bc3 = import_ref Other//o1, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.382 = import_ref Other//o1, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Other.O2: type = import_ref Other//o2, O2, loaded [concrete = constants.%O2]
 // CHECK:STDOUT:   %Other.import_ref.8f24d3.2: <witness> = import_ref Other//o2, loc4_11, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.b24 = import_ref Other//o2, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.28c = import_ref Other//o2, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -587,39 +599,39 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import.loc2_25.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %o1.patt: %pattern_type.5da = ref_binding_pattern o1 [concrete]
-// CHECK:STDOUT:     %o1.var_patt: %pattern_type.5da = var_pattern %o1.patt [concrete]
+// CHECK:STDOUT:     %o1.patt: %pattern_type.1e6 = ref_binding_pattern o1 [concrete = constants.%o1.patt]
+// CHECK:STDOUT:     %o1.var_patt: %pattern_type.1e6 = var_pattern %o1.patt [concrete = constants.%o1.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %o1.var: ref %O1 = var %o1.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6: type = splice_block %O1.ref [concrete = constants.%O1] {
 // CHECK:STDOUT:     %Other.ref.loc6: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %O1.ref: type = name_ref O1, imports.%Other.O1 [concrete = constants.%O1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o1: ref %O1 = ref_binding o1, %o1.var [concrete = %o1.var]
+// CHECK:STDOUT:   %o1: ref %O1 = wrapper_binding o1, %o1.var [concrete = %o1.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %o2.patt: %pattern_type.c00 = ref_binding_pattern o2 [concrete]
-// CHECK:STDOUT:     %o2.var_patt: %pattern_type.c00 = var_pattern %o2.patt [concrete]
+// CHECK:STDOUT:     %o2.patt: %pattern_type.327 = ref_binding_pattern o2 [concrete = constants.%o2.patt]
+// CHECK:STDOUT:     %o2.var_patt: %pattern_type.327 = var_pattern %o2.patt [concrete = constants.%o2.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %o2.var: ref %O2 = var %o2.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7: type = splice_block %O2.ref [concrete = constants.%O2] {
 // CHECK:STDOUT:     %Other.ref.loc7: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %O2.ref: type = name_ref O2, imports.%Other.O2 [concrete = constants.%O2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o2: ref %O2 = ref_binding o2, %o2.var [concrete = %o2.var]
+// CHECK:STDOUT:   %o2: ref %O2 = wrapper_binding o2, %o2.var [concrete = %o2.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O1 [from "o1.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.8f24d3.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.bc3
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.382
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O2 [from "o2.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.8f24d3.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.b24
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.28c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -657,6 +669,8 @@ import Other library "o1";
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %O1 [concrete]
+// CHECK:STDOUT:   %o1.patt: %pattern_type = ref_binding_pattern o1 [concrete]
+// CHECK:STDOUT:   %o1.var_patt: %pattern_type = var_pattern %o1.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %O1.val: %O1 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -668,7 +682,7 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.O1: type = import_ref Other//o1, O1, loaded [concrete = constants.%O1]
 // CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//o1, loc4_11, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.bc3 = import_ref Other//o1, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.382 = import_ref Other//o1, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -680,22 +694,22 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import.loc2_22.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %o1.patt: %pattern_type = ref_binding_pattern o1 [concrete]
-// CHECK:STDOUT:     %o1.var_patt: %pattern_type = var_pattern %o1.patt [concrete]
+// CHECK:STDOUT:     %o1.patt: %pattern_type = ref_binding_pattern o1 [concrete = constants.%o1.patt]
+// CHECK:STDOUT:     %o1.var_patt: %pattern_type = var_pattern %o1.patt [concrete = constants.%o1.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %o1.var: ref %O1 = var %o1.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6: type = splice_block %O1.ref [concrete = constants.%O1] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %O1.ref: type = name_ref O1, imports.%Other.O1 [concrete = constants.%O1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o1: ref %O1 = ref_binding o1, %o1.var [concrete = %o1.var]
+// CHECK:STDOUT:   %o1: ref %O1 = wrapper_binding o1, %o1.var [concrete = %o1.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O1 [from "o1.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.bc3
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.382
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

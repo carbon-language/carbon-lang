@@ -38,10 +38,10 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-fn Mul(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.smul";
+fn Mul(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.smul";
 
-class Expect(N:! Core.IntLiteral()) {}
-fn Test(N:! Core.IntLiteral()) -> Expect(N) { return {}; }
+class Expect(N:! Core.IntLiteral) {}
+fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Mul(0, 0)) as Expect(0);

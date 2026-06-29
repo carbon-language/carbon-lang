@@ -274,6 +274,16 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
   return out.TakeStr();
 }
 
+LLVM_DUMP_METHOD auto Dump(const File& file, FieldId field_id) -> std::string {
+  RawStringOstream out;
+  out << field_id;
+  if (field_id.has_value()) {
+    const auto& field = file.fields().Get(field_id);
+    out << ": " << field;
+  }
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file, FunctionId function_id)
     -> std::string {
   RawStringOstream out;
@@ -353,6 +363,19 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ImplId impl_id) -> std::string {
     out << '\n' << Dump(file, inst_block_id);
   }
   out << "\n  - witness loc: " << DumpLocSummary(file, LocId(impl.witness_id));
+  return out.TakeStr();
+}
+
+LLVM_DUMP_METHOD auto Dump(const File& file, ImportIRInstId import_inst_id)
+    -> std::string {
+  RawStringOstream out;
+  out << import_inst_id;
+  if (import_inst_id.has_value()) {
+    auto import_ir_inst = file.import_ir_insts().Get(import_inst_id);
+    out << ": " << import_ir_inst << "\n"
+        << Dump(*file.import_irs().Get(import_ir_inst.ir_id()).sem_ir,
+                import_ir_inst.inst_id());
+  }
   return out.TakeStr();
 }
 
@@ -616,6 +639,9 @@ LLVM_DUMP_METHOD static auto MakeNameScopeId(int id) -> NameScopeId {
 LLVM_DUMP_METHOD static auto MakeIdentifiedFacetTypeId(int id)
     -> IdentifiedFacetTypeId {
   return IdentifiedFacetTypeId(id);
+}
+LLVM_DUMP_METHOD static auto MakeImportIRInstId(int id) -> ImportIRInstId {
+  return ImportIRInstId(id);
 }
 LLVM_DUMP_METHOD static auto MakeNamedConstraintId(int id)
     -> NamedConstraintId {

@@ -111,7 +111,7 @@ fn G() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn Op[self: Self]();
+  fn Op(self);
 }
 
 class C {};
@@ -165,6 +165,7 @@ impl C as I {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -172,14 +173,14 @@ impl C as I {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Z [symbolic]
-// CHECK:STDOUT:   %.857: require_specific_def_type = require_specific_def @T.as.Z.impl(%T) [symbolic]
+// CHECK:STDOUT:   %.7ae: require_specific_def_type = require_specific_def @T.as.Z.impl(%T) [symbolic]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %T, (%Z.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%Z.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc13_7.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_10.1: type = splice_block %.loc13_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -190,10 +191,11 @@ impl C as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc13_7.2: type) {
+// CHECK:STDOUT:   %T.patt.loc13_7.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc13_7.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_7.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_7.1) [symbolic = %.loc19_6.2 (constants.%.857)]
+// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_7.1) [symbolic = %.loc19_6.2 (constants.%.7ae)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_7.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
 // CHECK:STDOUT:   %Z.facet.loc19_6.2: %Z.type = facet_value %T.loc13_7.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:   %F.specific_fn.loc19_3.2: <specific function> = specific_function constants.%F, @F(%Z.facet.loc19_6.2) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
@@ -211,6 +213,7 @@ impl C as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc13_7.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc13_7.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -221,6 +224,7 @@ impl C as I {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -228,15 +232,15 @@ impl C as I {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Z [symbolic]
-// CHECK:STDOUT:   %.dc4: require_specific_def_type = require_specific_def @T.as.Z.impl(%T) [symbolic]
+// CHECK:STDOUT:   %.7ae: require_specific_def_type = require_specific_def @T.as.Z.impl(%T) [symbolic]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %T, (%Z.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%Z.facet) [symbolic]
-// CHECK:STDOUT:   %.650: require_specific_def_type = require_specific_def @T.as.Z.impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %.d12: require_specific_def_type = require_specific_def @T.as.Z.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc13_7.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_10.1: type = splice_block %.loc13_10.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -247,10 +251,11 @@ impl C as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc13_7.2: type) {
+// CHECK:STDOUT:   %T.patt.loc13_7.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc13_7.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_7.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_7.1) [symbolic = %.loc19_6.2 (constants.%.dc4)]
+// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_7.1) [symbolic = %.loc19_6.2 (constants.%.7ae)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_7.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
 // CHECK:STDOUT:   %Z.facet.loc19_6.2: %Z.type = facet_value %T.loc13_7.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:   %F.specific_fn.loc19_3.2: <specific function> = specific_function constants.%F, @F(%Z.facet.loc19_6.2) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
@@ -268,14 +273,16 @@ impl C as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc13_7.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc13_7.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%empty_tuple.type) {
+// CHECK:STDOUT:   %T.patt.loc13_7.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc13_7.1 => constants.%empty_tuple.type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc19_6.2 => constants.%.650
+// CHECK:STDOUT:   %.loc19_6.2 => constants.%.d12
 // CHECK:STDOUT:   %Z.lookup_impl_witness => <error>
 // CHECK:STDOUT:   %Z.facet.loc19_6.2 => <error>
 // CHECK:STDOUT:   %F.specific_fn.loc19_3.2 => <error>
@@ -289,8 +296,8 @@ impl C as I {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %Z.impl_witness.3af: <witness> = impl_witness @T.as.Z.impl.%Z.impl_witness_table, @T.as.Z.impl(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %empty_tuple.type, (%Z.impl_witness.3af) [concrete]
+// CHECK:STDOUT:   %Z.impl_witness.39b: <witness> = impl_witness @T.as.Z.impl.%Z.impl_witness_table, @T.as.Z.impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %empty_tuple.type, (%Z.impl_witness.39b) [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%Z.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -298,7 +305,7 @@ impl C as I {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc18_6: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value constants.%empty_tuple.type, (constants.%Z.impl_witness.3af) [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value constants.%empty_tuple.type, (constants.%Z.impl_witness.39b) [concrete = constants.%Z.facet]
 // CHECK:STDOUT:   %.loc18_7: %Z.type = converted %.loc18_6, %Z.facet [concrete = constants.%Z.facet]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%Z.facet) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()

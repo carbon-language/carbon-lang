@@ -11,9 +11,9 @@
 class Foo {
   fn Make() -> Self { return {.x = 0}; }
 
-  fn Baz[self: Self]() -> i32 { return self.x; }
+  fn Baz(self) -> i32 { return self.x; }
 
-  fn Modify[ref self: Self]() { self->x = 1; }
+  fn Modify(ref self) { self->x = 1; }
 }
 
 // CHECK:STDOUT: - filename: fn_definitions.carbon
@@ -40,40 +40,34 @@ class Foo {
 // CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
 // CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Baz'},
-// CHECK:STDOUT:             {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:               {kind: 'SelfValueName', text: 'self'},
-// CHECK:STDOUT:               {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'ImplicitParamList', text: ']', subtree_size: 5},
 // CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'SelfValueName', text: 'self'},
+// CHECK:STDOUT:             {kind: 'SelfBindingPattern', text: 'self', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 4},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 12},
+// CHECK:STDOUT:         {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 9},
 // CHECK:STDOUT:           {kind: 'ReturnStatementStart', text: 'return'},
 // CHECK:STDOUT:             {kind: 'SelfValueNameExpr', text: 'self'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:           {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ReturnStatement', text: ';', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 18},
+// CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 15},
 // CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Modify'},
-// CHECK:STDOUT:             {kind: 'ImplicitParamListStart', text: '['},
+// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:                 {kind: 'SelfValueName', text: 'self'},
 // CHECK:STDOUT:               {kind: 'RefBindingName', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 11},
+// CHECK:STDOUT:             {kind: 'SelfBindingPattern', text: 'self', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 8},
 // CHECK:STDOUT:               {kind: 'SelfValueNameExpr', text: 'self'},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:             {kind: 'PointerMemberAccessExpr', text: '->', subtree_size: 3},
 // CHECK:STDOUT:             {kind: 'IntLiteral', text: '1'},
 // CHECK:STDOUT:           {kind: 'InfixOperatorEqual', text: '=', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 18},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 56},
+// CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 15},
+// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 50},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

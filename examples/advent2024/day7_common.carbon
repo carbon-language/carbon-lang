@@ -38,7 +38,7 @@ class Equation {
     return var;
   }
 
-  fn SolveFrom[self: Self](start: i32, value: i64, concat: bool) -> bool {
+  fn SolveFrom(self, start: i32, value: i64, concat: bool) -> bool {
     if (value > self.result) {
       return false;
     }
@@ -50,7 +50,7 @@ class Equation {
            (concat and self.SolveFrom(start + 1, Concat(value, self.operands[start]), true));
   }
 
-  fn Solve[self: Self](concat: bool) -> bool {
+  fn Solve(self, concat: bool) -> bool {
     return self.SolveFrom(1, self.operands[0], concat);
   }
 

@@ -46,7 +46,7 @@ import Cpp library "abstract.h";
 
 class C {
   extend base: Cpp.A;
-  override fn f[unused ref self: Self]() {}
+  override fn f(unused ref self) {}
 }
 
 // --- fail_impl_mismatch_member.carbon
@@ -58,10 +58,10 @@ import Cpp library "abstract.h";
 class C {
   extend base: Cpp.A;
   // CHECK:STDERR: fail_impl_mismatch_member.carbon:[[@LINE+4]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
-  // CHECK:STDERR:   override fn invalid[unused ref self: Self]() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn invalid(unused ref self) {}
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  override fn invalid[unused ref self: Self]() {}
+  override fn invalid(unused ref self) {}
 }
 
 // --- abstract_final.h
@@ -105,8 +105,10 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %AbstractFinal: type = class_type @AbstractFinal [concrete]
-// CHECK:STDOUT:   %.e25: Core.Form = init_form %AbstractFinal [concrete]
+// CHECK:STDOUT:   %.dbd: Core.Form = init_form %AbstractFinal [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %AbstractFinal [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %AbstractFinal [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AbstractFinal.f.type: type = fn_type @AbstractFinal.f [concrete]
@@ -128,12 +130,12 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %AbstractFinal.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %AbstractFinal.ref [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %AbstractFinal.ref: type = name_ref AbstractFinal, imports.%AbstractFinal.decl [concrete = constants.%AbstractFinal]
-// CHECK:STDOUT:     %.loc11_14.2: Core.Form = init_form %AbstractFinal.ref [concrete = constants.%.e25]
+// CHECK:STDOUT:     %.loc11_14.2: Core.Form = init_form %AbstractFinal.ref [concrete = constants.%.dbd]
 // CHECK:STDOUT:     %return.param: ref %AbstractFinal = out_param call_param0
 // CHECK:STDOUT:     %return: ref %AbstractFinal = return_slot %return.param
 // CHECK:STDOUT:   }

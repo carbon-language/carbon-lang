@@ -13,6 +13,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_categories.h"
 
 namespace Carbon::Check {
 
@@ -100,41 +101,24 @@ auto AddBindingEntityName(Context& context, SemIR::NameId name_id,
   return context.entity_names().Add(entity_name);
 }
 
-auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
-                       SemIR::ExprRegionId type_region_id,
-                       SemIR::AnyBindingPattern pattern) -> BindingPatternInfo {
+auto AddBindingForPattern(Context& context, SemIR::LocId name_loc,
+                          SemIR::AnyBindingPattern pattern,
+                          SemIR::TypeId binding_type_id, SemIR::InstId value_id)
+    -> SemIR::InstId {
   SemIR::InstKind bind_name_kind;
   switch (pattern.kind) {
-    case SemIR::RefBindingPattern::Kind:
-      bind_name_kind = SemIR::RefBinding::Kind;
-      break;
     case SemIR::SymbolicBindingPattern::Kind:
       bind_name_kind = SemIR::SymbolicBinding::Kind;
       break;
+    case SemIR::RefBindingPattern::Kind:
     case SemIR::ValueBindingPattern::Kind:
-      bind_name_kind = SemIR::ValueBinding::Kind;
+    case SemIR::WrapperBindingPattern::Kind:
+      bind_name_kind = SemIR::WrapperBinding::Kind;
       break;
-    case SemIR::WrapperBindingPattern::Kind: {
-      auto subpattern = context.insts().Get(pattern.subpattern_id);
-      CARBON_KIND_SWITCH(subpattern) {
-        case SemIR::RefParamPattern::Kind:
-        case SemIR::VarPattern::Kind:
-          bind_name_kind = SemIR::RefBinding::Kind;
-          break;
-        case SemIR::ValueParamPattern::Kind:
-          bind_name_kind = SemIR::ValueBinding::Kind;
-          break;
-        default:
-          CARBON_FATAL("Unexpected subpattern kind for at_binding_pattern: {0}",
-                       subpattern);
-      }
-      break;
-    }
     default:
       CARBON_FATAL("pattern_kind {0} is not a binding pattern kind",
                    pattern.kind);
   }
-  auto type_id = SemIR::ExtractScrutineeType(context.sem_ir(), pattern.type_id);
 
   // Handle non-static `var` decls in a class by creating a `FieldDecl`.
   if (InNonStaticFieldDecl(context)) {
@@ -144,7 +128,7 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
     auto& class_info = context.classes().Get(class_decl->class_id);
     auto field_type_id = GetUnboundElementType(
         context, context.types().GetTypeInstId(class_info.self_type_id),
-        context.types().GetTypeInstId(type_id));
+        context.types().GetTypeInstId(binding_type_id));
 
     if (name_id == SemIR::NameId::Underscore) {
       CARBON_DIAGNOSTIC(FieldNamedUnderscore, Error,
@@ -153,30 +137,41 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
     }
 
     auto field_id =
-        AddInst<SemIR::FieldDecl>(context, name_loc,
-                                  {.type_id = field_type_id,
-                                   .name_id = name_id,
-                                   .index = SemIR::ElementIndex::None});
-    context.field_decls_stack().AppendToTop(field_id);
+        context.fields().Add({.index = SemIR::ElementIndex::None,
+                              .initializer_id = SemIR::InstId::None});
+    auto field_decl_id = AddInst<SemIR::FieldDecl>(
+        context, name_loc,
+        {.type_id = field_type_id, .name_id = name_id, .field_id = field_id});
+    context.field_decls_stack().AppendToTop(field_decl_id);
 
-    return {.pattern_id = field_id, .bind_id = field_id};
+    return field_decl_id;
   }
 
   auto bind_id = AddInstInNoBlock(
       context, SemIR::LocIdAndInst::RuntimeVerified(
                    context.sem_ir(), name_loc,
                    SemIR::AnyBinding{.kind = bind_name_kind,
-                                     .type_id = type_id,
+                                     .type_id = binding_type_id,
                                      .entity_name_id = pattern.entity_name_id,
-                                     .value_id = SemIR::InstId::None}));
-
-  auto binding_pattern_id =
-      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(context.sem_ir(),
-                                                            name_loc, pattern));
+                                     .value_id = value_id}));
 
   if (pattern.kind == SemIR::SymbolicBindingPattern::Kind) {
     context.scope_stack().PushCompileTimeBinding(bind_id);
   }
+
+  return bind_id;
+}
+
+auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
+                       SemIR::ExprRegionId type_region_id,
+                       SemIR::TypeId scrutinee_type_id,
+                       SemIR::AnyBindingPattern pattern) -> BindingPatternInfo {
+  auto binding_pattern_id =
+      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(context.sem_ir(),
+                                                            name_loc, pattern));
+  auto bind_id =
+      AddBindingForPattern(context, name_loc, pattern, scrutinee_type_id,
+                           /*value_id=*/SemIR::InstId::None);
 
   bool inserted =
       context.bind_name_map()
@@ -187,11 +182,8 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
   return {.pattern_id = binding_pattern_id, .bind_id = bind_id};
 }
 
-// Returns a VarStorage inst for the given `var` pattern. If the pattern
-// is the body of a returned var, this reuses the return parameter, and
-// otherwise it adds a new inst.
-static auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
-                               bool is_returned_var) -> SemIR::InstId {
+auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
+                        bool is_returned_var) -> SemIR::InstId {
   if (is_returned_var) {
     if (auto return_param_id =
             GetReturnedVarParam(context, GetCurrentFunctionForReturn(context));
@@ -208,18 +200,19 @@ static auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
                         .pattern_id = var_pattern_id});
 }
 
-auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
-                          bool is_returned_var) -> void {
-  // We need to emit the VarStorage insts early, because they may be output
-  // arguments for the initializer. However, we can't emit them when we emit
-  // the corresponding `AnyVarPattern`s because they're part of the pattern
-  // match, not part of the pattern.
-  // TODO: Find a way to do this without walking the whole pattern block.
-  for (auto inst_id : context.inst_blocks().Get(pattern_block_id)) {
-    if (context.insts().Is<SemIR::AnyVarPattern>(inst_id)) {
-      context.var_storage_map().Insert(
-          inst_id, GetOrAddVarStorage(context, inst_id, is_returned_var));
-    }
+auto GetParamPatternKind(Context& context, SemIR::InstId param_inst_id)
+    -> ParamPatternKind {
+  auto param = context.insts().Get(
+      context.constant_values().GetConstantInstId(param_inst_id));
+  CARBON_KIND_SWITCH(param) {
+    case SemIR::RefParamPattern::Kind:
+      return ParamPatternKind::Ref;
+    case SemIR::VarParamPattern::Kind:
+      return ParamPatternKind::Var;
+    case SemIR::ValueParamPattern::Kind:
+      return ParamPatternKind::Value;
+    default:
+      CARBON_FATAL("Unexpected pattern kind: {0}", param);
   }
 }
 
@@ -246,11 +239,12 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
 
   auto pattern_type_id = GetPatternType(context, type_id);
   if (kind == ParamPatternKind::Var) {
-    auto pattern_id = AddBindingPattern(context, loc_id, type_expr_region_id,
-                                        {.kind = SemIR::RefBindingPattern::Kind,
-                                         .type_id = pattern_type_id,
-                                         .entity_name_id = entity_name_id,
-                                         .subpattern_id = SemIR::InstId::None});
+    auto pattern_id =
+        AddBindingPattern(context, loc_id, type_expr_region_id, type_id,
+                          {.kind = SemIR::RefBindingPattern::Kind,
+                           .type_id = pattern_type_id,
+                           .entity_name_id = entity_name_id,
+                           .subpattern_id = SemIR::InstId::None});
     return AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
                                 context.sem_ir(), loc_id,
                                 SemIR::VarParamPattern{
@@ -264,7 +258,7 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                                                 .type_id = pattern_type_id,
                                                 .pretty_name_id = name_id}));
 
-    return AddBindingPattern(context, loc_id, type_expr_region_id,
+    return AddBindingPattern(context, loc_id, type_expr_region_id, type_id,
                              {.kind = SemIR::WrapperBindingPattern::Kind,
                               .type_id = GetPatternType(context, type_id),
                               .entity_name_id = entity_name_id,

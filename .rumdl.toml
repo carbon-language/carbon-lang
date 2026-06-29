@@ -1,0 +1,67 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+[global]
+exclude = [
+  ".git",
+  ".jj",
+  "CHANGELOG.md",
+  "LICENSE.md",
+  ".github/pull_request_template.md",
+]
+respect-gitignore = true
+
+# Disable rules that produce the most noise initially. Some of these might make
+# sense to re-enable.
+disable = [
+  "MD013", # Line length exceeded
+  "MD033", # Inline HTML - commonly used in real-world markdown
+  "MD036", # Emphasis used instead of heading
+  "MD040", # Code blocks should have a language specified
+  "MD014", # Commands in code blocks should show output
+  "MD034", # Bare URLs
+  "MD059", # Link text should be descriptive
+  "MD028", # Blank line inside blockquote
+]
+
+# Heading style
+[MD003]
+style = "atx"
+
+# Narrow restriction on trailing punctuation in headings -- allows ':' and '!'.
+[MD026]
+punctuation = ".,;"
+
+# Unordered list marker style
+[MD004]
+style = "dash"
+
+# Ordered list numbering
+[MD029]
+style = "one-or-ordered"
+
+# Unordered list indentation
+[MD007]
+indent = 4
+
+[MD077]
+style = "aligned"
+
+# Spaces after list markers
+[MD030]
+ul-single = 3
+ul-multi = 3
+ol-align-column = 4
+
+# Code block style
+[MD046]
+style = "fenced"
+
+# Emphasis style
+[MD049]
+style = "underscore"
+
+# Strong style
+[MD050]
+style = "asterisk"

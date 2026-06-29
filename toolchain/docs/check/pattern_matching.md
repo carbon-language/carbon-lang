@@ -29,13 +29,13 @@ concepts.
 
 The SemIR for a pattern-matching operation is emitted in three steps:
 
-1. **Pattern:** Traverse the parse tree of the pattern to emit SemIR that
-   abstractly describes the pattern.
-2. **Scrutinee:** Traverse the parse tree of the scrutinee expression to emit
-   SemIR that evaluates it.
-3. **Match:** Traverse the pattern SemIR from step 1 (sometimes in conjunction
-   with the scrutinee SemIR) to emit SemIR that actually performs pattern
-   matching.
+1.  **Pattern:** Traverse the parse tree of the pattern to emit SemIR that
+    abstractly describes the pattern.
+2.  **Scrutinee:** Traverse the parse tree of the scrutinee expression to emit
+    SemIR that evaluates it.
+3.  **Match:** Traverse the pattern SemIR from step 1 (sometimes in conjunction
+    with the scrutinee SemIR) to emit SemIR that actually performs pattern
+    matching.
 
 ## Pattern instructions
 
@@ -98,10 +98,12 @@ Currently this happens in two cases, which are handled using two maps in
 instruction IDs:
 
 -   A name binding can be used within the same pattern that declares it:
+
     ```carbon
     match (x) {
       case (n: i32, n) => ...
     ```
+
     For this to work, the name `n` needs to be added to the scope as soon as we
     handle its declaration, and it needs to resolve to the `ValueBinding`
     instruction that binds a value to that name. This means that the
@@ -110,11 +112,13 @@ instruction IDs:
     `Context::bind_name_map` stores these `ValueBinding`s, keyed by the
     corresponding `ValueBindingPattern` instruction.
 -   A `var` pattern allocates storage during matching, which is represented by a
-    `VarStorage` instruction. This instruction must be allocated during the
-    pattern step, so that it can be used as the output parameter of scrutinee
-    expression evaluation during the scrutinee step. `Context::var_storage_map`
-    stores these `VarStorage` instructions, keyed by the corresponding
-    `VarPattern` instruction.
+    `VarStorage` instruction. For local and class-scope `var` patterns, this
+    instruction must be allocated at the end of the pattern step, so that it can
+    be used as the output parameter of scrutinee expression evaluation during
+    the scrutinee step, but doesn't get added to the instruction block that's
+    meant to capture sub-expressions (see below). `FullPatternStack` is
+    responsible for the mapping from `VarPattern` insts to the corresponding
+    `VarStorage` insts.
 
 As noted earlier, the pattern step can also emit non-pattern instructions to
 evaluate expressions that are embedded in the pattern, such as the type

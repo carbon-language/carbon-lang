@@ -12,7 +12,7 @@ import library "io_utils";
 
 // Read a sequence of lines each containing a pair of numbers into two arrays.
 // Returns the number of lines read.
-fn ReadInputs[N:! Core.IntLiteral()](ref a: array(i32, N), ref b: array(i32, N)) -> i32 {
+fn ReadInputs[N:! Core.IntLiteral](ref a: array(i32, N), ref b: array(i32, N)) -> i32 {
   for (i: i32 in Core.Range(N)) {
     var av: i32;
     var bv: i32;

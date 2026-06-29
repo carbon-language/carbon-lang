@@ -38,7 +38,9 @@ fn F() {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %E: type = class_type @E [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %E [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   %int_0: %E = int_value 0 [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   %int_1: %E = int_value 1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,7 +62,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %A.ref.loc8_30: type = name_ref A, imports.%A.decl [concrete = constants.%A]
@@ -70,9 +72,9 @@ fn F() {
 // CHECK:STDOUT:     %A.ref.loc8_20: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %E.ref.loc8: type = name_ref E, imports.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %E = value_binding a, %a.ref
+// CHECK:STDOUT:   %a: %E = wrapper_binding a, %a.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %A.ref.loc9_30: type = name_ref A, imports.%A.decl [concrete = constants.%A]
@@ -83,7 +85,7 @@ fn F() {
 // CHECK:STDOUT:     %A.ref.loc9_20: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %E.ref.loc9_22: type = name_ref E, imports.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %E = value_binding b, %b.ref
+// CHECK:STDOUT:   %b: %E = wrapper_binding b, %b.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

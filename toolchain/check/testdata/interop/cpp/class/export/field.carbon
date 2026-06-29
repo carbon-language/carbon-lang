@@ -138,3 +138,29 @@ class A {
 inline Cpp '''
 Carbon::A x;
 ''';
+
+// --- fail_private_field.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class C {
+  fn Make() -> C {
+    return {.x = 123};
+  }
+
+  private var x: i32;
+}
+
+inline Cpp '''
+int F() {
+  auto c = Carbon::C::Make();
+  // CHECK:STDERR: fail_private_field.carbon:[[@LINE+7]]:12: error: 'x' is a private member of 'Carbon::C' [CppInteropParseError]
+  // CHECK:STDERR:    22 |   return c.x;
+  // CHECK:STDERR:       |            ^
+  // CHECK:STDERR: fail_private_field.carbon:[[@LINE-9]]:16: note: implicitly declared private here [CppInteropParseNote]
+  // CHECK:STDERR:     9 |   private var x: i32;
+  // CHECK:STDERR:       |                ^
+  // CHECK:STDERR:
+  return c.x;
+}
+''';

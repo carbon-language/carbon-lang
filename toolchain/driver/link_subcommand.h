@@ -11,21 +11,9 @@
 #include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
+#include "toolchain/driver/link_options.h"
 
 namespace Carbon {
-
-// Options for the link subcommand.
-//
-// See the implementation of `Build` for documentation on members.
-struct LinkOptions {
-  auto Build(CommandLine::CommandBuilder& b) -> void;
-
-  CodegenOptions codegen_options;
-  llvm::StringRef output_filename;
-  llvm::SmallVector<llvm::StringRef> object_filenames;
-
-  llvm::SmallVector<llvm::StringRef> extra_clang_args;
-};
 
 // Implements the link subcommand of the driver.
 class LinkSubcommand : public DriverSubcommand {
@@ -33,7 +21,7 @@ class LinkSubcommand : public DriverSubcommand {
   explicit LinkSubcommand();
 
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
-    options_.Build(b);
+    options_.BuildForLinkSubcommand(b);
   }
 
   auto Run(DriverEnv& driver_env) -> DriverResult override;

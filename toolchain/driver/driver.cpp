@@ -13,6 +13,7 @@
 #include "common/pretty_stack_trace_function.h"
 #include "common/version.h"
 #include "toolchain/driver/build_runtimes_subcommand.h"
+#include "toolchain/driver/build_subcommand.h"
 #include "toolchain/driver/clang_subcommand.h"
 #include "toolchain/driver/compile_subcommand.h"
 #include "toolchain/driver/config_subcommand.h"
@@ -40,6 +41,7 @@ struct Options {
   llvm::StringRef prebuilt_runtimes_path;
 
   BuildRuntimesSubcommand runtimes;
+  BuildSubcommand build;
   ClangSubcommand clang;
   CompileSubcommand compile;
   ConfigSubcommand config;
@@ -169,6 +171,7 @@ when there are errors or other output.
       });
 
   runtimes.AddTo(b, &selected_subcommand);
+  build.AddTo(b, &selected_subcommand);
   clang.AddTo(b, &selected_subcommand);
   compile.AddTo(b, &selected_subcommand);
   config.AddTo(b, &selected_subcommand);
@@ -232,8 +235,10 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   });
 
   Options options;
+  Diagnostics::StreamConsumer consumer(error_stream_);
   DriverEnv env(fs_, installation_, input_stream_, output_stream_,
-                error_stream_, fuzzing_, enable_leaking_);
+                error_stream_, fuzzing_, enable_leaking_, &consumer);
+  env.mem_usage = mem_usage_;
 
   ErrorOr<CommandLine::ParseResult> result = CommandLine::Parse(
       args, *env.output_stream, Options::Info,
@@ -241,7 +246,7 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
 
   // Regardless of whether the parse succeeded, try to use the diagnostic kind
   // flag.
-  env.consumer.set_include_diagnostic_kind(options.include_diagnostic_kind);
+  consumer.set_include_diagnostic_kind(options.include_diagnostic_kind);
 
   if (env.installation->error()) {
     CARBON_DIAGNOSTIC(DriverInstallInvalid, Error, "{0}", std::string);

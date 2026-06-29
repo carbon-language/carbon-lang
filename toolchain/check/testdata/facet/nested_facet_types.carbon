@@ -244,16 +244,20 @@ library "[[@TEST_NAME]]";
 
 interface Y {}
 interface Z {
-  let T:! type;
-  let U:! type;
+  let Z1:! type;
+  let Z2:! type;
 }
 class C(T:! type) {}
 
-fn F(unused FF:! ((Y where .Self impls (Z where .T = C(.U)))
-                where .Self impls (Z where .T = C(.U)))
-                  where .Self impls (Z where .T = C(.U))) {}
+constraint NZ {
+  extend require impls Z where .Z1 = C(.Z2);
+}
 
-// --- nested_impl_unique.carbon
+fn F(unused FF:! ((Y where .Self impls NZ)
+                  where .Self impls NZ)
+                 where .Self impls NZ) {}
+
+// --- fail_todo_nested_impl_combine_rewrites_from_named_constraints.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {
@@ -265,6 +269,64 @@ interface Z {
 }
 class C(T:! type) { adapt (); }
 
-fn F(FF:! ((Y where .Y1 = ()) where .Self impls (Z where .Z1 = C(.Z2) and .Z2 = ()))) -> FF.(Z.Z1) {
+constraint NZ1 {
+  // This uses the rewrite from NZ2.
+  extend require impls Z where .Z1 = C(.Z2);
+}
+constraint NZ2 {
+  extend require impls Z where .Z2 = ();
+}
+
+fn F(FF:! ((Y where .Y1 = ()) where .Self impls NZ1) where .Self impls NZ2) -> FF.(Z.Z1) {
+  // CHECK:STDERR: fail_todo_nested_impl_combine_rewrites_from_named_constraints.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `C(())` to `FF.(Z.Z1)` [ConversionFailure]
+  // CHECK:STDERR:   return () as C(());
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_nested_impl_combine_rewrites_from_named_constraints.carbon:[[@LINE+4]]:3: note: type `C(())` does not implement interface `Core.ImplicitAs(FF.(Z.Z1))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   return () as C(());
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return () as C(());
 }
+
+// --- fail_where_nested_inside_where_impls.carbon
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_where_nested_inside_where_impls.carbon:[[@LINE+7]]:34: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fn F(_:! type where .Self impls (type where .Self impls type)) {}
+// CHECK:STDERR:                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_where_impls.carbon:[[@LINE+4]]:10: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
+// CHECK:STDERR: fn F(_:! type where .Self impls (type where .Self impls type)) {}
+// CHECK:STDERR:          ^~~~~~~~~~
+// CHECK:STDERR:
+fn F(_:! type where .Self impls (type where .Self impls type)) {}
+
+// --- fail_where_nested_inside_where_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+}
+
+// CHECK:STDERR: fail_where_nested_inside_where_rewrite.carbon:[[@LINE+7]]:25: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fn F(_:! Z where .Z1 = (type where .Self impls type)) {}
+// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_where_rewrite.carbon:[[@LINE+4]]:10: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
+// CHECK:STDERR: fn F(_:! Z where .Z1 = (type where .Self impls type)) {}
+// CHECK:STDERR:          ^~~~~~~
+// CHECK:STDERR:
+fn F(_:! Z where .Z1 = (type where .Self impls type)) {}
+
+// --- fail_where_nested_inside_where_same_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+class C;
+
+// CHECK:STDERR: fail_where_nested_inside_where_same_type.carbon:[[@LINE+7]]:24: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fn F(_:! Z where C == (type where .Self impls type)) {}
+// CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_where_same_type.carbon:[[@LINE+4]]:10: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
+// CHECK:STDERR: fn F(_:! Z where C == (type where .Self impls type)) {}
+// CHECK:STDERR:          ^~~~~~~
+// CHECK:STDERR:
+fn F(_:! Z where C == (type where .Self impls type)) {}

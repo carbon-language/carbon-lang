@@ -20,10 +20,11 @@ contributions.
     -   [macOS](#macos)
 -   [Tools](#tools)
     -   [Main tools](#main-tools)
-        -   [Running pre-commit](#running-pre-commit)
+        -   [Running prek](#running-prek)
     -   [Optional tools](#optional-tools)
         -   [Jujutsu (`jj`)](#jujutsu-jj)
         -   [AI assistants](#ai-assistants)
+    -   [Updating tools installed with `cargo`](#updating-tools-installed-with-cargo)
     -   [Running tests with AddressSanitizer (ASan)](#running-tests-with-addresssanitizer-asan)
     -   [Manually building Clang and LLVM (not recommended)](#manually-building-clang-and-llvm-not-recommended)
 -   [Troubleshooting build issues](#troubleshooting-build-issues)
@@ -58,18 +59,19 @@ sudo apt install \
   libc++-dev \
   libc++abi-dev \
   lld \
-  lldb \
-  python3 \
-  pipx
+  lldb
 
-# Install pre-commit.
-pipx install pre-commit
+# Install `uv` for Python scripts.
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install `prek` for Git hooks.
+cargo install --locked prek
 
 # Set up git.
 # If you don't already have a fork:
 gh repo fork --clone carbon-language/carbon-lang
 cd carbon-lang
-pre-commit install
+prek install
 
 # Run tests.
 ./scripts/run_bazelisk.py test //...:all
@@ -123,15 +125,15 @@ brew install \
   bazelisk \
   gh \
   llvm \
-  python@3.10 \
-  pre-commit
+  uv \
+  prek
 
 # IMPORTANT: Make sure `llvm` is added to the PATH! It's separate from `brew`.
 
 # Set up git.
 gh repo fork --clone carbon-language/carbon-lang
 cd carbon-lang
-pre-commit install
+prek install
 
 # Run tests. Note homebrew makes `bazel` an alias to `bazelisk`.
 bazel test //...:all
@@ -161,13 +163,16 @@ These tools are essential for work on Carbon.
     -   [Homebrew](https://brew.sh/) (for macOS)
         -   To upgrade versions of `brew` packages, it will be necessary to
             periodically run `brew upgrade`.
-    -   [Python](https://python.org)
-        -   Carbon requires Python 3.10 or newer.
-        -   To upgrade versions of pip-installed packages, it will be necessary
-            to periodically run `pipx list --outdated`, then
-            `pipx install -U <package>` to upgrade desired packages.
-        -   When upgrading, version dependencies may mean packages _should_ be
-            outdated, and not be upgraded.
+    -   [Python](https://python.org) using [`uv`](https://docs.astral.sh/uv/)
+        -   Carbon uses `uv` to run Python scripts directly, ensuring automatic
+            dependency management.
+        -   Standalone scripts (for example, in `scripts/`) have dependencies
+            embedded in the file using PEP 723 inline metadata.
+        -   To run a script directly, ensure `uv` is installed and the script
+            should be runnable directly (for example,
+            `./scripts/create_compdb.py`).
+        -   Installation:
+            https://docs.astral.sh/uv/getting-started/installation/
 -   Main tools
     -   [Bazel](https://www.bazel.build/)
         -   [Bazelisk](https://docs.bazel.build/versions/master/install-bazelisk.html):
@@ -177,31 +182,36 @@ These tools are essential for work on Carbon.
             issues, see
             [troubleshooting build issues](#troubleshooting-build-issues).
     -   [gh CLI](https://github.com/cli/cli): Helps with GitHub.
-    -   [pre-commit](https://pre-commit.com): Validates and cleans up git
-        commits.
+    -   [prek](https://github.com/j178/prek): Validates and cleans up commits.
     -   `autoupdate_testdata.py`: Updates expected output for tests.
         -   Usage: `./toolchain/autoupdate_testdata.py [files...]`
         -   This is essential when changes affect compiler output (diagnostics,
             SemIR, etc.).
 
-#### Running pre-commit
+#### Running prek
 
-[pre-commit](https://pre-commit.com) is typically set up using
-`pre-commit install`. When set up in this mode, it will check for issues when
-`git commit` is run. A typical commit workflow looks like:
+[prek](https://github.com/j178/prek) runs linters and formatters. It's a drop-in
+replacement for [pre-commit](https://pre-commit.com/).
 
-1.  `git commit` to try committing files. This automatically executes
-    `pre-commit run`, which may fail and leave files modified for cleanup.
-2.  `git add .` to add the automatically modifications done by `pre-commit`.
+To use it:
+
+1.  Install it by way of `cargo install --locked prek`.
+2.  Run `prek install` to set up the git hooks.
+
+A typical commit workflow looks like:
+
+1.  `git commit` to try committing files. This automatically executes `prek run`,
+    which may fail and leave files modified for cleanup.
+2.  `git add .` to add the automatic modifications done by hooks.
 3.  `git commit` again.
 
-You can also use `pre-commit run` to check pending changes without `git commit`,
-or `pre-commit run -a` to run on all files in the repository.
+You can also use `prek run` to check pending changes without `git commit`, or
+`prek run -a` to run on all files in the repository.
 
-> NOTE: Some developers prefer to run `pre-commit` on `git push` instead of
+> NOTE: Some developers prefer to run `prek` on `git push` instead of
 > `git commit` because they want to commit files as originally authored instead
-> of with pre-commit modifications. To switch, run
-> `pre-commit uninstall && pre-commit install -t pre-push`.
+> of with automatic modifications. To switch, run
+> `prek uninstall && prek install --hook-type pre-push`.
 
 ### Optional tools
 
@@ -213,14 +223,26 @@ considering if they fit your workflow.
 -   `rs-git-fsmonitor` and Watchman: Helps make `git` run faster on large
     repositories.
     -   **WARNING**: Bugs in `rs-git-fsmonitor` and/or Watchman can result in
-        `pre-commit` deleting files. If you see files being deleted, disable
+        `prek` deleting files. If you see files being deleted, disable
         `rs-git-fsmonitor` with `git config --unset core.fsmonitor`.
+-   [rumdl](https://github.com/rvben/rumdl): A Markdown formatter, which we use for
+    formatting Markdown files. If you want to format files directly or use it in
+    your editor, you can install it:
+    -   With `cargo` (preferred): `cargo install --locked rumdl`
+    -   With `brew` (on macOS): `brew install rumdl`
+    -   For Vim/Neovim, it is recommended to connect using its built-in Language
+        Server Protocol (LSP) capabilities (by way of `rumdl server`). It is supported
+        by [Mason](https://github.com/williamboman/mason.nvim) (as `rumdl`) and
+        can be configured by way of `nvim-lspconfig` or formatting plugins like
+        `conform.nvim`. For more details, see the
+        [rumdl editor integration documentation](https://github.com/rvben/rumdl#editor-integration).
 -   [vim-prettier](https://github.com/prettier/vim-prettier): A vim integration
     for [Prettier](https://prettier.io/), which we use for formatting.
 -   [Visual Studio Code](https://code.visualstudio.com/): A code editor.
     -   We provide [recommended extensions](/.vscode/extensions.json) to assist
         Carbon development. Some settings changes must be made separately:
-        -   Python › Formatting: Provider: `black`
+        -   Python › Formatting: Provider: `ruff`
+        -   Markdown › Formatting: Default Formatter: `rumdl`
     -   **WARNING:** Visual Studio Code modifies the `PATH` environment
         variable, particularly in the terminals it creates. The `PATH`
         difference can cause `bazel` to detect different startup options,
@@ -230,7 +252,7 @@ considering if they fit your workflow.
         purposes, such as editing files, without interfering with `bazel`.
     -   We also provide recommended setups for debugging in VS Code with either
         [LLDB](/toolchain/docs/debugging.md#debugging-with-lldb) or
-        [GDB]((/toolchain/docs/debugging.md#debugging-with-gdb)
+        [GDB](/toolchain/docs/debugging.md#debugging-with-gdb)
 -   [clangd](https://clangd.llvm.org/installation): An LSP server implementation
     for C/C++.
 
@@ -238,16 +260,9 @@ considering if they fit your workflow.
         generated file called `compile_commands.json`. This can be generated by
         invoking the command below:
 
-        ```
+        ```sh
         ./scripts/create_compdb.py
         ```
-
-        -   **NOTE**: This assumes you have `python` 3 installed on your system.
-
--   [`uv`](https://docs.astral.sh/uv/): A fast Python package manager.
-    -   Notably, `uv` supports automatic management of even complex Python
-        dependencies for scripts: https://docs.astral.sh/uv/guides/scripts/
-    -   Installation: https://docs.astral.sh/uv/getting-started/installation/
 
 #### Jujutsu (`jj`)
 
@@ -312,8 +327,7 @@ allowlisting) are:
 bazelisk build
 bazelisk test
 bazelisk run //toolchain/testing:file_test --
-clang-format
-pre-commit run
+prek run
 ./toolchain/autoupdate_testdata.py
 
 # Shell commands. Note that these allow reading arbitrary files on your local
@@ -328,6 +342,16 @@ git diff
 git log
 git show
 git status
+```
+
+### Updating tools installed with `cargo`
+
+We recommend and use a number of tools that are installed by way of
+`cargo install --locked`. To update these tools you can run the following
+command:
+
+```sh
+./scripts/cargo_update.py
 ```
 
 ### Running tests with AddressSanitizer (ASan)
