@@ -57,13 +57,13 @@ var poem: String = ''' // No file type indicator, just a comment.
 // CHECK:STDOUT: var count: i32 = 0; // A local variable.
 // CHECK:STDOUT:
 // CHECK:STDOUT: // Trailing comments may follow a sequence of statements.
-// CHECK:STDOUT: var x: i32 = 0; // first
-// CHECK:STDOUT: var yy: i32 = 10; // second
+// CHECK:STDOUT: var x: i32 = 0;     // first
+// CHECK:STDOUT: var yy: i32 = 10;   // second
 // CHECK:STDOUT: var zzz: i32 = 100; // third
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn Render(frame: Frame) {
 // CHECK:STDOUT:   Draw(frame); // A function call,
-// CHECK:STDOUT:   Flush(); // another call,
+// CHECK:STDOUT:   Flush();     // another call,
 // CHECK:STDOUT: } // and a closing brace.
 // CHECK:STDOUT:
 // CHECK:STDOUT: var a: i32 = 1; // alpha

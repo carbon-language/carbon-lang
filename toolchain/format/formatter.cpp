@@ -19,7 +19,7 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
     : tree_(tree),
       tokens_(&tree->tokens()),
       style_(style),
-      whitespace_(tokens_),
+      whitespace_(tokens_, style),
       token_infos_(
           TokenInfoStore::MakeWithExplicitSize(tokens_->size(), TokenInfo())) {
   // Derive per-token formatting data from the tokens and the parse tree. Each
@@ -177,8 +177,11 @@ auto Formatter::FlushLine() -> void {
   // Record each token's leading whitespace. The line's first token carries the
   // blank-line allowance and the break ending the previous line; a wrapped
   // token carries its own break and continuation indent; everything else its
-  // inter-token spacing.
+  // inter-token spacing. The bracket-nesting depth is tracked for the alignment
+  // pass, which uses it to tell a wrapped continuation line from a new
+  // statement.
   std::optional<Lex::TokenIndex> previous;
+  int nesting_level = 0;
   for (int i = 0; i < static_cast<int>(current_line_.size()); ++i) {
     Lex::TokenIndex token = current_line_[i];
     int newlines;
@@ -193,7 +196,19 @@ auto Formatter::FlushLine() -> void {
       newlines = 0;
       spaces = SpacesBefore(*tokens_, token_infos_, *previous, token);
     }
-    whitespace_.AddToken(newlines, spaces, token);
+    Lex::TokenKind kind = tokens_->GetKind(token);
+    if (kind.IsOneOf({Lex::TokenKind::CloseParen,
+                      Lex::TokenKind::CloseSquareBracket,
+                      Lex::TokenKind::CloseCurlyBrace}) &&
+        nesting_level > 0) {
+      --nesting_level;
+    }
+    whitespace_.AddToken(newlines, spaces, indent_, nesting_level, token);
+    if (kind.IsOneOf({Lex::TokenKind::OpenParen,
+                      Lex::TokenKind::OpenSquareBracket,
+                      Lex::TokenKind::OpenCurlyBrace})) {
+      ++nesting_level;
+    }
     previous = token;
   }
   started_ = true;

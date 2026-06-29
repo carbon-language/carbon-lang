@@ -44,6 +44,12 @@ struct Style {
   // The penalty for breaking after `=` onto the right-hand side. LLVM
   // (`PenaltyBreakAssignment`).
   int penalty_break_assignment = 2;
+
+  // Whether to align the `//` of a run of consecutive trailing comments into
+  // one column. LLVM enables this (`AlignTrailingComments`); the canonical
+  // style follows. A trailing comment that is the only one in its run keeps the
+  // single space before it.
+  bool align_trailing_comments = true;
 };
 
 }  // namespace Carbon::Format

@@ -4,20 +4,27 @@
 
 #include "toolchain/format/whitespace_manager.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <utility>
 
+#include "llvm/ADT/STLFunctionalExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Format {
 
-auto WhitespaceManager::AddToken(int newlines, int spaces,
-                                 Lex::TokenIndex token) -> void {
+auto WhitespaceManager::AddToken(int newlines, int spaces, int indent_level,
+                                 int nesting_level, Lex::TokenIndex token)
+    -> void {
   changes_.push_back({.is_token = true,
                       .newlines = newlines,
                       .spaces = spaces,
-                      .token = token});
+                      .token = token,
+                      .indent_level = indent_level,
+                      .nesting_level = nesting_level});
 }
 
 auto WhitespaceManager::AddRaw(int newlines, std::string text) -> void {
@@ -29,7 +36,7 @@ auto WhitespaceManager::AddRaw(int newlines, std::string text) -> void {
 
 auto WhitespaceManager::AddTrailingComment(std::string text) -> void {
   // No line break: the comment appends to the current line, separated by a
-  // single space.
+  // single space (alignment may add more `padding` later).
   changes_.push_back({.is_token = false,
                       .is_trailing_comment = true,
                       .newlines = 0,
@@ -37,21 +44,141 @@ auto WhitespaceManager::AddTrailingComment(std::string text) -> void {
                       .raw = std::move(text)});
 }
 
+auto WhitespaceManager::ComputeStartColumns() -> void {
+  int column = 0;
+  for (Change& change : changes_) {
+    if (!change.is_token) {
+      if (change.is_trailing_comment) {
+        // A trailing comment continues the current line: its column is the
+        // previous content's end plus the separating spaces and any padding.
+        column += change.spaces + change.padding;
+        change.start_column = column;
+        column += static_cast<int>(change.raw.size());
+      } else {
+        // A full-line comment block ends at a line boundary, so the next token
+        // (which necessarily starts a new line) recomputes from scratch.
+        column = 0;
+      }
+      continue;
+    }
+    column =
+        (change.newlines > 0 ? 0 : column) + change.spaces + change.padding;
+    change.start_column = column;
+    llvm::StringRef text = tokens_->GetTokenText(change.token);
+    // A multi-line token (such as a multi-line string literal) ends on its
+    // last physical line, whose width (not the token's full byte length)
+    // determines the column after it.
+    size_t last_line = text.rfind('\n');
+    if (last_line == llvm::StringRef::npos) {
+      column += static_cast<int>(text.size());
+    } else {
+      column = static_cast<int>(text.size() - last_line - 1);
+    }
+  }
+}
+
+auto WhitespaceManager::AlignChanges(
+    llvm::function_ref<auto(int, int)->int> find_match) -> void {
+  ComputeStartColumns();
+  int n = changes_.size();
+
+  // The matched change of each line in the run being built, and the indent
+  // those lines share.
+  llvm::SmallVector<int> run;
+  int run_indent = -1;
+  auto finalize = [&] {
+    if (run.size() >= 2) {
+      int target = 0;
+      for (int idx : run) {
+        target = std::max(target, changes_[idx].start_column);
+      }
+      for (int idx : run) {
+        changes_[idx].padding += target - changes_[idx].start_column;
+      }
+    }
+    run.clear();
+    run_indent = -1;
+  };
+
+  int i = 0;
+  while (i < n) {
+    // The current line spans `[i, j)`: its first change plus any following
+    // changes that carry no line break (same-line tokens and a trailing
+    // comment).
+    int j = i + 1;
+    while (j < n && changes_[j].newlines == 0) {
+      ++j;
+    }
+    // The line's indent and bracket nesting come from its first token change;
+    // a comment-only line has neither.
+    int indent = -1;
+    int nesting = -1;
+    for (int k = i; k < j; ++k) {
+      if (changes_[k].is_token) {
+        indent = changes_[k].indent_level;
+        nesting = changes_[k].nesting_level;
+        break;
+      }
+    }
+    int match = find_match(i, j);
+
+    // A blank line always breaks the run.
+    if (changes_[i].newlines > 1) {
+      finalize();
+    }
+    if (match < 0) {
+      // A wrapped continuation line (still inside brackets) neither joins nor
+      // breaks the run, mirroring clang-format's deeper-nesting skip; any
+      // other unmatched line, including a comment line, breaks it.
+      if (nesting <= 0) {
+        finalize();
+      }
+    } else {
+      if (!run.empty() && indent != run_indent) {
+        finalize();
+      }
+      if (run.empty()) {
+        run_indent = indent;
+      }
+      run.push_back(match);
+    }
+    i = j;
+  }
+  finalize();
+}
+
+auto WhitespaceManager::AlignTrailingComments() -> void {
+  if (!style_.align_trailing_comments) {
+    return;
+  }
+  // The line's trailing comment is its last raw change, if any.
+  AlignChanges([&](int begin, int end) {
+    for (int k = end - 1; k >= begin; --k) {
+      if (changes_[k].is_trailing_comment) {
+        return k;
+      }
+    }
+    return -1;
+  });
+}
+
 auto WhitespaceManager::Generate(llvm::SmallVectorImpl<TokenSpan>& token_map)
     -> std::string {
+  AlignTrailingComments();
+
   std::string output;
   for (const Change& change : changes_) {
     output.append(change.newlines, '\n');
     if (!change.is_token) {
       // A trailing comment appends to the current line after its separating
-      // space; a full-line block is emitted verbatim.
+      // spaces (plus any alignment padding); a full-line block is verbatim.
       if (change.is_trailing_comment) {
-        output.append(change.spaces, ' ');
+        output.append(change.spaces + change.padding, ' ');
       }
       output.append(change.raw);
       continue;
     }
-    output.append(change.spaces, ' ');
+    output.append(change.spaces + change.padding, ' ');
     llvm::StringRef text = tokens_->GetTokenText(change.token);
     // A lexer-inserted recovery token's text does not exist in the source (its
     // byte offset is synthesized, and can even overlap a neighboring token),

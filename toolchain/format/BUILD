@@ -108,7 +108,9 @@ cc_library(
     srcs = ["whitespace_manager.cpp"],
     hdrs = ["whitespace_manager.h"],
     deps = [
+        ":style",
         "//toolchain/lex:token_index",
+        "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],

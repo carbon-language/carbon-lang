@@ -292,5 +292,32 @@ TEST(FormatterTest, StyleMaxEmptyLinesToKeep) {
             "fn F() {\n  var x: i32 = 1;\n\n\n  var y: i32 = 2;\n}\n");
 }
 
+// A run of trailing comments aligns into one column under the canonical style.
+TEST(FormatterTest, TrailingCommentsAlignedByDefault) {
+  Testing::CompileHelper helper;
+  EXPECT_EQ(
+      FormatTextWithStyle(
+          helper, "var x: i32 = 1; // a\nvar yyyy: i32 = 22; // b\n", Style()),
+      "var x: i32 = 1;     // a\nvar yyyy: i32 = 22; // b\n");
+}
+
+// A blank line breaks a trailing-comment run, so each comment keeps its single
+// space rather than aligning across the gap.
+TEST(FormatterTest, TrailingCommentAlignmentStopsAtBlankLine) {
+  Testing::CompileHelper helper;
+  llvm::StringRef input = "var x: i32 = 1; // a\n\nvar yyyy: i32 = 22; // b\n";
+  EXPECT_EQ(FormatTextWithStyle(helper, input, Style()), input);
+}
+
+// `align_trailing_comments` can be turned off; the comments then keep a single
+// space and are not lined up.
+TEST(FormatterTest, StyleAlignTrailingCommentsCanBeDisabled) {
+  Testing::CompileHelper helper;
+  llvm::StringRef input = "var x: i32 = 1; // a\nvar yyyy: i32 = 22; // b\n";
+  Style style;
+  style.align_trailing_comments = false;
+  EXPECT_EQ(FormatTextWithStyle(helper, input, style), input);
+}
+
 }  // namespace
 }  // namespace Carbon::Format

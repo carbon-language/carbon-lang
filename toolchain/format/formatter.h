@@ -29,10 +29,10 @@ namespace Carbon::Format {
 // `line_wrapper.h` when it exceeds the column limit.
 //
 // `Run()` records each token's leading whitespace into a `WhitespaceManager`,
-// then generates the full formatted text from it and records where each token
-// landed. The result is then available either as the whole text (`TakeOutput`)
-// or as a minimal set of edits against the original source
-// (`ComputeReplacements`).
+// then generates the full formatted text from it (running the trailing-comment
+// alignment pass) and records where each token landed. The result is then
+// available either as the whole text (`TakeOutput`) or as a minimal set of
+// edits against the original source (`ComputeReplacements`).
 //
 // TODO: Drive indentation and line structure from the parse tree rather than
 // from brace nesting.
