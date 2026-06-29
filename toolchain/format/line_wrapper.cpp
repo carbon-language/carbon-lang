@@ -11,8 +11,10 @@
 #include <utility>
 
 #include "common/hashing.h"
+#include "common/map.h"
 #include "common/set.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/format/token_info.h"
 #include "toolchain/lex/token_kind.h"
@@ -24,6 +26,90 @@ namespace Carbon::Format {
 // lines generate far fewer; this only bounds the cost of pathological inputs
 // (very long, deeply nested lines).
 constexpr int MaxStatesGenerated = 100'000;
+
+// Whether the layout of a member-access chain is still open, committed to
+// breaking every call/subscript boundary, or committed to staying packed. See
+// `ChainState`.
+enum class ChainBreak : int8_t { Undecided, Broken, Unbroken };
+
+namespace {
+
+// The live layout state of one member-access call chain. clang-format formats a
+// chain all-or-nothing: either it fits packed on its line, or it breaks before
+// *every* member access that follows a call/subscript (the "fluent"/builder
+// shape). The first such break commits the chain, and the rest must match.
+struct ChainState {
+  // The chain's identity: its receiver-root token index (`member_chain_id`).
+  int key;
+  // The column member-access breaks in this chain indent to: the receiver's
+  // start column plus the continuation indent (clang-format anchors a chain's
+  // continuations under its root, not under the statement).
+  int anchor;
+  // Whether the all-or-nothing break decision has been made yet, and which way.
+  ChainBreak decision;
+};
+
+// Per-token, line-local data about member-access chains, precomputed once
+// before the search. Indexed by position within the line.
+struct ChainInfo {
+  // For a token that is the receiver root of a chain, the chain's key; else -1.
+  // Placing such a token opens a `ChainState`.
+  llvm::SmallVector<int> root_key;
+  // For a member-access `.`/`->` token, whether it follows a `)`/`]` and so is
+  // a fluent break point subject to the all-or-nothing coupling.
+  llvm::SmallVector<bool> is_fluent;
+  // For each chain key, the line position of its last member-access token,
+  // after which the chain's state is no longer needed and is dropped.
+  Map<int, int> last_member_pos;
+  // For each chain key, whether it is a builder chain: one with at least one
+  // fluent break point. In a builder chain, only fluent points break (the
+  // first segment and any field accesses stay attached, clang-format's
+  // builder-call shape); a chain with none is a plain field chain that breaks
+  // by the usual minimum-break.
+  Map<int, bool> is_builder;
+};
+
+}  // namespace
+
+// Computes the per-token chain data for `line`; see `ChainInfo`.
+static auto ComputeChainInfo(const Lex::TokenizedBuffer& tokens,
+                             const TokenInfoStore& token_infos,
+                             llvm::ArrayRef<Lex::TokenIndex> line)
+    -> ChainInfo {
+  int n = line.size();
+  ChainInfo info;
+  info.root_key.assign(n, -1);
+  info.is_fluent.assign(n, false);
+
+  // Map each token's index to its line position, to locate chain receiver
+  // roots.
+  Map<int, int> tok_to_pos;
+  for (int i = 0; i < n; ++i) {
+    tok_to_pos.Update(line[i].index, i);
+  }
+
+  for (int i = 0; i < n; ++i) {
+    int key = token_infos.Get(line[i]).member_chain_id;
+    if (key < 0) {
+      continue;
+    }
+    info.last_member_pos.Update(key, i);
+    bool fluent = i > 0 && tokens.GetKind(line[i - 1])
+                               .IsOneOf({Lex::TokenKind::CloseParen,
+                                         Lex::TokenKind::CloseSquareBracket});
+    info.is_fluent[i] = fluent;
+    if (fluent) {
+      info.is_builder.Update(key, true);
+    } else {
+      info.is_builder.Insert(key, false);
+    }
+    // Mark the receiver root's position (the first time its chain is seen).
+    if (int* root_pos = tok_to_pos[key]) {
+      info.root_key[*root_pos] = key;
+    }
+  }
+  return info;
+}
 
 // Updates the continuation-indent stack for the scopes that a token opens and
 // closes, given that its text runs from `start_column` to `end_column`, with
@@ -79,6 +165,10 @@ struct State {
   // The continuation-indent anchor for each currently-open bracket level, with
   // a bottom entry for the statement level. `back()` is the current level.
   llvm::SmallVector<int, 8> stack;
+  // The currently-open member-access chains (innermost last). Tracked
+  // separately from `stack` because a chain's anchor persists across the `()`
+  // calls within it, which push and pop bracket levels.
+  llvm::SmallVector<ChainState, 4> chains;
   // The state this was reached from, as an index into the node pool, or -1 for
   // the start state.
   int parent;
@@ -88,6 +178,17 @@ struct State {
 };
 
 }  // namespace
+
+// Finds the open chain with the given key, or null if none is open.
+static auto FindChain(llvm::SmallVectorImpl<ChainState>& chains, int key)
+    -> ChainState* {
+  for (ChainState& chain : chains) {
+    if (chain.key == key) {
+      return &chain;
+    }
+  }
+  return nullptr;
+}
 
 // Serializes the layout-relevant part of a state (everything that determines
 // its future, excluding the path bookkeeping) into a deduplication key. Two
@@ -100,10 +201,26 @@ struct State {
 // fixed-width key would avoid the per-state allocations.
 static auto StateKey(const State& state) -> llvm::SmallVector<int> {
   llvm::SmallVector<int> key;
-  key.reserve(state.stack.size() + 2);
+  key.reserve(state.stack.size() + state.chains.size() * 3 + 4);
   key.push_back(state.index);
   key.push_back(state.column);
+  key.push_back(state.stack.size());
   key.insert(key.end(), state.stack.begin(), state.stack.end());
+  // Canonicalize chains by key so that two states differing only in the
+  // (search- irrelevant) order of open chains dedupe against each other.
+  llvm::SmallVector<const ChainState*, 4> sorted_chains;
+  for (const ChainState& chain : state.chains) {
+    sorted_chains.push_back(&chain);
+  }
+  llvm::sort(sorted_chains, [](const ChainState* a, const ChainState* b) {
+    return a->key < b->key;
+  });
+  key.push_back(sorted_chains.size());
+  for (const ChainState* chain : sorted_chains) {
+    key.push_back(chain->key);
+    key.push_back(chain->anchor);
+    key.push_back(static_cast<int>(chain->decision));
+  }
   return key;
 }
 
@@ -128,6 +245,35 @@ auto SolveLineBreaks(const Lex::TokenizedBuffer& tokens,
     return breaks;
   }
 
+  ChainInfo chain_info = ComputeChainInfo(tokens, token_infos, line);
+
+  // Opens a member-access chain when the token at `position`, placed starting
+  // at `start_column`, is a chain's receiver root, recording the column its
+  // members indent to.
+  auto maybe_open_chain = [&](int position, int start_column,
+                              llvm::SmallVectorImpl<ChainState>& chains) {
+    int key = chain_info.root_key[position];
+    if (key >= 0) {
+      chains.push_back(
+          {.key = key,
+           .anchor = start_column + style.continuation_indent_width,
+           .decision = ChainBreak::Undecided});
+    }
+  };
+  // Drops a chain's state once its last member access has been placed.
+  auto maybe_close_chain = [&](int position,
+                               llvm::SmallVectorImpl<ChainState>& chains) {
+    int key = token_infos.Get(line[position]).member_chain_id;
+    int* last_pos = key >= 0 ? chain_info.last_member_pos[key] : nullptr;
+    if (last_pos && *last_pos == position) {
+      ChainState* chain = FindChain(chains, key);
+      if (chain) {
+        *chain = chains.back();
+        chains.pop_back();
+      }
+    }
+  };
+
   // The pool of explored states; `nodes[0]` is the start state, with the line's
   // first token already placed at `indent`.
   llvm::SmallVector<State> nodes;
@@ -139,9 +285,12 @@ auto SolveLineBreaks(const Lex::TokenizedBuffer& tokens,
     int column = indent + token_infos.Get(line[0]).column_width;
     ApplyTokenScopes(tokens.GetKind(line[0]), token_infos.Get(line[0]),
                      /*start_column=*/indent, /*end_column=*/column, stack);
+    llvm::SmallVector<ChainState, 4> chains;
+    maybe_open_chain(0, /*start_column=*/indent, chains);
     nodes.push_back({.index = 1,
                      .column = column,
                      .stack = std::move(stack),
+                     .chains = std::move(chains),
                      .parent = -1,
                      .newline_indent = -1});
   }
@@ -177,14 +326,41 @@ auto SolveLineBreaks(const Lex::TokenizedBuffer& tokens,
     int index = nodes[node_index].index;
     int column = nodes[node_index].column;
     llvm::SmallVector<int, 8> stack(nodes[node_index].stack);
+    llvm::SmallVector<ChainState, 4> chains(nodes[node_index].chains);
 
     Lex::TokenIndex previous = line[index - 1];
     Lex::TokenIndex token = line[index];
     Lex::TokenKind token_kind = tokens.GetKind(token);
     int token_width = token_infos.Get(token).column_width;
 
-    // Option 1: keep `token` on the current line.
-    {
+    // A member-access break indents to its chain's anchor rather than the
+    // current bracket level, and may be constrained by the chain's all-or-
+    // nothing decision.
+    int member_chain_id = token_infos.Get(token).member_chain_id;
+    bool is_member = member_chain_id >= 0;
+    ChainState* chain =
+        is_member ? FindChain(chains, member_chain_id) : nullptr;
+    bool fluent = chain_info.is_fluent[index];
+    bool* builder_entry =
+        is_member ? chain_info.is_builder[member_chain_id] : nullptr;
+    bool builder = builder_entry && *builder_entry;
+    ChainBreak decision = chain ? chain->decision : ChainBreak::Undecided;
+
+    // Whether a break before `token` is forbidden by the member-chain rules:
+    //   - in a builder chain, only fluent points (those following a `)`/`]`)
+    //     break, so the first segment and field accesses stay attached;
+    //   - a fluent point whose chain committed to staying packed cannot break.
+    //
+    // TODO: The first rule is a hard block where clang-format uses a penalty,
+    // so a builder chain whose receiver plus first segment alone overflow the
+    // limit stays overflowing where clang-format could still break before the
+    // first `.`. Rare in practice; revisit if it shows up in real code.
+    bool member_break_blocked =
+        (builder && !fluent) || (fluent && decision == ChainBreak::Unbroken);
+
+    // Keep `token` on the current line. A fluent break point whose chain
+    // already committed to breaking cannot stay on the line.
+    if (!fluent || decision != ChainBreak::Broken) {
       int start_column =
           column + SpacesBefore(tokens, token_infos, previous, token);
       int end_column = start_column + token_width;
@@ -192,18 +368,29 @@ auto SolveLineBreaks(const Lex::TokenizedBuffer& tokens,
       llvm::SmallVector<int, 8> next_stack(stack);
       ApplyTokenScopes(token_kind, token_infos.Get(token), start_column,
                        end_column, next_stack);
+      llvm::SmallVector<ChainState, 4> next_chains(chains);
+      if (fluent && decision == ChainBreak::Undecided) {
+        if (ChainState* c = FindChain(next_chains, member_chain_id)) {
+          c->decision = ChainBreak::Unbroken;
+        }
+      }
+      maybe_open_chain(index, start_column, next_chains);
+      maybe_close_chain(index, next_chains);
       nodes.push_back({.index = index + 1,
                        .column = end_column,
                        .stack = std::move(next_stack),
+                       .chains = std::move(next_chains),
                        .parent = node_index,
                        .newline_indent = -1});
       queue.push({penalty + step, static_cast<int>(nodes.size()) - 1});
     }
 
-    // Option 2: break before `token`, placing it at the current continuation
-    // indent, where a break is allowed.
-    if (CanBreakBefore(tokens, token_infos, previous, token)) {
-      int break_indent = stack.back();
+    // Break before `token`. A member access indents to its chain anchor;
+    // everything else to the current bracket level. The member-chain rules can
+    // forbid the break (see `member_break_blocked`).
+    if (CanBreakBefore(tokens, token_infos, previous, token) &&
+        !member_break_blocked) {
+      int break_indent = chain ? chain->anchor : stack.back();
       int end_column = break_indent + token_width;
       // A continuation line's excess telescope starts at its indent, clamped
       // to the limit so that when the anchor itself sits past the limit the
@@ -215,17 +402,27 @@ auto SolveLineBreaks(const Lex::TokenizedBuffer& tokens,
       llvm::SmallVector<int, 8> next_stack(std::move(stack));
       ApplyTokenScopes(token_kind, token_infos.Get(token), break_indent,
                        end_column, next_stack);
+      llvm::SmallVector<ChainState, 4> next_chains(chains);
+      if (fluent && decision == ChainBreak::Undecided) {
+        if (ChainState* c = FindChain(next_chains, member_chain_id)) {
+          c->decision = ChainBreak::Broken;
+        }
+      }
+      maybe_open_chain(index, break_indent, next_chains);
+      maybe_close_chain(index, next_chains);
       nodes.push_back({.index = index + 1,
                        .column = end_column,
                        .stack = std::move(next_stack),
+                       .chains = std::move(next_chains),
                        .parent = node_index,
                        .newline_indent = break_indent});
       queue.push({penalty + step, static_cast<int>(nodes.size()) - 1});
     }
   }
 
-  // A goal is always reachable, since option 1 is always available, but guard
-  // against the state cap or an empty queue regardless.
+  // A goal is always reachable, since option 1 is available except where a
+  // committed chain forces a break (which is itself always available), but
+  // guard against the state cap or an empty queue regardless.
   if (goal < 0) {
     return breaks;
   }

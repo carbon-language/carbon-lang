@@ -34,19 +34,19 @@ fn T() {
 
 // CHECK:STDOUT: // The return type moves to its own line before the parameter's binding colon
 // CHECK:STDOUT: // is split from its type.
-// CHECK:STDOUT: fn MakeSortedElementContainer(initial_capacity: i32) ->
-// CHECK:STDOUT:     SortedContainerOfElement;
+// CHECK:STDOUT: fn MakeSortedElementContainer(initial_capacity: i32)
+// CHECK:STDOUT:     -> SortedContainerOfElement;
 // CHECK:STDOUT:
 // CHECK:STDOUT: // The same preference with a parameter name too long to share a line with
 // CHECK:STDOUT: // anything else.
-// CHECK:STDOUT: fn Q(some_extremely_long_parameter_name_that_overflows_all_on_its_own: i32) ->
-// CHECK:STDOUT:     i32;
+// CHECK:STDOUT: fn Q(some_extremely_long_parameter_name_that_overflows_all_on_its_own: i32)
+// CHECK:STDOUT:     -> i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: // A modifier or introducer keyword is never split from its declaration; the
 // CHECK:STDOUT: // return type breaks instead.
 // CHECK:STDOUT: class C {
-// CHECK:STDOUT:   private fn Configure() ->
-// CHECK:STDOUT:       ValidationResultStatusNameGoesHereAndOverflowsXyzzyy;
+// CHECK:STDOUT:   private fn Configure()
+// CHECK:STDOUT:       -> ValidationResultStatusNameGoesHereAndOverflowsXyzzyy;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: // With no other legal break, a statement-level binding wraps after its colon

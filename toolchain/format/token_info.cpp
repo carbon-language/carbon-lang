@@ -113,6 +113,21 @@ auto OperatorInfoForNodeKind(Parse::NodeKind kind, const Style& style)
   }
 }
 
+auto MemberAccessBreakPenalty(Parse::NodeKind kind) -> int {
+  switch (kind) {
+    case Parse::NodeKind::MemberAccessExpr:
+    case Parse::NodeKind::PointerMemberAccessExpr:
+      // Breaking a member-access chain is expensive (clang-format's
+      // `isMemberAccess` penalty), so the solver wraps only when it must, and
+      // prefers breaking elsewhere (after `=`, between arguments) first. This
+      // is the penalty for a non-final link; the formatter lowers the last link
+      // in each chain to the cheaper 35 (see `Formatter`'s constructor).
+      return 150;
+    default:
+      return -1;
+  }
+}
+
 auto SpacesBefore(const Lex::TokenizedBuffer& tokens,
                   const TokenInfoStore& token_infos, Lex::TokenIndex left,
                   Lex::TokenIndex right) -> int {
@@ -214,6 +229,12 @@ auto CanBreakBefore(const Lex::TokenizedBuffer& tokens,
   if (token_infos.Get(right).break_penalty_after >= 0) {
     return false;
   }
+  // Never break after a member-access `.`/`->`: the member stays attached, so a
+  // chain wraps before the `.`/`->`, not after it.
+  if (tokens.GetKind(left).IsOneOf(
+          {Lex::TokenKind::Period, Lex::TokenKind::MinusGreater})) {
+    return false;
+  }
   // Anywhere else a break is allowed; the split penalty steers where breaks
   // actually land.
   return true;
@@ -234,6 +255,11 @@ auto SplitPenalty(const Lex::TokenizedBuffer& tokens,
   int left_break_penalty_after = token_infos.Get(left).break_penalty_after;
   if (left_break_penalty_after >= 0) {
     return left_break_penalty_after;
+  }
+  // Before a member-access `.`/`->` that the parse tree identified.
+  int right_break_penalty_before = token_infos.Get(right).break_penalty_before;
+  if (right_break_penalty_before >= 0) {
+    return right_break_penalty_before;
   }
   if (left_kind == Lex::TokenKind::Equal) {
     // After a `=` initializer that is not an infix-operator node (so has no
@@ -259,8 +285,14 @@ auto SplitPenalty(const Lex::TokenizedBuffer& tokens,
     return 100;
   }
   if (tokens.GetKind(right) == Lex::TokenKind::Period) {
-    // Before a member access in a chain.
+    // Before a `.` not otherwise classified (for example a struct-literal
+    // field), matching the member-access penalty.
     return 150;
+  }
+  if (tokens.GetKind(right) == Lex::TokenKind::MinusGreater) {
+    // Before a `->` not classified as a pointer member access: the function
+    // return type onto its own line (`PenaltyReturnTypeOnItsOwnLine`).
+    return 60;
   }
   if (left_kind.is_keyword()) {
     // After any other keyword. A keyword binds to the construct it introduces

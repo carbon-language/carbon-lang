@@ -321,5 +321,28 @@ TEST(RenderedWidthTest, SumsWidthsAndSpaces) {
   EXPECT_EQ(t.Width(), 6);
 }
 
+TEST(MemberAccessBreakPenaltyTest, DotAndArrow) {
+  EXPECT_EQ(MemberAccessBreakPenalty(Parse::NodeKind::MemberAccessExpr), 150);
+  EXPECT_EQ(MemberAccessBreakPenalty(Parse::NodeKind::PointerMemberAccessExpr),
+            150);
+  EXPECT_EQ(MemberAccessBreakPenalty(Parse::NodeKind::IntLiteral), -1);
+}
+
+TEST(CanBreakBeforeTest, NeverAfterMemberAccess) {
+  // A chain wraps before the `.`/`->`, keeping `.member` attached, so no break
+  // is allowed right after the `.`/`->`.
+  TokenTester t("a.b p->x");
+  EXPECT_FALSE(t.CanBreak(1, 2));  // After `.`.
+  EXPECT_FALSE(t.CanBreak(4, 5));  // After `->`.
+}
+
+TEST(SplitPenaltyTest, MemberAccess) {
+  TokenTester t("F().G() -> i32");
+  t.Info(3).break_penalty_before = 150;
+  EXPECT_EQ(t.Penalty(2, 3), 150);
+  // An unclassified `->` (a return arrow) uses the return-type penalty.
+  EXPECT_EQ(t.Penalty(6, 7), 60);
+}
+
 }  // namespace
 }  // namespace Carbon::Format

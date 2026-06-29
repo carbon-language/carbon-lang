@@ -72,6 +72,17 @@ struct OperatorInfo {
 auto OperatorInfoForNodeKind(Parse::NodeKind kind, const Style& style)
     -> OperatorInfo;
 
+// If `kind` is a member-access node (`MemberAccessExpr` for `.` or
+// `PointerMemberAccessExpr` for `->`), returns the penalty for breaking the
+// line before its `.`/`->` token, so a long call chain wraps before each member
+// rather than splitting `.member` apart. Returns -1 for any other node kind.
+auto MemberAccessBreakPenalty(Parse::NodeKind kind) -> int;
+
+// The break-before penalty for the final link in a member-access chain, which
+// is cheaper than a mid-chain link (clang-format's 35 vs 150) so a chain that
+// must wrap prefers to break at its end.
+constexpr int MemberAccessLastLinkBreakPenalty = 35;
+
 // The formatting information about one token that formatting decisions need.
 // This currently holds only what spacing and wrapping require, and grows with
 // the formatter. Information the tokenized buffer already provides, such as
@@ -101,6 +112,18 @@ struct TokenInfo {
   // not such an operator; in particular an initializer's `=` is not an
   // infix-operator node and is priced by a `SplitPenalty` fallback instead.
   int break_penalty_after = -1;
+  // If non-negative, this token is a member-access `.`/`->` before which a line
+  // break is the canonical split point (a break *after* it is disallowed by the
+  // token-kind rule); the value is the penalty for breaking there. The last
+  // member access in a chain gets the cheaper 35; the rest get 150. -1 means
+  // the token is not a member-access operator.
+  int break_penalty_before = -1;
+  // For a member-access `.`/`->` token, the identity of the call chain it
+  // belongs to: the token index of the chain's receiver root (shared by every
+  // member access in the chain, since the chain is left-nested). This groups a
+  // chain for receiver-anchored indentation and fluent all-or-nothing breaking.
+  // -1 means the token is not a member-access operator.
+  int member_chain_id = -1;
 };
 
 // The per-token formatting information, indexed by the token. The `Formatter`

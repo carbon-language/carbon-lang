@@ -49,6 +49,14 @@ struct TestLine {
   // can model wide tokens, roles, and penalties directly.
   auto Info(int i) -> TokenInfo& { return token_infos.Get(tokens[i]); }
 
+  // Marks the line's i-th token as a member-access `.`/`->` belonging to the
+  // chain rooted at line position `chain_root`, with the given break-before
+  // penalty (150 mid-chain, 35 last).
+  auto SetMemberDot(int i, int chain_root, int break_penalty_before) -> void {
+    Info(i).break_penalty_before = break_penalty_before;
+    Info(i).member_chain_id = tokens[chain_root].index;
+  }
+
   auto Solve(int indent) -> llvm::SmallVector<int> {
     return SolveLineBreaks(buffer, token_infos, tokens, indent, CanonicalStyle);
   }
@@ -185,6 +193,47 @@ TEST(SolveLineBreaksTest, OperandAlignmentNeverTighterThanContinuation) {
   EXPECT_THAT(
       line.Solve(0),
       ElementsAre(-1, -1, /*bbbb=*/CanonicalStyle.continuation_indent_width));
+}
+
+TEST(SolveLineBreaksTest, BuilderChainBreaksAllOrNothingAtReceiverAnchor) {
+  // `recv.aaaa().bbbb().cccc()` (all 20-wide names) overflows at 80. Because
+  // the members after `()` make this a builder chain, the layout is
+  // all-or-nothing: it breaks before `.bbbb` *and* `.cccc` (the two members
+  // that follow a `)`), keeps `recv.aaaa()` attached, and aligns the breaks at
+  // the receiver column plus the continuation indent (0 + 4 = 4). Breaking only
+  // `.cccc` (the cheaper last link) would fit, but the coupling forbids a
+  // partial break.
+  TestLine line("recv.aaaa().bbbb().cccc()");
+  for (int name : {0, 2, 6, 10}) {
+    line.Info(name).column_width = 20;
+  }
+  for (int paren : {3, 7, 11}) {
+    line.Info(paren).role = TokenRole::PostfixBracket;
+  }
+  line.SetMemberDot(1, /*chain_root=*/0, /*break_penalty_before=*/150);
+  line.SetMemberDot(5, /*chain_root=*/0, /*break_penalty_before=*/150);
+  line.SetMemberDot(9, /*chain_root=*/0, /*break_penalty_before=*/35);
+  EXPECT_THAT(line.Solve(0),
+              ElementsAre(-1, -1, -1, -1, -1, /*.bbbb=*/4, -1, -1, -1,
+                          /*.cccc=*/4, -1, -1, -1));
+}
+
+TEST(SolveLineBreaksTest, FieldChainBreaksOnceBeforeTheLastField) {
+  // `recv.f1.f2.f3.f4` (recv 30-wide, fields 12-wide) overflows at 80. With no
+  // calls there are no `()` boundaries, so this is not a builder chain: it
+  // breaks just once, before the last field (the cheap 35 link), at the
+  // receiver anchor (0 + 4 = 4), rather than at every `.`.
+  TestLine line("recv.f1.f2.f3.f4");
+  line.Info(0).column_width = 30;
+  for (int field : {2, 4, 6, 8}) {
+    line.Info(field).column_width = 12;
+  }
+  line.SetMemberDot(1, /*chain_root=*/0, /*break_penalty_before=*/150);
+  line.SetMemberDot(3, /*chain_root=*/0, /*break_penalty_before=*/150);
+  line.SetMemberDot(5, /*chain_root=*/0, /*break_penalty_before=*/150);
+  line.SetMemberDot(7, /*chain_root=*/0, /*break_penalty_before=*/35);
+  EXPECT_THAT(line.Solve(0),
+              ElementsAre(-1, -1, -1, -1, -1, -1, -1, /*.f4=*/4, -1));
 }
 
 }  // namespace

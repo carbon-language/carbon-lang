@@ -51,6 +51,9 @@ constexpr llvm::StringLiteral Inputs[] = {
     " around;\n  var x: i32 = 1;\n}",
     // Trailing comments kept on their code lines.
     "var x: i32 = 1; // a\nvar yyyy: i32 = 22; // b\n",
+    // A member-access chain long enough to wrap before a `.`.
+    "fn F() {\n  receiverrrrrrrrrrr.aaaaaaaaaaaaaaaaa().bbbbbbbbbbbbbbbbb()"
+    ".cccccccccccccccc();\n}",
     // Overflowing declarations that must break before `->` or after a binding
     // colon rather than splitting at a keyword.
     "class C { private fn Configure() -> "

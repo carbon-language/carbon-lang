@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "common/check.h"
+#include "common/map.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/format/comment.h"
@@ -45,6 +46,11 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
     token_infos_.Get(token).column_width =
         static_cast<int>(tokens_->GetTokenText(token).split('\n').first.size());
   }
+  // The latest (outermost) member-access token seen in each chain, keyed by the
+  // chain's receiver-root token index. The chain is left-nested, so postorder
+  // visits its member accesses inner-to-outer; the last one seen is the final
+  // link, which gets the cheaper break penalty.
+  Map<int, int> chain_last_member;
   // A completed subtree's root node kind (used to match its parent's
   // bracketing node kind) and inclusive token range; the range is `None` for
   // a subtree with no valued tokens.
@@ -93,6 +99,19 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
       }
     }
 
+    // A member-access node marks its `.`/`->` token as a break-before point
+    // and joins it to its chain, identified by the receiver root: the first
+    // token of the member-access subtree (`range.min`, just folded), shared
+    // across the whole left-nested chain.
+    int member_penalty = MemberAccessBreakPenalty(kind);
+    if (member_penalty >= 0 && token.has_value()) {
+      TokenInfo& info = token_infos_.Get(token);
+      info.break_penalty_before = member_penalty;
+      int chain_id = range.min.index;
+      info.member_chain_id = chain_id;
+      chain_last_member.Update(chain_id, token.index);
+    }
+
     auto op_info = OperatorInfoForNodeKind(kind, style_);
     if (op_info.break_penalty >= 0 && token.has_value()) {
       token_infos_.Get(token).break_penalty_after = op_info.break_penalty;
@@ -103,6 +122,13 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
     }
     range_stack.push_back(range);
   }
+
+  // The last link in each chain breaks more cheaply (clang-format's 35 vs 150),
+  // so a chain that must wrap prefers to break at its end.
+  chain_last_member.ForEach([&](int /*chain_id*/, int last_member) {
+    token_infos_.Get(Lex::TokenIndex(last_member)).break_penalty_before =
+        MemberAccessLastLinkBreakPenalty;
+  });
 }
 
 auto Formatter::ComputeBlankLines(int next_start_byte, bool is_block_end)
