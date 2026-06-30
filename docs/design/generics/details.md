@@ -3594,29 +3594,29 @@ clause must contain a designator.
 
 ```carbon
 // ✅ Allowed
-fn F(T:! type where C(.Self) impls (A & B));
+fn F(generic T: type where C(.Self) impls (A & B));
 // Which is the same as:
-fn F(T:! (type where C(.Self) impls A) and (type where C(.Self) impls B));
+fn F(generic T: (type where C(.Self) impls A) and (type where C(.Self) impls B));
 
 // ✅ Allowed
-fn F(T:! type where C impls (A(.Self) & B(.Self)));
+fn F(generic T: type where C impls (A(.Self) & B(.Self)));
 // Which is the same as:
-fn F(T:! (type where C impls A(.Self)) and (type where C impls B(.Self)));
+fn F(generic T: (type where C impls A(.Self)) and (type where C impls B(.Self)));
 
 // ❌ Error: `where C impls A` does not use `.Self` or a designator
-fn F(T:! type where C impls (A & B(.Self)));
+fn F(generic T: type where C impls (A & B(.Self)));
 // Which is the same as:
-fn F(T:! (type where C impls A) & (type where C impls B(.Self)));
+fn F(generic T: (type where C impls A) & (type where C impls B(.Self)));
 
 // ✅ Allowed
-fn F(T:! type where C impls A(.Self) and X == .Self);
+fn F(generic T: type where C impls A(.Self) and X == .Self);
 // Which is the same as:
-fn F(T:! (type where C impls A(.Self)) & (type where X == .Self));
+fn F(generic T: (type where C impls A(.Self)) & (type where X == .Self));
 
 // ❌ Error: `where X == Y` does not use `.Self` or a designator
-fn F(T:! type where C impls A(.Self) and X == Y);
+fn F(generic T: type where C impls A(.Self) and X == Y);
 // Which is the same as:
-fn F(T:! (type where C impls A(.Self)) & (type where X == Y));
+fn F(generic T: (type where C impls A(.Self)) & (type where X == Y));
 ```
 
 **Alternative considered:** This rule was added in proposal
@@ -4635,10 +4635,10 @@ enclosing generic.
 
 ```carbon
 interface Z {}
-interface Y(T:! type) {}
+interface Y(T: type) {}
 class A {}
 
-fn F(T:! type) {
+fn F(generic T: type) {
   class B { class C {} }
 
   // Accepted; anchored by the name `B`.
