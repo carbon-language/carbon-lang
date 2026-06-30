@@ -101,7 +101,6 @@ fn F() -> Cpp.AbstractFinal {
 }
 //@dump-sem-ir-end
 
-
 // CHECK:STDOUT: --- use_abstract_final.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
