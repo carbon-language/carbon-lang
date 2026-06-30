@@ -17,7 +17,11 @@ struct EntityName : public Printable<EntityName> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", index: " << bind_index_value << ", is_template: " << is_template
-        << ", is_unused: " << is_unused << ", form: " << form_id << "}";
+        << ", is_unused: " << is_unused;
+    if (name_id == SemIR::NameId::PeriodSelf) {
+      out << ", is_active_period_self: " << is_active_period_self << "}";
+    }
+    out << ", form: " << form_id << "}";
   }
 
   friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
@@ -58,8 +62,9 @@ struct EntityName : public Printable<EntityName> {
   bool is_template : 1 = false;
   // Whether this binding is marked unused.
   bool is_unused : 1 = false;
-  // Whether this binding is `.Self` and is part of a facet type under
-  // construction. This means the binding cannot be replaced during identify.
+  // Whether this binding is a `.Self` symbolic binding, within the scope of the
+  // `.Self` name during facet type under construction. Such bindings cannot be
+  // replaced during identify.
   bool is_active_period_self : 1 = false;
 
   // The declared form of the binding. This is guaranteed to be set for

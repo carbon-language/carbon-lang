@@ -29,6 +29,18 @@ static auto DumpNameIfValid(const File& file, NameId name_id) -> std::string {
   return out.TakeStr();
 }
 
+static auto DumpNameOfEntityName(const File& file,
+                                 const EntityName& entity_name) -> std::string {
+  RawStringOstream out;
+  out << " `";
+  out << file.names().GetFormatted(entity_name.name_id);
+  if (entity_name.is_active_period_self) {
+    out << "[active]";
+  }
+  out << "`";
+  return out.TakeStr();
+}
+
 static auto DumpLocSummary(const File& file, LocId loc_id) -> std::string {
   RawStringOstream out;
   // TODO: If the canonical location is None but the original is an InstId,
@@ -223,7 +235,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, EntityNameId entity_name_id)
   out << entity_name_id;
   if (entity_name_id.has_value()) {
     auto entity_name = file.entity_names().Get(entity_name_id);
-    out << ": " << entity_name << DumpNameIfValid(file, entity_name.name_id);
+    out << ": " << entity_name << DumpNameOfEntityName(file, entity_name);
   }
   return out.TakeStr();
 }
@@ -384,8 +396,7 @@ static auto DumpInstCommonDetails(const File& file, const Inst& inst,
   if (inst.arg0_and_kind().kind() == IdKind::For<EntityNameId>) {
     auto entity_name_id = EntityNameId(inst.arg0());
     out << "\n  - name:"
-        << DumpNameIfValid(file,
-                           file.entity_names().Get(entity_name_id).name_id);
+        << DumpNameOfEntityName(file, file.entity_names().Get(entity_name_id));
   }
 
   if (inst.type_id().has_value()) {
