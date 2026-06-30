@@ -13,25 +13,31 @@ auto HandlePattern(Context& context) -> void {
     case Lex::TokenKind::OpenParen:
       context.PushStateForPattern(StateKind::PatternListAsTuple,
                                   state.in_var_pattern, state.in_unused_pattern,
+                                  state.binding_context,
                                   state.ambient_precedence);
       break;
     case Lex::TokenKind::Var:
       context.PushStateForPattern(StateKind::VariablePattern,
                                   state.in_var_pattern, state.in_unused_pattern,
+                                  state.binding_context,
                                   state.ambient_precedence);
       break;
     case Lex::TokenKind::Unused:
       context.PushStateForPattern(StateKind::UnusedPattern,
                                   state.in_var_pattern, state.in_unused_pattern,
+                                  state.binding_context,
                                   state.ambient_precedence);
       break;
     case Lex::TokenKind::Template:
+    case Lex::TokenKind::Generic:
+    case Lex::TokenKind::Runtime:
     case Lex::TokenKind::Ref:
     // `self` is always a binding, even when its type is omitted (and so is not
     // followed by a `:`).
     case Lex::TokenKind::SelfValueIdentifier:
       context.PushStateForPattern(StateKind::BindingPattern,
                                   state.in_var_pattern, state.in_unused_pattern,
+                                  state.binding_context,
                                   state.ambient_precedence);
       break;
     default:
@@ -40,7 +46,8 @@ auto HandlePattern(Context& context) -> void {
               .is_binding_pattern_operator()) {
         context.PushStateForPattern(
             StateKind::BindingPattern, state.in_var_pattern,
-            state.in_unused_pattern, state.ambient_precedence);
+            state.in_unused_pattern, state.binding_context,
+            state.ambient_precedence);
         break;
       }
       context.PushState(StateKind::ExprPattern);

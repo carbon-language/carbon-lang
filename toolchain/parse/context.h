@@ -30,6 +30,20 @@ enum class Lookahead : int32_t {
   NextToken = 1,
 };
 
+// The syntactic context of a binding pattern, which determines its default
+// phase when no explicit `generic`/`template`/`runtime` keyword is present.
+enum class BindingContext : uint8_t {
+  // An explicit `()` parameter of a function, or a local binding
+  // (`let`/`var`/`for`/`match`). Runtime by default.
+  ExplicitParam,
+  // A deduced `[]` parameter, whether of a function, a compile-time entity, or
+  // an `impl`'s `forall`. Checked generic by default.
+  DeducedParam,
+  // An explicit `()` parameter of a compile-time entity (such as a `class`), or
+  // of a parameterized name qualifier. Checked generic by default.
+  CompileTimeEntityParam,
+};
+
 // Context and shared functionality for parser handlers. See state.def for state
 // documentation.
 class Context {
@@ -102,6 +116,12 @@ class Context {
     // could help catch errors.
     bool in_unused_pattern : 1 = false;
 
+    // The binding context governing this state, used to pick the default phase
+    // of its bindings. Meaningful for pattern states, and for the
+    // declaration-name states that carry an enclosing declaration's default
+    // down to its parameter lists.
+    BindingContext binding_context : 2 = BindingContext::ExplicitParam;
+
     // Precedence information used by expression states in order to determine
     // operator precedence. The ambient_precedence deals with how the expression
     // should interact with outside context, while the lhs_precedence is
@@ -119,7 +139,7 @@ class Context {
 
   // We expect State to fit into 12 bytes:
   //   state = 1 byte
-  //   has_error, in_var_pattern, and in_unused_pattern = 1 byte
+  //   has_error, in_var_pattern, in_unused_pattern, binding_context = 1 byte
   //   ambient_precedence = 1 byte
   //   lhs_precedence = 1 byte
   //   token = 4 bytes
@@ -310,6 +330,17 @@ class Context {
     PushState({.kind = kind, .token = token, .subtree_start = tree_->size()});
   }
 
+  // Pushes a new state with a specific token and binding context. Used when
+  // starting a parameter list whose bindings have a non-default phase, or when
+  // carrying a declaration's binding context across a qualified name.
+  auto PushState(StateKind kind, Lex::TokenIndex token,
+                 BindingContext binding_context) -> void {
+    PushState({.kind = kind,
+               .binding_context = binding_context,
+               .token = token,
+               .subtree_start = tree_->size()});
+  }
+
   // Pushes a new expression state with specific precedence.
   auto PushStateForExpr(PrecedenceGroup ambient_precedence) -> void {
     PushState({.kind = StateKind::Expr,
@@ -330,13 +361,16 @@ class Context {
 
   // Pushes a new state for handling a pattern. `in_var_pattern` and
   // `in_unused_pattern` indicate whether that pattern is nested inside a `var`
-  // or `unused` pattern.
+  // or `unused` pattern. `binding_context` is the binding context that
+  // determines the default phase of bindings in this pattern.
   auto PushStateForPattern(StateKind kind, bool in_var_pattern,
-                           bool in_unused_pattern, PrecedenceGroup precedence)
-      -> void {
+                           bool in_unused_pattern,
+                           BindingContext binding_context,
+                           PrecedenceGroup precedence) -> void {
     PushState({.kind = kind,
                .in_var_pattern = in_var_pattern,
                .in_unused_pattern = in_unused_pattern,
+               .binding_context = binding_context,
                .ambient_precedence = precedence,
                .token = *position_,
                .subtree_start = tree_->size()});

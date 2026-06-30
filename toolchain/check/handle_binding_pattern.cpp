@@ -50,19 +50,49 @@ static auto GetLeafBindingPatternInstKind(Parse::NodeKind node_kind,
   }
 }
 
+// Diagnoses an explicit `runtime` keyword on a parameter that is required to be
+// a checked generic, and returns false so the caller builds an error binding.
+// The parser preserves the keyword as a `RuntimeBindingName` node precisely so
+// this diagnostic can name it. `is_deduced` selects the message: a deduced
+// (`[...]`) parameter versus an explicit parameter of a compile-time entity.
+static auto DiagnoseInvalidRuntimeParam(Context& context, Parse::NodeId node_id,
+                                        bool is_deduced) -> bool {
+  if (is_deduced) {
+    CARBON_DIAGNOSTIC(DeducedRuntimeParamNotSupported, Error,
+                      "deduced runtime parameters are not yet supported");
+    context.emitter().Emit(node_id, DeducedRuntimeParamNotSupported);
+  } else {
+    CARBON_DIAGNOSTIC(
+        RuntimeModifierNotAllowed, Error,
+        "`runtime` is not allowed for parameters of compile-time entities");
+    context.emitter().Emit(node_id, RuntimeModifierNotAllowed);
+  }
+  return false;
+}
+
+// Returns whether the parameter being checked is a deduced (`[...]`) parameter.
+static auto IsDeducedParam(Context& context) -> bool {
+  return context.full_pattern_stack().CurrentKind() ==
+         FullPatternStack::Kind::ImplicitParamList;
+}
+
 // Returns true if a parameter is valid in the given `introducer_kind`.
 static auto IsValidParamForIntroducer(Context& context, Parse::NodeId node_id,
                                       SemIR::NameId name_id,
                                       Lex::TokenKind introducer_kind,
-                                      bool is_generic) -> bool {
+                                      bool is_generic, bool has_runtime_keyword)
+    -> bool {
   switch (introducer_kind) {
     case Lex::TokenKind::Fn: {
       // `self` in the implicit parameter list is diagnosed separately (see
       // `SelfInImplicitParamList`), so skip it here to avoid a redundant
       // diagnostic.
-      if (context.full_pattern_stack().CurrentKind() ==
-              FullPatternStack::Kind::ImplicitParamList &&
+      if (IsDeducedParam(context) &&
           !(is_generic || name_id == SemIR::NameId::SelfValue)) {
+        if (has_runtime_keyword) {
+          return DiagnoseInvalidRuntimeParam(context, node_id,
+                                             /*is_deduced=*/true);
+        }
         CARBON_DIAGNOSTIC(ImplictParamMustBeConstant, Error,
                           "implicit parameters of functions must be constant");
         context.emitter().Emit(node_id, ImplictParamMustBeConstant);
@@ -96,6 +126,10 @@ static auto IsValidParamForIntroducer(Context& context, Parse::NodeId node_id,
         return false;
       }
       if (!is_generic) {
+        if (has_runtime_keyword) {
+          return DiagnoseInvalidRuntimeParam(context, node_id,
+                                             IsDeducedParam(context));
+        }
         CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
                           "parameters of generic types must be constant");
         context.emitter().Emit(node_id, GenericParamMustBeConstant);
@@ -110,7 +144,7 @@ static auto IsValidParamForIntroducer(Context& context, Parse::NodeId node_id,
 
 namespace {
 // Information about the expression in the type position of a binding pattern,
-// i.e. the position following the `:`/`:?`/`:!` separator. Note that this
+// i.e. the position following the `:` or `:?` separator. Note that this
 // expression may be interpreted as a type or a form, depending on the binding
 // kind.
 struct BindingPatternTypeInfo {
@@ -180,6 +214,14 @@ static auto HandleAnyBindingPattern(
           .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
   // A non-generic template binding is diagnosed by the parser.
   is_template &= is_generic;
+
+  // Whether the binding has an explicit `runtime` keyword. A runtime binding's
+  // phase is already captured by its node kind, so we track the keyword only so
+  // that where it is invalid for the context (a parameter that must be a checked
+  // generic), the diagnostic can name it.
+  bool has_runtime_keyword =
+      context.node_stack()
+          .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::RuntimeBindingName>();
 
   // The name in a runtime binding may be wrapped in `ref`.
   bool is_ref =
@@ -274,8 +316,8 @@ static auto HandleAnyBindingPattern(
     // TODO: We should re-evaluate the contents of the eval block in a
     // synthesized specific to form these values, in order to propagate the
     // values.
-    return context.TODO(node_id,
-                        "local `let :!` bindings are currently unsupported");
+    return context.TODO(
+        node_id, "local generic `let` bindings are currently unsupported");
   }
 
   // Allocate an instruction of the appropriate kind, linked to the name for
@@ -284,7 +326,7 @@ static auto HandleAnyBindingPattern(
     case FullPatternStack::Kind::ImplicitParamList:
     case FullPatternStack::Kind::ExplicitParamList: {
       if (!IsValidParamForIntroducer(context, node_id, name_id, introducer.kind,
-                                     is_generic)) {
+                                     is_generic, has_runtime_keyword)) {
         if (name_id != SemIR::NameId::Underscore) {
           AddNameToLookup(context, name_id, SemIR::ErrorInst::InstId);
         }
@@ -536,6 +578,12 @@ auto HandleParseNode(Context& context,
 }
 
 auto HandleParseNode(Context& context, Parse::RefBindingNameId node_id)
+    -> bool {
+  context.node_stack().Push(node_id);
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::RuntimeBindingNameId node_id)
     -> bool {
   context.node_stack().Push(node_id);
   return true;

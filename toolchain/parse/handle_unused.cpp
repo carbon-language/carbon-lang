@@ -19,7 +19,7 @@ auto HandleUnusedPattern(Context& context) -> void {
   context.ConsumeChecked(Lex::TokenKind::Unused);
 
   context.PushStateForPattern(StateKind::Pattern, state.in_var_pattern,
-                              /*in_unused_pattern=*/true,
+                              /*in_unused_pattern=*/true, state.binding_context,
                               state.ambient_precedence);
 }
 
