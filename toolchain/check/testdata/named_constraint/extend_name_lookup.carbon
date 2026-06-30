@@ -198,8 +198,8 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:   %assoc0.359: %Y.assoc_type = assoc_entity element0, @Y.WithSelf.%Y.WithSelf.YF.decl [concrete]
 // CHECK:STDOUT:   %W.type: type = facet_type <@W> [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.197: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.as_type.bce: type = facet_access_type %.Self.197 [symbolic_self]
 // CHECK:STDOUT:   %type_where: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %type_where [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
@@ -226,16 +226,16 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:     %T.patt.loc12_7.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_15.1: type = splice_block %.loc12_15.2 [concrete = constants.%type_where] {
-// CHECK:STDOUT:       %.Self.loc12_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc12_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
 // CHECK:STDOUT:       %.loc12_10: type = type_literal type [concrete = type]
-// CHECK:STDOUT:       %.Self.loc12_15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.Self.ref: %type = name_ref .Self, %.Self.loc12_15 [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.loc12_15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.ref: %type = name_ref .Self, %.Self.loc12_15 [symbolic_self = constants.%.Self.197]
 // CHECK:STDOUT:       %W.ref: type = name_ref W, file.%W.decl [concrete = constants.%W.type]
-// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %.loc12_21: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type.bce]
+// CHECK:STDOUT:       %.loc12_21: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type.bce]
 // CHECK:STDOUT:       %.loc12_15.2: type = where_expr [concrete = constants.%type_where] {
 // CHECK:STDOUT:         requirement_base_facet_type %.loc12_10
-// CHECK:STDOUT:         requirement_impls %.loc12_21, %W.ref
+// CHECK:STDOUT:         requirement_impls <unexpected>.inst{{[0-9A-F]+}}.loc12_21, %W.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc12_7.2: %type_where = symbolic_binding T, 0 [symbolic = %T.loc12_7.1 (constants.%T)]
