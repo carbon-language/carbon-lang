@@ -3,8 +3,7 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#   "aiohttp",
-#   "gql>=4.0.0",
+#   "gql>=2.0.0,<3.0.0",
 # ]
 # ///
 
@@ -25,8 +24,7 @@ from typing import Any, Optional
 
 # https://pypi.org/project/gql/
 import gql
-from gql.transport.aiohttp import AIOHTTPTransport
-from gql.transport.exceptions import TransportServerError
+from gql.transport.requests import RequestsHTTPTransport
 
 # The main query.
 _QUERY = """
@@ -145,14 +143,15 @@ def _time(timestamp: str) -> datetime.datetime:
 def main() -> None:
     parsed_args = _parse_args()
 
-    transport = AIOHTTPTransport(
+    # TODO: This is a gql.transport.aiohttp.AIOHTTPTransport in gql>=3
+    transport = RequestsHTTPTransport(
         url="https://api.github.com/graphql",
         headers={"Authorization": "bearer %s" % parsed_args.access_token},
-        ssl=True,
+        # TODO: `ssl=True` in gql>=3
     )
     client = gql.Client(
         transport=transport,
-        execute_timeout=60,
+        # TODO: `execute_timeout=60` in gql>=3
     )
 
     cursor = ""
@@ -168,7 +167,8 @@ def main() -> None:
                     gql.gql(request_string=_QUERY % {"cursor": cursor})
                 )
                 break
-            except TransportServerError:
+            # TODO: This is a gql.transport.TransportServerError in gql>=3
+            except Exception:
                 if retries == 0:
                     raise
                 retries -= 1
