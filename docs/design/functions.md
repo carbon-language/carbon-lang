@@ -184,7 +184,7 @@ The return type of a function or lambda can be specified using a return clause
     -   Because the return type is deduced and not explicitly known, functions
         defined using `=>` cannot have a separate forward declaration.
 
-> **TODO:** Update this section to cover return extended types, as discussed
+> **TODO:** Update this section to cover extended return types, as discussed
 > [here](values.md#function-calls-and-returns).
 
 #### Unused parameters

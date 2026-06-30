@@ -309,9 +309,9 @@ The name being declared, which is the identifier to the left of the `:` is
 called a _binding_, or more specifically a _runtime binding_, _compile-time
 binding_, _symbolic binding_, or _template binding_. The expression to the right
 defining the type of the binding pattern is called the _binding type
-expression_, a kind of [type expression](#type-expression). For example, in
-`generic T: Hashable`, `T` is the binding (a symbolic binding in this case), and
-`Hashable` is the binding type expression.
+expression_, a kind of [type expression](#type-expression). For example, in a
+generic binding pattern `T: Hashable`, `T` is the binding (a symbolic binding in
+this case), and `Hashable` is the binding type expression.
 
 ## Types and `type`
 
@@ -367,7 +367,7 @@ cases, we are concerned with the type value after the implicit conversion.
 We use the term _facet binding_ to refer to the name introduced by a
 [compile-time binding pattern](#bindings) (indicated by context or keywords like
 `generic` or `template`) where the declared type is a [facet type](#facet-type).
-In the binding pattern `generic T: Hashable`, `T` is a facet binding, and the
+In a generic binding pattern `T: Hashable`, `T` is a facet binding, and the
 value of `T` is a [facet](#facet).
 
 ## Deduced parameter
