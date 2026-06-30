@@ -372,18 +372,13 @@ static auto CollectFacetWitnessSources(
     if (type_id != SemIR::TypeType::TypeId) {
       auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
 
-      // When we identify the facet type within a facet in the query, we also
-      // replace `.Self` with the `facet_const_id`, which has the same type as
-      // the facet type we're identifying. When replacing a `.Self` inside a
-      // `LookupImplWitness` instruction, the resulting `LookupImplWitness` is
-      // evalauted, which performs a search for a `final impl`. That search may
-      // find a generic `final impl` which then must deduce the type of its
-      // parameters. The deduction process may attempt to convert the
-      // `facet_const_id`, which performs an impl lookup and brings us back
-      // here. At that point we would replace `.Self` in the type of the
-      // `facet_const_id` again and cycle indefinitely, identifying and
-      // substituting `facet_const_id` into its type. We break that cycle here
-      // by preventing `final impl` lookups while replacing `.Self`.
+      // Identifying the facet type of `facet_const_id` causes `.Self` to be
+      // replaced with `facet_const_id`. The resulting `LookupImplWitness`
+      // evaluation searches for a `final impl`. The toolchain needs to deduce
+      // the result's parameters when a generic `final impl` is found. Deduction
+      // may convert the `facet_const_id`, which returns here and then we loop
+      // forever. We break that cycle here by preventing `final impl` lookups
+      // while replacing `.Self`.
       //
       // TODO: This prevents some legitimate code from working, as we can't find
       // some witnesses that involve concrete associated constants from a
