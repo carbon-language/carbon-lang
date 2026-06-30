@@ -374,14 +374,16 @@ static auto CollectFacetWitnessSources(
 
       // When we identify the facet type within a facet in the query, we also
       // replace `.Self` with the `facet_const_id`, which has the same type as
-      // the facet type we're identifying. If that `.Self` replacement is in a
-      // `LookupImplWitness` instruction, it will evaluate and look for a final
-      // impl. When we find a generic `final impl` and try to deduce its
-      // parameters, we may end up trying to convert the `facet_const_id` which
-      // does an impl lookup and comes back here. If we replace `.Self` again,
-      // we just cycle indefinitely identifying and substituting
-      // `facet_const_id` into its type. We break that cycle here by preventing
-      // `final impl` lookups while replacing `.Self`.
+      // the facet type we're identifying. When replacing a `.Self` inside a
+      // `LookupImplWitness` instruction, the resulting `LookupImplWitness` is
+      // evalauted, which performs a search for a `final impl`. That search may
+      // find a generic `final impl` which then must deduce the type of its
+      // parameters. The deduction process may attempt to convert the
+      // `facet_const_id`, which performs an impl lookup and brings us back
+      // here. At that point we would replace `.Self` in the type of the
+      // `facet_const_id` again and cycle indefinitely, identifying and
+      // substituting `facet_const_id` into its type. We break that cycle here
+      // by preventing `final impl` lookups while replacing `.Self`.
       //
       // TODO: This prevents some legitimate code from working, as we can't find
       // some witnesses that involve concrete associated constants from a
