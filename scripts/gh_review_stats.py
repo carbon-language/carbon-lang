@@ -26,7 +26,10 @@ from typing import Any, Optional
 import gql
 from gql.transport.requests import RequestsHTTPTransport
 
-# The main query.
+# The main query. We request all pullRequests in the repository, along with a
+# number of different events on each pullRequest. The request is paginated, and
+# we use the pageInfo to determine what the `cursor` should be for the next
+# request.
 _QUERY = """
 {
   repository(owner:"carbon-language", name:"carbon-lang") {
@@ -123,7 +126,7 @@ class PRInfo:
 
 def _parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     """Parses command-line arguments and flags."""
-    parser = argparse.ArgumentParser(description="Lists comments on a PR.")
+    parser = argparse.ArgumentParser(description=__doc__)
     access_token = os.environ.get(_ENV_TOKEN, default=None)
     parser.add_argument(
         "--access-token",
