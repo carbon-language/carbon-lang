@@ -260,21 +260,19 @@ class C;
 
 class NeedZ(V:! Z(.Self));
 
+interface S(T:! type);
+
 // NeedZ contains a `C as Z(.Self)` conversion but the `.Self` refers to the `V`
 // parameter which is being replaced by `C`, so it's `C as Z(C)`. The `.Self`
 // there should be replaced during the conversion. We show that it was replaced
 // because the `C impls Z(.Self)` constraint does not satisfy `C as Z(C)` so the
 // conversion fails.
-// CHECK:STDERR: fail_early_impls_with_period_self_replaced.carbon:[[@LINE+11]]:49: error: cannot convert type `C` into type implementing `Z(.Self)` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_early_impls_with_period_self_replaced.carbon:[[@LINE+7]]:49: error: cannot convert type `C` into type implementing `Z(.Self)` [ConversionFailureTypeToFacet]
 // CHECK:STDERR: fn F(unused T:! type where C impls Z(.Self) and NeedZ(C) impls S(.Self)) {}
 // CHECK:STDERR:                                                 ^~~~~~~~
-// CHECK:STDERR: fail_early_impls_with_period_self_replaced.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: fail_early_impls_with_period_self_replaced.carbon:[[@LINE-12]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR: class NeedZ(V:! Z(.Self));
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_early_impls_with_period_self_replaced.carbon:[[@LINE+4]]:64: error: name `S` not found [NameNotFound]
-// CHECK:STDERR: fn F(unused T:! type where C impls Z(.Self) and NeedZ(C) impls S(.Self)) {}
-// CHECK:STDERR:                                                                ^
 // CHECK:STDERR:
 fn F(unused T:! type where C impls Z(.Self) and NeedZ(C) impls S(.Self)) {}
 
