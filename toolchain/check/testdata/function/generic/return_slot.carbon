@@ -211,7 +211,7 @@ fn G() {
 // CHECK:STDOUT:   %Wrap.Make.call.loc22: init %i32 = call %Wrap.Make.specific_fn.loc22()
 // CHECK:STDOUT:   assign %a.var, %Wrap.Make.call.loc22
 // CHECK:STDOUT:   %i32.loc22_17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: ref %i32 = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %i32 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.cb1 = var_pattern %b.patt [concrete = constants.%b.var_patt]
@@ -230,7 +230,7 @@ fn G() {
 // CHECK:STDOUT:     %.loc23_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc23_18.3: type = converted %.loc23_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %empty_tuple.type = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %empty_tuple.type = wrapper_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
@@ -246,7 +246,7 @@ fn G() {
 // CHECK:STDOUT:   %Wrap.Make.call.loc24: init %C to %.loc24_3 = call %Wrap.Make.specific_fn.loc24()
 // CHECK:STDOUT:   assign %c.var, %Wrap.Make.call.loc24
 // CHECK:STDOUT:   %C.ref.loc24_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc24: <bound method> = bound_method %c.var, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call.loc24: init %empty_tuple.type = call %Destroy.Op.bound.loc24(%c.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc23: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.6

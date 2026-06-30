@@ -105,7 +105,7 @@ fn E() {}
 // CHECK:STDOUT:       %.loc25_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc25_10.3: type = converted %.loc25_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x.loc25: %empty_tuple.type = value_binding x, %x.param.loc25
+// CHECK:STDOUT:     %x.loc25: %empty_tuple.type = wrapper_binding x, %x.param.loc25
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc33: %B.type = fn_decl @B [concrete = constants.%B] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern [concrete = constants.%x.param_patt]
@@ -116,7 +116,7 @@ fn E() {}
 // CHECK:STDOUT:       %.loc33_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc33_10.3: type = converted %.loc33_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x.loc33: %empty_tuple.type = value_binding x, %x.param.loc33
+// CHECK:STDOUT:     %x.loc33: %empty_tuple.type = wrapper_binding x, %x.param.loc33
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc35: %C.type.322e3b.1 = fn_decl @C.loc35 [concrete = constants.%C.010386.1] {} {}
 // CHECK:STDOUT:   %C.decl.loc43: %C.type.322e3b.2 = fn_decl @C.loc43 [concrete = constants.%C.010386.2] {
@@ -128,7 +128,7 @@ fn E() {}
 // CHECK:STDOUT:       %.loc43_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc43_10.3: type = converted %.loc43_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
+// CHECK:STDOUT:     %x: %empty_tuple.type = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc45: %D.type = fn_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %D.decl.loc53: %D.type = fn_decl @D [concrete = constants.%D] {} {}

@@ -95,25 +95,25 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:     %a1.var_patt: %pattern_type.3fa = var_pattern %a1.patt [concrete = constants.%a1.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a1.var: ref %A = var %a1.var_patt [concrete]
-// CHECK:STDOUT:   %a1: ref %A = ref_binding a1, %a1.var [concrete = %a1.var]
+// CHECK:STDOUT:   %a1: ref %A = wrapper_binding a1, %a1.var [concrete = %a1.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b1.patt: %pattern_type.65a = ref_binding_pattern b1 [concrete = constants.%b1.patt]
 // CHECK:STDOUT:     %b1.var_patt: %pattern_type.65a = var_pattern %b1.patt [concrete = constants.%b1.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b1.var: ref %B = var %b1.var_patt [concrete]
-// CHECK:STDOUT:   %b1: ref %B = ref_binding b1, %b1.var [concrete = %b1.var]
+// CHECK:STDOUT:   %b1: ref %B = wrapper_binding b1, %b1.var [concrete = %b1.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b2.patt: %pattern_type.65a = ref_binding_pattern b2 [concrete = constants.%b2.patt]
 // CHECK:STDOUT:     %b2.var_patt: %pattern_type.65a = var_pattern %b2.patt [concrete = constants.%b2.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b2.var: ref %B = var %b2.var_patt [concrete]
-// CHECK:STDOUT:   %b2: ref %B = ref_binding b2, %b2.var [concrete = %b2.var]
+// CHECK:STDOUT:   %b2: ref %B = wrapper_binding b2, %b2.var [concrete = %b2.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a2.patt: %pattern_type.3fa = ref_binding_pattern a2 [concrete = constants.%a2.patt]
 // CHECK:STDOUT:     %a2.var_patt: %pattern_type.3fa = var_pattern %a2.patt [concrete = constants.%a2.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a2.var: ref %A = var %a2.var_patt [concrete]
-// CHECK:STDOUT:   %a2: ref %A = ref_binding a2, %a2.var [concrete = %a2.var]
+// CHECK:STDOUT:   %a2: ref %A = wrapper_binding a2, %a2.var [concrete = %a2.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -44,7 +44,7 @@ let f: FloatLiteral = 1.0;
 // CHECK:STDOUT:     %f.patt: %pattern_type = value_binding_pattern f [concrete = constants.%f.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %FloatLiteral.ref: type = name_ref FloatLiteral, imports.%Main.FloatLiteral [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:   %f: Core.FloatLiteral = value_binding f, @__global_init.%float
+// CHECK:STDOUT:   %f: Core.FloatLiteral = wrapper_binding f, @__global_init.%float
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

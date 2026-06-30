@@ -85,7 +85,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Enum.ref.loc8_13: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %Enum = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Enum = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc10: ref %Enum = name_ref a, %a
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Enum.ref.loc10: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]

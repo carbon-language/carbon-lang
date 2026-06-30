@@ -104,7 +104,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:       %i32.loc15_23: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.b4c]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %s: %struct_type.a.b.b4c = value_binding s, %s.param
+// CHECK:STDOUT:     %s: %struct_type.a.b.b4c = wrapper_binding s, %s.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %cond.param_patt: %pattern_type.831 = value_param_pattern [concrete = constants.%cond.param_patt]
@@ -112,7 +112,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %cond.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc17: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %cond: bool = value_binding cond, %cond.param
+// CHECK:STDOUT:     %cond: bool = wrapper_binding cond, %cond.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -152,7 +152,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %i32.loc18_24: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.b4c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %struct_type.a.b.b4c = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %struct_type.a.b.b4c = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %cond.ref: bool = name_ref cond, %cond
 // CHECK:STDOUT:   if %cond.ref br !if.expr.then else br !if.expr.else

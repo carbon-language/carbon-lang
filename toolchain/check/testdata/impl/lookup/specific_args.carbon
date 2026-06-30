@@ -135,7 +135,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:         %Self.as_type.loc4_30.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_30.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:         %.loc4_30.3: type = converted %Self.ref, %Self.as_type.loc4_30.2 [symbolic = %Self.as_type.loc4_30.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @I.WithSelf.F.%Self.as_type.loc4_30.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @I.WithSelf.F.%Self.as_type.loc4_30.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc4_35.1: @I.WithSelf.%I.assoc_type (%I.assoc_type) = assoc_entity element0, %I.WithSelf.F.decl [symbolic = %assoc0.loc4_35.2 (constants.%assoc0)]
 // CHECK:STDOUT:
@@ -299,7 +299,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %X = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @X.as.I.impl.%X.ref [concrete = constants.%X]
-// CHECK:STDOUT:     %self: %X = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %X = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%X.as.I.impl.F.decl), @X.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
@@ -482,7 +482,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %X = value_param call_param0
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Main.X [concrete = constants.%X]
-// CHECK:STDOUT:     %x: %X = value_binding x, %x.param
+// CHECK:STDOUT:     %x: %X = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -701,7 +701,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C.165 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.I.impl.%C [concrete = constants.%C.165]
-// CHECK:STDOUT:     %self: %C.165 = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C.165 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%C.as.I.impl.F.decl), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
@@ -920,7 +920,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:       %InClassArgs.ref: type = name_ref InClassArgs, imports.%Main.InClassArgs [concrete = constants.%InClassArgs]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%InClassArgs) [concrete = constants.%C.165]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %C.165 = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %C.165 = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

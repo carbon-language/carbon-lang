@@ -85,7 +85,7 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   %F.decl.loc22: %F.type.14e = fn_decl @F.loc22 [concrete = constants.%F.19f] {} {}
 // CHECK:STDOUT:   %n.param: <error> = value_param call_param0
 // CHECK:STDOUT:   %.loc32: type = type_literal <error> [concrete = <error>]
-// CHECK:STDOUT:   %n: <error> = value_binding n, <error> [concrete = <error>]
+// CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %.loc38_17.1: type = splice_block %.loc38_17.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -94,7 +94,7 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = constants.%T.67db0b.1]
 // CHECK:STDOUT:   %x.param: %T.67db0b.1 = value_param call_param0
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T.67db0b.1]
-// CHECK:STDOUT:   %x: %T.67db0b.1 = value_binding x, %x.param
+// CHECK:STDOUT:   %x: %T.67db0b.1 = wrapper_binding x, %x.param
 // CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %F.decl.loc48: %F.type.eb3 = fn_decl @F.loc48 [concrete = constants.%F.708] {} {

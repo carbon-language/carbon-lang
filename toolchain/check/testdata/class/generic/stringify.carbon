@@ -143,7 +143,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %NoParams = var %v.var_patt [concrete]
 // CHECK:STDOUT:   %NoParams.ref: type = name_ref NoParams, %NoParams.decl [concrete = constants.%NoParams]
-// CHECK:STDOUT:   %v: ref %NoParams = ref_binding v, %v.var [concrete = %v.var]
+// CHECK:STDOUT:   %v: ref %NoParams = wrapper_binding v, %v.var [concrete = %v.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.c83 = ref_binding_pattern w [concrete = constants.%w.patt]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.c83 = var_pattern %w.patt [concrete = constants.%w.var_patt]
@@ -153,7 +153,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %EmptyParams.ref: %EmptyParams.type = name_ref EmptyParams, %EmptyParams.decl [concrete = constants.%EmptyParams.generic]
 // CHECK:STDOUT:     %EmptyParams: type = class_type @EmptyParams [concrete = constants.%EmptyParams]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %EmptyParams = ref_binding w, %w.var [concrete = %w.var]
+// CHECK:STDOUT:   %w: ref %EmptyParams = wrapper_binding w, %w.var [concrete = %w.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NoParams {
@@ -280,7 +280,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %.loc9_16 [concrete = constants.%ptr.c28]
 // CHECK:STDOUT:     %Outer.loc9: type = class_type @Outer, @Outer(constants.%ptr.c28) [concrete = constants.%Outer.2d6]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %Outer.2d6 = ref_binding v, %v.var [concrete = %v.var]
+// CHECK:STDOUT:   %v: ref %Outer.2d6 = wrapper_binding v, %v.var [concrete = %v.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.85f = ref_binding_pattern w [concrete = constants.%w.patt]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.85f = var_pattern %w.patt [concrete = constants.%w.var_patt]
@@ -299,7 +299,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %ptr.loc19_34: type = ptr_type %struct_type.a [concrete = constants.%ptr.e4c]
 // CHECK:STDOUT:     %Inner: type = class_type @Inner, @Inner(constants.%ptr.c28, constants.%ptr.e4c) [concrete = constants.%Inner.61f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %Inner.61f = ref_binding w, %w.var [concrete = %w.var]
+// CHECK:STDOUT:   %w: ref %Inner.61f = wrapper_binding w, %w.var [concrete = %w.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Outer(%T.loc4_14.2: type) {
@@ -474,7 +474,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %.loc13_13.3: %i32 = converted %int_123, %.loc13_13.2 [concrete = constants.%int_123.2bf]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_123.2bf) [concrete = constants.%C.ece]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %C.ece = ref_binding v, %v.var [concrete = %v.var]
+// CHECK:STDOUT:   %v: ref %C.ece = wrapper_binding v, %v.var [concrete = %v.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%N.loc4_10.2: %i32) {
@@ -642,7 +642,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %.loc18_26.4: %D = acquire_value %.loc18_26.3 [concrete = constants.%D.val.b1d]
 // CHECK:STDOUT:     %E: type = class_type @E, @E(constants.%D.val.b1d) [concrete = constants.%E.7b7]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %g: ref %E.7b7 = ref_binding g, %g.var [concrete = %g.var]
+// CHECK:STDOUT:   %g: ref %E.7b7 = wrapper_binding g, %g.var [concrete = %g.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {

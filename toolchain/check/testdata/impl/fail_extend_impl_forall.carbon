@@ -90,7 +90,7 @@ class C {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @GenericInterface.WithSelf.F.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @GenericInterface.%T.loc15_29.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %x: @GenericInterface.WithSelf.F.%T (%T) = value_binding x, %x.param
+// CHECK:STDOUT:       %x: @GenericInterface.WithSelf.F.%T (%T) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc16_13.1: @GenericInterface.WithSelf.%GenericInterface.assoc_type (%GenericInterface.assoc_type) = assoc_entity element0, %GenericInterface.WithSelf.F.decl [symbolic = %assoc0.loc16_13.2 (constants.%assoc0)]
 // CHECK:STDOUT:
@@ -122,7 +122,7 @@ class C {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @C.as.GenericInterface.impl.F.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @C.as.GenericInterface.impl.%T.loc24_24.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %x: @C.as.GenericInterface.impl.F.%T (%T) = value_binding x, %x.param
+// CHECK:STDOUT:       %x: @C.as.GenericInterface.impl.F.%T (%T) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %GenericInterface.impl_witness_table = impl_witness_table (), @C.as.GenericInterface.impl [concrete]
 // CHECK:STDOUT:     %GenericInterface.impl_witness.loc24_56.1: <witness> = impl_witness %GenericInterface.impl_witness_table, @C.as.GenericInterface.impl(constants.%T) [symbolic = %GenericInterface.impl_witness.loc24_56.2 (constants.%GenericInterface.impl_witness)]

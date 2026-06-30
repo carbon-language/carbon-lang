@@ -204,7 +204,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %bar: %ptr = value_binding bar, %bar.param
+// CHECK:STDOUT:     %bar: %ptr = wrapper_binding bar, %bar.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -241,7 +241,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %bar: %ptr = value_binding bar, %bar.param
+// CHECK:STDOUT:     %bar: %ptr = wrapper_binding bar, %bar.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -278,7 +278,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %bar: %ptr = value_binding bar, %bar.param
+// CHECK:STDOUT:     %bar: %ptr = wrapper_binding bar, %bar.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -350,7 +350,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:     %Bar.ref.loc8_22: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc8_22 [concrete = constants.%ptr.227]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %bar: %ptr.227 = value_binding bar, %.loc8_37
+// CHECK:STDOUT:   %bar: %ptr.227 = wrapper_binding bar, %.loc8_37
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -387,7 +387,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:       %Bar.ref.loc7: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:       %ptr.loc7: type = ptr_type %Bar.ref.loc7 [concrete = constants.%ptr.227]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %bar: %ptr.227 = value_binding bar, %bar.param
+// CHECK:STDOUT:     %bar: %ptr.227 = wrapper_binding bar, %bar.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -406,7 +406,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:     %Bar.ref.loc8: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:     %ptr.loc8: type = ptr_type %Bar.ref.loc8 [concrete = constants.%ptr.227]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo_bar: %ptr.227 = value_binding foo_bar, %.loc8_37.3
+// CHECK:STDOUT:   %foo_bar: %ptr.227 = wrapper_binding foo_bar, %.loc8_37.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -449,7 +449,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:       %X.ref: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:       %ptr: type = ptr_type imports.%Bar.decl [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %bar: %ptr = value_binding bar, %bar.param
+// CHECK:STDOUT:     %bar: %ptr = wrapper_binding bar, %bar.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

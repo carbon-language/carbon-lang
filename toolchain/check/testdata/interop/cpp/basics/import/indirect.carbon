@@ -298,7 +298,7 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %.loc9_3.3: init %X = converted %int_1, %.loc9_3.2
 // CHECK:STDOUT:   assign %ax.var, %.loc9_3.3
 // CHECK:STDOUT:   %AX.ref: type = name_ref AX, imports.%Main.AX [concrete = constants.%X]
-// CHECK:STDOUT:   %ax: ref %X = ref_binding ax, %ax.var
+// CHECK:STDOUT:   %ax: ref %X = wrapper_binding ax, %ax.var
 // CHECK:STDOUT:   %ax.ref.loc10_11: ref %X = name_ref ax, %ax
 // CHECK:STDOUT:   %x.ref: %X.elem = name_ref x, @X.%.1 [concrete = @X.%.1]
 // CHECK:STDOUT:   %.loc10_13.1: ref %i32 = class_element_access %ax.ref.loc10_11, element0

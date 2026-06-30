@@ -226,7 +226,7 @@ fn Var5() {
 // CHECK:STDOUT:     %.loc13_28.2: %tuple.type.85c = tuple_literal (%Abstract2.ref) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc13_28.3: type = converted %.loc13_28.2, constants.%tuple.type.ea9 [concrete = constants.%tuple.type.ea9]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v: <error> = wrapper_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -269,7 +269,7 @@ fn Var5() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract3 = value_param call_param0
 // CHECK:STDOUT:     %Abstract3.ref.loc6: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
-// CHECK:STDOUT:     %a: %Abstract3 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %Abstract3 = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -295,7 +295,7 @@ fn Var5() {
 // CHECK:STDOUT:     %.loc7_28.2: %tuple.type.85c = tuple_literal (%Abstract3.ref.loc7) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc7_28.3: type = converted %.loc7_28.2, constants.%tuple.type.4cc [concrete = constants.%tuple.type.4cc]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %l: %tuple.type.4cc = value_binding l, %.loc7_35.2
+// CHECK:STDOUT:   %l: %tuple.type.4cc = wrapper_binding l, %.loc7_35.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -366,7 +366,7 @@ fn Var5() {
 // CHECK:STDOUT:     %.loc14_39.2: %tuple.type.24b = tuple_literal (%Abstract4.ref, %Abstract5.ref) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc14_39.3: type = converted %.loc14_39.2, constants.%tuple.type.417 [concrete = constants.%tuple.type.417]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v2: ref <error> = ref_binding v2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v2: <error> = wrapper_binding v2, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -428,7 +428,7 @@ fn Var5() {
 // CHECK:STDOUT:     %.loc13_32.3: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc13_32.4: type = converted %.loc13_32.2, constants.%tuple.type.427 [concrete = constants.%tuple.type.427]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v3: ref <error> = ref_binding v3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v3: <error> = wrapper_binding v3, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -490,7 +490,7 @@ fn Var5() {
 // CHECK:STDOUT:     %.loc13_32.3: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc13_32.4: type = converted %.loc13_32.2, constants.%tuple.type.9db [concrete = constants.%tuple.type.9db]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v4: ref <error> = ref_binding v4, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v4: <error> = wrapper_binding v4, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -583,7 +583,7 @@ fn Var5() {
 // CHECK:STDOUT:     %.loc14_28.2: %tuple.type.85c = tuple_literal (%Abstract.ref) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc14_28.3: type = converted %.loc14_28.2, constants.%tuple.type.763 [concrete = constants.%tuple.type.763]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v5: ref <error> = ref_binding v5, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v5: <error> = wrapper_binding v5, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

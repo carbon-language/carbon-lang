@@ -327,7 +327,7 @@ fn Call() {
 // CHECK:STDOUT:   %.loc9_57.1: %i32 = value_of_initializer %GlobalReturnInt.call
 // CHECK:STDOUT:   %.loc9_57.2: %i32 = converted %GlobalReturnInt.call, %.loc9_57.1
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %value: %i32 = value_binding value, %.loc9_57.2
+// CHECK:STDOUT:   %value: %i32 = wrapper_binding value, %.loc9_57.2
 // CHECK:STDOUT:   %.loc10_5.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc10: type = name_ref X, imports.%X.decl [concrete = constants.%X]
@@ -534,14 +534,14 @@ fn Call() {
 // CHECK:STDOUT:       %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %i32.4: type = type_literal %i32.3 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i32 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.2: type = splice_block %i32.2 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.1: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %i32.2: type = type_literal %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %i32 = wrapper_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.edf: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.845)]
@@ -564,14 +564,14 @@ fn Call() {
 // CHECK:STDOUT:       %i32.5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %i32.6: type = type_literal %i32.5 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i32 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.2: type = splice_block %i32.4 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.2: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %i32.4: type = type_literal %i32.3 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %i32 = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -589,21 +589,21 @@ fn Call() {
 // CHECK:STDOUT:       %i32.5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %i32.6: type = type_literal %i32.5 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i32 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.2: type = splice_block %i32.4 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.2: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %i32.4: type = type_literal %i32.3 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %i32 = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %c.param: %i32 = value_param call_param2
 // CHECK:STDOUT:     %.3: type = splice_block %i32.2 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.1: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %i32.2: type = type_literal %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %i32 = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %i32 = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %X.B.cpp_overload_set.value: %X.B.cpp_overload_set.type = cpp_overload_set_value @X.B.cpp_overload_set [concrete = constants.%X.B.cpp_overload_set.value]
@@ -614,14 +614,14 @@ fn Call() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %this.param: %X = value_param call_param0
-// CHECK:STDOUT:     %this: %X = value_binding this, %this.param
+// CHECK:STDOUT:     %this: %X = wrapper_binding this, %this.param
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %i32.2: type = type_literal %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i32 = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.C.cpp_overload_set.value: %X.C.cpp_overload_set.type = cpp_overload_set_value @X.C.cpp_overload_set [concrete = constants.%X.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
@@ -634,7 +634,7 @@ fn Call() {
 // CHECK:STDOUT:       %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %i32.2: type = type_literal %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i32 = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.D.cpp_overload_set.value: %X.D.cpp_overload_set.type = cpp_overload_set_value @X.D.cpp_overload_set [concrete = constants.%X.D.cpp_overload_set.value]
 // CHECK:STDOUT:   %D__carbon_thunk.decl: %D__carbon_thunk.type = fn_decl @D__carbon_thunk [concrete = constants.%D__carbon_thunk] {
@@ -644,14 +644,14 @@ fn Call() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.param: %ptr.ca1 = value_param call_param0
-// CHECK:STDOUT:     %_: %ptr.ca1 = value_binding _, %_.param
+// CHECK:STDOUT:     %_: %ptr.ca1 = wrapper_binding _, %_.param
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.1: type = splice_block %i32.2 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %i32.2: type = type_literal %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i32 = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.d3e = fn_decl @Destroy.WithSelf.Op [symbolic = @Destroy.WithSelf.%Destroy.WithSelf.Op (constants.%Destroy.WithSelf.Op.42b)] {} {}
@@ -660,7 +660,7 @@ fn Call() {
 // CHECK:STDOUT:     %self.patt: %pattern_type.fa7 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.37b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param
+// CHECK:STDOUT:     %self: ref %X = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -735,7 +735,7 @@ fn Call() {
 // CHECK:STDOUT:   %.loc9_51.1: %i32 = value_of_initializer %GlobalReturnInt__carbon_thunk.call
 // CHECK:STDOUT:   %.loc9_51.2: %i32 = converted %GlobalReturnInt__carbon_thunk.call, %.loc9_51.1
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %value: %i32 = value_binding value, %.loc9_51.2
+// CHECK:STDOUT:   %value: %i32 = wrapper_binding value, %.loc9_51.2
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %GlobalNoReturn.ref.loc10: %GlobalNoReturn.cpp_overload_set.type = name_ref GlobalNoReturn, imports.%GlobalNoReturn.cpp_overload_set.value [concrete = constants.%GlobalNoReturn.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -820,7 +820,7 @@ fn Call() {
 // CHECK:STDOUT:     %self.patt: %pattern_type.fa7 = at_binding_pattern self, %.1 [concrete = constants.%self.patt.37b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %X = ref_binding self, %self.param
+// CHECK:STDOUT:     %self: ref %X = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Op.ref.loc13: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
 // CHECK:STDOUT:   %Op.ref.loc11: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]

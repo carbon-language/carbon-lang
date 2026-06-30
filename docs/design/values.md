@@ -32,9 +32,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Function calls and returns](#function-calls-and-returns)
         -   [Deferred initialization from values and references](#deferred-initialization-from-values-and-references)
         -   [Declared `returned` variable](#declared-returned-variable)
--   [Expression forms](#expression-forms)
+-   [Extended types](#extended-types)
     -   [Initializing results](#initializing-results)
-    -   [Form conversions](#form-conversions)
+    -   [Extended type conversions](#extended-type-conversions)
         -   [Type conversions](#type-conversions)
         -   [Category conversions](#category-conversions)
 -   [Pointers](#pointers)
@@ -380,9 +380,9 @@ example:
     durable reference and compute the address of the referenced object.
 -   [`ref` binding patterns](pattern_matching.md#name-binding-patterns) require
     their scrutinee to be a durable reference.
--   If a function's [return form](#function-calls-and-returns) contains `ref`
-    tags, `return` statements require the corresponding parts of the operand to
-    be durable reference expressions.
+-   If a function's [extended return type](#function-calls-and-returns) contains
+    `ref` tags, `return` statements require the corresponding parts of the
+    operand to be durable reference expressions.
 
 There are also several kinds of expressions that produce durable references. For
 example:
@@ -396,8 +396,8 @@ example:
 -   [Indexing](/docs/design/expressions/indexing.md) into a type similar to
     C++'s `std::span` that implements `IndirectIndexWith`, or indexing into any
     type with a durable reference expression such as `local_array[i]`.
--   Calls to functions whose [return forms](#function-calls-and-returns) contain
-    `ref`.
+-   Calls to functions whose
+    [extended return types](#function-calls-and-returns) contain `ref`.
 
 Durable reference expressions can only be produced _directly_ by one of these
 expressions. They are never produced by converting one of the other expression
@@ -638,21 +638,21 @@ expression.
 
 ### Function calls and returns
 
-The [result](#expression-forms) of a function call can have an almost arbitrary
-form. The return clause of a function signature consists of `->` followed by a
-_return form_, an expression-like syntax that specifies not only the type but
-also the form of the function call's result. `return` expressions in the
-function body are expected to have that form, and are converted to it if
-necessary. When a function is declared without a return clause, it behaves from
-the caller's point of view as if the return clause were `-> ()`, but `return`
-statements in the function body don't take operands (and can be omitted at the
-end of the function).
+The [result](#extended-types) of a function call can have an almost arbitrary
+extended type. The return clause of a function signature consists of `->`
+followed by an _extended return type_, an expression-like syntax that specifies
+not only the type component but also the extended type of the function call's
+result. `return` expressions in the function body are expected to have that
+extended type, and are converted to it if necessary. When a function is declared
+without a return clause, it behaves from the caller's point of view as if the
+return clause were `-> ()`, but `return` statements in the function body don't
+take operands (and can be omitted at the end of the function).
 
-In the common case, the return form is a type expression, in which case calls
-are modeled directly as initializing expressions -- they require storage as an
-input and when evaluated cause that storage to be initialized with an object.
-This means that when a function call is used to initialize some variable pattern
-as here:
+In the common case, the extended return type is a type expression, in which case
+calls are modeled directly as initializing expressions -- they require storage
+as an input and when evaluated cause that storage to be initialized with an
+object. This means that when a function call is used to initialize some variable
+pattern as here:
 
 ```carbon
 fn CreateMyObject() -> MyType {
@@ -671,58 +671,67 @@ the function's call expression. This in turn causes the property to hold
 _transitively_ across an arbitrary number of function calls and returns. The
 storage is forwarded at each stage and initialized exactly once.
 
-More generally, the syntax and semantics of a return form are as follows:
+More generally, the syntax and semantics of an extended return type are as
+follows:
 
--   _return-clause_ ::= `->` _return-form_
--   _return-form_ ::= _nesting-return-form_ | _auto-return-form_
--   _nesting-return-form_ ::= _expression-return-form_ | _proper-return-form_
+-   _return-clause_ ::= `->` _extended-return-type_
+-   _extended-return-type_ ::= _nesting-extended-return-type_ |
+    _auto-extended-return-type_
+-   _nesting-extended-return-type_ ::= _expression-extended-return-type_ |
+    _proper-extended-return-type_
 
-Return forms can usually be nested, but syntaxes involving `auto` can only occur
-at top level. We further divide nesting return forms into expressions and
-"proper" return forms, but this is just a technical means of avoiding formal
-ambiguity in the grammar; it has no greater significance.
+Extended return types can usually be nested, but syntaxes involving `auto` can
+only occur at top level. We further divide nesting extended return types into
+expressions and "proper" extended return types, but this is just a technical
+means of avoiding formal ambiguity in the grammar; it has no greater
+significance.
 
 -   _category-tag_ ::= `val` | `ref` | `var`
 
 These tags are used to specify "value", "non-entire durable reference", or
 "initializing" expression category (respectively). Note that there is no way to
-express an entire or ephemeral reference category in a return form.
+express an entire or ephemeral reference category in an extended return type.
 
--   _auto-return-form_ ::= _category-tag_? `auto`
+-   _auto-extended-return-type_ ::= _category-tag_? `auto`
 
-This denotes a primitive form with runtime phase and deduced type. The category
-is determined by _category-tag_ if present, or "initializing" otherwise.
+This denotes a primitive extended type with runtime phase and a deduced type
+component. The category is determined by _category-tag_ if present, or
+"initializing" otherwise.
 
--   _proper-return-form_ ::= _category-tag_ _expression_
+-   _proper-extended-return-type_ ::= _category-tag_ _expression_
 
-This denotes a primitive form with runtime phase, category _category-tag_, and
-type "_expression_ `as type`".
+This denotes a primitive extended type with runtime phase, category
+_category-tag_, and type "_expression_ `as type`".
 
--   _expression-return-form_ ::= _expression_
+-   _expression-extended-return-type_ ::= _expression_
 
 An expression with no _category-tag_ is equivalent to "`var` _expression_".
 
--   _proper-return-form_ ::= `(` [_expression-return-form_ `,`]\* _proper-return-form_
-    [`,` _nesting-return-form_]\* `,`? `)`
+-   _proper-extended-return-type_ ::= `(` [_expression-extended-return-type_
+    `,`]\* _proper-extended-return-type_ [`,` _nesting-extended-return-type_]\*
+    `,`? `)`
 
-A tuple literal of return forms denotes a tuple form whose sub-forms are
-specified by the comma-separated elements. To avoid formal ambiguity, this
-grammar rule requires at least one of the sub-forms to be proper.
+A tuple literal of extended return types denotes a tuple extended type whose
+sub-extended-types are specified by the comma-separated elements. To avoid
+formal ambiguity, this grammar rule requires at least one of the
+sub-extended-types to be proper.
 
--   _expression-field-form_ ::= _designator_ `:` _expression-return-form_
--   _proper-field-form_ ::= _designator_ `:` _proper-return-form_
--   _field-form_ ::= _field-decl_
--   _field-form_ ::= _proper-field-form_
--   _proper-return-form_ ::= `{` [_expression-field-form_ `,`]\* _proper-field-form_
-    [`,` _field-form_]\* `}`
+-   _expression-field-extended-type_ ::= _designator_ `:`
+    _expression-extended-return-type_
+-   _proper-field-extended-type_ ::= _designator_ `:`
+    _proper-extended-return-type_
+-   _field-extended-type_ ::= _field-decl_
+-   _field-extended-type_ ::= _proper-field-extended-type_
+-   _proper-extended-return-type_ ::= `{` [_expression-field-extended-type_
+    `,`]\* _proper-extended-type_ [`,` _field-extended-type_]\* `}`
 
-A struct literal of return forms denotes a struct form whose field names and
-their forms are specified by the comma-separated field forms. To avoid formal
-ambiguity, this grammar rule requires at least one of the field forms to be
-proper.
+A struct literal of extended return types denotes a struct extended type whose
+field names and their extended types are specified by the comma-separated field
+extended types. To avoid formal ambiguity, this grammar rule requires at least
+one of the field extended types to be proper.
 
 > **Open question:** Should there be a way to specify symbolic or template phase
-> in return forms?
+> in extended return types?
 
 #### Deferred initialization from values and references
 
@@ -796,73 +805,81 @@ The model of initialization of returns also facilitates the use of
 [`returned var` declarations](control_flow/return.md#returned-var). These
 directly observe the storage provided for initialization of a function's return.
 
-## Expression forms
+## Extended types
 
 We typically treat the category and type of an expression as independent
 properties. However, in some cases we need to deal with them as an integrated
-whole. The _form_ of an expression captures all of the information about it that
-is visible to the type system, while abstracting away all other information
-about it. Thus, forms are a generalization of types: what we conventionally call
-"types" are really the types of objects and values, whereas forms are the types
-of expressions and patterns.
+whole. The _extended type_ of an expression captures all of the information
+about it that is visible to the type system, while abstracting away all other
+information about it. Thus, extended types are a generalization of types: what
+we conventionally call "types" are really the types of objects and values,
+whereas extended types are the types of expressions and patterns. The type
+`Core.ExtType` represents the type of an extended type constant, just as `type`
+represents the type of an object type constant.
 
-A _primitive form_ currently consists of a type, an expression category, an
-expression phase, and optionally a constant value (which is present if and only
-if the expression phase is not "runtime"). When dealing with primitive forms,
-which is the common case, we can treat each of those properties as independent.
-For convenience, in this section we will use the notation `<T, C, P, V>` to
-represent a primitive form with type `T`, category `C`, phase `P` and value `V`,
-but this is not Carbon syntax.
+A _primitive extended type_ currently consists of a type, an expression
+category, an expression phase, and optionally a constant value (which is present
+if and only if the expression phase is not "runtime"). When dealing with
+primitive extended types, which is the common case, we can treat each of those
+properties as independent. For convenience, in this section we will use the
+notation `<T, C, P, V>` to represent a primitive extended type with type `T`,
+category `C`, phase `P` and value `V`, but this is not Carbon syntax.
 
-Other forms are called _composite forms_, and there are two kinds:
+Other extended types are called _composite extended types_, and there are two
+kinds:
 
-A _tuple form_ can be thought of as a tuple of forms, just as a tuple type can
-be thought of as a tuple of types. The form of a tuple literal is a tuple form,
-whose elements are the forms of the literal elements.
+A _tuple extended type_ can be thought of as a tuple of extended types, just as
+a tuple type can be thought of as a tuple of types. The extended type of a tuple
+literal is a tuple extended type, whose elements are the extended types of the
+literal elements.
 
-> **TODO:** Extend this to support variadic forms.
+> **TODO:** Extend this to support variadic extended types.
 
-A _struct form_ can be thought of as a struct whose fields are forms, just as a
-struct type can be thought of as a struct whose fields are types. The form of a
-struct literal is a struct form with the same field names, whose values are the
-forms of the corresponding fields of the struct literal.
+A _struct extended type_ can be thought of as a struct whose fields are extended
+types, just as a struct type can be thought of as a struct whose fields are
+types. The extended type of a struct literal is a struct extended type with the
+same field names, whose values are the extended types of the corresponding
+fields of the struct literal.
 
-The _type component_ of a form is defined as follows:
+The _type component_ of an extended type is defined as follows:
 
--   The type component of a primitive form `<T, C, P, V>` is `T`.
--   The type component of a tuple form is a tuple of the type components of its
-    elements.
--   The type component of a struct form is a struct whose field names are the
-    field names of the struct form and whose field types are the type components
-    of the corresponding elements.
+-   The type component of a primitive extended type `<T, C, P, V>` is `T`.
+-   The type component of a tuple extended type is a tuple of the type
+    components of its elements.
+-   The type component of a struct extended type is a struct whose field names
+    are the field names of the struct extended type and whose field types are
+    the type components of the corresponding elements.
 
-The _category component_ and _phase component_ of a form are defined likewise.
-The category component of a struct form is called a _struct category_, and the
-category component of a tuple form is called a _tuple category_.
+The _category component_ and _phase component_ of an extended type are defined
+likewise. The category component of a struct extended type is called a _struct
+category_, and the category component of a tuple extended type is called a
+_tuple category_.
 
-The type of an expression is the type component of the expression's form.
+The type of an expression is the type component of the expression's extended
+type.
 
 Evaluating an expression produces a _result_. It can be defined recursively in
-terms of the expression's form:
+terms of the expression's extended type:
 
 -   The result of an initializing expression is an
     [initializing result](#initializing-results).
 -   The result of a value expression is a value.
 -   The result of a reference expression is a reference of the same kind.
--   The result of an expression with tuple form is a tuple of results.
--   The result of an expression with struct form is a struct of results.
+-   The result of an expression with tuple extended type is a tuple of results.
+-   The result of an expression with struct extended type is a struct of
+    results.
 
-An expression and its result always have the same form.
+An expression and its result always have the same extended type.
 
 The code that accesses the result of an expression is said to _consume_ that
-result, and every primitive-form result is consumed exactly once (except in
-certain narrow contexts where the result is known not to be initializing). If a
-result isn't explicitly accessed, such as when the expression is used as a
-statement, it is said to be _discarded_, which consumes it in the absence of an
-explicit consumer. Discarding an initializing result materializes and then
-immediately destroys it. Discarding an entire ephemeral reference destroys the
-object it refers to. Discarding a value or any other kind of reference is a
-no-op.
+result, and every primitive-extended-type result is consumed exactly once
+(except in certain narrow contexts where the result is known not to be
+initializing). If a result isn't explicitly accessed, such as when the
+expression is used as a statement, it is said to be _discarded_, which consumes
+it in the absence of an explicit consumer. Discarding an initializing result
+materializes and then immediately destroys it. Discarding an entire ephemeral
+reference destroys the object it refers to. Discarding a value or any other kind
+of reference is a no-op.
 
 ### Initializing results
 
@@ -916,62 +933,64 @@ expression. The source of that location depends on the consumer:
     location is newly-allocated temporary storage (which the consumer may
     subsequently lifetime-extend to durable storage).
 -   If the consumer is a `return` statement, and the initializing result
-    corresponds to an initializing sub-form of the function's return form, the
-    result location is the implicit output parameter corresponding to that
-    initializing sub-form.
+    corresponds to an initializing sub-extended-type of the function's return
+    extended type, the result location is the implicit output parameter
+    corresponding to that initializing sub-extended-type.
 
-### Form conversions
+### Extended type conversions
 
-A conversion between forms can be broken down into up to three steps: type
-conversion, category conversion, and phase conversion. These convert the form to
-a particular target type, category, and phase component (respectively). These
-steps aren't fully orthogonal: type conversions can change the category and
-phase components as a byproduct, and category conversions can change the phase
-component. However, category conversions can't change the type component, and
-phase conversions can't change either of the other two, so converting the type,
-then category, then phase, ensures that we converge on the desired result.
+A conversion between extended types can be broken down into up to three steps:
+type conversion, category conversion, and phase conversion. These convert the
+extended type to a particular target type, category, and phase component
+(respectively). These steps aren't fully orthogonal: type conversions can change
+the category and phase components as a byproduct, and category conversions can
+change the phase component. However, category conversions can't change the type
+component, and phase conversions can't change either of the other two, so
+converting the type, then category, then phase, ensures that we converge on the
+desired result.
 
 Any of these steps may be omitted, depending on whether the context imposes
 requirements on the corresponding component. Most commonly, an operand position
-requires its operand to have a primitive form with a particular category,
-usually with a particular type, and sometimes with a particular phase.
+requires its operand to have a primitive extended type with a particular
+category, usually with a particular type, and sometimes with a particular phase.
 
-Phase conversions cannot change the form structure; they can only apply
-primitive phase conversions to primitive sub-forms. Type and category
+Phase conversions cannot change the extended type structure; they can only apply
+primitive phase conversions to primitive sub-extended-types. Type and category
 conversions are more complex, and are covered in the next two sections.
 
 Note that these rules will implicitly convert between primitive and composite
-forms in both directions (except that a composite containing references cannot
-be converted to a primitive form). As a result, although the difference between
-primitive and composite forms is observable by way of overloading, it can't
-reliably carry any higher-level meaning, and should be used only as an
-optimization tool.
+extended types in both directions (except that a composite containing references
+cannot be converted to a primitive extended type). As a result, although the
+difference between primitive and composite extended types is observable by way
+of overloading, it can't reliably carry any higher-level meaning, and should be
+used only as an optimization tool.
 
-Note that this section describes the _logical structure_ of form conversions. As
-such, it primarily describes them "breadth-first", as a sequence of operations
-that each applies to the whole expression by recursively operating on its parts.
-However, the _physical execution_ of these conversions is actually depth-first,
-applying as many operations as possible to a minimal subexpression before moving
-on to the next one. The details of that process are described
+Note that this section describes the _logical structure_ of extended type
+conversions. As such, it primarily describes them "breadth-first", as a sequence
+of operations that each applies to the whole expression by recursively operating
+on its parts. However, the _physical execution_ of these conversions is actually
+depth-first, applying as many operations as possible to a minimal subexpression
+before moving on to the next one. The details of that process are described
 [here](pattern_matching.md#evaluation-order).
 
 #### Type conversions
 
 See [here](expressions/implicit_conversions.md) for overall information about
 type conversions. Conversions involving struct, tuple, and array types are
-described here because of their unique interactions with expression forms.
+described here because of their unique interactions with extended types of
+expressions.
 
 > **TODO:** A forthcoming proposal is expected to update the type conversion
-> interfaces to permit user-defined conversions to depend on the form of the
-> input, and customize the form of the output. Once that is done, these "built
-> in" conversions should be presented as implementations of those interfaces,
-> possibly with some "magic" for things like introspecting on struct field
-> names.
+> interfaces to permit user-defined conversions to depend on the extended type
+> of the input, and customize the extended type of the output. Once that is
+> done, these "built in" conversions should be presented as implementations of
+> those interfaces, possibly with some "magic" for things like introspecting on
+> struct field names.
 
 Each of the conversions described in this section is explicit if and only if it
 invokes another explicit type conversion. Otherwise, it is implicit.
 
-A type conversion of a primitive-form expression to a
+A type conversion of an expression with primitive extended type to a
 [compatible type](generics/terminology.md#compatible-types) just re-interprets
 the expression's result with a new type, so it requires no run-time work, and
 has the same category as the input expression.
@@ -984,8 +1003,8 @@ A result `source` that has a struct type can be converted to a struct type
     type-convert `source.F` to `Dest.F`. Return a struct result where each field
     `F` is set to the result of the corresponding conversion.
 -   If `source` is a primitive result, convert it to a struct result by
-    [form decomposition](#category-conversions), and then type-convert the
-    result to `Dest` and return the result.
+    [extended type decomposition](#category-conversions), and then type-convert
+    the result to `Dest` and return the result.
 
 Note that the sub-conversions invoked here are not necessarily defined; if so,
 the conversion itself is not defined.
@@ -1009,25 +1028,25 @@ of an object are not necessarily initialized in declaration order.
 Conversions between tuple types are defined in the same way, treating tuples as
 structs that have fields named `.0`, `.1`, etc, in numerical order.
 
-There is a conversion to `array(T, N)` from any expression with a tuple form of
-exactly `N` elements, whose type components are convertible to `T`. The
+There is a conversion to `array(T, N)` from any expression with a tuple extended
+type of exactly `N` elements, whose type components are convertible to `T`. The
 conversion is an initializing expression, which type-converts each source
 element to `T`, and initializes the corresponding array element from the result
 of that conversion.
 
 #### Category conversions
 
-_Form composition_ converts an expression of composite form with consistent
-category to a primitive form as follows (where `min` as applied to phases uses
-the ordering "runtime" < "symbolic" < "template"):
+_Extended type composition_ converts an expression of composite extended type
+with consistent category to a primitive extended type as follows (where `min` as
+applied to phases uses the ordering "runtime" < "symbolic" < "template"):
 
--   An expression of tuple form
+-   An expression of tuple extended type
     `(<T1, C, P1, V1>, <T2, C, P2, V2>, ... <TN, C, PN, VN>)` can be converted
-    to a primitive form
+    to a primitive extended type
     `<(T1, T2, ..., TN), C, min(P1, P2, ..., PN), (V1, V2, ... VN)>`.
--   An expression of struct form
+-   An expression of struct extended type
     `{.a = <Ta, C, Pa, Va>, .b = <Tb, C, Pb, Vb>, ... .z = <Tz, C, Pz, Vz>}` can
-    be converted to a primitive form
+    be converted to a primitive extended type
     `<{.a = Ta, .b = Tb, ... .z = Tz}, C, min(Pa, Pb, ... Pz), {.a = Va, .b = Vb, ... .z = Vz}>`.
 
 When `C` is "value", composition forms a value representation of the aggregate
@@ -1037,53 +1056,59 @@ expression that initializes the whole aggregate. `C` cannot be a reference
 category, because an aggregate of references to independent objects can't be
 replaced by a reference to a single aggregate object in a single step.
 
-_Form decomposition_ is the inverse of form composition. It converts a
-primitive-form expression to a composite form as follows:
+_Extended type decomposition_ is the inverse of extended type composition. It
+converts an expression with primitive extended type to a composite extended type
+as follows:
 
--   An expression with primitive form `<(T0, T1, ..., TN), C, P, V>` can be
-    converted to a tuple form
+-   An expression with primitive extended type `<(T0, T1, ..., TN), C, P, V>`
+    can be converted to a tuple extended type
     `(<T0, CC, P, V.0>, <T1, CC, P, V.1>, ... <TN, CC, P, V.N>)`.
--   An expression with primitive form
+-   An expression with primitive extended type
     `<{.a = Ta, .b = Tb, ... .z = Tz}, C, P, V>` can be converted to a struct
-    form
+    extended type
     `{.a = <Ta, CC, P, V.a>, .b = <Tb, CC, P, V.b>, ... .z = <Tz, CC, P, V.z>}`.
 
-The category `CC` of the resulting sub-forms is the same as `C`, with two
-exceptions:
+The category `CC` of the resulting sub-extended-types is the same as `C`, with
+two exceptions:
 
 -   If `C` is "durable entire reference", `CC` will be "durable non-entire
-    reference", because the sub-forms don't refer to complete objects. This
-    doesn't apply to ephemeral entire references, because in that case form
-    decomposition implicitly ends the lifetime of the original aggregate,
-    promoting its elements to complete objects with independent lifetimes.
+    reference", because the sub-extended-types don't refer to complete objects.
+    This doesn't apply to ephemeral entire references, because in that case
+    extended type decomposition implicitly ends the lifetime of the original
+    aggregate, promoting its elements to complete objects with independent
+    lifetimes.
 -   If `C` is "initializing", the original expression is materialized before it
     is decomposed, so `CC` will be "ephemeral entire reference".
 
-By convention, form decomposition is a no-op when applied to an expression with
-struct or tuple form.
+By convention, extended type decomposition is a no-op when applied to an
+expression with struct or tuple extended type.
 
 _Category conversion_ converts an expression to have a given category component
-without changing its type. The conversion works by combining form composition
-and decomposition with primitive category conversions, and is defined
-recursively:
+without changing its type component. The conversion works by combining extended
+type composition and decomposition with primitive category conversions, and is
+defined recursively:
 
--   If the target category component is a tuple, the source form must have a
-    tuple type with the same arity. Convert the source to a tuple form by form
-    decomposition, and then category-convert each source sub-form to the
-    corresponding target sub-category.
--   If the target category component is a struct, the source form must have a
-    struct type with the same set of field names in the same order. Convert the
-    source to a struct form by form decomposition, and then category-convert
-    each source sub-form to the corresponding target sub-category.
+-   If the target category component is a tuple, the source extended type must
+    have a type component that is a tuple type with the same arity. Convert the
+    source to a tuple extended type by extended type decomposition, and then
+    category-convert each source sub-extended-type to the corresponding target
+    sub-category.
+-   If the target category component is a struct, the source extended type must
+    have a type component that is a struct type with the same set of field names
+    in the same order. Convert the source to a struct extended type by extended
+    type decomposition, and then category-convert each source sub-extended-type
+    to the corresponding target sub-category.
 -   If the target category is a primitive category `C`:
-    -   If the source form is primitive, convert to `C` by applying primitive
-        category conversions.
-    -   If the source form is composite and `C` is a reference category,
-        category-convert the source form to "initializing", and then convert the
-        result to `C` by applying primitive category conversions.
-    -   If the source form is composite and `C` is not a reference category,
-        category-convert each source sub-form to `C`, and then convert the
-        aggregate result of these conversions to `C` by form composition.
+    -   If the source extended type is primitive, convert to `C` by applying
+        primitive category conversions.
+    -   If the source extended type is composite and `C` is a reference
+        category, category-convert the source extended type to "initializing",
+        and then convert the result to `C` by applying primitive category
+        conversions.
+    -   If the source extended type is composite and `C` is not a reference
+        category, category-convert each source sub-extended-type to `C`, and
+        then convert the aggregate result of these conversions to `C` by
+        extended type composition.
 
 ## Pointers
 
@@ -1501,6 +1526,7 @@ itself.
 -   [Alternative syntaxes for locals](/proposals/p002006-values-variables-pointers-and-references.md#alternative-syntaxes-for-locals)
 -   [Mixed expression categories](/proposals/p005545-expression-form-basics.md#mixed-expression-categories)
 -   [Don't implicitly convert to less-primitive forms](/proposals/p005545-expression-form-basics.md#dont-implicitly-convert-to-less-primitive-forms)
+-   [Use `exprtype` and `expr` keywords](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#use-exprtype-and-expr-keywords)
 
 ## References
 
@@ -1510,6 +1536,8 @@ itself.
 -   [Proposal #851: auto keyword for vars][#851]
 -   [Proposal #2006: Values, variables, and pointers][#2006]
 -   [Proposal #5545: Expression form basics][#5545]
+-   [Proposal #7254: Replace `:!` and `:?` with keywords and contextual
+    defaults][#7254]
 
 [#257]: /proposals/p000257-initialization-of-memory-and-variables.md
 [#339]: /proposals/p000339-var-statement.md
@@ -1517,3 +1545,4 @@ itself.
 [#851]: /proposals/p000851-variable-type-inference.md
 [#2006]: /proposals/p002006-values-variables-pointers-and-references.md
 [#5545]: /proposals/p005545-expression-form-basics.md
+[#7254]: /proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md

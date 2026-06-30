@@ -323,7 +323,7 @@ export Poison;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -386,7 +386,7 @@ export Poison;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -446,7 +446,7 @@ export Poison;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -506,7 +506,7 @@ export Poison;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -566,7 +566,7 @@ export Poison;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -626,7 +626,7 @@ export Poison;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -686,7 +686,7 @@ export Poison;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -746,7 +746,7 @@ export Poison;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -818,7 +818,7 @@ export Poison;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -880,7 +880,7 @@ export Poison;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %indirect_c.var: ref %C = var %indirect_c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %indirect_c: ref %C = ref_binding indirect_c, %indirect_c.var [concrete = %indirect_c.var]
+// CHECK:STDOUT:   %indirect_c: ref %C = wrapper_binding indirect_c, %indirect_c.var [concrete = %indirect_c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {

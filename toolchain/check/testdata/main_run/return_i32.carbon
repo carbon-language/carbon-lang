@@ -167,13 +167,13 @@ fn Run(unused argc: i32, unused argv: i32*) -> i32 { return 0; }
 // CHECK:STDOUT:     %.loc5_48: Core.Form = init_form %i32.loc5_48 [concrete = constants.%.795]
 // CHECK:STDOUT:     %argc.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc5_21: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %argc: %i32 = value_binding argc, %argc.param
+// CHECK:STDOUT:     %argc: %i32 = wrapper_binding argc, %argc.param
 // CHECK:STDOUT:     %argv.param: %ptr = value_param call_param1
 // CHECK:STDOUT:     %.loc5_42: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %i32.loc5_39: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %ptr: type = ptr_type %i32.loc5_39 [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %argv: %ptr = value_binding argv, %argv.param
+// CHECK:STDOUT:     %argv: %ptr = wrapper_binding argv, %argv.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

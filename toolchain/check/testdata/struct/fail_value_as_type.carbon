@@ -56,7 +56,7 @@ var x: {.a = 1};
 // CHECK:STDOUT:     %.loc22_15.1: %struct_type.a = struct_literal (%int_1) [concrete = constants.%struct]
 // CHECK:STDOUT:     %.loc22_15.2: type = converted %.loc22_15.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref <error> = ref_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: <error> = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

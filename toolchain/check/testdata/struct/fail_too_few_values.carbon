@@ -80,7 +80,7 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT:     %i32.loc19_22: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %struct_type.a.b = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %struct_type.a.b = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

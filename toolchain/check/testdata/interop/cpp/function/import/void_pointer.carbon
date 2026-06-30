@@ -189,7 +189,7 @@ fn F() {
 // CHECK:STDOUT:     %void.ref: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
 // CHECK:STDOUT:     %ptr: type = ptr_type %void.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %output: %ptr = value_binding output, %.loc10_42.2
+// CHECK:STDOUT:   %output: %ptr = wrapper_binding output, %.loc10_42.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -528,7 +528,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc10_45.2: %OptionalStorage.type = converted %ptr, %OptionalStorage.facet [concrete = constants.%OptionalStorage.facet]
 // CHECK:STDOUT:     %Optional: type = class_type @Optional, @Optional(constants.%OptionalStorage.facet) [concrete = constants.%Optional.752]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %output: %Optional.752 = value_binding output, %.loc10_57.3
+// CHECK:STDOUT:   %output: %Optional.752 = wrapper_binding output, %.loc10_57.3
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc10_57.2, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc10_57.2)
 // CHECK:STDOUT:   <elided>
@@ -609,7 +609,7 @@ fn F() {
 // CHECK:STDOUT:     %ptr.loc11_37: type = ptr_type %void.ref [concrete = constants.%ptr.00a]
 // CHECK:STDOUT:     %ptr.loc11_38: type = ptr_type %ptr.loc11_37 [concrete = constants.%ptr.6f9]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %non_nullable_pointer: ref %ptr.6f9 = ref_binding non_nullable_pointer, %non_nullable_pointer.var
+// CHECK:STDOUT:   %non_nullable_pointer: ref %ptr.6f9 = wrapper_binding non_nullable_pointer, %non_nullable_pointer.var
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Invoke.ref: %Invoke.cpp_overload_set.type = name_ref Invoke, imports.%Invoke.cpp_overload_set.value [concrete = constants.%Invoke.cpp_overload_set.value]
 // CHECK:STDOUT:   %non_nullable_pointer.ref: ref %ptr.6f9 = name_ref non_nullable_pointer, %non_nullable_pointer
@@ -682,7 +682,7 @@ fn F() {
 // CHECK:STDOUT:     %const: type = const_type %void.ref [concrete = constants.%const]
 // CHECK:STDOUT:     %ptr: type = ptr_type %const [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %const_void_pointer: ref %ptr = ref_binding const_void_pointer, %const_void_pointer.var
+// CHECK:STDOUT:   %const_void_pointer: ref %ptr = wrapper_binding const_void_pointer, %const_void_pointer.var
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Invoke.ref: %Invoke.cpp_overload_set.type = name_ref Invoke, imports.%Invoke.cpp_overload_set.value [concrete = constants.%Invoke.cpp_overload_set.value]
 // CHECK:STDOUT:   %const_void_pointer.ref: ref %ptr = name_ref const_void_pointer, %const_void_pointer

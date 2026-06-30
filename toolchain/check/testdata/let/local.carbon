@@ -70,7 +70,7 @@ fn CallF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %b: %i32 = value_binding b, %a.ref
+// CHECK:STDOUT:   %b: %i32 = wrapper_binding b, %a.ref
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc6_10.1: <bound method> = bound_method %b.ref, %impl.elem0

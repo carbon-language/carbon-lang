@@ -38,7 +38,7 @@ var x: {.v: ()} = {.v = ()};
 // CHECK:STDOUT:     %.loc14_14.2: type = converted %.loc14_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %struct_type.v = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %struct_type.v = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

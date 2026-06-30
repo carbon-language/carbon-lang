@@ -75,7 +75,7 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:       %Class.ref.loc17_9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr.loc17_14: type = ptr_type %Class.ref.loc17_9 [concrete = constants.%ptr.7ee]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.7ee = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.7ee = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.7ee = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.7ee = return_slot %return.param
 // CHECK:STDOUT:   }

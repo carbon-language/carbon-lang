@@ -95,7 +95,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_23.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc16 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %.loc16_23.2: %i32 = converted %int_1, %.loc16_23.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a.loc16: %i32 = value_binding a, %.loc16_23.2
+// CHECK:STDOUT:   %a.loc16: %i32 = wrapper_binding a, %.loc16_23.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt.loc24: %pattern_type.6b6 = value_binding_pattern a [concrete = constants.%a.patt.bb2e5b.2]
 // CHECK:STDOUT:   }
@@ -108,7 +108,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc24_23.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc24 [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   %.loc24_23.2: %i32 = converted %int_2, %.loc24_23.1 [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   %i32.loc24: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a.loc24: %i32 = value_binding a, %.loc24_23.2
+// CHECK:STDOUT:   %a.loc24: %i32 = wrapper_binding a, %.loc24_23.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

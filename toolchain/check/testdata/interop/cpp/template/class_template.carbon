@@ -81,7 +81,7 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %A = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

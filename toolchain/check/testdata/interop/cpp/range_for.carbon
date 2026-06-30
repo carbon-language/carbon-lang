@@ -1059,7 +1059,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %.loc34_19.15: %i32 = value_of_initializer %Optional.Get.call
 // CHECK:STDOUT:     %.loc34_19.16: %i32 = converted %Optional.Get.call, %.loc34_19.15
 // CHECK:STDOUT:     %i32.loc34: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i: %i32 = value_binding i, %.loc34_19.16
+// CHECK:STDOUT:     %i: %i32 = wrapper_binding i, %.loc34_19.16
 // CHECK:STDOUT:     %sum.ref: ref %i32 = name_ref sum, %sum
 // CHECK:STDOUT:     %i.ref: %i32 = name_ref i, %i
 // CHECK:STDOUT:     %impl.elem0.loc35: %.b28 = impl_witness_access constants.%AddAssignWith.impl_witness.22e, element0 [concrete = constants.%Int.as.AddAssignWith.impl.Op.00e760.2]
@@ -1172,7 +1172,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.loc49_19.13: %i32 = value_of_initializer %Optional.Get.call.loc49
 // CHECK:STDOUT:   %.loc49_19.14: %i32 = converted %Optional.Get.call.loc49, %.loc49_19.13
 // CHECK:STDOUT:   %i32.loc49: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %i.loc49: %i32 = value_binding i, %.loc49_19.14
+// CHECK:STDOUT:   %i.loc49: %i32 = wrapper_binding i, %.loc49_19.14
 // CHECK:STDOUT:   %sum.ref.loc50: ref %i32 = name_ref sum, %sum
 // CHECK:STDOUT:   %i.ref.loc50: %i32 = name_ref i, %i.loc49
 // CHECK:STDOUT:   %impl.elem0.loc50: %.b28 = impl_witness_access constants.%AddAssignWith.impl_witness.22e, element0 [concrete = constants.%Int.as.AddAssignWith.impl.Op.00e760.2]
@@ -1240,7 +1240,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.loc55_19.13: %i32 = value_of_initializer %Optional.Get.call.loc55
 // CHECK:STDOUT:   %.loc55_19.14: %i32 = converted %Optional.Get.call.loc55, %.loc55_19.13
 // CHECK:STDOUT:   %i32.loc55: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %i.loc55: %i32 = value_binding i, %.loc55_19.14
+// CHECK:STDOUT:   %i.loc55: %i32 = wrapper_binding i, %.loc55_19.14
 // CHECK:STDOUT:   %sum.ref.loc56: ref %i32 = name_ref sum, %sum
 // CHECK:STDOUT:   %i.ref.loc56: %i32 = name_ref i, %i.loc55
 // CHECK:STDOUT:   %impl.elem0.loc56: %.b28 = impl_witness_access constants.%AddAssignWith.impl_witness.22e, element0 [concrete = constants.%Int.as.AddAssignWith.impl.Op.00e760.2]
@@ -1687,7 +1687,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:       %Cpp.ref.loc44: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %ValueType.ref.loc44: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: %ValueType = value_binding i, %.loc44_29.17
+// CHECK:STDOUT:     %i: %ValueType = wrapper_binding i, %.loc44_29.17
 // CHECK:STDOUT:     %sum.ref: ref %ValueType = name_ref sum, %sum
 // CHECK:STDOUT:     %i.ref: %ValueType = name_ref i, %i
 // CHECK:STDOUT:     %.loc45_12: ref %ValueType = value_as_ref %i.ref
@@ -1803,7 +1803,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %Cpp.ref.loc59: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ValueType.ref.loc59: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.loc59: %ValueType = value_binding i, %.loc59_29.15
+// CHECK:STDOUT:   %i.loc59: %ValueType = wrapper_binding i, %.loc59_29.15
 // CHECK:STDOUT:   %sum.ref.loc60: ref %ValueType = name_ref sum, %sum
 // CHECK:STDOUT:   %i.ref.loc60: %ValueType = name_ref i, %i.loc59
 // CHECK:STDOUT:   %.loc60_12: ref %ValueType = value_as_ref %i.ref.loc60
@@ -1870,7 +1870,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %Cpp.ref.loc63: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ValueType.ref.loc63: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.loc63: %ValueType = value_binding i, %.loc63_29.15
+// CHECK:STDOUT:   %i.loc63: %ValueType = wrapper_binding i, %.loc63_29.15
 // CHECK:STDOUT:   %sum.ref.loc64: ref %ValueType = name_ref sum, %sum
 // CHECK:STDOUT:   %i.ref.loc64: %ValueType = name_ref i, %i.loc63
 // CHECK:STDOUT:   %.loc64_12: ref %ValueType = value_as_ref %i.ref.loc64
@@ -2240,7 +2240,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %.loc24_19.15: %f64.dc1 = value_of_initializer %Optional.Get.call
 // CHECK:STDOUT:     %.loc24_19.16: %f64.dc1 = converted %Optional.Get.call, %.loc24_19.15
 // CHECK:STDOUT:     %f64.loc24: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:     %i: %f64.dc1 = value_binding i, %.loc24_19.16
+// CHECK:STDOUT:     %i: %f64.dc1 = wrapper_binding i, %.loc24_19.16
 // CHECK:STDOUT:     %sum.ref: ref %f64.dc1 = name_ref sum, %sum
 // CHECK:STDOUT:     %i.ref: %f64.dc1 = name_ref i, %i
 // CHECK:STDOUT:     %impl.elem0.loc25: %.746 = impl_witness_access constants.%AddAssignWith.impl_witness.e85, element0 [concrete = constants.%Float.as.AddAssignWith.impl.Op.ac1]
@@ -2346,7 +2346,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.loc38_19.13: %f64.dc1 = value_of_initializer %Optional.Get.call
 // CHECK:STDOUT:   %.loc38_19.14: %f64.dc1 = converted %Optional.Get.call, %.loc38_19.13
 // CHECK:STDOUT:   %f64.loc38: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %i: %f64.dc1 = value_binding i, %.loc38_19.14
+// CHECK:STDOUT:   %i: %f64.dc1 = wrapper_binding i, %.loc38_19.14
 // CHECK:STDOUT:   %sum.ref: ref %f64.dc1 = name_ref sum, %sum
 // CHECK:STDOUT:   %i.ref: %f64.dc1 = name_ref i, %i
 // CHECK:STDOUT:   %impl.elem0.loc39: %.746 = impl_witness_access constants.%AddAssignWith.impl_witness.e85, element0 [concrete = constants.%Float.as.AddAssignWith.impl.Op.ac1]
@@ -2673,7 +2673,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %.loc26_19.15: %f64.dc1 = value_of_initializer %Optional.Get.call
 // CHECK:STDOUT:     %.loc26_19.16: %f64.dc1 = converted %Optional.Get.call, %.loc26_19.15
 // CHECK:STDOUT:     %f64.loc26: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:     %i: %f64.dc1 = value_binding i, %.loc26_19.16
+// CHECK:STDOUT:     %i: %f64.dc1 = wrapper_binding i, %.loc26_19.16
 // CHECK:STDOUT:     %sum.ref: ref %f64.dc1 = name_ref sum, %sum
 // CHECK:STDOUT:     %i.ref: %f64.dc1 = name_ref i, %i
 // CHECK:STDOUT:     %impl.elem0.loc27: %.746 = impl_witness_access constants.%AddAssignWith.impl_witness.e85, element0 [concrete = constants.%Float.as.AddAssignWith.impl.Op.ac1]
@@ -2781,7 +2781,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.loc68_19.13: %f64.dc1 = value_of_initializer %Optional.Get.call
 // CHECK:STDOUT:   %.loc68_19.14: %f64.dc1 = converted %Optional.Get.call, %.loc68_19.13
 // CHECK:STDOUT:   %f64.loc68: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %i: %f64.dc1 = value_binding i, %.loc68_19.14
+// CHECK:STDOUT:   %i: %f64.dc1 = wrapper_binding i, %.loc68_19.14
 // CHECK:STDOUT:   %sum.ref: ref %f64.dc1 = name_ref sum, %sum
 // CHECK:STDOUT:   %i.ref: %f64.dc1 = name_ref i, %i
 // CHECK:STDOUT:   %impl.elem0.loc69: %.746 = impl_witness_access constants.%AddAssignWith.impl_witness.e85, element0 [concrete = constants.%Float.as.AddAssignWith.impl.Op.ac1]
@@ -3132,7 +3132,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:       %N.ref.loc31: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:       %ValueType.ref.loc31: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: %ValueType = value_binding i, %.loc31_31.17
+// CHECK:STDOUT:     %i: %ValueType = wrapper_binding i, %.loc31_31.17
 // CHECK:STDOUT:     %sum.ref: ref %ValueType = name_ref sum, %sum
 // CHECK:STDOUT:     %i.ref: %ValueType = name_ref i, %i
 // CHECK:STDOUT:     %.loc32_12: ref %ValueType = value_as_ref %i.ref
@@ -3247,7 +3247,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %N.ref.loc45: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %ValueType.ref.loc45: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i: %ValueType = value_binding i, %.loc45_31.15
+// CHECK:STDOUT:   %i: %ValueType = wrapper_binding i, %.loc45_31.15
 // CHECK:STDOUT:   %sum.ref: ref %ValueType = name_ref sum, %sum
 // CHECK:STDOUT:   %i.ref: %ValueType = name_ref i, %i
 // CHECK:STDOUT:   %.loc46_12: ref %ValueType = value_as_ref %i.ref
@@ -3511,7 +3511,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:       %N.ref.loc31: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:       %ValueType.ref.loc31: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: %ValueType = value_binding i, %.loc31_31.17
+// CHECK:STDOUT:     %i: %ValueType = wrapper_binding i, %.loc31_31.17
 // CHECK:STDOUT:     %sum.ref: ref %ValueType = name_ref sum, %sum
 // CHECK:STDOUT:     %i.ref: %ValueType = name_ref i, %i
 // CHECK:STDOUT:     %.loc32_12: ref %ValueType = value_as_ref %i.ref
@@ -3589,14 +3589,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %N.ref.loc95: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %ValueType.ref.loc95: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i: %ValueType = value_binding i, <error> [concrete = <error>]
+// CHECK:STDOUT:   %i: %ValueType = wrapper_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   %sum.ref: ref %ValueType = name_ref sum, %sum
 // CHECK:STDOUT:   %i.ref: %ValueType = name_ref i, %i [concrete = <error>]
-// CHECK:STDOUT:   %.loc96_12: ref %ValueType = value_as_ref %i.ref
-// CHECK:STDOUT:   %addr.loc96: %ptr.9d3 = addr_of %.loc96_12
-// CHECK:STDOUT:   %.loc96_9.1: %ptr.32e = as_compatible %addr.loc96
-// CHECK:STDOUT:   %.loc96_9.2: %ptr.32e = converted %addr.loc96, %.loc96_9.1
-// CHECK:STDOUT:   %operator_PlusEqual__carbon_thunk.call: ref %ValueType = call imports.%operator_PlusEqual__carbon_thunk.decl(%sum.ref, %.loc96_9.2)
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
@@ -3898,7 +3893,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:       %N.ref.loc38: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:       %ValueType.ref.loc38: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: %ValueType = value_binding i, %.loc38_31.17
+// CHECK:STDOUT:     %i: %ValueType = wrapper_binding i, %.loc38_31.17
 // CHECK:STDOUT:     %sum.ref: ref %ValueType = name_ref sum, %sum
 // CHECK:STDOUT:     %i.ref: %ValueType = name_ref i, %i
 // CHECK:STDOUT:     %.loc39_12: ref %ValueType = value_as_ref %i.ref
@@ -4015,7 +4010,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %N.ref.loc80: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %ValueType.ref.loc80: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i: %ValueType = value_binding i, %.loc80_32.15
+// CHECK:STDOUT:   %i: %ValueType = wrapper_binding i, %.loc80_32.15
 // CHECK:STDOUT:   %sum.ref: ref %ValueType = name_ref sum, %sum
 // CHECK:STDOUT:   %i.ref: %ValueType = name_ref i, %i
 // CHECK:STDOUT:   %.loc81_12: ref %ValueType = value_as_ref %i.ref

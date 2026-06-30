@@ -117,14 +117,14 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %i32 = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc4: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x: ref %i32 = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %i32 = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.6b6 = ref_binding_pattern y [concrete = constants.%y.patt]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.6b6 = var_pattern %y.patt [concrete = constants.%y.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var %y.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %y: ref %i32 = ref_binding y, %y.var [concrete = %y.var]
+// CHECK:STDOUT:   %y: ref %i32 = wrapper_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -236,7 +236,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %i32 = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x: ref %i32 = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %i32 = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -256,7 +256,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc7: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   assign %x.var, %.loc7
 // CHECK:STDOUT:   %i32.loc7: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x: ref %i32 = ref_binding x, %x.var
+// CHECK:STDOUT:   %x: ref %i32 = wrapper_binding x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.6b6 = ref_binding_pattern y [concrete = constants.%y.patt]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.6b6 = var_pattern %y.patt [concrete = constants.%y.var_patt]
@@ -272,7 +272,7 @@ fn Main() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc9_30.2(%.loc9)
 // CHECK:STDOUT:   assign %y.var, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %y: ref %i32 = ref_binding y, %y.var
+// CHECK:STDOUT:   %y: ref %i32 = wrapper_binding y, %y.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc9: <bound method> = bound_method %y.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc9: init %empty_tuple.type = call %Destroy.Op.bound.loc9(%y.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %x.var, constants.%Destroy.Op.1a2547.2

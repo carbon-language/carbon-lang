@@ -177,7 +177,7 @@ fn Run() {
 // CHECK:STDOUT:     %.loc18_12.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc18_12.3: type = converted %.loc18_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_: %empty_tuple.type = value_binding _, %.loc18_35.11
+// CHECK:STDOUT:   %_: %empty_tuple.type = wrapper_binding _, %.loc18_35.11
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref()
 // CHECK:STDOUT:   br !for.next

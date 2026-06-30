@@ -99,7 +99,7 @@ let never: Never = {};
 // CHECK:STDOUT:     %mood.patt: %pattern_type = value_binding_pattern mood [concrete = constants.%mood.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Always.ref: type = name_ref Always, %Always.decl [concrete = constants.%Always]
-// CHECK:STDOUT:   %mood: %Always = value_binding mood, @__global_init.%Sunny.ref
+// CHECK:STDOUT:   %mood: %Always = wrapper_binding mood, @__global_init.%Sunny.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Always {
@@ -117,7 +117,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc6_1.10: init %Always = converted %.loc6_1.3, %.loc6_1.9 [concrete = constants.%Always.val]
 // CHECK:STDOUT:   %.loc6_1.11: ref %Always = temporary %.loc6_1.4, %.loc6_1.10 [concrete = constants.%.302]
 // CHECK:STDOUT:   %.loc6_1.12: %Always = acquire_value %.loc6_1.11 [concrete = constants.%Always.val]
-// CHECK:STDOUT:   %Sunny: %Always = value_binding Sunny, %.loc6_1.12
+// CHECK:STDOUT:   %Sunny: %Always = wrapper_binding Sunny, %.loc6_1.12
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -217,22 +217,22 @@ let never: Never = {};
 // CHECK:STDOUT:     %less.patt: %pattern_type.542 = value_binding_pattern less [concrete = constants.%less.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Ordering.ref.loc11: type = name_ref Ordering, %Ordering.decl [concrete = constants.%Ordering]
-// CHECK:STDOUT:   %less: %Ordering = value_binding less, @__global_init.%Less.ref
+// CHECK:STDOUT:   %less: %Ordering = wrapper_binding less, @__global_init.%Less.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %equiv.patt: %pattern_type.542 = value_binding_pattern equiv [concrete = constants.%equiv.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Ordering.ref.loc12: type = name_ref Ordering, %Ordering.decl [concrete = constants.%Ordering]
-// CHECK:STDOUT:   %equiv: %Ordering = value_binding equiv, @__global_init.%Equivalent.ref
+// CHECK:STDOUT:   %equiv: %Ordering = wrapper_binding equiv, @__global_init.%Equivalent.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %greater.patt: %pattern_type.542 = value_binding_pattern greater [concrete = constants.%greater.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Ordering.ref.loc13: type = name_ref Ordering, %Ordering.decl [concrete = constants.%Ordering]
-// CHECK:STDOUT:   %greater: %Ordering = value_binding greater, @__global_init.%Greater.ref
+// CHECK:STDOUT:   %greater: %Ordering = wrapper_binding greater, @__global_init.%Greater.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %inc.patt: %pattern_type.542 = value_binding_pattern inc [concrete = constants.%inc.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Ordering.ref.loc14: type = name_ref Ordering, %Ordering.decl [concrete = constants.%Ordering]
-// CHECK:STDOUT:   %inc: %Ordering = value_binding inc, @__global_init.%Incomparable.ref
+// CHECK:STDOUT:   %inc: %Ordering = wrapper_binding inc, @__global_init.%Incomparable.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Ordering {
@@ -258,7 +258,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc5_7.8: init %Ordering = converted %.loc5_7.3, %.loc5_7.7 [concrete = constants.%Ordering.val.236]
 // CHECK:STDOUT:   %.loc5_7.9: ref %Ordering = temporary %.loc5_7.4, %.loc5_7.8 [concrete = constants.%.156]
 // CHECK:STDOUT:   %.loc5_7.10: %Ordering = acquire_value %.loc5_7.9 [concrete = constants.%Ordering.val.236]
-// CHECK:STDOUT:   %Less: %Ordering = value_binding Less, %.loc5_7.10
+// CHECK:STDOUT:   %Less: %Ordering = wrapper_binding Less, %.loc5_7.10
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc6_13.1: %.66c = impl_witness_access constants.%ImplicitAs.impl_witness.e93, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.409]
 // CHECK:STDOUT:   %bound_method.loc6_13.1: <bound method> = bound_method %int_1, %impl.elem0.loc6_13.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.48e]
@@ -280,7 +280,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc6_13.8: init %Ordering = converted %.loc6_13.3, %.loc6_13.7 [concrete = constants.%Ordering.val.4d4]
 // CHECK:STDOUT:   %.loc6_13.9: ref %Ordering = temporary %.loc6_13.4, %.loc6_13.8 [concrete = constants.%.ce0]
 // CHECK:STDOUT:   %.loc6_13.10: %Ordering = acquire_value %.loc6_13.9 [concrete = constants.%Ordering.val.4d4]
-// CHECK:STDOUT:   %Equivalent: %Ordering = value_binding Equivalent, %.loc6_13.10
+// CHECK:STDOUT:   %Equivalent: %Ordering = wrapper_binding Equivalent, %.loc6_13.10
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0.loc7_10.1: %.66c = impl_witness_access constants.%ImplicitAs.impl_witness.e93, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.409]
 // CHECK:STDOUT:   %bound_method.loc7_10.1: <bound method> = bound_method %int_2, %impl.elem0.loc7_10.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.6c9]
@@ -302,7 +302,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc7_10.8: init %Ordering = converted %.loc7_10.3, %.loc7_10.7 [concrete = constants.%Ordering.val.fca]
 // CHECK:STDOUT:   %.loc7_10.9: ref %Ordering = temporary %.loc7_10.4, %.loc7_10.8 [concrete = constants.%.267]
 // CHECK:STDOUT:   %.loc7_10.10: %Ordering = acquire_value %.loc7_10.9 [concrete = constants.%Ordering.val.fca]
-// CHECK:STDOUT:   %Greater: %Ordering = value_binding Greater, %.loc7_10.10
+// CHECK:STDOUT:   %Greater: %Ordering = wrapper_binding Greater, %.loc7_10.10
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %impl.elem0.loc9_1.1: %.66c = impl_witness_access constants.%ImplicitAs.impl_witness.e93, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.409]
 // CHECK:STDOUT:   %bound_method.loc9_1.1: <bound method> = bound_method %int_3, %impl.elem0.loc9_1.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0d0]
@@ -324,7 +324,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc9_1.8: init %Ordering = converted %.loc9_1.3, %.loc9_1.7 [concrete = constants.%Ordering.val.3b4]
 // CHECK:STDOUT:   %.loc9_1.9: ref %Ordering = temporary %.loc9_1.4, %.loc9_1.8 [concrete = constants.%.a83]
 // CHECK:STDOUT:   %.loc9_1.10: %Ordering = acquire_value %.loc9_1.9 [concrete = constants.%Ordering.val.3b4]
-// CHECK:STDOUT:   %Incomparable: %Ordering = value_binding Incomparable, %.loc9_1.10
+// CHECK:STDOUT:   %Incomparable: %Ordering = wrapper_binding Incomparable, %.loc9_1.10
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

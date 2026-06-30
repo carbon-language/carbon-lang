@@ -154,7 +154,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %T.ref.loc7_21: type = name_ref T, %T.loc7_7.2 [symbolic = %T.loc7_7.1 (constants.%T)]
 // CHECK:STDOUT:       %C.loc7_22.2: type = class_type @C, @C(constants.%T) [symbolic = %C.loc7_22.1 (constants.%C.1d0)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: @F.%C.loc7_22.1 (%C.1d0) = value_binding p, %p.param
+// CHECK:STDOUT:     %p: @F.%C.loc7_22.1 (%C.1d0) = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref @F.%T.loc7_7.1 (%T) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%T.loc7_7.1 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -172,7 +172,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %D.ref.loc9_11: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%D) [concrete = constants.%C.aae]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %C.aae = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %C.aae = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -369,7 +369,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc7_7.2 [symbolic = %T.loc7_7.1 (constants.%T)]
 // CHECK:STDOUT:       %I.loc7_22.2: type = class_type @I, @I(constants.%T) [symbolic = %I.loc7_22.1 (constants.%I.76e)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: @F.%I.loc7_22.1 (%I.76e) = value_binding p, %p.param
+// CHECK:STDOUT:     %p: @F.%I.loc7_22.1 (%I.76e) = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -387,7 +387,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %C.ref.loc9_11: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %I: type = class_type @I, @I(constants.%C) [concrete = constants.%I.d0b]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %I.d0b = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %I.d0b = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -605,7 +605,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %U.ref.loc13_44: type = name_ref U, %U.loc13_17.2 [symbolic = %U.loc13_17.1 (constants.%U)]
 // CHECK:STDOUT:       %Inner.loc13_45.2: type = class_type @Inner, @Inner(constants.%T, constants.%U) [symbolic = %Inner.loc13_45.1 (constants.%Inner.34b)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: @F.%Inner.loc13_45.1 (%Inner.34b) = value_binding p, %p.param
+// CHECK:STDOUT:     %p: @F.%Inner.loc13_45.1 (%Inner.34b) = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref @F.%tuple.type (%tuple.type.a5e) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%tuple.type (%tuple.type.a5e) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -630,7 +630,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %D.ref.loc15_24: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:       %Inner: type = class_type @Inner, @Inner(constants.%C, constants.%D) [concrete = constants.%Inner.3ff]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %Inner.3ff = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %Inner.3ff = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.af1 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.af1 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -955,7 +955,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %N.ref.loc6_37: %i32 = name_ref N, %N.loc6_7.2 [symbolic = %N.loc6_7.1 (constants.%N.37f)]
 // CHECK:STDOUT:       %WithNontype.loc6_38.2: type = class_type @WithNontype, @WithNontype(constants.%N.37f) [symbolic = %WithNontype.loc6_38.1 (constants.%WithNontype.40e)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @F.%WithNontype.loc6_38.1 (%WithNontype.40e) = value_binding x, %x.param
+// CHECK:STDOUT:     %x: @F.%WithNontype.loc6_38.1 (%WithNontype.40e) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

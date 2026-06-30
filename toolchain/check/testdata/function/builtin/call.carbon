@@ -129,10 +129,10 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:     %.loc15: Core.Form = init_form %i32.loc15_27 [concrete = constants.%.795]
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc15_11: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i32 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc15_19: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %i32 = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -172,7 +172,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:     %.loc17_29.4: Core.IntLiteral = converted %Add.call, %.loc17_29.3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type: type = array_type %.loc17_29.4, %i32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %arr: ref %array_type = ref_binding arr, %arr.var [concrete = %arr.var]
+// CHECK:STDOUT:   %arr: ref %array_type = wrapper_binding arr, %arr.var [concrete = %arr.var]
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [concrete = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
@@ -185,10 +185,10 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:     %.loc19: Core.Form = init_form %i32.loc19_35 [concrete = constants.%.795]
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc19_19: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i32 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc19_27: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %i32 = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

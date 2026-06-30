@@ -91,7 +91,7 @@ let c: CharLiteral = AddIntChar(Negate(98), 'a');
 // CHECK:STDOUT:   %.loc12_39.1: Core.CharLiteral = value_of_initializer @__global_init.%AddIntChar.call [concrete = constants.%.711]
 // CHECK:STDOUT:   %.loc12_39.2: Core.CharLiteral = converted @__global_init.%AddIntChar.call, %.loc12_39.1 [concrete = constants.%.711]
 // CHECK:STDOUT:   %CharLiteral.ref: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %a: Core.CharLiteral = value_binding a, %.loc12_39.2
+// CHECK:STDOUT:   %a: Core.CharLiteral = wrapper_binding a, %.loc12_39.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

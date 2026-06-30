@@ -329,35 +329,35 @@ let inf_val: i32 = ConvertF64ToI32(Div(1.0, 0.0));
 // CHECK:STDOUT:   %.loc9_49.1: %i32 = value_of_initializer @__global_init.%ConvertF64ToI32.call.loc9 [concrete = <error>]
 // CHECK:STDOUT:   %.loc9_49.2: %i32 = converted @__global_init.%ConvertF64ToI32.call.loc9, %.loc9_49.1 [concrete = <error>]
 // CHECK:STDOUT:   %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %overflow: %i32 = value_binding overflow, %.loc9_49.2 [concrete = <error>]
+// CHECK:STDOUT:   %overflow: %i32 = wrapper_binding overflow, %.loc9_49.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %underflow.patt: %pattern_type.6b6 = value_binding_pattern underflow [concrete = constants.%underflow.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_58.1: %i32 = value_of_initializer @__global_init.%ConvertF64ToI32.call.loc15 [concrete = <error>]
 // CHECK:STDOUT:   %.loc15_58.2: %i32 = converted @__global_init.%ConvertF64ToI32.call.loc15, %.loc15_58.1 [concrete = <error>]
 // CHECK:STDOUT:   %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %underflow: %i32 = value_binding underflow, %.loc15_58.2 [concrete = <error>]
+// CHECK:STDOUT:   %underflow: %i32 = wrapper_binding underflow, %.loc15_58.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %unsigned_neg.patt: %pattern_type.668 = value_binding_pattern unsigned_neg [concrete = constants.%unsigned_neg.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21_52.1: %u32 = value_of_initializer @__global_init.%ConvertF64ToU32.call [concrete = <error>]
 // CHECK:STDOUT:   %.loc21_52.2: %u32 = converted @__global_init.%ConvertF64ToU32.call, %.loc21_52.1 [concrete = <error>]
 // CHECK:STDOUT:   %u32.loc21: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %unsigned_neg: %u32 = value_binding unsigned_neg, %.loc21_52.2 [concrete = <error>]
+// CHECK:STDOUT:   %unsigned_neg: %u32 = wrapper_binding unsigned_neg, %.loc21_52.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %literal_overflow.patt: %pattern_type.6b6 = value_binding_pattern literal_overflow [concrete = constants.%literal_overflow.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc27_66.1: %i32 = value_of_initializer @__global_init.%ConvertFloatLiteralToI32.call.loc27 [concrete = <error>]
 // CHECK:STDOUT:   %.loc27_66.2: %i32 = converted @__global_init.%ConvertFloatLiteralToI32.call.loc27, %.loc27_66.1 [concrete = <error>]
 // CHECK:STDOUT:   %i32.loc27: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %literal_overflow: %i32 = value_binding literal_overflow, %.loc27_66.2 [concrete = <error>]
+// CHECK:STDOUT:   %literal_overflow: %i32 = wrapper_binding literal_overflow, %.loc27_66.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %giant_literal_overflow.patt: %pattern_type.6b6 = value_binding_pattern giant_literal_overflow [concrete = constants.%giant_literal_overflow.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc33_71.1: %i32 = value_of_initializer @__global_init.%ConvertFloatLiteralToI32.call.loc33 [concrete = <error>]
 // CHECK:STDOUT:   %.loc33_71.2: %i32 = converted @__global_init.%ConvertFloatLiteralToI32.call.loc33, %.loc33_71.1 [concrete = <error>]
 // CHECK:STDOUT:   %i32.loc33: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %giant_literal_overflow: %i32 = value_binding giant_literal_overflow, %.loc33_71.2 [concrete = <error>]
+// CHECK:STDOUT:   %giant_literal_overflow: %i32 = wrapper_binding giant_literal_overflow, %.loc33_71.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %giant_literal_to_int_literal_overflow.patt: %pattern_type.dc0 = value_binding_pattern giant_literal_to_int_literal_overflow [concrete = constants.%giant_literal_to_int_literal_overflow.patt]
 // CHECK:STDOUT:   }
@@ -367,14 +367,14 @@ let inf_val: i32 = ConvertF64ToI32(Div(1.0, 0.0));
 // CHECK:STDOUT:     %Core.ref.loc40: <namespace> = name_ref Core, imports.%Core.048aa3.1 [concrete = imports.%Core.048aa3.1]
 // CHECK:STDOUT:     %IntLiteral.ref.loc40: type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %giant_literal_to_int_literal_overflow: Core.IntLiteral = value_binding giant_literal_to_int_literal_overflow, %.loc40_106.2 [concrete = <error>]
+// CHECK:STDOUT:   %giant_literal_to_int_literal_overflow: Core.IntLiteral = wrapper_binding giant_literal_to_int_literal_overflow, %.loc40_106.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %giant_exponent_literal_overflow.patt: %pattern_type.6b6 = value_binding_pattern giant_exponent_literal_overflow [concrete = constants.%giant_exponent_literal_overflow.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc47_107.1: %i32 = value_of_initializer @__global_init.%ConvertFloatLiteralToI32.call.loc47 [concrete = <error>]
 // CHECK:STDOUT:   %.loc47_107.2: %i32 = converted @__global_init.%ConvertFloatLiteralToI32.call.loc47, %.loc47_107.1 [concrete = <error>]
 // CHECK:STDOUT:   %i32.loc47: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %giant_exponent_literal_overflow: %i32 = value_binding giant_exponent_literal_overflow, %.loc47_107.2 [concrete = <error>]
+// CHECK:STDOUT:   %giant_exponent_literal_overflow: %i32 = wrapper_binding giant_exponent_literal_overflow, %.loc47_107.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %giant_exponent_literal_to_int_literal_overflow.patt: %pattern_type.dc0 = value_binding_pattern giant_exponent_literal_to_int_literal_overflow [concrete = constants.%giant_exponent_literal_to_int_literal_overflow.patt]
 // CHECK:STDOUT:   }
@@ -384,56 +384,56 @@ let inf_val: i32 = ConvertF64ToI32(Div(1.0, 0.0));
 // CHECK:STDOUT:     %Core.ref.loc55: <namespace> = name_ref Core, imports.%Core.048aa3.1 [concrete = imports.%Core.048aa3.1]
 // CHECK:STDOUT:     %IntLiteral.ref.loc55: type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %giant_exponent_literal_to_int_literal_overflow: Core.IntLiteral = value_binding giant_exponent_literal_to_int_literal_overflow, %.loc55_141.2 [concrete = <error>]
+// CHECK:STDOUT:   %giant_exponent_literal_to_int_literal_overflow: Core.IntLiteral = wrapper_binding giant_exponent_literal_to_int_literal_overflow, %.loc55_141.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %literal_overflow_large_mantissa.patt: %pattern_type.6b6 = value_binding_pattern literal_overflow_large_mantissa [concrete = constants.%literal_overflow_large_mantissa.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc62_82.1: %i32 = value_of_initializer @__global_init.%ConvertFloatLiteralToI32.call.loc62 [concrete = <error>]
 // CHECK:STDOUT:   %.loc62_82.2: %i32 = converted @__global_init.%ConvertFloatLiteralToI32.call.loc62, %.loc62_82.1 [concrete = <error>]
 // CHECK:STDOUT:   %i32.loc62: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %literal_overflow_large_mantissa: %i32 = value_binding literal_overflow_large_mantissa, %.loc62_82.2 [concrete = <error>]
+// CHECK:STDOUT:   %literal_overflow_large_mantissa: %i32 = wrapper_binding literal_overflow_large_mantissa, %.loc62_82.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %literal_overflow_med_mantissa.patt: %pattern_type.6b6 = value_binding_pattern literal_overflow_med_mantissa [concrete = constants.%literal_overflow_med_mantissa.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc69_80.1: %i32 = value_of_initializer @__global_init.%ConvertFloatLiteralToI32.call.loc69 [concrete = <error>]
 // CHECK:STDOUT:   %.loc69_80.2: %i32 = converted @__global_init.%ConvertFloatLiteralToI32.call.loc69, %.loc69_80.1 [concrete = <error>]
 // CHECK:STDOUT:   %i32.loc69: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %literal_overflow_med_mantissa: %i32 = value_binding literal_overflow_med_mantissa, %.loc69_80.2 [concrete = <error>]
+// CHECK:STDOUT:   %literal_overflow_med_mantissa: %i32 = wrapper_binding literal_overflow_med_mantissa, %.loc69_80.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %literal_overflow_hex_med_mantissa.patt: %pattern_type.6b6 = value_binding_pattern literal_overflow_hex_med_mantissa [concrete = constants.%literal_overflow_hex_med_mantissa.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc76_85.1: %i32 = value_of_initializer @__global_init.%ConvertFloatLiteralToI32.call.loc76 [concrete = <error>]
 // CHECK:STDOUT:   %.loc76_85.2: %i32 = converted @__global_init.%ConvertFloatLiteralToI32.call.loc76, %.loc76_85.1 [concrete = <error>]
 // CHECK:STDOUT:   %i32.loc76: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %literal_overflow_hex_med_mantissa: %i32 = value_binding literal_overflow_hex_med_mantissa, %.loc76_85.2 [concrete = <error>]
+// CHECK:STDOUT:   %literal_overflow_hex_med_mantissa: %i32 = wrapper_binding literal_overflow_hex_med_mantissa, %.loc76_85.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %literal_overflow_small_mantissa.patt: %pattern_type.6b6 = value_binding_pattern literal_overflow_small_mantissa [concrete = constants.%literal_overflow_small_mantissa.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc83_75.1: %i32 = value_of_initializer @__global_init.%ConvertFloatLiteralToI32.call.loc83 [concrete = <error>]
 // CHECK:STDOUT:   %.loc83_75.2: %i32 = converted @__global_init.%ConvertFloatLiteralToI32.call.loc83, %.loc83_75.1 [concrete = <error>]
 // CHECK:STDOUT:   %i32.loc83: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %literal_overflow_small_mantissa: %i32 = value_binding literal_overflow_small_mantissa, %.loc83_75.2 [concrete = <error>]
+// CHECK:STDOUT:   %literal_overflow_small_mantissa: %i32 = wrapper_binding literal_overflow_small_mantissa, %.loc83_75.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %literal_overflow_bin_small_mantissa.patt: %pattern_type.6b6 = value_binding_pattern literal_overflow_bin_small_mantissa [concrete = constants.%literal_overflow_bin_small_mantissa.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc90_81.1: %i32 = value_of_initializer @__global_init.%ConvertFloatLiteralToI32.call.loc90 [concrete = <error>]
 // CHECK:STDOUT:   %.loc90_81.2: %i32 = converted @__global_init.%ConvertFloatLiteralToI32.call.loc90, %.loc90_81.1 [concrete = <error>]
 // CHECK:STDOUT:   %i32.loc90: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %literal_overflow_bin_small_mantissa: %i32 = value_binding literal_overflow_bin_small_mantissa, %.loc90_81.2 [concrete = <error>]
+// CHECK:STDOUT:   %literal_overflow_bin_small_mantissa: %i32 = wrapper_binding literal_overflow_bin_small_mantissa, %.loc90_81.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %literal_overflow_unsigned_neg.patt: %pattern_type.668 = value_binding_pattern literal_overflow_unsigned_neg [concrete = constants.%literal_overflow_unsigned_neg.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc97_72.1: %u32 = value_of_initializer @__global_init.%ConvertFloatLiteralToU32.call.loc97 [concrete = <error>]
 // CHECK:STDOUT:   %.loc97_72.2: %u32 = converted @__global_init.%ConvertFloatLiteralToU32.call.loc97, %.loc97_72.1 [concrete = <error>]
 // CHECK:STDOUT:   %u32.loc97: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %literal_overflow_unsigned_neg: %u32 = value_binding literal_overflow_unsigned_neg, %.loc97_72.2 [concrete = <error>]
+// CHECK:STDOUT:   %literal_overflow_unsigned_neg: %u32 = wrapper_binding literal_overflow_unsigned_neg, %.loc97_72.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %literal_overflow_bin_unsigned_neg.patt: %pattern_type.668 = value_binding_pattern literal_overflow_bin_unsigned_neg [concrete = constants.%literal_overflow_bin_unsigned_neg.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc104_79.1: %u32 = value_of_initializer @__global_init.%ConvertFloatLiteralToU32.call.loc104 [concrete = <error>]
 // CHECK:STDOUT:   %.loc104_79.2: %u32 = converted @__global_init.%ConvertFloatLiteralToU32.call.loc104, %.loc104_79.1 [concrete = <error>]
 // CHECK:STDOUT:   %u32.loc104: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %literal_overflow_bin_unsigned_neg: %u32 = value_binding literal_overflow_bin_unsigned_neg, %.loc104_79.2 [concrete = <error>]
+// CHECK:STDOUT:   %literal_overflow_bin_unsigned_neg: %u32 = wrapper_binding literal_overflow_bin_unsigned_neg, %.loc104_79.2 [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -572,14 +572,14 @@ let inf_val: i32 = ConvertF64ToI32(Div(1.0, 0.0));
 // CHECK:STDOUT:   %.loc9_49.1: %i32 = value_of_initializer @__global_init.%ConvertF64ToI32.call.loc9 [concrete = <error>]
 // CHECK:STDOUT:   %.loc9_49.2: %i32 = converted @__global_init.%ConvertF64ToI32.call.loc9, %.loc9_49.1 [concrete = <error>]
 // CHECK:STDOUT:   %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %nan_val: %i32 = value_binding nan_val, %.loc9_49.2 [concrete = <error>]
+// CHECK:STDOUT:   %nan_val: %i32 = wrapper_binding nan_val, %.loc9_49.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %inf_val.patt: %pattern_type.6b6 = value_binding_pattern inf_val [concrete = constants.%inf_val.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_49.1: %i32 = value_of_initializer @__global_init.%ConvertF64ToI32.call.loc15 [concrete = <error>]
 // CHECK:STDOUT:   %.loc15_49.2: %i32 = converted @__global_init.%ConvertF64ToI32.call.loc15, %.loc15_49.1 [concrete = <error>]
 // CHECK:STDOUT:   %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %inf_val: %i32 = value_binding inf_val, %.loc15_49.2 [concrete = <error>]
+// CHECK:STDOUT:   %inf_val: %i32 = wrapper_binding inf_val, %.loc15_49.2 [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

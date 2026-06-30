@@ -178,5 +178,21 @@ TEST_F(TreeTest, HighRecursion) {
   EXPECT_FALSE(tree.has_errors());
 }
 
+TEST_F(TreeTest, IncompleteLambdaRecovers) {
+  // An incomplete lambda -- a `fn` introducer with no body, here `(fn)` -- must
+  // still parse to a structurally valid tree (a `Lambda` node with a
+  // placeholder body) rather than leaving an orphaned introducer where an
+  // expression is required, which would fail the parser's own tree
+  // verification.
+  Lex::TokenizedBuffer& tokens =
+      compile_helper_.GetTokenizedBuffer("var x: auto = (fn);");
+  ASSERT_FALSE(tokens.has_errors());
+  ::testing::NiceMock<Testing::MockDiagnosticConsumer> consumer;
+  Parse::ParseOptions options;
+  options.consumer = &consumer;
+  Tree tree = Parse(tokens, options);
+  EXPECT_TRUE(tree.has_errors());
+}
+
 }  // namespace
 }  // namespace Carbon::Parse

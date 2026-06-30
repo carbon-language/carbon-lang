@@ -360,7 +360,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8_20: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %C = value_binding c, %.loc8_33.4
+// CHECK:STDOUT:   %c: %C = wrapper_binding c, %.loc8_33.4
 // CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %.loc8_33.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%.loc8_33.3)
 // CHECK:STDOUT:   <elided>
@@ -418,7 +418,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var
 // CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %c.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%c.var)
 // CHECK:STDOUT:   <elided>
@@ -511,7 +511,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8_20: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %C = value_binding c, %.loc8_41.4
+// CHECK:STDOUT:   %c: %C = wrapper_binding c, %.loc8_41.4
 // CHECK:STDOUT:   %C.cpp_destructor.bound: <bound method> = bound_method %.loc8_41.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call: init %empty_tuple.type = call %C.cpp_destructor.bound(%.loc8_41.3)
 // CHECK:STDOUT:   <elided>
@@ -596,7 +596,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_34.4
+// CHECK:STDOUT:   %c1: %C = wrapper_binding c1, %.loc8_34.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = value_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:   }
@@ -629,7 +629,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc9_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc9_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_42.4
+// CHECK:STDOUT:   %c2: %C = wrapper_binding c2, %.loc9_42.4
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_42.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc9: init %empty_tuple.type = call %C.cpp_destructor.bound.loc9(%.loc9_42.3)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_34.3, constants.%C.cpp_destructor
@@ -732,7 +732,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_38.4
+// CHECK:STDOUT:   %c1: %C = wrapper_binding c1, %.loc8_38.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = value_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:   }
@@ -757,7 +757,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc9_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc9_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_35.4
+// CHECK:STDOUT:   %c2: %C = wrapper_binding c2, %.loc9_35.4
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_35.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc9: init %empty_tuple.type = call %C.cpp_destructor.bound.loc9(%.loc9_35.3)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_38.3, constants.%C.cpp_destructor
@@ -874,7 +874,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1: ref %C = ref_binding c1, %c1.var
+// CHECK:STDOUT:   %c1: ref %C = wrapper_binding c1, %c1.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:     %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete = constants.%c2.var_patt]
@@ -899,7 +899,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc9_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc9_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2: ref %C = ref_binding c2, %c2.var
+// CHECK:STDOUT:   %c2: ref %C = wrapper_binding c2, %c2.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c3.patt: %pattern_type.bbc = ref_binding_pattern c3 [concrete = constants.%c3.patt]
 // CHECK:STDOUT:     %c3.var_patt: %pattern_type.bbc = var_pattern %c3.patt [concrete = constants.%c3.var_patt]
@@ -919,7 +919,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc10_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc10_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c3: ref %C = ref_binding c3, %c3.var
+// CHECK:STDOUT:   %c3: ref %C = wrapper_binding c3, %c3.var
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc10: <bound method> = bound_method %c3.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc10: init %empty_tuple.type = call %C.cpp_destructor.bound.loc10(%c3.var)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc9: <bound method> = bound_method %c2.var, constants.%C.cpp_destructor
@@ -1021,7 +1021,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_35.4
+// CHECK:STDOUT:   %c1: %C = wrapper_binding c1, %.loc8_35.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = value_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:   }
@@ -1045,7 +1045,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_28.7
+// CHECK:STDOUT:   %c2: %C = wrapper_binding c2, %.loc9_28.7
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_28.6, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc9: init %empty_tuple.type = call %C.cpp_destructor.bound.loc9(%.loc9_28.6)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_35.3, constants.%C.cpp_destructor
@@ -1163,7 +1163,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_38.4
+// CHECK:STDOUT:   %c1: %C = wrapper_binding c1, %.loc8_38.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = value_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:   }
@@ -1188,7 +1188,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc9_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc9_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_35.4
+// CHECK:STDOUT:   %c2: %C = wrapper_binding c2, %.loc9_35.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c3.patt: %pattern_type.bbc = value_binding_pattern c3 [concrete = constants.%c3.patt]
 // CHECK:STDOUT:   }
@@ -1212,7 +1212,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_28.7
+// CHECK:STDOUT:   %c3: %C = wrapper_binding c3, %.loc10_28.7
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_28.6, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc10: init %empty_tuple.type = call %C.cpp_destructor.bound.loc10(%.loc10_28.6)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc9: <bound method> = bound_method %.loc9_35.3, constants.%C.cpp_destructor

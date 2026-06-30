@@ -738,7 +738,7 @@ Value expressions are further broken down into three _expression phases_:
 -   A _runtime value_ has a dynamic value only known at runtime.
 
 Template constants and symbolic constants are collectively called _compile-time
-constants_ and correspond to declarations using `:!`.
+constants_ and correspond to declarations of compile-time parameters.
 
 Carbon will automatically convert a template constant to a symbolic constant, or
 any value to a runtime value:
@@ -1049,6 +1049,25 @@ name. It can only match values that may be
 underscore (`_`) may be used instead of the name to match a value but without
 binding any name to it.
 
+Every binding pattern has a _phase_ (either compile-time or runtime). A
+[compile-time binding](#checked-and-template-parameters) can only match
+[compile-time constants](#expression-phases), not run-time values.
+
+To minimize keyword noise, Carbon uses contextual defaults to determine the
+phase (compile-time vs runtime) of a binding in parameter lists:
+
+-   Parameters to compile-time entities (such as `interface`, `impl`, and
+    `class`) are checked generics by default.
+-   Deduced function parameters (declared in `[]`) are checked generics by
+    default.
+-   Explicit function parameters and local bindings (declared in `()`) are
+    runtime by default.
+
+These defaults can be overridden by using the `template`, `generic`, or
+`runtime` keywords. However, using a keyword that matches the contextual default
+is disallowed to maintain consistency. A `template` keyword before the binding
+selects a template binding instead of a symbolic binding.
+
 Binding patterns default to _`let` bindings_. The `var` keyword is used to make
 it a _`var` binding_.
 
@@ -1068,11 +1087,6 @@ implementation's choice among these options may be indirectly observable, for
 example through side effects of the destructor, copy, and move operations, but
 the program's correctness must not depend on which option the Carbon
 implementation chooses.
-
-A [compile-time binding](#checked-and-template-parameters) uses `:!` instead of
-a colon (`:`) and can only match [compile-time constants](#expression-phases),
-not run-time values. A `template` keyword before the binding selects a template
-binding instead of a symbolic binding.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
@@ -2729,9 +2743,13 @@ not itself a type.
 
 ### Checked and template parameters
 
-The `:!` marks it as a compile-time binding pattern, and so `T` is a
-compile-time parameter. Compile-time parameters may either be _checked_ or
-_template_, and default to checked.
+Compile-time bindings may either be _checked_ or _template_ bindings and are
+often used as _parameters_ to generic entities. A binding pattern declares a
+checked binding if it's marked `generic`, or appears in a context that only
+supports compile-time bindings, such as the deduced parameter list `[]` of a
+function, the parameter list of a `class` or `interface`, or an associated
+constant declaration. A binding pattern declares a template binding if it's
+marked `template`.
 
 "Checked" here means that the body of `Min` is type checked when the function is
 defined, independent of the specific values `T` is instantiated with, and name
@@ -2741,7 +2759,8 @@ type `T` that implements the `Ordered` interface. Subsequent calls to `Min` only
 need to check that the deduced value of `T` implements `Ordered`.
 
 The parameter could alternatively be declared to be a _template_ generic
-parameter by prefixing with the `template` keyword, as in `template T:! type`.
+parameter by prefixing it with the `template` keyword. Keywords matching the
+contextual default are disallowed to ensure consistency.
 
 ```carbon
 fn Convert[template T:! type](source: T, template U:! type) -> U {
@@ -2780,9 +2799,10 @@ constraints declared in the function signature and evaluated at compile-time.
 
 The [expression phase](#expression-phases) of a checked parameter is a symbolic
 constant whereas the expression phase of a template parameter is template
-constant. A binding pattern using `:!` is a _compile-time binding pattern_; more
-specifically a _template binding pattern_ if it uses `template`, and a _symbolic
-binding pattern_ if it does not.
+constant. A binding pattern for a compile-time parameter is a _compile-time
+binding pattern_; more specifically a _template binding pattern_ if it uses
+`template`, and a _symbolic binding pattern_ if it uses `generic` or defaults to
+it.
 
 Although checked generics are generally preferred, templates enable translation
 of code between C++ and Carbon, and address some cases where the type checking
@@ -3003,13 +3023,13 @@ to a checked parameter.
 
 An associated constant is a member of an interface whose value is determined by
 the implementation of that interface for a specific type. These values are set
-to compile-time values in implementations, and so use the
-[`:!` compile-time binding pattern syntax](#checked-and-template-parameters)
-inside a [`let` declaration](#constant-let-declarations) without an initializer.
-This allows types in the signatures of functions in the interface to vary. For
-example, an interface describing a
-[stack](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>) might use an
-associated constant to represent the type of elements stored in the stack.
+to compile-time values in implementations, and so are defined using a
+[`let` declaration](#constant-let-declarations) without an initializer, which
+defines an associated constant in this context. This allows types in the
+signatures of functions in the interface to vary. For example, an interface
+describing a [stack](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>)
+might use an associated constant to represent the type of elements stored in the
+stack.
 
 ```
 interface StackInterface {
@@ -3055,9 +3075,9 @@ Many Carbon entities, not just functions, may be made generic by adding
 #### Generic Classes
 
 Classes may be defined with an optional explicit parameter list. All parameters
-to a class must be compile-time, and so defined with `:!`, either with or
-without the `template` prefix. For example, to define a stack that can hold
-values of any type `T`:
+to a class must be compile-time, and are checked generic parameters by default,
+or can be marked with the `template` keyword. For example, to define a stack
+that can hold values of any type `T`:
 
 ```carbon
 class Stack(T:! type) {
@@ -3821,7 +3841,7 @@ the critical underpinnings of such abstractions.
 > **TODO:** References need to be evolved. Needs a detailed design and a high
 > level summary provided inline.
 
-> References: [Lambdas](lambdas.md),
+> References: [Functions](functions.md),
 > [Proposal #3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
 
 #### Co-routines

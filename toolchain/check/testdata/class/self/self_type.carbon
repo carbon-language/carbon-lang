@@ -109,7 +109,7 @@ fn Class.F(self) -> i32 {
 // CHECK:STDOUT:     %.loc25: Core.Form = init_form %i32.loc25 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param.loc25: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc25: %Class = value_binding self, %self.param.loc25
+// CHECK:STDOUT:     %self.loc25: %Class = wrapper_binding self, %self.param.loc25
 // CHECK:STDOUT:     %return.param.loc25: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc25: ref %i32 = return_slot %return.param.loc25
 // CHECK:STDOUT:   }
@@ -126,7 +126,7 @@ fn Class.F(self) -> i32 {
 // CHECK:STDOUT:     %.loc16: Core.Form = init_form %i32.loc16 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param.loc16: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc16: %Class = value_binding self, %self.param.loc16
+// CHECK:STDOUT:     %self.loc16: %Class = wrapper_binding self, %self.param.loc16
 // CHECK:STDOUT:     %return.param.loc16: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc16: ref %i32 = return_slot %return.param.loc16
 // CHECK:STDOUT:   }
@@ -179,7 +179,7 @@ fn Class.F(self) -> i32 {
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %Class to %.loc17_16.1 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %return.param, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   %Self.ref.loc18: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:   %s: ref %Class = ref_binding s, %return.param
+// CHECK:STDOUT:   %s: ref %Class = wrapper_binding s, %return.param
 // CHECK:STDOUT:   %s.ref.loc19_5: ref %Class = name_ref s, %s
 // CHECK:STDOUT:   %s.ref.loc19_16: ref %Class = name_ref s, %s
 // CHECK:STDOUT:   %addr: %ptr.7ee = addr_of %s.ref.loc19_16

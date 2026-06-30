@@ -97,21 +97,21 @@ let c: CharLiteral = AddCharInt('a', Negate(98));
 // CHECK:STDOUT:   %.loc12_39.1: Core.CharLiteral = value_of_initializer @__global_init.%AddCharInt.call.loc12 [concrete = constants.%.711]
 // CHECK:STDOUT:   %.loc12_39.2: Core.CharLiteral = converted @__global_init.%AddCharInt.call.loc12, %.loc12_39.1 [concrete = constants.%.711]
 // CHECK:STDOUT:   %CharLiteral.ref.loc12: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %a: Core.CharLiteral = value_binding a, %.loc12_39.2
+// CHECK:STDOUT:   %a: Core.CharLiteral = wrapper_binding a, %.loc12_39.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.8c6 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_44.1: Core.CharLiteral = value_of_initializer @__global_init.%AddCharInt.call.loc15 [concrete = constants.%.ae7]
 // CHECK:STDOUT:   %.loc15_44.2: Core.CharLiteral = converted @__global_init.%AddCharInt.call.loc15, %.loc15_44.1 [concrete = constants.%.ae7]
 // CHECK:STDOUT:   %CharLiteral.ref.loc15: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %b: Core.CharLiteral = value_binding b, %.loc15_44.2
+// CHECK:STDOUT:   %b: Core.CharLiteral = wrapper_binding b, %.loc15_44.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.8c6 = value_binding_pattern c [concrete = constants.%c.patt.c30]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_44.1: Core.CharLiteral = value_of_initializer @__global_init.%AddCharInt.call.loc16 [concrete = constants.%.a8b]
 // CHECK:STDOUT:   %.loc16_44.2: Core.CharLiteral = converted @__global_init.%AddCharInt.call.loc16, %.loc16_44.1 [concrete = constants.%.a8b]
 // CHECK:STDOUT:   %CharLiteral.ref.loc16: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %c: Core.CharLiteral = value_binding c, %.loc16_44.2
+// CHECK:STDOUT:   %c: Core.CharLiteral = wrapper_binding c, %.loc16_44.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

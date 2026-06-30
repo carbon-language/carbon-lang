@@ -78,7 +78,7 @@ fn G() {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: ref %i32 = call %F.ref()
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x: ref %i32 = ref_binding x, %F.call
+// CHECK:STDOUT:   %x: ref %i32 = wrapper_binding x, %F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

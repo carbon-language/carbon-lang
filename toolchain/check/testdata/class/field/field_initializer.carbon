@@ -129,7 +129,7 @@ var C: Class = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.var: ref %Class = var %C.var_patt [concrete]
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %C: ref %Class = ref_binding C, %C.var [concrete = %C.var]
+// CHECK:STDOUT:   %C: ref %Class = wrapper_binding C, %C.var [concrete = %C.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

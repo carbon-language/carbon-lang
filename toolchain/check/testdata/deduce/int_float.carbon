@@ -124,7 +124,7 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:       %N.ref.loc4: Core.IntLiteral = name_ref N, %N.loc4_7.2 [symbolic = %N.loc4_7.1 (constants.%N)]
 // CHECK:STDOUT:       %Int.loc4_47.2: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc4_47.1 (constants.%Int)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: @F.%Int.loc4_47.1 (%Int) = value_binding n, %n.param
+// CHECK:STDOUT:     %n: @F.%Int.loc4_47.1 (%Int) = wrapper_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -139,7 +139,7 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:     %.loc8: Core.Form = init_form %IntLiteral.ref [concrete = constants.%.f7d]
 // CHECK:STDOUT:     %a.param: %i64 = value_param call_param0
 // CHECK:STDOUT:     %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
-// CHECK:STDOUT:     %a: %i64 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i64 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -286,7 +286,7 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:       %N.ref.loc4: Core.IntLiteral = name_ref N, %N.loc4_7.2 [symbolic = %N.loc4_7.1 (constants.%N)]
 // CHECK:STDOUT:       %Float.loc4_49.2: type = class_type @Float, @Float(constants.%N) [symbolic = %Float.loc4_49.1 (constants.%Float)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: @F.%Float.loc4_49.1 (%Float) = value_binding n, %n.param
+// CHECK:STDOUT:     %n: @F.%Float.loc4_49.1 (%Float) = wrapper_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -301,7 +301,7 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:     %.loc8: Core.Form = init_form %IntLiteral.ref [concrete = constants.%.f7d]
 // CHECK:STDOUT:     %a.param: %f64.dc1 = value_param call_param0
 // CHECK:STDOUT:     %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:     %a: %f64.dc1 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %f64.dc1 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }

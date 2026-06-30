@@ -74,7 +74,7 @@ choice Always(T:! type) {
 // CHECK:STDOUT:     %.loc16_1.10: init @Always.%Always (%Always) = converted %.loc16_1.3, %.loc16_1.9 [symbolic = %Always.val (constants.%Always.val)]
 // CHECK:STDOUT:     %.loc16_1.11: ref @Always.%Always (%Always) = temporary %.loc16_1.4, %.loc16_1.10 [symbolic = %.loc16_1.13 (constants.%.4eb)]
 // CHECK:STDOUT:     %.loc16_1.12: @Always.%Always (%Always) = acquire_value %.loc16_1.11 [symbolic = %Always.val (constants.%Always.val)]
-// CHECK:STDOUT:     %Sunny: @Always.%Always (%Always) = value_binding Sunny, %.loc16_1.12
+// CHECK:STDOUT:     %Sunny: @Always.%Always (%Always) = wrapper_binding Sunny, %.loc16_1.12
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

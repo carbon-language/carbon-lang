@@ -108,6 +108,10 @@ source file:
 -   support an extensible operator set
 -   different whitespace restrictions or no whitespace restrictions
 
+[Alternatives from proposal #7254](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#alternatives-considered):
+
+-   [Keep the `:!` syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#keep-the--syntax)
+
 ## References
 
 -   Proposal
@@ -138,3 +142,5 @@ source file:
     [#2511: Assignment statements](https://github.com/carbon-language/carbon-lang/pull/2511)
 -   Proposal
     [#2665: Semicolons terminate statements](https://github.com/carbon-language/carbon-lang/pull/2665)
+-   Proposal
+    [#7254: Replace `:!` and `:?` with keywords and contextual defaults](https://github.com/carbon-language/carbon-lang/pull/7254)

@@ -86,7 +86,7 @@ fn MyF() {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %UnsizedEnum.ref: type = name_ref UnsizedEnum, imports.%UnsizedEnum.decl [concrete = constants.%UnsizedEnum]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %e: %UnsizedEnum = value_binding e, %e.param
+// CHECK:STDOUT:     %e: %UnsizedEnum = wrapper_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

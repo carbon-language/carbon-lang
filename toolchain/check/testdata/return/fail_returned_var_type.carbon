@@ -118,7 +118,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %.loc23_12: init %f64.dc1 = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.895]
 // CHECK:STDOUT:   assign %v.var, %.loc23_12
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %v: ref %f64.dc1 = ref_binding v, %v.var
+// CHECK:STDOUT:   %v: ref %f64.dc1 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   %.loc23_17: %f64.dc1 = acquire_value %v
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)

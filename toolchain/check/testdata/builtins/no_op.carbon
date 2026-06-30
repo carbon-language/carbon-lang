@@ -139,7 +139,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:     %.loc7_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_9.3: type = converted %.loc7_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_tuple.type = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

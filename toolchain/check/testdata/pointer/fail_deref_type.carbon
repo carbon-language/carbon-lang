@@ -60,7 +60,7 @@ var p2: i32->foo;
 // CHECK:STDOUT:     %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc22: ref <error> = deref %i32.loc22 [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: ref <error> = ref_binding p, <error> [concrete = <error>]
+// CHECK:STDOUT:   %p: <error> = wrapper_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p2.patt: <error> = ref_binding_pattern p2 [concrete = <error>]
 // CHECK:STDOUT:     %p2.var_patt: <error> = var_pattern %p2.patt [concrete = <error>]
@@ -71,7 +71,7 @@ var p2: i32->foo;
 // CHECK:STDOUT:     %.loc27: ref <error> = deref %i32.loc27 [concrete = <error>]
 // CHECK:STDOUT:     %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p2: ref <error> = ref_binding p2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %p2: <error> = wrapper_binding p2, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

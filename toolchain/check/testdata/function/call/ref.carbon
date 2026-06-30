@@ -158,7 +158,7 @@ fn G(ref d: D) { F(ref d); }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %x: ref %i32 = ref_binding x, %x.param
+// CHECK:STDOUT:     %x: ref %i32 = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
@@ -181,7 +181,7 @@ fn G(ref d: D) { F(ref d); }
 // CHECK:STDOUT:   %.loc8: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   assign %y.var, %.loc8
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %y: ref %i32 = ref_binding y, %y.var
+// CHECK:STDOUT:   %y: ref %i32 = wrapper_binding y, %y.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %y.ref: ref %i32 = name_ref y, %y
 // CHECK:STDOUT:   %.loc10: %i32 = ref_tag %y.ref
@@ -241,7 +241,7 @@ fn G(ref d: D) { F(ref d); }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %self: ref %C = ref_binding self, %self.param
+// CHECK:STDOUT:     %self: ref %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -269,7 +269,7 @@ fn G(ref d: D) { F(ref d); }
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %C to %.loc10_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %c.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, @C.%C.F.decl [concrete = constants.%C.F]
 // CHECK:STDOUT:   %C.F.bound: <bound method> = bound_method %c.ref, %F.ref

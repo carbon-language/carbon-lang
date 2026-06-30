@@ -53,6 +53,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Conditional conformance](#conditional-conformance)
 -   [Interface parameters and associated constants](#interface-parameters-and-associated-constants)
 -   [Type constraints](#type-constraints)
+-   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -83,18 +84,23 @@ example, Rust supports
 ## Checked versus template parameters
 
 When we distinguish between checked and template generics in Carbon, it is on a
-parameter by parameter basis. A single function can take a mix of regular,
-checked, and template parameters.
+parameter by parameter basis. A single function can take a mix of runtime,
+checked generic, and template generic parameters.
 
--   **Regular parameters**, or "dynamic parameters", are designated using the
-    "\<name>`:` \<type>" syntax (or "\<value>").
--   **Checked parameters** are designated using `:!` between the name and the
-    type (so it is "\<name>`:!` \<type>").
--   **Template parameters** are designated using "`template` \<name>`:!`
-    \<type>".
+-   **Runtime parameters** are the default for explicit function parameter lists
+    (`()`) and locals. They can be explicitly marked with the `runtime` keyword
+    in a context where they are not the default.
+-   **Checked generic parameters** are the default in deduced parameter lists
+    (`[]`) and parameters to compile-time entities (like `interface` or
+    `class`). They can be explicitly marked with the `generic` keyword when used
+    in explicit parameter lists (`()`).
+-   **Template generic parameters** are designated by prefixing the parameter
+    with the `template` keyword and are never the default.
+
+Keywords matching the contextual default are disallowed to ensure consistency.
 
 The syntax for checked and template parameters was decided in
-[questions-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565).
+[leads issue #6932](https://github.com/carbon-language/carbon-lang/issues/6932).
 
 Expected difference between checked and template parameters:
 
@@ -288,27 +294,23 @@ classes, interfaces, and so on. There are three kinds of binding patterns,
 corresponding to
 [the three expression phases](/docs/design/README.md#expression-phases):
 
--   A _runtime binding pattern_ binds to a dynamic value at runtime, and is
-    written using a `:`, as in `x: i32`.
--   A _symbolic binding pattern_ binds to a compile-time value that is not known
-    when type checking, and is used to declare
-    [checked generic](#checked-versus-template-parameters) parameters. These
-    binding use `:!`, as in `T:! type`.
+-   A _runtime binding pattern_ binds to a dynamic value at runtime. It is the
+    default for explicit function parameters.
+-   A _symbolic binding pattern_ (or generic binding) binds to a compile-time
+    value that is not known when type checking. It is the default for deduced
+    function parameters and parameters to compile-time entities.
 -   A _template binding pattern_ binds to a compile-time value that is known
-    when type checking, and is used to declare
-    [template](#checked-versus-template-parameters) parameters. These bindings
-    use the keyword `template` in addition to `:!`, as in `template T:! type`.
+    when type checking. It is indicated by the `template` keyword.
 
-The last two binding patterns, which are about binding a compile-time value, are
-called _compile-time binding patterns_, and correspond to those binding patterns
-that use `:!`.
+These patterns use the keywords `runtime`, `generic`, and `template` to override
+the contextual defaults when necessary.
 
-The name being declared, which is the identifier to the left of the `:` or `:!`,
-is called a _binding_, or more specifically a _runtime binding_, _compile-time
+The name being declared, which is the identifier to the left of the `:` is
+called a _binding_, or more specifically a _runtime binding_, _compile-time
 binding_, _symbolic binding_, or _template binding_. The expression to the right
 defining the type of the binding pattern is called the _binding type
 expression_, a kind of [type expression](#type-expression). For example, in
-`T:! Hashable`, `T` is the binding (a symbolic binding in this case), and
+`generic T: Hashable`, `T` is the binding (a symbolic binding in this case), and
 `Hashable` is the binding type expression.
 
 ## Types and `type`
@@ -363,10 +365,9 @@ cases, we are concerned with the type value after the implicit conversion.
 ## Facet binding
 
 We use the term _facet binding_ to refer to the name introduced by a
-[compile-time binding pattern](#bindings) (using `:!` with or without the
-`template` modifier) where the declared type is a [facet type](#facet-type). In
-the binding pattern `T:! Hashable`, `T` is a facet binding, and the value of `T`
-is a [facet](#facet).
+[compile-time binding pattern](#bindings) where the declared type is a
+[facet type](#facet-type). In the binding pattern `generic T: Hashable`, `T` is
+a facet binding, and the value of `T` is a [facet](#facet).
 
 ## Deduced parameter
 
@@ -857,6 +858,16 @@ express, for example:
 Note that type constraints can be a restriction on one facet parameter or
 associated facet, or can define a relationship between multiple facets.
 
+## Alternatives considered
+
+-   [Keep the `:!` syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#keep-the--syntax)
+-   [Alternative keyword names](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#alternative-keyword-names)
+-   [Use `template generic` instead of just `template`](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#use-template-generic-instead-of-just-template)
+-   [Context-independent syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#context-independent-syntax)
+-   [Erased model for generics](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#erased-model-for-generics)
+-   [Context-sensitive defaults based on parameter type](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#context-sensitive-defaults-based-on-parameter-type)
+-   [Allow redundant phase keywords](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#allow-redundant-phase-keywords)
+
 ## References
 
 -   [#447: Generics terminology](https://github.com/carbon-language/carbon-lang/pull/447)
@@ -866,3 +877,4 @@ associated facet, or can define a relationship between multiple facets.
 -   [#2138: Checked and template generic terminology](https://github.com/carbon-language/carbon-lang/pull/2138)
 -   [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
+-   [#7254: Replace `:!` and `:?` with keywords and contextual defaults](https://github.com/carbon-language/carbon-lang/pull/7254)

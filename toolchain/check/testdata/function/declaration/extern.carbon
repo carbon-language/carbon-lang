@@ -132,7 +132,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_tuple.type = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F [from "basic.carbon"];
@@ -209,7 +209,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

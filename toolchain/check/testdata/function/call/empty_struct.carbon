@@ -56,7 +56,7 @@ fn Main() {
 // CHECK:STDOUT:       %.loc15_13.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc15_13.3: type = converted %.loc15_13.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %empty_struct_type = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %empty_struct_type = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }

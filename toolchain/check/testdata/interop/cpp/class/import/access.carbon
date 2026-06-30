@@ -1654,7 +1654,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %.loc8_36.1: ref %i32 = class_element_access %s.ref, element0
 // CHECK:STDOUT:   %.loc8_36.2: %i32 = acquire_value %.loc8_36.1
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc8_36.2
+// CHECK:STDOUT:   %instance_data: %i32 = wrapper_binding instance_data, %.loc8_36.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %static_data.patt: %pattern_type.6b6 = value_binding_pattern static_data [concrete = constants.%static_data.patt.405]
 // CHECK:STDOUT:   }
@@ -1664,7 +1664,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %static_data.ref: ref %i32 = name_ref static_data, imports.%static_data.var [concrete = imports.%static_data.var]
 // CHECK:STDOUT:   %.loc9: %i32 = acquire_value %static_data.ref
 // CHECK:STDOUT:   %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %static_data: %i32 = value_binding static_data, %.loc9
+// CHECK:STDOUT:   %static_data: %i32 = wrapper_binding static_data, %.loc9
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1702,7 +1702,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %.loc12_36.4: ref %i32 = class_element_access %.loc12_36.3, element0
 // CHECK:STDOUT:   %.loc12_36.5: %i32 = acquire_value %.loc12_36.4
 // CHECK:STDOUT:   %i32.loc12: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc12_36.5
+// CHECK:STDOUT:   %instance_data: %i32 = wrapper_binding instance_data, %.loc12_36.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %static_data.patt: %pattern_type.6b6 = value_binding_pattern static_data [concrete = constants.%static_data.patt.405]
 // CHECK:STDOUT:   }
@@ -1711,7 +1711,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %static_data.ref: ref %i32 = name_ref static_data, imports.%static_data.var [concrete = imports.%static_data.var]
 // CHECK:STDOUT:   %.loc13: %i32 = acquire_value %static_data.ref
 // CHECK:STDOUT:   %i32.loc13: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %static_data: %i32 = value_binding static_data, %.loc13
+// CHECK:STDOUT:   %static_data: %i32 = wrapper_binding static_data, %.loc13
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1770,7 +1770,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %.loc10_41.4: ref %i32 = class_element_access %.loc10_41.3, element0
 // CHECK:STDOUT:   %.loc10_41.5: %i32 = acquire_value %.loc10_41.4
 // CHECK:STDOUT:   %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc10_41.5
+// CHECK:STDOUT:   %instance_data: %i32 = wrapper_binding instance_data, %.loc10_41.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %unqualified_static_data.patt: %pattern_type.6b6 = value_binding_pattern unqualified_static_data [concrete = constants.%unqualified_static_data.patt]
 // CHECK:STDOUT:   }
@@ -1778,7 +1778,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %static_data.ref.loc11: ref %i32 = name_ref static_data, imports.%static_data.var [concrete = imports.%static_data.var]
 // CHECK:STDOUT:   %.loc11: %i32 = acquire_value %static_data.ref.loc11
 // CHECK:STDOUT:   %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %unqualified_static_data: %i32 = value_binding unqualified_static_data, %.loc11
+// CHECK:STDOUT:   %unqualified_static_data: %i32 = wrapper_binding unqualified_static_data, %.loc11
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %derived_static_data.patt: %pattern_type.6b6 = value_binding_pattern derived_static_data [concrete = constants.%derived_static_data.patt]
 // CHECK:STDOUT:   }
@@ -1786,7 +1786,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %static_data.ref.loc12: ref %i32 = name_ref static_data, imports.%static_data.var [concrete = imports.%static_data.var]
 // CHECK:STDOUT:   %.loc12: %i32 = acquire_value %static_data.ref.loc12
 // CHECK:STDOUT:   %i32.loc12: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %derived_static_data: %i32 = value_binding derived_static_data, %.loc12
+// CHECK:STDOUT:   %derived_static_data: %i32 = wrapper_binding derived_static_data, %.loc12
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %base_static_data.patt: %pattern_type.6b6 = value_binding_pattern base_static_data [concrete = constants.%base_static_data.patt]
 // CHECK:STDOUT:   }
@@ -1795,7 +1795,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %static_data.ref.loc13: ref %i32 = name_ref static_data, imports.%static_data.var [concrete = imports.%static_data.var]
 // CHECK:STDOUT:   %.loc13: %i32 = acquire_value %static_data.ref.loc13
 // CHECK:STDOUT:   %i32.loc13: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %base_static_data: %i32 = value_binding base_static_data, %.loc13
+// CHECK:STDOUT:   %base_static_data: %i32 = wrapper_binding base_static_data, %.loc13
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

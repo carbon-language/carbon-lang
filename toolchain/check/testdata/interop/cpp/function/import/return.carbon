@@ -239,7 +239,7 @@ fn Var() {
 // CHECK:STDOUT:     %Cpp.ref.loc11_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %nullptr_t.ref: type = name_ref nullptr_t, constants.%Cpp.nullptr_t [concrete = constants.%Cpp.nullptr_t]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %Cpp.nullptr_t = ref_binding c, %c.var
+// CHECK:STDOUT:   %c: ref %Cpp.nullptr_t = wrapper_binding c, %c.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %c.var, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%c.var)
 // CHECK:STDOUT:   <elided>
@@ -308,7 +308,7 @@ fn Var() {
 // CHECK:STDOUT:       %u8.1: type = class_type @UInt, @UInt(constants.%int_8) [concrete = constants.%u8]
 // CHECK:STDOUT:       %u8.2: type = type_literal %u8.1 [concrete = constants.%u8]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %return: %ptr = value_binding r#return, %return.param
+// CHECK:STDOUT:     %return: %ptr = wrapper_binding r#return, %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -424,7 +424,7 @@ fn Var() {
 // CHECK:STDOUT:   %ReturnU32.call: init %u32 = call imports.%ReturnU32.decl()
 // CHECK:STDOUT:   assign %my_u32.var, %ReturnU32.call
 // CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %my_u32: ref %u32 = ref_binding my_u32, %my_u32.var
+// CHECK:STDOUT:   %my_u32: ref %u32 = wrapper_binding my_u32, %my_u32.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %my_u32.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%my_u32.var)
 // CHECK:STDOUT:   return

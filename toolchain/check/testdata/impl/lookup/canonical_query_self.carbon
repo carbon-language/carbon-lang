@@ -195,7 +195,7 @@ fn G() {
 // CHECK:STDOUT:       %T.as_type.loc22_20.2: type = facet_access_type %T.ref.loc22 [symbolic = %T.as_type.loc22_20.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc22_20.2: type = converted %T.ref.loc22, %T.as_type.loc22_20.2 [symbolic = %T.as_type.loc22_20.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: @F.%T.as_type.loc22_20.1 (%T.as_type) = value_binding t, %t.param
+// CHECK:STDOUT:     %t: @F.%T.as_type.loc22_20.1 (%T.as_type) = wrapper_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
@@ -215,7 +215,7 @@ fn G() {
 // CHECK:STDOUT:       %Self.as_type.loc16_9.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc16_9.1 (constants.%Self.as_type.c84)]
 // CHECK:STDOUT:       %.loc16_9.2: type = converted %Self.ref, %Self.as_type.loc16_9.2 [symbolic = %Self.as_type.loc16_9.1 (constants.%Self.as_type.c84)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.II.%Self.as_type.loc16_9.1 (%Self.as_type.c84) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.II.%Self.as_type.loc16_9.1 (%Self.as_type.c84) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.II.decl [concrete = constants.%assoc0.153]
 // CHECK:STDOUT:
@@ -244,7 +244,7 @@ fn G() {
 // CHECK:STDOUT:       %Self.as_type.loc19_9.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc19_9.1 (constants.%Self.as_type.976)]
 // CHECK:STDOUT:       %.loc19_9.2: type = converted %Self.ref, %Self.as_type.loc19_9.2 [symbolic = %Self.as_type.loc19_9.1 (constants.%Self.as_type.976)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @J.WithSelf.JJ.%Self.as_type.loc19_9.1 (%Self.as_type.976) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @J.WithSelf.JJ.%Self.as_type.loc19_9.1 (%Self.as_type.976) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, %J.WithSelf.JJ.decl [concrete = constants.%assoc0.7d8]
 // CHECK:STDOUT:
@@ -263,7 +263,7 @@ fn G() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%C.as.I.impl.II.decl), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
@@ -281,7 +281,7 @@ fn G() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (%C.as.J.impl.JJ.decl), @C.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]

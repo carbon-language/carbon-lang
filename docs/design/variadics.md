@@ -219,6 +219,19 @@ the named pack from the Nth scrutinee. The binding pattern's type expression may
 contain an each-name (such as `each ElementType` in the `Zip` example), but if
 so, it must be a deduced parameter of the enclosing pattern.
 
+When a phase keyword (like `generic` or `template`) and/or a modifier (like
+`ref`) are used in a pack expansion pattern, the order is: `...` _phase_
+_modifier_ `each` _name_.
+
+For example:
+
+-   `... generic each T: type`
+-   `... runtime ref each x: i32` (Note: runtime parameters are the default for
+    explicit parameters so this would only come up in a hypothetical case where
+    we allow this in deduced parameters).
+
+This ensures that `each` remains most tightly attached to the binding name.
+
 > **Future work:** That restriction can probably be relaxed, but we currently
 > don't have motivating use cases to constrain the design.
 

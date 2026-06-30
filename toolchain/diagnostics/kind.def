@@ -318,6 +318,7 @@ CARBON_DIAGNOSTIC_KIND(FieldWithTuplePattern)
 CARBON_DIAGNOSTIC_KIND(GenericVirtual)
 CARBON_DIAGNOSTIC_KIND(OverrideWithoutBase)
 CARBON_DIAGNOSTIC_KIND(OverrideWithoutVirtualInBase)
+CARBON_DIAGNOSTIC_KIND(OverrideCandidateArityMismatch)
 CARBON_DIAGNOSTIC_KIND(VirtualWithoutSelf)
 
 // Deduction.

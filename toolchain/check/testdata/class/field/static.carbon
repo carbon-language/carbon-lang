@@ -114,14 +114,14 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %static_field.var: ref %i32 = var %static_field.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %static_field: ref %i32 = ref_binding static_field, %static_field.var [concrete = %static_field.var]
+// CHECK:STDOUT:   %static_field: ref %i32 = wrapper_binding static_field, %static_field.var [concrete = %static_field.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %static_field_with_init.patt: %pattern_type.6b6 = ref_binding_pattern static_field_with_init [concrete = constants.%static_field_with_init.patt]
 // CHECK:STDOUT:     %static_field_with_init.var_patt: %pattern_type.6b6 = var_pattern %static_field_with_init.patt [concrete = constants.%static_field_with_init.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %static_field_with_init.var: ref %i32 = var %static_field_with_init.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %static_field_with_init: ref %i32 = ref_binding static_field_with_init, %static_field_with_init.var [concrete = %static_field_with_init.var]
+// CHECK:STDOUT:   %static_field_with_init: ref %i32 = wrapper_binding static_field_with_init, %static_field_with_init.var [concrete = %static_field_with_init.var]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

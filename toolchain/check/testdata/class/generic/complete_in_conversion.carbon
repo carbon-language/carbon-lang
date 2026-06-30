@@ -145,7 +145,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N: Core.IntLiteral = value_binding N, %N.param
+// CHECK:STDOUT:     %N: Core.IntLiteral = wrapper_binding N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -177,7 +177,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%int_0.3c0) [concrete = constants.%A.32a]
 // CHECK:STDOUT:       %ptr.loc12: type = ptr_type %A [concrete = constants.%ptr.4dd]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %ptr.4dd = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %ptr.4dd = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -243,7 +243,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %ptr.loc20: type = ptr_type %B.ref [concrete = constants.%ptr.432]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %ptr.432 = value_binding b, %.loc20_22.3
+// CHECK:STDOUT:   %b: %ptr.432 = wrapper_binding b, %.loc20_22.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -184,7 +184,7 @@ interface Class { }
 // CHECK:STDOUT:       %Self.as_type.loc14_8.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc14_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc14_8.2: type = converted %Self.ref, %Self.as_type.loc14_8.2 [symbolic = %Self.as_type.loc14_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Interface.WithSelf.F.%Self.as_type.loc14_8.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @Interface.WithSelf.F.%Self.as_type.loc14_8.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:

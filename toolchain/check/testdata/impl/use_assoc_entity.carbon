@@ -606,13 +606,13 @@ fn F() {
 // CHECK:STDOUT:       %Self.as_type.loc6_8.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc6_8.1 (constants.%Self.as_type.976)]
 // CHECK:STDOUT:       %.loc6_8.2: type = converted %Self.ref, %Self.as_type.loc6_8.2 [symbolic = %Self.as_type.loc6_8.1 (constants.%Self.as_type.976)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @J.WithSelf.F.%Self.as_type.loc6_8.1 (%Self.as_type.976) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @J.WithSelf.F.%Self.as_type.loc6_8.1 (%Self.as_type.976) = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %u.param: @J.WithSelf.F.%impl.elem0.loc6_17.1 (%impl.elem0.c15) = value_param call_param1
 // CHECK:STDOUT:     %.loc6_17: type = splice_block %U.ref.loc6_17 [symbolic = %impl.elem0.loc6_17.1 (constants.%impl.elem0.c15)] {
 // CHECK:STDOUT:       %impl.elem0.loc6_17.2: type = impl_witness_access constants.%J.lookup_impl_witness.e57, element0 [symbolic = %impl.elem0.loc6_17.1 (constants.%impl.elem0.c15)]
 // CHECK:STDOUT:       %U.ref.loc6_17: type = name_ref U, %impl.elem0.loc6_17.2 [symbolic = %impl.elem0.loc6_17.1 (constants.%impl.elem0.c15)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %u: @J.WithSelf.F.%impl.elem0.loc6_17.1 (%impl.elem0.c15) = value_binding u, %u.param
+// CHECK:STDOUT:     %u: @J.WithSelf.F.%impl.elem0.loc6_17.1 (%impl.elem0.c15) = wrapper_binding u, %u.param
 // CHECK:STDOUT:     %return.param: ref @J.WithSelf.F.%impl.elem0.loc6_17.1 (%impl.elem0.c15) = out_param call_param2
 // CHECK:STDOUT:     %return: ref @J.WithSelf.F.%impl.elem0.loc6_17.1 (%impl.elem0.c15) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -641,10 +641,10 @@ fn F() {
 // CHECK:STDOUT:     %.loc12: Core.Form = init_form %i32.loc12_32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @empty_tuple.type.as.J.impl.%.loc10_7.2 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %self: %empty_tuple.type = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %empty_tuple.type = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %u.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc12_24: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %u: %i32 = value_binding u, %u.param
+// CHECK:STDOUT:     %u: %i32 = wrapper_binding u, %u.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -669,10 +669,10 @@ fn F() {
 // CHECK:STDOUT:     %.loc29_30: Core.Form = init_form %C.ref.loc29_30 [concrete = constants.%.a44]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.J.impl.%C.ref.loc27_6 [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %u.param: %C = value_param call_param1
 // CHECK:STDOUT:     %C.ref.loc29_24: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %u: %C = value_binding u, %u.param
+// CHECK:STDOUT:     %u: %C = wrapper_binding u, %u.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -903,7 +903,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_29.1: %i32 = value_of_initializer %E.as.J.impl.F.call.loc22
 // CHECK:STDOUT:   %.loc22_29.2: %i32 = converted %E.as.J.impl.F.call.loc22, %.loc22_29.1
 // CHECK:STDOUT:   %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %e1: %i32 = value_binding e1, %.loc22_29.2
+// CHECK:STDOUT:   %e1: %i32 = wrapper_binding e1, %.loc22_29.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e2.patt: %pattern_type.6b6 = value_binding_pattern e2 [concrete = constants.%e2.patt]
 // CHECK:STDOUT:   }
@@ -923,7 +923,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc23_29.1: %i32 = value_of_initializer %E.as.J.impl.G.call.loc23
 // CHECK:STDOUT:   %.loc23_29.2: %i32 = converted %E.as.J.impl.G.call.loc23, %.loc23_29.1
 // CHECK:STDOUT:   %i32.loc23: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %e2: %i32 = value_binding e2, %.loc23_29.2
+// CHECK:STDOUT:   %e2: %i32 = wrapper_binding e2, %.loc23_29.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e3.patt: %pattern_type.6b6 = value_binding_pattern e3 [concrete = constants.%e3.patt]
 // CHECK:STDOUT:   }
@@ -942,7 +942,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc24_29.1: %i32 = value_of_initializer %E.as.J.impl.F.call.loc24
 // CHECK:STDOUT:   %.loc24_29.2: %i32 = converted %E.as.J.impl.F.call.loc24, %.loc24_29.1
 // CHECK:STDOUT:   %i32.loc24: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %e3: %i32 = value_binding e3, %.loc24_29.2
+// CHECK:STDOUT:   %e3: %i32 = wrapper_binding e3, %.loc24_29.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e4.patt: %pattern_type.6b6 = value_binding_pattern e4 [concrete = constants.%e4.patt]
 // CHECK:STDOUT:   }
@@ -963,7 +963,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc25_33.1: %i32 = value_of_initializer %E.as.J.impl.G.call.loc25
 // CHECK:STDOUT:   %.loc25_33.2: %i32 = converted %E.as.J.impl.G.call.loc25, %.loc25_33.1
 // CHECK:STDOUT:   %i32.loc25: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %e4: %i32 = value_binding e4, %.loc25_33.2
+// CHECK:STDOUT:   %e4: %i32 = wrapper_binding e4, %.loc25_33.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e5.patt: %pattern_type.6b6 = value_binding_pattern e5 [concrete = constants.%e5.patt]
 // CHECK:STDOUT:   }
@@ -984,7 +984,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc26_33.1: %i32 = value_of_initializer %E.as.J.impl.G.call.loc26
 // CHECK:STDOUT:   %.loc26_33.2: %i32 = converted %E.as.J.impl.G.call.loc26, %.loc26_33.1
 // CHECK:STDOUT:   %i32.loc26: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %e5: %i32 = value_binding e5, %.loc26_33.2
+// CHECK:STDOUT:   %e5: %i32 = wrapper_binding e5, %.loc26_33.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1071,7 +1071,7 @@ fn F() {
 // CHECK:STDOUT:       %impl.elem0.loc11_13: type = impl_witness_access constants.%J.impl_witness, element0 [concrete = constants.%i32]
 // CHECK:STDOUT:       %U.ref.loc11_13: type = name_ref U, %impl.elem0.loc11_13 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %u: %i32 = value_binding u, %u.param
+// CHECK:STDOUT:     %u: %i32 = wrapper_binding u, %u.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

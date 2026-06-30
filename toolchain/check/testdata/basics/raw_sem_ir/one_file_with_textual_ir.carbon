@@ -102,7 +102,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst50000016:    {kind: ValueParamPattern, arg0: name1, type: type(inst50000014)}
 // CHECK:STDOUT:     inst50000017:    {kind: WrapperBindingPattern, arg0: entity_name50000000, arg1: inst50000015, type: type(inst50000014)}
 // CHECK:STDOUT:     inst50000018:    {kind: WrapperBindingPattern, arg0: entity_name50000000, arg1: inst50000016, type: type(inst50000014)}
-// CHECK:STDOUT:     inst50000019:    {kind: ValueBinding, arg0: entity_name50000000, arg1: inst5000002A, type: type(inst50000010)}
+// CHECK:STDOUT:     inst50000019:    {kind: WrapperBinding, arg0: entity_name50000000, arg1: inst5000002A, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000001A:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000001B:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000001C:    {kind: TupleType, arg0: inst_block50000008, type: type(TypeType)}
@@ -306,7 +306,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       %.loc16_12.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc16_12.3: type = converted %.loc16_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: %empty_tuple.type = value_binding n, %n.param
+// CHECK:STDOUT:     %n: %empty_tuple.type = wrapper_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }

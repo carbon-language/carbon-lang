@@ -363,7 +363,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc8_62.2: Core.Form = init_form %D.ref [concrete = constants.%.128]
 // CHECK:STDOUT:     %self.param: %C.771 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.0e1.%C [concrete = constants.%C.771]
-// CHECK:STDOUT:     %self: %C.771 = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C.771 = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -389,7 +389,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc9_62.2: Core.Form = init_form %D.ref [concrete = constants.%.128]
 // CHECK:STDOUT:     %self.param: %C.83b = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.f6a.%C [concrete = constants.%C.83b]
-// CHECK:STDOUT:     %self: %C.83b = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C.83b = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -415,7 +415,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc10_62.2: Core.Form = init_form %D.ref [concrete = constants.%.128]
 // CHECK:STDOUT:     %self.param: %C.5ce = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.aab.%C [concrete = constants.%C.5ce]
-// CHECK:STDOUT:     %self: %C.5ce = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C.5ce = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -441,7 +441,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc11_62.2: Core.Form = init_form %D.ref [concrete = constants.%.128]
 // CHECK:STDOUT:     %self.param: %C.b3e = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.203.%C [concrete = constants.%C.b3e]
-// CHECK:STDOUT:     %self: %C.b3e = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C.b3e = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -467,7 +467,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc12_62.2: Core.Form = init_form %D.ref [concrete = constants.%.128]
 // CHECK:STDOUT:     %self.param: %C.8ee = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.371.%C [concrete = constants.%C.8ee]
-// CHECK:STDOUT:     %self: %C.8ee = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C.8ee = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -493,7 +493,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc13_62.2: Core.Form = init_form %D.ref [concrete = constants.%.128]
 // CHECK:STDOUT:     %self.param: %C.5c1 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.c73.%C [concrete = constants.%C.5c1]
-// CHECK:STDOUT:     %self: %C.5c1 = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C.5c1 = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -519,7 +519,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc14_62.2: Core.Form = init_form %D.ref [concrete = constants.%.128]
 // CHECK:STDOUT:     %self.param: %C.57b = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.2f3.%C [concrete = constants.%C.57b]
-// CHECK:STDOUT:     %self: %C.57b = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C.57b = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -545,7 +545,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc15_62.2: Core.Form = init_form %D.ref [concrete = constants.%.128]
 // CHECK:STDOUT:     %self.param: %C.b0a = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.28a.%C [concrete = constants.%C.b0a]
-// CHECK:STDOUT:     %self: %C.b0a = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C.b0a = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1011,7 +1011,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc6_26.10: Core.Form = init_form %D.ref [concrete = constants.%.128]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
+// CHECK:STDOUT:     %n: %i32 = wrapper_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }

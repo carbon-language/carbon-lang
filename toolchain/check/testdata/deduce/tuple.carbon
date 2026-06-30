@@ -145,7 +145,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %.loc7_37.2: %tuple.type.24b = tuple_literal (%T.ref, %U.ref.loc7_36) [symbolic = %tuple (constants.%tuple.4b9)]
 // CHECK:STDOUT:       %.loc7_37.3: type = converted %.loc7_37.2, constants.%tuple.type.a5e [symbolic = %tuple.type (constants.%tuple.type.a5e)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %pair: @F.%tuple.type (%tuple.type.a5e) = value_binding pair, %pair.param
+// CHECK:STDOUT:     %pair: @F.%tuple.type (%tuple.type.a5e) = wrapper_binding pair, %pair.param
 // CHECK:STDOUT:     %return.param: ref @F.%U.loc7_17.1 (%U) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%U.loc7_17.1 (%U) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -164,7 +164,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %.loc9_17.2: %tuple.type.24b = tuple_literal (%C.ref, %D.ref.loc9_16) [concrete = constants.%tuple.b04]
 // CHECK:STDOUT:       %.loc9_17.3: type = converted %.loc9_17.2, constants.%tuple.type.af1 [concrete = constants.%tuple.type.af1]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %pair: %tuple.type.af1 = value_binding pair, %pair.param
+// CHECK:STDOUT:     %pair: %tuple.type.af1 = wrapper_binding pair, %pair.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -418,7 +418,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %.loc6_48.2: %tuple.type.e55 = converted %.loc6_47, %tuple.loc6_47.2 [symbolic = %tuple.loc6_47.1 (constants.%tuple.509)]
 // CHECK:STDOUT:       %HasPair.loc6_48.2: type = class_type @HasPair, @HasPair(constants.%tuple.509) [symbolic = %HasPair.loc6_48.1 (constants.%HasPair.72f)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %h: @F.%HasPair.loc6_48.1 (%HasPair.72f) = value_binding h, %h.param
+// CHECK:STDOUT:     %h: @F.%HasPair.loc6_48.1 (%HasPair.72f) = wrapper_binding h, %h.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -454,7 +454,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %.loc8_23.2: %tuple.type.e55 = converted %.loc8_22.1, %tuple [concrete = constants.%tuple.102]
 // CHECK:STDOUT:       %HasPair: type = class_type @HasPair, @HasPair(constants.%tuple.102) [concrete = constants.%HasPair.69b]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %h: %HasPair.69b = value_binding h, %h.param
+// CHECK:STDOUT:     %h: %HasPair.69b = wrapper_binding h, %h.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -636,7 +636,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %.loc7_27.2: %tuple.type.24b = tuple_literal (%T.ref.loc7_23, %T.ref.loc7_26) [symbolic = %tuple (constants.%tuple.11e)]
 // CHECK:STDOUT:       %.loc7_27.3: type = converted %.loc7_27.2, constants.%tuple.type.07a [symbolic = %tuple.type (constants.%tuple.type.07a)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %pair: @F.%tuple.type (%tuple.type.07a) = value_binding pair, %pair.param
+// CHECK:STDOUT:     %pair: @F.%tuple.type (%tuple.type.07a) = wrapper_binding pair, %pair.param
 // CHECK:STDOUT:     %return.param: ref @F.%T.loc7_7.1 (%T) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%T.loc7_7.1 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -655,7 +655,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %.loc9_17.2: %tuple.type.24b = tuple_literal (%C.ref, %D.ref.loc9_16) [concrete = constants.%tuple.b04]
 // CHECK:STDOUT:       %.loc9_17.3: type = converted %.loc9_17.2, constants.%tuple.type.af1 [concrete = constants.%tuple.type.af1]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %pair: %tuple.type.af1 = value_binding pair, %pair.param
+// CHECK:STDOUT:     %pair: %tuple.type.af1 = wrapper_binding pair, %pair.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }

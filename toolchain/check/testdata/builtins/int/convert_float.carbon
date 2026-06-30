@@ -90,7 +90,7 @@ let invalid: f64 = ConvertIntLiteralToFloatLiteral(-1) as f64;
 // CHECK:STDOUT:   %.loc9_354.1: %f64.dc1 = value_of_initializer @__global_init.%ConvertIntLiteralToF64.call [concrete = <error>]
 // CHECK:STDOUT:   %.loc9_354.2: %f64.dc1 = converted @__global_init.%ConvertIntLiteralToF64.call, %.loc9_354.1 [concrete = <error>]
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %overflow: %f64.dc1 = value_binding overflow, %.loc9_354.2 [concrete = <error>]
+// CHECK:STDOUT:   %overflow: %f64.dc1 = wrapper_binding overflow, %.loc9_354.2 [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -147,7 +147,7 @@ let invalid: f64 = ConvertIntLiteralToFloatLiteral(-1) as f64;
 // CHECK:STDOUT:     %invalid.patt: %pattern_type.fb7 = value_binding_pattern invalid [concrete = constants.%invalid.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %invalid: %f64.dc1 = value_binding invalid, @__global_init.%.loc9_56.2 [concrete = <error>]
+// CHECK:STDOUT:   %invalid: %f64.dc1 = wrapper_binding invalid, @__global_init.%.loc9_56.2 [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

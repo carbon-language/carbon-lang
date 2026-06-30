@@ -288,7 +288,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:     %.loc5_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e: ref %empty_tuple.type = ref_binding e, %e.var [concrete = %e.var]
+// CHECK:STDOUT:   %e: ref %empty_tuple.type = wrapper_binding e, %e.var [concrete = %e.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D [from "d.carbon"];

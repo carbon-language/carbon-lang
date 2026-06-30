@@ -106,6 +106,17 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
         } else {
           CARBON_FATAL("Inst doesn't have action category: {0}", action);
         }
+      } else if constexpr (std::same_as<TypedInstT, WrapperBinding>) {
+        if (!inst.value_id.has_value()) {
+          // `value_id` can be empty if we're trying to access the binding
+          // before pattern matching, e.g. in code like `fn F(t: I, u: t.X)`,
+          // where `I` is an interface with an `X` member. We assume that
+          // the binding in such cases is a value binding.
+          // TODO: Find a more robust solution.
+          return value_category;
+        }
+        inst_id = inst.value_id;
+        return std::nullopt;
       } else {
         static_assert(
             TypedInstT::Kind.expr_category() !=

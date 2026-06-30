@@ -65,7 +65,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [concrete = <error>]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: %i32 = value_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

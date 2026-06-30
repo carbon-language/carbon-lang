@@ -124,7 +124,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:       %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:       %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %oi: %Inner = value_binding oi, %oi.param
+// CHECK:STDOUT:     %oi: %Inner = wrapper_binding oi, %oi.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -134,7 +134,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %o.param: %Outer = value_param call_param0
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
-// CHECK:STDOUT:     %o: %Outer = value_binding o, %o.param
+// CHECK:STDOUT:     %o: %Outer = wrapper_binding o, %o.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -191,7 +191,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:     %o.ref: %Outer = name_ref o, %o
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i: ref %Inner = ref_binding i, %i.var
+// CHECK:STDOUT:   %i: ref %Inner = wrapper_binding i, %i.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %i.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%i.var)
 // CHECK:STDOUT:   return

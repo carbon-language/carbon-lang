@@ -174,7 +174,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc21_12: init %C = converted %.loc21_43.1, %.loc21_43.8 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %return.param, %.loc21_12
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %result: ref %C = ref_binding result, %return.param
+// CHECK:STDOUT:   %result: ref %C = wrapper_binding result, %return.param
 // CHECK:STDOUT:   %.loc21_22: %C = acquire_value %result
 // CHECK:STDOUT:   return %.loc21_22 to %return.param
 // CHECK:STDOUT: }
@@ -195,7 +195,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc26_12: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   assign %result.var, %.loc26_12
 // CHECK:STDOUT:   %i32.loc26: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %result: ref %i32 = ref_binding result, %result.var
+// CHECK:STDOUT:   %result: ref %i32 = wrapper_binding result, %result.var
 // CHECK:STDOUT:   %.loc26_22: %i32 = acquire_value %result
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %result.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%result.var)

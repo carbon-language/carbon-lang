@@ -376,7 +376,7 @@ class B {
 // CHECK:STDOUT:     %.loc12_36.3: Core.Form = init_form %.loc12_36.2 [concrete = constants.%.c11]
 // CHECK:STDOUT:     %self.param: %Circle = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [concrete = constants.%Circle]
-// CHECK:STDOUT:     %self: %Circle = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %Circle = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.e55 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.e55 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -537,7 +537,7 @@ class B {
 // CHECK:STDOUT:     %.loc15_18.3: Core.Form = init_form %.loc15_18.2 [concrete = constants.%.262]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -661,7 +661,7 @@ class B {
 // CHECK:STDOUT:   %.loc5_38.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_5.eef]
 // CHECK:STDOUT:   %.loc5_38.2: %i32 = converted %int_5, %.loc5_38.1 [concrete = constants.%int_5.eef]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %SOME_CONSTANT: %i32 = value_binding SOME_CONSTANT, %.loc5_38.2
+// CHECK:STDOUT:   %SOME_CONSTANT: %i32 = wrapper_binding SOME_CONSTANT, %.loc5_38.2
 // CHECK:STDOUT:   %A.SomeProtectedFunction.decl: %A.SomeProtectedFunction.type = fn_decl @A.SomeProtectedFunction [concrete = constants.%A.SomeProtectedFunction] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
@@ -815,7 +815,7 @@ class B {
 // CHECK:STDOUT:     %.loc11: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param: %Square = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Square [concrete = constants.%Square]
-// CHECK:STDOUT:     %self: %Square = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %Square = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1127,7 +1127,7 @@ class B {
 // CHECK:STDOUT:   %.loc11_44.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_86.81c]
 // CHECK:STDOUT:   %.loc11_44.2: %i32 = converted %int_86, %.loc11_44.1 [concrete = constants.%int_86.81c]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT: %i32 = value_binding SOME_PRIVATE_CONSTANT, %.loc11_44.2
+// CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT: %i32 = wrapper_binding SOME_PRIVATE_CONSTANT, %.loc11_44.2
 // CHECK:STDOUT:   %B.Fb.decl: %B.Fb.type = fn_decl @B.Fb [concrete = constants.%B.Fb] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.cb7 [concrete = constants.%complete_type.d5e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -1361,7 +1361,7 @@ class B {
 // CHECK:STDOUT:   %.loc5_48.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5 [concrete = constants.%int_5.eef]
 // CHECK:STDOUT:   %.loc5_48.2: %i32 = converted %int_5.loc5, %.loc5_48.1 [concrete = constants.%int_5.eef]
 // CHECK:STDOUT:   %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %SOME_PROTECTED_CONSTANT: %i32 = value_binding SOME_PROTECTED_CONSTANT, %.loc5_48.2
+// CHECK:STDOUT:   %SOME_PROTECTED_CONSTANT: %i32 = wrapper_binding SOME_PROTECTED_CONSTANT, %.loc5_48.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %SOME_PRIVATE_CONSTANT.patt: %pattern_type.6b6 = value_binding_pattern SOME_PRIVATE_CONSTANT [concrete = constants.%SOME_PRIVATE_CONSTANT.patt]
 // CHECK:STDOUT:   }
@@ -1374,7 +1374,7 @@ class B {
 // CHECK:STDOUT:   %.loc6_44.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6 [concrete = constants.%int_5.eef]
 // CHECK:STDOUT:   %.loc6_44.2: %i32 = converted %int_5.loc6, %.loc6_44.1 [concrete = constants.%int_5.eef]
 // CHECK:STDOUT:   %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT: %i32 = value_binding SOME_PRIVATE_CONSTANT, %.loc6_44.2
+// CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT: %i32 = wrapper_binding SOME_PRIVATE_CONSTANT, %.loc6_44.2
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1397,7 +1397,7 @@ class B {
 // CHECK:STDOUT:   %.loc10_42.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_5.eef]
 // CHECK:STDOUT:   %.loc10_42.2: %i32 = converted %int_5, %.loc10_42.1 [concrete = constants.%int_5.eef]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %INTERNAL_CONSTANT: %i32 = value_binding INTERNAL_CONSTANT, %.loc10_42.2
+// CHECK:STDOUT:   %INTERNAL_CONSTANT: %i32 = wrapper_binding INTERNAL_CONSTANT, %.loc10_42.2
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1427,7 +1427,7 @@ class B {
 // CHECK:STDOUT:     %.loc36: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %self.param: %B = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [concrete = constants.%B]
-// CHECK:STDOUT:     %self: %B = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %B = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1524,7 +1524,7 @@ class B {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %B = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [concrete = constants.%B]
-// CHECK:STDOUT:     %self: %B = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %B = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.cb7 [concrete = constants.%complete_type.d5e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -1607,7 +1607,7 @@ class B {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %B = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [concrete = constants.%B]
-// CHECK:STDOUT:     %self: %B = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %B = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.cb7 [concrete = constants.%complete_type.d5e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

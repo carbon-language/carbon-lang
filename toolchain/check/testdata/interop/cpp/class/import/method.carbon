@@ -571,7 +571,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %F__carbon_thunk.call: init %i32 = call imports.%F__carbon_thunk.decl.828b0d.1(%v.ref)
 // CHECK:STDOUT:   assign %a.var, %F__carbon_thunk.call
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: ref %i32 = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %i32 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete = constants.%b.patt.9fb99a.1]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete = constants.%b.var_patt.dede8c.1]
@@ -587,7 +587,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:     %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %i32.loc9 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %ptr.d08 = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %ptr.d08 = wrapper_binding b, %b.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc9: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc9: init %empty_tuple.type = call %Destroy.Op.bound.loc9(%b.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc8: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
@@ -617,7 +617,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %F__carbon_thunk.call: init %i32 = call imports.%F__carbon_thunk.decl.828b0d.2(%v.ref)
 // CHECK:STDOUT:   assign %a.var, %F__carbon_thunk.call
 // CHECK:STDOUT:   %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: ref %i32 = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %i32 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete = constants.%b.patt.9fb99a.2]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete = constants.%b.var_patt.dede8c.2]
@@ -633,7 +633,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:     %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc16: type = ptr_type %i32.loc16 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %ptr.d08 = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %ptr.d08 = wrapper_binding b, %b.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc16: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc16: init %empty_tuple.type = call %Destroy.Op.bound.loc16(%b.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc15: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3

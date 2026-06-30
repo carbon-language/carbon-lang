@@ -158,7 +158,7 @@ fn Run() {
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %Class to %.loc21_3 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %c.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %c: ref %Class = ref_binding c, %c.var
+// CHECK:STDOUT:   %c: ref %Class = wrapper_binding c, %c.var
 // CHECK:STDOUT:   %c.ref.loc22: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %j.ref.loc22: %Class.elem = name_ref j, @Class.%.loc16 [concrete = @Class.%.loc16]
 // CHECK:STDOUT:   %.loc22_4: ref %i32 = class_element_access %c.ref.loc22, element0
@@ -197,7 +197,7 @@ fn Run() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc24: init %i32 = call %bound_method.loc24_25.2(%.loc24_25.2)
 // CHECK:STDOUT:   assign %cj.var, %Int.as.Copy.impl.Op.call.loc24
 // CHECK:STDOUT:   %i32.loc24: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %cj: ref %i32 = ref_binding cj, %cj.var
+// CHECK:STDOUT:   %cj: ref %i32 = wrapper_binding cj, %cj.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %ck.patt: %pattern_type.6b6 = ref_binding_pattern ck [concrete = constants.%ck.patt]
 // CHECK:STDOUT:     %ck.var_patt: %pattern_type.6b6 = var_pattern %ck.patt [concrete = constants.%ck.var_patt]
@@ -214,7 +214,7 @@ fn Run() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc25: init %i32 = call %bound_method.loc25_25.2(%.loc25_25.2)
 // CHECK:STDOUT:   assign %ck.var, %Int.as.Copy.impl.Op.call.loc25
 // CHECK:STDOUT:   %i32.loc25: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %ck: ref %i32 = ref_binding ck, %ck.var
+// CHECK:STDOUT:   %ck: ref %i32 = wrapper_binding ck, %ck.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc25: <bound method> = bound_method %ck.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc25: init %empty_tuple.type = call %Destroy.Op.bound.loc25(%ck.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc24: <bound method> = bound_method %cj.var, constants.%Destroy.Op.1a2547.2

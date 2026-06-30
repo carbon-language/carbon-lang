@@ -163,7 +163,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %.loc4_26.2: %tuple.type.24b = tuple_literal (%i32.loc4_18, %i32.loc4_23) [concrete = constants.%tuple.b59]
 // CHECK:STDOUT:     %.loc4_26.3: type = converted %.loc4_26.2, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple_copy: ref %tuple.type.e55 = ref_binding tuple_copy, %tuple_copy.var [concrete = %tuple_copy.var]
+// CHECK:STDOUT:   %tuple_copy: ref %tuple.type.e55 = wrapper_binding tuple_copy, %tuple_copy.var [concrete = %tuple_copy.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %struct_copy.patt: %pattern_type.9c3 = ref_binding_pattern struct_copy [concrete = constants.%struct_copy.patt]
 // CHECK:STDOUT:     %struct_copy.var_patt: %pattern_type.9c3 = var_pattern %struct_copy.patt [concrete = constants.%struct_copy.var_patt]
@@ -175,7 +175,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %i32.loc6_41: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b.c: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [concrete = constants.%struct_type.a.b.c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %struct_copy: ref %struct_type.a.b.c = ref_binding struct_copy, %struct_copy.var [concrete = %struct_copy.var]
+// CHECK:STDOUT:   %struct_copy: ref %struct_type.a.b.c = wrapper_binding struct_copy, %struct_copy.var [concrete = %struct_copy.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %tuple_index.patt: %pattern_type.97e = ref_binding_pattern tuple_index [concrete = constants.%tuple_index.patt]
 // CHECK:STDOUT:     %tuple_index.var_patt: %pattern_type.97e = var_pattern %tuple_index.patt [concrete = constants.%tuple_index.var_patt]
@@ -186,7 +186,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %int_1.loc8: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type.loc8: type = array_type %int_1.loc8, %i32.loc8 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple_index: ref %array_type = ref_binding tuple_index, %tuple_index.var [concrete = %tuple_index.var]
+// CHECK:STDOUT:   %tuple_index: ref %array_type = wrapper_binding tuple_index, %tuple_index.var [concrete = %tuple_index.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %struct_access.patt: %pattern_type.97e = ref_binding_pattern struct_access [concrete = constants.%struct_access.patt]
 // CHECK:STDOUT:     %struct_access.var_patt: %pattern_type.97e = var_pattern %struct_access.patt [concrete = constants.%struct_access.var_patt]
@@ -197,7 +197,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type.loc10: type = array_type %int_1.loc10, %i32.loc10 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %struct_access: ref %array_type = ref_binding struct_access, %struct_access.var [concrete = %struct_access.var]
+// CHECK:STDOUT:   %struct_access: ref %array_type = wrapper_binding struct_access, %struct_access.var [concrete = %struct_access.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -422,7 +422,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32 [concrete = constants.%array_type.d27]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %array_index: ref %array_type.d27 = ref_binding array_index, %array_index.var [concrete = %array_index.var]
+// CHECK:STDOUT:   %array_index: ref %array_type.d27 = wrapper_binding array_index, %array_index.var [concrete = %array_index.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -696,7 +696,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:       %.loc6_29.2: %tuple.type.24b = tuple_literal (%ptr.loc6_19.1, %const.loc6_22.1) [symbolic = %tuple (constants.%tuple)]
 // CHECK:STDOUT:       %.loc6_29.3: type = converted %.loc6_29.2, constants.%tuple.type.cd5 [symbolic = %tuple.type (constants.%tuple.type.cd5)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %u: ref @F.%tuple.type (%tuple.type.cd5) = ref_binding u, %u.var
+// CHECK:STDOUT:     %u: ref @F.%tuple.type (%tuple.type.cd5) = wrapper_binding u, %u.var
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt.loc7_15.1: @F.%pattern_type.loc7 (%pattern_type.915) = ref_binding_pattern v [symbolic = %v.patt.loc7_15.2 (constants.%v.patt)]
 // CHECK:STDOUT:       %v.var_patt.loc7_3.1: @F.%pattern_type.loc7 (%pattern_type.915) = var_pattern %v.patt.loc7_15.1 [symbolic = %v.var_patt.loc7_3.2 (constants.%v.var_patt)]
@@ -716,7 +716,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:       %.loc7_22: type = converted %T.ref.loc7, %T.as_type.loc7 [symbolic = %T.as_type.loc6_19.2 (constants.%T.as_type.700)]
 // CHECK:STDOUT:       %struct_type.a.loc7_23.1: type = struct_type {.a: @F.%T.as_type.loc6_19.2 (%T.as_type.700)} [symbolic = %struct_type.a.loc7_23.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: ref @F.%struct_type.a.loc7_23.2 (%struct_type.a) = ref_binding v, %v.var
+// CHECK:STDOUT:     %v: ref @F.%struct_type.a.loc7_23.2 (%struct_type.a) = wrapper_binding v, %v.var
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %w.patt.loc8_15.1: @F.%pattern_type.loc8 (%pattern_type.78a) = ref_binding_pattern w [symbolic = %w.patt.loc8_15.2 (constants.%w.patt)]
 // CHECK:STDOUT:       %w.var_patt.loc8_3.1: @F.%pattern_type.loc8 (%pattern_type.78a) = var_pattern %w.patt.loc8_15.1 [symbolic = %w.var_patt.loc8_3.2 (constants.%w.var_patt)]
@@ -738,7 +738,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:       %.loc8_23: type = converted %T.ref.loc8, %T.as_type.loc8 [symbolic = %T.as_type.loc6_19.2 (constants.%T.as_type.700)]
 // CHECK:STDOUT:       %array_type.loc8_27.1: type = array_type %int_5, %.loc8_23 [symbolic = %array_type.loc8_27.2 (constants.%array_type.50f)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %w: ref @F.%array_type.loc8_27.2 (%array_type.50f) = ref_binding w, %w.var
+// CHECK:STDOUT:     %w: ref @F.%array_type.loc8_27.2 (%array_type.50f) = wrapper_binding w, %w.var
 // CHECK:STDOUT:     %impl.elem0.loc8_3.1: @F.%.loc8_3.4 (%.260) = impl_witness_access constants.%Destroy.lookup_impl_witness.1f5, element0 [symbolic = %impl.elem0.loc8_3.2 (constants.%impl.elem0.375)]
 // CHECK:STDOUT:     %bound_method.loc8_3.1: <bound method> = bound_method %w.var, %impl.elem0.loc8_3.1
 // CHECK:STDOUT:     %Destroy.facet.loc8_3.1: %Destroy.type = facet_value constants.%array_type.50f, (constants.%Destroy.lookup_impl_witness.1f5) [symbolic = %Destroy.facet.loc8_3.3 (constants.%Destroy.facet.664)]
@@ -824,7 +824,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:       %.loc14_28.2: Core.IntLiteral = converted %N.ref, %.loc14_28.1 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc14_28.2 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:       %array_type.loc14_29.1: type = array_type %.loc14_28.2, %i32.loc14 [symbolic = %array_type.loc14_29.2 (constants.%array_type.359)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %k: ref @G.%array_type.loc14_29.2 (%array_type.359) = ref_binding k, %k.var
+// CHECK:STDOUT:     %k: ref @G.%array_type.loc14_29.2 (%array_type.359) = wrapper_binding k, %k.var
 // CHECK:STDOUT:     %impl.elem0.loc14_3.1: @G.%.loc14_3.4 (%.a73) = impl_witness_access constants.%Destroy.lookup_impl_witness.822, element0 [symbolic = %impl.elem0.loc14_3.2 (constants.%impl.elem0.fa7)]
 // CHECK:STDOUT:     %bound_method.loc14_3.1: <bound method> = bound_method %k.var, %impl.elem0.loc14_3.1
 // CHECK:STDOUT:     %Destroy.facet.loc14_3.1: %Destroy.type = facet_value constants.%array_type.359, (constants.%Destroy.lookup_impl_witness.822) [symbolic = %Destroy.facet.loc14_3.3 (constants.%Destroy.facet.a58)]

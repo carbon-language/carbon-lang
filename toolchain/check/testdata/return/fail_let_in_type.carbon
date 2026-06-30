@@ -89,7 +89,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:     %x.patt: %pattern_type.98f = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %x: type = value_binding x, @__global_init.%i32.loc15
+// CHECK:STDOUT:   %x: type = wrapper_binding x, @__global_init.%i32.loc15
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
@@ -103,7 +103,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:     %.Self.loc27: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc27_9.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: type = value_binding y, @__global_init.%i32.loc27
+// CHECK:STDOUT:   %y: type = wrapper_binding y, @__global_init.%i32.loc27
 // CHECK:STDOUT:   %HalfDozen.decl: %HalfDozen.type = fn_decl @HalfDozen [concrete = constants.%HalfDozen] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
@@ -117,7 +117,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:     %.Self.loc39: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc39_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %z: type = value_binding z, @__global_init.%i32.loc39
+// CHECK:STDOUT:   %z: type = wrapper_binding z, @__global_init.%i32.loc39
 // CHECK:STDOUT:   %FirstPerfectNumber.decl: %FirstPerfectNumber.type = fn_decl @FirstPerfectNumber [concrete = constants.%FirstPerfectNumber] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {

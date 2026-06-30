@@ -131,7 +131,7 @@ fn Run() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ForwardDeclared = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [concrete = constants.%ForwardDeclared]
-// CHECK:STDOUT:     %self: %ForwardDeclared = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %ForwardDeclared = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclared.G.decl: %ForwardDeclared.G.type = fn_decl @ForwardDeclared.G [concrete = constants.%ForwardDeclared.G] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.bdf = ref_param_pattern [concrete = constants.%self.param_patt.a42]
@@ -139,7 +139,7 @@ fn Run() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %ForwardDeclared = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [concrete = constants.%ForwardDeclared]
-// CHECK:STDOUT:     %self: ref %ForwardDeclared = ref_binding self, %self.param
+// CHECK:STDOUT:     %self: ref %ForwardDeclared = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -354,7 +354,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_3: init %Empty = converted %.loc7_26.1, %.loc7_26.2 [concrete = constants.%Empty.val]
 // CHECK:STDOUT:   assign %a.var, %.loc7_3
 // CHECK:STDOUT:   %Empty.ref: type = name_ref Empty, imports.%Main.Empty [concrete = constants.%Empty]
-// CHECK:STDOUT:   %a: ref %Empty = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Empty = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.f17 = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.f17 = var_pattern %b.patt [concrete = constants.%b.var_patt]
@@ -374,7 +374,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc9_3: init %Field = converted %.loc9_25.1, %.loc9_25.5 [concrete = constants.%Field.val]
 // CHECK:STDOUT:   assign %b.var, %.loc9_3
 // CHECK:STDOUT:   %Field.ref: type = name_ref Field, imports.%Main.Field [concrete = constants.%Field]
-// CHECK:STDOUT:   %b: ref %Field = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %Field = wrapper_binding b, %b.var
 // CHECK:STDOUT:   %b.ref: ref %Field = name_ref b, %b
 // CHECK:STDOUT:   %x.ref: %Field.elem = name_ref x, imports.%Main.import_ref.5c1 [concrete = imports.%.860]
 // CHECK:STDOUT:   %.loc10_4: ref %i32 = class_element_access %b.ref, element0
@@ -396,7 +396,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc12_3: init %ForwardDeclared.08bd4c.1 = converted %.loc12_29.1, %.loc12_29.2 [concrete = constants.%ForwardDeclared.val]
 // CHECK:STDOUT:   assign %c.var, %.loc12_3
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc12: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.08bd4c.1]
-// CHECK:STDOUT:   %c: ref %ForwardDeclared.08bd4c.1 = ref_binding c, %c.var
+// CHECK:STDOUT:   %c: ref %ForwardDeclared.08bd4c.1 = wrapper_binding c, %c.var
 // CHECK:STDOUT:   %c.ref.loc13: ref %ForwardDeclared.08bd4c.1 = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %ForwardDeclared.F.type = name_ref F, imports.%Main.import_ref.bc9 [concrete = constants.%ForwardDeclared.F]
 // CHECK:STDOUT:   %ForwardDeclared.F.bound: <bound method> = bound_method %c.ref.loc13, %F.ref
@@ -423,7 +423,7 @@ fn Run() {
 // CHECK:STDOUT:     %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.08bd4c.1]
 // CHECK:STDOUT:     %ptr.loc16: type = ptr_type %ForwardDeclared.ref.loc16 [concrete = constants.%ptr.11e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: ref %ptr.11e = ref_binding d, %d.var
+// CHECK:STDOUT:   %d: ref %ptr.11e = wrapper_binding d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.bae = ref_binding_pattern e [concrete = constants.%e.patt]
 // CHECK:STDOUT:     %e.var_patt: %pattern_type.bae = var_pattern %e.patt [concrete = constants.%e.var_patt]
@@ -440,7 +440,7 @@ fn Run() {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, imports.%Main.Incomplete [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %ptr.loc18: type = ptr_type %Incomplete.ref [concrete = constants.%ptr.06d]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e: ref %ptr.06d = ref_binding e, %e.var
+// CHECK:STDOUT:   %e: ref %ptr.06d = wrapper_binding e, %e.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc18: <bound method> = bound_method %e.var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc18: init %empty_tuple.type = call %Destroy.Op.bound.loc18(%e.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc16: <bound method> = bound_method %d.var, constants.%Destroy.Op.1a2547.2

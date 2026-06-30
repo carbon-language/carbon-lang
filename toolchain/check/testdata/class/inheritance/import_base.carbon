@@ -92,7 +92,7 @@ fn Run() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
-// CHECK:STDOUT:     %self: %Base = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %Base = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.Unused.decl: %Base.Unused.type = fn_decl @Base.Unused [concrete = constants.%Base.Unused] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.912 = value_param_pattern [concrete = constants.%self.param_patt]
@@ -100,7 +100,7 @@ fn Run() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
-// CHECK:STDOUT:     %self: %Base = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %Base = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8: %Base.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %.loc9: %Base.elem = field_decl unused_y, element1 [concrete]
@@ -286,7 +286,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_3: init %Child = converted %.loc7_50.1, %.loc7_50.5 [concrete = constants.%Child.val]
 // CHECK:STDOUT:   assign %a.var, %.loc7_3
 // CHECK:STDOUT:   %Child.ref: type = name_ref Child, imports.%Main.Child [concrete = constants.%Child]
-// CHECK:STDOUT:   %a: ref %Child = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Child = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc8: ref %Child = name_ref a, %a
 // CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, imports.%Main.import_ref.230 [concrete = imports.%.11f]
 // CHECK:STDOUT:   %.loc8_4.1: ref %Base = as_compatible %a.ref.loc8

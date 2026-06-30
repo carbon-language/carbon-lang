@@ -255,7 +255,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc8_31.2: %tuple.type.ff9 = tuple_literal (%i32.loc8_18, %i32.loc8_23, %i32.loc8_28) [concrete = constants.%tuple.04d]
 // CHECK:STDOUT:     %.loc8_31.3: type = converted %.loc8_31.2, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %tuple.type.555 = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %tuple.type.555 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>
@@ -391,7 +391,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc17_43: %tuple.type.f94 = tuple_literal (%int_1, %int_2) [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %a: ref <error> = ref_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: <error> = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.e1e)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

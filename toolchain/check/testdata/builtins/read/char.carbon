@@ -61,7 +61,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc8_32.1: %i32 = value_of_initializer %ReadChar.call.loc8
 // CHECK:STDOUT:   %.loc8_32.2: %i32 = converted %ReadChar.call.loc8, %.loc8_32.1
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %n: %i32 = value_binding n, %.loc8_32.2
+// CHECK:STDOUT:   %n: %i32 = wrapper_binding n, %.loc8_32.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %m.patt: %pattern_type.6b6 = value_binding_pattern m [concrete = constants.%m.patt]
 // CHECK:STDOUT:   }
@@ -71,7 +71,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc9_37.1: %i32 = value_of_initializer %ReadChar.call.loc9
 // CHECK:STDOUT:   %.loc9_37.2: %i32 = converted %ReadChar.call.loc9, %.loc9_37.1
 // CHECK:STDOUT:   %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %m: %i32 = value_binding m, %.loc9_37.2
+// CHECK:STDOUT:   %m: %i32 = wrapper_binding m, %.loc9_37.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

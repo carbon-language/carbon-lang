@@ -104,10 +104,10 @@ fn Main() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc15_18: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %i32 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc15_33: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %i32 = wrapper_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
@@ -140,7 +140,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc18_15.2: %tuple.type.85c = tuple_literal (%i32) [concrete = constants.%tuple.19c]
 // CHECK:STDOUT:     %.loc18_15.3: type = converted %.loc18_15.2, constants.%tuple.type.a8a [concrete = constants.%tuple.type.a8a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %tuple.type.a8a = ref_binding x, %x.var
+// CHECK:STDOUT:   %x: ref %tuple.type.a8a = wrapper_binding x, %x.var
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [concrete = constants.%Foo]
 // CHECK:STDOUT:   %x.ref: ref %tuple.type.a8a = name_ref x, %x
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]

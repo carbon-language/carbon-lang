@@ -193,7 +193,7 @@ fn D() {}
 // CHECK:STDOUT:     %.loc5: Core.Form = init_form %i32.loc5_17 [concrete = constants.%.795]
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc5_9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %i32 = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -212,7 +212,7 @@ fn D() {}
 // CHECK:STDOUT:       %.loc6_14.2: %tuple.type.85c = tuple_literal (%i32.loc6_10) [concrete = constants.%tuple.19c]
 // CHECK:STDOUT:       %.loc6_14.3: type = converted %.loc6_14.2, constants.%tuple.type.a8a [concrete = constants.%tuple.type.a8a]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %tuple.type.a8a = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %tuple.type.a8a = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.c = out_param call_param1
 // CHECK:STDOUT:     %return: ref %struct_type.c = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -365,14 +365,14 @@ fn D() {}
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %empty_tuple.type = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = ref_binding_pattern b [concrete = constants.%b.patt.b23]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.6b6 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc7: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %b: ref %i32 = ref_binding b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %i32 = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.e1a = ref_binding_pattern c [concrete = constants.%c.patt.863]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.e1a = var_pattern %c.patt [concrete = constants.%c.var_patt]
@@ -382,7 +382,7 @@ fn D() {}
 // CHECK:STDOUT:     %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [concrete = constants.%struct_type.c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %struct_type.c = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %struct_type.c = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A [from "fns.carbon"];
@@ -468,7 +468,7 @@ fn D() {}
 // CHECK:STDOUT:     %.loc23: Core.Form = init_form %i32.loc23_17 [concrete = constants.%.795]
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc23_9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
+// CHECK:STDOUT:     %b: %i32 = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

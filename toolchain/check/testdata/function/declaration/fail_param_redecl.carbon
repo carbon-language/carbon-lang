@@ -58,10 +58,10 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param.loc22_7: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc22_9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n.loc22_7: %i32 = value_binding n, %n.param.loc22_7
+// CHECK:STDOUT:     %n.loc22_7: %i32 = wrapper_binding n, %n.param.loc22_7
 // CHECK:STDOUT:     %n.param.loc22_15: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc22_17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n.loc22_15: %i32 = value_binding n, %n.param.loc22_15
+// CHECK:STDOUT:     %n.loc22_15: %i32 = wrapper_binding n, %n.param.loc22_15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -69,7 +69,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Eats.type = value_param call_param0
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
-// CHECK:STDOUT:     %e: %Eats.type = value_binding e, %e.param
+// CHECK:STDOUT:     %e: %Eats.type = wrapper_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }

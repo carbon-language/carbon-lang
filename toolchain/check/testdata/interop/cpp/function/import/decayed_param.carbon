@@ -235,7 +235,7 @@ fn F() {
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
 // CHECK:STDOUT:     %array_type: type = array_type %int_42, %i32 [concrete = constants.%array_type.d58]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %array_type.d58 = ref_binding n, %n.var
+// CHECK:STDOUT:   %n: ref %array_type.d58 = wrapper_binding n, %n.var
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesArray.ref.loc11: %TakesArray.cpp_overload_set.type = name_ref TakesArray, imports.%TakesArray.cpp_overload_set.value [concrete = constants.%TakesArray.cpp_overload_set.value]
 // CHECK:STDOUT:   %n.ref: ref %array_type.d58 = name_ref n, %n
@@ -405,7 +405,7 @@ fn F() {
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
 // CHECK:STDOUT:     %array_type: type = array_type %int_42, %i32 [concrete = constants.%array_type.d58]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %array_type.d58 = ref_binding n, %n.var
+// CHECK:STDOUT:   %n: ref %array_type.d58 = wrapper_binding n, %n.var
 // CHECK:STDOUT:   %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesFunction.ref.loc31: %TakesFunction.cpp_overload_set.type = name_ref TakesFunction, imports.%TakesFunction.cpp_overload_set.value [concrete = constants.%TakesFunction.cpp_overload_set.value]
 // CHECK:STDOUT:   %n.ref: ref %array_type.d58 = name_ref n, %n

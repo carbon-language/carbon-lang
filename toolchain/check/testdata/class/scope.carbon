@@ -191,7 +191,7 @@ fn Run() {
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref.loc30()
 // CHECK:STDOUT:   assign %a.var, %F.call
 // CHECK:STDOUT:   %i32.loc30: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: ref %i32 = ref_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %i32 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.6b6 = var_pattern %b.patt [concrete = constants.%b.var_patt]
@@ -202,7 +202,7 @@ fn Run() {
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %F.ref.loc31()
 // CHECK:STDOUT:   assign %b.var, %Class.F.call
 // CHECK:STDOUT:   %i32.loc31: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %b: ref %i32 = ref_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %i32 = wrapper_binding b, %b.var
 // CHECK:STDOUT:   %Destroy.Op.bound.loc31: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc31: init %empty_tuple.type = call %Destroy.Op.bound.loc31(%b.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc30: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2

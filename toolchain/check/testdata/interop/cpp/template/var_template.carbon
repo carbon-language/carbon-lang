@@ -104,7 +104,7 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:     %A.ref.loc7: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %ptr.loc7: type = ptr_type %A.ref.loc7 [concrete = constants.%ptr.25f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pa: %ptr.25f = value_binding pa, @__global_init.%addr.loc7
+// CHECK:STDOUT:   %pa: %ptr.25f = wrapper_binding pa, @__global_init.%addr.loc7
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pb.patt: %pattern_type.733 = value_binding_pattern pb [concrete = constants.%pb.patt]
 // CHECK:STDOUT:   }
@@ -113,7 +113,7 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:     %B.ref.loc8: type = name_ref B, imports.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %ptr.loc8: type = ptr_type %B.ref.loc8 [concrete = constants.%ptr.dc0]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pb: %ptr.dc0 = value_binding pb, @__global_init.%addr.loc8
+// CHECK:STDOUT:   %pb: %ptr.dc0 = wrapper_binding pb, @__global_init.%addr.loc8
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pwa.patt: %pattern_type.1fa = value_binding_pattern pwa [concrete = constants.%pwa.patt]
 // CHECK:STDOUT:   }
@@ -122,7 +122,7 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:     %A.ref.loc9: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %A.ref.loc9 [concrete = constants.%ptr.25f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pwa: %ptr.25f = value_binding pwa, @__global_init.%addr.loc9
+// CHECK:STDOUT:   %pwa: %ptr.25f = wrapper_binding pwa, @__global_init.%addr.loc9
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pwb.patt: %pattern_type.733 = value_binding_pattern pwb [concrete = constants.%pwb.patt]
 // CHECK:STDOUT:   }
@@ -131,7 +131,7 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:     %B.ref.loc10: type = name_ref B, imports.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %ptr.loc10: type = ptr_type %B.ref.loc10 [concrete = constants.%ptr.dc0]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pwb: %ptr.dc0 = value_binding pwb, @__global_init.%addr.loc10
+// CHECK:STDOUT:   %pwb: %ptr.dc0 = wrapper_binding pwb, @__global_init.%addr.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

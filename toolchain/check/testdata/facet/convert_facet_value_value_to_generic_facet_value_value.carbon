@@ -249,14 +249,14 @@ fn F() {
 // CHECK:STDOUT:       %T.as_type.loc31_50.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc31_50.1 (constants.%T.as_type.b84)]
 // CHECK:STDOUT:       %.loc31_50.2: type = converted %T.ref, %T.as_type.loc31_50.2 [symbolic = %T.as_type.loc31_50.1 (constants.%T.as_type.b84)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %e: @Feed.%T.as_type.loc31_50.1 (%T.as_type.b84) = value_binding e, %e.param
+// CHECK:STDOUT:     %e: @Feed.%T.as_type.loc31_50.1 (%T.as_type.b84) = wrapper_binding e, %e.param
 // CHECK:STDOUT:     %food.param: @Feed.%Food.as_type.loc31_37.1 (%Food.as_type.bca) = value_param call_param1
 // CHECK:STDOUT:     %.loc31_66.1: type = splice_block %.loc31_66.2 [symbolic = %Food.as_type.loc31_37.1 (constants.%Food.as_type.bca)] {
 // CHECK:STDOUT:       %Food.ref.loc31_66: %Edible.type = name_ref Food, %Food.loc31_13.2 [symbolic = %Food.loc31_13.1 (constants.%Food.196)]
 // CHECK:STDOUT:       %Food.as_type.loc31_66: type = facet_access_type %Food.ref.loc31_66 [symbolic = %Food.as_type.loc31_37.1 (constants.%Food.as_type.bca)]
 // CHECK:STDOUT:       %.loc31_66.2: type = converted %Food.ref.loc31_66, %Food.as_type.loc31_66 [symbolic = %Food.as_type.loc31_37.1 (constants.%Food.as_type.bca)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %food: @Feed.%Food.as_type.loc31_37.1 (%Food.as_type.bca) = value_binding food, %food.param
+// CHECK:STDOUT:     %food: @Feed.%Food.as_type.loc31_37.1 (%Food.as_type.bca) = wrapper_binding food, %food.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleAnimal.decl: %HandleAnimal.type = fn_decl @HandleAnimal [concrete = constants.%HandleAnimal] {
 // CHECK:STDOUT:     %A.patt.loc32_18.1: %pattern_type.333 = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc32_18.2 (constants.%A.patt)]
@@ -282,14 +282,14 @@ fn F() {
 // CHECK:STDOUT:       %A.as_type.loc32_47.2: type = facet_access_type %A.ref [symbolic = %A.as_type.loc32_47.1 (constants.%A.as_type)]
 // CHECK:STDOUT:       %.loc32_47.2: type = converted %A.ref, %A.as_type.loc32_47.2 [symbolic = %A.as_type.loc32_47.1 (constants.%A.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @HandleAnimal.%A.as_type.loc32_47.1 (%A.as_type) = value_binding a, %a.param
+// CHECK:STDOUT:     %a: @HandleAnimal.%A.as_type.loc32_47.1 (%A.as_type) = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %food.param: @HandleAnimal.%Food.as_type.loc32_56.1 (%Food.as_type.24e) = value_param call_param1
 // CHECK:STDOUT:     %.loc32_56.1: type = splice_block %.loc32_56.2 [symbolic = %Food.as_type.loc32_56.1 (constants.%Food.as_type.24e)] {
 // CHECK:STDOUT:       %Food.ref: %Edible.type = name_ref Food, %Food.loc32_33.2 [symbolic = %Food.loc32_33.1 (constants.%Food.5f8)]
 // CHECK:STDOUT:       %Food.as_type.loc32_56.2: type = facet_access_type %Food.ref [symbolic = %Food.as_type.loc32_56.1 (constants.%Food.as_type.24e)]
 // CHECK:STDOUT:       %.loc32_56.2: type = converted %Food.ref, %Food.as_type.loc32_56.2 [symbolic = %Food.as_type.loc32_56.1 (constants.%Food.as_type.24e)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %food: @HandleAnimal.%Food.as_type.loc32_56.1 (%Food.as_type.24e) = value_binding food, %food.param
+// CHECK:STDOUT:     %food: @HandleAnimal.%Food.as_type.loc32_56.1 (%Food.as_type.24e) = wrapper_binding food, %food.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }

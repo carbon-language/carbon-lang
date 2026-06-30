@@ -10,14 +10,25 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Overview](#overview)
--   [Function definitions](#function-definitions)
+-   [Syntax](#syntax)
+    -   [Implicit parameters](#implicit-parameters)
+    -   [Named and positional parameters](#named-and-positional-parameters)
+    -   [Body](#body)
+-   [Function and lambda definitions](#function-and-lambda-definitions)
     -   [Function signatures](#function-signatures)
-        -   [Captures and function fields](#captures-and-function-fields)
-        -   [Positional Parameters](#positional-parameters)
         -   [Return specification](#return-specification)
         -   [Unused parameters](#unused-parameters)
     -   [`return` statements](#return-statements)
+-   [Positional parameters](#positional-parameters)
+-   [Captures](#captures)
+    -   [Capture restrictions on named functions](#capture-restrictions-on-named-functions)
+    -   [Capture modes](#capture-modes)
+    -   [Default capture mode](#default-capture-mode)
+    -   [Function fields](#function-fields)
+-   [Copy semantics](#copy-semantics)
+-   [Lambdas](#lambdas)
+    -   [Lambdas may not take `self` as a parameter](#lambdas-may-not-take-self-as-a-parameter)
+    -   [Lambda and function syntax comparison](#lambda-and-function-syntax-comparison)
 -   [Forward declarations](#forward-declarations)
     -   [Redeclaration matching](#redeclaration-matching)
 -   [Function types and values](#function-types-and-values)
@@ -32,36 +43,73 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## Overview
+## Syntax
 
-Functions are the core building block for applications. A function definition or
-declaration has one of the following syntactic forms (where items in square
-brackets are optional and independent):
+Functions are the core building block for applications. Carbon supports both
+named function declarations and anonymous function expressions called _lambdas_.
+
+A named function definition or declaration has one of the following syntactic
+forms (where items in square brackets are optional and independent):
 
 -   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] `=>` _expression_ `;`
 -   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_] `{`
     _statements_ `}`
--   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_] `;`
+-   `fn` _name_ [_implicit-parameters_] _tuple-pattern_ [`->` _return-form_] `;`
 
-The first form is a shorthand: `=> expression ;` is equivalent to
-`-> auto { return expression; }`. When a body is present (the first and second
-forms), it is a function definition. The body introduces nested scopes which may
-contain local variable declarations. A function with only a signature and no
-body (the third form) is a forward declaration.
+A lambda expression has one of the following syntactic forms:
 
-The syntax for parameters and returns is the same for functions and
-[lambdas](lambdas.md#syntax-overview):
+-   `fn` [_implicit-parameters_] [_tuple-pattern_] `=>` _expression_
+-   `fn` [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_] `{` _statements_
+    `}`
 
--   _implicit-parameters_: square brackets `[`...`]` enclosing default capture
-    modes, explicit captures, function fields, or deduced parameters, see
-    [lambdas](lambdas.md#implicit-parameters-in-square-brackets).
--   _tuple-pattern_: parentheses `(`...`)` enclosing a list of explicit
-    parameter patterns, see
-    [pattern matching](pattern_matching.md#pattern-syntax-and-semantics).
+Named function definitions are distinguished from lambdas by the presence of a
+name after the `fn` keyword. If a statement or declaration begins with `fn`, a
+name is required and it becomes a function declaration. Otherwise, if in an
+expression context, `fn` introduces a lambda.
 
-## Function definitions
+The first form in both cases is a shorthand: `=> expression` is equivalent to
+`-> auto { return expression; }` (with a trailing semicolon for named
+functions).
 
-A basic function definition may look like:
+The syntax for parameters, captures, and returns is the same for functions and
+lambdas.
+
+### Implicit parameters
+
+The optional _implicit-parameters_ part of a function declaration consists of
+square brackets `[]` enclosing zero or more comma-separated items. Each item is
+either a default capture mode, an explicit capture, a function field, or a
+deduced parameter. The default capture mode, if present, must come first; the
+other items can appear in any order. If _implicit-parameters_ is omitted, it is
+equivalent to `[]`.
+
+See [captures](#captures) and
+[deduced parameters](generics/overview.md#deduced-parameters) for details.
+
+### Named and positional parameters
+
+The presence of _tuple-pattern_ determines whether the function body uses named
+or positional parameters.
+
+> _tuple-pattern_: parentheses `(`...`)` enclosing a list of explicit parameter
+> patterns
+
+See the
+[pattern matching design](pattern_matching.md#pattern-syntax-and-semantics) for
+details about named parameters, and
+[positional parameters](#positional-parameters) for details about positional
+parameters.
+
+### Body
+
+When a body is present (in `{`...`}` or after `=>`), it is a function or lambda
+definition. The body introduces nested scopes which may contain local variable
+declarations. A named function with only a signature and no body is a forward
+declaration.
+
+## Function and lambda definitions
+
+A basic named function definition may look like:
 
 ```carbon
 fn Add(a: i64, b: i64) -> i64 {
@@ -93,31 +141,10 @@ auto Add(std::int64_t a, std::int64_t b) -> std::int64_t {
 
 ### Function signatures
 
-#### Captures and function fields
-
-Like lambdas, named function definitions support [captures](lambdas.md#captures)
-and [function fields](lambdas.md#function-fields), with these restrictions:
-
--   They can only be used on functions where the definition is attached to the
-    declaration (so they cannot be forward declared).
--   Captures and function fields are only supported on local function
-    definitions immediately defined inside the body of another function. They
-    are not supported on member functions of classes/interfaces.
-
-#### Positional Parameters
-
-Like lambdas, named function definitions support
-[positional parameters](lambdas.md#positional-parameters), which are used when
-the explicit parameter list is omitted. Like
-[captures and function fields](#captures-and-function-fields), they may only be
-used with function definitions and not forward declarations. In addition,
-positional parameters can only be used in a context where there is exactly one
-enclosing function or lambda that has no explicit parameter list.
-
 #### Return specification
 
-The return type of a function can be specified using a return clause (`->`), or
-it can be deduced using a signature return expression (`=>`).
+The return type of a function or lambda can be specified using a return clause
+(`->`), or it can be deduced using a signature return expression (`=>`).
 
 -   `->` followed by a return form:
     -   Most commonly, this will be an _expression_ that directly states the
@@ -147,6 +174,8 @@ it can be deduced using a signature return expression (`=>`).
     -   For example, `fn Sleep(seconds: i64);` is similar to
         `fn Sleep(seconds: i64) -> ();`.
     -   `()` is similar to a `void` return type in C++.
+    -   If `->` is omitted, `return` statements in the function body must not be
+        followed by an expression.
 -   `=>` followed by an _expression_ defines a shorthand for a function body
     that returns the expression. The return type is deduced as if `-> auto` were
     used.
@@ -154,6 +183,9 @@ it can be deduced using a signature return expression (`=>`).
         `i64` based on the type of the expression `a + b`.
     -   Because the return type is deduced and not explicitly known, functions
         defined using `=>` cannot have a separate forward declaration.
+
+> **TODO:** Update this section to cover extended return types, as discussed
+> [here](values.md#function-calls-and-returns).
 
 #### Unused parameters
 
@@ -206,6 +238,341 @@ statement must have an expression that is convertible to the return type, and a
 
 > **TODO:** Update this section to cover the requirements on the form of the
 > expression.
+
+## Positional parameters
+
+Positional parameters, denoted by a dollar sign followed by a non-negative
+integer (for example, `$3`), are auto-typed parameters defined within the
+function or lambda body when the explicit parameter list (parentheses) is
+omitted.
+
+```carbon
+let lambda: auto = fn => $0
+```
+
+They are variadic by design, meaning an unbounded number of arguments can be
+passed to any function or lambda that lacks an explicit parameter list. Only the
+parameters that are named in the body will be read from, meaning the highest
+named parameter denotes the minimum number of arguments required by the
+function. The body is free to omit lower-numbered parameters (for example,
+`fn { Print($10); }`).
+
+This syntax was inspired by Swift's
+[Shorthand Argument Names](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/closures/#Shorthand-Argument-Names).
+
+```carbon
+// A lambda that takes two positional parameters being used as a comparator
+Sort(my_list, fn => $0.val < $1.val);
+// In Swift: { $0.val < $1.val }
+```
+
+When positional parameters are used in a nested function definition, exactly one
+of the enclosing functions must omit the explicit parameter list, and they are
+interpreted as parameters of that function:
+
+```carbon
+fn F {
+  fn G[let]() -> auto {
+    // `$0` is a parameter of `F` that is captured by `G`,
+    // not a parameter of `G`.
+    return $0;
+  }
+}
+```
+
+This means that a single function or lambda cannot have both named and
+positional parameters:
+
+```carbon
+fn Foo(x: i32) -> i32 {
+  // ❌ Invalid since `Foo` is already using named parameters.
+  return $0;
+}
+```
+
+Positional parameters can only be used with function definitions, not forward
+declarations.
+
+## Captures
+
+Captures in Carbon mirror the non-init captures of C++. A capture declaration
+consists of a capture mode (for `var` captures) followed by the name of a
+binding from the enclosing scope, and makes that identifier available in the
+inner function body. These captures are specified in square brackets `[`...`]`
+as part of the implicit parameter list. The lifetime of a capture is the
+lifetime of the function in which it exists.
+
+For example:
+
+```carbon
+fn InLambda() {
+  let handle: Handle = Handle.Get();
+  var thread: Thread = Thread.Make(fn [var handle] { handle.Process(); });
+  thread.Join();
+}
+```
+
+```carbon
+fn InNamedFunction() {
+  let handle: Handle = Handle.Get();
+  fn MyThread[handle]() { handle.Process(); }
+  var thread: Thread = Thread.Make(MyThread);
+  thread.Join();
+}
+```
+
+### Capture restrictions on named functions
+
+While lambdas can use captures freely, named function definitions support
+captures (and function fields) with these restrictions:
+
+-   They can only be used on functions where the definition is attached to the
+    declaration (so they cannot be forward declared).
+-   Captures and function fields are only supported on local function
+    definitions immediately defined inside the body of another function.
+
+### Capture modes
+
+Lambdas and local functions can capture variables from their surrounding scope
+using `let` or `var`, just like regular bindings.
+
+Capture modes can be used as
+[default capture mode specifiers](#default-capture-mode) or for explicit
+captures as shown in the example code below.
+
+```carbon
+fn Example() {
+  var a: i32 = 0;
+  var b: i32 = 0;
+
+  let lambda: auto = fn [a, var b] {
+    // ❌ Invalid: by-value captures are immutable (default `let`)
+    a += 1;
+    // ✅ Valid: `b` is a mutable copy (captured with `var`)
+    b += 1;
+  };
+
+  lambda();
+}
+```
+
+```carbon
+fn Example {
+  fn Invalid() -> auto {
+    var s: String = "Hello world";
+    return fn [s]() => s;
+  }
+
+  // ❌ Invalid: returned lambda references `s` which is no longer alive
+  // when the lambda is invoked.
+  Print(Invalid()());
+}
+```
+
+Note: If a function object F has mutable state, either because it has a
+by-object capture or because it has a by-object function field, then a call to F
+should require the callee to be a reference expression rather than a value
+expression. We need a mutable handle to the function in order to be able to
+mutate its mutable state.
+
+### Default capture mode
+
+By default, there is no capturing in lambdas and functions. The lack of any
+square brackets is the same as an empty pair of square brackets. Users can opt
+into capturing behavior. This is done either by way of individual explicit
+captures, or more succinctly by way of a default capture mode. The default
+capture mode roughly mirrors the syntax `[=]` and `[&]` capture modes from C++
+by being the first thing to appear in the square brackets.
+
+```carbon
+fn Foo1() {
+  let handle: Handle = Handle.Get();
+  fn MyThread[var]() {
+    // `handle` is captured by-object due to the default capture
+    // mode specifier of `var`
+    handle.Process();
+  }
+  var thread: Thread = Thread.Make(MyThread);
+  thread.Join();
+}
+
+fn Foo2() {
+  let handle: Handle = Handle.Get();
+  fn MyThread[let]() {
+    // `handle` is captured by-value due to the default capture
+    // mode specifier of `let`
+    handle.Process();
+  }
+  var thread: Thread = Thread.Make(MyThread);
+  thread.Join();
+}
+```
+
+### Function fields
+
+Function fields mirror the behavior of init captures in C++. Function fields are
+defined in the implicit parameter list, and are allowed only where captures are
+allowed. A function field definition consists of an irrefutable pattern, `=`,
+and an initializer. It matches the pattern with the initializer when the
+function definition is evaluated. The bindings in the pattern have the same
+lifetime as the function, and their scope extends to the end of the function
+body.
+
+```carbon
+fn Foo() {
+  var h1: Handle = Handle.Get();
+  var h2: Handle = Handle.Get();
+  var thread: Thread = Thread.Make(fn [a: auto = h1, var b: auto = h2] {
+    a.Process();
+    b.Process();
+  });
+  thread.Join();
+}
+```
+
+## Copy semantics
+
+To mirror the behavior of C++, lambdas and functions with captures or function
+fields will be as copyable as their contained function fields and function
+captures. This means that, if a function holds a by-object function field, if
+the type of the field is copyable, so too is the function that contains it. This
+also applies to captures.
+
+The other case is by-value function fields. Since C++ const references, when
+made into fields of a class, prevent the class from being copy assigned, so too
+should by-value function fields prevent the function in which it is contained
+from being copy assigned.
+
+## Lambdas
+
+One goal of Carbon's lambda syntax is to have continuity between lambdas and
+named functions. Below are some example declarations:
+
+Implicit return types:
+
+```carbon
+// In a variable:
+let lambda: auto = fn => T.Make();
+// Equivalent in C++23:
+// const auto lambda = [] { return T::Make(); };
+
+// As an argument to a function call:
+Foo(10, 20, fn => T.Make());
+// Equivalent in C++23:
+// Foo(10, 20, [] { return T::Make(); });
+```
+
+Explicit return types:
+
+```carbon
+// In a variable:
+let lambda: auto = fn -> T { return T.Make(); };
+// Equivalent in C++23:
+// const auto lambda = [] -> T { return T::Make(); };
+
+// As an argument to a function call:
+PushBack(my_list, fn -> T { return T.Make() });
+// Equivalent in C++23:
+// PushBack(my_list, [] { return T::Make(); });
+```
+
+### Lambdas may not take `self` as a parameter
+
+To mirror C++'s use of capturing `this`, `self` should always come from the
+outer scope as a capture. `self` is never permitted in the explicit parameter
+list of a lambda.
+
+```carbon
+// ❌ Not allowed, lambdas can't be methods.
+let lambda: auto = fn (self) { self.F(); };
+
+// ✅ Captures `self` from outer scope
+let lambda: auto = fn [self] { self.F(); };
+```
+
+Note: Following
+[#3720](https://github.com/carbon-language/carbon-lang/pull/3720), an expression
+of the form `x.(F)`, where `F` is a function with a `self` or `ref self`
+parameter, produces a callable that holds the value of `x`, and does not hold
+the value of `F`. As a consequence, we can't support combining captures and
+function fields with a `self` parameter.
+
+### Lambda and function syntax comparison
+
+To understand how the syntax between lambdas and function declarations is
+reasonably "continuous", refer to this table of syntactic positions and the
+following code examples.
+
+| Syntactic Position |                   Syntax Allowed in Given Position (optional, unless otherwise stated)                    |
+| :----------------: | :-------------------------------------------------------------------------------------------------------: |
+|         A1         |          Required Returned Expression ([positional parameters](#positional-parameters) allowed)           |
+|         A2         |         Required Returned Expression ([positional parameters](#positional-parameters) disallowed)         |
+|         B          |                               [Default capture mode](#default-capture-mode)                               |
+|         C          | Explicit [Captures](#captures), [Function fields](#function-fields) and Deduced Parameters (in any order) |
+|         D          |                                            Explicit Parameters                                            |
+|         E1         |      Body of Statements (no return value) ([positional parameters](#positional-parameters) allowed)       |
+|         E2         |     Body of Statements (with return value) ([positional parameters](#positional-parameters) allowed)      |
+|         E3         |     Body of Statements (no return value) ([positional parameters](#positional-parameters) disallowed)     |
+|         E4         |    Body of Statements (with return value) ([positional parameters](#positional-parameters) disallowed)    |
+|         F          |                                           Required Return Type                                            |
+
+Lambdas (all the following are in an expression context and are themselves
+expressions):
+
+```carbon
+fn => A1
+
+fn [B, C] => A1
+
+fn (D) => A2
+
+fn [B, C](D) => A2
+
+fn { E1; }
+
+fn -> F { E2; }
+
+fn [B, C] { E1; }
+
+fn [B, C] -> F { E2; }
+
+fn (D) { E3; }
+
+fn (D) -> F { E4; }
+
+fn [B, C](D) { E3; }
+
+fn [B, C](D) -> F { E4; }
+```
+
+Function Declarations (all the following are allowed as statements in a function
+body or as declarations in other scopes):
+
+```carbon
+fn G => A1;
+
+fn G[B, C] => A1;
+
+fn G(D) => A2;
+
+fn G[B, C](D) => A2;
+
+fn G { E1; }
+
+fn G -> F { E2; }
+
+fn G[B, C] { E1; }
+
+fn G[B, C] -> F { E2; }
+
+fn G(D) { E3; }
+
+fn G(D) -> F { E4; }
+
+fn G[B, C](D) { E3; }
+
+fn G[B, C](D) -> F { E4; }
+```
 
 ## Forward declarations
 
@@ -521,6 +888,17 @@ Other designs build upon basic function syntax to add advanced features:
 -   [Allow separate declaration and definition](/proposals/p000826-function-return-type-inference.md#allow-separate-declaration-and-definition)
 -   [Signature-based function types](/proposals/p002875-functions-function-types-and-function-calls.md#signature-based-function-types)
 -   [Make direct and indirect calls behave uniformly](/proposals/p002875-functions-function-types-and-function-calls.md#make-direct-and-indirect-calls-behave-uniformly)
+-   [Terse vs Elaborated lambdas](/proposals/p003848-lambdas.md#alternative-considered-terse-vs-elaborated)
+-   [Sigil for lambdas](/proposals/p003848-lambdas.md#alternative-considered-sigil)
+-   [Additional Positional Parameter Restriction](/proposals/p003848-lambdas.md#alternative-considered-additional-positional-parameter-restriction)
+-   [Recursive Self in lambdas](/proposals/p003848-lambdas.md#alternative-considered-recursive-self)
+-   [Keep the `:!` syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#keep-the--syntax)
+-   [Alternative keyword names](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#alternative-keyword-names)
+-   [Use `template generic` instead of just `template`](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#use-template-generic-instead-of-just-template)
+-   [Context-independent syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#context-independent-syntax)
+-   [Erased model for generics](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#erased-model-for-generics)
+-   [Context-sensitive defaults based on parameter type](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#context-sensitive-defaults-based-on-parameter-type)
+-   [Allow redundant phase keywords](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#allow-redundant-phase-keywords)
 
 ## References
 
@@ -540,3 +918,5 @@ Other designs build upon basic function syntax to add advanced features:
     [#3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
 -   Proposal
     [#5434: `ref` parameters, arguments, returns and `val` returns](https://github.com/carbon-language/carbon-lang/pull/5434)
+-   Proposal
+    [#7254: Replace `:!` and `:?` with keywords and contextual defaults](https://github.com/carbon-language/carbon-lang/pull/7254)

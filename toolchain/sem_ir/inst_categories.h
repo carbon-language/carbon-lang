@@ -141,9 +141,7 @@ struct AnyBindingPattern {
 // clang-format off
 #define AnyBinding_CARBON_INST_CATEGORY(X, Sep) \
   X(::Carbon::SemIR::AliasBinding) Sep()        \
-  X(::Carbon::SemIR::RefBinding) Sep()          \
   X(::Carbon::SemIR::SymbolicBinding) Sep()     \
-  X(::Carbon::SemIR::ValueBinding) Sep()        \
   X(::Carbon::SemIR::WrapperBinding)
 // clang-format on
 

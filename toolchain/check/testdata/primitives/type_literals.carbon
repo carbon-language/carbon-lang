@@ -338,28 +338,28 @@ var test_str: str = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i8.var: ref %i8 = var %test_i8.var_patt [concrete]
 // CHECK:STDOUT:   %i8: type = type_literal constants.%i8 [concrete = constants.%i8]
-// CHECK:STDOUT:   %test_i8: ref %i8 = ref_binding test_i8, %test_i8.var [concrete = %test_i8.var]
+// CHECK:STDOUT:   %test_i8: ref %i8 = wrapper_binding test_i8, %test_i8.var [concrete = %test_i8.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_i16.patt: %pattern_type.203 = ref_binding_pattern test_i16 [concrete = constants.%test_i16.patt]
 // CHECK:STDOUT:     %test_i16.var_patt: %pattern_type.203 = var_pattern %test_i16.patt [concrete = constants.%test_i16.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i16.var: ref %i16 = var %test_i16.var_patt [concrete]
 // CHECK:STDOUT:   %i16: type = type_literal constants.%i16 [concrete = constants.%i16]
-// CHECK:STDOUT:   %test_i16: ref %i16 = ref_binding test_i16, %test_i16.var [concrete = %test_i16.var]
+// CHECK:STDOUT:   %test_i16: ref %i16 = wrapper_binding test_i16, %test_i16.var [concrete = %test_i16.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_i32.patt: %pattern_type.6b6 = ref_binding_pattern test_i32 [concrete = constants.%test_i32.patt]
 // CHECK:STDOUT:     %test_i32.var_patt: %pattern_type.6b6 = var_pattern %test_i32.patt [concrete = constants.%test_i32.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i32.var: ref %i32 = var %test_i32.var_patt [concrete]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %test_i32: ref %i32 = ref_binding test_i32, %test_i32.var [concrete = %test_i32.var]
+// CHECK:STDOUT:   %test_i32: ref %i32 = wrapper_binding test_i32, %test_i32.var [concrete = %test_i32.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_i64.patt: %pattern_type.f57 = ref_binding_pattern test_i64 [concrete = constants.%test_i64.patt]
 // CHECK:STDOUT:     %test_i64.var_patt: %pattern_type.f57 = var_pattern %test_i64.patt [concrete = constants.%test_i64.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i64.var: ref %i64 = var %test_i64.var_patt [concrete]
 // CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
-// CHECK:STDOUT:   %test_i64: ref %i64 = ref_binding test_i64, %test_i64.var [concrete = %test_i64.var]
+// CHECK:STDOUT:   %test_i64: ref %i64 = wrapper_binding test_i64, %test_i64.var [concrete = %test_i64.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -444,28 +444,28 @@ var test_str: str = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u8.var: ref %u8 = var %test_u8.var_patt [concrete]
 // CHECK:STDOUT:   %u8: type = type_literal constants.%u8 [concrete = constants.%u8]
-// CHECK:STDOUT:   %test_u8: ref %u8 = ref_binding test_u8, %test_u8.var [concrete = %test_u8.var]
+// CHECK:STDOUT:   %test_u8: ref %u8 = wrapper_binding test_u8, %test_u8.var [concrete = %test_u8.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_u16.patt: %pattern_type.17c = ref_binding_pattern test_u16 [concrete = constants.%test_u16.patt]
 // CHECK:STDOUT:     %test_u16.var_patt: %pattern_type.17c = var_pattern %test_u16.patt [concrete = constants.%test_u16.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u16.var: ref %u16 = var %test_u16.var_patt [concrete]
 // CHECK:STDOUT:   %u16: type = type_literal constants.%u16 [concrete = constants.%u16]
-// CHECK:STDOUT:   %test_u16: ref %u16 = ref_binding test_u16, %test_u16.var [concrete = %test_u16.var]
+// CHECK:STDOUT:   %test_u16: ref %u16 = wrapper_binding test_u16, %test_u16.var [concrete = %test_u16.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_u32.patt: %pattern_type.668 = ref_binding_pattern test_u32 [concrete = constants.%test_u32.patt]
 // CHECK:STDOUT:     %test_u32.var_patt: %pattern_type.668 = var_pattern %test_u32.patt [concrete = constants.%test_u32.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u32.var: ref %u32 = var %test_u32.var_patt [concrete]
 // CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %test_u32: ref %u32 = ref_binding test_u32, %test_u32.var [concrete = %test_u32.var]
+// CHECK:STDOUT:   %test_u32: ref %u32 = wrapper_binding test_u32, %test_u32.var [concrete = %test_u32.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_u64.patt: %pattern_type.b35 = ref_binding_pattern test_u64 [concrete = constants.%test_u64.patt]
 // CHECK:STDOUT:     %test_u64.var_patt: %pattern_type.b35 = var_pattern %test_u64.patt [concrete = constants.%test_u64.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u64.var: ref %u64 = var %test_u64.var_patt [concrete]
 // CHECK:STDOUT:   %u64: type = type_literal constants.%u64 [concrete = constants.%u64]
-// CHECK:STDOUT:   %test_u64: ref %u64 = ref_binding test_u64, %test_u64.var [concrete = %test_u64.var]
+// CHECK:STDOUT:   %test_u64: ref %u64 = wrapper_binding test_u64, %test_u64.var [concrete = %test_u64.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -550,28 +550,28 @@ var test_str: str = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f16.var: ref %f16.907 = var %test_f16.var_patt [concrete]
 // CHECK:STDOUT:   %f16: type = type_literal constants.%f16.907 [concrete = constants.%f16.907]
-// CHECK:STDOUT:   %test_f16: ref %f16.907 = ref_binding test_f16, %test_f16.var [concrete = %test_f16.var]
+// CHECK:STDOUT:   %test_f16: ref %f16.907 = wrapper_binding test_f16, %test_f16.var [concrete = %test_f16.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_f32.patt: %pattern_type.240 = ref_binding_pattern test_f32 [concrete = constants.%test_f32.patt]
 // CHECK:STDOUT:     %test_f32.var_patt: %pattern_type.240 = var_pattern %test_f32.patt [concrete = constants.%test_f32.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f32.var: ref %f32.c73 = var %test_f32.var_patt [concrete]
 // CHECK:STDOUT:   %f32: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
-// CHECK:STDOUT:   %test_f32: ref %f32.c73 = ref_binding test_f32, %test_f32.var [concrete = %test_f32.var]
+// CHECK:STDOUT:   %test_f32: ref %f32.c73 = wrapper_binding test_f32, %test_f32.var [concrete = %test_f32.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_f64.patt: %pattern_type.fb7 = ref_binding_pattern test_f64 [concrete = constants.%test_f64.patt]
 // CHECK:STDOUT:     %test_f64.var_patt: %pattern_type.fb7 = var_pattern %test_f64.patt [concrete = constants.%test_f64.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f64.var: ref %f64.dc1 = var %test_f64.var_patt [concrete]
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %test_f64: ref %f64.dc1 = ref_binding test_f64, %test_f64.var [concrete = %test_f64.var]
+// CHECK:STDOUT:   %test_f64: ref %f64.dc1 = wrapper_binding test_f64, %test_f64.var [concrete = %test_f64.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_f128.patt: %pattern_type.847 = ref_binding_pattern test_f128 [concrete = constants.%test_f128.patt]
 // CHECK:STDOUT:     %test_f128.var_patt: %pattern_type.847 = var_pattern %test_f128.patt [concrete = constants.%test_f128.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f128.var: ref %f128.e39 = var %test_f128.var_patt [concrete]
 // CHECK:STDOUT:   %f128: type = type_literal constants.%f128.e39 [concrete = constants.%f128.e39]
-// CHECK:STDOUT:   %test_f128: ref %f128.e39 = ref_binding test_f128, %test_f128.var [concrete = %test_f128.var]
+// CHECK:STDOUT:   %test_f128: ref %f128.e39 = wrapper_binding test_f128, %test_f128.var [concrete = %test_f128.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -640,7 +640,7 @@ var test_str: str = ();
 // CHECK:STDOUT:   %.loc5_23.1: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_99]
 // CHECK:STDOUT:   %.loc5_23.2: %char = converted @__global_init.%.loc5, %.loc5_23.1 [concrete = constants.%int_99]
 // CHECK:STDOUT:   %char: type = type_literal constants.%char [concrete = constants.%char]
-// CHECK:STDOUT:   %test_char: %char = value_binding test_char, %.loc5_23.2
+// CHECK:STDOUT:   %test_char: %char = wrapper_binding test_char, %.loc5_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -670,7 +670,7 @@ var test_str: str = ();
 // CHECK:STDOUT:     %test_str.patt: %pattern_type.adf = value_binding_pattern test_str [concrete = constants.%test_str.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %str: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
-// CHECK:STDOUT:   %test_str: %str.3d4 = value_binding test_str, @__global_init.%String.val
+// CHECK:STDOUT:   %test_str: %str.3d4 = wrapper_binding test_str, @__global_init.%String.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -711,7 +711,7 @@ var test_str: str = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_type.var: ref type = var %test_type.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %test_type: ref type = ref_binding test_type, %test_type.var [concrete = %test_type.var]
+// CHECK:STDOUT:   %test_type: ref type = wrapper_binding test_type, %test_type.var [concrete = %test_type.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -625,7 +625,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst78000026:    {kind: WrapperBindingPattern, arg0: entity_name78000002, arg1: inst78000022, type: type(symbolic_constant78000009)}
 // CHECK:STDOUT:     inst78000027:    {kind: WrapperBindingPattern, arg0: entity_name78000002, arg1: inst78000023, type: type(symbolic_constant78000007)}
 // CHECK:STDOUT:     inst78000028:    {kind: WrapperBindingPattern, arg0: entity_name78000002, arg1: inst78000025, type: type(symbolic_constant78000009)}
-// CHECK:STDOUT:     inst78000029:    {kind: ValueBinding, arg0: entity_name78000002, arg1: inst78000044, type: type(symbolic_constant78000006)}
+// CHECK:STDOUT:     inst78000029:    {kind: WrapperBinding, arg0: entity_name78000002, arg1: inst78000044, type: type(symbolic_constant78000006)}
 // CHECK:STDOUT:     inst7800002A:    {kind: NameRef, arg0: name1, arg1: inst7800001A, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800002B:    {kind: PointerType, arg0: inst7800002A, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800002C:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}

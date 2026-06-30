@@ -55,14 +55,14 @@ fn F(n: i32, a: array(i32, n)*);
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc19_9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
+// CHECK:STDOUT:     %n: %i32 = wrapper_binding n, %n.param
 // CHECK:STDOUT:     %a.param: <error> = value_param call_param1
 // CHECK:STDOUT:     %.loc19: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %i32.loc19_23: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: <error> = value_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:     %a: <error> = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

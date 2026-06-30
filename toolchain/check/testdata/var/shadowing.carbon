@@ -84,7 +84,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc5_12.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_12.3: type = converted %.loc5_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NS: ref %empty_tuple.type = ref_binding NS, %NS.var
+// CHECK:STDOUT:   %NS: ref %empty_tuple.type = wrapper_binding NS, %NS.var
 // CHECK:STDOUT:   %NS.ref: ref %empty_tuple.type = name_ref NS, %NS
 // CHECK:STDOUT:   %.loc6_9.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_9.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
@@ -103,7 +103,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc8_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_18.3: type = converted %.loc8_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.loc8: ref %empty_tuple.type = ref_binding x, %x.var.loc8
+// CHECK:STDOUT:   %x.loc8: ref %empty_tuple.type = wrapper_binding x, %x.var.loc8
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true br !if.then else br !if.else
 // CHECK:STDOUT:
@@ -121,7 +121,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc10_13.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc10_13.3: type = converted %.loc10_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.loc10: ref %empty_tuple.type = ref_binding x, %x.var.loc10
+// CHECK:STDOUT:   %x.loc10: ref %empty_tuple.type = wrapper_binding x, %x.var.loc10
 // CHECK:STDOUT:   %x.ref: ref %empty_tuple.type = name_ref x, %x.loc10
 // CHECK:STDOUT:   %.loc13_10.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc13_10.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
