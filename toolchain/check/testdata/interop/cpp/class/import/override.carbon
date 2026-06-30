@@ -45,15 +45,15 @@ class Overload0Params {
   // CHECK:STDERR:   override fn f(self);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:6:16: note: candidate function has 2 parameters including `self`, but override has only 1 [OverrideCandidateArityMismatch]
+  // CHECK:STDERR: ./overload.h:6:16: note: base class function has more parameters (1 vs 0 excluding `self`) [OverrideCandidateArityMismatch]
   // CHECK:STDERR:   virtual void f(X x);
   // CHECK:STDERR:                ^
   // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE-12]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:7:16: note: candidate function has 2 parameters including `self`, but override has only 1 [OverrideCandidateArityMismatch]
+  // CHECK:STDERR: ./overload.h:7:16: note: base class function has more parameters (1 vs 0 excluding `self`) [OverrideCandidateArityMismatch]
   // CHECK:STDERR:   virtual void f(Y y);
   // CHECK:STDERR:                ^
   // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:8:16: note: candidate function has 3 parameters including `self`, but override has only 1 [OverrideCandidateArityMismatch]
+  // CHECK:STDERR: ./overload.h:8:16: note: base class function has more parameters (2 vs 0 excluding `self`) [OverrideCandidateArityMismatch]
   // CHECK:STDERR:   virtual void f(X x, Y y);
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
@@ -67,15 +67,15 @@ class Overload3Params {
   // CHECK:STDERR:   override fn f(self, x: Cpp.X, y: Cpp.Y, z: Cpp.X);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE-30]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:6:16: note: candidate function has 2 parameters including `self`, but override has 4 [OverrideCandidateArityMismatch]
+  // CHECK:STDERR: ./overload.h:6:16: note: base class function has fewer parameters (1 vs 3 excluding `self`) [OverrideCandidateArityMismatch]
   // CHECK:STDERR:   virtual void f(X x);
   // CHECK:STDERR:                ^
   // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE-34]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:7:16: note: candidate function has 2 parameters including `self`, but override has 4 [OverrideCandidateArityMismatch]
+  // CHECK:STDERR: ./overload.h:7:16: note: base class function has fewer parameters (1 vs 3 excluding `self`) [OverrideCandidateArityMismatch]
   // CHECK:STDERR:   virtual void f(Y y);
   // CHECK:STDERR:                ^
   // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE-38]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:8:16: note: candidate function has 3 parameters including `self`, but override has 4 [OverrideCandidateArityMismatch]
+  // CHECK:STDERR: ./overload.h:8:16: note: base class function has fewer parameters (2 vs 3 excluding `self`) [OverrideCandidateArityMismatch]
   // CHECK:STDERR:   virtual void f(X x, Y y);
   // CHECK:STDERR:                ^
   // CHECK:STDERR:

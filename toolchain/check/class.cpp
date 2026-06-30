@@ -314,12 +314,11 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     } else if (!implemented_impls.Lookup(fn_decl.function_id)) {
       CARBON_DIAGNOSTIC(OverrideWithoutVirtualInBase, Error,
                         "override without compatible virtual in base class");
-      CARBON_DIAGNOSTIC(
-          OverrideCandidateArityMismatch, Note,
-          "candidate function has {0} parameter{0:s} including `self`, but "
-          "override has {2:only |}{1}",
-          Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
-          Diagnostics::BoolAsSelect);
+      CARBON_DIAGNOSTIC(OverrideCandidateArityMismatch, Note,
+                        "base class function has {2:more|fewer} parameters "
+                        "({0} vs {1} excluding `self`)",
+                        Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
+                        Diagnostics::BoolAsSelect);
       auto builder = context.emitter().Build(SemIR::LocId(inst_id),
                                              OverrideWithoutVirtualInBase);
       if (base_vtable_id.has_value()) {
@@ -339,8 +338,8 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
             case OverrideMatchResult::ArityMismatch:
               builder.Note(base_fn.first_owning_decl_id,
                            OverrideCandidateArityMismatch,
-                           base_fn.call_param_ranges.explicit_size(),
-                           fn.call_param_ranges.explicit_size(),
+                           base_fn.call_param_ranges.explicit_size() - 1,
+                           fn.call_param_ranges.explicit_size() - 1,
                            base_fn.call_param_ranges.explicit_size() >
                                fn.call_param_ranges.explicit_size());
               break;

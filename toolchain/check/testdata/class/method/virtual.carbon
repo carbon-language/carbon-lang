@@ -205,7 +205,7 @@ class Derived {
   // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+7]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
   // CHECK:STDERR:   override fn F(self, v: i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE-8]]:3: note: candidate function has 1 parameter including `self`, but override has 2 [OverrideCandidateArityMismatch]
+  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE-8]]:3: note: base class function has fewer parameters (0 vs 1 excluding `self`) [OverrideCandidateArityMismatch]
   // CHECK:STDERR:   virtual fn F(self);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
