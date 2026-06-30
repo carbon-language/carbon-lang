@@ -85,6 +85,13 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
 auto IsPeriodSelf(Context& context, SemIR::InstId inst_id,
                   bool canonicalize = true) -> bool;
 
+// Find all `.Self` with their active flag set in the EntityName and replace
+// them with a new `.Self` where the active flag is disabled. The active flag
+// prevents substiting `.Self` while inside the construction of a facet type,
+// and this frees them up to be replaced from outside the facet type, or allows
+// to constant comparison with values from outside the facet type.
+//
+// This supports substitution in a canonical or non-canonical instruction.
 auto MakePeriodSelfInactive(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId;
 

@@ -511,9 +511,10 @@ auto IsPeriodSelf(Context& context, SemIR::InstId inst_id, bool canonicalize)
 
 auto MakePeriodSelfInactive(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
-  class Callbacks : public SubstInstCallbacks {
+  class MakeInactiveCallbacks : public SubstInstCallbacks {
    public:
-    explicit Callbacks(Context* context) : SubstInstCallbacks(context) {}
+    explicit MakeInactiveCallbacks(Context* context)
+        : SubstInstCallbacks(context) {}
     auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
       if (inst_id == SemIR::TypeType::TypeInstId ||
           inst_id == SemIR::ErrorInst::InstId) {
@@ -568,10 +569,14 @@ auto MakePeriodSelfInactive(Context& context, SemIR::InstId inst_id)
     }
 
    private:
+    // Track replacements that have been done, so that we avoid re-evaluating
+    // the same instructions repeatedly. Without this, a facet type can create a
+    // quadratic number of evaluations, as each one produces many more,
+    // repeatedly.
     Map<SemIR::InstId, SemIR::InstId, 16> cache_;
   };
 
-  Callbacks callbacks(&context);
+  MakeInactiveCallbacks callbacks(&context);
   return SubstInst(context, inst_id, callbacks);
 }
 
