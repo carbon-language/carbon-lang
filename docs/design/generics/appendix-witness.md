@@ -230,8 +230,7 @@ var VectorForPoint_Inline: Vector  = {
 };
 ```
 
-Since generic arguments (indicated by context or the `generic` or `template`
-modifiers) are passed at compile time, the actual value of
+Since generic arguments are passed at compile time, the actual value of
 `VectorForPoint_Inline` can be used to generate the code for functions using
 that impl.
 

@@ -2860,10 +2860,14 @@ constraint ContainerIsSlice {
 
 The `.Self` construct follows these rules:
 
--   A compile-time binding `X` introduces a checked binding `.Self: type`, where
+-   A generic binding `X` introduces a checked generic binding `.Self: type`, where
+
     references to `.Self` are resolved to `X`. This allows you to use `.Self` as
     an interface parameter as in `X: I(.Self)`.
--   `A where` introduces `generic .Self: A` and a `.Foo` _designator_ for each
+-   `A where` introduces a checked generic binding `.Self: A` and a `.Foo`
+
+    _designator_ for each
+
     member `Foo` of `A`.
 -   It's an error to reference `.Self` if it refers to more than one different
     thing or isn't a facet.
@@ -2872,7 +2876,8 @@ The `.Self` construct follows these rules:
     to the same facet binding.
 -   `.Self` may not be on the left side of the `=` in a rewrite constraint.
 
-So in `X: A where ...` (where `X` is a compile-time binding), `.Self` is
+So in `X: A where ...` (where `X` is a generic binding), `.Self` is
+
 introduced twice, after the `:` and the `where`. This is allowed since both
 times it means `X`. After the `:`, `.Self` has the type `type`, which gets
 refined to `A` after the `where`. In contrast, it is an error if `.Self` could
@@ -3042,7 +3047,8 @@ interface EqualConverter {
   let T: type;
   fn Convert(t: T) -> Self;
 }
-fn EqualConvert[T: type](t: T, U: EqualConverter where .T = T) -> U {
+fn EqualConvert[T: type](t: T, generic U: EqualConverter where .T = T) -> U {
+
   return U.Convert(t);
 }
 impl forall [U: type] U as EqualConverter where .T = U {
@@ -3986,8 +3992,11 @@ interface Ordered {
   fn Compare(self, rhs: Self) -> CompareResult;
 }
 fn CombinedLess[T: type](a: T, b: T,
-                          generic U: CompatibleWith(T) & Ordered,
-                          generic V: CompatibleWith(T) & Ordered) -> bool {
+
+                         generic U: CompatibleWith(T) & Ordered,
+
+                         generic V: CompatibleWith(T) & Ordered) -> bool {
+
   match ((a as U).Compare(b as U)) {
     case .Less => { return True; }
     case .Greater => { return False; }
