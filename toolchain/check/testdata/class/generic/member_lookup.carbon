@@ -14,22 +14,22 @@
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T: type) {
   var b: T;
 }
 
-class Derived(T:! type) {
+class Derived(T: type) {
   extend base: Base(T);
   var d: T;
 }
 
-fn AccessDerived[T:! Core.Copy](x: Derived(T)) -> T {
+fn AccessDerived[T: Core.Copy](x: Derived(T)) -> T {
   //@dump-sem-ir-begin
   return x.d;
   //@dump-sem-ir-end
 }
 
-fn AccessBase[T:! Core.Copy](x: Derived(T)) -> T {
+fn AccessBase[T: Core.Copy](x: Derived(T)) -> T {
   //@dump-sem-ir-begin
   return x.b;
   //@dump-sem-ir-end
@@ -43,16 +43,16 @@ fn AccessConcrete(x: Derived(i32)) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T: type) {
   var b: T;
 }
 
-class Derived(T:! type) {
+class Derived(T: type) {
   extend base: Base(T);
   var d: T;
 }
 
-fn AccessMissingBase[T:! type](x: Base(T)) -> T {
+fn AccessMissingBase[T: type](x: Base(T)) -> T {
   // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Base(T)` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   return x.nonesuch;
   // CHECK:STDERR:          ^~~~~~~~~~
@@ -60,7 +60,7 @@ fn AccessMissingBase[T:! type](x: Base(T)) -> T {
   return x.nonesuch;
 }
 
-fn AccessMissingDerived[T:! type](x: Derived(T)) -> T {
+fn AccessMissingDerived[T: type](x: Derived(T)) -> T {
   // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Derived(T)` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   return x.nonesuch;
   // CHECK:STDERR:          ^~~~~~~~~~

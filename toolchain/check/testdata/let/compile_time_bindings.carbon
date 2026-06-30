@@ -26,7 +26,7 @@ class C {
   // CHECK:STDERR:   let x:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
-  let x:! () = ();
+  let generic x: () = ();
 }
 
 // --- fail_let_before.carbon
@@ -38,7 +38,7 @@ class C {
   // CHECK:STDERR:   let x:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
-  let x:! () = ();
+  let generic x: () = ();
   fn F() -> () { return x; }
 }
 
@@ -51,9 +51,9 @@ class C {
   // CHECK:STDERR:   let a:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
-  let a:! () = ();
-  fn F(b:! ((),)) {
-    let c:! ((), ()) = ((), ());
+  let generic a: () = ();
+  fn F(generic b: ((),)) {
+    let generic c: ((), ()) = ((), ());
 
     var unused a1: () = a;
     var unused b1: ((),) = b;
@@ -68,7 +68,7 @@ class C {
   // CHECK:STDERR:     let c:! ((), ()) = ((), ());
   // CHECK:STDERR:         ^~~~~~~~~~~~
   // CHECK:STDERR:
-  let d:! ((), (), ()) = ((), (), ());
+  let generic d: ((), (), ()) = ((), (), ());
 }
 
 // --- fail_invalid_let_after.carbon
@@ -85,7 +85,7 @@ class C {
   // CHECK:STDERR:   let x:! ();
   // CHECK:STDERR:             ^
   // CHECK:STDERR:
-  let x:! ();
+  let generic x: ();
 }
 
 // --- fail_todo_use_in_function.carbon
@@ -97,7 +97,7 @@ fn F() -> i32 {
   // CHECK:STDERR:   let Zero:! i32 = 0;
   // CHECK:STDERR:       ^~~~~~~~~~
   // CHECK:STDERR:
-  let Zero:! i32 = 0;
+  let generic Zero: i32 = 0;
   return Zero;
 }
 
@@ -111,7 +111,7 @@ fn F() -> i32 {
     // CHECK:STDERR:     let Zero:! i32 = 0;
     // CHECK:STDERR:         ^~~~~~~~~~
     // CHECK:STDERR:
-    let Zero:! i32 = 0;
+    let generic Zero: i32 = 0;
     return Zero;
   }
   return 1;
@@ -122,7 +122,7 @@ fn F() -> i32 {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type = i32;
+  let T: type = i32;
   fn F() -> T;
 }
 
@@ -135,7 +135,7 @@ class I {
   // CHECK:STDERR:   let T:! type = i32;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
-  let T:! type = i32;
+  let generic T: type = i32;
   // CHECK:STDERR: fail_return_in_class.carbon:[[@LINE+4]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:   fn F() -> T;
   // CHECK:STDERR:             ^
@@ -151,7 +151,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: let T:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~
 // CHECK:STDERR:
-let T:! type = i32;
+let generic T: type = i32;
 // CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+4]]:11: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: fn F() -> T;
 // CHECK:STDERR:           ^
@@ -169,7 +169,7 @@ impl i32 as Empty {
   // CHECK:STDERR:   let Zero:! i32 = 0;
   // CHECK:STDERR:       ^~~~~~~~~~
   // CHECK:STDERR:
-  let Zero:! i32 = 0;
+  let generic Zero: i32 = 0;
 }
 
 // CHECK:STDOUT: --- fail_let_after.carbon

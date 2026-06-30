@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/generic/local_function.carbon
 
-fn Test[unused T:! type]() {
+fn Test[unused T: type]() {
   fn Local() {
   }
   Local();

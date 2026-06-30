@@ -13,8 +13,8 @@
 // --- test_helpers.carbon
 library "[[@TEST_NAME]]";
 
-class Expect[T:! type](N:! T) {}
-fn Test[T:! type](N:! T) -> Expect(N) { return {}; }
+class Expect[T: type](N: T) {}
+fn Test[T: type](generic N: T) -> Expect(N) { return {}; }
 
 // --- literal_conversions.carbon
 library "[[@TEST_NAME]]";

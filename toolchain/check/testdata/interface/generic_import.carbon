@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-interface AddWith(T:! type) {
+interface AddWith(T: type) {
   fn F();
 }
 

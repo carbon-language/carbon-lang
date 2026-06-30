@@ -14,19 +14,19 @@
 
 library "[[@TEST_NAME]]";
 
-interface A(AA:! type) { let X:! type; }
+interface A(AA: type) { let X: type; }
 
-class C(CC:! type) {
+class C(CC: type) {
   //@dump-sem-ir-begin
   // The `.Self` bind_symbolic_name here should have a
   // symbolic constant value, not symbolic_self, because
   // its type depends on `CC`.
-  fn F(unused T:! A(CC) where .X = CC) {}
+  fn F(unused generic T: A(CC) where .X = CC) {}
   //@dump-sem-ir-end
 }
 
-class D(DD:! type) {
-  fn G(T:! type) {
+class D(DD: type) {
+  fn G(generic T: type) {
     //@dump-sem-ir-begin
     // CHECK:STDERR: fail_dot_self_symbolic_type.carbon:[[@LINE+7]]:5: error: cannot convert type `T` into type implementing `A(DD) where .(A(DD).X) = DD` [ConversionFailureTypeToFacet]
     // CHECK:STDERR:     C(DD).F(T);
@@ -40,7 +40,7 @@ class D(DD:! type) {
   }
 }
 
-fn H(T:! type) {
+fn H(generic T: type) {
   D({}).G(T);
 }
 
@@ -48,18 +48,18 @@ fn H(T:! type) {
 
 library "[[@TEST_NAME]]";
 
-interface A(AA:! type) { let X:! type; }
+interface A(AA: type) { let X: type; }
 
-interface B(AA:! type) {}
+interface B(AA: type) {}
 
 //@dump-sem-ir-begin
-impl forall [AA:! type, BB:! A(AA) where .X = ()] BB as B(AA*) {}
+impl forall [AA: type, BB: A(AA) where .X = ()] BB as B(AA*) {}
 //@dump-sem-ir-end
 
-impl forall [AA:! type, BB:! type] BB as B(AA) {}
+impl forall [AA: type, BB: type] BB as B(AA) {}
 
-class D(DD:! type) {
-  fn G(T:! type) {
+class D(DD: type) {
+  fn G(generic T: type) {
     // TODO: This produces a `lookup_impl_witness` instruction looking
     // for `.Self` as `A(DD)` in the generic eval block for `G`. That
     // is from an impl we ended up not using, so shouldn't be included
@@ -70,7 +70,7 @@ class D(DD:! type) {
   }
 }
 
-fn H(T:! type) {
+fn H(generic T: type) {
   D({}).G(T);
 }
 

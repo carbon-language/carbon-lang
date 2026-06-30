@@ -160,7 +160,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn G[template T:! type](p: partial T*);
 // CHECK:STDERR:                            ^~~~~~~~~
 // CHECK:STDERR:
-fn G[template T:! type](p: partial T*);
+fn G[template T: type](p: partial T*);
 
 // --- fail_partial_generic.carbon
 library "[[@TEST_NAME]]";
@@ -173,7 +173,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn F[T:! type](p: partial T*);
 // CHECK:STDERR:                   ^~~~~~~~~
 // CHECK:STDERR:
-fn F[T:! type](p: partial T*);
+fn F[T: type](p: partial T*);
 
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:

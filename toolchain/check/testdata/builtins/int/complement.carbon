@@ -32,8 +32,8 @@ library "[[@TEST_NAME]]";
 
 fn Complement(a: Core.IntLiteral) -> Core.IntLiteral = "int.complement";
 
-class Expect(N:! Core.IntLiteral) {}
-fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
+class Expect(N: Core.IntLiteral) {}
+fn Test(generic N: Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Complement(0)) as Expect(-1);

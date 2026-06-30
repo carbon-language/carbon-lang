@@ -17,7 +17,7 @@
 library "[[@TEST_NAME]]";
 
 // F in the lexical scope.
-class Class(F:! type) {
+class Class(F: type) {
   class Inner {
     // F in a non-lexical scope.
     fn F() -> i32 { return 0; }
@@ -25,7 +25,7 @@ class Class(F:! type) {
   }
 }
 
-fn Class(F:! type).Inner.G() -> i32 { return F(); }
+fn Class(F: type).Inner.G() -> i32 { return F(); }
 
 // CHECK:STDOUT: --- prefer_unqualified_lookup.carbon
 // CHECK:STDOUT:

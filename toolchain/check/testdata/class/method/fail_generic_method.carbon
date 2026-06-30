@@ -12,7 +12,7 @@
 
 class I {}
 
-class Class(T:! type) {
+class Class(T: type) {
   var a: T;
   fn F(self, n: T);
 }
@@ -34,4 +34,4 @@ class Class(T:! type) {
 // CHECK:STDERR: fn Class(unused N:! I).F(unused self, unused n: T) {}
 // CHECK:STDERR:                                                 ^
 // CHECK:STDERR:
-fn Class(unused N:! I).F(unused self, unused n: T) {}
+fn Class(unused N: I).F(unused self, unused n: T) {}

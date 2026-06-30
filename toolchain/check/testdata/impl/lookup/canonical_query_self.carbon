@@ -19,7 +19,7 @@ interface J {
   fn JJ(self);
 }
 
-fn F(T:! I & J, t: T) {
+fn F(generic T: I & J, t: T) {
   // Nesting FacetValue and FacetAccessTypes, the `lookup_impl_witness`
   // instructions should remain canonical, pointing symbolically to `T`, and not
   // include these conversions.

@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {
+class C(T: type) {
   var x: T;
 }
 
@@ -42,7 +42,7 @@ fn ImportedAccess(a: Adapter) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {
+class C(T: type) {
   var x: T;
 }
 
@@ -69,7 +69,7 @@ fn Access(a: Adapter) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {
+class C(T: type) {
   var x: T;
 }
 
@@ -99,7 +99,7 @@ fn ImportedAccess(a: Adapter) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-class Adapter(T:! type) {
+class Adapter(T: type) {
   adapt T;
 }
 

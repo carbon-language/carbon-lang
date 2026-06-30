@@ -20,7 +20,7 @@ interface Animal {}
 // https://github.com/carbon-language/carbon-lang/issues/4853
 impl Animal as Eats {}
 
-fn Feed(unused e:! Eats) {}
+fn Feed(unused generic e: Eats) {}
 fn F() {
   Feed(Animal);
 }
@@ -35,7 +35,7 @@ interface Animal {}
 // https://github.com/carbon-language/carbon-lang/issues/4853
 impl Animal as Eats {}
 
-fn Feed(unused e:! Eats) {}
+fn Feed(unused generic e: Eats) {}
 class Goat {}
 impl Goat as Animal {}
 
@@ -61,7 +61,7 @@ interface Climbs {}
 // https://github.com/carbon-language/carbon-lang/issues/4853
 impl Animal as Eats {}
 
-fn Feed(unused e:! Eats) {}
+fn Feed(unused generic e: Eats) {}
 class Goat {}
 impl Goat as Animal {}
 impl Goat as Climbs {}

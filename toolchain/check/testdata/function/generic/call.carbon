@@ -15,18 +15,18 @@
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-fn Function(T:! Core.Copy, x: T) -> T {
+fn Function(generic T: Core.Copy, x: T) -> T {
   return x;
 }
 //@dump-sem-ir-end
 
-fn CallGeneric(T:! Core.Copy, x: T) -> T {
+fn CallGeneric(generic T: Core.Copy, x: T) -> T {
   //@dump-sem-ir-begin
   return Function(T, x);
   //@dump-sem-ir-end
 }
 
-fn CallGenericPtr(T:! type, x: T*) -> T* {
+fn CallGenericPtr(generic T: type, x: T*) -> T* {
   //@dump-sem-ir-begin
   return Function(T*, x);
   //@dump-sem-ir-end
@@ -45,18 +45,18 @@ fn CallSpecific(x: C*) -> C* {
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-fn Function[T:! Core.Copy](x: T) -> T {
+fn Function[T: Core.Copy](x: T) -> T {
   return x;
 }
 //@dump-sem-ir-end
 
-fn CallGeneric(T:! Core.Copy, x: T) -> T {
+fn CallGeneric(generic T: Core.Copy, x: T) -> T {
   //@dump-sem-ir-begin
   return Function(x);
   //@dump-sem-ir-end
 }
 
-fn CallGenericPtr(T:! type, x: T*) -> T* {
+fn CallGenericPtr(generic T: type, x: T*) -> T* {
   //@dump-sem-ir-begin
   return Function(x);
   //@dump-sem-ir-end

@@ -51,7 +51,7 @@ fn NoParam() -> type = "maybe_unformed.make_type";
 // CHECK:STDERR: fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
+fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:

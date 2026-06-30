@@ -44,9 +44,9 @@ package Core library "[[@TEST_NAME]]";
 
 class X {}
 
-fn Int[T:! type](unused N:! T) -> X { return {}; }
+fn Int[T: type](unused generic N: T) -> X { return {}; }
 
-interface ImplicitAs(T:! type) {
+interface ImplicitAs(T: type) {
   fn Convert(self) -> T;
 }
 
@@ -79,7 +79,7 @@ package Core library "[[@TEST_NAME]]";
 
 // Core is not an imported package here.
 
-class Int[T:! type](unused N:! T) {}
+class Int[T: type](unused N: T) {}
 
 let n: i32 = {};
 
@@ -101,7 +101,7 @@ namespace Core;
 // CHECK:STDERR: fn Core.Int[T:! type](N:! T) -> {} { return {}; }
 // CHECK:STDERR:    ^~~~
 // CHECK:STDERR:
-fn Core.Int[T:! type](N:! T) -> {} { return {}; }
+fn Core.Int[T: type](generic N: T) -> {} { return {}; }
 
 // Make sure use of `i32` doesn't crash after above errors.
 let n: type = i32;
@@ -119,7 +119,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:       ^~~~
 // CHECK:STDERR:
 class Core {
-  fn Int[T:! type](N:! T) -> {} { return {}; }
+  fn Int[T: type](generic N: T) -> {} { return {}; }
 }
 
 let n: type = i32;

@@ -15,7 +15,7 @@
 interface Eats {}
 interface Animal {}
 
-fn Feed[T:! Eats](unused e: T) {}
+fn Feed[T: Eats](unused e: T) {}
 
 // CHECK:STDERR: fail_convert_facet_value_to_missing_impl.carbon:[[@LINE+7]]:37: error: cannot convert type `T` that implements `Animal` into type implementing `Eats` [ConversionFailureFacetToFacet]
 // CHECK:STDERR: fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
@@ -24,7 +24,7 @@ fn Feed[T:! Eats](unused e: T) {}
 // CHECK:STDERR: fn Feed[T:! Eats](unused e: T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
+fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 
 // CHECK:STDOUT: --- fail_convert_facet_value_to_missing_impl.carbon
 // CHECK:STDOUT:

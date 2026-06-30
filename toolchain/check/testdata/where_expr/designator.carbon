@@ -15,15 +15,15 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let Member:! type;
+  let Member: type;
 }
 
 //@dump-sem-ir-begin
-fn PeriodSelf(T:! I where .Self == ());
+fn PeriodSelf(generic T: I where .Self == ());
 
-fn PeriodMember(U:! I where .Member == ());
+fn PeriodMember(generic U: I where .Member == ());
 
-fn TypeSelfImpls(V:! type where .Self impls I);
+fn TypeSelfImpls(generic V: type where .Self impls I);
 //@dump-sem-ir-end
 
 // --- fail_wrong_member.carbon
@@ -31,14 +31,14 @@ fn TypeSelfImpls(V:! type where .Self impls I);
 library "[[@TEST_NAME]]";
 
 interface J {
-  let Member:! type;
+  let Member: type;
 }
 
 // CHECK:STDERR: fail_wrong_member.carbon:[[@LINE+4]]:31: error: member name `Mismatch` not found in `J` [MemberNameNotFoundInSpecificScope]
 // CHECK:STDERR: fn PeriodMismatch(W:! J where .Mismatch = {});
 // CHECK:STDERR:                               ^~~~~~~~~
 // CHECK:STDERR:
-fn PeriodMismatch(W:! J where .Mismatch = {});
+fn PeriodMismatch(generic W: J where .Mismatch = {});
 
 // --- fail_designator_matches_var.carbon
 
@@ -100,26 +100,26 @@ interface I {}
 // CHECK:STDERR: fn F(U:! type, unused T:! type where U impls I) {}
 // CHECK:STDERR:                                      ^~~~~~~~~
 // CHECK:STDERR:
-fn F(U:! type, unused T:! type where U impls I) {}
+fn F(generic U: type, unused generic T: type where U impls I) {}
 
 // --- fail_equality_constraint_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
+  let X: type;
 }
 
 // CHECK:STDERR: fail_equality_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:35: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F(U:! I, unused T:! type where U.X == ()) {}
 // CHECK:STDERR:                                   ^~~~~~~~~
 // CHECK:STDERR:
-fn F(U:! I, unused T:! type where U.X == ()) {}
+fn F(generic U: I, unused generic T: type where U.X == ()) {}
 
 // --- fail_combined_constraint_does_not_constrain_self.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
+  let X: type;
 }
 
 // CHECK:STDERR: fail_combined_constraint_does_not_constrain_self.carbon:[[@LINE+8]]:35: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
@@ -130,25 +130,25 @@ interface I {
 // CHECK:STDERR: fn F(U:! I, unused T:! type where U impls I and U.X == ()) {}
 // CHECK:STDERR:                                                 ^~~~~~~~~
 // CHECK:STDERR:
-fn F(U:! I, unused T:! type where U impls I and U.X == ()) {}
+fn F(generic U: I, unused generic T: type where U impls I and U.X == ()) {}
 
 // --- impls_constraint_does_constrain_self.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {}
+interface I(T: type) {}
 
-class C(T:! type);
+class C(T: type);
 
-fn F(unused T:! type where C(.Self) impls I(())) {}
+fn F(unused generic T: type where C(.Self) impls I(())) {}
 
-fn G(unused T:! type where C(()) impls I(.Self)) {}
+fn G(unused generic T: type where C(()) impls I(.Self)) {}
 
 // --- fail_where_without_designator_in_one_equiv_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface I {}
-interface J(T:! type) {}
-class A(T:! type);
+interface J(T: type) {}
+class A(T: type);
 class B;
 class C;
 
@@ -156,55 +156,55 @@ class C;
 // CHECK:STDERR: fn F(unused T:! type where A(.Self) == B and A(B) == B) {}
 // CHECK:STDERR:                                              ^~~~~~~~~
 // CHECK:STDERR:
-fn F(unused T:! type where A(.Self) == B and A(B) == B) {}
+fn F(unused generic T: type where A(.Self) == B and A(B) == B) {}
 
 interface Z {
-  let Z0:! type;
+  let Z0: type;
 }
 
 // CHECK:STDERR: fail_where_without_designator_in_one_equiv_constraint.carbon:[[@LINE+4]]:41: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn G(unused T:! Z where A(.Z0) == B and A(B) == B) {}
 // CHECK:STDERR:                                         ^~~~~~~~~
 // CHECK:STDERR:
-fn G(unused T:! Z where A(.Z0) == B and A(B) == B) {}
+fn G(unused generic T: Z where A(.Z0) == B and A(B) == B) {}
 
 // --- fail_where_without_self_designator_in_one_impls_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 interface I {}
-interface J(T:! type) {}
+interface J(T: type) {}
 class C;
 
 // CHECK:STDERR: fail_where_without_self_designator_in_one_impls_interface.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F(unused T:! type where C impls (I & J(.Self))) {}
 // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(unused T:! type where C impls (I & J(.Self))) {}
+fn F(unused generic T: type where C impls (I & J(.Self))) {}
 
 // --- fail_where_without_member_designator_in_one_impls_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z0:! type;
+  let Z0: type;
 }
 interface I {}
-interface J(T:! type) {}
+interface J(T: type) {}
 class C;
 
 // CHECK:STDERR: fail_where_without_member_designator_in_one_impls_interface.carbon:[[@LINE+4]]:25: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F(unused T:! Z where C impls (I & J(.Z0))) {}
 // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(unused T:! Z where C impls (I & J(.Z0))) {}
+fn F(unused generic T: Z where C impls (I & J(.Z0))) {}
 
 // --- fail_where_without_self_designator_in_one_impls_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
 constraint I {}
-interface J(T:! type) {}
-constraint K(T:! type) {
+interface J(T: type) {}
+constraint K(T: type) {
   require T impls J(Self);
 }
 class C;
@@ -213,17 +213,17 @@ class C;
 // CHECK:STDERR: fn F(unused T:! type where C impls (I & K(.Self))) {}
 // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(unused T:! type where C impls (I & K(.Self))) {}
+fn F(unused generic T: type where C impls (I & K(.Self))) {}
 
 // --- fail_where_without_member_designator_in_one_impls_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z0:! type;
+  let Z0: type;
 }
 constraint I {}
-interface J(T:! type) {}
-constraint K(T:! type) {
+interface J(T: type) {}
+constraint K(T: type) {
   require T impls J(Self);
 }
 class C;
@@ -233,42 +233,42 @@ class C;
 // CHECK:STDERR: fn F(unused T:! Z where C impls (I & K(.Z0))) {}
 // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(unused T:! Z where C impls (I & K(.Z0))) {}
+fn F(unused generic T: Z where C impls (I & K(.Z0))) {}
 
 // --- constraint_does_constrain_designator_as_self.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
-constraint N(T:! type) {
+interface Z(T: type) {}
+constraint N(T: type) {
   require T impls Z(Self);
 }
 class C;
 
-fn F(unused T:! type where C impls N(.Self)) {}
+fn F(unused generic T: type where C impls N(.Self)) {}
 
 // --- constraint_does_constrain_designator_as_specific.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
-constraint N(T:! type) {
+interface Z(T: type) {}
+constraint N(T: type) {
   require impls Z(T);
 }
 class C;
 
-fn F(unused T:! type where C impls N(.Self)) {}
+fn F(unused generic T: type where C impls N(.Self)) {}
 
 // --- todo_fail_constraint_does_not_constrain_designator.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
-constraint N(T:! type) {
+constraint N(T: type) {
   require impls Z;
 }
 class C;
 
 // TODO: This `.Self` is not actually constrained by `C impls N(.Self)`, so it
 // should fail.
-fn F(unused T:! type where C impls N(.Self)) {}
+fn F(unused generic T: type where C impls N(.Self)) {}
 
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:

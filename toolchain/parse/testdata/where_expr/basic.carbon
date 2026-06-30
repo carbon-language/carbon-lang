@@ -11,13 +11,13 @@
 fn Foo(T: type where .Self == i32);
 
 interface I {
-  let T:! type where .Foo impls Bar;
+  let T: type where .Foo impls Bar;
 }
 
-let T:! type where .U = .V;
+let generic T: type where .U = .V;
 
 fn F() {
-  let U:! type where .W == .X;
+  let generic U: type where .W == .X;
 }
 
 // CHECK:STDOUT: - filename: basic.carbon

@@ -33,8 +33,8 @@ var w: EmptyParams() = v;
 
 library "[[@TEST_NAME]]";
 
-class Outer(T:! type) {
-  class Inner(U:! type) {
+class Outer(T: type) {
+  class Inner(U: type) {
   }
 }
 
@@ -54,7 +54,7 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 
 library "[[@TEST_NAME]]";
 
-class C(N:! i32) {}
+class C(N: i32) {}
 
 // CHECK:STDERR: fail_int_value.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `C(123)` [ConversionFailure]
 // CHECK:STDERR: var v: C(123) = ();
@@ -74,7 +74,7 @@ class D {
   var b: i32;
 }
 
-class E(F:! D) {}
+class E(F: D) {}
 
 // CHECK:STDERR: fail_class_param.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `E({.a = 3, .b = 4})` to `E({.a = 1, .b = 2})` [ConversionFailure]
 // CHECK:STDERR: var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);

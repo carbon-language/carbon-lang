@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-fn Defined[T:! type](unused x: T) {}
+fn Defined[T: type](unused x: T) {}
 
 fn CallDefined() {
   Defined(0 as i32);
@@ -24,19 +24,19 @@ fn CallDefined() {
 
 library "[[@TEST_NAME]]";
 
-fn Defined[T:! type](x: T);
+fn Defined[T: type](x: T);
 
 fn CallDefined() {
   Defined(0 as i32);
 }
 
-fn Defined[T:! type](unused x: T) {}
+fn Defined[T: type](unused x: T) {}
 
 // --- fail_call_undefined.carbon
 
 library "[[@TEST_NAME]]";
 
-fn Undefined[T:! type](x: T);
+fn Undefined[T: type](x: T);
 
 fn CallUndefined() {
   // CHECK:STDERR: fail_call_undefined.carbon:[[@LINE+7]]:3: error: use of undefined generic function [MissingGenericFunctionDefinition]

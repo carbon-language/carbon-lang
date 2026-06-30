@@ -16,9 +16,9 @@
 
 library "[[@TEST_NAME]]";
 
-class Generic(T:! type);
+class Generic(T: type);
 
-class Generic(T:! type) {
+class Generic(T: type) {
 }
 
 // --- fail_mismatch_param_list.carbon
@@ -33,7 +33,7 @@ class A;
 // CHECK:STDERR: class A;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
-class A(T:! type) {}
+class A(T: type) {}
 
 // --- fail_mismatch_implicit_param_list.carbon
 
@@ -41,7 +41,7 @@ library "[[@TEST_NAME]]";
 
 class A {}
 
-class B(N:! A);
+class B(N: A);
 // CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE+7]]:1: error: redeclaration differs because of implicit parameter list [RedeclParamListDiffers]
 // CHECK:STDERR: class B[T:! type](N:! T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,7 +49,7 @@ class B(N:! A);
 // CHECK:STDERR: class B(N:! A);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-class B[T:! type](N:! T) {}
+class B[T: type](N: T) {}
 
 // --- fail_mismatch_param_count.carbon
 
@@ -57,7 +57,7 @@ library "[[@TEST_NAME]]";
 
 class A {}
 
-class C(T:! type);
+class C(T: type);
 // CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 2 [RedeclParamCountDiffers]
 // CHECK:STDERR: class C(T:! type, U:! A) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -65,7 +65,7 @@ class C(T:! type);
 // CHECK:STDERR: class C(T:! type);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-class C(T:! type, U:! A) {}
+class C(T: type, U: A) {}
 
 // --- fail_mismatch_param_type.carbon
 
@@ -73,7 +73,7 @@ library "[[@TEST_NAME]]";
 
 class A {}
 
-class D(T:! type);
+class D(T: type);
 // CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE+7]]:9: error: type `<pattern for A>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for type>` [RedeclParamDiffersType]
 // CHECK:STDERR: class D(T:! A) {}
 // CHECK:STDERR:         ^~~~~
@@ -81,13 +81,13 @@ class D(T:! type);
 // CHECK:STDERR: class D(T:! type);
 // CHECK:STDERR:         ^~~~~~~~
 // CHECK:STDERR:
-class D(T:! A) {}
+class D(T: A) {}
 
 // --- fail_mismatch_param_name.carbon
 
 library "[[@TEST_NAME]]";
 
-class E(T:! type);
+class E(T: type);
 // CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE+7]]:9: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: class E(U:! type) {}
 // CHECK:STDERR:         ^~~~~~~~
@@ -95,7 +95,7 @@ class E(T:! type);
 // CHECK:STDERR: class E(T:! type);
 // CHECK:STDERR:         ^~~~~~~~
 // CHECK:STDERR:
-class E(U:! type) {}
+class E(U: type) {}
 
 // CHECK:STDOUT: --- valid.carbon
 // CHECK:STDOUT:

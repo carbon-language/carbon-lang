@@ -12,7 +12,7 @@
 // CHECK:STDERR: let ref X:! i32 = 0;
 // CHECK:STDERR:     ^~~
 // CHECK:STDERR:
-let ref X:! i32 = 0;
+let generic ref X: i32 = 0;
 
 // CHECK:STDOUT: - filename: fail_generic_ref.carbon
 // CHECK:STDOUT:   parse_tree: [

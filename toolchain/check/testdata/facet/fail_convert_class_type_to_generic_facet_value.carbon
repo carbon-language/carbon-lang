@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/facet/fail_convert_class_type_to_generic_facet_value.carbon
 
-interface Generic(Scalar:! type) {
+interface Generic(Scalar: type) {
   fn F();
 }
 
@@ -24,7 +24,7 @@ impl ImplsGeneric as Generic(GenericParam) {
   fn F() {}
 }
 
-fn CallGenericMethod(T:! type, unused U:! Generic(T)) {}
+fn CallGenericMethod(generic T: type, unused generic U: Generic(T)) {}
 
 fn G() {
   // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE+7]]:3: error: cannot convert type `ImplsGeneric` into type implementing `Generic(WrongGenericParam)` [ConversionFailureTypeToFacet]

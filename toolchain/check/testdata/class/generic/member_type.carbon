@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-class Outer(T:! Core.Copy) {
+class Outer(T: Core.Copy) {
   class Inner {
     var n: T;
   }
@@ -33,7 +33,7 @@ fn Test() -> i32 {
 
 library "[[@TEST_NAME]]";
 
-class Outer(T:! type) {
+class Outer(T: type) {
   interface Inner {
     fn F(self) -> T;
   }

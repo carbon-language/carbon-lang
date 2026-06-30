@@ -56,7 +56,7 @@ package OwningPackage library "[[@TEST_NAME]]";
 
 import library "owner";
 
-fn Generic(unused T:! type, v1: Vector, v2: Vector) -> Vector {
+fn Generic(unused generic T: type, v1: Vector, v2: Vector) -> Vector {
   return v1 + v2 * (2 as i32);
 }
 
@@ -97,7 +97,7 @@ package OtherPackage library "[[@TEST_NAME]]";
 
 import OwningPackage library "owner";
 
-fn Generic(unused T:! type, v1: OwningPackage.Vector, v2: OwningPackage.Vector) -> OwningPackage.Vector {
+fn Generic(unused generic T: type, v1: OwningPackage.Vector, v2: OwningPackage.Vector) -> OwningPackage.Vector {
   return v1 + v2 * (2 as i32);
 }
 

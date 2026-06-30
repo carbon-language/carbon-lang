@@ -15,7 +15,7 @@
 // --- core.carbon
 package Core;
 
-interface ImplicitAs(Dest:! type) {
+interface ImplicitAs(Dest: type) {
   fn Convert(self) -> Dest;
 }
 

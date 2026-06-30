@@ -14,7 +14,7 @@
 // CHECK:STDERR: fail_self_type_mismatch.carbon: error: cannot implicitly convert expression of type `C(i32 as I)` to `C(i32)` [ConversionFailure]
 // CHECK:STDERR: fail_self_type_mismatch.carbon: note: type `C(i32 as I)` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessInContext]
 
-class C[T:! type](X:! T) {}
+class C[T: type](X: T) {}
 
 interface I {
   // Uses of `Self` inside the definition of `I` have type `I`.

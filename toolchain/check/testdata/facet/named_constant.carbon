@@ -14,8 +14,8 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
 fn Test() {
@@ -23,11 +23,11 @@ fn Test() {
   // CHECK:STDERR:   let Constant:! type = ();
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let Constant:! type = ();
+  let generic Constant: type = ();
 
-  fn F(T:! I where .X = Constant) {}
+  fn F(generic T: I where .X = Constant) {}
 
-  fn G(T:! I where .X = Constant) {
+  fn G(generic T: I where .X = Constant) {
     // TODO: The facet type T in G should match the facet type T in F.
     F(T);
   }
@@ -37,8 +37,8 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
 fn Test() {
@@ -46,12 +46,12 @@ fn Test() {
   // CHECK:STDERR:   let Constant2:! type = ();
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let Constant2:! type = ();
-  let Constant:! type = (Constant2, );
+  let generic Constant2: type = ();
+  let generic Constant: type = (Constant2, );
 
-  fn F(T:! I where .X = Constant) {}
+  fn F(generic T: I where .X = Constant) {}
 
-  fn G(T:! I where .X = Constant) {
+  fn G(generic T: I where .X = Constant) {
     // TODO: The facet type T in G should match the facet type T in F.
     F(T);
   }
@@ -61,8 +61,8 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
 fn Test() {
@@ -70,11 +70,11 @@ fn Test() {
   // CHECK:STDERR:   let Constant:! type = ();
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let Constant:! type = ();
+  let generic Constant: type = ();
 
-  fn F(T:! I where .X = Constant) {}
+  fn F(generic T: I where .X = Constant) {}
 
-  fn G(T:! I where .X = ()) {
+  fn G(generic T: I where .X = ()) {
     // TODO: The facet type T in G should match the facet type T in F.
     F(T);
   }
@@ -84,8 +84,8 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
 fn Test() {
@@ -93,11 +93,11 @@ fn Test() {
   // CHECK:STDERR:   let Constant:! type = ();
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let Constant:! type = ();
+  let generic Constant: type = ();
 
-  fn F(T:! I where .X = ()) {}
+  fn F(generic T: I where .X = ()) {}
 
-  fn G(T:! I where .X = Constant) {
+  fn G(generic T: I where .X = Constant) {
     // TODO: The facet type T in G should match the facet type T in F.
     F(T);
   }
@@ -107,8 +107,8 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
 fn Test() {
@@ -116,13 +116,13 @@ fn Test() {
   // CHECK:STDERR:   let Constant:! type = ();
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let Constant:! type = ();
+  let generic Constant: type = ();
 
   // TODO: The .Self reference in each .X should be different, there should be
   // no cycle here.
-  fn F(T:! I where .X = (I where .X = Constant)) {}
+  fn F(generic T: I where .X = (I where .X = Constant)) {}
 
-  fn G(T:! I where .X = (I where .X = Constant)) {
+  fn G(generic T: I where .X = (I where .X = Constant)) {
     // TODO: The facet type T in G should match the facet type T in F.
     F(T);
   }
@@ -132,8 +132,8 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
 fn Test() {
@@ -141,13 +141,13 @@ fn Test() {
   // CHECK:STDERR:   let Constant:! type = ();
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let Constant:! type = ();
+  let generic Constant: type = ();
 
-  fn F(T:! I where .X = (I where .X = ())) {}
+  fn F(generic T: I where .X = (I where .X = ())) {}
 
   // TODO: The .Self reference in each .X should be different, there should be
   // no cycle here.
-  fn G(T:! I where .X = (I where .X = Constant)) {
+  fn G(generic T: I where .X = (I where .X = Constant)) {
     // TODO: The facet type T in G should match the facet type T in F.
     F(T);
   }
@@ -157,8 +157,8 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
 fn Test() {
@@ -166,13 +166,13 @@ fn Test() {
   // CHECK:STDERR:   let Constant:! type = ();
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let Constant:! type = ();
+  let generic Constant: type = ();
 
   // TODO: The .Self reference in each .X should be different, there should be
   // no cycle here.
-  fn F(T:! I where .X = (I where .X = Constant)) {}
+  fn F(generic T: I where .X = (I where .X = Constant)) {}
 
-  fn G(T:! I where .X = (I where .X = ())) {
+  fn G(generic T: I where .X = (I where .X = ())) {
     // TODO: The facet type T in G should match the facet type T in F.
     F(T);
   }

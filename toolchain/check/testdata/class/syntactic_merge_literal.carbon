@@ -16,16 +16,16 @@
 
 library "[[@TEST_NAME]]";
 
-class C(a:! i32) {}
-class D(b:! C(1_000));
-class D(b:! C(1_000)) {}
+class C(a: i32) {}
+class D(b: C(1_000));
+class D(b: C(1_000)) {}
 
 // --- fail_int_mismatch.carbon
 
 library "[[@TEST_NAME]]";
 
-class C(a:! i32) {}
-class D(b:! C(1000));
+class C(a: i32) {}
+class D(b: C(1000));
 // CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE+7]]:15: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: class D(b:! C(1_000)) {}
 // CHECK:STDERR:               ^~~~~
@@ -33,7 +33,7 @@ class D(b:! C(1000));
 // CHECK:STDERR: class D(b:! C(1000));
 // CHECK:STDERR:               ^~~~
 // CHECK:STDERR:
-class D(b:! C(1_000)) {}
+class D(b: C(1_000)) {}
 
 // CHECK:STDOUT: --- int_match.carbon
 // CHECK:STDOUT:

@@ -23,9 +23,9 @@ interface Z {
 }
 //@dump-sem-ir-end
 
-fn F(T:! Z, t:! T) {
+fn F(generic T: Z, generic t: T) {
   // TODO: We find the name `YY`, but then fail to do impl lookup for `Y` in
-  // `T:! Z` since the identified facet type doesn't include `Y`. The
+  // `T: Z` since the identified facet type doesn't include `Y`. The
   // identified facet type needs to include extends inside interfaces?
 
   // CHECK:STDERR: fail_todo_extend.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Y` in type `T` that does not implement that interface [MissingImplInMemberAccess]
@@ -49,7 +49,7 @@ fn F(T:! Z, t:! T) {
 // --- fail_todo_extend_with_self.carbon
 library "[[@TEST_NAME]]";
 
-interface Y(T:! type) {
+interface Y(T: type) {
   fn YY();
 }
 
@@ -59,9 +59,9 @@ interface Z {
 }
 //@dump-sem-ir-end
 
-fn F(T:! Z) {
+fn F(generic T: Z) {
   // TODO: We find the name `YY`, but then fail to do impl lookup for `Y` in
-  // `T:! Z` since the identified facet type doesn't include `Y`. The
+  // `T: Z` since the identified facet type doesn't include `Y`. The
   // identified facet type needs to include extends inside interfaces?
   //
   // CHECK:STDERR: fail_todo_extend_with_self.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Y(T)` in type `T` that does not implement that interface [MissingImplInMemberAccess]
@@ -89,7 +89,7 @@ interface Z {
 }
 //@dump-sem-ir-end
 
-fn F(T:! Z) {
+fn F(generic T: Z) {
   // CHECK:STDERR: fail_todo_implicit_self_impls.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   T.(Y.YY)();
   // CHECK:STDERR:   ^~~~~~~~
@@ -110,7 +110,7 @@ interface Z {
 }
 //@dump-sem-ir-end
 
-fn F(T:! Z) {
+fn F(generic T: Z) {
   // CHECK:STDERR: fail_todo_explicit_self_impls.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   T.(Y.YY)();
   // CHECK:STDERR:   ^~~~~~~~
@@ -129,7 +129,7 @@ interface Z {
   require impls Y;
 }
 
-fn F(T:! Z) {
+fn F(generic T: Z) {
   // This should fail name lookup since Z does not extend Y.
   //
   // CHECK:STDERR: fail_implicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+4]]:3: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
@@ -150,7 +150,7 @@ interface Z {
   require Self impls Y;
 }
 
-fn F(T:! Z) {
+fn F(generic T: Z) {
   // This should fail name lookup since Z does not extend Y.
   //
   // CHECK:STDERR: fail_explicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+4]]:3: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
@@ -165,7 +165,7 @@ library "[[@TEST_NAME]]";
 
 interface Y {}
 
-class C(T:! type);
+class C(T: type);
 
 //@dump-sem-ir-begin
 interface Z {
@@ -180,13 +180,13 @@ interface Y {
   fn YY();
 }
 
-class C(T:! type);
+class C(T: type);
 
 interface Z {
   require C(Self) impls Y;
 }
 
-fn F(T:! Z) {
+fn F(generic T: Z) {
   // This fails because `T impls Z` implies that `C(T) impls Y`, not that
   // `T impls Y`.
   // CHECK:STDERR: fail_non_self_doesnt_provide_witness_for_self.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
@@ -203,13 +203,13 @@ interface Y {
   fn YY();
 }
 
-class C(T:! type);
+class C(T: type);
 
 interface Z {
   require C(Self) impls Y;
 }
 
-fn F(T:! Z) {
+fn F(generic T: Z) {
   // CHECK:STDERR: fail_todo_non_self_provide_witness_for_non_self.carbon:[[@LINE+4]]:3: error: cannot convert type `C(T)` into type implementing `Y` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C(T).(Y.YY)();
   // CHECK:STDERR:   ^~~~~~~~~~~
@@ -220,7 +220,7 @@ fn F(T:! Z) {
 // --- require_impls_where.carbon
 library "[[@TEST_NAME]]";
 
-interface Y { let Y1:! type; }
+interface Y { let Y1: type; }
 
 //@dump-sem-ir-begin
 interface Z {
@@ -232,7 +232,7 @@ interface Z {
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-interface Z(T:! type) {
+interface Z(T: type) {
   require T impls Z(Self);
 }
 //@dump-sem-ir-end
@@ -241,10 +241,10 @@ interface Z(T:! type) {
 library "[[@TEST_NAME]]";
 
 interface Y {
-  let Y1:! type;
+  let Y1: type;
 }
 
-interface Z(T:! type) {
+interface Z(T: type) {
   // Either the type `T` or the facet type `Y` must mention `Self` in a way that
   // it would appear in the type structure used for impl lookup (so inside a
   // `where` does not count). But they don't.
@@ -259,9 +259,9 @@ interface Z(T:! type) {
 // --- fail_require_impls_without_self_in_one_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface Y(T:! type) {}
+interface Y(T: type) {}
 
-interface Z(T:! type) {
+interface Z(T: type) {
   // Self is in one interface but not the other.
   //
   // CHECK:STDERR: fail_require_impls_without_self_in_one_interface.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y({})` without a `Self` argument [RequireImplsMissingSelf]
@@ -274,9 +274,9 @@ interface Z(T:! type) {
 // --- fail_require_impls_without_self_in_multiple_interfaces.carbon
 library "[[@TEST_NAME]]";
 
-interface Y(T:! type) {}
+interface Y(T: type) {}
 
-interface Z(T:! type) {
+interface Z(T: type) {
   // Self does not appear in either interface, we should get an error for each.
   //
   // CHECK:STDERR: fail_require_impls_without_self_in_multiple_interfaces.carbon:[[@LINE+8]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y(())` without a `Self` argument [RequireImplsMissingSelf]
@@ -293,7 +293,7 @@ interface Z(T:! type) {
 // --- fail_self_impls_self.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {
+interface Z(T: type) {
   // CHECK:STDERR: fail_self_impls_self.carbon:[[@LINE+4]]:17: error: `require` declaration constrained by a non-facet type; expected an `interface` or `constraint` name after `impls` [RequireImplsMissingFacetType]
   // CHECK:STDERR:   require impls Self;
   // CHECK:STDERR:                 ^~~~
@@ -304,9 +304,9 @@ interface Z(T:! type) {
 // --- fail_impls_type.carbon
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {}
+class C(T: type) {}
 
-interface Z(T:! type) {
+interface Z(T: type) {
   // CHECK:STDERR: fail_impls_type.carbon:[[@LINE+4]]:19: error: `require` declaration constrained by a non-facet type; expected an `interface` or `constraint` name after `impls` [RequireImplsMissingFacetType]
   // CHECK:STDERR:   require T impls C(Self);
   // CHECK:STDERR:                   ^~~~~~~
@@ -319,7 +319,7 @@ library "[[@TEST_NAME]]";
 
 interface Y {}
 
-interface Z(T:! type) {
+interface Z(T: type) {
   // CHECK:STDERR: fail_non_type_impls.carbon:[[@LINE+7]]:11: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   require 1 impls Y;
   // CHECK:STDERR:           ^
@@ -335,7 +335,7 @@ library "[[@TEST_NAME]]";
 
 interface Y {}
 
-interface Z(T:! type) {
+interface Z(T: type) {
   // CHECK:STDERR: fail_impls_non_type.carbon:[[@LINE+4]]:17: error: `require` declaration constrained by a non-facet type; expected an `interface` or `constraint` name after `impls` [RequireImplsMissingFacetType]
   // CHECK:STDERR:   require impls 1;
   // CHECK:STDERR:                 ^
@@ -347,7 +347,7 @@ interface Z(T:! type) {
 library "[[@TEST_NAME]]";
 
 interface Y {
-  let Y1:! type;
+  let Y1: type;
 }
 
 //@dump-sem-ir-begin
@@ -365,7 +365,7 @@ interface Y {
 }
 
 //@dump-sem-ir-begin
-interface Z(T:! type) {
+interface Z(T: type) {
   // This is okay because an interface Z can be identified before it's complete,
   // unlike a named constraint.
   require impls Z(T);

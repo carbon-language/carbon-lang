@@ -18,11 +18,11 @@ library "[[@TEST_NAME]]";
 
 interface NotGenericNoParams {}
 interface NotGenericButParams() {}
-interface GenericAndParams(T:! type) {}
+interface GenericAndParams(T: type) {}
 
-class C(T:! type) {
+class C(T: type) {
   interface GenericNoParams {}
-  interface GenericAndParams(U:! type) {}
+  interface GenericAndParams(U: type) {}
 }
 
 class X {}
@@ -40,7 +40,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: interface A[T: type]() {}
 // CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
-interface A[T: type]() {}
+interface A[runtime T: type]() {}
 
 // --- fail_non_generic_params.carbon
 
@@ -50,7 +50,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: interface A(T: type) {}
 // CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
-interface A(T: type) {}
+interface A(runtime T: type) {}
 
 // --- fail_implicit_params_only_empty.carbon
 
@@ -70,7 +70,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: interface Bar[T:! type] {}
 // CHECK:STDERR:              ^~~~~~~~~~
 // CHECK:STDERR:
-interface Bar[T:! type] {}
+interface Bar[T: type] {}
 
 // CHECK:STDOUT: --- params.carbon
 // CHECK:STDOUT:

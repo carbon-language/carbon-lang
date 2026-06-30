@@ -108,7 +108,7 @@ fn G() {
 // --- form_generic_param.carbon
 library "[[@TEST_NAME]]";
 
-fn F(Fm:! Core.Form, unused x:? Fm) {}
+fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
 fn G() {
   var x: i32;
@@ -118,7 +118,7 @@ fn G() {
 // --- fail_todo_composite_generic_form.carbon
 library "[[@TEST_NAME]]";
 
-fn F(Fm:! Core.Form, unused x:? Fm) {}
+fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
 fn G() {
   var x: i32;
@@ -138,7 +138,7 @@ fn G() {
 // --- fail_todo_deduce_generic_form.carbon
 library "[[@TEST_NAME]]";
 
-fn F[Fm:! Core.Form](v:? Fm);
+fn F[Fm: Core.Form](v:? Fm);
 
 fn G() {
   var v: i32 = 0;
@@ -155,7 +155,7 @@ fn G() {
 // --- fail_form_generic_arg_not_form.carbon
 library "[[@TEST_NAME]]";
 
-fn F(Fm:! Core.Form, unused x:? Fm) {}
+fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
 fn G() {
   var x: i32;
@@ -175,7 +175,7 @@ fn G() {
 // --- fail_form_generic_missing_ref_tag.carbon
 library "[[@TEST_NAME]]";
 
-fn F(Fm:! Core.Form, unused x:? Fm) {}
+fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
 fn G() {
   var x: i32;
@@ -206,7 +206,7 @@ library "[[@TEST_NAME]]";
 
 // TODO: this code should fail for a different reason, but right now we don't
 // have a way to write correct code that reaches the TODO we're exercising here.
-fn F(Form:! Core.Form) {
+fn F(generic Form: Core.Form) {
   // CHECK:STDERR: fail_todo_local_symbolic_form_binding.carbon:[[@LINE+4]]:7: error: semantics TODO: `support local form bindings` [SemanticsTodo]
   // CHECK:STDERR:   let y:? Form = 0;
   // CHECK:STDERR:       ^~~~~~~~
@@ -274,7 +274,7 @@ fn F() ->? ref i32;
 library "[[@TEST_NAME]]";
 //@include-in-dumps
 
-fn F(Fm:! Core.Form, v:? Fm) ->? Fm {
+fn F(generic Fm: Core.Form, v:? Fm) ->? Fm {
   // TODO: This should fail because `Fm` might be `form(var T)` for a
   // non-copyable `T`.
   return v;

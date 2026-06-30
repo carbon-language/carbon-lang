@@ -17,14 +17,14 @@ interface Animal {}
 class Goat {}
 impl Goat as Animal {}
 
-fn WalkAnimal(unused a:! Animal) {}
+fn WalkAnimal(unused generic a: Animal) {}
 
 fn F() {
   // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:   let x:! type = Goat;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
-  let x:! type = Goat;
+  let generic x: type = Goat;
   WalkAnimal(x);
 }
 

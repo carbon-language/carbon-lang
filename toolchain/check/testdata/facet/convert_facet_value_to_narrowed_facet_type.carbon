@@ -18,9 +18,9 @@ library "[[@TEST_NAME]]";
 interface Eats {}
 interface Animal {}
 
-fn Feed[T:! Eats](unused e: T) {}
+fn Feed[T: Eats](unused e: T) {}
 
-fn HandleAnimal[U:! Animal & Eats](a: U) { Feed(a); }
+fn HandleAnimal[U: Animal & Eats](a: U) { Feed(a); }
 
 // --- bigger.carbon
 library "[[@TEST_NAME]]";
@@ -29,9 +29,9 @@ interface Eats {}
 interface Animal {}
 interface Tame {}
 
-fn FeedTame[V:! Tame & Eats](unused v: V) {}
+fn FeedTame[V: Tame & Eats](unused v: V) {}
 
-fn HandleTameAnimal[W:! Eats & Animal & Tame](w: W) {
+fn HandleTameAnimal[W: Eats & Animal & Tame](w: W) {
   FeedTame(w);
 }
 
@@ -42,11 +42,11 @@ interface Eats {}
 interface Animal {}
 interface Tame {}
 
-impl forall [A:! Animal] A as Eats {}
+impl forall [A: Animal] A as Eats {}
 
-fn FeedTame2[V:! Tame & Eats](unused v: V) {}
+fn FeedTame2[V: Tame & Eats](unused v: V) {}
 
-fn HandleTameAnimal2[W:! Animal & Tame](w: W) {
+fn HandleTameAnimal2[W: Animal & Tame](w: W) {
   FeedTame2(w);
 }
 
@@ -57,35 +57,35 @@ library "[[@TEST_NAME]]";
 
 interface A {}
 
-fn TakesA[T:! A](unused x: T) {}
+fn TakesA[T: A](unused x: T) {}
 
-fn WithExtraWhere[U:! A where .Self impls type](y: U) {
+fn WithExtraWhere[U: A where .Self impls type](y: U) {
   TakesA(y);
 }
 
 // --- no_interfaces_success.carbon
 library "[[@TEST_NAME]]";
 
-fn TakesTypeDeduced[T:! type](unused x: T) {}
-fn CallsWithExtraWhere[U:! type where .Self impls type](y: U) {
+fn TakesTypeDeduced[T: type](unused x: T) {}
+fn CallsWithExtraWhere[U: type where .Self impls type](y: U) {
   TakesTypeDeduced(y);
 }
 
-fn TakesTypeExplicit(unused T:! type) {}
-fn CallsWithExtraWhereExplicit(U:! type where .Self impls type) {
+fn TakesTypeExplicit(unused generic T: type) {}
+fn CallsWithExtraWhereExplicit(generic U: type where .Self impls type) {
   TakesTypeExplicit(U);
 }
 
 // --- no_interfaces.carbon
 library "[[@TEST_NAME]]";
 
-fn TakesExtraWhereDeduced[T:! type where .Self impls type](unused x: T) {}
-fn CallsWithType[U:! type](y: U) {
+fn TakesExtraWhereDeduced[T: type where .Self impls type](unused x: T) {}
+fn CallsWithType[U: type](y: U) {
   TakesExtraWhereDeduced(y);
 }
 
-fn TakesExtraWhereExplicit(unused T:! type where .Self impls type) {}
-fn CallsWithTypeExplicit(U:! type) {
+fn TakesExtraWhereExplicit(unused generic T: type where .Self impls type) {}
+fn CallsWithTypeExplicit(generic U: type) {
   TakesExtraWhereExplicit(U);
 }
 

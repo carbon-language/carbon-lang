@@ -16,7 +16,7 @@
 // CHECK:STDERR: fn F(unused N:! error_not_found) {
 // CHECK:STDERR:                 ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(unused N:! error_not_found) {
+fn F(unused generic N: error_not_found) {
   base class C {
     virtual fn Foo(unused self) {}
   }

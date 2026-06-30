@@ -13,7 +13,7 @@
 // --- a.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {
+interface Z(T: type) {
   fn F();
 }
 
@@ -29,7 +29,7 @@ constraint X {
 //@include-in-dumps
 impl library "[[@TEST_NAME]]";
 
-fn F(A:! X, unused B:! Y) {
+fn F(generic A: X, unused generic B: Y) {
   A.F();
 }
 
@@ -38,8 +38,8 @@ library "[[@TEST_NAME]]";
 
 import library "a";
 
-fn F(B:! Y) {
-  // TODO: We find the name F, but then fail to do impl lookup for `F` in `B:!
+fn F(generic B: Y) {
+  // TODO: We find the name F, but then fail to do impl lookup for `F` in `B:
   // Y` since the identified facet type doesn't include Z. We need to be able to
   // find a symbolic facet from the require decl in Y during impl lookup.
   //

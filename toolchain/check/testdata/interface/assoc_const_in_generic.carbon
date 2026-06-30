@@ -12,11 +12,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/assoc_const_in_generic.carbon
 
-interface I(T:! type) {
-  fn F(U:! type) -> U;
+interface I(T: type) {
+  fn F(generic U: type) -> U;
 }
 
-fn G(T:! type) {
+fn G(generic T: type) {
   // This should not result in a `fn_decl` instruction being added to the eval
   // block for the generic G. This used to crash when printing formatted SemIR
   // because the same instruction ended up in multiple scopes.

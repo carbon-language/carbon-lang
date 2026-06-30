@@ -25,13 +25,13 @@ interface I {
   // CHECK:STDERR:   let var c:! ();
   // CHECK:STDERR:       ^~~
   // CHECK:STDERR:
-  let var c:! ();
+  let var c: ();
 
   // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
   // CHECK:STDERR:   var d:! ();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
-  var d:! ();
+  var d: ();
 }
 
 // CHECK:STDOUT: - filename: fail_in_interface.carbon

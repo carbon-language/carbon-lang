@@ -13,24 +13,24 @@
 // --- facet_value.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
+interface I { let X: type; }
 
-fn F(unused T:! I where .X = ()) {}
+fn F(unused generic T: I where .X = ()) {}
 
-fn G(T:! I where .X = ()) {
+fn G(generic T: I where .X = ()) {
   F(T);
 }
 
 // --- generic_interface_facet_value.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) { let X:! type; }
+interface I(T: type) { let X: type; }
 
 class C;
-final impl forall [T:! type] T as I(()) where .X = () {}
-final impl forall [T:! type] T as I({}) where .X = {} {}
+final impl forall [T: type] T as I(()) where .X = () {}
+final impl forall [T: type] T as I({}) where .X = {} {}
 
-fn F(U:! type, unused T:! I(U) where .X = ()) {}
+fn F(generic U: type, unused generic T: I(U) where .X = ()) {}
 fn G() {
   F((), C);
 }
@@ -38,13 +38,13 @@ fn G() {
 // --- fail_generic_interface_facet_value_wrong_specific_impl.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) { let X:! type; }
+interface I(T: type) { let X: type; }
 
 class C;
-final impl forall [T:! type] T as I(()) where .X = () {}
-final impl forall [T:! type] T as I({}) where .X = {} {}
+final impl forall [T: type] T as I(()) where .X = () {}
+final impl forall [T: type] T as I({}) where .X = {} {}
 
-fn F(U:! type, unused T:! I(U) where .X = ()) {}
+fn F(generic U: type, unused generic T: I(U) where .X = ()) {}
 fn G() {
   // This finds the impl where `.X = {}`, but F requires that `.X = ()`.
   //
@@ -61,10 +61,10 @@ fn G() {
 // --- dependent_rules.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
-interface J { let Y:! type; }
+interface I { let X: type; }
+interface J { let Y: type; }
 
-fn F(T:! I & J where .X = .Y) {
+fn F(generic T: I & J where .X = .Y) {
   // Allowed since `T impls I`, `T impls J`, and has constraint providing
   // T.(I.X) = T.(J.Y)`.
   F(T);
@@ -73,9 +73,9 @@ fn F(T:! I & J where .X = .Y) {
 // --- fail_convert.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
+interface I { let X: type; }
 
-fn F(unused T:! I where .X = {.a: (), .b: {}}) {}
+fn F(unused generic T: I where .X = {.a: (), .b: {}}) {}
 
 fn H() {
   class C;
@@ -90,7 +90,7 @@ fn H() {
   F(C);
 }
 
-fn G(T:! I where .X = {.b: {}, .a: ()}) {
+fn G(generic T: I where .X = {.b: {}, .a: ()}) {
   // CHECK:STDERR: fail_convert.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = {.b: {}, .a: ()}` into type implementing `I where .(I.X) = {.a: (), .b: {}}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
@@ -104,8 +104,8 @@ fn G(T:! I where .X = {.b: {}, .a: ()}) {
 // --- fail_todo_dependent_rules_compound.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
-interface J { let Y:! type; }
+interface I { let X: type; }
+interface J { let Y: type; }
 
 // CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+8]]:23: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
 // CHECK:STDERR: fn F(T:! I & J where .(I.X) = .(J.Y)) {
@@ -115,7 +115,7 @@ interface J { let Y:! type; }
 // CHECK:STDERR: fn F(T:! I & J where .(I.X) = .(J.Y)) {
 // CHECK:STDERR:                       ^
 // CHECK:STDERR:
-fn F(T:! I & J where .(I.X) = .(J.Y)) {
+fn F(generic T: I & J where .(I.X) = .(J.Y)) {
   // Allowed since `T impls I`, `T impls J`, and has constraint providing
   // T.(I.X) = T.(J.Y)`.
   F(T);
@@ -124,22 +124,22 @@ fn F(T:! I & J where .(I.X) = .(J.Y)) {
 // --- parameterized_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) { let X:! type; }
+interface I(T: type) { let X: type; }
 
-final impl forall [J:! I(()) where .X = ()] J as I({}) where .X = {} {}
+final impl forall [J: I(()) where .X = ()] J as I({}) where .X = {} {}
 
-fn F(unused T:! I({}) where .X = {}) {}
+fn F(unused generic T: I({}) where .X = {}) {}
 
-fn G(T:! I(()) where .X = ()) {
+fn G(generic T: I(()) where .X = ()) {
   F(T);
 }
 
 // --- fail_todo_parameterized_interface_compound.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) { let X:! type; }
+interface I(T: type) { let X: type; }
 
-final impl forall [J:! I(())] J as I({}) where .X = {} {}
+final impl forall [J: I(())] J as I({}) where .X = {} {}
 
 // CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+8]]:31: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
 // CHECK:STDERR: fn F(T:! I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
@@ -149,22 +149,22 @@ final impl forall [J:! I(())] J as I({}) where .X = {} {}
 // CHECK:STDERR: fn F(T:! I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
 // CHECK:STDERR:                               ^
 // CHECK:STDERR:
-fn F(T:! I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
+fn F(generic T: I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
 
-fn G(T:! I(()) where .X = ()) {
+fn G(generic T: I(()) where .X = ()) {
   F(T);
 }
 
 // --- fail_parameterized_interface_with_wrong_where_in_impl_deduction.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) { let X:! type; }
+interface I(T: type) { let X: type; }
 
-final impl forall [J:! I(()) where .X = {}] J as I({}) where .X = {} {}
+final impl forall [J: I(()) where .X = {}] J as I({}) where .X = {} {}
 
-fn F(unused T:! I({}) where .X = {}) {}
+fn F(unused generic T: I({}) where .X = {}) {}
 
-fn G(T:! I(()) where .X = ()) {
+fn G(generic T: I(()) where .X = ()) {
   // CHECK:STDERR: fail_parameterized_interface_with_wrong_where_in_impl_deduction.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I(()) where .(I(()).X) = ()` into type implementing `I({}) where .(I({}).X) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
@@ -179,11 +179,11 @@ fn G(T:! I(()) where .X = ()) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X1:! type;
-  let X2:! type;
+  let X1: type;
+  let X2: type;
 }
 
-fn F(unused T:! I where .X1 = () and .X2 = ()) {}
+fn F(unused generic T: I where .X1 = () and .X2 = ()) {}
 
 fn G() {
   class C;
@@ -191,7 +191,7 @@ fn G() {
   F(C);
 }
 
-fn H(T:! I where .X1 = .X2 and .X2 = ()) {
+fn H(generic T: I where .X1 = .X2 and .X2 = ()) {
   F(T);
 }
 
@@ -199,11 +199,11 @@ fn H(T:! I where .X1 = .X2 and .X2 = ()) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X1:! type;
-  let X2:! type;
+  let X1: type;
+  let X2: type;
 }
 
-fn F(unused T:! I where .X1 = .X2 and .X2 = ()) {}
+fn F(unused generic T: I where .X1 = .X2 and .X2 = ()) {}
 
 fn G() {
   class C;
@@ -211,7 +211,7 @@ fn G() {
   F(C);
 }
 
-fn H(T:! I where .X1 = () and .X2 = ()) {
+fn H(generic T: I where .X1 = () and .X2 = ()) {
   F(T);
 }
 
@@ -219,11 +219,11 @@ fn H(T:! I where .X1 = () and .X2 = ()) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X1:! type;
-  let X2:! type;
+  let X1: type;
+  let X2: type;
 }
 
-fn F(unused T:! I where .X1 = .X2 and .X2 = ()) {}
+fn F(unused generic T: I where .X1 = .X2 and .X2 = ()) {}
 
 fn G() {
   class C1;
@@ -235,11 +235,11 @@ fn G() {
   F(C2);
 }
 
-fn H1(T:! I where .X1 = .X2 and .X2 = ()) {
+fn H1(generic T: I where .X1 = .X2 and .X2 = ()) {
   F(T);
 }
 
-fn H2(T:! I where .X1 = () and .X2 = .X1) {
+fn H2(generic T: I where .X1 = () and .X2 = .X1) {
   F(T);
 }
 
@@ -247,11 +247,11 @@ fn H2(T:! I where .X1 = () and .X2 = .X1) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X1:! type;
-  let X2:! type;
+  let X1: type;
+  let X2: type;
 }
 
-fn F(unused T:! I where .X1 = .X2) {}
+fn F(unused generic T: I where .X1 = .X2) {}
 
 class C;
 // .X2 is not set in the impl definition, so its value is an ErrorInst
@@ -281,14 +281,14 @@ fn G() {
 library "[[@TEST_NAME]]";
 
 interface I {}
-interface J { let Y:! type; }
+interface J { let Y: type; }
 
 class C;
 
-final impl forall [T:! I] T as J where .Y = C {}
+final impl forall [T: I] T as J where .Y = C {}
 
-fn F(unused T:! I & J where .Y = C) {}
-fn G(T:! I) {
+fn F(unused generic T: I & J where .Y = C) {}
+fn G(generic T: I) {
   F(T);
 }
 
@@ -296,29 +296,29 @@ fn G(T:! I) {
 library "[[@TEST_NAME]]";
 
 interface I {}
-interface J { let Y:! type; }
+interface J { let Y: type; }
 
 class C;
 
-final impl forall [T:! J] T as I {}
+final impl forall [T: J] T as I {}
 
-fn F(unused T:! I & J where .Y = C) {}
-fn G(T:! J where .Y = C) {
+fn F(unused generic T: I & J where .Y = C) {}
+fn G(generic T: J where .Y = C) {
   F(T);
 }
 
 // --- fail_non_final_impl_deduce.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
+interface I { let X: type; }
 
-impl forall [U:! type] U as I where .X = () {}
+impl forall [U: type] U as I where .X = () {}
 
-fn F(unused T:! I where .X = ()) {}
+fn F(unused generic T: I where .X = ()) {}
 
-class C(T:! type);
+class C(T: type);
 
-fn G(T:! type) {
+fn G(generic T: type) {
   // The type `C(T)` is generic so that the resulting impl witness will not be
   // effectively final.
   //
@@ -335,13 +335,13 @@ fn G(T:! type) {
 // --- fail_non_final_impl_explicit.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
+interface I { let X: type; }
 
-impl forall [U:! type] U as I where .X = () {}
+impl forall [U: type] U as I where .X = () {}
 
-class C(T:! type);
+class C(T: type);
 
-fn F(T:! type) {
+fn F(generic T: type) {
   // The type `C(T)` is generic so that the resulting impl witness will not be
   // effectively final.
   //
@@ -355,11 +355,11 @@ fn F(T:! type) {
 // --- concrete_query_non_final_impl_deduce.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
+interface I { let X: type; }
 
-impl forall [U:! type] U as I where .X = () {}
+impl forall [U: type] U as I where .X = () {}
 
-fn F(unused T:! I where .X = ()) {}
+fn F(unused generic T: I where .X = ()) {}
 
 fn G() {
   class C;
@@ -369,9 +369,9 @@ fn G() {
 // --- concrete_query_non_final_impl_explicit_as.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
+interface I { let X: type; }
 
-impl forall [U:! type] U as I where .X = () {}
+impl forall [U: type] U as I where .X = () {}
 
 fn F() {
 class C;
@@ -381,11 +381,11 @@ class C;
 // --- final_impl_deduce.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
+interface I { let X: type; }
 
-final impl forall [U:! type] U as I where .X = () {}
+final impl forall [U: type] U as I where .X = () {}
 
-fn F(unused T:! I where .X = ()) {}
+fn F(unused generic T: I where .X = ()) {}
 
 fn G() {
   class C;
@@ -395,9 +395,9 @@ fn G() {
 // --- final_impl_explicit_as.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
+interface I { let X: type; }
 
-final impl forall [U:! type] U as I where .X = () {}
+final impl forall [U: type] U as I where .X = () {}
 
 fn F() {
   class C;
@@ -407,12 +407,12 @@ fn F() {
 // --- concrete_specialization_impl_deduce.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
+interface I { let X: type; }
 
 class C;
 impl C as I where .X = () {}
 
-fn F(unused T:! I where .X = ()) {}
+fn F(unused generic T: I where .X = ()) {}
 fn G() {
   F(C);
 }
@@ -420,7 +420,7 @@ fn G() {
 // --- concrete_specialization_impl_explicit_as.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
+interface I { let X: type; }
 
 class C;
 impl C as I where .X = () {}
@@ -433,15 +433,15 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
-class C(T:! type);
+class C(T: type);
 
-fn F(unused T:! I where .X = C(.Y)) {}
+fn F(unused generic T: I where .X = C(.Y)) {}
 
-fn G(T:! I where .X = C(()) and .Y = ()) {
+fn G(generic T: I where .X = C(()) and .Y = ()) {
   F(T);
 }
 
@@ -449,15 +449,15 @@ fn G(T:! I where .X = C(()) and .Y = ()) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
-class C(T:! type);
+class C(T: type);
 
-fn F(unused T:! I where .X = C(.Y)) {}
+fn F(unused generic T: I where .X = C(.Y)) {}
 
-fn G(T:! I where .X = C(()) and .Y = {}) {
+fn G(generic T: I where .X = C(()) and .Y = {}) {
   // CHECK:STDERR: fail_wrong_rewrite_value_in_class_param.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = C(()) and .(I.Y) = {}` into type implementing `I where .(I.X) = C(.(I.Y))` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
@@ -472,13 +472,13 @@ fn G(T:! I where .X = C(()) and .Y = {}) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
+  let X: type;
   fn F();
 }
 
-fn F(unused T:! I where .X = ()) {}
+fn F(unused generic T: I where .X = ()) {}
 
-fn G(T:! I where .X = ()) {
+fn G(generic T: I where .X = ()) {
   F(T);
 }
 
@@ -486,14 +486,14 @@ fn G(T:! I where .X = ()) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! X;
+  let X: type;
+  let Y: X;
   fn A();
 }
 
-fn F(unused T:! I where .Y = .A) {}
+fn F(unused generic T: I where .Y = .A) {}
 
-fn G(T:! I where .Y = .A) {
+fn G(generic T: I where .Y = .A) {
   F(T);
 }
 
@@ -501,15 +501,15 @@ fn G(T:! I where .Y = .A) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! X;
+  let X: type;
+  let Y: X;
   fn A();
   fn B();
 }
 
-fn F(unused T:! I where .Y = .A) {}
+fn F(unused generic T: I where .Y = .A) {}
 
-fn G(T:! I where .Y = .B) {
+fn G(generic T: I where .Y = .B) {
   // CHECK:STDERR: fail_wrong_function_as_rewrite_value.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.Y) = .(I.B)` into type implementing `I where .(I.Y) = .(I.A)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
@@ -524,22 +524,22 @@ fn G(T:! I where .Y = .B) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! X;
+  let X: type;
+  let Y: X;
   fn A();
 }
 
 interface J {
-  let J1:! type;
-  let J2:! type;
+  let J1: type;
+  let J2: type;
   // B has the same index in J as A does in I, ensuring the index is not enough
   // for comparing them.
   fn B();
 }
 
-fn F(unused T:! I & J where .Y = .A) {}
+fn F(unused generic T: I & J where .Y = .A) {}
 
-fn G(T:! I & J where .Y = .B) {
+fn G(generic T: I & J where .Y = .B) {
   // CHECK:STDERR: fail_wrong_function_as_rewrite_value_in_other_interface.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I & J where .(I.Y) = .(J.B)` into type implementing `I & J where .(I.Y) = .(I.A)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
@@ -553,26 +553,26 @@ fn G(T:! I & J where .Y = .B) {
 // --- recursive_facet.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X:! type; }
-interface K(Y:! type) {  }
+interface I { let X: type; }
+interface K(Y: type) {  }
 
-fn F(unused T:! I where .X = {.k: K(I)}) {}
+fn F(unused generic T: I where .X = {.k: K(I)}) {}
 
-fn G(T:! I where .X = {.k: K(I)}) {
+fn G(generic T: I where .X = {.k: K(I)}) {
   F(T);
 }
 
 // --- fail_facet_type_concrete_types_match_blanket_impl_concrete_types.carbon
 library "[[@TEST_NAME]]";
 
-interface A { let X:! type; }
-interface B { let Y:! type; }
+interface A { let X: type; }
+interface B { let Y: type; }
 
-interface C(BB:! B) { let AX:! type; let BY:! type; }
+interface C(BB: B) { let AX: type; let BY: type; }
 
-impl forall [AA:! A, BB:! B] AA as C(BB) where .AX = () and .BY = {} {}
+impl forall [AA: A, BB: B] AA as C(BB) where .AX = () and .BY = {} {}
 
-fn F(AA:! A where .X = (), BB:! B where .Y = {}) {
+fn F(generic AA: A where .X = (), generic BB: B where .Y = {}) {
   // The types match but there may be a specialization that specifies different
   // types and would be prefered for a specific `AA` or `BB`.
   //
@@ -586,14 +586,14 @@ fn F(AA:! A where .X = (), BB:! B where .Y = {}) {
 // --- fail_facet_type_concrete_types_become_blank_impl_types.carbon
 library "[[@TEST_NAME]]";
 
-interface A { let X:! type; }
-interface B { let Y:! type; }
+interface A { let X: type; }
+interface B { let Y: type; }
 
-interface C(BB:! B) { let AX:! type; let BY:! type; }
+interface C(BB: B) { let AX: type; let BY: type; }
 
-impl forall [AA:! A, BB:! B] AA as C(BB) where .AX = AA.X and .BY = BB.Y {}
+impl forall [AA: A, BB: B] AA as C(BB) where .AX = AA.X and .BY = BB.Y {}
 
-fn F(AA:! A where .X = (), BB:! B where .Y = {}) {
+fn F(generic AA: A where .X = (), generic BB: B where .Y = {}) {
   // The types match but there may be a specialization that specifies different
   // types and would be prefered for a specific `AA` or `BB`.
   //
@@ -607,42 +607,42 @@ fn F(AA:! A where .X = (), BB:! B where .Y = {}) {
 // --- facet_type_concrete_types_match_final_blanket_impl_concrete_types.carbon
 library "[[@TEST_NAME]]";
 
-interface A { let X:! type; }
-interface B { let Y:! type; }
+interface A { let X: type; }
+interface B { let Y: type; }
 
-interface C(BB:! B) { let AX:! type; let BY:! type; }
+interface C(BB: B) { let AX: type; let BY: type; }
 
-final impl forall [AA:! A, BB:! B] AA as C(BB) where .AX = () and .BY = {} {}
+final impl forall [AA: A, BB: B] AA as C(BB) where .AX = () and .BY = {} {}
 
-fn F(AA:! A where .X = (), BB:! B where .Y = {}) {
+fn F(generic AA: A where .X = (), generic BB: B where .Y = {}) {
   AA as (C(BB) where .AX = () and .BY = {});
 }
 
 // --- facet_type_concrete_types_become_final_blanket_impl_types.carbon
 library "[[@TEST_NAME]]";
 
-interface A { let X:! type; }
-interface B { let Y:! type; }
+interface A { let X: type; }
+interface B { let Y: type; }
 
-interface C(BB:! B) { let AX:! type; let BY:! type; }
+interface C(BB: B) { let AX: type; let BY: type; }
 
-final impl forall [AA:! A, BB:! B] AA as C(BB) where .AX = AA.X and .BY = BB.Y {}
+final impl forall [AA: A, BB: B] AA as C(BB) where .AX = AA.X and .BY = BB.Y {}
 
-fn F(AA:! A where .X = (), BB:! B where .Y = {}) {
+fn F(generic AA: A where .X = (), generic BB: B where .Y = {}) {
   AA as (C(BB) where .AX = () and .BY = {});
 }
 
 // --- fail_facet_type_concrete_types_become_final_blanket_impl_types_wrong_types.carbon
 library "[[@TEST_NAME]]";
 
-interface A { let X:! type; }
-interface B { let Y:! type; }
+interface A { let X: type; }
+interface B { let Y: type; }
 
-interface C(BB:! B) { let AX:! type; let BY:! type; }
+interface C(BB: B) { let AX: type; let BY: type; }
 
-final impl forall [AA:! A, BB:! B] AA as C(BB) where .AX = AA.X and .BY = BB.Y {}
+final impl forall [AA: A, BB: B] AA as C(BB) where .AX = AA.X and .BY = BB.Y {}
 
-fn F(AA:! A where .X = (), BB:! B where .Y = {}) {
+fn F(generic AA: A where .X = (), generic BB: B where .Y = {}) {
   // CHECK:STDERR: fail_facet_type_concrete_types_become_final_blanket_impl_types_wrong_types.carbon:[[@LINE+4]]:3: error: cannot convert type `AA` that implements `A where .(A.X) = ()` into type implementing `C(BB as B) where .(C(BB as B).AX) = {} and .(C(BB as B).BY) = ()` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   AA as (C(BB) where .AX = {} and .BY = ());
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -654,16 +654,16 @@ fn F(AA:! A where .X = (), BB:! B where .Y = {}) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X1:! type;
-  let X2:! type;
-  let X3:! type;
+  let X1: type;
+  let X2: type;
+  let X3: type;
 }
 
-class C(T:! type);
+class C(T: type);
 
-fn F(unused T:! I where .X1 = .X3 and .X2 = C(.X3) and .X3 = ()) {}
+fn F(unused generic T: I where .X1 = .X3 and .X2 = C(.X3) and .X3 = ()) {}
 
-fn G(T:! I where .X1 = () and .X2 = C(()) and .X3 = ()) {
+fn G(generic T: I where .X1 = () and .X2 = C(()) and .X3 = ()) {
   F(T);
 }
 
@@ -671,16 +671,16 @@ fn G(T:! I where .X1 = () and .X2 = C(()) and .X3 = ()) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X1:! type;
-  let X2:! type;
-  let X3:! type;
+  let X1: type;
+  let X2: type;
+  let X3: type;
 }
 
-class C(T:! type);
+class C(T: type);
 
-fn F(unused T:! I where .X1 = () and .X2 = C(()) and .X3 = .X1) {}
+fn F(unused generic T: I where .X1 = () and .X2 = C(()) and .X3 = .X1) {}
 
-fn G(T:! I where .X1 = .X3 and .X2 = C(.X1) and .X3 = ()) {
+fn G(generic T: I where .X1 = .X3 and .X2 = C(.X1) and .X3 = ()) {
   F(T);
 }
 
@@ -688,13 +688,13 @@ fn G(T:! I where .X1 = .X3 and .X2 = C(.X1) and .X3 = ()) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X1:! type;
-  let X2:! type;
+  let X1: type;
+  let X2: type;
 }
 
-fn F(U:! I where .X1 = {}, unused T:! I where .X1 = () and .X2 = U.X1) {}
+fn F(generic U: I where .X1 = {}, unused generic T: I where .X1 = () and .X2 = U.X1) {}
 
-fn G(U:! I where .X1 = {} and .X2 = (), T:! I where .X1 = U.X2 and .X2 = {}) {
+fn G(generic U: I where .X1 = {} and .X2 = (), generic T: I where .X1 = U.X2 and .X2 = {}) {
   F(U, T);
 }
 
@@ -702,18 +702,18 @@ fn G(U:! I where .X1 = {} and .X2 = (), T:! I where .X1 = U.X2 and .X2 = {}) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X1:! I;
-  let X2:! type;
-  let X3:! type;
+  let X1: I;
+  let X2: type;
+  let X3: type;
 }
 
-fn F(unused T:! I where .X1 = .Self and .X2 = .X1.X3 and .X3 = ()) {}
+fn F(unused generic T: I where .X1 = .Self and .X2 = .X1.X3 and .X3 = ()) {}
 
-fn G(T:! I where .X1 = .Self and .X2 = () and .X3 = ()) {
+fn G(generic T: I where .X1 = .Self and .X2 = () and .X3 = ()) {
   F(T);
 }
 
-fn H(T:! I where .X1 = .Self and .X2 = .X1.X3 and .X3 = ()) {
+fn H(generic T: I where .X1 = .Self and .X2 = .X1.X3 and .X3 = ()) {
   G(T);
 }
 
@@ -721,15 +721,15 @@ fn H(T:! I where .X1 = .Self and .X2 = .X1.X3 and .X3 = ()) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
-class C(T:! type);
+class C(T: type);
 
-fn F(unused T:! I where .X = C(.Y)) {}
+fn F(unused generic T: I where .X = C(.Y)) {}
 
-fn G(T:! I where .X = C({}) and .Y = {}) {
+fn G(generic T: I where .X = C({}) and .Y = {}) {
   F(T);
 }
 
@@ -737,14 +737,14 @@ fn G(T:! I where .X = C({}) and .Y = {}) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
-interface J(T:! type) {}
+interface J(T: type) {}
 
-fn F(unused T:! I where .X = J(())) {}
+fn F(unused generic T: I where .X = J(())) {}
 
-fn G(T:! I where .X = J(()) and .Y = ()) {
+fn G(generic T: I where .X = J(()) and .Y = ()) {
   F(T);
 }
 
@@ -752,15 +752,15 @@ fn G(T:! I where .X = J(()) and .Y = ()) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
-  let Z:! type;
+  let X: type;
+  let Y: type;
+  let Z: type;
 }
-interface J(T:! type) {}
+interface J(T: type) {}
 
-fn F(unused T:! I where .X = J(())) {}
+fn F(unused generic T: I where .X = J(())) {}
 
-fn G(T:! I where .X = J({}) and .Y = ()) {
+fn G(generic T: I where .X = J({}) and .Y = ()) {
   // CHECK:STDERR: fail_facet_type_in_assoc_constant_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = J({}) and .(I.Y) = ()` into type implementing `I where .(I.X) = J(())` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
@@ -774,9 +774,9 @@ fn G(T:! I where .X = J({}) and .Y = ()) {
 // --- rewrite_rhs_satisfies_lhs_requirement.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {}
-interface J(T:! type) {
-  let J1:! I(T);
+interface I(T: type) {}
+interface J(T: type) {
+  let J1: I(T);
 }
 
 class C;
@@ -789,18 +789,18 @@ constraint L {
   require C impls I(Self);
 }
 
-fn F(unused T:! L & J(.Self) where .J1 = C) {}
+fn F(unused generic T: L & J(.Self) where .J1 = C) {}
 
-fn G(T:! L & J(.Self) where .J1 = C) {
+fn G(generic T: L & J(.Self) where .J1 = C) {
   F(T);
 }
 
 // --- todo_fail_rewrite_rhs_does_not_satisfy_lhs_requirement.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {}
-interface J(T:! type) {
-  let J1:! I(T);
+interface I(T: type) {}
+interface J(T: type) {
+  let J1: I(T);
 }
 
 class C;
@@ -811,9 +811,9 @@ constraint L {
 
 // TODO: This should be an error that C does not impl I(.Self). We don't yet try
 // convert the RHS of a rewrite to the type of the LHS when the LHS is symbolic.
-fn F(unused T:! L & J(.Self) where .J1 = C) {}
+fn F(unused generic T: L & J(.Self) where .J1 = C) {}
 
-fn G(T:! L & J(.Self) where .J1 = C) {
+fn G(generic T: L & J(.Self) where .J1 = C) {
   F(T);
 }
 
@@ -821,21 +821,21 @@ fn G(T:! L & J(.Self) where .J1 = C) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let I1:! type;
-  let I2:! type;
+  let I1: type;
+  let I2: type;
 }
 
 interface J {
-  let J1:! I;
+  let J1: I;
 }
 
 interface K {
-  let K1:! J;
+  let K1: J;
 }
 
-fn F(unused T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = (.K1.J1).I2) {}
+fn F(unused generic T: I & J & K where .K1 = .Self and .J1 = .Self and .I1 = (.K1.J1).I2) {}
 
-fn G(T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = .I2) {
+fn G(generic T: I & J & K where .K1 = .Self and .J1 = .Self and .I1 = .I2) {
   F(T);
 }
 
@@ -843,22 +843,22 @@ fn G(T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = .I2) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let I1:! type;
-  let I2:! type;
+  let I1: type;
+  let I2: type;
 }
 
 interface J {
-  let J1:! I;
+  let J1: I;
 }
 
 interface K {
-  let K1:! J;
+  let K1: J;
 }
 
-fn F(unused T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = (.K1.J1).I2) {}
+fn F(unused generic T: I & J & K where .K1 = .Self and .J1 = .Self and .I1 = (.K1.J1).I2) {}
 
 // F's requirement I1 = I2 is not met, as I1 = () and I2 = {}
-fn G(T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = () and .I2 = {}) {
+fn G(generic T: I & J & K where .K1 = .Self and .J1 = .Self and .I1 = () and .I2 = {}) {
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I & J & K where .(K.K1) = .Self as J and .(J.J1) = .Self as I and .(I.I1) = () and .(I.I2) = {}` into type implementing `I & J & K where .(K.K1) = .Self as J and .(J.J1) = .Self as I and .(I.I1) = .(I.I2)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
@@ -870,7 +870,7 @@ fn G(T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = () and .I2 = {}) 
 }
 
 // F's requirement I1 = I2 is not met, as I1 = {} and I2 is unspecified
-fn G2(T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = {}) {
+fn G2(generic T: I & J & K where .K1 = .Self and .J1 = .Self and .I1 = {}) {
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I & J & K where .(K.K1) = .Self as J and .(J.J1) = .Self as I and .(I.I1) = {}` into type implementing `I & J & K where .(K.K1) = .Self as J and .(J.J1) = .Self as I and .(I.I1) = .(I.I2)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
@@ -882,7 +882,7 @@ fn G2(T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = {}) {
 }
 
 // F's requirement I1 = I2 is not met, as I2 = {} and I1 is unspecified
-fn G3(T:! I & J & K where .K1 = .Self and .J1 = .Self and .I2 = {}) {
+fn G3(generic T: I & J & K where .K1 = .Self and .J1 = .Self and .I2 = {}) {
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I & J & K where .(K.K1) = .Self as J and .(J.J1) = .Self as I and .(I.I2) = {}` into type implementing `I & J & K where .(K.K1) = .Self as J and .(J.J1) = .Self as I and .(I.I1) = .(I.I2)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
@@ -897,24 +897,24 @@ fn G3(T:! I & J & K where .K1 = .Self and .J1 = .Self and .I2 = {}) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let I1:! type;
+  let I1: type;
 }
 
 interface J {
-  let J1:! I;
-  let J2:! type;
+  let J1: I;
+  let J2: type;
 }
 
 interface K {
-  let K1:! J;
+  let K1: J;
 }
 
 // .K1.J1 is an ImplWitnessAccess into Self. The Self witness will be subst'd in
 // for `U` and it will eval to the ImplWitnessAccess inside of `U.I1`. Then that
 // will need to be subst'd to find the value of I1 in U's witness.
-fn F(unused U:! I, unused T:! J & K where .J2 = (.K1.J1).I1) {}
+fn F(unused generic U: I, unused generic T: J & K where .J2 = (.K1.J1).I1) {}
 
-fn G(U:! I where .I1 = (), T:! J & K where .K1 = .Self and .J1 = U and .J2 = ()) {
+fn G(generic U: I where .I1 = (), generic T: J & K where .K1 = .Self and .J1 = U and .J2 = ()) {
   F(U, T);
 }
 
@@ -922,22 +922,22 @@ fn G(U:! I where .I1 = (), T:! J & K where .K1 = .Self and .J1 = U and .J2 = ())
 library "[[@TEST_NAME]]";
 
 interface I {
-  let I1:! type;
+  let I1: type;
 }
 
 interface J {
-  let J1:! I;
-  let J2:! type;
+  let J1: I;
+  let J2: type;
 }
 
 interface K {
-  let K1:! J;
+  let K1: J;
 }
 
-fn F(unused U:! I, unused T:! J & K where .J2 = (.K1.J1).I1) {}
+fn F(unused generic U: I, unused generic T: J & K where .J2 = (.K1.J1).I1) {}
 
 // F's requirement J2 = I1 is not met as J2 = () and I1 = {}
-fn G(U:! I where .I1 = {}, T:! J & K where .K1 = .Self and .J1 = U and .J2 = ()) {
+fn G(generic U: I where .I1 = {}, generic T: J & K where .K1 = .Self and .J1 = U and .J2 = ()) {
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `J & K where .(J.J2) = () and .(K.K1) = .Self as J and .(J.J1) = U as I` into type implementing `J & K where .(J.J2) = .(K.K1).(J.J1).(I.I1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
@@ -949,7 +949,7 @@ fn G(U:! I where .I1 = {}, T:! J & K where .K1 = .Self and .J1 = U and .J2 = ())
 }
 
 // F's requirement J2 = I1 is not met as J2 = () and I1 is unspecified
-fn G2(U:! I, T:! J & K where .K1 = .Self and .J1 = U and .J2 = ()) {
+fn G2(generic U: I, generic T: J & K where .K1 = .Self and .J1 = U and .J2 = ()) {
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `J & K where .(J.J2) = () and .(K.K1) = .Self as J and .(J.J1) = U` into type implementing `J & K where .(J.J2) = .(K.K1).(J.J1).(I.I1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
@@ -961,7 +961,7 @@ fn G2(U:! I, T:! J & K where .K1 = .Self and .J1 = U and .J2 = ()) {
 }
 
 // F's requirement J2 = I1 is not met as I1 = {} and J2 is unspecified
-fn G3(U:! I where .I1 = {}, T:! J & K where .K1 = .Self and .J1 = U) {
+fn G3(generic U: I where .I1 = {}, generic T: J & K where .K1 = .Self and .J1 = U) {
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `J & K where .(K.K1) = .Self as J and .(J.J1) = U as I` into type implementing `J & K where .(J.J2) = .(K.K1).(J.J1).(I.I1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
@@ -976,22 +976,22 @@ fn G3(U:! I where .I1 = {}, T:! J & K where .K1 = .Self and .J1 = U) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let I1:! type;
+  let I1: type;
 }
 
 interface J {
-  let J1:! type;
+  let J1: type;
 }
 
 interface K {
-  let K1:! J & I;
-  let K2:! type;
-  let K3:! type;
+  let K1: J & I;
+  let K2: type;
+  let K3: type;
 }
 
-fn F(unused U:! I & J, unused T:! K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
+fn F(unused generic U: I & J, unused generic T: K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
 
-fn G(U:! I & J where .I1 = () and .J1 = {}, T:! K where .K1 = U and .K2 = () and .K3 = {}) {
+fn G(generic U: I & J where .I1 = () and .J1 = {}, generic T: K where .K1 = U and .K2 = () and .K3 = {}) {
   F(U, T);
 }
 
@@ -999,23 +999,23 @@ fn G(U:! I & J where .I1 = () and .J1 = {}, T:! K where .K1 = U and .K2 = () and
 library "[[@TEST_NAME]]";
 
 interface I {
-  let I1:! type;
+  let I1: type;
 }
 
 interface J {
-  let J1:! type;
+  let J1: type;
 }
 
 interface K {
-  let K1:! J & I;
-  let K2:! type;
-  let K3:! type;
+  let K1: J & I;
+  let K2: type;
+  let K3: type;
 }
 
-fn F(unused U:! I & J, unused T:! K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
+fn F(unused generic U: I & J, unused generic T: K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
 
 // K2 = I1 fails since K2 = {} and I1 = ()
-fn G(U:! I & J where .I1 = () and .J1 = {}, T:! K where .K1 = U and .K2 = {} and .K3 = {}) {
+fn G(generic U: I & J where .I1 = () and .J1 = {}, generic T: K where .K1 = U and .K2 = {} and .K3 = {}) {
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `K where .(K.K2) = {} and .(K.K1) = U as I & J and .(K.K3) = {}` into type implementing `K where .(K.K2) = .(K.K1).(I.I1) and .(K.K3) = .(K.K1).(J.J1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
@@ -1027,7 +1027,7 @@ fn G(U:! I & J where .I1 = () and .J1 = {}, T:! K where .K1 = U and .K2 = {} and
 }
 
 // K2 = I1 fails since I1 = () and K2 is unspecified.
-fn G2(U:! I & J where .I1 = () and .J1 = {}, T:! K where .K1 = U and .K3 = {}) {
+fn G2(generic U: I & J where .I1 = () and .J1 = {}, generic T: K where .K1 = U and .K3 = {}) {
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `K where .(K.K1) = U as I & J and .(K.K3) = {}` into type implementing `K where .(K.K2) = .(K.K1).(I.I1) and .(K.K3) = .(K.K1).(J.J1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
@@ -1039,7 +1039,7 @@ fn G2(U:! I & J where .I1 = () and .J1 = {}, T:! K where .K1 = U and .K3 = {}) {
 }
 
 // K2 = I1 fails since K2 = () and I1 is unspecified.
-fn G3(U:! I & J where .J1 = {}, T:! K where .K1 = U and .K2 = () and .K3 = {}) {
+fn G3(generic U: I & J where .J1 = {}, generic T: K where .K1 = U and .K2 = () and .K3 = {}) {
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `K where .(K.K2) = () and .(K.K1) = U as I & J and .(K.K3) = {}` into type implementing `K where .(K.K2) = .(K.K1).(I.I1) and .(K.K3) = .(K.K1).(J.J1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
@@ -1051,7 +1051,7 @@ fn G3(U:! I & J where .J1 = {}, T:! K where .K1 = U and .K2 = () and .K3 = {}) {
 }
 
 // K3 = J1 fails since J1 = {} and K3 is unspecified.
-fn G4(U:! I & J where .I1 = () and .J1 = {}, T:! K where .K1 = U and .K2 = ()) {
+fn G4(generic U: I & J where .I1 = () and .J1 = {}, generic T: K where .K1 = U and .K2 = ()) {
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `K where .(K.K2) = () and .(K.K1) = U as I & J` into type implementing `K where .(K.K2) = .(K.K1).(I.I1) and .(K.K3) = .(K.K1).(J.J1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
@@ -1063,7 +1063,7 @@ fn G4(U:! I & J where .I1 = () and .J1 = {}, T:! K where .K1 = U and .K2 = ()) {
 }
 
 // K3 = J1 fails since K3 = {} and J1 is unspecified.
-fn G5(U:! I & J where .I1 = (), T:! K where .K1 = U and .K2 = () and .K3 = {}) {
+fn G5(generic U: I & J where .I1 = (), generic T: K where .K1 = U and .K2 = () and .K3 = {}) {
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `K where .(K.K2) = () and .(K.K1) = U as I & J and .(K.K3) = {}` into type implementing `K where .(K.K2) = .(K.K1).(I.I1) and .(K.K3) = .(K.K1).(J.J1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
@@ -1078,15 +1078,15 @@ fn G5(U:! I & J where .I1 = (), T:! K where .K1 = U and .K2 = () and .K3 = {}) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let I1:! type;
-  let I2:! type;
-  let I3:! type;
-  let I4:! type;
+  let I1: type;
+  let I2: type;
+  let I3: type;
+  let I4: type;
 }
 
-fn F(unused T:! I where .I1 = () and .I2 = ()) {}
+fn F(unused generic T: I where .I1 = () and .I2 = ()) {}
 
-fn G(T:! I where .I1 = .I2) {
+fn G(generic T: I where .I1 = .I2) {
   // CHECK:STDERR: fail_target_rewrites_dont_apply_to_source.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.I1) = .(I.I2)` into type implementing `I where .(I.I1) = () and .(I.I2) = ()` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
@@ -1101,17 +1101,17 @@ fn G(T:! I where .I1 = .I2) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
-constraint NI(V:! type) {
+constraint NI(V: type) {
   extend require impls I where .Y = V;
 }
 
-fn F(T:! I where .X = NI({}), unused U:! T.X) {}
+fn F(generic T: I where .X = NI({}), unused generic U: T.X) {}
 
-fn G(T:! I where .X = NI({}), U:! I where .Y = {}) {
+fn G(generic T: I where .X = NI({}), generic U: I where .Y = {}) {
   F(T, U);
 }
 
@@ -1119,17 +1119,17 @@ fn G(T:! I where .X = NI({}), U:! I where .Y = {}) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
-constraint NI(V:! type) {
+constraint NI(V: type) {
   extend require impls I where .Y = V;
 }
 
-fn F(unused T:! I where .X = NI({}), unused U:! I where .Y = {}) {}
+fn F(unused generic T: I where .X = NI({}), unused generic U: I where .Y = {}) {}
 
-fn G(T:! I where .X = NI({}), U:! T.X) {
+fn G(generic T: I where .X = NI({}), generic U: T.X) {
   // TODO: This should pass, the rewrite in the constraint `NI` should be visible.
   // CHECK:STDERR: fail_todo_nested_facet_type_used_as_root_facet_type_in_caller.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `NI({})` into type implementing `I where .(I.Y) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T, U);
@@ -1145,21 +1145,21 @@ fn G(T:! I where .X = NI({}), U:! T.X) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 interface J {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
-constraint NI(V:! type) {
+constraint NI(V: type) {
   extend require impls I where .Y = V;
 }
 
-fn F(T:! I where .X = NI({}), unused U:! T.X) {}
+fn F(generic T: I where .X = NI({}), unused generic U: T.X) {}
 
-fn G(T:! I where .X = NI({}), U:! J where .Y = ()) {
+fn G(generic T: I where .X = NI({}), generic U: J where .Y = ()) {
   // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_interface.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `J where .(J.Y) = ()` into type implementing `NI({})` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T, U);
   // CHECK:STDERR:   ^~~~~~~
@@ -1174,17 +1174,17 @@ fn G(T:! I where .X = NI({}), U:! J where .Y = ()) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
-constraint NI(V:! type) {
+constraint NI(V: type) {
   extend require impls I where .Y = V;
 }
 
-fn F(T:! I where .X = NI({}), unused U:! T.X) {}
+fn F(generic T: I where .X = NI({}), unused generic U: T.X) {}
 
-fn G(T:! I where .X = NI({}), U:! I where .Y = ()) {
+fn G(generic T: I where .X = NI({}), generic U: I where .Y = ()) {
   // The caller's `U` has type `I where .Y = ()` but the callee wants something
   // of type `I where .Y = {}`.
   //
@@ -1196,17 +1196,17 @@ fn G(T:! I where .X = NI({}), U:! I where .Y = ()) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
-constraint NI(V:! type) {
+constraint NI(V: type) {
   extend require impls I where .Y = V;
 }
 
-fn F(unused T:! I where .X = NI({}), unused U:! I where .Y = ()) {}
+fn F(unused generic T: I where .X = NI({}), unused generic U: I where .Y = ()) {}
 
-fn G(T:! I where .X = NI({}), U:! T.X) {
+fn G(generic T: I where .X = NI({}), generic U: T.X) {
   // The caller's `U` has type `I where .Y = {}` but the callee wants something
   // of type `I where .Y = ()`.
   //
@@ -1224,37 +1224,37 @@ fn G(T:! I where .X = NI({}), U:! T.X) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let I1:! type;
-  let I2:! type;
-  let I3:! type;
-  let I4:! type;
+  let I1: type;
+  let I2: type;
+  let I3: type;
+  let I4: type;
 }
 
-class E(T:! type) {}
+class E(T: type) {}
 
 // * The LHS of `.I1` contains a `.Self` which is replaced by `C` to form
 //   `C.(I.I1)` and resolves to `()`.
 // * The RHS of `.I1` is `()` which then compares equal.
-fn F1(_:! I where .I1 = ()) {}
+fn F1(generic _: I where .I1 = ()) {}
 
 // * The LHS of `.I2` contains a `.Self` which is replaced by `C` to form
 //   `C.(I.I1)` and resolves to `C`.
 // * The RHS of `.I2` is `.Self` which is replaced by `C` and then compares
 //   equal.
-fn F2(_:! I where .I2 = .Self) {}
+fn F2(generic _: I where .I2 = .Self) {}
 
 // * The LHS of `.I3` contains a `.Self` which is replaced by `C` to form
 //   `C.(I.I1)` and resolves to `E(C)`.
 // * The RHS of `.I3` contains a `.Self` which is replaced by `C` to form
 //   `E(C)`, and then compares equal.
-fn F3(_:! I where .I3 = E(.Self)) {}
+fn F3(generic _: I where .I3 = E(.Self)) {}
 
 // * The LHS of `.I4` contains a `.Self` which is replaced by `C` to form
 //   `C.(I.I4)` and resolves to `.Self`. That `.Self` then is replaced by `C` so
 //   the LHS untimately resolves to `C`.
 // * The RHS of `.I4` is `.Self` which is replaced by `C` and then compares
 //   equal.
-fn F4(_:! I where .I4 = .Self) {}
+fn F4(generic _: I where .I4 = .Self) {}
 
 fn G() {
   class C;
@@ -1271,14 +1271,14 @@ library "[[@TEST_NAME]]";
 
 interface J {}
 interface I {
-  let I1:! type;
+  let I1: type;
 }
 
-fn F(unused U:! I & J where .I1 = {}) {}
+fn F(unused generic U: I & J where .I1 = {}) {}
 
-impl forall [T:! type] T as J {}
+impl forall [T: type] T as J {}
 
-fn G(T:! I where .I1 = {}) {
+fn G(generic T: I where .I1 = {}) {
   // Replaces `.Self` with `T`, which converts `T` to `I & J`. Doing so has to
   // invent a witness for `J`, and this tests we do so without losing the
   // information that `.I1 = {}`.
@@ -1289,17 +1289,17 @@ fn G(T:! I where .I1 = {}) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 
-fn G(_:! Z where .Z2 = ()) {}
+fn G(generic _: Z where .Z2 = ()) {}
 
 // Split the assignment of .Z1 and the use of it into separate facet types so
 // that the early rewrite application doesn't get to see the value of .Z1 where
 // it's used. Then rewrite constraint resolution has to do the replacement of
 // .Z1 so that we know .Z2 = () as required by G.
-fn F(T:! (Z where .Z1 = ()) & (Z where .Z2 = .Z1)) {
+fn F(generic T: (Z where .Z1 = ()) & (Z where .Z2 = .Z1)) {
   G(T);
 }
 
@@ -1307,13 +1307,13 @@ fn F(T:! (Z where .Z1 = ()) & (Z where .Z2 = .Z1)) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 
-fn F(_:! Z where .Z1 = {}) {}
+fn F(generic _: Z where .Z1 = {}) {}
 
-fn G(T:! Z where .Z1 = {} and .Z2 = {}) {
+fn G(generic T: Z where .Z1 = {} and .Z2 = {}) {
   //@dump-sem-ir-begin
   // We should see a conversion happen so we know the rewrite constraint is
   // being validated.
@@ -1325,10 +1325,10 @@ fn G(T:! Z where .Z1 = {} and .Z2 = {}) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
+  let Z1: type;
 }
 
-fn F(_:! Z where .Z1 = {}) {}
+fn F(generic _: Z where .Z1 = {}) {}
 
 constraint N {
   // The extend means that the rewrite constraint is propagated out of `N`, so
@@ -1336,7 +1336,7 @@ constraint N {
   extend require impls Z where .Z1 = {};
 }
 
-fn G(T:! N) {
+fn G(generic T: N) {
   // TODO: This should pass.
   // CHECK:STDERR: fail_todo_rewrite_provided_by_named_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `N` into type implementing `Z where .(Z.Z1) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
@@ -1352,10 +1352,10 @@ fn G(T:! N) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
+  let Z1: type;
 }
 
-fn F(_:! Z where .Z1 = {}) {}
+fn F(generic _: Z where .Z1 = {}) {}
 
 constraint N {
   // Without extend, this does not actually rewrite `.Z1 = {}`, it provides the
@@ -1365,7 +1365,7 @@ constraint N {
   require impls Z where .Z1 = {};
 }
 
-fn G(T:! N) {
+fn G(generic T: N) {
   // CHECK:STDERR: fail_rewrite_not_provided_by_named_constraint_without_extend.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `N` into type implementing `Z where .(Z.Z1) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~

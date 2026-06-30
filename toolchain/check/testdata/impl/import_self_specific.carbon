@@ -16,18 +16,18 @@ library "[[@TEST_NAME]]";
 
 // The I.Assoc will be a facet of type Y.
 interface Y {}
-impl forall [T:! type] T as Y {}
+impl forall [T: type] T as Y {}
 
 // C takes a facet of type Z.
 interface Z {}
-impl forall [U:! type] U as Z {}
+impl forall [U: type] U as Z {}
 
-class C(V:! Z) {
+class C(V: Z) {
   adapt ();
 }
 
 interface I {
-  let Assoc:! Y;
+  let Assoc: Y;
 
   // This is a generic function with a specific that contains a reference `Self`
   // in it (in the ImplWitnessAccess for `Self.Assoc`). The `Self.Assoc` is
@@ -45,7 +45,7 @@ import library "impl_def";
 
 class E {}
 
-class D(N:! E) {}
+class D(N: E) {}
 
 // The eval block for this generic `impl` must not include any instructions
 // derived from the import of `I.F`.
@@ -58,7 +58,7 @@ class D(N:! E) {}
 // that evaluation (such as inside impl lookup deduction against the U in the
 // impl for Z) should not be inappropriately added to this impl's generic eval
 // block.
-impl forall [N:! E] D(N) as I where .Assoc = () {
+impl forall [N: E] D(N) as I where .Assoc = () {
   fn F(unused c: C(())) {}
 }
 

@@ -14,13 +14,13 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let U:! type;
+  let U: type;
   fn F() -> U;
 }
 
 class C { adapt {}; }
 
-impl forall [T:! type] T as I where .U = C {
+impl forall [T: type] T as I where .U = C {
   // `T as I` does an impl lookup to form a FacetValue, which must find the impl
   // being defined and use that. The witness must be a final witness in order to
   // know that `U` is `C`.
@@ -31,13 +31,13 @@ impl forall [T:! type] T as I where .U = C {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let U:! type;
+  let U: type;
   fn F() -> U;
 }
 
 class C { adapt {}; }
 
-impl forall [T:! type] T as I where .U = C {
+impl forall [T: type] T as I where .U = C {
   // `Self as I` is a symbolic facet value specified in the interface-with-self
   // specific, and then monomorphized with the self type of the impl.
   fn F() -> (Self as I).U { return {} as C; }

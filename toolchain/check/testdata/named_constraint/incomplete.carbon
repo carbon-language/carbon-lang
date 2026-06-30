@@ -18,7 +18,7 @@ interface Z {}
 // An incomplete constraint is a valid type for a symbolic facet, and is just
 // not able to provide any witness for an impl lookup on that facet.
 constraint N;
-fn F(T:! N) {
+fn F(generic T: N) {
   // CHECK:STDERR: fail_incomplete_constraint_in_impl_lookup.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `N` into type implementing `Z` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   T as Z;
   // CHECK:STDERR:   ^~~~~~
@@ -35,7 +35,7 @@ interface Z {}
 // Since N is an incomplete constraint, it can not be identified as a target for
 // impl lookup to determine if C implements N. No diagnostic is attached to the
 // impl when the lookup fails, we simply fail to convert.
-impl forall [T:! N] T as Z {}
+impl forall [T: N] T as Z {}
 
 class C;
 
@@ -55,7 +55,7 @@ constraint N;
 interface Z {}
 // N is incomplete here, but that's okay. We don't need it to be identified
 // until a lookup tries to use this impl.
-impl forall [T:! N] T as Z {}
+impl forall [T: N] T as Z {}
 
 class C;
 
@@ -72,7 +72,7 @@ library "[[@TEST_NAME]]";
 
 constraint Z;
 
-fn AsZ(unused T:! Z) {}
+fn AsZ(unused generic T: Z) {}
 
 fn F() {
   // Converting to facet type `Z` requires `Z` to be identified.
@@ -96,15 +96,15 @@ library "[[@TEST_NAME]]";
 // being defined where this is called. This causes an error diagnostic at the
 // call.
 //
-// TODO: Define the function to `return U` once we can write `T:! Core.Copy`.
+// TODO: Define the function to `return U` once we can write `T: Core.Copy`.
 // Right now, due to #5750, facets are not seen to implement `Core.Copy`.
-eval fn ReturnFacet[T:! type](U:! T) -> T;
+eval fn ReturnFacet[T: type](generic U: T) -> T;
 
-interface Y { let YT:! type; }
+interface Y { let YT: type; }
 
 interface Z {}
 
-interface X { let XZ:! Z; }
+interface X { let XZ: Z; }
 constraint W {
   require impls Z;
   // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE+17]]:31: error: function returns incomplete type `W` [IncompleteTypeInFunctionReturnType]

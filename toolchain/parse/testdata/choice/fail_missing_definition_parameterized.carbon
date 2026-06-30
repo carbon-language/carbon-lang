@@ -12,7 +12,7 @@
 // CHECK:STDERR: choice MissingDefinition(T:! type);
 // CHECK:STDERR:                                   ^
 // CHECK:STDERR:
-choice MissingDefinition(T:! type);
+choice MissingDefinition(T: type);
 
 // CHECK:STDOUT: - filename: fail_missing_definition_parameterized.carbon
 // CHECK:STDOUT:   parse_tree: [

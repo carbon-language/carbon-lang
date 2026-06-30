@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/param_in_type.carbon
 
-fn F(N:! i32, a: array(i32, N)*);
+fn F(generic N: i32, a: array(i32, N)*);
 
 // CHECK:STDOUT: --- param_in_type.carbon
 // CHECK:STDOUT:

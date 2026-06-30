@@ -14,13 +14,13 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let U:! type;
+  let U: type;
   fn F() -> U;
 }
 
 class C { adapt {}; }
 
-impl forall [T:! type] T as I where .U = C {
+impl forall [T: type] T as I where .U = C {
   // We perform name lookup into `I` and resolve `U` to `T.(I.U)`.
   //@dump-sem-ir-begin
   fn F() -> U { return {} as C; }

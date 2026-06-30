@@ -16,7 +16,7 @@
 // CHECK:STDERR: fn F[s: ()]();
 // CHECK:STDERR:      ^~~~~
 // CHECK:STDERR:
-fn F[s: ()]();
+fn F[runtime s: ()]();
 
 fn Run() {
   F();

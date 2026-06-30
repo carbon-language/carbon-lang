@@ -15,17 +15,17 @@
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-class Class(T:! Core.Copy) {
+class Class(T: Core.Copy) {
   fn F(n: T) -> T;
   fn G(self) -> T;
   var n: T;
 }
 
-fn Class(T:! Core.Copy).F(n: T) -> T {
+fn Class(T: Core.Copy).F(n: T) -> T {
   return n;
 }
 
-fn Class(T:! Core.Copy).G(self) -> T {
+fn Class(T: Core.Copy).G(self) -> T {
   return self.n;
 }
 //@dump-sem-ir-end
@@ -35,13 +35,13 @@ fn Class(T:! Core.Copy).G(self) -> T {
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-class A(T:! type) {
-  class B(_:! T) {
+class A(T: type) {
+  class B(_: T) {
     fn F(self, a: T);
   }
 }
 
-fn A(T:! type).B(_:! T).F(unused self, unused a: T) {}
+fn A(T: type).B(_: T).F(unused self, unused a: T) {}
 //@dump-sem-ir-end
 
 // --- fail_mismatched_not_generic_vs_generic.carbon
@@ -59,13 +59,13 @@ class NotGeneric {
 // CHECK:STDERR: class NotGeneric {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn NotGeneric(unused T:! type).F() {}
+fn NotGeneric(unused T: type).F() {}
 
 // --- fail_mismatched_too_few_args.carbon
 
 library "[[@TEST_NAME]]";
 
-class Generic(unused T:! type) {
+class Generic(unused T: type) {
   fn TooFew();
 }
 
@@ -82,7 +82,7 @@ fn Generic().TooFew() {}
 
 library "[[@TEST_NAME]]";
 
-class Generic(T:! type) {
+class Generic(T: type) {
   fn TooMany();
 }
 
@@ -93,13 +93,13 @@ class Generic(T:! type) {
 // CHECK:STDERR: class Generic(T:! type) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Generic(unused T:! type, unused U:! type).TooMany() {}
+fn Generic(unused T: type, unused U: type).TooMany() {}
 
 // --- fail_mismatched_wrong_arg_type.carbon
 
 library "[[@TEST_NAME]]";
 
-class Generic(unused T:! type) {
+class Generic(unused T: type) {
   fn WrongType();
 }
 
@@ -110,7 +110,7 @@ class Generic(unused T:! type) {
 // CHECK:STDERR: class Generic(unused T:! type) {
 // CHECK:STDERR:                      ^~~~~~~~
 // CHECK:STDERR:
-fn Generic(unused T:! ()).WrongType() {}
+fn Generic(unused T: ()).WrongType() {}
 
 
 // CHECK:STDOUT: --- basic.carbon

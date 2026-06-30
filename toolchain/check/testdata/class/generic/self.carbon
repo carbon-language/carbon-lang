@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/generic/self.carbon
 
-class Class(T:! type) {
+class Class(T: type) {
   // `Self` is the same as `Class(T)` here.
   // TODO: Find a better way to test two types are the same.
   fn MakeSelf() -> Self { return {}; }

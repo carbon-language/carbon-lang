@@ -12,7 +12,7 @@
 
 // Builds on `call_recursive_reorder.carbon`.
 
-fn F[T:! type, U:! type, V:! type](x: T, y: U, z: V, count: i32) -> i32 {
+fn F[T: type, U: type, V: type](x: T, y: U, z: V, count: i32) -> i32 {
   if (count > 2) {
     return count;
   }

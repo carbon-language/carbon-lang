@@ -19,7 +19,7 @@ library "[[@TEST_NAME]]";
 class C {}
 class D {}
 
-fn F[T:! type, U:! type](pair: (T, U)) -> U { return F(pair); }
+fn F[T: type, U: type](pair: (T, U)) -> U { return F(pair); }
 
 fn G(pair: (C, D)) -> D {
   return F(pair);
@@ -29,9 +29,9 @@ fn G(pair: (C, D)) -> D {
 
 library "[[@TEST_NAME]]";
 
-class HasPair(Pair:! (i32, i32)) {}
+class HasPair(Pair: (i32, i32)) {}
 
-fn F[A:! i32, B:! i32](unused h: HasPair((A, B))) -> i32 { return B; }
+fn F[A: i32, B: i32](unused h: HasPair((A, B))) -> i32 { return B; }
 
 fn G(h: HasPair((1, 2))) -> i32 {
   return F(h);
@@ -44,7 +44,7 @@ library "[[@TEST_NAME]]";
 class C {}
 class D {}
 
-fn F[T:! type](pair: (T, T)) -> T;
+fn F[T: type](pair: (T, T)) -> T;
 
 fn G(pair: (C, D)) -> D {
   // CHECK:STDERR: fail_inconsistent.carbon:[[@LINE+7]]:10: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]

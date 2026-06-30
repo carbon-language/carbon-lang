@@ -13,23 +13,23 @@
 // --- impl_forall.carbon
 library "[[@TEST_NAME]]";
 
-class A(T:! type) {
+class A(T: type) {
   var n: T;
 }
 
-interface I(U:! type) {
+interface I(U: type) {
   fn F(ref self) -> U*;
 }
 
 //@dump-sem-ir-begin
-impl forall [V:! type] A(V) as I(V) {
+impl forall [V: type] A(V) as I(V) {
   fn F(ref self) -> V* {
     return &self.n;
   }
 }
 //@dump-sem-ir-end
 
-fn TestGeneric[W:! type](a: A(W)*) -> W* {
+fn TestGeneric[W: type](a: A(W)*) -> W* {
   //@dump-sem-ir-begin
   return a->(I(W).F)();
   //@dump-sem-ir-end

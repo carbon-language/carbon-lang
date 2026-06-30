@@ -101,7 +101,7 @@ fn Compare(a: Cpp.C.E, b: Cpp.C.E) -> bool {
   return a == b;
 }
 
-fn CompareGeneric[U:! type, T:! Core.EqWith(U)](x: T, y: U) -> bool {
+fn CompareGeneric[U: type, T: Core.EqWith(U)](x: T, y: U) -> bool {
   return x == y;
 }
 
@@ -138,7 +138,7 @@ fn Compare3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
   return a == b;
 }
 
-fn CompareGeneric[U:! type, T:! Core.EqWith(U)](x: T, y: U) -> bool {
+fn CompareGeneric[U: type, T: Core.EqWith(U)](x: T, y: U) -> bool {
   return x == y;
 }
 

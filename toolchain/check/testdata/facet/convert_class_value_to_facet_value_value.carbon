@@ -14,7 +14,7 @@
 
 interface Animal {}
 
-fn WalkAnimal[T:! Animal](unused a: T) {}
+fn WalkAnimal[T: Animal](unused a: T) {}
 
 class Goat {}
 impl Goat as Animal {}

@@ -23,7 +23,7 @@ interface J {
   fn GSelf(self);
 }
 
-fn INotJ[T:! I where .Self impls J](x: T) {
+fn INotJ[T: I where .Self impls J](x: T) {
   // Can access members of `I` using either kind of member access.
   T.FNonInstance();
   T.(I.FNonInstance)();
@@ -39,7 +39,7 @@ fn INotJ[T:! I where .Self impls J](x: T) {
   x.(J.GSelf)();
 }
 
-fn TypeNotJ[T:! type where .Self impls J](x: T) {
+fn TypeNotJ[T: type where .Self impls J](x: T) {
   T.(J.GNonInstance)();
   x.(J.GSelf)();
 }
@@ -55,7 +55,7 @@ interface J {
   fn F() -> {};
 }
 
-fn INotJ(T:! I where .Self impls J) {
+fn INotJ(generic T: I where .Self impls J) {
   // Gets `T.(I.F)`. Doesn't consider `T.(J.F)`, so no ambiguity.
   let unused x: () = T.F();
 }
@@ -71,7 +71,7 @@ interface J {
   fn G();
 }
 
-fn INotJ(T:! I where .Self impls J) {
+fn INotJ(generic T: I where .Self impls J) {
   // CHECK:STDERR: fail_name_lookup_through_where_self_impls.carbon:[[@LINE+4]]:3: error: member name `G` not found in `I` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   T.G();
   // CHECK:STDERR:   ^~~
@@ -86,7 +86,7 @@ interface J {
   fn G();
 }
 
-fn TypeNotJ(T:! type where .Self impls J) {
+fn TypeNotJ(generic T: type where .Self impls J) {
   // CHECK:STDERR: fail_name_lookup_with_type.carbon:[[@LINE+4]]:3: error: member name `G` not found [MemberNameNotFound]
   // CHECK:STDERR:   T.G();
   // CHECK:STDERR:   ^~~
@@ -100,7 +100,7 @@ library "[[@TEST_NAME]]";
 interface A {}
 interface B { fn Bfn(); }
 
-fn F(T:! A & B) {
+fn F(generic T: A & B) {
   // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+4]]:6: error: member name `Bfn` not found in `A` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   T.((A where .Self impls B).Bfn)();
   // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,7 +127,7 @@ interface J {
   fn GSelf(self);
 }
 
-fn INotJ[T:! I where .Self impls J](x: T) {
+fn INotJ[T: I where .Self impls J](x: T) {
   // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+4]]:3: error: member name `GNonInstance` not found in `I` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   x.GNonInstance();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
@@ -144,9 +144,9 @@ fn INotJ[T:! I where .Self impls J](x: T) {
 // --- compare_equal.carbon
 library "[[@TEST_NAME]]";
 
-class WrapType(T:! type) {}
-fn AssertSame[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-fn Type(T:! type) -> WrapType(T) { return {}; }
+class WrapType(T: type) {}
+fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+fn Type(generic T: type) -> WrapType(T) { return {}; }
 
 interface I;
 interface J;
@@ -171,12 +171,12 @@ interface K {}
 // --- fail_todo_compare_equal_with_rewrite.carbon
 library "[[@TEST_NAME]]";
 
-class WrapType(T:! type) {}
-fn AssertSame[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-fn Type(T:! type) -> WrapType(T) { return {}; }
+class WrapType(T: type) {}
+fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+fn Type(generic T: type) -> WrapType(T) { return {}; }
 
-interface I { let A:! type; }
-interface J { let B:! type; }
+interface I { let A: type; }
+interface J { let B: type; }
 
 // TODO: The `.Self` implied in `.A` contains all of the extended interfaces,
 // which is different between these facet types at the point where `.A` is
@@ -223,9 +223,9 @@ fn Test() {
 // --- fail_compare_not_equal.carbon
 library "[[@TEST_NAME]]";
 
-class WrapType(T:! type) {}
-fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-fn Type(T:! type) -> WrapType(T) { return {}; }
+class WrapType(T: type) {}
+fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+fn Type(generic T: type) -> WrapType(T) { return {}; }
 
 interface I {}
 interface J {}
@@ -244,12 +244,12 @@ fn Test() {
 // --- todo_fail_compare_not_equal_with_same_type.carbon
 library "[[@TEST_NAME]]";
 
-class WrapType(T:! type) {}
-fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-fn Type(T:! type) -> WrapType(T) { return {}; }
+class WrapType(T: type) {}
+fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+fn Type(generic T: type) -> WrapType(T) { return {}; }
 
-interface I { let A:! type; }
-interface J { let B:! type; }
+interface I { let A: type; }
+interface J { let B: type; }
 
 fn Test() {
   // The first `.A` has a `.Self` of type `I`. The second contains a `.Self` of
@@ -266,7 +266,7 @@ library "[[@TEST_NAME]]";
 class C {}
 
 interface I {}
-interface J { let T:! type; }
+interface J { let T: type; }
 
 // Interfaces to the right of the `where` don't interfere with the
 // "can only impl a facet type with a single interface" rule. Only
@@ -278,8 +278,8 @@ impl {.b: C} as J where .Self impls I and .T = () {}
 // --- impl_with_rewrite_of_interface_not_being_implemented.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let A:! type; }
-interface J { let A:! type; }
+interface I { let A: type; }
+interface J { let A: type; }
 
 class C {}
 
@@ -287,7 +287,7 @@ class C {}
 impl C as J where .A = {} {}
 
 // Requirement of implementing J with `.A = A`.
-constraint NeedJ(A:! type) {
+constraint NeedJ(A: type) {
   require impls J where .A = A;
 }
 

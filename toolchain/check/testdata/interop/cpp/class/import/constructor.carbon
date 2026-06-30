@@ -49,7 +49,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-fn G(T:! Core.Default & Core.Destroy) {
+fn G(generic T: Core.Default & Core.Destroy) {
   var unused x: T;
 }
 
@@ -75,7 +75,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "default.h";
 
-fn G(T:! Core.Default & Core.Destroy) {
+fn G(generic T: Core.Default & Core.Destroy) {
   var unused x: T;
 }
 

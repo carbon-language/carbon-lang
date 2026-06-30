@@ -16,10 +16,10 @@
 
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {}
+class C(T: type) {}
 class D {}
 
-fn F[T:! type](p: C(T)) -> T { return F(p); }
+fn F[T: type](p: C(T)) -> T { return F(p); }
 
 fn G(p: C(D)) -> D {
   return F(p);
@@ -29,10 +29,10 @@ fn G(p: C(D)) -> D {
 
 library "[[@TEST_NAME]]";
 
-class I(T:! type) {}
+class I(T: type) {}
 class C {}
 
-fn F[T:! type](p: I(T)) -> C { return F(p); }
+fn F[T: type](p: I(T)) -> C { return F(p); }
 
 fn G(p: I(C)) -> C {
   return F(p);
@@ -42,8 +42,8 @@ fn G(p: I(C)) -> C {
 
 library "[[@TEST_NAME]]";
 
-class Outer(T:! type) {
-  class Inner(U:! type) {}
+class Outer(T: type) {
+  class Inner(U: type) {}
 }
 
 class C {}
@@ -51,7 +51,7 @@ class D {}
 
 // C++ doesn't permit deducing `T` here because `Outer` might be specialized.
 // But that's not possible in Carbon, so we can deduce `T`.
-fn F[T:! type, U:! type](p: Outer(T).Inner(U)) -> (T, U) { return F(p); }
+fn F[T: type, U: type](p: Outer(T).Inner(U)) -> (T, U) { return F(p); }
 
 fn G(p: Outer(C).Inner(D)) -> (C, D) {
   return F(p);
@@ -61,9 +61,9 @@ fn G(p: Outer(C).Inner(D)) -> (C, D) {
 
 library "[[@TEST_NAME]]";
 
-class WithNontype(N:! i32) {}
+class WithNontype(N: i32) {}
 
-fn F[N:! i32](unused x: WithNontype(N)) -> i32 { return N; }
+fn F[N: i32](unused x: WithNontype(N)) -> i32 { return N; }
 
 fn G() -> i32 {
   return F({} as WithNontype(0));

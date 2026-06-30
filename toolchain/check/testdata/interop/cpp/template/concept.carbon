@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "concept.h";
 
-class X(B:! bool) {
+class X(B: bool) {
   fn Make() -> Self { return {}; }
 }
 

@@ -16,13 +16,13 @@
 
 library "[[@TEST_NAME]]";
 
-fn ExplicitGenericParam(T:! type) -> T* { return ExplicitGenericParam(T); }
+fn ExplicitGenericParam(generic T: type) -> T* { return ExplicitGenericParam(T); }
 
 fn CallExplicitGenericParam() -> i32* {
   return ExplicitGenericParam(i32);
 }
 
-fn CallExplicitGenericParamWithGenericArg(T:! type) -> {.a: T}* {
+fn CallExplicitGenericParamWithGenericArg(generic T: type) -> {.a: T}* {
   return ExplicitGenericParam({.a: T});
 }
 
@@ -30,9 +30,9 @@ fn CallExplicitGenericParamWithGenericArg(T:! type) -> {.a: T}* {
 
 library "[[@TEST_NAME]]";
 
-fn ExplicitGenericParam(T:! type) -> T* { return ExplicitGenericParam(T); }
+fn ExplicitGenericParam(generic T: type) -> T* { return ExplicitGenericParam(T); }
 
-fn CallExplicitGenericParamConst(T:! type) {
+fn CallExplicitGenericParamConst(generic T: type) {
   ExplicitGenericParam(T);
 }
 
@@ -53,7 +53,7 @@ library "[[@TEST_NAME]]";
 
 class A {}
 
-fn ExplicitAndAlsoDeduced(T:! type, x: T) -> T* {
+fn ExplicitAndAlsoDeduced(generic T: type, x: T) -> T* {
   return ExplicitAndAlsoDeduced(T, x);
 }
 
@@ -65,7 +65,7 @@ fn CallExplicitAndAlsoDeduced() -> A* {
 
 library "[[@TEST_NAME]]";
 
-fn ImplicitGenericParam[T:! type](x: T) -> T* { return ImplicitGenericParam(x); }
+fn ImplicitGenericParam[T: type](x: T) -> T* { return ImplicitGenericParam(x); }
 
 fn CallImplicitGenericParam(n: i32) -> i32* {
   return ImplicitGenericParam(n);
@@ -75,7 +75,7 @@ fn CallImplicitGenericParam(n: i32) -> i32* {
 
 library "[[@TEST_NAME]]";
 
-fn TupleParam[T:! type](unused x: (T, i32)) {}
+fn TupleParam[T: type](unused x: (T, i32)) {}
 
 fn CallTupleParam() {
   TupleParam((1, 2));
@@ -85,7 +85,7 @@ fn CallTupleParam() {
 
 library "[[@TEST_NAME]]";
 
-fn StructParam[T:! type](unused x: {.a: T, .b: i32}) {}
+fn StructParam[T: type](unused x: {.a: T, .b: i32}) {}
 
 fn CallStructParam() {
   StructParam({.a = 1, .b = 2});
@@ -95,7 +95,7 @@ fn CallStructParam() {
 
 library "[[@TEST_NAME]]";
 
-fn BigStructParam[T:! type](unused x: {.c: T, .d: i32, .e: i32}) {}
+fn BigStructParam[T: type](unused x: {.c: T, .d: i32, .e: i32}) {}
 
 fn CallBigStructParam() {
   // CHECK:STDERR: fail_deduce_bigger_struct.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
@@ -112,7 +112,7 @@ fn CallBigStructParam() {
 
 library "[[@TEST_NAME]]";
 
-fn SmallStructParam[T:! type](unused x: {.f: T, .g: i32}) {}
+fn SmallStructParam[T: type](unused x: {.f: T, .g: i32}) {}
 
 fn CallSmallStructParam() {
   // CHECK:STDERR: fail_deduce_smaller_struct.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
@@ -129,7 +129,7 @@ fn CallSmallStructParam() {
 
 library "[[@TEST_NAME]]";
 
-fn WrongNameStructParam[T:! type](unused x: {.i: T, .different: i32}) {}
+fn WrongNameStructParam[T: type](unused x: {.i: T, .different: i32}) {}
 
 fn CallWrongNameStructParam() {
   // CHECK:STDERR: fail_deduce_struct_wrong_name.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
@@ -146,7 +146,7 @@ fn CallWrongNameStructParam() {
 
 library "[[@TEST_NAME]]";
 
-fn WrongOrderStructParam[T:! type](unused x: {.first: T, .second: i32}) {}
+fn WrongOrderStructParam[T: type](unused x: {.first: T, .second: i32}) {}
 
 fn CallWrongOrderStructParam() {
   // CHECK:STDERR: fail_todo_deduce_struct_wrong_order.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
@@ -165,7 +165,7 @@ library "[[@TEST_NAME]]";
 
 // TODO: It would be nice to diagnose this at its point of declaration, because
 // U is not deducible.
-fn ImplicitNotDeducible[T:! type, U:! type](x: T) -> U;
+fn ImplicitNotDeducible[T: type, U: type](x: T) -> U;
 
 fn CallImplicitNotDeducible() {
   // CHECK:STDERR: fail_deduce_incomplete.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `U` [DeductionIncomplete]
@@ -182,7 +182,7 @@ fn CallImplicitNotDeducible() {
 
 library "[[@TEST_NAME]]";
 
-fn ImplicitNotDeducible[T:! type](x: T, y: T) -> T;
+fn ImplicitNotDeducible[T: type](x: T, y: T) -> T;
 
 fn CallImplicitNotDeducible() {
   // CHECK:STDERR: fail_deduce_inconsistent.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
@@ -203,11 +203,11 @@ interface Z {}
 class EE {}
 impl EE as Z {}
 
-class DD(E:! type) {}
-impl forall [E:! type] DD(E) as Z {}
+class DD(E: type) {}
+impl forall [E: type] DD(E) as Z {}
 
-class CC(D:! Z) {}
-impl forall [E:! type] CC(DD(E)) as Z {}
+class CC(D: Z) {}
+impl forall [E: type] CC(DD(E)) as Z {}
 
 fn F() {
   CC(DD(EE)) as Z;

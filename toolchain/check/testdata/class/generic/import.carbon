@@ -16,9 +16,9 @@
 
 library "[[@TEST_NAME]]";
 
-class Class(T:! type);
+class Class(T: type);
 
-class CompleteClass(T:! type) {
+class CompleteClass(T: type) {
   var n: i32;
   fn F() -> i32 { return 0; }
 }
@@ -29,7 +29,7 @@ fn F() -> CompleteClass(i32);
 
 impl library "[[@TEST_NAME]]";
 
-class Class(T:! type) {
+class Class(T: type) {
   var x: T;
 }
 
@@ -80,7 +80,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: class Class(T:! type);
 // CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR:
-class Class(U:! type) {
+class Class(U: type) {
   // CHECK:STDERR: fail_foo.impl.carbon:[[@LINE+4]]:10: error: name `T` not found [NameNotFound]
   // CHECK:STDERR:   var x: T;
   // CHECK:STDERR:          ^

@@ -17,8 +17,8 @@
 library "[[@TEST_NAME]]";
 
 // T has index 0, Self has index 1, U has index 2.
-interface A(T:! type) {
-  fn F(U:! type, u: U*) -> (T, Self, U*);
+interface A(T: type) {
+  fn F(generic U: type, u: U*) -> (T, Self, U*);
 }
 
 class X {}
@@ -28,7 +28,7 @@ class Z {}
 impl Y as A(X) {
   // Here, U has index 0. The specific used for A.F needs to renumber its U from
   // index 2 to index 0.
-  fn F(U:! type, u: U*) -> (X, Y, U*) {
+  fn F(generic U: type, u: U*) -> (X, Y, U*) {
     return ({}, {}, u);
   }
 }
@@ -38,7 +38,7 @@ fn Call() {
   (Y as A(X)).F(Z, &u);
 }
 
-fn CallGeneric(T:! A(X) & Core.Destroy) {
+fn CallGeneric(generic T: A(X) & Core.Destroy) {
   var u: Z;
   T.F(Z, &u);
 }
@@ -52,8 +52,8 @@ fn CallIndirect() {
 library "[[@TEST_NAME]]";
 
 // T has index 0, Self has index 1, U has index 2.
-interface A(T:! type) {
-  fn F(U:! type, u: U) -> (T, Self, U);
+interface A(T: type) {
+  fn F(generic U: type, u: U) -> (T, Self, U);
 }
 
 class X {}
@@ -61,10 +61,10 @@ class Y1 {}
 class Y2 {}
 class Z {}
 
-impl forall [V1:! type, V2:! type, W:! type] (V1, V2) as A(W) {
+impl forall [V1: type, V2: type, W: type] (V1, V2) as A(W) {
   // Here, U has index 3. The specific used for A.F needs to renumber its U from
   // index 2 to index 3.
-  fn F(U:! type, u: U) -> (W, (V1, V2), U) {
+  fn F(generic U: type, u: U) -> (W, (V1, V2), U) {
     return F(U, u);
   }
 }
@@ -74,7 +74,7 @@ fn Call() {
   (((Y1, Y2) as type) as A(X)).F(Z, {});
 }
 
-fn CallGeneric(T:! A(X) & Core.Destroy) {
+fn CallGeneric(generic T: A(X) & Core.Destroy) {
   T.F(Z, {});
 }
 

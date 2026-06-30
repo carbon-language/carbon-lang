@@ -8,13 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/precedence_where.carbon
 
-fn PostfixStar(T:! I* where .A* == .B*);
+fn PostfixStar(generic T: I* where .A* == .B*);
 
-fn Ampersand(U:! J & K where C & D impls E & F);
+fn Ampersand(generic U: J & K where C & D impls E & F);
 
-fn BinaryPlus(V:! L + M where G & H impls N & O);
+fn BinaryPlus(generic V: L + M where G & H impls N & O);
 
-fn UnaryMinus(W:! -P where -Q impls -R);
+fn UnaryMinus(generic W: -P where -Q impls -R);
 
 // CHECK:STDOUT: - filename: precedence_where.carbon
 // CHECK:STDOUT:   parse_tree: [

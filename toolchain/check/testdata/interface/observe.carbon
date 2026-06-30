@@ -19,9 +19,9 @@ interface Q { fn InQ(self); }
 interface R { fn InR(self); }
 
 interface Transitive {
-  let A:! P & Core.Destroy;
-  let B:! (Q where .Self == A) & Core.Destroy;
-  let C:! (R where .Self == B) & Core.Destroy;
+  let A: P & Core.Destroy;
+  let B: (Q where .Self == A) & Core.Destroy;
+  let C: (R where .Self == B) & Core.Destroy;
 
   fn GetA(self) -> A;
   fn TakesC(self, c: C);
@@ -34,7 +34,7 @@ library "[[@TEST_NAME]]";
 
 import library "transitive";
 
-fn F[T:! Transitive](t: T) {
+fn F[T: Transitive](t: T) {
   var a: T.A = t.GetA();
 
   // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `T.(Transitive.A)` to `T.(Transitive.B)` [ConversionFailure]
@@ -73,8 +73,8 @@ interface A {}
 interface B { require impls A; }
 interface C { require impls B; }
 
-fn RequiresA[T:! A](unused x: T) {}
-fn F[T:! C](x: T) {
+fn RequiresA[T: A](unused x: T) {}
+fn F[T: C](x: T) {
   observe T impls B;
 
   // CHECK:STDERR: fail_todo_impls.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `C` into type implementing `A` [ConversionFailureFacetToFacet]
@@ -92,8 +92,8 @@ library "[[@TEST_NAME]]";
 
 import library "transitive";
 
-fn TakesPQR[U:! P & Q & R](unused u: U) {}
-fn G[T:! Transitive](t: T) {
+fn TakesPQR[U: P & Q & R](unused u: U) {}
+fn G[T: Transitive](t: T) {
   var a: T.A = t.GetA();
 
   observe T.A == T.B impls Q;
@@ -119,8 +119,8 @@ library "[[@TEST_NAME]]";
 
 import library "transitive";
 
-fn TakesPQR[U:! P & Q & R](unused u: U) {}
-fn G[T:! Transitive](t: T) {
+fn TakesPQR[U: P & Q & R](unused u: U) {}
+fn G[T: Transitive](t: T) {
   var a: T.A = t.GetA();
 
   // CHECK:STDERR: fail_equivalent_impls_without_observe.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Q` in type `T.(Transitive.A)` that does not implement that interface [MissingImplInMemberAccess]
@@ -144,7 +144,7 @@ library "[[@TEST_NAME]]";
 
 import library "transitive";
 
-fn G[T:! Transitive](t: T) {
+fn G[T: Transitive](t: T) {
   observe T.A == T.B == T.C;
 
   var a: T.A = t.GetA();
@@ -167,14 +167,14 @@ interface B { }
 interface C { }
 interface D { }
 
-impl forall [T:! A] T as B { }
-impl forall [T:! B] T as C { }
-impl forall [T:! C] T as D { }
+impl forall [T: A] T as B { }
+impl forall [T: B] T as C { }
+impl forall [T: C] T as D { }
 
-fn RequiresB[T:! B](unused x: T) {}
-fn RequiresD[T:! D](unused x: T) {}
+fn RequiresB[T: B](unused x: T) {}
+fn RequiresD[T: D](unused x: T) {}
 
-fn RequiresA[T:! A](x: T) {
+fn RequiresA[T: A](x: T) {
   RequiresB(x);
 
   observe T impls B;
@@ -188,8 +188,8 @@ library "[[@TEST_NAME]]";
 interface A {}
 interface B {}
 
-fn RequiresA[T:! A](unused x: T) {}
-fn F[T:! A, U:! B where .Self == T]() {
+fn RequiresA[T: A](unused x: T) {}
+fn F[T: A, U: B where .Self == T]() {
   observe T == U;
 
   fn InnerF(x: U) {
@@ -210,8 +210,8 @@ library "[[@TEST_NAME]]";
 interface A {}
 interface B {}
 
-fn RequiresA[T:! A](unused x: T) {}
-fn F[T:! A, U:! B where .Self == T]() {
+fn RequiresA[T: A](unused x: T) {}
+fn F[T: A, U: B where .Self == T]() {
 
   fn InnerF(x: U) {
     observe T == U;
@@ -233,8 +233,8 @@ library "[[@TEST_NAME]]";
 interface A {}
 interface B {}
 
-fn RequiresA[T:! A](unused x: T) {}
-fn F[T:! A, U:! B where .Self == T]() {
+fn RequiresA[T: A](unused x: T) {}
+fn F[T: A, U: B where .Self == T]() {
 
   fn InnerF(x: U) {
     // CHECK:STDERR: fail_nested_functions_lexical_order.carbon:[[@LINE+7]]:5: error: cannot convert type `U` that implements `B where...` into type implementing `A` [ConversionFailureFacetToFacet]
@@ -256,8 +256,8 @@ library "[[@TEST_NAME]]";
 interface A {}
 interface B {}
 
-fn RequiresA[T:! A](unused x: T) {}
-fn F[T:! A, U:! B where .Self == T](x: U) {
+fn RequiresA[T: A](unused x: T) {}
+fn F[T: A, U: B where .Self == T](x: U) {
 
   fn InnerF(unused x: U) {
     observe T == U;
@@ -279,8 +279,8 @@ library "[[@TEST_NAME]]";
 interface A {}
 interface B {}
 
-fn RequiresA[T:! A](unused x: T) {}
-fn F[T:! A, U:! B where .Self == T, V:! B](x: U) {
+fn RequiresA[T: A](unused x: T) {}
+fn F[T: A, U: B where .Self == T, V: B](x: U) {
   observe T == V;
 
   // CHECK:STDERR: fail_not_observed.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `B where...` into type implementing `A` [ConversionFailureFacetToFacet]
@@ -299,8 +299,8 @@ library "[[@TEST_NAME]]";
 interface A {}
 interface B {}
 
-fn TakesA[T:! A](unused x: T) {}
-fn F[T:! A, U:! B](x: U) {
+fn TakesA[T: A](unused x: T) {}
+fn F[T: A, U: B](x: U) {
   observe T == U;
   // CHECK:STDERR: fail_invalid_equivalent.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `B` into type implementing `A` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   TakesA(x);
@@ -315,7 +315,7 @@ fn F[T:! A, U:! B](x: U) {
 // --- fail_wrong_scope_class.carbon
 library "[[@TEST_NAME]]";
 
-class C(T:! type, U:! type) {
+class C(T: type, U: type) {
   // CHECK:STDERR: fail_wrong_scope_class.carbon:[[@LINE+4]]:3: error: `observe` can only be used in an `interface` or `function` [ObserveInWrongScope]
   // CHECK:STDERR:   observe T == U;
   // CHECK:STDERR:   ^~~~~~~
@@ -326,7 +326,7 @@ class C(T:! type, U:! type) {
 // --- fail_wrong_scope_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
-constraint C(T:! type, U:! type) {
+constraint C(T: type, U: type) {
   // CHECK:STDERR: fail_wrong_scope_named_constraint.carbon:[[@LINE+4]]:3: error: `observe` can only be used in an `interface` or `function` [ObserveInWrongScope]
   // CHECK:STDERR:   observe T == U;
   // CHECK:STDERR:   ^~~~~~~
@@ -340,7 +340,7 @@ library "[[@TEST_NAME]]";
 class C {}
 interface A {}
 
-fn F[T:! A]() {
+fn F[T: A]() {
   // CHECK:STDERR: fail_non_facet_type_in_impls.carbon:[[@LINE+4]]:19: error: right argument of `impls` requirement must be a facet type [ImplsOnNonFacetType]
   // CHECK:STDERR:   observe T impls C;
   // CHECK:STDERR:                   ^
@@ -353,8 +353,8 @@ library "[[@TEST_NAME]]";
 
 interface A {}
 interface B {}
-interface I(T:! A & Core.Destroy) {
-  let U:! (B where .Self == T) & Core.Destroy;
+interface I(T: A & Core.Destroy) {
+  let U: (B where .Self == T) & Core.Destroy;
 
   fn GetU(self) -> U;
   fn TakesT(self, t: T);
@@ -370,7 +370,7 @@ import library "generic_observe";
 class C {}
 impl C as A {}
 
-fn F[T:! I(C)](t: T) {
+fn F[T: I(C)](t: T) {
   var u: T.U = t.GetU();
 
   // CHECK:STDERR: fail_todo_generic_import.carbon:[[@LINE+8]]:3: error: cannot convert type `T.(I(C as A & Core.Destroy).U)` that implements `Core.Destroy & B where...` into type implementing `A & Core.Destroy` [ConversionFailureFacetToFacet]

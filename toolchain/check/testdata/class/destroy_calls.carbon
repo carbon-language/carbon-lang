@@ -67,7 +67,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-class D(template T:! type) {}
+class D(template T: type) {}
 
 //@dump-sem-ir-begin
 fn F() {
@@ -78,10 +78,10 @@ fn F() {
 // --- generic_use_inside_generic.carbon
 library "[[@TEST_NAME]]";
 
-class C(template T:! type) {}
+class C(template T: type) {}
 
 //@dump-sem-ir-begin
-fn F(template T:! type) {
+fn F(template T: type) {
   var unused v: C(T) = {};
 }
 //@dump-sem-ir-end

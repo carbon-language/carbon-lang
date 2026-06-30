@@ -15,10 +15,10 @@
 class A {}
 class B {}
 
-class Class(T:! type) {
-  fn Get(U:! type) -> (T, U) { return Get(U); }
-  fn GetNoDeduce(x: T, U:! type) -> (T, U) { return GetNoDeduce(x, U); }
-  fn F[U:! type](self: Class(U)) -> U { return self.F(); }
+class Class(T: type) {
+  fn Get(generic U: type) -> (T, U) { return Get(U); }
+  fn GetNoDeduce(x: T, generic U: type) -> (T, U) { return GetNoDeduce(x, U); }
+  fn F[U: type](self: Class(U)) -> U { return self.F(); }
 }
 
 fn CallGenericMethod(c: Class(A)) -> (A, B) {

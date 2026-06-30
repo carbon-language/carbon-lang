@@ -13,12 +13,12 @@
 // --- symbolic_call_to_eval_fn.carbon
 library "[[@TEST_NAME]]";
 
-eval fn F(B:! bool) -> type {
+eval fn F(generic B: bool) -> type {
   if (B) { return (); }
   return ({}, {});
 }
 
-fn G(B:! bool) {
+fn G(generic B: bool) {
   let unused n: F(B) = ({}, {});
 }
 
@@ -30,12 +30,12 @@ fn H() {
 // --- fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon
 library "[[@TEST_NAME]]";
 
-eval fn F(B:! bool) -> type {
+eval fn F(generic B: bool) -> type {
   if (B) { return (); }
   return ({}, {});
 }
 
-fn G(B:! bool) {
+fn G(generic B: bool) {
   let unused n: F(B) = ({}, {});
 }
 
@@ -55,7 +55,7 @@ library "[[@TEST_NAME]]";
 interface Z {}
 impl {} as Z {}
 
-eval fn E(U:! Z) -> type {
+eval fn E(generic U: Z) -> type {
   // This makes a FacetAccessType(U) instruction, for which we have to get a
   // constant value from the definition in the called function's specific. This
   // requires that the called function has its specific definition resolved.

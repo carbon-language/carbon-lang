@@ -21,7 +21,7 @@ interface I {}
 // CHECK:STDERR: impl forall [T: type] C as I {}
 // CHECK:STDERR:              ^~~~~~~
 // CHECK:STDERR:
-impl forall [T: type] C as I {}
+impl forall [runtime T: type] C as I {}
 //@dump-sem-ir-end
 
 // --- fail_nonfinal_lookup_impl_witness_error_in_import.carbon
@@ -32,12 +32,12 @@ interface Z {}
 // CHECK:STDERR: impl forall [T:! type] T as Z;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] T as Z;
+impl forall [T: type] T as Z;
 
-fn F(unused U:! Z) {}
+fn F(unused generic U: Z) {}
 
 //@dump-sem-ir-begin
-fn G(T:! type) {
+fn G(generic T: type) {
   // This makes a LookupImplWitness instruction, but future lookups (evaluation
   // of this instruction with a specific) will result in an error since the impl
   // is never defined and is left with an error as its witness at the end of the
@@ -64,12 +64,12 @@ interface Z {}
 // CHECK:STDERR: impl forall [T:! type] T as Z;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] T as Z;
+impl forall [T: type] T as Z;
 
-fn F(unused U:! Z) {}
+fn F(unused generic U: Z) {}
 
 //@dump-sem-ir-begin
-fn G(T:! type) {
+fn G(generic T: type) {
   // This makes a LookupImplWitness instruction, but future lookups (evaluation
   // of this instruction with a specific) will fail with an error since the impl
   // is never defined and is left with an error as its witness at the end of the
@@ -93,9 +93,9 @@ interface Z {}
 // CHECK:STDERR: impl forall [T:! type] T as Z;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] T as Z;
+impl forall [T: type] T as Z;
 
-fn F(unused U:! Z) {}
+fn F(unused generic U: Z) {}
 
 fn G() {
   // This impl lookup resolves to a final witness, which poisons any future

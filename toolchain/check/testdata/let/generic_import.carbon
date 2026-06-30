@@ -20,7 +20,7 @@ package Implicit;
 // CHECK:STDERR: let T:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~
 // CHECK:STDERR:
-let T:! type = i32;
+let generic T: type = i32;
 
 // --- fail_implicit.impl.carbon
 

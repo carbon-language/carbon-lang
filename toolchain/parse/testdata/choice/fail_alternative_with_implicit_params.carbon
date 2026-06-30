@@ -13,7 +13,7 @@ choice X {
   // CHECK:STDERR:   A[T:! type](value: T)
   // CHECK:STDERR:    ^
   // CHECK:STDERR:
-  A[T:! type](value: T)
+  A[T: type](value: T)
 }
 
 // CHECK:STDOUT: - filename: fail_alternative_with_implicit_params.carbon

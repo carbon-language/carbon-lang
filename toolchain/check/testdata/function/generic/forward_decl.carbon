@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/forward_decl.carbon
 
-fn F(T:! type);
+fn F(generic T: type);
 
 // CHECK:STDOUT: --- forward_decl.carbon
 // CHECK:STDOUT:

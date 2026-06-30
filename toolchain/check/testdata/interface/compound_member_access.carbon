@@ -16,14 +16,14 @@
 library "[[@TEST_NAME]]";
 
 interface J {
-  let U:! type;
+  let U: type;
 }
 
 // Simple member access.
-fn Simple1(T:! J, unused S:! T.U) {}
+fn Simple1(generic T: J, unused generic S: T.U) {}
 
 // This should be equivalent to `Simple1` above, but using compound member access.
-fn Compound1(V:! J, unused W:! V.(J.U)) {}
+fn Compound1(generic V: J, unused generic W: V.(J.U)) {}
 
 // --- non_instance.carbon
 library "[[@TEST_NAME]]";
@@ -33,12 +33,12 @@ interface K1 {
 }
 
 // Simple member access.
-fn Simple2(T:! K1) {
+fn Simple2(generic T: K1) {
   T.Q1();
 }
 
 // This should be equivalent to `Simple2` above, but using compound member access.
-fn Compound2(V:! K1) {
+fn Compound2(generic V: K1) {
   V.(K1.Q1)();
 }
 
@@ -50,13 +50,13 @@ interface K2 {
 }
 
 // Simple member access allows this.
-fn Simple3(T:! K2, x: T) {
+fn Simple3(generic T: K2, x: T) {
   x.Q2();
 }
 
 // Compound member access does not. It tries to convert `y` to `K2`, but only
 // its type `V` can.
-fn Compound3(V:! K2, y: V) {
+fn Compound3(generic V: K2, y: V) {
   // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `V` into type implementing `K2` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   y.(K2.Q2)();
   // CHECK:STDERR:   ^~~~~~~~~
@@ -76,13 +76,13 @@ interface L1 {
 }
 
 // Simple member access.
-fn Simple4(T:! L1, x: T, p: T*) {
+fn Simple4(generic T: L1, x: T, p: T*) {
   x.R1();
   p->S1();
 }
 
 // This should be equivalent to `Simple4` above, but using compound member access.
-fn Compound4(V:! L1, y: V, p: V*) {
+fn Compound4(generic V: L1, y: V, p: V*) {
   y.(L1.R1)();
   p->(L1.S1)();
 }
@@ -97,7 +97,7 @@ interface L2 {
 }
 
 // Simple member access. Fails since calling an instance method without an object.
-fn Simple5(T:! L2) {
+fn Simple5(generic T: L2) {
   // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE+7]]:3: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
   // CHECK:STDERR:   T.R2();
   // CHECK:STDERR:   ^~~~~~
@@ -117,7 +117,7 @@ fn Simple5(T:! L2) {
 }
 
 // TODO: Expected to fail in the same way as `Simple5`.
-fn Compound5(V:! L2) {
+fn Compound5(generic V: L2) {
   // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE+4]]:3: error: cannot access member of interface `L2` in type `L2` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   V.(L2.R2)();
   // CHECK:STDERR:   ^~~~~~~~~

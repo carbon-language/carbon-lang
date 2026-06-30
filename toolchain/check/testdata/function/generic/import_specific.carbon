@@ -16,10 +16,10 @@
 
 library "[[@TEST_NAME]]";
 
-fn F(unused T:! type) {
+fn F(unused generic T: type) {
 }
 
-fn G(T:! type) {
+fn G(generic T: type) {
   F(T);
 }
 

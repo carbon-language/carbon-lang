@@ -24,14 +24,14 @@ impl DD as Y {}
 impl DD as W {}
 
 // CC requires D to implement Y.
-class CC(D:! Y) {}
+class CC(D: Y) {}
 
 interface Z {}
 
 // The `D` interface provides `Y` but not `W`, so we need to see that the
 // parameter to `CC` is `DD` which provides `Y & W`, not just a FacetValue
 // abstractly providing `Y.
-impl forall [E:! Y & W] CC(E) as Z {}
+impl forall [E: Y & W] CC(E) as Z {}
 
 fn F() {
   (CC(DD)) as Z;

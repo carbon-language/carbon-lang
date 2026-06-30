@@ -35,7 +35,7 @@ fn TestC(c: MakeUnformed(C*)) -> bool {
 library "[[@TEST_NAME]]";
 
 fn MakeUnformed(t: type) -> type = "maybe_unformed.make_type";
-fn IsNull[T:! type](p: MakeUnformed(T*)) -> bool = "pointer.is_null";
+fn IsNull[T: type](p: MakeUnformed(T*)) -> bool = "pointer.is_null";
 
 class C {}
 

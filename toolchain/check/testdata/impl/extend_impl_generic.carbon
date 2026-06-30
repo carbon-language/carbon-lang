@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-interface HasF(T:! type) {
+interface HasF(T: type) {
   fn F() -> T;
 }
 
@@ -41,11 +41,11 @@ fn G(c: C) {
 
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {
+interface I(T: type) {
   fn F(self, t: T);
 }
 
-class X(U:! type) {
+class X(U: type) {
   extend impl as I(U) {
     fn F(unused self, unused t: U) { }
   }

@@ -66,7 +66,7 @@ class C {
 
 library "[[@TEST_NAME]]";
 
-base class C(T:! type) {}
+base class C(T: type) {}
 
 fn F() {
   class B {

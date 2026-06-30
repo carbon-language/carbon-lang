@@ -250,7 +250,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_generic_virtual_decl.carbon:[[@LINE+3]]:1: error: use of undefined generic function [MissingGenericFunctionDefinition]
 // CHECK:STDERR: base class Base(T:! type) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-base class Base(T:! type) {
+base class Base(T: type) {
   // CHECK:STDERR: fail_generic_virtual_decl.carbon:[[@LINE+4]]:3: note: generic function declared here [MissingGenericFunctionDefinitionHere]
   // CHECK:STDERR:   virtual fn F(self);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
@@ -266,7 +266,7 @@ library "[[@TEST_NAME]]";
 class T1 {
 }
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self, unused t: T) { }
 }
 
@@ -333,26 +333,26 @@ base class T1 {
   // CHECK:STDERR:   virtual fn F[T:! type](self);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  virtual fn F[T:! type](self);
+  virtual fn F[T: type](self);
 }
 
 // --- fail_generic_virtual_in_generic_class.carbon
 
 library "[[@TEST_NAME]]";
 
-base class T1(T:! type) {
+base class T1(T: type) {
   // CHECK:STDERR: fail_generic_virtual_in_generic_class.carbon:[[@LINE+4]]:3: error: generic virtual function [GenericVirtual]
   // CHECK:STDERR:   virtual fn F[T:! type](self);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  virtual fn F[T:! type](self);
+  virtual fn F[T: type](self);
 }
 
 // --- generic_with_virtual.carbon
 
 library "[[@TEST_NAME]]";
 
-base class T1(T:! type) {
+base class T1(T: type) {
   //@dump-sem-ir-begin
   virtual fn F(unused self) { }
   //@dump-sem-ir-end
@@ -362,7 +362,7 @@ base class T1(T:! type) {
 
 library "[[@TEST_NAME]]";
 
-base class T1(T:! type) {
+base class T1(T: type) {
   //@dump-sem-ir-begin
   virtual fn F(unused self, unused t: T) { }
   //@dump-sem-ir-end
@@ -385,7 +385,7 @@ base class NonGenericBase {
   virtual fn F2(unused self) { }
 }
 
-base class GenericDerived(T:! type) {
+base class GenericDerived(T: type) {
   extend base: NonGenericBase;
   override fn F2(unused self) { }
   virtual fn F3(unused self) { }
@@ -395,7 +395,7 @@ base class GenericDerived(T:! type) {
 
 library "[[@TEST_NAME]]";
 
-base class GenericBase(T:! type) {
+base class GenericBase(T: type) {
   virtual fn F1(unused self) { }
   virtual fn F2(unused self) { }
 }
@@ -412,7 +412,7 @@ base class NonGenericDerived {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self, unused t: Base(T)*) { }
 }
 class T1;
@@ -432,7 +432,7 @@ library "[[@TEST_NAME]]";
 class T1;
 class T2;
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self, unused t: T1*) { }
 }
 
@@ -454,10 +454,10 @@ class D1 {
 
 library "[[@TEST_NAME]]";
 
-abstract class Base(T:! type) {
+abstract class Base(T: type) {
   virtual fn F(unused self, unused t: T*) { }
 }
-class Derived(T:! type) {
+class Derived(T: type) {
   extend base: Base(T);
   // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+7]]:37: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   override fn F(unused self, unused t: T) { }
@@ -473,10 +473,10 @@ class Derived(T:! type) {
 
 library "[[@TEST_NAME]]";
 
-abstract class Base(T:! type) {
+abstract class Base(T: type) {
   virtual fn F(unused self, unused t: T) { }
 }
-class Derived(T:! type) {
+class Derived(T: type) {
   extend base: Base(T*);
   //@dump-sem-ir-begin
   override fn F(unused self, unused t: T*) { }
@@ -487,7 +487,7 @@ class Derived(T:! type) {
 
 library "[[@TEST_NAME]]";
 
-abstract class Base(T:! type) {
+abstract class Base(T: type) {
   abstract fn F(self);
 }
 
@@ -502,7 +502,7 @@ class Derived {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self) { }
 }
 
@@ -519,11 +519,11 @@ var v: Base(T1) = {};
 
 library "[[@TEST_NAME]]";
 
-base class T1(G1:! type) {
+base class T1(G1: type) {
   virtual fn F(unused self) { }
 }
 
-class T2(G2:! type) {
+class T2(G2: type) {
   extend base: T1(G2);
 }
 
@@ -531,11 +531,11 @@ class T2(G2:! type) {
 
 library "[[@TEST_NAME]]";
 
-base class T1(G1:! type) {
+base class T1(G1: type) {
   virtual fn F(unused self) { }
 }
 
-class T2(G2:! type) {
+class T2(G2: type) {
   class T3 {
     extend base: T1(G2);
   }

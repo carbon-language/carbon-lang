@@ -105,7 +105,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-interface J { let T:! type; }
+interface J { let T: type; }
 interface Incomplete;
 
 impl C as J where .Self impls Incomplete and .T = ();
@@ -156,14 +156,14 @@ constraint Y {
   require impls Z;
 }
 interface X {
-  let X1:! type;
+  let X1: type;
 
   // Not extend, so only required to be identified.
   require impls Y;
 }
 
 // Requires `X` to be complete, doesn't require Z to be complete.
-fn F(unused T:! X where .X1 = {}) {}
+fn F(unused generic T: X where .X1 = {}) {}
 
 // --- fail_incomplete_constraint.carbon
 library "[[@TEST_NAME]]";

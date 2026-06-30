@@ -22,7 +22,7 @@ let : i32 = 4;
 // CHECK:STDERR: let :! bool = true;
 // CHECK:STDERR:     ^~
 // CHECK:STDERR:
-let :! bool = true;
+generic let : bool = true;
 
 // CHECK:STDOUT: - filename: fail_runtime_binding.carbon
 // CHECK:STDOUT:   parse_tree: [

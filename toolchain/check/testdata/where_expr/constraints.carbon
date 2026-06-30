@@ -17,13 +17,13 @@ library "[[@TEST_NAME]]";
 interface I {}
 
 //@dump-sem-ir-begin
-fn F(T:! I where .Self impls type);
+fn F(generic T: I where .Self impls type);
 //@dump-sem-ir-end
 
 alias Type = type;
 
 //@dump-sem-ir-begin
-fn G(T:! I where .Self impls Type);
+fn G(generic T: I where .Self impls Type);
 //@dump-sem-ir-end
 
 // --- fail_self_impls_error.carbon
@@ -40,7 +40,7 @@ interface I {}
 // CHECK:STDERR: fn F(T:! I where .Self impls J);
 // CHECK:STDERR:                              ^
 // CHECK:STDERR:
-fn F(T:! I where .Self impls J);
+fn F(generic T: I where .Self impls J);
 //@dump-sem-ir-end
 
 // --- state_constraints.carbon
@@ -50,16 +50,16 @@ library "[[@TEST_NAME]]";
 interface J {}
 
 interface I {
-  let Member:! type;
-  let Second:! J;
+  let Member: type;
+  let Second: J;
 }
 
 //@dump-sem-ir-begin
-fn EqualEqual(U:! I where .Self == ());
+fn EqualEqual(generic U: I where .Self == ());
 
-fn Impls(V:! J where .Self impls I);
+fn Impls(generic V: J where .Self impls I);
 
-fn And(W:! I where .Self impls J and .Member == ());
+fn And(generic W: I where .Self impls J and .Member == ());
 //@dump-sem-ir-end
 
 // --- associated_type_impls.carbon
@@ -70,11 +70,11 @@ interface L {}
 interface M {}
 
 interface K {
-  let Associated:! L;
+  let Associated: L;
 }
 
 //@dump-sem-ir-begin
-fn AssociatedTypeImpls(W:! K where .Associated impls M);
+fn AssociatedTypeImpls(generic W: K where .Associated impls M);
 //@dump-sem-ir-end
 
 // --- fail_left_of_impls_non_type.carbon
@@ -88,7 +88,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn NonTypeImpls(U:! type where 7 impls type);
 // CHECK:STDERR:                                ^
 // CHECK:STDERR:
-fn NonTypeImpls(U:! type where 7 impls type);
+fn NonTypeImpls(generic U: type where 7 impls type);
 
 // --- fail_right_of_impls_non_type.carbon
 
@@ -101,7 +101,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn ImplsNonType(U:! type where .Self impls 7);
 // CHECK:STDERR:                                            ^
 // CHECK:STDERR:
-fn ImplsNonType(U:! type where .Self impls 7);
+fn ImplsNonType(generic U: type where .Self impls 7);
 
 // --- fail_right_of_impls_non_facet_type.carbon
 
@@ -111,7 +111,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn ImplsOfNonFacetType(U:! type where .Self impls i32);
 // CHECK:STDERR:                                                   ^~~
 // CHECK:STDERR:
-fn ImplsOfNonFacetType(U:! type where .Self impls i32);
+fn ImplsOfNonFacetType(generic U: type where .Self impls i32);
 
 // --- fail_enforce_impls_constraint.carbon
 
@@ -144,7 +144,7 @@ import library "state_constraints";
 class C {}
 impl C as J {}
 
-fn EmptyStruct(Y:! J where .Self == {});
+fn EmptyStruct(generic Y: J where .Self == {});
 
 // TODO: Should report that `C` does not meeet the `==` constraint. Right
 // now there is no support for `==` constraints so it rejects it as an
@@ -169,7 +169,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn WithError(U:! type where .Self impls I);
 // CHECK:STDERR:                                         ^
 // CHECK:STDERR:
-fn WithError(U:! type where .Self impls I);
+fn WithError(generic U: type where .Self impls I);
 //@dump-sem-ir-end
 
 // --- import_error_in_constraint.carbon

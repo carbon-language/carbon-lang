@@ -75,7 +75,7 @@ var or_val: bool = true or true;
 
 library "[[@TEST_NAME]]";
 
-base class C(B:! bool) {}
+base class C(B: bool) {}
 
 fn F() {
   class B {

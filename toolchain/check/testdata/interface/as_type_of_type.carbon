@@ -18,7 +18,7 @@ class C {}
 
 impl C as Empty {}
 
-fn F(T:! Empty) {
+fn F(generic T: Empty) {
   var unused x: T*;
 }
 

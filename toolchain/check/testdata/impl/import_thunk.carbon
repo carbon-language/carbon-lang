@@ -25,9 +25,9 @@ interface I {
 library "[[@TEST_NAME]]";
 import library "a";
 
-class C(X:! ()) {}
+class C(X: ()) {}
 
-impl forall [Y:! ()] C(Y) as I {
+impl forall [Y: ()] C(Y) as I {
   fn F(unused x: C(Y)) {}
 }
 

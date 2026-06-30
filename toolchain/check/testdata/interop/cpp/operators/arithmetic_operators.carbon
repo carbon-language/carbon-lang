@@ -115,12 +115,12 @@ public:
 // `Result` is a workaround for `.Result impls Core.Destroy`. This funciton
 // ought to be defined as
 // ```
-// AddWith[U:! type, T:! Core.AddWith(U) where .Result impls Core.Destroy](x: T, y: T)
+// AddWith[U: type, T: Core.AddWith(U) where .Result impls Core.Destroy](x: T, y: T)
 // ```
 fn AddWith[
-  Result:! Core.Destroy,
-  U:! Core.Destroy,
-  T:! Core.Destroy & Core.AddWith(U) where .Result = Result
+  Result: Core.Destroy,
+  U: Core.Destroy,
+  T: Core.Destroy & Core.AddWith(U) where .Result = Result
 ](unused result: Result, x: T, y: U) {
   //@dump-sem-ir-begin
   x + y;
@@ -129,9 +129,9 @@ fn AddWith[
 
 // TODO: Refactor when `.Result impls Core.Destroy` is possible.
 fn SubWith[
-  Result:! Core.Destroy,
-  U:! Core.Destroy,
-  T:! Core.Destroy & Core.SubWith(U) where .Result = Result
+  Result: Core.Destroy,
+  U: Core.Destroy,
+  T: Core.Destroy & Core.SubWith(U) where .Result = Result
 ](unused result: Result, x: T, y: U) {
   //@dump-sem-ir-begin
   x - y;
@@ -140,9 +140,9 @@ fn SubWith[
 
 // TODO: Refactor when `.Result impls Core.Destroy` is possible.
 fn MulWith[
-  Result:! Core.Destroy,
-  U:! Core.Destroy,
-  T:! Core.Destroy & Core.MulWith(U) where .Result = Result
+  Result: Core.Destroy,
+  U: Core.Destroy,
+  T: Core.Destroy & Core.MulWith(U) where .Result = Result
 ](unused result: Result, x: T, y: U) {
   //@dump-sem-ir-begin
   x * y;
@@ -151,9 +151,9 @@ fn MulWith[
 
 // TODO: Refactor when `.Result impls Core.Destroy` is possible.
 fn DivWith[
-  Result:! Core.Destroy,
-  U:! Core.Destroy,
-  T:! Core.Destroy & Core.DivWith(U) where .Result = Result
+  Result: Core.Destroy,
+  U: Core.Destroy,
+  T: Core.Destroy & Core.DivWith(U) where .Result = Result
 ](unused result: Result, x: T, y: U) {
   //@dump-sem-ir-begin
   x / y;
@@ -162,9 +162,9 @@ fn DivWith[
 
 // TODO: Refactor when `.Result impls Core.Destroy` is possible.
 fn ModWith[
-  Result:! Core.Destroy,
-  U:! Core.Destroy,
-  T:! Core.Destroy & Core.ModWith(U) where .Result = Result
+  Result: Core.Destroy,
+  U: Core.Destroy,
+  T: Core.Destroy & Core.ModWith(U) where .Result = Result
 ](unused result: Result, x: T, y: U) {
   //@dump-sem-ir-begin
   x % y;
@@ -222,31 +222,31 @@ fn TestOpWith(a: Cpp.Int16, b: Cpp.Int32, c: Cpp.Int32, d: Cpp.Int64, x: i16) {
   ModWith(Cpp.Int64.Int64(), d, c);
 }
 
-fn AddAssignWith[U:! type, T:! Core.AddAssignWith(U)](var x: T, y: U) {
+fn AddAssignWith[U: type, T: Core.AddAssignWith(U)](var x: T, y: U) {
   //@dump-sem-ir-begin
   x += y;
   //@dump-sem-ir-end
 }
 
-fn SubAssignWith[U:! type, T:! Core.SubAssignWith(U)](var x: T, y: U) {
+fn SubAssignWith[U: type, T: Core.SubAssignWith(U)](var x: T, y: U) {
   //@dump-sem-ir-begin
   x -= y;
   //@dump-sem-ir-end
 }
 
-fn MulAssignWith[U:! type, T:! Core.MulAssignWith(U)](var x: T, y: U) {
+fn MulAssignWith[U: type, T: Core.MulAssignWith(U)](var x: T, y: U) {
   //@dump-sem-ir-begin
   x *= y;
   //@dump-sem-ir-end
 }
 
-fn DivAssignWith[U:! type, T:! Core.DivAssignWith(U)](var x: T, y: U) {
+fn DivAssignWith[U: type, T: Core.DivAssignWith(U)](var x: T, y: U) {
   //@dump-sem-ir-begin
   x /= y;
   //@dump-sem-ir-end
 }
 
-fn ModAssignWith[U:! type, T:! Core.ModAssignWith(U)](var x: T, y: U) {
+fn ModAssignWith[U: type, T: Core.ModAssignWith(U)](var x: T, y: U) {
   //@dump-sem-ir-begin
   x %= y;
   //@dump-sem-ir-end
@@ -275,13 +275,13 @@ fn TestOpAssignWith(int16: Cpp.Int16, int32: Cpp.Int32, int64: Cpp.Int64, x: i16
   ModAssignWith(int64, int32);
 }
 
-fn TestInc[T:! Core.Inc](var x: T) {
+fn TestInc[T: Core.Inc](var x: T) {
   //@dump-sem-ir-begin
   ++x;
   //@dump-sem-ir-end
 }
 
-fn TestDec[T:! Core.Dec](var x: T) {
+fn TestDec[T: Core.Dec](var x: T) {
   //@dump-sem-ir-begin
   --x;
   //@dump-sem-ir-end
@@ -289,8 +289,8 @@ fn TestDec[T:! Core.Dec](var x: T) {
 
 // TODO: Refactor when `.Result impls Core.Destroy` is possible.
 fn TestNegate[
-  Result:! Core.Destroy,
-  T:! Core.Destroy & Core.Negate where .Result = Result
+  Result: Core.Destroy,
+  T: Core.Destroy & Core.Negate where .Result = Result
 ](unused y: Result, x: T) {
   //@dump-sem-ir-begin
   -x;

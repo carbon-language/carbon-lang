@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-fn G(T:! type) {
+fn G(generic T: type) {
   // We can initialize this without knowing T.
   //@dump-sem-ir-begin
   var unused arr: array(T, 0) = ();
@@ -31,7 +31,7 @@ fn H() {
 
 library "[[@TEST_NAME]]";
 
-fn F(N:! i32) {
+fn F(generic N: i32) {
   // CHECK:STDERR: fail_init_dependent_bound.carbon:[[@LINE+4]]:35: error: cannot initialize array with dependent bound from a list of initializers [ArrayInitDependentBound]
   // CHECK:STDERR:   var unused arr: array(i32, N) = (1, 2, 3);
   // CHECK:STDERR:                                   ^~~~~~~~~
@@ -44,7 +44,7 @@ fn F(N:! i32) {
 library "[[@TEST_NAME]]";
 
 // TODO: This should be valid.
-fn G(template N:! i32) {
+fn G(template N: i32) {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_init_template_dependent_bound.carbon:[[@LINE+4]]:19: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:   var unused arr: array(i32, N) = (1, 2, 3);

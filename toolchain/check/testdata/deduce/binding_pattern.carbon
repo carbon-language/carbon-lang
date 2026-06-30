@@ -14,11 +14,11 @@
 
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {
+class C(T: type) {
   fn Create(unused value: T) {}
 }
 
-fn F(unused U:! type, V:! type) {
+fn F(unused generic U: type, generic V: type) {
   // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE+10]]:15: error: cannot implicitly convert expression of type `{}` to `V` [ConversionFailure]
   // CHECK:STDERR:   C(V).Create({});
   // CHECK:STDERR:               ^~
@@ -36,12 +36,12 @@ fn F(unused U:! type, V:! type) {
 
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {
+class C(T: type) {
   fn Create(unused value: T) {}
 }
 
 // This `where` is sufficient to say that `{} as V` works.
-fn F(unused U:! type, V:! Core.Destroy where {} impls Core.ImplicitAs(.Self)) {
+fn F(unused generic U: type, generic V: Core.Destroy where {} impls Core.ImplicitAs(.Self)) {
   C(V).Create({});
 }
 
@@ -55,7 +55,7 @@ class A {};
 // CHECK:STDERR: fn F[T:! DoesNotExist](unused x: T) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~
 // CHECK:STDERR:
-fn F[T:! DoesNotExist](unused x: T) {}
+fn F[T: DoesNotExist](unused x: T) {}
 
 fn Call(a: A) {
   F(a);

@@ -13,21 +13,21 @@
 // --- success.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let T:! type; }
+interface I { let T: type; }
 
 impl () as I where .T = {} {}
 
 // --- success_associated.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let T:! type; let U:! type; }
+interface I { let T: type; let U: type; }
 
 impl () as I where .T = .U and .U = {} {}
 
 // --- redecl.carbon
 library "[[@TEST_NAME]]";
 
-interface I2 { let T2:! type; }
+interface I2 { let T2: type; }
 
 impl () as I2 where .T2 = {};
 impl () as I2 where .T2 = {} {}
@@ -35,7 +35,7 @@ impl () as I2 where .T2 = {} {}
 // --- fail_redecl_adds_rewrites.carbon
 library "[[@TEST_NAME]]";
 
-interface I3 { let T3:! type; }
+interface I3 { let T3: type; }
 
 // CHECK:STDERR: fail_redecl_adds_rewrites.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as I3;
@@ -47,7 +47,7 @@ impl () as I3 where .T3 = {} {}
 // --- fail_mismatch.carbon
 library "[[@TEST_NAME]]";
 
-interface J { let U:! type; }
+interface J { let U: type; }
 
 // CHECK:STDERR: fail_mismatch.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as J where .U = {};
@@ -60,9 +60,9 @@ impl () as J where .U = () {}
 library "[[@TEST_NAME]]";
 
 interface I4 {
-  let T4:! type;
-  let T5:! type;
-  let T6:! type;
+  let T4: type;
+  let T5: type;
+  let T6: type;
 }
 
 // CHECK:STDERR: fail_mismatch_bad_value.carbon:[[@LINE+8]]:27: error: name `BAD1` not found [NameNotFound]
@@ -88,7 +88,7 @@ impl () as I4 where .T4 = {.b: {}} and .T5 = BAD3 and .T6 = BAD4 {}
 // --- fail_missing_on_definition.carbon
 library "[[@TEST_NAME]]";
 
-interface K { let V:! type; }
+interface K { let V: type; }
 
 impl () as K where .V = {};
 // CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE+11]]:1: error: associated constant V not given a value in impl of interface K [ImplAssociatedConstantNeedsValue]
@@ -107,7 +107,7 @@ impl () as K {}
 // --- fail_two_different.carbon
 library "[[@TEST_NAME]]";
 
-interface L { let W:! type; }
+interface L { let W: type; }
 
 // CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:12: error: associated constant `.(L.W)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as L where .W = {} and .W = () {}
@@ -118,7 +118,7 @@ impl () as L where .W = {} and .W = () {}
 // --- fail_two_different_first_associated.carbon
 library "[[@TEST_NAME]]";
 
-interface L2 { let W2:! type; let X2:! type; }
+interface L2 { let W2: type; let X2: type; }
 
 // CHECK:STDERR: fail_two_different_first_associated.carbon:[[@LINE+4]]:12: error: associated constant `.(L2.W2)` given two different values `()` and `.(L2.X2)` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as L2 where .W2 = .X2 and .W2 = () {}
@@ -129,7 +129,7 @@ impl () as L2 where .W2 = .X2 and .W2 = () {}
 // --- fail_two_different_second_associated.carbon
 library "[[@TEST_NAME]]";
 
-interface L2 { let W2:! type; let X2:! type; }
+interface L2 { let W2: type; let X2: type; }
 
 // CHECK:STDERR: fail_two_different_second_associated.carbon:[[@LINE+4]]:12: error: associated constant `.(L2.W2)` given two different values `()` and `.(L2.X2)` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as L2 where .W2 = () and .W2 = .X2 {}
@@ -140,7 +140,7 @@ impl () as L2 where .W2 = () and .W2 = .X2 {}
 // --- fail_two_different_first_bad.carbon
 library "[[@TEST_NAME]]";
 
-interface L2 { let W2:! type; }
+interface L2 { let W2: type; }
 
 // CHECK:STDERR: fail_two_different_first_bad.carbon:[[@LINE+4]]:27: error: name `BAD5` not found [NameNotFound]
 // CHECK:STDERR: impl () as L2 where .W2 = BAD5 and .W2 = () {}
@@ -151,7 +151,7 @@ impl () as L2 where .W2 = BAD5 and .W2 = () {}
 // --- fail_two_different_second_bad.carbon
 library "[[@TEST_NAME]]";
 
-interface L3 { let W3:! type; }
+interface L3 { let W3: type; }
 
 // CHECK:STDERR: fail_two_different_second_bad.carbon:[[@LINE+4]]:40: error: name `BAD6` not found [NameNotFound]
 // CHECK:STDERR: impl () as L3 where .W3 = {} and .W3 = BAD6 {}
@@ -162,7 +162,7 @@ impl () as L3 where .W3 = {} and .W3 = BAD6 {}
 // --- fail_two_different_both_bad.carbon
 library "[[@TEST_NAME]]";
 
-interface L4 { let W4:! type; }
+interface L4 { let W4: type; }
 
 // CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+8]]:27: error: name `BAD7` not found [NameNotFound]
 // CHECK:STDERR: impl () as L4 where .W4 = BAD7 and .W4 = BAD8 {}
@@ -177,7 +177,7 @@ impl () as L4 where .W4 = BAD7 and .W4 = BAD8 {}
 // --- fail_many_different.carbon
 library "[[@TEST_NAME]]";
 
-interface L { let W:! type; }
+interface L { let W: type; }
 
 // The facet type should have a single rewrite with `<error>` in the RHS (they
 // are all errors, and they get deduped).
@@ -193,21 +193,21 @@ impl () as L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ())
 // --- repeated.carbon
 library "[[@TEST_NAME]]";
 
-interface M { let X:! type; }
+interface M { let X: type; }
 
 impl () as M where .X = {} and .X = {} {}
 
 // --- repeated_associated.carbon
 library "[[@TEST_NAME]]";
 
-interface M { let X:! type; let Y:! type; }
+interface M { let X: type; let Y: type; }
 
 impl () as M where .X = .Y and .X = .Y and .Y = () {}
 
 // --- repeated_concrete_value_and_associated.carbon
 library "[[@TEST_NAME]]";
 
-interface M { let X:! type; let Y:! type; }
+interface M { let X: type; let Y: type; }
 
 impl () as M where .X = () and .Y = .X and .X = .Y {}
 
@@ -216,7 +216,7 @@ impl {} as M where .X = () and .X = .X and .Y = () {}
 // --- fail_repeated_and_different.carbon
 library "[[@TEST_NAME]]";
 
-interface M { let X:! type; }
+interface M { let X: type; }
 
 // CHECK:STDERR: fail_repeated_and_different.carbon:[[@LINE+4]]:12: error: associated constant `.(M.X)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as M where .X = {} and .X = () and .X = {} {}
@@ -227,7 +227,7 @@ impl () as M where .X = {} and .X = () and .X = {} {}
 // --- fail_cycle_single.carbon
 library "[[@TEST_NAME]]";
 
-interface M { let X:! type; }
+interface M { let X: type; }
 
 // This fails because it resolves to `.X = .X` which is cyclical.
 //
@@ -249,7 +249,7 @@ impl () as M where .X = .X and .X = () {}
 // --- fail_cycle.carbon
 library "[[@TEST_NAME]]";
 
-interface M { let X:! type; let Y:! type; let Z:! type; }
+interface M { let X: type; let Y: type; let Z: type; }
 
 // This fails because it resolves to `.X = .X` which is cyclical.
 // The value of .X and .Y becomes <error> but .Z is still valid.
@@ -266,11 +266,11 @@ impl () as M where .X = .Y and .Y = .X and .Z = () {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X1:! type;
-  let X2:! type;
+  let X1: type;
+  let X2: type;
 }
 interface J {
-  let X3:! type;
+  let X3: type;
 }
 
 // TODO: This should fail due to a cyclic definition of each value. But right
@@ -295,7 +295,7 @@ impl () as I where .Self impls J and .X1 = .(J.X3) and .X2 = .X1 and .(J.X3) = .
 library "[[@TEST_NAME]]";
 
 interface N {
-  let Y:! {.a: {}};
+  let Y: {.a: {}};
 }
 
 impl () as N where .Y = {.a = {}} { }
@@ -304,7 +304,7 @@ impl () as N where .Y = {.a = {}} { }
 library "[[@TEST_NAME]]";
 
 interface N {
-  let Y:! {.a: {}};
+  let Y: {.a: {}};
 }
 
 impl () as N where .Y = {.a = {}} and .Y = {.a = {}} { }
@@ -313,7 +313,7 @@ impl () as N where .Y = {.a = {}} and .Y = {.a = {}} { }
 library "[[@TEST_NAME]]";
 
 interface N {
-  let Y:! {.a: type};
+  let Y: {.a: type};
 }
 
 // CHECK:STDERR: fail_non-type_different.carbon:[[@LINE+4]]:12: error: associated constant `.(N.Y)` given two different values `{.a = {}}` and `{.a = ()}` [AssociatedConstantWithDifferentValues]
@@ -340,7 +340,7 @@ impl CD as IF where .F = 0 {
 // --- facet_type_in_assoc_constant.carbon
 library "[[@TEST_NAME]]";
 
-interface M { let X:! type; }
+interface M { let X: type; }
 constraint N {
   extend require impls M where .X = {};
 }
@@ -352,7 +352,7 @@ library "[[@TEST_NAME]]";
 
 interface Y {}
 interface Z {
-    let Z1:! Y;
+    let Z1: Y;
 }
 
 class C;
@@ -372,7 +372,7 @@ library "[[@TEST_NAME]]";
 
 interface Y {}
 interface Z {
-    let Z1:! Y;
+    let Z1: Y;
 }
 
 class C;
@@ -386,7 +386,7 @@ impl C as Z where .Z1 = C {}
 // CHECK:STDERR: fn F(unused T:! Z where .Z1 = .Self) {}
 // CHECK:STDERR:                               ^~~~~
 // CHECK:STDERR:
-fn F(unused T:! Z where .Z1 = .Self) {}
+fn F(unused generic T: Z where .Z1 = .Self) {}
 fn G() {
   F(C);
 

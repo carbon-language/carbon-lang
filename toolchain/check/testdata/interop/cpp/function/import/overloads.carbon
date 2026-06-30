@@ -777,7 +777,7 @@ import Cpp inline '''
 
 interface I {}
 
-fn EchoValue[ValueT:! I](unused value:! ValueT) {}
+fn EchoValue[ValueT: I](unused generic value: ValueT) {}
 
 fn F() {
   // CHECK:STDERR: fail_missing_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `<type of Cpp.foo>` into type implementing `I` [ConversionFailureTypeToFacet]

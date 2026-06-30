@@ -14,15 +14,15 @@
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-interface I(T:! type) {
-  let I1:! type;
+interface I(T: type) {
+  let I1: type;
 }
 
-fn F(T:! I(.Self) where .I1 = ()) -> T.I1 {
+fn F(generic T: I(.Self) where .I1 = ()) -> T.I1 {
   return ();
 }
 
-fn G(T:! I(.Self as type) where .I1 = ()) -> T.I1 {
+fn G(generic T: I(.Self as type) where .I1 = ()) -> T.I1 {
   return ();
 }
 //@dump-sem-ir-end
@@ -30,20 +30,20 @@ fn G(T:! I(.Self as type) where .I1 = ()) -> T.I1 {
 // --- underscore_identifier_name.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {
-  let I1:! type;
+interface I(T: type) {
+  let I1: type;
 }
 
 // Underscore as the identifier name produces a different parse tree for the
 // binding pattern.
-fn G(_:! I(.Self) where .I1 = ()) {}
+fn G(generic _: I(.Self) where .I1 = ()) {}
 
 // --- fail_period_self_as_type.carbon
 library "[[@TEST_NAME]]";
 
 // TODO: We should diagnose this use of `.Self` directly rather than later when
 // it is converted to `type`.
-interface I(T:! .Self) {
+interface I(T: .Self) {
   // CHECK:STDERR: fail_period_self_as_type.carbon:[[@LINE+7]]:13: error: cannot implicitly convert non-type value of type `.Self` to `type` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   fn G() -> T;
   // CHECK:STDERR:             ^
@@ -57,9 +57,9 @@ interface I(T:! .Self) {
 // --- convert_period_self_to_full_facet_value.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {}
+interface I(T: type) {}
 
-fn F(U:! I(.Self)) {
+fn F(generic U: I(.Self)) {
   U as I(U);
   (U as type) as I(U);
 }
@@ -67,11 +67,11 @@ fn F(U:! I(.Self)) {
 // --- convert_period_self_to_full_facet_value_with_assoc_constant.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {
-  let X:! type;
+interface I(T: type) {
+  let X: type;
 }
 
-fn F(U:! I(.Self) where .X = .Self) {
+fn F(generic U: I(.Self) where .X = .Self) {
   U as (I(U) where .X = U);
   (U as type) as (I(U) where .X = U);
 }
@@ -79,17 +79,17 @@ fn F(U:! I(.Self) where .X = .Self) {
 // --- fail_todo_return_of_type_period_self.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {
+interface I(T: type) {
   fn G() -> T*;
 }
 
-interface J(T:! type) {
+interface J(T: type) {
   fn J1() -> T*;
 }
 
-fn F2[U:! I(.Self)](unused T: U*) {}
+fn F2[U: I(.Self)](unused T: U*) {}
 
-fn F(U:! I(.Self)) {
+fn F(generic U: I(.Self)) {
   // Caller sees the returned `.Self` type from `F()` as the full `U`.
   // CHECK:STDERR: fail_todo_return_of_type_period_self.carbon:[[@LINE+4]]:3: error: member name `G` not found [MemberNameNotFound]
   // CHECK:STDERR:   U.G()->G()->G();
@@ -115,17 +115,17 @@ fn F(U:! I(.Self)) {
 // --- fail_todo_return_of_type_period_self_extends_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {
+interface I(T: type) {
   fn I1() -> T*;
 }
 
-interface J(T:! type) {
+interface J(T: type) {
   fn J1() -> T*;
 }
 
-fn F2[U:! I(.Self) & J(.Self)](unused T: U*) {}
+fn F2[U: I(.Self) & J(.Self)](unused T: U*) {}
 
-fn F(U:! I(.Self) & J(.Self)) {
+fn F(generic U: I(.Self) & J(.Self)) {
   // TODO: The returned value of `I1` and `J1` has type `U` which has access to
   // the methods of `I` and `J`.
   // CHECK:STDERR: fail_todo_return_of_type_period_self_extends_interface.carbon:[[@LINE+4]]:3: error: member name `J1` not found [MemberNameNotFound]
@@ -150,15 +150,15 @@ fn F(U:! I(.Self) & J(.Self)) {
 // --- fail_todo_return_of_period_self_impls_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {
+interface I(T: type) {
   fn I1() -> T;
 }
 
-interface J(T:! type) {
+interface J(T: type) {
   fn J1() -> T;
 }
 
-fn G(U:! I(.Self) where .Self impls J(.Self)) {
+fn G(generic U: I(.Self) where .Self impls J(.Self)) {
   // Compound member lookup through a non-type value is possible for methods
   // which take a `self` parameter. But it's not possible for methods without
   // `self`. For those you need to go directly throug the type.
@@ -197,11 +197,11 @@ fn G(U:! I(.Self) where .Self impls J(.Self)) {
 // --- fail_todo_return_of_type_period_self_has_type_u.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {
+interface I(T: type) {
   fn G() -> T;
 }
 
-fn F(U:! I(.Self)) {
+fn F(generic U: I(.Self)) {
   // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
   // CHECK:STDERR:   let unused a: U = U.G();
   // CHECK:STDERR:                     ^~~~~
@@ -216,26 +216,26 @@ fn F(U:! I(.Self)) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
+  let X: type;
   fn G() -> X;
 }
 
-fn F(U:! Core.Destroy & I where .X = .Self) {
+fn F(generic U: Core.Destroy & I where .X = .Self) {
   let unused a: U = U.G();
 }
 
 // --- period_self_parameter_sees_lhs_of_where_expr.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! Core.Destroy) {}
+interface I(T: Core.Destroy) {}
 
 // The `.Self` can see the LHS of the `where` to know `U` impls Core.Destroy.
-fn F(unused U:! Core.Destroy where .Self impls I(.Self)) {}
+fn F(unused generic U: Core.Destroy where .Self impls I(.Self)) {}
 
 // --- fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! Core.Destroy) {}
+interface I(T: Core.Destroy) {}
 
 // TODO: Implied constraints that `.Self` impls `Core.Destroy` are satisfied by
 // the `&` expression.
@@ -247,16 +247,16 @@ interface I(T:! Core.Destroy) {}
 // CHECK:STDERR: interface I(T:! Core.Destroy) {}
 // CHECK:STDERR:             ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(unused U:! Core.Destroy & I(.Self)) {}
+fn F(unused generic U: Core.Destroy & I(.Self)) {}
 
 // --- compound_lookup_on_returned_period_self_parameter.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! Core.Destroy) {
+interface I(T: Core.Destroy) {
   fn G(self) -> T;
 }
 
-fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
+fn F[U: Core.Destroy where .Self impls I(.Self)](u: U) {
   // This tests that both `I.G` is accessible and that `Destroy` is preserved;
   // we'd get an error for missing Destroy otherwise since G() returns an
   // initializing expression.
@@ -267,7 +267,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
+  let Z1: type;
 }
 
 class C;
@@ -281,7 +281,7 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
+  let Z1: type;
 }
 interface Y {}
 
@@ -296,10 +296,10 @@ fn F() {
 // --- fail_infinite_cycle_identifying_associated_constant_as_impls_type_missing_impls_m.carbon
 library "[[@TEST_NAME]]";
 
-interface L { let W:! type; }
+interface L { let W: type; }
 
 interface M {}
-final impl forall [T:! M] T as L where .W = {} {}
+final impl forall [T: M] T as L where .W = {} {}
 
 interface Z {}
 
@@ -313,15 +313,15 @@ interface Z {}
 // CHECK:STDERR: fn F(T:! L where .W impls Z, a: T.W) -> {} { return a; }
 // CHECK:STDERR:                                              ^~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! L where .W impls Z, a: T.W) -> {} { return a; }
+fn F(generic T: L where .W impls Z, a: T.W) -> {} { return a; }
 
 // --- infinite_cycle_identifying_associated_constant_as_impls_type.carbon
 library "[[@TEST_NAME]]";
 
-interface L { let W:! type; }
+interface L { let W: type; }
 
 interface M {}
-final impl forall [T:! M] T as L where .W = {} {}
+final impl forall [T: M] T as L where .W = {} {}
 
 interface Z {}
 
@@ -329,23 +329,23 @@ interface Z {}
 // 0. `T.W` looks for a witness for `L` in the facet type of `T`
 // 1. We identify the facet type of `T` and replace `.Self` with `T` throughout.
 // 2. The `.W` becomes `T.W` which is evaluated and does an impl lookup `T as L`.
-// 3. We find the final impl for `T:! M` and try to convert `T as M`.
+// 3. We find the final impl for `T: M` and try to convert `T as M`.
 // 4. We look for a witness for `M` in the facet type of `T`.
 // 5. Go to step 1.
 //
 // Because the `.W` is part of an `impls` constraint, it is substituted as part
 // of identifying.
-fn F(T:! L where .W impls Z and .Self impls M, a: T.W) -> {} { return a; }
+fn F(generic T: L where .W impls Z and .Self impls M, a: T.W) -> {} { return a; }
 
 // --- fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_type_missing_m.carbon
 library "[[@TEST_NAME]]";
 
-interface L { let W:! type; }
+interface L { let W: type; }
 
 interface M {}
-final impl forall [T:! M] T as L where .W = () {}
+final impl forall [T: M] T as L where .W = () {}
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
 // This is missing `.Self impls M` so the `final impl` is not used, through
 // deduction is attempted.
@@ -357,40 +357,40 @@ interface Z(T:! type) {}
 // CHECK:STDERR: fn F(T:! L where .Self impls Z(.W), a: T.W) -> () { return a; }
 // CHECK:STDERR:                                                     ^~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! L where .Self impls Z(.W), a: T.W) -> () { return a; }
+fn F(generic T: L where .Self impls Z(.W), a: T.W) -> () { return a; }
 
 // --- infinite_cycle_identifying_associated_constant_in_impls_interface_as_type.carbon
 library "[[@TEST_NAME]]";
 
-interface L { let W:! type; }
+interface L { let W: type; }
 
 interface M {}
-final impl forall [T:! M] T as L where .W = () {}
+final impl forall [T: M] T as L where .W = () {}
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
 // This can make an infinite cycle in the toolchain:
 // 0. `T.W` looks for a witness for `L` in the facet type of `T`
 // 1. We identify the facet type of `T` and replace `.Self` with `T` throughout.
 // 2. The `.W` becomes `T.W` which is evaluated and does an impl lookup `T as L`.
-// 3. We find the final impl for `T:! M` and try to convert `T as M`.
+// 3. We find the final impl for `T: M` and try to convert `T as M`.
 // 4. We look for a witness for `M` in the facet type of `T`.
 // 5. Go to step 1.
 //
 // Because the `.W` is part of an `impls` constraint, it is substituted as part
 // of identifying. In this case it is inside a FacetAccessType instruction.
-fn F(T:! L where .Self impls Z(.W) and .Self impls M, a: T.W) -> () { return a; }
+fn F(generic T: L where .Self impls Z(.W) and .Self impls M, a: T.W) -> () { return a; }
 
 // --- fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type_missing_m.carbon
 library "[[@TEST_NAME]]";
 
-interface L { let W:! type; }
+interface L { let W: type; }
 
 interface M {}
-final impl forall [T:! M] T as L where .W = () {}
+final impl forall [T: M] T as L where .W = () {}
 
 interface Y {}
-interface Z(T:! Y) {}
+interface Z(T: Y) {}
 
 // This is missing `.Self impls M` so the `final impl` is not used, through
 // deduction is attempted.
@@ -402,62 +402,62 @@ interface Z(T:! Y) {}
 // CHECK:STDERR: fn F(T:! L where .W impls Y and .Self impls Z(.W), a: T.W) -> () { return a; }
 // CHECK:STDERR:                                                                    ^~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! L where .W impls Y and .Self impls Z(.W), a: T.W) -> () { return a; }
+fn F(generic T: L where .W impls Y and .Self impls Z(.W), a: T.W) -> () { return a; }
 
 // --- infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type.carbon
 library "[[@TEST_NAME]]";
 
-interface L { let W:! type; }
+interface L { let W: type; }
 
 interface M {}
-final impl forall [T:! M] T as L where .W = () {}
+final impl forall [T: M] T as L where .W = () {}
 
 interface Y {}
-interface Z(T:! Y) {}
+interface Z(T: Y) {}
 
 // This can make an infinite cycle in the toolchain:
 // 0. `T.W` looks for a witness for `L` in the facet type of `T`
 // 1. We identify the facet type of `T` and replace `.Self` with `T` throughout.
 // 2. The `.W` becomes `T.W` which is evaluated and does an impl lookup `T as L`.
-// 3. We find the final impl for `T:! M` and try to convert `T as M`.
+// 3. We find the final impl for `T: M` and try to convert `T as M`.
 // 4. We look for a witness for `M` in the facet type of `T`.
 // 5. Go to step 1.
 //
 // Because the `.W` is part of an `impls` constraint, it is substituted as part
 // of identifying. In this case it is inside a FacetValue instruction, which is
 // converting it to `Y`.
-fn F(T:! L where .W impls Y and .Self impls Z(.W) and .Self impls M, a: T.W) -> () { return a; }
+fn F(generic T: L where .W impls Y and .Self impls Z(.W) and .Self impls M, a: T.W) -> () { return a; }
 
 // --- concrete_access_witness_m_in_extend_constraint.carbon
 library "[[@TEST_NAME]]";
 
-interface L { let W:! type; }
+interface L { let W: type; }
 
 interface M {}
-final impl forall [T:! M] T as L where .W = () {}
+final impl forall [T: M] T as L where .W = () {}
 
-interface Z(Z1:! type) {}
+interface Z(Z1: type) {}
 
-class C(C1:! type);
+class C(C1: type);
 
 // Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
 // (since the type of `.Self` contains `M`) and the `final impl`. So we can get
 // a witness for `C(())` from `T`.
-fn I(T:! (L & M) where C(.W) impls Z(.Self)) {
+fn I(generic T: (L & M) where C(.W) impls Z(.Self)) {
   C(()) as Z(T);
 }
 
 // --- fail_todo_concrete_access_witness_m_in_impls_constraint.carbon
 library "[[@TEST_NAME]]";
 
-interface L { let W:! type; }
+interface L { let W: type; }
 
 interface M {}
-final impl forall [T:! M] T as L where .W = () {}
+final impl forall [T: M] T as L where .W = () {}
 
-interface Z(Z1:! type) {}
+interface Z(Z1: type) {}
 
-class C(C1:! type);
+class C(C1: type);
 
 // Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
 // (since the type of `.Self` contains `M`) and the `final impl`. So we can get
@@ -465,7 +465,7 @@ class C(C1:! type);
 //
 // TODO: How come we don't get `.W` evaluating to `()` when `M` comes from a
 // non-extend constraint?
-fn H(T:! (L where .Self impls M) where C(.W) impls Z(.Self)) {
+fn H(generic T: (L where .Self impls M) where C(.W) impls Z(.Self)) {
   // CHECK:STDERR: fail_todo_concrete_access_witness_m_in_impls_constraint.carbon:[[@LINE+4]]:3: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C(()) as Z(T);
   // CHECK:STDERR:   ^~~~~~~~~~~~~
@@ -476,14 +476,14 @@ fn H(T:! (L where .Self impls M) where C(.W) impls Z(.Self)) {
 // --- fail_todo_concrete_access_witness_m_in_earlier_constraint.carbon
 library "[[@TEST_NAME]]";
 
-interface L { let W:! type; }
+interface L { let W: type; }
 
 interface M {}
-final impl forall [T:! M] T as L where .W = () {}
+final impl forall [T: M] T as L where .W = () {}
 
-interface Z(Z1:! type) {}
+interface Z(Z1: type) {}
 
-class C(C1:! type);
+class C(C1: type);
 
 
 // Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
@@ -492,7 +492,7 @@ class C(C1:! type);
 //
 // TODO: How come we don't get `.W` evaluating to `()` when `M` comes from an
 // earlier constraint? Is the `where_stack` not working with `.Self`?
-fn G(T:! L where .Self impls M and C(.W) impls Z(.Self)) {
+fn G(generic T: L where .Self impls M and C(.W) impls Z(.Self)) {
   // CHECK:STDERR: fail_todo_concrete_access_witness_m_in_earlier_constraint.carbon:[[@LINE+4]]:3: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C(()) as Z(T);
   // CHECK:STDERR:   ^~~~~~~~~~~~~
@@ -503,14 +503,14 @@ fn G(T:! L where .Self impls M and C(.W) impls Z(.Self)) {
 // --- fail_todo_concrete_access_witness.carbon
 library "[[@TEST_NAME]]";
 
-interface L { let W:! type; }
+interface L { let W: type; }
 
 interface M {}
-final impl forall [T:! M] T as L where .W = () {}
+final impl forall [T: M] T as L where .W = () {}
 
-interface Z(Z1:! type) {}
+interface Z(Z1: type) {}
 
-class C(C1:! type);
+class C(C1: type);
 
 // This does not pass because `.W` can't resolve to `()` where it is written.
 // The fact that `T impls M` comes later in the facet type. And we don't allow
@@ -518,9 +518,9 @@ class C(C1:! type);
 // witness for `C(()) as Z(T)` in order to avoid cycles.
 //
 // TODO: We would like this to pass though, without introducing an infinite
-// cycle that identifies `T`, which deduces `T:! M` for the `impl`, which
+// cycle that identifies `T`, which deduces `T: M` for the `impl`, which
 // identifies `T`. See TODO in CollectFacetWitnessSources for ideas.
-fn F(T:! L where C(.W) impls Z(.Self) and .Self impls M) {
+fn F(generic T: L where C(.W) impls Z(.Self) and .Self impls M) {
   // CHECK:STDERR: fail_todo_concrete_access_witness.carbon:[[@LINE+4]]:3: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C(()) as Z(T);
   // CHECK:STDERR:   ^~~~~~~~~~~~~

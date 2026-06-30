@@ -21,13 +21,13 @@ class Class {
   // CHECK:STDERR:   let A:! type = Class;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
-  let A:! type = Class;
+  let generic A: type = Class;
 
   // CHECK:STDERR: fail_let.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
   // CHECK:STDERR:   let template B:! type = Class;
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let template B:! type = Class;
+  let template B: type = Class;
 }
 
 // --- fail_var.carbon
@@ -43,13 +43,13 @@ class Class {
   // CHECK:STDERR:   var C:! type = Class;
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
-  var C:! type = Class;
+  var generic C: type = Class;
 
   // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:25: error: found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
   // CHECK:STDERR:   var template D:! type = Class;
   // CHECK:STDERR:                         ^
   // CHECK:STDERR:
-  var template D:! type = Class;
+  var template D: type = Class;
 }
 
 var x: Class = {};

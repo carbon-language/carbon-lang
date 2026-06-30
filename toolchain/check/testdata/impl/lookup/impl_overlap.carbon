@@ -17,23 +17,23 @@
 // --- interface_z.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
 // --- interface_z_with_impl.carbon
 library "[[@TEST_NAME]]";
 
 // Add an extra unused interface to bump `Z`'s id up so that it doesn't
 // accidentally match the id assigned to the imported copy of `Z`.
-interface Other(T:! type) {}
+interface Other(T: type) {}
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
-final impl forall [T:! type] T as Z(T) {}
+final impl forall [T: type] T as Z(T) {}
 
 // --- type_d.carbon
 library "[[@TEST_NAME]]";
 
-class D(T:! type) {}
+class D(T: type) {}
 
 // ============================================================================
 // Test files
@@ -44,7 +44,7 @@ library "[[@TEST_NAME]]";
 
 interface Z {}
 
-final impl forall [T:! type] T as Z {}
+final impl forall [T: type] T as Z {}
 
 // --- final_impl_with_interface_concrete_self_same_file.carbon
 library "[[@TEST_NAME]]";
@@ -86,14 +86,14 @@ interface Z {}
 
 // The root self type is from another file, but the interface is from this file.
 // This tests the self type being a symbolic type due to the type parameter T.
-final impl forall [T:! type] D(T) as Z {}
+final impl forall [T: type] D(T) as Z {}
 
 // --- fail_multiple_finals_overlap_with_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
-final impl forall [T:! type] T as Z(T) {}
+final impl forall [T: type] T as Z(T) {}
 
 // The final impl here overlaps with the final impl above, but is not in a
 // match_first.
@@ -105,7 +105,7 @@ final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-final impl forall [T:! type] T as Z(()) {}
+final impl forall [T: type] T as Z(()) {}
 
 class C {}
 
@@ -140,7 +140,7 @@ final impl C as Z(()) {}
 // CHECK:STDERR: final impl C as Z(()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-final impl forall [T:! type] C as Z(T) {}
+final impl forall [T: type] C as Z(T) {}
 
 // --- multiple_finals_with_nonoverlapping_with_interface.carbon
 library "[[@TEST_NAME]]";
@@ -171,11 +171,11 @@ library "[[@TEST_NAME]]";
 
 import library "interface_z";
 
-class C(T:! type) {}
+class C(T: type) {}
 
 // Can provide a specialized final blanket impl for a type defined in the same
 // file.
-final impl forall [T:! type] C(T) as Z(T) {}
+final impl forall [T: type] C(T) as Z(T) {}
 
 // --- fail_final_impl_with_both_interface_and_self_but_different_files.carbon
 library "[[@TEST_NAME]]";
@@ -283,12 +283,12 @@ class C {}
 // CHECK:STDERR: final impl forall [T:! type] T as Z(C) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-final impl forall [T:! type] T as Z(C) {}
+final impl forall [T: type] T as Z(C) {}
 
 // --- fail_final_overlaps_earlier_non_final_impl.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
 // CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+3]]:1: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
 // CHECK:STDERR: impl () as Z(()) {}
@@ -299,14 +299,14 @@ impl () as Z(()) {}
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-final impl forall [T:! type] T as Z(T) {}
+final impl forall [T: type] T as Z(T) {}
 
 // --- fail_final_overlaps_later_non_final_impl.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
-final impl forall [T:! type] T as Z(T) {}
+final impl forall [T: type] T as Z(T) {}
 
 // CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE+7]]:1: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
 // CHECK:STDERR: impl () as Z(()) {}
@@ -320,7 +320,7 @@ impl () as Z(()) {}
 // --- fail_final_overlaps_earlier_final_impl.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
 class C {}
 
@@ -333,16 +333,16 @@ final impl C as Z(C) {}
 // CHECK:STDERR: final impl C as Z(C) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-final impl forall [T:! type] T as Z(T) {}
+final impl forall [T: type] T as Z(T) {}
 
 // --- fail_final_overlaps_later_final_impl.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
 class C {}
 
-final impl forall [T:! type] T as Z(T) {}
+final impl forall [T: type] T as Z(T) {}
 
 // CHECK:STDERR: fail_final_overlaps_later_final_impl.carbon:[[@LINE+7]]:1: error: `final impl` overlaps with `final impl` from same file outside a `match_first` block [FinalImplOverlapsSameFile]
 // CHECK:STDERR: final impl C as Z(C) {}
@@ -356,15 +356,15 @@ final impl C as Z(C) {}
 // --- fail_non_final_type_structure_matches_non_final_impl.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 interface Y {}
 
-impl forall [T:! Y] T as Z(T) {}
+impl forall [T: Y] T as Z(T) {}
 
-class C(T:! type);
+class C(T: type);
 
 // No diagnosis here as the type structure is unique.
-impl forall [T:! type] T as Z(C(T)) {}
+impl forall [T: type] T as Z(C(T)) {}
 
 // CHECK:STDERR: fail_non_final_type_structure_matches_non_final_impl.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
 // CHECK:STDERR: impl forall [T:! type] T as Z(T) {}
@@ -373,7 +373,7 @@ impl forall [T:! type] T as Z(C(T)) {}
 // CHECK:STDERR: impl forall [T:! Y] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] T as Z(T) {}
+impl forall [T: type] T as Z(T) {}
 
 // --- non_final_type_structure_same_shape_but_different_concrete_types.carbon
 library "[[@TEST_NAME]]";
@@ -389,9 +389,9 @@ impl D as Z {}
 // --- partial_overlap_type_structure_of_non_final_impl.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
-impl forall [T:! type] T as Z(T) {}
+impl forall [T: type] T as Z(T) {}
 
 class C {}
 // Partially overlaps the blanket impl, which is fine.
@@ -403,15 +403,15 @@ impl D as Z(D) {}
 
 // --- fail_final_overlap_where_each_is_more_specific_than_the_other.carbon
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
-class C(T:! type) {}
+class C(T: type) {}
 
 // This should be diagnosed as overlapping final impls outside a `match_first`.
 // The first impl is more specific in the interface constraint. The second is
 // more specific in the self type. They overlap for the query `C(()) as Z(())`
 // but neither impl is completely more specific than the other.
-final impl forall [T:! type] C(T) as Z(()) {}
+final impl forall [T: type] C(T) as Z(()) {}
 // CHECK:STDERR: fail_final_overlap_where_each_is_more_specific_than_the_other.carbon:[[@LINE+7]]:1: error: `final impl` overlaps with `final impl` from same file outside a `match_first` block [FinalImplOverlapsSameFile]
 // CHECK:STDERR: final impl forall [T:! type] C(()) as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -419,4 +419,4 @@ final impl forall [T:! type] C(T) as Z(()) {}
 // CHECK:STDERR: final impl forall [T:! type] C(T) as Z(()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-final impl forall [T:! type] C(()) as Z(T) {}
+final impl forall [T: type] C(()) as Z(T) {}

@@ -24,14 +24,14 @@ interface K {}
 interface L {}
 
 // TODO: Put these in a match_first so the test will pass again.
-impl forall [T:! I] T as Interface;
-impl forall [T:! J] T as Interface;
-impl forall [T:! K] T as Interface;
-impl forall [T:! L] T as Interface;
+impl forall [T: I] T as Interface;
+impl forall [T: J] T as Interface;
+impl forall [T: K] T as Interface;
+impl forall [T: L] T as Interface;
 
 // These are different impls, so they are not redefinitions, even though the
 // self type and constraint type are the same.
-impl forall [T:! I] T as Interface {}
+impl forall [T: I] T as Interface {}
 // CHECK:STDERR: fail_todo_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
 // CHECK:STDERR: impl forall [T:! J] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,7 +39,7 @@ impl forall [T:! I] T as Interface {}
 // CHECK:STDERR: impl forall [T:! I] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! J] T as Interface {}
+impl forall [T: J] T as Interface {}
 // CHECK:STDERR: fail_todo_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
 // CHECK:STDERR: impl forall [T:! K] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,7 +47,7 @@ impl forall [T:! J] T as Interface {}
 // CHECK:STDERR: impl forall [T:! I] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! K] T as Interface {}
+impl forall [T: K] T as Interface {}
 // CHECK:STDERR: fail_todo_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
 // CHECK:STDERR: impl forall [T:! L] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -55,7 +55,7 @@ impl forall [T:! K] T as Interface {}
 // CHECK:STDERR: impl forall [T:! I] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! L] T as Interface {}
+impl forall [T: L] T as Interface {}
 
 // --- fail_same_self_and_interface_redefined.carbon
 
@@ -64,7 +64,7 @@ library "[[@TEST_NAME]]";
 interface I {}
 interface J {}
 
-impl forall [T:! I] T as J {}
+impl forall [T: I] T as J {}
 // CHECK:STDERR: fail_same_self_and_interface_redefined.carbon:[[@LINE+7]]:1: error: redefinition of `impl T as J` [ImplRedefinition]
 // CHECK:STDERR: impl forall [T:! I] T as J {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -72,7 +72,7 @@ impl forall [T:! I] T as J {}
 // CHECK:STDERR: impl forall [T:! I] T as J {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! I] T as J {}
+impl forall [T: I] T as J {}
 
 // --- fail_same_type_different_spelling.carbon
 
@@ -97,7 +97,7 @@ impl (C, C).0 as I {}
 
 interface I {}
 
-impl forall [T:! type] T as I {
+impl forall [T: type] T as I {
   fn A() {}
 }
 
@@ -108,7 +108,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDERR: impl forall [T:! type] T as I {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] T as I {
+impl forall [T: type] T as I {
   // Although not referenced, B has the same generic region index of A, and
   // makes C a different index. We used to merge, and this was a crash.
   fn B() {}

@@ -18,7 +18,7 @@ library "[[@TEST_NAME]]";
 
 // Check that we get a reasonable diagnostic for an unimplemented operation on a
 // template dependent expression.
-fn F[template T:! type](x: T) -> i32 {
+fn F[template T: type](x: T) -> i32 {
   // CHECK:STDERR: fail_todo_unimplemented_operator.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.MulWith(Core.IntLiteral)` in type `<dependent type>` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return x.n * 3;
   // CHECK:STDERR:          ^~~~~~~
@@ -37,7 +37,7 @@ class C {
 // Check that we get a reasonable diagnostic for an unimplemented operation on a
 // template dependent value where the type is concrete but determined through
 // the template dependent value.
-fn F(template c:! C) -> i32 {
+fn F(template c: C) -> i32 {
   // CHECK:STDERR: fail_todo_unimplemented_value.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.MulWith(Core.IntLiteral)` in type `<dependent type>` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return c.n * 3;
   // CHECK:STDERR:          ^~~~~~~
@@ -49,7 +49,7 @@ fn F(template c:! C) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-fn F[template T:! Core.Destroy](x: T) {
+fn F[template T: Core.Destroy](x: T) {
   // TODO: These diagnostics aren't very good, and we should only produce one error here.
   // CHECK:STDERR: fail_todo_unimplemented_convert.carbon:[[@LINE+8]]:3: error: member name of type `<dependent type>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:   var unused v: T = 0;

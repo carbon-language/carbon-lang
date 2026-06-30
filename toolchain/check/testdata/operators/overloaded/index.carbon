@@ -44,7 +44,7 @@ fn F() { 0[1]; }
 
 package Core library "[[@TEST_NAME]]";
 
-interface IndexWith(SubscriptType:! type, ElementType:! type) {
+interface IndexWith(SubscriptType: type, ElementType: type) {
   fn At(self, subscript: SubscriptType) -> ElementType;
 }
 

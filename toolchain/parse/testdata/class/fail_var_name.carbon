@@ -59,7 +59,7 @@ class C {
   // CHECK:STDERR:   var name:! C;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
-  var name:! C;
+  var generic name: C;
 }
 
 // CHECK:STDOUT: - filename: fail_var_name.carbon

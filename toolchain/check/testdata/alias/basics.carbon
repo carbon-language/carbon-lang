@@ -39,7 +39,7 @@ let d: c = {};
 
 library "[[@TEST_NAME]]";
 
-class A(T:! type) {}
+class A(T: type) {}
 
 //@dump-sem-ir-begin
 alias a = A({});
@@ -108,7 +108,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: alias A(T:! type) = T*;
 // CHECK:STDERR:        ^~~~~~~~~~
 // CHECK:STDERR:
-alias A(T:! type) = T*;
+alias A(T: type) = T*;
 
 // --- fail_modifiers.carbon
 

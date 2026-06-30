@@ -17,7 +17,7 @@ package Implicit;
 var a_ref: (i32,) = (0,);
 var b_ref: (((i32,), i32), (i32, i32)) = (((0,), 1), (2, 3));
 
-class C(X:! (i32, i32)) {}
+class C(X: (i32, i32)) {}
 
 fn F() -> C((1, 2));
 
@@ -63,7 +63,7 @@ var c_bad: C((3, 4)) = F();
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! (i32,);
+  let value: (i32,);
 }
 
 class C {}

@@ -19,6 +19,6 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: interface I(template T:! type, N:! T.I1) {
 // CHECK:STDERR:                                    ^~~~
 // CHECK:STDERR:
-interface I(template T:! type, N:! T.I1) {
-    let I1:! type;
+interface I(template T: type, N: T.I1) {
+    let I1: type;
 }

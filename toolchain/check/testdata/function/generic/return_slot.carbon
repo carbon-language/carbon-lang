@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/return_slot.carbon
 
-class Wrap(T:! type) {
+class Wrap(T: type) {
   fn Make() -> T { return Make(); }
 }
 

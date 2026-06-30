@@ -15,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-class Class(T:! Core.Copy) {
+class Class(T: Core.Copy) {
   fn GetAddr(ref self) -> T* {
     return &self.k;
   }
@@ -27,7 +27,7 @@ class Class(T:! Core.Copy) {
   var k: T;
 }
 
-class Declaration(T:! type);
+class Declaration(T: type);
 //@dump-sem-ir-end
 
 

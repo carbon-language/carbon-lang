@@ -17,7 +17,7 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let V:! Self;
+  let V: Self;
 }
 
 impl {} as I where .V = {} {}
@@ -29,7 +29,7 @@ impl i32 as I where .V = 0 {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let V:! Self;
+  let V: Self;
 }
 
 // CHECK:STDERR: fail_assoc_const_mismatch.carbon:[[@LINE+7]]:12: error: cannot implicitly convert expression of type `Core.IntLiteral` to `{}` [ConversionFailure]
@@ -46,7 +46,7 @@ impl {} as I where .V = 0 {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let V:! Self;
+  let V: Self;
 }
 
 class C {}
@@ -65,8 +65,8 @@ impl C as I where .V = () {}
 
 library "[[@TEST_NAME]]";
 
-interface I(N:! Core.IntLiteral) {
-  let V:! array(Self, N);
+interface I(N: Core.IntLiteral) {
+  let V: array(Self, N);
 }
 
 // CHECK:STDERR: fail_monomorphization_failure.carbon:[[@LINE+7]]:24: error: member access into facet of incomplete type `I(-1)` [IncompleteTypeInMemberAccessOfFacet]
@@ -83,10 +83,10 @@ impl {} as I(-1) where .V = () {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let V:! Self;
+  let V: Self;
 }
 
-fn F(T:! I where {} impls Core.ImplicitAs(.Self) and .V = {});
+fn F(generic T: I where {} impls Core.ImplicitAs(.Self) and .V = {});
 
 fn CallF() {
   // TODO: This call should eventually work.

@@ -16,9 +16,9 @@
 
 library "[[@TEST_NAME]]";
 
-fn F(T:! type) -> T*;
+fn F(generic T: type) -> T*;
 
-fn F(T:! type) -> T* {
+fn F(generic T: type) -> T* {
   return F(T);
 }
 
@@ -26,7 +26,7 @@ fn F(T:! type) -> T* {
 
 library "[[@TEST_NAME]]";
 
-fn F(T:! type, U:! type) -> T*;
+fn F(generic T: type, generic U: type) -> T*;
 
 // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:1: error: function redeclaration differs because return type is `U*` [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR: fn F(T:! type, U:! type) -> U* {
@@ -35,7 +35,7 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! type, U:! type) -> U* {
+fn F(generic T: type, generic U: type) -> U* {
   // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~~~
@@ -50,7 +50,7 @@ fn F(T:! type, U:! type) -> U* {
 
 library "[[@TEST_NAME]]";
 
-fn F(T:! type, U:! type) -> T*;
+fn F(generic T: type, generic U: type) -> T*;
 
 // CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:13: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: fn F(unused U:! type, T:! type) -> T* {
@@ -59,7 +59,7 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR:      ^~~~~~~~
 // CHECK:STDERR:
-fn F(unused U:! type, T:! type) -> T* {
+fn F(unused generic U: type, generic T: type) -> T* {
   // CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~~~
@@ -74,7 +74,7 @@ fn F(unused U:! type, T:! type) -> T* {
 
 library "[[@TEST_NAME]]";
 
-fn F(T:! type, U:! type) -> T*;
+fn F(generic T: type, generic U: type) -> T*;
 
 // CHECK:STDERR: fail_rename.carbon:[[@LINE+7]]:6: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: fn F(U:! type, T:! type) -> U* {
@@ -83,7 +83,7 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR:      ^~~~~~~~
 // CHECK:STDERR:
-fn F(U:! type, T:! type) -> U* {
+fn F(generic U: type, generic T: type) -> U* {
   // CHECK:STDERR: fail_rename.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~~~

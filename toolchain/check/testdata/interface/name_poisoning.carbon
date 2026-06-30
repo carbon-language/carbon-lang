@@ -19,9 +19,9 @@ interface I;
 // `N.F` uses `N.I` and not `package.I`.
 namespace N;
 interface N.I {}
-fn N.F(unused x:! I) {}
+fn N.F(unused generic x: I) {}
 
-fn TestCall(x:! N.I) {
+fn TestCall(generic x: N.I) {
   // `N.F` accepts an `N.I` not a `package.I`.
   N.F(x);
 }
@@ -34,7 +34,7 @@ interface I;
 
 namespace N;
 // Use `package.I` and poison `N.I`.
-fn N.F(x:! I);
+fn N.F(generic x: I);
 
 // --- fail_declare_after_poison.carbon
 
@@ -47,7 +47,7 @@ namespace N;
 // CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+3]]:12: error: name `I` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: fn N.F(x:! I);
 // CHECK:STDERR:            ^
-fn N.F(x:! I);
+fn N.F(generic x: I);
 
 // Failure: N.I declared after it was poisoned.
 // CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+4]]:13: note: declared here [NameUseBeforeDeclNote]
@@ -64,13 +64,13 @@ interface I;
 
 namespace N;
 // Use `package.I` and poison `N.I`.
-fn N.F1(x:! I);
+fn N.F1(generic x: I);
 
 // CHECK:STDERR: fail_use_poison.carbon:[[@LINE+4]]:13: error: member name `I` not found in `N` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: fn N.F2(x:! N.I);
 // CHECK:STDERR:             ^~~
 // CHECK:STDERR:
-fn N.F2(x:! N.I);
+fn N.F2(generic x: N.I);
 
 // --- fail_use_declaration_after_poison.carbon
 
@@ -83,7 +83,7 @@ namespace N;
 // CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+3]]:13: error: name `I` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: fn N.F1(x:! I);
 // CHECK:STDERR:             ^
-fn N.F1(x:! I);
+fn N.F1(generic x: I);
 
 // CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:13: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: interface N.I;
@@ -95,7 +95,7 @@ interface N.I;
 // CHECK:STDERR: fn N.F2(x:! N.I);
 // CHECK:STDERR:             ^~~
 // CHECK:STDERR:
-fn N.F2(x:! N.I);
+fn N.F2(generic x: N.I);
 
 // --- fail_alias.carbon
 
@@ -129,7 +129,7 @@ interface I2 {
       // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:16: error: name `I1` used before it was declared [NameUseBeforeDecl]
       // CHECK:STDERR:       fn F(x:! I1);
       // CHECK:STDERR:                ^~
-      fn F(x:! I1);
+      fn F(generic x: I1);
 
       // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:17: note: declared here [NameUseBeforeDeclNote]
       // CHECK:STDERR:       interface I1;
@@ -184,7 +184,7 @@ namespace N;
 // CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+3]]:12: error: name `I` used before it was declared [NameUseBeforeDecl]
 // CHECK:STDERR: fn N.F(x:! I);
 // CHECK:STDERR:            ^
-fn N.F(x:! I);
+fn N.F(generic x: I);
 
 // TODO: We should ideally only produce one diagnostic here.
 // CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:11: note: declared here [NameUseBeforeDeclNote]

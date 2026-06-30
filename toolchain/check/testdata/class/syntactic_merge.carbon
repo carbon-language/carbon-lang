@@ -19,11 +19,11 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-class Foo(a:! C);
-class Foo(a:! C) {}
+class Foo(a: C);
+class Foo(a: C) {}
 
-class Bar(a:! D);
-class Bar(a:! D) {}
+class Bar(a: D);
+class Bar(a: D) {}
 
 // --- spacing.carbon
 
@@ -31,8 +31,8 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-class Foo [ ] ( a :! C );
-class Foo[](a:! C) {}
+class Foo [ ] ( a : C );
+class Foo[](a: C) {}
 
 // --- fail_parens.carbon
 
@@ -40,7 +40,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-class Foo(a:! C);
+class Foo(a: C);
 // CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:15: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: class Foo(a:! (C)) {}
 // CHECK:STDERR:               ^
@@ -48,7 +48,7 @@ class Foo(a:! C);
 // CHECK:STDERR: class Foo(a:! C);
 // CHECK:STDERR:               ^
 // CHECK:STDERR:
-class Foo(a:! (C)) {}
+class Foo(a: (C)) {}
 
 // --- fail_raw_identifier.carbon
 
@@ -56,7 +56,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-class Foo(a:! C);
+class Foo(a: C);
 // CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+7]]:15: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: class Foo(a:! r#C) {}
 // CHECK:STDERR:               ^~~
@@ -64,7 +64,7 @@ class Foo(a:! C);
 // CHECK:STDERR: class Foo(a:! C);
 // CHECK:STDERR:               ^
 // CHECK:STDERR:
-class Foo(a:! r#C) {}
+class Foo(a: r#C) {}
 
 // --- two_file.carbon
 
@@ -73,15 +73,15 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-class Foo(a:! C);
-class Bar(a:! D);
+class Foo(a: C);
+class Bar(a: D);
 
 // --- two_file.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
-class Foo(a:! C) {}
-class Bar(a:! D) {}
+class Foo(a: C) {}
+class Bar(a: D) {}
 
 // --- fail_name_mismatch.carbon
 
@@ -90,7 +90,7 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-class Foo(a:! C);
+class Foo(a: C);
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:11: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: class Foo(b:! D) {}
 // CHECK:STDERR:           ^~~~~
@@ -98,7 +98,7 @@ class Foo(a:! C);
 // CHECK:STDERR: class Foo(a:! C);
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR:
-class Foo(b:! D) {}
+class Foo(b: D) {}
 
 // --- fail_alias.carbon
 
@@ -107,7 +107,7 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-class Foo(a:! C);
+class Foo(a: C);
 // CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:15: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: class Foo(a:! D) {}
 // CHECK:STDERR:               ^
@@ -115,7 +115,7 @@ class Foo(a:! C);
 // CHECK:STDERR: class Foo(a:! C);
 // CHECK:STDERR:               ^
 // CHECK:STDERR:
-class Foo(a:! D) {}
+class Foo(a: D) {}
 
 // --- fail_deduced_alias.carbon
 
@@ -124,7 +124,7 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-class Foo[a:! C]();
+class Foo[a: C]();
 // CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:15: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: class Foo[a:! D]() {}
 // CHECK:STDERR:               ^
@@ -132,7 +132,7 @@ class Foo[a:! C]();
 // CHECK:STDERR: class Foo[a:! C]();
 // CHECK:STDERR:               ^
 // CHECK:STDERR:
-class Foo[a:! D]() {}
+class Foo[a: D]() {}
 
 // --- alias_two_file.carbon
 
@@ -140,7 +140,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-class Foo(a:! C);
+class Foo(a: C);
 
 // --- todo_fail_alias_two_file.impl.carbon
 
@@ -148,7 +148,7 @@ impl library "[[@TEST_NAME]]";
 
 alias D = C;
 
-class Foo(a:! D) {}
+class Foo(a: D) {}
 
 // --- fail_repeat_const.carbon
 
@@ -156,7 +156,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-class Foo(a:! const C);
+class Foo(a: const C);
 // CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:15: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
 // CHECK:STDERR: class Foo(a:! const (const C)) {}
 // CHECK:STDERR:               ^~~~~~~~~~~~~~~
@@ -168,7 +168,7 @@ class Foo(a:! const C);
 // CHECK:STDERR: class Foo(a:! const C);
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:
-class Foo(a:! const (const C)) {}
+class Foo(a: const (const C)) {}
 
 // --- fail_self_type.carbon
 

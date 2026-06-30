@@ -20,7 +20,7 @@ interface Empty {
 }
 
 interface Basic {
-  let T:! type;
+  let T: type;
   fn F();
 }
 
@@ -28,7 +28,7 @@ interface Basic {
 // interface ForwardDeclared;
 
 interface ForwardDeclared {
-  let T:! type;
+  let T: type;
   fn F();
 }
 

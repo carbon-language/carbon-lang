@@ -20,9 +20,9 @@ interface NotGeneric;
 // CHECK:STDERR: interface NotGeneric;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-interface NotGeneric(T:! type) {}
+interface NotGeneric(T: type) {}
 
-interface Generic(T:! type);
+interface Generic(T: type);
 // CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: error: redeclaration differs because of missing parameter list [RedeclParamListDiffers]
 // CHECK:STDERR: interface Generic {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
@@ -32,7 +32,7 @@ interface Generic(T:! type);
 // CHECK:STDERR:
 interface Generic {}
 
-interface DifferentParams(T:! type);
+interface DifferentParams(T: type);
 // CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:27: error: type `<pattern for ()>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for type>` [RedeclParamDiffersType]
 // CHECK:STDERR: interface DifferentParams(T:! ()) {}
 // CHECK:STDERR:                           ^~~~~~
@@ -40,7 +40,7 @@ interface DifferentParams(T:! type);
 // CHECK:STDERR: interface DifferentParams(T:! type);
 // CHECK:STDERR:                           ^~~~~~~~
 // CHECK:STDERR:
-interface DifferentParams(T:! ()) {}
+interface DifferentParams(T: ()) {}
 
 // CHECK:STDOUT: --- fail_generic_redeclaration.carbon
 // CHECK:STDOUT:

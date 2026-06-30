@@ -18,7 +18,7 @@ library "[[@TEST_NAME]]";
 class C;
 
 interface I {
-  let T:! C;
+  let T: C;
 }
 
 // --- fail_incomplete_type_impl.carbon
@@ -27,7 +27,7 @@ library "[[@TEST_NAME]]";
 class C;
 
 interface I {
-  let T:! C;
+  let T: C;
 }
 
 // CHECK:STDERR: fail_incomplete_type_impl.carbon:[[@LINE+7]]:26: error: invalid use of incomplete type `C` [IncompleteTypeInConversion]
@@ -45,10 +45,10 @@ library "[[@TEST_NAME]]";
 class C;
 
 interface I {
-  let T:! C;
+  let T: C;
 }
 
-fn F[U:! I](a: U) {
+fn F[U: I](a: U) {
   // TODO: Should this be diagnosed as having an incomplete type?
   a.T;
 }
@@ -86,7 +86,7 @@ interface A {
 // --- fail_extend_require_enclosing_generic.carbon
 library "[[@TEST_NAME]]";
 
-interface A(T:! type) {
+interface A(T: type) {
   // CHECK:STDERR: fail_extend_require_enclosing_generic.carbon:[[@LINE+7]]:24: error: `extend require` of incomplete facet type `A({})` [RequireImplsIncompleteFacetType]
   // CHECK:STDERR:   extend require impls A({});
   // CHECK:STDERR:                        ^~~~~

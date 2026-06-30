@@ -18,7 +18,7 @@ library "[[@TEST_NAME]]";
 
 class B;
 
-class A(T:! type) {
+class A(T: type) {
   var v: T;
 }
 
@@ -49,7 +49,7 @@ library "[[@TEST_NAME]]";
 
 class B;
 
-fn F(T:! type, v: T*) {
+fn F(generic T: type, v: T*) {
   *v;
 }
 
@@ -64,7 +64,7 @@ library "[[@TEST_NAME]]";
 
 class B;
 
-fn F(T:! type, p: T*) {
+fn F(generic T: type, p: T*) {
   let _: T = *p;
 }
 

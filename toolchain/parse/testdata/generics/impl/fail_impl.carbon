@@ -70,19 +70,19 @@ impl forall f16 as Quux;
 // CHECK:STDERR: impl forall [T:! type] str;
 // CHECK:STDERR:                           ^
 // CHECK:STDERR:
-impl forall [T:! type] str;
+impl forall [T: type] str;
 
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:26: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR: impl forall [T:! type] T missing_as;
 // CHECK:STDERR:                          ^~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] T missing_as;
+impl forall [T: type] T missing_as;
 
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:39: error: `impl` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
 // CHECK:STDERR: impl forall [T:! type] T as Interface extra;
 // CHECK:STDERR:                                       ^~~~~
 // CHECK:STDERR:
-impl forall [T:! type] T as Interface extra;
+impl forall [T: type] T as Interface extra;
 
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:5: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: impl;

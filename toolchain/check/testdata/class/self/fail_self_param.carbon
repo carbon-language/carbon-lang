@@ -19,7 +19,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: class C(self:! type, x:! self) {}
 // CHECK:STDERR:         ^~~~~~~~~~~
 // CHECK:STDERR:
-class C(self:! type, x:! self) {}
+class C(self: type, x: self) {}
 // CHECK:STDERR: fail_self_param.carbon:[[@LINE+7]]:8: error: 1 argument passed to generic class expecting 2 arguments [CallArgCountMismatch]
 // CHECK:STDERR: var v: C(());
 // CHECK:STDERR:        ^~~~~
@@ -42,5 +42,5 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: class C[self:! type](x:! self) {}
 // CHECK:STDERR:         ^~~~~~~~~~~
 // CHECK:STDERR:
-class C[self:! type](x:! self) {}
+class C[self: type](x: self) {}
 var v: C(());

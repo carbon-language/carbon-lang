@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-fn F(T:! type, p: T**) -> T* {
+fn F(generic T: type, p: T**) -> T* {
   //@dump-sem-ir-begin
   return *p;
   //@dump-sem-ir-end

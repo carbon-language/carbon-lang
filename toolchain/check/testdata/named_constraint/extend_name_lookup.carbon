@@ -22,7 +22,7 @@ constraint W {
 }
 
 //@dump-sem-ir-begin
-fn F(T:! W) {
+fn F(generic T: W) {
   // Extends Z.
   T.ZF();
   // Does not extend Y.
@@ -39,7 +39,7 @@ constraint W {
   require impls Z;
 }
 
-fn F(T:! W) {
+fn F(generic T: W) {
   // Does not extend Z.
 interface Y { fn YF(); }
   // CHECK:STDERR: fail_name_lookup_in_constraint_does_not_extend.carbon:[[@LINE+4]]:3: error: member name `ZF` not found in `W` [MemberNameNotFoundInSpecificScope]
@@ -61,7 +61,7 @@ constraint W {
 }
 
 //@dump-sem-ir-begin
-fn F(T:! type where .Self impls W) {
+fn F(generic T: type where .Self impls W) {
   // T does not extend Z.
   T.(Z.ZF)();
   // T does not extend Y.
@@ -80,7 +80,7 @@ constraint W {
   require impls Y;
 }
 
-fn F(T:! type where .Self impls W) {
+fn F(generic T: type where .Self impls W) {
   // T does not extend Z.
   // CHECK:STDERR: fail_name_lookup_in_facet_type_does_not_extend.carbon:[[@LINE+4]]:3: error: member name `ZF` not found [MemberNameNotFound]
   // CHECK:STDERR:   T.ZF();

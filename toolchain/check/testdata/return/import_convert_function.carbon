@@ -16,7 +16,7 @@
 
 package P library "[[@TEST_NAME]]";
 
-class C(N:! i32) {}
+class C(N: i32) {}
 class D { var n: i32; var m: i32; }
 fn Make() -> D { return {.n = 0, .m = 0}; }
 

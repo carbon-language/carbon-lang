@@ -52,7 +52,7 @@ impl C as B {
   fn BB(unused self) {}
 }
 
-fn G[T:! A & B](unused t: T) {}
+fn G[T: A & B](unused t: T) {}
 
 fn F() {
   ({} as C).((A & B).BB)();
@@ -66,7 +66,7 @@ fn F() {
 // --- generic_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface A(T:! type) {}
+interface A(T: type) {}
 interface B {}
 
 class P1 {}
@@ -76,7 +76,7 @@ class C {}
 impl C as A(P1) {}
 impl C as B {}
 
-fn G[T:! A(P1) & B](unused t: T) {}
+fn G[T: A(P1) & B](unused t: T) {}
 
 fn F() {
   G({} as C);
@@ -85,7 +85,7 @@ fn F() {
 // --- fail_wrong_generic_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface A(T:! type) {}
+interface A(T: type) {}
 interface B {}
 
 class P1 {}
@@ -95,7 +95,7 @@ class C {}
 impl C as A(P1) {}
 impl C as B {}
 
-fn G[T:! A(P2) & B](unused t: T) {}
+fn G[T: A(P2) & B](unused t: T) {}
 
 fn F() {
   // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `A(P2) & B` [ConversionFailureTypeToFacet]
@@ -112,9 +112,9 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface Iface {}
-interface GenericIface(T:! type) {}
+interface GenericIface(T: type) {}
 
-class GenericClass(T:! type) {}
+class GenericClass(T: type) {}
 
 class ImplIface {}
 impl ImplIface as Iface {}
@@ -122,9 +122,9 @@ impl ImplIface as Iface {}
 class C {}
 impl C as Iface {}
 
-impl forall [IfaceType:! Iface] C as GenericIface(GenericClass(IfaceType)) {}
+impl forall [IfaceType: Iface] C as GenericIface(GenericClass(IfaceType)) {}
 
-fn G[T:! Iface & GenericIface(GenericClass(ImplIface))](unused t: T) {}
+fn G[T: Iface & GenericIface(GenericClass(ImplIface))](unused t: T) {}
 
 fn F() {
   G({} as C);
@@ -133,13 +133,13 @@ fn F() {
 // --- compare_equal.carbon
 library "[[@TEST_NAME]]";
 
-class WrapType(T:! type) {}
-fn AssertSame[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-fn Type(T:! type) -> WrapType(T) { return {}; }
+class WrapType(T: type) {}
+fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+fn Type(generic T: type) -> WrapType(T) { return {}; }
 
 interface I;
 interface J;
-interface K(T:! type);
+interface K(T: type);
 
 fn TestIncomplete() {
   AssertSame(Type(I), Type(I & I));
@@ -154,7 +154,7 @@ fn TestIncomplete() {
 
 interface I {}
 interface J {}
-interface K(T:! type) {}
+interface K(T: type) {}
 
 fn TestComplete() {
   AssertSame(Type(I), Type(I & I));
@@ -170,9 +170,9 @@ fn TestComplete() {
 // --- fail_compare_not_equal.carbon
 library "[[@TEST_NAME]]";
 
-class WrapType(T:! type) {}
-fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-fn Type(T:! type) -> WrapType(T) { return {}; }
+class WrapType(T: type) {}
+fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+fn Type(generic T: type) -> WrapType(T) { return {}; }
 
 interface I {}
 interface J {}
@@ -192,12 +192,12 @@ fn Test() {
 // --- fail_compare_not_equal_parameterized.carbon
 library "[[@TEST_NAME]]";
 
-class WrapType(T:! type) {}
-fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-fn Type(T:! type) -> WrapType(T) { return {}; }
+class WrapType(T: type) {}
+fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+fn Type(generic T: type) -> WrapType(T) { return {}; }
 
 interface I {}
-interface J(T:! type) {}
+interface J(T: type) {}
 
 fn Test() {
   // CHECK:STDERR: fail_compare_not_equal_parameterized.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
@@ -213,12 +213,12 @@ fn Test() {
 // --- fail_compare_not_equal_parameterized_extra.carbon
 library "[[@TEST_NAME]]";
 
-class WrapType(T:! type) {}
-fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-fn Type(T:! type) -> WrapType(T) { return {}; }
+class WrapType(T: type) {}
+fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+fn Type(generic T: type) -> WrapType(T) { return {}; }
 
 interface I {}
-interface J(T:! type) {}
+interface J(T: type) {}
 
 fn Test() {
   // CHECK:STDERR: fail_compare_not_equal_parameterized_extra.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]

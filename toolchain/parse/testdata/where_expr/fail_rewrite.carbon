@@ -17,7 +17,7 @@
 // CHECK:STDERR: fn NotDesignator(T:! type where i32 = .U);
 // CHECK:STDERR:                                     ^
 // CHECK:STDERR:
-fn NotDesignator(T:! type where i32 = .U);
+fn NotDesignator(generic T: type where i32 = .U);
 
 // --- fail_designator_in_parens.carbon
 
@@ -25,7 +25,7 @@ fn NotDesignator(T:! type where i32 = .U);
 // CHECK:STDERR: fn DesignatorInParens(V:! I where (.J) = bool);
 // CHECK:STDERR:                                        ^
 // CHECK:STDERR:
-fn DesignatorInParens(V:! I where (.J) = bool);
+fn DesignatorInParens(generic V: I where (.J) = bool);
 
 // --- fail_dot_self.carbon
 
@@ -33,7 +33,7 @@ fn DesignatorInParens(V:! I where (.J) = bool);
 // CHECK:STDERR: fn DotSelf(W:! K where .Self = f32);
 // CHECK:STDERR:                              ^
 // CHECK:STDERR:
-fn DotSelf(W:! K where .Self = f32);
+fn DotSelf(generic W: K where .Self = f32);
 
 // --- fail_dot_keyword.carbon
 
@@ -41,7 +41,7 @@ fn DotSelf(W:! K where .Self = f32);
 // CHECK:STDERR: fn DotKeyword(W:! K where .and = u8);
 // CHECK:STDERR:                            ^~~
 // CHECK:STDERR:
-fn DotKeyword(W:! K where .and = u8);
+fn DotKeyword(generic W: K where .and = u8);
 
 // --- fail_postfix_after_designator.carbon
 
@@ -49,7 +49,7 @@ fn DotKeyword(W:! K where .and = u8);
 // CHECK:STDERR: fn PostfixAfterDesignator(X:! L where .M* = u64*);
 // CHECK:STDERR:                                           ^
 // CHECK:STDERR:
-fn PostfixAfterDesignator(X:! L where .M* = u64*);
+fn PostfixAfterDesignator(generic X: L where .M* = u64*);
 
 // --- fail_binary_op_after_designator.carbon
 
@@ -57,7 +57,7 @@ fn PostfixAfterDesignator(X:! L where .M* = u64*);
 // CHECK:STDERR: fn BinaryOpAfterDesignator(Y:! N where .O + .P = {});
 // CHECK:STDERR:                                                ^
 // CHECK:STDERR:
-fn BinaryOpAfterDesignator(Y:! N where .O + .P = {});
+fn BinaryOpAfterDesignator(generic Y: N where .O + .P = {});
 
 // --- fail_after_and.carbon
 
@@ -65,7 +65,7 @@ fn BinaryOpAfterDesignator(Y:! N where .O + .P = {});
 // CHECK:STDERR: fn AfterAnd(Z:! Q where .R impls S and () = .A);
 // CHECK:STDERR:                                           ^
 // CHECK:STDERR:
-fn AfterAnd(Z:! Q where .R impls S and () = .A);
+fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 
 // CHECK:STDOUT: - filename: fail_not_designator.carbon
 // CHECK:STDOUT:   parse_tree: [

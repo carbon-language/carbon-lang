@@ -13,11 +13,11 @@
 interface Z {}
 
 //@dump-sem-ir-begin
-constraint Empty(T:! type) {}
+constraint Empty(T: type) {}
 
-fn F(T:! type, unused U:! Empty(T)) {}
+fn F(generic T: type, unused generic U: Empty(T)) {}
 
-fn G(T:! Z, U:! Empty(T), V:! type) {
+fn G(generic T: Z, generic U: Empty(T), generic V: type) {
   F(T, {} as type);
   F(T, type);
   F(T, T);

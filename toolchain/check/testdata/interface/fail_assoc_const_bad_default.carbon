@@ -20,7 +20,7 @@ interface I {
   // CHECK:STDERR:   let T:! type = 42;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let T:! type = 42;
+  let T: type = 42;
 }
 
 // CHECK:STDOUT: --- fail_assoc_const_bad_default.carbon

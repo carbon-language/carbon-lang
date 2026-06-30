@@ -14,7 +14,7 @@
 library "[[@TEST_NAME]]";
 
 interface J {
-  let U:! type;
+  let U: type;
   //@dump-sem-ir-begin
   fn F(self, u: U) -> U;
   //@dump-sem-ir-end
@@ -47,7 +47,7 @@ impl C as J where .U = C {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let U:! type;
+  let U: type;
   fn F(u: U) -> U;
 }
 
@@ -65,7 +65,7 @@ fn CallFunction() -> i32 {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let U:! type;
+  let U: type;
   fn F(u: U) -> U;
   fn G(self, v: U) -> U;
 }
@@ -91,7 +91,7 @@ fn CallBoth(e: E) {
   //@dump-sem-ir-end
 }
 
-fn GenericCallF[T:! J](t: T, u: T.U) -> T.U {
+fn GenericCallF[T: J](t: T, u: T.U) -> T.U {
   return t.F(u);
 }
 
@@ -107,11 +107,11 @@ interface I {
 }
 
 interface J {
-  let U:! I & Core.Destroy;
+  let U: I & Core.Destroy;
   fn F(u: U) -> U;
 }
 
-fn GenericResult[T:! J](t: T, u: T.U) -> T.U {
+fn GenericResult[T: J](t: T, u: T.U) -> T.U {
   return t.F(u).(I.Op)(T.F(u));
 }
 
@@ -119,11 +119,11 @@ fn GenericResult[T:! J](t: T, u: T.U) -> T.U {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let U:! type;
+  let U: type;
   fn G(self, v: U) -> U;
 }
 
-fn GenericCallInterfaceQualified[T:! J](t: T, u: T.U) -> T.U {
+fn GenericCallInterfaceQualified[T: J](t: T, u: T.U) -> T.U {
   return t.(J.G)(u);
 }
 
@@ -131,11 +131,11 @@ fn GenericCallInterfaceQualified[T:! J](t: T, u: T.U) -> T.U {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let U:! type;
+  let U: type;
   fn F(u: U) -> U;
 }
 
-fn GenericCallFI32[T:! J where .U = i32](t: T) -> i32 {
+fn GenericCallFI32[T: J where .U = i32](t: T) -> i32 {
   return t.F(2);
 }
 
@@ -160,7 +160,7 @@ impl E as J {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let U:! type;
+  let U: type;
   fn F(u: U) -> U;
 }
 
@@ -212,7 +212,7 @@ class E {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let X:! type;
+  let X: type;
 }
 
 class E {
@@ -227,13 +227,13 @@ class E {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let T:! type;
+  let T: type;
   fn F() -> T;
 }
 
 class A {}
 
-class E(T:! type) {
+class E(T: type) {
   extend impl as J where .T = A {
     // This `T` names the interface's `T` (extended by the `impl`), not the
     // class's `T` parameter.
@@ -243,7 +243,7 @@ class E(T:! type) {
   }
 }
 
-impl forall [T:! type] T as J where .T = () {
+impl forall [T: type] T as J where .T = () {
   // This `T` names the interface's `T` (extended by the `impl`), not the
   // class's `T` parameter.
   //
@@ -260,8 +260,8 @@ impl forall [T:! type] T as J where .T = () {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let T:! type;
-  let U:! type;
+  let T: type;
+  let U: type;
 }
 
 class A {}
@@ -362,7 +362,7 @@ impl A as J {
 library "[[@TEST_NAME]]";
 
 interface J2 {
-  let U2:! type;
+  let U2: type;
   // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE+14]]:17: error: member access into facet of incomplete type `J2` [IncompleteTypeInMemberAccessOfFacet]
   // CHECK:STDERR:   fn F(self, z: Self.U2) -> Self.U2;
   // CHECK:STDERR:                 ^~~~
@@ -398,7 +398,7 @@ impl C2 as J2 where .U2 = C2 {
 library "[[@TEST_NAME]]";
 
 interface K {
-  let V:! type;
+  let V: type;
   fn F(self, v: V) -> V;
 }
 
@@ -424,7 +424,7 @@ impl () as K where .V = {.a: ()} {
 library "[[@TEST_NAME]]";
 
 interface M {
-  let Z:! {.b: {}};
+  let Z: {.b: {}};
   fn G() -> {};
 }
 
@@ -439,10 +439,10 @@ impl () as M where .Z = {.b = {}} {
 // --- self_as_uses_correct_rewrite_constraint.carbon
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {}
+class C(T: type) {}
 
 interface M {
-  let Z:! {.b: type};
+  let Z: {.b: type};
   fn G() -> type;
 }
 
@@ -462,7 +462,7 @@ impl C(()) as M where .Z = {.b = ()} {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let N:! i32;
+  let N: i32;
   fn F(self) -> array(bool, N);
 }
 
@@ -474,13 +474,13 @@ impl () as I where .N = 2 {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
-class C(T:! type) {}
+class C(T: type) {}
 class D {}
 
-impl forall [T:! type] T as Z where .X = C(T) {}
+impl forall [T: type] T as Z where .X = C(T) {}
 
 fn F() {
   let unused a: D.(Z.X) = {} as C(D);

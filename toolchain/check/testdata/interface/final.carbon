@@ -17,12 +17,12 @@ library "[[@TEST_NAME]]";
 interface I { fn F(); }
 interface J {}
 
-final impl forall [T:! J] T as I { fn F() {} }
+final impl forall [T: J] T as I { fn F() {} }
 
 // This is creating an indirection where the `final impl` requires an indirect
 // instantiation by the caller.
-fn UseI(T:! I) { T.F(); }
-fn UseJ(T:! J) { UseI(T); }
+fn UseI(generic T: I) { T.F(); }
+fn UseJ(generic T: J) { UseI(T); }
 
 class C {}
 impl C as J {}

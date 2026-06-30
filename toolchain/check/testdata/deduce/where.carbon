@@ -14,12 +14,12 @@
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
+  let Z1: type;
 }
 
-class C(unused T:! type) {}
+class C(unused T: type) {}
 
-fn F[U:! type](unused T:! Z where .Z1 = C(U)) {}
+fn F[U: type](unused generic T: Z where .Z1 = C(U)) {}
 
 class D {}
 final impl () as Z where .Z1 = C(D) {}

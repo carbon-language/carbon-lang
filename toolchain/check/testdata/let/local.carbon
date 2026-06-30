@@ -33,7 +33,7 @@ fn CallF() {
   // CHECK:STDERR:   let c:! C = {};
   // CHECK:STDERR:       ^~~~~
   // CHECK:STDERR:
-  let c:! C = {};
+  let generic c: C = {};
   F(c);
   //@dump-sem-ir-end
 }

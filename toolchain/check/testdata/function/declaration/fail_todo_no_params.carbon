@@ -75,7 +75,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: var x:! () = ();
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
-var x:! () = ();
+var generic x: () = ();
 
 fn A {
   A();

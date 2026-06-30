@@ -28,7 +28,7 @@ struct A {
 };
 ''';
 
-fn CheckEqWith[U:! type, T:! Core.EqWith(U)](x: T, y: U) {
+fn CheckEqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
   x == y;
   x != y;
 }
@@ -63,7 +63,7 @@ struct A {
 };
 ''';
 
-fn CheckOrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
+fn CheckOrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   x < y;
   x > y;
   x <= y;

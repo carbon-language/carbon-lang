@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/call_method_on_generic_facet.carbon
 
-interface Generic(Scalar:! type) {
+interface Generic(Scalar: type) {
   fn F();
 }
 
@@ -30,7 +30,7 @@ impl ImplsGeneric as Other {
   fn G();
 }
 
-fn CallGenericMethod(T:! type, U:! Generic(T)) {
+fn CallGenericMethod(generic T: type, generic U: Generic(T)) {
   U.F();
 }
 

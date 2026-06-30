@@ -232,7 +232,7 @@ import Cpp inline '''
 class Class1;
 ''';
 
-class Generic(x:! Core.Copy) {
+class Generic(x: Core.Copy) {
 }
 
 // CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE+14]]:19: error: argument to C++ call has incomplete type `Cpp.Class1` [IncompleteTypeInCopyWitness]

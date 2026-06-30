@@ -17,7 +17,7 @@
 library "[[@TEST_NAME]]";
 
 fn F() {
-  class C(T:! type) {
+  class C(T: type) {
     var x: T;
   }
   var unused v: C(i32) = {.x = 1};
@@ -36,7 +36,7 @@ fn F() {
   // CHECK:STDERR:   class C(C:! type) {
   // CHECK:STDERR:           ^~~~~~~~
   // CHECK:STDERR:
-  class C(C:! type) {
+  class C(C: type) {
   }
 }
 
@@ -44,7 +44,7 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-class C(C:! type) {
+class C(C: type) {
 }
 
 // CHECK:STDOUT: --- class.carbon

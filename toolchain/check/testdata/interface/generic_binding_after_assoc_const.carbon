@@ -13,11 +13,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/generic_binding_after_assoc_const.carbon
 
 interface I {
-  fn F(T:! type);
-  let U:! type;
+  fn F(generic T: type);
+  let U: type;
   // This `T` should have index 1, just like the `T` above.
-  // The intervening `U:! type` should not cause this to have index 2.
-  fn G(T:! type);
+  // The intervening `U: type` should not cause this to have index 2.
+  fn G(generic T: type);
 }
 
 // CHECK:STDOUT: --- generic_binding_after_assoc_const.carbon

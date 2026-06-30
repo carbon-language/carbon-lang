@@ -30,7 +30,7 @@ impl C as B {
   fn BB() {}
 }
 
-fn G[T:! A & Empty & B](t: T) {
+fn G[T: A & Empty & B](t: T) {
   t.AA();
   t.BB();
 

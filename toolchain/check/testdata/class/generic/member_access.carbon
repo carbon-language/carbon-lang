@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-class Class(T:! Core.Copy) {
+class Class(T: Core.Copy) {
   var x: T;
 
   fn Get(self) -> T {
@@ -52,11 +52,11 @@ fn AddrMethodCall(p: Class(i32)*) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-class Class(T:! type) {
+class Class(T: type) {
   fn Make() -> Class(T) { return {}; }
 }
 
-fn StaticMemberFunctionCall(T:! type) -> Class(T) {
+fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
   //@dump-sem-ir-begin
   return Class(T).Make();
   //@dump-sem-ir-end

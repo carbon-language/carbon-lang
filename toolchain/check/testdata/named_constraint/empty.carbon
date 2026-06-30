@@ -16,13 +16,13 @@ constraint Empty {}
 // Like `type`.
 //
 //@dump-sem-ir-begin
-fn F(unused T:! Empty) {}
+fn F(unused generic T: Empty) {}
 //@dump-sem-ir-end
 
 interface Z {}
 
 //@dump-sem-ir-begin
-fn G(T:! Z, U:! type, V:! Empty) {
+fn G(generic T: Z, generic U: type, generic V: Empty) {
   F({});
   F(type);
   F(T);

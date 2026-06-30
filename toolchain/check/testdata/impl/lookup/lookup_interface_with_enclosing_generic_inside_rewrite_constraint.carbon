@@ -61,12 +61,12 @@ library "[[@TEST_NAME]]";
 //    the specific ids in the query interface and the facet type will continue
 //    to match after substitution.
 
-class Outer(OuterParam:! type) {
+class Outer(OuterParam: type) {
   interface Y {
-    let T:! type;
+    let T: type;
   }
 
-  fn G(unused H:! Y where .T = ()) {}
+  fn G(unused generic H: Y where .T = ()) {}
 }
 
 class C;
@@ -82,12 +82,12 @@ library "[[@TEST_NAME]]";
 interface Z1 {}
 interface Z2 {}
 
-class Outer(OuterParam:! Z1) {
+class Outer(OuterParam: Z1) {
   interface Y {
-    let T:! type;
+    let T: type;
   }
 
-  fn G(unused H:! Y where .T = ()) {}
+  fn G(unused generic H: Y where .T = ()) {}
 
   class C;
   impl C as Y where .T = () {}

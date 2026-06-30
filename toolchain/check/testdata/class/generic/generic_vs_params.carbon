@@ -18,11 +18,11 @@ library "[[@TEST_NAME]]";
 
 class NotGenericNoParams {}
 class NotGenericButParams() {}
-class GenericAndParams(T:! type) {}
+class GenericAndParams(T: type) {}
 
-class C(T:! type) {
+class C(T: type) {
   class GenericNoParams {}
-  class GenericAndParams(U:! type) {}
+  class GenericAndParams(U: type) {}
 }
 
 class X {}
@@ -41,7 +41,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: class A[T: type]() {}
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
-class A[T: type]() {}
+class A[runtime T: type]() {}
 
 // --- fail_non_generic_params.carbon
 
@@ -51,10 +51,10 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: class A(T: type) {}
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
-class A(T: type) {}
+class A(runtime T: type) {}
 
 // This is testing a use of the invalid type.
-fn F(T:! type) {
+fn F(generic T: type) {
   A(T);
 }
 
@@ -76,7 +76,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: class Foo[T:! type];
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
-class Foo[T:! type];
+class Foo[T: type];
 
 // CHECK:STDOUT: --- params.carbon
 // CHECK:STDOUT:

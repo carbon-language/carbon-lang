@@ -15,16 +15,16 @@
 // --- interface.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let T:! type; }
+interface I { let T: type; }
 
 interface I3 {
-  let T1:! type;
-  let T2:! type;
-  let T3:! type;
+  let T1: type;
+  let T2: type;
+  let T3: type;
 }
 
 interface NonType {
-  let Y:! {.a: {}};
+  let Y: {.a: {}};
 }
 
 // --- basic.carbon

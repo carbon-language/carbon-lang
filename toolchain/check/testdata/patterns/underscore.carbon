@@ -43,7 +43,7 @@ fn H() {
 
 library "[[@TEST_NAME]]";
 
-fn F(_:! type) {};
+fn F(generic _: type) {};
 
 fn G() {
   F({});
@@ -53,7 +53,7 @@ fn G() {
 
 library "[[@TEST_NAME]]";
 
-fn F(_:! type);
+fn F(generic _: type);
 
 fn G() {
   // CHECK:STDERR: fail_function_generic_undefined.carbon:[[@LINE+7]]:3: error: use of undefined generic function [MissingGenericFunctionDefinition]
@@ -70,9 +70,9 @@ fn G() {
 
 library "[[@TEST_NAME]]";
 
-fn F[_:! type]();
+fn F[_: type]();
 
-fn G[_:! type]() {}
+fn G[_: type]() {}
 
 // --- fail_class.carbon
 

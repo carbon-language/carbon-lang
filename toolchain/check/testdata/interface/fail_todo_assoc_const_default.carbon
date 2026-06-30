@@ -17,12 +17,12 @@ interface I {
   // CHECK:STDERR:   default let T:! type = (i32, i32);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  default let T:! type = (i32, i32);
+  default let T: type = (i32, i32);
   // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
   // CHECK:STDERR:   default let N:! i32 = 42;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  default let N:! i32 = 42;
+  default let N: i32 = 42;
 }
 
 // CHECK:STDOUT: --- fail_todo_assoc_const_default.carbon

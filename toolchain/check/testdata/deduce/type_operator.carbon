@@ -18,7 +18,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-fn F[T:! type](p: T*) -> T { return F(p); }
+fn F[T: type](p: T*) -> T { return F(p); }
 
 fn G(p: C*) -> C {
   return F(p);
@@ -30,7 +30,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-fn F[T:! type](p: const T*) -> T { return F(p); }
+fn F[T: type](p: const T*) -> T { return F(p); }
 
 fn G(p: const C*) -> C {
   return F(p);
@@ -42,7 +42,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-fn F[T:! type](p: T*) -> T { return F(p); }
+fn F[T: type](p: T*) -> T { return F(p); }
 
 fn G(p: const C*) -> const C {
   return F(p);
@@ -54,7 +54,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-fn F[T:! type](p: const T*) -> T { return F(p); }
+fn F[T: type](p: const T*) -> T { return F(p); }
 
 fn G(p: C*) -> const C {
   // CHECK:STDERR: fail_const_from_nonconst.carbon:[[@LINE+7]]:10: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]

@@ -14,9 +14,9 @@
 
 package Core;
 
-interface FloatFitsIn(Dest:! type) {}
+interface FloatFitsIn(Dest: type) {}
 
-fn CheckFitsIn[U:! type, T:! FloatFitsIn(U)](unused t: T, unused u: U) {}
+fn CheckFitsIn[U: type, T: FloatFitsIn(U)](unused t: T, unused u: U) {}
 
 // --- valid.carbon
 

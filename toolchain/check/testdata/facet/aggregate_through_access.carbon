@@ -14,14 +14,14 @@
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
 // CHECK:STDERR: fail_todo_tuple_access_through_witness.carbon:[[@LINE+4]]:34: error: type `type` does not support tuple indexing; only tuples can be indexed that way [TupleIndexOnANonTupleType]
 // CHECK:STDERR: fn F(T:! Z where .X = ({}, )) -> T.X.0 {
 // CHECK:STDERR:                                  ^~~~~
 // CHECK:STDERR:
-fn F(T:! Z where .X = ({}, )) -> T.X.0 {
+fn F(generic T: Z where .X = ({}, )) -> T.X.0 {
   return {};
 }
 
@@ -29,14 +29,14 @@ fn F(T:! Z where .X = ({}, )) -> T.X.0 {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
 // CHECK:STDERR: fail_todo_struct_access_through_witness.carbon:[[@LINE+4]]:36: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
 // CHECK:STDERR: fn F(T:! Z where .X = {.t: ()}) -> T.X.t {
 // CHECK:STDERR:                                    ^~~~~
 // CHECK:STDERR:
-fn F(T:! Z where .X = {.t: ()}) -> T.X.t {
+fn F(generic T: Z where .X = {.t: ()}) -> T.X.t {
   return ();
 }
 
@@ -44,14 +44,14 @@ fn F(T:! Z where .X = {.t: ()}) -> T.X.t {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
 // CHECK:STDERR: fail_todo_array_access_through_witness.carbon:[[@LINE+4]]:40: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `type` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: fn F(T:! Z where .X = array({}, 1)) -> T.X[0] {
 // CHECK:STDERR:                                        ^~~~~~
 // CHECK:STDERR:
-fn F(T:! Z where .X = array({}, 1)) -> T.X[0] {
+fn F(generic T: Z where .X = array({}, 1)) -> T.X[0] {
   return {};
 }
 
@@ -59,16 +59,16 @@ fn F(T:! Z where .X = array({}, 1)) -> T.X[0] {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X1:! type;
+  let X1: type;
 }
 
 interface Y {
-  let X2:! type;
+  let X2: type;
 }
 
 class C;
 impl C as Y where .X2 = {} {}
 
-fn F(T:! Z where .X1 = C) -> T.X1.(Y.X2) {
+fn F(generic T: Z where .X1 = C) -> T.X1.(Y.X2) {
   return {};
 }

@@ -64,7 +64,7 @@ class C {}
 // CHECK:STDERR: fn Foo[a: C];
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Foo[a: C];
+fn Foo[runtime a: C];
 // CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
 // CHECK:STDERR: fn Foo[a: (C)] {}
 // CHECK:STDERR:        ^~~~~~
@@ -73,7 +73,7 @@ fn Foo[a: C];
 // CHECK:STDERR: fn Foo[a: (C)] {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Foo[a: (C)] {}
+fn Foo[runtime a: (C)] {}
 
 // --- fail_raw_identifier.carbon
 
@@ -149,7 +149,7 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-fn Foo[a:! C]();
+fn Foo[a: C]();
 // CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: fn Foo[unused a:! D]() {}
 // CHECK:STDERR:                   ^
@@ -157,7 +157,7 @@ fn Foo[a:! C]();
 // CHECK:STDERR: fn Foo[a:! C]();
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
-fn Foo[unused a:! D]() {}
+fn Foo[unused a: D]() {}
 
 // --- todo_fail_alias_in_return.carbon
 

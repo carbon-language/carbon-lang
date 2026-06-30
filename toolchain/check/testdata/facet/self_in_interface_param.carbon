@@ -10,17 +10,17 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/facet/self_in_interface_param.carbon
 
-interface I(T:! type) {
-  let I1:! type;
+interface I(T: type) {
+  let I1: type;
 }
 
 //@dump-sem-ir-begin
-fn F(T:! I(.Self) where .I1 = ()) -> T.I1 {
+fn F(generic T: I(.Self) where .I1 = ()) -> T.I1 {
   return ();
 }
 //@dump-sem-ir-end
 
-fn G(_:! I(.Self) where .I1 = ()) {}
+fn G(generic _: I(.Self) where .I1 = ()) {}
 
 // CHECK:STDOUT: --- self_in_interface_param.carbon
 // CHECK:STDOUT:

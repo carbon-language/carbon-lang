@@ -19,8 +19,8 @@ interface I {
 
   // TODO: An associated constant with an initializer without `default` in an
   // interface should be rejected.
-  let T:! type = (i32, i32);
-  let N:! i32 = 42;
+  let T: type = (i32, i32);
+  let N: i32 = 42;
 }
 
 // CHECK:STDOUT: --- todo_define_not_default.carbon

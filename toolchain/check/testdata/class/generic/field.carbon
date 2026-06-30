@@ -15,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-class Class(T:! type) {
+class Class(T: type) {
   var x: T;
 }
 
@@ -23,11 +23,11 @@ fn F(c: Class(i32)) -> i32 {
   return c.x;
 }
 
-fn G(T:! Core.Copy, c: Class(T)) -> T {
+fn G(generic T: Core.Copy, c: Class(T)) -> T {
   return c.x;
 }
 
-fn H(U:! Core.Copy, c: Class(U)) -> U {
+fn H(generic U: Core.Copy, c: Class(U)) -> U {
   return c.x;
 }
 //@dump-sem-ir-end

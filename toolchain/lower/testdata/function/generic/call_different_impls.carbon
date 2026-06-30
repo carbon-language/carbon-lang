@@ -26,7 +26,7 @@ impl Y as I {
 
 // Cannot coalesce the lowering for G specifics, as they call different functions.
 // Check different functions are still emitted when trying to deduplicate emitted definitons.
-fn G(T:! I) { T.F(); }
+fn G(generic T: I) { T.F(); }
 
 fn Run() {
   G(X);

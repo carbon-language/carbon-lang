@@ -13,9 +13,9 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
-  final let I:! i32;
-  default let D:! bool;
+  let T: type;
+  final let I: i32;
+  default let D: bool;
 }
 
 // --- initializer.carbon
@@ -23,9 +23,9 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type = (i32, i32);
-  final let I:! i32 = 42;
-  default let D:! bool = false;
+  let T: type = (i32, i32);
+  final let I: i32 = 42;
+  default let D: bool = false;
 }
 
 // CHECK:STDOUT: - filename: associated_constants.carbon

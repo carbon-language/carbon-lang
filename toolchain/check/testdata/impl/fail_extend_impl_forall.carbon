@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_extend_impl_forall.carbon
 
-interface GenericInterface(T:! type) {
+interface GenericInterface(T: type) {
   fn F(x: T);
 }
 
@@ -21,7 +21,7 @@ class C {
   // CHECK:STDERR:   extend impl forall [T:! type] as GenericInterface(T) {
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
-  extend impl forall [T:! type] as GenericInterface(T) {
+  extend impl forall [T: type] as GenericInterface(T) {
     fn F(unused x: T) {}
   }
 }

@@ -14,9 +14,9 @@
 
 package Core;
 
-interface IntFitsIn(Dest:! type) {}
+interface IntFitsIn(Dest: type) {}
 
-fn CheckFitsIn[U:! type, T:! IntFitsIn(U)](unused t: T, unused u: U) {}
+fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
 
 // --- valid.carbon
 

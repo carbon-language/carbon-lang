@@ -14,8 +14,8 @@
 
 library "[[@TEST_NAME]]";
 
-class Outer(T:! Core.Copy) {
-  class Inner(U:! T) {
+class Outer(T: Core.Copy) {
+  class Inner(U: T) {
     //@dump-sem-ir-begin
     fn Get() -> T { return U; }
     //@dump-sem-ir-end

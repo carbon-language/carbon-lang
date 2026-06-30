@@ -14,7 +14,7 @@
 library "[[@TEST_NAME]]";
 
 interface Y {}
-interface NeedsY(T:! Y) {}
+interface NeedsY(T: Y) {}
 constraint W {
   // CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE+7]]:24: error: cannot convert type `Self` that implements `W` into type implementing `Y` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   extend require impls NeedsY(Self);
@@ -30,13 +30,13 @@ constraint W {
 library "[[@TEST_NAME]]";
 
 interface Y {}
-interface NeedsY(T:! Y) {}
+interface NeedsY(T: Y) {}
 constraint W {
   require impls Y;
   extend require impls NeedsY(Self);
 }
 
-fn F(w:! W) {
+fn F(generic w: W) {
   w as Y;
   w as NeedsY(w);
 }
@@ -45,7 +45,7 @@ fn F(w:! W) {
 library "[[@TEST_NAME]]";
 
 interface Y {}
-interface NeedsY(T:! Y) {}
+interface NeedsY(T: Y) {}
 constraint GivesY {
   require impls Y;
 }
@@ -54,7 +54,7 @@ constraint W {
   extend require impls NeedsY(Self);
 }
 
-fn F(w:! W) {
+fn F(generic w: W) {
   w as Y;
   w as NeedsY(w);
 }
@@ -63,11 +63,11 @@ fn F(w:! W) {
 library "[[@TEST_NAME]]";
 
 interface Y {}
-interface NeedsY(T:! Y) {}
+interface NeedsY(T: Y) {}
 
 // All types impl Y. This requires an impl lookup to find a witness, and it will
 // be a symbolic witness for a symbolic self type.
-impl forall [T:! type] T as Y {}
+impl forall [T: type] T as Y {}
 
 constraint W {
   // Constructs a FacetValue of `Self as Y`, containing the impl lookup
@@ -79,7 +79,7 @@ constraint W {
 class C {}
 impl C as NeedsY(C) {}
 
-fn G(w:! W) {
+fn G(generic w: W) {
   // The witness of NeedsY(Self) monomorphized by `w` must be the same as the
   // witness of `NeedsY(w)` constructed directly here in order for this to find
   // `NeedsY(w)` in the facet type `W`.
@@ -94,17 +94,17 @@ fn F() {
 // --- facet_access_type_of_self_meets_constraint.carbon
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {}
+class C(T: type) {}
 class D {}
 
 interface Y {}
-interface NeedsY(T:! Y) {}
+interface NeedsY(T: Y) {}
 constraint W {
   require C(Self) impls Y;
   require D impls NeedsY(C(Self));
 }
 
-fn F(w:! W) {
+fn F(generic w: W) {
   C(w) as Y;
   D as NeedsY(C(w));
 }
@@ -113,8 +113,8 @@ fn F(w:! W) {
 library "[[@TEST_NAME]]";
 
 interface Y {}
-interface NeedsY(T:! Y) {}
-interface NeedsNeedsY(T:! Y, U:! NeedsY(T)) {}
+interface NeedsY(T: Y) {}
+interface NeedsNeedsY(T: Y, U: NeedsY(T)) {}
 constraint W {
   require impls Y;
   // The identified facet type of Self is {Y}.
@@ -124,7 +124,7 @@ constraint W {
   extend require impls NeedsNeedsY(Self, Self);
 }
 
-fn F(w:! W) {
+fn F(generic w: W) {
   w as Y;
   w as NeedsY(w);
 }
@@ -132,14 +132,14 @@ fn F(w:! W) {
 // --- access_through_previous_require.carbon
 library "[[@TEST_NAME]]";
 
-interface Z { let Z0:! type; }
+interface Z { let Z0: type; }
 interface Y {}
 interface X {
-  let X0:! type;
+  let X0: type;
   fn XF() -> X0;
 }
 
-class P(T:! type) { adapt (); }
+class P(T: type) { adapt (); }
 
 constraint M {
   require impls Z where .Z0 = {};
@@ -151,7 +151,7 @@ constraint N {
   require impls X where .X0 = P(Self.(Z.Z0));
 }
 
-fn F(T:! N) -> T.(X.X0) { return T.(X.XF)(); }
+fn F(generic T: N) -> T.(X.X0) { return T.(X.XF)(); }
 
 fn G() -> P({}) {
   class C {}
@@ -168,7 +168,7 @@ library "[[@TEST_NAME]]";
 
 interface Z {}
 
-interface X { let XZ:! Z; }
+interface X { let XZ: Z; }
 constraint W {
   require impls Z;
   // Target of impl lookup can not be partially identified.
@@ -191,6 +191,6 @@ interface Z {}
 // identified, not fully identified.
 constraint W;
 
-fn F(T:! W & Z) {
+fn F(generic T: W & Z) {
   T as Z;
 }

@@ -21,11 +21,11 @@
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 
-class C(T:! Z where .Z1 = ()) {}
+class C(T: Z where .Z1 = ()) {}
 
 interface J {
   // Implied: .Z1 == ()
@@ -36,10 +36,10 @@ interface J {
   // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
   // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let J1:! Z where .Z2 = C(.Self);
+  let J1: Z where .Z2 = C(.Self);
 }
 
-fn F(unused T:! J) {}
+fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -51,7 +51,7 @@ class D;
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
-fn G(T:! J where .J1 = D) {
+fn G(generic T: J where .J1 = D) {
   F(T);
 }
 
@@ -59,14 +59,14 @@ fn G(T:! J where .J1 = D) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 
 interface Tuple {}
 impl () as Tuple {}
 
-class C(T:! Tuple) {}
+class C(T: Tuple) {}
 
 interface J {
   // Implied: .Z1 impls Tuple
@@ -77,15 +77,15 @@ interface J {
   // CHECK:STDERR: class C(T:! Tuple) {}
   // CHECK:STDERR:         ^~~~~~~~~
   // CHECK:STDERR:
-  let J1:! Z where .Z2 = C(.Z1);
+  let J1: Z where .Z2 = C(.Z1);
 }
 
-fn F(unused T:! J) {}
+fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
 impl D as Z where .Z1 = () and .Z2 = C(()) {}
-fn G(T:! J where .J1 = D) {
+fn G(generic T: J where .J1 = D) {
   F(T);
 }
 
@@ -93,11 +93,11 @@ fn G(T:! J where .J1 = D) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 
-class C(T:! Z where .Z1 = ()) {}
+class C(T: Z where .Z1 = ()) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
@@ -108,10 +108,10 @@ interface J {
   // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
   // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let J1:! (Z where .Z1 = ()) where .Z2 = C(.Self);
+  let J1: (Z where .Z1 = ()) where .Z2 = C(.Self);
 }
 
-fn F(unused T:! J) {}
+fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -123,7 +123,7 @@ class D;
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
-fn G(T:! J where .J1 = D) {
+fn G(generic T: J where .J1 = D) {
   F(T);
 }
 
@@ -131,11 +131,11 @@ fn G(T:! J where .J1 = D) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 
-class C(T:! Z where .Z1 = ()) {}
+class C(T: Z where .Z1 = ()) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
@@ -146,10 +146,10 @@ interface J {
   // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
   // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let J1:! (Z where .Z2 = C(.Self)) where .Z1 = ();
+  let J1: (Z where .Z2 = C(.Self)) where .Z1 = ();
 }
 
-fn F(unused T:! J) {}
+fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -161,7 +161,7 @@ class D;
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
-fn G(T:! J where .J1 = D) {
+fn G(generic T: J where .J1 = D) {
   F(T);
 }
 
@@ -169,11 +169,11 @@ fn G(T:! J where .J1 = D) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 
-class C(T:! Z where .Z1 = ()) {}
+class C(T: Z where .Z1 = ()) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
@@ -184,10 +184,10 @@ interface J {
   // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
   // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let J1:! Z where .Z1 = () and .Z2 = C(.Self);
+  let J1: Z where .Z1 = () and .Z2 = C(.Self);
 }
 
-fn F(unused T:! J) {}
+fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -199,7 +199,7 @@ class D;
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
-fn G(T:! J where .J1 = D) {
+fn G(generic T: J where .J1 = D) {
   F(T);
 }
 
@@ -207,11 +207,11 @@ fn G(T:! J where .J1 = D) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 
-class C(T:! Z where .Z1 = ()) {}
+class C(T: Z where .Z1 = ()) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
@@ -222,10 +222,10 @@ interface J {
   // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
   // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let J1:! Z where .Z2 = C(.Self) and .Z1 = ();
+  let J1: Z where .Z2 = C(.Self) and .Z1 = ();
 }
 
-fn F(unused T:! J) {}
+fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -237,7 +237,7 @@ class D;
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
-fn G(T:! J where .J1 = D) {
+fn G(generic T: J where .J1 = D) {
   F(T);
 }
 
@@ -245,25 +245,25 @@ fn G(T:! J where .J1 = D) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 
 interface Tuple {}
 impl () as Tuple {}
-class C(T:! Tuple) {}
+class C(T: Tuple) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
-  let J1:! Z where .Z1 = () and .Z2 = C(.Z1);
+  let J1: Z where .Z1 = () and .Z2 = C(.Z1);
 }
 
-fn F(unused T:! J) {}
+fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
 impl D as Z where .Z1 = () and .Z2 = C(()) {}
-fn G(T:! J where .J1 = D) {
+fn G(generic T: J where .J1 = D) {
   F(T);
 }
 
@@ -271,25 +271,25 @@ fn G(T:! J where .J1 = D) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 
 interface Tuple {}
 impl () as Tuple {}
-class C(T:! Tuple) {}
+class C(T: Tuple) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
-  let J1:! (Z where .Z1 = ()) where .Z2 = C(.Z1);
+  let J1: (Z where .Z1 = ()) where .Z2 = C(.Z1);
 }
 
-fn F(unused T:! J) {}
+fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
 impl D as Z where .Z1 = () and .Z2 = C(()) {}
-fn G(T:! J where .J1 = D) {
+fn G(generic T: J where .J1 = D) {
   F(T);
 }
 
@@ -297,29 +297,29 @@ fn G(T:! J where .J1 = D) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 
 interface Y {
-  let Y1:! Z;
+  let Y1: Z;
 }
 
 interface Tuple {}
 impl () as Tuple {}
-class C(T:! Tuple) {}
+class C(T: Tuple) {}
 
 interface J {
   // .Z2 depends on an two nested accesses of rewrite constraints.
-  let J1:! Y & Z where .Y1 = .Self and .Z1 = () and .Z2 = C(.Y1.Z1);
+  let J1: Y & Z where .Y1 = .Self and .Z1 = () and .Z2 = C(.Y1.Z1);
 }
 
-fn F(unused T:! J) {}
+fn F(unused generic T: J) {}
 
 class D;
 impl D as Z where .Z1 = () and .Z2 = C(()) {}
 impl D as Y where .Y1 = D {}
-fn G(T:! J where .J1 = D) {
+fn G(generic T: J where .J1 = D) {
   F(T);
 }
 
@@ -327,46 +327,46 @@ fn G(T:! J where .J1 = D) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 
 interface Y {}
-class NeedY(T:! Y) {}
+class NeedY(T: Y) {}
 
 impl () as Y {}
 
 // These are written differently but should behave the same.
 
 // Designator access of `.Z1`.
-fn F(_:! Z where .Z1 = () and .Z2 = NeedY(.Z1)) {}
+fn F(generic _: Z where .Z1 = () and .Z2 = NeedY(.Z1)) {}
 
 // Compound member access of `.Z1`.
-fn G(_:! Z where .Z1 = () and .Z2 = NeedY(.Self.(Z.Z1))) {}
+fn G(generic _: Z where .Z1 = () and .Z2 = NeedY(.Self.(Z.Z1))) {}
 
 // --- fail_todo_resolved_constraint_visible_in_type_parameter.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {
-  let Y1:! type;
+  let Y1: type;
 }
 
 interface Z {
-  let Z1:! Y;
-  let Z2:! type;
-  let Z3:! type;
+  let Z1: Y;
+  let Z2: type;
+  let Z3: type;
 }
 
 interface Tuple {}
 impl () as Tuple {}
-class C(T:! Tuple) {}
+class C(T: Tuple) {}
 
 interface J {
   // Implied: .Y1 impls Tuple, but this is also explicitly required for J1.
-  let J1:! Z & Y where .Y1 = () and .Z1 = .Self and .Z2 = .Z1.Y1 and .Z3 = C(.Z2);
+  let J1: Z & Y where .Y1 = () and .Z1 = .Self and .Z2 = .Z1.Y1 and .Z3 = C(.Z2);
 }
 
-fn F(unused T:! J) {}
+fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
@@ -380,7 +380,7 @@ impl D as Z where .Z1 = .Self and .Z2 = () and .Z3 = C(()) {}
 // CHECK:STDERR: fn G(T:! J where .J1 = D) {
 // CHECK:STDERR:                        ^
 // CHECK:STDERR:
-fn G(T:! J where .J1 = D) {
+fn G(generic T: J where .J1 = D) {
   F(T);
 }
 
@@ -388,18 +388,18 @@ fn G(T:! J where .J1 = D) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 interface Y {
-  let Y1:! type;
+  let Y1: type;
 }
 
 interface Tuple {}
 impl () as Tuple {}
-class C(U:! Tuple);
+class C(U: Tuple);
 
-constraint NY(V:! type) {
+constraint NY(V: type) {
   extend require impls Y where .Y1 = V;
 }
 
@@ -410,24 +410,24 @@ constraint NY(V:! type) {
 // CHECK:STDERR: class C(U:! Tuple);
 // CHECK:STDERR:         ^~~~~~~~~
 // CHECK:STDERR:
-fn F(unused T:! Z where .Z1 impls NY(()) and .Z2 = C(.Z1.(Y.Y1))) {}
+fn F(unused generic T: Z where .Z1 impls NY(()) and .Z2 = C(.Z1.(Y.Y1))) {}
 
 // --- fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_period_self.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 interface Y {
-  let Y1:! type;
+  let Y1: type;
 }
 
 interface Tuple {}
 impl () as Tuple {}
-class C(U:! Tuple);
+class C(U: Tuple);
 
-constraint NY(V:! type) {
+constraint NY(V: type) {
   extend require impls Y where .Y1 = V;
 }
 
@@ -441,24 +441,24 @@ constraint NY(V:! type) {
 // CHECK:STDERR: class C(U:! Tuple);
 // CHECK:STDERR:         ^~~~~~~~~
 // CHECK:STDERR:
-fn F(unused T:! Z where .Self impls NY(()) and .Z1 impls Y and .Z2 = C(.Z1.(Y.Y1))) {}
+fn F(unused generic T: Z where .Self impls NY(()) and .Z1 impls Y and .Z2 = C(.Z1.(Y.Y1))) {}
 
 // --- fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_associated_constant.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let Z1:! type;
-  let Z2:! type;
+  let Z1: type;
+  let Z2: type;
 }
 interface Y {
-  let Y1:! type;
+  let Y1: type;
 }
 
 interface Tuple {}
 impl () as Tuple {}
-class C(U:! Tuple);
+class C(U: Tuple);
 
-constraint NY(V:! type) {
+constraint NY(V: type) {
   extend require impls Y where .Y1 = V;
 }
 
@@ -469,22 +469,22 @@ constraint NY(V:! type) {
 // CHECK:STDERR: fn G(unused T:! Z where .Z1 impls NY(()) and .Self impls Y and .Z2 = C(Self.(Y.Y1))) {}
 // CHECK:STDERR:                                                                        ^~~~
 // CHECK:STDERR:
-fn G(unused T:! Z where .Z1 impls NY(()) and .Self impls Y and .Z2 = C(Self.(Y.Y1))) {}
+fn G(unused generic T: Z where .Z1 impls NY(()) and .Self impls Y and .Z2 = C(Self.(Y.Y1))) {}
 
 // --- fail_nested_facet_type_in_rewrite_does_not_use_rewrite_from_outside.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 
-constraint NZ(PeriodY:! type) {
+constraint NZ(PeriodY: type) {
   extend require impls Z where .X = PeriodY;
 }
 
-fn F(T:! Z where .Y = {} and .X = NZ(.Y), U:! T.X) -> U.(Z.X) {
-  // This should fail: `U:! T.X` contains a rewrite `.X = .Y` in its type, but
+fn F(generic T: Z where .Y = {} and .X = NZ(.Y), generic U: T.X) -> U.(Z.X) {
+  // This should fail: `U: T.X` contains a rewrite `.X = .Y` in its type, but
   // the value of `U.(Z.Y)` is not known. Only `T.(Z.Y)` is rewritten to `{}`.
   //
   // CHECK:STDERR: fail_nested_facet_type_in_rewrite_does_not_use_rewrite_from_outside.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `{}` to `U.(Z.X)` [ConversionFailure]

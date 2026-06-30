@@ -14,9 +14,9 @@
 
 interface Animal {}
 
-fn FeedAnimal(unused T:! Animal) {}
+fn FeedAnimal(unused generic T: Animal) {}
 
-fn HandleAnimal(T:! Animal) { FeedAnimal(T); }
+fn HandleAnimal(generic T: Animal) { FeedAnimal(T); }
 
 class Goat {}
 impl Goat as Animal {}

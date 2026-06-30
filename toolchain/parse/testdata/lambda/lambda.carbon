@@ -10,7 +10,7 @@
 
 // --- basic.carbon
 
-var a: auto = fn [T:! type] (x: T) -> T { return x; };
+var a: auto = fn [T: type] (x: T) -> T { return x; };
 var b: auto = fn (x: i32) => x;
 var c: auto = fn { };
 

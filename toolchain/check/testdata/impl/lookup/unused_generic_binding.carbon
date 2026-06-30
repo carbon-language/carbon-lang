@@ -14,10 +14,10 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
-impl forall [U:! type] U as I where .T = () {}
+impl forall [U: type] U as I where .T = () {}
 
 class C {}
 
@@ -28,7 +28,7 @@ class C {}
 // CHECK:STDERR: impl forall [V:! type] C as I where .T = {.unmatched: ()} {}
 // CHECK:STDERR:             ^~~~~~~~~~
 // CHECK:STDERR:
-impl forall [V:! type] C as I where .T = {.unmatched: ()} {}
+impl forall [V: type] C as I where .T = {.unmatched: ()} {}
 
 fn F() {
   // This shows that the first impl declaration was matched even though the
@@ -42,10 +42,10 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
-impl forall [U:! type] U as I where .T = () {}
+impl forall [U: type] U as I where .T = () {}
 
 class C {}
 
@@ -57,7 +57,7 @@ class C {}
 // CHECK:STDERR: impl forall [V:! type, W:! type] V as I where .T = {.unmatched: ()} {}
 // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [V:! type, W:! type] V as I where .T = {.unmatched: ()} {}
+impl forall [V: type, W: type] V as I where .T = {.unmatched: ()} {}
 
 fn F() {
   // This shows that the first impl declaration was matched even though the
@@ -70,12 +70,12 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
-impl forall [U:! type] U as I where .T = () {}
+impl forall [U: type] U as I where .T = () {}
 
-class C(U:! type) {
+class C(U: type) {
   // This impl can never deduce its inherited generic binding `U`, which
   // should be diagnosed.
   //
@@ -96,12 +96,12 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
-impl forall [U:! type] U as I where .T = () {}
+impl forall [U: type] U as I where .T = () {}
 
-class C(U:! type) {
+class C(U: type) {
   // This impl can never deduce its inherited generic binding `U`, which
   // should be diagnosed.
   //
@@ -111,7 +111,7 @@ class C(U:! type) {
   // CHECK:STDERR:   impl forall [V:! type] C(V) as I where .T = {.unmatched: ()} {}
   // CHECK:STDERR:               ^~~~~~~~~~
   // CHECK:STDERR:
-  impl forall [V:! type] C(V) as I where .T = {.unmatched: ()} {}
+  impl forall [V: type] C(V) as I where .T = {.unmatched: ()} {}
 }
 
 fn F() {
@@ -122,12 +122,12 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
-impl forall [U:! type] U as I where .T = {.unmatched: ()} {}
+impl forall [U: type] U as I where .T = {.unmatched: ()} {}
 
-class C(U:! type) {
+class C(U: type) {
   // `U` can be deduced here, so no diagnostic issued.
   impl C(U) as I where .T = () {}
 }
@@ -140,15 +140,15 @@ fn F() {
 // --- inherited_binding_in_forall_used.carbon
 library "[[@TEST_NAME]]";
 
-interface I(W:! type) {
-  let T:! type;
+interface I(W: type) {
+  let T: type;
 }
 
-impl forall [U:! type] U as I(U) where .T = {.unmatched: ()} {}
+impl forall [U: type] U as I(U) where .T = {.unmatched: ()} {}
 
-class C(U:! type) {
+class C(U: type) {
   // `U` can be deduced here, so no diagnostic issued.
-  impl forall [V:! type] C(U) as I(V) where .T = () {}
+  impl forall [V: type] C(U) as I(V) where .T = () {}
 }
 
 fn F() {

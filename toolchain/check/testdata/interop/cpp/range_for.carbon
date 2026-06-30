@@ -42,7 +42,7 @@ public:
 };
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = i32](r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = i32](r: R) {
   var sum: i32 = 0;
 
   //@dump-sem-ir-begin
@@ -113,7 +113,7 @@ public:
 };
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.ValueType](var r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = Cpp.ValueType](var r: R) {
   var sum: Cpp.ValueType = Cpp.ValueType.ValueType();
 
   //@dump-sem-ir-begin
@@ -162,7 +162,7 @@ public:
 } // namespace N
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = f64](r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = f64](r: R) {
   var sum: f64 = 0.0;
 
   //@dump-sem-ir-begin
@@ -208,7 +208,7 @@ public:
 } // namespace N
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = f64](r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = f64](r: R) {
   var sum: f64 = 0.0;
 
   //@dump-sem-ir-begin
@@ -287,7 +287,7 @@ public:
 } // namespace N
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
   var sum: Cpp.N.ValueType = Cpp.N.ValueType.ValueType();
 
   //@dump-sem-ir-begin
@@ -338,7 +338,7 @@ public:
 }
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
   var sum: Cpp.N.ValueType = Cpp.N.ValueType.ValueType();
 
   //@dump-sem-ir-begin
@@ -446,7 +446,7 @@ class MutableAndConstRange {
 }
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
   var sum: Cpp.N.ValueType = Cpp.N.ValueType.ValueType();
 
   //@dump-sem-ir-begin
@@ -564,7 +564,7 @@ struct EndFunctionDeleted {
 
 // We deliberately use `Core.CppRangeForIterate` here, since we want to confirm
 // that types don't implement this interface.
-fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
+fn Test[R: Core.CppRangeForIterate](unused r: R) {}
 
 fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
               var no_begin_method: Cpp.NoBeginMethod,

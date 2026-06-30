@@ -8,27 +8,27 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/params/name_qualifier.carbon
 
-class GenericClass1(T:! type) {
+class GenericClass1(T: type) {
   fn F();
 }
 
-fn GenericClass1(T:! type).F() {}
+fn GenericClass1(T: type).F() {}
 
-class GenericClass2[T:! type](X:! T) {
+class GenericClass2[T: type](X: T) {
   fn F();
 }
 
-fn GenericClass2[T:! type](X:! T).F() {}
+fn GenericClass2[T: type](X: T).F() {}
 
-class OuterGeneric(T:! type) {
-  class InnerGeneric(U:! type);
+class OuterGeneric(T: type) {
+  class InnerGeneric(U: type);
 }
 
-class OuterGeneric(T:! type).InnerGeneric(U:! type) {
+class OuterGeneric(T: type).InnerGeneric(U: type) {
   fn F(x: T, y: U);
 }
 
-fn OuterGeneric(T:! type).InnerGeneric(U:! type).F(x: T, y: U) {}
+fn OuterGeneric(T: type).InnerGeneric(U: type).F(x: T, y: U) {}
 
 // CHECK:STDOUT: - filename: name_qualifier.carbon
 // CHECK:STDOUT:   parse_tree: [

@@ -21,7 +21,7 @@ class Goat {}
 impl Goat as Animal {}
 impl Goat as Eats {}
 
-fn Feed(unused e:! Eats) {}
+fn Feed(unused generic e: Eats) {}
 
 fn F() {
   //@dump-sem-ir-begin
@@ -65,7 +65,7 @@ library "[[@TEST_NAME]]";
 
 interface J {}
 
-class C(A:! J, B:! A) {}
+class C(A: J, B: A) {}
 
 // The class C is holding a specific with a 2 SymbolicBindings where one is a
 // *symbolic* type of the other.
@@ -83,9 +83,9 @@ class C(A:! J, B:! A) {}
 // referring to the same symbolic type and with the same facet type.
 // Essentially, it allows lossless round trips through a FacetAccessType when
 // converting back to the type of its original facet value.
-fn G[A:! J, B:! A](unused x: C(A, B)) {}
+fn G[A: J, B: A](unused x: C(A, B)) {}
 
-fn F[A:! J, B:! A](x: C(A, B)) {
+fn F[A: J, B: A](x: C(A, B)) {
   //@dump-sem-ir-begin
   G(x);
   //@dump-sem-ir-end

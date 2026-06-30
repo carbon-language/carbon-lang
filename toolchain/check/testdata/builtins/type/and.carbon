@@ -19,7 +19,7 @@ fn TypeAnd(a: type, b: type) -> type = "type.and";
 interface I {}
 interface J {}
 
-fn TakeIJ(unused T:! TypeAnd(I, J)) {}
+fn TakeIJ(unused generic T: TypeAnd(I, J)) {}
 
 class IJ {
   impl as I {}
@@ -39,7 +39,7 @@ fn TypeAnd(a: type, b: type) -> type = "type.and";
 interface I {}
 interface J {}
 
-fn TakeIJ(unused T:! TypeAnd(I, J)) {}
+fn TakeIJ(unused generic T: TypeAnd(I, J)) {}
 
 class JustI {
   impl as I {}

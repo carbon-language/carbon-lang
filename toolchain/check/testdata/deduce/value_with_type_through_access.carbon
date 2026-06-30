@@ -16,11 +16,11 @@
 
 library "[[@TEST_NAME]]";
 
-class HoldsType(T:! (type, )) {}
+class HoldsType(T: (type, )) {}
 
 // `a` is received as a value, and has a type that requires going through
 // TupleAccess. Building the value representation must handle this indirection.
-fn F[T:! (type, )](unused x: HoldsType(T), unused a: T.0) {}
+fn F[T: (type, )](unused x: HoldsType(T), unused a: T.0) {}
 
 class C {}
 
@@ -32,11 +32,11 @@ fn G() {
 
 library "[[@TEST_NAME]]";
 
-class HoldsType(T:! {.t: type}) {}
+class HoldsType(T: {.t: type}) {}
 
 // `a` is received as a value, and has a type that requires going through
 // StructAccess. Building the value representation must handle this indirection.
-fn F[T:! {.t: type}](unused x: HoldsType(T), unused a: T.t) {}
+fn F[T: {.t: type}](unused x: HoldsType(T), unused a: T.t) {}
 
 class C {}
 
@@ -52,7 +52,7 @@ class Class {
   var t: type;
 }
 
-class HoldsType(T:! Class) {}
+class HoldsType(T: Class) {}
 
 // `a` is received as a value, and has a type that requires going through
 // StructAccess. Building the value representation must handle this indirection.
@@ -65,11 +65,11 @@ class HoldsType(T:! Class) {}
 // CHECK:STDERR: fn F[T:! Class](unused x: HoldsType(T), unused a: T.t) {}
 // CHECK:STDERR:                                                   ^~~
 // CHECK:STDERR:
-fn F[T:! Class](unused x: HoldsType(T), unused a: T.t) {}
+fn F[T: Class](unused x: HoldsType(T), unused a: T.t) {}
 
 class C {}
 
-fn G(c:! Class) {
+fn G(generic c: Class) {
   F({} as HoldsType(c), {});
 }
 
@@ -81,7 +81,7 @@ fn H() {
 
 library "[[@TEST_NAME]]";
 
-class HoldsType(T:! array(type, 1)) {}
+class HoldsType(T: array(type, 1)) {}
 
 // `a` is received as a value, and has a type that requires going through
 // ArrayIndex. Building the value representation must handle this indirection.
@@ -89,7 +89,7 @@ class HoldsType(T:! array(type, 1)) {}
 // CHECK:STDERR: fn F[T:! array(type, 1)](unused x: HoldsType(T), unused a: T[0]) {}
 // CHECK:STDERR:                                                            ^~~~
 // CHECK:STDERR:
-fn F[T:! array(type, 1)](unused x: HoldsType(T), unused a: T[0]) {}
+fn F[T: array(type, 1)](unused x: HoldsType(T), unused a: T[0]) {}
 
 class C {}
 

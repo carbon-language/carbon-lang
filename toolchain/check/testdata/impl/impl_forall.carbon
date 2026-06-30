@@ -16,7 +16,7 @@ interface Simple {
   fn F();
 }
 
-impl forall [T:! type] T as Simple {
+impl forall [T: type] T as Simple {
   fn F() {}
 }
 

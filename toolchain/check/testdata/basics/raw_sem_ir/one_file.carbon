@@ -13,7 +13,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/raw_sem_ir/one_file.carbon
 
-fn Foo[T:! type](p: T*) -> (T*, ()) {
+fn Foo[T: type](p: T*) -> (T*, ()) {
   return (p, ());
 }
 

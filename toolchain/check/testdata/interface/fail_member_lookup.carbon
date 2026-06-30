@@ -18,7 +18,7 @@ library "[[@TEST_NAME]]";
 interface Interface {
   fn F();
 
-  let T:! type;
+  let T: type;
 }
 
 fn F() {
@@ -44,7 +44,7 @@ interface Different {}
 // CHECK:STDERR: fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDERR:                        ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn G(U:! Different) -> U.(Interface.T);
+fn G(generic U: Different) -> U.(Interface.T);
 
 // CHECK:STDOUT: --- fail_member_lookup.carbon
 // CHECK:STDOUT:

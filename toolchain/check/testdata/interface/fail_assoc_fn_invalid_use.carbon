@@ -20,7 +20,7 @@ interface I {
   fn F(self);
 }
 
-fn Use(T:! I) {
+fn Use(generic T: I) {
   // CHECK:STDERR: fail_member_access.carbon:[[@LINE+4]]:3: error: type `<type of F in T>` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   T.F.member;
   // CHECK:STDERR:   ^~~~~~~~~~

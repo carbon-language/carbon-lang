@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_impl_bad_assoc_const.carbon
 
-interface I { let T:! type; }
+interface I { let T: type; }
 
 // CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+7]]:1: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR: impl () as I {}

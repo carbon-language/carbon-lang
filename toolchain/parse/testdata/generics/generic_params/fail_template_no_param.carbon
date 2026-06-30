@@ -30,13 +30,13 @@ fn C(template);
 // CHECK:STDERR: fn D(template:! i32);
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
-fn D(template:! i32);
+fn D(generic template: i32);
 
 // CHECK:STDERR: fail_template_no_param.carbon:[[@LINE+4]]:14: error: expected name in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR: fn E(template:! i32);
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
-fn E(template:! i32);
+fn E(generic template: i32);
 
 // CHECK:STDOUT: - filename: fail_template_no_param.carbon
 // CHECK:STDOUT:   parse_tree: [

@@ -15,11 +15,11 @@
 interface Eats {}
 interface Animal {}
 
-impl forall [A:! Animal] A as Eats {}
+impl forall [A: Animal] A as Eats {}
 
-fn Feed[T:! Eats](unused e: T) {}
+fn Feed[T: Eats](unused e: T) {}
 
-fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
+fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 
 // CHECK:STDOUT: --- convert_facet_value_value_to_blanket_impl.carbon
 // CHECK:STDOUT:

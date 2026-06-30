@@ -14,7 +14,7 @@
 library "[[@TEST_NAME]]";
 
 interface I {}
-class C(T:! type);
+class C(T: type);
 
 alias A = I where .Self == C;
 
@@ -28,7 +28,7 @@ alias A = I where .Self == C;
 // CHECK:STDERR: fn F(_:! type where C(A) impls type) {}
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
-fn F(_:! type where C(A) impls type) {}
+fn F(generic _: type where C(A) impls type) {}
 
 // --- fail_where_nested_inside_where_through_alias_impls_rhs_with_self_impls_interface.carbon
 library "[[@TEST_NAME]]";
@@ -47,7 +47,7 @@ alias A = type where .Self impls I;
 // CHECK:STDERR: fn F(_:! type where .Self impls A) {}
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
-fn F(_:! type where .Self impls A) {}
+fn F(generic _: type where .Self impls A) {}
 
 // --- fail_where_nested_inside_where_through_alias_impls_rhs_with_self_impls_named_constraint.carbon
 library "[[@TEST_NAME]]";
@@ -66,12 +66,12 @@ alias A = type where .Self impls N;
 // CHECK:STDERR: fn F(_:! type where .Self impls A) {}
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
-fn F(_:! type where .Self impls A) {}
+fn F(generic _: type where .Self impls A) {}
 
 // --- fail_where_nested_inside_where_through_alias_impls_rhs_with_type_impls_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {}
+interface I(T: type) {}
 class C;
 
 alias A = type where C impls I(.Self);
@@ -86,12 +86,12 @@ alias A = type where C impls I(.Self);
 // CHECK:STDERR: fn F(_:! type where .Self impls A) {}
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
-fn F(_:! type where .Self impls A) {}
+fn F(generic _: type where .Self impls A) {}
 
 // --- fail_where_nested_inside_where_through_alias_impls_rhs_with_type_impls_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
-constraint N(T:! type) {}
+constraint N(T: type) {}
 class C;
 
 alias A = type where C impls N(.Self);
@@ -106,12 +106,12 @@ alias A = type where C impls N(.Self);
 // CHECK:STDERR: fn F(_:! type where .Self impls A) {}
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
-fn F(_:! type where .Self impls A) {}
+fn F(generic _: type where .Self impls A) {}
 
 // --- fail_where_nested_inside_where_through_alias_impls_rhs_with_rewrite.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let I1:! type; }
+interface I { let I1: type; }
 class C;
 
 alias A = I where .I1 = C;
@@ -126,7 +126,7 @@ alias A = I where .I1 = C;
 // CHECK:STDERR: fn F(_:! type where .Self impls A) {}
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
-fn F(_:! type where .Self impls A) {}
+fn F(generic _: type where .Self impls A) {}
 
 // --- fail_where_nested_inside_where_through_alias_impls_rhs_with_equiv.carbon
 library "[[@TEST_NAME]]";
@@ -145,12 +145,12 @@ alias A = type where .Self == C;
 // CHECK:STDERR: fn F(_:! type where .Self impls A) {}
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
-fn F(_:! type where .Self impls A) {}
+fn F(generic _: type where .Self impls A) {}
 
 // --- fail_where_nested_inside_where_through_alias_rewrite_rhs.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let I1:! type; }
+interface I { let I1: type; }
 class C;
 
 alias A = I where .Self == C;
@@ -165,7 +165,7 @@ alias A = I where .Self == C;
 // CHECK:STDERR: fn F(_:! I where .I1 = A) {}
 // CHECK:STDERR:          ^~~~~~~
 // CHECK:STDERR:
-fn F(_:! I where .I1 = A) {}
+fn F(generic _: I where .I1 = A) {}
 
 // --- fail_where_nested_inside_where_through_alias_equiv_lhs.carbon
 library "[[@TEST_NAME]]";
@@ -185,7 +185,7 @@ alias A = I where .Self == C;
 // CHECK:STDERR: fn F(_:! type where A == .Self) {}
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
-fn F(_:! type where A == .Self) {}
+fn F(generic _: type where A == .Self) {}
 
 // --- fail_where_nested_inside_where_through_alias_equiv_rhs.carbon
 library "[[@TEST_NAME]]";
@@ -205,7 +205,7 @@ alias A = I where .Self == C;
 // CHECK:STDERR: fn F(_:! type where .Self == A) {}
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
-fn F(_:! type where .Self == A) {}
+fn F(generic _: type where .Self == A) {}
 
 // --- fail_where_nested_inside_where_through_fn_eval.carbon
 library "[[@TEST_NAME]]";
@@ -227,7 +227,7 @@ eval fn E() -> type {
 // CHECK:STDERR: fn F(_:! type where .Self impls E()) {}
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
-fn F(_:! type where .Self impls E()) {}
+fn F(generic _: type where .Self impls E()) {}
 
 // --- fail_where_nested_inside_where_through_operator_eval.carbon
 library "[[@TEST_NAME]]";
@@ -254,4 +254,4 @@ alias X = {} as X1;
 // CHECK:STDERR: fn F(_:! type where .Self impls type * X) {}
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
-fn F(_:! type where .Self impls type * X) {}
+fn F(generic _: type where .Self impls type * X) {}

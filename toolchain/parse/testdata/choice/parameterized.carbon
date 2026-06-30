@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/choice/parameterized.carbon
 
-choice OptionalElement(T:! type) {
+choice OptionalElement(T: type) {
   Element(value: T),
   None,
 }

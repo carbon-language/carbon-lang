@@ -17,7 +17,7 @@ interface Animal {}
 class Goat {}
 impl Goat as Animal {}
 
-fn WalkAnimal(unused A:! Animal) {}
+fn WalkAnimal(unused generic A: Animal) {}
 
 fn F() {
   WalkAnimal(Goat);

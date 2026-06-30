@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-interface Generic(Scalar:! type) {
+interface Generic(Scalar: type) {
   fn F();
 }
 
@@ -27,7 +27,7 @@ impl ImplsGeneric as Generic(GenericParam) {
   fn F() {}
 }
 
-fn CallGenericMethod[T:! type, U:! Generic(T)](unused a: U, unused s: T) {
+fn CallGenericMethod[T: type, U: Generic(T)](unused a: U, unused s: T) {
   U.F();
 }
 
@@ -38,13 +38,13 @@ fn G() {
 // --- multiple_generic_params_one_fixed_one_deduced.carbon
 library "[[@TEST_NAME]]";
 
-interface I(V:! type, W:! type) {}
+interface I(V: type, W: type) {}
 
 class C {}
 
-impl forall [T:! type] C as I(T, ()) {}
+impl forall [T: type] C as I(T, ()) {}
 
-fn A[T:! I({}, ())](unused t: T) {}
+fn A[T: I({}, ())](unused t: T) {}
 
 fn B() {
   A({} as C);
@@ -53,13 +53,13 @@ fn B() {
 // --- fail_mismatch_impl_constraint_with_fixed_specific.carbon
 library "[[@TEST_NAME]]";
 
-interface I(V:! type, W:! type) {}
+interface I(V: type, W: type) {}
 
 class C {}
 
-impl forall [T:! type] C as I(T, ()) {}
+impl forall [T: type] C as I(T, ()) {}
 
-fn A[T:! I({}, {})](unused t: T) {}
+fn A[T: I({}, {})](unused t: T) {}
 
 fn B() {
   // CHECK:STDERR: fail_mismatch_impl_constraint_with_fixed_specific.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `I({}, {})` [ConversionFailureTypeToFacet]
@@ -77,11 +77,11 @@ library "[[@TEST_NAME]]";
 
 interface I {}
 
-class C(V:! type, W:! type) {}
+class C(V: type, W: type) {}
 
-impl forall [T:! type] C(T, ()) as I {}
+impl forall [T: type] C(T, ()) as I {}
 
-fn A[T:! I](unused t: T) {}
+fn A[T: I](unused t: T) {}
 
 fn B() {
   // CHECK:STDERR: fail_mismatch_impl_self_with_fixed_specific.carbon:[[@LINE+7]]:3: error: cannot convert type `C({}, {})` into type implementing `I` [ConversionFailureTypeToFacet]

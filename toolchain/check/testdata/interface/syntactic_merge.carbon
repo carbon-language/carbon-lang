@@ -19,11 +19,11 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-interface Foo(a:! C);
-interface Foo(a:! C) {}
+interface Foo(a: C);
+interface Foo(a: C) {}
 
-interface Bar(a:! D);
-interface Bar(a:! D) {}
+interface Bar(a: D);
+interface Bar(a: D) {}
 
 // --- spacing.carbon
 
@@ -31,8 +31,8 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-interface Foo [ ] ( a :! C );
-interface Foo[](a:! C) {}
+interface Foo [ ] ( a : C );
+interface Foo[](a: C) {}
 
 // --- fail_parens.carbon
 
@@ -40,7 +40,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-interface Foo(a:! C);
+interface Foo(a: C);
 // CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: interface Foo(a:! (C)) {}
 // CHECK:STDERR:                   ^
@@ -48,7 +48,7 @@ interface Foo(a:! C);
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR:                   ^
 // CHECK:STDERR:
-interface Foo(a:! (C)) {}
+interface Foo(a: (C)) {}
 
 // --- fail_raw_identifier.carbon
 
@@ -56,7 +56,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-interface Foo(a:! C);
+interface Foo(a: C);
 // CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: interface Foo(a:! r#C) {}
 // CHECK:STDERR:                   ^~~
@@ -64,7 +64,7 @@ interface Foo(a:! C);
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR:                   ^
 // CHECK:STDERR:
-interface Foo(a:! r#C) {}
+interface Foo(a: r#C) {}
 
 // --- two_file.carbon
 
@@ -73,8 +73,8 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-interface Foo(a:! C);
-interface Bar(a:! D);
+interface Foo(a: C);
+interface Bar(a: D);
 
 // --- fail_todo_two_file.impl.carbon
 
@@ -88,7 +88,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-interface Foo(a:! C) {}
+interface Foo(a: C) {}
 // CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name `Bar` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Bar(a:! D) {}
 // CHECK:STDERR:           ^~~
@@ -97,7 +97,7 @@ interface Foo(a:! C) {}
 // CHECK:STDERR: interface Bar(a:! D);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-interface Bar(a:! D) {}
+interface Bar(a: D) {}
 
 // --- fail_name_mismatch.carbon
 
@@ -106,7 +106,7 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-interface Foo(a:! C);
+interface Foo(a: C);
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:15: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: interface Foo(b:! D) {}
 // CHECK:STDERR:               ^~~~~
@@ -114,7 +114,7 @@ interface Foo(a:! C);
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR:               ^~~~~
 // CHECK:STDERR:
-interface Foo(b:! D) {}
+interface Foo(b: D) {}
 
 // --- fail_alias.carbon
 
@@ -123,7 +123,7 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-interface Foo(a:! C);
+interface Foo(a: C);
 // CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: interface Foo(a:! D) {}
 // CHECK:STDERR:                   ^
@@ -131,7 +131,7 @@ interface Foo(a:! C);
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR:                   ^
 // CHECK:STDERR:
-interface Foo(a:! D) {}
+interface Foo(a: D) {}
 
 // --- fail_deduced_alias.carbon
 
@@ -140,7 +140,7 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-interface Foo[a:! C]();
+interface Foo[a: C]();
 // CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: interface Foo[a:! D]() {}
 // CHECK:STDERR:                   ^
@@ -148,7 +148,7 @@ interface Foo[a:! C]();
 // CHECK:STDERR: interface Foo[a:! C]();
 // CHECK:STDERR:                   ^
 // CHECK:STDERR:
-interface Foo[a:! D]() {}
+interface Foo[a: D]() {}
 
 // --- alias_two_file.carbon
 
@@ -156,7 +156,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-interface Foo(a:! C);
+interface Foo(a: C);
 
 // --- fail_alias_two_file.impl.carbon
 
@@ -175,7 +175,7 @@ alias D = C;
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-interface Foo(a:! D) {}
+interface Foo(a: D) {}
 
 // --- fail_repeat_const.carbon
 
@@ -183,7 +183,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-interface Foo(a:! const C);
+interface Foo(a: const C);
 // CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:19: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
 // CHECK:STDERR: interface Foo(a:! const (const C)) {}
 // CHECK:STDERR:                   ^~~~~~~~~~~~~~~
@@ -195,7 +195,7 @@ interface Foo(a:! const C);
 // CHECK:STDERR: interface Foo(a:! const C);
 // CHECK:STDERR:                         ^
 // CHECK:STDERR:
-interface Foo(a:! const (const C)) {}
+interface Foo(a: const (const C)) {}
 
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:

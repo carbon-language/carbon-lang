@@ -10,15 +10,15 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/where_expr/dot_self_index.carbon
 
-interface Empty(W:! type) {
-  let A:! type;
+interface Empty(W: type) {
+  let A: type;
 }
 
 // T has index 0
 // .Self has index invalid, not 1
 // V has index 1, does not match .Self
 //@dump-sem-ir-begin
-fn H(T:! type, unused U: Empty(T) where .A = T*, unused V:! type) {}
+fn H(generic T: type, unused U: Empty(T) where .A = T*, unused generic V: type) {}
 //@dump-sem-ir-end
 
 fn G(U: Empty(i32) where .A = i32*) {

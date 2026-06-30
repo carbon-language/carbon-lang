@@ -10,7 +10,7 @@
 
 // --- basic.carbon
 
-fn foo(template a:! i32);
+fn foo(template a: i32);
 
 // --- fail_template_ref.carbon
 
@@ -18,7 +18,7 @@ fn foo(template a:! i32);
 // CHECK:STDERR: fn foo(template ref a:! i32);
 // CHECK:STDERR:                 ^~~
 // CHECK:STDERR:
-fn foo(template ref a:! i32);
+fn foo(template ref a: i32);
 
 // CHECK:STDERR: fail_template_ref.carbon:[[@LINE+4]]:8: error: expected `:!` binding after `template` [ExpectedGenericBindingPatternAfterTemplate]
 // CHECK:STDERR: fn foo(template ref a: i32);
@@ -30,7 +30,7 @@ fn foo(template ref a: i32);
 // CHECK:STDERR: fn foo(ref template a:! i32);
 // CHECK:STDERR:            ^~~~~~~~
 // CHECK:STDERR:
-fn foo(ref template a:! i32);
+fn foo(ref template a: i32);
 
 // CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   parse_tree: [

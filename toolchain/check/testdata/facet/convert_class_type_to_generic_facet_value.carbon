@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-interface Generic(Scalar:! type) {
+interface Generic(Scalar: type) {
   fn F();
 }
 
@@ -27,13 +27,13 @@ impl ImplsGeneric as Generic(GenericParam) {
   fn F() {}
 }
 
-fn CallGenericMethod(T:! type, unused U:! Generic(T)) {}
+fn CallGenericMethod(generic T: type, unused generic U: Generic(T)) {}
 
 fn G() {
   CallGenericMethod(GenericParam, ImplsGeneric);
 }
 
-fn PassThroughToGenericMethod(T:! type, U:! Generic(T)) {
+fn PassThroughToGenericMethod(generic T: type, generic U: Generic(T)) {
   CallGenericMethod(T, U);
 }
 
@@ -45,7 +45,7 @@ fn H() {
 
 library "[[@TEST_NAME]]";
 
-interface Generic(Scalar:! type) {
+interface Generic(Scalar: type) {
   fn F();
 }
 
@@ -56,7 +56,7 @@ impl ImplsGeneric as Generic(GenericParam) {
   fn F() {}
 }
 
-fn CallGenericMethod[T:! type](unused U:! Generic(T), unused t: T) {}
+fn CallGenericMethod[T: type](unused generic U: Generic(T), unused t: T) {}
 
 fn G() {
   CallGenericMethod(ImplsGeneric, {} as GenericParam);

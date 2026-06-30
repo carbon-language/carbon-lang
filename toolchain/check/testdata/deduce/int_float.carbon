@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-fn F[N:! Core.IntLiteral](unused n: Core.Int(N)) -> Core.IntLiteral {
+fn F[N: Core.IntLiteral](unused n: Core.Int(N)) -> Core.IntLiteral {
   return N;
 }
 
@@ -28,7 +28,7 @@ fn G(a: i64) -> Core.IntLiteral {
 
 library "[[@TEST_NAME]]";
 
-fn F[N:! Core.IntLiteral](unused n: Core.Float(N)) -> Core.IntLiteral {
+fn F[N: Core.IntLiteral](unused n: Core.Float(N)) -> Core.IntLiteral {
   return N;
 }
 

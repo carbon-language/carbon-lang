@@ -27,7 +27,7 @@ impl library "[[@TEST_NAME]]";
 
 //@include-in-dumps
 
-fn F(_:! N) {}
+fn F(generic _: N) {}
 
 // CHECK:STDOUT: --- import.carbon
 // CHECK:STDOUT:

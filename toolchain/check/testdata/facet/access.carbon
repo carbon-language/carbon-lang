@@ -18,7 +18,7 @@ interface I {
   fn DoIt();
 }
 
-fn Use(T:! I) {
+fn Use(generic T: I) {
 //@dump-sem-ir-begin
   T.DoIt();
 //@dump-sem-ir-end
@@ -32,7 +32,7 @@ interface I {
   fn Make() -> Self;
 }
 
-fn Use(T:! I) -> T {
+fn Use(generic T: I) -> T {
 //@dump-sem-ir-begin
   return T.Make();
 //@dump-sem-ir-end
@@ -47,7 +47,7 @@ interface I {
 }
 
 //@dump-sem-ir-begin
-fn Use[T:! I](x: T) -> T {
+fn Use[T: I](x: T) -> T {
   return x.Copy();
 }
 //@dump-sem-ir-end
@@ -60,7 +60,7 @@ interface I {
   fn Hello();
 }
 
-fn Use[T:! I](x: T){
+fn Use[T: I](x: T){
 //@dump-sem-ir-begin
   x.Hello();
 //@dump-sem-ir-end
@@ -74,7 +74,7 @@ interface I {
   fn Copy(self) -> Self;
 }
 
-fn UseIndirect[T:! I](x: T) -> T {
+fn UseIndirect[T: I](x: T) -> T {
 //@dump-sem-ir-begin
   return x.(T.Copy)();
 //@dump-sem-ir-end
@@ -84,10 +84,10 @@ fn UseIndirect[T:! I](x: T) -> T {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let I1:! type;
+  let I1: type;
 }
 
-fn F(U:! I where .I1 = .Self) {
+fn F(generic U: I where .I1 = .Self) {
   U as (I where .I1 = U);
   (U as type) as (I where .I1 = U);
 }
@@ -96,11 +96,11 @@ fn F(U:! I where .I1 = .Self) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let I1:! type;
-  let I2:! type;
+  let I1: type;
+  let I2: type;
 }
 
-fn F(U:! I where .I1 = .Self and .I2 = ()) {
+fn F(generic U: I where .I1 = .Self and .I2 = ()) {
   U as (I where .I1 = .Self);
   (U as type) as (I where .I1 = .Self);
 }
@@ -109,14 +109,14 @@ fn F(U:! I where .I1 = .Self and .I2 = ()) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
+  let X: type;
   fn G() -> X*;
 }
 
-fn F2[U:! I](unused V: U*) {}
-fn F3[U:! I where .X = .Self](unused V: U*) {}
+fn F2[U: I](unused V: U*) {}
+fn F3[U: I where .X = .Self](unused V: U*) {}
 
-fn F(U:! I where .X = .Self, unused V: U*) {
+fn F(generic U: I where .X = .Self, unused V: U*) {
   // The returned value of `G` type `U` which has access to the methods of `I`.
   U.G()->G()->G();
   (U as type).G()->G()->G();
@@ -133,11 +133,11 @@ fn F(U:! I where .X = .Self, unused V: U*) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
+  let X: type;
   fn G() -> X;
 }
 
-fn F(U:! Core.Destroy & I where .X = .Self) {
+fn F(generic U: Core.Destroy & I where .X = .Self) {
   // Compound member lookup through a non-type value is possible for methods
   // which take a `self` parameter. But it's not possible for methods without
   // `self`. For those you need to go directly throug the type.
@@ -174,11 +174,11 @@ fn F(U:! Core.Destroy & I where .X = .Self) {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! type;
+  let X: type;
   fn G(self) -> X*;
 }
 
-fn F(U:! I where .X = .Self, v: U) {
+fn F(generic U: I where .X = .Self, v: U) {
   // Compound member lookup through a non-type value is possible for methods
   // which take a `self` parameter.
 
@@ -196,8 +196,8 @@ fn F(U:! I where .X = .Self, v: U) {
 // --- fail_non_const_associated.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let T:! type; }
-fn Id[U:! type](x: U) -> U { return Id(x); }
+interface I { let T: type; }
+fn Id[U: type](x: U) -> U { return Id(x); }
 impl () as I where .T = () {}
 // Type of member expr is associated entity type,
 // but value is not constant.
@@ -210,10 +210,10 @@ var v: ().(Id(I.T));
 // --- fail_non_const_associated_in_interface.carbon
 library "[[@TEST_NAME]]";
 
-fn Id[U:! type](x: U) -> U { return Id(x); }
+fn Id[U: type](x: U) -> U { return Id(x); }
 
 interface J {
-  let T:! type;
+  let T: type;
   // CHECK:STDERR: fail_non_const_associated_in_interface.carbon:[[@LINE+4]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:   fn F() -> Id(T);
   // CHECK:STDERR:             ^~~~~
@@ -225,7 +225,7 @@ interface J {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
 // CHECK:STDERR: fail_alias_to_non_const_assoc_entity.carbon:[[@LINE+4]]:8: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
@@ -245,7 +245,7 @@ interface J {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
 alias U = I.T;
@@ -268,17 +268,17 @@ interface J {
 // --- access_constant_in_self_facet.carbon
 library "[[@TEST_NAME]]";
 
-interface A { let X:! type; }
+interface A { let X: type; }
 
-fn F(AA:! A where .X = ()) -> AA.X {
+fn F(generic AA: A where .X = ()) -> AA.X {
   return ();
 }
 
 // --- access_constant_in_self_facet_with_multiple_interfaces.carbon
 library "[[@TEST_NAME]]";
 
-interface A { let X:! type; }
-interface B { let Y:! type; }
+interface A { let X: type; }
+interface B { let Y: type; }
 
 // The rewrite rules of .X and .Y come in some canonically sorted order. The
 // ImplWitnessAccess instruction looks at them to try find a value for the
@@ -287,24 +287,24 @@ interface B { let Y:! type; }
 // an interface other than the one it is accessing before finding the correct
 // rewrite.
 
-fn F(AB:! A & B where .X = () and .Y = {}) -> AB.X {
+fn F(generic AB: A & B where .X = () and .Y = {}) -> AB.X {
   return ();
 }
 
-fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
+fn G(generic AB: A & B where .X = () and .Y = {}) -> AB.Y {
   return {};
 }
 
 // --- fail_todo_access_constant_through_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
-interface A { let X:! type; }
+interface A { let X: type; }
 
 constraint N {
   extend require impls A where .X = ();
 }
 
-fn F(AA:! N) {
+fn F(generic AA: N) {
   // TODO: The identified facet type `N` includes `A` and should provide a
   // same-type constraint `A.X == ()` which would allow this conversion.
   // CHECK:STDERR: fail_todo_access_constant_through_named_constraint.carbon:[[@LINE+7]]:3: error: cannot convert expression of type `()` to `AA.(A.X)` with `as` [ConversionFailure]
@@ -323,7 +323,7 @@ interface Y {}
 impl () as Y {}
 
 interface Z {
-  let Y1:! Y;
+  let Y1: Y;
   fn G() -> Y1*;
 }
 
@@ -338,9 +338,9 @@ interface Z {
 // This requires that `SymbolicBindingType` evaluation correctly handles
 // arbitrary facet value instructions. Not just the common case of `FacetValue`
 // or `SymbolicBinding`.
-fn F1(T:! Y, unused t: T*) {}
+fn F1(generic T: Y, unused t: T*) {}
 
-fn F2(U:! Z) {
+fn F2(generic U: Z) {
   F1(U.Y1, U.G());
 }
 
@@ -349,16 +349,16 @@ library "[[@TEST_NAME]]";
 
 interface W {}
 interface X {
-  let X1:! type;
+  let X1: type;
 }
-interface Y(U:! type) {
-  let Y1:! X where .X1 = U;
+interface Y(U: type) {
+  let Y1: X where .X1 = U;
 }
-interface Z(T:! type) {
-  let Z1:! type;
+interface Z(T: type) {
+  let Z1: type;
 }
 
-fn F(U:! W, V:! Z(.Self) where .Z1 impls Y(U)) {
+fn F(generic U: W, generic V: Z(.Self) where .Z1 impls Y(U)) {
   // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
   // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, where
   // it finds the rewrite of `.X1 = U`.
@@ -372,25 +372,25 @@ library "[[@TEST_NAME]]";
 
 interface W {}
 interface X {
-  let X1:! type;
+  let X1: type;
 }
-interface Y(T:! type) {
-  let Y0:! type;
-  let Y1:! type;
-  let Y2:! type;
+interface Y(T: type) {
+  let Y0: type;
+  let Y1: type;
+  let Y2: type;
 }
 
-constraint NX(V:! type) {
+constraint NX(V: type) {
   extend require impls X where .X1 = V;
 }
 
-interface Z(PeriodSelf:! type) {
-  let Z1:! Y(PeriodSelf) where .Y0 impls NX(())
+interface Z(PeriodSelf: type) {
+  let Z1: Y(PeriodSelf) where .Y0 impls NX(())
                            and .Y1 impls NX({})
                            and .Y2 impls NX(());
 }
 
-fn F(V:! Z(.Self)) {
+fn F(generic V: Z(.Self)) {
   // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
   // look for a rewrite of .X1. First it looks in `V.Z1.Y1`, then `V.Z1`, where
   // it finds the rewrite of `.Y1.X1 = {}`.
@@ -412,26 +412,26 @@ library "[[@TEST_NAME]]";
 
 interface W {}
 interface X {
-  let X1:! type;
+  let X1: type;
 }
 interface Y {
-  let Y1:! type;
+  let Y1: type;
 }
-interface Z(T:! type) {
-  let Z0:! type;
-  let Z1:! type;
-  let Z2:! type;
+interface Z(T: type) {
+  let Z0: type;
+  let Z1: type;
+  let Z2: type;
 }
 
-constraint NX(V:! type) {
+constraint NX(V: type) {
   extend require impls X where .X1 = V;
 }
 
-constraint NY(V:! type) {
+constraint NY(V: type) {
   extend require impls Y where .Y1 = NX(V);
 }
 
-fn F(V:! Z(.Self) where .Z0 impls NY(())
+fn F(generic V: Z(.Self) where .Z0 impls NY(())
                     and .Z1 impls NY({})
                     and .Z2 impls NY(())) {
   // This has to search for a value for `.Z1.Y1.X1` in V. To do so it needs to
@@ -451,19 +451,19 @@ fn F(V:! Z(.Self) where .Z0 impls NY(())
 library "[[@TEST_NAME]]";
 
 interface Z {}
-interface Y(T:! type) {
-  let Y1:! type;
+interface Y(T: type) {
+  let Y1: type;
 }
 class C;
 
-constraint NY(PeriodSelf:! type) {
+constraint NY(PeriodSelf: type) {
   extend require impls Y(PeriodSelf) where .Y1 = {};
 }
 
 // TODO: We need to look in `T` for the rewrite in the access of
 // `(C as Y(T)).Y1` but we currently only look in `C`. See the TODO in
 // `TryFindValueInRewriteConstraints()`.
-fn F(T:! Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
+fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
   // CHECK:STDERR: fail_todo_find_access_value_in_facet_from_specific_interface.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `{}` to `C.(Y(T).Y1)` [ConversionFailure]
   // CHECK:STDERR:   return {};
   // CHECK:STDERR:   ^~~~~~~~~~

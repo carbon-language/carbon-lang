@@ -32,7 +32,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "enum.h";
 
-fn CompareGeneric[U:! type, T:! Core.EqWith(U)](x: T, y: U) -> bool {
+fn CompareGeneric[U: type, T: Core.EqWith(U)](x: T, y: U) -> bool {
   return x == y;
 }
 fn CompareUnscoped(x: Cpp.Unscoped, y: Cpp.Unscoped) -> bool {
@@ -53,7 +53,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "overloaded.h";
 
-fn CompareGeneric[U:! type, T:! Core.EqWith(U)](x: T, y: U) -> bool {
+fn CompareGeneric[U: type, T: Core.EqWith(U)](x: T, y: U) -> bool {
   return x == y;
 }
 
@@ -71,7 +71,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "enum.h";
 
-fn CompareGeneric[U:! type, T:! Core.EqWith(U)](x: T, y: U) -> bool {
+fn CompareGeneric[U: type, T: Core.EqWith(U)](x: T, y: U) -> bool {
   return x == y;
 }
 

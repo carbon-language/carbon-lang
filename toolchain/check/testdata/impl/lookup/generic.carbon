@@ -20,7 +20,7 @@ interface HasF {
   fn F(self);
 }
 
-impl forall [T:! type] T as HasF {
+impl forall [T: type] T as HasF {
   fn F(unused self) {}
 }
 
@@ -36,7 +36,7 @@ interface HasF {
   fn F(self) -> Self;
 }
 
-impl forall [T:! type] T* as HasF {
+impl forall [T: type] T* as HasF {
   fn F(self) -> T* { return self; }
 }
 
@@ -52,9 +52,9 @@ interface HasF {
   fn F(self);
 }
 
-class C(T:! type) {}
+class C(T: type) {}
 
-impl forall [T:! type] C(T) as HasF {
+impl forall [T: type] C(T) as HasF {
   fn F(unused self) {}
 }
 
@@ -66,11 +66,11 @@ fn G(x: C({})) {
 
 library "[[@TEST_NAME]]";
 
-interface HasF(T:! type) {
+interface HasF(T: type) {
   fn F(self);
 }
 
-impl forall [T:! type] {} as HasF(T) {
+impl forall [T: type] {} as HasF(T) {
   fn F(unused self) {}
 }
 
@@ -90,7 +90,7 @@ interface HasF {
 // CHECK:STDERR: impl forall [T:! type, U:! type] T as HasF {
 // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type, U:! type] T as HasF {
+impl forall [T: type, U: type] T as HasF {
   fn F(unused self) {}
 }
 
@@ -106,11 +106,11 @@ fn G(x: {}) {
 
 library "[[@TEST_NAME]]";
 
-interface HasF(T:! type) {
+interface HasF(T: type) {
   fn F(self);
 }
 
-impl forall [T:! type] T as HasF(T) {
+impl forall [T: type] T as HasF(T) {
   fn F(unused self) {}
 }
 

@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-fn F[template T:! type](x: T) -> i32 {
+fn F[template T: type](x: T) -> i32 {
   let n: i32 = x.n;
   return n;
 }
@@ -37,7 +37,7 @@ fn Test2(x: {.m: i32, .n: i32}) {
 
 library "[[@TEST_NAME]]";
 
-fn F[template T:! type](x: T) -> i32 {
+fn F[template T: type](x: T) -> i32 {
   let n: i32 = x.n;
   return n;
 }
@@ -61,7 +61,7 @@ fn Test(d: D) {
 
 library "[[@TEST_NAME]]";
 
-fn F[template T:! type](x: T) -> i32 {
+fn F[template T: type](x: T) -> i32 {
   let n: i32 = x.n;
   return n;
 }

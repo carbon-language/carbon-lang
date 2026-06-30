@@ -16,13 +16,13 @@
 package Lib;
 
 interface Z {}
-fn A[T:! Z](unused x: {.a: T}) {}
+fn A[T: Z](unused x: {.a: T}) {}
 
 // --- fail_deduce_imported_function.carbon
 
 import Lib;
 
-fn A[T:! Lib.Z](unused x: {.a: T}) {}
+fn A[T: Lib.Z](unused x: {.a: T}) {}
 
 fn B() {
   // CHECK:STDERR: fail_deduce_imported_function.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]

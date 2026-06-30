@@ -18,18 +18,18 @@ class Grass {}
 impl Grass as Edible {}
 
 interface Animal {}
-interface Eats(Food:! type) {}
+interface Eats(Food: type) {}
 
 // When answering a query "does Goat impl Animal", we must avoid trying to deduce
 // parameters for this impl. Not only is doing so unnecessary, it would start a new
 // "does Goat impl Animal" query, leading to a "cycle in impl lookup" error.
-impl forall [T:! Animal, U:! Edible] T as Eats(U) {}
+impl forall [T: Animal, U: Edible] T as Eats(U) {}
 
 class Goat {}
 impl Goat as Animal {}
 
-fn Feed[Food:! Edible, T:! Eats(Food)](unused e: T, unused food: Food) {}
-fn HandleAnimal[A:! Animal, Food:! Edible](a: A, food: Food) { Feed(a, food); }
+fn Feed[Food: Edible, T: Eats(Food)](unused e: T, unused food: Food) {}
+fn HandleAnimal[A: Animal, Food: Edible](a: A, food: Food) { Feed(a, food); }
 
 fn F() {
   HandleAnimal({} as Goat, {} as Grass);

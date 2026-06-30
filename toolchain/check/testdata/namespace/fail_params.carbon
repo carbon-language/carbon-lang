@@ -29,13 +29,15 @@ fn A.F() {}
 // CHECK:STDERR: namespace B(n: i32);
 // CHECK:STDERR:            ^~~~~~~~
 // CHECK:STDERR:
-namespace B(n: i32);
+namespace B(T: type);
+
+interface I(T: type) {}
 
 // CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: error: `namespace` declaration cannot have parameters [UnexpectedDeclNameParams]
 // CHECK:STDERR: namespace C[T:! type](x: T);
 // CHECK:STDERR:            ^~~~~~~~~~
 // CHECK:STDERR:
-namespace C[T:! type](x: T);
+namespace C[T: type](U: I(T));
 
 namespace D;
 // CHECK:STDERR: fail_params.carbon:[[@LINE+7]]:4: error: redeclaration differs because of parameter list [RedeclParamListDiffers]
@@ -45,7 +47,7 @@ namespace D;
 // CHECK:STDERR: namespace D;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
-fn D(unused T:! type).F() {}
+fn D(unused T: type).F() {}
 
 // CHECK:STDOUT: --- fail_params.carbon
 // CHECK:STDOUT:

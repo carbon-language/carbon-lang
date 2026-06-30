@@ -10,9 +10,9 @@
 
 // --- success.carbon
 
-fn OneAnd(T:! type where .U = i32 and .V == .W);
+fn OneAnd(generic T: type where .U = i32 and .V == .W);
 
-fn TwoAnd(Y:! I where .J impls K and .L == .M and .N = bool);
+fn TwoAnd(generic Y: I where .J impls K and .L == .M and .N = bool);
 
 // --- fail_and_prefix.carbon
 
@@ -20,7 +20,7 @@ fn TwoAnd(Y:! I where .J impls K and .L == .M and .N = bool);
 // CHECK:STDERR: fn AndPrefix(T:! type where and .V == .W);
 // CHECK:STDERR:                             ^~~
 // CHECK:STDERR:
-fn AndPrefix(T:! type where and .V == .W);
+fn AndPrefix(generic T: type where and .V == .W);
 
 // --- fail_and_suffix.carbon
 
@@ -28,7 +28,7 @@ fn AndPrefix(T:! type where and .V == .W);
 // CHECK:STDERR: fn AndSuffix(Y:! I where .J impls K and);
 // CHECK:STDERR:                                        ^
 // CHECK:STDERR:
-fn AndSuffix(Y:! I where .J impls K and);
+fn AndSuffix(generic Y: I where .J impls K and);
 
 // --- fail_and_early.carbon
 
@@ -36,7 +36,7 @@ fn AndSuffix(Y:! I where .J impls K and);
 // CHECK:STDERR: fn AndEarly(Z:! L where .M and N);
 // CHECK:STDERR:                            ^~~
 // CHECK:STDERR:
-fn AndEarly(Z:! L where .M and N);
+fn AndEarly(generic Z: L where .M and N);
 
 // CHECK:STDOUT: - filename: success.carbon
 // CHECK:STDOUT:   parse_tree: [

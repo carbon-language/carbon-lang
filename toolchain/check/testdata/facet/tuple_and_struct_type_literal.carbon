@@ -15,35 +15,35 @@ library "[[@TEST_NAME]]";
 
 interface Y {}
 interface Z {
-  let X:! Y;
+  let X: Y;
 }
 
 impl () as Y {}
 
 // The tuple literal converts implicitly to a type, and then to a facet value
 // satisfying `Y`.
-impl forall [T:! type] T as Z where .X = () {}
+impl forall [T: type] T as Z where .X = () {}
 
 // --- complex_tuple_literal_to_facet_value.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {}
 interface Z {
-  let X:! Y;
+  let X: Y;
 }
 
 impl ((), {}) as Y {}
 
 // The tuple literal converts implicitly to a type, and then to a facet value
 // satisfying `Y`.
-impl forall [T:! type] T as Z where .X = ((), {}) {}
+impl forall [T: type] T as Z where .X = ((), {}) {}
 
 // --- fail_mismatch_tuple_literal_to_facet_value.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {}
 interface Z {
-  let X:! Y;
+  let X: Y;
 }
 
 impl ((), {}) as Y {}
@@ -52,42 +52,42 @@ impl ((), {}) as Y {}
 // CHECK:STDERR: impl forall [T:! type] T as Z where .X = ({}, {}) {}
 // CHECK:STDERR:                                          ^~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] T as Z where .X = ({}, {}) {}
+impl forall [T: type] T as Z where .X = ({}, {}) {}
 
 // --- struct_literal_to_facet_value.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {}
 interface Z {
-  let X:! Y;
+  let X: Y;
 }
 
 impl {} as Y {}
 
 // The struct literal converts implicitly to a type, and then to a facet value
 // satisfying `Y`.
-impl forall [T:! type] T as Z where .X = {} {}
+impl forall [T: type] T as Z where .X = {} {}
 
 // --- complex_struct_literal_to_facet_value.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {}
 interface Z {
-  let X:! Y;
+  let X: Y;
 }
 
 impl {.a: (), .b: {}} as Y {}
 
 // The struct literal converts implicitly to a type, and then to a facet value
 // satisfying `Y`.
-impl forall [T:! type] T as Z where .X = {.a: (), .b: {}} {}
+impl forall [T: type] T as Z where .X = {.a: (), .b: {}} {}
 
 // --- fail_mismatch_struct_literal_to_facet_value.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {}
 interface Z {
-  let X:! Y;
+  let X: Y;
 }
 
 impl {.a: (), .b: {}} as Y {}
@@ -96,18 +96,18 @@ impl {.a: (), .b: {}} as Y {}
 // CHECK:STDERR: impl forall [T:! type] T as Z where .X = {.a: {}, .b: {}} {}
 // CHECK:STDERR:                                          ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] T as Z where .X = {.a: {}, .b: {}} {}
+impl forall [T: type] T as Z where .X = {.a: {}, .b: {}} {}
 
 // --- struct_literal_to_facet_type_parameter.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
-impl forall [U:! type] U as Z {}
+impl forall [U: type] U as Z {}
 
 constraint N {}
 
-fn InterfaceParam(unused U:! Z) {}
-fn ConstraintParam(unused U:! N) {}
+fn InterfaceParam(unused generic U: Z) {}
+fn ConstraintParam(unused generic U: N) {}
 
 fn F() {
   InterfaceParam({});
@@ -118,12 +118,12 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface Z {}
-impl forall [U:! type] U as Z {}
+impl forall [U: type] U as Z {}
 
 constraint N {}
 
-fn InterfaceParam(unused U:! Z) {}
-fn ConstraintParam(unused U:! N) {}
+fn InterfaceParam(unused generic U: Z) {}
+fn ConstraintParam(unused generic U: N) {}
 
 fn F() {
   // CHECK:STDERR: fail_struct_literal_with_field_to_facet_type_parameter.carbon:[[@LINE+10]]:3: error: cannot implicitly convert non-type value of type `{.a: ()}` into type implementing `Z` [ConversionFailureNonTypeToFacet]
@@ -154,12 +154,12 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface Z {}
-impl forall [U:! type] U as Z {}
+impl forall [U: type] U as Z {}
 
 constraint N {}
 
-fn InterfaceParam(unused U:! Z) {}
-fn ConstraintParam(unused U:! N) {}
+fn InterfaceParam(unused generic U: Z) {}
+fn ConstraintParam(unused generic U: N) {}
 
 fn F() {
   InterfaceParam(());
@@ -176,14 +176,14 @@ fn F() {
 // --- struct_literal_to_generic_facet_type_parameter_with_concrete_specific.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(U:! type) {}
-impl forall [T:! type, U:! type] U as Z(T) {}
+interface Z(U: type) {}
+impl forall [T: type, U: type] U as Z(T) {}
 
-constraint N(U:! type) {}
+constraint N(U: type) {}
 
 class C;
-fn InterfaceParam(unused U:! Z(C)) {}
-fn ConstraintParam(unused U:! N(C)) {}
+fn InterfaceParam(unused generic U: Z(C)) {}
+fn ConstraintParam(unused generic U: N(C)) {}
 
 fn F() {
   InterfaceParam({});
@@ -193,14 +193,14 @@ fn F() {
 // --- tuple_literal_to_generic_facet_type_parameter_with_concrete_specific.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(U:! type) {}
-impl forall [T:! type, U:! type] U as Z(T) {}
+interface Z(U: type) {}
+impl forall [T: type, U: type] U as Z(T) {}
 
-constraint N(U:! type) {}
+constraint N(U: type) {}
 
 class C;
-fn InterfaceParam(unused U:! Z(C)) {}
-fn ConstraintParam(unused U:! N(C)) {}
+fn InterfaceParam(unused generic U: Z(C)) {}
+fn ConstraintParam(unused generic U: N(C)) {}
 
 fn F() {
   InterfaceParam(());
@@ -217,15 +217,15 @@ fn F() {
 // --- struct_literal_to_generic_facet_type_parameter_with_symbolic_specific.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(U:! type) {}
-impl forall [T:! type, U:! type] U as Z(T) {}
+interface Z(U: type) {}
+impl forall [T: type, U: type] U as Z(T) {}
 
-constraint N(U:! type) {}
+constraint N(U: type) {}
 
-fn InterfaceParam(T:! type, unused U:! Z(T)) {}
-fn ConstraintParam(T:! type, unused U:! N(T)) {}
+fn InterfaceParam(generic T: type, unused generic U: Z(T)) {}
+fn ConstraintParam(generic T: type, unused generic U: N(T)) {}
 
-fn F(T:! type) {
+fn F(generic T: type) {
   InterfaceParam((), {});
   ConstraintParam((), {});
 
@@ -236,15 +236,15 @@ fn F(T:! type) {
 // --- tuple_literal_to_generic_facet_type_parameter_with_symbolic_specific.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(U:! type) {}
-impl forall [T:! type, U:! type] U as Z(T) {}
+interface Z(U: type) {}
+impl forall [T: type, U: type] U as Z(T) {}
 
-constraint N(U:! type) {}
+constraint N(U: type) {}
 
-fn InterfaceParam(T:! type, unused U:! Z(T)) {}
-fn ConstraintParam(T:! type, unused U:! N(T)) {}
+fn InterfaceParam(generic T: type, unused generic U: Z(T)) {}
+fn ConstraintParam(generic T: type, unused generic U: N(T)) {}
 
-fn F(T:! type) {
+fn F(generic T: type) {
   InterfaceParam({}, ());
   ConstraintParam({}, ());
 

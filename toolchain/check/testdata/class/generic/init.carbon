@@ -14,12 +14,12 @@
 
 library "[[@TEST_NAME]]";
 
-class Class(T:! Core.Destroy) {
+class Class(T: Core.Destroy) {
   var k: T;
 }
 
 //@dump-sem-ir-begin
-fn InitFromStructGeneric(T:! Core.Copy & Core.Destroy, x: T) -> T {
+fn InitFromStructGeneric(generic T: Core.Copy & Core.Destroy, x: T) -> T {
   var v: Class(T) = {.k = x};
   return v.k;
 }
@@ -34,12 +34,12 @@ fn InitFromStructSpecific(x: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-class Adapt(T:! type) {
+class Adapt(T: type) {
   adapt T;
 }
 
 //@dump-sem-ir-begin
-fn InitFromAdaptedGeneric(T:! Core.Copy, x: T) -> T {
+fn InitFromAdaptedGeneric(generic T: Core.Copy, x: T) -> T {
   return (x as Adapt(T)) as T;
 }
 

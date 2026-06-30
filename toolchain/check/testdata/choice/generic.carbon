@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/choice/generic.carbon
 
 //@dump-sem-ir-begin
-choice Always(T:! type) {
+choice Always(T: type) {
   Sunny
 }
 //@dump-sem-ir-end

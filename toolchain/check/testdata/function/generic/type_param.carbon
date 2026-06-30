@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/type_param.carbon
 
-fn F(T:! type) {
+fn F(generic T: type) {
   var p: T*;
   let unused n: T = *p;
 }

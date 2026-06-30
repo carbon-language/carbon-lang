@@ -15,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-fn F[template T:! type](x: T**) -> T* {
+fn F[template T: type](x: T**) -> T* {
   return *x;
 }
 //@dump-sem-ir-end
@@ -25,7 +25,7 @@ fn F[template T:! type](x: T**) -> T* {
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-fn F(template T:! type, U:! type) -> (T, U) {
+fn F(template T: type, generic U: type) -> (T, U) {
   return F(T, U);
 }
 //@dump-sem-ir-end

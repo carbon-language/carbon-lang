@@ -24,7 +24,7 @@ struct Ordered {
 };
 ''';
 
-fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
+fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   //@dump-sem-ir-begin
   x < y;
   x <= y;
@@ -91,7 +91,7 @@ struct B3 {
 };
 ''';
 
-fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
+fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   //@dump-sem-ir-begin
   x < y;
   x <= y;
@@ -249,7 +249,7 @@ struct AllReturnBoolish {
 // CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
+fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   x < y;
   x <= y;
   x > y;
@@ -318,7 +318,7 @@ struct LessNonConst {
 };
 ''';
 
-fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
+fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   x < y;
   x <= y;
   x > y;

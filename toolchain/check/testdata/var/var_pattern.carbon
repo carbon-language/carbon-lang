@@ -106,8 +106,8 @@ fn f() {
   // CHECK:STDERR:   var T:! type;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
-  var T:! type;
-  let (x: (), T:! type) = ((), ());
+  var generic T: type;
+  let (x: (), generic T: type) = ((), ());
 }
 
 // --- fail_implicit.carbon
@@ -128,7 +128,7 @@ fn F[var u: ()]();
 // CHECK:STDERR: fn G[var T:! type]();
 // CHECK:STDERR:                  ^
 // CHECK:STDERR:
-fn G[var T:! type]();
+fn G[var T: type]();
 
 // --- var_self.carbon
 

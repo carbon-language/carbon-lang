@@ -18,7 +18,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn F(T:! i32 where .Self == bool);
 // CHECK:STDERR:          ^~~
 // CHECK:STDERR:
-fn F(T:! i32 where .Self == bool);
+fn F(generic T: i32 where .Self == bool);
 
 // --- fail_left_where_unknown.carbon
 
@@ -28,7 +28,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn G(U:! NOT_DECLARED where .Self == bool);
 // CHECK:STDERR:          ^~~~~~~~~~~~
 // CHECK:STDERR:
-fn G(U:! NOT_DECLARED where .Self == bool);
+fn G(generic U: NOT_DECLARED where .Self == bool);
 
 // --- fail_var.carbon
 

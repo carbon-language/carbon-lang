@@ -21,12 +21,12 @@
 // CHECK:STDERR: fn Foo[a: ()]();
 // CHECK:STDERR:        ^~~~~
 // CHECK:STDERR:
-fn Foo[a: ()]();
 // CHECK:STDERR: fail_multi_error.carbon:[[@LINE+4]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
 // CHECK:STDERR: fn Boo[a: ()]() {}
 // CHECK:STDERR:        ^~~~~
 // CHECK:STDERR:
-fn Boo[a: ()]() {}
+fn Foo[runtime a: ()]();
+fn Boo[runtime a: ()]() {}
 
 // CHECK:STDOUT: --- fail_multi_error.carbon
 // CHECK:STDOUT:

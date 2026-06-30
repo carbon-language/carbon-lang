@@ -16,8 +16,8 @@
 
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) { fn F(self); }
-class C(T:! type) {}
+interface I(T: type) { fn F(self); }
+class C(T: type) {}
 
 class X {}
 

@@ -15,7 +15,7 @@ fn F() {
 }
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
 // CHECK:STDOUT: - filename: missing_value.carbon

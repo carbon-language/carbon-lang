@@ -12,12 +12,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/method/generic_method.carbon
 
-class Class(T:! type) {
+class Class(T: type) {
   var a: T;
   fn F(self, n: T);
 }
 
-fn Class(T:! type).F(unused self, unused n: T) {}
+fn Class(T: type).F(unused self, unused n: T) {}
 
 
 // CHECK:STDOUT: --- generic_method.carbon

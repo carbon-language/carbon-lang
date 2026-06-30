@@ -20,7 +20,7 @@ fn F() {
   // CHECK:STDERR:   let T:! type = i32;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
-  let T:! type = i32;
+  let generic T: type = i32;
   var p: T*;
   let unused a: T = *p;
 }
@@ -33,7 +33,7 @@ fn F(a: i32) -> i32 {
   // CHECK:STDERR:   let T:! type = i32;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
-  let T:! type = i32;
+  let generic T: type = i32;
   let x: T = 5;
   return x;
 }

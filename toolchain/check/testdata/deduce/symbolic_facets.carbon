@@ -18,14 +18,14 @@
 // --- fail_missing_interface.carbon
 library "[[@TEST_NAME]]";
 
-class C(CC:! type) {
+class C(CC: type) {
   interface A {}
-  fn F(unused T:! A) {}
+  fn F(unused generic T: A) {}
 }
 
-class D(DD:! type) {
+class D(DD: type) {
   interface B {}
-  fn G(T:! B) {
+  fn G(generic T: B) {
     // T only implements D(DD).B, so should not convert to a facet value
     // implementing C(()).A.
     //
@@ -43,14 +43,14 @@ class D(DD:! type) {
 // --- fail_interface_wrong_generic_param.carbon
 library "[[@TEST_NAME]]";
 
-class C(CC:! type) {
+class C(CC: type) {
   interface A {}
-  fn F(unused T:! A) {}
+  fn F(unused generic T: A) {}
 }
 
-class D(DD:! type) {
+class D(DD: type) {
   interface B {}
-  fn G(T:! B & C({}).A) {
+  fn G(generic T: B & C({}).A) {
     // T implements C({}).A and D(DD).B, so should not convert to a facet value
     // implementing C(()).A.
     //
@@ -68,14 +68,14 @@ class D(DD:! type) {
 // --- compatible_deduce.carbon
 library "[[@TEST_NAME]]";
 
-class C(CC:! type) {
+class C(CC: type) {
   interface A {}
-  fn F(unused T:! A) {}
+  fn F(unused generic T: A) {}
 }
 
-class D(DD:! type) {
+class D(DD: type) {
   interface B {}
-  fn G(T:! B & C(()).A) {
+  fn G(generic T: B & C(()).A) {
     C(()).F(T);
   }
 }

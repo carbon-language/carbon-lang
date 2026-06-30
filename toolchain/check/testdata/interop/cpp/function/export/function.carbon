@@ -17,8 +17,8 @@ fn F1() {}
 fn F2() -> i32 { return 0; }
 fn F3(_: i32) {}
 
-fn HasGenericArg(T:! type, a: T) { a; }
-fn HasDeducedArg[T:! type](a: T) { a; }
+fn HasGenericArg(generic T: type, a: T) { a; }
+fn HasDeducedArg[T: type](a: T) { a; }
 
 // --- function.carbon
 

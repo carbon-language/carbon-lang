@@ -16,11 +16,11 @@
 
 library "[[@TEST_NAME]]";
 
-interface Simple(T:! type) {}
+interface Simple(T: type) {}
 
 class X {}
 
-interface WithAssocFn(T:! type) {
+interface WithAssocFn(T: type) {
   // TODO: Take `Self`, return `T`, once that works.
   fn F() -> X;
 }
@@ -34,10 +34,10 @@ class C {
   }
 }
 
-interface WithImplicitArgs[T:! type](N:! T);
+interface WithImplicitArgs[T: type](N: T);
 
-fn Receive(unused T:! Simple(C)) {}
-fn Pass(T:! Simple(C)) {
+fn Receive(unused generic T: Simple(C)) {}
+fn Pass(generic T: Simple(C)) {
   Receive(T);
 }
 
@@ -45,13 +45,13 @@ fn Pass(T:! Simple(C)) {
 
 library "[[@TEST_NAME]]";
 
-interface Generic(T:! type) {}
+interface Generic(T: type) {}
 
 class A {}
 class B {}
 
-fn F(T:! Generic(A));
-fn G(T:! Generic(B)) {
+fn F(generic T: Generic(A));
+fn G(generic T: Generic(B)) {
   // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `Generic(B)` into type implementing `Generic(A)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
@@ -65,7 +65,7 @@ fn G(T:! Generic(B)) {
 // --- fail_args_count_mismatch.carbon
 library "[[@TEST_NAME]]";
 
-interface Generic(T:! type) {}
+interface Generic(T: type) {}
 
 // CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+7]]:17: error: 2 arguments passed to generic interface expecting 1 argument [CallArgCountMismatch]
 // CHECK:STDERR: fn F(unused T:! Generic((), ())) {}
@@ -74,7 +74,7 @@ interface Generic(T:! type) {}
 // CHECK:STDERR: interface Generic(T:! type) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(unused T:! Generic((), ())) {}
+fn F(unused generic T: Generic((), ())) {}
 
 // CHECK:STDOUT: --- generic.carbon
 // CHECK:STDOUT:

@@ -20,15 +20,15 @@ fn MakeIntLiteral() -> type = "int_literal.make_type";
 alias IntLiteral = MakeIntLiteral();
 fn Int(N: IntLiteral) -> type = "int.make_type_signed";
 
-interface AddWith(T:! type) {
+interface AddWith(T: type) {
   fn Op(self, other: Self) -> Self;
 }
 
-interface As(T:! type) {
+interface As(T: type) {
   fn Convert(self) -> T;
 }
 
-interface ImplicitAs(T:! type) {
+interface ImplicitAs(T: type) {
   fn Convert(self) -> T;
 }
 

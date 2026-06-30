@@ -21,7 +21,7 @@ fn Main() {
   // CHECK:STDERR:   var x:! () = ();
   // CHECK:STDERR:              ^
   // CHECK:STDERR:
-  var x:! () = ();
+  var generic x: () = ();
 }
 
 // CHECK:STDOUT: --- fail_generic.carbon

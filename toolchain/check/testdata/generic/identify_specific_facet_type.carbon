@@ -16,11 +16,11 @@ library "[[@TEST_NAME]]";
 // Identification tries to form the specific interface `K(array(i32, -1))` which
 // is invalid, so the impl as a whole is invalid.
 
-interface K(T:! type) {}
-constraint L(N:! i32) {
+interface K(T: type) {}
+constraint L(N: i32) {
   require impls K(array(i32, N));
 }
-constraint J(N:! i32) {
+constraint J(N: i32) {
   require impls L(N);
 }
 
@@ -39,8 +39,8 @@ library "[[@TEST_NAME]]";
 // Identification tries to form the specific interface `K(array(i32, -1))` which
 // is invalid, so the impl as a whole is invalid.
 
-interface K(T:! type) {}
-constraint J(N:! i32) {
+interface K(T: type) {}
+constraint J(N: i32) {
   extend require impls K(array(i32, N));
 }
 
@@ -57,12 +57,12 @@ impl {} as J(-1) {}
 library "[[@TEST_NAME]]";
 
 interface Y {}
-interface CanFailToMonomorphize(N:! Core.IntLiteral) {
-  let Z1:! array((), N);
-  let Z2:! type;
+interface CanFailToMonomorphize(N: Core.IntLiteral) {
+  let Z1: array((), N);
+  let Z2: type;
 }
 
-constraint S(N:! Core.IntLiteral) {
+constraint S(N: Core.IntLiteral) {
   extend require impls CanFailToMonomorphize(N);
 }
 
@@ -75,9 +75,9 @@ constraint S(N:! Core.IntLiteral) {
 // gets to the `.Z2` and attempts `SubstPeriodSelf()` before failing. Without
 // the named constraint indirection, we'd just fail to build a specific for
 // `CanFailToMonomorphize(N)` and fail without attempting `SubstPeriodSelf()`.
-fn F(N:! Core.IntLiteral, _:! S(N) where .Z2 impls Y) {}
+fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z2 impls Y) {}
 
-fn G(T:! Y) {
+fn G(generic T: Y) {
   // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE+13]]:3: error: facet type `S(-1) where .(CanFailToMonomorphize(-1).Z2) impls Y` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   F(-1, T);
   // CHECK:STDERR:   ^~~~~~~~
@@ -99,16 +99,16 @@ library "[[@TEST_NAME]]";
 
 interface Y {}
 interface Z {
-  let Z1:! type;
+  let Z1: type;
 }
 
-constraint S(N:! Core.IntLiteral) {
+constraint S(N: Core.IntLiteral) {
   extend require impls Z where .Z1 = array((), N);
 }
 
-fn F(N:! Core.IntLiteral, _:! S(N)) {}
+fn F(generic N: Core.IntLiteral, generic _: S(N)) {}
 
-fn G(T:! Z) {
+fn G(generic T: Z) {
   // CHECK:STDERR: fail_monomorphization_identify_in_call.carbon:[[@LINE+10]]:3: error: facet type `S(-1)` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   F(-1, T);
   // CHECK:STDERR:   ^~~~~~~~
@@ -127,16 +127,16 @@ library "[[@TEST_NAME]]";
 
 interface Y {}
 interface Z {
-  let Z1:! type;
+  let Z1: type;
 }
 
-constraint S(N:! Core.IntLiteral) {
+constraint S(N: Core.IntLiteral) {
   extend require impls Z;
 }
 
-fn F(N:! Core.IntLiteral, _:! S(N) where .Z1 = array((), N)) {}
+fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z1 = array((), N)) {}
 
-fn G(T:! Z) {
+fn G(generic T: Z) {
   // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE+10]]:3: error: constructed invalid specific for `S(N) where .(Z.Z1) = array((), N)` from argument [SubstitutingGenericParamType]
   // CHECK:STDERR:   F(-1, T);
   // CHECK:STDERR:   ^~~~~~~~

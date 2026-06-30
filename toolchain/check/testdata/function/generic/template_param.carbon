@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-fn F(unused template T:! type) {
+fn F(unused template T: type) {
 }
 
 fn G() {

@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T: type) {
   var x: T;
 }
 
@@ -46,7 +46,7 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {
+class C(T: type) {
   // CHECK:STDERR: fail_todo_extend_symbolic_base.carbon:[[@LINE+4]]:16: error: deriving from final type `T`; base type must be an `abstract` or `base` class [BaseIsFinal]
   // CHECK:STDERR:   extend base: T;
   // CHECK:STDERR:                ^
@@ -66,11 +66,11 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-base class X(U:! type) {
+base class X(U: type) {
   fn G() -> U { return G(); }
 }
 
-class C(T:! type) {
+class C(T: type) {
   extend base: X(T);
 }
 

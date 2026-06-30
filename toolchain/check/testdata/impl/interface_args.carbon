@@ -15,7 +15,7 @@
 // --- core.carbon
 package Core;
 
-interface ImplicitAs(Dest:! type) {
+interface ImplicitAs(Dest: type) {
   fn Convert(self) -> Dest;
 }
 
@@ -23,7 +23,7 @@ interface ImplicitAs(Dest:! type) {
 
 library "[[@TEST_NAME]]";
 
-interface Action(T:! type) {
+interface Action(T: type) {
   fn Op(self);
 }
 
@@ -57,7 +57,7 @@ fn G(a: A) { a.(Action(C).Op)(); }
 
 library "[[@TEST_NAME]]";
 
-interface Factory(T:! type) {
+interface Factory(T: type) {
   // Non-instance class function
   fn Make() -> T;
   // Instance method

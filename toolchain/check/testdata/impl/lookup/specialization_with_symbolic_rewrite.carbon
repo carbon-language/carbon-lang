@@ -15,17 +15,17 @@
 // --- final_specialized_symbolic_rewrite.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {
-  let X:! type;
+interface Z(T: type) {
+  let X: type;
 }
 
 class C {}
 
-impl forall [T:! type, S:! type] T as Z(S) where .X = () {}
+impl forall [T: type, S: type] T as Z(S) where .X = () {}
 
-final impl forall [T:! type] T as Z(C) where .X = T {}
+final impl forall [T: type] T as Z(C) where .X = T {}
 
-fn F(T:! Z(C), t: T) {
+fn F(generic T: Z(C), t: T) {
   // This should typecheck, the `final impl` should give the same `T`.
   let unused a: T.X = t;
 }
@@ -33,18 +33,18 @@ fn F(T:! Z(C), t: T) {
 // --- fail_nonfinal_specialized_symbolic_rewrite.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {
-  let X:! type;
+interface Z(T: type) {
+  let X: type;
 }
 interface Y {}
 
 class C {}
 
-impl forall [T:! type, S:! type] T as Z(S) where .X = () {}
+impl forall [T: type, S: type] T as Z(S) where .X = () {}
 
-impl forall [T:! type] T as Z(C) where .X = T {}
+impl forall [T: type] T as Z(C) where .X = T {}
 
-fn F(T:! Z(C), t: T) {
+fn F(generic T: Z(C), t: T) {
   // CHECK:STDERR: fail_nonfinal_specialized_symbolic_rewrite.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `T` to `T.(Z(C).X)` [ConversionFailure]
   // CHECK:STDERR:   let unused a: T.X = t;
   // CHECK:STDERR:                       ^
@@ -59,12 +59,12 @@ fn F(T:! Z(C), t: T) {
 library "[[@TEST_NAME]]";
 
 interface Ptr {
-  let Type:! type;
+  let Type: type;
 }
 
-final impl forall [U:! type] U as Ptr where .Type = U* {}
+final impl forall [U: type] U as Ptr where .Type = U* {}
 
-fn F[T:! type](var t: T) -> T.(Ptr.Type) {
+fn F[T: type](var t: T) -> T.(Ptr.Type) {
   return &t;
 }
 
@@ -72,12 +72,12 @@ fn F[T:! type](var t: T) -> T.(Ptr.Type) {
 library "[[@TEST_NAME]]";
 
 interface Ptr {
-  let Type:! type;
+  let Type: type;
 }
 
-final impl forall [U:! type] U as Ptr where .Type = U* {}
+final impl forall [U: type] U as Ptr where .Type = U* {}
 
-fn F[T:! Ptr](var t: T) -> T.Type {
+fn F[T: Ptr](var t: T) -> T.Type {
   return &t;
 }
 
@@ -85,12 +85,12 @@ fn F[T:! Ptr](var t: T) -> T.Type {
 library "[[@TEST_NAME]]";
 
 interface Ptr {
-  let Type:! type;
+  let Type: type;
 }
 
-final impl forall [U:! type] U as Ptr where .Type = U* {}
+final impl forall [U: type] U as Ptr where .Type = U* {}
 
-fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
+fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
   return &t;
 }
 

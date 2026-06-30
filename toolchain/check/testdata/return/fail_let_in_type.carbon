@@ -24,7 +24,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDERR: let y:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~
 // CHECK:STDERR:
-let y:! type = i32;
+let generic y: type = i32;
 // CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:19: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: fn HalfDozen() -> y { return 6; }
 // CHECK:STDERR:                   ^
@@ -36,7 +36,7 @@ fn HalfDozen() -> y { return 6; }
 // CHECK:STDERR: let template z:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-let template z:! type = i32;
+let template z: type = i32;
 // CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:28: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDERR:                            ^

@@ -123,7 +123,7 @@ fn J() {
 
 package PackageHasParam;
 
-class AnyParam[T:! type](X:! T) {}
+class AnyParam[T: type](X: T) {}
 
 interface Y {
   fn K(unused self) {}
@@ -135,7 +135,7 @@ package PackageGenericInterface;
 
 import PackageHasParam;
 
-interface GenericInterface(U:! type) {}
+interface GenericInterface(U: type) {}
 
 impl PackageHasParam.AnyParam(GenericInterface) as PackageHasParam.Y {
   fn K(unused self) {}
@@ -165,7 +165,7 @@ package PackageGenericClass;
 
 import PackageHasParam;
 
-class GenericClass(U:! type) {}
+class GenericClass(U: type) {}
 
 impl PackageHasParam.AnyParam(GenericClass) as PackageHasParam.Y {
   fn K(unused self) {}
@@ -201,7 +201,7 @@ interface Extra6 {}
 interface Extra7 {}
 interface Extra8 {}
 
-class C(T:! type) {}
+class C(T: type) {}
 interface I { fn F(self); }
 
 impl C((Extra1, Extra2, Extra3, Extra4, Extra5, Extra6, Extra7, Extra8)) as I {

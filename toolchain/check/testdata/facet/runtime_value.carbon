@@ -56,7 +56,7 @@ fn F(c: C) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-    let X:! type;
+    let X: type;
 }
 
 // CHECK:STDERR: fail_compound_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+4]]:15: error: semantics TODO: `associated value lookup on runtime facet value` [SemanticsTodo]
@@ -69,7 +69,7 @@ fn F(T: Z, v: T.(Z.X));
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
 // TODO: Improve this diagnostic. The problem is that T is a runtime facet
@@ -86,7 +86,7 @@ fn F(T: Z, v: T.X);
 library "[[@TEST_NAME]]";
 
 interface Z {
-    let X:! type;
+    let X: type;
 }
 
 // TODO: We should be able to get the value of `.X` from the `FacetType` of
@@ -102,7 +102,7 @@ fn F(T: Z where .X = (), v: T.(Z.X));
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
 // TODO: We should be able to get the value of `.X` from the `FacetType` of

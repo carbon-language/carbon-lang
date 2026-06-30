@@ -26,7 +26,7 @@ interface Z {
 
 // --- impls_where.carbon
 
-interface Y { let Y1:! type; }
+interface Y { let Y1: type; }
 
 interface Z {
   require impls Y where .Y1 = ();
@@ -36,7 +36,7 @@ interface Z {
 
 interface Y {}
 
-interface Z(T:! type) {
+interface Z(T: type) {
   require T impls Y;
 }
 

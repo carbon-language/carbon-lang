@@ -8,9 +8,9 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/impl/forall.carbon
 
-impl forall [T:! type] T as Interface;
+impl forall [T: type] T as Interface;
 
-impl forall [T:! type, U:! Interface] U as Interface(T) {
+impl forall [T: type, U: Interface] U as Interface(T) {
 }
 
 // CHECK:STDOUT: - filename: forall.carbon

@@ -16,13 +16,13 @@
 
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {}
+class C(T: type) {}
 
 interface I {
   fn F();
 }
 
-impl forall [T:! type] C(T) as I {
+impl forall [T: type] C(T) as I {
   fn F() {}
 }
 

@@ -24,11 +24,11 @@ impl X as Core.ImplicitAs(i32) {
   fn Convert(self: X) -> i32 { return self.n; }
 }
 
-// TODO: fn Sink(T:! type, x: T);
+// TODO: fn Sink(generic T: type, x: T);
 // ... once we stop deducing `T` from the type of the second argument in this case.
 fn Sink_i32(n: i32);
 fn Sink_X(x: X);
-fn Source(T:! type) -> T { return Source(T); }
+fn Source(generic T: type) -> T { return Source(T); }
 
 fn Test() {
   Sink_i32(Source(X));

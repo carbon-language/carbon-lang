@@ -39,7 +39,7 @@ var array_index: array(i32, 1) = (0,) as array(i32, ((5, 7, 1, 9) as array(i32, 
 library "[[@TEST_NAME]]";
 
 // Check that we propagate the `symbolic` tag through evaluations.
-fn F(T:! Core.Destroy) {
+fn F(generic T: Core.Destroy) {
   //@dump-sem-ir-begin
   var unused u: (T*, const T);
   var unused v: {.a: T};
@@ -47,7 +47,7 @@ fn F(T:! Core.Destroy) {
   //@dump-sem-ir-end
 }
 
-fn G(N:! i32) {
+fn G(generic N: i32) {
   //@dump-sem-ir-begin
   var unused k: array(i32, N);
   //@dump-sem-ir-end

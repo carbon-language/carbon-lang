@@ -31,7 +31,7 @@ constraint B {
 //@include-in-dumps
 impl library "[[@TEST_NAME]]";
 
-fn F(unused T:! B) {}
+fn F(unused generic T: B) {}
 
 // --- fail_import_not_identified.carbon
 library "[[@TEST_NAME]]";

@@ -15,10 +15,10 @@ library "[[@TEST_NAME]]";
 
 interface I {}
 
-class ArgToI(T:! I) {}
+class ArgToI(T: I) {}
 
 interface IMisuse {
-  let Arg:! type;
+  let Arg: type;
   // CHECK:STDERR: fail_invalid_interface.carbon:[[@LINE+7]]:18: error: cannot convert type `Arg` into type implementing `I` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   fn Op(self) -> ArgToI(Arg);
   // CHECK:STDERR:                  ^~~~~~~~~~~
@@ -58,7 +58,7 @@ class C {
 // CHECK:STDERR:   fn Op(self) -> ArgToI(Arg);
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! IMisuse) { T.Op(); }
+fn F(generic T: IMisuse) { T.Op(); }
 
 fn G() {
   var c: C;
@@ -106,7 +106,7 @@ class C {
 // CHECK:STDERR:   fn Op(self) -> ArgToI(Arg);
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(T:! IMisuse) { T.Op(); }
+fn F(generic T: IMisuse) { T.Op(); }
 
 fn G() {
   var c: C;

@@ -130,14 +130,14 @@ struct CrossTypeRhs {
 
 import Cpp library "three_way_comparable_types.h";
 
-fn EqWith[U:! type, T:! Core.EqWith(U)](x: T, y: U) {
+fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
   //@dump-sem-ir-begin
   x == y;
   x != y;
   //@dump-sem-ir-end
 }
 
-fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
+fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   //@dump-sem-ir-begin
   x < y;
   x <= y;
@@ -213,7 +213,7 @@ fn Test(default_spaceship_only: Cpp.DefaultSpaceshipOnly,
 
 import Cpp library "three_way_comparable_types.h";
 
-fn EqWith[U:! type, T:! Core.EqWith(U)](unused x: T, unused y: U) {}
+fn EqWith[U: type, T: Core.EqWith(U)](unused x: T, unused y: U) {}
 
 fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.ReturnsStrongOrdering` into type implementing `Core.EqWith(Cpp.ReturnsStrongOrdering)` [ConversionFailureTypeToFacet]

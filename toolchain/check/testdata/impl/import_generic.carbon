@@ -15,8 +15,8 @@
 // --- basic_import_generic_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {}
-interface J(T:! type) {
+interface I(T: type) {}
+interface J(T: type) {
   extend require impls I(T);
 }
 
@@ -32,8 +32,8 @@ impl C as J({}) {}
 // --- basic_import_generic_constraint.carbon
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {}
-constraint J(T:! type) {
+interface I(T: type) {}
+constraint J(T: type) {
   extend require impls I(T);
 }
 
@@ -49,16 +49,16 @@ impl C as J({}) {}
 library "[[@TEST_NAME]]";
 
 class C {}
-interface I(T:! type) {}
+interface I(T: type) {}
 
 // Has both declaration and definition.
-impl forall [T:! type] C as I(T);
-impl forall [T:! type] C as I(T) {}
+impl forall [T: type] C as I(T);
+impl forall [T: type] C as I(T) {}
 
 // Only has definition.
-impl forall [T:! type] C as I(T*) {}
+impl forall [T: type] C as I(T*) {}
 
-constraint N(T:! type) {
+constraint N(T: type) {
   extend require impls I(T);
 }
 
@@ -68,49 +68,49 @@ impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] C as I(T);
+impl forall [T: type] C as I(T);
+
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] C as I(T);
+impl forall [T: type] C as I(T) {}
 
 // CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] C as I(T) {}
+impl forall [T: type] C as I(T*);
+
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] C as I(T) {}
+impl forall [T: type] C as I(T*) {}
 
 // CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] C as I(T*);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] C as I(T*);
-
+impl forall [T: type] C as N(T);
 // CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] C as I(T*) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] C as I(T*) {}
-
 // CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] C as N(T);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] C as N(T);
+impl forall [T: type] C as N(T*);
 // CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] C as N(T*);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] C as N(T*);
 
 // --- import_generic_with_different_specific.carbon
 
 library "[[@TEST_NAME]]";
 
 class C {}
-interface I(T:! type) {}
+interface I(T: type) {}
 
-impl forall [T:! type] C as I(T) {}
+impl forall [T: type] C as I(T) {}
 
-constraint N(T:! type) {
+constraint N(T: type) {
   extend require impls I(T);
 }
 
@@ -119,31 +119,31 @@ impl library "[[@TEST_NAME]]";
 
 // These have different specifics than any impl decl in the api file, so they
 // are allowed.
-impl forall [T:! type] C as I(T*) {}
-impl forall [T:! type] C as N(T**) {}
+impl forall [T: type] C as I(T*) {}
+impl forall [T: type] C as N(T**) {}
 
 // --- fail_import_generic_decl.carbon
 
 library "[[@TEST_NAME]]";
 
 class D {}
-interface J(T:! type) {}
+interface J(T: type) {}
 
-constraint N(T:! type) {
+constraint N(T: type) {
   extend require impls J(T);
 }
 
 // CHECK:STDERR: fail_import_generic_decl.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl forall [T:! type] D as J(T);
+impl forall [T: type] D as J(T);
+
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] D as J(T);
-
+impl forall [T: type] D as J(T*);
 // CHECK:STDERR: fail_import_generic_decl.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl forall [T:! type] D as J(T*);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] D as J(T*);
 
 // --- fail_import_generic_decl.impl.carbon
 
@@ -151,39 +151,39 @@ impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_import_generic_decl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] D as J(T);
+impl forall [T: type] D as J(T);
+
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] D as J(T);
+impl forall [T: type] D as J(T) {}
 
 // CHECK:STDERR: fail_import_generic_decl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] D as J(T) {}
+impl forall [T: type] D as J(T*);
+
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] D as J(T) {}
+impl forall [T: type] D as J(T*) {}
 
 // CHECK:STDERR: fail_import_generic_decl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] D as J(T*);
+impl forall [T: type] D as N(T) {}
+
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] D as J(T*);
-
+impl forall [T: type] D as N(T*) {}
 // CHECK:STDERR: fail_import_generic_decl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] D as J(T*) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] D as J(T*) {}
-
 // CHECK:STDERR: fail_import_generic_decl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] D as N(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] D as N(T) {}
-
 // CHECK:STDERR: fail_import_generic_decl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] D as N(T*) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] D as N(T*) {}
 
 // CHECK:STDOUT: --- basic_import_generic_interface.carbon
 // CHECK:STDOUT:

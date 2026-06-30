@@ -15,11 +15,11 @@
 library "[[@TEST_NAME]]";
 
 interface N {
-  let P:! type;
+  let P: type;
 }
 
 //@dump-sem-ir-begin
-fn Equal(T:! N where .P = {});
+fn Equal(generic T: N where .P = {});
 //@dump-sem-ir-end
 
 // --- nested_rewrites.carbon
@@ -27,12 +27,12 @@ fn Equal(T:! N where .P = {});
 library "[[@TEST_NAME]]";
 
 interface A {
-  let B:! type;
-  let C:! type;
+  let B: type;
+  let C: type;
 }
 
 //@dump-sem-ir-begin
-fn NestedRewrite(D:! (A where .B = bool) where .C = ());
+fn NestedRewrite(generic D: (A where .B = bool) where .C = ());
 //@dump-sem-ir-end
 
 // --- repeated_rewrite.carbon
@@ -40,18 +40,18 @@ fn NestedRewrite(D:! (A where .B = bool) where .C = ());
 library "[[@TEST_NAME]]";
 
 interface E {
-  let F:! type;
+  let F: type;
 }
 
 //@dump-sem-ir-begin
-fn OneRewrite(unused G:! E where .F = i32) {}
+fn OneRewrite(unused generic G: E where .F = i32) {}
 
-fn RepeatedRewrite(H:! E where .F = i32 and .F = i32) {
+fn RepeatedRewrite(generic H: E where .F = i32 and .F = i32) {
   //@dump-sem-ir-end
   OneRewrite(H);
 }
 
-fn OneRewriteAgain(I:! E where .F = i32) {
+fn OneRewriteAgain(generic I: E where .F = i32) {
   RepeatedRewrite(I);
 }
 
@@ -60,14 +60,14 @@ fn OneRewriteAgain(I:! E where .F = i32) {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let K:! type;
-  let L:! type;
+  let K: type;
+  let L: type;
 }
 
 //@dump-sem-ir-begin
-fn Alphabetical(unused M:! J where .K = () and .L = bool) {}
+fn Alphabetical(unused generic M: J where .K = () and .L = bool) {}
 
-fn Reversed(N:! J where .L = bool and .K = ()) {
+fn Reversed(generic N: J where .L = bool and .K = ()) {
   //@dump-sem-ir-end
   Alphabetical(N);
 }
@@ -77,12 +77,12 @@ fn Reversed(N:! J where .L = bool and .K = ()) {
 library "[[@TEST_NAME]]";
 
 interface O {
-  let P:! type;
+  let P: type;
 }
 
-fn WithInteger(unused Q:! O where .P = i32) {}
+fn WithInteger(unused generic Q: O where .P = i32) {}
 
-fn WithBool(R:! O where .P = bool) {
+fn WithBool(generic R: O where .P = bool) {
   // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+7]]:3: error: cannot convert type `R` that implements `O where .(O.P) = bool` into type implementing `O where .(O.P) = i32` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   WithInteger(R);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
@@ -98,13 +98,13 @@ fn WithBool(R:! O where .P = bool) {
 library "[[@TEST_NAME]]";
 
 interface S {
-  let T:! type;
-  let U:! type;
+  let T: type;
+  let U: type;
 }
 
-fn WithT(unused V:! S where .T = ()) {}
+fn WithT(unused generic V: S where .T = ()) {}
 
-fn WithU(W:! S where .U = ()) {
+fn WithU(generic W: S where .U = ()) {
   // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+7]]:3: error: cannot convert type `W` that implements `S where .(S.U) = ()` into type implementing `S where .(S.T) = ()` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   WithT(W);
   // CHECK:STDERR:   ^~~~~~~~
@@ -149,7 +149,7 @@ fn Calls() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let Member:! type;
+  let Member: type;
 }
 
 // `2` can't be converted to the type of `I.Member`
@@ -160,7 +160,7 @@ interface I {
 // CHECK:STDERR: fn RewriteTypeMismatch(X:! I where .Member = 2);
 // CHECK:STDERR:                                              ^
 // CHECK:STDERR:
-fn RewriteTypeMismatch(X:! I where .Member = 2);
+fn RewriteTypeMismatch(generic X: I where .Member = 2);
 
 // --- fail_todo_let.carbon
 
@@ -175,7 +175,7 @@ fn F() {
   // CHECK:STDERR:   let E:! type where .Self impls A = D;
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let E:! type where .Self impls A = D;
+  let generic E: type where .Self impls A = D;
 }
 
 // --- fail_todo_let_compile_time.carbon
@@ -190,15 +190,15 @@ impl D as A {}
 // CHECK:STDERR: let B:! type where .Self impls A = D;
 // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-let B:! type where .Self impls A = D;
+let generic B: type where .Self impls A = D;
 
 // --- fail_type_does_not_implement_where.carbon
 
 library "[[@TEST_NAME]]";
 
 interface E {
-  let F:! type;
-  let G:! type;
+  let F: type;
+  let G: type;
 }
 // Testing how these types get stringified in error messages.
 

@@ -16,15 +16,15 @@
 
 library "[[@TEST_NAME]]";
 
-interface Interface(T:! type) {
-  let X:! T*;
+interface Interface(T: type) {
+  let X: T*;
 }
 
-fn AccessGeneric[T:! type](I:! Interface(T)) -> T* {
+fn AccessGeneric[T: type](generic I: Interface(T)) -> T* {
   return I.X;
 }
 
-fn AccessConcrete(I:! Interface(i32)) -> i32* {
+fn AccessConcrete(generic I: Interface(i32)) -> i32* {
   return I.X;
 }
 
@@ -32,11 +32,11 @@ fn AccessConcrete(I:! Interface(i32)) -> i32* {
 
 library "[[@TEST_NAME]]";
 
-interface Interface(T:! type) {
-  let X:! T*;
+interface Interface(T: type) {
+  let X: T*;
 }
 
-fn AccessMissingGeneric[T:! type](I:! Interface(T)) -> T {
+fn AccessMissingGeneric[T: type](generic I: Interface(T)) -> T {
   // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Interface(T)` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   return I.nonesuch;
   // CHECK:STDERR:          ^~~~~~~~~~
@@ -44,7 +44,7 @@ fn AccessMissingGeneric[T:! type](I:! Interface(T)) -> T {
   return I.nonesuch;
 }
 
-fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
+fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
   // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Interface(i32)` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   return I.nonesuch;
   // CHECK:STDERR:          ^~~~~~~~~~

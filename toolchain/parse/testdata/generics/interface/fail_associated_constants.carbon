@@ -17,7 +17,7 @@ interface I {
   // CHECK:STDERR:   let (T:! type, U:! type);
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  let (T:! type, U:! type);
+  let (T: type, U: type);
 }
 
 // --- fail_tuple_pattern_with_default.carbon
@@ -29,7 +29,7 @@ interface I {
   // CHECK:STDERR:   default let (T:! type, U:! type) = ({}, {});
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
-  default let (T:! type, U:! type) = ({}, {});
+  default let (T: type, U: type) = ({}, {});
 }
 
 // --- fail_var_pattern.carbon
@@ -41,7 +41,7 @@ interface I {
   // CHECK:STDERR:   let var T:! type;
   // CHECK:STDERR:       ^~~
   // CHECK:STDERR:
-  let var T:! type;
+  let var T: type;
 }
 
 // --- fail_var_pattern_with_default.carbon
@@ -53,7 +53,7 @@ interface I {
   // CHECK:STDERR:   default let var T:! type = {};
   // CHECK:STDERR:               ^~~
   // CHECK:STDERR:
-  default let var T:! type = {};
+  default let var T: type = {};
 }
 
 // --- fail_not_constant.carbon
@@ -65,7 +65,7 @@ interface I {
   // CHECK:STDERR:   let a: {.b: ()};
   // CHECK:STDERR:        ^
   // CHECK:STDERR:
-  let a: {.b: ()};
+  let runtime a: {.b: ()};
 }
 
 // --- fail_template.carbon
@@ -77,7 +77,7 @@ interface I {
   // CHECK:STDERR:   let template T:! type;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
-  let template T:! type;
+  let template T: type;
 }
 
 
@@ -90,7 +90,15 @@ interface I {
   // CHECK:STDERR:   let _:! {};
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  let _:! {};
+  let _: {};
+}
+
+// --- fail_missing_colon.carbon
+
+library "[[@TEST_NAME]]";
+
+interface I {
+  let a;
 }
 
 

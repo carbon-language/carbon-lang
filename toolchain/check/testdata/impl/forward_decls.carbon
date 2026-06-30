@@ -47,7 +47,7 @@ impl {} as I & I {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 impl {} as I where .T = ();
 
@@ -57,7 +57,7 @@ impl {} as I where .T = () {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 class C {}
 impl C as I where .T = ();
@@ -70,7 +70,7 @@ impl C as I where .T = () {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 class C {}
 impl C as I where .T = ();
@@ -83,7 +83,7 @@ impl C as I where .T = () {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 class C {}
 impl C as I;
@@ -129,8 +129,8 @@ impl D as I where .T = C {}
 // --- associated_const_of_parameterized.carbon
 library "[[@TEST_NAME]]";
 
-interface I(U:! type) {
-  let T:! type;
+interface I(U: type) {
+  let T: type;
 }
 class C;
 class D {}
@@ -145,13 +145,13 @@ library "[[@TEST_NAME]]";
 interface I;
 class D {}
 impl D as I;
-class C(T:! I);
+class C(T: I);
 
 fn F(x: C(D));
 
 interface I {}
 impl D as I {}
-class C(T:! I) {}
+class C(T: I) {}
 
 fn F(unused x: C(D)) {}
 
@@ -174,8 +174,8 @@ interface J {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
-  let U:! type;
+  let T: type;
+  let U: type;
 }
 class C {}
 
@@ -196,8 +196,8 @@ library "[[@TEST_NAME]]";
 interface X;
 
 // Allowed to use incomplete interfaces in function declarations.
-fn F(_:! X);
-fn G[U:! X](u: U);
+fn F(generic _: X);
+fn G[U: X](u: U);
 
 class C;
 
@@ -224,8 +224,8 @@ fn H(c: C) {
 // The above declarations require that `interface Y`, `fn F` (since it is
 // generic), and `impl C as X` are defined in the same file.
 interface Y {}
-fn F(_:! X) {}
-fn G[U:! X](unused u: U) {}
+fn F(generic _: X) {}
+fn G[U: X](unused u: U) {}
 impl C as Y;
 impl C as X {}
 impl C as Y {}

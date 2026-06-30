@@ -30,7 +30,7 @@ class B {
   }
 }
 
-fn F[T:! I](t: T) {
+fn F[T: I](t: T) {
   t.Doit();
 }
 
@@ -52,7 +52,7 @@ import Cpp;
 // CHECK:STDERR: fn F[unused N:! i32]() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F[unused N:! i32]() {}
+fn F[unused N: i32]() {}
 
 inline Cpp '''
 void G() {
@@ -72,7 +72,7 @@ void G() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-fn F[T:! type](unused t: T*) {}
+fn F[T: type](unused t: T*) {}
 
 inline Cpp '''
 void G() {
@@ -93,8 +93,8 @@ void G() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class A(T:! type) {
-  fn F[U:! type](x: T, y: U);
+class A(T: type) {
+  fn F[U: type](x: T, y: U);
 }
 alias B = A(i32);
 
@@ -124,7 +124,7 @@ import Cpp;
 // CHECK:STDERR: fn F[T:! type](unused t: T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F[T:! type](unused t: T) {}
+fn F[T: type](unused t: T) {}
 
 inline Cpp '''
 void G() {

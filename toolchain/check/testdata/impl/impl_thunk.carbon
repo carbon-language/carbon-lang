@@ -128,8 +128,8 @@ impl B as X {
 // --- form_parameter.carbon
 
 interface I {
-  let T:! type;
-  let Fm:! Core.Form;
+  let T: type;
+  let Fm: Core.Form;
   fn F(x:? Fm, y: {.a: (), .b: ()});
 }
 
@@ -276,7 +276,7 @@ impl C as I {
 
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {
+interface I(T: type) {
   fn F(a: T);
 }
 
@@ -309,12 +309,12 @@ class C {
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn F[T:! type](x: T*) -> T*;
+  fn F[T: type](x: T*) -> T*;
 }
 
 impl () as I {
   //@dump-sem-ir-begin
-  fn F[U:! Core.Copy](x: U) -> U { return x; }
+  fn F[U: Core.Copy](x: U) -> U { return x; }
   //@dump-sem-ir-end
 }
 
@@ -323,12 +323,12 @@ impl () as I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn F[T:! type](self, x: T*) -> T*;
+  fn F[T: type](self, x: T*) -> T*;
 }
 
 impl () as I {
   //@dump-sem-ir-begin
-  fn F[U:! Core.Copy](unused self: (), x: U) -> U { return x; }
+  fn F[U: Core.Copy](unused self: (), x: U) -> U { return x; }
   //@dump-sem-ir-end
 }
 
@@ -336,7 +336,7 @@ impl () as I {
 
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) {
+interface I(T: type) {
   fn F() -> {.a: T, .b: T};
 }
 

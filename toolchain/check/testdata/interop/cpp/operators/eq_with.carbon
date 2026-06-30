@@ -22,7 +22,7 @@ struct EqualityComparable {
 };
 ''';
 
-fn EqWith[U:! type, T:! Core.EqWith(U)](x: T, y: U) {
+fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
   //@dump-sem-ir-begin
   x == y;
   x != y;
@@ -67,7 +67,7 @@ struct B3 {
 };
 ''';
 
-fn EqWith[U:! type, T:! Core.EqWith(U)](x: T, y: U) {
+fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
   //@dump-sem-ir-begin
   x == y;
   x != y;
@@ -163,7 +163,7 @@ struct BothBoolish {
 // CHECK:STDERR: fn EqWith[U:! type, T:! Core.EqWith(U)](x: T, y: U) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn EqWith[U:! type, T:! Core.EqWith(U)](x: T, y: U) {
+fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
   x == y;
   x != y;
 }
@@ -194,7 +194,7 @@ public:
 };
 ''';
 
-fn EqWith[U:! type, T:! Core.EqWith(U)](x: T, y: U) {
+fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
   x == y;
   x != y;
 }
@@ -265,7 +265,7 @@ struct B2 {
 };
 ''';
 
-fn EqWith[U:! type, T:! Core.EqWith(U)](x: T, y: U) {
+fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
   x == y;
   x != y;
 }

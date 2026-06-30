@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-class Class(T:! type, N:! i32) {}
+class Class(T: type, N: i32) {}
 
 var a: Class(i32*, 5);
 
@@ -27,7 +27,7 @@ var b: Class((), 0);
 
 library "[[@TEST_NAME]]";
 
-class Class(T:! type, N:! i32) {}
+class Class(T: type, N: i32) {}
 
 // CHECK:STDERR: fail_too_few.carbon:[[@LINE+7]]:8: error: 1 argument passed to generic class expecting 2 arguments [CallArgCountMismatch]
 // CHECK:STDERR: var a: Class(i32*);
@@ -42,7 +42,7 @@ var a: Class(i32*);
 
 library "[[@TEST_NAME]]";
 
-class Class(T:! type, N:! i32) {}
+class Class(T: type, N: i32) {}
 
 // CHECK:STDERR: fail_too_many.carbon:[[@LINE+7]]:8: error: 3 arguments passed to generic class expecting 2 arguments [CallArgCountMismatch]
 // CHECK:STDERR: var a: Class(i32*, 1, 2);
@@ -57,7 +57,7 @@ var a: Class(i32*, 1, 2);
 
 library "[[@TEST_NAME]]";
 
-class Class(T:! type, N:! i32) {}
+class Class(T: type, N: i32) {}
 
 // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+10]]:8: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: var a: Class(5, i32*);
@@ -73,8 +73,8 @@ var a: Class(5, i32*);
 
 // --- call_in_nested_return_type.carbon
 
-class Outer(T:! type) {
-  class Inner(U:! type) {
+class Outer(T: type) {
+  class Inner(U: type) {
     fn A() -> Outer(T) {
       return {};
     }

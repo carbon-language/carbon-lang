@@ -19,7 +19,7 @@ impl i32 as I {
 }
 
 //@dump-sem-ir-begin
-fn TestOp[T:! I](unused var x: T) {}
+fn TestOp[T: I](unused var x: T) {}
 //@dump-sem-ir-end
 
 fn Test(x: i32) {

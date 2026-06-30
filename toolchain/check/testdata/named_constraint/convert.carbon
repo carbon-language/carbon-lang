@@ -15,10 +15,10 @@ library "[[@TEST_NAME]]";
 
 constraint E {}
 
-fn F(unused T:! E) {}
+fn F(unused generic T: E) {}
 
 //@dump-sem-ir-begin
-fn G(T:! E & E) {
+fn G(generic T: E & E) {
   F(T);
 }
 //@dump-sem-ir-end
@@ -29,10 +29,10 @@ library "[[@TEST_NAME]]";
 constraint E1 {}
 constraint E2 {}
 
-fn F(unused T:! E1) {}
+fn F(unused generic T: E1) {}
 
 //@dump-sem-ir-begin
-fn G(T:! E2) {
+fn G(generic T: E2) {
   F(T);
 }
 //@dump-sem-ir-end
@@ -46,12 +46,12 @@ constraint E {
   require impls Z;
 }
 
-fn F(unused T:! E) {}
+fn F(unused generic T: E) {}
 
 class C {}
 impl C as Z {}
 
-fn G(T:! Z) {
+fn G(generic T: Z) {
   // Anything that impls Z also impls E, since that's all it requires. Nothing
   // needs to specify that T impls E.
   F(T);

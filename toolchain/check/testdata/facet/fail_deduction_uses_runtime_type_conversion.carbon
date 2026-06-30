@@ -14,7 +14,7 @@
 
 // Uses a tuple to allow using the inner type as a type that isn't directly
 // deducible, without deducing through HoldsType.
-class HoldsType(T:! (type, )) {}
+class HoldsType(T: (type, )) {}
 
 class RuntimeConvertFrom {}
 class RuntimeConvertTo {}
@@ -24,9 +24,9 @@ impl RuntimeConvertFrom as Core.ImplicitAs(RuntimeConvertTo) {
   fn Convert(unused self) -> RuntimeConvertTo { return {}; }
 }
 
-fn F[T:! (type, )](unused A:! T.0, unused x: HoldsType(T)) {}
+fn F[T: (type, )](unused generic A: T.0, unused x: HoldsType(T)) {}
 
-fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
+fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom) {
   // CHECK:STDERR: fail_deduction_uses_runtime_type_conversion.carbon:[[@LINE+10]]:3: error: compile-time value requires runtime conversion, constructing value of type `RuntimeConvertTo` [RuntimeConversionDuringCompTimeDeduction]
   // CHECK:STDERR:   F(from, holds_to);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~

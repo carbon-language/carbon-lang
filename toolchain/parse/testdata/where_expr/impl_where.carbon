@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/where_expr/impl_where.carbon
 
 interface Interface {
-  let T:! type;
+  let T: type;
 }
 
 impl i32 as Interface where .T = () {
