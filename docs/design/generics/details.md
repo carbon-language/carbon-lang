@@ -893,7 +893,7 @@ This recovers the original type for the facet, so
 `(Point_Inline as Vector) as type` is `Point_Inline` again.
 
 However, when a facet type like `Vector` is used as the binding type of a
-symbolic binding, as in `T: Vector`, the
+symbolic binding (for example, the deduced parameter `T: Vector`), the
 [symbolic facet binding](#symbolic-facet-bindings) `T` is disassociated with
 whatever facet value `T` is eventually bound to. Instead, `T` is treated as an
 [archetype](terminology.md#archetype), with the members and
