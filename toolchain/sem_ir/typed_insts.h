@@ -2333,6 +2333,8 @@ struct VarStorage {
 
   // If this storage was created for a `var` pattern, the pattern. Otherwise,
   // such as the implicit storage in `for`, this is `None`.
+  //
+  // TODO: remove this field. FIXME explain
   AbsoluteInstId pattern_id;
 };
 
