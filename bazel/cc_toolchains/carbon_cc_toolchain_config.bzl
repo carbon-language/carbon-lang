@@ -111,15 +111,15 @@ def _carbon_cc_toolchain_config_impl(ctx):
         llvm_ar = tool(path = llvm_bindir + "/llvm-ar"),
         llvm_strip = tool(path = llvm_bindir + "/llvm-strip"),
     )
-    carbon_busybox_bin = None
     if ctx.attr.bins:
+        carbon_busybox = None
         clang = None
         clangpp = None
         llvm_ar = None
         llvm_strip = None
         for f in ctx.files.bins:
             if f.basename == "carbon-busybox":
-                carbon_busybox_bin = f
+                carbon_busybox = f
             elif f.basename == "clang":
                 clang = f
             elif f.basename == "clang++":
@@ -128,12 +128,12 @@ def _carbon_cc_toolchain_config_impl(ctx):
                 llvm_ar = f
             elif f.basename == "llvm-strip":
                 llvm_strip = f
-        if not all([carbon_busybox_bin, clang, clangpp, llvm_ar, llvm_strip]):
+        if not all([carbon_busybox, clang, clangpp, llvm_ar, llvm_strip]):
             fail("Missing required tool in bins: {0}".format(ctx.attr.bins))
         llvm_bindir = llvm_ar.dirname
         clang_bindir = clang.dirname
         tools = struct(
-            carbon_busybox = tool(tool = carbon_busybox_bin),
+            carbon_busybox = tool(tool = carbon_busybox),
             clang = tool(tool = clang),
             clangpp = tool(tool = clangpp),
             llvm_ar = tool(tool = llvm_ar),

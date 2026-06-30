@@ -151,7 +151,7 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
   CARBON_CHECK(!prelude_paths.empty(),
                "runtimes_path: {}, core_path: {}, relative_path: {}",
                runtimes_path, core_path, relative_path);
-  llvm::for_each(prelude_paths, [&](std::string path) -> void {
+  llvm::for_each(prelude_paths, [&clang_args](const std::string& path) -> void {
     clang_args.push_back(llvm::StringRef(path));
   });
 

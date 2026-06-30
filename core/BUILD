@@ -16,7 +16,7 @@ filegroup(
 # This is consumed by //toolchain/base:install_paths.
 manifest(
     name = "prelude_manifest.txt",
-    srcs = ["prelude_files"],
+    srcs = [":prelude_files"],
     strip_package_dir = True,
 )
 

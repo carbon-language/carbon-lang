@@ -122,9 +122,9 @@ def _carbon_binary_impl(ctx):
 
     ctx.actions.run(
         outputs = [bin],
-        inputs = objs + dep_link_inputs,
+        inputs = depset(direct = objs + dep_link_inputs),
         executable = toolchain_driver,
-        tools = depset(toolchain_data + prebuilt_runtimes),
+        tools = depset(direct = toolchain_data + prebuilt_runtimes),
         arguments = full_link_flags,
         mnemonic = "CarbonLink",
         progress_message = "Linking " + bin.short_path,
@@ -235,7 +235,7 @@ def _carbon_prelude_impl(ctx):
 _carbon_binary_internal = rule(
     implementation = _carbon_binary_impl,
     attrs = {
-        "deps": attr.label_list(allow_files = True, providers = [[CcInfo], [DefaultInfo], [CarbonLibraryInfo]]),
+        "deps": attr.label_list(allow_files = True, providers = [[CcInfo], [CarbonLibraryInfo]]),
         "flags": attr.string_list(),
 
         # The exec config toolchain attributes. These will be `None` when using
@@ -271,7 +271,6 @@ _carbon_binary_internal = rule(
             executable = True,
             cfg = "target",
         ),
-        "prelude_srcs": attr.label_list(allow_files = [".carbon"]),
         "srcs": attr.label_list(allow_files = [".carbon"]),
         "_cc_toolchain": attr.label(default = "//toolchain/install:carbon_stage1_cc_toolchain"),
     },
@@ -388,7 +387,6 @@ def carbon_binary(name, srcs, deps = [], flags = [], tags = []):
     _carbon_binary_internal(
         name = name,
         srcs = srcs,
-        prelude_srcs = [Label("//core:prelude_files")],
         deps = deps + [Label("//core:io"), Label("//core:range")],
         flags = flags,
         tags = tags,
