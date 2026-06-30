@@ -190,7 +190,7 @@ fragment:
 
 ```
 var result: bool = true;
-for (let i: i32 in (0, 1, 2)) {
+for (let generic i: i32 in (0, 1, 2)) {
   result = result && F(x[:i:], y[:i:]);
   if (result == false) { break; }
 }
