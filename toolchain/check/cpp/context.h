@@ -31,7 +31,8 @@ namespace Carbon::Check {
 class CppContext {
  public:
   explicit CppContext(clang::CompilerInstance& instance,
-                      std::shared_ptr<clang::Parser> parser);
+                      std::shared_ptr<clang::Parser> parser,
+                      std::unique_ptr<CppDiagnosticListener> listener);
   ~CppContext();
 
   auto ast_context() -> clang::ASTContext& { return *ast_context_; }
@@ -51,12 +52,6 @@ class CppContext {
   void set_placement_new_decl(clang::FunctionDecl* decl) {
     placement_new_decl_ = decl;
   }
-
-  auto diagnostic_listener() -> CppDiagnosticListener* {
-    return diagnostic_listener_.get();
-  }
-  auto set_diagnostic_listener(std::unique_ptr<CppDiagnosticListener> listener)
-      -> void;
 
  private:
   // The Clang AST context.

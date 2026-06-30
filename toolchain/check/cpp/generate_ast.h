@@ -20,6 +20,7 @@ class CompilerInvocation;
 class CompilerInstance;
 class Parser;
 class ExternalSemaSource;
+class CodeGenerator;
 }  // namespace clang
 
 namespace Carbon::Check {
@@ -28,6 +29,7 @@ namespace Carbon::Check {
 struct SharedClangState {
   std::shared_ptr<clang::CompilerInstance> clang_instance;
   std::shared_ptr<clang::Parser> parser;
+  clang::CodeGenerator* code_generator = nullptr;
 };
 
 // Generates a Clang AST for the given C++ imports and sets it as the context's

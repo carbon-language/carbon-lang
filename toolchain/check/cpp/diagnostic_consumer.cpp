@@ -60,8 +60,6 @@ class FallbackDiagnosticListener : public CppDiagnosticListener {
                                       Diagnostics::Consumer& next_consumer)
       : CppDiagnosticListener(consumer), next_consumer_(&next_consumer) {}
 
-  ~FallbackDiagnosticListener() override;
-
   auto EmitDiagnostics(llvm::ArrayRef<Diagnostic> diags) -> void override {
     if (diags.empty()) {
       return;
@@ -94,8 +92,6 @@ class ContextDiagnosticListener : public CppDiagnosticListener {
   explicit ContextDiagnosticListener(CarbonClangDiagnosticConsumer& consumer,
                                      Context& context)
       : CppDiagnosticListener(consumer), context_(&context) {}
-
-  ~ContextDiagnosticListener() override;
 
   auto EmitDiagnostics(llvm::ArrayRef<Diagnostic> diags) -> void override {
     if (diags.empty()) {
@@ -257,12 +253,6 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   std::shared_ptr<clang::CompilerInvocation> invocation_;
 };
 
-FallbackDiagnosticListener::~FallbackDiagnosticListener() {
-  consumer().Flush();
-}
-
-ContextDiagnosticListener::~ContextDiagnosticListener() { consumer().Flush(); }
-
 CppDiagnosticListener::CppDiagnosticListener(
     CarbonClangDiagnosticConsumer& consumer)
     : consumer_(&consumer) {
@@ -279,6 +269,10 @@ auto MakeDiagnosticConsumer(
     -> std::unique_ptr<clang::DiagnosticConsumer> {
   return std::make_unique<CarbonClangDiagnosticConsumer>(consumer,
                                                          std::move(invocation));
+}
+
+auto FlushDiagnosticConsumer(clang::DiagnosticConsumer& consumer) -> void {
+  static_cast<CarbonClangDiagnosticConsumer&>(consumer).Flush();
 }
 
 auto MakeContextDiagnosticListener(clang::DiagnosticConsumer& consumer,
