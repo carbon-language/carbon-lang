@@ -80,7 +80,7 @@ carbon_runtimes_config = rule(
     implementation = _carbon_runtimes_config_impl,
     attrs = {
         "builtins_archive": attr.label(mandatory = True, allow_files = [".a"]),
-        "carbon_prelude_prebuilt": attr.label(mandatory = True, allow_files = [".o"]),
+        "carbon_prelude_prebuilt": attr.label(allow_files = [".o"]),
         "clang_hdrs_prefix": attr.string(default = "include/"),
         "crt_copts": attr.string_list(default = []),
         "crtbegin_src": attr.label(allow_files = [".c"]),
