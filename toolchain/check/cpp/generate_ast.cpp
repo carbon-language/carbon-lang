@@ -611,6 +611,32 @@ static auto ParseTopLevelDecls(clang::Parser& parser,
   }
 }
 
+// Injects the C++ code in `buffer` into the Clang preprocessor and parses it
+// as top-level declarations. Returns true on success, false if entering the
+// source file fails.
+static auto InjectAndParse(Context& context,
+                           std::unique_ptr<llvm::MemoryBuffer> buffer) -> bool {
+  auto* cpp_context = context.cpp_context();
+  CARBON_CHECK(cpp_context);
+
+  clang::Sema& sema = cpp_context->sema();
+  clang::Preprocessor& preprocessor = sema.getPreprocessor();
+  clang::Parser& parser = cpp_context->parser();
+
+  clang::FileID file_id =
+      preprocessor.getSourceManager().createFileID(std::move(buffer));
+  if (preprocessor.EnterSourceFile(file_id, nullptr, clang::SourceLocation())) {
+    return false;
+  }
+
+  if (parser.getCurToken().is(clang::tok::eof)) {
+    parser.ConsumeToken();
+  }
+  ParseTopLevelDecls(parser, sema.getASTConsumer());
+
+  return true;
+}
+
 namespace {
 
 // An action and a set of registered Clang callbacks used to generate an AST
@@ -855,32 +881,13 @@ auto GenerateAst(Context& context,
   std::string includes = GenerateCppIncludesHeaderCode(context, imports);
   auto buffer =
       llvm::MemoryBuffer::getMemBufferCopy(includes, "<shared cpp imports>");
-
-  clang::Preprocessor& preprocessor = clang_instance->getPreprocessor();
-  clang::Sema& sema = clang_instance->getSema();
-
-  clang::FileID file_id =
-      preprocessor.getSourceManager().createFileID(std::move(buffer));
-  if (preprocessor.EnterSourceFile(file_id, nullptr, clang::SourceLocation())) {
-    return false;
-  }
-
-  if (parser->getCurToken().is(clang::tok::eof)) {
-    parser->ConsumeToken();
-  }
-  ParseTopLevelDecls(*parser, sema.getASTConsumer());
-
-  return true;
+  return InjectAndParse(context, std::move(buffer));
 }
 
 auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
                              llvm::StringRef source_code) -> void {
   auto* cpp_context = context.cpp_context();
   CARBON_CHECK(cpp_context);
-
-  clang::Sema& sema = cpp_context->sema();
-  clang::Preprocessor& preprocessor = sema.getPreprocessor();
-  clang::Parser& parser = cpp_context->parser();
 
   RawStringOstream code_stream;
   AppendInlineCode(context, code_stream,
@@ -889,22 +896,9 @@ auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
 
   auto buffer = llvm::MemoryBuffer::getMemBufferCopy(code_stream.TakeStr(),
                                                      "<inline c++>");
-  clang::FileID file_id =
-      preprocessor.getSourceManager().createFileID(std::move(buffer));
-
-  if (preprocessor.EnterSourceFile(file_id, nullptr, clang::SourceLocation())) {
-    // Clang will have generated a suitable error. There's nothing more to do
-    // here.
-    return;
-  }
-
-  // The parser will typically have an EOF as its cached current token; consume
-  // that so we can reach the newly-injected tokens.
-  if (parser.getCurToken().is(clang::tok::eof)) {
-    parser.ConsumeToken();
-  }
-
-  ParseTopLevelDecls(parser, sema.getASTConsumer());
+  // Clang will have generated a suitable error if this fails. There's nothing
+  // more to do here.
+  InjectAndParse(context, std::move(buffer));
 }
 
 auto FinishAst(Context& context) -> void {
