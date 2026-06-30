@@ -965,8 +965,7 @@ static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
 static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
                               SemIR::ConstantId initial_self_const_id,
                               const SemIR::FacetType& facet_type,
-                              bool allow_partially_identified,
-                              bool initial_subst_period_self, bool diagnose)
+                              bool allow_partially_identified, bool diagnose)
     -> SemIR::IdentifiedFacetTypeId {
   // While partially identified facet types end up in the store of
   // IdentifiedFacetTypes, we don't try to construct a key to look for them
@@ -995,8 +994,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 
   // Work queue.
   llvm::SmallVector<SelfImplsFacetType> work = {
-      {true, initial_subst_period_self, initial_self_const_id,
-       facet_type.facet_type_id}};
+      {true, true, initial_self_const_id, facet_type.facet_type_id}};
 
   // Outputs for the IdentifiedFacetType.
   bool partially_identified = false;
@@ -1269,11 +1267,10 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
                             SemIR::ConstantId self_const_id,
                             const SemIR::FacetType& facet_type,
-                            bool allow_partially_identified,
-                            bool subst_period_self)
+                            bool allow_partially_identified)
     -> SemIR::IdentifiedFacetTypeId {
   return IdentifyFacetType(context, loc_id, self_const_id, facet_type,
-                           allow_partially_identified, subst_period_self,
+                           allow_partially_identified,
                            /*diagnose=*/false);
 }
 
@@ -1286,8 +1283,7 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
   Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
 
   return IdentifyFacetType(context, loc_id, self_const_id, facet_type,
-                           /*allow_partially_identified=*/false,
-                           /*initial_subst_period_self=*/true, diagnose);
+                           /*allow_partially_identified=*/false, diagnose);
 }
 
 }  // namespace Carbon::Check

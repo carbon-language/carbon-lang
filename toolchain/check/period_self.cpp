@@ -13,6 +13,7 @@
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -21,10 +22,10 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,
                               SemIR::TypeId self_type_id) -> SemIR::InstId {
   CARBON_CHECK(self_type_id == SemIR::ErrorInst::TypeId ||
                context.types().Is<SemIR::FacetType>(self_type_id));
-  auto entity_name_id = context.entity_names().AddCanonical({
-      .name_id = SemIR::NameId::PeriodSelf,
-      .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-  });
+  auto entity_name_id = context.entity_names().AddCanonical(
+      {.name_id = SemIR::NameId::PeriodSelf,
+       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+       .is_active_period_self = true});
   auto inst_id = AddInst<SemIR::SymbolicBinding>(
       context, loc_id,
       {
@@ -39,6 +40,31 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,
   // Shouldn't have any names in newly created scope.
   CARBON_CHECK(!existing.has_value());
   return inst_id;
+}
+
+struct GetAsResult {
+  SemIR::SymbolicBinding bind;
+  bool is_active;
+};
+
+static auto TryGetAsPeriodSelf(Context& context, SemIR::InstId inst_id,
+                               bool canonicalize)
+    -> std::optional<GetAsResult> {
+  auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
+  if (!const_inst_id.has_value()) {
+    return std::nullopt;
+  }
+  auto query_inst_id =
+      canonicalize ? GetCanonicalFacetOrTypeValue(context, const_inst_id)
+                   : inst_id;
+  if (auto bind =
+          context.insts().TryGetAs<SemIR::SymbolicBinding>(query_inst_id)) {
+    const auto& entity_name = context.entity_names().Get(bind->entity_name_id);
+    if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
+      return {{*bind, entity_name.is_active_period_self}};
+    }
+  }
+  return std::nullopt;
 }
 
 class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
@@ -102,12 +128,16 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
     // Canonicalization not necessary; we are working with the constant
     // value already, and the query self in a witness is already
     // canonicalized.
-    if (IsPeriodSelf(context(), inst_id,
-                     /*canonicalize=*/false)) {
+    if (auto get_as = TryGetAsPeriodSelf(context(), inst_id,
+                                         /*canonicalize=*/false)) {
       bool is_implicit_self_in_desigator = false;
       if (GetDesignatorState() == WitnessSelfNext) {
         is_implicit_self_in_desigator = true;
         designator_states_.back() = RebuildNext;
+      }
+
+      if (get_as->is_active) {
+        return FullySubstituted;
       }
 
       switch (behaviour_) {
@@ -476,19 +506,73 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
 
 auto IsPeriodSelf(Context& context, SemIR::InstId inst_id, bool canonicalize)
     -> bool {
-  auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
-  if (!const_inst_id.has_value()) {
-    return false;
-  }
-  auto query_inst_id =
-      canonicalize ? GetCanonicalFacetOrTypeValue(context, const_inst_id)
-                   : inst_id;
-  if (auto bind =
-          context.insts().TryGetAs<SemIR::SymbolicBinding>(query_inst_id)) {
-    const auto& entity_name = context.entity_names().Get(bind->entity_name_id);
-    return entity_name.name_id == SemIR::NameId::PeriodSelf;
-  }
-  return false;
+  return TryGetAsPeriodSelf(context, inst_id, canonicalize).has_value();
+}
+
+auto MakePeriodSelfInactive(Context& context, SemIR::InstId inst_id)
+    -> SemIR::InstId {
+  class Callbacks : public SubstInstCallbacks {
+   public:
+    explicit Callbacks(Context* context) : SubstInstCallbacks(context) {}
+    auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+      if (inst_id == SemIR::TypeType::TypeInstId ||
+          inst_id == SemIR::ErrorInst::InstId) {
+        return FullySubstituted;
+      }
+
+      if (auto found = cache_.Lookup(inst_id)) {
+        inst_id = found.value();
+        return FullySubstituted;
+      }
+
+      // No need to canonicalize, Subst will recurse to find it and we want to
+      // preserve structure.
+      if (auto get_as =
+              TryGetAsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
+        auto entity_name =
+            context().entity_names().Get(get_as->bind.entity_name_id);
+        if (entity_name.is_active_period_self) {
+          entity_name.is_active_period_self = false;
+          auto bind = get_as->bind;
+          bind.entity_name_id =
+              context().entity_names().AddCanonical(entity_name);
+          auto subst_id = Rebuild(inst_id, bind);
+          cache_.Insert(inst_id, subst_id);
+          inst_id = subst_id;
+          return FullySubstituted;
+        }
+      }
+
+      return SubstOperands;
+    }
+
+    auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
+      cache_.Insert(orig_inst_id, orig_inst_id);
+      return orig_inst_id;
+    }
+
+    auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
+        -> SemIR::InstId override {
+      auto inserted = cache_.Insert(orig_inst_id, [&] {
+        if (context().constant_values().GetConstantInstId(orig_inst_id) ==
+            orig_inst_id) {
+          return RebuildNewInst(SemIR::LocId(orig_inst_id), new_inst);
+        } else {
+          return AddInstInNoBlock(
+              context(),
+              SemIR::LocIdAndInst::RuntimeVerified(
+                  context().sem_ir(), SemIR::LocId(orig_inst_id), new_inst));
+        }
+      });
+      return inserted.value();
+    }
+
+   private:
+    Map<SemIR::InstId, SemIR::InstId, 16> cache_;
+  };
+
+  Callbacks callbacks(&context);
+  return SubstInst(context, inst_id, callbacks);
 }
 
 }  // namespace Carbon::Check

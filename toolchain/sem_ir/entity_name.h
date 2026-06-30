@@ -53,11 +53,14 @@ struct EntityName : public Printable<EntityName> {
   // them for other kinds of `EntityName`.
 
   // The bind_index() value, unwrapped so it can be stored in a bit-field.
-  int32_t bind_index_value : 30 = CompileTimeBindIndex::None.index;
+  int32_t bind_index_value : 29 = CompileTimeBindIndex::None.index;
   // Whether this binding is a template parameter.
   bool is_template : 1 = false;
   // Whether this binding is marked unused.
   bool is_unused : 1 = false;
+  // Whether this binding is `.Self` and is part of a facet type under
+  // construction. This means the binding cannot be replaced during identify.
+  bool is_active_period_self : 1 = false;
 
   // The declared form of the binding. This is guaranteed to be set for
   // `:?` bindings, and may be set for other binding kinds as well.
@@ -77,12 +80,14 @@ struct EntityNameStore
   // Adds an entity name for a symbolic binding.
   auto AddSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,
                               CompileTimeBindIndex bind_index, bool is_template,
-                              bool is_unused) -> EntityNameId {
+                              bool is_unused, bool is_active_period_self)
+      -> EntityNameId {
     EntityName name = {.name_id = name_id,
                        .parent_scope_id = parent_scope_id,
                        .bind_index_value = bind_index.index,
                        .is_template = is_template,
-                       .is_unused = is_unused};
+                       .is_unused = is_unused,
+                       .is_active_period_self = is_active_period_self};
     CARBON_CHECK(name.bind_index_value == bind_index.index,
                  "Bind index out of range for bit-field: {0}",
                  bind_index.index);

@@ -85,6 +85,9 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
 auto IsPeriodSelf(Context& context, SemIR::InstId inst_id,
                   bool canonicalize = true) -> bool;
 
+auto MakePeriodSelfInactive(Context& context, SemIR::InstId inst_id)
+    -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_PERIOD_SELF_H_

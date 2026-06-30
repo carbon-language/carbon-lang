@@ -19,6 +19,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/emitter.h"
@@ -186,7 +187,8 @@ static auto PerformImplWitnessAccessAndSubstitute(
 
   if (!context.where_stack().empty()) {
     if (auto result = context.where_stack().back().rewrites.Lookup(
-            context.constant_values().Get(access_id))) {
+            context.constant_values().Get(
+                MakePeriodSelfInactive(context, access_id)))) {
       return GetOrAddInst<SemIR::ImplWitnessAccessSubstituted>(
           context, loc_id,
           {.type_id = access.type_id,

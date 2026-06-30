@@ -145,6 +145,8 @@ static auto HandleAnyBindingPatternType(Context& context,
 
   auto [node_id, original_inst_id] = context.node_stack().PopExprWithNodeId();
 
+  original_inst_id = MakePeriodSelfInactive(context, original_inst_id);
+
   if (node_kind == Parse::FormBindingPattern::Kind) {
     auto as_form = FormExprAsForm(context, node_id, original_inst_id);
     return {.node_id = node_id,

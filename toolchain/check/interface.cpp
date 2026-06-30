@@ -140,7 +140,7 @@ auto AddSelfSymbolicBindingToScope(Context& context,
   auto entity_name_id = context.entity_names().AddSymbolicBindingName(
       SemIR::NameId::SelfType, scope_id,
       context.scope_stack().AddCompileTimeBinding(), is_template,
-      /*is_unused=*/false);
+      /*is_unused=*/false, /*is_active_period_self=*/false);
   // Because there is no equivalent non-symbolic value, we use `None` as
   // the `value_id` on the `SymbolicBinding`.
   auto self_param_inst_id =

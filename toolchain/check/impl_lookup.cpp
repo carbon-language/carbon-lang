@@ -390,9 +390,9 @@ static auto CollectFacetWitnessSources(
       auto& no_symbolic_final_lookups =
           context.impl_lookup_no_symbolic_final_lookups();
       ++no_symbolic_final_lookups;
-      auto identified_id = TryToIdentifyFacetType(
-          context, loc_id, facet_const_id, facet_type,
-          allow_partially_identified, /*subst_period_self=*/true);
+      auto identified_id =
+          TryToIdentifyFacetType(context, loc_id, facet_const_id, facet_type,
+                                 allow_partially_identified);
       --no_symbolic_final_lookups;
 
       if (identified_id.has_value()) {
@@ -474,8 +474,7 @@ static auto CollectFacetWitnessSources(
           facet_type_const_id);
       auto identified_id = TryToIdentifyFacetType(
           context, loc_id, canon_self_const_id, facet_type,
-          /*allow_partially_identified=*/true,
-          /*subst_period_self=*/false);
+          /*allow_partially_identified=*/true);
       if (identified_id.has_value()) {
         witnesses.push_back({.facet_const_id = canon_self_const_id,
                              .identified_facet_type_id = identified_id});
