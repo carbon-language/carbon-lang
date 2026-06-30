@@ -442,14 +442,14 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%p.param: @F.%ptr.loc6_20.1 (%ptr.e8f)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %_.patt.loc7_8.1: @F.%pattern_type.loc7 (%pattern_type.51d) = value_binding_pattern _ [symbolic = %_.patt.loc7_8.2 (constants.%_.patt.ee9)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p.ref: @F.%ptr.loc6_20.1 (%ptr.e8f) = name_ref p, %p
 // CHECK:STDOUT:     %.loc7_14.1: ref @F.%T.loc6_7.1 (%T) = deref %p.ref
 // CHECK:STDOUT:     %.loc7_14.2: @F.%T.loc6_7.1 (%T) = acquire_value %.loc7_14.1
 // CHECK:STDOUT:     %T.ref.loc7: type = name_ref T, %T.loc6_7.2 [symbolic = %T.loc6_7.1 (constants.%T)]
 // CHECK:STDOUT:     %_: @F.%T.loc6_7.1 (%T) = wrapper_binding _, %.loc7_14.2
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %_.patt.loc7_8.1: @F.%pattern_type.loc7 (%pattern_type.51d) = value_binding_pattern _ [symbolic = %_.patt.loc7_8.2 (constants.%_.patt.ee9)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

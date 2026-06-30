@@ -171,13 +171,13 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type = value_binding_pattern f [concrete = constants.%f.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_53.1: Core.FloatLiteral = value_of_initializer @__global_init.%FloatLiteralToFloatLiteral.call [concrete = constants.%float]
 // CHECK:STDOUT:   %.loc6_53.2: Core.FloatLiteral = converted @__global_init.%FloatLiteralToFloatLiteral.call, %.loc6_53.1 [concrete = constants.%float]
 // CHECK:STDOUT:   %FloatLiteral.ref: type = name_ref FloatLiteral, imports.%Main.FloatLiteral [concrete = Core.FloatLiteral]
 // CHECK:STDOUT:   %f: Core.FloatLiteral = wrapper_binding f, %.loc6_53.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %pattern_type = value_binding_pattern f [concrete = constants.%f.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -212,27 +212,27 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.fb7 = value_binding_pattern a [concrete = constants.%a.patt.ae8]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_39.1: %f64.dc1 = value_of_initializer @__global_init.%FloatLiteralToFloat64.call.loc6 [concrete = constants.%float.895]
 // CHECK:STDOUT:   %.loc6_39.2: %f64.dc1 = converted @__global_init.%FloatLiteralToFloat64.call.loc6, %.loc6_39.1 [concrete = constants.%float.895]
 // CHECK:STDOUT:   %f64.loc6: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %a: %f64.dc1 = wrapper_binding a, %.loc6_39.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.fb7 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.fb7 = value_binding_pattern a [concrete = constants.%a.patt.ae8]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_39.1: %f64.dc1 = value_of_initializer @__global_init.%FloatLiteralToFloat64.call.loc7 [concrete = constants.%float.3b9]
 // CHECK:STDOUT:   %.loc7_39.2: %f64.dc1 = converted @__global_init.%FloatLiteralToFloat64.call.loc7, %.loc7_39.1 [concrete = constants.%float.3b9]
 // CHECK:STDOUT:   %f64.loc7: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %b: %f64.dc1 = wrapper_binding b, %.loc7_39.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.fb7 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.fb7 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_43.1: %f64.dc1 = value_of_initializer @__global_init.%FloatLiteralToFloat64.call.loc8 [concrete = constants.%float.672]
 // CHECK:STDOUT:   %.loc8_43.2: %f64.dc1 = converted @__global_init.%FloatLiteralToFloat64.call.loc8, %.loc8_43.1 [concrete = constants.%float.672]
 // CHECK:STDOUT:   %f64.loc8: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %c: %f64.dc1 = wrapper_binding c, %.loc8_43.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.fb7 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -273,27 +273,27 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.240 = value_binding_pattern a [concrete = constants.%a.patt.895]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_39.1: %f32.c73 = value_of_initializer @__global_init.%FloatLiteralToFloat32.call.loc6 [concrete = constants.%float.5cd]
 // CHECK:STDOUT:   %.loc6_39.2: %f32.c73 = converted @__global_init.%FloatLiteralToFloat32.call.loc6, %.loc6_39.1 [concrete = constants.%float.5cd]
 // CHECK:STDOUT:   %f32.loc6: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:   %a: %f32.c73 = wrapper_binding a, %.loc6_39.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.240 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.240 = value_binding_pattern a [concrete = constants.%a.patt.895]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_39.1: %f32.c73 = value_of_initializer @__global_init.%FloatLiteralToFloat32.call.loc7 [concrete = constants.%float.943]
 // CHECK:STDOUT:   %.loc7_39.2: %f32.c73 = converted @__global_init.%FloatLiteralToFloat32.call.loc7, %.loc7_39.1 [concrete = constants.%float.943]
 // CHECK:STDOUT:   %f32.loc7: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:   %b: %f32.c73 = wrapper_binding b, %.loc7_39.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.240 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.240 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_42.1: %f32.c73 = value_of_initializer @__global_init.%FloatLiteralToFloat32.call.loc8 [concrete = constants.%float.c47]
 // CHECK:STDOUT:   %.loc8_42.2: %f32.c73 = converted @__global_init.%FloatLiteralToFloat32.call.loc8, %.loc8_42.1 [concrete = constants.%float.c47]
 // CHECK:STDOUT:   %f32.loc8: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:   %c: %f32.c73 = wrapper_binding c, %.loc8_42.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.240 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -353,27 +353,27 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.fb7 = value_binding_pattern a [concrete = constants.%a.patt.ae8]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_34.1: %f64.dc1 = value_of_initializer @__global_init.%Float64ToFloat64.call.loc6 [concrete = constants.%float.895]
 // CHECK:STDOUT:   %.loc6_34.2: %f64.dc1 = converted @__global_init.%Float64ToFloat64.call.loc6, %.loc6_34.1 [concrete = constants.%float.895]
 // CHECK:STDOUT:   %f64.loc6: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %a: %f64.dc1 = wrapper_binding a, %.loc6_34.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.fb7 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.fb7 = value_binding_pattern a [concrete = constants.%a.patt.ae8]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_34.1: %f64.dc1 = value_of_initializer @__global_init.%Float64ToFloat64.call.loc7 [concrete = constants.%float.3b9]
 // CHECK:STDOUT:   %.loc7_34.2: %f64.dc1 = converted @__global_init.%Float64ToFloat64.call.loc7, %.loc7_34.1 [concrete = constants.%float.3b9]
 // CHECK:STDOUT:   %f64.loc7: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %b: %f64.dc1 = wrapper_binding b, %.loc7_34.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.fb7 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.fb7 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_38.1: %f64.dc1 = value_of_initializer @__global_init.%Float64ToFloat64.call.loc8 [concrete = constants.%float.672]
 // CHECK:STDOUT:   %.loc8_38.2: %f64.dc1 = converted @__global_init.%Float64ToFloat64.call.loc8, %.loc8_38.1 [concrete = constants.%float.672]
 // CHECK:STDOUT:   %f64.loc8: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %c: %f64.dc1 = wrapper_binding c, %.loc8_38.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.fb7 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -454,27 +454,27 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.240 = value_binding_pattern a [concrete = constants.%a.patt.895]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_34.1: %f32.c73 = value_of_initializer @__global_init.%Float32ToFloat32.call.loc6 [concrete = constants.%float.5cd]
 // CHECK:STDOUT:   %.loc6_34.2: %f32.c73 = converted @__global_init.%Float32ToFloat32.call.loc6, %.loc6_34.1 [concrete = constants.%float.5cd]
 // CHECK:STDOUT:   %f32.loc6: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:   %a: %f32.c73 = wrapper_binding a, %.loc6_34.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.240 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.240 = value_binding_pattern a [concrete = constants.%a.patt.895]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_34.1: %f32.c73 = value_of_initializer @__global_init.%Float32ToFloat32.call.loc7 [concrete = constants.%float.943]
 // CHECK:STDOUT:   %.loc7_34.2: %f32.c73 = converted @__global_init.%Float32ToFloat32.call.loc7, %.loc7_34.1 [concrete = constants.%float.943]
 // CHECK:STDOUT:   %f32.loc7: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:   %b: %f32.c73 = wrapper_binding b, %.loc7_34.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.240 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.240 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_37.1: %f32.c73 = value_of_initializer @__global_init.%Float32ToFloat32.call.loc8 [concrete = constants.%float.c47]
 // CHECK:STDOUT:   %.loc8_37.2: %f32.c73 = converted @__global_init.%Float32ToFloat32.call.loc8, %.loc8_37.1 [concrete = constants.%float.c47]
 // CHECK:STDOUT:   %f32.loc8: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:   %c: %f32.c73 = wrapper_binding c, %.loc8_37.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.240 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -548,13 +548,13 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.240 = value_binding_pattern a [concrete = constants.%a.patt.895]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_34.1: %f32.c73 = value_of_initializer @__global_init.%Float64ToFloat32.call [concrete = constants.%float.943]
 // CHECK:STDOUT:   %.loc6_34.2: %f32.c73 = converted @__global_init.%Float64ToFloat32.call, %.loc6_34.1 [concrete = constants.%float.943]
 // CHECK:STDOUT:   %f32: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:   %a: %f32.c73 = wrapper_binding a, %.loc6_34.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.240 = value_binding_pattern a [concrete = constants.%a.patt.895]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -618,27 +618,27 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.240 = value_binding_pattern a [concrete = constants.%a.patt.895]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_37.1: %f32.c73 = value_of_initializer @__global_init.%Float64ToFloat32.call [concrete = <error>]
 // CHECK:STDOUT:   %.loc11_37.2: %f32.c73 = converted @__global_init.%Float64ToFloat32.call, %.loc11_37.1 [concrete = <error>]
 // CHECK:STDOUT:   %f32.loc11: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:   %a: %f32.c73 = wrapper_binding a, %.loc11_37.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.240 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.240 = value_binding_pattern a [concrete = constants.%a.patt.895]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_42.1: %f32.c73 = value_of_initializer @__global_init.%FloatLiteralToFloat32.call [concrete = <error>]
 // CHECK:STDOUT:   %.loc16_42.2: %f32.c73 = converted @__global_init.%FloatLiteralToFloat32.call, %.loc16_42.1 [concrete = <error>]
 // CHECK:STDOUT:   %f32.loc16: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:   %b: %f32.c73 = wrapper_binding b, %.loc16_42.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.fb7 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.240 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21_43.1: %f64.dc1 = value_of_initializer @__global_init.%FloatLiteralToFloat64.call [concrete = <error>]
 // CHECK:STDOUT:   %.loc21_43.2: %f64.dc1 = converted @__global_init.%FloatLiteralToFloat64.call, %.loc21_43.1 [concrete = <error>]
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %c: %f64.dc1 = wrapper_binding c, %.loc21_43.2 [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.fb7 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -704,20 +704,20 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.fb7 = value_binding_pattern a [concrete = constants.%a.patt.ae8]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_34.1: %f64.dc1 = value_of_initializer @__global_init.%Float32ToFloat64.call.loc6 [concrete = constants.%float.3b9]
 // CHECK:STDOUT:   %.loc6_34.2: %f64.dc1 = converted @__global_init.%Float32ToFloat64.call.loc6, %.loc6_34.1 [concrete = constants.%float.3b9]
 // CHECK:STDOUT:   %f64.loc6: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %a: %f64.dc1 = wrapper_binding a, %.loc6_34.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.fb7 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.fb7 = value_binding_pattern a [concrete = constants.%a.patt.ae8]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_37.1: %f64.dc1 = value_of_initializer @__global_init.%Float32ToFloat64.call.loc7 [concrete = constants.%float.84e]
 // CHECK:STDOUT:   %.loc7_37.2: %f64.dc1 = converted @__global_init.%Float32ToFloat64.call.loc7, %.loc7_37.1 [concrete = constants.%float.84e]
 // CHECK:STDOUT:   %f64.loc7: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %b: %f64.dc1 = wrapper_binding b, %.loc7_37.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.fb7 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -779,9 +779,6 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_constant_64.patt: %pattern_type.fb7 = value_binding_pattern not_constant_64 [concrete = constants.%not_constant_64.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0: %.2d7 = impl_witness_access constants.%ImplicitAs.impl_witness.43c, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.cf0]
 // CHECK:STDOUT:   %bound_method.loc6_28.1: <bound method> = bound_method @__global_init.%float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -792,12 +789,15 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %f64.loc6: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %not_constant_64: %f64.dc1 = wrapper_binding not_constant_64, %.loc6_28.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %convert_not_constant.patt: %pattern_type.fb7 = value_binding_pattern convert_not_constant [concrete = constants.%convert_not_constant.patt]
+// CHECK:STDOUT:     %not_constant_64.patt: %pattern_type.fb7 = value_binding_pattern not_constant_64 [concrete = constants.%not_constant_64.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_65.1: %f64.dc1 = value_of_initializer @__global_init.%Float64ToFloat64.call
 // CHECK:STDOUT:   %.loc15_65.2: %f64.dc1 = converted @__global_init.%Float64ToFloat64.call, %.loc15_65.1
 // CHECK:STDOUT:   %f64.loc15: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %convert_not_constant: %f64.dc1 = wrapper_binding convert_not_constant, %.loc15_65.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %convert_not_constant.patt: %pattern_type.fb7 = value_binding_pattern convert_not_constant [concrete = constants.%convert_not_constant.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

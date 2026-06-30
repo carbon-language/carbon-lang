@@ -41,9 +41,6 @@ let b: Bool() = false;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_13.1: type = splice_block %.loc7_13.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.ref: %Bool.type = name_ref Bool, imports.%Main.Bool [concrete = constants.%Bool]
 // CHECK:STDOUT:     %Bool.call: init type = call %Bool.ref() [concrete = bool]
@@ -51,6 +48,9 @@ let b: Bool() = false;
 // CHECK:STDOUT:     %.loc7_13.3: type = converted %Bool.call, %.loc7_13.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: bool = wrapper_binding b, @__global_init.%false
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

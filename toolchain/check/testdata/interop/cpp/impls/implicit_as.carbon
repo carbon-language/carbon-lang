@@ -486,9 +486,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UserConversion(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
 // CHECK:STDOUT:   %.loc8_21.1: ref %Dest = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.ca8 = addr_of %.loc8_21.1
@@ -502,6 +499,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %Dest = wrapper_binding _, %.loc8_21.5
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Dest.Op.bound: <bound method> = bound_method %.loc8_21.4, constants.%Dest.Op
 // CHECK:STDOUT:   %Op.ref: %Dest.cpp_destructor.type = name_ref Op, imports.%Dest.cpp_destructor.decl [concrete = constants.%Dest.cpp_destructor]
@@ -512,9 +512,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonConstConversion.loc12(%s.param: ref %NonConstConversion.689) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: ref %NonConstConversion.689 = name_ref s, %s
 // CHECK:STDOUT:   %.loc14_21.1: ref %Dest = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.ca8 = addr_of %.loc14_21.1
@@ -528,6 +525,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %Dest = wrapper_binding _, %.loc14_21.5
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Dest.Op.bound: <bound method> = bound_method %.loc14_21.4, constants.%Dest.Op
 // CHECK:STDOUT:   %Op.ref: %Dest.cpp_destructor.type = name_ref Op, imports.%Dest.cpp_destructor.decl [concrete = constants.%Dest.cpp_destructor]
 // CHECK:STDOUT:   %Dest.cpp_destructor.bound: <bound method> = bound_method %.loc14_21.4, %Op.ref
@@ -537,9 +537,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstructorConversion(%s.param: %Source2) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.a68 = value_binding_pattern _ [concrete = constants.%_.patt.ff1]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %Source2 = name_ref s, %s
 // CHECK:STDOUT:   %.loc20_22.1: ref %Dest2 = temporary_storage
 // CHECK:STDOUT:   %.loc20_22.2: ref %Source2 = value_as_ref %s.ref
@@ -555,6 +552,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %Dest2.ref: type = name_ref Dest2, imports.%Dest2.decl [concrete = constants.%Dest2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %Dest2 = wrapper_binding _, %.loc20_22.6
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.a68 = value_binding_pattern _ [concrete = constants.%_.patt.ff1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Dest2.Op.bound: <bound method> = bound_method %.loc20_22.5, constants.%Dest2.Op
 // CHECK:STDOUT:   %Op.ref: %Dest2.cpp_destructor.type = name_ref Op, imports.%Dest2.cpp_destructor.decl [concrete = constants.%Dest2.cpp_destructor]
@@ -584,9 +584,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonConstConversionTest(%s.param: %NonConstConversion) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %NonConstConversion = name_ref s, %s
 // CHECK:STDOUT:   %.loc15_21: %Dest.980 = converted %s.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc15_13: type = splice_block %Dest.ref [concrete = constants.%Dest.980] {
@@ -594,6 +591,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest.980]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %Dest.980 = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -662,9 +662,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InaccessibleConstructorTest(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.824 = value_binding_pattern _ [concrete = constants.%_.patt.f1f]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
 // CHECK:STDOUT:   %.loc16_40.1: ref %InaccessibleConstructor = temporary_storage
 // CHECK:STDOUT:   %.loc16_40.2: ref %Source = value_as_ref %s.ref
@@ -680,6 +677,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %InaccessibleConstructor.ref: type = name_ref InaccessibleConstructor, imports.%InaccessibleConstructor.decl [concrete = constants.%InaccessibleConstructor]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %InaccessibleConstructor = wrapper_binding _, %.loc16_40.6
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.824 = value_binding_pattern _ [concrete = constants.%_.patt.f1f]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %InaccessibleConstructor.Op.bound: <bound method> = bound_method %.loc16_40.5, constants.%InaccessibleConstructor.Op
 // CHECK:STDOUT:   %Op.ref: %InaccessibleConstructor.cpp_destructor.type = name_ref Op, imports.%InaccessibleConstructor.cpp_destructor.decl [concrete = constants.%InaccessibleConstructor.cpp_destructor]
@@ -690,9 +690,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InaccessibleConversionTest(%s.param: %InaccessibleConversion) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %InaccessibleConversion = name_ref s, %s
 // CHECK:STDOUT:   %.loc30_21.1: ref %Dest = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.ca8 = addr_of %.loc30_21.1
@@ -706,6 +703,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %Dest = wrapper_binding _, %.loc30_21.5
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Dest.Op.bound: <bound method> = bound_method %.loc30_21.4, constants.%Dest.Op
 // CHECK:STDOUT:   %Op.ref: %Dest.cpp_destructor.type = name_ref Op, imports.%Dest.cpp_destructor.decl [concrete = constants.%Dest.cpp_destructor]
@@ -743,9 +743,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DeletedConstructorTest(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.937 = value_binding_pattern _ [concrete = constants.%_.patt.a57]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
 // CHECK:STDOUT:   %.loc15_35: %DeletedConstructor = converted %s.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc15_13: type = splice_block %DeletedConstructor.ref [concrete = constants.%DeletedConstructor] {
@@ -753,14 +750,14 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %DeletedConstructor.ref: type = name_ref DeletedConstructor, imports.%DeletedConstructor.decl [concrete = constants.%DeletedConstructor]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %DeletedConstructor = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.937 = value_binding_pattern _ [concrete = constants.%_.patt.a57]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DeletedConversionTest(%s.param: %DeletedConversion) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %DeletedConversion = name_ref s, %s
 // CHECK:STDOUT:   %.loc28_21: %Dest.980 = converted %s.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc28_13: type = splice_block %Dest.ref [concrete = constants.%Dest.980] {
@@ -768,6 +765,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest.980]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %Dest.980 = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -800,9 +800,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ExplicitConstructorTest(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.eae = value_binding_pattern _ [concrete = constants.%_.patt.411]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
 // CHECK:STDOUT:   %.loc15_36: %ExplicitConstructor = converted %s.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc15_13: type = splice_block %ExplicitConstructor.ref [concrete = constants.%ExplicitConstructor] {
@@ -810,14 +807,14 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %ExplicitConstructor.ref: type = name_ref ExplicitConstructor, imports.%ExplicitConstructor.decl [concrete = constants.%ExplicitConstructor]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %ExplicitConstructor = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.eae = value_binding_pattern _ [concrete = constants.%_.patt.411]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ExplicitConversionTest(%s.param: %ExplicitConversion) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %ExplicitConversion = name_ref s, %s
 // CHECK:STDOUT:   %.loc28_21: %Dest.980 = converted %s.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc28_13: type = splice_block %Dest.ref [concrete = constants.%Dest.980] {
@@ -825,6 +822,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest.980]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %Dest.980 = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -866,9 +866,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @IntConstructor.loc6(%i.param: %i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.c4e = value_binding_pattern _ [concrete = constants.%_.patt.151]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.ref: %i32 = name_ref i, %i
 // CHECK:STDOUT:   %.loc8_31.1: ref %IntConstructor.372 = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.100 = addr_of %.loc8_31.1
@@ -882,6 +879,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %IntConstructor.ref: type = name_ref IntConstructor, imports.%IntConstructor.decl [concrete = constants.%IntConstructor.372]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %IntConstructor.372 = wrapper_binding _, %.loc8_31.5
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.c4e = value_binding_pattern _ [concrete = constants.%_.patt.151]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %IntConstructor.Op.bound: <bound method> = bound_method %.loc8_31.4, constants.%IntConstructor.Op
 // CHECK:STDOUT:   %Op.ref: %IntConstructor.cpp_destructor.type = name_ref Op, imports.%IntConstructor.cpp_destructor.decl [concrete = constants.%IntConstructor.cpp_destructor]
@@ -929,9 +929,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @IntConstructorTest(%u.param: %u32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.c4e = value_binding_pattern _ [concrete = constants.%_.patt.151]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %u.ref: %u32 = name_ref u, %u
 // CHECK:STDOUT:   %.loc19_31.1: ref %IntConstructor = temporary_storage
 // CHECK:STDOUT:   %.loc19_31.2: %i32 = converted %u.ref, <error> [concrete = <error>]
@@ -946,6 +943,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %IntConstructor.ref: type = name_ref IntConstructor, imports.%IntConstructor.decl [concrete = constants.%IntConstructor]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %IntConstructor = wrapper_binding _, %.loc19_31.6
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.c4e = value_binding_pattern _ [concrete = constants.%_.patt.151]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %IntConstructor.Op.bound: <bound method> = bound_method %.loc19_31.5, constants.%IntConstructor.Op
 // CHECK:STDOUT:   %Op.ref: %IntConstructor.cpp_destructor.type = name_ref Op, imports.%IntConstructor.cpp_destructor.decl [concrete = constants.%IntConstructor.cpp_destructor]
@@ -991,9 +991,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DefaultConstructorTest() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.be4 = value_binding_pattern _ [concrete = constants.%_.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_36.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_36.2: ref %DefaultConstructor = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.c09 = addr_of %.loc9_36.2
@@ -1007,6 +1004,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %DefaultConstructor.ref: type = name_ref DefaultConstructor, imports.%DefaultConstructor.decl [concrete = constants.%DefaultConstructor]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %DefaultConstructor = wrapper_binding _, %.loc9_36.6
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.be4 = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %DefaultConstructor.Op.bound: <bound method> = bound_method %.loc9_36.5, constants.%DefaultConstructor.Op
 // CHECK:STDOUT:   %Op.ref: %DefaultConstructor.cpp_destructor.type = name_ref Op, imports.%DefaultConstructor.cpp_destructor.decl [concrete = constants.%DefaultConstructor.cpp_destructor]
@@ -1111,9 +1111,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ImplicitConvert() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc8: %pattern_type.586 = value_binding_pattern _ [concrete = constants.%_.patt.44e]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc8: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc8: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc8_25.1: %tuple.type.f94 = tuple_literal (%int_1.loc8, %int_2.loc8) [concrete = constants.%tuple.ad8]
@@ -1144,7 +1141,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc8: %Two = wrapper_binding _, %.loc8_25.6
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc10: %pattern_type.248 = value_binding_pattern _ [concrete = constants.%_.patt.368]
+// CHECK:STDOUT:     %_.patt.loc8: %pattern_type.586 = value_binding_pattern _ [concrete = constants.%_.patt.44e]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc10: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
@@ -1176,7 +1173,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc10: %ThreeWithDefault = wrapper_binding _, %.loc10_38.6
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc12: %pattern_type.248 = value_binding_pattern _ [concrete = constants.%_.patt.368]
+// CHECK:STDOUT:     %_.patt.loc10: %pattern_type.248 = value_binding_pattern _ [concrete = constants.%_.patt.368]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc12: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
@@ -1215,6 +1212,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %ThreeWithDefault.ref.loc12: type = name_ref ThreeWithDefault, imports.%ThreeWithDefault.decl [concrete = constants.%ThreeWithDefault]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc12: %ThreeWithDefault = wrapper_binding _, %.loc12_41.6
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt.loc12: %pattern_type.248 = value_binding_pattern _ [concrete = constants.%_.patt.368]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %ThreeWithDefault.Op.bound.loc12: <bound method> = bound_method %.loc12_41.5, constants.%ThreeWithDefault.Op
 // CHECK:STDOUT:   %Op.ref.loc12: %ThreeWithDefault.cpp_destructor.type = name_ref Op, imports.%ThreeWithDefault.cpp_destructor.decl [concrete = constants.%ThreeWithDefault.cpp_destructor]
@@ -1258,9 +1258,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InitFromTuple() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc15: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_27.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_27.2: %Aggregate = converted %.loc15_27.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc15_13: type = splice_block %Aggregate.ref.loc15 [concrete = constants.%Aggregate] {
@@ -1269,7 +1266,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc15: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc23: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc15: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc23: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %.loc23_29.1: %tuple.type.985 = tuple_literal (%int_1.loc23) [concrete = constants.%tuple.378]
@@ -1280,7 +1277,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc23: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc31: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc23: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc31: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
@@ -1291,6 +1288,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %Aggregate.ref.loc31: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc31: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt.loc31: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1320,9 +1320,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InitFromStruct() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc15: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_27.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc15_27.2: %Aggregate = converted %.loc15_27.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc15_13: type = splice_block %Aggregate.ref.loc15 [concrete = constants.%Aggregate] {
@@ -1331,7 +1328,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc15: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc23: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc15: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc23: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %.loc23_33.1: %struct_type.x = struct_literal (%int_1.loc23) [concrete = constants.%struct.147]
@@ -1342,7 +1339,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc23: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc31: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc23: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc31: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
@@ -1353,6 +1350,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %Aggregate.ref.loc31: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc31: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt.loc31: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1434,9 +1434,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InitFromStruct() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc8: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_30.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_30.2: ref %NonAggregate = temporary_storage
 // CHECK:STDOUT:   %addr.loc8: %ptr.f81 = addr_of %.loc8_30.2
@@ -1451,7 +1448,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc8: %NonAggregate = wrapper_binding _, %.loc8_30.6
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc9: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc8: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc9_32.1: %tuple.type.985 = tuple_literal (%int_1.loc9) [concrete = constants.%tuple.378]
@@ -1475,7 +1472,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc9: %NonAggregate = wrapper_binding _, %.loc9_32.6
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc10: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc9: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
@@ -1506,6 +1503,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %NonAggregate.ref.loc10: type = name_ref NonAggregate, imports.%NonAggregate.decl [concrete = constants.%NonAggregate]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc10: %NonAggregate = wrapper_binding _, %.loc10_34.6
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt.loc10: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %NonAggregate.Op.bound.loc10: <bound method> = bound_method %.loc10_34.5, constants.%NonAggregate.Op
 // CHECK:STDOUT:   %Op.ref.loc10: %NonAggregate.cpp_destructor.type = name_ref Op, imports.%NonAggregate.cpp_destructor.decl [concrete = constants.%NonAggregate.cpp_destructor]
@@ -1548,9 +1548,6 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InitFromStruct() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc15: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc15_30.2: %NonAggregate = converted %.loc15_30.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc15_13: type = splice_block %NonAggregate.ref.loc15 [concrete = constants.%NonAggregate] {
@@ -1559,7 +1556,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc15: %NonAggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc23: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc15: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc23: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %.loc23_36.1: %struct_type.x = struct_literal (%int_1.loc23) [concrete = constants.%struct.147]
@@ -1570,7 +1567,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc23: %NonAggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc31: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc23: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc31: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
@@ -1581,6 +1578,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %NonAggregate.ref.loc31: type = name_ref NonAggregate, imports.%NonAggregate.decl [concrete = constants.%NonAggregate]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc31: %NonAggregate = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt.loc31: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
