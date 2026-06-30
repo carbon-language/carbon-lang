@@ -25,6 +25,7 @@ struct LinkOptions {
 
   std::shared_ptr<CodegenOptions> codegen_options;
   llvm::StringRef output_filename;
+  bool link_prelude_files = true;
   llvm::SmallVector<llvm::StringRef> object_filenames;
 
   llvm::SmallVector<llvm::StringRef> extra_clang_args;

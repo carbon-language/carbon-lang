@@ -30,6 +30,33 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+filegroup(
+    name = "core_library_files",
+    srcs = glob(
+        include = ["**/*.carbon"],
+        exclude = [
+            "prelude.carbon",
+            "prelude/**",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+manifest(
+    name = "core_library_manifest.txt",
+    srcs = [":core_library_files"],
+    strip_package_dir = True,
+)
+
+filegroup(
+    name = "core_library",
+    srcs = [
+        ":core_library_files",
+        ":core_library_manifest.txt",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 carbon_library(
     name = "io",
     api = "io.carbon",

@@ -149,6 +149,12 @@ toolchain_files(
 )
 
 toolchain_files(
+    name = "core_library",
+    srcs = ["//core:core_library"],
+    prefix = "core/",
+)
+
+toolchain_files(
     name = "clang_builtin_hdrs",
     srcs = ["@llvm-project//clang:builtin_headers_gen"],
     prefix = "llvm/lib/clang/{0}/include/".format(LLVM_VERSION_MAJOR),
@@ -368,6 +374,7 @@ filegroup(
         ":builtins_all_srcs",
         ":clang_hdrs",
         ":core",
+        ":core_library",
         ":install_marker",
         ":installed_bazel_files",
         ":libc_internal_libcxx_hdrs",

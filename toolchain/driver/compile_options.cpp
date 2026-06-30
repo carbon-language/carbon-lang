@@ -390,6 +390,7 @@ Use the string form of the fingerprint from mangling instead of the hash form.
 
 auto CompileOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b)
     -> void {
+  include_carbon_core = true;
   BuildSharedOptions(b, this);
 }
 

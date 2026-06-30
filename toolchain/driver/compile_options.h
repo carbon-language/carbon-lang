@@ -100,6 +100,12 @@ struct CompileOptions {
   bool prelude_import = true;
   bool output_last_input_only = false;
 
+  // An internal flag specifying if the CompileDriver should automatically
+  // include the Core libraries files in the compilation. Note this refers to
+  // the Core libraries files other than the prelude, the inclusion of which
+  // is currently controlled by the `prelude_import` flag.
+  bool include_carbon_core = false;
+
   llvm::SmallVector<llvm::StringRef> exclude_dump_file_prefixes;
 
   llvm::StringRef sem_ir_crash_dump;

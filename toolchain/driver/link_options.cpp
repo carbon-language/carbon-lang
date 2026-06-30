@@ -56,6 +56,18 @@ legacy parsing logic.
       },
       [&](auto& arg_b) { arg_b.Set(&output_filename); });
 
+  b.AddFlag(
+      {
+          .name = "link_prelude_files",
+          .help = R"""(
+Automatically include the Carbon prelude files in the link.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&link_prelude_files);
+      });
+
   BuildSharedOptions(b, this);
 
   codegen_options = std::make_shared<CodegenOptions>();
@@ -77,6 +89,7 @@ name of the first provided input file.
       [&](auto& arg_b) { arg_b.Set(&output_filename); });
 
   BuildSharedOptions(b, this);
+  link_prelude_files = false;
 }
 
 }  // namespace Carbon

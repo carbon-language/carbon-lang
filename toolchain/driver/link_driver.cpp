@@ -90,42 +90,47 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
 
   // Find or build the Carbon Core runtimes for linking the prelude into the
   // binary.
+  bool include_prelude = false;
   std::filesystem::path core_path;
   Filesystem::DirRef runtimes_dir;
   std::filesystem::path runtimes_path;
-  if (driver_env.prebuilt_runtimes) {
-    auto error_or_path =
-        driver_env.prebuilt_runtimes->Get(Runtimes::CarbonCore);
-    CARBON_CHECK(error_or_path.ok(),
-                 "Prebuilt runtimes failed to fetch for Carbon prelude: {}",
-                 error_or_path.error().message());
-    core_path = std::move(*error_or_path);
-    runtimes_dir = driver_env.prebuilt_runtimes->base_dir();
-    runtimes_path = driver_env.prebuilt_runtimes->base_path();
-  } else if (driver_env.build_runtimes_on_demand) {
-    Runtimes::Cache::Features features = {
-        .target = options_->codegen_options->target.str()};
-    auto runtimes_or_error = driver_env.runtimes_cache.Lookup(features);
-    CARBON_CHECK(runtimes_or_error.ok(), "Runtimes cache lookup failed: {}",
-                 runtimes_or_error.error().message());
-    auto runtimes = std::move(*runtimes_or_error);
-    CarbonPreludeBuilder prelude_builder(&driver_env, options_->codegen_options,
-                                         &runtimes);
-    auto path_or_error = std::move(prelude_builder).Build();
-    if (!path_or_error.ok()) {
-      CARBON_DIAGNOSTIC(FailureBuildingRuntimes, Error,
-                        "Failed to build Carbon prelude during linking: {0}",
-                        std::string);
-      driver_env.emitter.Emit(FailureBuildingRuntimes,
-                              path_or_error.error().message());
-      return {.success = false};
+  std::optional<Runtimes> runtimes_cache;
+  if (options_->link_prelude_files) {
+    if (driver_env.prebuilt_runtimes) {
+      auto error_or_path =
+          driver_env.prebuilt_runtimes->Get(Runtimes::CarbonCore);
+      CARBON_CHECK(error_or_path.ok(),
+                   "Prebuilt runtimes failed to fetch for Carbon prelude: {}",
+                   error_or_path.error().message());
+      core_path = std::move(*error_or_path);
+      runtimes_dir = driver_env.prebuilt_runtimes->base_dir();
+      runtimes_path = driver_env.prebuilt_runtimes->base_path();
+      include_prelude = true;
+    } else if (driver_env.build_runtimes_on_demand) {
+      Runtimes::Cache::Features features = {
+          .target = options_->codegen_options->target.str()};
+      auto runtimes_or_error = driver_env.runtimes_cache.Lookup(features);
+      CARBON_CHECK(runtimes_or_error.ok(), "Runtimes cache lookup failed: {}",
+                   runtimes_or_error.error().message());
+      auto runtimes = std::move(*runtimes_or_error);
+      CarbonPreludeBuilder prelude_builder(
+          &driver_env, options_->codegen_options, &runtimes);
+      auto path_or_error = std::move(prelude_builder).Build();
+      if (!path_or_error.ok()) {
+        CARBON_DIAGNOSTIC(FailureBuildingRuntimes, Error,
+                          "Failed to build Carbon prelude during linking: {0}",
+                          std::string);
+        driver_env.emitter.Emit(FailureBuildingRuntimes,
+                                path_or_error.error().message());
+        return {.success = false};
+      }
+      core_path = std::move(*path_or_error);
+      runtimes_dir = runtimes.base_dir();
+      runtimes_path = runtimes.base_path();
+      // Keep the Runtimes object in scope so we can use it during linking.
+      runtimes_cache = std::move(runtimes);
+      include_prelude = true;
     }
-    core_path = std::move(*path_or_error);
-    runtimes_dir = runtimes.base_dir();
-    runtimes_path = runtimes.base_path();
-  } else {
-    // TODO: emit diagnostic
-    return {.success = false};
   }
 
   // Note that we append any extra Clang args before our object filenames. This
@@ -139,21 +144,23 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
 
   // Append the Carbon prelude object files to the link.
   llvm::SmallVector<std::string> prelude_paths;
-  // Open subdirectory specifically for the object files relative to the
-  // runtimes base path.
-  auto relative_path = core_path.lexically_relative(runtimes_path);
-  auto core_dir_or_error = runtimes_dir.OpenDir(relative_path);
-  CARBON_CHECK(core_dir_or_error.ok(),
-               "Failed to open prelude binaries directory at {}",
-               core_dir_or_error.error());
-  auto core_dir = std::move(*core_dir_or_error);
-  object_search(core_dir, core_path, prelude_paths);
-  CARBON_CHECK(!prelude_paths.empty(),
-               "runtimes_path: {}, core_path: {}, relative_path: {}",
-               runtimes_path, core_path, relative_path);
-  llvm::for_each(prelude_paths, [&clang_args](const std::string& path) -> void {
-    clang_args.push_back(llvm::StringRef(path));
-  });
+  if (include_prelude) {
+    // Open subdirectory specifically for the object files relative to the
+    // runtimes base path.
+    auto relative_path = core_path.lexically_relative(runtimes_path);
+    auto core_dir_or_error = runtimes_dir.OpenDir(relative_path);
+    CARBON_CHECK(core_dir_or_error.ok(),
+                 "Failed to open prelude binaries directory at {}, error: {}",
+                 runtimes_path / relative_path, core_dir_or_error.error());
+    auto core_dir = std::move(*core_dir_or_error);
+    object_search(core_dir, core_path, prelude_paths);
+    CARBON_CHECK(!prelude_paths.empty(), "Found no prelude files at {}",
+                 runtimes_path / relative_path);
+    llvm::for_each(prelude_paths,
+                   [&clang_args](const std::string& path) -> void {
+                     clang_args.push_back(llvm::StringRef(path));
+                   });
+  }
 
   clang_args.append(options_->object_filenames.begin(),
                     options_->object_filenames.end());
