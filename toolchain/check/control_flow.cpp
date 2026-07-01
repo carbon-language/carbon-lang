@@ -147,8 +147,7 @@ auto MaybeAddCleanupForInst(Context& context, SemIR::InstId inst_id) -> void {
   context.scope_stack().destroy_id_stack().AppendToTop(inst_id);
 }
 
-static auto AddCleanupBlockForValues(Context& context,
-                                     llvm::ArrayRef<SemIR::InstId> destroy_ids)
+auto AddCleanups(Context& context, llvm::ArrayRef<SemIR::InstId> destroy_ids)
     -> void {
   for (auto destroy_id : llvm::reverse(destroy_ids)) {
     // TODO: This does the `Destroy` lookup and call at every cleanup block.
@@ -160,23 +159,41 @@ static auto AddCleanupBlockForValues(Context& context,
   }
 }
 
-auto AddBlockCleanups(Context& context) -> void {
-  AddCleanupBlockForValues(
-      context, context.scope_stack().destroy_id_stack().PeekArray());
-}
-
+// TODO: When we have multiple branches or returns in the same function, share
+// cleanup instructions rather than duplicating them for each branch or return.
+// We would do this by creating cleanup blocks that hold the relevant cleanups,
+// and chaining between cleanup blocks to allow cleanup instruction reuse. We
+// could either share cleanup blocks only if they end in the same instruction,
+// or generate branches out of the cleanups to the chosen destination.
+//
+// For example:
+//
+//   fn F() {
+//     var a: C;
+//     if (...) {
+//       // Cleanup block 1: destroy a, return
+//       return;
+//     }
+//
+//     var b: C;
+//     if (...) {
+//       // Cleanup block 2: destroy b, reuse cleanup block 1.
+//       return;
+//     }
+//
+//     DoSomethingMore();
+//     // Cleanup block 3: reuse cleanup block 2.
+//   }
 auto AddBranchWithCleanups(Context& context, SemIR::LocId loc_id,
                            SemIR::InstBlockId target_id,
                            ScopeStack::CleanupStackDepth depth) -> void {
-  AddCleanupBlockForValues(context,
-                           context.scope_stack().GetCleanupsSince(depth));
+  AddCleanups(context, context.scope_stack().GetCleanupsSince(depth));
   AddInst<SemIR::Branch>(context, loc_id, {.target_id = target_id});
 }
 
 auto AddReturnInstWithCleanups(Context& context,
                                SemIR::LocIdAndInst loc_id_and_inst) -> void {
-  AddCleanupBlockForValues(
-      context, context.scope_stack().GetCleanupsSinceFunctionEntry());
+  AddCleanups(context, context.scope_stack().GetCleanupsSinceFunctionEntry());
   AddInst(context, loc_id_and_inst);
 }
 

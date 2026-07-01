@@ -407,9 +407,6 @@ struct ScopeStack::SuspendedScope : public MoveOnly<SuspendedScope> {
   // inline size is an attempt to keep the size of a `SuspendedFunction`
   // reasonable while avoiding heap allocations most of the time.
   llvm::SmallVector<ScopeItem, 8> suspended_items;
-
-  // The list of cleanups associated with this scope.
-  llvm::SmallVector<SemIR::InstId> cleanups;
 };
 
 }  // namespace Carbon::Check

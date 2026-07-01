@@ -167,12 +167,13 @@ auto ScopeStack::Pop(bool check_unused) -> void {
     }
 
     if (return_scope_stack_.back().decl_id == scope.scope_inst_id) {
-      // Leaving the function scope.
+      // Leaving the function scope. We don't run destructors here, since they
+      // will have already been run before creating the `Return` instruction.
       return_scope_stack_.pop_back();
       destroy_id_stack_.PopArray();
     } else {
       if (scope.has_destroy_array) {
-        AddBlockCleanups(*context_);
+        AddCleanups(*context_, destroy_id_stack_.PeekArray());
         destroy_id_stack_.PopArray();
       }
       if (return_scope_stack_.back().nested_scope_index == scope.index) {
@@ -347,15 +348,9 @@ auto ScopeStack::SetReturnedVarOrGetExisting(SemIR::InstId inst_id,
 auto ScopeStack::Suspend() -> SuspendedScope {
   CARBON_CHECK(!scope_stack_.empty(), "No scope to suspend");
   SuspendedScope result = {.entry = scope_stack_.pop_back_val(),
-                           .suspended_items = {},
-                           .cleanups = {}};
+                           .suspended_items = {}};
   if (!result.entry.is_lexical_scope()) {
     non_lexical_scope_stack_.pop_back();
-  }
-  if (result.entry.has_destroy_array) {
-    auto array = destroy_id_stack_.PeekArray();
-    result.cleanups.assign(array.begin(), array.end());
-    destroy_id_stack_.PopArray();
   }
   auto peek_compile_time_bindings = compile_time_binding_stack_.PeekArray();
   result.suspended_items.reserve(result.entry.num_names +
@@ -385,6 +380,8 @@ auto ScopeStack::Suspend() -> SuspendedScope {
   compile_time_binding_stack_.PopArray();
 
   // This would be easy to support if we had a need, but currently we do not.
+  CARBON_CHECK(!result.entry.has_destroy_array,
+               "Should not suspend a function definition scope.");
   CARBON_CHECK(!result.entry.has_returned_var,
                "Should not suspend a scope with a returned var.");
   return result;
@@ -406,11 +403,6 @@ auto ScopeStack::Restore(SuspendedScope&& scope) -> void {
 
   VerifyNextCompileTimeBindIndex("Restore", scope.entry);
 
-  if (scope.entry.has_destroy_array) {
-    destroy_id_stack_.PushArray();
-    destroy_id_stack_.AppendToTop(scope.cleanups);
-  }
-
   if (!scope.entry.is_lexical_scope()) {
     non_lexical_scope_stack_.push_back(
         {.scope_index = scope.entry.index,
@@ -426,7 +418,7 @@ auto ScopeStack::cleanup_stack_depth() const -> CleanupStackDepth {
 
 auto ScopeStack::GetCleanupsSince(CleanupStackDepth depth) const
     -> llvm::ArrayRef<SemIR::InstId> {
-  return destroy_id_stack_.PeekValuesFromOffset(depth.index);
+  return destroy_id_stack_.PeekAllValues().slice(depth.index);
 }
 
 auto ScopeStack::GetCleanupsSinceFunctionEntry() const

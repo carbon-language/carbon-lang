@@ -92,9 +92,9 @@ auto AddInstWithCleanupInNoBlock(Context& context, LocT loc, InstT inst)
   return inst_id;
 }
 
-// Adds cleanup calls for the variables/temporaries at the top of the cleanup
-// stack (i.e. the current block scope).
-auto AddBlockCleanups(Context& context) -> void;
+// Adds cleanups for the given variables.
+auto AddCleanups(Context& context, llvm::ArrayRef<SemIR::InstId> destroy_ids)
+    -> void;
 
 // Adds a branch to the given target block, which should be in the current scope
 // or an enclosing scope, along with cleanups for all variables and temporaries
@@ -104,34 +104,8 @@ auto AddBranchWithCleanups(Context& context, SemIR::LocId loc_id,
                            SemIR::InstBlockId target_id,
                            ScopeStack::CleanupStackDepth depth) -> void;
 
-// Adds a return cleanup block, including the returning instruction.
-//
-// Cleanup blocks are an effort to share cleanup instructions across equivalent
-// scope-ending instructions (for example, all `return;` instructions are
-// equivalent). Structurally, they should first run non-shared cleanup, then
-// either dispatch to a cleanup block that includes shared cleanup, or invoke
-// the control flow instruction.
-//
-// For example:
-//
-//   fn F() {
-//     var a: C;
-//     if (...) {
-//       // Cleanup block 1: destroy a, return
-//       return;
-//     }
-//
-//     var b: C;
-//     if (...) {
-//       // Cleanup block 2: destroy b, reuse cleanup block 1.
-//       return;
-//     }
-//
-//     DoSomethingMore();
-//     // Cleanup block 3: reuse cleanup block 2.
-//   }
-//
-// TODO: Add reuse (described above but not done).
+// Adds a return instruction, along with cleanups for all live variables or
+// temporaries in the current function.
 auto AddReturnInstWithCleanups(Context& context,
                                SemIR::LocIdAndInst loc_id_and_inst) -> void;
 
