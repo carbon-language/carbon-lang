@@ -217,7 +217,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:     %o.patt: %pattern_type.d6c = ref_binding_pattern o [concrete = constants.%o.patt.a05f50.1]
 // CHECK:STDOUT:     %o.var_patt: %pattern_type.d6c = var_pattern %o.patt [concrete = constants.%o.var_patt.6496fb.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o.var: ref %Outer = var %o.var_patt
+// CHECK:STDOUT:   %o.var: ref %Outer = var_storage %o.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc18: %DefaultOrUnformed.type = facet_value constants.%Outer, (constants.%DefaultOrUnformed.impl_witness.474) [concrete = constants.%DefaultOrUnformed.facet.1fd]
 // CHECK:STDOUT:   %.loc18_24.1: %DefaultOrUnformed.type = converted constants.%Outer, %DefaultOrUnformed.facet.loc18 [concrete = constants.%DefaultOrUnformed.facet.1fd]
 // CHECK:STDOUT:   %as_type.loc18: type = facet_access_type %.loc18_24.1 [concrete = constants.%Outer]
@@ -232,7 +232,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:     %i.patt: %pattern_type.dc4 = ref_binding_pattern i [concrete = constants.%i.patt.539460.1]
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.dc4 = var_pattern %i.patt [concrete = constants.%i.var_patt.15311d.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.var: ref %Inner = var %i.var_patt
+// CHECK:STDOUT:   %i.var: ref %Inner = var_storage %i.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc19: %DefaultOrUnformed.type = facet_value constants.%Inner, (constants.%DefaultOrUnformed.impl_witness.b1a) [concrete = constants.%DefaultOrUnformed.facet.eb3]
 // CHECK:STDOUT:   %.loc19_24.1: %DefaultOrUnformed.type = converted constants.%Inner, %DefaultOrUnformed.facet.loc19 [concrete = constants.%DefaultOrUnformed.facet.eb3]
 // CHECK:STDOUT:   %as_type.loc19: type = facet_access_type %.loc19_24.1 [concrete = constants.%Inner]
@@ -256,7 +256,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:     %o.patt: %pattern_type.d6c = ref_binding_pattern o [concrete = constants.%o.patt.a05f50.2]
 // CHECK:STDOUT:     %o.var_patt: %pattern_type.d6c = var_pattern %o.patt [concrete = constants.%o.var_patt.6496fb.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o.var: ref %Outer = var %o.var_patt
+// CHECK:STDOUT:   %o.var: ref %Outer = var_storage %o.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc29: %DefaultOrUnformed.type = facet_value constants.%Outer, (constants.%DefaultOrUnformed.impl_witness.474) [concrete = constants.%DefaultOrUnformed.facet.1fd]
 // CHECK:STDOUT:   %.loc29_26.1: %DefaultOrUnformed.type = converted constants.%Outer, %DefaultOrUnformed.facet.loc29 [concrete = constants.%DefaultOrUnformed.facet.1fd]
 // CHECK:STDOUT:   %as_type.loc29: type = facet_access_type %.loc29_26.1 [concrete = constants.%Outer]
@@ -271,7 +271,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:     %i.patt: %pattern_type.dc4 = ref_binding_pattern i [concrete = constants.%i.patt.539460.2]
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.dc4 = var_pattern %i.patt [concrete = constants.%i.var_patt.15311d.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.var: ref %Inner = var %i.var_patt
+// CHECK:STDOUT:   %i.var: ref %Inner = var_storage %i.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc30: %DefaultOrUnformed.type = facet_value constants.%Inner, (constants.%DefaultOrUnformed.impl_witness.b1a) [concrete = constants.%DefaultOrUnformed.facet.eb3]
 // CHECK:STDOUT:   %.loc30_26.1: %DefaultOrUnformed.type = converted constants.%Inner, %DefaultOrUnformed.facet.loc30 [concrete = constants.%DefaultOrUnformed.facet.eb3]
 // CHECK:STDOUT:   %as_type.loc30: type = facet_access_type %.loc30_26.1 [concrete = constants.%Inner]
@@ -295,7 +295,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:     %o.patt: %pattern_type.d6c = ref_binding_pattern o [concrete = constants.%o.patt.a05f50.3]
 // CHECK:STDOUT:     %o.var_patt: %pattern_type.d6c = var_pattern %o.patt [concrete = constants.%o.var_patt.6496fb.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o.var: ref %Outer = var %o.var_patt
+// CHECK:STDOUT:   %o.var: ref %Outer = var_storage %o.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc36: %DefaultOrUnformed.type = facet_value constants.%Outer, (constants.%DefaultOrUnformed.impl_witness.474) [concrete = constants.%DefaultOrUnformed.facet.1fd]
 // CHECK:STDOUT:   %.loc36_24.1: %DefaultOrUnformed.type = converted constants.%Outer, %DefaultOrUnformed.facet.loc36 [concrete = constants.%DefaultOrUnformed.facet.1fd]
 // CHECK:STDOUT:   %as_type.loc36: type = facet_access_type %.loc36_24.1 [concrete = constants.%Outer]
@@ -310,7 +310,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:     %i.patt: %pattern_type.dc4 = ref_binding_pattern i [concrete = constants.%i.patt.539460.3]
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.dc4 = var_pattern %i.patt [concrete = constants.%i.var_patt.15311d.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.var: ref %Inner = var %i.var_patt
+// CHECK:STDOUT:   %i.var: ref %Inner = var_storage %i.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc37: %DefaultOrUnformed.type = facet_value constants.%Inner, (constants.%DefaultOrUnformed.impl_witness.b1a) [concrete = constants.%DefaultOrUnformed.facet.eb3]
 // CHECK:STDOUT:   %.loc37_24.1: %DefaultOrUnformed.type = converted constants.%Inner, %DefaultOrUnformed.facet.loc37 [concrete = constants.%DefaultOrUnformed.facet.eb3]
 // CHECK:STDOUT:   %as_type.loc37: type = facet_access_type %.loc37_24.1 [concrete = constants.%Inner]

@@ -301,7 +301,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:     %v.patt: %pattern_type.6b6 = ref_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.6b6 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %i32 = var %v.var_patt
+// CHECK:STDOUT:   %v.var: ref %i32 = var_storage %v.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc27: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc27_3.1: <bound method> = bound_method %int_1, %impl.elem0.loc27 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.094]
@@ -335,7 +335,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:     %w.patt: %pattern_type.f00 = ref_binding_pattern w [concrete = constants.%w.patt]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.f00 = var_pattern %w.patt [concrete = constants.%w.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref %ptr.d08 = var %w.var_patt
+// CHECK:STDOUT:   %w.var: ref %ptr.d08 = var_storage %w.var_patt
 // CHECK:STDOUT:   %v.ref: ref %i32 = name_ref v, %v
 // CHECK:STDOUT:   %addr: %ptr.d08 = addr_of %v.ref
 // CHECK:STDOUT:   %impl.elem0.loc28: %.ac9 = impl_witness_access constants.%Copy.impl_witness.ce1, element0 [concrete = constants.%ptr.as.Copy.impl.Op.d1c]
@@ -396,7 +396,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:     %v.patt: %pattern_type.6b6 = ref_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.6b6 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %i32 = var %v.var_patt
+// CHECK:STDOUT:   %v.var: ref %i32 = var_storage %v.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc33: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc33_3.1: <bound method> = bound_method %int_1, %impl.elem0.loc33 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.094]
@@ -429,7 +429,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:     %w.patt: %pattern_type.f00 = ref_binding_pattern w [concrete = constants.%w.patt]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.f00 = var_pattern %w.patt [concrete = constants.%w.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref %ptr.d08 = var %w.var_patt
+// CHECK:STDOUT:   %w.var: ref %ptr.d08 = var_storage %w.var_patt
 // CHECK:STDOUT:   %v.ref: ref %i32 = name_ref v, %v
 // CHECK:STDOUT:   %addr: %ptr.d08 = addr_of %v.ref
 // CHECK:STDOUT:   %impl.elem0.loc34: %.ac9 = impl_witness_access constants.%Copy.impl_witness.ce1, element0 [concrete = constants.%ptr.as.Copy.impl.Op.d1c]

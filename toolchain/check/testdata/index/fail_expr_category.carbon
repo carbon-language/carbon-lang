@@ -166,7 +166,7 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:     %pb.patt: %pattern_type.f00 = ref_binding_pattern pb [concrete = constants.%pb.patt]
 // CHECK:STDOUT:     %pb.var_patt: %pattern_type.f00 = var_pattern %pb.patt [concrete = constants.%pb.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pb.var: ref %ptr.d08 = var %pb.var_patt
+// CHECK:STDOUT:   %pb.var: ref %ptr.d08 = var_storage %pb.var_patt
 // CHECK:STDOUT:   %b.ref.loc23: %array_type = name_ref b, %b
 // CHECK:STDOUT:   %int_0.loc23: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc23_28: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
@@ -215,7 +215,7 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:     %pf.patt: %pattern_type.f00 = ref_binding_pattern pf [concrete = constants.%pf.patt]
 // CHECK:STDOUT:     %pf.var_patt: %pattern_type.f00 = var_pattern %pf.patt [concrete = constants.%pf.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pf.var: ref %ptr.d08 = var %pf.var_patt
+// CHECK:STDOUT:   %pf.var: ref %ptr.d08 = var_storage %pf.var_patt
 // CHECK:STDOUT:   %F.ref.loc36: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc36_28.1: ref %array_type = temporary_storage
 // CHECK:STDOUT:   %F.call.loc36: init %array_type to %.loc36_28.1 = call %F.ref.loc36()

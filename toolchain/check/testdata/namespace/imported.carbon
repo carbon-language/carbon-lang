@@ -123,7 +123,7 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     %a.patt: %pattern_type = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt [concrete]
+// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -133,7 +133,7 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     %b.patt: %pattern_type = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var %b.var_patt [concrete]
+// CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var_storage %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5_9.1: type = splice_block %.loc5_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc5_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -143,7 +143,7 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     %package_a.patt: %pattern_type = ref_binding_pattern package_a [concrete = constants.%package_a.patt]
 // CHECK:STDOUT:     %package_a.var_patt: %pattern_type = var_pattern %package_a.patt [concrete = constants.%package_a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %package_a.var: ref %empty_tuple.type = var %package_a.var_patt [concrete]
+// CHECK:STDOUT:   %package_a.var: ref %empty_tuple.type = var_storage %package_a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7_17.1: type = splice_block %.loc7_17.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc7_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_17.3: type = converted %.loc7_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -153,7 +153,7 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:     %package_b.patt: %pattern_type = ref_binding_pattern package_b [concrete = constants.%package_b.patt]
 // CHECK:STDOUT:     %package_b.var_patt: %pattern_type = var_pattern %package_b.patt [concrete = constants.%package_b.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %package_b.var: ref %empty_tuple.type = var %package_b.var_patt [concrete]
+// CHECK:STDOUT:   %package_b.var: ref %empty_tuple.type = var_storage %package_b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8_17.1: type = splice_block %.loc8_17.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc8_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_17.3: type = converted %.loc8_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

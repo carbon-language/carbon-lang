@@ -113,7 +113,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = ref_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:     %n.var_patt: %pattern_type.6b6 = var_pattern %n.patt [concrete = constants.%n.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref %i32 = var %n.var_patt
+// CHECK:STDOUT:   %n.var: ref %i32 = var_storage %n.var_patt
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
 // CHECK:STDOUT:   %impl.elem0.loc8: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc8_3.1: <bound method> = bound_method %int_42, %impl.elem0.loc8 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -132,7 +132,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:     %p.patt: %pattern_type.f00 = ref_binding_pattern p [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.f00 = var_pattern %p.patt [concrete = constants.%p.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %ptr.d08 = var %p.var_patt
+// CHECK:STDOUT:   %p.var: ref %ptr.d08 = var_storage %p.var_patt
 // CHECK:STDOUT:   %n.ref: ref %i32 = name_ref n, %n
 // CHECK:STDOUT:   %addr: %ptr.d08 = addr_of %n.ref
 // CHECK:STDOUT:   %impl.elem0.loc10: %.ac9 = impl_witness_access constants.%Copy.impl_witness.ce1, element0 [concrete = constants.%ptr.as.Copy.impl.Op.d1c]
@@ -207,7 +207,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:     %pd.patt: %pattern_type.8fa = ref_binding_pattern pd [concrete = constants.%pd.patt]
 // CHECK:STDOUT:     %pd.var_patt: %pattern_type.8fa = var_pattern %pd.patt [concrete = constants.%pd.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pd.var: ref %ptr.0a2 = var %pd.var_patt
+// CHECK:STDOUT:   %pd.var: ref %ptr.0a2 = var_storage %pd.var_patt
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %addr.loc9: %ptr.0a2 = addr_of %c.ref
 // CHECK:STDOUT:   %impl.elem0.loc9: %.51b = impl_witness_access constants.%Copy.impl_witness.00a, element0 [concrete = constants.%ptr.as.Copy.impl.Op.4ad]
@@ -226,7 +226,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:     %pc.patt: %pattern_type.8fa = ref_binding_pattern pc [concrete = constants.%pc.patt]
 // CHECK:STDOUT:     %pc.var_patt: %pattern_type.8fa = var_pattern %pc.patt [concrete = constants.%pc.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pc.var: ref %ptr.0a2 = var %pc.var_patt
+// CHECK:STDOUT:   %pc.var: ref %ptr.0a2 = var_storage %pc.var_patt
 // CHECK:STDOUT:   %d.ref: ref %C = name_ref d, %d
 // CHECK:STDOUT:   %addr.loc10: %ptr.0a2 = addr_of %d.ref
 // CHECK:STDOUT:   %impl.elem0.loc10: %.51b = impl_witness_access constants.%Copy.impl_witness.00a, element0 [concrete = constants.%ptr.as.Copy.impl.Op.4ad]

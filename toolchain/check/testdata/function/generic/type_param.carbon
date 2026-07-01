@@ -115,7 +115,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:       %p.patt.loc16_8.1: @F.%pattern_type.loc16 (%pattern_type.4f4) = ref_binding_pattern p [symbolic = %p.patt.loc16_8.2 (constants.%p.patt)]
 // CHECK:STDOUT:       %p.var_patt.loc16_3.1: @F.%pattern_type.loc16 (%pattern_type.4f4) = var_pattern %p.patt.loc16_8.1 [symbolic = %p.var_patt.loc16_3.2 (constants.%p.var_patt)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p.var: ref @F.%ptr.loc16_11.2 (%ptr) = var %p.var_patt.loc16_3.1
+// CHECK:STDOUT:     %p.var: ref @F.%ptr.loc16_11.2 (%ptr) = var_storage %p.var_patt.loc16_3.1
 // CHECK:STDOUT:     %DefaultOrUnformed.facet.loc16_12.1: %DefaultOrUnformed.type = facet_value constants.%ptr, (constants.%DefaultOrUnformed.lookup_impl_witness) [symbolic = %DefaultOrUnformed.facet.loc16_12.2 (constants.%DefaultOrUnformed.facet)]
 // CHECK:STDOUT:     %.loc16_12.1: %DefaultOrUnformed.type = converted constants.%ptr, %DefaultOrUnformed.facet.loc16_12.1 [symbolic = %DefaultOrUnformed.facet.loc16_12.2 (constants.%DefaultOrUnformed.facet)]
 // CHECK:STDOUT:     %as_type: type = facet_access_type %.loc16_12.1 [symbolic = %ptr.loc16_11.2 (constants.%ptr)]

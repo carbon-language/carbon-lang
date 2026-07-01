@@ -105,7 +105,7 @@ var b: T = *a;
 // CHECK:STDOUT:     %a.patt: <error> = ref_binding_pattern a [concrete = <error>]
 // CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %a.var: ref <error> = var_storage %a.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc8: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:     %T.ref.loc8: type = name_ref T, imports.%Implicit.T
 // CHECK:STDOUT:     %ptr: type = ptr_type <error> [concrete = <error>]
@@ -115,7 +115,7 @@ var b: T = *a;
 // CHECK:STDOUT:     %b.patt: <error> = ref_binding_pattern b [concrete = <error>]
 // CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref <error> = var %b.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %b.var: ref <error> = var_storage %b.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, imports.%Implicit.T
 // CHECK:STDOUT:   %b: <error> = wrapper_binding b, <error> [concrete = <error>]
 // CHECK:STDOUT: }

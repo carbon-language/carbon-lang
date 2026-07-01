@@ -220,7 +220,7 @@ fn Call() {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.cb1 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var %x.var_patt
+// CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var_storage %x.var_patt
 // CHECK:STDOUT:   %.loc5_27.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_27.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_7: init %empty_tuple.type = converted %.loc5_27.1, %.loc5_27.2 [concrete = constants.%empty_tuple]
@@ -283,7 +283,7 @@ fn Call() {
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.cb1 = var_pattern %y.patt [concrete = constants.%y.var_patt]
 // CHECK:STDOUT:     %.loc5_38: %pattern_type.5b8 = tuple_pattern (%x.patt, %y.var_patt) [concrete = constants.%.5ae]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var %y.var_patt
+// CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var_storage %y.var_patt
 // CHECK:STDOUT:   %.loc5_44.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_48.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_49: %tuple.type = tuple_literal (%.loc5_44.1, %.loc5_48.1) [concrete = constants.%tuple]
@@ -355,7 +355,7 @@ fn Call() {
 // CHECK:STDOUT:     %.loc5_34: %pattern_type.5b8 = tuple_pattern (%x.patt, %y.patt) [concrete = constants.%.8b4]
 // CHECK:STDOUT:     %.var_patt: %pattern_type.5b8 = var_pattern %.loc5_34 [concrete = constants.%.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %tuple.type = var %.var_patt
+// CHECK:STDOUT:   %.var: ref %tuple.type = var_storage %.var_patt
 // CHECK:STDOUT:   %.loc5_40.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_44.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_45.1: %tuple.type = tuple_literal (%.loc5_40.1, %.loc5_44.1) [concrete = constants.%tuple]
@@ -440,7 +440,7 @@ fn Call() {
 // CHECK:STDOUT:     %.loc5_38: %pattern_type.5b8 = tuple_pattern (%x.patt, %y.patt) [concrete = constants.%.8b4]
 // CHECK:STDOUT:     %.var_patt: %pattern_type.5b8 = var_pattern %.loc5_38 [concrete = constants.%.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %tuple.type = var %.var_patt
+// CHECK:STDOUT:   %.var: ref %tuple.type = var_storage %.var_patt
 // CHECK:STDOUT:   %.loc5_44.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_48.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_49.1: %tuple.type = tuple_literal (%.loc5_44.1, %.loc5_48.1) [concrete = constants.%tuple]
@@ -546,7 +546,7 @@ fn Call() {
 // CHECK:STDOUT:     %v.patt: %pattern_type.cb1 = ref_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.cb1 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt
+// CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var_storage %v.var_patt
 // CHECK:STDOUT:   %.loc7_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_16.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_3: init %empty_tuple.type = converted %.loc7_16.1, %.loc7_16.2 [concrete = constants.%empty_tuple]
@@ -561,7 +561,7 @@ fn Call() {
 // CHECK:STDOUT:   %.loc8_9.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_5: %empty_tuple.type = converted %v.ref, %tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var @F.%y.param_patt
+// CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var_storage @F.%y.param_patt
 // CHECK:STDOUT:   %.loc8_9.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4: init %empty_tuple.type = converted %.loc8_9.1, %.loc8_9.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %y.var, %.loc4
@@ -741,7 +741,7 @@ fn Call() {
 // CHECK:STDOUT:   %.loc7_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_8.2: %empty_tuple.type = converted %.loc7_8.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var constants.%y.param_patt
+// CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var_storage constants.%y.param_patt
 // CHECK:STDOUT:   %.loc7_12.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.1: init %empty_tuple.type = converted %.loc7_12.1, %.loc7_12.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %y.var, %.1
@@ -885,7 +885,7 @@ fn Call() {
 // CHECK:STDOUT:     %z.patt: %pattern_type.cb1 = value_binding_pattern z [concrete = constants.%z.patt]
 // CHECK:STDOUT:     %.loc8_52: %pattern_type.8c1 = tuple_pattern (%x.patt, %y.var_patt, %z.patt) [concrete = constants.%.b14]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var %y.var_patt
+// CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var_storage %y.var_patt
 // CHECK:STDOUT:   %F.ref.loc8_57: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call.loc8_59: init %empty_tuple.type = call %F.ref.loc8_57()
 // CHECK:STDOUT:   %F.ref.loc8_62: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
@@ -962,7 +962,7 @@ fn Call() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeVar.ref: %TakeVar.type = name_ref TakeVar, file.%TakeVar.decl [concrete = constants.%TakeVar]
 // CHECK:STDOUT:   %MakeInit.ref: %MakeInit.type = name_ref MakeInit, file.%MakeInit.decl [concrete = constants.%MakeInit]
-// CHECK:STDOUT:   %a.var: ref %X = var @TakeVar.%a.param_patt
+// CHECK:STDOUT:   %a.var: ref %X = var_storage @TakeVar.%a.param_patt
 // CHECK:STDOUT:   %MakeInit.call: init %X to %a.var = call %MakeInit.ref()
 // CHECK:STDOUT:   assign %a.var, %MakeInit.call
 // CHECK:STDOUT:   %TakeVar.call: init %empty_tuple.type = call %TakeVar.ref(%a.var)
@@ -1037,7 +1037,7 @@ fn Call() {
 // CHECK:STDOUT:   %bound_method.loc5_12.2: <bound method> = bound_method %int_123, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_12.2(%int_123) [concrete = constants.%int_123.2bf]
 // CHECK:STDOUT:   %.loc5: init %i32 = converted %int_123, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_123.2bf]
-// CHECK:STDOUT:   %n.var: ref %i32 = var @TakeVar.%n.param_patt
+// CHECK:STDOUT:   %n.var: ref %i32 = var_storage @TakeVar.%n.param_patt
 // CHECK:STDOUT:   assign %n.var, %.loc5
 // CHECK:STDOUT:   %TakeVar.call: init %empty_tuple.type = call %TakeVar.ref(%n.var)
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %n.var, constants.%Destroy.Op.1a2547.2

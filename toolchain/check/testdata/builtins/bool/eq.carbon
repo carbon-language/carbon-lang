@@ -65,7 +65,7 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:     %a.patt: %pattern_type.2ef = ref_binding_pattern a [concrete = constants.%a.patt.8de]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.2ef = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %C.ac4 = var %a.var_patt [concrete]
+// CHECK:STDOUT:   %a.var: ref %C.ac4 = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc12_24.1: type = splice_block %C.loc12 [concrete = constants.%C.ac4] {
 // CHECK:STDOUT:     %C.ref.loc12: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %Eq.ref.loc12: %Eq.type = name_ref Eq, %Eq.decl [concrete = constants.%Eq]
@@ -121,7 +121,7 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:     %a.patt: %pattern_type.2ef = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.2ef = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %C.ac4 = var %a.var_patt [concrete]
+// CHECK:STDOUT:   %a.var: ref %C.ac4 = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_22.1: type = splice_block %C.loc10 [concrete = constants.%C.ac4] {
 // CHECK:STDOUT:     %C.ref.loc10: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %true.loc10_10: bool = bool_literal true [concrete = constants.%true]

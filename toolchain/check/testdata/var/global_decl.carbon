@@ -24,7 +24,7 @@ var x: {.v: ()} = {.v = ()};
 // CHECK:STDOUT:   %x.patt: %pattern_type = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.v = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.267: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete]
+// CHECK:STDOUT:   %.7ba: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -32,7 +32,7 @@ var x: {.v: ()} = {.v = ()};
 // CHECK:STDOUT:     %x.patt: %pattern_type = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %struct_type.v = var %x.var_patt [concrete]
+// CHECK:STDOUT:   %x.var: ref %struct_type.v = var_storage %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc14_15: type = splice_block %struct_type.v [concrete = constants.%struct_type.v] {
 // CHECK:STDOUT:     %.loc14_14.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc14_14.2: type = converted %.loc14_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -45,7 +45,7 @@ var x: {.v: ()} = {.v = ()};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc14_27.1: %struct_type.v = struct_literal (%.loc14_26.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc14_27.2: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete = constants.%.267]
+// CHECK:STDOUT:   %.loc14_27.2: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete = constants.%.7ba]
 // CHECK:STDOUT:   %.loc14_26.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc14_27.3: init %empty_tuple.type = converted %.loc14_26.1, %.loc14_26.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc14_27.4: init %struct_type.v to file.%x.var = struct_init (%.loc14_27.3) [concrete = constants.%struct]

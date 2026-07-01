@@ -135,7 +135,7 @@ let n: type = i32;
 // CHECK:STDOUT:     %n.patt: <error> = ref_binding_pattern n [concrete = <error>]
 // CHECK:STDOUT:     %n.var_patt: <error> = var_pattern %n.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref <error> = var %n.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %n.var: ref <error> = var_storage %n.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc8: type = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT: }
@@ -171,7 +171,7 @@ let n: type = i32;
 // CHECK:STDOUT:     %n.patt: <error> = ref_binding_pattern n [concrete = <error>]
 // CHECK:STDOUT:     %n.var_patt: <error> = var_pattern %n.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref <error> = var %n.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %n.var: ref <error> = var_storage %n.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc10: type = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT: }

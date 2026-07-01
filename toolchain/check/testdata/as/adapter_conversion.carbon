@@ -182,7 +182,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %ptr.432: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %pattern_type.3c8: type = pattern_type %ptr.432 [concrete]
 // CHECK:STDOUT:   %b_ptr.patt: %pattern_type.3c8 = value_binding_pattern b_ptr [concrete]
-// CHECK:STDOUT:   %a_ref.var: ref %B = var file.%a_ref.var_patt [concrete]
+// CHECK:STDOUT:   %a_ref.var: ref %B = var_storage file.%a_ref.var_patt [concrete]
 // CHECK:STDOUT:   %addr: %ptr.432 = addr_of %a_ref.var [concrete]
 // CHECK:STDOUT:   %b_factory.patt: %pattern_type.e39 = ref_binding_pattern b_factory [concrete]
 // CHECK:STDOUT:   %b_factory.var_patt: %pattern_type.e39 = var_pattern %b_factory.patt [concrete]
@@ -206,7 +206,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:     %b_factory.patt: %pattern_type.e39 = ref_binding_pattern b_factory [concrete = constants.%b_factory.patt]
 // CHECK:STDOUT:     %b_factory.var_patt: %pattern_type.e39 = var_pattern %b_factory.patt [concrete = constants.%b_factory.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b_factory.var: ref %B = var %b_factory.var_patt [concrete]
+// CHECK:STDOUT:   %b_factory.var: ref %B = var_storage %b_factory.var_patt [concrete]
 // CHECK:STDOUT:   %B.ref.loc25: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %b_factory: ref %B = wrapper_binding b_factory, %b_factory.var [concrete = %b_factory.var]
 // CHECK:STDOUT: }

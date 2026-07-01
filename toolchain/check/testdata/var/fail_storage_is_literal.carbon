@@ -60,7 +60,7 @@ fn Main() {
 // CHECK:STDOUT:     %x.patt: <error> = ref_binding_pattern x [concrete = <error>]
 // CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %x.var: ref <error> = var_storage %x.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc23_21: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {

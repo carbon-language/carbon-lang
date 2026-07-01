@@ -574,7 +574,7 @@ fn F() {
 // CHECK:STDOUT:     %unsigned_int.patt: %pattern_type.990 = ref_binding_pattern unsigned_int [concrete = constants.%unsigned_int.patt]
 // CHECK:STDOUT:     %unsigned_int.var_patt: %pattern_type.990 = var_pattern %unsigned_int.patt [concrete = constants.%unsigned_int.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %unsigned_int.var: ref %unsigned_int = var %unsigned_int.var_patt
+// CHECK:STDOUT:   %unsigned_int.var: ref %unsigned_int = var_storage %unsigned_int.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%unsigned_int, (constants.%DefaultOrUnformed.impl_witness.a47) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc12_38.1: %DefaultOrUnformed.type = converted constants.%unsigned_int, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc12_38.1 [concrete = constants.%unsigned_int]

@@ -148,7 +148,7 @@ fn Run() {
 // CHECK:STDOUT:     %c.patt: %pattern_type.f15 = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.f15 = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %Class = var %c.var_patt
+// CHECK:STDOUT:   %c.var: ref %Class = var_storage %c.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%Class, (constants.%DefaultOrUnformed.impl_witness.4e8) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc21_15.1: %DefaultOrUnformed.type = converted constants.%Class, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc21_15.1 [concrete = constants.%Class]
@@ -185,7 +185,7 @@ fn Run() {
 // CHECK:STDOUT:     %cj.patt: %pattern_type.6b6 = ref_binding_pattern cj [concrete = constants.%cj.patt]
 // CHECK:STDOUT:     %cj.var_patt: %pattern_type.6b6 = var_pattern %cj.patt [concrete = constants.%cj.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cj.var: ref %i32 = var %cj.var_patt
+// CHECK:STDOUT:   %cj.var: ref %i32 = var_storage %cj.var_patt
 // CHECK:STDOUT:   %c.ref.loc24: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %j.ref.loc24: %Class.elem = name_ref j, @Class.%.loc16 [concrete = @Class.%.loc16]
 // CHECK:STDOUT:   %.loc24_25.1: ref %i32 = class_element_access %c.ref.loc24, element0
@@ -202,7 +202,7 @@ fn Run() {
 // CHECK:STDOUT:     %ck.patt: %pattern_type.6b6 = ref_binding_pattern ck [concrete = constants.%ck.patt]
 // CHECK:STDOUT:     %ck.var_patt: %pattern_type.6b6 = var_pattern %ck.patt [concrete = constants.%ck.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ck.var: ref %i32 = var %ck.var_patt
+// CHECK:STDOUT:   %ck.var: ref %i32 = var_storage %ck.var_patt
 // CHECK:STDOUT:   %c.ref.loc25: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %k.ref.loc25: %Class.elem = name_ref k, @Class.%.loc17 [concrete = @Class.%.loc17]
 // CHECK:STDOUT:   %.loc25_25.1: ref %i32 = class_element_access %c.ref.loc25, element1

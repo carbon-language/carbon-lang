@@ -163,7 +163,7 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:     %arr.patt: %pattern_type.771 = ref_binding_pattern arr [concrete = constants.%arr.patt]
 // CHECK:STDOUT:     %arr.var_patt: %pattern_type.771 = var_pattern %arr.patt [concrete = constants.%arr.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %arr.var: ref %array_type = var %arr.var_patt [concrete]
+// CHECK:STDOUT:   %arr.var: ref %array_type = var_storage %arr.var_patt [concrete]
 // CHECK:STDOUT:   %.loc23_40: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %i32.loc23_16: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]

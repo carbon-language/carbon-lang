@@ -178,7 +178,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:     %i.patt: %pattern_type.dc4 = ref_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.dc4 = var_pattern %i.patt [concrete = constants.%i.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.var: ref %Inner = var %i.var_patt
+// CHECK:STDOUT:   %i.var: ref %Inner = var_storage %i.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%Inner, (constants.%DefaultOrUnformed.impl_witness.b1a) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc26_24.1: %DefaultOrUnformed.type = converted constants.%Inner, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc26_24.1 [concrete = constants.%Inner]

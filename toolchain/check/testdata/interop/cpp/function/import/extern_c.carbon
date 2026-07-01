@@ -188,7 +188,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.patt: %pattern_type.6b6 = ref_binding_pattern foo [concrete = constants.%foo.patt]
 // CHECK:STDOUT:   %foo.var_patt: %pattern_type.6b6 = var_pattern %foo.patt [concrete = constants.%foo.var_patt]
-// CHECK:STDOUT:   %foo.var: ref %i32 = var %foo.var_patt [concrete]
+// CHECK:STDOUT:   %foo.var: ref %i32 = var_storage %foo.var_patt [concrete]
 // CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.367 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }

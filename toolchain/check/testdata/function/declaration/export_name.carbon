@@ -105,7 +105,7 @@ var f: () = F();
 // CHECK:STDOUT:     %f.patt: %pattern_type = ref_binding_pattern f [concrete = constants.%f.patt]
 // CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete = constants.%f.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var_storage %f.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6_9.1: type = splice_block %.loc6_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

@@ -211,7 +211,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %c.patt.loc21_17.1: @Class.F.%pattern_type (%pattern_type.36e) = ref_binding_pattern c [symbolic = %c.patt.loc21_17.2 (constants.%c.patt)]
 // CHECK:STDOUT:       %c.var_patt.loc21_5.1: @Class.F.%pattern_type (%pattern_type.36e) = var_pattern %c.patt.loc21_17.1 [symbolic = %c.var_patt.loc21_5.2 (constants.%c.var_patt)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c.var: ref @Class.F.%Class.loc21_26.2 (%Class) = var %c.var_patt.loc21_5.1
+// CHECK:STDOUT:     %c.var: ref @Class.F.%Class.loc21_26.2 (%Class) = var_storage %c.var_patt.loc21_5.1
 // CHECK:STDOUT:     %.loc21_30: @Class.F.%Class.MakeSelf.type (%Class.MakeSelf.type) = specific_constant @Class.%Class.MakeSelf.decl, @Class(constants.%T) [symbolic = %Class.MakeSelf (constants.%Class.MakeSelf)]
 // CHECK:STDOUT:     %MakeSelf.ref: @Class.F.%Class.MakeSelf.type (%Class.MakeSelf.type) = name_ref MakeSelf, %.loc21_30 [symbolic = %Class.MakeSelf (constants.%Class.MakeSelf)]
 // CHECK:STDOUT:     %Class.MakeSelf.specific_fn.loc21_30.1: <specific function> = specific_function %MakeSelf.ref, @Class.MakeSelf(constants.%T) [symbolic = %Class.MakeSelf.specific_fn.loc21_30.2 (constants.%Class.MakeSelf.specific_fn)]
@@ -228,7 +228,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %s.patt.loc22_17.1: @Class.F.%pattern_type (%pattern_type.36e) = ref_binding_pattern s [symbolic = %s.patt.loc22_17.2 (constants.%s.patt)]
 // CHECK:STDOUT:       %s.var_patt.loc22_5.1: @Class.F.%pattern_type (%pattern_type.36e) = var_pattern %s.patt.loc22_17.1 [symbolic = %s.var_patt.loc22_5.2 (constants.%s.var_patt)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %s.var: ref @Class.F.%Class.loc21_26.2 (%Class) = var %s.var_patt.loc22_5.1
+// CHECK:STDOUT:     %s.var: ref @Class.F.%Class.loc21_26.2 (%Class) = var_storage %s.var_patt.loc22_5.1
 // CHECK:STDOUT:     %.loc22_26: @Class.F.%Class.MakeClass.type (%Class.MakeClass.type) = specific_constant @Class.%Class.MakeClass.decl, @Class(constants.%T) [symbolic = %Class.MakeClass (constants.%Class.MakeClass)]
 // CHECK:STDOUT:     %MakeClass.ref: @Class.F.%Class.MakeClass.type (%Class.MakeClass.type) = name_ref MakeClass, %.loc22_26 [symbolic = %Class.MakeClass (constants.%Class.MakeClass)]
 // CHECK:STDOUT:     %Class.MakeClass.specific_fn.loc22_26.1: <specific function> = specific_function %MakeClass.ref, @Class.MakeClass(constants.%T) [symbolic = %Class.MakeClass.specific_fn.loc22_26.2 (constants.%Class.MakeClass.specific_fn)]

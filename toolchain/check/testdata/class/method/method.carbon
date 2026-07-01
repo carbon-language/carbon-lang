@@ -452,7 +452,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %c.patt: %pattern_type.f15 = ref_binding_pattern c [concrete = constants.%c.patt.345]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.f15 = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %Class = var %c.var_patt
+// CHECK:STDOUT:   %c.var: ref %Class = var_storage %c.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%Class, (constants.%DefaultOrUnformed.impl_witness.4e8) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc43_15.1: %DefaultOrUnformed.type = converted constants.%Class, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc43_15.1 [concrete = constants.%Class]

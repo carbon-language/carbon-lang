@@ -291,7 +291,7 @@ fn G() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -547,7 +547,7 @@ fn G() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -746,7 +746,7 @@ fn G() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -971,7 +971,7 @@ fn G() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc10_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -1240,7 +1240,7 @@ fn G() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.0ed = ref_binding_pattern a [concrete = constants.%a.patt.7d5]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.0ed = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.cec = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %array_type.cec = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc11_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc11_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc11_34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -1499,7 +1499,7 @@ fn G() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]

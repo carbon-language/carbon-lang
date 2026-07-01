@@ -109,8 +109,8 @@ fn Use() {
 // CHECK:STDOUT:   %ptr.faf: type = ptr_type %const [concrete]
 // CHECK:STDOUT:   %pattern_type.7f7: type = pattern_type %ptr.faf [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.7f7 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:   %reference.var: ref %const = var file.%reference.var_patt [concrete]
-// CHECK:STDOUT:   %addr.c2d: %ptr.faf = addr_of %reference.var [concrete]
+// CHECK:STDOUT:   %reference.var: ref %const = var_storage file.%reference.var_patt [concrete]
+// CHECK:STDOUT:   %addr.daa: %ptr.faf = addr_of %reference.var [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.7f7 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc14_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
@@ -122,7 +122,7 @@ fn Use() {
 // CHECK:STDOUT:     %i.patt: %pattern_type.dfd = ref_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.dfd = var_pattern %i.patt [concrete = constants.%i.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.var: ref %const = var %i.var_patt
+// CHECK:STDOUT:   %i.var: ref %const = var_storage %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc14_3: ref %const = splice_block %i.var {}
 // CHECK:STDOUT:   %Init.call: init %X to %.loc14_3 = call %Init.ref()
@@ -157,7 +157,7 @@ fn Use() {
 // CHECK:STDOUT:   %const.loc16_43: type = const_type %X.ref.loc16_49 [concrete = constants.%const]
 // CHECK:STDOUT:   %.loc16_40.1: ref %const = as_compatible %reference.ref [concrete = constants.%reference.var]
 // CHECK:STDOUT:   %.loc16_40.2: ref %const = converted %reference.ref, %.loc16_40.1 [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %addr: %ptr.faf = addr_of %.loc16_40.2 [concrete = constants.%addr.c2d]
+// CHECK:STDOUT:   %addr: %ptr.faf = addr_of %.loc16_40.2 [concrete = constants.%addr.daa]
 // CHECK:STDOUT:   %.loc16_24: type = splice_block %ptr.loc16 [concrete = constants.%ptr.faf] {
 // CHECK:STDOUT:     %X.ref.loc16_23: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %const.loc16_17: type = const_type %X.ref.loc16_23 [concrete = constants.%const]
@@ -224,7 +224,7 @@ fn Use() {
 // CHECK:STDOUT:     %i.patt: %pattern_type.6cb = ref_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.6cb = var_pattern %i.patt [concrete = constants.%i.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.var: ref %X = var %i.var_patt
+// CHECK:STDOUT:   %i.var: ref %X = var_storage %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc12_3: ref %X = splice_block %i.var {}
 // CHECK:STDOUT:   %Init.call: init %const to %.loc12_3 = call %Init.ref()
@@ -269,8 +269,8 @@ fn Use() {
 // CHECK:STDOUT:   %ptr.db8: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %pattern_type.990: type = pattern_type %ptr.db8 [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.990 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:   %reference.var: ref %X = var file.%reference.var_patt [concrete]
-// CHECK:STDOUT:   %addr.c0f: %ptr.db8 = addr_of %reference.var [concrete]
+// CHECK:STDOUT:   %reference.var: ref %X = var_storage file.%reference.var_patt [concrete]
+// CHECK:STDOUT:   %addr.0f1: %ptr.db8 = addr_of %reference.var [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.990 = value_binding_pattern b [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -283,7 +283,7 @@ fn Use() {
 // CHECK:STDOUT:   %X.ref.loc11_44: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc11_41.1: ref %X = as_compatible %reference.ref [concrete = constants.%reference.var]
 // CHECK:STDOUT:   %.loc11_41.2: ref %X = converted %reference.ref, %.loc11_41.1 [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %addr: %ptr.db8 = addr_of %.loc11_41.2 [concrete = constants.%addr.c0f]
+// CHECK:STDOUT:   %addr: %ptr.db8 = addr_of %.loc11_41.2 [concrete = constants.%addr.0f1]
 // CHECK:STDOUT:   %.loc11_18: type = splice_block %ptr.loc11 [concrete = constants.%ptr.db8] {
 // CHECK:STDOUT:     %X.ref.loc11_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %ptr.loc11: type = ptr_type %X.ref.loc11_17 [concrete = constants.%ptr.db8]

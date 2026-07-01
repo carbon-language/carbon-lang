@@ -219,7 +219,7 @@ fn Var5() {
 // CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete = <error>]
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %v.var: ref <error> = var_storage %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %.loc13_28.1: type = splice_block %.loc13_28.3 [concrete = constants.%tuple.type.ea9] {
 // CHECK:STDOUT:     %Abstract2.ref: type = name_ref Abstract2, file.%Abstract2.decl [concrete = constants.%Abstract2]
@@ -358,7 +358,7 @@ fn Var5() {
 // CHECK:STDOUT:     %v2.patt: <error> = ref_binding_pattern v2 [concrete = <error>]
 // CHECK:STDOUT:     %v2.var_patt: <error> = var_pattern %v2.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v2.var: ref <error> = var %v2.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %v2.var: ref <error> = var_storage %v2.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v2.var, <error>
 // CHECK:STDOUT:   %.loc14_39.1: type = splice_block %.loc14_39.3 [concrete = constants.%tuple.type.417] {
 // CHECK:STDOUT:     %Abstract4.ref: type = name_ref Abstract4, file.%Abstract4.decl [concrete = constants.%Abstract4]
@@ -419,7 +419,7 @@ fn Var5() {
 // CHECK:STDOUT:     %v3.patt: <error> = ref_binding_pattern v3 [concrete = <error>]
 // CHECK:STDOUT:     %v3.var_patt: <error> = var_pattern %v3.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v3.var: ref <error> = var %v3.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %v3.var: ref <error> = var_storage %v3.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v3.var, <error>
 // CHECK:STDOUT:   %.loc13_32.1: type = splice_block %.loc13_32.4 [concrete = constants.%tuple.type.427] {
 // CHECK:STDOUT:     %Abstract6.ref: type = name_ref Abstract6, file.%Abstract6.decl [concrete = constants.%Abstract6]
@@ -481,7 +481,7 @@ fn Var5() {
 // CHECK:STDOUT:     %v4.patt: <error> = ref_binding_pattern v4 [concrete = <error>]
 // CHECK:STDOUT:     %v4.var_patt: <error> = var_pattern %v4.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v4.var: ref <error> = var %v4.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %v4.var: ref <error> = var_storage %v4.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v4.var, <error>
 // CHECK:STDOUT:   %.loc13_32.1: type = splice_block %.loc13_32.4 [concrete = constants.%tuple.type.9db] {
 // CHECK:STDOUT:     %.loc13_20: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -576,7 +576,7 @@ fn Var5() {
 // CHECK:STDOUT:     %v5.patt: <error> = ref_binding_pattern v5 [concrete = <error>]
 // CHECK:STDOUT:     %v5.var_patt: <error> = var_pattern %v5.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v5.var: ref <error> = var %v5.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %v5.var: ref <error> = var_storage %v5.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v5.var, <error>
 // CHECK:STDOUT:   %.loc14_28.1: type = splice_block %.loc14_28.3 [concrete = constants.%tuple.type.763] {
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, imports.%Main.Abstract [concrete = constants.%Abstract]

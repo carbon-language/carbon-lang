@@ -286,7 +286,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     %c.patt: %pattern_type.2fd = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.2fd = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %C.d8e = var %c.var_patt [concrete]
+// CHECK:STDOUT:   %c.var: ref %C.d8e = var_storage %c.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6_12.1: type = splice_block %C [concrete = constants.%C.d8e] {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %.loc6_11: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]

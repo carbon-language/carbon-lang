@@ -43,7 +43,7 @@ fn A() {
 // CHECK:STDOUT:     %n.patt.loc18_17: %pattern_type.cb1 = ref_binding_pattern n [concrete = constants.%n.patt.785a0d.1]
 // CHECK:STDOUT:     %n.var_patt.loc18_5: %pattern_type.cb1 = var_pattern %n.patt.loc18_17 [concrete = constants.%n.var_patt.961036.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var.loc18_5: ref %empty_tuple.type = var %n.var_patt.loc18_5
+// CHECK:STDOUT:   %n.var.loc18_5: ref %empty_tuple.type = var_storage %n.var_patt.loc18_5
 // CHECK:STDOUT:   %.loc18_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_5: init %empty_tuple.type = converted %.loc18_25.1, %.loc18_25.2 [concrete = constants.%empty_tuple]
@@ -60,7 +60,7 @@ fn A() {
 // CHECK:STDOUT:     %n.patt.loc18_49: %pattern_type.cb1 = ref_binding_pattern n [concrete = constants.%n.patt.785a0d.2]
 // CHECK:STDOUT:     %n.var_patt.loc18_37: %pattern_type.cb1 = var_pattern %n.patt.loc18_49 [concrete = constants.%n.var_patt.961036.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var.loc18_37: ref %empty_tuple.type = var %n.var_patt.loc18_37
+// CHECK:STDOUT:   %n.var.loc18_37: ref %empty_tuple.type = var_storage %n.var_patt.loc18_37
 // CHECK:STDOUT:   %.loc18_57.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_57.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_37: init %empty_tuple.type = converted %.loc18_57.1, %.loc18_57.2 [concrete = constants.%empty_tuple]

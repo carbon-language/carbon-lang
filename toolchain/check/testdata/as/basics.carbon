@@ -271,7 +271,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %b.patt: %pattern_type.3ee = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.3ee = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %tuple.type.359 = var %b.var_patt
+// CHECK:STDOUT:   %b.var: ref %tuple.type.359 = var_storage %b.var_patt
 // CHECK:STDOUT:   %Make.ref.loc20_27: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %tuple.elem0: ref %X = tuple_access %b.var, element0
 // CHECK:STDOUT:   %Make.call.loc20_32: init %X to %tuple.elem0 = call %Make.ref.loc20_27()
@@ -357,7 +357,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %x.patt: %pattern_type.6cb = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.6cb = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %X = var %x.var_patt
+// CHECK:STDOUT:   %x.var: ref %X = var_storage %x.var_patt
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc24: ref %X = splice_block %x.var {}
 // CHECK:STDOUT:   %Make.call: init %X to %.loc24 = call %Make.ref()
