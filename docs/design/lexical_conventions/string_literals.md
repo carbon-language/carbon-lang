@@ -151,8 +151,11 @@ var String: invalid = '''
   ''';
 ```
 
-A _file type indicator_ is any sequence of non-whitespace characters other than
-`'` or `#`. The file type indicator has no semantic meaning to the Carbon
+A _file type indicator_ is the text following the `'''` on the introducer line,
+with surrounding whitespace removed; it may not contain `'` or `#`. A
+[trailing comment](comments.md) may follow the file type indicator on the
+introducer line, and like the surrounding whitespace it is not part of the
+indicator. The file type indicator has no semantic meaning to the Carbon
 compiler, but some file type indicators are understood by the language tooling
 (for example, syntax highlighter, code formatter) as indicating the structure of
 the string literal's content.

@@ -6,10 +6,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-<!-- TODO: Replace NNNN/NNNNNN below with the assigned pull request number, and
-rename this file to `pNNNNNN-trailing-comments.md` accordingly. -->
-
-[Pull request](https://github.com/carbon-language/carbon-lang/pull/NNNN)
+[Pull request](https://github.com/carbon-language/carbon-lang/pull/7441)
 
 <!-- toc -->
 
@@ -150,6 +147,12 @@ recognized only as full-line comments, since they are line-oriented markers; in
 trailing position `//@` is simply a `//` not followed by whitespace, and so is a
 reserved (currently invalid) comment as before.
 
+A block string literal's introducer line, consisting of the `'''` and an optional
+file type indicator, may also carry a trailing comment. Since the file type
+indicator runs to the end of the line, a trailing comment there is treated like
+trailing whitespace: it ends the file type indicator, is not itself recorded as a
+comment, and may contain `#` and `"` even though the indicator may not.
+
 ### Examples
 
 A trailing comment may follow any content, and the following code is now valid
@@ -178,6 +181,15 @@ by whitespace is still an error:
 
 ```carbon
 var x: i32 = 0; //rejected: whitespace is required after `//`
+```
+
+A trailing comment may also follow the file type indicator on a block string
+literal's introducer line:
+
+```carbon
+var query: String = '''sql // TODO: switch to a prepared statement
+  SELECT * FROM t
+  ''';
 ```
 
 ### Style guidance

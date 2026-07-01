@@ -68,11 +68,11 @@ Full-line and trailing comments serve different purposes:
 -   [Block comments](/proposals/p000198-comments.md#block-comments-2)
 -   [Documentation comments](/proposals/p000198-comments.md#documentation-comments)
 -   [Code folding comments](/proposals/p000198-comments.md#code-folding-comments)
--   [Keep requiring comments to be alone on their line](/proposals/pNNNNNN-trailing-comments.md#keep-requiring-comments-to-be-alone-on-their-line)
+-   [Keep requiring comments to be alone on their line](/proposals/p007441-trailing-comments.md#keep-requiring-comments-to-be-alone-on-their-line)
 
 ## References
 
 -   Proposal
     [#198: Comments](https://github.com/carbon-language/carbon-lang/pull/198)
 -   Proposal
-    [#NNNN: Trailing comments](https://github.com/carbon-language/carbon-lang/pull/NNNN)
+    [#7441: Trailing comments](https://github.com/carbon-language/carbon-lang/pull/7441)

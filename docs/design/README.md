@@ -372,7 +372,7 @@ var pi: f64 = 3.14159; // Accurate enough for our purposes.
 > -   Proposal
 >     [#198: Comments](https://github.com/carbon-language/carbon-lang/pull/198)
 > -   Proposal
->     [#NNNN: Trailing comments](https://github.com/carbon-language/carbon-lang/pull/NNNN)
+>     [#7441: Trailing comments](https://github.com/carbon-language/carbon-lang/pull/7441)
 
 ## Build modes
 

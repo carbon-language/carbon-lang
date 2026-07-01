@@ -52,15 +52,35 @@ auto StringLiteral::Introducer::Lex(llvm::StringRef source_text)
   }
 
   if (kind != Kind::SingleLine) {
-    // The rest of the line must be a valid file type indicator: a sequence of
-    // characters containing neither '#' nor '"' followed by a newline.
-    auto prefix_end = source_text.find_first_of("#\n\"", indicator.size());
-    if (prefix_end != llvm::StringRef::npos &&
-        source_text[prefix_end] == '\n') {
-      // Include the newline in the prefix size.
-      return Introducer{.kind = kind,
-                        .terminator = indicator,
-                        .prefix_size = static_cast<int>(prefix_end + 1)};
+    // The rest of the opening line is an optional file type indicator, which
+    // may be followed by a trailing comment. The line must be terminated by a
+    // newline; the string literal's content begins on the following line.
+    size_t line_end = source_text.find('\n', indicator.size());
+    if (line_end != llvm::StringRef::npos) {
+      llvm::StringRef rest = source_text.slice(indicator.size(), line_end);
+      // Strip a trailing comment, if present. A `//` followed by whitespace or
+      // the end of the line begins one; it is treated like trailing whitespace
+      // and is not part of the file type indicator. Because it is removed here,
+      // it may contain `#` or `"`, which the indicator itself may not.
+      for (size_t slashes = rest.find("//"); slashes != llvm::StringRef::npos;
+           slashes = rest.find("//", slashes + 1)) {
+        llvm::StringRef after_slashes = rest.drop_front(slashes + 2);
+        if (after_slashes.empty() || after_slashes.starts_with(' ') ||
+            after_slashes.starts_with('\t')) {
+          rest = rest.take_front(slashes);
+          break;
+        }
+      }
+      // The file type indicator is the remaining text with surrounding
+      // whitespace trimmed. It must contain neither '#' nor '"', which would be
+      // ambiguous with the hash and double-quoted string introducers.
+      llvm::StringRef file_type = rest.trim(" \t");
+      if (file_type.find_first_of("#\"") == llvm::StringRef::npos) {
+        // Include the newline in the prefix size.
+        return Introducer{.kind = kind,
+                          .terminator = indicator,
+                          .prefix_size = static_cast<int>(line_end + 1)};
+      }
     }
   }
 

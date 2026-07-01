@@ -1188,21 +1188,26 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
 
   // Update line and column information.
   if (literal->kind() != StringLiteral::Kind::SingleLine) {
-    // Record the actual indentation -- the width of the leading horizontal
-    // whitespace -- of each line the literal spans, the same as for any other
-    // line. In particular, the line on which the literal ends can be followed
-    // by further tokens and comments, which rely on its indent being correct
-    // (for example, to detect a trailing comment). Parser error recovery, which
-    // wants to treat tokens after the literal as a continuation of the
-    // construct the literal began, instead consults the literal's opening line;
-    // see `Context::SkipPastLikelyEnd`. This is all on the cold path, as
-    // multi-line literals are rare.
+    // A block string literal's content is indented to match its closing
+    // delimiter: leading whitespace up to the delimiter's column is
+    // indentation, and anything past it is part of the content. Each line the
+    // literal spans is given the closing delimiter's column as its indentation.
+    // The closing line's indentation must be correct because tokens and
+    // comments can follow the closing delimiter and rely on it, for example to
+    // detect a trailing comment. Multi-line literals are rare, so this cold
+    // path need not be fast.
+    LineIndex first_spanned_line(line_index_.index + 1);
     while (next_line_info().start < position) {
       ++line_index_.index;
-      auto& spanned_line_info = current_line_info();
-      ssize_t indent_end = spanned_line_info.start;
-      SkipHorizontalWhitespace(source_text, indent_end);
-      spanned_line_info.indent = indent_end - spanned_line_info.start;
+    }
+    // The closing delimiter is the first non-whitespace on the closing line, so
+    // its column is that line's leading-whitespace width.
+    LineInfo& closing_line_info = current_line_info();
+    ssize_t indent_end = closing_line_info.start;
+    SkipHorizontalWhitespace(source_text, indent_end);
+    int32_t indent = indent_end - closing_line_info.start;
+    for (int32_t i = first_spanned_line.index; i <= line_index_.index; ++i) {
+      buffer_.line_infos_.Get(LineIndex(i)).indent = indent;
     }
   }
 

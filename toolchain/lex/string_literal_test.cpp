@@ -91,6 +91,15 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
       // #"""# does not start a multiline string literal.
       R"(#"""#)",
       R"(##"""##)",
+
+      // A trailing comment may follow the file type indicator on the opening
+      // line, and unlike the indicator it may contain '#' and '"'.
+      R"('''py // a #2 "trailing" comment
+      content
+      ''')",
+      R"('''//no-space-is-not-a-comment
+      content
+      ''')",
   };
 
   for (llvm::StringLiteral test : valid) {
@@ -150,6 +159,10 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
       // Lines containing only whitespace are treated as empty even if they
       // contain tabs.
       {"'''\n\t  \t\n'''", "\n"},
+
+      // A trailing comment after the file type indicator is ignored and does
+      // not affect the content, even when it contains '#' or '"'.
+      {"'''py // a #2 \"trailing\" comment\nhello\n'''", "hello\n"},
 
       // Indent removal.
       {R"(

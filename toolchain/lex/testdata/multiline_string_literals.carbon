@@ -23,6 +23,16 @@ a
 a
 """
 
+// --- introducer_trailing_comment.carbon
+
+// A trailing comment may follow the file type indicator on the introducer line.
+// It is treated like trailing whitespace: it is part of the literal's introducer
+// and produces no comment token, and it may contain `#` and `"` even though the
+// file type indicator may not.
+var s: String = '''py // A trailing comment with # and " in it.
+  content
+  ''';
+
 // --- AUTOUPDATE-SPLIT
 
 // CHECK:STDERR: fail_indent_mismatch.carbon:3:1: error: indentation does not match that of the closing `'''` in multi-line string literal [MismatchedIndentInString]
@@ -39,3 +49,12 @@ a
 // CHECK:STDOUT: - filename: fail_quotes.carbon
 // CHECK:STDOUT:   tokens:
 // CHECK:STDOUT:   - { index: 1, kind: "StringLiteral", line: {{ *}}2, column: 1, indent: 1, spelling: "\"\"\"\na\n\"\"\"", value: "a\n", has_leading_space: true }
+// CHECK:STDOUT: - filename: introducer_trailing_comment.carbon
+// CHECK:STDOUT:   tokens:
+// CHECK:STDOUT:   - { index: 1, kind:           "Var", line: {{ *}}6, column:  1, indent: 1, spelling: "var", has_leading_space: true }
+// CHECK:STDOUT:   - { index: 2, kind:    "Identifier", line: {{ *}}6, column:  5, indent: 1, spelling: "s", identifier: 0, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 3, kind:         "Colon", line: {{ *}}6, column:  6, indent: 1, spelling: ":" }
+// CHECK:STDOUT:   - { index: 4, kind:    "Identifier", line: {{ *}}6, column:  8, indent: 1, spelling: "String", identifier: 1, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 5, kind:         "Equal", line: {{ *}}6, column: 15, indent: 1, spelling: "=", has_leading_space: true }
+// CHECK:STDOUT:   - { index: 6, kind: "StringLiteral", line: {{ *}}6, column: 17, indent: 1, spelling: "'''py // A trailing comment with # and \" in it.\n  content\n  '''", value: "content\n", has_leading_space: true }
+// CHECK:STDOUT:   - { index: 7, kind:          "Semi", line: {{ *}}8, column:  6, indent: 3, spelling: ";" }
