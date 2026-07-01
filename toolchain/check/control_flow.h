@@ -94,6 +94,10 @@ auto AddInstWithCleanupInNoBlock(Context& context, LocT loc, InstT inst)
 // stack (i.e. the current block scope).
 auto AddBlockCleanup(Context& context) -> void;
 
+// Adds cleanup calls for variables/temporaries created since the given depth on
+// the cleanup stack (for break or continue).
+auto AddLoopCleanup(Context& context, size_t destroy_stack_depth) -> void;
+
 // Adds a return cleanup block, including the returning instruction.
 //
 // Cleanup blocks are an effort to share cleanup instructions across equivalent

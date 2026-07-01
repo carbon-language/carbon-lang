@@ -147,18 +147,9 @@ auto MaybeAddCleanupForInst(Context& context, SemIR::InstId inst_id) -> void {
   context.scope_stack().destroy_id_stack().AppendToTop(inst_id);
 }
 
-// Common support for cleanup blocks.
-static auto AddCleanupBlock(Context& context, bool destroy_all) -> void {
-  auto destroy_ids =
-      destroy_all ? context.scope_stack().PeekAllValuesInCurrentFunction()
-                  : context.scope_stack().destroy_id_stack().PeekArray();
-
-  // If there's nothing to destroy, add the final instruction to the current
-  // block.
-  if (destroy_ids.empty()) {
-    return;
-  }
-
+static auto AddCleanupBlockForValues(Context& context,
+                                     llvm::ArrayRef<SemIR::InstId> destroy_ids)
+    -> void {
   for (auto destroy_id : llvm::reverse(destroy_ids)) {
     // TODO: This does the `Destroy` lookup and call at every cleanup block.
     // Control flow can lead to the same variable being destroyed by multiple
@@ -169,8 +160,34 @@ static auto AddCleanupBlock(Context& context, bool destroy_all) -> void {
   }
 }
 
+// Common support for cleanup blocks.
+static auto AddCleanupBlock(Context& context, bool destroy_all) -> void {
+  auto destroy_ids =
+      destroy_all ? context.scope_stack().PeekAllValuesInCurrentFunction()
+                  : context.scope_stack().destroy_id_stack().PeekArray();
+
+  // If there's nothing to destroy, return early.
+  if (destroy_ids.empty()) {
+    return;
+  }
+
+  AddCleanupBlockForValues(context, destroy_ids);
+}
+
 auto AddBlockCleanup(Context& context) -> void {
   AddCleanupBlock(context, /*destroy_all=*/false);
+}
+
+auto AddLoopCleanup(Context& context, size_t destroy_stack_depth) -> void {
+  auto destroy_ids =
+      context.scope_stack().destroy_id_stack().PeekValuesFromOffset(
+          destroy_stack_depth);
+
+  if (destroy_ids.empty()) {
+    return;
+  }
+
+  AddCleanupBlockForValues(context, destroy_ids);
 }
 
 auto AddReturnCleanupBlock(Context& context,

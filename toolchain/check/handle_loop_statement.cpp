@@ -58,7 +58,10 @@ static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
 
   // Allow `break` and `continue` in this scope.
   context.break_continue_stack().push_back(
-      {.break_target = loop_exit_id, .continue_target = loop_header_id});
+      {.break_target = loop_exit_id,
+       .continue_target = loop_header_id,
+       .destroy_stack_depth =
+           context.scope_stack().destroy_id_stack().all_values_size()});
 }
 
 // Finishes emitting the body for a `while`-like loop. Adds a back-edge to the
@@ -239,6 +242,7 @@ auto HandleParseNode(Context& context, Parse::BreakStatementStartId node_id)
                       "`break` can only be used in a loop");
     context.emitter().Emit(node_id, BreakOutsideLoop);
   } else {
+    AddLoopCleanup(context, stack.back().destroy_stack_depth);
     AddInst<SemIR::Branch>(context, node_id,
                            {.target_id = stack.back().break_target});
   }
@@ -264,6 +268,7 @@ auto HandleParseNode(Context& context, Parse::ContinueStatementStartId node_id)
                       "`continue` can only be used in a loop");
     context.emitter().Emit(node_id, ContinueOutsideLoop);
   } else {
+    AddLoopCleanup(context, stack.back().destroy_stack_depth);
     AddInst<SemIR::Branch>(context, node_id,
                            {.target_id = stack.back().continue_target});
   }

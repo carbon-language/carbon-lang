@@ -100,6 +100,15 @@ class ArrayStack {
     return llvm::ArrayRef(values_).slice(array_offsets_[array_index]);
   }
 
+  // Returns trailing values starting from the given value offset.
+  auto PeekValuesFromOffset(size_t value_offset) const
+      -> llvm::ArrayRef<ValueT> {
+    if (value_offset >= values_.size()) {
+      return {};
+    }
+    return llvm::ArrayRef(values_).slice(value_offset);
+  }
+
  private:
   // For each pushed array, the start index in `values_`.
   llvm::SmallVector<int32_t> array_offsets_;

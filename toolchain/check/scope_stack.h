@@ -29,6 +29,7 @@ class ScopeStack {
   struct BreakContinueScope {
     SemIR::InstBlockId break_target;
     SemIR::InstBlockId continue_target;
+    size_t destroy_stack_depth;
   };
 
   // A non-lexical scope in which unqualified lookup may be required.
