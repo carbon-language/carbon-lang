@@ -167,19 +167,16 @@ auto ScopeStack::Pop(bool check_unused) -> void {
     }
 
     if (return_scope_stack_.back().decl_id == scope.scope_inst_id) {
-      // Leaving the function scope. We don't run destructors here, since they
-      // will have already been run before creating the `Return` instruction.
+      // Leaving the function scope.
       return_scope_stack_.pop_back();
-      destroy_id_stack_.PopArray();
     } else {
-      if (scope.has_destroy_array) {
-        AddCleanups(*context_, destroy_id_stack_.PeekArray());
-        destroy_id_stack_.PopArray();
-      }
       if (return_scope_stack_.back().nested_scope_index == scope.index) {
         // Returned to a function scope from a non-function nested entity scope.
         return_scope_stack_.back().nested_scope_index = ScopeIndex::None;
       }
+    }
+    if (scope.has_destroy_array) {
+      destroy_id_stack_.PopArray();
     }
   } else {
     CARBON_CHECK(!scope.has_returned_var);
@@ -196,6 +193,24 @@ auto ScopeStack::PopTo(ScopeIndex index, bool check_unused) -> void {
   CARBON_CHECK(PeekIndex() == index,
                "Scope index {0} does not enclose the current scope {1}", index,
                PeekIndex());
+}
+
+auto ScopeStack::SwapTopTwoScopesInForStmt() -> void {
+  CARBON_CHECK(scope_stack_.size() >= 2);
+  auto& outer = scope_stack_[scope_stack_.size() - 2];
+  auto& inner = scope_stack_[scope_stack_.size() - 1];
+
+  // Swap the scope indexes so that references to them (such as from lexical
+  // lookup results) remain stable. This means that we have an outer scope whose
+  // index is less than that of an inner scope, which would break PopTo, but we
+  // don't PopTo past a `for` scope.
+  // TODO: This is a hack. Consider rewriting the lexical lookups table instead.
+  std::swap(outer.index, inner.index);
+  std::swap(outer.num_names, inner.num_names);
+  std::swap(outer.names, inner.names);
+
+  CARBON_CHECK(outer.has_destroy_array && inner.has_destroy_array);
+  destroy_id_stack_.SwapTopTwoArrays();
 }
 
 auto ScopeStack::MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id,
@@ -410,23 +425,6 @@ auto ScopeStack::Restore(SuspendedScope&& scope) -> void {
          .specific_id = scope.entry.specific_id});
   }
   scope_stack_.push_back(std::move(scope.entry));
-}
-
-auto ScopeStack::cleanup_stack_depth() const -> CleanupStackDepth {
-  return CleanupStackDepth(destroy_id_stack_.all_values_size());
-}
-
-auto ScopeStack::GetCleanupsSince(CleanupStackDepth depth) const
-    -> llvm::ArrayRef<SemIR::InstId> {
-  return destroy_id_stack_.PeekAllValues().slice(depth.index);
-}
-
-auto ScopeStack::GetCleanupsSinceFunctionEntry() const
-    -> llvm::ArrayRef<SemIR::InstId> {
-  if (return_scope_stack_.empty()) {
-    return {};
-  }
-  return GetCleanupsSince(return_scope_stack_.back().cleanup_stack_depth);
 }
 
 }  // namespace Carbon::Check

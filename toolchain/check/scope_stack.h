@@ -72,10 +72,8 @@ class ScopeStack {
   // Pushes a function scope.
   auto PushForFunctionBody(SemIR::InstId scope_inst_id) -> void;
 
-  // Pops the top scope from scope_stack_, inserting cleanups for any local
-  // variables that need to be destroyed when leaving this scope. Removes names
-  // from lexical_lookup_. If `check_unused` is set, checks and emits
-  // diagnostics for unused names.
+  // Pops the top scope from scope_stack_. Removes names from lexical_lookup_.
+  // If `check_unused` is set, checks and emits diagnostics for unused names.
   auto Pop(bool check_unused = false) -> void;
 
   // Pops the top scope from scope_stack_ if it contains no names.
@@ -118,6 +116,14 @@ class ScopeStack {
     return !return_scope_stack_.empty() &&
            !return_scope_stack_.back().nested_scope_index.has_value();
   }
+
+  // Swaps over the top two scopes in a `for` statement. Given:
+  //
+  //   for (var a: i32 in MakeTempRange()) {
+  //
+  // we have an outer scope containing `var a: i32` and an inner scope
+  // containing `MakeTempRange()`, and we want them the other way around.
+  auto SwapTopTwoScopesInForStmt() -> void;
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
@@ -210,14 +216,25 @@ class ScopeStack {
 
   // Returns all values on `destroy_id_stack_` added since `depth`.
   auto GetCleanupsSince(CleanupStackDepth depth) const
-      -> llvm::ArrayRef<SemIR::InstId>;
-
-  // Returns all values on `destroy_id_stack_` that belong to the current
-  // function.
-  auto GetCleanupsSinceFunctionEntry() const -> llvm::ArrayRef<SemIR::InstId>;
+      -> llvm::ArrayRef<SemIR::InstId> {
+    return destroy_id_stack_.PeekAllValues().slice(depth.index);
+  }
 
   // Returns the current depth of the cleanup stack.
-  auto cleanup_stack_depth() const -> CleanupStackDepth;
+  auto cleanup_stack_depth() const -> CleanupStackDepth {
+    return CleanupStackDepth(destroy_id_stack_.all_values_size());
+  }
+
+  // Returns the depth of the cleanup stack enclosing the current scope.
+  auto enclosing_cleanup_stack_depth() const -> CleanupStackDepth {
+    return CleanupStackDepth(destroy_id_stack_.all_values_size() -
+                             destroy_id_stack_.PeekArray().size());
+  }
+
+  // Returns the depth of the cleanup stack enclosing this function scope.
+  auto function_cleanup_stack_depth() const -> CleanupStackDepth {
+    return return_scope_stack_.back().cleanup_stack_depth;
+  }
 
   auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
     return break_continue_stack_;

@@ -147,9 +147,10 @@ auto MaybeAddCleanupForInst(Context& context, SemIR::InstId inst_id) -> void {
   context.scope_stack().destroy_id_stack().AppendToTop(inst_id);
 }
 
-auto AddCleanups(Context& context, llvm::ArrayRef<SemIR::InstId> destroy_ids)
+auto AddCleanups(Context& context, ScopeStack::CleanupStackDepth depth)
     -> void {
-  for (auto destroy_id : llvm::reverse(destroy_ids)) {
+  for (auto destroy_id :
+       llvm::reverse(context.scope_stack().GetCleanupsSince(depth))) {
     // TODO: This does the `Destroy` lookup and call at every cleanup block.
     // Control flow can lead to the same variable being destroyed by multiple
     // cleanup blocks, so we'll want to avoid this in the future.
@@ -157,6 +158,12 @@ auto AddCleanups(Context& context, llvm::ArrayRef<SemIR::InstId> destroy_ids)
                        context.insts().GetLocIdForDesugaring(destroy_id),
                        {.interface_name = CoreIdentifier::Destroy}, destroy_id);
   }
+}
+
+auto PopScopeWithCleanups(Context& context) -> void {
+  AddCleanups(context, context.scope_stack().enclosing_cleanup_stack_depth());
+  // This is a function-local scope, so we always want 'unused' warnings.
+  context.scope_stack().Pop(/*check_unused=*/true);
 }
 
 // TODO: When we have multiple branches or returns in the same function, share
@@ -187,13 +194,13 @@ auto AddCleanups(Context& context, llvm::ArrayRef<SemIR::InstId> destroy_ids)
 auto AddBranchWithCleanups(Context& context, SemIR::LocId loc_id,
                            SemIR::InstBlockId target_id,
                            ScopeStack::CleanupStackDepth depth) -> void {
-  AddCleanups(context, context.scope_stack().GetCleanupsSince(depth));
+  AddCleanups(context, depth);
   AddInst<SemIR::Branch>(context, loc_id, {.target_id = target_id});
 }
 
 auto AddReturnInstWithCleanups(Context& context,
                                SemIR::LocIdAndInst loc_id_and_inst) -> void {
-  AddCleanups(context, context.scope_stack().GetCleanupsSinceFunctionEntry());
+  AddCleanups(context, context.scope_stack().function_cleanup_stack_depth());
   AddInst(context, loc_id_and_inst);
 }
 

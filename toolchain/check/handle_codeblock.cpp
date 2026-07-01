@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/unused.h"
 
@@ -16,7 +17,7 @@ auto HandleParseNode(Context& context, Parse::CodeBlockStartId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::CodeBlockId /*node_id*/) -> bool {
-  context.scope_stack().Pop(/*check_unused=*/true);
+  PopScopeWithCleanups(context);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::CodeBlockStart>();
   return true;

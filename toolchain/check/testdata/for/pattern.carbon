@@ -197,17 +197,6 @@ fn Run() {
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.19c, %Main.import_ref.ee4), @EmptyRange.as.Iterate.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_36.1: <bound method> = bound_method @Run.%.loc10_36.10, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_36.1: init %empty_tuple.type = call %Destroy.Op.bound.loc10_36.1(@Run.%.loc10_36.10)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_36.2: <bound method> = bound_method @Run.%.loc10_36.2, constants.%Destroy.Op.1a2547.5
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_36.2: init %empty_tuple.type = call %Destroy.Op.bound.loc10_36.2(@Run.%.loc10_36.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_36.3: <bound method> = bound_method @Run.%var, constants.%Destroy.Op.1a2547.1
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_36.3: init %empty_tuple.type = call %Destroy.Op.bound.loc10_36.3(@Run.%var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_35: <bound method> = bound_method @Run.%.loc10_35.2, constants.%Destroy.Op.1a2547.6
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_35: init %empty_tuple.type = call %Destroy.Op.bound.loc10_35(@Run.%.loc10_35.2)
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
@@ -271,13 +260,13 @@ fn Run() {
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref(%c.ref)
-// CHECK:STDOUT:   br !for.next
-// CHECK:STDOUT:
-// CHECK:STDOUT: !for.done:
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_36.1: <bound method> = bound_method %.loc10_36.10, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_36.1: init %empty_tuple.type = call %Destroy.Op.bound.loc10_36.1(%.loc10_36.10)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_36.2: <bound method> = bound_method %.loc10_36.2, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_36.2: init %empty_tuple.type = call %Destroy.Op.bound.loc10_36.2(%.loc10_36.2)
+// CHECK:STDOUT:   br !for.next
+// CHECK:STDOUT:
+// CHECK:STDOUT: !for.done:
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_36.3: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_36.3: init %empty_tuple.type = call %Destroy.Op.bound.loc10_36.3(%var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_35: <bound method> = bound_method %.loc10_35.2, constants.%Destroy.Op.1a2547.6
@@ -390,17 +379,6 @@ fn Run() {
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.19c, %Main.import_ref.ee4), @EmptyRange.as.Iterate.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_8: <bound method> = bound_method @Run.%c.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_8: init %empty_tuple.type = call %Destroy.Op.bound.loc10_8(@Run.%c.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_40.1: <bound method> = bound_method @Run.%.loc10_40.2, constants.%Destroy.Op.1a2547.5
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_40.1: init %empty_tuple.type = call %Destroy.Op.bound.loc10_40.1(@Run.%.loc10_40.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_40.2: <bound method> = bound_method @Run.%var, constants.%Destroy.Op.1a2547.1
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_40.2: init %empty_tuple.type = call %Destroy.Op.bound.loc10_40.2(@Run.%var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_39: <bound method> = bound_method @Run.%.loc10_39.2, constants.%Destroy.Op.1a2547.6
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_39: init %empty_tuple.type = call %Destroy.Op.bound.loc10_39(@Run.%.loc10_39.2)
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
@@ -466,13 +444,13 @@ fn Run() {
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %addr.loc11: %ptr.6b6 = addr_of %c.ref
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref(%addr.loc11)
-// CHECK:STDOUT:   br !for.next
-// CHECK:STDOUT:
-// CHECK:STDOUT: !for.done:
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_8: <bound method> = bound_method %c.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_8: init %empty_tuple.type = call %Destroy.Op.bound.loc10_8(%c.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_40.1: <bound method> = bound_method %.loc10_40.2, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_40.1: init %empty_tuple.type = call %Destroy.Op.bound.loc10_40.1(%.loc10_40.2)
+// CHECK:STDOUT:   br !for.next
+// CHECK:STDOUT:
+// CHECK:STDOUT: !for.done:
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_40.2: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_40.2: init %empty_tuple.type = call %Destroy.Op.bound.loc10_40.2(%var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_39: <bound method> = bound_method %.loc10_39.2, constants.%Destroy.Op.1a2547.6
@@ -594,17 +572,6 @@ fn Run() {
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.19c, %Main.import_ref.ee4), @EmptyRange.as.Iterate.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_61.1: <bound method> = bound_method @Run.%.loc10_61.10, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_61.1: init %empty_tuple.type = call %Destroy.Op.bound.loc10_61.1(@Run.%.loc10_61.10)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_61.2: <bound method> = bound_method @Run.%.loc10_61.2, constants.%Destroy.Op.1a2547.4
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_61.2: init %empty_tuple.type = call %Destroy.Op.bound.loc10_61.2(@Run.%.loc10_61.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_61.3: <bound method> = bound_method @Run.%var, constants.%Destroy.Op.1a2547.5
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_61.3: init %empty_tuple.type = call %Destroy.Op.bound.loc10_61.3(@Run.%var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_60: <bound method> = bound_method @Run.%.loc10_60.2, constants.%Destroy.Op.1a2547.6
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_60: init %empty_tuple.type = call %Destroy.Op.bound.loc10_60(@Run.%.loc10_60.2)
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
@@ -678,13 +645,13 @@ fn Run() {
 // CHECK:STDOUT:   %a.ref: bool = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   br !for.next
-// CHECK:STDOUT:
-// CHECK:STDOUT: !for.done:
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_61.1: <bound method> = bound_method %.loc10_61.10, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_61.1: init %empty_tuple.type = call %Destroy.Op.bound.loc10_61.1(%.loc10_61.10)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_61.2: <bound method> = bound_method %.loc10_61.2, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_61.2: init %empty_tuple.type = call %Destroy.Op.bound.loc10_61.2(%.loc10_61.2)
+// CHECK:STDOUT:   br !for.next
+// CHECK:STDOUT:
+// CHECK:STDOUT: !for.done:
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_61.3: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_61.3: init %empty_tuple.type = call %Destroy.Op.bound.loc10_61.3(%var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_60: <bound method> = bound_method %.loc10_60.2, constants.%Destroy.Op.1a2547.6
@@ -808,17 +775,6 @@ fn Run() {
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.19c, %Main.import_ref.ee4), @EmptyRange.as.Iterate.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_49.1: <bound method> = bound_method @Run.%.loc10_49.10, constants.%Destroy.Op.1a2547.3
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_49.1: init %empty_tuple.type = call %Destroy.Op.bound.loc10_49.1(@Run.%.loc10_49.10)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_49.2: <bound method> = bound_method @Run.%.loc10_49.2, constants.%Destroy.Op.1a2547.6
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_49.2: init %empty_tuple.type = call %Destroy.Op.bound.loc10_49.2(@Run.%.loc10_49.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_49.3: <bound method> = bound_method @Run.%var, constants.%Destroy.Op.1a2547.1
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_49.3: init %empty_tuple.type = call %Destroy.Op.bound.loc10_49.3(@Run.%var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10_48: <bound method> = bound_method @Run.%.loc10_48.2, constants.%Destroy.Op.1a2547.7
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_48: init %empty_tuple.type = call %Destroy.Op.bound.loc10_48(@Run.%.loc10_48.2)
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
@@ -892,13 +848,13 @@ fn Run() {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   br !for.next
-// CHECK:STDOUT:
-// CHECK:STDOUT: !for.done:
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_49.1: <bound method> = bound_method %.loc10_49.10, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_49.1: init %empty_tuple.type = call %Destroy.Op.bound.loc10_49.1(%.loc10_49.10)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_49.2: <bound method> = bound_method %.loc10_49.2, constants.%Destroy.Op.1a2547.6
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_49.2: init %empty_tuple.type = call %Destroy.Op.bound.loc10_49.2(%.loc10_49.2)
+// CHECK:STDOUT:   br !for.next
+// CHECK:STDOUT:
+// CHECK:STDOUT: !for.done:
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_49.3: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_49.3: init %empty_tuple.type = call %Destroy.Op.bound.loc10_49.3(%var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_48: <bound method> = bound_method %.loc10_48.2, constants.%Destroy.Op.1a2547.7

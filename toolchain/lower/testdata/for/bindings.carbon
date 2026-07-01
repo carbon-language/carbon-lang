@@ -68,12 +68,12 @@ fn For() {
 // CHECK:STDOUT:   %.loc29_33.12 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !8
 // CHECK:STDOUT:   store i32 %.loc29_33.12, ptr %n.var, align 4, !dbg !9
 // CHECK:STDOUT:   call void @_CF.Main(i32 %.loc29_33.11, ptr %n.var), !dbg !10
-// CHECK:STDOUT:   br label %for.next, !dbg !11
-// CHECK:STDOUT:
-// CHECK:STDOUT: for.done:                                         ; preds = %for.next
 // CHECK:STDOUT:   call void @"_COp.eff30dc40f4a53d2:core.Destroy.Core"(ptr %.loc29_33.8.temp), !dbg !8
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %n.var), !dbg !9
 // CHECK:STDOUT:   call void @"_COp.72fec7d6e0df4c57:core.Destroy.Core"(ptr %.loc29_33.1.temp), !dbg !8
+// CHECK:STDOUT:   br label %for.next, !dbg !11
+// CHECK:STDOUT:
+// CHECK:STDOUT: for.done:                                         ; preds = %for.next
 // CHECK:STDOUT:   call void @"_COp.88c97397fb274b67:core.Destroy.Core"(ptr %r.var), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }

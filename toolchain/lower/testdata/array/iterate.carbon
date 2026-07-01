@@ -54,10 +54,10 @@ fn F() {
 // CHECK:STDOUT: for.body:                                         ; preds = %for.next
 // CHECK:STDOUT:   %Optional.Get.call = call i32 @_CGet.Optional.Core.18012f5191ea64dc(ptr %.loc17_19.5.temp), !dbg !8
 // CHECK:STDOUT:   call void @_CG.Main(i32 %Optional.Get.call), !dbg !9
+// CHECK:STDOUT:   call void @"_COp.ab782c7eec490fc7:core.Destroy.Core"(ptr %.loc17_19.5.temp), !dbg !8
 // CHECK:STDOUT:   br label %for.next, !dbg !10
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.done:                                         ; preds = %for.next
-// CHECK:STDOUT:   call void @"_COp.ab782c7eec490fc7:core.Destroy.Core"(ptr %.loc17_19.5.temp), !dbg !8
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %var), !dbg !8
 // CHECK:STDOUT:   call void @"_COp.3a5df7cec745952b:core.Destroy.Core"(ptr @array), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !11

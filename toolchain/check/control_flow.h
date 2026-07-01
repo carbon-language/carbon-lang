@@ -93,8 +93,12 @@ auto AddInstWithCleanupInNoBlock(Context& context, LocT loc, InstT inst)
 }
 
 // Adds cleanups for the given variables.
-auto AddCleanups(Context& context, llvm::ArrayRef<SemIR::InstId> destroy_ids)
+auto AddCleanups(Context& context, ScopeStack::CleanupStackDepth target_depth)
     -> void;
+
+// Pops a scope from the scope stack and adds any cleanups for variables within
+// that scope.
+auto PopScopeWithCleanups(Context& context) -> void;
 
 // Adds a branch to the given target block, which should be in the current scope
 // or an enclosing scope, along with cleanups for all variables and temporaries

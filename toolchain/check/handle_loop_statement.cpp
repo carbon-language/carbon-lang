@@ -60,7 +60,8 @@ static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
   context.break_continue_stack().push_back(
       {.break_target = loop_exit_id,
        .continue_target = loop_header_id,
-       .cleanup_stack_depth = context.scope_stack().cleanup_stack_depth()});
+       .cleanup_stack_depth =
+           context.scope_stack().enclosing_cleanup_stack_depth()});
 }
 
 // Finishes emitting the body for a `while`-like loop. Adds a back-edge to the
@@ -68,9 +69,10 @@ static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
 static auto FinishLoopBody(Context& context, Parse::NodeId node_id) -> void {
   auto blocks = context.break_continue_stack().pop_back_val();
 
-  // Add the loop backedge.
-  AddInst<SemIR::Branch>(context, node_id,
-                         {.target_id = blocks.continue_target});
+  // Add the loop backedge and pop the loop scope.
+  AddBranchWithCleanups(context, node_id, blocks.continue_target,
+                        blocks.cleanup_stack_depth);
+  context.scope_stack().Pop(/*check_unused=*/true);
   context.inst_block_stack().Pop();
 
   // Start emitting the loop exit block.
@@ -83,6 +85,7 @@ static auto FinishLoopBody(Context& context, Parse::NodeId node_id) -> void {
 
 auto HandleParseNode(Context& context, Parse::WhileConditionStartId node_id)
     -> bool {
+  context.scope_stack().PushForSameRegion();
   context.node_stack().Push(node_id, StartLoopHeader(context, node_id));
   return true;
 }
@@ -110,9 +113,7 @@ auto HandleParseNode(Context& context, Parse::WhileStatementId node_id)
 
 auto HandleParseNode(Context& context, Parse::ForHeaderStartId node_id)
     -> bool {
-  // Create a nested scope to hold the cursor variable. This is also the lexical
-  // scope that names in the pattern are added to, although they get rebound on
-  // each loop iteration.
+  // Create a scope to hold names in the pattern.
   context.scope_stack().PushForSameRegion();
 
   // Begin an implicit let declaration context for the pattern.
@@ -132,6 +133,11 @@ auto HandleParseNode(Context& context, Parse::ForInId node_id) -> bool {
                                   {.pattern_block_id = pattern_block_id});
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
   context.full_pattern_stack().StartPatternInitializer();
+
+  // Create a new scope to hold the range expression and the cursor. This comes
+  // before the pattern in control flow order, but we'll reorder temporary
+  // destruction later.
+  context.scope_stack().PushForSameRegion();
   return true;
 }
 
@@ -184,6 +190,12 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
       {.lhs_id = init_result.storage_id, .rhs_id = init_result.init_id});
   cursor_var_id = init_result.storage_id;
 
+  // Now we're finished with the loop initialization, swap over the top two
+  // scopes. The outer scope currently contains the loop variables, whereas the
+  // inner one contains the range, and that's backwards from a control flow and
+  // destruction order perspective.
+  context.scope_stack().SwapTopTwoScopesInForStmt();
+
   // Start emitting the loop header block.
   auto loop_header_id = StartLoopHeader(context, start_node_id);
 
@@ -227,6 +239,9 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::ForStatementId node_id) -> bool {
   FinishLoopBody(context, node_id);
+
+  // Pop the scope that the range and cursor live in.
+  PopScopeWithCleanups(context);
   return true;
 }
 
