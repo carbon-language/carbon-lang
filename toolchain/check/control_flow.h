@@ -90,6 +90,10 @@ auto AddInstWithCleanupInNoBlock(Context& context, LocT loc, InstT inst)
   return inst_id;
 }
 
+// Adds cleanup calls for the variables/temporaries at the top of the cleanup
+// stack (i.e. the current block scope).
+auto AddBlockCleanup(Context& context) -> void;
+
 // Adds a return cleanup block, including the returning instruction.
 //
 // Cleanup blocks are an effort to share cleanup instructions across equivalent
@@ -117,7 +121,6 @@ auto AddInstWithCleanupInNoBlock(Context& context, LocT loc, InstT inst)
 //     // Cleanup block 3: reuse cleanup block 2.
 //   }
 //
-// TODO: Add support for `break;` and `continue;`.
 // TODO: Add reuse (described above but not done).
 auto AddReturnCleanupBlock(Context& context,
                            SemIR::LocIdAndInst loc_id_and_inst) -> void;

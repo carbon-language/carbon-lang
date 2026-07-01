@@ -121,6 +121,16 @@ fn Run() {
 // CHECK:STDOUT:   %Copy.impl_witness_table.938 = impl_witness_table (%Core.import_ref.9c3), @empty_tuple.type.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Destroy.Op.bound.loc18_35.1: <bound method> = bound_method @Run.%.loc18_35.10, constants.%Destroy.Op.1a2547.1
+// CHECK:STDOUT:   %Destroy.Op.call.loc18_35.1: init %empty_tuple.type = call %Destroy.Op.bound.loc18_35.1(@Run.%.loc18_35.10)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc18_35.2: <bound method> = bound_method @Run.%.loc18_35.2, constants.%Destroy.Op.1a2547.4
+// CHECK:STDOUT:   %Destroy.Op.call.loc18_35.2: init %empty_tuple.type = call %Destroy.Op.bound.loc18_35.2(@Run.%.loc18_35.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc18_35.3: <bound method> = bound_method @Run.%var, constants.%Destroy.Op.1a2547.1
+// CHECK:STDOUT:   %Destroy.Op.call.loc18_35.3: init %empty_tuple.type = call %Destroy.Op.bound.loc18_35.3(@Run.%var)
+// CHECK:STDOUT:   %Destroy.Op.call.loc18_20: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.50e)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {

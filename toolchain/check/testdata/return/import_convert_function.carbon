@@ -1108,7 +1108,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc7_26.3: %C.771 = acquire_value %.loc7_26.2 [concrete = constants.%C.val.d9b]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc7: init %D to %.loc6_26.1 = call %bound_method.loc7_35(%.loc7_26.3)
 // CHECK:STDOUT:   %.loc7_35: init %D = converted %.loc7_26.1, %C.as.ImplicitAs.impl.Convert.call.loc7
-// CHECK:STDOUT:   %Destroy.Op.call.loc7_26.1: init %empty_tuple.type = call constants.%Destroy.Op.bound.234(constants.%.de3)
+// CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call constants.%Destroy.Op.bound.234(constants.%.de3)
 // CHECK:STDOUT:   return %.loc7_35 to %return.param
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc7:
@@ -1138,8 +1138,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc8_26.3: %C.83b = acquire_value %.loc8_26.2 [concrete = constants.%C.val.399]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc8: init %D to %.loc6_26.2 = call %bound_method.loc8_35(%.loc8_26.3)
 // CHECK:STDOUT:   %.loc8_35: init %D = converted %.loc8_26.1, %C.as.ImplicitAs.impl.Convert.call.loc8
-// CHECK:STDOUT:   %Destroy.Op.call.loc8_26.1: init %empty_tuple.type = call constants.%Destroy.Op.bound.d6e(constants.%.027)
-// CHECK:STDOUT:   %Destroy.Op.call.loc7_26.2: init %empty_tuple.type = call constants.%Destroy.Op.bound.234(constants.%.de3)
+// CHECK:STDOUT:   %Destroy.Op.call.loc8: init %empty_tuple.type = call constants.%Destroy.Op.bound.d6e(constants.%.027)
 // CHECK:STDOUT:   return %.loc8_35 to %return.param
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc8:
@@ -1169,9 +1168,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc9_26.3: %C.5ce = acquire_value %.loc9_26.2 [concrete = constants.%C.val.040]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc9: init %D to %.loc6_26.3 = call %bound_method.loc9_35(%.loc9_26.3)
 // CHECK:STDOUT:   %.loc9_35: init %D = converted %.loc9_26.1, %C.as.ImplicitAs.impl.Convert.call.loc9
-// CHECK:STDOUT:   %Destroy.Op.call.loc9_26.1: init %empty_tuple.type = call constants.%Destroy.Op.bound.458(constants.%.ed7)
-// CHECK:STDOUT:   %Destroy.Op.call.loc8_26.2: init %empty_tuple.type = call constants.%Destroy.Op.bound.d6e(constants.%.027)
-// CHECK:STDOUT:   %Destroy.Op.call.loc7_26.3: init %empty_tuple.type = call constants.%Destroy.Op.bound.234(constants.%.de3)
+// CHECK:STDOUT:   %Destroy.Op.call.loc9: init %empty_tuple.type = call constants.%Destroy.Op.bound.458(constants.%.ed7)
 // CHECK:STDOUT:   return %.loc9_35 to %return.param
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc9:
@@ -1201,10 +1198,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc10_26.3: %C.b3e = acquire_value %.loc10_26.2 [concrete = constants.%C.val.cf1]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc10: init %D to %.loc6_26.4 = call %bound_method.loc10_35(%.loc10_26.3)
 // CHECK:STDOUT:   %.loc10_35: init %D = converted %.loc10_26.1, %C.as.ImplicitAs.impl.Convert.call.loc10
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_26.1: init %empty_tuple.type = call constants.%Destroy.Op.bound.5e3(constants.%.dc8)
-// CHECK:STDOUT:   %Destroy.Op.call.loc9_26.2: init %empty_tuple.type = call constants.%Destroy.Op.bound.458(constants.%.ed7)
-// CHECK:STDOUT:   %Destroy.Op.call.loc8_26.3: init %empty_tuple.type = call constants.%Destroy.Op.bound.d6e(constants.%.027)
-// CHECK:STDOUT:   %Destroy.Op.call.loc7_26.4: init %empty_tuple.type = call constants.%Destroy.Op.bound.234(constants.%.de3)
+// CHECK:STDOUT:   %Destroy.Op.call.loc10: init %empty_tuple.type = call constants.%Destroy.Op.bound.5e3(constants.%.dc8)
 // CHECK:STDOUT:   return %.loc10_35 to %return.param
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc10:
@@ -1234,11 +1228,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc11_26.3: %C.8ee = acquire_value %.loc11_26.2 [concrete = constants.%C.val.19e]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc11: init %D to %.loc6_26.5 = call %bound_method.loc11_35(%.loc11_26.3)
 // CHECK:STDOUT:   %.loc11_35: init %D = converted %.loc11_26.1, %C.as.ImplicitAs.impl.Convert.call.loc11
-// CHECK:STDOUT:   %Destroy.Op.call.loc11_26.1: init %empty_tuple.type = call constants.%Destroy.Op.bound.670(constants.%.054)
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_26.2: init %empty_tuple.type = call constants.%Destroy.Op.bound.5e3(constants.%.dc8)
-// CHECK:STDOUT:   %Destroy.Op.call.loc9_26.3: init %empty_tuple.type = call constants.%Destroy.Op.bound.458(constants.%.ed7)
-// CHECK:STDOUT:   %Destroy.Op.call.loc8_26.4: init %empty_tuple.type = call constants.%Destroy.Op.bound.d6e(constants.%.027)
-// CHECK:STDOUT:   %Destroy.Op.call.loc7_26.5: init %empty_tuple.type = call constants.%Destroy.Op.bound.234(constants.%.de3)
+// CHECK:STDOUT:   %Destroy.Op.call.loc11: init %empty_tuple.type = call constants.%Destroy.Op.bound.670(constants.%.054)
 // CHECK:STDOUT:   return %.loc11_35 to %return.param
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc11:
@@ -1268,12 +1258,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc12_26.3: %C.5c1 = acquire_value %.loc12_26.2 [concrete = constants.%C.val.6ca]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc12: init %D to %.loc6_26.6 = call %bound_method.loc12_35(%.loc12_26.3)
 // CHECK:STDOUT:   %.loc12_35: init %D = converted %.loc12_26.1, %C.as.ImplicitAs.impl.Convert.call.loc12
-// CHECK:STDOUT:   %Destroy.Op.call.loc12_26.1: init %empty_tuple.type = call constants.%Destroy.Op.bound.443(constants.%.6f6)
-// CHECK:STDOUT:   %Destroy.Op.call.loc11_26.2: init %empty_tuple.type = call constants.%Destroy.Op.bound.670(constants.%.054)
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_26.3: init %empty_tuple.type = call constants.%Destroy.Op.bound.5e3(constants.%.dc8)
-// CHECK:STDOUT:   %Destroy.Op.call.loc9_26.4: init %empty_tuple.type = call constants.%Destroy.Op.bound.458(constants.%.ed7)
-// CHECK:STDOUT:   %Destroy.Op.call.loc8_26.5: init %empty_tuple.type = call constants.%Destroy.Op.bound.d6e(constants.%.027)
-// CHECK:STDOUT:   %Destroy.Op.call.loc7_26.6: init %empty_tuple.type = call constants.%Destroy.Op.bound.234(constants.%.de3)
+// CHECK:STDOUT:   %Destroy.Op.call.loc12: init %empty_tuple.type = call constants.%Destroy.Op.bound.443(constants.%.6f6)
 // CHECK:STDOUT:   return %.loc12_35 to %return.param
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc12:
@@ -1303,13 +1288,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc13_26.3: %C.57b = acquire_value %.loc13_26.2 [concrete = constants.%C.val.225]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc13: init %D to %.loc6_26.7 = call %bound_method.loc13_35(%.loc13_26.3)
 // CHECK:STDOUT:   %.loc13_35: init %D = converted %.loc13_26.1, %C.as.ImplicitAs.impl.Convert.call.loc13
-// CHECK:STDOUT:   %Destroy.Op.call.loc13_26.1: init %empty_tuple.type = call constants.%Destroy.Op.bound.742(constants.%.fa8)
-// CHECK:STDOUT:   %Destroy.Op.call.loc12_26.2: init %empty_tuple.type = call constants.%Destroy.Op.bound.443(constants.%.6f6)
-// CHECK:STDOUT:   %Destroy.Op.call.loc11_26.3: init %empty_tuple.type = call constants.%Destroy.Op.bound.670(constants.%.054)
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_26.4: init %empty_tuple.type = call constants.%Destroy.Op.bound.5e3(constants.%.dc8)
-// CHECK:STDOUT:   %Destroy.Op.call.loc9_26.5: init %empty_tuple.type = call constants.%Destroy.Op.bound.458(constants.%.ed7)
-// CHECK:STDOUT:   %Destroy.Op.call.loc8_26.6: init %empty_tuple.type = call constants.%Destroy.Op.bound.d6e(constants.%.027)
-// CHECK:STDOUT:   %Destroy.Op.call.loc7_26.7: init %empty_tuple.type = call constants.%Destroy.Op.bound.234(constants.%.de3)
+// CHECK:STDOUT:   %Destroy.Op.call.loc13: init %empty_tuple.type = call constants.%Destroy.Op.bound.742(constants.%.fa8)
 // CHECK:STDOUT:   return %.loc13_35 to %return.param
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc13:
@@ -1339,14 +1318,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc14_26.3: %C.b0a = acquire_value %.loc14_26.2 [concrete = constants.%C.val.79c]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc14: init %D to %.loc6_26.8 = call %bound_method.loc14_35(%.loc14_26.3)
 // CHECK:STDOUT:   %.loc14_35: init %D = converted %.loc14_26.1, %C.as.ImplicitAs.impl.Convert.call.loc14
-// CHECK:STDOUT:   %Destroy.Op.call.loc14_26.1: init %empty_tuple.type = call constants.%Destroy.Op.bound.e4a(constants.%.a0a)
-// CHECK:STDOUT:   %Destroy.Op.call.loc13_26.2: init %empty_tuple.type = call constants.%Destroy.Op.bound.742(constants.%.fa8)
-// CHECK:STDOUT:   %Destroy.Op.call.loc12_26.3: init %empty_tuple.type = call constants.%Destroy.Op.bound.443(constants.%.6f6)
-// CHECK:STDOUT:   %Destroy.Op.call.loc11_26.4: init %empty_tuple.type = call constants.%Destroy.Op.bound.670(constants.%.054)
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_26.5: init %empty_tuple.type = call constants.%Destroy.Op.bound.5e3(constants.%.dc8)
-// CHECK:STDOUT:   %Destroy.Op.call.loc9_26.6: init %empty_tuple.type = call constants.%Destroy.Op.bound.458(constants.%.ed7)
-// CHECK:STDOUT:   %Destroy.Op.call.loc8_26.7: init %empty_tuple.type = call constants.%Destroy.Op.bound.d6e(constants.%.027)
-// CHECK:STDOUT:   %Destroy.Op.call.loc7_26.8: init %empty_tuple.type = call constants.%Destroy.Op.bound.234(constants.%.de3)
+// CHECK:STDOUT:   %Destroy.Op.call.loc14: init %empty_tuple.type = call constants.%Destroy.Op.bound.e4a(constants.%.a0a)
 // CHECK:STDOUT:   return %.loc14_35 to %return.param
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc14:
@@ -1354,14 +1326,6 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, imports.%P.Make [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc6_26.9: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %Make.call: init %D to %.loc6_26.9 = call %Make.ref()
-// CHECK:STDOUT:   %Destroy.Op.call.loc14_26.2: init %empty_tuple.type = call constants.%Destroy.Op.bound.e4a(constants.%.a0a)
-// CHECK:STDOUT:   %Destroy.Op.call.loc13_26.3: init %empty_tuple.type = call constants.%Destroy.Op.bound.742(constants.%.fa8)
-// CHECK:STDOUT:   %Destroy.Op.call.loc12_26.4: init %empty_tuple.type = call constants.%Destroy.Op.bound.443(constants.%.6f6)
-// CHECK:STDOUT:   %Destroy.Op.call.loc11_26.5: init %empty_tuple.type = call constants.%Destroy.Op.bound.670(constants.%.054)
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_26.6: init %empty_tuple.type = call constants.%Destroy.Op.bound.5e3(constants.%.dc8)
-// CHECK:STDOUT:   %Destroy.Op.call.loc9_26.7: init %empty_tuple.type = call constants.%Destroy.Op.bound.458(constants.%.ed7)
-// CHECK:STDOUT:   %Destroy.Op.call.loc8_26.8: init %empty_tuple.type = call constants.%Destroy.Op.bound.d6e(constants.%.027)
-// CHECK:STDOUT:   %Destroy.Op.call.loc7_26.9: init %empty_tuple.type = call constants.%Destroy.Op.bound.234(constants.%.de3)
 // CHECK:STDOUT:   return %Make.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

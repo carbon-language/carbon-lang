@@ -197,6 +197,17 @@ fn Run() {
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.19c, %Main.import_ref.ee4), @EmptyRange.as.Iterate.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_36.1: <bound method> = bound_method @Run.%.loc10_36.10, constants.%Destroy.Op.1a2547.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_36.1: init %empty_tuple.type = call %Destroy.Op.bound.loc10_36.1(@Run.%.loc10_36.10)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_36.2: <bound method> = bound_method @Run.%.loc10_36.2, constants.%Destroy.Op.1a2547.5
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_36.2: init %empty_tuple.type = call %Destroy.Op.bound.loc10_36.2(@Run.%.loc10_36.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_36.3: <bound method> = bound_method @Run.%var, constants.%Destroy.Op.1a2547.1
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_36.3: init %empty_tuple.type = call %Destroy.Op.bound.loc10_36.3(@Run.%var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_35: <bound method> = bound_method @Run.%.loc10_35.2, constants.%Destroy.Op.1a2547.6
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_35: init %empty_tuple.type = call %Destroy.Op.bound.loc10_35(@Run.%.loc10_35.2)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
@@ -377,6 +388,17 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.19c: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.647) = import_ref Main//empty_range, loc8_37, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.9e2)]
 // CHECK:STDOUT:   %Main.import_ref.ee4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.cfe) = import_ref Main//empty_range, loc11_66, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.0c8)]
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.19c, %Main.import_ref.ee4), @EmptyRange.as.Iterate.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_8: <bound method> = bound_method @Run.%c.var, constants.%Destroy.Op.1a2547.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_8: init %empty_tuple.type = call %Destroy.Op.bound.loc10_8(@Run.%c.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_40.1: <bound method> = bound_method @Run.%.loc10_40.2, constants.%Destroy.Op.1a2547.5
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_40.1: init %empty_tuple.type = call %Destroy.Op.bound.loc10_40.1(@Run.%.loc10_40.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_40.2: <bound method> = bound_method @Run.%var, constants.%Destroy.Op.1a2547.1
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_40.2: init %empty_tuple.type = call %Destroy.Op.bound.loc10_40.2(@Run.%var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_39: <bound method> = bound_method @Run.%.loc10_39.2, constants.%Destroy.Op.1a2547.6
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_39: init %empty_tuple.type = call %Destroy.Op.bound.loc10_39(@Run.%.loc10_39.2)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -570,6 +592,17 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.19c: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.647) = import_ref Main//empty_range, loc8_37, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.9e2)]
 // CHECK:STDOUT:   %Main.import_ref.ee4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.cfe) = import_ref Main//empty_range, loc11_66, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.0c8)]
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.19c, %Main.import_ref.ee4), @EmptyRange.as.Iterate.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_61.1: <bound method> = bound_method @Run.%.loc10_61.10, constants.%Destroy.Op.1a2547.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_61.1: init %empty_tuple.type = call %Destroy.Op.bound.loc10_61.1(@Run.%.loc10_61.10)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_61.2: <bound method> = bound_method @Run.%.loc10_61.2, constants.%Destroy.Op.1a2547.4
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_61.2: init %empty_tuple.type = call %Destroy.Op.bound.loc10_61.2(@Run.%.loc10_61.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_61.3: <bound method> = bound_method @Run.%var, constants.%Destroy.Op.1a2547.5
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_61.3: init %empty_tuple.type = call %Destroy.Op.bound.loc10_61.3(@Run.%var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_60: <bound method> = bound_method @Run.%.loc10_60.2, constants.%Destroy.Op.1a2547.6
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_60: init %empty_tuple.type = call %Destroy.Op.bound.loc10_60(@Run.%.loc10_60.2)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -773,6 +806,17 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.19c: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.647) = import_ref Main//empty_range, loc8_37, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.9e2)]
 // CHECK:STDOUT:   %Main.import_ref.ee4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.cfe) = import_ref Main//empty_range, loc11_66, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.0c8)]
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.19c, %Main.import_ref.ee4), @EmptyRange.as.Iterate.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_49.1: <bound method> = bound_method @Run.%.loc10_49.10, constants.%Destroy.Op.1a2547.3
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_49.1: init %empty_tuple.type = call %Destroy.Op.bound.loc10_49.1(@Run.%.loc10_49.10)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_49.2: <bound method> = bound_method @Run.%.loc10_49.2, constants.%Destroy.Op.1a2547.6
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_49.2: init %empty_tuple.type = call %Destroy.Op.bound.loc10_49.2(@Run.%.loc10_49.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_49.3: <bound method> = bound_method @Run.%var, constants.%Destroy.Op.1a2547.1
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_49.3: init %empty_tuple.type = call %Destroy.Op.bound.loc10_49.3(@Run.%var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc10_48: <bound method> = bound_method @Run.%.loc10_48.2, constants.%Destroy.Op.1a2547.7
+// CHECK:STDOUT:   %Destroy.Op.call.loc10_48: init %empty_tuple.type = call %Destroy.Op.bound.loc10_48(@Run.%.loc10_48.2)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

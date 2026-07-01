@@ -979,6 +979,26 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %AnyInt.impl_witness_table = impl_witness_table (%Core.import_ref.47b, %Core.import_ref.a64), @Int.as.AnyInt.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Destroy.Op.bound.loc34: <bound method> = bound_method @TestIterate.%.loc34_19.8, constants.%Destroy.Op.1a2547.9
+// CHECK:STDOUT:   %Destroy.Op.call.loc34: init %empty_tuple.type = call %Destroy.Op.bound.loc34(@TestIterate.%.loc34_19.8)
+// CHECK:STDOUT:   %impl.elem0: @TestIterate.%.loc34_19.21 (%.94f) = impl_witness_access constants.%Destroy.lookup_impl_witness.5d5, element0 [symbolic = @TestIterate.%impl.elem0.loc34_19.2 (constants.%impl.elem0.e52)]
+// CHECK:STDOUT:   %bound_method.loc34_19.1: <bound method> = bound_method @TestIterate.%var, %impl.elem0
+// CHECK:STDOUT:   %.loc34_19.1: %Destroy.type = converted constants.%as_type.ca2, constants.%impl.elem1.d31 [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.d31)]
+// CHECK:STDOUT:   %.loc34_19.2: %Destroy.type = converted constants.%as_type.ca2, constants.%impl.elem1.d31 [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.d31)]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.WithSelf.Op(constants.%impl.elem1.d31) [symbolic = @TestIterate.%specific_impl_fn.loc34_19.6 (constants.%specific_impl_fn.12e)]
+// CHECK:STDOUT:   %bound_method.loc34_19.2: <bound method> = bound_method @TestIterate.%var, %specific_impl_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc34_19.2(@TestIterate.%var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc55_19.1: <bound method> = bound_method @TestRangeFor.%.loc55_19.6, constants.%Destroy.Op.1a2547.9
+// CHECK:STDOUT:   %Destroy.Op.call.loc55_19.1: init %empty_tuple.type = call %Destroy.Op.bound.loc55_19.1(@TestRangeFor.%.loc55_19.6)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc55_19.2: <bound method> = bound_method @TestRangeFor.%var.loc55, constants.%Destroy.Op.1a2547.11
+// CHECK:STDOUT:   %Destroy.Op.call.loc55_19.2: init %empty_tuple.type = call %Destroy.Op.bound.loc55_19.2(@TestRangeFor.%var.loc55)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc49_19.1: <bound method> = bound_method @TestRangeFor.%.loc49_19.6, constants.%Destroy.Op.1a2547.9
+// CHECK:STDOUT:   %Destroy.Op.call.loc49_19.1: init %empty_tuple.type = call %Destroy.Op.bound.loc49_19.1(@TestRangeFor.%.loc49_19.6)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc49_19.2: <bound method> = bound_method @TestRangeFor.%var.loc49, constants.%Destroy.Op.1a2547.10
+// CHECK:STDOUT:   %Destroy.Op.call.loc49_19.2: init %empty_tuple.type = call %Destroy.Op.bound.loc49_19.2(@TestRangeFor.%var.loc49)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TestIterate(%R.loc30_17.2: %Iterate_where.type.8bc) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
@@ -1601,6 +1621,38 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %ConstRange.decl: type = class_decl @ConstRange [concrete = constants.%ConstRange] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %ValueType.Op.bound.loc44: <bound method> = bound_method @TestIterate.%.loc44_29.16, constants.%ValueType.Op.4dca31.1
+// CHECK:STDOUT:   %Op.ref.loc44: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
+// CHECK:STDOUT:   %ValueType.cpp_destructor.bound.loc44: <bound method> = bound_method @TestIterate.%.loc44_29.16, %Op.ref.loc44
+// CHECK:STDOUT:   %ValueType.cpp_destructor.call.loc44: init %empty_tuple.type = call %ValueType.cpp_destructor.bound.loc44(@TestIterate.%.loc44_29.16)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc44: <bound method> = bound_method @TestIterate.%.loc44_29.8, constants.%Destroy.Op.1a2547.7
+// CHECK:STDOUT:   %Destroy.Op.call.loc44: init %empty_tuple.type = call %Destroy.Op.bound.loc44(@TestIterate.%.loc44_29.8)
+// CHECK:STDOUT:   %impl.elem0: @TestIterate.%.loc44_29.22 (%.4b9) = impl_witness_access constants.%Destroy.lookup_impl_witness.ff8, element0 [symbolic = @TestIterate.%impl.elem0.loc44_29.2 (constants.%impl.elem0.fbe)]
+// CHECK:STDOUT:   %bound_method.loc44_29.1: <bound method> = bound_method @TestIterate.%var, %impl.elem0
+// CHECK:STDOUT:   %.loc44_29.1: %Destroy.type = converted constants.%as_type.bc6, constants.%impl.elem1.411 [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.411)]
+// CHECK:STDOUT:   %.loc44_29.2: %Destroy.type = converted constants.%as_type.bc6, constants.%impl.elem1.411 [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.411)]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.WithSelf.Op(constants.%impl.elem1.411) [symbolic = @TestIterate.%specific_impl_fn.loc44_29.6 (constants.%specific_impl_fn.517)]
+// CHECK:STDOUT:   %bound_method.loc44_29.2: <bound method> = bound_method @TestIterate.%var, %specific_impl_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc44_29.2(@TestIterate.%var)
+// CHECK:STDOUT:   %ValueType.Op.bound.loc63: <bound method> = bound_method @TestRangeFor.%.loc63_29.14, constants.%ValueType.Op.4dca31.1
+// CHECK:STDOUT:   %Op.ref.loc63: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
+// CHECK:STDOUT:   %ValueType.cpp_destructor.bound.loc63: <bound method> = bound_method @TestRangeFor.%.loc63_29.14, %Op.ref.loc63
+// CHECK:STDOUT:   %ValueType.cpp_destructor.call.loc63: init %empty_tuple.type = call %ValueType.cpp_destructor.bound.loc63(@TestRangeFor.%.loc63_29.14)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc63_29.1: <bound method> = bound_method @TestRangeFor.%.loc63_29.6, constants.%Destroy.Op.1a2547.7
+// CHECK:STDOUT:   %Destroy.Op.call.loc63_29.1: init %empty_tuple.type = call %Destroy.Op.bound.loc63_29.1(@TestRangeFor.%.loc63_29.6)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc63_29.2: <bound method> = bound_method @TestRangeFor.%var.loc63, constants.%Destroy.Op.1a2547.9
+// CHECK:STDOUT:   %Destroy.Op.call.loc63_29.2: init %empty_tuple.type = call %Destroy.Op.bound.loc63_29.2(@TestRangeFor.%var.loc63)
+// CHECK:STDOUT:   %ValueType.Op.bound.loc59: <bound method> = bound_method @TestRangeFor.%.loc59_29.14, constants.%ValueType.Op.4dca31.1
+// CHECK:STDOUT:   %Op.ref.loc59: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
+// CHECK:STDOUT:   %ValueType.cpp_destructor.bound.loc59: <bound method> = bound_method @TestRangeFor.%.loc59_29.14, %Op.ref.loc59
+// CHECK:STDOUT:   %ValueType.cpp_destructor.call.loc59: init %empty_tuple.type = call %ValueType.cpp_destructor.bound.loc59(@TestRangeFor.%.loc59_29.14)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc59_29.1: <bound method> = bound_method @TestRangeFor.%.loc59_29.6, constants.%Destroy.Op.1a2547.7
+// CHECK:STDOUT:   %Destroy.Op.call.loc59_29.1: init %empty_tuple.type = call %Destroy.Op.bound.loc59_29.1(@TestRangeFor.%.loc59_29.6)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc59_29.2: <bound method> = bound_method @TestRangeFor.%var.loc59, constants.%Destroy.Op.1a2547.8
+// CHECK:STDOUT:   %Destroy.Op.call.loc59_29.2: init %empty_tuple.type = call %Destroy.Op.bound.loc59_29.2(@TestRangeFor.%var.loc59)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TestIterate(%R.loc40_17.2: %Iterate_where.type.dfc) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
@@ -2160,6 +2212,22 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %AddAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb3), @Float.as.AddAssignWith.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Destroy.Op.bound.loc24: <bound method> = bound_method @TestIterate.%.loc24_19.8, constants.%Destroy.Op.1a2547.9
+// CHECK:STDOUT:   %Destroy.Op.call.loc24: init %empty_tuple.type = call %Destroy.Op.bound.loc24(@TestIterate.%.loc24_19.8)
+// CHECK:STDOUT:   %impl.elem0: @TestIterate.%.loc24_19.21 (%.75c) = impl_witness_access constants.%Destroy.lookup_impl_witness.f8f, element0 [symbolic = @TestIterate.%impl.elem0.loc24_19.2 (constants.%impl.elem0.688)]
+// CHECK:STDOUT:   %bound_method.loc24_19.1: <bound method> = bound_method @TestIterate.%var, %impl.elem0
+// CHECK:STDOUT:   %.loc24_19.1: %Destroy.type = converted constants.%as_type.6f2, constants.%impl.elem1.f12 [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.f12)]
+// CHECK:STDOUT:   %.loc24_19.2: %Destroy.type = converted constants.%as_type.6f2, constants.%impl.elem1.f12 [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.f12)]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.WithSelf.Op(constants.%impl.elem1.f12) [symbolic = @TestIterate.%specific_impl_fn.loc24_19.6 (constants.%specific_impl_fn.1e0)]
+// CHECK:STDOUT:   %bound_method.loc24_19.2: <bound method> = bound_method @TestIterate.%var, %specific_impl_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc24_19.2(@TestIterate.%var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc38_19.1: <bound method> = bound_method @TestRangeFor.%.loc38_19.6, constants.%Destroy.Op.1a2547.9
+// CHECK:STDOUT:   %Destroy.Op.call.loc38_19.1: init %empty_tuple.type = call %Destroy.Op.bound.loc38_19.1(@TestRangeFor.%.loc38_19.6)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc38_19.2: <bound method> = bound_method @TestRangeFor.%var, constants.%Destroy.Op.1a2547.10
+// CHECK:STDOUT:   %Destroy.Op.call.loc38_19.2: init %empty_tuple.type = call %Destroy.Op.bound.loc38_19.2(@TestRangeFor.%var)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TestIterate(%R.loc20_17.2: %Iterate_where.type.83b) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
@@ -2591,6 +2659,22 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Iterate.impl_witness_table.344 = impl_witness_table (%Core.import_ref.301, %Core.import_ref.89f, %Core.import_ref.3e6, %Core.import_ref.85d), @R.as_type.as.Iterate.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.cb3: @Float.as.AddAssignWith.impl.%Float.as.AddAssignWith.impl.Op.type (%Float.as.AddAssignWith.impl.Op.type.fdd) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Float.as.AddAssignWith.impl.%Float.as.AddAssignWith.impl.Op (constants.%Float.as.AddAssignWith.impl.Op.430)]
 // CHECK:STDOUT:   %AddAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb3), @Float.as.AddAssignWith.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Destroy.Op.bound.loc26: <bound method> = bound_method @TestIterate.%.loc26_19.8, constants.%Destroy.Op.1a2547.9
+// CHECK:STDOUT:   %Destroy.Op.call.loc26: init %empty_tuple.type = call %Destroy.Op.bound.loc26(@TestIterate.%.loc26_19.8)
+// CHECK:STDOUT:   %impl.elem0: @TestIterate.%.loc26_19.21 (%.75c) = impl_witness_access constants.%Destroy.lookup_impl_witness.f8f, element0 [symbolic = @TestIterate.%impl.elem0.loc26_19.2 (constants.%impl.elem0.688)]
+// CHECK:STDOUT:   %bound_method.loc26_19.1: <bound method> = bound_method @TestIterate.%var, %impl.elem0
+// CHECK:STDOUT:   %.loc26_19.1: %Destroy.type = converted constants.%as_type.6f2, constants.%impl.elem1.f12 [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.f12)]
+// CHECK:STDOUT:   %.loc26_19.2: %Destroy.type = converted constants.%as_type.6f2, constants.%impl.elem1.f12 [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.f12)]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.WithSelf.Op(constants.%impl.elem1.f12) [symbolic = @TestIterate.%specific_impl_fn.loc26_19.6 (constants.%specific_impl_fn.1e0)]
+// CHECK:STDOUT:   %bound_method.loc26_19.2: <bound method> = bound_method @TestIterate.%var, %specific_impl_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc26_19.2(@TestIterate.%var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc68_19.1: <bound method> = bound_method @TestRangeFor.%.loc68_19.6, constants.%Destroy.Op.1a2547.9
+// CHECK:STDOUT:   %Destroy.Op.call.loc68_19.1: init %empty_tuple.type = call %Destroy.Op.bound.loc68_19.1(@TestRangeFor.%.loc68_19.6)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc68_19.2: <bound method> = bound_method @TestRangeFor.%var, constants.%Destroy.Op.1a2547.10
+// CHECK:STDOUT:   %Destroy.Op.call.loc68_19.2: init %empty_tuple.type = call %Destroy.Op.bound.loc68_19.2(@TestRangeFor.%var)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TestIterate(%R.loc22_17.2: %Iterate_where.type.83b) {
@@ -3047,6 +3131,30 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %ConstRange.decl: type = class_decl @ConstRange [concrete = constants.%ConstRange] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %ValueType.Op.bound.loc31: <bound method> = bound_method @TestIterate.%.loc31_31.16, constants.%ValueType.Op.4c94b9.1
+// CHECK:STDOUT:   %Op.ref.loc31: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
+// CHECK:STDOUT:   %ValueType.cpp_destructor.bound.loc31: <bound method> = bound_method @TestIterate.%.loc31_31.16, %Op.ref.loc31
+// CHECK:STDOUT:   %ValueType.cpp_destructor.call.loc31: init %empty_tuple.type = call %ValueType.cpp_destructor.bound.loc31(@TestIterate.%.loc31_31.16)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc31: <bound method> = bound_method @TestIterate.%.loc31_31.8, constants.%Destroy.Op.1a2547.7
+// CHECK:STDOUT:   %Destroy.Op.call.loc31: init %empty_tuple.type = call %Destroy.Op.bound.loc31(@TestIterate.%.loc31_31.8)
+// CHECK:STDOUT:   %impl.elem0: @TestIterate.%.loc31_31.22 (%.bc1) = impl_witness_access constants.%Destroy.lookup_impl_witness.f37, element0 [symbolic = @TestIterate.%impl.elem0.loc31_31.2 (constants.%impl.elem0.c7c)]
+// CHECK:STDOUT:   %bound_method.loc31_31.1: <bound method> = bound_method @TestIterate.%var, %impl.elem0
+// CHECK:STDOUT:   %.loc31_31.1: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:   %.loc31_31.2: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.WithSelf.Op(constants.%impl.elem1.46a) [symbolic = @TestIterate.%specific_impl_fn.loc31_31.6 (constants.%specific_impl_fn.cd3)]
+// CHECK:STDOUT:   %bound_method.loc31_31.2: <bound method> = bound_method @TestIterate.%var, %specific_impl_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc31_31.2(@TestIterate.%var)
+// CHECK:STDOUT:   %ValueType.Op.bound.loc45: <bound method> = bound_method @TestRangeFor.%.loc45_31.14, constants.%ValueType.Op.4c94b9.1
+// CHECK:STDOUT:   %Op.ref.loc45: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
+// CHECK:STDOUT:   %ValueType.cpp_destructor.bound.loc45: <bound method> = bound_method @TestRangeFor.%.loc45_31.14, %Op.ref.loc45
+// CHECK:STDOUT:   %ValueType.cpp_destructor.call.loc45: init %empty_tuple.type = call %ValueType.cpp_destructor.bound.loc45(@TestRangeFor.%.loc45_31.14)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc45_31.1: <bound method> = bound_method @TestRangeFor.%.loc45_31.6, constants.%Destroy.Op.1a2547.7
+// CHECK:STDOUT:   %Destroy.Op.call.loc45_31.1: init %empty_tuple.type = call %Destroy.Op.bound.loc45_31.1(@TestRangeFor.%.loc45_31.6)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc45_31.2: <bound method> = bound_method @TestRangeFor.%var, constants.%Destroy.Op.1a2547.8
+// CHECK:STDOUT:   %Destroy.Op.call.loc45_31.2: init %empty_tuple.type = call %Destroy.Op.bound.loc45_31.2(@TestRangeFor.%var)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TestIterate(%R.loc27_17.2: %Iterate_where.type.99d) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
@@ -3424,6 +3532,22 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MutableRange.decl: type = class_decl @MutableRange [concrete = constants.%MutableRange] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %ValueType.Op.bound: <bound method> = bound_method @TestIterate.%.loc31_31.16, constants.%ValueType.Op.4c94b9.1
+// CHECK:STDOUT:   %Op.ref: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
+// CHECK:STDOUT:   %ValueType.cpp_destructor.bound: <bound method> = bound_method @TestIterate.%.loc31_31.16, %Op.ref
+// CHECK:STDOUT:   %ValueType.cpp_destructor.call: init %empty_tuple.type = call %ValueType.cpp_destructor.bound(@TestIterate.%.loc31_31.16)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method @TestIterate.%.loc31_31.8, constants.%Destroy.Op.1a2547.7
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(@TestIterate.%.loc31_31.8)
+// CHECK:STDOUT:   %impl.elem0: @TestIterate.%.loc31_31.22 (%.bc1) = impl_witness_access constants.%Destroy.lookup_impl_witness.f37, element0 [symbolic = @TestIterate.%impl.elem0.loc31_31.2 (constants.%impl.elem0.c7c)]
+// CHECK:STDOUT:   %bound_method.loc31_31.1: <bound method> = bound_method @TestIterate.%var, %impl.elem0
+// CHECK:STDOUT:   %.loc31_31.1: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:   %.loc31_31.2: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.WithSelf.Op(constants.%impl.elem1.46a) [symbolic = @TestIterate.%specific_impl_fn.loc31_31.6 (constants.%specific_impl_fn.cd3)]
+// CHECK:STDOUT:   %bound_method.loc31_31.2: <bound method> = bound_method @TestIterate.%var, %specific_impl_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc31_31.2(@TestIterate.%var)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TestIterate(%R.loc27_17.2: %Iterate_where.type.99d) {
@@ -3806,6 +3930,30 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MutableAndConstRange.decl: type = class_decl @MutableAndConstRange [concrete = constants.%MutableAndConstRange] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %ValueType.Op.bound.loc38: <bound method> = bound_method @TestIterate.%.loc38_31.16, constants.%ValueType.Op.4c94b9.1
+// CHECK:STDOUT:   %Op.ref.loc38: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
+// CHECK:STDOUT:   %ValueType.cpp_destructor.bound.loc38: <bound method> = bound_method @TestIterate.%.loc38_31.16, %Op.ref.loc38
+// CHECK:STDOUT:   %ValueType.cpp_destructor.call.loc38: init %empty_tuple.type = call %ValueType.cpp_destructor.bound.loc38(@TestIterate.%.loc38_31.16)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc38: <bound method> = bound_method @TestIterate.%.loc38_31.8, constants.%Destroy.Op.1a2547.7
+// CHECK:STDOUT:   %Destroy.Op.call.loc38: init %empty_tuple.type = call %Destroy.Op.bound.loc38(@TestIterate.%.loc38_31.8)
+// CHECK:STDOUT:   %impl.elem0: @TestIterate.%.loc38_31.22 (%.bc1) = impl_witness_access constants.%Destroy.lookup_impl_witness.f37, element0 [symbolic = @TestIterate.%impl.elem0.loc38_31.2 (constants.%impl.elem0.c7c)]
+// CHECK:STDOUT:   %bound_method.loc38_31.1: <bound method> = bound_method @TestIterate.%var, %impl.elem0
+// CHECK:STDOUT:   %.loc38_31.1: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:   %.loc38_31.2: %Destroy.type = converted constants.%as_type.862, constants.%impl.elem1.46a [symbolic = @TestIterate.%impl.elem1 (constants.%impl.elem1.46a)]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.WithSelf.Op(constants.%impl.elem1.46a) [symbolic = @TestIterate.%specific_impl_fn.loc38_31.6 (constants.%specific_impl_fn.cd3)]
+// CHECK:STDOUT:   %bound_method.loc38_31.2: <bound method> = bound_method @TestIterate.%var, %specific_impl_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc38_31.2(@TestIterate.%var)
+// CHECK:STDOUT:   %ValueType.Op.bound.loc80: <bound method> = bound_method @TestRangeFor.%.loc80_32.14, constants.%ValueType.Op.4c94b9.1
+// CHECK:STDOUT:   %Op.ref.loc80: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
+// CHECK:STDOUT:   %ValueType.cpp_destructor.bound.loc80: <bound method> = bound_method @TestRangeFor.%.loc80_32.14, %Op.ref.loc80
+// CHECK:STDOUT:   %ValueType.cpp_destructor.call.loc80: init %empty_tuple.type = call %ValueType.cpp_destructor.bound.loc80(@TestRangeFor.%.loc80_32.14)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc80_32.1: <bound method> = bound_method @TestRangeFor.%.loc80_32.6, constants.%Destroy.Op.1a2547.7
+// CHECK:STDOUT:   %Destroy.Op.call.loc80_32.1: init %empty_tuple.type = call %Destroy.Op.bound.loc80_32.1(@TestRangeFor.%.loc80_32.6)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc80_32.2: <bound method> = bound_method @TestRangeFor.%var, constants.%Destroy.Op.1a2547.8
+// CHECK:STDOUT:   %Destroy.Op.call.loc80_32.2: init %empty_tuple.type = call %Destroy.Op.bound.loc80_32.2(@TestRangeFor.%var)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TestIterate(%R.loc34_17.2: %Iterate_where.type.99d) {

@@ -148,8 +148,10 @@ auto MaybeAddCleanupForInst(Context& context, SemIR::InstId inst_id) -> void {
 }
 
 // Common support for cleanup blocks.
-static auto AddCleanupBlock(Context& context) -> void {
-  auto destroy_ids = context.scope_stack().destroy_id_stack().PeekArray();
+static auto AddCleanupBlock(Context& context, bool destroy_all) -> void {
+  auto destroy_ids =
+      destroy_all ? context.scope_stack().PeekAllValuesInCurrentFunction()
+                  : context.scope_stack().destroy_id_stack().PeekArray();
 
   // If there's nothing to destroy, add the final instruction to the current
   // block.
@@ -167,9 +169,13 @@ static auto AddCleanupBlock(Context& context) -> void {
   }
 }
 
+auto AddBlockCleanup(Context& context) -> void {
+  AddCleanupBlock(context, /*destroy_all=*/false);
+}
+
 auto AddReturnCleanupBlock(Context& context,
                            SemIR::LocIdAndInst loc_id_and_inst) -> void {
-  AddCleanupBlock(context);
+  AddCleanupBlock(context, /*destroy_all=*/true);
   AddInst(context, loc_id_and_inst);
 }
 

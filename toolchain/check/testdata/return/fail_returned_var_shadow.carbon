@@ -172,6 +172,10 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   assign %w.var, %.loc25
 // CHECK:STDOUT:   %i32.loc25: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %w: ref %i32 = wrapper_binding w, %w.var
+// CHECK:STDOUT:   %Destroy.Op.bound.loc25: <bound method> = bound_method %w.var, constants.%Destroy.Op.1a2547.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc25: init %empty_tuple.type = call %Destroy.Op.bound.loc25(%w.var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc17: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc17: init %empty_tuple.type = call %Destroy.Op.bound.loc17(%v.var)
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
@@ -182,10 +186,6 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %bound_method.loc27_11.2: <bound method> = bound_method %int_0.loc27, %specific_fn.loc27 [concrete = constants.%bound_method.6e0]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc27: init %i32 = call %bound_method.loc27_11.2(%int_0.loc27) [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   %.loc27: init %i32 = converted %int_0.loc27, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc27 [concrete = constants.%int_0.3c0]
-// CHECK:STDOUT:   %Destroy.Op.bound.loc25: <bound method> = bound_method %w.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc25: init %empty_tuple.type = call %Destroy.Op.bound.loc25(%w.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc17: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc17: init %empty_tuple.type = call %Destroy.Op.bound.loc17(%v.var)
 // CHECK:STDOUT:   return %.loc27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -236,9 +236,13 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   assign %w.var, %.loc41
 // CHECK:STDOUT:   %i32.loc41: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %w: ref %i32 = wrapper_binding w, %w.var
+// CHECK:STDOUT:   %Destroy.Op.bound.loc41: <bound method> = bound_method %w.var, constants.%Destroy.Op.1a2547.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc41: init %empty_tuple.type = call %Destroy.Op.bound.loc41(%w.var)
 // CHECK:STDOUT:   br !if.else.loc33
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc33:
+// CHECK:STDOUT:   %Destroy.Op.bound.loc32: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
+// CHECK:STDOUT:   %Destroy.Op.call.loc32: init %empty_tuple.type = call %Destroy.Op.bound.loc32(%v.var)
 // CHECK:STDOUT:   br !if.else.loc31
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc31:
@@ -249,10 +253,6 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %bound_method.loc44_11.2: <bound method> = bound_method %int_0.loc44, %specific_fn.loc44 [concrete = constants.%bound_method.6e0]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc44: init %i32 = call %bound_method.loc44_11.2(%int_0.loc44) [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   %.loc44: init %i32 = converted %int_0.loc44, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc44 [concrete = constants.%int_0.3c0]
-// CHECK:STDOUT:   %Destroy.Op.bound.loc41: <bound method> = bound_method %w.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc41: init %empty_tuple.type = call %Destroy.Op.bound.loc41(%w.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc32: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc32: init %empty_tuple.type = call %Destroy.Op.bound.loc32(%v.var)
 // CHECK:STDOUT:   return %.loc44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

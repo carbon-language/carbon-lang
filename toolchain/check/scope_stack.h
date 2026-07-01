@@ -198,6 +198,11 @@ class ScopeStack {
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;
 
+  // Returns all values on destroy_id_stack_ that belong to the current
+  // function.
+  auto PeekAllValuesInCurrentFunction() const
+      -> llvm::ArrayRef<SemIR::InstId>;
+
   auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
     return break_continue_stack_;
   }
@@ -255,6 +260,9 @@ class ScopeStack {
     // Names which are registered with lexical_lookup_, and will need to be
     // unregistered when the scope ends.
     Set<SemIR::NameId> names = {};
+
+    // Whether this scope pushed a cleanup array on `destroy_id_stack_`.
+    bool has_destroy_array = false;
   };
 
   // A scope in which `return` can be used.
@@ -380,6 +388,9 @@ struct ScopeStack::SuspendedScope : public MoveOnly<SuspendedScope> {
   // inline size is an attempt to keep the size of a `SuspendedFunction`
   // reasonable while avoiding heap allocations most of the time.
   llvm::SmallVector<ScopeItem, 8> suspended_items;
+
+  // The list of cleanups associated with this scope.
+  llvm::SmallVector<SemIR::InstId> cleanups;
 };
 
 }  // namespace Carbon::Check

@@ -92,6 +92,14 @@ class ArrayStack {
   // Returns true if the stack has no arrays pushed.
   auto empty() const -> bool { return array_offsets_.empty(); }
 
+  // Returns trailing values starting from the given array index.
+  auto PeekValuesFrom(int array_index) const -> llvm::ArrayRef<ValueT> {
+    if (array_index >= static_cast<int>(array_offsets_.size())) {
+      return {};
+    }
+    return llvm::ArrayRef(values_).slice(array_offsets_[array_index]);
+  }
+
  private:
   // For each pushed array, the start index in `values_`.
   llvm::SmallVector<int32_t> array_offsets_;
