@@ -25,11 +25,18 @@ class ScopeStack {
  public:
   explicit ScopeStack(Context& context);
 
+  // An index for the depth of the cleanup stack.
+  struct CleanupStackDepth : public IndexBase<CleanupStackDepth> {
+    static constexpr llvm::StringLiteral Label = "cleanup_stack_depth";
+
+    using IndexBase::IndexBase;
+  };
+
   // A scope in which `break` and `continue` can be used.
   struct BreakContinueScope {
     SemIR::InstBlockId break_target;
     SemIR::InstBlockId continue_target;
-    size_t destroy_stack_depth;
+    CleanupStackDepth cleanup_stack_depth;
   };
 
   // A non-lexical scope in which unqualified lookup may be required.
@@ -65,8 +72,10 @@ class ScopeStack {
   // Pushes a function scope.
   auto PushForFunctionBody(SemIR::InstId scope_inst_id) -> void;
 
-  // Pops the top scope from scope_stack_. Removes names from lexical_lookup_.
-  // If `check_unused` is set, checks and emits diagnostics for unused names.
+  // Pops the top scope from scope_stack_, inserting cleanups for any local
+  // variables that need to be destroyed when leaving this scope. Removes names
+  // from lexical_lookup_. If `check_unused` is set, checks and emits
+  // diagnostics for unused names.
   auto Pop(bool check_unused = false) -> void;
 
   // Pops the top scope from scope_stack_ if it contains no names.
@@ -199,10 +208,16 @@ class ScopeStack {
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;
 
-  // Returns all values on destroy_id_stack_ that belong to the current
-  // function.
-  auto PeekAllValuesInCurrentFunction() const
+  // Returns all values on `destroy_id_stack_` added since `depth`.
+  auto GetCleanupsSince(CleanupStackDepth depth) const
       -> llvm::ArrayRef<SemIR::InstId>;
+
+  // Returns all values on `destroy_id_stack_` that belong to the current
+  // function.
+  auto GetCleanupsSinceFunctionEntry() const -> llvm::ArrayRef<SemIR::InstId>;
+
+  // Returns the current depth of the cleanup stack.
+  auto cleanup_stack_depth() const -> CleanupStackDepth;
 
   auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
     return break_continue_stack_;
@@ -274,6 +289,9 @@ class ScopeStack {
     // The value corresponding to the current `returned var`, if any. Will be
     // set and unset as `returned var`s are declared and go out of scope.
     SemIR::InstId returned_var = SemIR::InstId::None;
+
+    // The cleanup stack depth when entering the function body.
+    CleanupStackDepth cleanup_stack_depth;
 
     // When a nested scope interrupts a return scope, this is the index of the
     // outermost interrupting scope (the one closest to the function scope).

@@ -160,39 +160,23 @@ static auto AddCleanupBlockForValues(Context& context,
   }
 }
 
-// Common support for cleanup blocks.
-static auto AddCleanupBlock(Context& context, bool destroy_all) -> void {
-  auto destroy_ids =
-      destroy_all ? context.scope_stack().PeekAllValuesInCurrentFunction()
-                  : context.scope_stack().destroy_id_stack().PeekArray();
-
-  // If there's nothing to destroy, return early.
-  if (destroy_ids.empty()) {
-    return;
-  }
-
-  AddCleanupBlockForValues(context, destroy_ids);
+auto AddBlockCleanups(Context& context) -> void {
+  AddCleanupBlockForValues(
+      context, context.scope_stack().destroy_id_stack().PeekArray());
 }
 
-auto AddBlockCleanup(Context& context) -> void {
-  AddCleanupBlock(context, /*destroy_all=*/false);
+auto AddBranchWithCleanups(Context& context, SemIR::LocId loc_id,
+                           SemIR::InstBlockId target_id,
+                           ScopeStack::CleanupStackDepth depth) -> void {
+  AddCleanupBlockForValues(context,
+                           context.scope_stack().GetCleanupsSince(depth));
+  AddInst<SemIR::Branch>(context, loc_id, {.target_id = target_id});
 }
 
-auto AddLoopCleanup(Context& context, size_t destroy_stack_depth) -> void {
-  auto destroy_ids =
-      context.scope_stack().destroy_id_stack().PeekValuesFromOffset(
-          destroy_stack_depth);
-
-  if (destroy_ids.empty()) {
-    return;
-  }
-
-  AddCleanupBlockForValues(context, destroy_ids);
-}
-
-auto AddReturnCleanupBlock(Context& context,
-                           SemIR::LocIdAndInst loc_id_and_inst) -> void {
-  AddCleanupBlock(context, /*destroy_all=*/true);
+auto AddReturnInstWithCleanups(Context& context,
+                               SemIR::LocIdAndInst loc_id_and_inst) -> void {
+  AddCleanupBlockForValues(
+      context, context.scope_stack().GetCleanupsSinceFunctionEntry());
   AddInst(context, loc_id_and_inst);
 }
 

@@ -7,6 +7,8 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/scope_stack.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -92,11 +94,15 @@ auto AddInstWithCleanupInNoBlock(Context& context, LocT loc, InstT inst)
 
 // Adds cleanup calls for the variables/temporaries at the top of the cleanup
 // stack (i.e. the current block scope).
-auto AddBlockCleanup(Context& context) -> void;
+auto AddBlockCleanups(Context& context) -> void;
 
-// Adds cleanup calls for variables/temporaries created since the given depth on
-// the cleanup stack (for break or continue).
-auto AddLoopCleanup(Context& context, size_t destroy_stack_depth) -> void;
+// Adds a branch to the given target block, which should be in the current scope
+// or an enclosing scope, along with cleanups for all variables and temporaries
+// created since the given depth, which should be the cleanup depth of the
+// branch target.
+auto AddBranchWithCleanups(Context& context, SemIR::LocId loc_id,
+                           SemIR::InstBlockId target_id,
+                           ScopeStack::CleanupStackDepth depth) -> void;
 
 // Adds a return cleanup block, including the returning instruction.
 //
@@ -126,17 +132,17 @@ auto AddLoopCleanup(Context& context, size_t destroy_stack_depth) -> void;
 //   }
 //
 // TODO: Add reuse (described above but not done).
-auto AddReturnCleanupBlock(Context& context,
-                           SemIR::LocIdAndInst loc_id_and_inst) -> void;
+auto AddReturnInstWithCleanups(Context& context,
+                               SemIR::LocIdAndInst loc_id_and_inst) -> void;
 
 template <typename LocT>
-auto AddReturnCleanupBlock(Context& context, LocT loc) -> void {
-  AddReturnCleanupBlock(context, SemIR::LocIdAndInst(loc, SemIR::Return{}));
+auto AddReturnInstWithCleanups(Context& context, LocT loc) -> void {
+  AddReturnInstWithCleanups(context, SemIR::LocIdAndInst(loc, SemIR::Return{}));
 }
 template <typename LocT>
-auto AddReturnCleanupBlockWithExpr(Context& context, LocT loc,
-                                   SemIR::ReturnExpr inst) -> void {
-  AddReturnCleanupBlock(context, SemIR::LocIdAndInst(loc, inst));
+auto AddReturnInstWithCleanups(Context& context, LocT loc,
+                               SemIR::ReturnExpr inst) -> void {
+  AddReturnInstWithCleanups(context, SemIR::LocIdAndInst(loc, inst));
 }
 
 }  // namespace Carbon::Check

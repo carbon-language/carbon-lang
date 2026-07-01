@@ -131,7 +131,8 @@ auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
   Push(scope_inst_id, SemIR::NameScopeId::None, self_specific,
        /*lexical_lookup_has_load_error=*/false);
 
-  return_scope_stack_.push_back({.decl_id = scope_inst_id});
+  return_scope_stack_.push_back(
+      {.decl_id = scope_inst_id, .cleanup_stack_depth = cleanup_stack_depth()});
   auto& scope = scope_stack_.back();
   if (!scope.has_destroy_array) {
     scope.has_destroy_array = true;
@@ -171,7 +172,7 @@ auto ScopeStack::Pop(bool check_unused) -> void {
       destroy_id_stack_.PopArray();
     } else {
       if (scope.has_destroy_array) {
-        AddBlockCleanup(*context_);
+        AddBlockCleanups(*context_);
         destroy_id_stack_.PopArray();
       }
       if (return_scope_stack_.back().nested_scope_index == scope.index) {
@@ -419,22 +420,21 @@ auto ScopeStack::Restore(SuspendedScope&& scope) -> void {
   scope_stack_.push_back(std::move(scope.entry));
 }
 
-auto ScopeStack::PeekAllValuesInCurrentFunction() const
+auto ScopeStack::cleanup_stack_depth() const -> CleanupStackDepth {
+  return CleanupStackDepth(destroy_id_stack_.all_values_size());
+}
+
+auto ScopeStack::GetCleanupsSince(CleanupStackDepth depth) const
+    -> llvm::ArrayRef<SemIR::InstId> {
+  return destroy_id_stack_.PeekValuesFromOffset(depth.index);
+}
+
+auto ScopeStack::GetCleanupsSinceFunctionEntry() const
     -> llvm::ArrayRef<SemIR::InstId> {
   if (return_scope_stack_.empty()) {
     return {};
   }
-  int array_index = 0;
-  for (const auto& scope : scope_stack_) {
-    if (scope.scope_inst_id.has_value() &&
-        return_scope_stack_.back().decl_id == scope.scope_inst_id) {
-      break;
-    }
-    if (scope.has_destroy_array) {
-      ++array_index;
-    }
-  }
-  return destroy_id_stack_.PeekValuesFrom(array_index);
+  return GetCleanupsSince(return_scope_stack_.back().cleanup_stack_depth);
 }
 
 }  // namespace Carbon::Check
