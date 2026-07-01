@@ -17,7 +17,7 @@ static auto HandlePatternListStart(Context& context, Parse::NodeId node_id)
     -> bool {
   context.node_stack().Push(node_id);
   context.param_and_arg_refs_stack().Push();
-  BeginSubpattern(context);
+  BeginExprRegionForPattern(context);
   return true;
 }
 
@@ -29,6 +29,9 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
     -> bool {
+  // End the pending `ExprRegion`, so that we can start a new one in
+  // `HandlePatternListStart`.
+  EndEmptyExprRegionForPattern(context);
   return HandlePatternListStart(context, node_id);
 }
 
@@ -43,11 +46,12 @@ auto HandleParseNode(Context& context, Parse::ExplicitParamListStartId node_id)
 static auto HandleParamListEnd(Context& context, Parse::NodeId node_id,
                                Parse::NodeKind start_kind) -> bool {
   if (context.node_stack().PeekIs(start_kind)) {
-    // End the subpattern started by a trailing comma, or the opening delimiter
-    // of an empty list.
-    EndEmptySubpattern(context);
+    // End the pending region started by a trailing comma, or the opening
+    // delimiter of an empty list.
+    EndEmptyExprRegionForPattern(context);
   } else {
-    EndSubpattern(context, context.node_stack());
+    // End the pending region for the last pattern in the list.
+    EndExprRegionForPattern(context, context.node_stack());
   }
   // Note the Start node remains on the stack, where the param list handler can
   // make use of it.
@@ -71,22 +75,26 @@ auto HandleParseNode(Context& context, Parse::ExplicitParamListId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::ParenPatternId node_id) -> bool {
-  EndSubpattern(context, context.node_stack());
+  EndExprRegionForPattern(context, context.node_stack());
   auto pattern_id = context.node_stack().PopPattern();
   context.param_and_arg_refs_stack().PopAndDiscard();
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::TuplePatternStart>();
   context.node_stack().Push(node_id, pattern_id);
+  // Start a new pending `ExprRegion`, to maintain the invariant that one is
+  // pending at the end of handling for a pattern.
+  BeginExprRegionForPattern(context);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   if (context.node_stack().PeekIs(Parse::NodeKind::TuplePatternStart)) {
-    // End the subpattern started by a trailing comma, or the opening delimiter
-    // of an empty list.
-    EndEmptySubpattern(context);
+    // End the pending region started by a trailing comma, or the opening
+    // delimiter of an empty list.
+    EndEmptyExprRegionForPattern(context);
   } else {
-    EndSubpattern(context, context.node_stack());
+    // End the pending region for the last pattern in the list.
+    EndExprRegionForPattern(context, context.node_stack());
   }
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::TuplePatternStart);
@@ -115,14 +123,17 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
       node_id,
       AddInst<SemIR::TuplePattern>(
           context, node_id, {.type_id = type_id, .elements_id = refs_id}));
+  // Start a new pending `ExprRegion`, to maintain the invariant that one is
+  // pending at the end of handling for a pattern.
+  BeginExprRegionForPattern(context);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
     -> bool {
-  EndSubpattern(context, context.node_stack());
+  EndExprRegionForPattern(context, context.node_stack());
   context.param_and_arg_refs_stack().ApplyComma();
-  BeginSubpattern(context);
+  BeginExprRegionForPattern(context);
   return true;
 }
 

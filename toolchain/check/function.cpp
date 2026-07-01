@@ -117,29 +117,23 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
   if (!args.self_type_id.has_value() && args.param_type_ids.empty()) {
     insts.param_patterns_id = SemIR::InstBlockId::Empty;
   } else {
-    context.inst_block_stack().Push();
+    llvm::SmallVector<SemIR::InstId> param_patterns;
     if (args.self_type_id.has_value()) {
-      BeginSubpattern(context);
-      auto self_type_region_id = ConsumeSubpatternExpr(
+      auto self_type_region_id = MakeEmptyRegion(
           context, context.types().GetTypeInstId(args.self_type_id));
-      EndEmptySubpattern(context);
-
       insts.self_param_id = AddParamPattern(
           context, loc_id, SemIR::NameId::SelfValue, self_type_region_id,
           args.self_type_id, args.self_kind);
-      context.inst_block_stack().AddInstId(insts.self_param_id);
+      param_patterns.push_back(insts.self_param_id);
     }
     for (auto param_type_id : args.param_type_ids) {
-      BeginSubpattern(context);
-      auto param_type_region_id = ConsumeSubpatternExpr(
+      auto param_type_region_id = MakeEmptyRegion(
           context, context.types().GetTypeInstId(param_type_id));
-      EndEmptySubpattern(context);
-
-      context.inst_block_stack().AddInstId(AddParamPattern(
+      param_patterns.push_back(AddParamPattern(
           context, loc_id, SemIR::NameId::Underscore, param_type_region_id,
           param_type_id, args.param_kind));
     }
-    insts.param_patterns_id = context.inst_block_stack().Pop();
+    insts.param_patterns_id = context.inst_blocks().Add(param_patterns);
   }
   context.full_pattern_stack().EndExplicitParamList();
 
