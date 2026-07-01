@@ -380,7 +380,7 @@ example:
     durable reference and compute the address of the referenced object.
 -   [`ref` binding patterns](pattern_matching.md#name-binding-patterns) require
     their scrutinee to be a durable reference.
--   If a function's [return extended type](#function-calls-and-returns) contains
+-   If a function's [extended return type](#function-calls-and-returns) contains
     `ref` tags, `return` statements require the corresponding parts of the
     operand to be durable reference expressions.
 
@@ -397,7 +397,7 @@ example:
     C++'s `std::span` that implements `IndirectIndexWith`, or indexing into any
     type with a durable reference expression such as `local_array[i]`.
 -   Calls to functions whose
-    [return extended types](#function-calls-and-returns) contain `ref`.
+    [extended return types](#function-calls-and-returns) contain `ref`.
 
 Durable reference expressions can only be produced _directly_ by one of these
 expressions. They are never produced by converting one of the other expression
@@ -640,7 +640,7 @@ expression.
 
 The [result](#extended-types) of a function call can have an almost arbitrary
 extended type. The return clause of a function signature consists of `->`
-followed by a _return extended type_, an expression-like syntax that specifies
+followed by an _extended return type_, an expression-like syntax that specifies
 not only the type component but also the extended type of the function call's
 result. `return` expressions in the function body are expected to have that
 extended type, and are converted to it if necessary. When a function is declared
@@ -648,7 +648,7 @@ without a return clause, it behaves from the caller's point of view as if the
 return clause were `-> ()`, but `return` statements in the function body don't
 take operands (and can be omitted at the end of the function).
 
-In the common case, the return extended type is a type expression, in which case
+In the common case, the extended return type is a type expression, in which case
 calls are modeled directly as initializing expressions -- they require storage
 as an input and when evaluated cause that storage to be initialized with an
 object. This means that when a function call is used to initialize some variable
@@ -671,17 +671,18 @@ the function's call expression. This in turn causes the property to hold
 _transitively_ across an arbitrary number of function calls and returns. The
 storage is forwarded at each stage and initialized exactly once.
 
-More generally, the syntax and semantics of a return extended type are as
+More generally, the syntax and semantics of an extended return type are as
 follows:
 
--   _return-clause_ ::= `->` _return-exttype_
--   _return-exttype_ ::= _nesting-return-exttype_ | _auto-return-exttype_
--   _nesting-return-exttype_ ::= _expression-return-exttype_ |
-    _proper-return-exttype_
+-   _return-clause_ ::= `->` _extended-return-type_
+-   _extended-return-type_ ::= _nesting-extended-return-type_ |
+    _auto-extended-return-type_
+-   _nesting-extended-return-type_ ::= _expression-extended-return-type_ |
+    _proper-extended-return-type_
 
-Return extended types can usually be nested, but syntaxes involving `auto` can
-only occur at top level. We further divide nesting return extended types into
-expressions and "proper" return extended types, but this is just a technical
+Extended return types can usually be nested, but syntaxes involving `auto` can
+only occur at top level. We further divide nesting extended return types into
+expressions and "proper" extended return types, but this is just a technical
 means of avoiding formal ambiguity in the grammar; it has no greater
 significance.
 
@@ -692,47 +693,50 @@ These tags are used to specify "value", "non-entire durable reference", or
 used to _forward_ the expression category as well as the type component of an
 extended type, and when it is used it must be followed by an expression that is
 convertible to `exttype` rather than `type`. Note that there is no way to
-express an entire or ephemeral reference category in a return extended type.
+express an entire or ephemeral reference category in an extended return type.
 
--   _auto-return-exttype_ ::= _category-tag_? `auto`
+-   _auto-extended-return-type_ ::= _category-tag_? `auto`
 
 This denotes a primitive extended type with runtime phase and a deduced type
 component. The category is determined by _category-tag_ if present, and deduced
 along with the type if `fwd`, or "initializing" otherwise.
 
--   _proper-return-exttype_ ::= _category-tag_ _expression_
+-   _proper-extended-return-type_ ::= _category-tag_ _expression_
 
-If the _category-tag_ is `fwd`, then this denotes a return extended type
+If the _category-tag_ is `fwd`, then this denotes an extended return type
 forwarded from "_expression_ `as exttype`". Otherwise, this denotes a primitive
 extended type with runtime phase, category _category-tag_, and type
 "_expression_ `as type`".
 
--   _expression-return-exttype_ ::= _expression_
+-   _expression-extended-return-type_ ::= _expression_
 
 An expression with no _category-tag_ is equivalent to "`var` _expression_".
 
--   _proper-return-exttype_ ::= `(` [_expression-return-exttype_ `,`]\* _proper-return-exttype_
-    [`,` _nesting-return-exttype_]\* `,`? `)`
+-   _proper-extended-return-type_ ::= `(` [_expression-extended-return-type_
+    `,`]\* _proper-extended-return-type_ [`,` _nesting-extended-return-type_]\*
+    `,`? `)`
 
-A tuple literal of return extended types denotes a tuple extended type whose
+A tuple literal of extended return types denotes a tuple extended type whose
 sub-extended-types are specified by the comma-separated elements. To avoid
 formal ambiguity, this grammar rule requires at least one of the
 sub-extended-types to be proper.
 
--   _expression-field-exttype_ ::= _designator_ `:` _expression-return-exttype_
--   _proper-field-exttype_ ::= _designator_ `:` _proper-return-exttype_
--   _field-exttype_ ::= _field-decl_
--   _field-exttype_ ::= _proper-field-exttype_
--   _proper-return-exttype_ ::= `{` [_expression-field-exttype_ `,`]\* _proper-field-exttype_
-    [`,` _field-exttype_]\* `}`
+-   _expression-field-extended-type_ ::= _designator_ `:`
+    _expression-extended-return-type_
+-   _proper-field-extended-type_ ::= _designator_ `:`
+    _proper-extended-return-type_
+-   _field-extended-type_ ::= _field-decl_
+-   _field-extended-type_ ::= _proper-field-extended-type_
+-   _proper-extended-return-type_ ::= `{` [_expression-field-extended-type_
+    `,`]\* _proper-field-extended-type_ [`,` _field-extended-type_]\* `}`
 
-A struct literal of return extended types denotes a struct extended type whose
+A struct literal of extended return types denotes a struct extended type whose
 field names and their extended types are specified by the comma-separated field
 extended types. To avoid formal ambiguity, this grammar rule requires at least
 one of the field extended types to be proper.
 
 > **Open question:** Should there be a way to specify symbolic or template phase
-> in return extended types?
+> in extended return types?
 
 #### Deferred initialization from values and references
 
@@ -813,8 +817,8 @@ whole. The _extended type_ of an expression captures all of the information
 about it that is visible to the type system, while abstracting away all other
 information about it. Thus, extended types are a generalization of types: what
 we conventionally call "types" are really the types of objects and values,
-whereas extended types are the types of expressions and patterns. The keyword
-`exttype` represents the type of an extended type constant, just as `type`
+whereas extended types are the types of expressions and patterns. The type
+`Core.ExtType` represents the type of an extended type constant, just as `type`
 represents the type of an object type constant.
 
 A _primitive extended type_ currently consists of a type, an expression

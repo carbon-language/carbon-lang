@@ -231,6 +231,7 @@ For example:
     we allow this in deduced parameters).
 
 This ensures that `each` remains most tightly attached to the binding name.
+
 > **Future work:** That restriction can probably be relaxed, but we currently
 > don't have motivating use cases to constrain the design.
 

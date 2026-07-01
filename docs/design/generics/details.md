@@ -2184,9 +2184,10 @@ interface NSpacePoint {
 }
 ```
 
-The pattern of an associated constant declaration must be a symbolic binding
-pattern, and unlike other `let` declarations, an associated constant declaration
-cannot have an initializer unless it's
+The pattern of an associated constant declaration must be a single binding
+pattern with no category or phase modifiers, and is interpreted as a checked
+generic binding pattern. Unlike other `let` declarations, an associated
+constant declaration cannot have an initializer unless it's
 [preceded by `default`](#interface-defaults):
 
 _associated-constant-decl_ ::= `let` _identifier_ `:` _expression_ `;`
@@ -2252,9 +2253,6 @@ fn ExtractPoint[PointT: NSpacePoint](
 
 **Comparison with other languages:** This feature is also called
 [associated constants in Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants).
-
-**Aside:** The use of `let` in an `interface` scope declares an associated
-constant, which is a compile-time value.
 
 ### Associated functions
 
@@ -5042,11 +5040,11 @@ impl forall [A: type where Optional(.Self) impls B] A as B;
 impl Optional(bool) as B;
 // OK, because we never consider the first `impl`
 // declaration when looking for `Optional(bool) impls I`.
-let U: B = bool;
+let generic U: B = bool;
 // Error: cycle with `i32 impls B` depending on
 // `Optional(i32) impls B`, using the same `impl`
 // declaration, as before.
-let V: B = i32;
+let generic V: B = i32;
 ```
 
 > **Note:**
@@ -5384,7 +5382,7 @@ An interface or named constraint may be forward declared subject to these rules:
 If `C` is the name of an incomplete interface or named constraint, then it can
 be used in the following contexts:
 
--   ✅ `T: C`
+-   ✅ `T: C` where `T` is a checked binding.
 -   ✅ `C & D`
     -   There may be conflicts between `C` and `D` making this invalid that will
         only be discovered once they are both complete.
@@ -5392,8 +5390,8 @@ be used in the following contexts:
     `constraint `...` { require` ... `impls C; }`
     -   Nothing implied by implementing `C` will be visible until `C` is
         complete.
--   ✅ `T: C` ... `T impls C`
--   ✅ `T: A & C` ... `T impls C`
+-   ✅ `T: C` ... `T impls C` where `T` is a checked binding.
+-   ✅ `T: A & C` ... `T impls C` where `T` is a checked binding.
     -   This includes constructs requiring `T impls C` such as `T as C` or
         `U: C = T`.
 -   ✅ `impl `...` as C;`
@@ -5402,8 +5400,8 @@ be used in the following contexts:
 
 An incomplete `C` cannot be used in the following contexts:
 
--   ❌ `T: C` ... `T.X`
--   ❌ `T: C where `...
+-   ❌ `T: C` ... `T.X` where `T` is a checked binding.
+-   ❌ `T: C where `... where `T` is a checked binding.
 -   ❌ `class `...` { extend impl as C; }`
     -   The names of `C` are added to the class, and so those names need to be
         known.
@@ -5411,8 +5409,8 @@ An incomplete `C` cannot be used in the following contexts:
     `constraint `...` { extend require impls C; }`
     -   An `extend` declaration requires the target scope to be complete. See
         [`extend` in member access](../expressions/member_access.md#extend).
--   ❌ `T: C` ... `T impls A` where `A` is an interface or named constraint
-    different from `C`
+-   ❌ `T: C` ... `T impls A` where `T` is a checked binding, and `A` is an
+    interface or named constraint different from `C`
     -   Need to see the definition of `C` to see if it implies `A`.
 -   ❌ `impl` ... `as C {` ... `}`
 
@@ -6588,8 +6586,9 @@ class HashMap(
 }
 ```
 
-Note that, unlike functions, every parameter to a type must be a compile-time
-binding, either checked or template, not runtime.
+Note that parameters to a type are treated as checked generic parameters by
+default. They can be marked as template parameters with the `template` modifier,
+but the `runtime` modifier is not permitted.
 
 Two types are the same if they have the same name and the same arguments, after
 applying aliases and [rewrite constraints](#rewrite-constraints). Carbon's
