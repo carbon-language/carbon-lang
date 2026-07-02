@@ -198,7 +198,7 @@ fn Works() {
 // CHECK:STDOUT:   %J.assoc_type: type = assoc_entity_type @J [concrete]
 // CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, @J.WithSelf.%U [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.2c5: type = pattern_type %J.type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.2c5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %J.type = symbolic_binding T, 0 [symbolic]
@@ -242,12 +242,12 @@ fn Works() {
 // CHECK:STDOUT:     %S.patt.loc8_27.1: @Simple1.%pattern_type (%pattern_type.0f6fa4.1) = symbolic_binding_pattern S, 1 [symbolic = %S.patt.loc8_27.2 (constants.%S.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_16: type = splice_block %J.ref [concrete = constants.%J.type] {
-// CHECK:STDOUT:       %.Self.loc8_13: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc8_13: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_13.2: %J.type = symbolic_binding T, 0 [symbolic = %T.loc8_13.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc8_31.1: type = splice_block %impl.elem0.loc8_31.2 [symbolic = %impl.elem0.loc8_31.1 (constants.%impl.elem0.436176.1)] {
-// CHECK:STDOUT:       %.Self.loc8_27: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc8_27: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %T.ref: %J.type = name_ref T, %T.loc8_13.2 [symbolic = %T.loc8_13.1 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc8_31.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc8_31.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc8_31.2: type = converted %T.ref, %T.as_type.loc8_31.2 [symbolic = %T.as_type.loc8_31.1 (constants.%T.as_type)]
@@ -261,12 +261,12 @@ fn Works() {
 // CHECK:STDOUT:     %W.patt.loc11_29.1: @Compound1.%pattern_type (%pattern_type.0f6fa4.2) = symbolic_binding_pattern W, 1 [symbolic = %W.patt.loc11_29.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_18: type = splice_block %J.ref.loc11_18 [concrete = constants.%J.type] {
-// CHECK:STDOUT:       %.Self.loc11_15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc11_15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %J.ref.loc11_18: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc11_15.2: %J.type = symbolic_binding V, 0 [symbolic = %V.loc11_15.1 (constants.%V)]
 // CHECK:STDOUT:     %.loc11_33: type = splice_block %impl.elem0.loc11_33.2 [symbolic = %impl.elem0.loc11_33.1 (constants.%impl.elem0.436176.2)] {
-// CHECK:STDOUT:       %.Self.loc11_29: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc11_29: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %V.ref: %J.type = name_ref V, %V.loc11_15.2 [symbolic = %V.loc11_15.1 (constants.%V)]
 // CHECK:STDOUT:       %J.ref.loc11_35: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:       %U.ref: %J.assoc_type = name_ref U, @U.%assoc0 [concrete = constants.%assoc0]
@@ -372,7 +372,7 @@ fn Works() {
 // CHECK:STDOUT:   %K1.assoc_type: type = assoc_entity_type @K1 [concrete]
 // CHECK:STDOUT:   %assoc0: %K1.assoc_type = assoc_entity element0, @K1.WithSelf.%K1.WithSelf.Q1.decl [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %K1.type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %K1.type = symbolic_binding T, 0 [symbolic]
@@ -417,7 +417,7 @@ fn Works() {
 // CHECK:STDOUT:     %T.patt.loc8_13.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8: type = splice_block %K1.ref [concrete = constants.%K1.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %K1.ref: type = name_ref K1, file.%K1.decl [concrete = constants.%K1.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_13.2: %K1.type = symbolic_binding T, 0 [symbolic = %T.loc8_13.1 (constants.%T)]
@@ -426,7 +426,7 @@ fn Works() {
 // CHECK:STDOUT:     %V.patt.loc13_15.1: %pattern_type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc13_15.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13: type = splice_block %K1.ref.loc13 [concrete = constants.%K1.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %K1.ref.loc13: type = name_ref K1, file.%K1.decl [concrete = constants.%K1.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc13_15.2: %K1.type = symbolic_binding V, 0 [symbolic = %V.loc13_15.1 (constants.%V)]
@@ -549,7 +549,7 @@ fn Works() {
 // CHECK:STDOUT:   %K2.assoc_type: type = assoc_entity_type @K2 [concrete]
 // CHECK:STDOUT:   %assoc0.7f8: %K2.assoc_type = assoc_entity element0, @K2.WithSelf.%K2.WithSelf.Q2.decl [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.583: type = pattern_type %K2.type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.583 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %K2.type = symbolic_binding T, 0 [symbolic]
@@ -603,7 +603,7 @@ fn Works() {
 // CHECK:STDOUT:     %x.patt.loc8_21.1: @Simple3.%pattern_type (%pattern_type.f2711c.1) = at_binding_pattern x, %x.param_patt.loc8_21.1 [symbolic = %x.patt.loc8_21.2 (constants.%x.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_16: type = splice_block %K2.ref [concrete = constants.%K2.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %K2.ref: type = name_ref K2, file.%K2.decl [concrete = constants.%K2.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_13.2: %K2.type = symbolic_binding T, 0 [symbolic = %T.loc8_13.1 (constants.%T)]
@@ -621,7 +621,7 @@ fn Works() {
 // CHECK:STDOUT:     %y.patt.loc14_23.1: @Compound3.%pattern_type (%pattern_type.f2711c.2) = at_binding_pattern y, %y.param_patt.loc14_23.1 [symbolic = %y.patt.loc14_23.2 (constants.%y.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_18: type = splice_block %K2.ref.loc14 [concrete = constants.%K2.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %K2.ref.loc14: type = name_ref K2, file.%K2.decl [concrete = constants.%K2.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc14_15.2: %K2.type = symbolic_binding V, 0 [symbolic = %V.loc14_15.1 (constants.%V)]
@@ -759,7 +759,7 @@ fn Works() {
 // CHECK:STDOUT:   %L1.WithSelf.S1.11f: %L1.WithSelf.S1.type.ff3 = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1: %L1.assoc_type = assoc_entity element1, @L1.WithSelf.%L1.WithSelf.S1.decl [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.b7b: type = pattern_type %L1.type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.b7b = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %L1.type = symbolic_binding T, 0 [symbolic]
@@ -845,7 +845,7 @@ fn Works() {
 // CHECK:STDOUT:     %p.patt.loc9_27.1: @Simple4.%pattern_type.loc9_27 (%pattern_type.e0b9be.1) = at_binding_pattern p, %p.param_patt.loc9_27.1 [symbolic = %p.patt.loc9_27.2 (constants.%p.patt.4967c5.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_16: type = splice_block %L1.ref [concrete = constants.%L1.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %L1.ref: type = name_ref L1, file.%L1.decl [concrete = constants.%L1.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc9_13.2: %L1.type = symbolic_binding T, 0 [symbolic = %T.loc9_13.1 (constants.%T)]
@@ -873,7 +873,7 @@ fn Works() {
 // CHECK:STDOUT:     %p.patt.loc15_29.1: @Compound4.%pattern_type.loc15_29 (%pattern_type.e0b9be.2) = at_binding_pattern p, %p.param_patt.loc15_29.1 [symbolic = %p.patt.loc15_29.2 (constants.%p.patt.4967c5.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_18: type = splice_block %L1.ref.loc15 [concrete = constants.%L1.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %L1.ref.loc15: type = name_ref L1, file.%L1.decl [concrete = constants.%L1.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc15_15.2: %L1.type = symbolic_binding V, 0 [symbolic = %V.loc15_15.1 (constants.%V)]
@@ -1178,7 +1178,7 @@ fn Works() {
 // CHECK:STDOUT:   %L2.WithSelf.S2.a11: %L2.WithSelf.S2.type.51d = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1: %L2.assoc_type = assoc_entity element1, @L2.WithSelf.%L2.WithSelf.S2.decl [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.5b3: type = pattern_type %L2.type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.5b3 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %L2.type = symbolic_binding T, 0 [symbolic]
@@ -1220,7 +1220,7 @@ fn Works() {
 // CHECK:STDOUT:     %T.patt.loc10_13.1: %pattern_type.5b3 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10: type = splice_block %L2.ref [concrete = constants.%L2.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %L2.ref: type = name_ref L2, file.%L2.decl [concrete = constants.%L2.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc10_13.2: %L2.type = symbolic_binding T, 0 [symbolic = %T.loc10_13.1 (constants.%T)]
@@ -1229,7 +1229,7 @@ fn Works() {
 // CHECK:STDOUT:     %V.patt.loc30_15.1: %pattern_type.5b3 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc30_15.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc30: type = splice_block %L2.ref.loc30 [concrete = constants.%L2.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %L2.ref.loc30: type = name_ref L2, file.%L2.decl [concrete = constants.%L2.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc30_15.2: %L2.type = symbolic_binding V, 0 [symbolic = %V.loc30_15.1 (constants.%V)]

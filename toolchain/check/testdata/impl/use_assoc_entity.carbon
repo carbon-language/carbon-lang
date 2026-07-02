@@ -509,8 +509,8 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %J.WithSelf.F.f69: %J.WithSelf.F.type.a0a = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1.413: %J.assoc_type = assoc_entity element1, @J.WithSelf.%J.WithSelf.F.decl [concrete]
-// CHECK:STDOUT:   %.Self.99c: %J.type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %J.WithSelf.F.type.885: type = fn_type @J.WithSelf.F, @J.WithSelf(%.Self.99c) [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %J.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %J.WithSelf.F.type.885: type = fn_type @J.WithSelf.F, @J.WithSelf(%.Self.frozen) [symbolic_self]
 // CHECK:STDOUT:   %J.WithSelf.F.76e: %J.WithSelf.F.type.885 = struct_value () [symbolic_self]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
@@ -766,9 +766,9 @@ fn F() {
 // CHECK:STDOUT:   %return.patt.loc6_20.2 => constants.%return.patt.cdd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J.WithSelf(constants.%.Self.99c) {
+// CHECK:STDOUT: specific @J.WithSelf(constants.%.Self.frozen) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%.Self.99c
+// CHECK:STDOUT:   %Self => constants.%.Self.frozen
 // CHECK:STDOUT:   %J.WithSelf.F.type => constants.%J.WithSelf.F.type.885
 // CHECK:STDOUT:   %J.WithSelf.F => constants.%J.WithSelf.F.76e
 // CHECK:STDOUT: }

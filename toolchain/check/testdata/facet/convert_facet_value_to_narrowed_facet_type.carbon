@@ -97,7 +97,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
 // CHECK:STDOUT:   %Self.f00: %Animal.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.880: type = pattern_type %Eats.type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.880 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %Eats.type = symbolic_binding T, 0 [symbolic]
@@ -165,7 +165,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %e.patt.loc6_27.1: @Feed.%pattern_type (%pattern_type.aed) = at_binding_pattern e, %e.param_patt.loc6_27.1 [symbolic = %e.patt.loc6_27.2 (constants.%e.patt.543)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_13: type = splice_block %Eats.ref [concrete = constants.%Eats.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_10.2: %Eats.type = symbolic_binding T, 0 [symbolic = %T.loc6_10.1 (constants.%T)]
@@ -183,7 +183,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %a.patt.loc8_37.1: @HandleAnimal.%pattern_type (%pattern_type.c56) = at_binding_pattern a, %a.param_patt.loc8_37.1 [symbolic = %a.patt.loc8_37.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_28.1: type = splice_block %.loc8_28.3 [concrete = constants.%facet_type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:       %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:       %impl.elem0: %.d56 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
@@ -318,7 +318,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %Tame.type: type = facet_type <@Tame> [concrete]
 // CHECK:STDOUT:   %Self.0f0: %Tame.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %BitAndWith.type.a06: type = generic_interface_type @BitAndWith [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %BitAndWith.generic: %BitAndWith.type.a06 = struct_value () [concrete]
@@ -393,7 +393,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %v.patt.loc7_38.1: @FeedTame.%pattern_type (%pattern_type.7b2) = at_binding_pattern v, %v.param_patt.loc7_38.1 [symbolic = %v.patt.loc7_38.2 (constants.%v.patt.d6a)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_22.1: type = splice_block %.loc7_22.3 [concrete = constants.%facet_type.bbb] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Tame.ref: type = name_ref Tame, file.%Tame.decl [concrete = constants.%Tame.type]
 // CHECK:STDOUT:       %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:       %impl.elem0: %.d56 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
@@ -417,7 +417,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %w.patt.loc9_48.1: @HandleTameAnimal.%pattern_type (%pattern_type.b23) = at_binding_pattern w, %w.param_patt.loc9_48.1 [symbolic = %w.patt.loc9_48.2 (constants.%w.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_39.1: type = splice_block %.loc9_39.3 [concrete = constants.%facet_type.dd5] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:       %impl.elem0.loc9_30: %.d56 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
@@ -574,7 +574,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %Tame.type: type = facet_type <@Tame> [concrete]
 // CHECK:STDOUT:   %Self.0f0: %Tame.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.333: type = pattern_type %Animal.type [concrete]
 // CHECK:STDOUT:   %A.patt: %pattern_type.333 = symbolic_binding_pattern A, 0 [symbolic]
 // CHECK:STDOUT:   %A: %Animal.type = symbolic_binding A, 0 [symbolic]
@@ -659,7 +659,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %.loc7_26: type = converted %A.ref, %A.as_type.loc7_26.1 [symbolic = %A.as_type.loc7_26.2 (constants.%A.as_type)]
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:     %.loc7_18: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %A.loc7_15.1: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc7_15.2 (constants.%A)]
@@ -670,7 +670,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %v.patt.loc9_39.1: @FeedTame2.%pattern_type (%pattern_type.7b2) = at_binding_pattern v, %v.param_patt.loc9_39.1 [symbolic = %v.patt.loc9_39.2 (constants.%v.patt.d6a)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_23.1: type = splice_block %.loc9_23.3 [concrete = constants.%facet_type.bbb] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Tame.ref: type = name_ref Tame, file.%Tame.decl [concrete = constants.%Tame.type]
 // CHECK:STDOUT:       %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:       %impl.elem0: %.d56 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
@@ -694,7 +694,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %w.patt.loc11_42.1: @HandleTameAnimal2.%pattern_type (%pattern_type.493) = at_binding_pattern w, %w.param_patt.loc11_42.1 [symbolic = %w.patt.loc11_42.2 (constants.%w.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_33.1: type = splice_block %.loc11_33.3 [concrete = constants.%facet_type.83c] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:       %Tame.ref: type = name_ref Tame, file.%Tame.decl [concrete = constants.%Tame.type]
 // CHECK:STDOUT:       %impl.elem0: %.d56 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
@@ -882,7 +882,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.197: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen.197: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.029: type = pattern_type %A.type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.029 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %A.type = symbolic_binding T, 0 [symbolic]
@@ -894,10 +894,10 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TakesA: %TakesA.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.94f9a3.1: <witness> = require_complete_type %T.as_type [symbolic]
-// CHECK:STDOUT:   %.Self.d4e: %A.type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.as_type.a03: type = facet_access_type %.Self.d4e [symbolic_self]
-// CHECK:STDOUT:   %.Self.6a5: %A.type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.as_type.57f: type = facet_access_type %.Self.6a5 [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen.d4e: %A.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen.d4e [symbolic_self]
+// CHECK:STDOUT:   %.Self: %A.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %U.patt: %pattern_type.029 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: %A.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %U.as_type: type = facet_access_type %U [symbolic]
@@ -934,7 +934,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %x.patt.loc7_26.1: @TakesA.%pattern_type (%pattern_type.a0e098.1) = at_binding_pattern x, %x.param_patt.loc7_26.1 [symbolic = %x.patt.loc7_26.2 (constants.%x.patt.19b9f1.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_15: type = splice_block %A.ref [concrete = constants.%A.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
 // CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc7_12.2: %A.type = symbolic_binding T, 0 [symbolic = %T.loc7_12.1 (constants.%T)]
@@ -952,17 +952,17 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %y.patt.loc9_50.1: @WithExtraWhere.%pattern_type (%pattern_type.a0e098.2) = at_binding_pattern y, %y.param_patt.loc9_50.1 [symbolic = %y.patt.loc9_50.2 (constants.%y.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_25.1: type = splice_block %.loc9_25.2 [concrete = constants.%A.type] {
-// CHECK:STDOUT:       %.Self.loc9_20: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen.loc9_20: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
 // CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:       %.Self.loc9_25.1: %A.type = symbolic_binding .Self [symbolic_self = constants.%.Self.d4e]
-// CHECK:STDOUT:       %.Self.ref.loc9_31.1: %A.type = name_ref .Self, %.Self.loc9_25.1 [symbolic_self = constants.%.Self.d4e]
+// CHECK:STDOUT:       %.Self.frozen.loc9_25: %A.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.d4e]
+// CHECK:STDOUT:       %.Self.ref.loc9_31.1: %A.type = name_ref .Self, %.Self.frozen.loc9_25 [symbolic_self = constants.%.Self.frozen.d4e]
 // CHECK:STDOUT:       %.loc9_43: type = type_literal type [concrete = type]
-// CHECK:STDOUT:       %.Self.as_type.loc9_31.1: type = facet_access_type %.Self.ref.loc9_31.1 [symbolic_self = constants.%.Self.as_type.a03]
-// CHECK:STDOUT:       %.loc9_31.1: type = converted %.Self.ref.loc9_31.1, %.Self.as_type.loc9_31.1 [symbolic_self = constants.%.Self.as_type.a03]
-// CHECK:STDOUT:       %.Self.loc9_25.2: %A.type = symbolic_binding .Self [symbolic_self = constants.%.Self.6a5]
-// CHECK:STDOUT:       %.Self.ref.loc9_31.2: %A.type = name_ref .Self, %.Self.loc9_25.2 [symbolic_self = constants.%.Self.6a5]
-// CHECK:STDOUT:       %.Self.as_type.loc9_31.2: type = facet_access_type %.Self.ref.loc9_31.2 [symbolic_self = constants.%.Self.as_type.57f]
-// CHECK:STDOUT:       %.loc9_31.2: type = converted %.Self.ref.loc9_31.1, %.Self.as_type.loc9_31.2 [symbolic_self = constants.%.Self.as_type.57f]
+// CHECK:STDOUT:       %.Self.as_type.loc9_31.1: type = facet_access_type %.Self.ref.loc9_31.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.loc9_31.1: type = converted %.Self.ref.loc9_31.1, %.Self.as_type.loc9_31.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.Self: %A.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.ref.loc9_31.2: %A.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.as_type.loc9_31.2: type = facet_access_type %.Self.ref.loc9_31.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %.loc9_31.2: type = converted %.Self.ref.loc9_31.1, %.Self.as_type.loc9_31.2 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc9_25.2: type = where_expr [concrete = constants.%A.type] {
 // CHECK:STDOUT:         requirement_base_facet_type %A.ref
 // CHECK:STDOUT:         requirement_impls %.loc9_31.2, %.loc9_43
@@ -1069,7 +1069,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.197: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0 [symbolic]
@@ -1080,9 +1080,9 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TakesTypeDeduced: %TakesTypeDeduced.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T.67db0b.1 [symbolic]
-// CHECK:STDOUT:   %.Self.as_type.bce: type = facet_access_type %.Self.197 [symbolic_self]
-// CHECK:STDOUT:   %.Self.e0b: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.as_type.007: type = facet_access_type %.Self.e0b [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen [symbolic_self]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type %type [concrete]
 // CHECK:STDOUT:   %U.patt: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: %type = symbolic_binding U, 0 [symbolic]
@@ -1126,7 +1126,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %x.patt.loc3_39.1: @TakesTypeDeduced.%pattern_type (%pattern_type.51d) = at_binding_pattern x, %x.param_patt.loc3_39.1 [symbolic = %x.patt.loc3_39.2 (constants.%x.patt.800)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc3_25.1: type = splice_block %.loc3_25.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc3_25.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc3_22.2: type = symbolic_binding T, 0 [symbolic = %T.loc3_22.1 (constants.%T.67db0b.1)]
@@ -1140,17 +1140,17 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %y.patt.loc4_58.1: @CallsWithExtraWhere.%pattern_type (%pattern_type.86a) = at_binding_pattern y, %y.param_patt.loc4_58.1 [symbolic = %y.patt.loc4_58.2 (constants.%y.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_33.1: type = splice_block %.loc4_33.2 [concrete = constants.%type] {
-// CHECK:STDOUT:       %.Self.loc4_25: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen.loc4_25: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_28: type = type_literal type [concrete = type]
-// CHECK:STDOUT:       %.Self.loc4_33.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
-// CHECK:STDOUT:       %.Self.ref.loc4_39.1: %type = name_ref .Self, %.Self.loc4_33.1 [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen.loc4_33: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.ref.loc4_39.1: %type = name_ref .Self, %.Self.frozen.loc4_33 [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_51: type = type_literal type [concrete = type]
-// CHECK:STDOUT:       %.Self.as_type.loc4_39.1: type = facet_access_type %.Self.ref.loc4_39.1 [symbolic_self = constants.%.Self.as_type.bce]
-// CHECK:STDOUT:       %.loc4_39.1: type = converted %.Self.ref.loc4_39.1, %.Self.as_type.loc4_39.1 [symbolic_self = constants.%.Self.as_type.bce]
-// CHECK:STDOUT:       %.Self.loc4_33.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.e0b]
-// CHECK:STDOUT:       %.Self.ref.loc4_39.2: %type = name_ref .Self, %.Self.loc4_33.2 [symbolic_self = constants.%.Self.e0b]
-// CHECK:STDOUT:       %.Self.as_type.loc4_39.2: type = facet_access_type %.Self.ref.loc4_39.2 [symbolic_self = constants.%.Self.as_type.007]
-// CHECK:STDOUT:       %.loc4_39.2: type = converted %.Self.ref.loc4_39.1, %.Self.as_type.loc4_39.2 [symbolic_self = constants.%.Self.as_type.007]
+// CHECK:STDOUT:       %.Self.as_type.loc4_39.1: type = facet_access_type %.Self.ref.loc4_39.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.loc4_39.1: type = converted %.Self.ref.loc4_39.1, %.Self.as_type.loc4_39.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.ref.loc4_39.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.as_type.loc4_39.2: type = facet_access_type %.Self.ref.loc4_39.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %.loc4_39.2: type = converted %.Self.ref.loc4_39.1, %.Self.as_type.loc4_39.2 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc4_33.2: type = where_expr [concrete = constants.%type] {
 // CHECK:STDOUT:         requirement_base_facet_type %.loc4_28
 // CHECK:STDOUT:         requirement_impls %.loc4_39.2, %.loc4_51
@@ -1169,7 +1169,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %T.patt.loc8_30.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_30.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_33.1: type = splice_block %.loc8_33.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc8_33.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_30.3: type = symbolic_binding T, 0 [symbolic = %T.loc8_30.2 (constants.%T.67db0b.2)]
@@ -1178,17 +1178,17 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %U.patt.loc9_33.1: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc9_33.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_41.1: type = splice_block %.loc9_41.2 [concrete = constants.%type] {
-// CHECK:STDOUT:       %.Self.loc9_33: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen.loc9_33: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc9_36: type = type_literal type [concrete = type]
-// CHECK:STDOUT:       %.Self.loc9_41.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
-// CHECK:STDOUT:       %.Self.ref.loc9_47.1: %type = name_ref .Self, %.Self.loc9_41.1 [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen.loc9_41: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.ref.loc9_47.1: %type = name_ref .Self, %.Self.frozen.loc9_41 [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc9_59: type = type_literal type [concrete = type]
-// CHECK:STDOUT:       %.Self.as_type.loc9_47.1: type = facet_access_type %.Self.ref.loc9_47.1 [symbolic_self = constants.%.Self.as_type.bce]
-// CHECK:STDOUT:       %.loc9_47.1: type = converted %.Self.ref.loc9_47.1, %.Self.as_type.loc9_47.1 [symbolic_self = constants.%.Self.as_type.bce]
-// CHECK:STDOUT:       %.Self.loc9_41.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.e0b]
-// CHECK:STDOUT:       %.Self.ref.loc9_47.2: %type = name_ref .Self, %.Self.loc9_41.2 [symbolic_self = constants.%.Self.e0b]
-// CHECK:STDOUT:       %.Self.as_type.loc9_47.2: type = facet_access_type %.Self.ref.loc9_47.2 [symbolic_self = constants.%.Self.as_type.007]
-// CHECK:STDOUT:       %.loc9_47.2: type = converted %.Self.ref.loc9_47.1, %.Self.as_type.loc9_47.2 [symbolic_self = constants.%.Self.as_type.007]
+// CHECK:STDOUT:       %.Self.as_type.loc9_47.1: type = facet_access_type %.Self.ref.loc9_47.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.loc9_47.1: type = converted %.Self.ref.loc9_47.1, %.Self.as_type.loc9_47.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.ref.loc9_47.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.as_type.loc9_47.2: type = facet_access_type %.Self.ref.loc9_47.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %.loc9_47.2: type = converted %.Self.ref.loc9_47.1, %.Self.as_type.loc9_47.2 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc9_41.2: type = where_expr [concrete = constants.%type] {
 // CHECK:STDOUT:         requirement_base_facet_type %.loc9_36
 // CHECK:STDOUT:         requirement_impls %.loc9_47.2, %.loc9_59
@@ -1320,10 +1320,10 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.197: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.as_type.bce: type = facet_access_type %.Self.197 [symbolic_self]
-// CHECK:STDOUT:   %.Self.e0b: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.as_type.007: type = facet_access_type %.Self.e0b [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen [symbolic_self]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type %type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.f45530.1: %type = symbolic_binding T, 0 [symbolic]
@@ -1378,17 +1378,17 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %x.patt.loc3_68.1: @TakesExtraWhereDeduced.%pattern_type (%pattern_type.86a) = at_binding_pattern x, %x.param_patt.loc3_68.1 [symbolic = %x.patt.loc3_68.2 (constants.%x.patt.fe1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc3_36.1: type = splice_block %.loc3_36.2 [concrete = constants.%type] {
-// CHECK:STDOUT:       %.Self.loc3_28: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen.loc3_28: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc3_31: type = type_literal type [concrete = type]
-// CHECK:STDOUT:       %.Self.loc3_36.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
-// CHECK:STDOUT:       %.Self.ref.loc3_42.1: %type = name_ref .Self, %.Self.loc3_36.1 [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen.loc3_36: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.ref.loc3_42.1: %type = name_ref .Self, %.Self.frozen.loc3_36 [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc3_54: type = type_literal type [concrete = type]
-// CHECK:STDOUT:       %.Self.as_type.loc3_42.1: type = facet_access_type %.Self.ref.loc3_42.1 [symbolic_self = constants.%.Self.as_type.bce]
-// CHECK:STDOUT:       %.loc3_42.1: type = converted %.Self.ref.loc3_42.1, %.Self.as_type.loc3_42.1 [symbolic_self = constants.%.Self.as_type.bce]
-// CHECK:STDOUT:       %.Self.loc3_36.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.e0b]
-// CHECK:STDOUT:       %.Self.ref.loc3_42.2: %type = name_ref .Self, %.Self.loc3_36.2 [symbolic_self = constants.%.Self.e0b]
-// CHECK:STDOUT:       %.Self.as_type.loc3_42.2: type = facet_access_type %.Self.ref.loc3_42.2 [symbolic_self = constants.%.Self.as_type.007]
-// CHECK:STDOUT:       %.loc3_42.2: type = converted %.Self.ref.loc3_42.1, %.Self.as_type.loc3_42.2 [symbolic_self = constants.%.Self.as_type.007]
+// CHECK:STDOUT:       %.Self.as_type.loc3_42.1: type = facet_access_type %.Self.ref.loc3_42.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.loc3_42.1: type = converted %.Self.ref.loc3_42.1, %.Self.as_type.loc3_42.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.ref.loc3_42.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.as_type.loc3_42.2: type = facet_access_type %.Self.ref.loc3_42.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %.loc3_42.2: type = converted %.Self.ref.loc3_42.1, %.Self.as_type.loc3_42.2 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc3_36.2: type = where_expr [concrete = constants.%type] {
 // CHECK:STDOUT:         requirement_base_facet_type %.loc3_31
 // CHECK:STDOUT:         requirement_impls %.loc3_42.2, %.loc3_54
@@ -1409,7 +1409,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %y.patt.loc4_29.1: @CallsWithType.%pattern_type (%pattern_type.51d) = at_binding_pattern y, %y.param_patt.loc4_29.1 [symbolic = %y.patt.loc4_29.2 (constants.%y.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_22.1: type = splice_block %.loc4_22.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_22.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc4_19.2: type = symbolic_binding U, 0 [symbolic = %U.loc4_19.1 (constants.%U)]
@@ -1421,17 +1421,17 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %T.patt.loc8_36.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_36.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_44.1: type = splice_block %.loc8_44.2 [concrete = constants.%type] {
-// CHECK:STDOUT:       %.Self.loc8_36: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen.loc8_36: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc8_39: type = type_literal type [concrete = type]
-// CHECK:STDOUT:       %.Self.loc8_44.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
-// CHECK:STDOUT:       %.Self.ref.loc8_50.1: %type = name_ref .Self, %.Self.loc8_44.1 [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen.loc8_44: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.ref.loc8_50.1: %type = name_ref .Self, %.Self.frozen.loc8_44 [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc8_62: type = type_literal type [concrete = type]
-// CHECK:STDOUT:       %.Self.as_type.loc8_50.1: type = facet_access_type %.Self.ref.loc8_50.1 [symbolic_self = constants.%.Self.as_type.bce]
-// CHECK:STDOUT:       %.loc8_50.1: type = converted %.Self.ref.loc8_50.1, %.Self.as_type.loc8_50.1 [symbolic_self = constants.%.Self.as_type.bce]
-// CHECK:STDOUT:       %.Self.loc8_44.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.e0b]
-// CHECK:STDOUT:       %.Self.ref.loc8_50.2: %type = name_ref .Self, %.Self.loc8_44.2 [symbolic_self = constants.%.Self.e0b]
-// CHECK:STDOUT:       %.Self.as_type.loc8_50.2: type = facet_access_type %.Self.ref.loc8_50.2 [symbolic_self = constants.%.Self.as_type.007]
-// CHECK:STDOUT:       %.loc8_50.2: type = converted %.Self.ref.loc8_50.1, %.Self.as_type.loc8_50.2 [symbolic_self = constants.%.Self.as_type.007]
+// CHECK:STDOUT:       %.Self.as_type.loc8_50.1: type = facet_access_type %.Self.ref.loc8_50.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.loc8_50.1: type = converted %.Self.ref.loc8_50.1, %.Self.as_type.loc8_50.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.ref.loc8_50.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.as_type.loc8_50.2: type = facet_access_type %.Self.ref.loc8_50.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %.loc8_50.2: type = converted %.Self.ref.loc8_50.1, %.Self.as_type.loc8_50.2 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc8_44.2: type = where_expr [concrete = constants.%type] {
 // CHECK:STDOUT:         requirement_base_facet_type %.loc8_39
 // CHECK:STDOUT:         requirement_impls %.loc8_50.2, %.loc8_62
@@ -1443,7 +1443,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %U.patt.loc9_27.1: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc9_27.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_30.1: type = splice_block %.loc9_30.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc9_30.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc9_27.2: type = symbolic_binding U, 0 [symbolic = %U.loc9_27.1 (constants.%U)]

@@ -53,6 +53,13 @@ class InstNamer::NamingContext {
   auto AddStructTypeInstName(StructType struct_ty, llvm::StringRef type_suffix,
                              llvm::StringRef name_suffix) -> void;
 
+  // Adds the instruction's name by `EntityNameId`.
+  //
+  // Prefer this over AddInstNameId when the inst has an EntityNameId, as the
+  // resulting name may have annotations added from the EntityName.
+  auto AddInstEntityNameId(EntityNameId entity_name_id,
+                           llvm::StringRef suffix = "") -> void;
+
   // Adds the instruction's name by `NameId`.
   auto AddInstNameId(NameId name_id, llvm::StringRef suffix = "") -> void {
     AddInstName((sem_ir().names().GetIRBaseName(name_id) + suffix).str());
@@ -854,6 +861,19 @@ auto InstNamer::NamingContext::AddStructTypeInstName(
   AddInstName(out.TakeStr());
 }
 
+auto InstNamer::NamingContext::AddInstEntityNameId(EntityNameId entity_name_id,
+                                                   llvm::StringRef suffix)
+    -> void {
+  RawStringOstream name;
+  const auto& entity_name = sem_ir().entity_names().Get(entity_name_id);
+  name << sem_ir().names().GetIRBaseName(entity_name.name_id);
+  if (entity_name.is_frozen_period_self) {
+    name << ".frozen";
+  }
+  name << suffix;
+  AddInstName(name.TakeStr());
+}
+
 auto InstNamer::NamingContext::AddIntOrFloatTypeName(char type_literal_prefix,
                                                      InstId bit_width_id,
                                                      llvm::StringRef suffix)
@@ -915,15 +935,15 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND_ANY(AnyBindingOrExportDecl, inst): {
-      AddInstNameId(sem_ir().entity_names().Get(inst.entity_name_id).name_id);
+      AddInstEntityNameId(inst.entity_name_id);
       return;
     }
     case CARBON_KIND_ANY(AnyBindingPattern, inst): {
-      auto name_id = NameId::Underscore;
       if (inst.entity_name_id.has_value()) {
-        name_id = sem_ir().entity_names().Get(inst.entity_name_id).name_id;
+        AddInstEntityNameId(inst.entity_name_id, ".patt");
+      } else {
+        AddInstNameId(NameId::Underscore, ".patt");
       }
-      AddInstNameId(name_id, ".patt");
       return;
     }
     case CARBON_KIND(BoolLiteral inst): {
@@ -1002,7 +1022,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(CppTemplateNameType inst): {
-      AddInstNameId(sem_ir().entity_names().Get(inst.name_id).name_id, ".type");
+      AddInstEntityNameId(inst.name_id, ".type");
       return;
     }
     case CustomWitness::Kind: {
@@ -1018,16 +1038,12 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(FacetAccessType inst): {
-      auto name_id = SemIR::NameId::None;
       if (auto name =
               sem_ir().insts().TryGetAs<NameRef>(inst.facet_value_inst_id)) {
-        name_id = name->name_id;
+        AddInstNameId(name->name_id, ".as_type");
       } else if (auto bind = sem_ir().insts().TryGetAs<SymbolicBinding>(
                      inst.facet_value_inst_id)) {
-        name_id = sem_ir().entity_names().Get(bind->entity_name_id).name_id;
-      }
-      if (name_id.has_value()) {
-        AddInstNameId(name_id, ".as_type");
+        AddInstEntityNameId(bind->entity_name_id, ".as_type");
       } else {
         AddInstName("as_type");
       }
@@ -1380,9 +1396,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       } else if (auto template_name_ty =
                      sem_ir().types().TryGetAs<CppTemplateNameType>(
                          inst.type_id)) {
-        AddInstNameId(
-            sem_ir().entity_names().Get(template_name_ty->name_id).name_id,
-            ".template");
+        AddInstEntityNameId(template_name_ty->name_id, ".template");
       } else {
         if (sem_ir().inst_blocks().Get(inst.elements_id).empty()) {
           AddInstName("empty_struct");
