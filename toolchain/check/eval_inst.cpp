@@ -324,8 +324,7 @@ static auto TryFindValueInRewriteConstraints(
     // an `ImplWitnessAccess` into the same interface that `inst` is indexing
     // into, then we can use its RHS as the value.
     auto rewrite_lhs_access =
-        context.insts().TryGetAs<SemIR::ImplWitnessAccess>(
-            ThawPeriodSelf(context, rewrite.lhs_id));
+        context.insts().TryGetAs<SemIR::ImplWitnessAccess>(rewrite.lhs_id);
     if (!rewrite_lhs_access) {
       continue;
     }
