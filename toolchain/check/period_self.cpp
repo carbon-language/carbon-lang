@@ -128,15 +128,15 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
     // Canonicalization not necessary; we are working with the constant
     // value already, and the query self in a witness is already
     // canonicalized.
-    if (auto get_as = TryGetAsPeriodSelf(context(), inst_id,
-                                         /*canonicalize=*/false)) {
+    if (auto period_self = TryGetAsPeriodSelf(context(), inst_id,
+                                              /*canonicalize=*/false)) {
       bool is_implicit_self_in_desigator = false;
       if (GetDesignatorState() == WitnessSelfNext) {
         is_implicit_self_in_desigator = true;
         designator_states_.back() = RebuildNext;
       }
 
-      if (get_as->is_frozen) {
+      if (period_self->is_frozen) {
         return FullySubstituted;
       }
 
@@ -527,13 +527,13 @@ auto ThawPeriodSelf(Context& context, SemIR::InstId inst_id) -> SemIR::InstId {
 
       // No need to canonicalize, Subst will recurse to find it and we want to
       // preserve structure.
-      if (auto get_as =
+      if (auto period_self =
               TryGetAsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
         auto entity_name =
-            context().entity_names().Get(get_as->bind.entity_name_id);
+            context().entity_names().Get(period_self->bind.entity_name_id);
         if (entity_name.is_frozen_period_self) {
           entity_name.is_frozen_period_self = false;
-          auto bind = get_as->bind;
+          auto bind = period_self->bind;
           bind.entity_name_id =
               context().entity_names().AddCanonical(entity_name);
           auto subst_id = Rebuild(inst_id, bind);
