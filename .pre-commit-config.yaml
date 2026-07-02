@@ -132,6 +132,12 @@ repos:
         language: python
         args: ['-i']
         additional_dependencies: ['clang-format==21.1.8']
+      - id: clangd-tidy
+        name: clangd-tidy
+        entry: clangd-tidy
+        types_or: [c++, def]
+        language: python
+        additional_dependencies: ['clangd-tidy==1.1.0.post2']
 
   - repo: local
     hooks:
