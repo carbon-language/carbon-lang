@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Proposal](#proposal)
 -   [Details](#details)
     -   [Lexical rule](#lexical-rule)
+    -   [Empty character literals and `'''`](#empty-character-literals-and-)
     -   [Examples](#examples)
     -   [Style guidance](#style-guidance)
     -   [Tooling](#tooling)
@@ -147,11 +148,47 @@ recognized only as full-line comments, since they are line-oriented markers; in
 trailing position `//@` is simply a `//` not followed by whitespace, and so is a
 reserved (currently invalid) comment as before.
 
-A block string literal's introducer line, consisting of the `'''` and an optional
-file type indicator, may also carry a trailing comment. Since the file type
-indicator runs to the end of the line, a trailing comment there is treated like
-trailing whitespace: it ends the file type indicator, is not itself recorded as a
-comment, and may contain `#` and `"` even though the indicator may not.
+A block string literal's introducer line, consisting of the `'''` and an
+optional file type indicator, may also carry a trailing comment. This is an
+ordinary trailing comment, and it behaves as a comment everywhere: syntax
+highlighting renders it as a comment, `carbon format` preserves it, tooling
+that inspects comments sees it, and `//` not followed by whitespace remains
+reserved on this line just as elsewhere, so it is not valid within a file type
+indicator. The one special rule is needed because the file type indicator
+would otherwise run to the end of the line: a trailing comment ends the file
+type indicator, just as trailing whitespace does. Because the comment is not
+part of the indicator, it may contain `'`, `#`, and `"` even though the
+indicator may not.
+
+### Empty character literals and `'''`
+
+Allowing a comment on the introducer line, and allowing it to contain `'`,
+creates a lexical ambiguity. Consider:
+
+```carbon
+'''foo // '
+```
+
+This could be a block string literal introducer with the file type `foo` and a
+comment, or an empty character literal `''` followed by the character literal
+`'foo // '`.
+
+This proposal resolves the ambiguity by specifying that a
+[character literal](/docs/design/lexical_conventions/character_literals.md) is
+never empty: `''` never begins a character literal, and so `'''` unambiguously
+begins (or ends) a block string literal. An empty character literal has no
+meaning or use case, and the toolchain already rejects `''` as an error, so
+this only codifies the existing behavior as the disambiguation rule; it does
+not change which programs are valid. It also lets a lexer classify `''`
+without further lookahead.
+
+With this rule the file type indicator no longer needs a restricted character
+set to be unambiguous, but this proposal keeps the restriction because it
+improves error recovery: an introducer line whose file type indicator would
+contain `'`, `#`, or `"` is diagnosed as an error and does not open a block
+string literal, so text like `let s: String = '''single-line?''';` produces a
+contained error rather than treating the remainder of the file as string
+content or as a sequence of character literals.
 
 ### Examples
 
@@ -210,6 +247,13 @@ The lexer records each trailing comment as a comment, marked as trailing so that
 tools can distinguish it from a comment that introduces the following code. A
 trailing comment is never coalesced with the full-line comments adjacent to it,
 even when they line up, because it belongs to the content on its own line.
+
+One exception in the toolchain today: a trailing comment on a block string
+literal's introducer line is carried within the string literal token's spelling
+rather than in the lexer's comment records, and `carbon format` preserves it
+verbatim as part of the literal. Surfacing it through the comment records, and
+diagnosing a reserved `//` sequence within a file type indicator, remain as
+toolchain follow-ups.
 
 `carbon format` keeps a trailing comment on the line it annotates, separated
 from the preceding content by a single space, rather than relocating it to its

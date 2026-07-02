@@ -38,6 +38,18 @@ fn Render(frame: Frame) {
   Flush();
 }                            // c) And a closing brace.
 
+// A trailing comment on a block string literal's introducer line is carried
+// within the literal token and is preserved, with or without a file type
+// indicator. A trailing comment after the literal's closing line stays
+// attached to that line.
+var query: String = '''sql // TODO: switch to a prepared statement
+  SELECT * FROM t
+  ''';
+
+var poem: String = ''' // No file type indicator, just a comment.
+  Roses are red.
+  '''; // A trailing comment after the closing line.
+
 // --- AUTOUPDATE-SPLIT
 
 // CHECK:STDOUT: // A comment
@@ -59,3 +71,13 @@ fn Render(frame: Frame) {
 // CHECK:STDOUT:   Draw (frame); // b) A function call,
 // CHECK:STDOUT:   Flush ();
 // CHECK:STDOUT: } // c) And a closing brace.
+// CHECK:STDOUT: // A trailing comment on a block string literal's introducer line is carried
+// CHECK:STDOUT: // within the literal token and is preserved, with or without a file type
+// CHECK:STDOUT: // indicator. A trailing comment after the literal's closing line stays
+// CHECK:STDOUT: // attached to that line.
+// CHECK:STDOUT: var query: String = '''sql // TODO: switch to a prepared statement
+// CHECK:STDOUT:   SELECT * FROM t
+// CHECK:STDOUT:   ''';
+// CHECK:STDOUT: var poem: String = ''' // No file type indicator, just a comment.
+// CHECK:STDOUT:   Roses are red.
+// CHECK:STDOUT:   '''; // A trailing comment after the closing line.

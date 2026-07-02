@@ -145,26 +145,18 @@ auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> Lex::TokenIndex {
     return *(position_ - 1);
   }
 
-  Lex::LineIndex root_line = tokens().GetLine(skip_root);
-  int root_line_indent = tokens().GetIndentColumnNumber(root_line);
+  int root_line_indent =
+      tokens().GetIndentColumnNumber(tokens().GetLine(skip_root));
 
-  // The lines a multi-line string literal spans are indented for the literal,
-  // not for the enclosing construct. A token after the closing delimiter (as in
-  // `''' + "more"`) can sit on a line less indented than the construct. We
-  // remember the closing line of the multi-line string literal being scanned
-  // and bypass the indentation end to the scan for that line.
-  Lex::LineIndex multiline_string_close_line = Lex::LineIndex::None;
-
-  // We will keep scanning through tokens on the same line as the root, lines
-  // with greater indentation than root's line, or a multi-line string literal's
-  // closing line.
+  // We keep scanning through tokens that don't start their own line and
+  // through lines indented more than the root's line. Tokens that don't start
+  // their line include the rest of the root's line and, because comments run
+  // to the end of the line, tokens after a multi-line string literal's
+  // closing delimiter (as in `''' + "more"`), both of which continue the
+  // construct regardless of indentation.
   auto keep_scanning = [&](Lex::TokenIndex t) {
-    Lex::LineIndex l = tokens().GetLine(t);
-    if (l == root_line || l == multiline_string_close_line) {
-      return true;
-    }
-
-    return tokens().GetIndentColumnNumber(l) > root_line_indent;
+    int indent = tokens().GetIndentColumnNumber(tokens().GetLine(t));
+    return tokens().GetColumnNumber(t) > indent || indent > root_line_indent;
   };
 
   do {
@@ -183,16 +175,6 @@ auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> Lex::TokenIndex {
     // Skip over any matching group of tokens().
     if (SkipMatchingGroup()) {
       continue;
-    }
-
-    // On stepping past a multi-line string literal, remember its closing line
-    // so that tokens following the closing delimiter continue the construct;
-    // see above.
-    if (PositionIs(Lex::TokenKind::StringLiteral)) {
-      Lex::LineIndex close_line = tokens().GetEndLoc(*position_).first;
-      if (close_line != tokens().GetLine(*position_)) {
-        multiline_string_close_line = close_line;
-      }
     }
 
     // Otherwise just step forward one token.

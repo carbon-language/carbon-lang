@@ -33,6 +33,10 @@ A character literal consists of a sequence of characters enclosed in single
 quotes (`'`).
 
 -   The contents must represent precisely one Unicode code point.
+-   A character literal is never empty. `''` does not begin a character
+    literal; it only occurs as part of the `'''` that begins or ends a
+    [block string literal](string_literals.md), which keeps `'''`
+    unambiguous.
 -   Hex escape sequences (`\xHH`) are supported but limited to values up to
     `0x7F` (where the UTF-8 code unit and Unicode code point values are
     identical). Values `0x80` and above are disallowed in character literals to
@@ -66,3 +70,5 @@ letters (for example, `\x0A`, not `\x0a`).
     [#1964: Character Literals](https://github.com/carbon-language/carbon-lang/pull/1964)
 -   Proposal
     [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)
+-   Proposal
+    [#7441: Trailing comments](https://github.com/carbon-language/carbon-lang/pull/7441)

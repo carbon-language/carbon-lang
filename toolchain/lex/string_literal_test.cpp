@@ -93,10 +93,12 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
       R"(##"""##)",
 
       // A trailing comment may follow the file type indicator on the opening
-      // line, and unlike the indicator it may contain '#' and '"'.
-      R"('''py // a #2 "trailing" comment
+      // line, and unlike the indicator it may contain '\'', '#', and '"'.
+      R"('''py // a #2 "trailing" comment isn't part of the indicator
       content
       ''')",
+      // TODO: `//` not followed by whitespace is reserved; diagnose it rather
+      // than lexing it as part of the file type indicator.
       R"('''//no-space-is-not-a-comment
       content
       ''')",
@@ -124,6 +126,13 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
       "#'''\n'''",
       R"(" \
       ")",
+      // A malformed `'''` introducer line is an invalid literal covering that
+      // line; it is never re-lexed as character literals, because a character
+      // literal is not allowed to be empty.
+      "'''not multi-line'''",
+      "'''bad#type\ncontent\n'''",
+      "'''no newline",
+      "#'''bad#type\ncontent\n'''#",
       // clang-format on
   };
 
@@ -161,8 +170,9 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
       {"'''\n\t  \t\n'''", "\n"},
 
       // A trailing comment after the file type indicator is ignored and does
-      // not affect the content, even when it contains '#' or '"'.
-      {"'''py // a #2 \"trailing\" comment\nhello\n'''", "hello\n"},
+      // not affect the content, even when it contains '\'', '#', or '"'.
+      {"'''py // a #2 \"trailing\" comment isn't an indicator\nhello\n'''",
+       "hello\n"},
 
       // Indent removal.
       {R"(

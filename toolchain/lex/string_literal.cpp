@@ -30,6 +30,10 @@ struct StringLiteral::Introducer {
   // The length of the introducer, including the file type indicator and
   // newline for a multi-line string literal.
   int prefix_size;
+  // Whether the introducer is valid. Only a `'''` introducer with a malformed
+  // introducer line is invalid; `prefix_size` then covers that line without
+  // its newline.
+  bool is_valid = true;
 
   // Lex the introducer for a string literal, after any '#'s.
   static auto Lex(llvm::StringRef source_text) -> std::optional<Introducer>;
@@ -60,8 +64,11 @@ auto StringLiteral::Introducer::Lex(llvm::StringRef source_text)
       llvm::StringRef rest = source_text.slice(indicator.size(), line_end);
       // Strip a trailing comment, if present. A `//` followed by whitespace or
       // the end of the line begins one; it is treated like trailing whitespace
-      // and is not part of the file type indicator. Because it is removed here,
-      // it may contain `#` or `"`, which the indicator itself may not.
+      // and is not part of the file type indicator. Because it is removed
+      // here, it may contain `'`, `#`, or `"`, which the indicator itself may
+      // not.
+      // TODO: Surface this comment through the lexer's comment records rather
+      // than only carrying it within the string literal token's spelling.
       for (size_t slashes = rest.find("//"); slashes != llvm::StringRef::npos;
            slashes = rest.find("//", slashes + 1)) {
         llvm::StringRef after_slashes = rest.drop_front(slashes + 2);
@@ -72,15 +79,33 @@ auto StringLiteral::Introducer::Lex(llvm::StringRef source_text)
         }
       }
       // The file type indicator is the remaining text with surrounding
-      // whitespace trimmed. It must contain neither '#' nor '"', which would be
-      // ambiguous with the hash and double-quoted string introducers.
+      // whitespace trimmed. It must not contain `'`, `#`, or `"`, which would
+      // be ambiguous with the closing delimiter and the hash and double-quoted
+      // string introducers.
+      // TODO: Diagnose a `//` within the indicator: `//` not followed by
+      // whitespace is reserved here as everywhere, rather than being valid
+      // indicator text.
       llvm::StringRef file_type = rest.trim(" \t");
-      if (file_type.find_first_of("#\"") == llvm::StringRef::npos) {
+      if (file_type.find_first_of("'#\"") == llvm::StringRef::npos) {
         // Include the newline in the prefix size.
         return Introducer{.kind = kind,
                           .terminator = indicator,
                           .prefix_size = static_cast<int>(line_end + 1)};
       }
+    }
+    if (kind == Kind::MultiLine) {
+      // The introducer line is malformed. A character literal is never empty,
+      // so the leading `''` cannot begin one and there is no other way to lex
+      // this text; return an invalid introducer for diagnosis. A `"""`
+      // introducer falls through instead: `""` is a valid empty string
+      // literal.
+      return Introducer{
+          .kind = kind,
+          .terminator = indicator,
+          .prefix_size = static_cast<int>(line_end == llvm::StringRef::npos
+                                              ? source_text.size()
+                                              : line_end),
+          .is_valid = false};
     }
   }
 
@@ -138,6 +163,17 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
 
   cursor += introducer->prefix_size;
   const int prefix_len = cursor;
+
+  if (!introducer->is_valid) {
+    // A malformed `'''` introducer line: return an invalid literal covering
+    // the introducer line so the caller can diagnose it.
+    llvm::StringRef text = source_text.take_front(prefix_len);
+    return StringLiteral(text, /*content=*/llvm::StringRef(),
+                         /*content_needs_validation=*/false, hash_level,
+                         introducer->kind,
+                         /*is_terminated=*/false,
+                         /*has_invalid_introducer=*/true);
+  }
 
   llvm::SmallString<16> terminator(introducer->terminator);
   llvm::SmallString<16> escape("\\");

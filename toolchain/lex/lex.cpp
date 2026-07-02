@@ -1186,6 +1186,17 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
     return lex_as_error();
   }
 
+  if (literal->has_invalid_introducer()) {
+    // The literal covers only the malformed introducer line, so it spans no
+    // lines and needs no line updates.
+    CARBON_DIAGNOSTIC(MultiLineStringInvalidIntroducer, Error,
+                      "invalid multi-line string literal introducer; a file "
+                      "type indicator may not contain `'`, `#`, or `\"`, and "
+                      "the content must begin on a new line");
+    emitter_.Emit(literal->text().begin(), MultiLineStringInvalidIntroducer);
+    return lex_as_error();
+  }
+
   // Update line and column information.
   if (literal->kind() != StringLiteral::Kind::SingleLine) {
     // A block string literal's content is indented to match its closing
