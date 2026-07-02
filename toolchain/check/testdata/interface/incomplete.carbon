@@ -153,6 +153,9 @@ interface A(T:! type) {
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self.3a0 [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness.ced: <witness> = lookup_impl_witness %.Self.3a0, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.aef: %C = impl_witness_access %I.lookup_impl_witness.ced, element0 [symbolic_self]
+// CHECK:STDOUT:   %.Self.f73: %I.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %I.lookup_impl_witness.78b: <witness> = lookup_impl_witness %.Self.f73, @I [symbolic_self]
+// CHECK:STDOUT:   %impl.elem0.cc9: %C = impl_witness_access %I.lookup_impl_witness.78b, element0 [symbolic_self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -171,12 +174,15 @@ interface A(T:! type) {
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc16_20: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %T.ref: %I.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0: %C = impl_witness_access constants.%I.lookup_impl_witness.ced, element0 [symbolic_self = constants.%impl.elem0.aef]
+// CHECK:STDOUT:     %impl.elem0.loc16_20.1: %C = impl_witness_access constants.%I.lookup_impl_witness.ced, element0 [symbolic_self = constants.%impl.elem0.aef]
+// CHECK:STDOUT:     %impl.elem0.loc16_20.2: %C = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.cc9]
 // CHECK:STDOUT:     %.loc16_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %impl.elem0.loc16_20.3: %C = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.cc9]
+// CHECK:STDOUT:     %impl.elem0.loc16_20.4: %C = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.cc9]
 // CHECK:STDOUT:     %.loc16_14: type = where_expr [concrete = <error>] {
 // CHECK:STDOUT:       requirement_base_facet_type %I.ref
-// CHECK:STDOUT:       requirement_rewrite <unexpected>.inst{{[0-9A-F]+}}.loc16_20, <error>
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc16_20.4, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

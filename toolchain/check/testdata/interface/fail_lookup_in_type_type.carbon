@@ -62,6 +62,8 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.197: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.as_type.bce: type = facet_access_type %.Self.197 [symbolic_self]
+// CHECK:STDOUT:   %.Self.e0b: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.as_type.007: type = facet_access_type %.Self.e0b [symbolic_self]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -75,14 +77,18 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %.loc8_9: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
-// CHECK:STDOUT:     %.Self.ref: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:     %.Self.loc8_14.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]
+// CHECK:STDOUT:     %.Self.ref.loc8_20.1: %type = name_ref .Self, %.Self.loc8_14.1 [symbolic_self = constants.%.Self.197]
 // CHECK:STDOUT:     %.loc8_32: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type.bce]
-// CHECK:STDOUT:     %.loc8_20: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type.bce]
+// CHECK:STDOUT:     %.Self.as_type.loc8_20.1: type = facet_access_type %.Self.ref.loc8_20.1 [symbolic_self = constants.%.Self.as_type.bce]
+// CHECK:STDOUT:     %.loc8_20.1: type = converted %.Self.ref.loc8_20.1, %.Self.as_type.loc8_20.1 [symbolic_self = constants.%.Self.as_type.bce]
+// CHECK:STDOUT:     %.Self.loc8_14.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.e0b]
+// CHECK:STDOUT:     %.Self.ref.loc8_20.2: %type = name_ref .Self, %.Self.loc8_14.2 [symbolic_self = constants.%.Self.e0b]
+// CHECK:STDOUT:     %.Self.as_type.loc8_20.2: type = facet_access_type %.Self.ref.loc8_20.2 [symbolic_self = constants.%.Self.as_type.007]
+// CHECK:STDOUT:     %.loc8_20.2: type = converted %.Self.ref.loc8_20.1, %.Self.as_type.loc8_20.2 [symbolic_self = constants.%.Self.as_type.007]
 // CHECK:STDOUT:     %.loc8_14: type = where_expr [concrete = constants.%type] {
 // CHECK:STDOUT:       requirement_base_facet_type %.loc8_9
-// CHECK:STDOUT:       requirement_impls <unexpected>.inst{{[0-9A-F]+}}.loc8_20, %.loc8_32
+// CHECK:STDOUT:       requirement_impls %.loc8_20.2, %.loc8_32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %missing.ref: <error> = name_ref missing, <error> [concrete = <error>]
 // CHECK:STDOUT:   }

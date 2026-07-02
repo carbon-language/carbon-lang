@@ -536,22 +536,60 @@ static auto CheckForNestedWhereInRequirementsAfterEval(
   return context.inst_blocks().Add(checked_requirements);
 }
 
-static auto ThawPeriodSelfInInstBlock(Context& context,
-                                      SemIR::InstBlockId block_id)
+static auto ThawPeriodSelfInRequirements(Context& context,
+                                         SemIR::InstBlockId requirements_id)
     -> SemIR::InstBlockId {
-  llvm::SmallVector<SemIR::InstId> ids(context.inst_blocks().Get(block_id));
   bool changed = false;
+
+  auto thaw = [&](SemIR::InstId req_id, auto req) {
+    bool changed_local = false;
+    auto subst_lhs_id = ThawPeriodSelf(context, req.lhs_id);
+    if (subst_lhs_id != req.lhs_id) {
+      changed_local = changed = true;
+      req.lhs_id = subst_lhs_id;
+    }
+    auto subst_rhs_id = ThawPeriodSelf(context, req.rhs_id);
+    if (subst_rhs_id != req.rhs_id) {
+      changed_local = changed = true;
+      req.rhs_id = subst_rhs_id;
+    }
+    if (changed_local) {
+      return AddInstInNoBlock(context,
+                              SemIR::LocIdAndInst::RuntimeVerified(
+                                  context.sem_ir(), SemIR::LocId(req_id), req));
+    }
+    return req_id;
+  };
+
+  llvm::SmallVector<SemIR::InstId> ids(
+      context.inst_blocks().Get(requirements_id));
   for (SemIR::InstId& inst_id : ids) {
-    auto subst_id = ThawPeriodSelf(context, inst_id);
-    if (subst_id != inst_id) {
-      changed = true;
-      inst_id = subst_id;
+    auto inst = context.insts().Get(inst_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::RequirementBaseFacetType _): {
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementEquivalent equiv): {
+        inst_id = thaw(inst_id, equiv);
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementRewrite rewrite): {
+        inst_id = thaw(inst_id, rewrite);
+        break;
+      }
+      case CARBON_KIND(SemIR::RequirementImpls impls): {
+        inst_id = thaw(inst_id, impls);
+        break;
+      }
+      default:
+        CARBON_FATAL("unexpected inst {0} in `where` requirements block", inst);
     }
   }
+
   if (changed) {
     return context.inst_blocks().Add(ids);
   }
-  return block_id;
+  return requirements_id;
 }
 
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
@@ -571,7 +609,7 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   }
   requirements_id = CheckForNestedWhereInRequirementsAfterEval(
       context, where_loc, requirements_id);
-  requirements_id = ThawPeriodSelfInInstBlock(context, requirements_id);
+  requirements_id = ThawPeriodSelfInRequirements(context, requirements_id);
 
   AddInstAndPush<SemIR::WhereExpr>(
       context, node_id,

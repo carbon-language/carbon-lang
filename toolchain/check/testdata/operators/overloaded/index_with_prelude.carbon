@@ -173,11 +173,14 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %.loc8_47.1: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_47.2: %IndexWith.assoc_type.144 = specific_constant imports.%Core.import_ref.bc6, @IndexWith.WithSelf(constants.%SubscriptType.f8f, constants.%.Self.ffd) [concrete = constants.%assoc0.c96]
 // CHECK:STDOUT:     %ElementType.ref.loc8_47: %IndexWith.assoc_type.144 = name_ref ElementType, %.loc8_47.2 [concrete = constants.%assoc0.c96]
-// CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.a61, element0 [symbolic_self = constants.%impl.elem0.e0a]
+// CHECK:STDOUT:     %impl.elem0.loc8_47.1: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.a61, element0 [symbolic_self = constants.%impl.elem0.e0a]
+// CHECK:STDOUT:     %impl.elem0.loc8_47.2: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.2a2, element0 [symbolic_self = constants.%impl.elem0.fc1]
 // CHECK:STDOUT:     %ElementType.ref.loc8_62: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType]
+// CHECK:STDOUT:     %impl.elem0.loc8_47.3: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.2a2, element0 [symbolic_self = constants.%impl.elem0.fc1]
+// CHECK:STDOUT:     %impl.elem0.loc8_47.4: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.2a2, element0 [symbolic_self = constants.%impl.elem0.fc1]
 // CHECK:STDOUT:     %.loc8_41: type = where_expr [concrete = constants.%IndexWith_where.type] {
 // CHECK:STDOUT:       requirement_base_facet_type %IndexWith.type
-// CHECK:STDOUT:       requirement_rewrite <unexpected>.inst{{[0-9A-F]+}}.loc8_47, %ElementType.ref.loc8_62
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc8_47.4, %ElementType.ref.loc8_62
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
@@ -378,11 +381,14 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %.loc8_54.1: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_54.2: %IndexWith.assoc_type.ecd = specific_constant imports.%Core.import_ref.bc6, @IndexWith.WithSelf(Core.IntLiteral, constants.%.Self.1ee) [concrete = constants.%assoc0.abe]
 // CHECK:STDOUT:     %ElementType.ref: %IndexWith.assoc_type.ecd = name_ref ElementType, %.loc8_54.2 [concrete = constants.%assoc0.abe]
-// CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.5cc, element0 [symbolic_self = constants.%impl.elem0.b24]
+// CHECK:STDOUT:     %impl.elem0.loc8_54.1: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.5cc, element0 [symbolic_self = constants.%impl.elem0.b24]
+// CHECK:STDOUT:     %impl.elem0.loc8_54.2: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.c41, element0 [symbolic_self = constants.%impl.elem0.7cb]
 // CHECK:STDOUT:     %C.ref.loc8_69: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %impl.elem0.loc8_54.3: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.c41, element0 [symbolic_self = constants.%impl.elem0.7cb]
+// CHECK:STDOUT:     %impl.elem0.loc8_54.4: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.c41, element0 [symbolic_self = constants.%impl.elem0.7cb]
 // CHECK:STDOUT:     %.loc8_48: type = where_expr [concrete = constants.%IndexWith_where.type] {
 // CHECK:STDOUT:       requirement_base_facet_type %IndexWith.type
-// CHECK:STDOUT:       requirement_rewrite <unexpected>.inst{{[0-9A-F]+}}.loc8_54, %C.ref.loc8_69
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc8_54.4, %C.ref.loc8_69
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
@@ -573,11 +579,14 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %.loc8_47.1: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_47.2: %IndexWith.assoc_type.144 = specific_constant imports.%Core.import_ref.bc6, @IndexWith.WithSelf(constants.%SubscriptType.f8f, constants.%.Self.ffd) [concrete = constants.%assoc0.c96]
 // CHECK:STDOUT:     %ElementType.ref.loc8_47: %IndexWith.assoc_type.144 = name_ref ElementType, %.loc8_47.2 [concrete = constants.%assoc0.c96]
-// CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.a61, element0 [symbolic_self = constants.%impl.elem0.e0a]
+// CHECK:STDOUT:     %impl.elem0.loc8_47.1: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.a61, element0 [symbolic_self = constants.%impl.elem0.e0a]
+// CHECK:STDOUT:     %impl.elem0.loc8_47.2: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.2a2, element0 [symbolic_self = constants.%impl.elem0.fc1]
 // CHECK:STDOUT:     %ElementType.ref.loc8_62: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType]
+// CHECK:STDOUT:     %impl.elem0.loc8_47.3: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.2a2, element0 [symbolic_self = constants.%impl.elem0.fc1]
+// CHECK:STDOUT:     %impl.elem0.loc8_47.4: type = impl_witness_access constants.%IndexWith.lookup_impl_witness.2a2, element0 [symbolic_self = constants.%impl.elem0.fc1]
 // CHECK:STDOUT:     %.loc8_41: type = where_expr [concrete = constants.%IndexWith_where.type] {
 // CHECK:STDOUT:       requirement_base_facet_type %IndexWith.type
-// CHECK:STDOUT:       requirement_rewrite <unexpected>.inst{{[0-9A-F]+}}.loc8_47, %ElementType.ref.loc8_62
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc8_47.4, %ElementType.ref.loc8_62
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {

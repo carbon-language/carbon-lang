@@ -482,13 +482,16 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc20_37: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %Assoc.ref: %I.assoc_type = name_ref Assoc, imports.%Main.import_ref.f32 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0: %Y.type = impl_witness_access constants.%I.lookup_impl_witness.ced, element0 [symbolic_self = constants.%impl.elem0.f7a]
+// CHECK:STDOUT:     %impl.elem0.loc20_37.1: %Y.type = impl_witness_access constants.%I.lookup_impl_witness.ced, element0 [symbolic_self = constants.%impl.elem0.f7a]
+// CHECK:STDOUT:     %impl.elem0.loc20_37.2: %Y.type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.aef]
 // CHECK:STDOUT:     %.loc20_47.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %Y.facet: %Y.type = facet_value constants.%empty_tuple.type, (constants.%Y.impl_witness.2e8) [concrete = constants.%Y.facet]
 // CHECK:STDOUT:     %.loc20_47.2: %Y.type = converted %.loc20_47.1, %Y.facet [concrete = constants.%Y.facet]
+// CHECK:STDOUT:     %impl.elem0.loc20_37.3: %Y.type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.aef]
+// CHECK:STDOUT:     %impl.elem0.loc20_37.4: %Y.type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.aef]
 // CHECK:STDOUT:     %.loc20_31: type = where_expr [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       requirement_base_facet_type %I.ref
-// CHECK:STDOUT:       requirement_rewrite <unexpected>.inst{{[0-9A-F]+}}.loc20_37, %.loc20_47.2
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc20_37.4, %.loc20_47.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc20_18: type = splice_block %E.ref [concrete = constants.%E] {
 // CHECK:STDOUT:       %.Self.loc20_15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.197]

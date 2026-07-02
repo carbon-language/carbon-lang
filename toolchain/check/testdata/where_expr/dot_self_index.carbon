@@ -101,11 +101,14 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %.loc21_41.2: @H.%Empty.assoc_type (%Empty.assoc_type.c44b55.2) = specific_constant @A.%assoc0, @Empty.WithSelf(constants.%T, constants.%.Self.063) [symbolic = %assoc0 (constants.%assoc0.3a7cb1.2)]
 // CHECK:STDOUT:       %A.ref: @H.%Empty.assoc_type (%Empty.assoc_type.c44b55.2) = name_ref A, %.loc21_41.2 [symbolic = %assoc0 (constants.%assoc0.3a7cb1.2)]
 // CHECK:STDOUT:       %impl.elem0.loc21_41.3: type = impl_witness_access constants.%Empty.lookup_impl_witness.88a, element0 [symbolic = %impl.elem0.loc21_41.1 (constants.%impl.elem0.c2e)]
+// CHECK:STDOUT:       %impl.elem0.loc21_41.4: type = impl_witness_access constants.%Empty.lookup_impl_witness.67b, element0 [symbolic = %impl.elem0.loc21_41.2 (constants.%impl.elem0.d8a)]
 // CHECK:STDOUT:       %T.ref.loc21_46: type = name_ref T, %T.loc21_7.2 [symbolic = %T.loc21_7.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc21_47.2: type = ptr_type %T.ref.loc21_46 [symbolic = %ptr.loc21_47.1 (constants.%ptr.e8f)]
+// CHECK:STDOUT:       %impl.elem0.loc21_41.5: type = impl_witness_access constants.%Empty.lookup_impl_witness.67b, element0 [symbolic = %impl.elem0.loc21_41.2 (constants.%impl.elem0.d8a)]
+// CHECK:STDOUT:       %impl.elem0.loc21_41.6: type = impl_witness_access constants.%Empty.lookup_impl_witness.67b, element0 [symbolic = %impl.elem0.loc21_41.2 (constants.%impl.elem0.d8a)]
 // CHECK:STDOUT:       %.loc21_35.2: type = where_expr [symbolic = %Empty_where.type (constants.%Empty_where.type.696)] {
 // CHECK:STDOUT:         requirement_base_facet_type %Empty.type.loc21_33.2
-// CHECK:STDOUT:         requirement_rewrite <unexpected>.inst{{[0-9A-F]+}}.loc21_41, %ptr.loc21_47.2
+// CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc21_41.6, %ptr.loc21_47.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.696) = wrapper_binding U, %U.param
