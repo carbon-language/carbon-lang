@@ -284,7 +284,7 @@ struct Worklist {
     } else {
       Add(entity_name.name_id);
       if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
-        AddInteger(entity_name.is_active_period_self);
+        AddInteger(entity_name.is_frozen_period_self);
       }
     }
     Add(entity_name.parent_scope_id);

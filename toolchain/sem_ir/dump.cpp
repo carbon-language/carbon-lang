@@ -34,8 +34,8 @@ static auto DumpNameOfEntityName(const File& file,
   RawStringOstream out;
   out << " `";
   out << file.names().GetFormatted(entity_name.name_id);
-  if (entity_name.is_active_period_self) {
-    out << "[active]";
+  if (entity_name.is_frozen_period_self) {
+    out << "[frozen]";
   }
   out << "`";
   return out.TakeStr();

@@ -188,7 +188,7 @@ static auto PerformImplWitnessAccessAndSubstitute(
   if (!context.where_stack().empty()) {
     if (auto result = context.where_stack().back().rewrites.Lookup(
             context.constant_values().Get(
-                MakePeriodSelfInactive(context, access_id)))) {
+                ThawPeriodSelf(context, access_id)))) {
       return GetOrAddInst<SemIR::ImplWitnessAccessSubstituted>(
           context, loc_id,
           {.type_id = access.type_id,

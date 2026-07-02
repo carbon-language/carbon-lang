@@ -19,7 +19,7 @@ struct EntityName : public Printable<EntityName> {
         << ", index: " << bind_index_value << ", is_template: " << is_template
         << ", is_unused: " << is_unused;
     if (name_id == SemIR::NameId::PeriodSelf) {
-      out << ", is_active_period_self: " << is_active_period_self << "}";
+      out << ", is_frozen_period_self: " << is_frozen_period_self << "}";
     }
     out << ", form: " << form_id << "}";
   }
@@ -65,7 +65,7 @@ struct EntityName : public Printable<EntityName> {
   // Whether this binding is a `.Self` symbolic binding, within the scope of the
   // `.Self` name during facet type under construction. Such bindings cannot be
   // replaced during identify.
-  bool is_active_period_self : 1 = false;
+  bool is_frozen_period_self : 1 = false;
 
   // The declared form of the binding. This is guaranteed to be set for
   // `:?` bindings, and may be set for other binding kinds as well.
@@ -85,14 +85,14 @@ struct EntityNameStore
   // Adds an entity name for a symbolic binding.
   auto AddSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,
                               CompileTimeBindIndex bind_index, bool is_template,
-                              bool is_unused, bool is_active_period_self)
+                              bool is_unused, bool is_frozen_period_self)
       -> EntityNameId {
     EntityName name = {.name_id = name_id,
                        .parent_scope_id = parent_scope_id,
                        .bind_index_value = bind_index.index,
                        .is_template = is_template,
                        .is_unused = is_unused,
-                       .is_active_period_self = is_active_period_self};
+                       .is_frozen_period_self = is_frozen_period_self};
     CARBON_CHECK(name.bind_index_value == bind_index.index,
                  "Bind index out of range for bit-field: {0}",
                  bind_index.index);

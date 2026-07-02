@@ -25,7 +25,7 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,
   auto entity_name_id = context.entity_names().AddCanonical(
       {.name_id = SemIR::NameId::PeriodSelf,
        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-       .is_active_period_self = true});
+       .is_frozen_period_self = true});
   auto inst_id = AddInst<SemIR::SymbolicBinding>(
       context, loc_id,
       {
@@ -44,7 +44,7 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,
 
 struct GetAsResult {
   SemIR::SymbolicBinding bind;
-  bool is_active;
+  bool is_frozen;
 };
 
 static auto TryGetAsPeriodSelf(Context& context, SemIR::InstId inst_id,
@@ -61,7 +61,7 @@ static auto TryGetAsPeriodSelf(Context& context, SemIR::InstId inst_id,
           context.insts().TryGetAs<SemIR::SymbolicBinding>(query_inst_id)) {
     const auto& entity_name = context.entity_names().Get(bind->entity_name_id);
     if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
-      return {{*bind, entity_name.is_active_period_self}};
+      return {{*bind, entity_name.is_frozen_period_self}};
     }
   }
   return std::nullopt;
@@ -136,7 +136,7 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
         designator_states_.back() = RebuildNext;
       }
 
-      if (get_as->is_active) {
+      if (get_as->is_frozen) {
         return FullySubstituted;
       }
 
@@ -509,8 +509,7 @@ auto IsPeriodSelf(Context& context, SemIR::InstId inst_id, bool canonicalize)
   return TryGetAsPeriodSelf(context, inst_id, canonicalize).has_value();
 }
 
-auto MakePeriodSelfInactive(Context& context, SemIR::InstId inst_id)
-    -> SemIR::InstId {
+auto ThawPeriodSelf(Context& context, SemIR::InstId inst_id) -> SemIR::InstId {
   class MakeInactiveCallbacks : public SubstInstCallbacks {
    public:
     explicit MakeInactiveCallbacks(Context* context)
@@ -532,8 +531,8 @@ auto MakePeriodSelfInactive(Context& context, SemIR::InstId inst_id)
               TryGetAsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
         auto entity_name =
             context().entity_names().Get(get_as->bind.entity_name_id);
-        if (entity_name.is_active_period_self) {
-          entity_name.is_active_period_self = false;
+        if (entity_name.is_frozen_period_self) {
+          entity_name.is_frozen_period_self = false;
           auto bind = get_as->bind;
           bind.entity_name_id =
               context().entity_names().AddCanonical(entity_name);

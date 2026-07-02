@@ -145,7 +145,9 @@ static auto HandleAnyBindingPatternType(Context& context,
 
   auto [node_id, original_inst_id] = context.node_stack().PopExprWithNodeId();
 
-  original_inst_id = MakePeriodSelfInactive(context, original_inst_id);
+  // We are leaving the scope of the `.Self`; they should no longer be frozen in
+  // the binding's type.
+  original_inst_id = ThawPeriodSelf(context, original_inst_id);
 
   if (node_kind == Parse::FormBindingPattern::Kind) {
     auto as_form = FormExprAsForm(context, node_id, original_inst_id);

@@ -218,7 +218,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     // `ImplWitnessAccess` that refers to the rewrite constraint would have been
     // created, and the value of the constraint will be used instead.
     context.where_stack().back().rewrites.Insert(
-        context.constant_values().Get(MakePeriodSelfInactive(
+        context.constant_values().Get(ThawPeriodSelf(
             context, GetImplWitnessAccessWithoutSubstitution(context, lhs_id))),
         rhs_id);
   }
@@ -536,6 +536,24 @@ static auto CheckForNestedWhereInRequirementsAfterEval(
   return context.inst_blocks().Add(checked_requirements);
 }
 
+static auto ThawPeriodSelfInInstBlock(Context& context,
+                                      SemIR::InstBlockId block_id)
+    -> SemIR::InstBlockId {
+  llvm::SmallVector<SemIR::InstId> ids(context.inst_blocks().Get(block_id));
+  bool changed = false;
+  for (SemIR::InstId& inst_id : ids) {
+    auto subst_id = ThawPeriodSelf(context, inst_id);
+    if (subst_id != inst_id) {
+      changed = true;
+      inst_id = subst_id;
+    }
+  }
+  if (changed) {
+    return context.inst_blocks().Add(ids);
+  }
+  return block_id;
+}
+
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   auto where_loc = context.where_stack().back().loc_id;
   context.where_stack().pop_back();
@@ -553,22 +571,7 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   }
   requirements_id = CheckForNestedWhereInRequirementsAfterEval(
       context, where_loc, requirements_id);
-
-  {
-    llvm::SmallVector<SemIR::InstId> reqs(
-        context.inst_blocks().Get(requirements_id));
-    bool changed = false;
-    for (SemIR::InstId& inst_id : reqs) {
-      auto subst_id = MakePeriodSelfInactive(context, inst_id);
-      if (subst_id != inst_id) {
-        changed = true;
-        inst_id = subst_id;
-      }
-    }
-    if (changed) {
-      requirements_id = context.inst_blocks().Add(reqs);
-    }
-  }
+  requirements_id = ThawPeriodSelfInInstBlock(context, requirements_id);
 
   AddInstAndPush<SemIR::WhereExpr>(
       context, node_id,
