@@ -1931,7 +1931,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %obj.patt: %pattern_type.f0f = ref_binding_pattern obj [concrete = constants.%obj.patt]
 // CHECK:STDOUT:     %obj.var_patt: %pattern_type.f0f = var_pattern %obj.patt [concrete = constants.%obj.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %obj.var: ref %AnyParam.591 = var %obj.var_patt
+// CHECK:STDOUT:   %obj.var: ref %AnyParam.591 = var_storage %obj.var_patt
 // CHECK:STDOUT:   %.loc13_58.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc13_58.2: init %AnyParam.591 to %obj.var = class_init () [concrete = constants.%AnyParam.val]
 // CHECK:STDOUT:   %.loc13_3: init %AnyParam.591 = converted %.loc13_58.1, %.loc13_58.2 [concrete = constants.%AnyParam.val]
@@ -2175,7 +2175,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %obj.patt: %pattern_type.f0f = ref_binding_pattern obj [concrete = constants.%obj.patt]
 // CHECK:STDOUT:     %obj.var_patt: %pattern_type.f0f = var_pattern %obj.patt [concrete = constants.%obj.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %obj.var: ref %AnyParam.591 = var %obj.var_patt
+// CHECK:STDOUT:   %obj.var: ref %AnyParam.591 = var_storage %obj.var_patt
 // CHECK:STDOUT:   %.loc9_50.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_50.2: init %AnyParam.591 to %obj.var = class_init () [concrete = constants.%AnyParam.val]
 // CHECK:STDOUT:   %.loc8: init %AnyParam.591 = converted %.loc9_50.1, %.loc9_50.2 [concrete = constants.%AnyParam.val]
@@ -2463,7 +2463,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %obj.patt: %pattern_type.005 = ref_binding_pattern obj [concrete = constants.%obj.patt]
 // CHECK:STDOUT:     %obj.var_patt: %pattern_type.005 = var_pattern %obj.patt [concrete = constants.%obj.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %obj.var: ref %AnyParam.21c = var %obj.var_patt
+// CHECK:STDOUT:   %obj.var: ref %AnyParam.21c = var_storage %obj.var_patt
 // CHECK:STDOUT:   %.loc13_54.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc13_54.2: init %AnyParam.21c to %obj.var = class_init () [concrete = constants.%AnyParam.val]
 // CHECK:STDOUT:   %.loc13_3: init %AnyParam.21c = converted %.loc13_54.1, %.loc13_54.2 [concrete = constants.%AnyParam.val]
@@ -2701,7 +2701,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %obj.patt: %pattern_type.005 = ref_binding_pattern obj [concrete = constants.%obj.patt]
 // CHECK:STDOUT:     %obj.var_patt: %pattern_type.005 = var_pattern %obj.patt [concrete = constants.%obj.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %obj.var: ref %AnyParam.21c = var %obj.var_patt
+// CHECK:STDOUT:   %obj.var: ref %AnyParam.21c = var_storage %obj.var_patt
 // CHECK:STDOUT:   %.loc8_74.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_74.2: init %AnyParam.21c to %obj.var = class_init () [concrete = constants.%AnyParam.val]
 // CHECK:STDOUT:   %.loc8_3: init %AnyParam.21c = converted %.loc8_74.1, %.loc8_74.2 [concrete = constants.%AnyParam.val]

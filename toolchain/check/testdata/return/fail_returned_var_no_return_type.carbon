@@ -87,7 +87,7 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:     %v.patt: %pattern_type.cb1 = ref_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.cb1 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt
+// CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var_storage %v.var_patt
 // CHECK:STDOUT:   %.loc12_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_32.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_12: init %empty_tuple.type = converted %.loc12_32.1, %.loc12_32.2 [concrete = constants.%empty_tuple]
@@ -143,7 +143,7 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:     %v.patt: %pattern_type.cb1 = ref_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.cb1 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt
+// CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var_storage %v.var_patt
 // CHECK:STDOUT:   %.loc12_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_32.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_12: init %empty_tuple.type = converted %.loc12_32.1, %.loc12_32.2 [concrete = constants.%empty_tuple]

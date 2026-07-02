@@ -1093,7 +1093,7 @@ fn F() {
 // CHECK:STDOUT:     %c.patt: %pattern_type.bbc = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.bbc = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
+// CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc8_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc8_23: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
@@ -1447,7 +1447,7 @@ fn F() {
 // CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete = constants.%c1.patt]
 // CHECK:STDOUT:     %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete = constants.%c1.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1.var: ref %C = var %c1.var_patt
+// CHECK:STDOUT:   %c1.var: ref %C = var_storage %c1.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc8_24: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
@@ -1465,7 +1465,7 @@ fn F() {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:     %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete = constants.%c2.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2.var: ref %C = var %c2.var_patt
+// CHECK:STDOUT:   %c2.var: ref %C = var_storage %c2.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc9_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc9_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc9_24: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
@@ -2208,7 +2208,7 @@ fn F() {
 // CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete = constants.%c1.patt]
 // CHECK:STDOUT:     %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete = constants.%c1.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1.var: ref %C = var %c1.var_patt
+// CHECK:STDOUT:   %c1.var: ref %C = var_storage %c1.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc15_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc15_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc15_24: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
@@ -2226,7 +2226,7 @@ fn F() {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:     %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete = constants.%c2.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2.var: ref %C = var %c2.var_patt
+// CHECK:STDOUT:   %c2.var: ref %C = var_storage %c2.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc16_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc16_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc16_24: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
@@ -2369,7 +2369,7 @@ fn F() {
 // CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete = constants.%c1.patt]
 // CHECK:STDOUT:     %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete = constants.%c1.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1.var: ref %C = var %c1.var_patt
+// CHECK:STDOUT:   %c1.var: ref %C = var_storage %c1.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc12_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc12_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc12_24: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
@@ -2387,7 +2387,7 @@ fn F() {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:     %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete = constants.%c2.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2.var: ref %C = var %c2.var_patt
+// CHECK:STDOUT:   %c2.var: ref %C = var_storage %c2.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc13_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc13_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc13_24: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
@@ -3186,7 +3186,7 @@ fn F() {
 // CHECK:STDOUT:     %c1.patt: %pattern_type.bbc = ref_binding_pattern c1 [concrete = constants.%c1.patt]
 // CHECK:STDOUT:     %c1.var_patt: %pattern_type.bbc = var_pattern %c1.patt [concrete = constants.%c1.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1.var: ref %C = var %c1.var_patt
+// CHECK:STDOUT:   %c1.var: ref %C = var_storage %c1.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc8_24: %C.C.cpp_overload_set.type = name_ref C, imports.%C.C.cpp_overload_set.value [concrete = constants.%C.C.cpp_overload_set.value]
@@ -3204,7 +3204,7 @@ fn F() {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.bbc = ref_binding_pattern c2 [concrete = constants.%c2.patt]
 // CHECK:STDOUT:     %c2.var_patt: %pattern_type.bbc = var_pattern %c2.patt [concrete = constants.%c2.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2.var: ref %C = var %c2.var_patt
+// CHECK:STDOUT:   %c2.var: ref %C = var_storage %c2.var_patt
 // CHECK:STDOUT:   %c1.ref.loc9: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %.loc9_3: ref %C = splice_block %c2.var {}
 // CHECK:STDOUT:   %addr.loc9: %ptr.0a2 = addr_of %.loc9_3
@@ -3220,7 +3220,7 @@ fn F() {
 // CHECK:STDOUT:     %c3.patt: %pattern_type.bbc = ref_binding_pattern c3 [concrete = constants.%c3.patt]
 // CHECK:STDOUT:     %c3.var_patt: %pattern_type.bbc = var_pattern %c3.patt [concrete = constants.%c3.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c3.var: ref %C = var %c3.var_patt
+// CHECK:STDOUT:   %c3.var: ref %C = var_storage %c3.var_patt
 // CHECK:STDOUT:   %c1.ref.loc10: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref: ref %C = name_ref c2, %c2
 // CHECK:STDOUT:   %.loc10_3: ref %C = splice_block %c3.var {}

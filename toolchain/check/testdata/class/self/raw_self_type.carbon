@@ -165,7 +165,7 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:     %Self.patt: %pattern_type.8c5 = ref_binding_pattern r#Self [concrete = constants.%Self.patt]
 // CHECK:STDOUT:     %Self.var_patt: %pattern_type.8c5 = var_pattern %Self.patt [concrete = constants.%Self.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Self.var: ref %ptr.7ee = var %Self.var_patt
+// CHECK:STDOUT:   %Self.var: ref %ptr.7ee = var_storage %Self.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%ptr.7ee, (constants.%DefaultOrUnformed.impl_witness.a7b) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc17_22.1: %DefaultOrUnformed.type = converted constants.%ptr.7ee, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc17_22.1 [concrete = constants.%ptr.7ee]
@@ -182,7 +182,7 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:     %p.patt: %pattern_type.8c5 = ref_binding_pattern p [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.8c5 = var_pattern %p.patt [concrete = constants.%p.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %ptr.7ee = var %p.var_patt
+// CHECK:STDOUT:   %p.var: ref %ptr.7ee = var_storage %p.var_patt
 // CHECK:STDOUT:   %Self.ref.loc18_27: ref %ptr.7ee = name_ref r#Self, %Self
 // CHECK:STDOUT:   %.loc18_27: %ptr.7ee = acquire_value %Self.ref.loc18_27
 // CHECK:STDOUT:   %impl.elem0: %.4c3 = impl_witness_access constants.%Copy.impl_witness.fa4, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8fa]

@@ -114,7 +114,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     %inst.patt: %pattern_type = ref_binding_pattern inst [concrete = constants.%inst.patt]
 // CHECK:STDOUT:     %inst.var_patt: %pattern_type = var_pattern %inst.patt [concrete = constants.%inst.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst.var: ref %C = var %inst.var_patt [concrete]
+// CHECK:STDOUT:   %inst.var: ref %C = var_storage %inst.var_patt [concrete]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Test.A [concrete = constants.%C]
 // CHECK:STDOUT:   %inst: ref %C = wrapper_binding inst, %inst.var [concrete = %inst.var]
 // CHECK:STDOUT: }
@@ -157,7 +157,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     %inst.patt: <error> = ref_binding_pattern inst [concrete = <error>]
 // CHECK:STDOUT:     %inst.var_patt: <error> = var_pattern %inst.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst.var: ref <error> = var %inst.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %inst.var: ref <error> = var_storage %inst.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [concrete = <error>]
 // CHECK:STDOUT:   %inst: <error> = wrapper_binding inst, <error> [concrete = <error>]
 // CHECK:STDOUT: }
@@ -193,7 +193,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     %inst.patt: <error> = ref_binding_pattern inst [concrete = <error>]
 // CHECK:STDOUT:     %inst.var_patt: <error> = var_pattern %inst.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst.var: ref <error> = var %inst.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %inst.var: ref <error> = var_storage %inst.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:     %A.ref: <error> = name_ref A, <error> [concrete = <error>]

@@ -95,7 +95,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete = <error>]
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %v.var: ref <error> = var_storage %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   br !.loc12_20
@@ -172,7 +172,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete = <error>]
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %v.var: ref <error> = var_storage %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   br !.loc9_20
@@ -199,7 +199,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %w.patt: <error> = ref_binding_pattern w [concrete = <error>]
 // CHECK:STDOUT:     %w.var_patt: <error> = var_pattern %w.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref <error> = var %w.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %w.var: ref <error> = var_storage %w.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc14: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %w.var, <error>
 // CHECK:STDOUT:   br !.loc14_20

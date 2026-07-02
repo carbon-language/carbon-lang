@@ -370,7 +370,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:       %v.patt.loc14_15.1: @F.%pattern_type (%pattern_type.f4e485.2) = ref_binding_pattern v [template = %v.patt.loc14_15.2 (constants.%v.patt)]
 // CHECK:STDOUT:       %v.var_patt.loc14_3.1: @F.%pattern_type (%pattern_type.f4e485.2) = var_pattern %v.patt.loc14_15.1 [template = %v.var_patt.loc14_3.2 (constants.%v.var_patt)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v.var: ref @F.%T.as_type.loc4_36.1 (%T.as_type.700) = var %v.var_patt.loc14_3.1
+// CHECK:STDOUT:     %v.var: ref @F.%T.as_type.loc4_36.1 (%T.as_type.700) = var_storage %v.var_patt.loc14_3.1
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:     %ImplicitAs.type.loc14_3.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%T.as_type.700)> [template = %ImplicitAs.type.loc14_3.2 (constants.%ImplicitAs.type.f42)]
 // CHECK:STDOUT:     %.loc14_3.1: @F.%.loc14_3.6 (@F.%.loc14_3.6) = splice_inst %.loc14_3.5
@@ -386,7 +386,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:       %w.patt: %pattern_type.6b6 = ref_binding_pattern w [concrete = constants.%w.patt]
 // CHECK:STDOUT:       %w.var_patt: %pattern_type.6b6 = var_pattern %w.patt [concrete = constants.%w.var_patt]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %w.var: ref %i32 = var %w.var_patt
+// CHECK:STDOUT:     %w.var: ref %i32 = var_storage %w.var_patt
 // CHECK:STDOUT:     %x.ref: @F.%T.as_type.loc4_36.1 (%T.as_type.700) = name_ref x, %x
 // CHECK:STDOUT:     %.loc22: %i32 = converted %x.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     assign %w.var, <error>

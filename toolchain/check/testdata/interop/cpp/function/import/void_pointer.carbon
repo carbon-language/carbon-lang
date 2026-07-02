@@ -598,7 +598,7 @@ fn F() {
 // CHECK:STDOUT:     %non_nullable_pointer.patt: %pattern_type.c1e = ref_binding_pattern non_nullable_pointer [concrete = constants.%non_nullable_pointer.patt]
 // CHECK:STDOUT:     %non_nullable_pointer.var_patt: %pattern_type.c1e = var_pattern %non_nullable_pointer.patt [concrete = constants.%non_nullable_pointer.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %non_nullable_pointer.var: ref %ptr.6f9 = var %non_nullable_pointer.var_patt
+// CHECK:STDOUT:   %non_nullable_pointer.var: ref %ptr.6f9 = var_storage %non_nullable_pointer.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc11_42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Return.ref: %Return.cpp_overload_set.type = name_ref Return, imports.%Return.cpp_overload_set.value [concrete = constants.%Return.cpp_overload_set.value]
 // CHECK:STDOUT:   %Return.call: init %ptr.6f9 = call imports.%Return.decl()
@@ -671,7 +671,7 @@ fn F() {
 // CHECK:STDOUT:     %const_void_pointer.patt: %pattern_type.c83 = ref_binding_pattern const_void_pointer [concrete = constants.%const_void_pointer.patt]
 // CHECK:STDOUT:     %const_void_pointer.var_patt: %pattern_type.c83 = var_pattern %const_void_pointer.patt [concrete = constants.%const_void_pointer.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %const_void_pointer.var: ref %ptr = var %const_void_pointer.var_patt
+// CHECK:STDOUT:   %const_void_pointer.var: ref %ptr = var_storage %const_void_pointer.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc11_45: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Return.ref: %Return.cpp_overload_set.type = name_ref Return, imports.%Return.cpp_overload_set.value [concrete = constants.%Return.cpp_overload_set.value]
 // CHECK:STDOUT:   %Return.call: init %ptr = call imports.%Return.decl()

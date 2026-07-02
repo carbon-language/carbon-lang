@@ -149,7 +149,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %m.patt: %pattern_type.e13 = ref_binding_pattern m [concrete = constants.%m.patt]
 // CHECK:STDOUT:     %m.var_patt: %pattern_type.e13 = var_pattern %m.patt [concrete = constants.%m.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %m.var: ref %i64.builtin = var %m.var_patt [concrete]
+// CHECK:STDOUT:   %m.var: ref %i64.builtin = var_storage %m.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7_14.1: type = splice_block %.loc7_14.3 [concrete = constants.%i64.builtin] {
 // CHECK:STDOUT:     %Int.ref.loc7: %Int.type = name_ref Int, imports.%Main.Int [concrete = constants.%Int]
 // CHECK:STDOUT:     %int_64.loc7: Core.IntLiteral = int_value 64 [concrete = constants.%int_64.fab]
@@ -162,7 +162,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %n.patt: %pattern_type.e13 = ref_binding_pattern n [concrete = constants.%n.patt.914]
 // CHECK:STDOUT:     %n.var_patt: %pattern_type.e13 = var_pattern %n.patt [concrete = constants.%n.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref %i64.builtin = var %n.var_patt [concrete]
+// CHECK:STDOUT:   %n.var: ref %i64.builtin = var_storage %n.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8_14.1: type = splice_block %.loc8_14.3 [concrete = constants.%i64.builtin] {
 // CHECK:STDOUT:     %Int.ref.loc8: %Int.type = name_ref Int, imports.%Main.Int [concrete = constants.%Int]
 // CHECK:STDOUT:     %int_64.loc8: Core.IntLiteral = int_value 64 [concrete = constants.%int_64.fab]

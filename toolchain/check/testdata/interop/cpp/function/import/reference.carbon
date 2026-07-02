@@ -522,7 +522,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
@@ -603,7 +603,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %v.patt: %pattern_type.0f5 = ref_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.0f5 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %S = var %v.var_patt
+// CHECK:STDOUT:   %v.var: ref %S = var_storage %v.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.eff) [concrete = constants.%DefaultOrUnformed.facet.176]
 // CHECK:STDOUT:   %.loc8_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc8 [concrete = constants.%DefaultOrUnformed.facet.176]
 // CHECK:STDOUT:   %as_type.loc8: type = facet_access_type %.loc8_15.1 [concrete = constants.%S]
@@ -642,7 +642,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %t.patt: %pattern_type.5f6 = ref_binding_pattern t [concrete = constants.%t.patt]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.5f6 = var_pattern %t.patt [concrete = constants.%t.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t.var: ref %T.ed0 = var %t.var_patt
+// CHECK:STDOUT:   %t.var: ref %T.ed0 = var_storage %t.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc30: %DefaultOrUnformed.type = facet_value constants.%T.ed0, (constants.%DefaultOrUnformed.impl_witness.537) [concrete = constants.%DefaultOrUnformed.facet.e0e]
 // CHECK:STDOUT:   %.loc30_15.1: %DefaultOrUnformed.type = converted constants.%T.ed0, %DefaultOrUnformed.facet.loc30 [concrete = constants.%DefaultOrUnformed.facet.e0e]
 // CHECK:STDOUT:   %as_type.loc30: type = facet_access_type %.loc30_15.1 [concrete = constants.%T.ed0]
@@ -663,7 +663,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %u.patt: %pattern_type.0f5 = ref_binding_pattern u [concrete = constants.%u.patt]
 // CHECK:STDOUT:     %u.var_patt: %pattern_type.0f5 = var_pattern %u.patt [concrete = constants.%u.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %u.var: ref %S = var %u.var_patt
+// CHECK:STDOUT:   %u.var: ref %S = var_storage %u.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc41: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.eff) [concrete = constants.%DefaultOrUnformed.facet.176]
 // CHECK:STDOUT:   %.loc41_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc41 [concrete = constants.%DefaultOrUnformed.facet.176]
 // CHECK:STDOUT:   %as_type.loc41: type = facet_access_type %.loc41_15.1 [concrete = constants.%S]
@@ -802,7 +802,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.eff) [concrete = constants.%DefaultOrUnformed.facet.176]
 // CHECK:STDOUT:   %.loc8_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc8 [concrete = constants.%DefaultOrUnformed.facet.176]
 // CHECK:STDOUT:   %as_type.loc8: type = facet_access_type %.loc8_15.1 [concrete = constants.%S]
@@ -823,7 +823,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %t.patt: %pattern_type.5f6 = ref_binding_pattern t [concrete = constants.%t.patt]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.5f6 = var_pattern %t.patt [concrete = constants.%t.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t.var: ref %T.ed0 = var %t.var_patt
+// CHECK:STDOUT:   %t.var: ref %T.ed0 = var_storage %t.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc19: %DefaultOrUnformed.type = facet_value constants.%T.ed0, (constants.%DefaultOrUnformed.impl_witness.537) [concrete = constants.%DefaultOrUnformed.facet.e0e]
 // CHECK:STDOUT:   %.loc19_15.1: %DefaultOrUnformed.type = converted constants.%T.ed0, %DefaultOrUnformed.facet.loc19 [concrete = constants.%DefaultOrUnformed.facet.e0e]
 // CHECK:STDOUT:   %as_type.loc19: type = facet_access_type %.loc19_15.1 [concrete = constants.%T.ed0]
@@ -903,7 +903,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
@@ -1129,7 +1129,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.eff) [concrete = constants.%DefaultOrUnformed.facet.176]
 // CHECK:STDOUT:   %.loc8_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc8 [concrete = constants.%DefaultOrUnformed.facet.176]
 // CHECK:STDOUT:   %as_type.loc8: type = facet_access_type %.loc8_15.1 [concrete = constants.%S]
@@ -1150,7 +1150,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %t.patt: %pattern_type.5f6 = ref_binding_pattern t [concrete = constants.%t.patt]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.5f6 = var_pattern %t.patt [concrete = constants.%t.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t.var: ref %T.ed0 = var %t.var_patt
+// CHECK:STDOUT:   %t.var: ref %T.ed0 = var_storage %t.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc19: %DefaultOrUnformed.type = facet_value constants.%T.ed0, (constants.%DefaultOrUnformed.impl_witness.537) [concrete = constants.%DefaultOrUnformed.facet.e0e]
 // CHECK:STDOUT:   %.loc19_15.1: %DefaultOrUnformed.type = converted constants.%T.ed0, %DefaultOrUnformed.facet.loc19 [concrete = constants.%DefaultOrUnformed.facet.e0e]
 // CHECK:STDOUT:   %as_type.loc19: type = facet_access_type %.loc19_15.1 [concrete = constants.%T.ed0]

@@ -141,14 +141,14 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %v.patt: %pattern_type.c07 = ref_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.c07 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %NoParams = var %v.var_patt [concrete]
+// CHECK:STDOUT:   %v.var: ref %NoParams = var_storage %v.var_patt [concrete]
 // CHECK:STDOUT:   %NoParams.ref: type = name_ref NoParams, %NoParams.decl [concrete = constants.%NoParams]
 // CHECK:STDOUT:   %v: ref %NoParams = wrapper_binding v, %v.var [concrete = %v.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.c83 = ref_binding_pattern w [concrete = constants.%w.patt]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.c83 = var_pattern %w.patt [concrete = constants.%w.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref %EmptyParams = var %w.var_patt [concrete]
+// CHECK:STDOUT:   %w.var: ref %EmptyParams = var_storage %w.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15: type = splice_block %EmptyParams [concrete = constants.%EmptyParams] {
 // CHECK:STDOUT:     %EmptyParams.ref: %EmptyParams.type = name_ref EmptyParams, %EmptyParams.decl [concrete = constants.%EmptyParams.generic]
 // CHECK:STDOUT:     %EmptyParams: type = class_type @EmptyParams [concrete = constants.%EmptyParams]
@@ -272,7 +272,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %v.patt: %pattern_type.e03 = ref_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.e03 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %Outer.2d6 = var %v.var_patt [concrete]
+// CHECK:STDOUT:   %v.var: ref %Outer.2d6 = var_storage %v.var_patt [concrete]
 // CHECK:STDOUT:   %.loc9_17: type = splice_block %Outer.loc9 [concrete = constants.%Outer.2d6] {
 // CHECK:STDOUT:     %Outer.ref.loc9: %Outer.type = name_ref Outer, %Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:     %.loc9_15: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -285,7 +285,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %w.patt: %pattern_type.85f = ref_binding_pattern w [concrete = constants.%w.patt]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.85f = var_pattern %w.patt [concrete = constants.%w.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref %Inner.61f = var %w.var_patt [concrete]
+// CHECK:STDOUT:   %w.var: ref %Inner.61f = var_storage %w.var_patt [concrete]
 // CHECK:STDOUT:   %.loc19_35: type = splice_block %Inner [concrete = constants.%Inner.61f] {
 // CHECK:STDOUT:     %Outer.ref.loc19: %Outer.type = name_ref Outer, %Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:     %.loc19_15: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -461,7 +461,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %v.patt: %pattern_type.b05 = ref_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.b05 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %C.ece = var %v.var_patt [concrete]
+// CHECK:STDOUT:   %v.var: ref %C.ece = var_storage %v.var_patt [concrete]
 // CHECK:STDOUT:   %.loc13_13.1: type = splice_block %C [concrete = constants.%C.ece] {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_123: Core.IntLiteral = int_value 123 [concrete = constants.%int_123.fff]
@@ -613,7 +613,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %g.patt: %pattern_type.e71 = ref_binding_pattern g [concrete = constants.%g.patt]
 // CHECK:STDOUT:     %g.var_patt: %pattern_type.e71 = var_pattern %g.patt [concrete = constants.%g.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %g.var: ref %E.7b7 = var %g.var_patt [concrete]
+// CHECK:STDOUT:   %g.var: ref %E.7b7 = var_storage %g.var_patt [concrete]
 // CHECK:STDOUT:   %.loc18_26.1: type = splice_block %E [concrete = constants.%E.7b7] {
 // CHECK:STDOUT:     %E.ref: %E.type = name_ref E, %E.decl [concrete = constants.%E.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]

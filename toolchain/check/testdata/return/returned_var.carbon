@@ -185,7 +185,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %result.patt: %pattern_type.6b6 = ref_binding_pattern result [concrete = constants.%result.patt.808]
 // CHECK:STDOUT:     %result.var_patt: %pattern_type.6b6 = var_pattern %result.patt [concrete = constants.%result.var_patt.a44]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %result.var: ref %i32 = var %result.var_patt
+// CHECK:STDOUT:   %result.var: ref %i32 = var_storage %result.var_patt
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc26_12.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.7b4]

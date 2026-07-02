@@ -252,7 +252,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:       %v.patt.loc10_8.1: @InitFromStructGeneric.%pattern_type.loc10 (%pattern_type.0b6) = ref_binding_pattern v [symbolic = %v.patt.loc10_8.2 (constants.%v.patt.ef6)]
 // CHECK:STDOUT:       %v.var_patt.loc10_3.1: @InitFromStructGeneric.%pattern_type.loc10 (%pattern_type.0b6) = var_pattern %v.patt.loc10_8.1 [symbolic = %v.var_patt.loc10_3.2 (constants.%v.var_patt.8cf)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v.var: ref @InitFromStructGeneric.%Class.loc10_17.2 (%Class.55b) = var %v.var_patt.loc10_3.1
+// CHECK:STDOUT:     %v.var: ref @InitFromStructGeneric.%Class.loc10_17.2 (%Class.55b) = var_storage %v.var_patt.loc10_3.1
 // CHECK:STDOUT:     %x.ref: @InitFromStructGeneric.%T.as_type.loc9_59.1 (%T.as_type.74b) = name_ref x, %x
 // CHECK:STDOUT:     %.loc10_28.1: @InitFromStructGeneric.%struct_type.k (%struct_type.k.aa4) = struct_literal (%x.ref)
 // CHECK:STDOUT:     %impl.elem0.loc10_27.1: @InitFromStructGeneric.%.loc10_27.3 (%.018) = impl_witness_access constants.%Copy.lookup_impl_witness.4df, element0 [symbolic = %impl.elem0.loc10_27.2 (constants.%impl.elem0.170)]
@@ -311,7 +311,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %v.patt: %pattern_type.82c = ref_binding_pattern v [concrete = constants.%v.patt.675]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.82c = var_pattern %v.patt [concrete = constants.%v.var_patt.68c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %Class.a32 = var %v.var_patt
+// CHECK:STDOUT:   %v.var: ref %Class.a32 = var_storage %v.var_patt
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %.loc15_30.1: %struct_type.k.e7c = struct_literal (%x.ref)
 // CHECK:STDOUT:   %impl.elem0.loc15: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

@@ -330,7 +330,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete = <error>]
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %v.var: ref <error> = var_storage %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %v: <error> = wrapper_binding v, <error> [concrete = <error>]

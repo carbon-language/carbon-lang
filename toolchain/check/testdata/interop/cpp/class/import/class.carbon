@@ -412,7 +412,7 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT:   %foo.patt: %pattern_type = ref_binding_pattern foo [concrete = constants.%foo.patt]
 // CHECK:STDOUT:   %foo.var_patt: %pattern_type = var_pattern %foo.patt [concrete = constants.%foo.var_patt]
-// CHECK:STDOUT:   %foo.var: ref %ptr.227 = var %foo.var_patt [concrete]
+// CHECK:STDOUT:   %foo.var: ref %ptr.227 = var_storage %foo.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {

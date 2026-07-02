@@ -91,7 +91,7 @@ fn MyF() {
 // CHECK:STDOUT:   %pattern_type.635: type = pattern_type %const [concrete]
 // CHECK:STDOUT:   %global_ref.patt: %pattern_type.635 = ref_binding_pattern global_ref [concrete]
 // CHECK:STDOUT:   %global_ref.var_patt: %pattern_type.635 = var_pattern %global_ref.patt [concrete]
-// CHECK:STDOUT:   %global_ref.var: ref %ptr.0a2 = var imports.%global_ref.var_patt [concrete]
+// CHECK:STDOUT:   %global_ref.var: ref %ptr.0a2 = var_storage imports.%global_ref.var_patt [concrete]
 // CHECK:STDOUT:   %addr: %ptr.0a2 = addr_of imports.%global.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -110,13 +110,13 @@ fn MyF() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %global.patt: %pattern_type.bbc = ref_binding_pattern global [concrete = constants.%global.patt]
 // CHECK:STDOUT:   %global.var_patt: %pattern_type.bbc = var_pattern %global.patt [concrete = constants.%global.var_patt]
-// CHECK:STDOUT:   %global.var: ref %C = var %global.var_patt [concrete]
+// CHECK:STDOUT:   %global.var: ref %C = var_storage %global.var_patt [concrete]
 // CHECK:STDOUT:   %global_ptr.patt: %pattern_type.8fa = ref_binding_pattern global_ptr [concrete = constants.%global_ptr.patt]
 // CHECK:STDOUT:   %global_ptr.var_patt: %pattern_type.8fa = var_pattern %global_ptr.patt [concrete = constants.%global_ptr.var_patt]
-// CHECK:STDOUT:   %global_ptr.var: ref %ptr.0a2 = var %global_ptr.var_patt [concrete]
+// CHECK:STDOUT:   %global_ptr.var: ref %ptr.0a2 = var_storage %global_ptr.var_patt [concrete]
 // CHECK:STDOUT:   %global_ref.patt: %pattern_type.635 = ref_binding_pattern global_ref [concrete = constants.%global_ref.patt]
 // CHECK:STDOUT:   %global_ref.var_patt: %pattern_type.635 = var_pattern %global_ref.patt [concrete = constants.%global_ref.var_patt]
-// CHECK:STDOUT:   %global_ref.var: ref %const = var %global_ref.var_patt [concrete]
+// CHECK:STDOUT:   %global_ref.var: ref %const = var_storage %global_ref.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

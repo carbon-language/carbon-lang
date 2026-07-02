@@ -86,7 +86,7 @@ fn Main() {
 // CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.cb1 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var %b.var_patt
+// CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var_storage %b.var_patt
 // CHECK:STDOUT:   %B.ref: %A.type = name_ref B, file.%B [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %B.ref()
 // CHECK:STDOUT:   assign %b.var, %A.call

@@ -282,7 +282,7 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:     %ax.patt: %pattern_type.88a = ref_binding_pattern ax [concrete = constants.%ax.patt]
 // CHECK:STDOUT:     %ax.var_patt: %pattern_type.88a = var_pattern %ax.patt [concrete = constants.%ax.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ax.var: ref %X = var %ax.var_patt
+// CHECK:STDOUT:   %ax.var: ref %X = var_storage %ax.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc9_3.1: ref %X = splice_block %ax.var {}
 // CHECK:STDOUT:   %impl.elem0.loc9: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]

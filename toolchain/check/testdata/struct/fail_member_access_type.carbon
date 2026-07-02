@@ -85,7 +85,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     %x.patt: %pattern_type.6b7 = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.6b7 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %struct_type.a.752 = var %x.var_patt [concrete]
+// CHECK:STDOUT:   %x.var: ref %struct_type.a.752 = var_storage %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.752] {
 // CHECK:STDOUT:     %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %f64.dc1} [concrete = constants.%struct_type.a.752]
@@ -95,7 +95,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     %y.patt: %pattern_type.6b6 = ref_binding_pattern y [concrete = constants.%y.patt]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.6b6 = var_pattern %y.patt [concrete = constants.%y.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %i32 = var %y.var_patt [concrete]
+// CHECK:STDOUT:   %y.var: ref %i32 = var_storage %y.var_patt [concrete]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %y: ref %i32 = wrapper_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }

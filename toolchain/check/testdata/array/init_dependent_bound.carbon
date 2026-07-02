@@ -117,7 +117,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %arr.patt.loc7_17.1: @G.%pattern_type (%pattern_type.bd6) = ref_binding_pattern arr [symbolic = %arr.patt.loc7_17.2 (constants.%arr.patt.770)]
 // CHECK:STDOUT:       %arr.var_patt.loc7_3.1: @G.%pattern_type (%pattern_type.bd6) = var_pattern %arr.patt.loc7_17.1 [symbolic = %arr.var_patt.loc7_3.2 (constants.%arr.var_patt.5fc)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc7_29.2 (%array_type.1b3) = var %arr.var_patt.loc7_3.1
+// CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc7_29.2 (%array_type.1b3) = var_storage %arr.var_patt.loc7_3.1
 // CHECK:STDOUT:     %.loc7_34.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_34.2: init @G.%array_type.loc7_29.2 (%array_type.1b3) to %arr.var = array_init () [symbolic = %array (constants.%array.ca4)]
 // CHECK:STDOUT:     %.loc7_3.1: init @G.%array_type.loc7_29.2 (%array_type.1b3) = converted %.loc7_34.1, %.loc7_34.2 [symbolic = %array (constants.%array.ca4)]
@@ -224,7 +224,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %arr.patt: <error> = ref_binding_pattern arr [concrete = <error>]
 // CHECK:STDOUT:       %arr.var_patt: <error> = var_pattern %arr.patt [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %arr.var: ref <error> = var %arr.var_patt [concrete = <error>]
+// CHECK:STDOUT:     %arr.var: ref <error> = var_storage %arr.var_patt [concrete = <error>]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]

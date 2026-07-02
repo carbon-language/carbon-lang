@@ -116,7 +116,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:     %c.patt: %pattern_type.7b0 = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.7b0 = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %array_type = var %c.var_patt [concrete]
+// CHECK:STDOUT:   %c.var: ref %array_type = var_storage %c.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
@@ -127,7 +127,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:     %d.patt: %pattern_type.6b6 = ref_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.6b6 = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %i32 = var %d.var_patt [concrete]
+// CHECK:STDOUT:   %d.var: ref %i32 = var_storage %d.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %d: ref %i32 = wrapper_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT: }

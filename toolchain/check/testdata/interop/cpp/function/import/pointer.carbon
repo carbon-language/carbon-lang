@@ -468,7 +468,7 @@ fn F() {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
@@ -529,7 +529,7 @@ fn F() {
 // CHECK:STDOUT:     %p.patt: %pattern_type.282 = ref_binding_pattern p [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.282 = var_pattern %p.patt [concrete = constants.%p.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %const = var %p.var_patt
+// CHECK:STDOUT:   %p.var: ref %const = var_storage %p.var_patt
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %G.call: init %const = call %G.ref()
 // CHECK:STDOUT:   assign %p.var, %G.call
@@ -619,7 +619,7 @@ fn F() {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
@@ -633,7 +633,7 @@ fn F() {
 // CHECK:STDOUT:     %p.patt: %pattern_type.de6 = ref_binding_pattern p [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.de6 = var_pattern %p.patt [concrete = constants.%p.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %ptr.037 = var %p.var_patt
+// CHECK:STDOUT:   %p.var: ref %ptr.037 = var_storage %p.var_patt
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
 // CHECK:STDOUT:   %addr.loc9: %ptr.037 = addr_of %s.ref
 // CHECK:STDOUT:   %impl.elem0: %.166 = impl_witness_access constants.%Copy.impl_witness.478, element0 [concrete = constants.%ptr.as.Copy.impl.Op.def]
@@ -703,7 +703,7 @@ fn F() {
 // CHECK:STDOUT:     %s.patt: %pattern_type.914 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.914 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %const = var %s.var_patt
+// CHECK:STDOUT:   %s.var: ref %const = var_storage %s.var_patt
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %.loc10_3: ref %const = splice_block %s.var {}
 // CHECK:STDOUT:   %G.call: init %const to %.loc10_3 = call %G.ref()
@@ -771,7 +771,7 @@ fn F() {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %.loc8_3: ref %S = splice_block %s.var {}
 // CHECK:STDOUT:   %G.call: init %S to %.loc8_3 = call %G.ref()
@@ -834,7 +834,7 @@ fn F() {
 // CHECK:STDOUT:     %p.patt: %pattern_type.282 = ref_binding_pattern p [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.282 = var_pattern %p.patt [concrete = constants.%p.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %const = var %p.var_patt
+// CHECK:STDOUT:   %p.var: ref %const = var_storage %p.var_patt
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %G.call: init %const = call %G.ref()
 // CHECK:STDOUT:   assign %p.var, %G.call
@@ -904,7 +904,7 @@ fn F() {
 // CHECK:STDOUT:     %p.patt: %pattern_type.de6 = ref_binding_pattern p [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.de6 = var_pattern %p.patt [concrete = constants.%p.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %ptr = var %p.var_patt
+// CHECK:STDOUT:   %p.var: ref %ptr = var_storage %p.var_patt
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %G.call: init %ptr = call %G.ref()
 // CHECK:STDOUT:   assign %p.var, %G.call
@@ -1030,7 +1030,7 @@ fn F() {
 // CHECK:STDOUT:     %p.patt: %pattern_type.282 = ref_binding_pattern p [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.282 = var_pattern %p.patt [concrete = constants.%p.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %const.f96 = var %p.var_patt
+// CHECK:STDOUT:   %p.var: ref %const.f96 = var_storage %p.var_patt
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %G.call: init %const.f96 = call %G.ref()
 // CHECK:STDOUT:   assign %p.var, %G.call
@@ -1175,7 +1175,7 @@ fn F() {
 // CHECK:STDOUT:     %p.patt: %pattern_type.de6 = ref_binding_pattern p [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.de6 = var_pattern %p.patt [concrete = constants.%p.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %ptr.037 = var %p.var_patt
+// CHECK:STDOUT:   %p.var: ref %ptr.037 = var_storage %p.var_patt
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %G.call: init %ptr.037 = call %G.ref()
 // CHECK:STDOUT:   assign %p.var, %G.call
@@ -1451,7 +1451,7 @@ fn F() {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
@@ -1705,7 +1705,7 @@ fn F() {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
@@ -1905,7 +1905,7 @@ fn F() {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
@@ -2066,7 +2066,7 @@ fn F() {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %.loc10_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc10_3: init %S = converted %.loc10_19.1, %.loc10_19.2 [concrete = constants.%S.val]

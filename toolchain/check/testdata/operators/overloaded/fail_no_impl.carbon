@@ -179,7 +179,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %a.patt: %pattern_type.4a7 = ref_binding_pattern a [concrete = constants.%a.patt.28f]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.4a7 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %C = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %C = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc36_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc36_15.2: init %C to %a.var = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc36_3: init %C = converted %.loc36_15.1, %.loc36_15.2 [concrete = constants.%C.val]

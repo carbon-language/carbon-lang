@@ -95,7 +95,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %a.patt: %pattern_type.9ef = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.9ef = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt [concrete]
+// CHECK:STDOUT:   %a.var: ref %A = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc14_14.1: type = splice_block %.loc14_14.3 [concrete = constants.%A] {
 // CHECK:STDOUT:     %F.ref.loc14: %F.type = name_ref F, %F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %true: bool = bool_literal true [concrete = constants.%true]
@@ -108,7 +108,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %b.patt: %pattern_type.e39 = ref_binding_pattern b [concrete = constants.%b.patt.492]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.e39 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %B = var %b.var_patt [concrete]
+// CHECK:STDOUT:   %b.var: ref %B = var_storage %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15_15.1: type = splice_block %.loc15_15.3 [concrete = constants.%B] {
 // CHECK:STDOUT:     %F.ref.loc15: %F.type = name_ref F, %F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
@@ -163,7 +163,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %a.patt: %pattern_type.9ef = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.9ef = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt [concrete]
+// CHECK:STDOUT:   %a.var: ref %A = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_14.1: type = splice_block %.loc10_14.3 [concrete = constants.%A] {
 // CHECK:STDOUT:     %F.ref.loc10: %F.type = name_ref F, %F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %true: bool = bool_literal true [concrete = constants.%true]
@@ -176,7 +176,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:     %b.patt: %pattern_type.e39 = ref_binding_pattern b [concrete = constants.%b.patt.492]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.e39 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %B = var %b.var_patt [concrete]
+// CHECK:STDOUT:   %b.var: ref %B = var_storage %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc11_15.1: type = splice_block %.loc11_15.3 [concrete = constants.%B] {
 // CHECK:STDOUT:     %F.ref.loc11: %F.type = name_ref F, %F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]

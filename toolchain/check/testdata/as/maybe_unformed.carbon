@@ -145,8 +145,8 @@ fn Use() {
 // CHECK:STDOUT:   %ptr.b8c: type = ptr_type %MaybeUnformed.198 [concrete]
 // CHECK:STDOUT:   %pattern_type.abe: type = pattern_type %ptr.b8c [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.abe = value_binding_pattern a [concrete]
-// CHECK:STDOUT:   %reference.var: ref %MaybeUnformed.198 = var file.%reference.var_patt [concrete]
-// CHECK:STDOUT:   %addr.d37: %ptr.b8c = addr_of %reference.var [concrete]
+// CHECK:STDOUT:   %reference.var: ref %MaybeUnformed.198 = var_storage file.%reference.var_patt [concrete]
+// CHECK:STDOUT:   %addr.1d8: %ptr.b8c = addr_of %reference.var [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.abe = value_binding_pattern b [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -173,7 +173,7 @@ fn Use() {
 // CHECK:STDOUT:   %MaybeUnformed.loc12_77: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.198]
 // CHECK:STDOUT:   %.loc12_54.1: ref %MaybeUnformed.198 = as_compatible %reference.ref [concrete = constants.%reference.var]
 // CHECK:STDOUT:   %.loc12_54.2: ref %MaybeUnformed.198 = converted %reference.ref, %.loc12_54.1 [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %addr: %ptr.b8c = addr_of %.loc12_54.2 [concrete = constants.%addr.d37]
+// CHECK:STDOUT:   %addr: %ptr.b8c = addr_of %.loc12_54.2 [concrete = constants.%addr.1d8]
 // CHECK:STDOUT:   %.loc12_38: type = splice_block %ptr.loc12 [concrete = constants.%ptr.b8c] {
 // CHECK:STDOUT:     %Core.ref.loc12_17: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %MaybeUnformed.ref.loc12_21: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
@@ -251,7 +251,7 @@ fn Use() {
 // CHECK:STDOUT:     %i.patt: %pattern_type.009 = ref_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.009 = var_pattern %i.patt [concrete = constants.%i.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.var: ref %MaybeUnformed.198 = var %i.var_patt
+// CHECK:STDOUT:   %i.var: ref %MaybeUnformed.198 = var_storage %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc19_46: ref %X = temporary_storage
 // CHECK:STDOUT:   %Init.call: init %X to %.loc19_46 = call %Init.ref()
@@ -322,8 +322,8 @@ fn Use() {
 // CHECK:STDOUT:   %ptr.db8: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %pattern_type.990: type = pattern_type %ptr.db8 [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.990 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:   %reference.var: ref %X = var file.%reference.var_patt [concrete]
-// CHECK:STDOUT:   %addr.8ef: %ptr.db8 = addr_of %reference.var [concrete]
+// CHECK:STDOUT:   %reference.var: ref %X = var_storage file.%reference.var_patt [concrete]
+// CHECK:STDOUT:   %addr.5ed: %ptr.db8 = addr_of %reference.var [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.990 = value_binding_pattern b [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -345,7 +345,7 @@ fn Use() {
 // CHECK:STDOUT:   %X.ref.loc14_44: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc14_41.1: ref %X = as_compatible %reference.ref [concrete = constants.%reference.var]
 // CHECK:STDOUT:   %.loc14_41.2: ref %X = converted %reference.ref, %.loc14_41.1 [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %addr: %ptr.db8 = addr_of %.loc14_41.2 [concrete = constants.%addr.8ef]
+// CHECK:STDOUT:   %addr: %ptr.db8 = addr_of %.loc14_41.2 [concrete = constants.%addr.5ed]
 // CHECK:STDOUT:   %.loc14_18: type = splice_block %ptr.loc14 [concrete = constants.%ptr.db8] {
 // CHECK:STDOUT:     %X.ref.loc14_17: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %ptr.loc14: type = ptr_type %X.ref.loc14_17 [concrete = constants.%ptr.db8]

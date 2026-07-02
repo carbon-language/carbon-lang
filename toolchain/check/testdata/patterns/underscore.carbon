@@ -154,7 +154,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.patt.loc5: %pattern_type.a96 = ref_binding_pattern _ [concrete = constants.%_.patt.7e8]
 // CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc5 [concrete = constants.%_.var_patt.d5b]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.var: ref %empty_struct_type = var %_.var_patt
+// CHECK:STDOUT:   %_.var: ref %empty_struct_type = var_storage %_.var_patt
 // CHECK:STDOUT:   %.loc5_9.1: type = splice_block %.loc5_9.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc5_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
@@ -180,7 +180,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.patt.loc9: %pattern_type.a96 = ref_binding_pattern _ [concrete = constants.%_.patt.3b4]
 // CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc9 [concrete = constants.%_.var_patt.f52]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.var: ref %empty_struct_type = var %_.var_patt
+// CHECK:STDOUT:   %_.var: ref %empty_struct_type = var_storage %_.var_patt
 // CHECK:STDOUT:   %.loc9_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_16.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_3: init %empty_struct_type = converted %.loc9_16.1, %.loc9_16.2 [concrete = constants.%empty_struct]

@@ -89,7 +89,7 @@ fn G() {
 // CHECK:STDOUT:     %v.patt: %pattern_type.28f = ref_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.28f = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %struct_type.a.b.2a0 = var %v.var_patt
+// CHECK:STDOUT:   %v.var: ref %struct_type.a.b.2a0 = var_storage %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc18_68: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc18_81.1: ref %tuple.type.555 = struct_access %v.var, element0
 // CHECK:STDOUT:   %F.call.loc18_70: init %tuple.type.555 to %.loc18_81.1 = call %F.ref.loc18_68()

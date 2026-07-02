@@ -740,7 +740,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %d.patt: %pattern_type.746 = ref_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.746 = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %Derived = var %d.var_patt
+// CHECK:STDOUT:   %d.var: ref %Derived = var_storage %d.var_patt
 // CHECK:STDOUT:   %.loc15_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc15_38.1: %struct_type.base.f5e = struct_literal (%.loc15_37.1) [concrete = constants.%struct.6b1]
 // CHECK:STDOUT:   %.loc15_38.2: ref %.f93 = class_element_access %d.var, element0
@@ -825,7 +825,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %v.patt: %pattern_type.b8d = ref_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.b8d = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %Base = var %v.var_patt
+// CHECK:STDOUT:   %v.var: ref %Base = var_storage %v.var_patt
 // CHECK:STDOUT:   %.loc8_35.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_35.2: ref %ptr.454 = class_element_access %v.var, element0
 // CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
@@ -927,7 +927,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %b1.patt: %pattern_type.912 = ref_binding_pattern b1 [concrete = constants.%b1.patt]
 // CHECK:STDOUT:     %b1.var_patt: %pattern_type.912 = var_pattern %b1.patt [concrete = constants.%b1.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b1.var: ref %Base = var %b1.var_patt
+// CHECK:STDOUT:   %b1.var: ref %Base = var_storage %b1.var_patt
 // CHECK:STDOUT:   %i.ref.loc14_25: ref %i32 = name_ref i, %i
 // CHECK:STDOUT:   %i.ref.loc14_34: ref %i32 = name_ref i, %i
 // CHECK:STDOUT:   %.loc14_35.1: %struct_type.m2.m1.810 = struct_literal (%i.ref.loc14_25, %i.ref.loc14_34)
@@ -959,7 +959,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %b2.patt: %pattern_type.912 = ref_binding_pattern b2 [concrete = constants.%b2.patt]
 // CHECK:STDOUT:     %b2.var_patt: %pattern_type.912 = var_pattern %b2.patt [concrete = constants.%b2.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b2.var: ref %Base = var %b2.var_patt
+// CHECK:STDOUT:   %b2.var: ref %Base = var_storage %b2.var_patt
 // CHECK:STDOUT:   %int_3.loc15: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %.loc15_42.1: %struct_type.m2.m1.5f2 = struct_literal (%int_3.loc15, %int_5) [concrete = constants.%struct]

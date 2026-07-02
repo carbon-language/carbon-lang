@@ -219,7 +219,7 @@ fn Run() {
 // CHECK:STDOUT:   %bound_method.loc10_36.2: <bound method> = bound_method %.loc10_35.2, %specific_fn.loc10_36.1
 // CHECK:STDOUT:   %.loc10_35.3: %EmptyRange.de0 = acquire_value %.loc10_35.2
 // CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.call: init %empty_struct_type = call %bound_method.loc10_36.2(%.loc10_35.3)
-// CHECK:STDOUT:   %var: ref %empty_struct_type = var invalid
+// CHECK:STDOUT:   %var: ref %empty_struct_type = var_storage invalid
 // CHECK:STDOUT:   assign %var, %EmptyRange.as.Iterate.impl.NewCursor.call
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
@@ -402,7 +402,7 @@ fn Run() {
 // CHECK:STDOUT:   %bound_method.loc10_40.2: <bound method> = bound_method %.loc10_39.2, %specific_fn.loc10_40.1
 // CHECK:STDOUT:   %.loc10_39.3: %EmptyRange.de0 = acquire_value %.loc10_39.2
 // CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.call: init %empty_struct_type = call %bound_method.loc10_40.2(%.loc10_39.3)
-// CHECK:STDOUT:   %var: ref %empty_struct_type = var invalid
+// CHECK:STDOUT:   %var: ref %empty_struct_type = var_storage invalid
 // CHECK:STDOUT:   assign %var, %EmptyRange.as.Iterate.impl.NewCursor.call
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
@@ -428,7 +428,7 @@ fn Run() {
 // CHECK:STDOUT:   if %.loc10_40.6 br !for.body else br !for.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.body:
-// CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
+// CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt
 // CHECK:STDOUT:   %.loc10_40.7: %Optional.Get.type.0a8 = specific_constant imports.%Core.import_ref.73b, @Optional(constants.%Copy.facet) [concrete = constants.%Optional.Get.d5d]
 // CHECK:STDOUT:   %Get.ref: %Optional.Get.type.0a8 = name_ref Get, %.loc10_40.7 [concrete = constants.%Optional.Get.d5d]
 // CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc10_40.2, %Get.ref
@@ -598,7 +598,7 @@ fn Run() {
 // CHECK:STDOUT:   %bound_method.loc10_61.2: <bound method> = bound_method %.loc10_60.2, %specific_fn.loc10_61.1
 // CHECK:STDOUT:   %.loc10_60.3: %EmptyRange.012 = acquire_value %.loc10_60.2
 // CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.call: init %empty_struct_type = call %bound_method.loc10_61.2(%.loc10_60.3)
-// CHECK:STDOUT:   %var: ref %empty_struct_type = var invalid
+// CHECK:STDOUT:   %var: ref %empty_struct_type = var_storage invalid
 // CHECK:STDOUT:   assign %var, %EmptyRange.as.Iterate.impl.NewCursor.call
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
@@ -801,7 +801,7 @@ fn Run() {
 // CHECK:STDOUT:   %bound_method.loc10_49.2: <bound method> = bound_method %.loc10_48.2, %specific_fn.loc10_49.1
 // CHECK:STDOUT:   %.loc10_48.3: %EmptyRange.617 = acquire_value %.loc10_48.2
 // CHECK:STDOUT:   %EmptyRange.as.Iterate.impl.NewCursor.call: init %empty_struct_type = call %bound_method.loc10_49.2(%.loc10_48.3)
-// CHECK:STDOUT:   %var: ref %empty_struct_type = var invalid
+// CHECK:STDOUT:   %var: ref %empty_struct_type = var_storage invalid
 // CHECK:STDOUT:   assign %var, %EmptyRange.as.Iterate.impl.NewCursor.call
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:

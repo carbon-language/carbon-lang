@@ -147,7 +147,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:     %c.patt: %pattern_type.cb1 = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.cb1 = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var %c.var_patt
+// CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var_storage %c.var_patt
 // CHECK:STDOUT:   %.loc18_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_16.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_3: init %empty_tuple.type = converted %.loc18_16.1, %.loc18_16.2 [concrete = constants.%empty_tuple]
