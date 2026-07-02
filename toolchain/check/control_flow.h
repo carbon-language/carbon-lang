@@ -93,8 +93,9 @@ auto AddInstWithCleanupInNoBlock(Context& context, LocT loc, InstT inst)
 }
 
 // Adds cleanups for the given variables.
-auto AddCleanups(Context& context, ScopeStack::CleanupStackDepth target_depth)
-    -> void;
+auto AddCleanups(Context& context, ScopeStack::CleanupStackDepth depth,
+                 ScopeStack::CleanupStackDepth end_depth =
+                     ScopeStack::CleanupStackDepth::None) -> void;
 
 // Pops a scope from the scope stack and adds any cleanups for variables within
 // that scope.

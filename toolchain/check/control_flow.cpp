@@ -147,10 +147,10 @@ auto MaybeAddCleanupForInst(Context& context, SemIR::InstId inst_id) -> void {
   context.scope_stack().destroy_id_stack().AppendToTop(inst_id);
 }
 
-auto AddCleanups(Context& context, ScopeStack::CleanupStackDepth depth)
-    -> void {
-  for (auto destroy_id :
-       llvm::reverse(context.scope_stack().GetCleanupsSince(depth))) {
+auto AddCleanups(Context& context, ScopeStack::CleanupStackDepth depth,
+                 ScopeStack::CleanupStackDepth end_depth) -> void {
+  for (auto destroy_id : llvm::reverse(
+           context.scope_stack().GetCleanupsSince(depth, end_depth))) {
     // TODO: This does the `Destroy` lookup and call at every cleanup block.
     // Control flow can lead to the same variable being destroyed by multiple
     // cleanup blocks, so we'll want to avoid this in the future.

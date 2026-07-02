@@ -56,11 +56,14 @@ static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
   context.inst_block_stack().Push(loop_body_id);
   context.region_stack().AddToRegion(loop_body_id, node_id);
 
-  // Allow `break` and `continue` in this scope.
+  // Allow `break` and `continue` in this scope. `continue` will destroy
+  // temporaries in the loop header, `break` will not, as the loop exit block
+  // also destroys those temporaries.
   context.break_continue_stack().push_back(
       {.break_target = loop_exit_id,
+       .break_depth = context.scope_stack().cleanup_stack_depth(),
        .continue_target = loop_header_id,
-       .cleanup_stack_depth =
+       .continue_depth =
            context.scope_stack().enclosing_cleanup_stack_depth()});
 }
 
@@ -69,15 +72,18 @@ static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
 static auto FinishLoopBody(Context& context, Parse::NodeId node_id) -> void {
   auto blocks = context.break_continue_stack().pop_back_val();
 
-  // Add the loop backedge and pop the loop scope.
+  // Add the loop backedge.
   AddBranchWithCleanups(context, node_id, blocks.continue_target,
-                        blocks.cleanup_stack_depth);
-  context.scope_stack().Pop(/*check_unused=*/true);
+                        blocks.continue_depth);
   context.inst_block_stack().Pop();
 
   // Start emitting the loop exit block.
   context.inst_block_stack().Push(blocks.break_target);
   context.region_stack().AddToRegion(blocks.break_target, node_id);
+
+  // Clean up anything created in the loop header and pop the loop scope.
+  AddCleanups(context, blocks.continue_depth, blocks.break_depth);
+  context.scope_stack().Pop(/*check_unused=*/true);
 }
 
 // `while`
@@ -257,7 +263,7 @@ auto HandleParseNode(Context& context, Parse::BreakStatementStartId node_id)
     context.emitter().Emit(node_id, BreakOutsideLoop);
   } else {
     AddBranchWithCleanups(context, node_id, stack.back().break_target,
-                          stack.back().cleanup_stack_depth);
+                          stack.back().break_depth);
   }
 
   context.inst_block_stack().Pop();
@@ -282,7 +288,7 @@ auto HandleParseNode(Context& context, Parse::ContinueStatementStartId node_id)
     context.emitter().Emit(node_id, ContinueOutsideLoop);
   } else {
     AddBranchWithCleanups(context, node_id, stack.back().continue_target,
-                          stack.back().cleanup_stack_depth);
+                          stack.back().continue_depth);
   }
 
   context.inst_block_stack().Pop();

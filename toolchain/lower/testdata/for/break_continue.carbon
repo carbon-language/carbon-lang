@@ -58,7 +58,6 @@ fn For() {
 // CHECK:STDOUT:   br i1 %F.call, label %if.then.loc21, label %if.else.loc21, !dbg !10
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then.loc21:                                    ; preds = %for.body
-// CHECK:STDOUT:   call void @"_COp.ab3effcb00e348a7:core.Destroy.Core"(ptr %.loc20_33.1.temp), !dbg !8
 // CHECK:STDOUT:   br label %for.done, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else.loc21:                                    ; preds = %for.body
@@ -75,6 +74,7 @@ fn For() {
 // CHECK:STDOUT:   br label %for.next, !dbg !16
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.done:                                         ; preds = %if.then.loc21, %for.next
+// CHECK:STDOUT:   call void @"_COp.ab3effcb00e348a7:core.Destroy.Core"(ptr %.loc20_33.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %var), !dbg !8
 // CHECK:STDOUT:   call void @"_COp.0d5da2659ce22e5f:core.Destroy.Core"(ptr %.loc20_32.1.temp), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !17

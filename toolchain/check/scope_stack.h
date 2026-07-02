@@ -35,8 +35,9 @@ class ScopeStack {
   // A scope in which `break` and `continue` can be used.
   struct BreakContinueScope {
     SemIR::InstBlockId break_target;
+    CleanupStackDepth break_depth;
     SemIR::InstBlockId continue_target;
-    CleanupStackDepth cleanup_stack_depth;
+    CleanupStackDepth continue_depth;
   };
 
   // A non-lexical scope in which unqualified lookup may be required.
@@ -214,10 +215,16 @@ class ScopeStack {
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;
 
-  // Returns all values on `destroy_id_stack_` added since `depth`.
-  auto GetCleanupsSince(CleanupStackDepth depth) const
-      -> llvm::ArrayRef<SemIR::InstId> {
-    return destroy_id_stack_.PeekAllValues().slice(depth.index);
+  // Returns all values on `destroy_id_stack_` added since `depth`, and before
+  // `end_depth` if specified.
+  auto GetCleanupsSince(CleanupStackDepth depth,
+                        CleanupStackDepth end_depth = CleanupStackDepth::None)
+      const -> llvm::ArrayRef<SemIR::InstId> {
+    auto values = destroy_id_stack_.PeekAllValues().slice(depth.index);
+    if (end_depth.has_value()) {
+      values = values.take_front(end_depth.index - depth.index);
+    }
+    return values;
   }
 
   // Returns the current depth of the cleanup stack.
