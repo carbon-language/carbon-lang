@@ -41,9 +41,43 @@ auto HandlePatternListElementAsStruct(Context& context) -> void {
       HandlePatternListElement(context, StateKind::VariablePattern,
                                StateKind::PatternListElementFinishAsStruct);
       break;
-    default:
+    case Lex::TokenKind::Let:
+    case Lex::TokenKind::Ref:
+    case Lex::TokenKind::Identifier:
       HandlePatternListElement(context, StateKind::BindingPattern,
                                StateKind::PatternListElementFinishAsStruct);
+      break;
+    default:
+      auto state = context.PopState();
+      state.has_error = true;
+
+      CARBON_DIAGNOSTIC(ExpectedStructPatternField, Error,
+                        "expected `.field = value` or Binding Pattern");
+
+      context.emitter().Emit(*context.position(), ExpectedStructPatternField);
+
+      auto recovery_pos =
+          context.FindNextOf({Lex::TokenKind::Equal, Lex::TokenKind::Comma});
+
+      if (!recovery_pos ||
+          context.tokens().GetKind(*recovery_pos) == Lex::TokenKind::Comma) {
+        context.PushState(state, StateKind::PatternListElementFinishAsStruct);
+        break;
+      }
+
+      context.SkipTo(*recovery_pos);
+
+      if (context.PositionIs(Lex::TokenKind::Equal)) {
+        state.token = context.ConsumeChecked(Lex::TokenKind::Equal);
+
+        context.PushState(state, StateKind::StructPatternDesignatedFieldFinish);
+        context.PushStateForPattern(StateKind::Pattern, state.in_var_pattern,
+                                    state.in_unused_pattern,
+                                    state.ambient_precedence);
+      } else {
+        context.PushState(state, StateKind::PatternListElementFinishAsStruct);
+      }
+
       break;
   }
 }
@@ -86,10 +120,11 @@ auto HandleStructPatternFieldAfterDesignator(Context& context) -> void {
   }
 
   if (!context.PositionIs(Lex::TokenKind::Equal)) {
-    CARBON_DIAGNOSTIC(ExpectedStructPatternField, Error,
+    CARBON_DIAGNOSTIC(ExpectedStructPatternDesignatedField, Error,
                       "expected `.field = value`");
 
-    context.emitter().Emit(*context.position(), ExpectedStructPatternField);
+    context.emitter().Emit(*context.position(),
+                           ExpectedStructPatternDesignatedField);
 
     state.has_error = true;
     context.PushState(state, StateKind::StructPatternDesignatedFieldFinish);

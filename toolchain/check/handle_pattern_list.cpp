@@ -124,13 +124,12 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
-  return context.TODO(
-      node_id, "struct pattern");  // HandlePatternListStart(context node_id)
+  return context.TODO(node_id, "struct pattern");
 }
 
 auto HandleParseNode(Context& context,
                      Parse::StructPatternDesignatedFieldId node_id) -> bool {
-  return context.TODO(node_id, "struct pattern Field");
+  return context.TODO(node_id, "struct pattern field");
 }
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
