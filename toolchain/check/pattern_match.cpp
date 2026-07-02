@@ -667,13 +667,6 @@ auto MatchContext::DoVarPreWorkImpl(State state,
       return scrutinee_id;
     }
     case CARBON_KIND(LocalState* _): {
-      // TODO: Find a more efficient way to put these insts in the global_init
-      // block (or drop the distinction between the global_init block and the
-      // file scope?)
-      if (UseGlobalInit(context_)) {
-        context_.global_init().Resume();
-      }
-
       // In a `var`/`let` declaration, the `VarStorage` inst is created before
       // we start pattern matching.
       auto storage_id =
@@ -689,9 +682,6 @@ auto MatchContext::DoVarPreWorkImpl(State state,
                                {.lhs_id = storage_id, .rhs_id = init_id});
       }
 
-      if (UseGlobalInit(context_)) {
-        context_.global_init().Suspend();
-      }
       return storage_id;
     }
     case CARBON_KIND(CallerState* _): {
@@ -1194,11 +1184,17 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
 
 auto LocalPatternMatch(Context& context, SemIR::InstId pattern_id,
                        SemIR::InstId scrutinee_id) -> void {
+  if (UseGlobalInit(context)) {
+    context.global_init().Resume();
+  }
   LocalState state;
   MatchContext match(context);
   match.Match(&state,
               {.pattern_id = pattern_id,
                .work = MatchContext::PreWork{.scrutinee_id = scrutinee_id}});
+  if (UseGlobalInit(context)) {
+    context.global_init().Suspend();
+  }
 }
 
 }  // namespace Carbon::Check
