@@ -686,27 +686,22 @@ expressions and "proper" extended return types, but this is just a technical
 means of avoiding formal ambiguity in the grammar; it has no greater
 significance.
 
--   _category-tag_ ::= `val` | `ref` | `var` | `fwd`
+-   _category-tag_ ::= `val` | `ref` | `var`
 
 These tags are used to specify "value", "non-entire durable reference", or
-"initializing" expression category (respectively). The last keyword `fwd` is
-used to _forward_ the expression category as well as the type component of an
-extended type, and when it is used it must be followed by an expression that is
-convertible to `exttype` rather than `type`. Note that there is no way to
+"initializing" expression category (respectively). Note that there is no way to
 express an entire or ephemeral reference category in an extended return type.
 
 -   _auto-extended-return-type_ ::= _category-tag_? `auto`
 
 This denotes a primitive extended type with runtime phase and a deduced type
-component. The category is determined by _category-tag_ if present, and deduced
-along with the type if `fwd`, or "initializing" otherwise.
+component. The category is determined by _category-tag_ if present, or
+"initializing" otherwise.
 
 -   _proper-extended-return-type_ ::= _category-tag_ _expression_
 
-If the _category-tag_ is `fwd`, then this denotes an extended return type
-forwarded from "_expression_ `as exttype`". Otherwise, this denotes a primitive
-extended type with runtime phase, category _category-tag_, and type
-"_expression_ `as type`".
+This denotes a primitive extended type with runtime phase, category
+_category-tag_, and type "_expression_ `as type`".
 
 -   _expression-extended-return-type_ ::= _expression_
 
@@ -728,7 +723,7 @@ sub-extended-types to be proper.
 -   _field-extended-type_ ::= _field-decl_
 -   _field-extended-type_ ::= _proper-field-extended-type_
 -   _proper-extended-return-type_ ::= `{` [_expression-field-extended-type_
-    `,`]\* _proper-field-extended-type_ [`,` _field-extended-type_]\* `}`
+    `,`]\* _proper-extended-type_ [`,` _field-extended-type_]\* `}`
 
 A struct literal of extended return types denotes a struct extended type whose
 field names and their extended types are specified by the comma-separated field
@@ -741,10 +736,11 @@ one of the field extended types to be proper.
 #### Deferred initialization from values and references
 
 TODO: This section needs to be updated to reflect the addition of `-> val`
-returns in [proposal #5434](/proposals/p005434-ref-parameters-arguments-returns-and-val-returns.md). This section could be replaced
-by a statement that initializing returns may be replaced by value returns when
-that is safe and correct, moving much of this content into a description of how
-value returns works.
+returns in
+[proposal #5434](/proposals/p005434-ref-parameters-arguments-returns-and-val-returns.md).
+This section could be replaced by a statement that initializing returns may be
+replaced by value returns when that is safe and correct, moving much of this
+content into a description of how value returns works.
 
 Carbon also makes the evaluation of function calls and return statements tightly
 linked in order to enable more efficiency improvements. It allows the actual

@@ -3990,11 +3990,8 @@ interface Ordered {
   fn Compare(self, rhs: Self) -> CompareResult;
 }
 fn CombinedLess[T: type](a: T, b: T,
-
                          generic U: CompatibleWith(T) & Ordered,
-
                          generic V: CompatibleWith(T) & Ordered) -> bool {
-
   match ((a as U).Compare(b as U)) {
     case .Less => { return True; }
     case .Greater => { return False; }
@@ -5403,8 +5400,6 @@ An incomplete `C` cannot be used in the following contexts:
 -   ❌ `T: C` ... `T.X` where `T` is a checked binding.
 -   ❌ `T: C where `... where `T` is a checked binding.
 -   ❌ `class `...` { extend impl as C; }`
-    -   The names of `C` are added to the class, and so those names need to be
-        known.
 -   ❌ `interface `...` { extend require impls C; }` or
     `constraint `...` { extend require impls C; }`
     -   An `extend` declaration requires the target scope to be complete. See
