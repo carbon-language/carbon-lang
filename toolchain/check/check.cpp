@@ -463,14 +463,13 @@ auto CheckParseTrees(
       // Adding the prelude to the non-prelude parts of Core requires different
       // semantics because it is not valid to mention the name of the package
       // for a library import from the same package.
+      auto prelude_id =
+          unit_info.unit->value_stores->string_literal_values().Add("prelude");
       if (packaging && (packaging->names.package_id == PackageNameId::Core)) {
         if (packaging->names.library_id == StringLiteralValueId::None ||
             !unit_info.unit->value_stores->string_literal_values()
                  .Get(packaging->names.library_id)
                  .starts_with("prelude")) {
-          auto prelude_id =
-              unit_info.unit->value_stores->string_literal_values().Add(
-                  "prelude");
           // Add the prelude to a non-prelude unit within Core.
           TrackImport(api_map, &explicit_import_map, unit_info,
                       {.node_id = Parse::NoneNodeId(),
@@ -479,9 +478,6 @@ auto CheckParseTrees(
                       options.fuzzing);
         }
       } else {
-        auto prelude_id =
-            unit_info.unit->value_stores->string_literal_values().Add(
-                "prelude");
         // Add the prelude to a non-Core unit.
         TrackImport(api_map, &explicit_import_map, unit_info,
                     {.node_id = Parse::NoneNodeId(),

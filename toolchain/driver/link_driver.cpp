@@ -84,7 +84,7 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
     CARBON_DIAGNOSTIC(LinkObjectFilesMissing, Error,
                       "no object files provided to link command and no extra "
                       "Clang options that could provide them");
-    driver_env.emitter.Emit(LinkObjectFilesMissing);
+    driver_env.emitter.Emit(LinkObjectFilesMissing);`
     return {.success = false};
   }
 

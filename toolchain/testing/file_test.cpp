@@ -47,6 +47,9 @@ struct SharedTestData {
   // Files in the prelude.
   llvm::SmallVector<std::string> prelude_files;
 
+  // Files in core not in the prelude.
+  llvm::SmallVector<std::string> core_files;
+
   // The installed files that tests can use.
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> file_system =
       new llvm::vfs::InMemoryFileSystem();
@@ -60,6 +63,12 @@ static auto GetSharedTestData(llvm::StringRef exe_path)
     CARBON_ASSIGN_OR_RETURN(data.prelude_files,
                             data.installation.ReadPreludeManifest());
     for (const auto& file : data.prelude_files) {
+      CARBON_RETURN_IF_ERROR(AddFile(*data.file_system, file));
+    }
+
+    CARBON_ASSIGN_OR_RETURN(data.core_files,
+                            data.installation.ReadCarbonCoreManifest());
+    for (const auto& file : data.core_files) {
       CARBON_RETURN_IF_ERROR(AddFile(*data.file_system, file));
     }
 

@@ -386,6 +386,20 @@ Use the string form of the fingerprint from mangling instead of the hash form.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&mangle_string_fingerprint); });
+  b.AddFlag(
+      {
+          .name = "include-carbon-core",
+          .help = R"""(
+Automatically include the Core libraries files in the compilation.
+
+Note this refers to the Core libraries files other than the prelude, the
+inclusion of which is currently controlled by the `prelude_import` flag.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(false);
+        arg_b.Set(&include_carbon_core);
+      });
 }
 
 auto CompileOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b)
