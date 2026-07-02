@@ -83,6 +83,7 @@ fn M() {
   A(ptr_f64, 0);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_sccs_deep.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_sccs_deep.carbon"
 // CHECK:STDOUT:
@@ -585,3 +586,4 @@ fn M() {
 // CHECK:STDOUT: !207 = !DILocation(line: 70, column: 15, scope: !203)
 // CHECK:STDOUT: !208 = !DILocation(line: 70, column: 10, scope: !203)
 // CHECK:STDOUT: !209 = !DILocation(line: 70, column: 3, scope: !203)
+// CHECK:STDOUT:
