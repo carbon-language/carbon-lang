@@ -1631,8 +1631,11 @@ class Lexer::ErrorRecoveryBuffer {
       for (; old_tokens_it->first < next_offset; ++old_tokens_it) {
         buffer_->token_infos_.Add(old_tokens_it->second);
       }
-      buffer_->AddToken(info);
-      buffer_->recovery_tokens_.set(next_offset.index);
+      // Flag the token just added at its index in the merged list, which
+      // shifts past `next_offset` (the pre-insertion index) once any earlier
+      // insertion has been applied.
+      TokenIndex added = buffer_->AddToken(info);
+      buffer_->recovery_tokens_.set(added.index);
     }
     for (; old_tokens_it != old_tokens_range.end(); ++old_tokens_it) {
       buffer_->token_infos_.Add(old_tokens_it->second);

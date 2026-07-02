@@ -618,6 +618,44 @@ TEST_F(LexerTest, MismatchedGroups) {
           {.kind = TokenKind::FileEnd},
       }));
 
+  // Two recovery tokens inserted at the same point: each must be flagged at
+  // its own merged index, not the pre-insertion index of the token it was
+  // inserted before.
+  auto& buffer3b = compile_helper_.GetTokenizedBuffer("{((}");
+  EXPECT_TRUE(buffer3b.has_errors());
+  EXPECT_THAT(
+      buffer3b,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::FileStart},
+          {.kind = TokenKind::OpenCurlyBrace, .column = 1},
+          {.kind = TokenKind::OpenParen, .column = 2},
+          {.kind = TokenKind::OpenParen, .column = 3},
+          {.kind = TokenKind::CloseParen, .column = 4, .recovery = true},
+          {.kind = TokenKind::CloseParen, .column = 4, .recovery = true},
+          {.kind = TokenKind::CloseCurlyBrace, .column = 4},
+          {.kind = TokenKind::FileEnd},
+      }));
+
+  // Recovery insertions at two separate points: the second one's merged index
+  // is shifted by the first, and a real token must not be flagged in its
+  // place.
+  auto& buffer3c = compile_helper_.GetTokenizedBuffer("{(} {(}");
+  EXPECT_TRUE(buffer3c.has_errors());
+  EXPECT_THAT(
+      buffer3c,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::FileStart},
+          {.kind = TokenKind::OpenCurlyBrace, .column = 1},
+          {.kind = TokenKind::OpenParen, .column = 2},
+          {.kind = TokenKind::CloseParen, .column = 3, .recovery = true},
+          {.kind = TokenKind::CloseCurlyBrace, .column = 3},
+          {.kind = TokenKind::OpenCurlyBrace, .column = 5},
+          {.kind = TokenKind::OpenParen, .column = 6},
+          {.kind = TokenKind::CloseParen, .column = 7, .recovery = true},
+          {.kind = TokenKind::CloseCurlyBrace, .column = 7},
+          {.kind = TokenKind::FileEnd},
+      }));
+
   auto& buffer4 = compile_helper_.GetTokenizedBuffer(")({)");
   EXPECT_TRUE(buffer4.has_errors());
   EXPECT_THAT(
