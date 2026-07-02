@@ -36,6 +36,7 @@ constexpr Kind UntestedKinds[] = {
     Kind::BuildPreludeManifestError,
     Kind::BuildTempDirectoryCreationError,
     Kind::BuildTempDirectoryDeletionError,
+    Kind::CompileCoreManifestError,
     Kind::CompilePreludeManifestError,
     Kind::ConfigFailedToReadDigest,
     Kind::ConfigFailedToSetupTarget,
