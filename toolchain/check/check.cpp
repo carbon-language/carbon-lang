@@ -458,9 +458,10 @@ auto CheckParseTrees(
 
     // Add the prelude import. It's added to explicit_import_map so that it can
     // conflict with an explicit import of the prelude.
-    auto prelude_id =
-        unit_info.unit->value_stores->string_literal_values().Add("prelude");
     if (options.prelude_import) {
+      auto prelude_id =
+          unit_info.unit->value_stores->string_literal_values().Add("prelude");
+
       // We add the prelude to every Carbon unit except for the prelude itself.
       // Adding the prelude to the non-prelude parts of Core requires different
       // semantics because it is not valid to mention the name of the package
