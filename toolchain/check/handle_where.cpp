@@ -541,6 +541,10 @@ static auto ThawPeriodSelfInRequirements(Context& context,
     -> SemIR::InstBlockId {
   bool changed = false;
 
+  // TODO: Fn non-canonical cases, Subst should be able to communicate when it
+  // recurses nito an InstBlock so that the substituted instructions can be used
+  // to build a new InstBlock. Then we should be able to expose a SubstInstBlock
+  // entry point and just call that to avoid all this extra complexity here.
   auto thaw = [&](SemIR::InstId req_id, auto req) {
     bool changed_local = false;
     auto subst_lhs_id = ThawPeriodSelf(context, req.lhs_id);

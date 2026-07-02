@@ -571,10 +571,9 @@ auto ThawPeriodSelf(Context& context, SemIR::InstId inst_id) -> SemIR::InstId {
             orig_inst_id) {
           return RebuildNewInst(SemIR::LocId(orig_inst_id), new_inst);
         } else {
-          return AddInst(
-              context(),
-              SemIR::LocIdAndInst::RuntimeVerified(
-                  context().sem_ir(), SemIR::LocId(orig_inst_id), new_inst));
+          return AddInst(context(), SemIR::LocIdAndInst::RuntimeVerified(
+                                        context().sem_ir(),
+                                        SemIR::LocId(orig_inst_id), new_inst));
         }
       });
       return inserted.value();
