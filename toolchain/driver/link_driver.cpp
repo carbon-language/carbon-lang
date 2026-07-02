@@ -37,15 +37,19 @@ auto object_search(Filesystem::DirRef base_dir, std::filesystem::path base_path,
                                 return path.extension() == ".o";
                               })
             .ok());
-    llvm::for_each(relative_sub_paths, [relative_path, &work_paths](
-                                           std::filesystem::path sub_path) {
-      work_paths.push_back(relative_path / sub_path);
-    });
-    llvm::for_each(relative_file_paths, [relative_path, base_path,
-                                         &prelude_paths](
-                                            std::filesystem::path file_path) {
-      prelude_paths.push_back((base_path / relative_path / file_path).string());
-    });
+    llvm::append_range(
+        work_paths,
+        llvm::map_range(relative_sub_paths,
+                        [relative_path](std::filesystem::path sub_path) {
+                          return relative_path / sub_path;
+                        }));
+    llvm::append_range(
+        prelude_paths,
+        llvm::map_range(
+            relative_file_paths,
+            [relative_path, base_path](std::filesystem::path file_path) {
+              return (base_path / relative_path / file_path).string();
+            }));
   }
 }
 
@@ -84,7 +88,7 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
     CARBON_DIAGNOSTIC(LinkObjectFilesMissing, Error,
                       "no object files provided to link command and no extra "
                       "Clang options that could provide them");
-    driver_env.emitter.Emit(LinkObjectFilesMissing);`
+    driver_env.emitter.Emit(LinkObjectFilesMissing);
     return {.success = false};
   }
 
@@ -117,10 +121,10 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
           &driver_env, options_->codegen_options, &runtimes);
       auto path_or_error = std::move(prelude_builder).Build();
       if (!path_or_error.ok()) {
-        CARBON_DIAGNOSTIC(FailureBuildingRuntimes, Error,
+        CARBON_DIAGNOSTIC(LinkCarbonPreludeBuildFailed, Error,
                           "Failed to build Carbon prelude during linking: {0}",
                           std::string);
-        driver_env.emitter.Emit(FailureBuildingRuntimes,
+        driver_env.emitter.Emit(LinkCarbonPreludeBuildFailed,
                                 path_or_error.error().message());
         return {.success = false};
       }
@@ -156,10 +160,10 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
     object_search(core_dir, core_path, prelude_paths);
     CARBON_CHECK(!prelude_paths.empty(), "Found no prelude files at {}",
                  runtimes_path / relative_path);
-    llvm::for_each(prelude_paths,
-                   [&clang_args](const std::string& path) -> void {
-                     clang_args.push_back(llvm::StringRef(path));
-                   });
+    llvm::append_range(
+        clang_args, llvm::map_range(prelude_paths, [](const std::string& path) {
+          return llvm::StringRef(path);
+        }));
   }
 
   clang_args.append(options_->object_filenames.begin(),

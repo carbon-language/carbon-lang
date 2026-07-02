@@ -239,12 +239,12 @@ class CompileDriver {
   // object name.
   // Returns `false` on configuration error.
   [[nodiscard]] auto Initialize(
-      DriverEnv* driver_env,
+      DriverEnv& driver_env,
       llvm::function_ref<auto(llvm::StringRef)->std::string> map_input) -> bool;
 
   // Performs the compilation process on each input specified in the
   // `CompileOptions` provided at construction time.
-  [[nodiscard]] auto Compile(DriverEnv* driver_env) -> DriverResult;
+  [[nodiscard]] auto Compile(DriverEnv& driver_env) -> DriverResult;
 
   // Returns the index in the `units()` array of the first input file
   // specified by the user on the command line. This may not be the first

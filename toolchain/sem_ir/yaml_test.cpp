@@ -39,9 +39,9 @@ TEST(SemIRTest, Yaml) {
   RawStringOstream print_stream;
   Driver driver(fs, &install_paths, /*input_stream=*/nullptr, &print_stream,
                 &llvm::errs());
-  auto run_result =
-      driver.RunCommand({"compile", "--no-prelude-import", "--phase=check",
-                         "--dump-raw-sem-ir", "test.carbon"});
+  auto run_result = driver.RunCommand(
+      {"compile", "--no-prelude-import", "--no-include-carbon-core",
+       "--phase=check", "--dump-raw-sem-ir", "test.carbon"});
   EXPECT_TRUE(run_result.success);
 
   // Matches the ID of an instruction. Instruction counts may change as various

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // Exclude the prelude import so that the number of prelude files isn't tested.
-// ARGS: --include-diagnostic-kind compile --output=%t --no-prelude-import foo.carbon bar.carbon
+// ARGS: --include-diagnostic-kind compile --output=%t --no-prelude-import --no-include-carbon-core foo.carbon bar.carbon
 //
 // SET-CAPTURE-CONSOLE-OUTPUT
 // clang-format off

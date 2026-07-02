@@ -175,6 +175,7 @@ auto ToolchainFileTest::Run(
   if (component_ == "check" || component_ == "lower") {
     filtered_test_args.reserve(test_args.size());
     bool found_prelude_flag = false;
+    bool found_include_core_flag = false;
     for (auto arg : test_args) {
       bool driver_flag = arg == "--custom-core" || arg == "--no-prelude-import";
       // A flag specified by a test prelude to indicate the intention to include
@@ -183,7 +184,9 @@ auto ToolchainFileTest::Run(
       if (driver_flag || full_prelude) {
         found_prelude_flag = true;
       }
-      if (!full_prelude) {
+      bool include_core = arg == "--include-carbon-core";
+      found_include_core_flag |= include_core;
+      if (!full_prelude && !include_core) {
         filtered_test_args.push_back(arg);
       }
     }
@@ -191,6 +194,13 @@ auto ToolchainFileTest::Run(
       return Error(
           "Include a prelude from //toolchain/testing/testdata/min_prelude "
           "to specify what should be imported into the test.");
+    }
+    // The compile driver includes the carbon-core by default, but we invert
+    // this logic for the check and lower phases, meaning we detect the presence
+    // of `--include-carbon-core` in the arguments, and unless that is there
+    // we automatically append the `--no-include-carbon-core` flag.
+    if (!found_include_core_flag) {
+      filtered_test_args.push_back("--no-include-carbon-core");
     }
   } else {
     filtered_test_args = test_args;
@@ -275,7 +285,7 @@ auto ToolchainFileTest::GetDefaultArgs() const
   } else if (component_ == "lower") {
     args.insert(args.end(), {"--dump-llvm-ir", "--target=x86_64-linux-gnu"});
   } else if (component_ == "codegen") {
-    // codegen tests specify flags as needed.
+    args.insert(args.end(), {"--no-include-carbon-core"});
   } else {
     CARBON_FATAL("Unexpected test component {0}: {1}", component_, test_name());
   }

@@ -236,11 +236,11 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
 
   compile_driver_ = std::make_unique<CompileDriver>(&options_);
   auto map_input = [](llvm::StringRef) -> std::string { return ""; };
-  if (!compile_driver_->Initialize(&driver_env, map_input)) {
+  if (!compile_driver_->Initialize(driver_env, map_input)) {
     context.PublishDiagnostics(consumer.params());
     return;
   }
-  if (!compile_driver_->Compile(&driver_env).success) {
+  if (!compile_driver_->Compile(driver_env).success) {
     context.PublishDiagnostics(consumer.params());
     return;
   }

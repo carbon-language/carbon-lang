@@ -17,6 +17,11 @@ CarbonRuntimesBuilderBase::CarbonRuntimesBuilderBase(
       install_root_(driver_env->installation->root()),
       result_(Error("Did not finish building the Carbon runtimes!")) {
   compile_options_.codegen_options = codegen_options;
+  // Each prelude file explicitly imports the other parts of the prelude it
+  // needs.
+  compile_options_.prelude_import = false;
+  // Don't also try and compile the rest of the core when compiling the prelude.
+  compile_options_.include_carbon_core = false;
 }
 
 CarbonPreludeBuilder::CarbonPreludeBuilder(
@@ -66,13 +71,10 @@ auto CarbonPreludeBuilder::Build() && -> ErrorOr<std::filesystem::path> {
                        llvm::StringRef(prelude_source_files.back()));
                  });
 
-  // Each prelude file explicitly imports the other parts of the prelude it
-  // needs.
-  compile_options_.prelude_import = false;
   auto install_root_length = install_root_.string().length();
   CARBON_CHECK(
       compile_driver_.Initialize(
-          driver_env_,
+          *driver_env_,
           [&](llvm::StringRef input_filename) -> std::string {
             // Make the input path relative to the install_root_ again, and
             // replace the `.carbon` extension with a `.o`.
@@ -97,7 +99,7 @@ auto CarbonPreludeBuilder::Build() && -> ErrorOr<std::filesystem::path> {
             return output_path.string();
           }),
       "Failed to initialize compiler driver for Carbon prelude.");
-  CARBON_CHECK(compile_driver_.Compile(driver_env_).success,
+  CARBON_CHECK(compile_driver_.Compile(*driver_env_).success,
                "Failed to compile Carbon prelude.");
 
   result_ = (*std::move(runtimes_builder_)).Commit();

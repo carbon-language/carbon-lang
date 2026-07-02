@@ -29,6 +29,7 @@ struct CompileOptions;
 // Although this class has only a single derivation for building the prelude,
 // we anticipate wanting to build other parts of Core in the future and so
 // design for extensibility.
+// TODO: Build all parts of the Core, not just the prelude.
 class CarbonRuntimesBuilderBase {
  protected:
   // `installation` contains the path to the runtimes cache

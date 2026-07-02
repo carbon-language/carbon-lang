@@ -35,14 +35,14 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   auto compile_driver = CompileDriver(&options_);
 
-  if (!compile_driver.Initialize(&driver_env,
+  if (!compile_driver.Initialize(driver_env,
                                  [&](llvm::StringRef) -> std::string {
                                    return options_.output_filename.str();
                                  })) {
     return {.success = false};
   }
 
-  return compile_driver.Compile(&driver_env);
+  return compile_driver.Compile(driver_env);
 }
 
 }  // namespace Carbon
