@@ -515,6 +515,19 @@ auto ThawPeriodSelf(Context& context, SemIR::InstId inst_id) -> SemIR::InstId {
     explicit MakeInactiveCallbacks(Context* context)
         : SubstInstCallbacks(context) {}
     auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+      // For canonical insts, if the inst is a concrete constant, then there is
+      // no frozen `.Self` to replace. But for non-canonical insts, we need to
+      // look for `.Self` in the inst's operands even if its constant value is
+      // concrete, since we're thawing `.Self` in the non-canonical inst itself,
+      // not just its constant value.
+      auto const_id = context().constant_values().Get(inst_id);
+      if (context().constant_values().GetInstId(const_id) == inst_id &&
+          const_id.is_concrete()) {
+        return FullySubstituted;
+      }
+
+      // Base case for non-canonical insts. The operands of these insts include
+      // themselves.
       if (inst_id == SemIR::TypeType::TypeInstId ||
           inst_id == SemIR::ErrorInst::InstId) {
         return FullySubstituted;
