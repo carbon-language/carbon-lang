@@ -79,8 +79,8 @@ auto CheckAssociatedFunctionImplementation(
 
   return BuildThunk(context, interface_function_type.function_id,
                     interface_function_specific_id,
-                    /*signature_self_type_override_id=*/SemIR::TypeId::None,
-                    impl_decl_id, defer_thunk_definition);
+                    /*override_self_type_id=*/SemIR::TypeId::None, impl_decl_id,
+                    defer_thunk_definition);
 }
 
 static auto GetScopeInstId(Context& context, SemIR::InstId scope_inst_id)
