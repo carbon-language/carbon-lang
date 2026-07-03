@@ -647,9 +647,10 @@ auto DeduceGenericCallArguments(
 }
 
 auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
-                         const SemIR::Impl& impl, SemIR::ConstantId self_id,
+                         SemIR::ImplId impl_id, SemIR::ConstantId self_id,
                          SemIR::SpecificId constraint_specific_id)
     -> SemIR::SpecificId {
+  const auto& impl = context.impls().Get(impl_id);
   DeductionContext deduction(&context, loc_id, impl.generic_id,
                              /*enclosing_specific_id=*/SemIR::SpecificId::None,
                              /*diagnose=*/false);
@@ -676,10 +677,14 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
   context.generic_region_stack().Pop();
   context.inst_block_stack().PopAndDiscard();
 
-  if (!success) {
-    return SemIR::SpecificId::None;
+  auto specific_id = SemIR::SpecificId::None;
+  if (success) {
+    context.forbidden_impls().push_back(impl_id);
+    specific_id = deduction.MakeSpecific();
+    context.forbidden_impls().pop_back();
   }
-  return deduction.MakeSpecific();
+
+  return specific_id;
 }
 
 }  // namespace Carbon::Check

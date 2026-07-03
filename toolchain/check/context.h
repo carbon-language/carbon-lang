@@ -286,6 +286,10 @@ class Context {
     return where_stack_;
   }
 
+  auto forbidden_impls() -> llvm::SmallVector<SemIR::ImplId>& {
+    return forbidden_impls_;
+  }
+
   // Data about a form expression.
   //
   // TODO: consider moving this out of Context.
@@ -565,6 +569,11 @@ class Context {
   // Tracks information about constraints in the current `where` expression
   // being checked so that they can be used by later constraints.
   llvm::SmallVector<WhereStackEntry> where_stack_;
+
+  // Impls that can not be used in impl lookup. This is used to prevent cycles
+  // where a lookup inside the impl decl should not be able to find the
+  // containing impl decl.
+  llvm::SmallVector<SemIR::ImplId> forbidden_impls_;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;

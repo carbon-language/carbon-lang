@@ -206,6 +206,7 @@ static auto VerifyImplRedecl(Context& context, const SemIR::Impl& new_impl,
 // false is returned.
 static auto VerifyAllGenericBindingsUsed(Context& context, SemIR::LocId loc_id,
                                          SemIR::LocId implicit_params_loc_id,
+                                         SemIR::ImplId impl_id,
                                          SemIR::Impl& impl) -> bool {
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     return true;
@@ -225,7 +226,7 @@ static auto VerifyAllGenericBindingsUsed(Context& context, SemIR::LocId loc_id,
   }
 
   auto deduced_specific_id = DeduceImplArguments(
-      context, loc_id, impl, context.constant_values().Get(impl.self_id),
+      context, loc_id, impl_id, context.constant_values().Get(impl.self_id),
       impl.interface.specific_id);
   if (deduced_specific_id.has_value()) {
     // Deduction succeeded, all bindings were used.
@@ -376,7 +377,8 @@ auto AddImpl(Context& context, const SemIR::Impl& impl,
   // its generic bindings, and will never be matched. This should be
   // diagnossed to the user.
   if (!VerifyAllGenericBindingsUsed(context, SemIR::LocId(impl_decl_id),
-                                    implicit_params_loc_id, stored_impl)) {
+                                    implicit_params_loc_id, impl_id,
+                                    stored_impl)) {
     FillImplWitnessWithErrors(context, stored_impl);
   }
 
