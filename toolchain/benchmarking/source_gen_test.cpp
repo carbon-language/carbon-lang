@@ -624,43 +624,128 @@ TEST(SourceGenTest, GenApiFileDenseDeclsPlanDeclarations) {
   EXPECT_THAT(source, HasSubstr("auto ["));
 }
 
+// Definitions call free functions, passing `&acc` and `&acc64` for pointer
+// parameters and destructuring tuple-returning calls.
+TEST_P(GenApiFileDenseDeclsParamsTest, FreeFunctionCalls) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.inline_function_defs = 2},
+      .define_decls_out_of_line = true,
+      .free_function_decls_per_class = 2};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 16));
+  std::string source = SourceGen(GetParam()).GenApiFileDenseDecls(3000, params);
+  EXPECT_TRUE(TestCompile(GetParam(), source));
+  EXPECT_THAT(source, HasSubstr("&acc"));
+  EXPECT_THAT(source, HasSubstr("&acc64"));
+}
+
+// When no free function returns a tuple in `CallDestructureForms`,
+// `DestructureCall` steps fall back to literal destructuring while keeping file
+// sizes seed-independent.
+TEST_P(GenApiFileDenseDeclsParamsTest, FreeFunctionCallsWithoutTupleReturns) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 1,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 2},
+      .define_decls_out_of_line = true,
+      .out_of_line_def_sizes = {{.statements = 60, .weight = 1}},
+      .free_function_decls_per_class = 2};
+  // Drop the tuple entries at the end of `fixed_type_weights` so no free
+  // function returns a destructurable tuple.
+  llvm::erase_if(params.type_use_params.fixed_type_weights,
+                 [](const SourceGen::TypeUseParams::FixedTypeWeight& fw) {
+                   return fw.carbon_spelling.starts_with("(");
+                 });
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 16));
+  std::string source = SourceGen(GetParam()).GenApiFileDenseDecls(3000, params);
+  EXPECT_TRUE(TestCompile(GetParam(), source));
+  EXPECT_THAT(source, HasSubstr("&acc64"));
+}
+
+TEST(SourceGenTest, GenApiFileDenseDeclsFreeFunctionCalls) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 1,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 2},
+      .define_decls_out_of_line = true,
+      .out_of_line_def_sizes = {{.statements = 60, .weight = 1}},
+      .free_function_decls_per_class = 4};
+
+  SourceGen carbon_gen;
+  std::string source = carbon_gen.GenApiFileDenseDecls(3000, params);
+  auto [carbon_free_decls, carbon_classes_and_defs] =
+      llvm::StringRef(source).split("\nclass ");
+  EXPECT_THAT(carbon_free_decls, ContainsRegex("\nfn [A-Za-z0-9_]{5,}\\("));
+  EXPECT_THAT(carbon_classes_and_defs,
+              ContainsRegex("let \\([A-Za-z0-9_]+: bool, [A-Za-z0-9_]+: i64\\) "
+                            "= [A-Za-z0-9_]{5,}\\("));
+  EXPECT_THAT(
+      carbon_classes_and_defs,
+      ContainsRegex("let \\([A-Za-z0-9_]+: i32, [A-Za-z0-9_]+: i64\\*\\)"
+                    " = [A-Za-z0-9_]{5,}\\("));
+
+  SourceGen cpp_gen(SourceGen::Language::Cpp);
+  source = cpp_gen.GenApiFileDenseDecls(3000, params);
+  auto [cpp_free_decls, cpp_classes_and_defs] =
+      llvm::StringRef(source).split("\nclass ");
+  EXPECT_THAT(cpp_free_decls, ContainsRegex("\nauto [A-Za-z0-9_]{5,}\\("));
+  EXPECT_THAT(cpp_classes_and_defs,
+              ContainsRegex("const auto \\[[A-Za-z0-9_]+, [A-Za-z0-9_]+\\] = "
+                            "[A-Za-z0-9_]{5,}\\("));
+}
+
 // The line estimates have to track the emitted lines closely, or files miss
 // their target size. The target is large so that rounding to a whole number of
 // classes is small next to the tolerance. C++ gets a larger tolerance for its
 // access specifier lines, which the estimates don't count.
 TEST(SourceGenTest, GenApiFileDenseDeclsLineTargetAccuracy) {
-  llvm::SmallVector<SourceGen::DenseDeclParams, 0> param_set;
-  param_set.push_back({.class_params = {.inline_function_defs = 1,
-                                        .inline_getters = 1,
-                                        .inline_predicates = 1,
-                                        .inline_forwarders = 1}});
+  struct NamedParams {
+    llvm::StringLiteral name;
+    SourceGen::DenseDeclParams params;
+  };
+  llvm::SmallVector<NamedParams, 0> param_set;
+  param_set.push_back({.name = "dense_decls",
+                       .params = {.class_params = {.inline_function_defs = 1,
+                                                   .inline_getters = 1,
+                                                   .inline_predicates = 1,
+                                                   .inline_forwarders = 1},
+                                  .free_function_decls_per_class = 2}});
   // The implementation file shape.
   param_set.push_back(
-      {.class_params = {.public_function_decls = 2,
-                        .public_function_decl_params = {.max_params = 2},
-                        .public_method_decls = 6,
-                        .public_method_decl_params = {.max_params = 2},
-                        .private_function_decls = 2,
-                        .private_function_decl_params = {.max_params = 2},
-                        .private_method_decls = 2,
-                        .private_method_decl_params = {.max_params = 2},
-                        .private_field_decls = 4},
-       .define_decls_out_of_line = true});
+      {.name = "impl_file",
+       .params = {
+           .class_params = {.public_function_decls = 2,
+                            .public_function_decl_params = {.max_params = 2},
+                            .public_method_decls = 6,
+                            .public_method_decl_params = {.max_params = 2},
+                            .private_function_decls = 2,
+                            .private_function_decl_params = {.max_params = 2},
+                            .private_method_decls = 2,
+                            .private_method_decl_params = {.max_params = 2},
+                            .private_field_decls = 4},
+           .define_decls_out_of_line = true,
+           .free_function_decls_per_class = 2}});
   // The realistic header shape.
   param_set.push_back(
-      {.class_params = {.public_function_decls = 0,
-                        .public_method_decls = 2,
-                        .private_function_decls = 0,
-                        .private_method_decls = 0,
-                        .private_field_decls = 3,
-                        .inline_function_defs = 2,
-                        .inline_function_decl_params = {.max_params = 2},
-                        .inline_getters = 2,
-                        .inline_predicates = 1,
-                        .inline_forwarders = 2}});
+      {.name = "realistic_header",
+       .params = {
+           .class_params = {.public_function_decls = 0,
+                            .public_method_decls = 2,
+                            .private_function_decls = 0,
+                            .private_method_decls = 0,
+                            .private_field_decls = 3,
+                            .inline_function_defs = 2,
+                            .inline_function_decl_params = {.max_params = 2},
+                            .inline_getters = 2,
+                            .inline_predicates = 1,
+                            .inline_forwarders = 2},
+           .free_function_decls_per_class = 1}});
 
   constexpr int TargetLines = 20000;
-  for (const SourceGen::DenseDeclParams& params : param_set) {
+  for (const auto& [name, params] : param_set) {
     for (SourceGen::Language language :
          {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
       SourceGen gen(language);
@@ -668,12 +753,10 @@ TEST(SourceGenTest, GenApiFileDenseDeclsLineTargetAccuracy) {
       ssize_t lines = CountLines(source);
       if (language == SourceGen::Language::Carbon) {
         // Within 2% of the requested line count.
-        EXPECT_THAT(lines, AllOf(Ge(19600), Le(20400)))
-            << "define_decls_out_of_line=" << params.define_decls_out_of_line;
+        EXPECT_THAT(lines, AllOf(Ge(19600), Le(20400))) << name;
       } else {
         // Within 10% of the requested line count.
-        EXPECT_THAT(lines, AllOf(Ge(18000), Le(22000)))
-            << "define_decls_out_of_line=" << params.define_decls_out_of_line;
+        EXPECT_THAT(lines, AllOf(Ge(18000), Le(22000))) << name;
       }
     }
   }
