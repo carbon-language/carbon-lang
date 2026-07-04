@@ -239,6 +239,15 @@ class SourceGen {
     int declared_types_weight = 30;
   };
 
+  // A definition size in a histogram of definition sizes, with its weight.
+  // `statements` counts the statements beyond the three that every definition
+  // has: an accumulator, a statement reading the parameters, and the final
+  // `return`.
+  struct DefSizeWeight {
+    int statements;
+    int weight;
+  };
+
   // Parameters used to generate a file with dense declarations.
   struct DenseDeclParams {
     // TODO: Add more parameters to control generating top-level constructs
@@ -249,6 +258,28 @@ class SourceGen {
 
     // Parameters used to guide the selection of types for use in declarations.
     TypeUseParams type_use_params = {};
+
+    // Whether to define each declared function and method out-of-line, after
+    // every class.
+    bool define_decls_out_of_line = false;
+
+    // The histogram of sizes of out-of-line definitions. A file's definitions
+    // follow it as closely as their number allows.
+    //
+    // The default weights are percentages (rounded to sum to 100, with the
+    // 0.4% tail bucket rounded up to 1%) of the function definitions in a
+    // sample of the Carbon toolchain's, LLVM's, and Clang's implementation
+    // files, in buckets of their statement counts. Each size is a bucket's
+    // median, less the three statements that every generated definition has.
+    // The 43% of real definitions that have at most three statements get no
+    // more statements.
+    llvm::SmallVector<DefSizeWeight> out_of_line_def_sizes = {
+        {.statements = 0, .weight = 43}, {.statements = 2, .weight = 18},
+        {.statements = 5, .weight = 11}, {.statements = 8, .weight = 9},
+        {.statements = 13, .weight = 7}, {.statements = 20, .weight = 5},
+        {.statements = 29, .weight = 3}, {.statements = 43, .weight = 2},
+        {.statements = 67, .weight = 1}, {.statements = 125, .weight = 1},
+    };
   };
 
   // Access a global instance of this type to generate Carbon code for
@@ -367,6 +398,24 @@ class SourceGen {
     llvm::StringRef type;
   };
 
+  // A declaration's signature, for emitting its out-of-line definition, and
+  // the index of the definition's plan.
+  struct FunctionSig {
+    llvm::StringRef name;
+    bool is_method;
+    llvm::SmallVector<TypedName> params;
+    llvm::SmallVector<llvm::StringRef> param_consumers;
+    llvm::StringRef return_type;
+    int def_plan;
+  };
+
+  // A declaration to define out-of-line, after every class: the name of its
+  // class, and its signature.
+  struct OutOfLineDef {
+    llvm::StringRef class_name;
+    FunctionSig sig;
+  };
+
   auto EmitParams(bool is_method, llvm::ArrayRef<TypedName> params,
                   llvm::StringRef indent, llvm::raw_ostream& os) -> void;
   auto EmitFunctionDecl(llvm::StringRef name, bool is_private, bool is_method,
@@ -375,7 +424,10 @@ class SourceGen {
                         llvm::raw_ostream& os) -> void;
   auto GenerateFunctionDecl(ClassGenState& state, llvm::StringRef name,
                             bool is_private, bool is_method, int param_count,
-                            llvm::StringRef indent, llvm::raw_ostream& os)
+                            llvm::StringRef indent, llvm::raw_ostream& os,
+                            FunctionSig* captured = nullptr) -> void;
+  auto GenerateOutOfLineDef(ClassGenState& state, llvm::StringRef class_name,
+                            const FunctionSig& sig, llvm::raw_ostream& os)
       -> void;
   auto GenerateInlineFunctionDef(ClassGenState& state, llvm::StringRef name,
                                  int param_count, int local_count,
@@ -394,7 +446,9 @@ class SourceGen {
                             llvm::raw_ostream& os) -> void;
   auto GenerateChecksumFunction(llvm::raw_ostream& os) -> void;
   auto GenerateClassDef(const ClassParams& params, ClassGenState& state,
-                        llvm::raw_ostream& os) -> void;
+                        llvm::raw_ostream& os,
+                        llvm::SmallVectorImpl<OutOfLineDef>& out_of_line_defs)
+      -> void;
 
   absl::BitGen rng_;
   llvm::BumpPtrAllocator storage_;
