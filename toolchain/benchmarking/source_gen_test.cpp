@@ -32,6 +32,7 @@ using ::testing::Each;
 using ::testing::Eq;
 using ::testing::Ge;
 using ::testing::Gt;
+using ::testing::HasSubstr;
 using ::testing::Le;
 using ::testing::MatchesRegex;
 using ::testing::SizeIs;
@@ -407,6 +408,113 @@ TEST(SourceGenTest, GenApiFileDenseDeclsRobustForFieldHeavyParams) {
          {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
       ExpectSeedIndependentSize(language, /*target_lines=*/3000, params,
                                 /*num_seeds=*/32);
+    }
+  }
+}
+
+// Bodies read class-typed parameters through `Checksum`, and return class
+// values through `Make`.
+TEST(SourceGenTest, GenApiFileDenseDeclsInlineBodies) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.inline_function_defs = 3,
+                       .max_body_locals = 4,
+                       .inline_getters = 2,
+                       .inline_predicates = 2,
+                       .inline_forwarders = 2}};
+  for (SourceGen::Language language :
+       {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
+    ExpectSeedIndependentSize(language, /*target_lines=*/2000, params,
+                              /*num_seeds=*/16);
+  }
+
+  SourceGen gen;
+  std::string source = gen.GenApiFileDenseDecls(2000, params);
+  EXPECT_THAT(source, HasSubstr("acc = acc + "));
+  EXPECT_THAT(source, HasSubstr(".Checksum()"));
+  EXPECT_THAT(source, HasSubstr(".Make()"));
+  EXPECT_THAT(source, HasSubstr("Impl("));
+}
+
+TEST(SourceGenTest, GenApiFileDenseDeclsInlineBodiesWithVariedParams) {
+  llvm::SmallVector<SourceGen::DenseDeclParams, 0> param_set;
+  // Many large bodies and few other declarations.
+  param_set.push_back({.class_params = {.public_function_decls = 1,
+                                        .public_method_decls = 1,
+                                        .private_function_decls = 0,
+                                        .private_method_decls = 0,
+                                        .private_field_decls = 4,
+                                        .inline_function_defs = 8,
+                                        .max_body_locals = 12}});
+  // Many fields, which `Make` initializes, often with an earlier class's
+  // `Make`.
+  param_set.push_back({.class_params = {.public_function_decls = 1,
+                                        .public_method_decls = 1,
+                                        .private_function_decls = 0,
+                                        .private_method_decls = 0,
+                                        .private_field_decls = 24,
+                                        .inline_function_defs = 2,
+                                        .max_body_locals = 3}});
+  // Many getters and predicates, and no other fields.
+  param_set.push_back({.class_params = {.private_field_decls = 0,
+                                        .inline_getters = 8,
+                                        .inline_predicates = 8}});
+  // Many forwarders with many parameters, which can have class types.
+  param_set.push_back(
+      {.class_params = {.inline_forwarders = 8,
+                        .inline_forwarder_params = {.max_params = 8}}});
+
+  for (const SourceGen::DenseDeclParams& params : param_set) {
+    for (SourceGen::Language language :
+         {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
+      ExpectSeedIndependentSize(language, /*target_lines=*/3000, params,
+                                /*num_seeds=*/24);
+    }
+  }
+}
+
+// Locals and parameters draw from the same identifiers of each length, and C++
+// rejects a local that redeclares a parameter. Whether a local could do so
+// depends on the shuffle, so compile many seeds.
+TEST(SourceGenTest, GenApiFileDenseDeclsInlineBodiesCppCompiles) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 1,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 4,
+                       .inline_function_defs = 8,
+                       .max_body_locals = 12}};
+  for (int _ : llvm::seq(8)) {
+    SourceGen gen(SourceGen::Language::Cpp);
+    EXPECT_TRUE(TestCompile(SourceGen::Language::Cpp,
+                            gen.GenApiFileDenseDecls(5000, params)));
+  }
+}
+
+// The line estimates have to track the emitted lines closely, or files miss
+// their target size. The target is large so that rounding to a whole number of
+// classes is small next to the tolerance. C++ gets a larger tolerance for its
+// access specifier lines, which the estimates don't count.
+TEST(SourceGenTest, GenApiFileDenseDeclsLineTargetAccuracy) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.inline_function_defs = 1,
+                       .max_body_locals = 3,
+                       .inline_getters = 1,
+                       .inline_predicates = 1,
+                       .inline_forwarders = 1}};
+
+  constexpr int TargetLines = 20000;
+  for (SourceGen::Language language :
+       {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
+    SourceGen gen(language);
+    std::string source = gen.GenApiFileDenseDecls(TargetLines, params);
+    ssize_t lines = CountLines(source);
+    if (language == SourceGen::Language::Carbon) {
+      // Within 2% of the requested line count.
+      EXPECT_THAT(lines, AllOf(Ge(19600), Le(20400)));
+    } else {
+      // Within 10% of the requested line count.
+      EXPECT_THAT(lines, AllOf(Ge(18000), Le(22000)));
     }
   }
 }

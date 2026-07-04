@@ -6,12 +6,14 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <numeric>
 #include <string>
 #include <utility>
 
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -30,6 +32,46 @@ SourceGen::SourceGen(Language language) : language_(language) {}
 // Heuristic numbers used in synthesizing various identifier sequences.
 static constexpr int MinClassNameLength = 5;
 static constexpr int MinMemberNameLength = 4;
+
+// The length of every local variable name. How many times a body spells each
+// local depends on the local's position, so a single length keeps the byte
+// count from depending on which name lands where. Locals are shorter than class
+// names, so they can't shadow a class that the body names.
+static constexpr int LocalNameLength = 3;
+
+// The number of function and method declarations in each class.
+static auto NumDeclsPerClass(const SourceGen::ClassParams& params) -> int {
+  return params.public_function_decls + params.public_method_decls +
+         params.private_function_decls + params.private_method_decls;
+}
+
+// The number of inline definitions of every kind in each class.
+static auto NumInlineDefsPerClass(const SourceGen::ClassParams& params) -> int {
+  return params.inline_function_defs + params.inline_getters +
+         params.inline_predicates + params.inline_forwarders;
+}
+
+// Returns the fixed types that satisfy `eligible`, each repeated `weight` times
+// and interleaved with the others.
+static auto WeightedFixedTypes(
+    const SourceGen::TypeUseParams& params,
+    llvm::function_ref<
+        auto(const SourceGen::TypeUseParams::FixedTypeWeight&)->bool>
+        eligible)
+    -> llvm::SmallVector<const SourceGen::TypeUseParams::FixedTypeWeight*> {
+  llvm::SmallVector<const SourceGen::TypeUseParams::FixedTypeWeight*> weighted;
+  for (int round = 0;; ++round) {
+    int size = weighted.size();
+    for (const auto& fw : params.fixed_type_weights) {
+      if (fw.weight > round && eligible(fw)) {
+        weighted.push_back(&fw);
+      }
+    }
+    if (static_cast<int>(weighted.size()) == size) {
+      return weighted;
+    }
+  }
+}
 
 // The shuffled state used to generate some number of classes.
 //
@@ -56,43 +98,191 @@ class SourceGen::ClassGenState {
     return private_method_param_counts_;
   }
 
+  auto inline_function_param_counts() -> llvm::SmallVectorImpl<int>& {
+    return inline_function_param_counts_;
+  }
+  auto local_counts() -> llvm::SmallVectorImpl<int>& { return local_counts_; }
+  auto forwarder_param_counts() -> llvm::SmallVectorImpl<int>& {
+    return forwarder_param_counts_;
+  }
+
+  auto getter_field_types() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return getter_field_types_;
+  }
+  // The type of a field that a predicate tests, and the predicate template for
+  // that type.
+  struct PredicateField {
+    llvm::StringRef type;
+    llvm::StringRef predicate;
+  };
+  auto predicate_fields() -> llvm::SmallVectorImpl<PredicateField>& {
+    return predicate_fields_;
+  }
+
   auto class_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
     return class_names_;
   }
-  auto member_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
-    return member_names_;
+  auto decl_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return decl_names_;
+  }
+  auto field_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return field_names_;
   }
   auto param_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
     return param_names_;
   }
 
-  auto type_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
-    return type_names_;
+  auto inline_function_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return inline_function_names_;
+  }
+  auto inline_param_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return inline_param_names_;
+  }
+  auto local_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return local_names_;
+  }
+  auto accessed_field_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return accessed_field_names_;
+  }
+  auto forwarder_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return forwarder_names_;
+  }
+  auto forwarder_param_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return forwarder_param_names_;
   }
 
   auto AddValidTypeName(llvm::StringRef type_name) -> void {
     valid_type_names_.Insert(type_name);
   }
 
-  auto GetValidTypeName() -> llvm::StringRef;
+  // The names of all classes in the file. Parameter, member, and field names
+  // exclude these so that they can't shadow a class that a body names.
+  auto class_name_set() -> const Set<llvm::StringRef>& {
+    return class_name_set_;
+  }
+
+  // Emits an expression producing a value of `type`: a call to the class's
+  // `Make` function, or the fixed type's value expression.
+  auto ProduceValue(llvm::StringRef type, llvm::raw_ostream& os) -> void {
+    if (class_name_set_.Contains(type)) {
+      os << type << (is_cpp_ ? "::Make()" : ".Make()");
+    } else {
+      os << fixed_value_.Lookup(type).value();
+    }
+  }
+
+  // A use of a type drawn from a pool. A consumed use also has the consumer
+  // template that reads it.
+  struct TypeUse {
+    llvm::StringRef name;
+    llvm::StringRef consumer;
+  };
+
+  // Each kind of type use draws from its own pool, so that every use in a pool
+  // spells its type the same number of times. Then the byte count doesn't
+  // depend on which use gets which type. A use is "produced" when a body
+  // constructs a value of its type, and "consumed" when a body reads it with a
+  // consumer template.
+
+  // Return and parameter types of declarations, and field types when the file
+  // has no bodies.
+  auto GetDeclType() -> TypeUse { return GetValidTypeUse(decl_type_pool_); }
+  // Parameter types of inline definitions, which are consumed.
+  auto GetInlineParamType() -> TypeUse {
+    return GetValidTypeUse(inline_param_pool_);
+  }
+  // Return types of inline definitions, and field types when the file has
+  // bodies, which are produced.
+  auto GetProducedType() -> TypeUse {
+    return GetValidTypeUse(produced_type_pool_);
+  }
+  // `Make` produces every field when the file has bodies. Without bodies,
+  // fields share the declaration pool, which can include types that have no
+  // value expression.
+  auto GetFieldType() -> TypeUse {
+    return GetValidTypeUse(has_bodies_ ? produced_type_pool_ : decl_type_pool_);
+  }
+  // Return and parameter types of forwarders, which the declarations that they
+  // call spell again.
+  auto GetForwardType() -> TypeUse {
+    return GetValidTypeUse(forward_type_pool_);
+  }
+
+  auto has_bodies() -> bool { return has_bodies_; }
+  auto type_pools_empty() -> bool {
+    return decl_type_pool_.uses.empty() && inline_param_pool_.uses.empty() &&
+           produced_type_pool_.uses.empty() && forward_type_pool_.uses.empty();
+  }
 
  private:
-  auto BuildClassAndTypeNames(SourceGen& gen, int num_classes, int num_types,
-                              int max_refs_per_class,
+  // A pool of type uses, removed as they are emitted. `GetValidTypeUse` resumes
+  // its search at `last_index`.
+  struct TypePool {
+    llvm::SmallVector<TypeUse> uses;
+    int last_index = 0;
+  };
+
+  auto GetValidTypeUse(TypePool& pool) -> TypeUse;
+
+  auto BuildClassAndTypeNames(SourceGen& gen, int num_classes,
+                              const ClassParams& class_params,
                               const TypeUseParams& type_use_params) -> void;
+  auto BuildTypePool(SourceGen& gen, int num_types, int max_refs_per_class,
+                     bool producible_only, bool consumed,
+                     const TypeUseParams& type_use_params) -> TypePool;
 
   llvm::SmallVector<int> public_function_param_counts_;
   llvm::SmallVector<int> public_method_param_counts_;
   llvm::SmallVector<int> private_function_param_counts_;
   llvm::SmallVector<int> private_method_param_counts_;
 
+  llvm::SmallVector<int> inline_function_param_counts_;
+  llvm::SmallVector<int> local_counts_;
+  llvm::SmallVector<int> forwarder_param_counts_;
+
+  // Getters return a copy of their field, and `Make` initializes it, so getter
+  // and predicate fields have fixed types with a value expression. These types
+  // cycle through the eligible types in proportion to their weights, so that
+  // their spellings don't depend on the seed.
+  llvm::SmallVector<llvm::StringRef> getter_field_types_;
+  llvm::SmallVector<PredicateField> predicate_fields_;
+
   llvm::SmallVector<llvm::StringRef> class_names_;
-  llvm::SmallVector<llvm::StringRef> member_names_;
+  // Field names have their own pool because Carbon's `Make` spells each field
+  // name a second time.
+  llvm::SmallVector<llvm::StringRef> decl_names_;
+  llvm::SmallVector<llvm::StringRef> field_names_;
   llvm::SmallVector<llvm::StringRef> param_names_;
 
-  llvm::SmallVector<llvm::StringRef> type_names_;
+  // Inline function names are shorter than `MinMemberNameLength`, so they can't
+  // collide with class, member, or field names.
+  llvm::SmallVector<llvm::StringRef> inline_function_names_;
+  llvm::SmallVector<llvm::StringRef> inline_param_names_;
+  llvm::SmallVector<llvm::StringRef> local_names_;
+  // A getter or predicate spells its field's name again, and a forwarder's
+  // call and the declaration it calls spell its name and parameter names
+  // again, so these have separate pools.
+  llvm::SmallVector<llvm::StringRef> accessed_field_names_;
+  llvm::SmallVector<llvm::StringRef> forwarder_names_;
+  llvm::SmallVector<llvm::StringRef> forwarder_param_names_;
+
+  bool is_cpp_;
+  // Whether the file has any bodies. Then each class also gets a `Make`
+  // function, a `Checksum` method, and a `tag` field.
+  bool has_bodies_;
+  TypePool decl_type_pool_;
+  TypePool inline_param_pool_;
+  TypePool produced_type_pool_;
+  TypePool forward_type_pool_;
   Set<llvm::StringRef> valid_type_names_;
-  int last_type_name_index_ = 0;
+
+  Set<llvm::StringRef> class_name_set_;
+  // The value expression and consumer templates of each fixed type, keyed by
+  // its spelling. These refer into the `TypeUseParams`, which outlives
+  // generation.
+  Map<llvm::StringRef, llvm::StringRef> fixed_value_;
+  Map<llvm::StringRef, llvm::ArrayRef<llvm::StringRef>> fixed_consumers_;
+  llvm::ArrayRef<llvm::StringRef> class_consumers_;
 };
 
 // A helper to sum elements of a range.
@@ -109,7 +299,9 @@ static auto Sum(const T& range) -> int {
 // definitions.
 SourceGen::ClassGenState::ClassGenState(SourceGen& gen, int num_classes,
                                         const ClassParams& class_params,
-                                        const TypeUseParams& type_use_params) {
+                                        const TypeUseParams& type_use_params)
+    : is_cpp_(gen.IsCpp()),
+      has_bodies_(NumInlineDefsPerClass(class_params) > 0) {
   public_function_param_counts_ =
       gen.GetShuffledInts(num_classes * class_params.public_function_decls, 0,
                           class_params.public_function_decl_params.max_params);
@@ -123,106 +315,142 @@ SourceGen::ClassGenState::ClassGenState(SourceGen& gen, int num_classes,
       gen.GetShuffledInts(num_classes * class_params.private_method_decls, 0,
                           class_params.private_method_decl_params.max_params);
 
-  // Each function and method declaration has a return type that can reference
-  // its own class, so each class has at least this many such type uses.
-  int decls_per_class =
-      class_params.public_function_decls + class_params.public_method_decls +
-      class_params.private_function_decls + class_params.private_method_decls;
-  int num_members =
-      num_classes * (decls_per_class + class_params.private_field_decls);
-  member_names_ = gen.GetShuffledIdentifiers(
-      num_members, /*min_length=*/MinMemberNameLength);
+  int num_inline_functions = num_classes * class_params.inline_function_defs;
+  decl_names_ =
+      gen.GetShuffledIdentifiers(num_classes * NumDeclsPerClass(class_params),
+                                 /*min_length=*/MinMemberNameLength);
+  field_names_ =
+      gen.GetShuffledIdentifiers(num_classes * class_params.private_field_decls,
+                                 /*min_length=*/MinMemberNameLength);
   int num_params =
       Sum(public_function_param_counts_) + Sum(public_method_param_counts_) +
       Sum(private_function_param_counts_) + Sum(private_method_param_counts_);
   param_names_ = gen.GetShuffledIdentifiers(num_params);
 
-  BuildClassAndTypeNames(gen, num_classes, num_members + num_params,
-                         decls_per_class, type_use_params);
+  inline_function_param_counts_ =
+      gen.GetShuffledInts(num_inline_functions, 0,
+                          class_params.inline_function_decl_params.max_params);
+  local_counts_ = gen.GetShuffledInts(num_inline_functions, 0,
+                                      class_params.max_body_locals);
+  // Each inline definition has one parameter beyond its random count; see
+  // `BuildClassAndTypeNames`.
+  int num_inline_params =
+      Sum(inline_function_param_counts_) + num_inline_functions;
+  int num_locals = Sum(local_counts_);
+  int num_getters = num_classes * class_params.inline_getters;
+  int num_predicates = num_classes * class_params.inline_predicates;
+  int num_forwarders = num_classes * class_params.inline_forwarders;
+  inline_function_names_ = gen.GetShuffledIdentifiers(
+      num_inline_functions + num_getters + num_predicates, /*min_length=*/2,
+      /*max_length=*/MinMemberNameLength - 1);
+  inline_param_names_ = gen.GetShuffledIdentifiers(num_inline_params);
+  local_names_ = gen.GetShuffledIdentifiers(num_locals,
+                                            /*min_length=*/LocalNameLength,
+                                            /*max_length=*/LocalNameLength);
+  accessed_field_names_ =
+      gen.GetShuffledIdentifiers(num_getters + num_predicates,
+                                 /*min_length=*/MinMemberNameLength);
+  forwarder_param_counts_ = gen.GetShuffledInts(
+      num_forwarders, 0, class_params.inline_forwarder_params.max_params);
+  forwarder_names_ =
+      gen.GetShuffledIdentifiers(num_forwarders, /*min_length=*/2,
+                                 /*max_length=*/MinMemberNameLength - 1);
+  forwarder_param_names_ =
+      gen.GetShuffledIdentifiers(Sum(forwarder_param_counts_));
+
+  BuildClassAndTypeNames(gen, num_classes, class_params, type_use_params);
 }
 
-auto SourceGen::ClassGenState::GetValidTypeName() -> llvm::StringRef {
+auto SourceGen::ClassGenState::GetValidTypeUse(TypePool& pool) -> TypeUse {
   // Check that we don't completely wrap the type names by tracking where we
   // started.
-  int initial_last_type_name_index = last_type_name_index_;
+  int initial_last_index = pool.last_index;
 
-  // Now search the type names, starting from the last used index, to find the
-  // first valid name.
+  // Now search the type uses, starting from the last used index, to find the
+  // first valid one.
   for (;;) {
-    if (last_type_name_index_ == 0) {
-      last_type_name_index_ = type_names_.size();
+    if (pool.last_index == 0) {
+      pool.last_index = pool.uses.size();
     }
-    --last_type_name_index_;
-    llvm::StringRef& type_name = type_names_[last_type_name_index_];
-    if (valid_type_names_.Contains(type_name)) {
-      // Found a valid type name, swap it with the back and pop that off.
-      std::swap(type_names_.back(), type_name);
-      return type_names_.pop_back_val();
+    --pool.last_index;
+    TypeUse& use = pool.uses[pool.last_index];
+    if (valid_type_names_.Contains(use.name)) {
+      // Found a valid type use, swap it with the back and pop that off.
+      std::swap(pool.uses.back(), use);
+      return pool.uses.pop_back_val();
     }
 
-    // `BuildClassAndTypeNames` caps the references to each class so that a
-    // valid type name always remains.
-    CARBON_CHECK(last_type_name_index_ != initial_last_type_name_index,
+    // `BuildTypePool` caps the references to each class so that a valid type
+    // use always remains.
+    CARBON_CHECK(pool.last_index != initial_last_index,
                  "Failed to find a valid type name with {0} candidates, an "
                  "initial index of {1}, and with {2} classes left to emit!",
-                 type_names_.size(), initial_last_type_name_index,
-                 class_names_.size());
+                 pool.uses.size(), initial_last_index, class_names_.size());
   }
 }
 
-// Build both the class names this file will declare and a list of type
-// references to use throughout those classes.
+// Builds a shuffled pool of `num_types` type uses, mixing references to the
+// classes with the fixed types to roughly match the weights in
+// `type_use_params`. `max_refs_per_class` caps the references to each class.
 //
-// We combine a list of fixed types in the `type_use_params` with the list of
-// class names that will be defined to form the spelling of all the referenced
-// types. The `type_use_params` provides weights for each fixed type as well as
-// an overall weight for referencing class names that are being declared. We
-// build a set of type references so that its histogram will roughly match these
-// weights.
+// With `producible_only`, the pool only uses fixed types that have a value
+// expression. With `consumed`, each use gets one of its type's consumer
+// templates, round-robin per type before the shuffle, so that the mix of
+// templates doesn't depend on the seed.
 //
-// For each of the fixed types, `type_use_params` provides a spelling for both
-// Carbon and C++.
-//
-// We distribute our references to declared class names evenly to the extent
-// possible.
-//
-// Before all the references are formed, the class names are kept their original
-// unshuffled order. This ensures that any uneven sampling of names is done
-// deterministically. At the end, we randomly shuffle the sequences of both the
-// declared class names and type references to provide an unpredictable order in
-// the generated output.
-auto SourceGen::ClassGenState::BuildClassAndTypeNames(
-    SourceGen& gen, int num_classes, int num_types, int max_refs_per_class,
-    const TypeUseParams& type_use_params) -> void {
-  // Initially get the sequence of class names without shuffling so we can
-  // compute our type name pool from them prior to any shuffling.
-  class_names_ =
-      gen.GetUniqueIdentifiers(num_classes, /*min_length=*/MinClassNameLength);
+// `valid_type_names_` must already contain the fixed type spellings.
+auto SourceGen::ClassGenState::BuildTypePool(
+    SourceGen& gen, int num_types, int max_refs_per_class, bool producible_only,
+    bool consumed, const TypeUseParams& type_use_params) -> TypePool {
+  TypePool pool;
+  if (num_types == 0) {
+    return pool;
+  }
+  pool.uses.reserve(num_types);
 
-  type_names_.reserve(num_types);
+  auto fixed_spelling = [&](const TypeUseParams::FixedTypeWeight& fw) {
+    return gen.IsCpp() ? fw.cpp_spelling : fw.carbon_spelling;
+  };
+  auto fixed_usable = [&](const TypeUseParams::FixedTypeWeight& fw) {
+    return !producible_only ||
+           !(gen.IsCpp() ? fw.cpp_value : fw.carbon_value).empty();
+  };
 
-  // Compute the sum of weights and pre-process the fixed types.
+  Map<llvm::StringRef, int> consumer_counters;
+  auto append_use = [&](llvm::StringRef name) {
+    llvm::StringRef consumer;
+    if (consumed) {
+      llvm::ArrayRef<llvm::StringRef> consumers =
+          class_name_set_.Contains(name)
+              ? class_consumers_
+              : fixed_consumers_.Lookup(name).value();
+      int& counter = consumer_counters.Insert(name, 0).value();
+      consumer = consumers[counter++ % consumers.size()];
+    }
+    pool.uses.push_back({.name = name, .consumer = consumer});
+  };
+
   int type_weight_sum = type_use_params.declared_types_weight;
   for (const auto& fixed_type_weight : type_use_params.fixed_type_weights) {
-    type_weight_sum += fixed_type_weight.weight;
-    // Add all the fixed type spellings as immediately valid.
-    valid_type_names_.Insert(gen.IsCpp() ? fixed_type_weight.cpp_spelling
-                                         : fixed_type_weight.carbon_spelling);
+    if (fixed_usable(fixed_type_weight)) {
+      type_weight_sum += fixed_type_weight.weight;
+    }
   }
 
   // Compute the number of declared types used. We expect to have a decent
   // number of repeated names, so we repeatedly append the entire sequence of
   // class names until there is some remainder of names needed.
+  int num_classes = class_names_.size();
   int num_declared_types =
       num_types * type_use_params.declared_types_weight / type_weight_sum;
   int full_copies = num_declared_types / num_classes;
   int remainder = num_declared_types % num_classes;
 
-  // Cap the references to each class so that `GetValidTypeName` finds a valid
+  // Cap the references to each class so that `GetValidTypeUse` finds a valid
   // type for any shuffle. A class becomes a valid type after its field types
-  // are chosen, so references to it can only go on its own return and
-  // parameter types, or in a later class. The last class defined has only its
-  // own, and each class has at least `max_refs_per_class` return types. The
+  // are chosen, so references to it can only go on its own function signatures,
+  // or in a later class. The last class defined has only its own, and the cap
+  // is the number of uses each class draws from this pool after its fields. The
   // fixed types below replace any references the cap removes, so the pool's
   // spellings, and with them the byte count, don't depend on the shuffle.
   if (full_copies >= max_refs_per_class) {
@@ -231,43 +459,171 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   }
 
   for ([[maybe_unused]] auto _ : llvm::seq(full_copies)) {
-    llvm::append_range(type_names_, class_names_);
+    for (llvm::StringRef name : class_names_) {
+      append_use(name);
+    }
   }
   // Now append the remainder number of class names. This is where the class
   // names being un-shuffled is essential. We're going to have one extra
   // reference to some fraction of the class names and we want that to be a
   // stable subset.
-  type_names_.append(class_names_.begin(), class_names_.begin() + remainder);
+  for (llvm::StringRef name :
+       llvm::ArrayRef(class_names_).slice(0, remainder)) {
+    append_use(name);
+  }
   num_declared_types = full_copies * num_classes + remainder;
-  CARBON_CHECK(static_cast<int>(type_names_.size()) == num_declared_types);
+  CARBON_CHECK(static_cast<int>(pool.uses.size()) == num_declared_types);
 
   // Use each fixed type weight to append the expected number of copies of that
   // type. This isn't exact however, and is designed to stop short.
   for (const auto& fixed_type_weight : type_use_params.fixed_type_weights) {
+    if (!fixed_usable(fixed_type_weight)) {
+      continue;
+    }
     int num_fixed_type = num_types * fixed_type_weight.weight / type_weight_sum;
-    type_names_.append(num_fixed_type, gen.IsCpp()
-                                           ? fixed_type_weight.cpp_spelling
-                                           : fixed_type_weight.carbon_spelling);
+    for ([[maybe_unused]] auto _ : llvm::seq(num_fixed_type)) {
+      append_use(fixed_spelling(fixed_type_weight));
+    }
   }
 
   // If we need a tail of types to hit the exact number, simply round-robin
-  // through the fixed types without any weighting. With reasonably large
+  // through the usable fixed types without any weighting. With reasonably large
   // numbers of types this won't distort the distribution in an interesting way
   // and is simpler than trying to scale the distribution down.
-  while (static_cast<int>(type_names_.size()) < num_types) {
-    for (const auto& fixed_type_weight :
-         llvm::ArrayRef(type_use_params.fixed_type_weights)
-             .take_front(num_types - type_names_.size())) {
-      type_names_.push_back(gen.IsCpp() ? fixed_type_weight.cpp_spelling
-                                        : fixed_type_weight.carbon_spelling);
+  while (static_cast<int>(pool.uses.size()) < num_types) {
+    for (const auto& fixed_type_weight : type_use_params.fixed_type_weights) {
+      if (static_cast<int>(pool.uses.size()) >= num_types) {
+        break;
+      }
+      if (fixed_usable(fixed_type_weight)) {
+        append_use(fixed_spelling(fixed_type_weight));
+      }
     }
   }
-  CARBON_CHECK(static_cast<int>(type_names_.size()) == num_types);
-  last_type_name_index_ = num_types;
+  CARBON_CHECK(static_cast<int>(pool.uses.size()) == num_types);
+  pool.last_index = num_types;
 
-  // Now shuffle both the class names and the type names.
+  std::shuffle(pool.uses.begin(), pool.uses.end(), gen.rng_);
+  return pool;
+}
+
+// Builds the class names and the type use pools. Each pool caps the references
+// to each class at the number of uses each class draws from it after its
+// fields; see `BuildTypePool`.
+auto SourceGen::ClassGenState::BuildClassAndTypeNames(
+    SourceGen& gen, int num_classes, const ClassParams& class_params,
+    const TypeUseParams& type_use_params) -> void {
+  // Initially get the sequence of class names without shuffling so we can
+  // compute our type pools from them prior to any shuffling.
+  class_names_ =
+      gen.GetUniqueIdentifiers(num_classes, /*min_length=*/MinClassNameLength);
+  for (llvm::StringRef name : class_names_) {
+    class_name_set_.Insert(name);
+  }
+
+  // Every fixed type needs a consumer template, since any of them can be the
+  // type of a consumed parameter.
+  for (const auto& fw : type_use_params.fixed_type_weights) {
+    llvm::StringRef spelling =
+        gen.IsCpp() ? fw.cpp_spelling : fw.carbon_spelling;
+    valid_type_names_.Insert(spelling);
+    fixed_value_.Insert(spelling, gen.IsCpp() ? fw.cpp_value : fw.carbon_value);
+    llvm::ArrayRef<llvm::StringRef> consumers =
+        gen.IsCpp() ? fw.cpp_consumers : fw.carbon_consumers;
+    CARBON_CHECK(!consumers.empty(),
+                 "Fixed type `{0}` needs at least one consumer template.",
+                 spelling);
+    for (llvm::StringRef consumer : consumers) {
+      CARBON_CHECK(consumer.contains("{0}"),
+                   "Fixed type `{0}` has a consumer template without a name "
+                   "placeholder.",
+                   spelling);
+    }
+    fixed_consumers_.Insert(spelling, consumers);
+  }
+  CARBON_CHECK(!type_use_params.class_consumers.empty(),
+               "Class types need at least one consumer template.");
+  class_consumers_ = type_use_params.class_consumers;
+
+  int decls_per_class = NumDeclsPerClass(class_params);
+  int num_decl_returns = num_classes * decls_per_class;
+  int num_decl_params =
+      Sum(public_function_param_counts_) + Sum(public_method_param_counts_) +
+      Sum(private_function_param_counts_) + Sum(private_method_param_counts_);
+  int num_inline_returns = num_classes * class_params.inline_function_defs;
+  int num_inline_params = Sum(inline_function_param_counts_);
+  int num_fields = num_classes * class_params.private_field_decls;
+  int num_produced_fields = has_bodies_ ? num_fields : 0;
+
+  // Each class draws `inline_function_defs` return types from this pool after
+  // its fields.
+  produced_type_pool_ = BuildTypePool(
+      gen, num_inline_returns + num_produced_fields,
+      class_params.inline_function_defs,
+      /*producible_only=*/true, /*consumed=*/false, type_use_params);
+
+  // Each inline definition has one parameter beyond its random count, so that
+  // each class draws at least `inline_function_defs` parameter types from this
+  // pool, and the pool can include class types.
+  int num_inline_extra_params = num_inline_returns;
+  inline_param_pool_ = BuildTypePool(
+      gen, num_inline_params + num_inline_extra_params,
+      class_params.inline_function_defs,
+      /*producible_only=*/false, /*consumed=*/true, type_use_params);
+
+  // Each class draws `decls_per_class` return types from this pool after its
+  // fields.
+  decl_type_pool_ = BuildTypePool(
+      gen,
+      num_decl_returns + num_decl_params + (num_fields - num_produced_fields),
+      decls_per_class,
+      /*producible_only=*/false, /*consumed=*/false, type_use_params);
+
+  // Each class draws `inline_forwarders` return types from this pool after its
+  // fields.
+  forward_type_pool_ = BuildTypePool(
+      gen,
+      num_classes * class_params.inline_forwarders +
+          Sum(forwarder_param_counts_),
+      class_params.inline_forwarders,
+      /*producible_only=*/false, /*consumed=*/false, type_use_params);
+
+  auto value = [&](const TypeUseParams::FixedTypeWeight& fw) {
+    return gen.IsCpp() ? fw.cpp_value : fw.carbon_value;
+  };
+  auto predicate = [&](const TypeUseParams::FixedTypeWeight& fw) {
+    return gen.IsCpp() ? fw.cpp_predicate : fw.carbon_predicate;
+  };
+  auto spelling = [&](const TypeUseParams::FixedTypeWeight& fw) {
+    return gen.IsCpp() ? fw.cpp_spelling : fw.carbon_spelling;
+  };
+  int num_getters = num_classes * class_params.inline_getters;
+  auto getter_types = WeightedFixedTypes(
+      type_use_params, [&](const auto& fw) { return !value(fw).empty(); });
+  CARBON_CHECK(num_getters == 0 || !getter_types.empty(),
+               "Getters need a fixed type with a value expression.");
+  for (int i : llvm::seq(num_getters)) {
+    getter_field_types_.push_back(
+        spelling(*getter_types[i % getter_types.size()]));
+  }
+  std::shuffle(getter_field_types_.begin(), getter_field_types_.end(),
+               gen.rng_);
+  int num_predicates = num_classes * class_params.inline_predicates;
+  auto predicate_types =
+      WeightedFixedTypes(type_use_params, [&](const auto& fw) {
+        return !value(fw).empty() && !predicate(fw).empty();
+      });
+  CARBON_CHECK(num_predicates == 0 || !predicate_types.empty(),
+               "Predicates need a fixed type with a value expression and a "
+               "predicate template.");
+  for (int i : llvm::seq(num_predicates)) {
+    const auto& fw = *predicate_types[i % predicate_types.size()];
+    predicate_fields_.push_back(
+        {.type = spelling(fw), .predicate = predicate(fw)});
+  }
+  std::shuffle(predicate_fields_.begin(), predicate_fields_.end(), gen.rng_);
+
   std::shuffle(class_names_.begin(), class_names_.end(), gen.rng_);
-  std::shuffle(type_names_.begin(), type_names_.end(), gen.rng_);
 }
 
 // Some heuristic numbers used when formatting generated code. These heuristics
@@ -279,12 +635,15 @@ static constexpr int NumSingleLineFunctionParams = 3;
 static constexpr int NumSingleLineMethodParams = 2;
 static constexpr int MaxParamsPerLine = 4;
 
-static auto EstimateAvgFunctionDeclLines(SourceGen::FunctionDeclParams params)
-    -> double {
-  // Currently model a uniform distribution [0, max] parameters. Assume a line
-  // break before the first parameter for >3 and after every 4th.
+// `extra_params` is the number of parameters a function has beyond its random
+// count.
+static auto EstimateAvgFunctionDeclLines(SourceGen::FunctionDeclParams params,
+                                         int extra_params = 0) -> double {
+  // Currently model a uniform distribution [0, max] random parameters. Assume
+  // a line break before the first parameter for >3 and after every 4th.
   int param_lines = 0;
-  for (int num_params : llvm::seq_inclusive(0, params.max_params)) {
+  for (int num_params :
+       llvm::seq_inclusive(extra_params, params.max_params + extra_params)) {
     if (num_params > NumSingleLineFunctionParams) {
       param_lines += (num_params + MaxParamsPerLine - 1) / MaxParamsPerLine;
     }
@@ -292,20 +651,38 @@ static auto EstimateAvgFunctionDeclLines(SourceGen::FunctionDeclParams params)
   return 1.0 + static_cast<double>(param_lines) / (params.max_params + 1);
 }
 
-static auto EstimateAvgMethodDeclLines(SourceGen::MethodDeclParams params)
-    -> double {
-  // Currently model a uniform distribution [0, max] parameters. Assume a line
-  // break before the first parameter for >2 and after every 4th. A Carbon
-  // method also emits a leading `self`, but `self` only rarely tips a method
-  // onto an additional wrapped line, so the estimate ignores it; this stays
-  // calibrated against the emitter (see `source_gen_test`).
+// See `EstimateAvgFunctionDeclLines` for the meaning of `extra_params`.
+static auto EstimateAvgMethodDeclLines(SourceGen::MethodDeclParams params,
+                                       int extra_params = 0) -> double {
+  // Currently model a uniform distribution [0, max] random parameters. Assume
+  // a line break before the first parameter for >2 and after every 4th slot,
+  // where a Carbon method's `self` takes the first slot. C++ methods have no
+  // `self`, so this slightly overestimates their lines.
   int param_lines = 0;
-  for (int num_params : llvm::seq_inclusive(0, params.max_params)) {
+  for (int num_params :
+       llvm::seq_inclusive(extra_params, params.max_params + extra_params)) {
     if (num_params > NumSingleLineMethodParams) {
-      param_lines += (num_params + MaxParamsPerLine - 1) / MaxParamsPerLine;
+      param_lines += 1 + num_params / MaxParamsPerLine;
     }
   }
   return 1.0 + static_cast<double>(param_lines) / (params.max_params + 1);
+}
+
+// Estimates the average number of lines in an inline function definition,
+// excluding its comment. The body has an accumulator line, a line per
+// parameter, a line per local plus one more when there are any, a return line,
+// and a closing brace line.
+static auto EstimateAvgInlineFunctionDefLines(SourceGen::ClassParams params)
+    -> double {
+  constexpr int ExtraParams = 1;
+  double avg_params =
+      params.inline_function_decl_params.max_params / 2.0 + ExtraParams;
+  double max_locals = params.max_body_locals;
+  double avg_locals = max_locals / 2.0;
+  double prob_any_local = max_locals / (max_locals + 1.0);
+  return EstimateAvgFunctionDeclLines(params.inline_function_decl_params,
+                                      ExtraParams) +
+         1.0 + avg_params + avg_locals + prob_any_local + 2.0;
 }
 
 // Note that this should match the heuristics used when formatting.
@@ -325,10 +702,32 @@ static auto EstimateAvgClassDefLines(SourceGen::ClassParams params) -> double {
          params.private_function_decls;
   avg += (2.0 + EstimateAvgMethodDeclLines(params.private_method_decl_params)) *
          params.private_method_decls;
+  avg += (2.0 + EstimateAvgInlineFunctionDefLines(params)) *
+         params.inline_function_defs;
+  // Getters and predicates are on one line.
+  avg += 3.0 * (params.inline_getters + params.inline_predicates);
+  // A forwarder's body has a return line and a closing brace line, and the
+  // declaration it calls has the same signature.
+  double forwarder_signature_lines =
+      EstimateAvgMethodDeclLines(params.inline_forwarder_params);
+  avg += (2.0 + forwarder_signature_lines + 2.0 + 2.0 +
+          forwarder_signature_lines) *
+         params.inline_forwarders;
 
-  // A blank line and all the fields (if any).
-  if (params.private_field_decls > 0) {
-    avg += 1.0 + params.private_field_decls;
+  bool has_bodies = NumInlineDefsPerClass(params) > 0;
+
+  // A blank line and all the fields (if any), including `tag` when the file has
+  // bodies.
+  double num_fields = params.private_field_decls + params.inline_getters +
+                      params.inline_predicates + (has_bodies ? 1.0 : 0.0);
+  if (num_fields > 0) {
+    avg += 1.0 + num_fields;
+  }
+
+  // `Make` and `Checksum` each have a blank line, a comment line, a signature
+  // line, a return line, and a closing brace line.
+  if (has_bodies) {
+    avg += 10.0;
   }
 
   // No need to account for the class close line, we have an extra blank line
@@ -349,8 +748,11 @@ auto SourceGen::GenApiFileDenseDecls(int target_lines,
   double avg_class_lines = EstimateAvgClassDefLines(params.class_params);
   CARBON_CHECK(target_lines > NumFileCommentLines + avg_class_lines,
                "Not enough target lines to generate a single class!");
-  int num_classes = static_cast<double>(target_lines - NumFileCommentLines) /
-                    (avg_class_lines + 1);
+  // Round to the nearest whole class. Truncating can leave the file nearly a
+  // whole class short of the target, which matters when classes with bodies
+  // run to hundreds of lines.
+  int num_classes =
+      std::lround((target_lines - NumFileCommentLines) / (avg_class_lines + 1));
   int expected_lines =
       NumFileCommentLines + num_classes * (avg_class_lines + 1);
 
@@ -384,12 +786,24 @@ auto SourceGen::GenApiFileDenseDecls(int target_lines,
   CARBON_CHECK(class_gen_state.public_method_param_counts().empty());
   CARBON_CHECK(class_gen_state.private_function_param_counts().empty());
   CARBON_CHECK(class_gen_state.private_method_param_counts().empty());
+  CARBON_CHECK(class_gen_state.inline_function_param_counts().empty());
+  CARBON_CHECK(class_gen_state.local_counts().empty());
+  CARBON_CHECK(class_gen_state.forwarder_param_counts().empty());
+  CARBON_CHECK(class_gen_state.getter_field_types().empty());
+  CARBON_CHECK(class_gen_state.predicate_fields().empty());
   CARBON_CHECK(class_gen_state.class_names().empty());
-  CARBON_CHECK(class_gen_state.type_names().empty());
+  CARBON_CHECK(class_gen_state.type_pools_empty());
   // The identifier lengths in each name pool don't depend on the seed, so
   // emitting every name keeps the byte count seed-independent.
-  CARBON_CHECK(class_gen_state.member_names().empty());
+  CARBON_CHECK(class_gen_state.decl_names().empty());
+  CARBON_CHECK(class_gen_state.field_names().empty());
   CARBON_CHECK(class_gen_state.param_names().empty());
+  CARBON_CHECK(class_gen_state.inline_function_names().empty());
+  CARBON_CHECK(class_gen_state.inline_param_names().empty());
+  CARBON_CHECK(class_gen_state.local_names().empty());
+  CARBON_CHECK(class_gen_state.accessed_field_names().empty());
+  CARBON_CHECK(class_gen_state.forwarder_names().empty());
+  CARBON_CHECK(class_gen_state.forwarder_param_names().empty());
 
   return source.TakeStr();
 }
@@ -499,6 +913,12 @@ static constexpr llvm::StringRef NonCarbonCppKeywords[] = {
     "unsigned", "using",  "xor", "M_E",    "M_El",  "M_PI", "NAN",      "NULL",
 };
 
+// Names that generated code declares itself, which random identifiers must
+// avoid. For example, an inline function named `Make` would collide with its
+// class's `Make` function.
+static constexpr llvm::StringRef ReservedGeneratedNames[] = {"Make", "Checksum",
+                                                             "acc", "tag"};
+
 // Returns a random identifier string of the specified length.
 //
 // Ensures this is a valid identifier, avoiding any overlapping syntaxes or
@@ -528,8 +948,10 @@ auto SourceGen::GenerateRandomIdentifier(
           Lex::TokenKind::KeywordTokens,
           [ident](auto token) { return ident == token.fixed_spelling(); }) ||
       llvm::is_contained(NonCarbonCppKeywords, ident) ||
-      ident.ends_with("_t") || ident.ends_with("_MIN") ||
-      ident.ends_with("_MAX") || ident.ends_with("_C") ||
+      llvm::is_contained(ReservedGeneratedNames, ident) ||
+      ident.ends_with("Impl") || ident.ends_with("_t") ||
+      ident.ends_with("_MIN") || ident.ends_with("_MAX") ||
+      ident.ends_with("_C") ||
       (llvm::is_contained({'i', 'u', 'f'}, ident[0]) &&
        llvm::all_of(ident.substr(1),
                     [](const char c) { return llvm::isDigit(c); })));
@@ -760,9 +1182,22 @@ auto SourceGen::GetShuffledInts(int number, int min, int max)
 // fallback identifiers into the generator's storage.
 class SourceGen::UniqueIdentifierPopper {
  public:
-  explicit UniqueIdentifierPopper(SourceGen& gen,
-                                  llvm::SmallVectorImpl<llvm::StringRef>& data)
-      : gen_(&gen), data_(&data), it_(data_->rbegin()) {}
+  // The popper never returns an identifier in `excluded`. `excluded` isn't
+  // copied, so it must outlive the popper and not change while it's in use.
+  explicit UniqueIdentifierPopper(
+      SourceGen& gen, llvm::SmallVectorImpl<llvm::StringRef>& data,
+      const Set<llvm::StringRef>* excluded = nullptr)
+      : gen_(&gen), data_(&data), it_(data_->rbegin()), excluded_(excluded) {}
+
+  // The identifiers this popper has returned.
+  auto used() const -> const Set<llvm::StringRef>& { return set_; }
+
+  // Prevents this popper from returning any of `names`, which are copied.
+  auto Reserve(const Set<llvm::StringRef>& names) -> void {
+    for (llvm::StringRef name : names.entries()) {
+      set_.Insert(name);
+    }
+  }
 
   // Pop the next unique identifier that can be found in the data, or synthesize
   // one with a valid length. Always consumes exactly one identifier from the
@@ -772,6 +1207,9 @@ class SourceGen::UniqueIdentifierPopper {
   // and not the underlying data.
   auto Pop() -> llvm::StringRef {
     for (auto end = data_->rend(); it_ != end; ++it_) {
+      if (excluded_ && excluded_->Contains(*it_)) {
+        continue;
+      }
       auto insert = set_.Insert(*it_);
       if (!insert.is_inserted()) {
         continue;
@@ -796,6 +1234,9 @@ class SourceGen::UniqueIdentifierPopper {
     for (;;) {
       gen_->GenerateRandomIdentifier(fallback_ident_storage);
       auto fallback_id = llvm::StringRef(fallback_ident_storage.data(), length);
+      if (excluded_ && excluded_->Contains(fallback_id)) {
+        continue;
+      }
       if (set_.Insert(fallback_id).is_inserted()) {
         return fallback_id;
       }
@@ -806,22 +1247,51 @@ class SourceGen::UniqueIdentifierPopper {
   SourceGen* gen_;
   llvm::SmallVectorImpl<llvm::StringRef>* data_;
   llvm::SmallVectorImpl<llvm::StringRef>::reverse_iterator it_;
+  const Set<llvm::StringRef>* excluded_;
   Set<llvm::StringRef> set_;
 };
 
-// Generates a function declaration and writes it to the provided stream.
-//
-// The declaration can be configured with a function name, private modifier,
-// whether it is a method, the parameter count, an how indented it is.
-//
-// This is also provided a collection of identifiers to consume as parameter
-// names -- it will use a unique popper to extract unique parameter names from
-// this collection.
-auto SourceGen::GenerateFunctionDecl(
-    llvm::StringRef name, bool is_private, bool is_method, int param_count,
-    llvm::StringRef indent, llvm::SmallVectorImpl<llvm::StringRef>& param_names,
-    llvm::function_ref<auto()->llvm::StringRef> get_type_name,
-    llvm::raw_ostream& os) -> void {
+// Emits a parameter list, wrapping it as declarations do. Carbon methods begin
+// with `self`.
+auto SourceGen::EmitParams(bool is_method, llvm::ArrayRef<TypedName> params,
+                           llvm::StringRef indent, llvm::raw_ostream& os)
+    -> void {
+  if (static_cast<int>(params.size()) >
+      (is_method ? NumSingleLineMethodParams : NumSingleLineFunctionParams)) {
+    os << "\n" << indent << "    ";
+  }
+  // For Carbon methods, `self` is the first explicit parameter. Its type is
+  // omitted, which defaults it to `Self`.
+  bool is_carbon_method = is_method && !IsCpp();
+  if (is_carbon_method) {
+    os << "self";
+  }
+  for (auto [i, param] : llvm::enumerate(params)) {
+    // `self` occupies the first slot for Carbon methods, so shift the index
+    // used for separators and line wrapping.
+    int slot = static_cast<int>(i) + (is_carbon_method ? 1 : 0);
+    if (slot > 0) {
+      if ((slot % MaxParamsPerLine) == 0) {
+        os << ",\n" << indent << "    ";
+      } else {
+        os << ", ";
+      }
+    }
+    if (!IsCpp()) {
+      os << param.name << ": " << param.type;
+    } else {
+      os << param.type << " " << param.name;
+    }
+  }
+}
+
+// Emits a function declaration with the given signature.
+auto SourceGen::EmitFunctionDecl(llvm::StringRef name, bool is_private,
+                                 bool is_method,
+                                 llvm::ArrayRef<TypedName> params,
+                                 llvm::StringRef return_type,
+                                 llvm::StringRef indent, llvm::raw_ostream& os)
+    -> void {
   os << indent << "// TODO: make better comment text\n";
   if (!IsCpp()) {
     os << indent << (is_private ? "private " : "") << "fn " << name;
@@ -832,41 +1302,203 @@ auto SourceGen::GenerateFunctionDecl(
     }
     os << "auto " << name;
   }
-
   os << "(";
+  EmitParams(is_method, params, indent, os);
+  os << ") -> " << return_type << ";\n";
+}
 
-  if (param_count >
-      (is_method ? NumSingleLineMethodParams : NumSingleLineFunctionParams)) {
-    os << "\n" << indent << "    ";
+// Generates a function declaration and writes it to the provided stream.
+//
+// The declaration can be configured with a function name, private modifier,
+// whether it is a method, the parameter count, and how indented it is. Its
+// parameter names and types come from `state`.
+auto SourceGen::GenerateFunctionDecl(ClassGenState& state, llvm::StringRef name,
+                                     bool is_private, bool is_method,
+                                     int param_count, llvm::StringRef indent,
+                                     llvm::raw_ostream& os) -> void {
+  UniqueIdentifierPopper unique_param_names(*this, state.param_names());
+  llvm::SmallVector<TypedName> params;
+  params.reserve(param_count);
+  for ([[maybe_unused]] auto _ : llvm::seq(param_count)) {
+    params.push_back(
+        {.name = unique_param_names.Pop(), .type = state.GetDeclType().name});
   }
-  // For Carbon methods, `self` is the first explicit parameter. Its type is
-  // omitted, which defaults it to `Self`.
-  bool is_carbon_method = is_method && !IsCpp();
-  if (is_carbon_method) {
-    os << "self";
+  EmitFunctionDecl(name, is_private, is_method, params,
+                   state.GetDeclType().name, indent, os);
+}
+
+// Emits `format` with `name` substituted for its `{0}`.
+static auto EmitTemplate(llvm::StringRef format, llvm::StringRef name,
+                         llvm::raw_ostream& os) -> void {
+  CARBON_CHECK(!format.empty());
+  auto [prefix, suffix] = format.split("{0}");
+  os << prefix << name << suffix;
+}
+
+// Generates an inline function definition and writes it to the provided
+// stream.
+//
+// The body adds every parameter to an `i32` accumulator, declares a chain of
+// `i32` locals, and returns a value of the return type. Reading every parameter
+// and local keeps the code free of unused-binding warnings.
+auto SourceGen::GenerateInlineFunctionDef(ClassGenState& state,
+                                          llvm::StringRef name, int param_count,
+                                          int local_count,
+                                          llvm::StringRef indent,
+                                          llvm::raw_ostream& os) -> void {
+  // Add the extra parameter; see `BuildClassAndTypeNames`.
+  param_count += 1;
+
+  // Exclude class names so that a parameter can't shadow a class that the body
+  // names.
+  UniqueIdentifierPopper unique_param_names(*this, state.inline_param_names(),
+                                            &state.class_name_set());
+  llvm::SmallVector<TypedName> params;
+  llvm::SmallVector<llvm::StringRef> consumers;
+  params.reserve(param_count);
+  consumers.reserve(param_count);
+  for ([[maybe_unused]] auto _ : llvm::seq(param_count)) {
+    llvm::StringRef param = unique_param_names.Pop();
+    ClassGenState::TypeUse type = state.GetInlineParamType();
+    params.push_back({.name = param, .type = type.name});
+    consumers.push_back(type.consumer);
   }
-  UniqueIdentifierPopper unique_param_names(*this, param_names);
-  for (int i : llvm::seq(param_count)) {
-    // `self` occupies the first slot for Carbon methods, so shift the index
-    // used for separators and line wrapping.
-    int slot = i + (is_carbon_method ? 1 : 0);
-    if (slot > 0) {
-      if ((slot % MaxParamsPerLine) == 0) {
-        os << ",\n" << indent << "    ";
-      } else {
-        os << ", ";
-      }
-    }
+  llvm::StringRef return_type = state.GetProducedType().name;
+
+  os << indent << "// TODO: make better comment text\n";
+  os << indent << (IsCpp() ? "static auto " : "fn ") << name << "(";
+  EmitParams(/*is_method=*/false, params, indent, os);
+  os << ") -> " << return_type << " {\n";
+
+  std::string body_indent = indent.str() + "  ";
+
+  os << body_indent << (IsCpp() ? "int acc = 0;\n" : "var acc: i32 = 0;\n");
+  for (auto [param, consumer] : llvm::zip(params, consumers)) {
+    os << body_indent << "acc = acc + ";
+    EmitTemplate(consumer, param.name, os);
+    os << ";\n";
+  }
+
+  // Each local after the first reads the previous one. Locals and parameters
+  // draw from the same identifiers of each length, so exclude this function's
+  // parameter names: C++ rejects a local that redeclares a parameter.
+  llvm::SmallVector<llvm::StringRef> locals;
+  locals.reserve(local_count);
+  UniqueIdentifierPopper unique_local_names(*this, state.local_names(),
+                                            &unique_param_names.used());
+  for (int i : llvm::seq(local_count)) {
+    llvm::StringRef local = unique_local_names.Pop();
+    locals.push_back(local);
     if (!IsCpp()) {
-      os << unique_param_names.Pop() << ": " << get_type_name();
+      os << body_indent << "var " << local << ": i32 = ";
     } else {
-      os << get_type_name() << " " << unique_param_names.Pop();
+      os << body_indent << "int " << local << " = ";
     }
+    if (i == 0) {
+      os << "1";
+    } else {
+      os << locals[i - 1] << " + 1";
+    }
+    os << ";\n";
   }
-  os << ")";
+  // Read the last local by assigning it to the first. With one local, this is a
+  // self-assignment, which still reads it.
+  if (local_count > 0) {
+    os << body_indent << locals.front() << " = " << locals.back() << ";\n";
+  }
 
-  os << " -> " << get_type_name();
+  os << body_indent << "return ";
+  state.ProduceValue(return_type, os);
   os << ";\n";
+
+  os << indent << "}\n";
+}
+
+// Generates an inline method that returns `field`.
+auto SourceGen::GenerateGetter(llvm::StringRef name, TypedName field,
+                               llvm::raw_ostream& os) -> void {
+  os << "  // TODO: make better comment text\n";
+  if (!IsCpp()) {
+    os << "  fn " << name << "(self) -> " << field.type << " { return self."
+       << field.name << "; }\n";
+  } else {
+    os << "  auto " << name << "() const -> " << field.type << " { return "
+       << field.name << "; }\n";
+  }
+}
+
+// Generates an inline method that returns the `predicate` template applied to
+// `field`.
+auto SourceGen::GeneratePredicate(llvm::StringRef name, TypedName field,
+                                  llvm::StringRef predicate,
+                                  llvm::raw_ostream& os) -> void {
+  os << "  // TODO: make better comment text\n";
+  if (!IsCpp()) {
+    os << "  fn " << name << "(self) -> bool { return ";
+    EmitTemplate(predicate, ("self." + field.name).str(), os);
+  } else {
+    os << "  auto " << name << "() const -> bool { return ";
+    EmitTemplate(predicate, field.name, os);
+  }
+  os << "; }\n";
+}
+
+// Generates an inline method that passes its parameters on to `<name>Impl`, a
+// private method with the same signature.
+auto SourceGen::GenerateForwarder(llvm::StringRef name,
+                                  llvm::ArrayRef<TypedName> params,
+                                  llvm::StringRef return_type,
+                                  llvm::raw_ostream& os) -> void {
+  os << "  // TODO: make better comment text\n";
+  os << "  " << (IsCpp() ? "auto " : "fn ") << name << "(";
+  EmitParams(/*is_method=*/true, params, /*indent=*/"  ", os);
+  os << ") -> " << return_type << " {\n";
+  os << "    return " << (IsCpp() ? "" : "self.") << name << "Impl(";
+  llvm::ListSeparator sep;
+  for (const TypedName& param : params) {
+    os << sep << param.name;
+  }
+  os << ");\n  }\n";
+}
+
+// Generates a class's `Make` function, which returns a value of the class with
+// every field initialized. A class-typed field calls an earlier class's `Make`,
+// so these calls never recurse.
+auto SourceGen::GenerateMakeFunction(ClassGenState& state,
+                                     llvm::StringRef class_name,
+                                     llvm::ArrayRef<TypedName> fields,
+                                     llvm::raw_ostream& os) -> void {
+  os << "  // TODO: make better comment text\n";
+  os << "  " << (IsCpp() ? "static auto " : "fn ") << "Make() -> " << class_name
+     << " {\n";
+  os << "    return {";
+  llvm::ListSeparator sep;
+  os << sep << (IsCpp() ? "0" : ".tag = 0");
+  for (const TypedName& field : fields) {
+    os << sep;
+    // Carbon uses designated initializers; C++ uses positional aggregate init.
+    if (!IsCpp()) {
+      os << "." << field.name << " = ";
+    }
+    state.ProduceValue(field.type, os);
+  }
+  os << "};\n  }\n";
+}
+
+// Generates a class's `Checksum` method, which the class consumer templates
+// call to read a value of the class. It reads only `tag`, so it is the same in
+// every class. Reading the other fields would consume their types, which share
+// a pool with inline return types that aren't consumed.
+auto SourceGen::GenerateChecksumFunction(llvm::raw_ostream& os) -> void {
+  os << "  // TODO: make better comment text\n";
+  if (!IsCpp()) {
+    os << "  fn Checksum(self) -> i32 {\n";
+    os << "    return self.tag + 1;\n";
+  } else {
+    os << "  auto Checksum() -> int {\n";
+    os << "    return tag + 1;\n";
+  }
+  os << "  }\n";
 }
 
 // Generate a class definition and write it to the provided stream.
@@ -888,7 +1520,7 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
   llvm::SmallVector<llvm::StringRef> field_type_names;
   field_type_names.reserve(params.private_field_decls);
   for ([[maybe_unused]] auto _ : llvm::seq(params.private_field_decls)) {
-    field_type_names.push_back(state.GetValidTypeName());
+    field_type_names.push_back(state.GetFieldType().name);
   }
 
   // Mark this class as now a valid type now that field type names have been
@@ -896,24 +1528,93 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
   // the definition.
   state.AddValidTypeName(name);
 
-  UniqueIdentifierPopper unique_member_names(*this, state.member_names());
+  // Name the getter and predicate fields first, so that member names can avoid
+  // them.
+  UniqueIdentifierPopper unique_accessed_names(
+      *this, state.accessed_field_names(), &state.class_name_set());
+  llvm::SmallVector<TypedName> getter_fields;
+  getter_fields.reserve(params.inline_getters);
+  for ([[maybe_unused]] auto _ : llvm::seq(params.inline_getters)) {
+    getter_fields.push_back(
+        {.name = unique_accessed_names.Pop(),
+         .type = state.getter_field_types().pop_back_val()});
+  }
+  llvm::SmallVector<std::pair<TypedName, llvm::StringRef>> predicate_fields;
+  predicate_fields.reserve(params.inline_predicates);
+  for ([[maybe_unused]] auto _ : llvm::seq(params.inline_predicates)) {
+    ClassGenState::PredicateField field =
+        state.predicate_fields().pop_back_val();
+    predicate_fields.push_back(
+        {{.name = unique_accessed_names.Pop(), .type = field.type},
+         field.predicate});
+  }
+
+  // Bodies in this class can name any class, so exclude class names from member
+  // names. Inline function names are too short to be class names.
+  UniqueIdentifierPopper unique_member_names(*this, state.decl_names(),
+                                             &state.class_name_set());
+  unique_member_names.Reserve(unique_accessed_names.used());
+  UniqueIdentifierPopper unique_inline_names(*this,
+                                             state.inline_function_names());
+
   llvm::ListSeparator line_sep("\n");
   for ([[maybe_unused]] auto _ : llvm::seq(params.public_function_decls)) {
     os << line_sep;
-    GenerateFunctionDecl(
-        unique_member_names.Pop(), /*is_private=*/false,
-        /*is_method=*/false,
-        state.public_function_param_counts().pop_back_val(),
-        /*indent=*/"  ", state.param_names(),
-        [&] { return state.GetValidTypeName(); }, os);
+    GenerateFunctionDecl(state, unique_member_names.Pop(), /*is_private=*/false,
+                         /*is_method=*/false,
+                         state.public_function_param_counts().pop_back_val(),
+                         /*indent=*/"  ", os);
+  }
+  for ([[maybe_unused]] auto _ : llvm::seq(params.inline_function_defs)) {
+    os << line_sep;
+    GenerateInlineFunctionDef(
+        state, unique_inline_names.Pop(),
+        state.inline_function_param_counts().pop_back_val(),
+        state.local_counts().pop_back_val(), /*indent=*/"  ", os);
   }
   for ([[maybe_unused]] auto _ : llvm::seq(params.public_method_decls)) {
     os << line_sep;
-    GenerateFunctionDecl(
-        unique_member_names.Pop(), /*is_private=*/false,
-        /*is_method=*/true, state.public_method_param_counts().pop_back_val(),
-        /*indent=*/"  ", state.param_names(),
-        [&] { return state.GetValidTypeName(); }, os);
+    GenerateFunctionDecl(state, unique_member_names.Pop(), /*is_private=*/false,
+                         /*is_method=*/true,
+                         state.public_method_param_counts().pop_back_val(),
+                         /*indent=*/"  ", os);
+  }
+  for (TypedName field : getter_fields) {
+    os << line_sep;
+    GenerateGetter(unique_inline_names.Pop(), field, os);
+  }
+  for (auto [field, predicate] : predicate_fields) {
+    os << line_sep;
+    GeneratePredicate(unique_inline_names.Pop(), field, predicate, os);
+  }
+
+  // Forwarder names are as short as other inline function names, so exclude
+  // those.
+  UniqueIdentifierPopper unique_forwarder_names(*this, state.forwarder_names());
+  unique_forwarder_names.Reserve(unique_inline_names.used());
+  struct Forwarder {
+    llvm::StringRef name;
+    llvm::SmallVector<TypedName> params;
+    llvm::StringRef return_type;
+  };
+  llvm::SmallVector<Forwarder> forwarders;
+  forwarders.reserve(params.inline_forwarders);
+  for ([[maybe_unused]] auto _ : llvm::seq(params.inline_forwarders)) {
+    Forwarder& forwarder = forwarders.emplace_back();
+    forwarder.name = unique_forwarder_names.Pop();
+    // Exclude class names so that a parameter can't shadow a class in the
+    // signature.
+    UniqueIdentifierPopper unique_param_names(
+        *this, state.forwarder_param_names(), &state.class_name_set());
+    for ([[maybe_unused]] auto _ :
+         llvm::seq(state.forwarder_param_counts().pop_back_val())) {
+      forwarder.params.push_back({.name = unique_param_names.Pop(),
+                                  .type = state.GetForwardType().name});
+    }
+    forwarder.return_type = state.GetForwardType().name;
+    os << line_sep;
+    GenerateForwarder(forwarder.name, forwarder.params, forwarder.return_type,
+                      os);
   }
 
   if (IsCpp()) {
@@ -924,28 +1625,68 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
 
   for ([[maybe_unused]] auto _ : llvm::seq(params.private_function_decls)) {
     os << line_sep;
-    GenerateFunctionDecl(
-        unique_member_names.Pop(), /*is_private=*/true,
-        /*is_method=*/false,
-        state.private_function_param_counts().pop_back_val(),
-        /*indent=*/"  ", state.param_names(),
-        [&] { return state.GetValidTypeName(); }, os);
+    GenerateFunctionDecl(state, unique_member_names.Pop(), /*is_private=*/true,
+                         /*is_method=*/false,
+                         state.private_function_param_counts().pop_back_val(),
+                         /*indent=*/"  ", os);
   }
   for ([[maybe_unused]] auto _ : llvm::seq(params.private_method_decls)) {
     os << line_sep;
-    GenerateFunctionDecl(
-        unique_member_names.Pop(), /*is_private=*/true,
-        /*is_method=*/true, state.private_method_param_counts().pop_back_val(),
-        /*indent=*/"  ", state.param_names(),
-        [&] { return state.GetValidTypeName(); }, os);
+    GenerateFunctionDecl(state, unique_member_names.Pop(), /*is_private=*/true,
+                         /*is_method=*/true,
+                         state.private_method_param_counts().pop_back_val(),
+                         /*indent=*/"  ", os);
   }
-  os << line_sep;
+  for (const Forwarder& forwarder : forwarders) {
+    os << line_sep;
+    EmitFunctionDecl((forwarder.name + "Impl").str(), /*is_private=*/true,
+                     /*is_method=*/true, forwarder.params,
+                     forwarder.return_type, /*indent=*/"  ", os);
+  }
+
+  // Field names can't repeat this class's function, method, or field names, or
+  // be a class name.
+  UniqueIdentifierPopper unique_field_names(*this, state.field_names(),
+                                            &state.class_name_set());
+  unique_field_names.Reserve(unique_member_names.used());
+  llvm::SmallVector<TypedName> fields;
+  fields.reserve(field_type_names.size() + getter_fields.size() +
+                 predicate_fields.size());
   for (llvm::StringRef type_name : field_type_names) {
+    fields.push_back({.name = unique_field_names.Pop(), .type = type_name});
+  }
+  llvm::append_range(fields, getter_fields);
+  for (auto [field, _] : predicate_fields) {
+    fields.push_back(field);
+  }
+
+  // With bodies, C++ puts `Make` and the fields in a public section. Public
+  // fields make the class an aggregate, which `Make` initializes with a braced
+  // list. Without bodies, the fields stay private.
+  bool has_bodies = state.has_bodies();
+  if (IsCpp() && has_bodies) {
+    os << "\n public:\n";
+    line_sep = llvm::ListSeparator("\n");
+  }
+
+  // Only bodies call `Make` and `Checksum`.
+  if (has_bodies) {
+    os << line_sep;
+    GenerateMakeFunction(state, name, fields, os);
+    os << line_sep;
+    GenerateChecksumFunction(os);
+  }
+
+  os << line_sep;
+  // `tag` comes first, matching its position in C++ `Make`.
+  if (has_bodies) {
+    os << (IsCpp() ? "  int tag;\n" : "  private var tag: i32;\n");
+  }
+  for (const TypedName& field : fields) {
     if (!IsCpp()) {
-      os << "  private var " << unique_member_names.Pop() << ": " << type_name
-         << ";\n";
+      os << "  private var " << field.name << ": " << field.type << ";\n";
     } else {
-      os << "  " << type_name << " " << unique_member_names.Pop() << ";\n";
+      os << "  " << field.type << " " << field.name << ";\n";
     }
   }
   os << "}" << (IsCpp() ? ";" : "") << "\n";

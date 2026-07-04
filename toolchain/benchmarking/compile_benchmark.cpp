@@ -255,6 +255,17 @@ using CompilerFor =
     std::conditional_t<M == Mode::InProcess, InProcessCompiler<L>,
                        SubprocessCompiler<L>>;
 
+// Parameters for the dense declarations pattern, which models an API file:
+// classes of mostly function declarations, with a few small inline definitions.
+static auto DenseDeclParams() -> SourceGen::DenseDeclParams {
+  SourceGen::DenseDeclParams params;
+  params.class_params.inline_function_defs = 1;
+  params.class_params.max_body_locals = 3;
+  params.class_params.inline_getters = 1;
+  params.class_params.inline_forwarders = 1;
+  return params;
+}
+
 // Benchmark on multiple files of the same size but with different source code
 // in order to avoid branch prediction perfectly learning a particular file's
 // structure and shape, and to get closer to a cache-cold benchmark number which
@@ -278,7 +289,9 @@ static auto ComputeFileCount(int target_lines, int min_files,
 }
 
 template <Lang L, Phase P, Mode M = Mode::InProcess>
-static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
+static auto RunApiFileBenchmark(benchmark::State& state,
+                                const SourceGen::DenseDeclParams& params)
+    -> void {
   using Compiler = CompilerFor<L, M>;
   Compiler bench;
   CompileHelper carbon_compile_helper;
@@ -302,8 +315,7 @@ static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
   ssize_t first_lines = 0;
 
   for (auto _ : llvm::seq(num_files)) {
-    sources.push_back(bench.gen().GenApiFileDenseDecls(
-        target_lines, SourceGen::DenseDeclParams{}));
+    sources.push_back(bench.gen().GenApiFileDenseDecls(target_lines, params));
     const auto& source = sources.back();
     ssize_t bytes = source.size();
     ssize_t lines = llvm::count(source, '\n');
@@ -365,6 +377,11 @@ static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
       i += static_cast<ssize_t>(success);
     }
   }
+}
+
+template <Lang L, Phase P, Mode M = Mode::InProcess>
+static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
+  RunApiFileBenchmark<L, P, M>(state, DenseDeclParams());
 }
 
 // A thin wrapper for the subprocess benchmarks: they reuse the shared
