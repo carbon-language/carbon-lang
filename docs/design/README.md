@@ -209,8 +209,8 @@ accessible as members of `Math`, like `Math.Sqrt`. The `Core.Print` function
 comes from the `Core` package's `io` library. Unlike C++, the namespaces of
 different packages are kept separate, so there are no name conflicts.
 
-Carbon [comments](#code-and-comments) must be on a line by themselves starting
-with `//`:
+Carbon [comments](#code-and-comments) start with `//` and run to the end of the
+line, either on a line by themselves or following other content:
 
 ```carbon
 // Returns the smallest factor of `n` > 1, and
@@ -353,11 +353,14 @@ allowed to have non-ASCII characters.
 var résultat: String = "Succès";
 ```
 
-Comments start with two slashes `//` and go to the end of the line. They are
-required to be the only non-whitespace on the line.
+Comments start with two slashes `//` and go to the end of the line. A comment
+may be the only content on its line, or it may follow other content as a trailing
+comment. Full-line comments are preferred for documentation, while trailing
+comments mark or annotate a specific line.
 
 ```carbon
-// Compute an approximation of π
+// Compute an approximation of π.
+var pi: f64 = 3.14159; // Accurate enough for our purposes.
 ```
 
 > References:
@@ -368,6 +371,8 @@ required to be the only non-whitespace on the line.
 >     [#142: Unicode source files](https://github.com/carbon-language/carbon-lang/pull/142)
 > -   Proposal
 >     [#198: Comments](https://github.com/carbon-language/carbon-lang/pull/198)
+> -   Proposal
+>     [#7441: Trailing comments](https://github.com/carbon-language/carbon-lang/pull/7441)
 
 ## Build modes
 
