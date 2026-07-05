@@ -24,28 +24,24 @@ auto GetObserveIds(Context& context) -> llvm::SmallVector<SemIR::ObserveId> {
 
 auto UnpackObserveDecl(Context& context, SemIR::ObserveId id)
     -> std::pair<llvm::SmallVector<SemIR::InstId>, SemIR::InstId> {
-  llvm::SmallVector<SemIR::InstId> canonical_value_ids;
-  auto constraint_canonical_value_id = SemIR::InstId::None;
+  llvm::SmallVector<SemIR::InstId> operand_ids;
+  auto impls_constraint_id = SemIR::InstId::None;
   const auto& observe = context.observes().Get(id);
   for (auto operator_id :
        context.inst_blocks().GetOrEmpty(observe.operations_id)) {
     CARBON_KIND_SWITCH(context.insts().Get(operator_id)) {
       case CARBON_KIND(SemIR::ObserveEquivalent observe_equivalent): {
-        if (canonical_value_ids.empty()) {
-          canonical_value_ids.push_back(
-              GetCanonicalFacetOrTypeValue(context, observe_equivalent.lhs_id));
+        if (operand_ids.empty()) {
+          operand_ids.push_back(observe_equivalent.lhs_id);
         }
-        canonical_value_ids.push_back(
-            GetCanonicalFacetOrTypeValue(context, observe_equivalent.rhs_id));
+        operand_ids.push_back(observe_equivalent.rhs_id);
         break;
       }
       case CARBON_KIND(SemIR::ObserveImpls observe_impls): {
-        if (canonical_value_ids.empty()) {
-          canonical_value_ids.push_back(
-              GetCanonicalFacetOrTypeValue(context, observe_impls.lhs_id));
+        if (operand_ids.empty()) {
+          operand_ids.push_back(observe_impls.lhs_id);
         }
-        constraint_canonical_value_id =
-            GetCanonicalFacetOrTypeValue(context, observe_impls.rhs_id);
+        impls_constraint_id = observe_impls.rhs_id;
         break;
       }
       default: {
@@ -53,7 +49,7 @@ auto UnpackObserveDecl(Context& context, SemIR::ObserveId id)
       }
     }
   }
-  return {std::move(canonical_value_ids), constraint_canonical_value_id};
+  return {std::move(operand_ids), impls_constraint_id};
 }
 
 auto CheckObserveOperandsForEquivalance(

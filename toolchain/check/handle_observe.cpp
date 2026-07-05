@@ -9,6 +9,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/type.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/ids.h"
@@ -30,7 +31,7 @@ auto HandleParseNode(Context& context, Parse::ObserveIntroducerId node_id)
     scope_inst_id = SemIR::ErrorInst::InstId;
   }
 
-  context.inst_block_stack().Push();
+  context.args_type_info_stack().Push();
 
   context.node_stack().Push(node_id, scope_inst_id);
   return true;
@@ -54,10 +55,12 @@ auto HandleParseNode(Context& context, Parse::ObserveEqualEqualId node_id)
 
   // Push rhs again for chain == expressions.
   context.node_stack().Push(rhs_node_id, rhs_inst_id);
-  context.inst_block_stack().AddInstId(
+  context.args_type_info_stack().AddInstId(
       AddInstInNoBlock<SemIR::ObserveEquivalent>(
           context, node_id,
-          {.lhs_id = lhs_as_type.inst_id, .rhs_id = rhs_as_type.inst_id}));
+          {.lhs_id = GetCanonicalFacetOrTypeValue(context, lhs_as_type.inst_id),
+           .rhs_id =
+               GetCanonicalFacetOrTypeValue(context, rhs_as_type.inst_id)}));
   return true;
 }
 
@@ -84,9 +87,12 @@ auto HandleParseNode(Context& context, Parse::ObserveImplsId node_id) -> bool {
 
   // Dummy node for ObserveDeclId.
   context.node_stack().Push(rhs_node_id, rhs_inst_id);
-  context.inst_block_stack().AddInstId(AddInstInNoBlock<SemIR::ObserveImpls>(
-      context, node_id,
-      {.lhs_id = lhs_as_type.inst_id, .rhs_id = rhs_as_type.inst_id}));
+  context.args_type_info_stack().AddInstId(
+      AddInstInNoBlock<SemIR::ObserveImpls>(
+          context, node_id,
+          {.lhs_id = GetCanonicalFacetOrTypeValue(context, lhs_as_type.inst_id),
+           .rhs_id =
+               GetCanonicalFacetOrTypeValue(context, rhs_as_type.inst_id)}));
   return true;
 }
 
@@ -94,7 +100,7 @@ auto HandleParseNode(Context& context, Parse::ObserveDeclId node_id) -> bool {
   context.node_stack().PopAndIgnore();
   auto scope_inst_id =
       context.node_stack().Pop<Parse::NodeKind::ObserveIntroducer>();
-  auto operations_id = context.inst_block_stack().Pop();
+  auto operations_id = context.args_type_info_stack().Pop();
 
   if (scope_inst_id == SemIR::ErrorInst::InstId) {
     // We already diagnosed the errors.
