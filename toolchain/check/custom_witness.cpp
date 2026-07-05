@@ -143,13 +143,8 @@ static auto HasWitnessForOneField(
 // Returns true if `class_type` should impl `Destroy`.
 static auto CanDestroyClass(
     Context& context, SemIR::LocId loc_id, SemIR::ClassType class_type,
-    const SemIR::CompleteTypeInfo& complete_info,
-    SemIR::SpecificInterfaceId query_specific_interface_id, bool is_partial)
+    SemIR::SpecificInterfaceId query_specific_interface_id)
     -> DestroyFormat {
-  // Abstract classes can't be destroyed.
-  if (!is_partial && complete_info.IsAbstract()) {
-    return DestroyFormat::NoDestroy;
-  }
 
   auto class_info = context.classes().Get(class_type.class_id);
 
@@ -232,9 +227,7 @@ static auto CanDestroyType(
 
     case CARBON_KIND(SemIR::ClassType class_type): {
       return CanDestroyClass(context, loc_id, class_type,
-                             context.types().GetCompleteTypeInfo(type_id),
-                             query_specific_interface_id,
-                             /*is_partial=*/false);
+                             query_specific_interface_id);
     }
 
     case CARBON_KIND(SemIR::ConstType const_type): {
@@ -254,9 +247,7 @@ static auto CanDestroyType(
       auto class_type =
           context.insts().GetAs<SemIR::ClassType>(partial_type.inner_id);
       return CanDestroyClass(context, loc_id, class_type,
-                             context.types().GetCompleteTypeInfo(type_id),
-                             query_specific_interface_id,
-                             /*is_partial=*/true);
+                             query_specific_interface_id);
     }
 
     case CARBON_KIND(SemIR::StructType struct_type): {
