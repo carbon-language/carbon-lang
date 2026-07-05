@@ -104,6 +104,7 @@ cc_library(
         "name.cpp",
         "name_scope.cpp",
         "named_constraint.cpp",
+        "observe.cpp",
         "pattern.cpp",
         "require_impls.cpp",
         "specific_interface.cpp",

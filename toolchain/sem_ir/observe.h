@@ -44,4 +44,14 @@ using ObserveBlockStore =
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::ObserveId, SemIR::Observe,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::ObserveBlockId,
+                                 llvm::MutableArrayRef<SemIR::ObserveId>,
+                                 Tag<SemIR::CheckIRId>>;
+extern template class BlockValueStore<SemIR::ObserveBlockId, SemIR::ObserveId,
+                                      Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_OBSERVE_H_
