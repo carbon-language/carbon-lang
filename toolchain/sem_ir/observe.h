@@ -20,12 +20,13 @@ namespace Carbon::SemIR {
 struct Observe : Printable<Observe> {
   // The location of the `observe` declaration.
   InstId decl_id;
-  // The block which contains the `ObserveEquivalent` and `ObserveImpls`
-  // operators.
+  // A block of `ObserveEquivalent` and `ObserveImpls` insts.
   InstBlockId operations_id;
-  // The scope which contains the `observe` declaration.
+  // The interface scope which contains the `observe` declaration, if it's written
+  // in an interface, or None.
   NameScopeId parent_scope_id;
-  // The function which contains the `observe` declaration.
+  // The function which contains the `observe` declaration, if it's written in a
+  // function body, or None.
   InstId parent_function_inst_id;
 
   auto IsInFunction() const -> bool {
