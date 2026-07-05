@@ -57,6 +57,14 @@ class WhitespaceManager {
   auto AddToken(int newlines, int spaces, int indent_level, int nesting_level,
                 Lex::TokenIndex token, llvm::StringRef rewritten = "") -> void;
 
+  // Records `token` preceded by `gap`, the token's original leading source
+  // text (which may hold newlines, comments, or any other whitespace), emitted
+  // verbatim in place of computed spacing. Used inside a verbatim error
+  // region; the token itself is still an anchor, but its spacing is exempt
+  // from alignment.
+  auto AddVerbatimGapToken(std::string gap, int indent_level, int nesting_level,
+                           Lex::TokenIndex token) -> void;
+
   // Records `text` (a formatted comment block, which ends with a newline)
   // preceded by `newlines` line breaks. It is emitted verbatim.
   auto AddRaw(int newlines, std::string text) -> void;
@@ -105,6 +113,11 @@ class WhitespaceManager {
     // to emit the token verbatim. A rewritten token is not recorded as a
     // `TokenSpan` anchor.
     std::string rewritten;
+    // Whether the token's leading whitespace is `verbatim_gap`, the original
+    // source text before it, rather than `newlines`/`spaces` (which then only
+    // describe the gap for the alignment pass's line partitioning).
+    bool is_verbatim_gap = false;
+    std::string verbatim_gap;
 
     // Raw changes only: the verbatim text to emit.
     std::string raw;

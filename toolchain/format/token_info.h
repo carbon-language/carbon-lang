@@ -128,6 +128,12 @@ struct TokenInfo {
   // `import Cpp inline`) declaration. Such a literal holds C++ and is
   // reformatted even without a `'''cpp` file type indicator.
   bool is_cpp_string = false;
+  // Whether the token lies in a minimal error subtree of the parse tree. Such
+  // a region is emitted with its original source text (each token's leading
+  // gap within the region is copied verbatim rather than reformatted),
+  // preserving author intent where the parse is unreliable. See `Formatter`'s
+  // constructor.
+  bool is_verbatim = false;
 };
 
 // The per-token formatting information, indexed by the token. The `Formatter`

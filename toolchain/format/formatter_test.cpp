@@ -188,6 +188,21 @@ TEST(FormatterTest, ReplacementsReproduceFormatOnRecoveredInput) {
   }
 }
 
+// A parse error's maximal error subtree is emitted with its original source
+// text (verbatim, odd spacing and all) while the surrounding code still
+// reformats, and the result is idempotent and reproducible through the
+// minimal-edit path.
+TEST(FormatterTest, ErrorRegionKeptVerbatim) {
+  Testing::CompileHelper helper;
+  llvm::StringRef input =
+      "fn  F ( )  {\n  var  ok : i32  =  1 ;\n  var broken  :  = 2  +  ;\n}\n";
+  std::string formatted = FormatText(helper, input);
+  EXPECT_EQ(formatted,
+            "fn F() {\n  var ok: i32 = 1;\n  var broken  :  = 2  +  ;\n}\n");
+  EXPECT_EQ(FormatText(helper, formatted), formatted);
+  EXPECT_EQ(FormatViaReplacements(helper, input), formatted);
+}
+
 // Already-formatted input produces no edits at all.
 TEST(FormatterTest, NoReplacementsWhenAlreadyFormatted) {
   Testing::CompileHelper helper;

@@ -28,6 +28,22 @@ auto WhitespaceManager::AddToken(int newlines, int spaces, int indent_level,
                       .rewritten = rewritten.str()});
 }
 
+auto WhitespaceManager::AddVerbatimGapToken(std::string gap, int indent_level,
+                                            int nesting_level,
+                                            Lex::TokenIndex token) -> void {
+  // The gap text is emitted verbatim; `newlines` still records the line breaks
+  // it holds so the alignment pass partitions physical lines correctly.
+  int newlines = static_cast<int>(llvm::StringRef(gap).count('\n'));
+  changes_.push_back({.is_token = true,
+                      .newlines = newlines,
+                      .spaces = 0,
+                      .token = token,
+                      .indent_level = indent_level,
+                      .nesting_level = nesting_level,
+                      .is_verbatim_gap = true,
+                      .verbatim_gap = std::move(gap)});
+}
+
 auto WhitespaceManager::AddRaw(int newlines, std::string text) -> void {
   changes_.push_back({.is_token = false,
                       .newlines = newlines,
@@ -62,8 +78,20 @@ auto WhitespaceManager::ComputeStartColumns() -> void {
       }
       continue;
     }
-    column =
-        (change.newlines > 0 ? 0 : column) + change.spaces + change.padding;
+    if (change.is_verbatim_gap) {
+      // A verbatim gap positions its token by its own text: after its last
+      // newline if it has one, else appended to the current column.
+      llvm::StringRef gap = change.verbatim_gap;
+      size_t last_break = gap.rfind('\n');
+      if (last_break == llvm::StringRef::npos) {
+        column += static_cast<int>(gap.size());
+      } else {
+        column = static_cast<int>(gap.size() - last_break - 1);
+      }
+    } else {
+      column =
+          (change.newlines > 0 ? 0 : column) + change.spaces + change.padding;
+    }
     change.start_column = column;
     llvm::StringRef text = tokens_->GetTokenText(change.token);
     // A multi-line token (such as a multi-line string literal) ends on its
@@ -169,7 +197,13 @@ auto WhitespaceManager::Generate(llvm::SmallVectorImpl<TokenSpan>& token_map)
 
   std::string output;
   for (const Change& change : changes_) {
-    output.append(change.newlines, '\n');
+    if (change.is_verbatim_gap) {
+      // The token's original leading source text, emitted in place of any
+      // computed line breaks and indentation.
+      output.append(change.verbatim_gap);
+    } else {
+      output.append(change.newlines, '\n');
+    }
     if (!change.is_token) {
       // A trailing comment appends to the current line after its separating
       // spaces (plus any alignment padding); a full-line block is verbatim.
@@ -179,7 +213,9 @@ auto WhitespaceManager::Generate(llvm::SmallVectorImpl<TokenSpan>& token_map)
       output.append(change.raw);
       continue;
     }
-    output.append(change.spaces + change.padding, ' ');
+    if (!change.is_verbatim_gap) {
+      output.append(change.spaces + change.padding, ' ');
+    }
     if (!change.rewritten.empty()) {
       // A rewritten token (for example a reformatted C++ snippet) is emitted in
       // place of its source text and is not a `TokenSpan` anchor, so its edit

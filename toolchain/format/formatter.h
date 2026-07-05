@@ -63,6 +63,13 @@ class Formatter {
   auto AffectedByteRanges(LineRange lines) const
       -> llvm::SmallVector<std::pair<int32_t, int32_t>>;
 
+  // Returns the original source text between `token` and the token before it,
+  // when that gap lies inside a verbatim error region and must be copied to
+  // the output unchanged; returns nullopt when the gap formats normally. See
+  // toolchain/docs/format.md.
+  auto VerbatimGapBefore(Lex::TokenIndex token) const
+      -> std::optional<llvm::StringRef>;
+
   // Lays out the buffered line (if any): decides its line breaks, then records
   // each token's leading whitespace into the whitespace manager, prefixed by
   // any blank line the source had before it. Clears the line buffer.
@@ -128,6 +135,10 @@ class Formatter {
   // Whether any content has been recorded yet, so the first line gets no
   // leading newline.
   bool started_ = false;
+
+  // Whether any token at all lies in a verbatim error region, so the per-token
+  // verbatim checks short-circuit on error-free input. See `VerbatimGapBefore`.
+  bool has_verbatim_tokens_ = false;
 
   // The current code indent level, in spaces, added to new lines.
   int indent_ = 0;

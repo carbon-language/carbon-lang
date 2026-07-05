@@ -56,13 +56,30 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
   Map<int, int> chain_last_member;
   // A completed subtree's root node kind (used to match its parent's
   // bracketing node kind) and inclusive token range; the range is `None` for
-  // a subtree with no valued tokens.
+  // a subtree with no valued tokens. `is_error_root` records that the
+  // subtree's own node is erroneous and no enclosing subtree has claimed it
+  // yet: if an erroneous ancestor folds it in, the ancestor's wider range
+  // subsumes it; otherwise it is a maximal error subtree, the minimal span to
+  // emit verbatim (see `MarkVerbatim` below).
   struct SubtreeRange {
     Parse::NodeKind kind;
     Lex::TokenIndex min = Lex::TokenIndex::None;
     Lex::TokenIndex max = Lex::TokenIndex::None;
+    bool is_error_root = false;
   };
   llvm::SmallVector<SubtreeRange> range_stack;
+  // Marks every token of a maximal error subtree, so the region is emitted
+  // with its original source text; see `VerbatimGapBefore`. Maximal error
+  // subtrees are disjoint, so the total marking work is linear.
+  auto mark_verbatim = [&](const SubtreeRange& range) {
+    if (!range.min.has_value()) {
+      return;
+    }
+    has_verbatim_tokens_ = true;
+    for (int index = range.min.index; index <= range.max.index; ++index) {
+      token_infos_.Get(Lex::TokenIndex(index)).is_verbatim = true;
+    }
+  };
   for (auto node_id : tree_->postorder()) {
     auto kind = tree_->node_kind(node_id);
     Lex::TokenIndex token = tree_->node_token(node_id);
@@ -85,6 +102,7 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
     if (token.has_value()) {
       range.min = range.max = token;
     }
+    bool node_has_error = tree_->node_has_error(node_id);
     auto fold_child = [&]() -> Parse::NodeKind {
       CARBON_CHECK(!range_stack.empty(), "NodeId {0} ({1}) is missing children",
                    node_id, kind);
@@ -97,6 +115,12 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
           (!range.max.has_value() || child.max > range.max)) {
         range.max = child.max;
       }
+      // A child error subtree is subsumed when this node is erroneous too
+      // (this node's wider range covers it); otherwise the child is a maximal
+      // error subtree and its tokens go verbatim now.
+      if (child.is_error_root && !node_has_error) {
+        mark_verbatim(child);
+      }
       return child.kind;
     };
     if (kind.has_child_count()) {
@@ -107,6 +131,7 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
       while (fold_child() != kind.bracket()) {
       }
     }
+    range.is_error_root = node_has_error;
 
     // A member-access node marks its `.`/`->` token as a break-before point
     // and joins it to its chain, identified by the receiver root: the first
@@ -130,6 +155,13 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
       }
     }
     range_stack.push_back(range);
+  }
+  // Top-level subtrees have no parent to fold them, so any that are error
+  // roots are maximal and go verbatim here.
+  for (const SubtreeRange& range : range_stack) {
+    if (range.is_error_root) {
+      mark_verbatim(range);
+    }
   }
 
   // The last link in each chain breaks more cheaply (clang-format's 35 vs 150),
@@ -161,6 +193,34 @@ auto Formatter::ComputeBlankLines(int next_start_byte, bool is_block_end)
                     style_.max_empty_lines_to_keep);
 }
 
+auto Formatter::VerbatimGapBefore(Lex::TokenIndex token) const
+    -> std::optional<llvm::StringRef> {
+  // A token's leading gap is copied verbatim when the token and the token
+  // before it both lie in a verbatim error region, so the region's interior
+  // keeps its original layout while its first token is still placed by the
+  // formatter. A lexer-inserted recovery token has no real source position
+  // (its synthesized offset can even overlap a neighbor), so a gap it bounds
+  // cannot be sliced out of the source and is formatted normally instead.
+  // The whole-file flag keeps this near-free on error-free input, the common
+  // case, where it is checked for every token and comment.
+  if (!has_verbatim_tokens_ || !token_infos_.Get(token).is_verbatim ||
+      token.index == 0) {
+    return std::nullopt;
+  }
+  Lex::TokenIndex prev(token.index - 1);
+  if (!token_infos_.Get(prev).is_verbatim || tokens_->IsRecoveryToken(token) ||
+      tokens_->IsRecoveryToken(prev)) {
+    return std::nullopt;
+  }
+  int32_t prev_end = tokens_->GetByteOffset(prev) +
+                     static_cast<int32_t>(tokens_->GetTokenText(prev).size());
+  int32_t start = tokens_->GetByteOffset(token);
+  if (start < prev_end) {
+    return std::nullopt;
+  }
+  return tokens_->source().text().slice(prev_end, start);
+}
+
 auto Formatter::FlushLine() -> void {
   if (current_line_.empty()) {
     return;
@@ -173,10 +233,16 @@ auto Formatter::FlushLine() -> void {
 
   // Decide where line breaks go. A line that already fits needs none: this is
   // both the common case and a fast path that keeps short output byte-for-byte
-  // stable. A longer line goes to the wrapping solver.
+  // stable. A longer line goes to the wrapping solver, except a line holding a
+  // verbatim error region, whose original layout must not be re-wrapped.
   llvm::SmallVector<int> newline_indents;
-  if (indent_ + RenderedWidth(*tokens_, token_infos_, current_line_) <=
-      style_.column_limit) {
+  bool has_verbatim = has_verbatim_tokens_ &&
+                      llvm::any_of(current_line_, [&](Lex::TokenIndex token) {
+                        return token_infos_.Get(token).is_verbatim;
+                      });
+  if (has_verbatim ||
+      indent_ + RenderedWidth(*tokens_, token_infos_, current_line_) <=
+          style_.column_limit) {
     newline_indents.assign(current_line_.size(), -1);
   } else {
     newline_indents =
@@ -218,7 +284,8 @@ auto Formatter::FlushLine() -> void {
     // `cpp_snippet.h`. The body and closing delimiter indent to the statement.
     llvm::StringRef rewritten;
     std::optional<std::string> cpp_snippet;
-    if (style_.format_cpp_snippets && kind == Lex::TokenKind::StringLiteral) {
+    if (style_.format_cpp_snippets && !token_infos_.Get(token).is_verbatim &&
+        kind == Lex::TokenKind::StringLiteral) {
       cpp_snippet = CppSnippet(tokens_->GetTokenText(token), indent_, style_,
                                token_infos_.Get(token).is_cpp_string);
       // An already-formatted snippet is not a rewrite: keeping the token as a
@@ -227,8 +294,15 @@ auto Formatter::FlushLine() -> void {
         rewritten = *cpp_snippet;
       }
     }
-    whitespace_.AddToken(newlines, spaces, indent_, nesting_level, token,
-                         rewritten);
+    // Within a verbatim error region, the token's leading gap is the original
+    // source text; otherwise the computed whitespace is recorded.
+    if (std::optional<llvm::StringRef> gap = VerbatimGapBefore(token)) {
+      whitespace_.AddVerbatimGapToken(gap->str(), indent_, nesting_level,
+                                      token);
+    } else {
+      whitespace_.AddToken(newlines, spaces, indent_, nesting_level, token,
+                           rewritten);
+    }
     if (kind.IsOneOf({Lex::TokenKind::OpenParen,
                       Lex::TokenKind::OpenSquareBracket,
                       Lex::TokenKind::OpenCurlyBrace})) {
@@ -254,11 +328,10 @@ auto Formatter::Run() -> bool {
   // tree is always structurally valid, so output can always be produced. The
   // return value reports whether the input was error-free (so the driver can
   // reflect that in its exit code), but best-effort output is emitted either
-  // way rather than giving up.
-  //
-  // TODO: For badly malformed regions, consider emitting the original source
-  // verbatim (rather than reformatting) to better preserve author intent. This
-  // requires identifying the minimal error subtrees, not just `has_errors()`.
+  // way rather than giving up. The minimal error subtrees themselves are
+  // emitted with their original source text (see the constructor and
+  // `VerbatimGapBefore`), preserving author intent where the parse is
+  // unreliable, while the surrounding code still reformats.
   //
   // TODO: `//@...` tooling directive lines (`//@include-in-dumps` and
   // `//@dump-sem-ir-begin`/`-end`) are consumed by the lexer without being
@@ -274,6 +347,12 @@ auto Formatter::Run() -> bool {
     // limit; a trailing comment stays on the line of the code it follows.
     while (comment_it != comments.end() &&
            tokens_->IsAfterComment(token, *comment_it)) {
+      // A comment inside a verbatim error region sits in a source gap that is
+      // copied verbatim, so it must not also be emitted separately.
+      if (VerbatimGapBefore(token)) {
+        ++comment_it;
+        continue;
+      }
       llvm::StringRef text = tokens_->GetCommentText(*comment_it);
       int start_byte = text.data() - tokens_->source().text().data();
       if (tokens_->IsTrailingComment(*comment_it)) {
