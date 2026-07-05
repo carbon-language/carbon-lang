@@ -215,6 +215,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %.var.loc7, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%.var.loc7)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -222,6 +224,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %tuple.type.b6b) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- variable.carbon
@@ -323,6 +327,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %Destroy.Op.bound.loc6: <bound method> = bound_method %tuple.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc6: init %empty_tuple.type = call %Destroy.Op.bound.loc6(%tuple.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc7_3.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -330,6 +336,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT: fn @Destroy.Op.loc7_3.2(%self.param: ref %tuple.type.b6b) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
@@ -391,6 +399,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
@@ -421,6 +431,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested.carbon
@@ -478,6 +490,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %z: %empty_struct_type = wrapper_binding z, %.loc6_65.2
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- package_scope.carbon
@@ -522,5 +536,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %.loc5_28: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc5_29: %tuple.type = tuple_literal (%.loc5_24, %.loc5_28) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

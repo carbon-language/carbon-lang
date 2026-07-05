@@ -130,5 +130,7 @@ let min: i32 = SubCharCharToI32('\u{0}', '\u{10FFFF}');
 // CHECK:STDOUT:   %.loc29_42: Core.CharLiteral = char_value U+10FFFF [concrete = constants.%.914]
 // CHECK:STDOUT:   %SubCharCharToI32.call.loc29: init %i32 = call %SubCharCharToI32.ref.loc29(%.loc29_33, %.loc29_42) [concrete = constants.%int_-1114111]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

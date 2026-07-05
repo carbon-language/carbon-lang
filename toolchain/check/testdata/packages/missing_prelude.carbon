@@ -144,6 +144,8 @@ let n: type = i32;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%n.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- prelude_empty.carbon
@@ -180,6 +182,8 @@ let n: type = i32;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%n.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- prelude_fake_int.carbon
@@ -302,6 +306,8 @@ let n: type = i32;
 // CHECK:STDOUT:     witness = (@ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -328,6 +334,8 @@ let n: type = i32;
 // CHECK:STDOUT:     %.loc6_47.2: init %X to %return.param = class_init () [concrete = constants.%X.val]
 // CHECK:STDOUT:     %.loc6_48: init %X = converted %.loc6_47.1, %.loc6_47.2 [concrete = constants.%X.val]
 // CHECK:STDOUT:     return %.loc6_48 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -481,6 +489,8 @@ let n: type = i32;
 // CHECK:STDOUT:     witness = (imports.%Core.Convert)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -527,6 +537,8 @@ let n: type = i32;
 // CHECK:STDOUT:   %.loc21_17.2: type = converted %Int.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc21_17.3: type = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
@@ -689,6 +701,8 @@ let n: type = i32;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {

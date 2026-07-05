@@ -136,6 +136,8 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   fn(%U.param: @H.%Empty_where.type (%Empty_where.type.e78)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

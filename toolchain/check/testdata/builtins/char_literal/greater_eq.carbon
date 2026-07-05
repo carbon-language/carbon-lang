@@ -77,5 +77,7 @@ let c: bool = GreaterEq('a', 'b');
 // CHECK:STDOUT:   %.loc23_30: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
 // CHECK:STDOUT:   %GreaterEq.call.loc23: init bool = call %GreaterEq.ref.loc23(%.loc23_25, %.loc23_30) [concrete = constants.%false]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

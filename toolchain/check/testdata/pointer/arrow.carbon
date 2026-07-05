@@ -129,5 +129,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %field.ref.loc27_13: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]
 // CHECK:STDOUT:   %.loc27_13.2: ref %ptr.6b6 = class_element_access %.loc27_13.1, element0
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

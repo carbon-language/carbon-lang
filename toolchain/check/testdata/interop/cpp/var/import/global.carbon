@@ -182,6 +182,8 @@ fn MyF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %local_ref: %ptr.0a2 = wrapper_binding local_ref, %.loc9_37.3
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_unsupported_type.carbon
@@ -229,5 +231,7 @@ fn MyF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %local: <error> = wrapper_binding local, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -99,6 +99,8 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str, %int_4) [concrete = constants.%String.val]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- test_string_indexing.carbon
@@ -189,5 +191,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %char.loc6: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %d: %char = wrapper_binding d, %.loc6_32.4
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

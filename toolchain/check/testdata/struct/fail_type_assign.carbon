@@ -72,5 +72,7 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   %.loc22: %struct_type.a = converted %struct_type.a, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

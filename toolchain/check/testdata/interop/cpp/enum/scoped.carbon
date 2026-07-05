@@ -78,5 +78,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %Enum = wrapper_binding a, %a.ref
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

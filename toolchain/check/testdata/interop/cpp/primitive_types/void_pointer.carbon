@@ -189,6 +189,8 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.00a = wrapper_binding p, %.loc10_29.2
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit_as_from_carbon_class_pointer_to_void_pointer.carbon
@@ -242,6 +244,8 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.00a = wrapper_binding p, %.loc10_29.2
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- explicit_as_from_cpp_class_pointer_to_void_pointer.carbon
@@ -310,6 +314,8 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.00a = wrapper_binding p, %.loc10_35.2
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- explicit_as_from_carbon_class_pointer_to_void_pointer.carbon
@@ -376,6 +382,8 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.00a = wrapper_binding p, %.loc10_35.2
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon
@@ -415,6 +423,8 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.037 = wrapper_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon
@@ -443,6 +453,8 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.6b6 = wrapper_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unsafe_as_from_void_pointer_to_cpp_class_pointer.carbon
@@ -502,6 +514,8 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.037 = wrapper_binding p, %.loc10_39.2
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unsafe_as_from_void_pointer_to_carbon_class_pointer.carbon
@@ -553,5 +567,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.6b6 = wrapper_binding p, %.loc10_35.2
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

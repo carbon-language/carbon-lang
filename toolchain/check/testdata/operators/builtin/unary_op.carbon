@@ -122,6 +122,8 @@ fn Constant() {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc16, %impl.elem0
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%.loc16)
 // CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() {
@@ -194,6 +196,8 @@ fn Constant() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc23: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc23: init %empty_tuple.type = call %Destroy.Op.bound.loc23(%a.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc24(%self.param: ref bool) = "no_op";
@@ -207,5 +211,7 @@ fn Constant() {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:   %.loc20: bool = not %false [concrete = constants.%true]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

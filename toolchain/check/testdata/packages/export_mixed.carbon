@@ -315,6 +315,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_20.1, %.loc6_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_name_then_import.carbon
@@ -375,6 +377,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_20.1, %.loc6_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_both.carbon
@@ -435,6 +439,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_20.1, %.loc7_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_nonexport_use_both.carbon
@@ -472,6 +478,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %.loc11_20: %struct_type.y = struct_literal (%.loc11_19) [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_both_reversed.carbon
@@ -532,6 +540,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_20.1, %.loc7_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_both_and_export_import.carbon
@@ -631,5 +641,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %.loc9_1: init %D = converted %.loc9_20.1, %.loc9_20.5 [concrete = constants.%D.val]
 // CHECK:STDOUT:   assign file.%d.var, %.loc9_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

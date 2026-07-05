@@ -732,6 +732,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.H.bound: <bound method> = bound_method %.loc9_22.2, %H.ref
 // CHECK:STDOUT:   %Derived.H.call: init %empty_tuple.type = call %Derived.H.bound(%.loc9_22.2)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
@@ -763,6 +765,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %d.var, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%d.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.1(%self.param: ref %ptr.454) = "no_op";
@@ -770,21 +774,29 @@ class T2(G2:! type) {
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.2(%self.param: ref %struct_type.vptr) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.3(%self.param: ref %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.4(%self.param: ref %struct_type.base.507) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.5(%self.param: ref %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init.carbon
@@ -841,6 +853,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref %ptr.454) = "no_op";
@@ -848,11 +862,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %struct_type.vptr) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.3(%self.param: ref %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init_members.carbon
@@ -993,6 +1011,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc14: <bound method> = bound_method %b1.var, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call.loc14: init %empty_tuple.type = call %Destroy.Op.bound.loc14(%b1.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.1(%self.param: ref %ptr.454) = "no_op";
@@ -1002,16 +1022,22 @@ class T2(G2:! type) {
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.3(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.4(%self.param: ref %struct_type.vptr.m1.m2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.5(%self.param: ref %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- abstract_impl.carbon
@@ -1083,6 +1109,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %.loc15_22.3, %F.ref
 // CHECK:STDOUT:   %Derived.F.call: init %empty_tuple.type = call %Derived.F.bound(%.loc15_22.3)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- virtual_impl.carbon
@@ -1154,6 +1182,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %.loc15_22.3, %F.ref
 // CHECK:STDOUT:   %Derived.F.call: init %empty_tuple.type = call %Derived.F.bound(%.loc15_22.3)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- impl_conversion.carbon
@@ -1240,6 +1270,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc23_28.4, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc23_28.4)
 // CHECK:STDOUT:   return %.loc23_28.6 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc23_28.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -1247,6 +1279,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT: fn @Destroy.Op.loc23_28.2(%self.param: ref %T2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_with_virtual.carbon
@@ -1312,6 +1346,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   virtual fn(%self.param: @T1.F.%T1 (%T1)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1413,6 +1449,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   virtual fn(%self.param: @T1.F.%T1 (%T1), %t.param: @T1.F.%T (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1512,6 +1550,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT: override fn @D1.F.loc11_51.1(%self.param: %D1, %t.param: %ptr.2ee) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: override fn @D1.F.loc11_51.2(%self.param: %Base.5b2, %t.param: %ptr.2ee) [thunk @D1.%D1.F.decl.loc11_51.1 for @Base.%Base.F.decl, @Base.F(constants.%T1)] {
@@ -1523,6 +1563,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %D1.F.bound: <bound method> = bound_method %.loc11_51.2, %F.ref
 // CHECK:STDOUT:   %D1.F.call: init %empty_tuple.type = call %D1.F.bound(%.loc11_51.2, %t.param)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- impl_generic_generic.carbon
@@ -1637,6 +1679,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   override fn(%self.param: @Derived.F.loc10_44.1.%Derived (%Derived), %t.param: @Derived.F.loc10_44.1.%ptr.loc10_41.1 (%ptr.e8f)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1662,6 +1706,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc10_44.3, %Derived.F.specific_fn.loc10_44.1
 // CHECK:STDOUT:     %Derived.F.call: init %empty_tuple.type = call %bound_method(%.loc10_44.3, %t.param)
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

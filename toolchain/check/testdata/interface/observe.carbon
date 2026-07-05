@@ -618,9 +618,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %self.patt.loc3_22.2: @P.WithSelf.InP.%pattern_type (%pattern_type.fc0) = at_binding_pattern self, %self.param_patt.loc3_22.2 [symbolic = %self.patt.loc3_22.2 (constants.%self.patt.090)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @P.WithSelf.InP.%Self.as_type.loc3_22.1 (%Self.as_type.b49));
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Q.WithSelf.InQ(@Q.%Self: %Q.type) {
@@ -631,9 +628,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %self.patt.loc4_22.2: @Q.WithSelf.InQ.%pattern_type (%pattern_type.684) = at_binding_pattern self, %self.param_patt.loc4_22.2 [symbolic = %self.patt.loc4_22.2 (constants.%self.patt.f63)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Q.WithSelf.InQ.%Self.as_type.loc4_22.1 (%Self.as_type.7c9));
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @R.WithSelf.InR(@R.%Self: %R.type) {
@@ -644,9 +638,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %self.patt.loc5_22.2: @R.WithSelf.InR.%pattern_type (%pattern_type.ebd) = at_binding_pattern self, %self.param_patt.loc5_22.2 [symbolic = %self.patt.loc5_22.2 (constants.%self.patt.da0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @R.WithSelf.InR.%Self.as_type.loc5_22.1 (%Self.as_type.85f));
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Transitive.WithSelf.GetA(@Transitive.%Self: %Transitive.type) {
@@ -664,9 +655,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %return.patt.loc12_17.2: @Transitive.WithSelf.GetA.%pattern_type.loc12_20 (%pattern_type.51a) = return_slot_pattern %return.param_patt.loc12_20.2, %as_type [symbolic = %return.patt.loc12_17.2 (constants.%return.patt.680)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Transitive.WithSelf.GetA.%Self.as_type.loc12_11.1 (%Self.as_type.7f2)) -> out %return.param: @Transitive.WithSelf.GetA.%as_type (%as_type.d30);
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Transitive.WithSelf.TakesC(@Transitive.%Self: %Transitive.type) {
@@ -683,9 +671,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %c.patt.loc13_20.2: @Transitive.WithSelf.TakesC.%pattern_type.loc13_20 (%pattern_type.007) = at_binding_pattern c, %c.param_patt.loc13_20.2 [symbolic = %c.patt.loc13_20.2 (constants.%c.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Transitive.WithSelf.TakesC.%Self.as_type.loc13_13.1 (%Self.as_type.7f2), %c.param: @Transitive.WithSelf.TakesC.%as_type (%as_type.472));
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @P.WithSelf(constants.%Self.801) {
@@ -1078,9 +1063,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %self.patt: @R.WithSelf.InR.%pattern_type (%pattern_type.60e) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.894)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Q.WithSelf.InQ(imports.%Main.import_ref.c0a1f5.2: %Q.type) [from "transitive.carbon"] {
@@ -1091,9 +1073,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %self.patt: @Q.WithSelf.InQ.%pattern_type (%pattern_type.ade) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.b5e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @P.WithSelf.InP(imports.%Main.import_ref.aef2fa.2: %P.type) [from "transitive.carbon"] {
@@ -1104,9 +1083,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %self.patt: @P.WithSelf.InP.%pattern_type (%pattern_type.3ef) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.6de)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Transitive.WithSelf.TakesC(imports.%Main.import_ref.df6636.2: %Transitive.type) [from "transitive.carbon"] {
@@ -1123,9 +1099,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %c.patt: @Transitive.WithSelf.TakesC.%pattern_type.2 (%pattern_type.d96) = at_binding_pattern c, %c.param_patt [symbolic = %c.patt (constants.%c.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Transitive.WithSelf.GetA(imports.%Main.import_ref.df6636.3: %Transitive.type) [from "transitive.carbon"] {
@@ -1143,9 +1116,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %return.patt: @Transitive.WithSelf.GetA.%pattern_type.2 (%pattern_type.77f685.1) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.87a9a6.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc5_7.2: %Transitive.type) {
@@ -1314,10 +1284,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %bound_method.loc6_3.2: <bound method> = bound_method %a.var, %specific_impl_fn.loc6_3.1
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call.loc6: init %empty_tuple.type = call %bound_method.loc6_3.2(%a.var)
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @R.WithSelf(constants.%Self.be6) {
@@ -1673,10 +1642,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   fn(%x.param: @RequiresA.%T.as_type.loc7_31.1 (%T.as_type.3b8)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc8_7.2: %C.type) {
@@ -1701,13 +1669,12 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %RequiresA.ref: %RequiresA.type = name_ref RequiresA, file.%RequiresA.decl [concrete = constants.%RequiresA]
 // CHECK:STDOUT:     %x.ref: @F.%T.as_type.loc8_16.1 (%T.as_type.c69) = name_ref x, %x
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:   @observe {
-// CHECK:STDOUT:     observe constants.%T.659 impls constants.%B.type
+// CHECK:STDOUT:   !observes:
+// CHECK:STDOUT:     @observe {
+// CHECK:STDOUT:       observe constants.%T.659 impls constants.%B.type
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self.d0c) {
@@ -2055,9 +2022,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %self.patt: @P.WithSelf.InP.%pattern_type (%pattern_type.3ef) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.6de)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Q.WithSelf.InQ(imports.%Main.import_ref.c0a1f5.2: %Q.type) [from "transitive.carbon"] {
@@ -2068,9 +2032,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %self.patt: @Q.WithSelf.InQ.%pattern_type (%pattern_type.ade) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.b5e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @R.WithSelf.InR(imports.%Main.import_ref.f6968b.2: %R.type) [from "transitive.carbon"] {
@@ -2081,9 +2042,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %self.patt: @R.WithSelf.InR.%pattern_type (%pattern_type.60e) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.894)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TakesPQR(%U.loc5_14.2: %facet_type.0b6) {
@@ -2100,10 +2058,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   fn(%u.param: @TakesPQR.%U.as_type.loc5_38.1 (%U.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Transitive.WithSelf.TakesC(imports.%Main.import_ref.df6636.2: %Transitive.type) [from "transitive.carbon"] {
@@ -2120,9 +2077,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %c.patt: @Transitive.WithSelf.TakesC.%pattern_type.2 (%pattern_type.ac0) = at_binding_pattern c, %c.param_patt [symbolic = %c.patt (constants.%c.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Transitive.WithSelf.GetA(imports.%Main.import_ref.df6636.3: %Transitive.type) [from "transitive.carbon"] {
@@ -2140,9 +2094,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %return.patt: @Transitive.WithSelf.GetA.%pattern_type.2 (%pattern_type.c73ac0.1) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.4e0711.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc6_7.2: %Transitive.type) {
@@ -2260,16 +2211,15 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %bound_method.loc7_3.2: <bound method> = bound_method %a.var, %specific_impl_fn.loc7_3.1
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc7_3.2(%a.var)
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:   @observe.loc9 {
-// CHECK:STDOUT:     observe constants.%impl.elem0.0439e7.2 == constants.%impl.elem1.6be46c.2 impls constants.%Q.type
+// CHECK:STDOUT:   !observes:
+// CHECK:STDOUT:     @observe.loc9 {
+// CHECK:STDOUT:       observe constants.%impl.elem0.0439e7.2 == constants.%impl.elem1.6be46c.2 impls constants.%Q.type
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     @observe.loc16 {
+// CHECK:STDOUT:       observe constants.%impl.elem0.0439e7.2 == constants.%impl.elem2.731f97.2 impls constants.%R.type
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   @observe.loc16 {
-// CHECK:STDOUT:     observe constants.%impl.elem0.0439e7.2 == constants.%impl.elem2.731f97.2 impls constants.%R.type
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @P.WithSelf(constants.%Self.104) {
@@ -2713,9 +2663,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %self.patt: @P.WithSelf.InP.%pattern_type (%pattern_type.3ef) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.6de)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Q.WithSelf.InQ(imports.%Main.import_ref.c0a1f5.2: %Q.type) [from "transitive.carbon"] {
@@ -2726,9 +2673,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %self.patt: @Q.WithSelf.InQ.%pattern_type (%pattern_type.ade) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.b5e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @R.WithSelf.InR(imports.%Main.import_ref.f6968b.2: %R.type) [from "transitive.carbon"] {
@@ -2739,9 +2683,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %self.patt: @R.WithSelf.InR.%pattern_type (%pattern_type.60e) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.894)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TakesPQR(%U.loc5_14.2: %facet_type.0b6) {
@@ -2758,10 +2699,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   fn(%u.param: @TakesPQR.%U.as_type.loc5_38.1 (%U.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Transitive.WithSelf.TakesC(imports.%Main.import_ref.df6636.2: %Transitive.type) [from "transitive.carbon"] {
@@ -2778,9 +2718,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %c.patt: @Transitive.WithSelf.TakesC.%pattern_type.2 (%pattern_type.ac0) = at_binding_pattern c, %c.param_patt [symbolic = %c.patt (constants.%c.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Transitive.WithSelf.GetA(imports.%Main.import_ref.df6636.3: %Transitive.type) [from "transitive.carbon"] {
@@ -2798,9 +2735,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %return.patt: @Transitive.WithSelf.GetA.%pattern_type.2 (%pattern_type.c73ac0.1) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.4e0711.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc6_7.2: %Transitive.type) {
@@ -2874,10 +2808,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %bound_method.loc7_3.2: <bound method> = bound_method %a.var, %specific_impl_fn.loc7_3.1
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc7_3.2(%a.var)
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @P.WithSelf(constants.%Self.104) {
@@ -3333,10 +3266,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   fn(%x.param: @RequiresB.%T.as_type.loc12_31.1 (%T.as_type.4de)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RequiresD(%T.loc13_15.2: %D.type) {
@@ -3353,10 +3285,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   fn(%x.param: @RequiresD.%T.as_type.loc13_31.1 (%T.as_type.8cd)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RequiresA(%T.loc15_15.2: %A.type) {
@@ -3411,16 +3342,15 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %RequiresD.specific_fn.loc20_3.1: <specific function> = specific_function %RequiresD.ref, @RequiresD(constants.%D.facet.5cf) [symbolic = %RequiresD.specific_fn.loc20_3.2 (constants.%RequiresD.specific_fn)]
 // CHECK:STDOUT:     %RequiresD.call: init %empty_tuple.type = call %RequiresD.specific_fn.loc20_3.1(%x.ref.loc20)
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:   @observe.loc18 {
-// CHECK:STDOUT:     observe constants.%T.626 impls constants.%B.type
+// CHECK:STDOUT:   !observes:
+// CHECK:STDOUT:     @observe.loc18 {
+// CHECK:STDOUT:       observe constants.%T.626 impls constants.%B.type
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     @observe.loc19 {
+// CHECK:STDOUT:       observe constants.%T.626 impls constants.%C.type
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   @observe.loc19 {
-// CHECK:STDOUT:     observe constants.%T.626 impls constants.%C.type
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self.d0c) {
@@ -3679,10 +3609,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   fn(%x.param: @RequiresA.%T.as_type.loc6_31.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc7_7.2: %A.type, %U.loc7_14.2: %B_where.type) {
@@ -3720,13 +3649,12 @@ fn F[T:! A]() {
 // CHECK:STDOUT:       %x: @InnerF.%U.as_type.loc10_16.1 (%U.as_type) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:   @observe {
-// CHECK:STDOUT:     observe constants.%T == constants.%U
+// CHECK:STDOUT:   !observes:
+// CHECK:STDOUT:     @observe {
+// CHECK:STDOUT:       observe constants.%T == constants.%U
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @InnerF(@F.%T.loc7_7.2: %A.type, @F.%U.loc7_14.2: %B_where.type) {
@@ -3744,10 +3672,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %RequiresA.ref: %RequiresA.type = name_ref RequiresA, file.%RequiresA.decl [concrete = constants.%RequiresA]
 // CHECK:STDOUT:     %x.ref: @InnerF.%U.as_type.loc10_16.1 (%U.as_type) = name_ref x, %x
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self.d0c) {
@@ -3918,10 +3845,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   fn(%x.param: @RequiresA.%T.as_type.loc6_31.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc7_7.2: %A.type, %U.loc7_14.2: %B_where.type) {
@@ -3949,10 +3875,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:       %x: @InnerF.%U.as_type.loc9_16.1 (%U.as_type) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @InnerF(@F.%T.loc7_7.2: %A.type, @F.%U.loc7_14.2: %B_where.type) {
@@ -3980,13 +3905,12 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %RequiresA.ref: %RequiresA.type = name_ref RequiresA, file.%RequiresA.decl [concrete = constants.%RequiresA]
 // CHECK:STDOUT:     %x.ref: @InnerF.%U.as_type.loc9_16.1 (%U.as_type) = name_ref x, %x
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:   @observe {
-// CHECK:STDOUT:     observe constants.%T == constants.%U
+// CHECK:STDOUT:   !observes:
+// CHECK:STDOUT:     @observe {
+// CHECK:STDOUT:       observe constants.%T == constants.%U
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self.d0c) {
@@ -4157,10 +4081,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   fn(%x.param: @RequiresA.%T.as_type.loc6_31.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc7_7.2: %A.type, %U.loc7_14.2: %B_where.type) {
@@ -4198,13 +4121,12 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %.loc20_11: type = converted %T.ref.loc20, %T.as_type.loc20_11.1 [symbolic = %T.as_type.loc20_11.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:   @observe {
-// CHECK:STDOUT:     observe constants.%T == constants.%U
+// CHECK:STDOUT:   !observes:
+// CHECK:STDOUT:     @observe {
+// CHECK:STDOUT:       observe constants.%T == constants.%U
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @InnerF(@F.%T.loc7_7.2: %A.type, @F.%U.loc7_14.2: %B_where.type) {
@@ -4222,10 +4144,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %RequiresA.ref: %RequiresA.type = name_ref RequiresA, file.%RequiresA.decl [concrete = constants.%RequiresA]
 // CHECK:STDOUT:     %x.ref: @InnerF.%U.as_type.loc9_16.1 (%U.as_type) = name_ref x, %x
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self.d0c) {
@@ -4405,10 +4326,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   fn(%x.param: @RequiresA.%T.as_type.loc6_31.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc7_7.2: %A.type, %U.loc7_14.2: %B_where.type) {
@@ -4443,10 +4363,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %RequiresA.ref: %RequiresA.type = name_ref RequiresA, file.%RequiresA.decl [concrete = constants.%RequiresA]
 // CHECK:STDOUT:     %x.ref: @F.%U.as_type.loc7_40.1 (%U.as_type) = name_ref x, %x
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @InnerF(@F.%T.loc7_7.2: %A.type, @F.%U.loc7_14.2: %B_where.type) {
@@ -4472,13 +4391,12 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %.loc10_13: type = converted %T.ref, %T.as_type.loc10_13.1 [symbolic = %T.as_type.loc10_13.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:   @observe {
-// CHECK:STDOUT:     observe constants.%T == constants.%U
+// CHECK:STDOUT:   !observes:
+// CHECK:STDOUT:     @observe {
+// CHECK:STDOUT:       observe constants.%T == constants.%U
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self.d0c) {
@@ -4670,10 +4588,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   fn(%x.param: @RequiresA.%T.as_type.loc6_31.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc7_7.2: %A.type, %U.loc7_14.2: %B_where.type, %V.loc7_38.2: %B.type) {
@@ -4706,13 +4623,12 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %RequiresA.ref: %RequiresA.type = name_ref RequiresA, file.%RequiresA.decl [concrete = constants.%RequiresA]
 // CHECK:STDOUT:     %x.ref: @F.%U.as_type.loc7_47.1 (%U.as_type) = name_ref x, %x
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:   @observe {
-// CHECK:STDOUT:     observe constants.%T == constants.%V
+// CHECK:STDOUT:   !observes:
+// CHECK:STDOUT:     @observe {
+// CHECK:STDOUT:       observe constants.%T == constants.%V
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self.d0c) {
@@ -4879,10 +4795,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   fn(%x.param: @TakesA.%T.as_type.loc6_28.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc7_7.2: %A.type, %U.loc7_14.2: %B.type) {
@@ -4912,13 +4827,12 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %TakesA.ref: %TakesA.type = name_ref TakesA, file.%TakesA.decl [concrete = constants.%TakesA]
 // CHECK:STDOUT:     %x.ref: @F.%U.as_type.loc7_23.1 (%U.as_type) = name_ref x, %x
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:   @observe {
-// CHECK:STDOUT:     observe constants.%T == constants.%U
+// CHECK:STDOUT:   !observes:
+// CHECK:STDOUT:     @observe {
+// CHECK:STDOUT:       observe constants.%T == constants.%U
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self.d0c) {
@@ -5191,10 +5105,9 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %T.as_type.loc11_11.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc11_11.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc11: type = converted %T.ref, %T.as_type.loc11_11.1 [symbolic = %T.as_type.loc11_11.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
-// CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {

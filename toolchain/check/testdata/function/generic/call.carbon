@@ -208,6 +208,8 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     %.loc5_37.1: ref @Function.%T.as_type.loc5_31.1 (%T.as_type) = splice_block %return.param {}
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @Function.%T.as_type.loc5_31.1 (%T.as_type) to %.loc5_37.1 = call %bound_method.loc6_10.2(%x.ref)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -229,6 +231,8 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %Function.call: init @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type) to %.loc10_40.1 = call %Function.specific_fn.loc12_10.1(%x.ref)
 // CHECK:STDOUT:     return %Function.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -257,6 +261,8 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     %Function.specific_fn.loc18_10.1: <specific function> = specific_function %Function.ref, @Function(constants.%Copy.facet.302) [symbolic = %Function.specific_fn.loc18_10.2 (constants.%Function.specific_fn.162)]
 // CHECK:STDOUT:     %Function.call: init @CallGenericPtr.%ptr.loc16_33.1 (%ptr.e8f) = call %Function.specific_fn.loc18_10.1(%x.ref)
 // CHECK:STDOUT:     return %Function.call
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -275,6 +281,8 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %Function.specific_fn: <specific function> = specific_function %Function.ref, @Function(constants.%Copy.facet.3f0) [concrete = constants.%Function.specific_fn.710]
 // CHECK:STDOUT:   %Function.call: init %ptr.6b6 = call %Function.specific_fn(%x.ref)
 // CHECK:STDOUT:   return %Function.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%T.f84) {
@@ -498,6 +506,8 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     %.loc5_37.1: ref @Function.%T.as_type.loc5_31.1 (%T.as_type) = splice_block %return.param {}
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @Function.%T.as_type.loc5_31.1 (%T.as_type) to %.loc5_37.1 = call %bound_method.loc6_10.2(%x.ref)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -518,6 +528,8 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %Function.call: init @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type) to %.loc10_40.1 = call %Function.specific_fn.loc12_10.1(%x.ref)
 // CHECK:STDOUT:     return %Function.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -542,6 +554,8 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     %Function.specific_fn.loc18_10.1: <specific function> = specific_function %Function.ref, @Function(constants.%Copy.facet.302) [symbolic = %Function.specific_fn.loc18_10.2 (constants.%Function.specific_fn.162)]
 // CHECK:STDOUT:     %Function.call: init @CallGenericPtr.%ptr.loc16_33.1 (%ptr.e8f) = call %Function.specific_fn.loc18_10.1(%x.ref)
 // CHECK:STDOUT:     return %Function.call
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -556,6 +570,8 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %Function.specific_fn: <specific function> = specific_function %Function.ref, @Function(constants.%Copy.facet.3f0) [concrete = constants.%Function.specific_fn.710]
 // CHECK:STDOUT:   %Function.call: init %ptr.6b6 = call %Function.specific_fn(%x.ref)
 // CHECK:STDOUT:   return %Function.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%T.f84) {

@@ -209,5 +209,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc10_1: init %C = converted %.loc10_29.1, %.loc10_29.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%a_val.var, %.loc10_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

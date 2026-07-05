@@ -408,6 +408,8 @@ fn Call() {
 // CHECK:STDOUT:   %Op.ref.loc12: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
 // CHECK:STDOUT:   %Op.ref.loc10: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_with_default.carbon
@@ -825,6 +827,8 @@ fn Call() {
 // CHECK:STDOUT:   %Op.ref.loc13: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
 // CHECK:STDOUT:   %Op.ref.loc11: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GlobalNoReturn.1(%a.param: %i32, %b.param: %i32);
@@ -859,6 +863,8 @@ fn Call() {
 // CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %self.param, %Op.ref
 // CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%self.param)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_call_too_few_args.carbon
@@ -943,5 +949,7 @@ fn Call() {
 // CHECK:STDOUT:   %Op.ref.loc76: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
 // CHECK:STDOUT:   %Op.ref.loc56: %X.cpp_destructor.type = name_ref Op, imports.%X.cpp_destructor.decl [concrete = constants.%X.cpp_destructor]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

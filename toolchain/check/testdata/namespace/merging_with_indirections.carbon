@@ -158,6 +158,8 @@ fn Run() {
 // CHECK:STDOUT:   %.loc8_27.2: init %A to %return.param = class_init () [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc8_28: init %A = converted %.loc8_27.1, %.loc8_27.2 [concrete = constants.%A.val]
 // CHECK:STDOUT:   return %.loc8_28 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main.carbon
@@ -272,6 +274,8 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %.loc7_11.2, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%.loc7_11.2)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "b.carbon"];
@@ -281,5 +285,7 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.2(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

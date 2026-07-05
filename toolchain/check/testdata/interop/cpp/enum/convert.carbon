@@ -188,5 +188,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: %Other = wrapper_binding c, %.loc10_35.2
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

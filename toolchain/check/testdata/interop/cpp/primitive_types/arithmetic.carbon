@@ -465,6 +465,8 @@ fn F() {
 // CHECK:STDOUT:   %f64.loc30: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %carbon_double: %f64.dc1 = wrapper_binding carbon_double, %cpp_double.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_unsupported_types.carbon
@@ -519,6 +521,8 @@ fn F() {
 // CHECK:STDOUT:   %f64.loc16: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %carbon_long_double: %f64.dc1 = wrapper_binding carbon_long_double, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- override_builtin.carbon
@@ -602,5 +606,7 @@ fn F() {
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor.bound: <bound method> = bound_method %unsigned_int.var, constants.%unsigned_int.cpp_destructor
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor.call: init %empty_tuple.type = call %unsigned_int.cpp_destructor.bound(%unsigned_int.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

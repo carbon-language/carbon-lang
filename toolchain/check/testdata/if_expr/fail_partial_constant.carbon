@@ -119,6 +119,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT: !.loc12_15:
 // CHECK:STDOUT:   %v: <error> = wrapper_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_constant_result.carbon
@@ -223,5 +225,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT: !.loc14_15:
 // CHECK:STDOUT:   %w: <error> = wrapper_binding w, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

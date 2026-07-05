@@ -80,5 +80,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w: %tuple.type.555 = wrapper_binding w, %.loc8_28.4
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

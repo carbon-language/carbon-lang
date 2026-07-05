@@ -240,6 +240,8 @@ alias C = Other.C;
 // CHECK:STDOUT: fn @C() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_import.carbon
@@ -443,6 +445,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_import_with_copy.carbon
@@ -512,6 +516,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_26.1, %.loc7_26.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_import_indirect.carbon
@@ -581,6 +587,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_name.carbon
@@ -648,6 +656,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_name_with_copy.carbon
@@ -716,6 +726,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_26.1, %.loc7_26.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_name_indirect.carbon
@@ -783,6 +795,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_all.carbon
@@ -856,6 +870,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc11_1: init %C = converted %.loc11_26.1, %.loc11_26.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc11_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unused_conflict_on_export_import.carbon

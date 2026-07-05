@@ -134,6 +134,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: fn @C.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -308,6 +310,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_c.carbon
@@ -367,6 +371,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_d.carbon
@@ -426,6 +432,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_e.carbon
@@ -498,6 +506,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_f.carbon
@@ -570,5 +580,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

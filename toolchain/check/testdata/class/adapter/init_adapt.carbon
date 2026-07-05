@@ -308,6 +308,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc25_25.2: init %C = converted %MakeAdaptC.call, %.loc25_25.1
 // CHECK:STDOUT:   assign file.%e.var, %.loc25_25.2
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_not_implicit.carbon
@@ -514,5 +516,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc55_1: %C = converted %MakeAdaptC.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%e.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

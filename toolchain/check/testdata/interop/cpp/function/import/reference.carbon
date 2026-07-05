@@ -540,6 +540,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_param_lvalue_ref.carbon
@@ -692,6 +694,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %S.cpp_destructor.bound.loc8: <bound method> = bound_method %v.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call.loc8: init %empty_tuple.type = call %S.cpp_destructor.bound.loc8(%v.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_param_rvalue_ref.carbon
@@ -738,6 +742,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %addr: %ptr.037 = addr_of %_.var
 // CHECK:STDOUT:   %TakesRValue__carbon_thunk.call: init %empty_tuple.type = call imports.%TakesRValue__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_param_rvalue_ref.carbon
@@ -858,6 +864,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_param_const_lvalue_ref_with_ref.carbon
@@ -941,6 +949,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_param_const_lvalue_ref_with_value.carbon
@@ -1018,6 +1028,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %.loc11_40.2: %ptr.711 = converted %addr.loc11, %.loc11_40.1
 // CHECK:STDOUT:   %TakesConstLValue__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%TakesConstLValue__carbon_thunk.decl(%.loc11_40.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- param_value_arg_for_const_rvalue_ref.carbon
@@ -1070,6 +1082,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %.loc9_26.2: %ptr.711 = converted %addr.loc9, %.loc9_26.1
 // CHECK:STDOUT:   %TakesConstRValue__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%TakesConstRValue__carbon_thunk.decl(%.loc9_26.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_param_lvalue_ref_arg_const_rvalue_ref.carbon
@@ -1172,6 +1186,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_return_lvalue_ref.carbon
@@ -1211,6 +1227,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %ReturnsLValue.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_return_rvalue_ref.carbon
@@ -1250,6 +1268,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %ReturnsRValue.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_return_const_lvalue_ref.carbon
@@ -1291,6 +1311,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %const = wrapper_binding s, %ReturnConstLValue.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- forwarding_reference.carbon
@@ -1366,6 +1388,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %.loc28_37.2: %ptr.faf = converted %addr, %.loc28_37.1
 // CHECK:STDOUT:   %TakeAnything_ExpectConstRRef__carbon_thunk.call: init %empty_tuple.type = call imports.%TakeAnything_ExpectConstRRef__carbon_thunk.decl(%.loc28_37.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassRef(%x.param: ref %X) {
@@ -1376,6 +1400,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %.loc34: %X = ref_tag %x.ref
 // CHECK:STDOUT:   %TakeAnything_ExpectLRef.call: init %empty_tuple.type = call imports.%TakeAnything_ExpectLRef.decl(%x.ref)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassConstRef(%x.param: ref %const) {
@@ -1392,6 +1418,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %.loc40_37.2: %ptr.faf = converted %addr, %.loc40_37.1
 // CHECK:STDOUT:   %TakeAnything_ExpectConstLRef__carbon_thunk.call: init %empty_tuple.type = call imports.%TakeAnything_ExpectConstLRef__carbon_thunk.decl(%.loc40_37.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassInit() {
@@ -1405,5 +1433,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %addr: %ptr.db8 = addr_of %_.var
 // CHECK:STDOUT:   %TakeAnything_ExpectRRef__carbon_thunk.call: init %empty_tuple.type = call imports.%TakeAnything_ExpectRRef__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -131,5 +131,7 @@ fn F() {
 // CHECK:STDOUT:   %true.loc16_62: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc16_66: %tuple.type = tuple_literal (%true.loc16_56, %true.loc16_62) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

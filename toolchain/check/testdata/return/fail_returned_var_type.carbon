@@ -123,6 +123,8 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   return %.loc23_17
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc23_12.1(%self.param: ref %f64.794) = "no_op";
@@ -130,5 +132,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: fn @Destroy.Op.loc23_12.2(%self.param: ref %f64.dc1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

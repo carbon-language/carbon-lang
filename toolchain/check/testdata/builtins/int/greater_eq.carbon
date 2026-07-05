@@ -86,5 +86,7 @@ fn F() {
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %GreaterEq.call: init bool = call %GreaterEq.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %GreaterEq.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

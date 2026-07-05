@@ -94,6 +94,8 @@ fn Main() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %y.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%y.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc5_3.1(%self.param: ref %empty_tuple.type) = "no_op";
@@ -101,6 +103,8 @@ fn Main() {
 // CHECK:STDOUT: fn @Destroy.Op.loc5_3.2(%self.param: ref %struct_type.v) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -114,5 +118,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc2_1: init %struct_type.v = converted %.loc2_27.1, %.loc2_27.4 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc2_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

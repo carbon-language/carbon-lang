@@ -138,6 +138,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %ptr = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign file.%a.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- class2.carbon
@@ -219,6 +221,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %ptr = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign file.%b.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- class3.carbon
@@ -295,6 +299,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %ptr = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign file.%c.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var1.carbon
@@ -342,6 +348,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %.loc4_1: init %empty_tuple.type = converted %.loc4_14.1, %.loc4_14.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc4_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var2.carbon
@@ -397,6 +405,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %.loc8_1: init %empty_tuple.type = converted %a_alias.ref, %.loc8_13 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%b.var, %.loc8_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var3.carbon
@@ -449,5 +459,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %.loc6_1: init %empty_tuple.type = converted %a_alias_alias.ref, %.loc6_13 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

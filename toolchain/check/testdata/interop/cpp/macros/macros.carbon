@@ -1059,6 +1059,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.loc13: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %f: %i32 = wrapper_binding f, %CONFIG_VALUE_BINARY.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_macro_and_non_macro_same_name.carbon
@@ -1183,6 +1185,8 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.1(%self.param: ref %f32.9b3) = "no_op";
@@ -1190,11 +1194,15 @@ fn F() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.2(%self.param: ref %f32.c73) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.3(%self.param: ref %array_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_unary_operator.carbon
@@ -1225,6 +1233,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %NEGATIVE.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_binary_operator.carbon
@@ -1255,6 +1265,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %ADDITION.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_casting.carbon
@@ -1320,6 +1332,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %d: %i32 = wrapper_binding d, %CAST_BOOL_TO_INT.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_nested_macros.carbon
@@ -1350,6 +1364,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %INDIRECT_ONE.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_string_literal_object_like_macro.carbon
@@ -1461,6 +1477,8 @@ fn F() {
 // CHECK:STDOUT:   %str.loc14: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
 // CHECK:STDOUT:   %g: %str.3d4 = wrapper_binding g, %Indirect.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_floating_point_literal_macro.carbon
@@ -1516,6 +1534,8 @@ fn F() {
 // CHECK:STDOUT:   %f32.loc10: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:   %c: %f32.c73 = wrapper_binding c, %MyFloat.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_character_literals.carbon
@@ -1600,6 +1620,8 @@ fn F() {
 // CHECK:STDOUT:   %char.loc13: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %f: %char = wrapper_binding f, %M_UTF8_CHAR.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_character_literals_operators.carbon
@@ -1654,6 +1676,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc10: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %c: bool = wrapper_binding c, %M_A_EQUAL.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_boolean_literal_macro.carbon
@@ -1779,6 +1803,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.loc19: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %k: %i32 = wrapper_binding k, %M_ZERO.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nullptr.carbon
@@ -1878,21 +1904,29 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc11_14.3, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc11_14.3)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc11_14.1(%self.param: ref %.0f8) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc11_14.2(%self.param: ref %MaybeUnformed.b84) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc11_14.3(%self.param: ref %Optional.a18) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- enums.carbon
@@ -1926,6 +1960,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %A = wrapper_binding a, %M_A.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- constexpr_int.carbon
@@ -1968,6 +2004,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %.loc11_26.3
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- constexpr_int_addr.carbon
@@ -2014,6 +2052,8 @@ fn F() {
 // CHECK:STDOUT:   %N.ref: ref %const = name_ref N, imports.%n.var [concrete = imports.%n.var]
 // CHECK:STDOUT:   %addr: %ptr = addr_of %N.ref [concrete = constants.%addr]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- lambda.carbon
@@ -2044,6 +2084,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %i: %i32 = wrapper_binding i, %MyIntLambda.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_macro_redefined.carbon
@@ -2074,6 +2116,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %REDEF_NAME.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_macro_defined_twice.carbon
@@ -2104,6 +2148,8 @@ fn F() {
 // CHECK:STDOUT:   %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %TWICE_DEF.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- assign.carbon
@@ -2157,6 +2203,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc10: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   assign %m.ref, %.loc10
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- assign_subobject.carbon
@@ -2220,5 +2268,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc17_9: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   assign %m.ref, %.loc17_9
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

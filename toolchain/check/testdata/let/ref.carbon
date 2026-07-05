@@ -84,5 +84,7 @@ fn F() {
 // CHECK:STDOUT:   %i32.loc8_41: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %e: ref %i32 = wrapper_binding e, %c.ref
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

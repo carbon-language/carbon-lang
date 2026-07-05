@@ -54,5 +54,7 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   %.loc19_27: %struct_type.b.347 = struct_literal (%.loc19_26) [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

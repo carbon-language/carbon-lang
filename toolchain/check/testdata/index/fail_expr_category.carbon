@@ -273,6 +273,8 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc23: <bound method> = bound_method %pb.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc23: init %empty_tuple.type = call %Destroy.Op.bound.loc23(%pb.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc41_5.1(%self.param: ref %i32.builtin) = "no_op";
@@ -280,11 +282,15 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT: fn @Destroy.Op.loc41_5.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc41_5.3(%self.param: ref %array_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc36(%self.param: ref %ptr.d08) = "no_op";

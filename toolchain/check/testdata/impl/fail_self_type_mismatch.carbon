@@ -190,6 +190,8 @@ impl i32 as I {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @bool.as.I.impl: %.loc24 as %I.ref {
@@ -290,6 +292,8 @@ impl i32 as I {
 // CHECK:STDOUT:   %.3: %C.8dc = converted %c.param, <error> [concrete = <error>]
 // CHECK:STDOUT:   %i32.as.I.impl.F.call: init %empty_tuple.type = call %F.ref(<error>)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T, constants.%X) {

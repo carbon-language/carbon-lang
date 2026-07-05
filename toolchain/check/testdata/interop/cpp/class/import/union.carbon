@@ -312,6 +312,8 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:   %foo.ref: %Bar.foo.cpp_overload_set.type = name_ref foo, imports.%Bar.foo.cpp_overload_set.value [concrete = constants.%Bar.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call imports.%Bar.foo.decl()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_static_data_member.carbon
@@ -352,6 +354,8 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar: %ptr.227 = wrapper_binding bar, %.loc8_37
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_data_member.carbon
@@ -408,6 +412,8 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo_bar: %ptr.227 = wrapper_binding foo_bar, %.loc8_37.3
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_template.carbon

@@ -189,6 +189,8 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc17: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc17: init %empty_tuple.type = call %Destroy.Op.bound.loc17(%v.var)
 // CHECK:STDOUT:   return %.loc22
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc20_14.1(%self.param: ref %i32.builtin) = "no_op";
@@ -196,6 +198,8 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT: fn @Destroy.Op.loc20_14.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @EnclosingButAfter(%b.param: bool) -> out %return.param: %i32 {
@@ -246,5 +250,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc27_14.2: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc27_14.2: init %empty_tuple.type = call %Destroy.Op.bound.loc27_14.2(%v.var)
 // CHECK:STDOUT:   return %.loc30_17
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

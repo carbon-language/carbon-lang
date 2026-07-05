@@ -166,6 +166,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: !.loc14_15:
 // CHECK:STDOUT:   %b: <error> = wrapper_binding b, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_despite_known_result.carbon
@@ -286,5 +288,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: !.loc16_15:
 // CHECK:STDOUT:   %d: <error> = wrapper_binding d, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -64,5 +64,7 @@ let b: bool = Greater('a', 'b');
 // CHECK:STDOUT:   %.loc22_28: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
 // CHECK:STDOUT:   %Greater.call.loc22: init bool = call %Greater.ref.loc22(%.loc22_23, %.loc22_28) [concrete = constants.%false]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

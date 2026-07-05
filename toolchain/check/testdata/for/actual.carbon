@@ -557,6 +557,8 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:     %.loc6_39.6: init @IntRange.Make.%IntRange (%IntRange.2c4) to %return.param = class_init (%.loc6_39.3, %.loc6_39.5)
 // CHECK:STDOUT:     %.loc6_40: init @IntRange.Make.%IntRange (%IntRange.2c4) = converted %.loc6_39.1, %.loc6_39.6
 // CHECK:STDOUT:     return %.loc6_40 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -600,6 +602,8 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:     %bound_method.loc10_52.2: <bound method> = bound_method %.loc10_52.2, %specific_impl_fn.loc10_52.1
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @IntRange.as.Iterate.impl.NewCursor.%Int.loc10_37.1 (%Int.67af24.1) = call %bound_method.loc10_52.2(%.loc10_52.2)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -785,6 +789,8 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:     %bound_method.loc12_7.4: <bound method> = bound_method %value.var, %specific_impl_fn.loc12_7.2
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call.loc12_7.2: init %empty_tuple.type = call %bound_method.loc12_7.4(%value.var)
 // CHECK:STDOUT:     return %Optional.None.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -808,6 +814,8 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:   %.loc27_28.2: %i32 = converted %int_0, %.loc27_28.1 [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   %IntRange.Make.call: init %IntRange.bbd to %.loc26_34.1 = call %IntRange.Make.specific_fn(%.loc27_28.2, %end.ref)
 // CHECK:STDOUT:   return %IntRange.Make.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IntRange(constants.%N) {
@@ -1137,6 +1145,8 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:     %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1176,16 +1186,22 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT: fn @Destroy.Op.loc5_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc5_3.3(%self.param: ref %struct_type.start.end.e93) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc5_3.4(%self.param: ref %IntRange.bbd) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Read(constants.%y) {

@@ -152,5 +152,7 @@ extend impl nonexistent* as I {}
 // CHECK:STDOUT: fn @C.as.HasF.impl.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -64,5 +64,7 @@ fn NotGenericF(unused U: I where .T == i32) {}
 // CHECK:STDOUT: fn @NotGenericF(%U.param: %I_where.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

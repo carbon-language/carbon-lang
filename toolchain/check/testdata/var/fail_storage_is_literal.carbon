@@ -69,5 +69,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: <error> = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

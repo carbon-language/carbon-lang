@@ -254,6 +254,8 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc6: init %i32 = call %bound_method.loc6_15.2(%.loc6)
 // CHECK:STDOUT:   assign file.%c.var, %Int.as.Copy.impl.Op.call.loc6
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- index_not_literal.carbon
@@ -429,6 +431,8 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc7: init %i32 = call %bound_method.loc7_15.2(%.loc7_15)
 // CHECK:STDOUT:   assign file.%d.var, %Int.as.Copy.impl.Op.call.loc7
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_value_access.carbon
@@ -472,5 +476,7 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %bound_method.loc7_13.2: <bound method> = bound_method %tuple.elem0, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc7_13.2(%tuple.elem0)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

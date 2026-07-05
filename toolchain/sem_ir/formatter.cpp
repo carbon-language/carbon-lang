@@ -599,13 +599,13 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
       FormatCodeBlock(block_id);
     }
 
+    FormatObserveBlock(fn.observe_block_id);
+
     CloseBrace();
   } else {
     Semicolon();
   }
 
-  out() << '\n';
-  FormatObserveBlock(fn.observe_block_id);
   out() << '\n';
 
   FormatEntityEnd(fn.generic_id);

@@ -87,5 +87,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %E = wrapper_binding b, %b.ref
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

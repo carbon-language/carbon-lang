@@ -67,5 +67,7 @@ fn Call() {
 // CHECK:STDOUT:   %Cpp.ref.loc27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %F2.ref: %F2.cpp_overload_set.type = name_ref F2, imports.%F2.cpp_overload_set.value [concrete = constants.%F2.cpp_overload_set.value]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

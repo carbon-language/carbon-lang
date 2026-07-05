@@ -187,5 +187,7 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc27: init %i32 = call %bound_method.loc27_27.2(%.loc27_27.2) [concrete = <error>]
 // CHECK:STDOUT:   assign file.%c.var, %Int.as.Copy.impl.Op.call.loc27
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -256,6 +256,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.EqWith.impl.Equal.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %C.as.EqWith.impl.Equal.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestNotEqual(%a.param: %C, %b.param: %C) -> out %return.param: bool {
@@ -266,6 +268,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   %C.as.EqWith.impl.NotEqual.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %C.as.EqWith.impl.NotEqual.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_impl.carbon
@@ -364,6 +368,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestNotEqual(%a.param: %D, %b.param: %D) -> out %return.param: bool {
@@ -371,6 +377,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_impl_for_args.carbon
@@ -556,6 +564,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLhsBad(%a.param: %D, %b.param: %C) -> out %return.param: bool {
@@ -563,5 +573,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

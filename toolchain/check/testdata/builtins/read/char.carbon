@@ -73,5 +73,7 @@ fn Main() {
 // CHECK:STDOUT:   %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %m: %i32 = wrapper_binding m, %.loc9_37.2
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

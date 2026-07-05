@@ -291,6 +291,8 @@ fn Works() {
 // CHECK:STDOUT:   witness = (@J.WithSelf.%U)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Simple1(%T.loc8_13.2: %J.type, %S.loc8_27.2: @Simple1.%impl.elem0.loc8_31.1 (%impl.elem0.436176.1)) {
@@ -308,6 +310,8 @@ fn Works() {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -325,6 +329,8 @@ fn Works() {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -447,6 +453,8 @@ fn Works() {
 // CHECK:STDOUT:   witness = (@K1.WithSelf.%K1.WithSelf.Q1.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @K1.WithSelf.Q1(@K1.%Self: %K1.type) {
@@ -475,6 +483,8 @@ fn Works() {
 // CHECK:STDOUT:     %specific_impl_fn.loc9_4.1: <specific function> = specific_impl_function %impl.elem0.loc9_4.1, @K1.WithSelf.Q1(constants.%T) [symbolic = %specific_impl_fn.loc9_4.2 (constants.%specific_impl_fn.747340.1)]
 // CHECK:STDOUT:     %K1.WithSelf.Q1.call: init %empty_tuple.type = call %specific_impl_fn.loc9_4.1()
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -498,6 +508,8 @@ fn Works() {
 // CHECK:STDOUT:     %specific_impl_fn.loc14_4.1: <specific function> = specific_impl_function %impl.elem0.loc14_4.1, @K1.WithSelf.Q1(constants.%V) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.747340.2)]
 // CHECK:STDOUT:     %K1.WithSelf.Q1.call: init %empty_tuple.type = call %specific_impl_fn.loc14_4.1()
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -649,6 +661,8 @@ fn Works() {
 // CHECK:STDOUT:   witness = (@K2.WithSelf.%K2.WithSelf.Q2.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @K2.WithSelf.Q2(@K2.%Self: %K2.type) {
@@ -679,6 +693,8 @@ fn Works() {
 // CHECK:STDOUT:     %specific_impl_fn.loc9_4.1: <specific function> = specific_impl_function %impl.elem0.loc9_4.1, @K2.WithSelf.Q2(constants.%T) [symbolic = %specific_impl_fn.loc9_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %K2.WithSelf.Q2.call: init %empty_tuple.type = call %specific_impl_fn.loc9_4.1()
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -700,6 +716,8 @@ fn Works() {
 // CHECK:STDOUT:     %Q2.ref: %K2.assoc_type = name_ref Q2, @K2.WithSelf.%assoc0 [concrete = constants.%assoc0.7f8]
 // CHECK:STDOUT:     %.loc22: %K2.type = converted %y.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -934,6 +952,8 @@ fn Works() {
 // CHECK:STDOUT:   witness = (@L1.WithSelf.%L1.WithSelf.R1.decl, @L1.WithSelf.%L1.WithSelf.S1.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @L1.WithSelf.R1(@L1.%Self: %L1.type) {
@@ -1003,6 +1023,8 @@ fn Works() {
 // CHECK:STDOUT:     %bound_method.loc11_9: <bound method> = bound_method %.loc11_4.1, %specific_impl_fn.loc11_4.1
 // CHECK:STDOUT:     %L1.WithSelf.S1.call: init %empty_tuple.type = call %bound_method.loc11_9(%.loc11_4.1)
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1055,6 +1077,8 @@ fn Works() {
 // CHECK:STDOUT:     %bound_method.loc17_14: <bound method> = bound_method %.loc17_4.1, %specific_impl_fn.loc17_4.1
 // CHECK:STDOUT:     %L1.WithSelf.S1.call: init %empty_tuple.type = call %bound_method.loc17_14(%.loc17_4.1)
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1275,6 +1299,8 @@ fn Works() {
 // CHECK:STDOUT:   witness = (@L2.WithSelf.%L2.WithSelf.R2.decl, @L2.WithSelf.%L2.WithSelf.S2.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @L2.WithSelf.R2(@L2.%Self: %L2.type) {
@@ -1324,6 +1350,8 @@ fn Works() {
 // CHECK:STDOUT:     %S2.ref: %L2.assoc_type = name_ref S2, @L2.WithSelf.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:     %impl.elem1.loc26_4.1: @Simple5.%.loc26_4.2 (%.451) = impl_witness_access constants.%L2.lookup_impl_witness.d84, element1 [symbolic = %impl.elem1.loc26_4.2 (constants.%impl.elem1)]
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1342,6 +1370,8 @@ fn Works() {
 // CHECK:STDOUT:     %L2.ref.loc40: type = name_ref L2, file.%L2.decl [concrete = constants.%L2.type]
 // CHECK:STDOUT:     %S2.ref: %L2.assoc_type = name_ref S2, @L2.WithSelf.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1469,6 +1499,8 @@ fn Works() {
 // CHECK:STDOUT:   witness = (@A.WithSelf.%A.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.A.impl: %C.ref as %A.ref {
@@ -1497,6 +1529,8 @@ fn Works() {
 // CHECK:STDOUT: fn @C.as.A.impl.G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Fails() {
@@ -1558,6 +1592,8 @@ fn Works() {
 // CHECK:STDOUT:   %G.ref.loc38: %A.assoc_type = name_ref G, @A.WithSelf.%assoc0 [concrete = constants.%assoc0.f27]
 // CHECK:STDOUT:   %.loc38_32: %A.type = converted %.loc38_8, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self.d0c) {
@@ -1654,6 +1690,8 @@ fn Works() {
 // CHECK:STDOUT:   witness = (@A.WithSelf.%A.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.A.impl: %C.ref as %A.ref {
@@ -1682,6 +1720,8 @@ fn Works() {
 // CHECK:STDOUT: fn @C.as.A.impl.G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Works() {
@@ -1730,6 +1770,8 @@ fn Works() {
 // CHECK:STDOUT:   %impl.elem0.loc15_17: %.282 = impl_witness_access constants.%A.impl_witness, element0 [concrete = constants.%C.as.A.impl.G]
 // CHECK:STDOUT:   %C.as.A.impl.G.call.loc15: init %empty_tuple.type = call %impl.elem0.loc15_17()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self.d0c) {

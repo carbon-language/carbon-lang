@@ -228,6 +228,8 @@ fn Var5() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: <error> = wrapper_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- abstract_let.carbon
@@ -297,6 +299,8 @@ fn Var5() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %l: %tuple.type.4cc = wrapper_binding l, %.loc7_35.2
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_twice.carbon
@@ -368,6 +372,8 @@ fn Var5() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: <error> = wrapper_binding v2, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_first.carbon
@@ -430,6 +436,8 @@ fn Var5() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v3: <error> = wrapper_binding v3, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_second.carbon
@@ -492,6 +500,8 @@ fn Var5() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v4: <error> = wrapper_binding v4, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- lib.carbon
@@ -585,5 +595,7 @@ fn Var5() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v5: <error> = wrapper_binding v5, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

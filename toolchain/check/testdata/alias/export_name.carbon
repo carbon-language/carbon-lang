@@ -235,6 +235,8 @@ var d: D* = &c;
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_13.1, %.loc6_13.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%d.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_orig_name_not_in_export.carbon
@@ -275,6 +277,8 @@ var d: D* = &c;
 // CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- indirect_compat.carbon
@@ -374,5 +378,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.6b6 = call %bound_method.loc8_13.2(%addr) [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%d.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

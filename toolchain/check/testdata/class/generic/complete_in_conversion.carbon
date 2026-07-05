@@ -245,6 +245,8 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %ptr.432 = wrapper_binding b, %.loc20_22.3
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%N.37f) {

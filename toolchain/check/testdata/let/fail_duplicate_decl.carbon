@@ -110,5 +110,7 @@ fn F() {
 // CHECK:STDOUT:   %i32.loc24: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a.loc24: %i32 = wrapper_binding a, %.loc24_23.2
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

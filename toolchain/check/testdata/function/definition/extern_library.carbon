@@ -205,6 +205,8 @@ extern fn ExternDecl();
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file_extern.carbon
@@ -258,6 +260,8 @@ extern fn ExternDecl();
 // CHECK:STDOUT: extern fn @F() [from "two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file_impl_mismatch_extern.carbon
@@ -311,6 +315,8 @@ extern fn ExternDecl();
 // CHECK:STDOUT: extern fn @F() [from "two_file_impl_mismatch.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- no_decl_extern.carbon
@@ -418,6 +424,8 @@ extern fn ExternDecl();
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- in_impl_extern.carbon
@@ -461,6 +469,8 @@ extern fn ExternDecl();
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- cross_package_extern.carbon
@@ -512,6 +522,8 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   %Extern.ref: %Extern.type = name_ref Extern, imports.%OtherPackage.Extern [concrete = constants.%Extern]
 // CHECK:STDOUT:   %Extern.call: init %empty_tuple.type = call %Extern.ref()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @Extern;

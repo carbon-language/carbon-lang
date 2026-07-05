@@ -138,5 +138,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pet2: %Animal = wrapper_binding pet2, %Dog.ref
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

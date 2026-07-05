@@ -182,6 +182,8 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc26_5.2: <bound method> = bound_method %A.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc26_5.2: init %empty_tuple.type = call %Destroy.Op.bound.loc26_5.2(%A.var)
 // CHECK:STDOUT:   return %.loc31
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc26_5.1(%self.param: ref %i32.builtin) = "no_op";
@@ -189,5 +191,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: fn @Destroy.Op.loc26_5.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

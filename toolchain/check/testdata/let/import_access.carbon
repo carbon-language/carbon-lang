@@ -85,6 +85,8 @@ let v2: () = Test.v;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- def.impl.carbon
@@ -121,6 +123,8 @@ let v2: () = Test.v;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref: %empty_tuple.type = name_ref v, imports.%Test.v
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_def.carbon
@@ -152,6 +156,8 @@ let v2: () = Test.v;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref: <error> = name_ref v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_other_def.carbon
@@ -191,5 +197,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:   %v.ref: <error> = name_ref v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

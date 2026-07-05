@@ -234,6 +234,8 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.6b6 = call %bound_method.loc9_17.2(%addr) [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%b_ptr.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- c.carbon
@@ -334,6 +336,8 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.6b6 = call %bound_method.loc9_17.2(%addr) [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%c_ptr.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- triangle.carbon
@@ -437,6 +441,8 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.6b6 = call %bound_method.loc8_15.2(%addr) [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%ptr.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- triangle_reverse.carbon
@@ -540,6 +546,8 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.6b6 = call %bound_method.loc8_15.2(%addr) [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%ptr.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- diamond.carbon
@@ -647,6 +655,8 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.6b6 = call %bound_method.loc8_15.2(%addr) [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%ptr.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- diamond_reverse.carbon
@@ -754,5 +764,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.6b6 = call %bound_method.loc8_15.2(%addr) [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%ptr.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

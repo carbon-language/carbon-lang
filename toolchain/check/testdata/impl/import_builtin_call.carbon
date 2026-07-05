@@ -107,6 +107,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Double.specific_fn: <specific function> = specific_function %Double.ref, @Double(constants.%int_64) [concrete = constants.%Double.specific_fn]
 // CHECK:STDOUT:   %Double.call: init %MyInt.9fc = call %Double.specific_fn(%n.ref)
 // CHECK:STDOUT:   return %Double.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_convert_symbolic.carbon
@@ -197,5 +199,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %MakeFromClass.call: init %i64.builtin = call %MakeFromClass.specific_fn()
 // CHECK:STDOUT:   assign file.%n.var, %MakeFromClass.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
