@@ -646,6 +646,9 @@ auto InstNamer::PushEntity(ObserveId observe_id, ScopeId /*scope_id*/,
 
   auto scope_prefix = GetNameForParentNameScope(observe.parent_scope_id);
 
+  // TODO: Currently observe declarations in the same scope have the same name.
+  // Generate unique names for them like we do when we are pushing
+  // RequireImplsId entity.
   scope.name =
       globals_.AllocateName(*this, observe_loc,
                             llvm::formatv("{0}{1}observe", scope_prefix,

@@ -340,7 +340,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %Transitive.WithSelf.TakesC.type: type = fn_type @Transitive.WithSelf.TakesC, @Transitive.WithSelf(%Self.e2a) [symbolic]
 // CHECK:STDOUT:   %Transitive.WithSelf.TakesC: %Transitive.WithSelf.TakesC.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc4: %Transitive.assoc_type = assoc_entity element4, @Transitive.WithSelf.%Transitive.WithSelf.TakesC.decl [concrete]
-// CHECK:STDOUT:   %Transitive.WithSelf.observe.decl = observe_decl @Transitive.WithSelf.observe [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -509,7 +508,7 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %c: @Transitive.WithSelf.TakesC.%as_type (%as_type.d58) = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc4: %Transitive.assoc_type = assoc_entity element4, %Transitive.WithSelf.TakesC.decl [concrete = constants.%assoc4]
-// CHECK:STDOUT:   %Transitive.WithSelf.observe.decl = observe_decl @Transitive.WithSelf.observe [concrete = constants.%Transitive.WithSelf.observe.decl]
+// CHECK:STDOUT:   %Transitive.WithSelf.observe.decl = observe_decl @Transitive.WithSelf.observe [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -1259,7 +1258,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.791: <witness> = require_complete_type %T.binding.as_type.d92 [symbolic]
 // CHECK:STDOUT:   %impls = observe_impls %T.binding.as_type.d92, %B.type [symbolic]
-// CHECK:STDOUT:   %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1414,7 +1412,7 @@ fn F[T:! A]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%T.binding.as_type (%T.binding.as_type.d92)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete = constants.%observe.decl]
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT:     %RequiresA.ref: %RequiresA.type = name_ref RequiresA, file.%RequiresA.decl [concrete = constants.%RequiresA]
 // CHECK:STDOUT:     %x.ref: @F.%T.binding.as_type (%T.binding.as_type.d92) = name_ref x, %x
 // CHECK:STDOUT:     return
@@ -1552,13 +1550,11 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %specific_impl_fn.a8a: <specific function> = specific_impl_function %impl.elem3, @Transitive.WithSelf.GetA(%T) [symbolic]
 // CHECK:STDOUT:   %assoc1: %Transitive.assoc_type = assoc_entity element1, imports.%Main.import_ref.5d7 [concrete]
 // CHECK:STDOUT:   %impls.f83 = observe_impls %as_type.734f04.2, %Q.type [symbolic]
-// CHECK:STDOUT:   %observe.decl.9f0 = observe_decl @observe.loc9 [concrete]
 // CHECK:STDOUT:   %Q.assoc_type: type = assoc_entity_type @Q [concrete]
 // CHECK:STDOUT:   %assoc0.8b2: %Q.assoc_type = assoc_entity element0, imports.%Main.import_ref.37b [concrete]
 // CHECK:STDOUT:   %assoc2: %Transitive.assoc_type = assoc_entity element2, imports.%Main.import_ref.efa [concrete]
 // CHECK:STDOUT:   %eq.43e = observe_equivalent %as_type.871755.2, %as_type.6edb67.2 [symbolic]
 // CHECK:STDOUT:   %impls.a2f = observe_impls %as_type.6edb67.2, %R.type [symbolic]
-// CHECK:STDOUT:   %observe.decl.508 = observe_decl @observe.loc16 [concrete]
 // CHECK:STDOUT:   %P.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem0.8bc875.2, @P [symbolic]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem0.8bc875.2, @Destroy [symbolic]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %as_type.871755.2, (%Destroy.lookup_impl_witness) [symbolic]
@@ -1843,11 +1839,11 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc7_3.2: ref @G.%as_type.loc7_11.2 (%as_type.871755.2) = as_compatible %a.var
 // CHECK:STDOUT:     %a: ref @G.%as_type.loc7_11.2 (%as_type.871755.2) = ref_binding a, %.loc7_3.2
-// CHECK:STDOUT:     %observe.decl.loc9 = observe_decl @observe.loc9 [concrete = constants.%observe.decl.9f0]
+// CHECK:STDOUT:     %observe.decl.loc9 = observe_decl @observe.loc9 [concrete]
 // CHECK:STDOUT:     %a.ref.loc14: ref @G.%as_type.loc7_11.2 (%as_type.871755.2) = name_ref a, %a
 // CHECK:STDOUT:     %Q.ref: type = name_ref Q, imports.%Main.Q [concrete = constants.%Q.type]
 // CHECK:STDOUT:     %InQ.ref: %Q.assoc_type = name_ref InQ, imports.%Main.import_ref.b1e [concrete = constants.%assoc0.8b2]
-// CHECK:STDOUT:     %observe.decl.loc16 = observe_decl @observe.loc16 [concrete = constants.%observe.decl.508]
+// CHECK:STDOUT:     %observe.decl.loc16 = observe_decl @observe.loc16 [concrete]
 // CHECK:STDOUT:     %TakesPQR.ref: %TakesPQR.type = name_ref TakesPQR, file.%TakesPQR.decl [concrete = constants.%TakesPQR]
 // CHECK:STDOUT:     %a.ref.loc24: ref @G.%as_type.loc7_11.2 (%as_type.871755.2) = name_ref a, %a
 // CHECK:STDOUT:     %impl.elem0.loc7_3.1: @G.%.loc7_3.4 (%.526) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_3.2 (constants.%impl.elem0.ea6)]
@@ -2533,9 +2529,7 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %B.facet.83f: %B.type = facet_value %T.binding.as_type.0b3, (%B.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %RequiresB.specific_fn: <specific function> = specific_function %RequiresB, @RequiresB(%B.facet.83f) [symbolic]
 // CHECK:STDOUT:   %impls.c88 = observe_impls %T.binding.as_type.0b3, %B.type [symbolic]
-// CHECK:STDOUT:   %observe.decl.565 = observe_decl @observe.loc18 [concrete]
 // CHECK:STDOUT:   %impls.2b3 = observe_impls %T.binding.as_type.0b3, %C.type [symbolic]
-// CHECK:STDOUT:   %observe.decl.3f6 = observe_decl @observe.loc19 [concrete]
 // CHECK:STDOUT:   %C.impl_witness.257: <witness> = impl_witness @T.binding.as_type.as.C.impl.%C.impl_witness_table, @T.binding.as_type.as.C.impl(%B.facet.83f) [symbolic]
 // CHECK:STDOUT:   %C.lookup_impl_witness: <witness> = lookup_impl_witness %T.5a3, @C [symbolic]
 // CHECK:STDOUT:   %C.facet.9cd: %C.type = facet_value %T.binding.as_type.0b3, (%C.lookup_impl_witness) [symbolic]
@@ -2814,8 +2808,8 @@ fn F[T:! A]() {
 // CHECK:STDOUT:     %.loc16_14.2: %B.type = converted constants.%T.binding.as_type.0b3, %B.facet.loc16_14.2 [symbolic = %B.facet.loc16_14.3 (constants.%B.facet.83f)]
 // CHECK:STDOUT:     %RequiresB.specific_fn.loc16_3.1: <specific function> = specific_function %RequiresB.ref, @RequiresB(constants.%B.facet.83f) [symbolic = %RequiresB.specific_fn.loc16_3.2 (constants.%RequiresB.specific_fn)]
 // CHECK:STDOUT:     %RequiresB.call: init %empty_tuple.type = call %RequiresB.specific_fn.loc16_3.1(%x.ref.loc16)
-// CHECK:STDOUT:     %observe.decl.loc18 = observe_decl @observe.loc18 [concrete = constants.%observe.decl.565]
-// CHECK:STDOUT:     %observe.decl.loc19 = observe_decl @observe.loc19 [concrete = constants.%observe.decl.3f6]
+// CHECK:STDOUT:     %observe.decl.loc18 = observe_decl @observe.loc18 [concrete]
+// CHECK:STDOUT:     %observe.decl.loc19 = observe_decl @observe.loc19 [concrete]
 // CHECK:STDOUT:     %RequiresD.ref: %RequiresD.type = name_ref RequiresD, file.%RequiresD.decl [concrete = constants.%RequiresD]
 // CHECK:STDOUT:     %x.ref.loc20: @RequiresA.%T.binding.as_type (%T.binding.as_type.0b3) = name_ref x, %x
 // CHECK:STDOUT:     %D.facet.loc20_14.1: %D.type = facet_value constants.%T.binding.as_type.0b3, (constants.%D.lookup_impl_witness) [symbolic = %D.facet.loc20_14.3 (constants.%D.facet.514)]
@@ -2954,7 +2948,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %U.binding.as_type.e57: type = symbolic_binding_type U, 1, %U [symbolic]
 // CHECK:STDOUT:   %eq = observe_equivalent %T.binding.as_type, %U.binding.as_type.e57 [symbolic]
-// CHECK:STDOUT:   %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT:   %pattern_type.2d9: type = pattern_type %U.binding.as_type.e57 [symbolic]
 // CHECK:STDOUT:   %InnerF.type: type = fn_type @InnerF [concrete]
 // CHECK:STDOUT:   %InnerF: %InnerF.type = struct_value () [concrete]
@@ -3073,7 +3066,7 @@ fn F[T:! A]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete = constants.%observe.decl]
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT:     %InnerF.decl: %InnerF.type = fn_decl @InnerF [concrete = constants.%InnerF] {
 // CHECK:STDOUT:       %x.patt: @InnerF.%pattern_type (%pattern_type.2d9) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:       %x.param_patt: @InnerF.%pattern_type (%pattern_type.2d9) = value_param_pattern %x.patt, call_param0 [concrete]
@@ -3178,7 +3171,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %InnerF: %InnerF.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.a2d: <witness> = require_complete_type %U.binding.as_type.e57 [symbolic]
 // CHECK:STDOUT:   %eq = observe_equivalent %T.binding.as_type, %U.binding.as_type.e57 [symbolic]
-// CHECK:STDOUT:   %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT:   %U.binding.as_type.89d: %A.type = symbolic_binding_type U, 1, %U [symbolic]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %U.binding.as_type.89d [symbolic]
 // CHECK:STDOUT:   %pattern_type.562: type = pattern_type %as_type [symbolic]
@@ -3323,7 +3315,7 @@ fn F[T:! A]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @InnerF.%U.binding.as_type.loc9 (%U.binding.as_type.e57)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete = constants.%observe.decl]
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT:     %RequiresA.ref: %RequiresA.type = name_ref RequiresA, file.%RequiresA.decl [concrete = constants.%RequiresA]
 // CHECK:STDOUT:     %x.ref: @InnerF.%U.binding.as_type.loc9 (%U.binding.as_type.e57) = name_ref x, %x
 // CHECK:STDOUT:     %.loc12_16.1: %A.type = as_compatible constants.%U.binding.as_type.e57 [symbolic = %U.binding.as_type.loc12 (constants.%U.binding.as_type.89d)]
@@ -3397,7 +3389,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %InnerF: %InnerF.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.a2d: <witness> = require_complete_type %U.binding.as_type [symbolic]
 // CHECK:STDOUT:   %eq = observe_equivalent %T.binding.as_type, %U.binding.as_type [symbolic]
-// CHECK:STDOUT:   %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -3519,7 +3510,7 @@ fn F[T:! A]() {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %x: @InnerF.%U.binding.as_type (%U.binding.as_type) = value_binding x, %x.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete = constants.%observe.decl]
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -3593,7 +3584,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %InnerF.type: type = fn_type @InnerF [concrete]
 // CHECK:STDOUT:   %InnerF: %InnerF.type = struct_value () [concrete]
 // CHECK:STDOUT:   %eq = observe_equivalent %T.binding.as_type, %U.binding.as_type [symbolic]
-// CHECK:STDOUT:   %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -3743,7 +3733,7 @@ fn F[T:! A]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @InnerF.%U.binding.as_type (%U.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete = constants.%observe.decl]
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -3804,7 +3794,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %require_complete.a2d: <witness> = require_complete_type %U.binding.as_type [symbolic]
 // CHECK:STDOUT:   %V.binding.as_type: type = symbolic_binding_type V, 2, %V [symbolic]
 // CHECK:STDOUT:   %eq = observe_equivalent %T.binding.as_type, %V.binding.as_type [symbolic]
-// CHECK:STDOUT:   %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -3933,7 +3922,7 @@ fn F[T:! A]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%U.binding.as_type (%U.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete = constants.%observe.decl]
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT:     %RequiresA.ref: %RequiresA.type = name_ref RequiresA, file.%RequiresA.decl [concrete = constants.%RequiresA]
 // CHECK:STDOUT:     %x.ref: @F.%U.binding.as_type (%U.binding.as_type) = name_ref x, %x
 // CHECK:STDOUT:     return
@@ -3987,7 +3976,6 @@ fn F[T:! A]() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.f78: <witness> = require_complete_type %U.binding.as_type.121 [symbolic]
 // CHECK:STDOUT:   %eq = observe_equivalent %T.binding.as_type, %U.binding.as_type.121 [symbolic]
-// CHECK:STDOUT:   %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT:   %U.binding.as_type.ddb: %A.type = symbolic_binding_type U, 1, %U [symbolic]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %U.binding.as_type.ddb [symbolic]
 // CHECK:STDOUT:   %pattern_type.97b: type = pattern_type %as_type [symbolic]
@@ -4110,7 +4098,7 @@ fn F[T:! A]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%U.binding.as_type.loc7 (%U.binding.as_type.121)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete = constants.%observe.decl]
+// CHECK:STDOUT:     %observe.decl = observe_decl @observe [concrete]
 // CHECK:STDOUT:     %TakesA.ref: %TakesA.type = name_ref TakesA, file.%TakesA.decl [concrete = constants.%TakesA]
 // CHECK:STDOUT:     %x.ref: @F.%U.binding.as_type.loc7 (%U.binding.as_type.121) = name_ref x, %x
 // CHECK:STDOUT:     %.loc9_11.1: %A.type = as_compatible constants.%U.binding.as_type.121 [symbolic = %U.binding.as_type.loc9 (constants.%U.binding.as_type.ddb)]

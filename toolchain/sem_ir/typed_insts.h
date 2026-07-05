@@ -1696,7 +1696,7 @@ struct RequirementRewrite {
   InstId rhs_id;
 };
 
-// A requirement that two expressions evaluate to the same constant, as
+// An observation that two expressions evaluate to the same constant, as
 // specified by an `expr == expr` clause in an `observe` declaration.
 struct ObserveEquivalent {
   static constexpr auto Kind =
@@ -1710,6 +1710,9 @@ struct ObserveEquivalent {
   InstId rhs_id;
 };
 
+// An observation that the LHS expression is a facet type that implements the
+// interface on the RHS and meets any constraints in the RHS, as specified by an
+// `expr impls expr` clause in an `observe` declaration.
 struct ObserveImpls {
   static constexpr auto Kind =
       InstKind::ObserveImpls.Define<Parse::ObserveImplsId>(
@@ -1722,12 +1725,12 @@ struct ObserveImpls {
   InstId rhs_id;
 };
 
-// A `observe ...` declaration.
+// An `observe ...` declaration.
 struct ObserveDecl {
   static constexpr auto Kind =
       InstKind::ObserveDecl.Define<Parse::ObserveDeclId>(
           {.ir_name = "observe_decl",
-           .constant_kind = InstConstantKind::Always,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // No type since not an expression

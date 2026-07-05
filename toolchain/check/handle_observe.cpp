@@ -21,8 +21,8 @@ auto HandleParseNode(Context& context, Parse::ObserveIntroducerId node_id)
     -> bool {
   auto scope_inst_id = context.scope_stack().PeekInstId();
   if (!context.insts()
-           .IsOneOf<SemIR::InterfaceDecl, SemIR::InterfaceWithSelfDecl,
-                    SemIR::FunctionDecl>(scope_inst_id)) {
+           .IsOneOf<SemIR::InterfaceWithSelfDecl, SemIR::FunctionDecl>(
+               scope_inst_id)) {
     CARBON_DIAGNOSTIC(
         ObserveInWrongScope, Error,
         "`observe` can only be used in an `interface` or `function`");
