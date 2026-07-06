@@ -367,7 +367,7 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
 
   auto GetOrExportFunctionToCpp(SemIR::InstId target_inst_id,
                                 SemIR::FunctionId function_id)
-      -> clang::FunctionDecl*;
+      -> clang::NamedDecl*;
   // Get a current best-effort location for the current position within C++
   // processing.
   auto GetCurrentCppLocId() -> SemIR::LocId {
@@ -460,19 +460,20 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
 
 auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
     SemIR::InstId target_inst_id, SemIR::FunctionId function_id)
-    -> clang::FunctionDecl* {
+    -> clang::NamedDecl* {
   SemIR::Function& function = context_->functions().Get(function_id);
   if (const auto* clang_decl =
           context_->clang_decls().Lookup(function.first_decl_id())) {
-    return cast<clang::FunctionDecl>(clang_decl->decl());
+    return cast<clang::NamedDecl>(clang_decl->decl());
   }
 
-  auto* clang_function_decl =
+  auto* named_decl =
       ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id), function_id);
-
-  if (!clang_function_decl) {
+  if (!named_decl) {
     return nullptr;
   }
+
+  auto* clang_function_decl = cast<clang::FunctionDecl>(named_decl);
 
   SemIR::ClangDeclSignature thunk_signature;
   thunk_signature.kind = SemIR::ClangDeclSignature::Normal;

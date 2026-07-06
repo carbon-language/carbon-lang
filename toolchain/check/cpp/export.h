@@ -53,7 +53,7 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
 
 // Get a `clang::FunctionDecl` that can be used to call a Carbon function.
 auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                         SemIR::FunctionId function_id) -> clang::FunctionDecl*;
+                         SemIR::FunctionId function_id) -> clang::NamedDecl*;
 
 // Export a Carbon destructor into C++.
 //

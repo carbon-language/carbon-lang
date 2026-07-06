@@ -744,7 +744,7 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
 
 auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
                          SemIR::FunctionId callee_function_id)
-    -> clang::FunctionDecl* {
+    -> clang::NamedDecl* {
   const SemIR::Function& callee = context.functions().Get(callee_function_id);
 
   if (callee.generic_id.has_value()) {
