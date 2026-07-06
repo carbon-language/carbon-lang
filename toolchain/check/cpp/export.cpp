@@ -748,6 +748,34 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
   return carbon_thunk_function_id;
 }
 
+// Creates a `clang::FunctionDecl` that calls the Carbon function in
+// `target`. The `extra_name` string is appended to the Carbon thunk's
+// name.
+//
+// Returns nullptr if an error occurs.
+auto ExportNonGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
+                                   const FunctionInfo& target,
+                                   std::string_view extra_name = "")
+    -> clang::FunctionDecl* {
+  // Create a Carbon thunk that calls the callee. The thunk's parameters
+  // are all references so that the ABI is compatible with C++ callers.
+  auto carbon_thunk_function_id =
+      BuildCarbonToCarbonThunk(context, loc_id, target, extra_name);
+
+  // Create a `clang::FunctionDecl` that can be used to call the Carbon thunk.
+  auto* carbon_function_decl = BuildCppFunctionDeclForCarbonFn(
+      context, loc_id, carbon_thunk_function_id);
+  if (!carbon_function_decl) {
+    return nullptr;
+  }
+
+  // Create a C++ thunk that calls the Carbon thunk.
+  return BuildCppToCarbonThunk(
+      context, loc_id, target,
+      context.names().GetFormatted(target.function.name_id),
+      carbon_function_decl);
+}
+
 auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
                          SemIR::FunctionId callee_function_id)
     -> clang::NamedDecl* {
@@ -770,22 +798,7 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
   FunctionInfo target_function_info(context, callee_function_id, callee,
                                     decl_context);
 
-  // Create a Carbon thunk that calls the callee. The thunk's parameters
-  // are all references so that the ABI is compatible with C++ callers.
-  auto carbon_thunk_function_id =
-      BuildCarbonToCarbonThunk(context, loc_id, target_function_info);
-
-  // Create a `clang::FunctionDecl` that can be used to call the Carbon thunk.
-  auto* carbon_function_decl = BuildCppFunctionDeclForCarbonFn(
-      context, loc_id, carbon_thunk_function_id);
-  if (!carbon_function_decl) {
-    return nullptr;
-  }
-
-  // Create a C++ thunk that calls the Carbon thunk.
-  return BuildCppToCarbonThunk(context, loc_id, target_function_info,
-                               context.names().GetFormatted(callee.name_id),
-                               carbon_function_decl);
+  return ExportNonGenericFunctionToCpp(context, loc_id, target_function_info);
 }
 
 // Returns whether the given class has any abstract methods.
