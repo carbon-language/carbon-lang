@@ -421,18 +421,22 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
   CARBON_CHECK(identifier_info, "function with non-identifier name {0}",
                function.name_id);
 
+  auto* tinfo = context.ast_context().getTrivialTypeSourceInfo(
+      cpp_function_type, clang_loc);
   clang::FunctionDecl* function_decl = clang::FunctionDecl::Create(
       context.ast_context(), context.ast_context().getTranslationUnitDecl(),
       /*StartLoc=*/clang_loc, /*NLoc=*/clang_loc, identifier_info,
-      cpp_function_type, /*TInfo=*/nullptr, clang::SC_Extern);
+      cpp_function_type, tinfo, clang::SC_Extern);
 
   // Build parameter decls.
   llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
   for (auto [i, type] : llvm::enumerate(cpp_param_types)) {
+    auto* param_tinfo =
+        context.ast_context().getTrivialTypeSourceInfo(type, clang_loc);
     clang::ParmVarDecl* param = clang::ParmVarDecl::Create(
         context.ast_context(), function_decl, /*StartLoc=*/clang_loc,
-        /*IdLoc=*/clang_loc, /*Id=*/nullptr, type, /*TInfo=*/nullptr,
-        clang::SC_None, /*DefArg=*/nullptr);
+        /*IdLoc=*/clang_loc, /*Id=*/nullptr, type, param_tinfo, clang::SC_None,
+        /*DefArg=*/nullptr);
     param_var_decls.push_back(param);
   }
   function_decl->setParams(param_var_decls);
