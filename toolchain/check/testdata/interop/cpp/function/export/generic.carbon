@@ -149,7 +149,7 @@ void G() {
 // CHECK:STDOUT:       %T.as_type.loc20_16.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc20_16.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc20_16.2: type = converted %T.ref, %T.as_type.loc20_16.2 [symbolic = %T.as_type.loc20_16.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: @F.%T.as_type.loc20_16.1 (%T.as_type) = value_binding t, %t.param
+// CHECK:STDOUT:     %t: @F.%T.as_type.loc20_16.1 (%T.as_type) = wrapper_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   inline_cpp "void G() {\n  Carbon::A a;\n  Carbon::B b;\n  Carbon::F(a);\n  Carbon::F(b);\n}\n"
@@ -170,7 +170,7 @@ void G() {
 // CHECK:STDOUT:       %Self.as_type.loc6_11.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc6_11.1 (constants.%Self.as_type.c84)]
 // CHECK:STDOUT:       %.loc6_11.2: type = converted %Self.ref, %Self.as_type.loc6_11.2 [symbolic = %Self.as_type.loc6_11.1 (constants.%Self.as_type.c84)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.Doit.%Self.as_type.loc6_11.1 (%Self.as_type.c84) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.Doit.%Self.as_type.loc6_11.1 (%Self.as_type.c84) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.Doit.decl [concrete = constants.%assoc0.628]
 // CHECK:STDOUT:
@@ -189,7 +189,7 @@ void G() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %A = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%A [concrete = constants.%A]
-// CHECK:STDOUT:     %self: %A = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %A = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%A.as.I.impl.Doit.decl), @A.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.6ad]
@@ -207,7 +207,7 @@ void G() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %B = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [concrete = constants.%B]
-// CHECK:STDOUT:     %self: %B = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %B = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%B.as.I.impl.Doit.decl), @B.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.5b8]
