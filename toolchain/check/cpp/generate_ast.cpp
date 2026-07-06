@@ -473,7 +473,15 @@ auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
     return nullptr;
   }
 
-  auto* clang_function_decl = cast<clang::FunctionDecl>(named_decl);
+  if (auto* function_template_decl =
+          llvm::dyn_cast<clang::FunctionTemplateDecl>(named_decl)) {
+    context_->clang_decls().Add(
+        {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(function_template_decl),
+         .inst_id = function.first_decl_id()});
+    return function_template_decl;
+  }
+
+  auto* clang_function_decl = llvm::cast<clang::FunctionDecl>(named_decl);
 
   SemIR::ClangDeclSignature thunk_signature;
   thunk_signature.kind = SemIR::ClangDeclSignature::Normal;

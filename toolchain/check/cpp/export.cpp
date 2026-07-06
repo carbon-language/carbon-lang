@@ -776,17 +776,70 @@ auto ExportNonGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
       carbon_function_decl);
 }
 
+// Creates a `clang::FunctionTemplateDecl` for a generic Carbon function.
+//
+// Returns nullptr if an error occurs.
+static auto ExportGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
+                                       const FunctionInfo& callee)
+    -> clang::FunctionTemplateDecl* {
+  auto clang_loc = GetCppLocation(context, loc_id);
+
+  const auto& generic = context.generics().Get(callee.function.generic_id);
+  auto bindings = context.inst_blocks().Get(generic.bindings_id);
+  llvm::SmallVector<clang::NamedDecl*> template_param_decls;
+
+  // Create `clang::TemplateTypeParmDecl`s for each of the function's
+  // symbolic parameters.
+  for (auto binding_inst_id : bindings) {
+    binding_inst_id =
+        context.constant_values().GetConstantInstId(binding_inst_id);
+    auto symbolic_binding =
+        context.insts().GetAs<SemIR::SymbolicBinding>(binding_inst_id);
+    const auto& entity_name =
+        context.entity_names().Get(symbolic_binding.entity_name_id);
+
+    auto* param_ident = GetClangIdentifierInfo(context, entity_name.name_id);
+    CARBON_CHECK(param_ident, "non-identifier param name {0}",
+                 entity_name.name_id);
+
+    auto* param_decl = clang::TemplateTypeParmDecl::Create(
+        context.ast_context(), callee.decl_context, /*KeyLoc=*/clang_loc,
+        /*NameLoc=*/clang_loc,
+        /*D=*/0, /*P=*/0, param_ident, /*Typename=*/true,
+        /*ParameterPack=*/false);
+    template_param_decls.push_back(param_decl);
+
+    // Store a mapping between the generic parameter's `TypeInstId` and
+    // the `clang::TemplateTypeParmDecl`.
+    auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(param_decl);
+    context.clang_decls().Add({.key = key, .inst_id = binding_inst_id});
+  }
+
+  auto* template_param_list = clang::TemplateParameterList::Create(
+      context.ast_context(),
+      /*TemplateLoc=*/clang_loc,
+      /*LAngleLoc=*/clang_loc, template_param_decls,
+      /*RAngleLoc=*/clang_loc,
+      /*RequiresClause=*/nullptr);
+
+  auto* function_decl =
+      BuildCppFunctionDeclForCarbonFn(context, loc_id, callee.function_id);
+  if (!function_decl) {
+    return nullptr;
+  }
+
+  auto* template_decl = clang::FunctionTemplateDecl::Create(
+      context.ast_context(), callee.decl_context, clang_loc,
+      function_decl->getDeclName(), template_param_list, function_decl);
+  function_decl->setDescribedFunctionTemplate(template_decl);
+
+  return template_decl;
+}
+
 auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
                          SemIR::FunctionId callee_function_id)
     -> clang::NamedDecl* {
   const SemIR::Function& callee = context.functions().Get(callee_function_id);
-
-  if (callee.generic_id.has_value()) {
-    context.TODO(loc_id,
-                 "unsupported: C++ calling a Carbon function with "
-                 "generic parameters");
-    return nullptr;
-  }
 
   // Map the parent scope into the C++ AST.
   auto* decl_context =
@@ -797,6 +850,10 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
 
   FunctionInfo target_function_info(context, callee_function_id, callee,
                                     decl_context);
+
+  if (callee.generic_id.has_value()) {
+    return ExportGenericFunctionToCpp(context, loc_id, target_function_info);
+  }
 
   return ExportNonGenericFunctionToCpp(context, loc_id, target_function_info);
 }

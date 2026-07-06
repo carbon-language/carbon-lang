@@ -188,7 +188,6 @@
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .I = <poisoned>
-// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -202,7 +201,6 @@
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .I = <poisoned>
-// CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.Doit(@I.%Self: %I.type) {
@@ -372,10 +370,6 @@ class B {
   }
 }
 
-// CHECK:STDERR: generic_type_impls_interface.carbon:[[@LINE+4]]:1: error: semantics TODO: `unsupported: C++ calling a Carbon function with generic parameters` [SemanticsTodo]
-// CHECK:STDERR: fn F[T:! I](t: T) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F[T:! I](t: T) {
   t.Doit();
 }
@@ -384,14 +378,20 @@ inline Cpp '''
 void G() {
   Carbon::A a;
   Carbon::B b;
-  // CHECK:STDERR: generic_type_impls_interface.carbon:[[@LINE+4]]:11: error: no type named 'F' in namespace 'Carbon' [CppInteropParseError]
+  // CHECK:STDERR: generic_type_impls_interface.carbon:[[@LINE+7]]:3: error: no matching function for call to 'F' [CppInteropParseError]
   // CHECK:STDERR:   278 |   Carbon::F(a);
-  // CHECK:STDERR:       |   ~~~~~~~~^
+  // CHECK:STDERR:       |   ^~~~~~~~~
+  // CHECK:STDERR: generic_type_impls_interface.carbon:[[@LINE-11]]:19: note: candidate template ignored: substitution failure [with T = Carbon::A] [CppInteropParseNote]
+  // CHECK:STDERR:   266 | fn F[T:! I](t: T) {
+  // CHECK:STDERR:       |                   ^
   // CHECK:STDERR:
   Carbon::F(a);
-  // CHECK:STDERR: generic_type_impls_interface.carbon:[[@LINE+4]]:11: error: no type named 'F' in namespace 'Carbon' [CppInteropParseError]
+  // CHECK:STDERR: generic_type_impls_interface.carbon:[[@LINE+7]]:3: error: no matching function for call to 'F' [CppInteropParseError]
   // CHECK:STDERR:   283 |   Carbon::F(b);
-  // CHECK:STDERR:       |   ~~~~~~~~^
+  // CHECK:STDERR:       |   ^~~~~~~~~
+  // CHECK:STDERR: generic_type_impls_interface.carbon:[[@LINE-19]]:19: note: candidate template ignored: substitution failure [with T = Carbon::B] [CppInteropParseNote]
+  // CHECK:STDERR:   266 | fn F[T:! I](t: T) {
+  // CHECK:STDERR:       |                   ^
   // CHECK:STDERR:
   Carbon::F(b);
 }
