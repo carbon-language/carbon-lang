@@ -19,6 +19,7 @@ fn F() {
   }
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'iterate.carbon'
 // CHECK:STDOUT: source_filename = "iterate.carbon"
 // CHECK:STDOUT:
@@ -363,3 +364,4 @@ fn F() {
 // CHECK:STDOUT: !134 = !{!135}
 // CHECK:STDOUT: !135 = !DILocalVariable(arg: 1, scope: !133, type: !15)
 // CHECK:STDOUT: !136 = !DILocation(line: 59, column: 28, scope: !133)
+// CHECK:STDOUT:

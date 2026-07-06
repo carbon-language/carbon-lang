@@ -13,6 +13,7 @@
 fn r#self() {}
 
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'raw_name.carbon'
 // CHECK:STDOUT: source_filename = "raw_name.carbon"
 // CHECK:STDOUT:
@@ -35,3 +36,4 @@ fn r#self() {}
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 13, column: 1, scope: !4)
+// CHECK:STDOUT:

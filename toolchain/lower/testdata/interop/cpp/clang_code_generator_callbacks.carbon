@@ -70,6 +70,7 @@ void f2() {
 }
 ''';
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'clang_code_generator_callbacks.carbon'
 // CHECK:STDOUT: source_filename = "clang_code_generator_callbacks.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -144,3 +145,4 @@ void f2() {
 // CHECK:STDOUT: !15 = !{!"_ZTS1S", !8, i64 0}
 // CHECK:STDOUT: !16 = !{!17, !17, i64 0}
 // CHECK:STDOUT: !17 = !{!"p1 _ZTS2t2", !13, i64 0}
+// CHECK:STDOUT:

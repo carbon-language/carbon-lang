@@ -43,6 +43,7 @@ fn G() {
 }
 
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_impl_function.carbon'
 // CHECK:STDOUT: source_filename = "call_impl_function.carbon"
 // CHECK:STDOUT:
@@ -94,3 +95,4 @@ fn G() {
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !20 = !DILocation(line: 36, column: 10, scope: !17)
 // CHECK:STDOUT: !21 = !DILocation(line: 36, column: 3, scope: !17)
+// CHECK:STDOUT:

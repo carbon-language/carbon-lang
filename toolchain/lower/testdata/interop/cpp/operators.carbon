@@ -74,6 +74,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
   CheckOrderedWith(x, y);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'eq_with.carbon'
 // CHECK:STDOUT: source_filename = "eq_with.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -280,6 +281,8 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: !46 = !DILocation(line: 18, column: 1, scope: !40)
 // CHECK:STDOUT: !47 = !{!48, !8, i64 0}
 // CHECK:STDOUT: !48 = !{!"_ZTS1A", !8, i64 0}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'ordered_with.carbon'
 // CHECK:STDOUT: source_filename = "ordered_with.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -619,3 +622,4 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: !58 = !DILocation(line: 26, column: 1, scope: !50)
 // CHECK:STDOUT: !59 = !{!60, !8, i64 0}
 // CHECK:STDOUT: !60 = !{!"_ZTS1A", !8, i64 0}
+// CHECK:STDOUT:

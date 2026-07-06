@@ -14,6 +14,7 @@ fn UnsafeAs(p: i32*) -> i64* {
   return p unsafe as i64*;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'convert.carbon'
 // CHECK:STDOUT: source_filename = "convert.carbon"
 // CHECK:STDOUT:
@@ -39,3 +40,4 @@ fn UnsafeAs(p: i32*) -> i64* {
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT:

@@ -108,6 +108,7 @@ fn PassTemporary() {
   Cpp.pass(Cpp.make());
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'copyable.carbon'
 // CHECK:STDOUT: source_filename = "copyable.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -241,6 +242,8 @@ fn PassTemporary() {
 // CHECK:STDOUT: !36 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !1, type: !15, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !37 = !DILocation(line: 14, column: 23, scope: !36)
 // CHECK:STDOUT: !38 = !DILocation(line: 0, scope: !36)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'copy_or_move.carbon'
 // CHECK:STDOUT: source_filename = "copy_or_move.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -394,6 +397,8 @@ fn PassTemporary() {
 // CHECK:STDOUT: !37 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !1, type: !15, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !38 = !DILocation(line: 16, column: 25, scope: !37)
 // CHECK:STDOUT: !39 = !DILocation(line: 0, scope: !37)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'move_only.carbon'
 // CHECK:STDOUT: source_filename = "move_only.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -502,3 +507,4 @@ fn PassTemporary() {
 // CHECK:STDOUT: !23 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !1, type: !15, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !24 = !DILocation(line: 20, column: 23, scope: !23)
 // CHECK:STDOUT: !25 = !DILocation(line: 0, scope: !23)
+// CHECK:STDOUT:

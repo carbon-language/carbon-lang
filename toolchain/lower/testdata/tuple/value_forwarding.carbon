@@ -16,6 +16,7 @@ fn F(a: (i32, i32, i32), b: (i32, i32, i32)) {
   G((a, b));
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'value_forwarding.carbon'
 // CHECK:STDOUT: source_filename = "value_forwarding.carbon"
 // CHECK:STDOUT:
@@ -57,3 +58,4 @@ fn F(a: (i32, i32, i32), b: (i32, i32, i32)) {
 // CHECK:STDOUT: !11 = !DILocation(line: 16, column: 5, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 16, column: 3, scope: !4)
 // CHECK:STDOUT: !13 = !DILocation(line: 15, column: 1, scope: !4)
+// CHECK:STDOUT:

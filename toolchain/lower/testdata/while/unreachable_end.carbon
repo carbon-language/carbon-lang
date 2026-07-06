@@ -25,6 +25,7 @@ fn While() {
   H();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'unreachable_end.carbon'
 // CHECK:STDOUT: source_filename = "unreachable_end.carbon"
 // CHECK:STDOUT:
@@ -74,3 +75,4 @@ fn While() {
 // CHECK:STDOUT: !11 = !DILocation(line: 23, column: 5, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 25, column: 3, scope: !4)
 // CHECK:STDOUT: !13 = !DILocation(line: 19, column: 1, scope: !4)
+// CHECK:STDOUT:

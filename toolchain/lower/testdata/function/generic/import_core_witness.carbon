@@ -28,6 +28,7 @@ fn Run() {
   F(0);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'lib.carbon'
 // CHECK:STDOUT: source_filename = "lib.carbon"
 // CHECK:STDOUT:
@@ -53,6 +54,8 @@ fn Run() {
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'main.carbon'
 // CHECK:STDOUT: source_filename = "main.carbon"
 // CHECK:STDOUT:
@@ -99,3 +102,4 @@ fn Run() {
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 7, column: 3, scope: !10)
 // CHECK:STDOUT: !15 = !DILocation(line: 4, column: 1, scope: !10)
+// CHECK:STDOUT:

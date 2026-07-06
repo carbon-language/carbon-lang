@@ -29,6 +29,7 @@ fn F() {
   );
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'numeric_literals.carbon'
 // CHECK:STDOUT: source_filename = "numeric_literals.carbon"
 // CHECK:STDOUT:
@@ -133,3 +134,4 @@ fn F() {
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !30, type: !15)
 // CHECK:STDOUT: !33 = !DILocation(line: 16, column: 3, scope: !30)
+// CHECK:STDOUT:

@@ -57,6 +57,7 @@ fn F(c: Core.Optional(C*)) -> Core.Optional(C*) {
   return c;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'convert.carbon'
 // CHECK:STDOUT: source_filename = "convert.carbon"
 // CHECK:STDOUT:
@@ -593,6 +594,8 @@ fn F(c: Core.Optional(C*)) -> Core.Optional(C*) {
 // CHECK:STDOUT: !218 = !{!219}
 // CHECK:STDOUT: !219 = !DILocalVariable(arg: 1, scope: !216, type: !7)
 // CHECK:STDOUT: !220 = !DILocation(line: 23, column: 25, scope: !216)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'copy.carbon'
 // CHECK:STDOUT: source_filename = "copy.carbon"
 // CHECK:STDOUT:
@@ -712,6 +715,8 @@ fn F(c: Core.Optional(C*)) -> Core.Optional(C*) {
 // CHECK:STDOUT: !48 = !{!7}
 // CHECK:STDOUT: !49 = !DILocation(line: 128, column: 5, scope: !46)
 // CHECK:STDOUT: !50 = !DILocation(line: 129, column: 5, scope: !46)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'copy_pointer.carbon'
 // CHECK:STDOUT: source_filename = "copy_pointer.carbon"
 // CHECK:STDOUT:
@@ -749,3 +754,4 @@ fn F(c: Core.Optional(C*)) -> Core.Optional(C*) {
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !12, type: !7)
 // CHECK:STDOUT: !16 = !DILocation(line: 51, column: 5, scope: !12)
+// CHECK:STDOUT:

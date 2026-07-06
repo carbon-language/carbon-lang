@@ -76,6 +76,7 @@ fn ConvertToValue(b: Cpp.B) {
   let unused a: Cpp.int = b;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'class_to_class.carbon'
 // CHECK:STDOUT: source_filename = "class_to_class.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -167,6 +168,8 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !14)
 // CHECK:STDOUT: !28 = !DILocation(line: 20, column: 25, scope: !25)
 // CHECK:STDOUT: !29 = !DILocation(line: 19, column: 1, scope: !25)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'class_to_enum.carbon'
 // CHECK:STDOUT: source_filename = "class_to_enum.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -280,6 +283,8 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: !32 = !DILocation(line: 20, column: 25, scope: !29)
 // CHECK:STDOUT: !33 = !DILocation(line: 21, column: 25, scope: !29)
 // CHECK:STDOUT: !34 = !DILocation(line: 19, column: 1, scope: !29)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'class_to_int.carbon'
 // CHECK:STDOUT: source_filename = "class_to_int.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -368,3 +373,4 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !30, type: !14)
 // CHECK:STDOUT: !33 = !DILocation(line: 16, column: 27, scope: !30)
 // CHECK:STDOUT: !34 = !DILocation(line: 15, column: 1, scope: !30)
+// CHECK:STDOUT:

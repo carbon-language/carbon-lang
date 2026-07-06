@@ -92,6 +92,7 @@ fn CallF() {
   F(C, {} as C);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'require_completion_in_call.carbon'
 // CHECK:STDOUT: source_filename = "require_completion_in_call.carbon"
 // CHECK:STDOUT:
@@ -102,6 +103,8 @@ fn CallF() {
 // CHECK:STDOUT: !1 = !DIFile(filename: "require_completion_in_call.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_without_completion_in_call.carbon'
 // CHECK:STDOUT: source_filename = "use_without_completion_in_call.carbon"
 // CHECK:STDOUT:
@@ -188,6 +191,8 @@ fn CallF() {
 // CHECK:STDOUT: !30 = !{!31}
 // CHECK:STDOUT: !31 = !DIBasicType(name: "int", size: 456, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !32 = !DILocation(line: 12, column: 5, scope: !28)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'require_completion_in_vtable.carbon'
 // CHECK:STDOUT: source_filename = "require_completion_in_vtable.carbon"
 // CHECK:STDOUT:
@@ -198,6 +203,8 @@ fn CallF() {
 // CHECK:STDOUT: !1 = !DIFile(filename: "require_completion_in_vtable.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_without_completion_in_vtable.carbon'
 // CHECK:STDOUT: source_filename = "use_without_completion_in_vtable.carbon"
 // CHECK:STDOUT:
@@ -231,6 +238,8 @@ fn CallF() {
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 9, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 0, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'require_completion_in_virtual_call.carbon'
 // CHECK:STDOUT: source_filename = "require_completion_in_virtual_call.carbon"
 // CHECK:STDOUT:
@@ -256,6 +265,8 @@ fn CallF() {
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_without_completion_in_virtual_call.carbon'
 // CHECK:STDOUT: source_filename = "use_without_completion_in_virtual_call.carbon"
 // CHECK:STDOUT:
@@ -387,3 +398,4 @@ fn CallF() {
 // CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !42, type: !13)
 // CHECK:STDOUT: !48 = !DILocalVariable(arg: 2, scope: !42, type: !13)
 // CHECK:STDOUT: !49 = !DILocation(line: 7, column: 60, scope: !42)
+// CHECK:STDOUT:

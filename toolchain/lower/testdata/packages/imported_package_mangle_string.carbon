@@ -41,6 +41,7 @@ fn G() {
   (array(A.N.D, 1) as A.I).F();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'a.carbon'
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
@@ -71,6 +72,8 @@ fn G() {
 // CHECK:STDOUT: !7 = !DILocation(line: 10, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "F", linkageName: "_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,N,A,!invalid,!invalid}}:I.A", scope: null, file: !1, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !9 = !DILocation(line: 17, column: 3, scope: !8)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
@@ -101,3 +104,4 @@ fn G() {
 // CHECK:STDOUT: !7 = !DILocation(line: 5, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 6, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 4, column: 1, scope: !4)
+// CHECK:STDOUT:

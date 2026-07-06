@@ -11,6 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/global/decl.carbon
 var a: i32;
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'decl.carbon'
 // CHECK:STDOUT: source_filename = "decl.carbon"
 // CHECK:STDOUT:
@@ -38,3 +39,4 @@ var a: i32;
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 0, scope: !4)
+// CHECK:STDOUT:

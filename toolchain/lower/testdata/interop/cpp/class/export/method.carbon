@@ -63,6 +63,7 @@ void CallF() {
 
 fn CallCallF() { Cpp.CallF(); }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'method.carbon'
 // CHECK:STDOUT: source_filename = "method.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -179,6 +180,8 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !30 = !{!31}
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !29, type: !17)
 // CHECK:STDOUT: !32 = !DILocation(line: 6, column: 3, scope: !29)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'method_with_args_and_return.carbon'
 // CHECK:STDOUT: source_filename = "method_with_args_and_return.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -321,6 +324,8 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !43 = !{!17}
 // CHECK:STDOUT: !44 = !DILocation(line: 18, column: 32, scope: !41)
 // CHECK:STDOUT: !45 = !DILocation(line: 18, column: 25, scope: !41)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'static.carbon'
 // CHECK:STDOUT: source_filename = "static.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -413,3 +418,4 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !28 = distinct !DISubprogram(name: "CallCallF", linkageName: "_CCallCallF.Main", scope: null, file: !1, line: 15, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !29 = !DILocation(line: 15, column: 18, scope: !28)
 // CHECK:STDOUT: !30 = !DILocation(line: 15, column: 1, scope: !28)
+// CHECK:STDOUT:

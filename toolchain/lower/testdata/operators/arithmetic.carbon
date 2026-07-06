@@ -36,6 +36,7 @@ fn sub_u32(a: u32, b: u32) -> u32 { return a - b; }
 fn div_i16(a: i16, b: i16) -> i16 { return a / b; }
 fn div_u16(a: u16, b: u16) -> u16 { return a / b; }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'arithmetic.carbon'
 // CHECK:STDOUT: source_filename = "arithmetic.carbon"
 // CHECK:STDOUT:
@@ -244,3 +245,4 @@ fn div_u16(a: u16, b: u16) -> u16 { return a / b; }
 // CHECK:STDOUT: !99 = !DILocalVariable(arg: 2, scope: !93, type: !96)
 // CHECK:STDOUT: !100 = !DILocation(line: 37, column: 44, scope: !93)
 // CHECK:STDOUT: !101 = !DILocation(line: 37, column: 37, scope: !93)
+// CHECK:STDOUT:

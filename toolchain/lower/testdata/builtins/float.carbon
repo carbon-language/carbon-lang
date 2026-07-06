@@ -79,6 +79,7 @@ fn TestF64(a: f64, b: f64) -> f64 { return F64(a, b); }
 fn F128(a: f128, b: f128) -> f128 = "float.add";
 fn TestF128(a: f128, b: f128) -> f128 { return F128(a, b); }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -238,6 +239,8 @@ fn TestF128(a: f128, b: f128) -> f128 { return F128(a, b); }
 // CHECK:STDOUT: !71 = !DILocalVariable(arg: 2, scope: !68, type: !7)
 // CHECK:STDOUT: !72 = !DILocation(line: 35, column: 51, scope: !68)
 // CHECK:STDOUT: !73 = !DILocation(line: 35, column: 44, scope: !68)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'compound_assign.carbon'
 // CHECK:STDOUT: source_filename = "compound_assign.carbon"
 // CHECK:STDOUT:
@@ -313,6 +316,8 @@ fn TestF128(a: f128, b: f128) -> f128 { return F128(a, b); }
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 2, scope: !25, type: !7)
 // CHECK:STDOUT: !29 = !DILocation(line: 14, column: 34, scope: !25)
 // CHECK:STDOUT: !30 = !DILocation(line: 14, column: 1, scope: !25)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'types.carbon'
 // CHECK:STDOUT: source_filename = "types.carbon"
 // CHECK:STDOUT:
@@ -380,3 +385,4 @@ fn TestF128(a: f128, b: f128) -> f128 { return F128(a, b); }
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 2, scope: !25, type: !7)
 // CHECK:STDOUT: !29 = !DILocation(line: 14, column: 48, scope: !25)
 // CHECK:STDOUT: !30 = !DILocation(line: 14, column: 41, scope: !25)
+// CHECK:STDOUT:

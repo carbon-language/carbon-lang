@@ -19,6 +19,7 @@ fn F() -> i32 {
   return G(&n);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -80,3 +81,4 @@ fn F() -> i32 {
 // CHECK:STDOUT: !22 = !{!23}
 // CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !19, type: !7)
 // CHECK:STDOUT: !24 = !DILocation(line: 18, column: 3, scope: !19)
+// CHECK:STDOUT:

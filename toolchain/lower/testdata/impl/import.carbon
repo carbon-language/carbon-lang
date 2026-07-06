@@ -36,6 +36,7 @@ fn Call(a: A) -> i32 {
   return a.(I.F)();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'impl_def.carbon'
 // CHECK:STDOUT: source_filename = "impl_def.carbon"
 // CHECK:STDOUT:
@@ -65,6 +66,8 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
 // CHECK:STDOUT: !11 = !DILocation(line: 14, column: 12, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 14, column: 5, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'impl_use.carbon'
 // CHECK:STDOUT: source_filename = "impl_use.carbon"
 // CHECK:STDOUT:
@@ -95,3 +98,4 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
 // CHECK:STDOUT: !11 = !DILocation(line: 5, column: 10, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 5, column: 3, scope: !4)
+// CHECK:STDOUT:

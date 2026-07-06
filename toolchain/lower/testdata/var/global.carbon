@@ -50,6 +50,7 @@ package Other;
 
 var a: i32 = 1;
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'simple.carbon'
 // CHECK:STDOUT: source_filename = "simple.carbon"
 // CHECK:STDOUT:
@@ -88,6 +89,8 @@ var a: i32 = 1;
 // CHECK:STDOUT: !11 = !{null}
 // CHECK:STDOUT: !12 = !DILocation(line: 4, column: 1, scope: !9)
 // CHECK:STDOUT: !13 = !DILocation(line: 0, scope: !9)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'var_in_tuple.carbon'
 // CHECK:STDOUT: source_filename = "var_in_tuple.carbon"
 // CHECK:STDOUT:
@@ -137,6 +140,8 @@ var a: i32 = 1;
 // CHECK:STDOUT: !14 = !DILocation(line: 4, column: 6, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 4, column: 18, scope: !11)
 // CHECK:STDOUT: !16 = !DILocation(line: 0, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'tuple_in_var.carbon'
 // CHECK:STDOUT: source_filename = "tuple_in_var.carbon"
 // CHECK:STDOUT:
@@ -191,6 +196,8 @@ var a: i32 = 1;
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 4, column: 1, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 0, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'unnamed.carbon'
 // CHECK:STDOUT: source_filename = "unnamed.carbon"
 // CHECK:STDOUT:
@@ -230,6 +237,8 @@ var a: i32 = 1;
 // CHECK:STDOUT: !7 = !DILocation(line: 4, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 5, column: 1, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 0, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'not_main_package.carbon'
 // CHECK:STDOUT: source_filename = "not_main_package.carbon"
 // CHECK:STDOUT:
@@ -257,3 +266,4 @@ var a: i32 = 1;
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 4, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 0, scope: !4)
+// CHECK:STDOUT:

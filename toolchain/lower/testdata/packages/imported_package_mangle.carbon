@@ -89,6 +89,7 @@ fn G() {
   (array(C, 2) as I).F();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'a.carbon'
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
@@ -111,6 +112,8 @@ fn G() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 10, column: 3, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
@@ -147,6 +150,8 @@ fn G() {
 // CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F", linkageName: "_CF.b11ad1d729c16944:I.A.91a8a89714fbc21c", scope: null, file: !11, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !11 = !DIFile(filename: "a.carbon", directory: "")
 // CHECK:STDOUT: !12 = !DILocation(line: 14, column: 3, scope: !10)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'c.carbon'
 // CHECK:STDOUT: source_filename = "c.carbon"
 // CHECK:STDOUT:
@@ -243,3 +248,4 @@ fn G() {
 // CHECK:STDOUT: !28 = !DILocation(line: 32, column: 3, scope: !27)
 // CHECK:STDOUT: !29 = distinct !DISubprogram(name: "F", linkageName: "_CF.c2375ae0b92fd5ec:I.C.91a8a89714fbc21c", scope: null, file: !1, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !30 = !DILocation(line: 16, column: 3, scope: !29)
+// CHECK:STDOUT:

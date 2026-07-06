@@ -17,6 +17,7 @@ fn Or() -> bool {
   return F() or G();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'or.carbon'
 // CHECK:STDOUT: source_filename = "or.carbon"
 // CHECK:STDOUT:
@@ -68,3 +69,4 @@ fn Or() -> bool {
 // CHECK:STDOUT: !12 = !DILocation(line: 17, column: 10, scope: !11)
 // CHECK:STDOUT: !13 = !DILocation(line: 17, column: 17, scope: !11)
 // CHECK:STDOUT: !14 = !DILocation(line: 17, column: 3, scope: !11)
+// CHECK:STDOUT:

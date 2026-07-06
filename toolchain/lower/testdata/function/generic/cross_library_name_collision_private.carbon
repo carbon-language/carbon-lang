@@ -51,6 +51,7 @@ fn Run() {
   let _: i32 = Lib2CallF(1 as i32, 2 as i32);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'lib1.carbon'
 // CHECK:STDOUT: source_filename = "lib1.carbon"
 // CHECK:STDOUT:
@@ -61,6 +62,8 @@ fn Run() {
 // CHECK:STDOUT: !1 = !DIFile(filename: "lib1.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'lib2.carbon'
 // CHECK:STDOUT: source_filename = "lib2.carbon"
 // CHECK:STDOUT:
@@ -71,6 +74,8 @@ fn Run() {
 // CHECK:STDOUT: !1 = !DIFile(filename: "lib2.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'todo_use.carbon'
 // CHECK:STDOUT: source_filename = "todo_use.carbon"
 // CHECK:STDOUT:
@@ -139,3 +144,4 @@ fn Run() {
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !27, type: !7)
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 2, scope: !27, type: !7)
 // CHECK:STDOUT: !31 = !DILocation(line: 5, column: 3, scope: !27)
+// CHECK:STDOUT:

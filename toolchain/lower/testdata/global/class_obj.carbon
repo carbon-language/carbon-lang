@@ -13,6 +13,7 @@ class A {}
 
 var a: A = {};
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'class_obj.carbon'
 // CHECK:STDOUT: source_filename = "class_obj.carbon"
 // CHECK:STDOUT:
@@ -45,3 +46,4 @@ var a: A = {};
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 0, scope: !4)
+// CHECK:STDOUT:

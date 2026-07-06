@@ -23,6 +23,7 @@ fn M() {
   F(ptr_i8);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_dedup_ptr.carbon'
 // CHECK:STDOUT: source_filename = "call_dedup_ptr.carbon"
 // CHECK:STDOUT:
@@ -90,3 +91,4 @@ fn M() {
 // CHECK:STDOUT: !21 = !{!22}
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !17, type: !20)
 // CHECK:STDOUT: !23 = !DILocation(line: 14, column: 3, scope: !17)
+// CHECK:STDOUT:

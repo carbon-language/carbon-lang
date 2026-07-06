@@ -21,6 +21,7 @@ fn While() {
   }
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'break_continue.carbon'
 // CHECK:STDOUT: source_filename = "break_continue.carbon"
 // CHECK:STDOUT:
@@ -85,3 +86,4 @@ fn While() {
 // CHECK:STDOUT: !14 = !DILocation(line: 20, column: 16, scope: !4)
 // CHECK:STDOUT: !15 = !DILocation(line: 18, column: 3, scope: !4)
 // CHECK:STDOUT: !16 = !DILocation(line: 17, column: 1, scope: !4)
+// CHECK:STDOUT:

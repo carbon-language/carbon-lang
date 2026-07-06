@@ -30,6 +30,7 @@ fn InstanceAccess(a: A) -> i32 {
   return a.F();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'extend_impl.carbon'
 // CHECK:STDOUT: source_filename = "extend_impl.carbon"
 // CHECK:STDOUT:
@@ -78,3 +79,4 @@ fn InstanceAccess(a: A) -> i32 {
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !12, type: !15)
 // CHECK:STDOUT: !18 = !DILocation(line: 30, column: 10, scope: !12)
 // CHECK:STDOUT: !19 = !DILocation(line: 30, column: 3, scope: !12)
+// CHECK:STDOUT:

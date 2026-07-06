@@ -22,6 +22,7 @@ fn F() {
   let unused local_vehicle: VehicleType = VehicleType.Car;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -59,3 +60,4 @@ fn F() {
 // CHECK:STDOUT: !7 = !DILocation(line: 21, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !1, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !9 = !DILocation(line: 0, scope: !8)
+// CHECK:STDOUT:

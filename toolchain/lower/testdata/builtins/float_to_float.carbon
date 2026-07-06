@@ -22,6 +22,7 @@ fn TestConvertF64ToF32(a: f64) -> f32 { return ConvertF64ToF32(a); }
 fn ConvertF16ToF128(a: f16) -> f128 = "float.convert";
 fn TestConvertF16ToF128(a: f16) -> f128 { return ConvertF16ToF128(a); }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'float_to_float.carbon'
 // CHECK:STDOUT: source_filename = "float_to_float.carbon"
 // CHECK:STDOUT:
@@ -73,3 +74,4 @@ fn TestConvertF16ToF128(a: f16) -> f128 { return ConvertF16ToF128(a); }
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !20 = !DILocation(line: 10, column: 50, scope: !17)
 // CHECK:STDOUT: !21 = !DILocation(line: 10, column: 43, scope: !17)
+// CHECK:STDOUT:
