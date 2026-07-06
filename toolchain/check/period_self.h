@@ -23,7 +23,6 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,
 
 enum class SubstPeriodSelfBehaviour {
   ImplicitOnly,
-  ExplicitOnly,
   All,
 };
 
@@ -65,9 +64,10 @@ auto SubstPeriodSelf(
 // Replace `.Self` references with the self-type. The `facet_type_inst_id` must
 // be a `FacetType` instruction (or error).
 //
-// The implicit `.Self` in designators is not replaced in rewrite constraints,
-// to allow for rewrite constraint resolution to recognise the designators.
-// Later use of rewrite constraints requires further `.Self` replacement.
+// The `.Self` in the LHS of rewrite constraints is not replaced, to allow for
+// rewrite constraint resolution to recognise the designators and avoid
+// evaluation replacing them with a concrete value. Later use of rewrite
+// constraints requires further `.Self` replacement.
 //
 // Unlike SubstPeriodSelf, which works with constant values and thus canonical
 // instructions, this operation can be done for non-canonical facet types. A new
