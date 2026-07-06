@@ -5,6 +5,7 @@
 #include "toolchain/check/cpp/export.h"
 
 #include <optional>
+#include <string_view>
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Sema/Sema.h"
@@ -700,13 +701,18 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
 
 // Create a Carbon thunk that calls `callee`. The thunk's parameters are
 // all references to the callee parameter type.
+//
+// `extra_name` will be appended to the thunk name. This is used to
+// disambiguate the names of specialized function thunks.
 static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
-                                     const FunctionInfo& target)
+                                     const FunctionInfo& target,
+                                     std::string_view extra_name = "")
     -> SemIR::FunctionId {
   // Create the thunk's name.
   llvm::SmallString<64> thunk_name =
       context.names().GetFormatted(target.function.name_id);
   thunk_name += "__carbon_thunk";
+  thunk_name += extra_name;
   auto& ident = context.ast_context().Idents.get(thunk_name);
   auto thunk_name_id =
       SemIR::NameId::ForIdentifier(context.identifiers().Add(ident.getName()));
