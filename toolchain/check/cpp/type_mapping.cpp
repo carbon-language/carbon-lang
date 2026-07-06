@@ -239,7 +239,7 @@ static auto TryMapClassType(Context& context, SemIR::TypeInstId class_inst_id,
 // Maps a symbolic Carbon type to a C++ template parameter type.
 static auto TryMapSymbolicType(Context& context,
                                SemIR::InstId symbolic_inst_id) {
-  auto* clang_decl = context.clang_decls().Lookup(symbolic_inst_id);
+  const auto* clang_decl = context.clang_decls().Lookup(symbolic_inst_id);
   if (!clang_decl) {
     return clang::QualType();
   }
