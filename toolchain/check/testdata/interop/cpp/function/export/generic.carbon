@@ -44,6 +44,30 @@ void G() {
 ''';
 //@dump-sem-ir-end
 
+// --- fail_todo_non_type_generic.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+// CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+4]]:1: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
+// CHECK:STDERR: fn F[unused N:! i32]() {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F[unused N:! i32]() {}
+
+inline Cpp '''
+void G() {
+  // CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+8]]:11: error: no member named 'F' in namespace 'Carbon' [CppInteropParseError]
+  // CHECK:STDERR:    20 |   Carbon::F<3>();
+  // CHECK:STDERR:       |           ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+4]]:16: error: expected expression [CppInteropParseError]
+  // CHECK:STDERR:    20 |   Carbon::F<3>();
+  // CHECK:STDERR:       |                ^
+  // CHECK:STDERR:
+  Carbon::F<3>();
+}
+''';
+
 // --- fail_todo_generic_pointer.carbon
 library "[[@TEST_NAME]]";
 import Cpp;

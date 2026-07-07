@@ -898,12 +898,19 @@ static auto ExportGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
         context.constant_values().GetConstantInstId(binding_inst_id);
     auto symbolic_binding =
         context.insts().GetAs<SemIR::SymbolicBinding>(binding_inst_id);
+
     const auto& entity_name =
         context.entity_names().Get(symbolic_binding.entity_name_id);
 
     auto* param_ident = GetClangIdentifierInfo(context, entity_name.name_id);
     CARBON_CHECK(param_ident, "non-identifier param name {0}",
                  entity_name.name_id);
+
+    if (symbolic_binding.type_id != SemIR::TypeType::TypeId &&
+        !context.types().Is<SemIR::FacetType>(symbolic_binding.type_id)) {
+      context.TODO(loc_id, "binding maps to a non-type template parameter");
+      return nullptr;
+    }
 
     auto* param_decl = clang::TemplateTypeParmDecl::Create(
         context.ast_context(), callee.decl_context, /*KeyLoc=*/clang_loc,
