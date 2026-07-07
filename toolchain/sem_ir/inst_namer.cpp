@@ -1336,6 +1336,22 @@ auto InstNamer::NamingContext::NameInst() -> void {
       PushBlockId(require_scope_id, inst.decl_block_id);
       return;
     }
+    case Carbon::SemIR::RequirementBaseFacetType::Kind: {
+      AddInstName("base_facet_type");
+      return;
+    }
+    case Carbon::SemIR::RequirementEquivalent::Kind: {
+      AddInstName("equiv");
+      return;
+    }
+    case Carbon::SemIR::RequirementImpls::Kind: {
+      AddInstName("impls");
+      return;
+    }
+    case Carbon::SemIR::RequirementRewrite::Kind: {
+      AddInstName("rewrite");
+      return;
+    }
     case ReturnSlotPattern::Kind: {
       AddInstNameId(NameId::ReturnSlot, ".patt");
       return;

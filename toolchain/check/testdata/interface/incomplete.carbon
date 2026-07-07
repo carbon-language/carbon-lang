@@ -170,6 +170,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:     %.loc16_7.2: type = converted %.loc16_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.frozen: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %I.ref [concrete]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.frozen.as_type]
 // CHECK:STDOUT:     %.loc16_20: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type]
@@ -178,11 +179,13 @@ interface A(T:! type) {
 // CHECK:STDOUT:     %impl.elem0.loc16_20.2: %C = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.cc9]
 // CHECK:STDOUT:     %.loc16_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %rewrite.loc16_23.1 = requirement_rewrite %impl.elem0.loc16_20.1, <error> [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc16_20.3: %C = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.cc9]
 // CHECK:STDOUT:     %impl.elem0.loc16_20.4: %C = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.cc9]
+// CHECK:STDOUT:     %rewrite.loc16_23.2 = requirement_rewrite %impl.elem0.loc16_20.4, <error> [concrete]
 // CHECK:STDOUT:     %.loc16_14: type = where_expr [concrete = <error>] {
-// CHECK:STDOUT:       requirement_base_facet_type %I.ref
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc16_20.4, <error>
+// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
+// CHECK:STDOUT:       %rewrite.loc16_23.2 = requirement_rewrite %impl.elem0.loc16_20.4, <error> [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

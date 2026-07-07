@@ -14,6 +14,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -520,9 +521,15 @@ auto ThawPeriodSelf(Context& context, SemIR::InstId inst_id) -> SemIR::InstId {
       // look for `.Self` in the inst's operands even if its constant value is
       // concrete, since we're thawing `.Self` in the non-canonical inst itself,
       // not just its constant value.
+      //
+      // AlwaysUnique constants are not canonicalized, and they report a
+      // concrete value even if they depend on a symbolic value. So we have to
+      // substitute into them always.
       auto const_id = context().constant_values().Get(inst_id);
       if (context().constant_values().GetInstId(const_id) == inst_id &&
-          const_id.is_concrete()) {
+          const_id.is_concrete() &&
+          context().insts().Get(inst_id).kind().constant_kind() !=
+              SemIR::InstConstantKind::AlwaysUnique) {
         return FullySubstituted;
       }
 

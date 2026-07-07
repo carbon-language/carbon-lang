@@ -1641,7 +1641,7 @@ struct RequirementBaseFacetType {
   static constexpr auto Kind =
       InstKind::RequirementBaseFacetType.Define<Parse::NodeId>(
           {.ir_name = "requirement_base_facet_type",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // No type since not an expression
@@ -1658,7 +1658,7 @@ struct RequirementEquivalent {
   static constexpr auto Kind =
       InstKind::RequirementEquivalent.Define<Parse::RequirementEqualEqualId>(
           {.ir_name = "requirement_equivalent",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // No type since not an expression
@@ -1673,7 +1673,7 @@ struct RequirementImpls {
   static constexpr auto Kind =
       InstKind::RequirementImpls.Define<Parse::RequirementImplsId>(
           {.ir_name = "requirement_impls",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // No type since not an expression
@@ -1688,7 +1688,7 @@ struct RequirementRewrite {
   static constexpr auto Kind =
       InstKind::RequirementRewrite.Define<Parse::RequirementEqualId>(
           {.ir_name = "requirement_rewrite",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // No type since not an expression

@@ -95,6 +95,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %T.ref.loc21_32: type = name_ref T, %T.loc21_7.2 [symbolic = %T.loc21_7.1 (constants.%T)]
 // CHECK:STDOUT:       %Empty.type.loc21_33.2: type = facet_type <@Empty, @Empty(constants.%T)> [symbolic = %Empty.type.loc21_33.1 (constants.%Empty.type.95d624.2)]
 // CHECK:STDOUT:       %.Self.frozen.loc21_35.2: @H.%Empty.type.loc21_33.1 (%Empty.type.95d624.2) = symbolic_binding .Self [symbolic = %.Self.frozen.loc21_35.1 (constants.%.Self.frozen.063)]
+// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %Empty.type.loc21_33.2 [concrete]
 // CHECK:STDOUT:       %.Self.ref: @H.%Empty.type.loc21_33.1 (%Empty.type.95d624.2) = name_ref .Self, %.Self.frozen.loc21_35.2 [symbolic = %.Self.frozen.loc21_35.1 (constants.%.Self.frozen.063)]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = %.Self.frozen.as_type (constants.%.Self.frozen.as_type.f3f)]
 // CHECK:STDOUT:       %.loc21_41.1: type = converted %.Self.ref, %.Self.as_type [symbolic = %.Self.frozen.as_type (constants.%.Self.frozen.as_type.f3f)]
@@ -104,11 +105,13 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %impl.elem0.loc21_41.4: type = impl_witness_access constants.%Empty.lookup_impl_witness.67b, element0 [symbolic = %impl.elem0.loc21_41.2 (constants.%impl.elem0.d8a)]
 // CHECK:STDOUT:       %T.ref.loc21_46: type = name_ref T, %T.loc21_7.2 [symbolic = %T.loc21_7.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc21_47.2: type = ptr_type %T.ref.loc21_46 [symbolic = %ptr.loc21_47.1 (constants.%ptr.e8f)]
+// CHECK:STDOUT:       %rewrite.loc21_44.1 = requirement_rewrite %impl.elem0.loc21_41.3, %ptr.loc21_47.2 [concrete]
 // CHECK:STDOUT:       %impl.elem0.loc21_41.5: type = impl_witness_access constants.%Empty.lookup_impl_witness.67b, element0 [symbolic = %impl.elem0.loc21_41.2 (constants.%impl.elem0.d8a)]
 // CHECK:STDOUT:       %impl.elem0.loc21_41.6: type = impl_witness_access constants.%Empty.lookup_impl_witness.67b, element0 [symbolic = %impl.elem0.loc21_41.2 (constants.%impl.elem0.d8a)]
+// CHECK:STDOUT:       %rewrite.loc21_44.2 = requirement_rewrite %impl.elem0.loc21_41.6, %ptr.loc21_47.2 [concrete]
 // CHECK:STDOUT:       %.loc21_35.2: type = where_expr [symbolic = %Empty_where.type (constants.%Empty_where.type.696)] {
-// CHECK:STDOUT:         requirement_base_facet_type %Empty.type.loc21_33.2
-// CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc21_41.6, %ptr.loc21_47.2
+// CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %Empty.type.loc21_33.2 [concrete]
+// CHECK:STDOUT:         %rewrite.loc21_44.2 = requirement_rewrite %impl.elem0.loc21_41.6, %ptr.loc21_47.2 [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.696) = wrapper_binding U, %U.param

@@ -147,6 +147,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.frozen: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %I.ref [concrete]
 // CHECK:STDOUT:     %.Self.ref.loc6_20: %I.type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %.Self.as_type.loc6_20: type = facet_access_type %.Self.ref.loc6_20 [symbolic_self = constants.%.Self.frozen.as_type]
 // CHECK:STDOUT:     %.loc6_20: type = converted %.Self.ref.loc6_20, %.Self.as_type.loc6_20 [symbolic_self = constants.%.Self.frozen.as_type]
@@ -176,6 +177,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %.loc6_48.2: %tuple.type.e55 = converted %.loc6_47.1, %tuple.loc6_47 [concrete = constants.%tuple.102]
 // CHECK:STDOUT:     %struct.loc6_48: %struct_type.a.b.486 = struct_value (%true, %.loc6_48.2) [concrete = constants.%struct.247]
 // CHECK:STDOUT:     %.loc6_48.3: %struct_type.a.b.486 = converted %.loc6_48.1, %struct.loc6_48 [concrete = constants.%struct.247]
+// CHECK:STDOUT:     %rewrite.loc6_23.1 = requirement_rewrite %impl.elem0.loc6_20.1, %.loc6_48.3 [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc6_20.3: %struct_type.a.b.486 = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.f1e]
 // CHECK:STDOUT:     %.Self.ref.loc6_54: %I.type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %.Self.as_type.loc6_54: type = facet_access_type %.Self.ref.loc6_54 [symbolic_self = constants.%.Self.frozen.as_type]
@@ -220,14 +222,17 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %.loc6_95.2: %tuple.type.e55 = converted %.loc6_94.1, %tuple.loc6_94 [concrete = constants.%tuple.102]
 // CHECK:STDOUT:     %struct.loc6_95: %struct_type.a.b.486 = struct_value (%.loc6_65, %.loc6_95.2) [concrete = constants.%struct.247]
 // CHECK:STDOUT:     %.loc6_95.3: %struct_type.a.b.486 = converted %.loc6_95.1, %struct.loc6_95 [concrete = constants.%struct.247]
+// CHECK:STDOUT:     %rewrite.loc6_57.1 = requirement_rewrite %impl.elem0.subst.loc6_54.1, %.loc6_95.3 [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc6_54.3: %struct_type.a.b.486 = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.f1e]
 // CHECK:STDOUT:     %impl.elem0.loc6_20.4: %struct_type.a.b.486 = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.f1e]
+// CHECK:STDOUT:     %rewrite.loc6_23.2 = requirement_rewrite %impl.elem0.loc6_20.4, %.loc6_48.3 [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc6_54.4: %struct_type.a.b.486 = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.f1e]
 // CHECK:STDOUT:     %impl.elem0.subst.loc6_54.2: %struct_type.a.b.486 = impl_witness_access_substituted %impl.elem0.loc6_54.4, %.loc6_48.3 [concrete = constants.%struct.247]
+// CHECK:STDOUT:     %rewrite.loc6_57.2 = requirement_rewrite %impl.elem0.subst.loc6_54.2, %.loc6_95.3 [concrete]
 // CHECK:STDOUT:     %.loc6_14: type = where_expr [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_base_facet_type %I.ref
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc6_20.4, %.loc6_48.3
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.subst.loc6_54.2, %.loc6_95.3
+// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
+// CHECK:STDOUT:       %rewrite.loc6_23.2 = requirement_rewrite %impl.elem0.loc6_20.4, %.loc6_48.3 [concrete]
+// CHECK:STDOUT:       %rewrite.loc6_57.2 = requirement_rewrite %impl.elem0.subst.loc6_54.2, %.loc6_95.3 [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -363,6 +368,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.frozen: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %I.ref [concrete]
 // CHECK:STDOUT:     %.Self.ref.loc10_20: %I.type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %.Self.as_type.loc10_20: type = facet_access_type %.Self.ref.loc10_20 [symbolic_self = constants.%.Self.frozen.as_type]
 // CHECK:STDOUT:     %.loc10_20: type = converted %.Self.ref.loc10_20, %.Self.as_type.loc10_20 [symbolic_self = constants.%.Self.frozen.as_type]
@@ -392,6 +398,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %.loc10_48.2: %tuple.type.e55 = converted %.loc10_47.1, %tuple.loc10_47 [concrete = constants.%tuple.102]
 // CHECK:STDOUT:     %struct.loc10_48: %struct_type.a.b.486 = struct_value (%true, %.loc10_48.2) [concrete = constants.%struct.247]
 // CHECK:STDOUT:     %.loc10_48.3: %struct_type.a.b.486 = converted %.loc10_48.1, %struct.loc10_48 [concrete = constants.%struct.247]
+// CHECK:STDOUT:     %rewrite.loc10_23.1 = requirement_rewrite %impl.elem0.loc10_20.1, %.loc10_48.3 [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc10_20.3: %struct_type.a.b.486 = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.f1e]
 // CHECK:STDOUT:     %.Self.ref.loc10_54: %I.type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %.Self.as_type.loc10_54: type = facet_access_type %.Self.ref.loc10_54 [symbolic_self = constants.%.Self.frozen.as_type]
@@ -423,14 +430,17 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %.loc10_83.2: %tuple.type.e55 = converted %.loc10_82.1, %tuple.loc10_82 [concrete = constants.%tuple.e16]
 // CHECK:STDOUT:     %struct.loc10_83: %struct_type.a.b.486 = struct_value (%false, %.loc10_83.2) [concrete = constants.%struct.866]
 // CHECK:STDOUT:     %.loc10_83.3: %struct_type.a.b.486 = converted %.loc10_83.1, %struct.loc10_83 [concrete = constants.%struct.866]
+// CHECK:STDOUT:     %rewrite.loc10_57.1 = requirement_rewrite %impl.elem0.subst.loc10_54.1, %.loc10_83.3 [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc10_54.3: %struct_type.a.b.486 = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.f1e]
 // CHECK:STDOUT:     %impl.elem0.loc10_20.4: %struct_type.a.b.486 = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.f1e]
+// CHECK:STDOUT:     %rewrite.loc10_23.2 = requirement_rewrite %impl.elem0.loc10_20.4, %.loc10_48.3 [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc10_54.4: %struct_type.a.b.486 = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.f1e]
 // CHECK:STDOUT:     %impl.elem0.subst.loc10_54.2: %struct_type.a.b.486 = impl_witness_access_substituted %impl.elem0.loc10_54.4, %.loc10_48.3 [concrete = constants.%struct.247]
+// CHECK:STDOUT:     %rewrite.loc10_57.2 = requirement_rewrite %impl.elem0.subst.loc10_54.2, %.loc10_83.3 [concrete]
 // CHECK:STDOUT:     %.loc10_14: type = where_expr [concrete = <error>] {
-// CHECK:STDOUT:       requirement_base_facet_type %I.ref
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_20.4, %.loc10_48.3
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.subst.loc10_54.2, %.loc10_83.3
+// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
+// CHECK:STDOUT:       %rewrite.loc10_23.2 = requirement_rewrite %impl.elem0.loc10_20.4, %.loc10_48.3 [concrete]
+// CHECK:STDOUT:       %rewrite.loc10_57.2 = requirement_rewrite %impl.elem0.subst.loc10_54.2, %.loc10_83.3 [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

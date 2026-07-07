@@ -463,6 +463,7 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:       %Core.ref.loc9_11: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Iterate.ref: type = name_ref Iterate, imports.%Core.Iterate [concrete = constants.%Iterate.type]
 // CHECK:STDOUT:       %.Self.frozen: %Iterate.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.bdd]
+// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %Iterate.ref [concrete]
 // CHECK:STDOUT:       %.Self.ref.loc9_30: %Iterate.type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen.bdd]
 // CHECK:STDOUT:       %.Self.as_type.loc9_30: type = facet_access_type %.Self.ref.loc9_30 [symbolic_self = constants.%.Self.frozen.as_type]
 // CHECK:STDOUT:       %.loc9_30: type = converted %.Self.ref.loc9_30, %.Self.as_type.loc9_30 [symbolic_self = constants.%.Self.frozen.as_type]
@@ -475,6 +476,7 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:       %Int.loc9_54.2: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc9_54.1 (constants.%Int.67af24.1)]
 // CHECK:STDOUT:       %Destroy.facet.loc9_54.2: %Destroy.type = facet_value %Int.loc9_54.2, (constants.%Destroy.lookup_impl_witness.173) [symbolic = %Destroy.facet.loc9_54.1 (constants.%Destroy.facet.7bb)]
 // CHECK:STDOUT:       %.loc9_54: %Destroy.type = converted %Int.loc9_54.2, %Destroy.facet.loc9_54.2 [symbolic = %Destroy.facet.loc9_54.1 (constants.%Destroy.facet.7bb)]
+// CHECK:STDOUT:       %rewrite.loc9_42.1 = requirement_rewrite %impl.elem1.loc9_30.1, %.loc9_54 [concrete]
 // CHECK:STDOUT:       %impl.elem1.loc9_30.3: %Destroy.type = impl_witness_access constants.%Iterate.lookup_impl_witness.1d8, element1 [symbolic_self = constants.%impl.elem1.6f4]
 // CHECK:STDOUT:       %.Self.ref.loc9_60: %Iterate.type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen.bdd]
 // CHECK:STDOUT:       %.Self.as_type.loc9_60: type = facet_access_type %.Self.ref.loc9_60 [symbolic_self = constants.%.Self.frozen.as_type]
@@ -488,13 +490,16 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:       %Int.loc9_85: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc9_54.1 (constants.%Int.67af24.1)]
 // CHECK:STDOUT:       %facet_value.loc9_85.2: %facet_type.f48 = facet_value %Int.loc9_85, (constants.%Destroy.lookup_impl_witness.173, constants.%Copy.lookup_impl_witness.df6) [symbolic = %facet_value.loc9_85.1 (constants.%facet_value)]
 // CHECK:STDOUT:       %.loc9_85.2: %facet_type.f48 = converted %Int.loc9_85, %facet_value.loc9_85.2 [symbolic = %facet_value.loc9_85.1 (constants.%facet_value)]
+// CHECK:STDOUT:       %rewrite.loc9_73.1 = requirement_rewrite %impl.elem0.loc9_60.1, %.loc9_85.2 [concrete]
 // CHECK:STDOUT:       %impl.elem0.loc9_60.3: %facet_type.f48 = impl_witness_access constants.%Iterate.lookup_impl_witness.1d8, element0 [symbolic_self = constants.%impl.elem0.294]
 // CHECK:STDOUT:       %impl.elem1.loc9_30.4: %Destroy.type = impl_witness_access constants.%Iterate.lookup_impl_witness.1d8, element1 [symbolic_self = constants.%impl.elem1.6f4]
+// CHECK:STDOUT:       %rewrite.loc9_42.2 = requirement_rewrite %impl.elem1.loc9_30.4, %.loc9_54 [concrete]
 // CHECK:STDOUT:       %impl.elem0.loc9_60.4: %facet_type.f48 = impl_witness_access constants.%Iterate.lookup_impl_witness.1d8, element0 [symbolic_self = constants.%impl.elem0.294]
+// CHECK:STDOUT:       %rewrite.loc9_73.2 = requirement_rewrite %impl.elem0.loc9_60.4, %.loc9_85.2 [concrete]
 // CHECK:STDOUT:       %.loc9_24: type = where_expr [symbolic = %Iterate_where.type (constants.%Iterate_where.type)] {
-// CHECK:STDOUT:         requirement_base_facet_type %Iterate.ref
-// CHECK:STDOUT:         requirement_rewrite %impl.elem1.loc9_30.4, %.loc9_54
-// CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc9_60.4, %.loc9_85.2
+// CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %Iterate.ref [concrete]
+// CHECK:STDOUT:         %rewrite.loc9_42.2 = requirement_rewrite %impl.elem1.loc9_30.4, %.loc9_54 [concrete]
+// CHECK:STDOUT:         %rewrite.loc9_73.2 = requirement_rewrite %impl.elem0.loc9_60.4, %.loc9_85.2 [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc22: @IntRange.%IntRange.elem (%IntRange.elem.bed) = field_decl start, element0 [concrete]

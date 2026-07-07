@@ -49,6 +49,7 @@ fn NotGenericF(unused U: I where .T == i32) {}
 // CHECK:STDOUT:     %.loc17_28.1: type = splice_block %.loc17_28.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.Self.frozen: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.frozen.as_type]
 // CHECK:STDOUT:       %.loc17_34: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type]
@@ -56,10 +57,12 @@ fn NotGenericF(unused U: I where .T == i32) {}
 // CHECK:STDOUT:       %impl.elem0.loc17_34.1: type = impl_witness_access constants.%I.lookup_impl_witness.ced, element0 [symbolic_self = constants.%impl.elem0.125]
 // CHECK:STDOUT:       %impl.elem0.loc17_34.2: type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.e55]
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:       %equiv.loc17_37.1 = requirement_equivalent %impl.elem0.loc17_34.1, %i32 [concrete]
 // CHECK:STDOUT:       %impl.elem0.loc17_34.3: type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.e55]
+// CHECK:STDOUT:       %equiv.loc17_37.2 = requirement_equivalent %impl.elem0.loc17_34.3, %i32 [concrete]
 // CHECK:STDOUT:       %.loc17_28.2: type = where_expr [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:         requirement_base_facet_type %I.ref
-// CHECK:STDOUT:         requirement_equivalent %impl.elem0.loc17_34.3, %i32
+// CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %I.ref [concrete]
+// CHECK:STDOUT:         %equiv.loc17_37.2 = requirement_equivalent %impl.elem0.loc17_34.3, %i32 [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: %I_where.type = wrapper_binding U, %U.param

@@ -78,17 +78,20 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %.loc8_9: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %.loc8_9 [concrete]
 // CHECK:STDOUT:     %.Self.ref.loc8_20.1: %type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %.loc8_32: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %.Self.as_type.loc8_20.1: type = facet_access_type %.Self.ref.loc8_20.1 [symbolic_self = constants.%.Self.frozen.as_type]
 // CHECK:STDOUT:     %.loc8_20.1: type = converted %.Self.ref.loc8_20.1, %.Self.as_type.loc8_20.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:     %impls.loc8_26.1 = requirement_impls %.loc8_20.1, %.loc8_32 [concrete]
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc8_20.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.as_type.loc8_20.2: type = facet_access_type %.Self.ref.loc8_20.2 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc8_20.2: type = converted %.Self.ref.loc8_20.1, %.Self.as_type.loc8_20.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %impls.loc8_26.2 = requirement_impls %.loc8_20.2, %.loc8_32 [concrete]
 // CHECK:STDOUT:     %.loc8_14: type = where_expr [concrete = constants.%type] {
-// CHECK:STDOUT:       requirement_base_facet_type %.loc8_9
-// CHECK:STDOUT:       requirement_impls %.loc8_20.2, %.loc8_32
+// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc8_9 [concrete]
+// CHECK:STDOUT:       %impls.loc8_26.2 = requirement_impls %.loc8_20.2, %.loc8_32 [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %missing.ref: <error> = name_ref missing, <error> [concrete = <error>]
 // CHECK:STDOUT:   }

@@ -92,7 +92,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // Pass along all the constraints from the base facet type to be added to the
   // resulting facet type.
   context.args_type_info_stack().AddInstId(
-      AddInstInNoBlock<SemIR::RequirementBaseFacetType>(
+      AddInst<SemIR::RequirementBaseFacetType>(
           context, SemIR::LocId(node_id),
           {.base_type_inst_id = context.types().GetAsTypeInstId(self_id)}));
 
@@ -208,9 +208,8 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
   }
 
   // Build up the list of arguments for the `WhereExpr` inst.
-  context.args_type_info_stack().AddInstId(
-      AddInstInNoBlock<SemIR::RequirementRewrite>(
-          context, node_id, {.lhs_id = lhs_id, .rhs_id = rhs_id}));
+  context.args_type_info_stack().AddInstId(AddInst<SemIR::RequirementRewrite>(
+      context, node_id, {.lhs_id = lhs_id, .rhs_id = rhs_id}));
 
   if (lhs_id != SemIR::ErrorInst::InstId) {
     // Track the value of the rewrite so further constraints can use it
@@ -244,8 +243,8 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualEqualId node_id)
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
-      AddInstInNoBlock<SemIR::RequirementEquivalent>(
-          context, node_id, {.lhs_id = lhs, .rhs_id = rhs}));
+      AddInst<SemIR::RequirementEquivalent>(context, node_id,
+                                            {.lhs_id = lhs, .rhs_id = rhs}));
   return true;
 }
 
@@ -340,10 +339,9 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   // that `.T impls Hash`.
 
   // Build up the list of arguments for the `WhereExpr` inst.
-  context.args_type_info_stack().AddInstId(
-      AddInstInNoBlock<SemIR::RequirementImpls>(
-          context, node_id,
-          {.lhs_id = lhs_as_type.inst_id, .rhs_id = rhs_as_type.inst_id}));
+  context.args_type_info_stack().AddInstId(AddInst<SemIR::RequirementImpls>(
+      context, node_id,
+      {.lhs_id = lhs_as_type.inst_id, .rhs_id = rhs_as_type.inst_id}));
 
   if (lhs_as_type.type_id != SemIR::ErrorInst::TypeId &&
       rhs_as_type.type_id != SemIR::ErrorInst::TypeId &&
@@ -499,7 +497,7 @@ static auto CheckForNestedWhereInRequirementsAfterEval(
         found = diagnosed = true;
       }
       if (found) {
-        inst_id = AddInstInNoBlock(
+        inst_id = AddInst(
             context, SemIR::LocIdAndInst::RuntimeVerified(
                          context.sem_ir(), SemIR::LocId(inst_id), req_inst));
       }
@@ -540,56 +538,15 @@ static auto ThawPeriodSelfInRequirements(Context& context,
                                          SemIR::InstBlockId requirements_id)
     -> SemIR::InstBlockId {
   bool changed = false;
-
-  // TODO: Fn non-canonical cases, Subst should be able to communicate when it
-  // recurses nito an InstBlock so that the substituted instructions can be used
-  // to build a new InstBlock. Then we should be able to expose a SubstInstBlock
-  // entry point and just call that to avoid all this extra complexity here.
-  auto thaw = [&](SemIR::InstId req_id, auto req) {
-    bool changed_local = false;
-    auto subst_lhs_id = ThawPeriodSelf(context, req.lhs_id);
-    if (subst_lhs_id != req.lhs_id) {
-      changed_local = changed = true;
-      req.lhs_id = subst_lhs_id;
-    }
-    auto subst_rhs_id = ThawPeriodSelf(context, req.rhs_id);
-    if (subst_rhs_id != req.rhs_id) {
-      changed_local = changed = true;
-      req.rhs_id = subst_rhs_id;
-    }
-    if (changed_local) {
-      return AddInstInNoBlock(context,
-                              SemIR::LocIdAndInst::RuntimeVerified(
-                                  context.sem_ir(), SemIR::LocId(req_id), req));
-    }
-    return req_id;
-  };
-
   llvm::SmallVector<SemIR::InstId> ids(
       context.inst_blocks().Get(requirements_id));
   for (SemIR::InstId& inst_id : ids) {
-    auto inst = context.insts().Get(inst_id);
-    CARBON_KIND_SWITCH(inst) {
-      case CARBON_KIND(SemIR::RequirementBaseFacetType _): {
-        break;
-      }
-      case CARBON_KIND(SemIR::RequirementEquivalent equiv): {
-        inst_id = thaw(inst_id, equiv);
-        break;
-      }
-      case CARBON_KIND(SemIR::RequirementRewrite rewrite): {
-        inst_id = thaw(inst_id, rewrite);
-        break;
-      }
-      case CARBON_KIND(SemIR::RequirementImpls impls): {
-        inst_id = thaw(inst_id, impls);
-        break;
-      }
-      default:
-        CARBON_FATAL("unexpected inst {0} in `where` requirements block", inst);
+    auto subst_id = ThawPeriodSelf(context, inst_id);
+    if (subst_id != inst_id) {
+      changed = true;
+      inst_id = subst_id;
     }
   }
-
   if (changed) {
     return context.inst_blocks().Add(ids);
   }
