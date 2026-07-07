@@ -818,6 +818,9 @@ auto ExportFunctionSpecializationToCpp(
     auto type_expr =
         ImportCppType(context, loc_id, clang_template_arg.getAsType());
     if (type_expr.type_id == SemIR::ErrorInst::TypeId) {
+      return false;
+    }
+    if (!type_expr.type_id.has_value()) {
       context.TODO(loc_id, "failed to import C++ type");
       return false;
     }
