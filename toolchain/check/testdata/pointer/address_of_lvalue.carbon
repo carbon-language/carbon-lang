@@ -146,10 +146,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.20e3 = ref_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:     %s.var_patt: %pattern_type.20e3 = var_pattern %s.patt [concrete = constants.%s.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %struct_type.a.b.b4c = var_storage %s.var_patt
 // CHECK:STDOUT:   %int_1.loc16: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc16: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
@@ -180,8 +176,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %struct_type.a.b.b4c = wrapper_binding s, %s.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.88d = ref_binding_pattern p [concrete = constants.%p.patt]
-// CHECK:STDOUT:     %p.var_patt: %pattern_type.88d = var_pattern %p.patt [concrete = constants.%p.var_patt]
+// CHECK:STDOUT:     %s.patt: %pattern_type.20e3 = ref_binding_pattern s [concrete = constants.%s.patt]
+// CHECK:STDOUT:     %s.var_patt: %pattern_type.20e3 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.939 = var_storage %p.var_patt
 // CHECK:STDOUT:   %s.ref.loc18: ref %struct_type.a.b.b4c = name_ref s, %s
@@ -200,8 +196,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.939 = wrapper_binding p, %p.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %q.patt: %pattern_type.f00 = ref_binding_pattern q [concrete = constants.%q.patt]
-// CHECK:STDOUT:     %q.var_patt: %pattern_type.f00 = var_pattern %q.patt [concrete = constants.%q.var_patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.88d = ref_binding_pattern p [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.var_patt: %pattern_type.88d = var_pattern %p.patt [concrete = constants.%p.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %q.var: ref %ptr.d08 = var_storage %q.var_patt
 // CHECK:STDOUT:   %s.ref.loc19: ref %struct_type.a.b.b4c = name_ref s, %s
@@ -219,8 +215,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %q: ref %ptr.d08 = wrapper_binding q, %q.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %r.patt: %pattern_type.f00 = ref_binding_pattern r [concrete = constants.%r.patt]
-// CHECK:STDOUT:     %r.var_patt: %pattern_type.f00 = var_pattern %r.patt [concrete = constants.%r.var_patt]
+// CHECK:STDOUT:     %q.patt: %pattern_type.f00 = ref_binding_pattern q [concrete = constants.%q.patt]
+// CHECK:STDOUT:     %q.var_patt: %pattern_type.f00 = var_pattern %q.patt [concrete = constants.%q.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %r.var: ref %ptr.d08 = var_storage %r.var_patt
 // CHECK:STDOUT:   %s.ref.loc20: ref %struct_type.a.b.b4c = name_ref s, %s
@@ -238,8 +234,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %r: ref %ptr.d08 = wrapper_binding r, %r.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: %pattern_type.394 = ref_binding_pattern t [concrete = constants.%t.patt]
-// CHECK:STDOUT:     %t.var_patt: %pattern_type.394 = var_pattern %t.patt [concrete = constants.%t.var_patt]
+// CHECK:STDOUT:     %r.patt: %pattern_type.f00 = ref_binding_pattern r [concrete = constants.%r.patt]
+// CHECK:STDOUT:     %r.var_patt: %pattern_type.f00 = var_pattern %r.patt [concrete = constants.%r.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref %tuple.type.e55 = var_storage %t.var_patt
 // CHECK:STDOUT:   %int_1.loc22: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -272,8 +268,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %tuple.type.e55 = wrapper_binding t, %t.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t0.patt: %pattern_type.f00 = ref_binding_pattern t0 [concrete = constants.%t0.patt]
-// CHECK:STDOUT:     %t0.var_patt: %pattern_type.f00 = var_pattern %t0.patt [concrete = constants.%t0.var_patt]
+// CHECK:STDOUT:     %t.patt: %pattern_type.394 = ref_binding_pattern t [concrete = constants.%t.patt]
+// CHECK:STDOUT:     %t.var_patt: %pattern_type.394 = var_pattern %t.patt [concrete = constants.%t.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t0.var: ref %ptr.d08 = var_storage %t0.var_patt
 // CHECK:STDOUT:   %t.ref.loc23: ref %tuple.type.e55 = name_ref t, %t
@@ -292,8 +288,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t0: ref %ptr.d08 = wrapper_binding t0, %t0.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t1.patt: %pattern_type.f00 = ref_binding_pattern t1 [concrete = constants.%t1.patt]
-// CHECK:STDOUT:     %t1.var_patt: %pattern_type.f00 = var_pattern %t1.patt [concrete = constants.%t1.var_patt]
+// CHECK:STDOUT:     %t0.patt: %pattern_type.f00 = ref_binding_pattern t0 [concrete = constants.%t0.patt]
+// CHECK:STDOUT:     %t0.var_patt: %pattern_type.f00 = var_pattern %t0.patt [concrete = constants.%t0.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t1.var: ref %ptr.d08 = var_storage %t1.var_patt
 // CHECK:STDOUT:   %t.ref.loc24: ref %tuple.type.e55 = name_ref t, %t
@@ -311,6 +307,10 @@ fn F() {
 // CHECK:STDOUT:     %ptr.loc24: type = ptr_type %i32.loc24 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t1: ref %ptr.d08 = wrapper_binding t1, %t1.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %t1.patt: %pattern_type.f00 = ref_binding_pattern t1 [concrete = constants.%t1.patt]
+// CHECK:STDOUT:     %t1.var_patt: %pattern_type.f00 = var_pattern %t1.patt [concrete = constants.%t1.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound.loc24: <bound method> = bound_method %t1.var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc24: init %empty_tuple.type = call %Destroy.Op.bound.loc24(%t1.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc23: <bound method> = bound_method %t0.var, constants.%Destroy.Op.1a2547.1

@@ -62,13 +62,13 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:     .Six = %Six.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %x.var: ref type = var_storage %x.var_patt [concrete]
+// CHECK:STDOUT:   %.loc15: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %x: ref type = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.98f = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.98f = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref type = var_storage %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc15: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %x: ref type = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
