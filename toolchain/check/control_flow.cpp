@@ -147,8 +147,8 @@ auto MaybeAddCleanupForInst(Context& context, SemIR::InstId inst_id) -> void {
   context.scope_stack().destroy_id_stack().AppendToTop(inst_id);
 }
 
-auto AddCleanups(Context& context, ScopeStack::CleanupStackDepth depth,
-                 ScopeStack::CleanupStackDepth end_depth) -> void {
+auto AddCleanups(Context& context, ScopeStack::CleanupScopeDepth depth,
+                 ScopeStack::CleanupScopeDepth end_depth) -> void {
   for (auto destroy_id : llvm::reverse(
            context.scope_stack().GetCleanupsSince(depth, end_depth))) {
     // TODO: This does the `Destroy` lookup and call at every cleanup block.
@@ -193,7 +193,7 @@ auto PopScopeWithCleanups(Context& context) -> void {
 //   }
 auto AddBranchWithCleanups(Context& context, SemIR::LocId loc_id,
                            SemIR::InstBlockId target_id,
-                           ScopeStack::CleanupStackDepth depth) -> void {
+                           ScopeStack::CleanupScopeDepth depth) -> void {
   AddCleanups(context, depth);
   AddInst<SemIR::Branch>(context, loc_id, {.target_id = target_id});
 }

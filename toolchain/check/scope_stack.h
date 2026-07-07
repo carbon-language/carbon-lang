@@ -25,9 +25,9 @@ class ScopeStack {
  public:
   explicit ScopeStack(Context& context);
 
-  // An index for the depth of the cleanup stack.
-  struct CleanupStackDepth : public IndexBase<CleanupStackDepth> {
-    static constexpr llvm::StringLiteral Label = "cleanup_stack_depth";
+  // An index for the distance to the bottom of the cleanup stack.
+  struct CleanupScopeDepth : public IndexBase<CleanupScopeDepth> {
+    static constexpr llvm::StringLiteral Label = "cleanup_scope_depth";
 
     using IndexBase::IndexBase;
   };
@@ -35,9 +35,9 @@ class ScopeStack {
   // A scope in which `break` and `continue` can be used.
   struct BreakContinueScope {
     SemIR::InstBlockId break_target;
-    CleanupStackDepth break_depth;
+    CleanupScopeDepth break_depth;
     SemIR::InstBlockId continue_target;
-    CleanupStackDepth continue_depth;
+    CleanupScopeDepth continue_depth;
   };
 
   // A non-lexical scope in which unqualified lookup may be required.
@@ -217,8 +217,8 @@ class ScopeStack {
 
   // Returns all values on `destroy_id_stack_` added since `depth`, and before
   // `end_depth` if specified.
-  auto GetCleanupsSince(CleanupStackDepth depth,
-                        CleanupStackDepth end_depth = CleanupStackDepth::None)
+  auto GetCleanupsSince(CleanupScopeDepth depth,
+                        CleanupScopeDepth end_depth = CleanupScopeDepth::None)
       const -> llvm::ArrayRef<SemIR::InstId> {
     auto values = destroy_id_stack_.PeekAllValues().slice(depth.index);
     if (end_depth.has_value()) {
@@ -228,18 +228,18 @@ class ScopeStack {
   }
 
   // Returns the current depth of the cleanup stack.
-  auto cleanup_stack_depth() const -> CleanupStackDepth {
-    return CleanupStackDepth(destroy_id_stack_.all_values_size());
+  auto cleanup_stack_depth() const -> CleanupScopeDepth {
+    return CleanupScopeDepth(destroy_id_stack_.all_values_size());
   }
 
   // Returns the depth of the cleanup stack enclosing the current scope.
-  auto enclosing_cleanup_stack_depth() const -> CleanupStackDepth {
-    return CleanupStackDepth(destroy_id_stack_.all_values_size() -
+  auto enclosing_cleanup_stack_depth() const -> CleanupScopeDepth {
+    return CleanupScopeDepth(destroy_id_stack_.all_values_size() -
                              destroy_id_stack_.PeekArray().size());
   }
 
   // Returns the depth of the cleanup stack enclosing this function scope.
-  auto function_cleanup_stack_depth() const -> CleanupStackDepth {
+  auto function_cleanup_stack_depth() const -> CleanupScopeDepth {
     return return_scope_stack_.back().cleanup_stack_depth;
   }
 
@@ -315,7 +315,7 @@ class ScopeStack {
     SemIR::InstId returned_var = SemIR::InstId::None;
 
     // The cleanup stack depth when entering the function body.
-    CleanupStackDepth cleanup_stack_depth;
+    CleanupScopeDepth cleanup_stack_depth;
 
     // When a nested scope interrupts a return scope, this is the index of the
     // outermost interrupting scope (the one closest to the function scope).

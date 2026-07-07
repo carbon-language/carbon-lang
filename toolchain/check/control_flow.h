@@ -93,9 +93,9 @@ auto AddInstWithCleanupInNoBlock(Context& context, LocT loc, InstT inst)
 }
 
 // Adds cleanups for the given variables.
-auto AddCleanups(Context& context, ScopeStack::CleanupStackDepth depth,
-                 ScopeStack::CleanupStackDepth end_depth =
-                     ScopeStack::CleanupStackDepth::None) -> void;
+auto AddCleanups(Context& context, ScopeStack::CleanupScopeDepth depth,
+                 ScopeStack::CleanupScopeDepth end_depth =
+                     ScopeStack::CleanupScopeDepth::None) -> void;
 
 // Pops a scope from the scope stack and adds any cleanups for variables within
 // that scope.
@@ -107,7 +107,7 @@ auto PopScopeWithCleanups(Context& context) -> void;
 // branch target.
 auto AddBranchWithCleanups(Context& context, SemIR::LocId loc_id,
                            SemIR::InstBlockId target_id,
-                           ScopeStack::CleanupStackDepth depth) -> void;
+                           ScopeStack::CleanupScopeDepth depth) -> void;
 
 // Adds a return instruction, along with cleanups for all live variables or
 // temporaries in the current function.
