@@ -408,8 +408,8 @@ interface J {}
 
 // When matching this impl during impl lookup, we deduce and replace `T` with a
 // specific argument, and resolve that specific's decl eval block. Doing so
-// re-evaluates the lookup for `I` inside `.X`. If that lookup finds this impl
-// (since it's a final impl, eval can find it), we will deduce and produce an
+// re-evaluates the lookup for `I` inside `.X`. If that lookup found this impl
+// (since it's a final impl, eval can find it), we would deduce and produce an
 // infinite cycle. Instructions inside the impl decl should not be able to find
 // the impl.
 final impl forall [T:! type] T as I where .X impls J and .X = () {}
