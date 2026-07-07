@@ -677,13 +677,13 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
   context.generic_region_stack().Pop();
   context.inst_block_stack().PopAndDiscard();
 
-  auto specific_id = SemIR::SpecificId::None;
-  if (success) {
-    context.forbidden_impls().push_back(impl_id);
-    specific_id = deduction.MakeSpecific();
-    context.forbidden_impls().pop_back();
+  if (!success) {
+    return SemIR::SpecificId::None;
   }
 
+  context.forbidden_impls().push_back(impl_id);
+  auto specific_id = deduction.MakeSpecific();
+  context.forbidden_impls().pop_back();
   return specific_id;
 }
 
