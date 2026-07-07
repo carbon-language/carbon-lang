@@ -89,8 +89,7 @@ TEST(SourceGenTest, Identifiers) {
   EXPECT_THAT(idents, Each(SizeIs(AllOf(Ge(10), Le(20)))));
 }
 
-// The identifier byte-sum invariant is the foundation of the stable-byte-count
-// property: for fixed parameters, the total number of bytes across the returned
+// For fixed parameters, the total number of bytes across the returned
 // identifiers must not depend on the random seed, even though the specific
 // identifiers do. This checks that across a range of parameters and across many
 // freshly-seeded generators (each `SourceGen` gets an independent random seed).
