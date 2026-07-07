@@ -216,14 +216,14 @@ static auto GetRequiredImplsFromConstraint(
     SemIR::ConstantId query_facet_type_const_id, bool diagnose)
     -> std::optional<RequiredImplsFromConstraint> {
   auto facet_type_inst_id =
-      context.constant_values().GetInstId(query_facet_type_const_id);
+      context.types().GetTypeInstIdForTypeConstantId(query_facet_type_const_id);
   auto facet_type_inst =
       context.insts().GetAs<SemIR::FacetType>(facet_type_inst_id);
   const auto& facet_type_info =
       context.facet_types().Get(facet_type_inst.facet_type_id);
 
   auto identified_id = RequireIdentifiedFacetType(
-      context, loc_id, query_self_const_id, facet_type_inst,
+      context, loc_id, query_self_const_id, facet_type_inst_id,
       [&](auto& builder) {
         CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Context,
                           "facet type {0} can not be identified", InstIdAsType);
@@ -370,8 +370,6 @@ static auto CollectFacetWitnessSources(
 
     auto type_id = context.insts().Get(facet).type_id();
     if (type_id != SemIR::TypeType::TypeId) {
-      auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
-
       // Identifying the facet type of `facet_const_id` causes `.Self` to be
       // replaced with `facet_const_id`. The resulting `LookupImplWitness`
       // evaluation searches for a `final impl`. The toolchain needs to deduce
@@ -391,8 +389,9 @@ static auto CollectFacetWitnessSources(
           context.impl_lookup_no_symbolic_final_lookups();
       ++no_symbolic_final_lookups;
       auto identified_id = TryToIdentifyFacetType(
-          context, loc_id, facet_const_id, facet_type,
-          allow_partially_identified, /*subst_period_self=*/true);
+          context, loc_id, facet_const_id,
+          context.types().GetTypeInstId(type_id), allow_partially_identified,
+          /*subst_period_self=*/true);
       --no_symbolic_final_lookups;
 
       if (identified_id.has_value()) {
@@ -468,12 +467,11 @@ static auto CollectFacetWitnessSources(
     for (auto [self_const_id, facet_type_const_id] : impls) {
       auto canon_self_const_id =
           GetCanonicalFacetOrTypeValue(context, self_const_id);
-      // TypeType is never stored in the impls stack, so we always have a
-      // FacetType.
-      auto facet_type = context.constant_values().GetInstAs<SemIR::FacetType>(
-          facet_type_const_id);
+      // TypeType (and ErrorInst) is never stored in the impls stack, so we
+      // always have a FacetType in `facet_type_const_id`.
       auto identified_id = TryToIdentifyFacetType(
-          context, loc_id, canon_self_const_id, facet_type,
+          context, loc_id, canon_self_const_id,
+          context.types().GetTypeInstIdForTypeConstantId(facet_type_const_id),
           /*allow_partially_identified=*/true,
           /*subst_period_self=*/false);
       if (identified_id.has_value()) {

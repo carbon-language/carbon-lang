@@ -77,7 +77,7 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
 // the middle of being defined.
 auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
                             SemIR::ConstantId self_const_id,
-                            const SemIR::FacetType& facet_type,
+                            SemIR::TypeInstId facet_type_inst_id,
                             bool allow_partially_identified,
                             bool subst_period_self)
     -> SemIR::IdentifiedFacetTypeId;
@@ -85,7 +85,8 @@ auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
 // Requires the named constraints in the facet type to be complete, so that the
 // set of interfaces the facet type requires is known. The `self_const_id` is a
 // type or facet type expression that is the self that the FacetType is
-// constraining. Produces a set of interfaces that must be implemented for a set
+// constraining. The `facet_type_inst_id` must be a FacetType (and cannot be an
+// ErrorInst). Produces a set of interfaces that must be implemented for a set
 // of types, most of them for the `self_const_id`. Diagnoses an error and
 // returns None if any error is found.
 //
@@ -98,7 +99,7 @@ auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
 // TODO: Remove `diagnose` and split into `TryIdentifyFacetType`.
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,
-                                const SemIR::FacetType& facet_type,
+                                SemIR::TypeInstId facet_type_inst_id,
                                 DiagnosticContextFn diagnostic_context,
                                 bool diagnose = true)
     -> SemIR::IdentifiedFacetTypeId;
