@@ -44,6 +44,27 @@ void G() {
 ''';
 //@dump-sem-ir-end
 
+// --- fail_todo_generic_pointer.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+fn F[T:! type](unused t: T*) {}
+
+inline Cpp '''
+void G() {
+  int x = 0;
+  int* _Nonnull p = &x;
+  // CHECK:STDERR: fail_todo_generic_pointer.carbon:[[@LINE+7]]:3: error: no matching function for call to 'F' [CppInteropParseError]
+  // CHECK:STDERR:    17 |   Carbon::F(p);
+  // CHECK:STDERR:       |   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_generic_pointer.carbon:[[@LINE-9]]:30: note: candidate template ignored: deduced type 'T * _Nonnull' of 1st parameter does not match adjusted type 'int * _Nonnull' of argument [with T = int] [CppInteropParseNote]
+  // CHECK:STDERR:     4 | fn F[T:! type](unused t: T*) {}
+  // CHECK:STDERR:       |                              ^
+  // CHECK:STDERR:
+  Carbon::F(p);
+}
+''';
+
 // --- fail_todo_enclosing_generic.carbon
 library "[[@TEST_NAME]]";
 import Cpp;

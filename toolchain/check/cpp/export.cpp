@@ -834,6 +834,10 @@ auto ExportFunctionSpecializationToCpp(
   }
 
   // Replace symbolic explicit parameters with a concrete Carbon type.
+  //
+  // This will only handle simple cases like `x: T`, and not things like
+  // `x: T*`. Ultimately what we should be doing here is producing a Specific
+  // for the generic function. See `fail_todo_generic_pointer.carbon`.
   for (auto& param : target.explicit_params) {
     auto param_type_inst_id = context.types().GetTypeInstId(param.type_id);
     SemIR::InstId symbolic_inst_id = SemIR::InstId::None;
