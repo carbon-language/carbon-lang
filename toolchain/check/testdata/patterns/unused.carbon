@@ -202,8 +202,8 @@ library "[[@TEST_NAME]]";
 // parameter, both a compile-time binding and `self`.
 
 // CHECK:STDERR: fail_unused_implicit_param_decl.carbon:[[@LINE+4]]:13: error: `unused` modifier without a definition [UnusedModifierWithoutDefinition]
-// CHECK:STDERR: fn F[unused T:! type]();
-// CHECK:STDERR:             ^~~~~~~~
+// CHECK:STDERR: fn F[unused T: type]();
+// CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
 fn F[unused T: type]();
 
@@ -274,17 +274,17 @@ library "[[@TEST_NAME]]";
 
 fn F(generic T: type);
 
-// CHECK:STDERR: fail_todo_unused_generic.carbon:[[@LINE+4]]:13: error: semantics TODO: `generic redeclaration differs from previous declaration` [SemanticsTodo]
-// CHECK:STDERR: fn F(unused T:! type) {}
-// CHECK:STDERR:             ^~~~~~~~
+// CHECK:STDERR: fail_todo_unused_generic.carbon:[[@LINE+4]]:21: error: semantics TODO: `generic redeclaration differs from previous declaration` [SemanticsTodo]
+// CHECK:STDERR: fn F(unused generic T: type) {}
+// CHECK:STDERR:                     ^~~~~~~
 // CHECK:STDERR:
 fn F(unused generic T: type) {}
 
 class C(T: type);
 
 // CHECK:STDERR: fail_todo_unused_generic.carbon:[[@LINE+4]]:16: error: semantics TODO: `generic redeclaration differs from previous declaration` [SemanticsTodo]
-// CHECK:STDERR: class C(unused T:! type) {}
-// CHECK:STDERR:                ^~~~~~~~
+// CHECK:STDERR: class C(unused T: type) {}
+// CHECK:STDERR:                ^~~~~~~
 // CHECK:STDERR:
 class C(unused T: type) {}
 

@@ -242,8 +242,8 @@ class Generic(x: Core.Copy) {
 // CHECK:STDERR: class Class1;
 // CHECK:STDERR:       ^
 // CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE-9]]:15: note: initializing generic parameter `x` declared here [InitializingGenericParam]
-// CHECK:STDERR: class Generic(x:! Core.Copy) {
-// CHECK:STDERR:               ^~~~~~~~~~~~~
+// CHECK:STDERR: class Generic(x: Core.Copy) {
+// CHECK:STDERR:               ^~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE+4]]:15: warning: binding `p2` unused [UnusedBinding]
 // CHECK:STDERR: fn GenericUse(p2: Generic(Cpp.Class1)) {

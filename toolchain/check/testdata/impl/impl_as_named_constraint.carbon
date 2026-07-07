@@ -158,9 +158,9 @@ interface A(T: type) {}
 // the constraint.
 //@dump-sem-ir-begin
 //
-// CHECK:STDERR: fail_error_self_in_require.carbon:[[@LINE+4]]:18: error: name `Undefined` not found [NameNotFound]
-// CHECK:STDERR: constraint B(X:! Undefined) {
-// CHECK:STDERR:                  ^~~~~~~~~
+// CHECK:STDERR: fail_error_self_in_require.carbon:[[@LINE+4]]:17: error: name `Undefined` not found [NameNotFound]
+// CHECK:STDERR: constraint B(X: Undefined) {
+// CHECK:STDERR:                 ^~~~~~~~~
 // CHECK:STDERR:
 constraint B(X: Undefined) {
   extend require impls A(X);
@@ -246,8 +246,8 @@ class C;
 // CHECK:STDERR: impl C as N {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let I1:! type;
-// CHECK:STDERR:       ^~~~~~~~~
+// CHECK:STDERR:   let I1: type;
+// CHECK:STDERR:       ^~~~~~~~
 // CHECK:STDERR:
 impl C as N {}
 
@@ -273,8 +273,8 @@ class C;
 // CHECK:STDERR: impl C as N {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let I1:! type;
-// CHECK:STDERR:       ^~~~~~~~~
+// CHECK:STDERR:   let I1: type;
+// CHECK:STDERR:       ^~~~~~~~
 // CHECK:STDERR:
 impl C as N {}
 

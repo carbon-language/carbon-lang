@@ -783,9 +783,9 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Z.decl: %Z.type.c39 = interface_decl @Z [concrete = constants.%Z.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_14.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc4_16.1: type = splice_block %.loc4_16.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc4_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc4_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -797,10 +797,10 @@ interface Z(T: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z, @Z(%T.loc4_14.1)> [symbolic = %Z.type (constants.%Z.type.924)]
-// CHECK:STDOUT:   %Self.loc4_23.2: @Z.%Z.type (%Z.type.924) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self)]
+// CHECK:STDOUT:   %Self.loc4_22.2: @Z.%Z.type (%Z.type.924) = symbolic_binding Self, 1 [symbolic = %Self.loc4_22.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc4_23.1: @Z.%Z.type (%Z.type.924) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc4_22.1: @Z.%Z.type (%Z.type.924) = symbolic_binding Self, 1 [symbolic = %Self.loc4_22.2 (constants.%Self)]
 // CHECK:STDOUT:     %Z.WithSelf.decl = interface_with_self_decl @Z [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
@@ -809,7 +809,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Z.%T.loc4_14.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Z.ref: %Z.type.c39 = name_ref Z, file.%Z.decl [concrete = constants.%Z.generic]
-// CHECK:STDOUT:       %.loc5_21: @Z.WithSelf.T.impls.Z.type.require.%Z.type.loc5_21 (%Z.type.924) = specific_constant @Z.%Self.loc4_23.1, @Z(constants.%T) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %.loc5_21: @Z.WithSelf.T.impls.Z.type.require.%Z.type.loc5_21 (%Z.type.924) = specific_constant @Z.%Self.loc4_22.1, @Z(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref: @Z.WithSelf.T.impls.Z.type.require.%Z.type.loc5_21 (%Z.type.924) = name_ref Self, %.loc5_21 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc5_25.1: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_25.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc5_25: type = converted %Self.ref, %Self.as_type.loc5_25.1 [symbolic = %Self.as_type.loc5_25.2 (constants.%Self.as_type)]
@@ -817,7 +817,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc4_23.1
+// CHECK:STDOUT:     .Self = %Self.loc4_22.1
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Z = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
@@ -833,7 +833,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.WithSelf.T.impls.Z.type.require(@Z.%T.loc4_14.2: type, @Z.%Self.loc4_23.1: @Z.%Z.type (%Z.type.924)) {
+// CHECK:STDOUT: generic require @Z.WithSelf.T.impls.Z.type.require(@Z.%T.loc4_14.2: type, @Z.%Self.loc4_22.1: @Z.%Z.type (%Z.type.924)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Z.type.loc5_21: type = facet_type <@Z, @Z(%T)> [symbolic = %Z.type.loc5_21 (constants.%Z.type.924)]
 // CHECK:STDOUT:   %Self: @Z.WithSelf.T.impls.Z.type.require.%Z.type.loc5_21 (%Z.type.924) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
@@ -960,9 +960,9 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Z.decl: %Z.type.c39 = interface_decl @Z [concrete = constants.%Z.generic] {
 // CHECK:STDOUT:     %T.patt.loc8_14.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8_17.1: type = splice_block %.loc8_17.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc8_16.1: type = splice_block %.loc8_16.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc8_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc8_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_14.1 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -974,24 +974,24 @@ interface Z(T: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z, @Z(%T.loc8_14.1)> [symbolic = %Z.type (constants.%Z.type.924)]
-// CHECK:STDOUT:   %Self.loc8_23.2: @Z.%Z.type (%Z.type.924) = symbolic_binding Self, 1 [symbolic = %Self.loc8_23.2 (constants.%Self.21f)]
+// CHECK:STDOUT:   %Self.loc8_22.2: @Z.%Z.type (%Z.type.924) = symbolic_binding Self, 1 [symbolic = %Self.loc8_22.2 (constants.%Self.21f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc8_23.1: @Z.%Z.type (%Z.type.924) = symbolic_binding Self, 1 [symbolic = %Self.loc8_23.2 (constants.%Self.21f)]
+// CHECK:STDOUT:     %Self.loc8_22.1: @Z.%Z.type (%Z.type.924) = symbolic_binding Self, 1 [symbolic = %Self.loc8_22.2 (constants.%Self.21f)]
 // CHECK:STDOUT:     %Z.WithSelf.decl = interface_with_self_decl @Z [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %Z.WithSelf.Self.as_type.impls.Z.type.require.decl = require_decl @Z.WithSelf.Self.as_type.impls.Z.type.require [concrete] {
 // CHECK:STDOUT:       require %Self.as_type.loc11_11.1 impls %Z.type.loc11_20
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %Self.as_type.loc11_11.1: type = facet_access_type @Z.%Self.loc8_23.1 [symbolic = %Self.as_type.loc11_11.2 (constants.%Self.as_type.a0d)]
+// CHECK:STDOUT:       %Self.as_type.loc11_11.1: type = facet_access_type @Z.%Self.loc8_22.1 [symbolic = %Self.as_type.loc11_11.2 (constants.%Self.as_type.a0d)]
 // CHECK:STDOUT:       %Z.ref: %Z.type.c39 = name_ref Z, file.%Z.decl [concrete = constants.%Z.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Z.%T.loc8_14.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Z.type.loc11_20: type = facet_type <@Z, @Z(constants.%T)> [symbolic = %Z.type.loc11_11 (constants.%Z.type.924)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc8_23.1
+// CHECK:STDOUT:     .Self = %Self.loc8_22.1
 // CHECK:STDOUT:     .Z = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Z = <poisoned>
@@ -1007,7 +1007,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.WithSelf.Self.as_type.impls.Z.type.require(@Z.%T.loc8_14.2: type, @Z.%Self.loc8_23.1: @Z.%Z.type (%Z.type.924)) {
+// CHECK:STDOUT: generic require @Z.WithSelf.Self.as_type.impls.Z.type.require(@Z.%T.loc8_14.2: type, @Z.%Self.loc8_22.1: @Z.%Z.type (%Z.type.924)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Z.type.loc11_11: type = facet_type <@Z, @Z(%T)> [symbolic = %Z.type.loc11_11 (constants.%Z.type.924)]
 // CHECK:STDOUT:   %Self: @Z.WithSelf.Self.as_type.impls.Z.type.require.%Z.type.loc11_11 (%Z.type.924) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.21f)]

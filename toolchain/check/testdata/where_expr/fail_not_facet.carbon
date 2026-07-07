@@ -14,9 +14,9 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_left_where_not_facet.carbon:[[@LINE+4]]:10: error: left argument of `where` operator must be a facet type [WhereOnNonFacetType]
-// CHECK:STDERR: fn F(T:! i32 where .Self == bool);
-// CHECK:STDERR:          ^~~
+// CHECK:STDERR: fail_left_where_not_facet.carbon:[[@LINE+4]]:17: error: left argument of `where` operator must be a facet type [WhereOnNonFacetType]
+// CHECK:STDERR: fn F(generic T: i32 where .Self == bool);
+// CHECK:STDERR:                 ^~~
 // CHECK:STDERR:
 fn F(generic T: i32 where .Self == bool);
 
@@ -24,9 +24,9 @@ fn F(generic T: i32 where .Self == bool);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_left_where_unknown.carbon:[[@LINE+4]]:10: error: name `NOT_DECLARED` not found [NameNotFound]
-// CHECK:STDERR: fn G(U:! NOT_DECLARED where .Self == bool);
-// CHECK:STDERR:          ^~~~~~~~~~~~
+// CHECK:STDERR: fail_left_where_unknown.carbon:[[@LINE+4]]:17: error: name `NOT_DECLARED` not found [NameNotFound]
+// CHECK:STDERR: fn G(generic U: NOT_DECLARED where .Self == bool);
+// CHECK:STDERR:                 ^~~~~~~~~~~~
 // CHECK:STDERR:
 fn G(generic U: NOT_DECLARED where .Self == bool);
 

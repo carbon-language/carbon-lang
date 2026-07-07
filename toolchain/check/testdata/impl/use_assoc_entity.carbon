@@ -272,15 +272,15 @@ class A {}
 // CHECK:STDERR: impl A as J {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let T:! type;
-// CHECK:STDERR:       ^~~~~~~~
+// CHECK:STDERR:   let T: type;
+// CHECK:STDERR:       ^~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+7]]:1: error: associated constant U not given a value in impl of interface J [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR: impl A as J {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE-17]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let U:! type;
-// CHECK:STDERR:       ^~~~~~~~
+// CHECK:STDERR:   let U: type;
+// CHECK:STDERR:       ^~~~~~~
 // CHECK:STDERR:
 impl A as J {
   // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+8]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]

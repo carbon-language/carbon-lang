@@ -62,8 +62,8 @@ impl forall [T: type] T as Y;
 
 // T needs to impl Z at the start of the definition.
 // CHECK:STDERR: fail_missing_extend_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `T` implements `Z` [RequireImplsNotImplemented]
-// CHECK:STDERR: impl forall [T:! type] T as Y {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl forall [T: type] T as Y {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T: type] T as Y {}
 
@@ -81,8 +81,8 @@ impl forall [T: type] T as Y;
 
 // T needs to impl Z at the start of the definition.
 // CHECK:STDERR: fail_missing_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `T` implements `Z` [RequireImplsNotImplemented]
-// CHECK:STDERR: impl forall [T:! type] T as Y {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl forall [T: type] T as Y {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T: type] T as Y {}
 

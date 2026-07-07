@@ -106,8 +106,8 @@ impl C6 as I where .T = {};
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE-7]]:1: in import [InImport]
 // CHECK:STDERR: interface.carbon:3:19: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR: interface I { let T:! type; }
-// CHECK:STDERR:                   ^~~~~~~~
+// CHECK:STDERR: interface I { let T: type; }
+// CHECK:STDERR:                   ^~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE-9]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl C6 as I where .T = {};

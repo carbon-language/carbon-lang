@@ -156,9 +156,9 @@ library "[[@TEST_NAME]]";
 // TODO: This should be accepted because `T` might be final once we know what it
 // is.
 
-// CHECK:STDERR: fail_todo_partial_template_dependent.carbon:[[@LINE+4]]:28: error: `partial` applied to final type `T` [PartialOnFinal]
-// CHECK:STDERR: fn G[template T:! type](p: partial T*);
-// CHECK:STDERR:                            ^~~~~~~~~
+// CHECK:STDERR: fail_todo_partial_template_dependent.carbon:[[@LINE+4]]:27: error: `partial` applied to final type `T` [PartialOnFinal]
+// CHECK:STDERR: fn G[template T: type](p: partial T*);
+// CHECK:STDERR:                           ^~~~~~~~~
 // CHECK:STDERR:
 fn G[template T: type](p: partial T*);
 
@@ -169,9 +169,9 @@ library "[[@TEST_NAME]]";
 // generic type and its requirements, as distinct from the concrete type that
 // might be used here in any specific.
 
-// CHECK:STDERR: fail_partial_generic.carbon:[[@LINE+4]]:19: error: `partial` applied to final type `T` [PartialOnFinal]
-// CHECK:STDERR: fn F[T:! type](p: partial T*);
-// CHECK:STDERR:                   ^~~~~~~~~
+// CHECK:STDERR: fail_partial_generic.carbon:[[@LINE+4]]:18: error: `partial` applied to final type `T` [PartialOnFinal]
+// CHECK:STDERR: fn F[T: type](p: partial T*);
+// CHECK:STDERR:                  ^~~~~~~~~
 // CHECK:STDERR:
 fn F[T: type](p: partial T*);
 

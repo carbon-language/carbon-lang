@@ -14,10 +14,6 @@
 // CHECK:STDERR:
 fn A(template i32);
 
-// CHECK:STDERR: fail_template_no_param.carbon:[[@LINE+4]]:6: error: expected `:!` binding after `template` [ExpectedGenericBindingPatternAfterTemplate]
-// CHECK:STDERR: fn B(template a: i32);
-// CHECK:STDERR:      ^~~~~~~~
-// CHECK:STDERR:
 fn B(template a: i32);
 
 // CHECK:STDERR: fail_template_no_param.carbon:[[@LINE+4]]:14: error: expected name in binding pattern [ExpectedBindingPattern]
@@ -26,15 +22,15 @@ fn B(template a: i32);
 // CHECK:STDERR:
 fn C(template);
 
-// CHECK:STDERR: fail_template_no_param.carbon:[[@LINE+4]]:14: error: expected name in binding pattern [ExpectedBindingPattern]
-// CHECK:STDERR: fn D(template:! i32);
-// CHECK:STDERR:              ^~
+// CHECK:STDERR: fail_template_no_param.carbon:[[@LINE+4]]:22: error: expected name in binding pattern; prefix reserved word with `r#` to form a valid identifier [ExpectedBindingPattern]
+// CHECK:STDERR: fn D(generic template: i32);
+// CHECK:STDERR:                      ^
 // CHECK:STDERR:
 fn D(generic template: i32);
 
-// CHECK:STDERR: fail_template_no_param.carbon:[[@LINE+4]]:14: error: expected name in binding pattern [ExpectedBindingPattern]
-// CHECK:STDERR: fn E(template:! i32);
-// CHECK:STDERR:              ^~
+// CHECK:STDERR: fail_template_no_param.carbon:[[@LINE+4]]:22: error: expected name in binding pattern; prefix reserved word with `r#` to form a valid identifier [ExpectedBindingPattern]
+// CHECK:STDERR: fn E(generic template: i32);
+// CHECK:STDERR:                      ^
 // CHECK:STDERR:
 fn E(generic template: i32);
 
@@ -52,12 +48,13 @@ fn E(generic template: i32);
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'B'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:           {kind: 'TemplateBindingName', text: 'template', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
+// CHECK:STDOUT:             {kind: 'TemplateBindingName', text: 'template', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'C'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
@@ -69,22 +66,20 @@ fn E(generic template: i32);
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'D'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: ':!', has_error: yes},
-// CHECK:STDOUT:             {kind: 'TemplateBindingName', text: 'template', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'template'},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'E'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: ':!', has_error: yes},
-// CHECK:STDOUT:             {kind: 'TemplateBindingName', text: 'template', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'template'},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

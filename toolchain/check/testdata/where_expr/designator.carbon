@@ -34,9 +34,9 @@ interface J {
   let Member: type;
 }
 
-// CHECK:STDERR: fail_wrong_member.carbon:[[@LINE+4]]:31: error: member name `Mismatch` not found in `J` [MemberNameNotFoundInSpecificScope]
-// CHECK:STDERR: fn PeriodMismatch(W:! J where .Mismatch = {});
-// CHECK:STDERR:                               ^~~~~~~~~
+// CHECK:STDERR: fail_wrong_member.carbon:[[@LINE+4]]:38: error: member name `Mismatch` not found in `J` [MemberNameNotFoundInSpecificScope]
+// CHECK:STDERR: fn PeriodMismatch(generic W: J where .Mismatch = {});
+// CHECK:STDERR:                                      ^~~~~~~~~
 // CHECK:STDERR:
 fn PeriodMismatch(generic W: J where .Mismatch = {});
 
@@ -96,9 +96,9 @@ library "[[@TEST_NAME]]";
 
 interface I {}
 
-// CHECK:STDERR: fail_impls_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:38: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(U:! type, unused T:! type where U impls I) {}
-// CHECK:STDERR:                                      ^~~~~~~~~
+// CHECK:STDERR: fail_impls_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:52: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(generic U: type, unused generic T: type where U impls I) {}
+// CHECK:STDERR:                                                    ^~~~~~~~~
 // CHECK:STDERR:
 fn F(generic U: type, unused generic T: type where U impls I) {}
 
@@ -109,9 +109,9 @@ interface I {
   let X: type;
 }
 
-// CHECK:STDERR: fail_equality_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:35: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(U:! I, unused T:! type where U.X == ()) {}
-// CHECK:STDERR:                                   ^~~~~~~~~
+// CHECK:STDERR: fail_equality_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:49: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(generic U: I, unused generic T: type where U.X == ()) {}
+// CHECK:STDERR:                                                 ^~~~~~~~~
 // CHECK:STDERR:
 fn F(generic U: I, unused generic T: type where U.X == ()) {}
 
@@ -122,13 +122,13 @@ interface I {
   let X: type;
 }
 
-// CHECK:STDERR: fail_combined_constraint_does_not_constrain_self.carbon:[[@LINE+8]]:35: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(U:! I, unused T:! type where U impls I and U.X == ()) {}
-// CHECK:STDERR:                                   ^~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_combined_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:49: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(U:! I, unused T:! type where U impls I and U.X == ()) {}
+// CHECK:STDERR: fail_combined_constraint_does_not_constrain_self.carbon:[[@LINE+8]]:49: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(generic U: I, unused generic T: type where U impls I and U.X == ()) {}
 // CHECK:STDERR:                                                 ^~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_combined_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:63: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(generic U: I, unused generic T: type where U impls I and U.X == ()) {}
+// CHECK:STDERR:                                                               ^~~~~~~~~
 // CHECK:STDERR:
 fn F(generic U: I, unused generic T: type where U impls I and U.X == ()) {}
 
@@ -152,9 +152,9 @@ class A(T: type);
 class B;
 class C;
 
-// CHECK:STDERR: fail_where_without_designator_in_one_equiv_constraint.carbon:[[@LINE+4]]:46: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused T:! type where A(.Self) == B and A(B) == B) {}
-// CHECK:STDERR:                                              ^~~~~~~~~
+// CHECK:STDERR: fail_where_without_designator_in_one_equiv_constraint.carbon:[[@LINE+4]]:53: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused generic T: type where A(.Self) == B and A(B) == B) {}
+// CHECK:STDERR:                                                     ^~~~~~~~~
 // CHECK:STDERR:
 fn F(unused generic T: type where A(.Self) == B and A(B) == B) {}
 
@@ -162,9 +162,9 @@ interface Z {
   let Z0: type;
 }
 
-// CHECK:STDERR: fail_where_without_designator_in_one_equiv_constraint.carbon:[[@LINE+4]]:41: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn G(unused T:! Z where A(.Z0) == B and A(B) == B) {}
-// CHECK:STDERR:                                         ^~~~~~~~~
+// CHECK:STDERR: fail_where_without_designator_in_one_equiv_constraint.carbon:[[@LINE+4]]:48: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn G(unused generic T: Z where A(.Z0) == B and A(B) == B) {}
+// CHECK:STDERR:                                                ^~~~~~~~~
 // CHECK:STDERR:
 fn G(unused generic T: Z where A(.Z0) == B and A(B) == B) {}
 
@@ -176,9 +176,9 @@ interface I {}
 interface J(T: type) {}
 class C;
 
-// CHECK:STDERR: fail_where_without_self_designator_in_one_impls_interface.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused T:! type where C impls (I & J(.Self))) {}
-// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_without_self_designator_in_one_impls_interface.carbon:[[@LINE+4]]:35: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused generic T: type where C impls (I & J(.Self))) {}
+// CHECK:STDERR:                                   ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(unused generic T: type where C impls (I & J(.Self))) {}
 
@@ -192,9 +192,9 @@ interface I {}
 interface J(T: type) {}
 class C;
 
-// CHECK:STDERR: fail_where_without_member_designator_in_one_impls_interface.carbon:[[@LINE+4]]:25: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused T:! Z where C impls (I & J(.Z0))) {}
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_without_member_designator_in_one_impls_interface.carbon:[[@LINE+4]]:32: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused generic T: Z where C impls (I & J(.Z0))) {}
+// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(unused generic T: Z where C impls (I & J(.Z0))) {}
 
@@ -209,9 +209,9 @@ constraint K(T: type) {
 }
 class C;
 
-// CHECK:STDERR: fail_where_without_self_designator_in_one_impls_named_constraint.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused T:! type where C impls (I & K(.Self))) {}
-// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_without_self_designator_in_one_impls_named_constraint.carbon:[[@LINE+4]]:35: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused generic T: type where C impls (I & K(.Self))) {}
+// CHECK:STDERR:                                   ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(unused generic T: type where C impls (I & K(.Self))) {}
 
@@ -229,9 +229,9 @@ constraint K(T: type) {
 class C;
 
 
-// CHECK:STDERR: fail_where_without_member_designator_in_one_impls_named_constraint.carbon:[[@LINE+4]]:25: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused T:! Z where C impls (I & K(.Z0))) {}
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_without_member_designator_in_one_impls_named_constraint.carbon:[[@LINE+4]]:32: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused generic T: Z where C impls (I & K(.Z0))) {}
+// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(unused generic T: Z where C impls (I & K(.Z0))) {}
 
@@ -310,110 +310,110 @@ fn F(unused generic T: type where C impls N(.Self)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %PeriodSelf.decl: %PeriodSelf.type = fn_decl @PeriodSelf [concrete = constants.%PeriodSelf] {
-// CHECK:STDOUT:     %T.patt.loc9_16.1: %pattern_type.603 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_16.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc9_24.1: %pattern_type.603 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_24.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc9_21.1: type = splice_block %.loc9_21.2 [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc9_16: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:     %.loc9_28.1: type = splice_block %.loc9_28.2 [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       %.Self.frozen.loc9_24: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:       %.Self.frozen.loc9_21: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.3a0]
+// CHECK:STDOUT:       %.Self.frozen.loc9_28: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.3a0]
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:       %.Self.ref.loc9_27.1: %I.type = name_ref .Self, %.Self.frozen.loc9_21 [symbolic_self = constants.%.Self.frozen.3a0]
-// CHECK:STDOUT:       %.loc9_37: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %equiv.loc9_33.1 = requirement_equivalent %.Self.ref.loc9_27.1, %.loc9_37 [concrete]
+// CHECK:STDOUT:       %.Self.ref.loc9_34.1: %I.type = name_ref .Self, %.Self.frozen.loc9_28 [symbolic_self = constants.%.Self.frozen.3a0]
+// CHECK:STDOUT:       %.loc9_44: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %equiv.loc9_40.1 = requirement_equivalent %.Self.ref.loc9_34.1, %.loc9_44 [concrete]
 // CHECK:STDOUT:       %.Self: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.f73]
-// CHECK:STDOUT:       %.Self.ref.loc9_27.2: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.f73]
-// CHECK:STDOUT:       %equiv.loc9_33.2 = requirement_equivalent %.Self.ref.loc9_27.2, %.loc9_37 [concrete]
-// CHECK:STDOUT:       %.loc9_21.2: type = where_expr [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       %.Self.ref.loc9_34.2: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.f73]
+// CHECK:STDOUT:       %equiv.loc9_40.2 = requirement_equivalent %.Self.ref.loc9_34.2, %.loc9_44 [concrete]
+// CHECK:STDOUT:       %.loc9_28.2: type = where_expr [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:         %equiv.loc9_33.2 = requirement_equivalent %.Self.ref.loc9_27.2, %.loc9_37 [concrete]
+// CHECK:STDOUT:         %equiv.loc9_40.2 = requirement_equivalent %.Self.ref.loc9_34.2, %.loc9_44 [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc9_16.2: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc9_16.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc9_24.2: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc9_24.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PeriodMember.decl: %PeriodMember.type = fn_decl @PeriodMember [concrete = constants.%PeriodMember] {
-// CHECK:STDOUT:     %U.patt.loc11_18.1: %pattern_type.603 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_18.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc11_26.1: %pattern_type.603 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_26.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc11_23.1: type = splice_block %.loc11_23.2 [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc11_18: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:     %.loc11_30.1: type = splice_block %.loc11_30.2 [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       %.Self.frozen.loc11_26: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:       %.Self.frozen.loc11_23: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.3a0]
+// CHECK:STDOUT:       %.Self.frozen.loc11_30: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.3a0]
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.frozen.loc11_23 [symbolic_self = constants.%.Self.frozen.3a0]
+// CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.frozen.loc11_30 [symbolic_self = constants.%.Self.frozen.3a0]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.frozen.as_type.e90]
-// CHECK:STDOUT:       %.loc11_29: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type.e90]
+// CHECK:STDOUT:       %.loc11_36: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type.e90]
 // CHECK:STDOUT:       %Member.ref: %I.assoc_type = name_ref Member, @Member.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:       %impl.elem0.loc11_29.1: type = impl_witness_access constants.%I.lookup_impl_witness.ced, element0 [symbolic_self = constants.%impl.elem0.125]
-// CHECK:STDOUT:       %.loc11_41: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %equiv.loc11_37.1 = requirement_equivalent %impl.elem0.loc11_29.1, %.loc11_41 [concrete]
-// CHECK:STDOUT:       %impl.elem0.loc11_29.2: type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.e55]
-// CHECK:STDOUT:       %equiv.loc11_37.2 = requirement_equivalent %impl.elem0.loc11_29.2, %.loc11_41 [concrete]
-// CHECK:STDOUT:       %.loc11_23.2: type = where_expr [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       %impl.elem0.loc11_36.1: type = impl_witness_access constants.%I.lookup_impl_witness.ced, element0 [symbolic_self = constants.%impl.elem0.125]
+// CHECK:STDOUT:       %.loc11_48: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %equiv.loc11_44.1 = requirement_equivalent %impl.elem0.loc11_36.1, %.loc11_48 [concrete]
+// CHECK:STDOUT:       %impl.elem0.loc11_36.2: type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.e55]
+// CHECK:STDOUT:       %equiv.loc11_44.2 = requirement_equivalent %impl.elem0.loc11_36.2, %.loc11_48 [concrete]
+// CHECK:STDOUT:       %.loc11_30.2: type = where_expr [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:         %equiv.loc11_37.2 = requirement_equivalent %impl.elem0.loc11_29.2, %.loc11_41 [concrete]
+// CHECK:STDOUT:         %equiv.loc11_44.2 = requirement_equivalent %impl.elem0.loc11_36.2, %.loc11_48 [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc11_18.2: %I_where.type = symbolic_binding U, 0 [symbolic = %U.loc11_18.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc11_26.2: %I_where.type = symbolic_binding U, 0 [symbolic = %U.loc11_26.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [concrete = constants.%TypeSelfImpls] {
-// CHECK:STDOUT:     %V.patt.loc13_19.1: %pattern_type.951 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc13_19.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.patt.loc13_27.1: %pattern_type.951 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc13_27.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_27.1: type = splice_block %.loc13_27.2 [concrete = constants.%type_where] {
-// CHECK:STDOUT:       %.Self.frozen.loc13_19: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
-// CHECK:STDOUT:       %.loc13_22: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc13_34.1: type = splice_block %.loc13_34.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:       %.Self.frozen.loc13_27: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
-// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc13_22 [concrete]
-// CHECK:STDOUT:       %.Self.ref.loc13_33.1: %type = name_ref .Self, %.Self.frozen.loc13_27 [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.loc13_29: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.Self.frozen.loc13_34: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc13_29 [concrete]
+// CHECK:STDOUT:       %.Self.ref.loc13_40.1: %type = name_ref .Self, %.Self.frozen.loc13_34 [symbolic_self = constants.%.Self.frozen.197]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:       %.Self.as_type.loc13_33.1: type = facet_access_type %.Self.ref.loc13_33.1 [symbolic_self = constants.%.Self.frozen.as_type.bce]
-// CHECK:STDOUT:       %.loc13_33.1: type = converted %.Self.ref.loc13_33.1, %.Self.as_type.loc13_33.1 [symbolic_self = constants.%.Self.frozen.as_type.bce]
-// CHECK:STDOUT:       %impls.loc13_39.1 = requirement_impls %.loc13_33.1, %I.ref [concrete]
+// CHECK:STDOUT:       %.Self.as_type.loc13_40.1: type = facet_access_type %.Self.ref.loc13_40.1 [symbolic_self = constants.%.Self.frozen.as_type.bce]
+// CHECK:STDOUT:       %.loc13_40.1: type = converted %.Self.ref.loc13_40.1, %.Self.as_type.loc13_40.1 [symbolic_self = constants.%.Self.frozen.as_type.bce]
+// CHECK:STDOUT:       %impls.loc13_46.1 = requirement_impls %.loc13_40.1, %I.ref [concrete]
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.e0b]
-// CHECK:STDOUT:       %.Self.ref.loc13_33.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.e0b]
-// CHECK:STDOUT:       %.Self.as_type.loc13_33.2: type = facet_access_type %.Self.ref.loc13_33.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %.loc13_33.2: type = converted %.Self.ref.loc13_33.1, %.Self.as_type.loc13_33.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %impls.loc13_39.2 = requirement_impls %.loc13_33.2, %I.ref [concrete]
-// CHECK:STDOUT:       %.loc13_27.2: type = where_expr [concrete = constants.%type_where] {
-// CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %.loc13_22 [concrete]
-// CHECK:STDOUT:         %impls.loc13_39.2 = requirement_impls %.loc13_33.2, %I.ref [concrete]
+// CHECK:STDOUT:       %.Self.ref.loc13_40.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.e0b]
+// CHECK:STDOUT:       %.Self.as_type.loc13_40.2: type = facet_access_type %.Self.ref.loc13_40.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %.loc13_40.2: type = converted %.Self.ref.loc13_40.1, %.Self.as_type.loc13_40.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %impls.loc13_46.2 = requirement_impls %.loc13_40.2, %I.ref [concrete]
+// CHECK:STDOUT:       %.loc13_34.2: type = where_expr [concrete = constants.%type_where] {
+// CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %.loc13_29 [concrete]
+// CHECK:STDOUT:         %impls.loc13_46.2 = requirement_impls %.loc13_40.2, %I.ref [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %V.loc13_19.2: %type_where = symbolic_binding V, 0 [symbolic = %V.loc13_19.1 (constants.%V)]
+// CHECK:STDOUT:     %V.loc13_27.2: %type_where = symbolic_binding V, 0 [symbolic = %V.loc13_27.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodSelf(%T.loc9_16.2: %I_where.type) {
-// CHECK:STDOUT:   %T.patt.loc9_16.2: %pattern_type.603 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_16.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc9_16.1: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc9_16.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @PeriodSelf(%T.loc9_24.2: %I_where.type) {
+// CHECK:STDOUT:   %T.patt.loc9_24.2: %pattern_type.603 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_24.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc9_24.1: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc9_24.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodMember(%U.loc11_18.2: %I_where.type) {
-// CHECK:STDOUT:   %U.patt.loc11_18.2: %pattern_type.603 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_18.2 (constants.%U.patt)]
-// CHECK:STDOUT:   %U.loc11_18.1: %I_where.type = symbolic_binding U, 0 [symbolic = %U.loc11_18.1 (constants.%U)]
+// CHECK:STDOUT: generic fn @PeriodMember(%U.loc11_26.2: %I_where.type) {
+// CHECK:STDOUT:   %U.patt.loc11_26.2: %pattern_type.603 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_26.2 (constants.%U.patt)]
+// CHECK:STDOUT:   %U.loc11_26.1: %I_where.type = symbolic_binding U, 0 [symbolic = %U.loc11_26.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc13_19.2: %type_where) {
-// CHECK:STDOUT:   %V.patt.loc13_19.2: %pattern_type.951 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc13_19.2 (constants.%V.patt)]
-// CHECK:STDOUT:   %V.loc13_19.1: %type_where = symbolic_binding V, 0 [symbolic = %V.loc13_19.1 (constants.%V)]
+// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc13_27.2: %type_where) {
+// CHECK:STDOUT:   %V.patt.loc13_27.2: %pattern_type.951 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc13_27.2 (constants.%V.patt)]
+// CHECK:STDOUT:   %V.loc13_27.1: %type_where = symbolic_binding V, 0 [symbolic = %V.loc13_27.1 (constants.%V)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodSelf(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc9_16.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc9_16.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc9_24.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc9_24.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMember(constants.%U) {
-// CHECK:STDOUT:   %U.patt.loc11_18.2 => constants.%U.patt
-// CHECK:STDOUT:   %U.loc11_18.1 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc11_26.2 => constants.%U.patt
+// CHECK:STDOUT:   %U.loc11_26.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TypeSelfImpls(constants.%V) {
-// CHECK:STDOUT:   %V.patt.loc13_19.2 => constants.%V.patt
-// CHECK:STDOUT:   %V.loc13_19.1 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc13_27.2 => constants.%V.patt
+// CHECK:STDOUT:   %V.loc13_27.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

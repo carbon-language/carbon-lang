@@ -22,13 +22,13 @@ interface I {
   var b: ();
 
   // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   let var c:! ();
+  // CHECK:STDERR:   let var c: ();
   // CHECK:STDERR:       ^~~
   // CHECK:STDERR:
   let var c: ();
 
   // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:   var d:! ();
+  // CHECK:STDERR:   var d: ();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
   var d: ();

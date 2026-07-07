@@ -95,8 +95,8 @@ impl () as K where .V = {};
 // CHECK:STDERR: impl () as K {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE-6]]:19: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR: interface K { let V:! type; }
-// CHECK:STDERR:                   ^~~~~~~~
+// CHECK:STDERR: interface K { let V: type; }
+// CHECK:STDERR:                   ^~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE-8]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as K where .V = {};
@@ -382,9 +382,9 @@ impl C as Z where .Z1 = C {}
 // Implied constraint: .Self impls Y. Should be verified against the type of the
 // facet value replacing T when calling F.
 //
-// CHECK:STDERR: fail_todo_period_self_compared_with_concrete_self.carbon:[[@LINE+4]]:31: error: cannot convert type `.Self` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fn F(unused T:! Z where .Z1 = .Self) {}
-// CHECK:STDERR:                               ^~~~~
+// CHECK:STDERR: fail_todo_period_self_compared_with_concrete_self.carbon:[[@LINE+4]]:38: error: cannot convert type `.Self` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: fn F(unused generic T: Z where .Z1 = .Self) {}
+// CHECK:STDERR:                                      ^~~~~
 // CHECK:STDERR:
 fn F(unused generic T: Z where .Z1 = .Self) {}
 fn G() {

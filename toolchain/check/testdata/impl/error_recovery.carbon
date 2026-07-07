@@ -17,9 +17,9 @@ class C {}
 interface I {}
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_runtime_generic_param.carbon:[[@LINE+4]]:14: error: parameters of generic types must be constant [GenericParamMustBeConstant]
-// CHECK:STDERR: impl forall [T: type] C as I {}
-// CHECK:STDERR:              ^~~~~~~
+// CHECK:STDERR: fail_runtime_generic_param.carbon:[[@LINE+4]]:14: error: deduced runtime parameters are not yet supported [DeducedRuntimeParamNotSupported]
+// CHECK:STDERR: impl forall [runtime T: type] C as I {}
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [runtime T: type] C as I {}
 //@dump-sem-ir-end
@@ -29,8 +29,8 @@ library "[[@TEST_NAME]]";
 
 interface Z {}
 // CHECK:STDERR: fail_nonfinal_lookup_impl_witness_error_in_import.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: impl forall [T:! type] T as Z;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl forall [T: type] T as Z;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T: type] T as Z;
 
@@ -61,8 +61,8 @@ library "[[@TEST_NAME]]";
 
 interface Z {}
 // CHECK:STDERR: fail_nonfinal_lookup_impl_witness_error.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: impl forall [T:! type] T as Z;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl forall [T: type] T as Z;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T: type] T as Z;
 
@@ -90,8 +90,8 @@ library "[[@TEST_NAME]]";
 
 interface Z {}
 // CHECK:STDERR: fail_final_lookup_impl_witness_error.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: impl forall [T:! type] T as Z;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl forall [T: type] T as Z;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T: type] T as Z;
 
@@ -180,30 +180,30 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %T.patt.loc13_7.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_7.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc13_15.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_10.1: type = splice_block %.loc13_10.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc13_17.1: type = splice_block %.loc13_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc13_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc13_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc13_7.2: type = symbolic_binding T, 0 [symbolic = %T.loc13_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc13_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc13_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%T.loc13_7.2: type) {
-// CHECK:STDOUT:   %T.patt.loc13_7.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_7.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc13_7.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_7.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @G(%T.loc13_15.2: type) {
+// CHECK:STDOUT:   %T.patt.loc13_15.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc13_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_15.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_7.1) [symbolic = %.loc19_6.2 (constants.%.7ae)]
-// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_7.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
-// CHECK:STDOUT:   %Z.facet.loc19_6.2: %Z.type = facet_value %T.loc13_7.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
+// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_15.1) [symbolic = %.loc19_6.2 (constants.%.7ae)]
+// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_15.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
+// CHECK:STDOUT:   %Z.facet.loc19_6.2: %Z.type = facet_value %T.loc13_15.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:   %F.specific_fn.loc19_3.2: <specific function> = specific_function constants.%F, @F(%Z.facet.loc19_6.2) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_7.2 [symbolic = %T.loc13_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_15.2 [symbolic = %T.loc13_15.1 (constants.%T)]
 // CHECK:STDOUT:     %Z.facet.loc19_6.1: %Z.type = facet_value %T.ref, (constants.%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:     %.loc19_6.1: %Z.type = converted %T.ref, %Z.facet.loc19_6.1 [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:     %F.specific_fn.loc19_3.1: <specific function> = specific_function %F.ref, @F(constants.%Z.facet) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
@@ -215,8 +215,8 @@ impl C as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc13_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc13_7.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc13_15.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc13_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_nonfinal_lookup_impl_witness_error.carbon
@@ -242,30 +242,30 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %T.patt.loc13_7.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_7.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc13_15.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_10.1: type = splice_block %.loc13_10.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc13_17.1: type = splice_block %.loc13_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc13_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc13_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc13_7.2: type = symbolic_binding T, 0 [symbolic = %T.loc13_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc13_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc13_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%T.loc13_7.2: type) {
-// CHECK:STDOUT:   %T.patt.loc13_7.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_7.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc13_7.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_7.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @G(%T.loc13_15.2: type) {
+// CHECK:STDOUT:   %T.patt.loc13_15.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc13_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_15.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_7.1) [symbolic = %.loc19_6.2 (constants.%.7ae)]
-// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_7.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
-// CHECK:STDOUT:   %Z.facet.loc19_6.2: %Z.type = facet_value %T.loc13_7.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
+// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_15.1) [symbolic = %.loc19_6.2 (constants.%.7ae)]
+// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_15.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
+// CHECK:STDOUT:   %Z.facet.loc19_6.2: %Z.type = facet_value %T.loc13_15.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:   %F.specific_fn.loc19_3.2: <specific function> = specific_function constants.%F, @F(%Z.facet.loc19_6.2) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_7.2 [symbolic = %T.loc13_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_15.2 [symbolic = %T.loc13_15.1 (constants.%T)]
 // CHECK:STDOUT:     %Z.facet.loc19_6.1: %Z.type = facet_value %T.ref, (constants.%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:     %.loc19_6.1: %Z.type = converted %T.ref, %Z.facet.loc19_6.1 [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:     %F.specific_fn.loc19_3.1: <specific function> = specific_function %F.ref, @F(constants.%Z.facet) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
@@ -277,13 +277,13 @@ impl C as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc13_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc13_7.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc13_15.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc13_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%empty_tuple.type) {
-// CHECK:STDOUT:   %T.patt.loc13_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc13_7.1 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %T.patt.loc13_15.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc13_15.1 => constants.%empty_tuple.type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc19_6.2 => constants.%.d12

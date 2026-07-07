@@ -17,9 +17,9 @@ interface Z {
   let X: type;
 }
 
-// CHECK:STDERR: fail_todo_tuple_access_through_witness.carbon:[[@LINE+4]]:34: error: type `type` does not support tuple indexing; only tuples can be indexed that way [TupleIndexOnANonTupleType]
-// CHECK:STDERR: fn F(T:! Z where .X = ({}, )) -> T.X.0 {
-// CHECK:STDERR:                                  ^~~~~
+// CHECK:STDERR: fail_todo_tuple_access_through_witness.carbon:[[@LINE+4]]:41: error: type `type` does not support tuple indexing; only tuples can be indexed that way [TupleIndexOnANonTupleType]
+// CHECK:STDERR: fn F(generic T: Z where .X = ({}, )) -> T.X.0 {
+// CHECK:STDERR:                                         ^~~~~
 // CHECK:STDERR:
 fn F(generic T: Z where .X = ({}, )) -> T.X.0 {
   return {};
@@ -32,9 +32,9 @@ interface Z {
   let X: type;
 }
 
-// CHECK:STDERR: fail_todo_struct_access_through_witness.carbon:[[@LINE+4]]:36: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
-// CHECK:STDERR: fn F(T:! Z where .X = {.t: ()}) -> T.X.t {
-// CHECK:STDERR:                                    ^~~~~
+// CHECK:STDERR: fail_todo_struct_access_through_witness.carbon:[[@LINE+4]]:43: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
+// CHECK:STDERR: fn F(generic T: Z where .X = {.t: ()}) -> T.X.t {
+// CHECK:STDERR:                                           ^~~~~
 // CHECK:STDERR:
 fn F(generic T: Z where .X = {.t: ()}) -> T.X.t {
   return ();
@@ -47,9 +47,9 @@ interface Z {
   let X: type;
 }
 
-// CHECK:STDERR: fail_todo_array_access_through_witness.carbon:[[@LINE+4]]:40: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `type` that does not implement that interface [MissingImplInMemberAccess]
-// CHECK:STDERR: fn F(T:! Z where .X = array({}, 1)) -> T.X[0] {
-// CHECK:STDERR:                                        ^~~~~~
+// CHECK:STDERR: fail_todo_array_access_through_witness.carbon:[[@LINE+4]]:47: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `type` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: fn F(generic T: Z where .X = array({}, 1)) -> T.X[0] {
+// CHECK:STDERR:                                               ^~~~~~
 // CHECK:STDERR:
 fn F(generic T: Z where .X = array({}, 1)) -> T.X[0] {
   return {};

@@ -264,9 +264,9 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %Outer.decl: %Outer.type = class_decl @Outer [concrete = constants.%Outer.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_14.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt.d47)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc4_16.1: type = splice_block %.loc4_16.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc4_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc4_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
@@ -316,9 +316,9 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %Inner.decl: @Outer.%Inner.type (%Inner.type.8f7) = class_decl @Inner [symbolic = @Outer.%Inner.generic (constants.%Inner.generic.b3a)] {
 // CHECK:STDOUT:       %U.patt.loc5_16.1: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc5_16.2 (constants.%U.patt)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc5_19.1: type = splice_block %.loc5_19.2 [concrete = type] {
+// CHECK:STDOUT:       %.loc5_18.1: type = splice_block %.loc5_18.2 [concrete = type] {
 // CHECK:STDOUT:         %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:         %.loc5_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:         %.loc5_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %U.loc5_16.2: type = symbolic_binding U, 1 [symbolic = %U.loc5_16.1 (constants.%U)]
 // CHECK:STDOUT:     }

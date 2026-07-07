@@ -27,11 +27,11 @@ library "[[@TEST_NAME]]";
 
 constraint ForwardDeclaredGeneric(T: ());
 // CHECK:STDERR: fail_mismatched_generic_param_types.carbon:[[@LINE+7]]:35: error: type `<pattern for type>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for ()>` [RedeclParamDiffersType]
-// CHECK:STDERR: constraint ForwardDeclaredGeneric(T:! type) {}
-// CHECK:STDERR:                                   ^~~~~~~~
+// CHECK:STDERR: constraint ForwardDeclaredGeneric(T: type) {}
+// CHECK:STDERR:                                   ^~~~~~~
 // CHECK:STDERR: fail_mismatched_generic_param_types.carbon:[[@LINE-4]]:35: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-// CHECK:STDERR: constraint ForwardDeclaredGeneric(T:! ());
-// CHECK:STDERR:                                   ^~~~~~
+// CHECK:STDERR: constraint ForwardDeclaredGeneric(T: ());
+// CHECK:STDERR:                                   ^~~~~
 // CHECK:STDERR:
 constraint ForwardDeclaredGeneric(T: type) {}
 
@@ -40,11 +40,11 @@ library "[[@TEST_NAME]]";
 
 constraint ForwardDeclaredGeneric(T: type, U: type);
 // CHECK:STDERR: fail_mismatched_generic_param_arity.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 1 [RedeclParamCountDiffers]
-// CHECK:STDERR: constraint ForwardDeclaredGeneric(T:! type) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: constraint ForwardDeclaredGeneric(T: type) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_mismatched_generic_param_arity.carbon:[[@LINE-4]]:1: note: previously declared with parameter count of 2 [RedeclParamCountPrevious]
-// CHECK:STDERR: constraint ForwardDeclaredGeneric(T:! type, U:! type);
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: constraint ForwardDeclaredGeneric(T: type, U: type);
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 constraint ForwardDeclaredGeneric(T: type) {}
 
@@ -53,11 +53,11 @@ library "[[@TEST_NAME]]";
 
 constraint Generic(T: type) {}
 // CHECK:STDERR: fail_inside_definition.carbon:[[@LINE+7]]:1: error: redefinition of `constraint Generic` [RedeclRedef]
-// CHECK:STDERR: constraint Generic(T:! type) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: constraint Generic(T: type) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_inside_definition.carbon:[[@LINE-4]]:1: note: previously defined here [RedeclPrevDef]
-// CHECK:STDERR: constraint Generic(T:! type) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: constraint Generic(T: type) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 constraint Generic(T: type) {}
 
@@ -66,12 +66,12 @@ library "[[@TEST_NAME]]";
 
 constraint Generic(T: type) {}
 
-// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+7]]:17: error: 2 arguments passed to generic constraint expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: fn F(unused T:! Generic((), ())) {}
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+7]]:24: error: 2 arguments passed to generic constraint expecting 1 argument [CallArgCountMismatch]
+// CHECK:STDERR: fn F(unused generic T: Generic((), ())) {}
+// CHECK:STDERR:                        ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE-5]]:1: note: calling generic constraint declared here [InCallToEntity]
-// CHECK:STDERR: constraint Generic(T:! type) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: constraint Generic(T: type) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(unused generic T: Generic((), ())) {}
 
@@ -112,9 +112,9 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   %GenericType.decl: %GenericType.type.d1d = constraint_decl @GenericType [concrete = constants.%empty_struct.b7e] {
 // CHECK:STDOUT:     %T.patt.loc4_25.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_25.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_28.1: type = splice_block %.loc4_28.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc4_27.1: type = splice_block %.loc4_27.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc4_28.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc4_27.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_25.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_25.1 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -131,18 +131,18 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.decl.loc9: %ForwardDeclaredGeneric.type.650 = constraint_decl @ForwardDeclaredGeneric [concrete = constants.%empty_struct.43d] {
 // CHECK:STDOUT:     %T.patt.loc9_36.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_36.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc9_39.1: type = splice_block %.loc9_39.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc9_38.1: type = splice_block %.loc9_38.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen.loc9: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc9_39.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc9_38.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc9_36.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_36.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.decl.loc10: %ForwardDeclaredGeneric.type.650 = constraint_decl @ForwardDeclaredGeneric [concrete = constants.%empty_struct.43d] {
 // CHECK:STDOUT:     %T.patt.loc9_36.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_36.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc10_39.1: type = splice_block %.loc10_39.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc10_38.1: type = splice_block %.loc10_38.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen.loc10: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc10_39.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc10_38.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc10: type = symbolic_binding T, 0 [symbolic = %T.loc9_36.1 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -167,14 +167,14 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericType.type: type = facet_type <@GenericType, @GenericType(%T.loc4_25.1)> [symbolic = %GenericType.type (constants.%GenericType.type.d68)]
-// CHECK:STDOUT:   %Self.loc4_34.2: @GenericType.%GenericType.type (%GenericType.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc4_34.2 (constants.%Self.22bbf7.1)]
+// CHECK:STDOUT:   %Self.loc4_33.2: @GenericType.%GenericType.type (%GenericType.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc4_33.2 (constants.%Self.22bbf7.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.loc4_34.1: @GenericType.%GenericType.type (%GenericType.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc4_34.2 (constants.%Self.22bbf7.1)]
+// CHECK:STDOUT:     %Self.loc4_33.1: @GenericType.%GenericType.type (%GenericType.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc4_33.2 (constants.%Self.22bbf7.1)]
 // CHECK:STDOUT:     %GenericType.WithSelf.decl = constraint_with_self_decl @GenericType [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc4_34.1
+// CHECK:STDOUT:     .Self = %Self.loc4_33.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
@@ -186,14 +186,14 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericZ.type: type = facet_type <@GenericZ, @GenericZ(%U.loc7_22.1)> [symbolic = %GenericZ.type (constants.%GenericZ.type.d68)]
-// CHECK:STDOUT:   %Self.loc7_28.2: @GenericZ.%GenericZ.type (%GenericZ.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc7_28.2 (constants.%Self.22bbf7.2)]
+// CHECK:STDOUT:   %Self.loc7_27.2: @GenericZ.%GenericZ.type (%GenericZ.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc7_27.2 (constants.%Self.22bbf7.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.loc7_28.1: @GenericZ.%GenericZ.type (%GenericZ.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc7_28.2 (constants.%Self.22bbf7.2)]
+// CHECK:STDOUT:     %Self.loc7_27.1: @GenericZ.%GenericZ.type (%GenericZ.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc7_27.2 (constants.%Self.22bbf7.2)]
 // CHECK:STDOUT:     %GenericZ.WithSelf.decl = constraint_with_self_decl @GenericZ [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc7_28.1
+// CHECK:STDOUT:     .Self = %Self.loc7_27.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
@@ -205,14 +205,14 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.type: type = facet_type <@ForwardDeclaredGeneric, @ForwardDeclaredGeneric(%T.loc9_36.1)> [symbolic = %ForwardDeclaredGeneric.type (constants.%ForwardDeclaredGeneric.type.d68)]
-// CHECK:STDOUT:   %Self.loc10_45.2: @ForwardDeclaredGeneric.%ForwardDeclaredGeneric.type (%ForwardDeclaredGeneric.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc10_45.2 (constants.%Self.22bbf7.3)]
+// CHECK:STDOUT:   %Self.loc10_44.2: @ForwardDeclaredGeneric.%ForwardDeclaredGeneric.type (%ForwardDeclaredGeneric.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc10_44.2 (constants.%Self.22bbf7.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.loc10_45.1: @ForwardDeclaredGeneric.%ForwardDeclaredGeneric.type (%ForwardDeclaredGeneric.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc10_45.2 (constants.%Self.22bbf7.3)]
+// CHECK:STDOUT:     %Self.loc10_44.1: @ForwardDeclaredGeneric.%ForwardDeclaredGeneric.type (%ForwardDeclaredGeneric.type.d68) = symbolic_binding Self, 1 [symbolic = %Self.loc10_44.2 (constants.%Self.22bbf7.3)]
 // CHECK:STDOUT:     %ForwardDeclaredGeneric.WithSelf.decl = constraint_with_self_decl @ForwardDeclaredGeneric [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc10_45.1
+// CHECK:STDOUT:     .Self = %Self.loc10_44.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }

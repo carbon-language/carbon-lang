@@ -1080,14 +1080,14 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Read.decl: %Read.type = fn_decl @Read [concrete = constants.%Read] {
-// CHECK:STDOUT:     %y.patt.loc4_10.1: %pattern_type.dc0 = symbolic_binding_pattern y, 0 [symbolic = %y.patt.loc4_10.2 (constants.%y.patt)]
+// CHECK:STDOUT:     %y.patt.loc4_18.1: %pattern_type.dc0 = symbolic_binding_pattern y, 0 [symbolic = %y.patt.loc4_18.2 (constants.%y.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4: type = splice_block %IntLiteral.ref [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core.048aa3.1 [concrete = imports.%Core.048aa3.1]
 // CHECK:STDOUT:       %IntLiteral.ref: type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %y.loc4_10.2: Core.IntLiteral = symbolic_binding y, 0 [symbolic = %y.loc4_10.1 (constants.%y)]
+// CHECK:STDOUT:     %y.loc4_18.2: Core.IntLiteral = symbolic_binding y, 0 [symbolic = %y.loc4_18.1 (constants.%y)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1119,20 +1119,20 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Read(%y.loc4_10.2: Core.IntLiteral) {
-// CHECK:STDOUT:   %y.patt.loc4_10.2: %pattern_type.dc0 = symbolic_binding_pattern y, 0 [symbolic = %y.patt.loc4_10.2 (constants.%y.patt)]
-// CHECK:STDOUT:   %y.loc4_10.1: Core.IntLiteral = symbolic_binding y, 0 [symbolic = %y.loc4_10.1 (constants.%y)]
+// CHECK:STDOUT: generic fn @Read(%y.loc4_18.2: Core.IntLiteral) {
+// CHECK:STDOUT:   %y.patt.loc4_18.2: %pattern_type.dc0 = symbolic_binding_pattern y, 0 [symbolic = %y.patt.loc4_18.2 (constants.%y.patt)]
+// CHECK:STDOUT:   %y.loc4_18.1: Core.IntLiteral = symbolic_binding y, 0 [symbolic = %y.loc4_18.1 (constants.%y)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %y.loc4_10.1, constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [symbolic = %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound)]
-// CHECK:STDOUT:   %bound_method.loc5_38.3: <bound method> = bound_method %y.loc4_10.1, constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [symbolic = %bound_method.loc5_38.3 (constants.%bound_method)]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5_38.2: init %i32 = call %bound_method.loc5_38.3(%y.loc4_10.1) [symbolic = %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5_38.2 (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.call)]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %y.loc4_18.1, constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [symbolic = %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound)]
+// CHECK:STDOUT:   %bound_method.loc5_38.3: <bound method> = bound_method %y.loc4_18.1, constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [symbolic = %bound_method.loc5_38.3 (constants.%bound_method)]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5_38.2: init %i32 = call %bound_method.loc5_38.3(%y.loc4_18.1) [symbolic = %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5_38.2 (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.var: ref %IntRange.bbd = var_storage %x.var_patt
 // CHECK:STDOUT:     %Range.ref: %Range.type = name_ref Range, imports.%Main.Range [concrete = constants.%Range]
-// CHECK:STDOUT:     %y.ref: Core.IntLiteral = name_ref y, %y.loc4_10.2 [symbolic = %y.loc4_10.1 (constants.%y)]
+// CHECK:STDOUT:     %y.ref: Core.IntLiteral = name_ref y, %y.loc4_18.2 [symbolic = %y.loc4_18.1 (constants.%y)]
 // CHECK:STDOUT:     %.loc5_3: ref %IntRange.bbd = splice_block %x.var {}
 // CHECK:STDOUT:     %impl.elem0: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:     %bound_method.loc5_38.1: <bound method> = bound_method %y.ref, %impl.elem0 [symbolic = %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound)]
@@ -1216,8 +1216,8 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Read(constants.%y) {
-// CHECK:STDOUT:   %y.patt.loc4_10.2 => constants.%y.patt
-// CHECK:STDOUT:   %y.loc4_10.1 => constants.%y
+// CHECK:STDOUT:   %y.patt.loc4_18.2 => constants.%y.patt
+// CHECK:STDOUT:   %y.loc4_18.1 => constants.%y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IntRange(constants.%N) {

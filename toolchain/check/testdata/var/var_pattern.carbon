@@ -98,13 +98,13 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn f() {
-  // CHECK:STDERR: fail_compile_time.carbon:[[@LINE+8]]:7: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   var T:! type;
-  // CHECK:STDERR:       ^~~~~~~~
+  // CHECK:STDERR: fail_compile_time.carbon:[[@LINE+8]]:15: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   var generic T: type;
+  // CHECK:STDERR:               ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_compile_time.carbon:[[@LINE+4]]:15: error: found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
-  // CHECK:STDERR:   var T:! type;
-  // CHECK:STDERR:               ^
+  // CHECK:STDERR: fail_compile_time.carbon:[[@LINE+4]]:22: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
+  // CHECK:STDERR:   var generic T: type;
+  // CHECK:STDERR:                      ^
   // CHECK:STDERR:
   var generic T: type;
   let (x: (), generic T: type) = ((), ());
@@ -120,13 +120,9 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn F[var u: ()]();
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+8]]:10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: fn G[var T:! type]();
-// CHECK:STDERR:          ^~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: error: found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
-// CHECK:STDERR: fn G[var T:! type]();
-// CHECK:STDERR:                  ^
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:10: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
+// CHECK:STDERR: fn G[var T: type]();
+// CHECK:STDERR:          ^~~~~~~
 // CHECK:STDERR:
 fn G[var T: type]();
 
@@ -785,7 +781,34 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_implicit.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_self.carbon
 // CHECK:STDOUT:

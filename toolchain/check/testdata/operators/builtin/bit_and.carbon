@@ -26,23 +26,23 @@ interface I {}
 class J {}
 class K {}
 
-// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:11: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F1[T:! I & J](unused t: T) {}
-// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:10: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+// CHECK:STDERR: fn F1[T: I & J](unused t: T) {}
+// CHECK:STDERR:          ^~~~~
 // CHECK:STDERR:
 fn F1[T: I & J](unused t: T) {}
-// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:11: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F2[T:! J & I](unused t: T) {}
-// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:10: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+// CHECK:STDERR: fn F2[T: J & I](unused t: T) {}
+// CHECK:STDERR:          ^~~~~
 // CHECK:STDERR:
 fn F2[T: J & I](unused t: T) {}
-// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+8]]:11: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F3[T:! J & K](unused t: T) {}
-// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+8]]:10: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+// CHECK:STDERR: fn F3[T: J & K](unused t: T) {}
+// CHECK:STDERR:          ^~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:11: error: non-facet type `K` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F3[T:! J & K](unused t: T) {}
-// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:10: error: non-facet type `K` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
+// CHECK:STDERR: fn F3[T: J & K](unused t: T) {}
+// CHECK:STDERR:          ^~~~~
 // CHECK:STDERR:
 fn F3[T: J & K](unused t: T) {}
 

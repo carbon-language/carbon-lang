@@ -51,9 +51,9 @@ library "[[@TEST_NAME]]";
 
 class A {};
 
-// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+4]]:10: error: name `DoesNotExist` not found [NameNotFound]
-// CHECK:STDERR: fn F[T:! DoesNotExist](unused x: T) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~
+// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+4]]:9: error: name `DoesNotExist` not found [NameNotFound]
+// CHECK:STDERR: fn F[T: DoesNotExist](unused x: T) {}
+// CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR:
 fn F[T: DoesNotExist](unused x: T) {}
 

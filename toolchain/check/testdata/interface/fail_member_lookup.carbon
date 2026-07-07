@@ -40,9 +40,9 @@ fn F() {
 
 interface Different {}
 
-// CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:24: error: cannot convert type `U` that implements `Different` into type implementing `Interface` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fn G(U:! Different) -> U.(Interface.T);
-// CHECK:STDERR:                        ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:31: error: cannot convert type `U` that implements `Different` into type implementing `Interface` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: fn G(generic U: Different) -> U.(Interface.T);
+// CHECK:STDERR:                               ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn G(generic U: Different) -> U.(Interface.T);
 
@@ -97,18 +97,18 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:   %Different.decl: type = interface_decl @Different [concrete = constants.%Different.type] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %U.patt.loc32_7.1: %pattern_type.776 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc32_7.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc32_15.1: %pattern_type.776 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc32_15.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc32_7.2 [symbolic = %U.loc32_7.1 (constants.%U)]
+// CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc32_15.2 [symbolic = %U.loc32_15.1 (constants.%U)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %T.ref: %Interface.assoc_type = name_ref T, @T.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:     %U.as_type.loc32_25.2: type = facet_access_type %U.ref [symbolic = %U.as_type.loc32_25.1 (constants.%U.as_type)]
+// CHECK:STDOUT:     %U.as_type.loc32_32.2: type = facet_access_type %U.ref [symbolic = %U.as_type.loc32_32.1 (constants.%U.as_type)]
 // CHECK:STDOUT:     %.loc32: type = splice_block %Different.ref [concrete = constants.%Different.type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Different.ref: type = name_ref Different, file.%Different.decl [concrete = constants.%Different.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc32_7.2: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_7.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc32_15.2: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_15.1 (constants.%U)]
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -173,10 +173,10 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%U.loc32_7.2: %Different.type) {
-// CHECK:STDOUT:   %U.patt.loc32_7.2: %pattern_type.776 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc32_7.2 (constants.%U.patt)]
-// CHECK:STDOUT:   %U.loc32_7.1: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_7.1 (constants.%U)]
-// CHECK:STDOUT:   %U.as_type.loc32_25.1: type = facet_access_type %U.loc32_7.1 [symbolic = %U.as_type.loc32_25.1 (constants.%U.as_type)]
+// CHECK:STDOUT: generic fn @G(%U.loc32_15.2: %Different.type) {
+// CHECK:STDOUT:   %U.patt.loc32_15.2: %pattern_type.776 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc32_15.2 (constants.%U.patt)]
+// CHECK:STDOUT:   %U.loc32_15.1: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_15.1 (constants.%U)]
+// CHECK:STDOUT:   %U.as_type.loc32_32.1: type = facet_access_type %U.loc32_15.1 [symbolic = %U.as_type.loc32_32.1 (constants.%U.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> <error>;
 // CHECK:STDOUT: }
@@ -195,8 +195,8 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {
-// CHECK:STDOUT:   %U.patt.loc32_7.2 => constants.%U.patt
-// CHECK:STDOUT:   %U.loc32_7.1 => constants.%U
-// CHECK:STDOUT:   %U.as_type.loc32_25.1 => constants.%U.as_type
+// CHECK:STDOUT:   %U.patt.loc32_15.2 => constants.%U.patt
+// CHECK:STDOUT:   %U.loc32_15.1 => constants.%U
+// CHECK:STDOUT:   %U.as_type.loc32_32.1 => constants.%U.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

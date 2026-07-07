@@ -26,12 +26,12 @@ library "[[@TEST_NAME]]";
 
 class C(a: i32) {}
 class D(b: C(1000));
-// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE+7]]:15: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: class D(b:! C(1_000)) {}
-// CHECK:STDERR:               ^~~~~
-// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE-4]]:15: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: class D(b:! C(1000));
-// CHECK:STDERR:               ^~~~
+// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE+7]]:14: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: class D(b: C(1_000)) {}
+// CHECK:STDERR:              ^~~~~
+// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE-4]]:14: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR: class D(b: C(1000));
+// CHECK:STDERR:              ^~~~
 // CHECK:STDERR:
 class D(b: C(1_000)) {}
 
@@ -110,17 +110,17 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   %D.decl.loc5: %D.type = class_decl @D [concrete = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt.loc6: %pattern_type.053 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc5_20.1: type = splice_block %C.loc5 [concrete = constants.%C.847] {
+// CHECK:STDOUT:     %.loc5_19.1: type = splice_block %C.loc5 [concrete = constants.%C.847] {
 // CHECK:STDOUT:       %.Self.frozen.loc5: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref.loc5: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000.loc5: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000.ff9]
 // CHECK:STDOUT:       %impl.elem0.loc5: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:       %bound_method.loc5_20.1: <bound method> = bound_method %int_1000.loc5, %impl.elem0.loc5 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:       %bound_method.loc5_19.1: <bound method> = bound_method %int_1000.loc5, %impl.elem0.loc5 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:       %specific_fn.loc5: <specific function> = specific_function %impl.elem0.loc5, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:       %bound_method.loc5_20.2: <bound method> = bound_method %int_1000.loc5, %specific_fn.loc5 [concrete = constants.%bound_method]
-// CHECK:STDOUT:       %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5: init %i32 = call %bound_method.loc5_20.2(%int_1000.loc5) [concrete = constants.%int_1000.55f]
-// CHECK:STDOUT:       %.loc5_20.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5 [concrete = constants.%int_1000.55f]
-// CHECK:STDOUT:       %.loc5_20.3: %i32 = converted %int_1000.loc5, %.loc5_20.2 [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %bound_method.loc5_19.2: <bound method> = bound_method %int_1000.loc5, %specific_fn.loc5 [concrete = constants.%bound_method]
+// CHECK:STDOUT:       %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5: init %i32 = call %bound_method.loc5_19.2(%int_1000.loc5) [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %.loc5_19.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5 [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %.loc5_19.3: %i32 = converted %int_1000.loc5, %.loc5_19.2 [concrete = constants.%int_1000.55f]
 // CHECK:STDOUT:       %C.loc5: type = class_type @C, @C(constants.%int_1000.55f) [concrete = constants.%C.847]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc5_10.2: %C.847 = symbolic_binding b, 0 [symbolic = %b.loc5_10.1 (constants.%b)]
@@ -128,17 +128,17 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   %D.decl.loc6: %D.type = class_decl @D [concrete = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt.loc6: %pattern_type.053 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc6_20.1: type = splice_block %C.loc6 [concrete = constants.%C.847] {
+// CHECK:STDOUT:     %.loc6_19.1: type = splice_block %C.loc6 [concrete = constants.%C.847] {
 // CHECK:STDOUT:       %.Self.frozen.loc6: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref.loc6: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000.loc6: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000.ff9]
 // CHECK:STDOUT:       %impl.elem0.loc6: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:       %bound_method.loc6_20.1: <bound method> = bound_method %int_1000.loc6, %impl.elem0.loc6 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:       %bound_method.loc6_19.1: <bound method> = bound_method %int_1000.loc6, %impl.elem0.loc6 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:       %specific_fn.loc6: <specific function> = specific_function %impl.elem0.loc6, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:       %bound_method.loc6_20.2: <bound method> = bound_method %int_1000.loc6, %specific_fn.loc6 [concrete = constants.%bound_method]
-// CHECK:STDOUT:       %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6: init %i32 = call %bound_method.loc6_20.2(%int_1000.loc6) [concrete = constants.%int_1000.55f]
-// CHECK:STDOUT:       %.loc6_20.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6 [concrete = constants.%int_1000.55f]
-// CHECK:STDOUT:       %.loc6_20.3: %i32 = converted %int_1000.loc6, %.loc6_20.2 [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %bound_method.loc6_19.2: <bound method> = bound_method %int_1000.loc6, %specific_fn.loc6 [concrete = constants.%bound_method]
+// CHECK:STDOUT:       %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6: init %i32 = call %bound_method.loc6_19.2(%int_1000.loc6) [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %.loc6_19.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6 [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %.loc6_19.3: %i32 = converted %int_1000.loc6, %.loc6_19.2 [concrete = constants.%int_1000.55f]
 // CHECK:STDOUT:       %C.loc6: type = class_type @C, @C(constants.%int_1000.55f) [concrete = constants.%C.847]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc6: %C.847 = symbolic_binding b, 0 [symbolic = %b.loc5_10.1 (constants.%b)]
@@ -267,17 +267,17 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   %D.decl.loc5: %D.type.ff75f2.1 = class_decl @D.loc5 [concrete = constants.%D.generic.7223e9.1] {
 // CHECK:STDOUT:     %b.patt.loc5_10.1: %pattern_type.053 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5_10.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc5_19.1: type = splice_block %C [concrete = constants.%C.847] {
+// CHECK:STDOUT:     %.loc5_18.1: type = splice_block %C [concrete = constants.%C.847] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000.ff9]
 // CHECK:STDOUT:       %impl.elem0: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:       %bound_method.loc5_19.1: <bound method> = bound_method %int_1000, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:       %bound_method.loc5_18.1: <bound method> = bound_method %int_1000, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:       %bound_method.loc5_19.2: <bound method> = bound_method %int_1000, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:       %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_19.2(%int_1000) [concrete = constants.%int_1000.55f]
-// CHECK:STDOUT:       %.loc5_19.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1000.55f]
-// CHECK:STDOUT:       %.loc5_19.3: %i32 = converted %int_1000, %.loc5_19.2 [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %bound_method.loc5_18.2: <bound method> = bound_method %int_1000, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:       %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_18.2(%int_1000) [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %.loc5_18.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %.loc5_18.3: %i32 = converted %int_1000, %.loc5_18.2 [concrete = constants.%int_1000.55f]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%int_1000.55f) [concrete = constants.%C.847]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc5_10.2: %C.847 = symbolic_binding b, 0 [symbolic = %b.loc5_10.1 (constants.%b)]
@@ -285,17 +285,17 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   %D.decl.loc13: %D.type.ff75f2.2 = class_decl @D.loc13 [concrete = constants.%D.generic.7223e9.2] {
 // CHECK:STDOUT:     %b.patt.loc13_10.1: %pattern_type.053 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc13_10.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_20.1: type = splice_block %C [concrete = constants.%C.847] {
+// CHECK:STDOUT:     %.loc13_19.1: type = splice_block %C [concrete = constants.%C.847] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000.ff9]
 // CHECK:STDOUT:       %impl.elem0: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:       %bound_method.loc13_20.1: <bound method> = bound_method %int_1000, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:       %bound_method.loc13_19.1: <bound method> = bound_method %int_1000, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:       %bound_method.loc13_20.2: <bound method> = bound_method %int_1000, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:       %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc13_20.2(%int_1000) [concrete = constants.%int_1000.55f]
-// CHECK:STDOUT:       %.loc13_20.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1000.55f]
-// CHECK:STDOUT:       %.loc13_20.3: %i32 = converted %int_1000, %.loc13_20.2 [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %bound_method.loc13_19.2: <bound method> = bound_method %int_1000, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:       %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc13_19.2(%int_1000) [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %.loc13_19.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %.loc13_19.3: %i32 = converted %int_1000, %.loc13_19.2 [concrete = constants.%int_1000.55f]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%int_1000.55f) [concrete = constants.%C.847]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc13_10.2: %C.847 = symbolic_binding b, 0 [symbolic = %b.loc13_10.1 (constants.%b)]

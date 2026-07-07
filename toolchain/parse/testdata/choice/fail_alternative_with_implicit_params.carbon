@@ -10,7 +10,7 @@
 
 choice X {
   // CHECK:STDERR: fail_alternative_with_implicit_params.carbon:[[@LINE+4]]:4: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
-  // CHECK:STDERR:   A[T:! type](value: T)
+  // CHECK:STDERR:   A[T: type](value: T)
   // CHECK:STDERR:    ^
   // CHECK:STDERR:
   A[T: type](value: T)

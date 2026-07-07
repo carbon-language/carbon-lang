@@ -84,12 +84,12 @@ fn G(generic T: Y) {
   // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-18]]:24: note: `CanFailToMonomorphize(N)` evaluates to incomplete type `CanFailToMonomorphize(-1)` [IncompleteTypeInMonomorphization]
   // CHECK:STDERR:   extend require impls CanFailToMonomorphize(N);
   // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-26]]:22: note: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR:   let Z1:! array((), N);
-  // CHECK:STDERR:                      ^
+  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-26]]:21: note: array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR:   let Z1: array((), N);
+  // CHECK:STDERR:                     ^
   // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-12]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn F(N:! Core.IntLiteral, _:! S(N) where .Z2 impls Y) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z2 impls Y) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(-1, T);
 };
@@ -116,8 +116,8 @@ fn G(generic T: Z) {
   // CHECK:STDERR:   extend require impls Z where .Z1 = array((), N);
   // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_monomorphization_identify_in_call.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn F(N:! Core.IntLiteral, _:! S(N)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn F(generic N: Core.IntLiteral, generic _: S(N)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(-1, T);
 };
@@ -140,12 +140,12 @@ fn G(generic T: Z) {
   // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE+10]]:3: error: constructed invalid specific for `S(N) where .(Z.Z1) = array((), N)` from argument [SubstitutingGenericParamType]
   // CHECK:STDERR:   F(-1, T);
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE-6]]:27: note: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR: fn F(N:! Core.IntLiteral, _:! S(N) where .Z1 = array((), N)) {}
-  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE-6]]:42: note: array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR: fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z1 = array((), N)) {}
+  // CHECK:STDERR:                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn F(N:! Core.IntLiteral, _:! S(N) where .Z1 = array((), N)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z1 = array((), N)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(-1, T);
 };

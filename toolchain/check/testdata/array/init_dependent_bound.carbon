@@ -94,11 +94,11 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %.a02: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.ccc, %Destroy.facet.396 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%T.loc4_7.2: type) {
+// CHECK:STDOUT: generic fn @G(%T.loc4_15.2: type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %array_type.loc7_29.2: type = array_type constants.%int_0, %T.loc4_7.1 [symbolic = %array_type.loc7_29.2 (constants.%array_type.1b3)]
+// CHECK:STDOUT:   %array_type.loc7_29.2: type = array_type constants.%int_0, %T.loc4_15.1 [symbolic = %array_type.loc7_29.2 (constants.%array_type.1b3)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc7_29.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %array_type.loc7_29.2 [symbolic = %pattern_type (constants.%pattern_type.bd6)]
 // CHECK:STDOUT:   %arr.patt.loc7_17.2: @G.%pattern_type (%pattern_type.bd6) = ref_binding_pattern arr [symbolic = %arr.patt.loc7_17.2 (constants.%arr.patt.770)]
@@ -119,7 +119,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:     %.loc7_3.1: init @G.%array_type.loc7_29.2 (%array_type.1b3) = converted %.loc7_34.1, %.loc7_34.2 [symbolic = %array (constants.%array.ca4)]
 // CHECK:STDOUT:     assign %arr.var, %.loc7_3.1
 // CHECK:STDOUT:     %.loc7_29: type = splice_block %array_type.loc7_29.1 [symbolic = %array_type.loc7_29.2 (constants.%array_type.1b3)] {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc4_7.2 [symbolic = %T.loc4_7.1 (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc4_15.2 [symbolic = %T.loc4_15.1 (constants.%T)]
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:       %array_type.loc7_29.1: type = array_type %int_0, %T.ref [symbolic = %array_type.loc7_29.2 (constants.%array_type.1b3)]
 // CHECK:STDOUT:     }
@@ -146,13 +146,13 @@ fn H() { G(3); }
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %array_type.988) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc4_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc4_7.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc4_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%C) {
-// CHECK:STDOUT:   %T.patt.loc4_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc4_7.1 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc4_15.1 => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %array_type.loc7_29.2 => constants.%array_type.988

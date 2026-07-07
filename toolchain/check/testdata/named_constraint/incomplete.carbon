@@ -82,9 +82,9 @@ fn F() {
   // CHECK:STDERR: fail_impl_lookup_target_not_identified.carbon:[[@LINE-9]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
   // CHECK:STDERR: constraint Z;
   // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_lookup_target_not_identified.carbon:[[@LINE-10]]:15: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn AsZ(unused T:! Z) {}
-  // CHECK:STDERR:               ^~~~~
+  // CHECK:STDERR: fail_impl_lookup_target_not_identified.carbon:[[@LINE-10]]:23: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn AsZ(unused generic T: Z) {}
+  // CHECK:STDERR:                       ^~~~
   // CHECK:STDERR:
   AsZ(());
 }
@@ -113,16 +113,16 @@ constraint W {
   // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE-5]]:1: note: constraint is currently being defined [NamedConstraintIncompleteWithinDefinition]
   // CHECK:STDERR: constraint W {
   // CHECK:STDERR: ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE-15]]:38: note: return type declared here [IncompleteReturnTypeHere]
-  // CHECK:STDERR: eval fn ReturnFacet[T:! type](U:! T) -> T;
-  // CHECK:STDERR:                                      ^~~~
+  // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE-15]]:44: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: eval fn ReturnFacet[T: type](generic U: T) -> T;
+  // CHECK:STDERR:                                            ^~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE+7]]:31: error: use of undefined generic function [MissingGenericFunctionDefinition]
   // CHECK:STDERR:   require impls X where .XZ = ReturnFacet(Self);
   // CHECK:STDERR:                               ^~~~~~~~~~~
   // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE-22]]:1: note: generic function declared here [MissingGenericFunctionDefinitionHere]
-  // CHECK:STDERR: eval fn ReturnFacet[T:! type](U:! T) -> T;
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: eval fn ReturnFacet[T: type](generic U: T) -> T;
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   require impls X where .XZ = ReturnFacet(Self);
 }

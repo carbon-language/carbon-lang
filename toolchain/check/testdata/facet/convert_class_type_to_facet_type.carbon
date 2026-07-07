@@ -69,13 +69,13 @@ fn F() {
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WalkAnimal.decl: %WalkAnimal.type = fn_decl @WalkAnimal [concrete = constants.%WalkAnimal] {
-// CHECK:STDOUT:     %A.patt.loc20_23.1: %pattern_type = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc20_23.2 (constants.%A.patt)]
+// CHECK:STDOUT:     %A.patt.loc20_31.1: %pattern_type = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc20_31.2 (constants.%A.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc20: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %A.loc20_23.2: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc20_23.1 (constants.%A)]
+// CHECK:STDOUT:     %A.loc20_31.2: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc20_31.1 (constants.%A)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -110,9 +110,9 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%Goat
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @WalkAnimal(%A.loc20_23.2: %Animal.type) {
-// CHECK:STDOUT:   %A.patt.loc20_23.2: %pattern_type = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc20_23.2 (constants.%A.patt)]
-// CHECK:STDOUT:   %A.loc20_23.1: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc20_23.1 (constants.%A)]
+// CHECK:STDOUT: generic fn @WalkAnimal(%A.loc20_31.2: %Animal.type) {
+// CHECK:STDOUT:   %A.patt.loc20_31.2: %pattern_type = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc20_31.2 (constants.%A.patt)]
+// CHECK:STDOUT:   %A.loc20_31.1: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc20_31.1 (constants.%A)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -146,13 +146,13 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%A) {
-// CHECK:STDOUT:   %A.patt.loc20_23.2 => constants.%A.patt
-// CHECK:STDOUT:   %A.loc20_23.1 => constants.%A
+// CHECK:STDOUT:   %A.patt.loc20_31.2 => constants.%A.patt
+// CHECK:STDOUT:   %A.loc20_31.1 => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%Animal.facet) {
-// CHECK:STDOUT:   %A.patt.loc20_23.2 => constants.%A.patt
-// CHECK:STDOUT:   %A.loc20_23.1 => constants.%Animal.facet
+// CHECK:STDOUT:   %A.patt.loc20_31.2 => constants.%A.patt
+// CHECK:STDOUT:   %A.loc20_31.1 => constants.%Animal.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

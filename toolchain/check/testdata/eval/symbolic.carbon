@@ -95,16 +95,16 @@ fn F() {
 // CHECK:STDOUT:   %Copy.impl_witness_table.4d6 = impl_witness_table (%Core.import_ref.9c3), @type.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @E(%U.loc6_12.2: %Z.type) {
+// CHECK:STDOUT: generic fn @E(%U.loc6_20.2: %Z.type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %U.as_type.loc11_11.2: type = facet_access_type %U.loc6_12.1 [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
+// CHECK:STDOUT:   %U.as_type.loc11_11.2: type = facet_access_type %U.loc6_20.1 [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.bound: <bound method> = bound_method %U.as_type.loc11_11.2, constants.%type.as.Copy.impl.Op [symbolic = %type.as.Copy.impl.Op.bound (constants.%type.as.Copy.impl.Op.bound.05d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %U.ref: %Z.type = name_ref U, %U.loc6_12.2 [symbolic = %U.loc6_12.1 (constants.%U.013)]
+// CHECK:STDOUT:     %U.ref: %Z.type = name_ref U, %U.loc6_20.2 [symbolic = %U.loc6_20.1 (constants.%U.013)]
 // CHECK:STDOUT:     %U.as_type.loc11_11.1: type = facet_access_type %U.ref [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
 // CHECK:STDOUT:     %.loc11: type = converted %U.ref, %U.as_type.loc11_11.1 [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
 // CHECK:STDOUT:     %impl.elem0: %.524 = impl_witness_access constants.%Copy.impl_witness.638, element0 [concrete = constants.%type.as.Copy.impl.Op]
@@ -117,13 +117,13 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E(constants.%U.013) {
-// CHECK:STDOUT:   %U.patt.loc6_12.2 => constants.%U.patt.4a7
-// CHECK:STDOUT:   %U.loc6_12.1 => constants.%U.013
+// CHECK:STDOUT:   %U.patt.loc6_20.2 => constants.%U.patt.4a7
+// CHECK:STDOUT:   %U.loc6_20.1 => constants.%U.013
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E(constants.%Z.facet) {
-// CHECK:STDOUT:   %U.patt.loc6_12.2 => constants.%U.patt.4a7
-// CHECK:STDOUT:   %U.loc6_12.1 => constants.%Z.facet
+// CHECK:STDOUT:   %U.patt.loc6_20.2 => constants.%U.patt.4a7
+// CHECK:STDOUT:   %U.loc6_20.1 => constants.%Z.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %U.as_type.loc11_11.2 => constants.%empty_struct_type

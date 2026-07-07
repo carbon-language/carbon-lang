@@ -195,13 +195,13 @@ fn F(generic _: N) {}
 // CHECK:STDOUT:   %default.import.loc1_22.2 = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %_.patt.loc5_7.1: %pattern_type.9a5 = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc5_7.2 (constants.%_.patt)]
+// CHECK:STDOUT:     %_.patt.loc5_15.1: %pattern_type.9a5 = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc5_15.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5: type = splice_block %N.ref [concrete = constants.%N.type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %N.ref: type = name_ref N, imports.%Main.N [concrete = constants.%N.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_.loc5_7.2: %N.type = symbolic_binding _, 0 [symbolic = %_.loc5_7.1 (constants.%_)]
+// CHECK:STDOUT:     %_.loc5_15.2: %N.type = symbolic_binding _, 0 [symbolic = %_.loc5_15.1 (constants.%_)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -240,9 +240,9 @@ fn F(generic _: N) {}
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.190)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%_.loc5_7.2: %N.type) {
-// CHECK:STDOUT:   %_.patt.loc5_7.2: %pattern_type.9a5 = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc5_7.2 (constants.%_.patt)]
-// CHECK:STDOUT:   %_.loc5_7.1: %N.type = symbolic_binding _, 0 [symbolic = %_.loc5_7.1 (constants.%_)]
+// CHECK:STDOUT: generic fn @F(%_.loc5_15.2: %N.type) {
+// CHECK:STDOUT:   %_.patt.loc5_15.2: %pattern_type.9a5 = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc5_15.2 (constants.%_.patt)]
+// CHECK:STDOUT:   %_.loc5_15.1: %N.type = symbolic_binding _, 0 [symbolic = %_.loc5_15.1 (constants.%_)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -266,7 +266,7 @@ fn F(generic _: N) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {
-// CHECK:STDOUT:   %_.patt.loc5_7.2 => constants.%_.patt
-// CHECK:STDOUT:   %_.loc5_7.1 => constants.%_
+// CHECK:STDOUT:   %_.patt.loc5_15.2 => constants.%_.patt
+// CHECK:STDOUT:   %_.loc5_15.1 => constants.%_
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

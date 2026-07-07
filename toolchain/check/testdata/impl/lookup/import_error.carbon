@@ -18,9 +18,9 @@ interface Z {
 }
 
 // The value of .X is an error.
-// CHECK:STDERR: fail_error_interface_z.carbon:[[@LINE+4]]:35: error: associated constant `.(Z.X)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: final impl forall [T:! type] T as Z where .X = {} and .X = () {}
-// CHECK:STDERR:                                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_error_interface_z.carbon:[[@LINE+4]]:34: error: associated constant `.(Z.X)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: final impl forall [T: type] T as Z where .X = {} and .X = () {}
+// CHECK:STDERR:                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 final impl forall [T: type] T as Z where .X = {} and .X = () {}
 

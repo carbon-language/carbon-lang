@@ -22,9 +22,9 @@ impl forall [U: type] U as I where .T = () {
   fn F(unused self) -> () { return (); }
 }
 
-// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+3]]:25: error: found `impl` that would change the result of an earlier use of `C* as I` [PoisonedImplLookupConcreteResult]
-// CHECK:STDERR: fn H[W:! type](v: W) -> W.(I.T) {
-// CHECK:STDERR:                         ^~~~~~~
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+3]]:24: error: found `impl` that would change the result of an earlier use of `C* as I` [PoisonedImplLookupConcreteResult]
+// CHECK:STDERR: fn H[W: type](v: W) -> W.(I.T) {
+// CHECK:STDERR:                        ^~~~~~~
 fn H[W: type](v: W) -> W.(I.T) {
   return v.(I.F)();
 }
@@ -40,8 +40,8 @@ fn G(p: C*) -> () {
 // CHECK:STDERR: impl C* as I where .T = C {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE-21]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
-// CHECK:STDERR: impl forall [U:! type] U as I where .T = () {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl forall [U: type] U as I where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C* as I where .T = C {
   fn F(self) -> C { return *self; }
@@ -70,8 +70,8 @@ fn H[W: type](unused v: W) {
 // CHECK:STDERR: impl C as I where .T = C {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE-15]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
-// CHECK:STDERR: impl forall [U:! type] U as I where .T = () {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl forall [U: type] U as I where .T = () {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C as I where .T = C {}
 
@@ -101,8 +101,8 @@ fn G(c: C(())) -> () {
 // CHECK:STDERR: impl C(()) as I where .T = {} {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE-15]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
-// CHECK:STDERR: impl forall [U:! type] C(U) as I where .T = () {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl forall [U: type] C(U) as I where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C(()) as I where .T = {} {
   fn F(unused self) -> {} { return {}; }
@@ -134,8 +134,8 @@ fn G(c: C) -> () {
 // CHECK:STDERR: impl C as I(C) where .T = {} {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE-17]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
-// CHECK:STDERR: impl forall [U:! type] U as I(U) where .T = () {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl forall [U: type] U as I(U) where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C as I(C) where .T = {} {
   fn F(unused self) -> {} { return {}; }

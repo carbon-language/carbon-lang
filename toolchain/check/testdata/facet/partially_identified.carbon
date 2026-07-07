@@ -20,8 +20,8 @@ constraint W {
   // CHECK:STDERR:   extend require impls NeedsY(Self);
   // CHECK:STDERR:                        ^~~~~~~~~~~~
   // CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE-5]]:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: interface NeedsY(T:! Y) {}
-  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR: interface NeedsY(T: Y) {}
+  // CHECK:STDERR:                  ^~~~
   // CHECK:STDERR:
   extend require impls NeedsY(Self);
 }

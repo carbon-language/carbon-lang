@@ -28,8 +28,8 @@ import library "a";
 export C1;
 
 // CHECK:STDERR: fail_b.carbon:[[@LINE+4]]:10: error: `export` declaration cannot have parameters [UnexpectedDeclNameParams]
-// CHECK:STDERR: export C2(T:! type);
-// CHECK:STDERR:          ^~~~~~~~~~
+// CHECK:STDERR: export C2(T: type);
+// CHECK:STDERR:          ^~~~~~~~~
 // CHECK:STDERR:
 export C2(T: type);
 
@@ -55,18 +55,18 @@ export C2(T: type);
 // CHECK:STDOUT:   %C1.decl: %C1.type = class_decl @C1 [concrete = constants.%C1.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_11.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_11.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_14.1: type = splice_block %.loc4_14.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc4_13.1: type = splice_block %.loc4_13.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc4_14.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc4_13.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_11.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_11.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C2.decl: %C2.type = class_decl @C2 [concrete = constants.%C2.generic] {
 // CHECK:STDOUT:     %T.patt.loc5_11.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_11.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc5_13.1: type = splice_block %.loc5_13.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc5_14.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc5_13.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_11.2: type = symbolic_binding T, 0 [symbolic = %T.loc5_11.1 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -124,9 +124,9 @@ export C2(T: type);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C1: %C1.type = export C1, imports.%Foo.C1 [concrete = constants.%C1.generic]
-// CHECK:STDOUT:   %.loc12_15.1: type = splice_block %.loc12_15.2 [concrete = type] {
+// CHECK:STDOUT:   %.loc12_14.1: type = splice_block %.loc12_14.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc12_15.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc12_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = constants.%T]
 // CHECK:STDOUT:   %C2: %C2.type = export C2, imports.%Foo.C2 [concrete = constants.%C2.generic]

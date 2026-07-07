@@ -94,29 +94,29 @@ class C3 {
   impl C3 as I6 {}
 
   // CHECK:STDERR: fail_no_match.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   impl forall [Z3:! type] C3 as J3(Z3);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   impl forall [Z3: type] C3 as J3(Z3);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   impl forall [Z3: type] C3 as J3(Z3);
   impl forall [Z3: type] as J3(Z3) {}
 
   // CHECK:STDERR: fail_no_match.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   impl forall [Z4:! type] C3 as J4(Z4);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   impl forall [Z4: type] C3 as J4(Z4);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   impl forall [Z4: type] C3 as J4(Z4);
   impl forall [Z4: type] Self as J4(Z4) {}
 
   // CHECK:STDERR: fail_no_match.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   impl forall [Z5:! type] as J5(Z5);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   impl forall [Z5: type] as J5(Z5);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   impl forall [Z5: type] as J5(Z5);
   impl forall [Z5: type] C3 as J5(Z5) {}
 
   // CHECK:STDERR: fail_no_match.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   impl forall [Z6:! type] Self as J6(Z6);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   impl forall [Z6: type] Self as J6(Z6);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   impl forall [Z6: type] Self as J6(Z6);
   impl forall [Z6: type] C3 as J6(Z6) {}
@@ -152,29 +152,29 @@ class C4(A: type) {
   impl C4(A) as I6 {}
 
   // CHECK:STDERR: fail_no_match.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   impl forall [B3:! type] C4(A) as J3(B3);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   impl forall [B3: type] C4(A) as J3(B3);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   impl forall [B3: type] C4(A) as J3(B3);
   impl forall [B3: type] as J3(B3) {}
 
   // CHECK:STDERR: fail_no_match.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   impl forall [B4:! type] C4(A) as J4(B4);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   impl forall [B4: type] C4(A) as J4(B4);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   impl forall [B4: type] C4(A) as J4(B4);
   impl forall [B4: type] Self as J4(B4) {}
 
   // CHECK:STDERR: fail_no_match.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   impl forall [B5:! type] as J5(B5);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   impl forall [B5: type] as J5(B5);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   impl forall [B5: type] as J5(B5);
   impl forall [B5: type] C4(A) as J5(B5) {}
 
   // CHECK:STDERR: fail_no_match.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   impl forall [B6:! type] Self as J6(B6);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   impl forall [B6: type] Self as J6(B6);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   impl forall [B6: type] Self as J6(B6);
   impl forall [B6: type] C4(A) as J6(B6) {}

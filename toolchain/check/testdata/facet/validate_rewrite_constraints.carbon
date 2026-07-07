@@ -52,8 +52,8 @@ fn G() {
   // CHECK:STDERR:   F({}, C);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_generic_interface_facet_value_wrong_specific_impl.carbon:[[@LINE-7]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn F(U:! type, unused T:! I(U) where .X = ()) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn F(generic U: type, unused generic T: I(U) where .X = ()) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F({}, C);
 }
@@ -83,9 +83,9 @@ fn H() {
   // CHECK:STDERR: fail_convert.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `I where .(I.X) = {.a: (), .b: {}}` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F(C);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_convert.carbon:[[@LINE-8]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .X = {.a: (), .b: {}}) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_convert.carbon:[[@LINE-8]]:21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I where .X = {.a: (), .b: {}}) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(C);
 }
@@ -94,9 +94,9 @@ fn G(generic T: I where .X = {.b: {}, .a: ()}) {
   // CHECK:STDERR: fail_convert.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = {.b: {}, .a: ()}` into type implementing `I where .(I.X) = {.a: (), .b: {}}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_convert.carbon:[[@LINE-19]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .X = {.a: (), .b: {}}) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_convert.carbon:[[@LINE-19]]:21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I where .X = {.a: (), .b: {}}) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -107,13 +107,13 @@ library "[[@TEST_NAME]]";
 interface I { let X: type; }
 interface J { let Y: type; }
 
-// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+8]]:23: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
-// CHECK:STDERR: fn F(T:! I & J where .(I.X) = .(J.Y)) {
-// CHECK:STDERR:                       ^
+// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+8]]:30: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fn F(generic T: I & J where .(I.X) = .(J.Y)) {
+// CHECK:STDERR:                              ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+4]]:23: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: fn F(T:! I & J where .(I.X) = .(J.Y)) {
-// CHECK:STDERR:                       ^
+// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+4]]:30: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fn F(generic T: I & J where .(I.X) = .(J.Y)) {
+// CHECK:STDERR:                              ^
 // CHECK:STDERR:
 fn F(generic T: I & J where .(I.X) = .(J.Y)) {
   // Allowed since `T impls I`, `T impls J`, and has constraint providing
@@ -141,13 +141,13 @@ interface I(T: type) { let X: type; }
 
 final impl forall [J: I(())] J as I({}) where .X = {} {}
 
-// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+8]]:31: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
-// CHECK:STDERR: fn F(T:! I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
-// CHECK:STDERR:                               ^
+// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+8]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fn F(generic T: I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
+// CHECK:STDERR:                                      ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+4]]:31: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: fn F(T:! I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
-// CHECK:STDERR:                               ^
+// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+4]]:38: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fn F(generic T: I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
+// CHECK:STDERR:                                      ^
 // CHECK:STDERR:
 fn F(generic T: I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
 
@@ -168,9 +168,9 @@ fn G(generic T: I(()) where .X = ()) {
   // CHECK:STDERR: fail_parameterized_interface_with_wrong_where_in_impl_deduction.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I(()) where .(I(()).X) = ()` into type implementing `I({}) where .(I({}).X) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_parameterized_interface_with_wrong_where_in_impl_deduction.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I({}) where .X = {}) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_parameterized_interface_with_wrong_where_in_impl_deduction.carbon:[[@LINE-6]]:21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I({}) where .X = {}) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -261,8 +261,8 @@ class C;
 // CHECK:STDERR: impl C as I where .X1 = () {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_error_in_witness_table.carbon:[[@LINE-12]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let X2:! type;
-// CHECK:STDERR:       ^~~~~~~~~
+// CHECK:STDERR:   let X2: type;
+// CHECK:STDERR:       ^~~~~~~~
 // CHECK:STDERR:
 impl C as I where .X1 = () {}
 
@@ -270,9 +270,9 @@ fn G() {
   // CHECK:STDERR: fail_error_in_witness_table.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `I where .(I.X1) = .(I.X2)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F(C);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_error_in_witness_table.carbon:[[@LINE-19]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .X1 = .X2) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_error_in_witness_table.carbon:[[@LINE-19]]:21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I where .X1 = .X2) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(C);
 }
@@ -325,9 +325,9 @@ fn G(generic T: type) {
   // CHECK:STDERR: fail_non_final_impl_deduce.carbon:[[@LINE+7]]:3: error: cannot convert type `C(T)` into type implementing `I where .(I.X) = ()` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F(C(T));
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_non_final_impl_deduce.carbon:[[@LINE-11]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .X = ()) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_non_final_impl_deduce.carbon:[[@LINE-11]]:21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I where .X = ()) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(C(T));
 }
@@ -461,9 +461,9 @@ fn G(generic T: I where .X = C(()) and .Y = {}) {
   // CHECK:STDERR: fail_wrong_rewrite_value_in_class_param.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = C(()) and .(I.Y) = {}` into type implementing `I where .(I.X) = C(.(I.Y))` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_wrong_rewrite_value_in_class_param.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .X = C(.Y)) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_rewrite_value_in_class_param.carbon:[[@LINE-6]]:21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I where .X = C(.Y)) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -513,9 +513,9 @@ fn G(generic T: I where .Y = .B) {
   // CHECK:STDERR: fail_wrong_function_as_rewrite_value.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.Y) = .(I.B)` into type implementing `I where .(I.Y) = .(I.A)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_wrong_function_as_rewrite_value.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .Y = .A) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_function_as_rewrite_value.carbon:[[@LINE-6]]:21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I where .Y = .A) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -543,9 +543,9 @@ fn G(generic T: I & J where .Y = .B) {
   // CHECK:STDERR: fail_wrong_function_as_rewrite_value_in_other_interface.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I & J where .(I.Y) = .(J.B)` into type implementing `I & J where .(I.Y) = .(I.A)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_wrong_function_as_rewrite_value_in_other_interface.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I & J where .Y = .A) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_function_as_rewrite_value_in_other_interface.carbon:[[@LINE-6]]:21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I & J where .Y = .A) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -764,9 +764,9 @@ fn G(generic T: I where .X = J({}) and .Y = ()) {
   // CHECK:STDERR: fail_facet_type_in_assoc_constant_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = J({}) and .(I.Y) = ()` into type implementing `I where .(I.X) = J(())` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_facet_type_in_assoc_constant_differs.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .X = J(())) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_facet_type_in_assoc_constant_differs.carbon:[[@LINE-6]]:21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I where .X = J(())) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -862,9 +862,9 @@ fn G(generic T: I & J & K where .K1 = .Self and .J1 = .Self and .I1 = () and .I2
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I & J & K where .(K.K1) = .Self as J and .(J.J1) = .Self as I and .(I.I1) = () and .(I.I2) = {}` into type implementing `I & J & K where .(K.K1) = .Self as J and .(J.J1) = .Self as I and .(I.I1) = .(I.I2)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE-7]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = (.K1.J1).I2) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE-7]]:21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I & J & K where .K1 = .Self and .J1 = .Self and .I1 = (.K1.J1).I2) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -874,9 +874,9 @@ fn G2(generic T: I & J & K where .K1 = .Self and .J1 = .Self and .I1 = {}) {
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I & J & K where .(K.K1) = .Self as J and .(J.J1) = .Self as I and .(I.I1) = {}` into type implementing `I & J & K where .(K.K1) = .Self as J and .(J.J1) = .Self as I and .(I.I1) = .(I.I2)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE-19]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = (.K1.J1).I2) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE-19]]:21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I & J & K where .K1 = .Self and .J1 = .Self and .I1 = (.K1.J1).I2) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -886,9 +886,9 @@ fn G3(generic T: I & J & K where .K1 = .Self and .J1 = .Self and .I2 = {}) {
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I & J & K where .(K.K1) = .Self as J and .(J.J1) = .Self as I and .(I.I2) = {}` into type implementing `I & J & K where .(K.K1) = .Self as J and .(J.J1) = .Self as I and .(I.I1) = .(I.I2)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE-31]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I & J & K where .K1 = .Self and .J1 = .Self and .I1 = (.K1.J1).I2) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_self_wrong_type.carbon:[[@LINE-31]]:21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I & J & K where .K1 = .Self and .J1 = .Self and .I1 = (.K1.J1).I2) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -941,9 +941,9 @@ fn G(generic U: I where .I1 = {}, generic T: J & K where .K1 = .Self and .J1 = U
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `J & K where .(J.J2) = () and .(K.K1) = .Self as J and .(J.J1) = U as I` into type implementing `J & K where .(J.J2) = .(K.K1).(J.J1).(I.I1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE-7]]:27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused U:! I, unused T:! J & K where .J2 = (.K1.J1).I1) {}
-  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE-7]]:42: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic U: I, unused generic T: J & K where .J2 = (.K1.J1).I1) {}
+  // CHECK:STDERR:                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -953,9 +953,9 @@ fn G2(generic U: I, generic T: J & K where .K1 = .Self and .J1 = U and .J2 = ())
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `J & K where .(J.J2) = () and .(K.K1) = .Self as J and .(J.J1) = U` into type implementing `J & K where .(J.J2) = .(K.K1).(J.J1).(I.I1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE-19]]:27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused U:! I, unused T:! J & K where .J2 = (.K1.J1).I1) {}
-  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE-19]]:42: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic U: I, unused generic T: J & K where .J2 = (.K1.J1).I1) {}
+  // CHECK:STDERR:                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -965,9 +965,9 @@ fn G3(generic U: I where .I1 = {}, generic T: J & K where .K1 = .Self and .J1 = 
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `J & K where .(K.K1) = .Self as J and .(J.J1) = U as I` into type implementing `J & K where .(J.J2) = .(K.K1).(J.J1).(I.I1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE-31]]:27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused U:! I, unused T:! J & K where .J2 = (.K1.J1).I1) {}
-  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_wrong_type.carbon:[[@LINE-31]]:42: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic U: I, unused generic T: J & K where .J2 = (.K1.J1).I1) {}
+  // CHECK:STDERR:                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1019,9 +1019,9 @@ fn G(generic U: I & J where .I1 = () and .J1 = {}, generic T: K where .K1 = U an
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `K where .(K.K2) = {} and .(K.K1) = U as I & J and .(K.K3) = {}` into type implementing `K where .(K.K2) = .(K.K1).(I.I1) and .(K.K3) = .(K.K1).(J.J1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-7]]:31: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused U:! I & J, unused T:! K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
-  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-7]]:46: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic U: I & J, unused generic T: K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
+  // CHECK:STDERR:                                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1031,9 +1031,9 @@ fn G2(generic U: I & J where .I1 = () and .J1 = {}, generic T: K where .K1 = U a
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `K where .(K.K1) = U as I & J and .(K.K3) = {}` into type implementing `K where .(K.K2) = .(K.K1).(I.I1) and .(K.K3) = .(K.K1).(J.J1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-19]]:31: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused U:! I & J, unused T:! K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
-  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-19]]:46: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic U: I & J, unused generic T: K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
+  // CHECK:STDERR:                                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1043,9 +1043,9 @@ fn G3(generic U: I & J where .J1 = {}, generic T: K where .K1 = U and .K2 = () a
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `K where .(K.K2) = () and .(K.K1) = U as I & J and .(K.K3) = {}` into type implementing `K where .(K.K2) = .(K.K1).(I.I1) and .(K.K3) = .(K.K1).(J.J1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-31]]:31: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused U:! I & J, unused T:! K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
-  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-31]]:46: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic U: I & J, unused generic T: K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
+  // CHECK:STDERR:                                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1055,9 +1055,9 @@ fn G4(generic U: I & J where .I1 = () and .J1 = {}, generic T: K where .K1 = U a
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `K where .(K.K2) = () and .(K.K1) = U as I & J` into type implementing `K where .(K.K2) = .(K.K1).(I.I1) and .(K.K3) = .(K.K1).(J.J1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-43]]:31: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused U:! I & J, unused T:! K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
-  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-43]]:46: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic U: I & J, unused generic T: K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
+  // CHECK:STDERR:                                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1067,9 +1067,9 @@ fn G5(generic U: I & J where .I1 = (), generic T: K where .K1 = U and .K2 = () a
   // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `K where .(K.K2) = () and .(K.K1) = U as I & J and .(K.K3) = {}` into type implementing `K where .(K.K2) = .(K.K1).(I.I1) and .(K.K3) = .(K.K1).(J.J1)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(U, T);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-55]]:31: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused U:! I & J, unused T:! K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
-  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_requires_subst_in_nested_access_of_other_with_two_witnesses_wrong_type.carbon:[[@LINE-55]]:46: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic U: I & J, unused generic T: K where .K2 = .K1.I1 and .K3 = .K1.J1) {}
+  // CHECK:STDERR:                                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(U, T);
 }
@@ -1090,9 +1090,9 @@ fn G(generic T: I where .I1 = .I2) {
   // CHECK:STDERR: fail_target_rewrites_dont_apply_to_source.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.I1) = .(I.I2)` into type implementing `I where .(I.I1) = () and .(I.I2) = ()` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_target_rewrites_dont_apply_to_source.carbon:[[@LINE-6]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .I1 = () and .I2 = ()) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_target_rewrites_dont_apply_to_source.carbon:[[@LINE-6]]:21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I where .I1 = () and .I2 = ()) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -1134,9 +1134,9 @@ fn G(generic T: I where .X = NI({}), generic U: T.X) {
   // CHECK:STDERR: fail_todo_nested_facet_type_used_as_root_facet_type_in_caller.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `NI({})` into type implementing `I where .(I.Y) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T, U);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_nested_facet_type_used_as_root_facet_type_in_caller.carbon:[[@LINE-7]]:45: note: initializing generic parameter `U` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .X = NI({}), unused U:! I where .Y = {}) {}
-  // CHECK:STDERR:                                             ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_nested_facet_type_used_as_root_facet_type_in_caller.carbon:[[@LINE-7]]:60: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I where .X = NI({}), unused generic U: I where .Y = {}) {}
+  // CHECK:STDERR:                                                            ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T, U);
 }
@@ -1163,9 +1163,9 @@ fn G(generic T: I where .X = NI({}), generic U: J where .Y = ()) {
   // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_interface.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `J where .(J.Y) = ()` into type implementing `NI({})` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T, U);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_interface.carbon:[[@LINE-6]]:38: note: initializing generic parameter `U` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(T:! I where .X = NI({}), unused U:! T.X) {}
-  // CHECK:STDERR:                                      ^~~~~~~
+  // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_interface.carbon:[[@LINE-6]]:53: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(generic T: I where .X = NI({}), unused generic U: T.X) {}
+  // CHECK:STDERR:                                                     ^~~~~~
   // CHECK:STDERR:
   F(T, U);
 }
@@ -1213,9 +1213,9 @@ fn G(generic T: I where .X = NI({}), generic U: T.X) {
   // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_caller_access.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `NI({})` into type implementing `I where .(I.Y) = ()` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T, U);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_caller_access.carbon:[[@LINE-9]]:45: note: initializing generic parameter `U` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused T:! I where .X = NI({}), unused U:! I where .Y = ()) {}
-  // CHECK:STDERR:                                             ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_caller_access.carbon:[[@LINE-9]]:60: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic T: I where .X = NI({}), unused generic U: I where .Y = ()) {}
+  // CHECK:STDERR:                                                            ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T, U);
 }
@@ -1341,9 +1341,9 @@ fn G(generic T: N) {
   // CHECK:STDERR: fail_todo_rewrite_provided_by_named_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `N` into type implementing `Z where .(Z.Z1) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_todo_rewrite_provided_by_named_constraint.carbon:[[@LINE-13]]:6: note: initializing generic parameter `_` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(_:! Z where .Z1 = {}) {}
-  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_rewrite_provided_by_named_constraint.carbon:[[@LINE-13]]:14: note: initializing generic parameter `_` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(generic _: Z where .Z1 = {}) {}
+  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -1369,9 +1369,9 @@ fn G(generic T: N) {
   // CHECK:STDERR: fail_rewrite_not_provided_by_named_constraint_without_extend.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `N` into type implementing `Z where .(Z.Z1) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_rewrite_not_provided_by_named_constraint_without_extend.carbon:[[@LINE-14]]:6: note: initializing generic parameter `_` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(_:! Z where .Z1 = {}) {}
-  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_not_provided_by_named_constraint_without_extend.carbon:[[@LINE-14]]:14: note: initializing generic parameter `_` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(generic _: Z where .Z1 = {}) {}
+  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(T);
 }
@@ -1399,19 +1399,19 @@ fn G(generic T: N) {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%facet_value) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%T.loc10_7.2: %Z_where.type.c91) {
+// CHECK:STDOUT: generic fn @G(%T.loc10_15.2: %Z_where.type.c91) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc14_6.2: type = facet_access_type %T.loc10_7.1 [symbolic = %T.as_type.loc14_6.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc10_7.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness.9fe)]
+// CHECK:STDOUT:   %T.as_type.loc14_6.2: type = facet_access_type %T.loc10_15.1 [symbolic = %T.as_type.loc14_6.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc10_15.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness.9fe)]
 // CHECK:STDOUT:   %facet_value.loc14_6.2: %Z_where.type.7b9 = facet_value %T.as_type.loc14_6.2, (%Z.lookup_impl_witness) [symbolic = %facet_value.loc14_6.2 (constants.%facet_value)]
 // CHECK:STDOUT:   %F.specific_fn.loc14_3.2: <specific function> = specific_function constants.%F, @F(%facet_value.loc14_6.2) [symbolic = %F.specific_fn.loc14_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:     %T.ref: %Z_where.type.c91 = name_ref T, %T.loc10_7.2 [symbolic = %T.loc10_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: %Z_where.type.c91 = name_ref T, %T.loc10_15.2 [symbolic = %T.loc10_15.1 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc14_6.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc14_6.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %facet_value.loc14_6.1: %Z_where.type.7b9 = facet_value %T.as_type.loc14_6.1, (constants.%Z.lookup_impl_witness.9fe) [symbolic = %facet_value.loc14_6.2 (constants.%facet_value)]
 // CHECK:STDOUT:     %.loc14: %Z_where.type.7b9 = converted %T.ref, %facet_value.loc14_6.1 [symbolic = %facet_value.loc14_6.2 (constants.%facet_value)]
@@ -1424,7 +1424,7 @@ fn G(generic T: N) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc10_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc10_7.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc10_15.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc10_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

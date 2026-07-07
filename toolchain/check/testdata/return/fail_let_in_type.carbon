@@ -20,9 +20,9 @@ let x: type = i32;
 fn Six() -> x { return 6; }
 
 // TODO: This should probably work.
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-// CHECK:STDERR: let y:! type = i32;
-// CHECK:STDERR:     ^~~~~~~~
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:13: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
+// CHECK:STDERR: let generic y: type = i32;
+// CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
 let generic y: type = i32;
 // CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:19: error: cannot evaluate type expression [TypeExprEvaluationFailure]
@@ -33,8 +33,8 @@ fn HalfDozen() -> y { return 6; }
 
 // TODO: This should work.
 // CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-// CHECK:STDERR: let template z:! type = i32;
-// CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: let template z: type = i32;
+// CHECK:STDERR:     ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let template z: type = i32;
 // CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:28: error: cannot evaluate type expression [TypeExprEvaluationFailure]
@@ -96,9 +96,9 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:     %x.ref: type = name_ref x, file.%x
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc27_9.1: type = splice_block %.loc27_9.2 [concrete = type] {
+// CHECK:STDOUT:   %.loc27_16.1: type = splice_block %.loc27_16.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.frozen.loc27: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc27_9.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc27_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: type = wrapper_binding y, @__global_init.%i32.loc27
 // CHECK:STDOUT:   name_binding_decl {
@@ -110,9 +110,9 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:     %y.ref: type = name_ref y, file.%y
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc39_18.1: type = splice_block %.loc39_18.2 [concrete = type] {
+// CHECK:STDOUT:   %.loc39_17.1: type = splice_block %.loc39_17.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.frozen.loc39: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc39_18.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc39_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %z: type = wrapper_binding z, @__global_init.%i32.loc39
 // CHECK:STDOUT:   name_binding_decl {

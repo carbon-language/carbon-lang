@@ -87,12 +87,12 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+9]]:1: in import [InImport]
 // CHECK:STDERR: other.carbon:7:1: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
-// CHECK:STDERR: fn HasGenericArg(T:! type, a: T) { a; }
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn HasGenericArg(generic T: type, a: T) { a; }
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+5]]:1: in import [InImport]
 // CHECK:STDERR: other.carbon:7:1: note: calling function declared here [InCallToEntity]
-// CHECK:STDERR: fn HasGenericArg(T:! type, a: T) { a; }
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn HasGenericArg(generic T: type, a: T) { a; }
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Other;
 import Cpp inline '''

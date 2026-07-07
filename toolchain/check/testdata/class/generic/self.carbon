@@ -84,9 +84,9 @@ class Class(T: type) {
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
 // CHECK:STDOUT:     %T.patt.loc15_14.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15_17.1: type = splice_block %.loc15_17.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc15_16.1: type = splice_block %.loc15_16.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc15_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc15_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc15_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_14.1 (constants.%T)]
 // CHECK:STDOUT:   }

@@ -105,8 +105,8 @@ alias c = *b;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:8: error: `alias` declaration cannot have parameters [UnexpectedDeclNameParams]
-// CHECK:STDERR: alias A(T:! type) = T*;
-// CHECK:STDERR:        ^~~~~~~~~~
+// CHECK:STDERR: alias A(T: type) = T*;
+// CHECK:STDERR:        ^~~~~~~~~
 // CHECK:STDERR:
 alias A(T: type) = T*;
 

@@ -23,8 +23,8 @@ interface IMisuse {
   // CHECK:STDERR:   fn Op(self) -> ArgToI(Arg);
   // CHECK:STDERR:                  ^~~~~~~~~~~
   // CHECK:STDERR: fail_invalid_interface.carbon:[[@LINE-7]]:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: class ArgToI(T:! I) {}
-  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR: class ArgToI(T: I) {}
+  // CHECK:STDERR:              ^~~~
   // CHECK:STDERR:
   fn Op(self) -> ArgToI(Arg);
 }
@@ -50,9 +50,9 @@ class C {
   }
 }
 
-// CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+8]]:21: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: fn F(T:! IMisuse) { T.Op(); }
-// CHECK:STDERR:                     ^~~~~~
+// CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+8]]:28: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
+// CHECK:STDERR: fn F(generic T: IMisuse) { T.Op(); }
+// CHECK:STDERR:                            ^~~~~~
 // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE-21]]:1: in import [InImport]
 // CHECK:STDERR: fail_invalid_interface.carbon:16:3: note: calling function declared here [InCallToEntity]
 // CHECK:STDERR:   fn Op(self) -> ArgToI(Arg);
@@ -68,9 +68,9 @@ fn G() {
   // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+7]]:3: note: type `C` does not implement interface `Core.ImplicitAs(IMisuse)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   F(c);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE-10]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(T:! IMisuse) { T.Op(); }
-  // CHECK:STDERR:      ^~~~~~~~~~~
+  // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE-10]]:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(generic T: IMisuse) { T.Op(); }
+  // CHECK:STDERR:              ^~~~~~~~~~
   // CHECK:STDERR:
   F(c);
 }
@@ -89,8 +89,8 @@ class C {
     // CHECK:STDERR:                           ^~~~~~~~~~~~
     // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE-9]]:1: in import [InImport]
     // CHECK:STDERR: fail_invalid_interface.carbon:5:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-    // CHECK:STDERR: class ArgToI(T:! I) {}
-    // CHECK:STDERR:              ^~~~~
+    // CHECK:STDERR: class ArgToI(T: I) {}
+    // CHECK:STDERR:              ^~~~
     // CHECK:STDERR:
     fn Op(unused self) -> ArgToI(ArgC) {
       return {};
@@ -98,9 +98,9 @@ class C {
   }
 }
 
-// CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+8]]:21: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: fn F(T:! IMisuse) { T.Op(); }
-// CHECK:STDERR:                     ^~~~~~
+// CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+8]]:28: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
+// CHECK:STDERR: fn F(generic T: IMisuse) { T.Op(); }
+// CHECK:STDERR:                            ^~~~~~
 // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE-23]]:1: in import [InImport]
 // CHECK:STDERR: fail_invalid_interface.carbon:16:3: note: calling function declared here [InCallToEntity]
 // CHECK:STDERR:   fn Op(self) -> ArgToI(Arg);
@@ -116,9 +116,9 @@ fn G() {
   // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+7]]:3: note: type `C` does not implement interface `Core.ImplicitAs(IMisuse)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   F(c);
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE-10]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(T:! IMisuse) { T.Op(); }
-  // CHECK:STDERR:      ^~~~~~~~~~~
+  // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE-10]]:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(generic T: IMisuse) { T.Op(); }
+  // CHECK:STDERR:              ^~~~~~~~~~
   // CHECK:STDERR:
   F(c);
 }

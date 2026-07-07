@@ -32,8 +32,8 @@ fn G() {
   // CHECK:STDERR:   F(() as type);
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_where.carbon:[[@LINE-12]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn F[U:! type](unused T:! Z where .Z1 = C(U)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn F[U: type](unused generic T: Z where .Z1 = C(U)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(() as type);
 }

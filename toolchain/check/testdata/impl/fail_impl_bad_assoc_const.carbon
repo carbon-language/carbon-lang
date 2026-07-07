@@ -18,8 +18,8 @@ interface I { let T: type; }
 // CHECK:STDERR: impl () as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE-5]]:19: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR: interface I { let T:! type; }
-// CHECK:STDERR:                   ^~~~~~~~
+// CHECK:STDERR: interface I { let T: type; }
+// CHECK:STDERR:                   ^~~~~~~
 // CHECK:STDERR:
 impl () as I {}
 

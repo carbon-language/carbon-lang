@@ -960,7 +960,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %P.import_ref.9f8 = import_ref P//library, loc5_16, unloaded
 // CHECK:STDOUT:   %P.import_ref.0cb = import_ref P//library, loc5_28, unloaded
 // CHECK:STDOUT:   %P.C: %C.type = import_ref P//library, C, loaded [concrete = constants.%C.generic]
-// CHECK:STDOUT:   %P.import_ref.8f2: <witness> = import_ref P//library, loc4_19, loaded [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   %P.import_ref.8f2: <witness> = import_ref P//library, loc4_18, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %P.import_ref.70e = import_ref P//library, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %P.import_ref.d2a: %i32 = import_ref P//library, loc4_10, loaded [symbolic = @C.%N (constants.%N.37f)]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]

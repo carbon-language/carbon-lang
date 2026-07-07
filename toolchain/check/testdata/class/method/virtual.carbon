@@ -248,8 +248,8 @@ fn Derived.F(unused self) -> T2 {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_generic_virtual_decl.carbon:[[@LINE+3]]:1: error: use of undefined generic function [MissingGenericFunctionDefinition]
-// CHECK:STDERR: base class Base(T:! type) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: base class Base(T: type) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 base class Base(T: type) {
   // CHECK:STDERR: fail_generic_virtual_decl.carbon:[[@LINE+4]]:3: note: generic function declared here [MissingGenericFunctionDefinitionHere]
   // CHECK:STDERR:   virtual fn F(self);
@@ -330,8 +330,8 @@ library "[[@TEST_NAME]]";
 
 base class T1 {
   // CHECK:STDERR: fail_generic_virtual.carbon:[[@LINE+4]]:3: error: generic virtual function [GenericVirtual]
-  // CHECK:STDERR:   virtual fn F[T:! type](self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F[T: type](self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   virtual fn F[T: type](self);
 }
@@ -342,8 +342,8 @@ library "[[@TEST_NAME]]";
 
 base class T1(T: type) {
   // CHECK:STDERR: fail_generic_virtual_in_generic_class.carbon:[[@LINE+4]]:3: error: generic virtual function [GenericVirtual]
-  // CHECK:STDERR:   virtual fn F[T:! type](self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F[T: type](self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   virtual fn F[T: type](self);
 }

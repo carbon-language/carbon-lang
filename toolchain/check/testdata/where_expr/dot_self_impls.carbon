@@ -192,8 +192,8 @@ fn Test() {
   // CHECK:STDERR:   AssertSame(Type((I where .A = ()) & J),
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE-19]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn AssertSame[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   AssertSame(Type((I where .A = ()) & J),
              Type(I & J where .A = ()));
@@ -202,8 +202,8 @@ fn Test() {
   // CHECK:STDERR:   AssertSame(Type(I & (J where .B = {})),
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE-29]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn AssertSame[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   AssertSame(Type(I & (J where .B = {})),
              Type(I & J where .B = {}));
@@ -213,8 +213,8 @@ fn Test() {
   // CHECK:STDERR:   AssertSame(Type((I where .A = ()) & (J where .B = {})),
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE-40]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn AssertSame[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   AssertSame(Type((I where .A = ()) & (J where .B = {})),
              Type(I & J where .A = () and .B = {}));
@@ -235,8 +235,8 @@ fn Test() {
   // CHECK:STDERR:   Same(Type(I where .Self impls J), Type(J where .Self impls I));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Same(Type(I where .Self impls J), Type(J where .Self impls I));
 }

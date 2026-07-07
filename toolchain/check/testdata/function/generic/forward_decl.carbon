@@ -31,25 +31,25 @@ fn F(generic T: type);
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc15_7.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_7.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc15_15.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15_10.1: type = splice_block %.loc15_10.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc15_17.1: type = splice_block %.loc15_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc15_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc15_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc15_7.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc15_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc15_7.2: type) {
-// CHECK:STDOUT:   %T.patt.loc15_7.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_7.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc15_7.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_7.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc15_15.2: type) {
+// CHECK:STDOUT:   %T.patt.loc15_15.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc15_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_15.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc15_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc15_7.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc15_15.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc15_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

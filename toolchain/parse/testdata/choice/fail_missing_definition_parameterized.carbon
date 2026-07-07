@@ -8,9 +8,9 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/choice/fail_missing_definition_parameterized.carbon
 
-// CHECK:STDERR: fail_missing_definition_parameterized.carbon:[[@LINE+4]]:35: error: choice definition expected [ExpectedChoiceDefinition]
-// CHECK:STDERR: choice MissingDefinition(T:! type);
-// CHECK:STDERR:                                   ^
+// CHECK:STDERR: fail_missing_definition_parameterized.carbon:[[@LINE+4]]:34: error: choice definition expected [ExpectedChoiceDefinition]
+// CHECK:STDERR: choice MissingDefinition(T: type);
+// CHECK:STDERR:                                  ^
 // CHECK:STDERR:
 choice MissingDefinition(T: type);
 
@@ -21,9 +21,9 @@ choice MissingDefinition(T: type);
 // CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'MissingDefinition'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'ChoiceDefinitionStart', text: ';', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'ChoiceDefinition', text: ';', has_error: yes, subtree_size: 10},
