@@ -2967,7 +2967,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
        .enclosing_scope_inst_id = enclosing_scope_inst_id});
   observe_decl.observe_id = observe_id;
   return ResolveResult::Done(
-      ReplacePlaceholderImportedInst(resolver, observe_decl_id, observe_decl));
+      ReplacePlaceholderImportedInst(resolver, observe_decl_id, observe_decl),
+      observe_decl_id);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
