@@ -209,8 +209,8 @@ accessible as members of `Math`, like `Math.Sqrt`. The `Core.Print` function
 comes from the `Core` package's `io` library. Unlike C++, the namespaces of
 different packages are kept separate, so there are no name conflicts.
 
-Carbon [comments](#code-and-comments) must be on a line by themselves starting
-with `//`:
+Carbon [comments](#code-and-comments) start with `//` and run to the end of the
+line, either on a line by themselves or following other content:
 
 ```carbon
 // Returns the smallest factor of `n` > 1, and
@@ -353,11 +353,14 @@ allowed to have non-ASCII characters.
 var résultat: String = "Succès";
 ```
 
-Comments start with two slashes `//` and go to the end of the line. They are
-required to be the only non-whitespace on the line.
+Comments start with two slashes `//` and go to the end of the line. A comment
+may be the only content on its line, or it may follow other content as a trailing
+comment. Full-line comments are preferred for documentation, while trailing
+comments mark or annotate a specific line.
 
 ```carbon
-// Compute an approximation of π
+// Compute an approximation of π.
+var pi: f64 = 3.14159; // Accurate enough for our purposes.
 ```
 
 > References:
@@ -368,6 +371,8 @@ required to be the only non-whitespace on the line.
 >     [#142: Unicode source files](https://github.com/carbon-language/carbon-lang/pull/142)
 > -   Proposal
 >     [#198: Comments](https://github.com/carbon-language/carbon-lang/pull/198)
+> -   Proposal
+>     [#7441: Trailing comments](https://github.com/carbon-language/carbon-lang/pull/7441)
 
 ## Build modes
 
@@ -2705,7 +2710,7 @@ has a type\* parameter `T` that can be any type that implements the `Ordered`
 interface.
 
 ```carbon
-fn Min[T:! Ordered](x: T, y: T) -> T {
+fn Min[T: Ordered](x: T, y: T) -> T {
   // Can compare `x` and `y` since they have
   // type `T` known to implement `Ordered`.
   return if x <= y then x else y;
@@ -2763,7 +2768,7 @@ parameter by prefixing it with the `template` keyword. Keywords matching the
 contextual default are disallowed to ensure consistency.
 
 ```carbon
-fn Convert[template T:! type](source: T, template U:! type) -> U {
+fn Convert[template T: type](source: T, template U: type) -> U {
   var converted: U = source;
   return converted;
 }
@@ -2779,7 +2784,7 @@ A template parameter can still use a constraint. The `Min` example could have
 been declared as:
 
 ```carbon
-fn TemplatedMin[template T:! Ordered](x: T, y: T) -> T {
+fn TemplatedMin[template T: Ordered](x: T, y: T) -> T {
   return if x <= y then x else y;
 }
 ```
@@ -2877,7 +2882,7 @@ In this case, `Print` is not a direct member of `Circle`, but:
     `Printable`.
 
     ```carbon
-    fn GenericPrint[T:! Printable](x: T) {
+    fn GenericPrint[T: Printable](x: T) {
       // Look up into `T` delegates to `Printable`, so this
       // finds `Printable.Print`:
       x.Print();
@@ -2938,7 +2943,7 @@ A function can require type arguments to implement multiple interfaces (or other
 facet types) by combining them using an ampersand (`&`):
 
 ```carbon
-fn PrintMin[T:! Ordered & Printable](x: T, y: T) {
+fn PrintMin[T: Ordered & Printable](x: T, y: T) {
   // Can compare since type `T` implements `Ordered`.
   if (x <= y) {
     // Can call `Print` since type `T` implements `Printable`.
@@ -2956,7 +2961,7 @@ syntax ([1](expressions/member_access.md),
 qualify the name of the member, as in:
 
 ```carbon
-fn DrawTies[T:! Renderable & GameResult](x: T) {
+fn DrawTies[T: Renderable & GameResult](x: T) {
   if (x.(GameResult.Draw)()) {
     x.(Renderable.Draw)();
   }
@@ -2988,18 +2993,18 @@ class Game {
   }
 }
 
-fn TemplateDraw[template T:! type](x: T) {
+fn TemplateDraw[template T: type](x: T) {
   // Calls `Game.Draw` when `T` is `Game`:
   x.Draw();
 }
 
-fn ConstrainedTemplateDraw[template T:! Renderable](x: T) {
+fn ConstrainedTemplateDraw[template T: Renderable](x: T) {
   // ❌ Error when `T` is `Game`: Finds both `T.Draw` and
   // `Renderable.Draw`, and they are different.
   x.Draw();
 }
 
-fn CheckedGenericDraw[T:! Renderable](x: T) {
+fn CheckedGenericDraw[T: Renderable](x: T) {
   // Always calls `Renderable.Draw`, even when `T` is `Game`:
   x.Draw();
 }
@@ -3033,7 +3038,7 @@ stack.
 
 ```
 interface StackInterface {
-  let ElementType:! Movable;
+  let ElementType: Movable;
   fn Push(ref self, value: ElementType);
   fn Pop(ref self) -> ElementType;
   fn IsEmpty(self) -> bool;
@@ -3080,7 +3085,7 @@ or can be marked with the `template` keyword. For example, to define a stack
 that can hold values of any type `T`:
 
 ```carbon
-class Stack(T:! type) {
+class Stack(T: type) {
   fn Push(ref self, value: T);
   fn Pop(ref self) -> T;
 
@@ -3102,7 +3107,7 @@ The values of type parameters are part of a type's value, and so may be deduced
 in a function call, as in this example:
 
 ```carbon
-fn PeekTopOfStack[T:! type](s: Stack(T)*) -> T {
+fn PeekTopOfStack[T: type](s: Stack(T)*) -> T {
   var top: T = s->Pop();
   s->Push(top);
   return top;
@@ -3123,7 +3128,7 @@ PeekTopOfStack(&int_stack);
 [Choice types](#choice-types) may be parameterized similarly to classes:
 
 ```carbon
-choice Result(T:! type, Error:! type) {
+choice Result(T: type, Error: type) {
   Success(value: T),
   Failure(error: Error)
 }
@@ -3135,7 +3140,7 @@ Interfaces are always parameterized by a `Self` type, but in some cases they
 will have additional parameters.
 
 ```carbon
-interface AddWith(U:! type);
+interface AddWith(U: type);
 ```
 
 Interfaces without parameters may only be implemented once for a given type, but
@@ -3158,12 +3163,12 @@ An `impl` declaration may be parameterized by adding `forall [`_compile-time
 parameter list_`]` after the `impl` keyword introducer, as in:
 
 ```carbon
-impl forall [T:! Printable] Vector(T) as Printable;
-impl forall [Key:! Hashable, Value:! type]
+impl forall [T: Printable] Vector(T) as Printable;
+impl forall [Key: Hashable, Value: type]
     HashMap(Key, Value) as Has(Key);
-impl forall [T:! Ordered] T as PartiallyOrdered;
-impl forall [T:! ImplicitAs(i32)] BigInt as AddWith(T);
-impl forall [U:! type, T:! As(U)]
+impl forall [T: Ordered] T as PartiallyOrdered;
+impl forall [T: ImplicitAs(i32)] BigInt as AddWith(T);
+impl forall [U: type, T: As(U)]
     Optional(T) as As(Optional(U));
 ```
 
@@ -3379,7 +3384,7 @@ There are some situations where the common type for two types is needed:
     will be set to the common type of the corresponding arguments, as in:
 
     ```carbon
-    fn F[T:! type](x: T, y: T);
+    fn F[T: type](x: T, y: T);
 
     // Calls `F` with `T` set to the
     // common type of `G()` and `H()`:

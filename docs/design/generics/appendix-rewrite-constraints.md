@@ -31,9 +31,9 @@ This document explains the rationale for choosing to make
 ## Rewrite constraints
 
 Rewrite constraints are [`where` clauses](details.md#where-constraints) of the
-form `.AssociatedConstant = Value`. Given `T:! A where .B = C`, references to
-`T.(A.B)` are rewritten to `C`. This appendix describes the precise rules
-governing them.
+form `.AssociatedConstant = Value`. Given a checked generic binding `T: A where .B = C`,
+references to `T.(A.B)` are rewritten to `C`. This appendix describes the
+precise rules governing them.
 
 ## Combining constraints with `&`
 
@@ -41,10 +41,9 @@ Suppose we have `X = C where .R = A` and `Y = C where .R = B`. What should
 `C & X` produce? What should `X & Y` produce?
 
 -   Combining two rewrite rules with different rewrite targets results in a
-    facet type where the associated constant is ambiguous. Given `T:! X & Y`,
-    the type expression `T.R` is ambiguous between a rewrite to `A` and a
-    rewrite to `B`. But given `T:! X & X`, `T.R` is unambiguously rewritten to
-    `A`.
+    facet type where the associated constant is ambiguous. Given `T: X & Y`, the
+    type expression `T.R` is ambiguous between a rewrite to `A` and a rewrite to
+    `B`. But given `T: X & X`, `T.R` is unambiguously rewritten to `A`.
 -   Combining a constraint with a rewrite rule with a constraint with no rewrite
     rule preserves the rewrite rule, so `C & X` is the same as `X`. For example,
     supposing that `interface Container` extends `interface Iterable`, and
@@ -72,18 +71,18 @@ happens, the facet type `C where A and B` is interpreted as
 
 ```carbon
 interface C {
-  let T:! type;
-  let U:! type;
-  let V:! type;
+  let T: type;
+  let U: type;
+  let V: type;
 }
 class M {
   alias Me = Self;
 }
 // ✅ Same as `C where .T = M and .U = M.Me`, which is
 // the same as `C where .T = M and .U = M`.
-fn F[A:! C where .T = M and .U = .T.Me]() {}
-// ❌ No member `Me` in `A.T:! type`.
-fn F[A:! C where .U = .T.Me and .T = M]() {}
+fn F[A: C where .T = M and .U = .T.Me]() {}
+// ❌ No member `Me` in `A.T: type`.
+fn F[A: C where .U = .T.Me and .T = M]() {}
 ```
 
 ## Combining constraints with `extend`
@@ -93,8 +92,8 @@ constraint that has rewrites.
 
 ```carbon
 interface A {
-  let T:! type;
-  let U:! type;
+  let T: type;
+  let U: type;
 }
 interface B {
   extend A where .T = .U and .U = i32;
@@ -105,7 +104,7 @@ var n: i32;
 // ✅ Resolved constraint on `T` is
 // `B where .(A.T) = i32 and .(A.U) = i32`.
 // `T.(A.T)` is rewritten to `i32`.
-fn F(T:! B) -> T.(A.T) { return n; }
+fn F(generic T: B) -> T.(A.T) { return n; }
 ```
 
 ## Combining constraints with `require` and `impls`
@@ -118,8 +117,8 @@ are equivalent to `==` constraints:
 
 ```carbon
 interface A {
-  let T:! type;
-  let U:! type;
+  let T: type;
+  let U: type;
 }
 constraint C {
   extend A where .T = .U and .U = i32;
@@ -141,7 +140,7 @@ var n: i32;
 // `T.(A.T)` is single-step equal to `T.(A.U)`, and
 // `T.(A.U)` is single-step equal to `i32`, but
 // `T.(A.T)` is not single-step equal to `i32`.
-fn F(T:! B) -> T.(A.T) { return n; }
+fn F(generic T: B) -> T.(A.T) { return n; }
 ```
 
 Because `=` constraints are effectively treated as `==` constraints in an
@@ -158,7 +157,7 @@ For example:
 
 ```carbon
 // Compile-time identity function.
-fn Identity[T:! type](x:! T) -> T { return x; }
+fn Identity[T: type](generic x: T) -> T { return x; }
 
 interface E {
   // ❌ Rewrite constraint specified directly.
@@ -177,19 +176,19 @@ is rewritten to `.Self.T`, and `.Self` is ambiguous.
 
 ```carbon
 // ❌ Rewrite constraint specified directly in `impls`.
-fn F[T:! A where .U impls (A where .T = i32)]();
+fn F[T: A where .U impls (A where .T = i32)]();
 
 // ❌ Reference to `.T` in same-type constraint is ambiguous:
 // does this mean the outer or inner `.Self.T`?
-fn G[T:! A where .U impls (A where .T == i32)]();
+fn G[T: A where .U impls (A where .T == i32)]();
 
 // ✅ Not specified directly, but does not result
 // in any rewrites being performed. Return type
 // is not rewritten to `i32`.
-fn H[T:! type where .Self impls C]() -> T.(A.U);
+fn H[T: type where .Self impls C]() -> T.(A.U);
 
 // ✅ Return type is rewritten to `i32`.
-fn I[T:! C]() -> T.(A.U);
+fn I[T: C]() -> T.(A.U);
 ```
 
 ## Rewrite constraint resolution
@@ -200,7 +199,7 @@ constraints that apply to `T`. This happens:
 
 -   When the constraint is used explicitly when declaring a symbolic binding,
     like a generic parameter or associated constant, of the form
-    `T:! Constraint`.
+    `T: Constraint`.
 -   When declaring that a type implements a constraint with an `impl`
     declaration, such as `impl T as Constraint`. Note that this does not include
     `require` ... `impls` constraints appearing in `interface` or `constraint`
@@ -224,22 +223,22 @@ abstract constraints into a set of constraints on `T`:
 
 ```carbon
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
 // ✅ `.X` in `.Y = .X` is rewritten to `i32` when initially
 // forming the facet type.
 // Nothing to do during constraint resolution.
-fn InOrder[T:! I where .X = i32 and .Y = .X]() {}
+fn InOrder[T: I where .X = i32 and .Y = .X]() {}
 // ✅ Facet type has `.X = .Y` before constraint resolution.
 // That rewrite is resolved to `.X = i32`.
-fn Reordered[T:! I where .X = .Y and .Y = i32]() {}
+fn Reordered[T: I where .X = .Y and .Y = i32]() {}
 // ✅ Facet type has `.Y = .X` before constraint resolution.
 // That rewrite is resolved to `.Y = i32`.
-fn ReorderedIndirect[T:! (I where .X = i32) & (I where .Y = .X)]() {}
+fn ReorderedIndirect[T: (I where .X = i32) & (I where .Y = .X)]() {}
 // ❌ Constraint resolution fails because
 // no fixed point of rewrites exists.
-fn Cycle[T:! I where .X = .Y and .Y = .X]() {}
+fn Cycle[T: I where .X = .Y and .Y = .X]() {}
 ```
 
 To find a fixed point, we can perform rewrites on other rewrites, cycling
@@ -258,7 +257,7 @@ condition:
 // `.X = .Y*`, then `.Y = .Y**`, then `.Z = .Y***`,
 // then `.X = .Y**`, then detect that the `.Y` rewrite
 // would apply to itself.
-fn IndirectCycle[T:! I where .X = .Y and .Y = .Z* and .Z = .Y*]();
+fn IndirectCycle[T: I where .X = .Y and .Y = .Z* and .Z = .Y*]();
 ```
 
 After constraint resolution, no references to rewritten associated constants
@@ -269,11 +268,11 @@ The following examples each treat the two assignments of `.X` as being
 identical, though they are written differently:
 
 ```carbon
-fn Identical(T:! I where .X = () and .X = .Y and .Y = ()) {}
+fn Identical(generic T: I where .X = () and .X = .Y and .Y = ()) {}
 
-fn IdenticalNoCycle(T:! I where .X = () and .X = .Y and .Y = .X) {}
+fn IdenticalNoCycle(generic T: I where .X = () and .X = .Y and .Y = .X) {}
 
-fn IdenticalNested(T:! (I where .X = ()) where .X = .Y and .Y = ()) {}
+fn IdenticalNested(generic T: (I where .X = ()) where .X = .Y and .Y = ()) {}
 ```
 
 The rewrite constraints of the current facet type are all available, so both
@@ -285,7 +284,7 @@ But the following does not have the rewrite of `.Y` available at the time of
 resolving the two rewrites of `.X`, so the rewrites are invalid:
 
 ```carbon
-fn NotIdentical(T:! (I where .X = () and .X = .Y) where .Y = ()) {}
+fn NotIdentical(generic T: (I where .X = () and .X = .Y) where .Y = ()) {}
 ```
 
 When combining two facet types together with `&`, the rewrite constraints are
@@ -302,10 +301,10 @@ which constraint resolution would always fail. For example:
 package Broken;
 
 interface I {
-  let X:! type;
-  let Y:! type;
+  let X: type;
+  let Y: type;
 }
-let Bad:! auto = (I where .X = .Y) & (I where .Y = .X);
+let generic Bad: auto = (I where .X = .Y) & (I where .Y = .X);
 // Bad is not used here.
 ```
 
@@ -350,10 +349,10 @@ type.
 
 ```carbon
 interface C {
-  let M:! i32;
-  let U:! C;
+  let M: i32;
+  let U: C;
 }
-fn F[T:! C](x: T) {
+fn F[T: C](x: T) {
   // Value is C.M in all four of these
   let a: i32 = x.M;
   let b: i32 = T.M;
@@ -378,7 +377,7 @@ declared type.
 interface SelfIface {
   fn Get(self) -> Self;
 }
-class UsesSelf(T:! type) {
+class UsesSelf(T: type) {
   // Equivalent to `fn Make() -> UsesSelf(T)*;`
   fn Make() -> Self*;
   impl as SelfIface;
@@ -405,33 +404,33 @@ example in detail:
 
 ```carbon
 interface A {
-  let T:! type;
+  let T: type;
 }
 interface B {
-  let U:! type;
+  let U: type;
   // More explicitly, this is of type `A where .(A.T) = Self.(B.U)`
-  let V:! A where .T = U;
+  let V: A where .T = U;
 }
 // Type of W is B.
-fn F[W:! B](x: W) {
+fn F[W: B](x: W) {
   // The type of the expression `W` is `B`.
   // `W.V` finds `B.V` with type `A where .(A.T) = Self.(B.U)`.
   // We substitute `Self` = `W` giving the type of `u` as
   // `A where .(A.T) = W.(B.U)`.
-  let u:! auto = W.V;
+  let generic u: auto = W.V;
   // The type of `u` is `A where .(A.T) = W.(B.U)`.
   // Lookup for `u.T` resolves it to `u.(A.T)`.
   // So the result of the qualified member access is `W.(B.U)`,
   // and the type of `v` is the type of `W.(B.U)`, namely `type`.
   // No substitution is performed in this step.
-  let v:! auto = u.T;
+  let generic v: auto = u.T;
 }
 ```
 
 The more complex case of
 
 ```carbon
-fn F2[Z:! B where .U = i32](x: Z);
+fn F2[Z: B where .U = i32](x: Z);
 ```
 
 is discussed later.
@@ -446,7 +445,7 @@ substitution of inferred parameter values into the type of a function when
 type-checking a function call:
 
 ```carbon
-fn F[T:! C](x: T) -> T;
+fn F[T: C](x: T) -> T;
 fn G(n: i32) -> i32 {
   // Deduces T = i32, which is substituted
   // into the type `fn (x: T) -> T` to produce
@@ -465,19 +464,19 @@ expressions, and do not do it again:
 
 ```carbon
 interface IfaceHasX {
-  let X:! type;
+  let X: type;
 }
 class ClassHasX {
   class X {}
 }
 interface HasAssoc {
-  let Assoc:! IfaceHasX;
+  let Assoc: IfaceHasX;
 }
 
 // Qualified name lookup finds `T.(HasAssoc.Assoc).(IfaceHasX.X)`.
-fn F(T:! HasAssoc) -> T.Assoc.X;
+fn F(generic T: HasAssoc) -> T.Assoc.X;
 
-fn G(T:! HasAssoc where .Assoc = ClassHasX) {
+fn G(generic T: HasAssoc where .Assoc = ClassHasX) {
   // `T.Assoc` rewritten to `ClassHasX` by qualified name lookup.
   // Names `ClassHasX.X`.
   var a: T.Assoc.X = {};
@@ -493,11 +492,11 @@ value. It’s important that we perform this resolution:
 
 ```carbon
 interface A {
-  let T:! type;
+  let T: type;
 }
 class K { fn Member(); }
-fn H[U:! A](x: U) -> U.T;
-fn J[V:! A where .T = K](y: V) {
+fn H[U: A](x: U) -> U.T;
+fn J[V: A where .T = K](y: V) {
   // We need the interface of `H(y)` to include
   // `K.Member` in order for this lookup to succeed.
   H(y).Member();
@@ -536,28 +535,28 @@ Continuing an example from [qualified name lookup](#qualified-name-lookup):
 
 ```carbon
 interface A {
-  let T:! type;
+  let T: type;
 }
 interface B {
-  let U:! type;
-  let V:! A where .T = U;
+  let U: type;
+  let V: A where .T = U;
 }
 
 // Type of the expression `Z` is `B where .(B.U) = i32`
-fn F2[Z:! B where .U = i32](x: Z) {
+fn F2[Z: B where .U = i32](x: Z) {
   // The type of the expression `Z` is `B where .U = i32`.
   // `Z.V` is looked up and finds the associated facet `(B.V)`.
   // The declared type is `A where .(A.T) = Self.U`.
   // We substitute `Self = Z` with rewrite `.U = i32`.
   // The resulting type is `A where .(A.T) = i32`.
   // So `u` is `Z.V` with type `A where .(A.T) = i32`.
-  let u:! auto = Z.V;
+  let generic u: auto = Z.V;
   // The type of `u` is `A where .(A.T) = i32`.
   // Lookup for `u.T` resolves it to `u.(A.T)`.
   // So the result of the qualified member access is `i32`,
   // and the type of `v` is the type of `i32`, namely `type`.
   // No substitution is performed in this step.
-  let v:! auto = u.T;
+  let generic v: auto = u.T;
 }
 ```
 
@@ -565,41 +564,41 @@ fn F2[Z:! B where .U = i32](x: Z) {
 
 ```carbon
 interface Container {
-  let Element:! type;
+  let Element: type;
 }
 interface SliceableContainer {
   extend Container;
-  let Slice:! Container where .Element = Self.(Container.Element);
+  let Slice: Container where .Element = Self.(Container.Element);
 }
 // ❌ Qualified name lookup rewrites this facet type to
 // `SliceableContainer where .(Container.Element) = .Self.(Container.Element)`.
 // Constraint resolution rejects this because this rewrite forms a cycle.
-fn Bad[T:! SliceableContainer where .Element = .Slice.Element](x: T.Element) {}
+fn Bad[T: SliceableContainer where .Element = .Slice.Element](x: T.Element) {}
 ```
 
 ```carbon
 interface Helper {
-  let D:! type;
+  let D: type;
 }
 interface Example {
-  let B:! type;
-  let C:! Helper where .D = B;
+  let B: type;
+  let C: Helper where .D = B;
 }
 // ✅ `where .D = ...` by itself is fine.
 // `T.C.D` is rewritten to `T.B`.
-fn Allowed(T:! Example, x: T.C.D);
+fn Allowed(generic T: Example, x: T.C.D);
 // ❌ But combined with another rewrite, creates an infinite loop.
 // `.C.D` is rewritten to `.B`, resulting in `where .B = .B`,
 // which causes an error during constraint resolution.
 // Using `==` instead of `=` would make this constraint redundant,
 // rather than it being an error.
-fn Error(T:! Example where .B = .C.D, x: T.C.D);
+fn Error(generic T: Example where .B = .C.D, x: T.C.D);
 ```
 
 ```carbon
 interface Allowed;
 interface AllowedBase {
-  let A:! Allowed;
+  let A: Allowed;
 }
 interface Allowed {
   extend AllowedBase where .A = .Self;
@@ -608,18 +607,18 @@ interface Allowed {
 // In `((T.A).A).A`, the inner `T.A` is rewritten to `T`,
 // resulting in `((T).A).A`, which is then rewritten to
 // `(T).A`, which is then rewritten to `T`.
-fn F(T:! Allowed, x: ((T.A).A).A);
+fn F(generic T: Allowed, x: ((T.A).A).A);
 ```
 
 ```carbon
 interface MoveYsRight;
-constraint ForwardDeclaredConstraint(X:! MoveYsRight);
+constraint ForwardDeclaredConstraint(X: MoveYsRight);
 interface MoveYsRight {
-  let X:! MoveYsRight;
-  // Means `Y:! MoveYsRight where .X = X.Y`
-  let Y:! ForwardDeclaredConstraint(X);
+  let X: MoveYsRight;
+  // Means `Y: MoveYsRight where .X = X.Y`
+  let Y: ForwardDeclaredConstraint(X);
 }
-constraint ForwardDeclaredConstraint(X:! MoveYsRight) {
+constraint ForwardDeclaredConstraint(X: MoveYsRight) {
   extend MoveYsRight where .X = X.Y;
 }
 // ✅ The final type of `x` is `T.X.Y.Y`. It is computed as follows:
@@ -647,7 +646,7 @@ constraint ForwardDeclaredConstraint(X:! MoveYsRight) {
 // -   Qualified name lookup finds `MoveYsRight.X`.
 // -   The type of `T.Y.Y` says to rewrite that to `T.X.Y.Y`.
 // -   The result is `T.X.Y.Y`, of type `MoveYsRight`.
-fn F4(T:! MoveYsRight, x: T.Y.Y.X);
+fn F4(generic T: MoveYsRight, x: T.Y.Y.X);
 ```
 
 ### Termination

@@ -90,7 +90,7 @@ TEST_F(LexerTest, TracksLinesAndColumns) {
           {.kind = TokenKind::Identifier,
            .line = 6,
            .column = 6,
-           .indent_column = 11,
+           .indent_column = 2,
            .text = "y"},
           {.kind = TokenKind::FileEnd, .line = 6, .column = 7},
       }));
@@ -128,7 +128,7 @@ TEST_F(LexerTest, TracksLinesAndColumnsCrLf) {
           {.kind = TokenKind::Identifier,
            .line = 6,
            .column = 6,
-           .indent_column = 11,
+           .indent_column = 2,
            .text = "y"},
           {.kind = TokenKind::FileEnd, .line = 6, .column = 7},
       }));
@@ -618,6 +618,44 @@ TEST_F(LexerTest, MismatchedGroups) {
           {.kind = TokenKind::FileEnd},
       }));
 
+  // Two recovery tokens inserted at the same point: each must be flagged at
+  // its own merged index, not the pre-insertion index of the token it was
+  // inserted before.
+  auto& buffer3b = compile_helper_.GetTokenizedBuffer("{((}");
+  EXPECT_TRUE(buffer3b.has_errors());
+  EXPECT_THAT(
+      buffer3b,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::FileStart},
+          {.kind = TokenKind::OpenCurlyBrace, .column = 1},
+          {.kind = TokenKind::OpenParen, .column = 2},
+          {.kind = TokenKind::OpenParen, .column = 3},
+          {.kind = TokenKind::CloseParen, .column = 4, .recovery = true},
+          {.kind = TokenKind::CloseParen, .column = 4, .recovery = true},
+          {.kind = TokenKind::CloseCurlyBrace, .column = 4},
+          {.kind = TokenKind::FileEnd},
+      }));
+
+  // Recovery insertions at two separate points: the second one's merged index
+  // is shifted by the first, and a real token must not be flagged in its
+  // place.
+  auto& buffer3c = compile_helper_.GetTokenizedBuffer("{(} {(}");
+  EXPECT_TRUE(buffer3c.has_errors());
+  EXPECT_THAT(
+      buffer3c,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::FileStart},
+          {.kind = TokenKind::OpenCurlyBrace, .column = 1},
+          {.kind = TokenKind::OpenParen, .column = 2},
+          {.kind = TokenKind::CloseParen, .column = 3, .recovery = true},
+          {.kind = TokenKind::CloseCurlyBrace, .column = 3},
+          {.kind = TokenKind::OpenCurlyBrace, .column = 5},
+          {.kind = TokenKind::OpenParen, .column = 6},
+          {.kind = TokenKind::CloseParen, .column = 7, .recovery = true},
+          {.kind = TokenKind::CloseCurlyBrace, .column = 7},
+          {.kind = TokenKind::FileEnd},
+      }));
+
   auto& buffer4 = compile_helper_.GetTokenizedBuffer(")({)");
   EXPECT_TRUE(buffer4.has_errors());
   EXPECT_THAT(
@@ -722,7 +760,6 @@ TEST_F(LexerTest, Comments) {
 TEST_F(LexerTest, InvalidComments) {
   llvm::StringLiteral testcases[] = {
       "  /// foo\n",
-      "foo // bar\n",
       "//! hello",
       " //world",
   };
@@ -859,7 +896,7 @@ TEST_F(LexerTest, StringLiterals) {
                   {.kind = TokenKind::Identifier,
                    .line = 7,
                    .column = 10,
-                   .indent_column = 5,
+                   .indent_column = 6,
                    .text = "trailing"},
                   {.kind = TokenKind::StringLiteral,
                    .line = 9,
@@ -1098,17 +1135,32 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
                       }));
 }
 
-TEST_F(LexerTest, DiagnosticTrailingComment) {
-  llvm::StringLiteral testcase = R"(
-    // Hello!
-    var String x; // trailing comment
-  )";
+TEST_F(LexerTest, TrailingComment) {
+  // A comment that follows other content on a line is a valid trailing comment.
+  auto& buffer = compile_helper_.GetTokenizedBuffer(
+      "// leading\nvar x: i32 = 0; // trailing\n// trailing's neighbor\n");
+  EXPECT_FALSE(buffer.has_errors());
 
-  Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            Diagnostics::Kind::TrailingComment,
-                            Diagnostics::Level::Error, 3, 19, _)));
-  compile_helper_.GetTokenizedBuffer(testcase, &consumer);
+  // The trailing comment is recorded but never coalesced with an adjacent
+  // full-line comment, so the leading comment, the trailing comment, and the
+  // following full-line comment remain three separate comments.
+  EXPECT_THAT(buffer.comments_size(), Eq(3));
+}
+
+TEST_F(LexerTest, TrailingCommentAfterMultiLineString) {
+  // A multi-line string literal records the real indentation of each line it
+  // spans. Here the trailing `//` is deliberately aligned to the column where
+  // the literal opened (both at column 17); if the literal instead recorded
+  // that opening column as the final line's indent (as it once did), the
+  // trailing-comment check in `Lexer::LexComment` would misclassify this as a
+  // full-line comment.
+  auto& buffer = compile_helper_.GetTokenizedBuffer(
+      "var x: String = '''\n"
+      "           text\n"
+      "           '''; // trailing\n");
+  EXPECT_FALSE(buffer.has_errors());
+  ASSERT_THAT(buffer.comments_size(), Eq(1));
+  EXPECT_TRUE(buffer.IsTrailingComment(CommentIndex(0)));
 }
 
 TEST_F(LexerTest, DiagnosticWhitespace) {

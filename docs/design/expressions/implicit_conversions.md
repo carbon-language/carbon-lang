@@ -224,7 +224,7 @@ extends
 [the `As` interface used to implement `as` expressions](as_expressions.md#extensibility):
 
 ```
-interface ImplicitAs(Dest:! type) {
+interface ImplicitAs(Dest: type) {
   extend As(Dest);
   // Inherited from As(Dest):
   // fn Convert(self) -> Dest;

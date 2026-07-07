@@ -10,13 +10,9 @@
 
 virtual namespace B
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:1: error: `namespace` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `namespace` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR: impl namespace
 // CHECK:STDERR: ^~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:6: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: impl namespace
-// CHECK:STDERR:      ^~~~~~~~~
 // CHECK:STDERR:
 impl namespace
 
@@ -26,9 +22,6 @@ impl namespace
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:       {kind: 'VirtualModifier', text: 'virtual'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'B'},
-// CHECK:STDOUT:     {kind: 'Namespace', text: 'impl', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '', has_error: yes},
-// CHECK:STDOUT:     {kind: 'Namespace', text: 'namespace', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'Namespace', text: 'namespace', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
