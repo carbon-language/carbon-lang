@@ -570,9 +570,9 @@ class Context {
   // being checked so that they can be used by later constraints.
   llvm::SmallVector<WhereStackEntry> where_stack_;
 
-  // Impls that can not be used in impl lookup. This is used to prevent cycles
-  // where a lookup inside the impl decl should not be able to find the
-  // containing impl decl.
+  // Impls that cannot be used in impl lookup. This prevents cycles where a
+  // `LookupImplWitness` instruction inside the impl decl should not be able to
+  // find the containing impl decl.
   llvm::SmallVector<SemIR::ImplId> forbidden_impls_;
 
   // Declared return form for the in-progress function declaration, if any.
