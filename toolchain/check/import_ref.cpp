@@ -2950,10 +2950,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   auto operations =
       GetLocalInstBlockContents(resolver, import_observe.operations_id);
-  auto parent_scope_id =
-      GetLocalNameScopeId(resolver, import_observe.parent_scope_id);
-  auto parent_function_inst_id =
-      AddImportRef(resolver, import_observe.parent_function_inst_id);
+  auto operations_id = GetLocalCanonicalInstBlockId(
+      resolver, import_observe.operations_id, operations);
+  auto enclosing_scope_inst_id =
+      GetLocalConstantInstId(resolver, import_observe.enclosing_scope_inst_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -2963,10 +2963,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       AddPlaceholderImportedInst(resolver, import_inst_id, observe_decl);
   auto observe_id = resolver.local_observes().Add(
       {.decl_id = observe_decl_id,
-       .operations_id = GetLocalCanonicalInstBlockId(
-           resolver, import_observe.operations_id, operations),
-       .parent_scope_id = parent_scope_id,
-       .parent_function_inst_id = parent_function_inst_id});
+       .operations_id = operations_id,
+       .enclosing_scope_inst_id = enclosing_scope_inst_id});
   observe_decl.observe_id = observe_id;
   return ResolveResult::Done(
       ReplacePlaceholderImportedInst(resolver, observe_decl_id, observe_decl));

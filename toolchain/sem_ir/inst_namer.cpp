@@ -644,7 +644,21 @@ auto InstNamer::PushEntity(ObserveId observe_id, ScopeId /*scope_id*/,
   const auto& observe = sem_ir_->observes().Get(observe_id);
   LocId observe_loc(observe.decl_id);
 
-  auto scope_prefix = GetNameForParentNameScope(observe.parent_scope_id);
+  llvm::StringRef scope_prefix;
+  CARBON_KIND_SWITCH(sem_ir_->insts().Get(observe.enclosing_scope_inst_id)) {
+    case CARBON_KIND(SemIR::InterfaceWithSelfDecl interface): {
+      scope_prefix = MaybePushEntity(interface.interface_id);
+      break;
+    }
+    case CARBON_KIND(SemIR::FunctionDecl fn): {
+      scope_prefix = MaybePushEntity(fn.function_id);
+      break;
+    }
+    default: {
+      scope_prefix = "<unexpected scope>";
+      break;
+    }
+  }
 
   // TODO: Currently observe declarations in the same scope have the same name.
   // Generate unique names for them like we do when we are pushing
