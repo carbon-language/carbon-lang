@@ -44,6 +44,7 @@ fn M() {
   F(C);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_specific_in_class.carbon'
 // CHECK:STDOUT: source_filename = "call_specific_in_class.carbon"
 // CHECK:STDOUT:
@@ -324,3 +325,4 @@ fn M() {
 // CHECK:STDOUT: !112 = !DILocalVariable(arg: 1, scope: !110, type: !7)
 // CHECK:STDOUT: !113 = !DILocalVariable(arg: 2, scope: !110, type: !7)
 // CHECK:STDOUT: !114 = !DILocation(line: 19, column: 5, scope: !110)
+// CHECK:STDOUT:

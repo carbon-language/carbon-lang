@@ -18,6 +18,7 @@ fn Foo() {
   Run();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'no_return_from_run.carbon'
 // CHECK:STDOUT: source_filename = "no_return_from_run.carbon"
 // CHECK:STDOUT:
@@ -53,3 +54,4 @@ fn Foo() {
 // CHECK:STDOUT: !11 = !{null}
 // CHECK:STDOUT: !12 = !DILocation(line: 18, column: 3, scope: !9)
 // CHECK:STDOUT: !13 = !DILocation(line: 17, column: 1, scope: !9)
+// CHECK:STDOUT:

@@ -28,6 +28,7 @@ fn IntMin() -> i32 {
   return -0x8000_0000;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'int_literal.carbon'
 // CHECK:STDOUT: source_filename = "int_literal.carbon"
 // CHECK:STDOUT:
@@ -80,3 +81,4 @@ fn IntMin() -> i32 {
 // CHECK:STDOUT: !17 = !DILocation(line: 24, column: 3, scope: !16)
 // CHECK:STDOUT: !18 = distinct !DISubprogram(name: "IntMin", linkageName: "_CIntMin.Main", scope: null, file: !1, line: 27, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !19 = !DILocation(line: 28, column: 3, scope: !18)
+// CHECK:STDOUT:

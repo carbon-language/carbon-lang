@@ -58,6 +58,7 @@ fn Call(b: Cpp.B*) {
   b->f();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'convert.carbon'
 // CHECK:STDOUT: source_filename = "convert.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -112,6 +113,8 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: !23 = !DILocation(line: 13, column: 13, scope: !18)
 // CHECK:STDOUT: !24 = !DILocation(line: 13, column: 3, scope: !18)
 // CHECK:STDOUT: !25 = !DILocation(line: 12, column: 1, scope: !18)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'access_field.carbon'
 // CHECK:STDOUT: source_filename = "access_field.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -152,6 +155,8 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !11, type: !15)
 // CHECK:STDOUT: !18 = !DILocation(line: 7, column: 10, scope: !11)
 // CHECK:STDOUT: !19 = !DILocation(line: 7, column: 3, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_method.carbon'
 // CHECK:STDOUT: source_filename = "call_method.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -205,3 +210,4 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: !19 = !{!20, !20, i64 0}
 // CHECK:STDOUT: !20 = !{!"p1 _ZTS1A", !21, i64 0}
 // CHECK:STDOUT: !21 = !{!"any pointer", !9, i64 0}
+// CHECK:STDOUT:

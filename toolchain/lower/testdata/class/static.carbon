@@ -41,6 +41,7 @@ fn Run() -> i32 {
   return Cpp.F();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'static.carbon'
 // CHECK:STDOUT: source_filename = "static.carbon"
 // CHECK:STDOUT:
@@ -83,6 +84,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !11 = !DILocation(line: 4, column: 10, scope: !10)
 // CHECK:STDOUT: !12 = !DILocation(line: 5, column: 10, scope: !10)
 // CHECK:STDOUT: !13 = !DILocation(line: 0, scope: !10)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'static_export.carbon'
 // CHECK:STDOUT: source_filename = "static_export.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -166,3 +169,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !30 = !{null}
 // CHECK:STDOUT: !31 = !DILocation(line: 5, column: 10, scope: !28)
 // CHECK:STDOUT: !32 = !DILocation(line: 0, scope: !28)
+// CHECK:STDOUT:

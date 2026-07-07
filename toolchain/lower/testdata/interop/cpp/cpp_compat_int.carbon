@@ -38,6 +38,7 @@ fn DoubleULong64(ul64: Core.CppCompat.ULongLong64) -> u64 {
   return 2 * (ul64 as u64);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'primitives.carbon'
 // CHECK:STDOUT: source_filename = "primitives.carbon"
 // CHECK:STDOUT:
@@ -110,3 +111,4 @@ fn DoubleULong64(ul64: Core.CppCompat.ULongLong64) -> u64 {
 // CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !28, type: !31)
 // CHECK:STDOUT: !34 = !DILocation(line: 25, column: 10, scope: !28)
 // CHECK:STDOUT: !35 = !DILocation(line: 25, column: 3, scope: !28)
+// CHECK:STDOUT:

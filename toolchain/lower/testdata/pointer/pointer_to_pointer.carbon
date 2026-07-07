@@ -17,6 +17,7 @@ fn F(p: i32**) -> i32 {
   return **c;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'pointer_to_pointer.carbon'
 // CHECK:STDOUT: source_filename = "pointer_to_pointer.carbon"
 // CHECK:STDOUT:
@@ -70,3 +71,4 @@ fn F(p: i32**) -> i32 {
 // CHECK:STDOUT: !16 = !DILocation(line: 17, column: 11, scope: !4)
 // CHECK:STDOUT: !17 = !DILocation(line: 17, column: 10, scope: !4)
 // CHECK:STDOUT: !18 = !DILocation(line: 17, column: 3, scope: !4)
+// CHECK:STDOUT:

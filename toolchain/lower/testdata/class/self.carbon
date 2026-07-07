@@ -25,6 +25,7 @@ fn C.Set(ref self: C) {
   self.a = 1;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'self.carbon'
 // CHECK:STDOUT: source_filename = "self.carbon"
 // CHECK:STDOUT:
@@ -69,3 +70,4 @@ fn C.Set(ref self: C) {
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !13, type: !8)
 // CHECK:STDOUT: !18 = !DILocation(line: 25, column: 3, scope: !13)
 // CHECK:STDOUT: !19 = !DILocation(line: 24, column: 1, scope: !13)
+// CHECK:STDOUT:

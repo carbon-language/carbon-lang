@@ -44,6 +44,7 @@ fn M(ptr_i32: i32*, ptr_f64: f64*) {
   F(ptr_f64);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_different_specific.carbon'
 // CHECK:STDOUT: source_filename = "call_different_specific.carbon"
 // CHECK:STDOUT:
@@ -207,3 +208,4 @@ fn M(ptr_i32: i32*, ptr_f64: f64*) {
 // CHECK:STDOUT: !64 = !{!65}
 // CHECK:STDOUT: !65 = !DILocalVariable(arg: 1, scope: !63, type: !7)
 // CHECK:STDOUT: !66 = !DILocation(line: 30, column: 3, scope: !63)
+// CHECK:STDOUT:

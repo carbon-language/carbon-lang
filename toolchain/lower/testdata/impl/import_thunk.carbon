@@ -66,6 +66,7 @@ fn Test(a: A) -> C {
   return X.(I.F)(a);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'thunk.carbon'
 // CHECK:STDOUT: source_filename = "thunk.carbon"
 // CHECK:STDOUT:
@@ -193,6 +194,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !44 = !{!45}
 // CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !43, type: !7)
 // CHECK:STDOUT: !46 = !DILocation(line: 20, column: 3, scope: !43)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_thunk.carbon'
 // CHECK:STDOUT: source_filename = "call_thunk.carbon"
 // CHECK:STDOUT:
@@ -282,6 +285,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !27 = !{!28}
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !26, type: !7)
 // CHECK:STDOUT: !29 = !DILocation(line: 7, column: 10, scope: !26)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'thunk_for_imported_interface.carbon'
 // CHECK:STDOUT: source_filename = "thunk_for_imported_interface.carbon"
 // CHECK:STDOUT:
@@ -381,6 +386,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !32 = !{!33}
 // CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !31, type: !7)
 // CHECK:STDOUT: !34 = !DILocation(line: 9, column: 3, scope: !31)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_thunk_for_imported_interface.carbon'
 // CHECK:STDOUT: source_filename = "call_thunk_for_imported_interface.carbon"
 // CHECK:STDOUT:
@@ -470,3 +477,4 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !27 = !{!28}
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !26, type: !7)
 // CHECK:STDOUT: !29 = !DILocation(line: 8, column: 10, scope: !26)
+// CHECK:STDOUT:

@@ -24,6 +24,7 @@ fn Check(p: MakeUnformed(C*)) -> bool {
   return IsNull(p);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'pointer.carbon'
 // CHECK:STDOUT: source_filename = "pointer.carbon"
 // CHECK:STDOUT:
@@ -61,3 +62,4 @@ fn Check(p: MakeUnformed(C*)) -> bool {
 // CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !9, type: !7)
 // CHECK:STDOUT: !14 = !DILocation(line: 24, column: 10, scope: !9)
 // CHECK:STDOUT: !15 = !DILocation(line: 24, column: 3, scope: !9)
+// CHECK:STDOUT:

@@ -26,6 +26,7 @@ fn Call() -> i32 {
   return Cpp.g();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'foo.carbon'
 // CHECK:STDOUT: source_filename = "foo.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -78,3 +79,4 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !15 = !DILocation(line: 13, column: 10, scope: !11)
 // CHECK:STDOUT: !16 = !DILocation(line: 13, column: 3, scope: !11)
+// CHECK:STDOUT:

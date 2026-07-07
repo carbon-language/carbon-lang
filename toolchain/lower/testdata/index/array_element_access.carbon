@@ -20,6 +20,7 @@ fn Run() {
   var _: i32 = B()[1];
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'array_element_access.carbon'
 // CHECK:STDOUT: source_filename = "array_element_access.carbon"
 // CHECK:STDOUT:
@@ -164,3 +165,4 @@ fn Run() {
 // CHECK:STDOUT: !39 = !{!40}
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !38, type: !7)
 // CHECK:STDOUT: !41 = !DILocation(line: 17, column: 26, scope: !38)
+// CHECK:STDOUT:

@@ -18,6 +18,7 @@ fn G() -> i32 {
   return F((1, 2, 3), 1);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'function_param.carbon'
 // CHECK:STDOUT: source_filename = "function_param.carbon"
 // CHECK:STDOUT:
@@ -98,3 +99,4 @@ fn G() -> i32 {
 // CHECK:STDOUT: !29 = !{!30}
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !26, type: !8)
 // CHECK:STDOUT: !31 = !DILocation(line: 18, column: 12, scope: !26)
+// CHECK:STDOUT:

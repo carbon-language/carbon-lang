@@ -19,6 +19,7 @@ fn Main() {
   var _: () = Bar(Foo());
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'implicit_empty_tuple_as_arg.carbon'
 // CHECK:STDOUT: source_filename = "implicit_empty_tuple_as_arg.carbon"
 // CHECK:STDOUT:
@@ -73,3 +74,4 @@ fn Main() {
 // CHECK:STDOUT: !12 = !DILocation(line: 19, column: 19, scope: !10)
 // CHECK:STDOUT: !13 = !DILocation(line: 19, column: 15, scope: !10)
 // CHECK:STDOUT: !14 = !DILocation(line: 18, column: 1, scope: !10)
+// CHECK:STDOUT:

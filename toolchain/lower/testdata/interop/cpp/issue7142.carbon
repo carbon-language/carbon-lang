@@ -27,6 +27,7 @@ void f() {
 }
 ''';
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'issue7142.carbon'
 // CHECK:STDOUT: source_filename = "issue7142.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -144,3 +145,4 @@ void f() {
 // CHECK:STDOUT: !36 = !{!37}
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !35, type: !16)
 // CHECK:STDOUT: !38 = !DILocation(line: 15, column: 1, scope: !35)
+// CHECK:STDOUT:

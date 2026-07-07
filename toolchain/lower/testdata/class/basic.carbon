@@ -22,6 +22,7 @@ fn Run() {
   var _: C = F(c);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -100,3 +101,4 @@ fn Run() {
 // CHECK:STDOUT: !26 = !{!27}
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !21)
 // CHECK:STDOUT: !28 = !DILocation(line: 22, column: 3, scope: !25)
+// CHECK:STDOUT:

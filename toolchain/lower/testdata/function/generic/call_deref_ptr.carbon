@@ -40,6 +40,7 @@ fn M() {
   F(ptr_f64);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_deref_ptr.carbon'
 // CHECK:STDOUT: source_filename = "call_deref_ptr.carbon"
 // CHECK:STDOUT:
@@ -212,3 +213,4 @@ fn M() {
 // CHECK:STDOUT: !65 = !{!66}
 // CHECK:STDOUT: !66 = !DILocalVariable(arg: 1, scope: !64, type: !24)
 // CHECK:STDOUT: !67 = !DILocation(line: 23, column: 3, scope: !64)
+// CHECK:STDOUT:

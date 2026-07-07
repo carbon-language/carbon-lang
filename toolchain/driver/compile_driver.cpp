@@ -308,8 +308,10 @@ auto CompilationUnit::RunOptimize(
 auto CompilationUnit::PostLower() -> void {
   CARBON_CHECK(module_, "Must call RunLower first");
   if (options_->dump_llvm_ir && IncludeInDumps()) {
+    *driver_env_->output_stream << "; ---\n";
     module_->print(*driver_env_->output_stream, /*AAW=*/nullptr,
                    /*ShouldPreserveUseListOrder=*/true);
+    *driver_env_->output_stream << "\n";
   }
 }
 

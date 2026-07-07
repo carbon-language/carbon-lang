@@ -108,6 +108,7 @@ fn PassValueExpr(y: Cpp.Y) {
   Cpp.pass_struct(y);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_ints.carbon'
 // CHECK:STDOUT: source_filename = "import_ints.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -355,6 +356,8 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !75 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !1, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !76 = !DILocation(line: 14, column: 1, scope: !75)
 // CHECK:STDOUT: !77 = !DILocation(line: 0, scope: !75)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_struct.carbon'
 // CHECK:STDOUT: source_filename = "import_struct.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -474,6 +477,8 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !31 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !32 = !DILocation(line: 9, column: 28, scope: !30)
 // CHECK:STDOUT: !33 = !DILocation(line: 9, column: 21, scope: !30)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_class_with_nontrivial_copy.carbon'
 // CHECK:STDOUT: source_filename = "import_class_with_nontrivial_copy.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -581,3 +586,4 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !27, type: !30)
 // CHECK:STDOUT: !33 = !DILocation(line: 21, column: 3, scope: !27)
 // CHECK:STDOUT: !34 = !DILocation(line: 20, column: 1, scope: !27)
+// CHECK:STDOUT:

@@ -52,6 +52,7 @@ fn F(d: D(i32)) -> i32* {
   return d.(I.GetI)().GetC();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'a.carbon'
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
@@ -62,6 +63,8 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: !1 = !DIFile(filename: "a.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
@@ -72,6 +75,8 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: !1 = !DIFile(filename: "b.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'c.carbon'
 // CHECK:STDOUT: source_filename = "c.carbon"
 // CHECK:STDOUT:
@@ -82,6 +87,8 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: !1 = !DIFile(filename: "c.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'd.carbon'
 // CHECK:STDOUT: source_filename = "d.carbon"
 // CHECK:STDOUT:
@@ -161,3 +168,4 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: !27 = !DILocation(line: 5, column: 5, scope: !23)
 // CHECK:STDOUT: !28 = !DILocation(line: 6, column: 12, scope: !23)
 // CHECK:STDOUT: !29 = !DILocation(line: 6, column: 5, scope: !23)
+// CHECK:STDOUT:

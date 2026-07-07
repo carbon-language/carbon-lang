@@ -23,6 +23,7 @@ fn IfEq(a: Bool(), b: Bool()) -> Bool() {
   return false;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'bool.carbon'
 // CHECK:STDOUT: source_filename = "bool.carbon"
 // CHECK:STDOUT:
@@ -85,3 +86,4 @@ fn IfEq(a: Bool(), b: Bool()) -> Bool() {
 // CHECK:STDOUT: !24 = !DILocation(line: 22, column: 6, scope: !19)
 // CHECK:STDOUT: !25 = !DILocation(line: 22, column: 19, scope: !19)
 // CHECK:STDOUT: !26 = !DILocation(line: 23, column: 3, scope: !19)
+// CHECK:STDOUT:

@@ -56,6 +56,7 @@ fn M() {
   A(ptr_f64, 0);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_diamond.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_diamond.carbon"
 // CHECK:STDOUT:
@@ -401,3 +402,4 @@ fn M() {
 // CHECK:STDOUT: !137 = !DILocation(line: 44, column: 15, scope: !133)
 // CHECK:STDOUT: !138 = !DILocation(line: 44, column: 10, scope: !133)
 // CHECK:STDOUT: !139 = !DILocation(line: 44, column: 3, scope: !133)
+// CHECK:STDOUT:

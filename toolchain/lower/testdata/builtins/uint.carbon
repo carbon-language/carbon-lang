@@ -64,6 +64,7 @@ fn TestGreater(a: u64, b: u64) -> bool { return Greater(a, b); }
 fn GreaterEq(a: u64, b: u64) -> bool = "int.greater_eq";
 fn TestGreaterEq(a: u64, b: u64) -> bool { return GreaterEq(a, b); }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'uint.carbon'
 // CHECK:STDOUT: source_filename = "uint.carbon"
 // CHECK:STDOUT:
@@ -316,3 +317,4 @@ fn TestGreaterEq(a: u64, b: u64) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT: !115 = !DILocalVariable(arg: 2, scope: !112, type: !7)
 // CHECK:STDOUT: !116 = !DILocation(line: 65, column: 51, scope: !112)
 // CHECK:STDOUT: !117 = !DILocation(line: 65, column: 44, scope: !112)
+// CHECK:STDOUT:

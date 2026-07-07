@@ -16,6 +16,7 @@ fn AddMethod(self: i32, b: i32) -> i32 = "int.sadd";
 fn TestAddNonmethod(a: i32, b: i32) -> i32 { return AddNonmethod(a, b); }
 fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'method_vs_nonmethod.carbon'
 // CHECK:STDOUT: source_filename = "method_vs_nonmethod.carbon"
 // CHECK:STDOUT:
@@ -57,3 +58,4 @@ fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
 // CHECK:STDOUT: !16 = !DILocalVariable(arg: 2, scope: !13, type: !7)
 // CHECK:STDOUT: !17 = !DILocation(line: 17, column: 50, scope: !13)
 // CHECK:STDOUT: !18 = !DILocation(line: 17, column: 43, scope: !13)
+// CHECK:STDOUT:

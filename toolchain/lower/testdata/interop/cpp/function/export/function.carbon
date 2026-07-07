@@ -62,6 +62,7 @@ inline void G2() {
 
 fn H() { Cpp.G2(); }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'other.carbon'
 // CHECK:STDOUT: source_filename = "other.carbon"
 // CHECK:STDOUT:
@@ -130,6 +131,8 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: !27 = !DISubroutineType(types: !28)
 // CHECK:STDOUT: !28 = !{!18}
 // CHECK:STDOUT: !29 = !DILocation(line: 13, column: 3, scope: !26)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'function.carbon'
 // CHECK:STDOUT: source_filename = "function.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -290,6 +293,8 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: !39 = !{!40}
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !38, type: !30)
 // CHECK:STDOUT: !41 = !DILocation(line: 12, column: 1, scope: !38)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'single_file.carbon'
 // CHECK:STDOUT: source_filename = "single_file.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -368,3 +373,4 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: !17 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !1, line: 20, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !18 = !DILocation(line: 20, column: 10, scope: !17)
 // CHECK:STDOUT: !19 = !DILocation(line: 20, column: 1, scope: !17)
+// CHECK:STDOUT:

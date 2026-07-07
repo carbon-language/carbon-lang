@@ -16,6 +16,7 @@ fn test_a() -> i32 {
 
 var a: i32 = test_a();
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'simple_with_fun.carbon'
 // CHECK:STDOUT: source_filename = "simple_with_fun.carbon"
 // CHECK:STDOUT:
@@ -56,3 +57,4 @@ var a: i32 = test_a();
 // CHECK:STDOUT: !12 = !DILocation(line: 17, column: 14, scope: !9)
 // CHECK:STDOUT: !13 = !DILocation(line: 17, column: 1, scope: !9)
 // CHECK:STDOUT: !14 = !DILocation(line: 0, scope: !9)
+// CHECK:STDOUT:

@@ -27,6 +27,7 @@ fn Main() {
   }
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'print_read.carbon'
 // CHECK:STDOUT: source_filename = "print_read.carbon"
 // CHECK:STDOUT:
@@ -89,3 +90,4 @@ fn Main() {
 // CHECK:STDOUT: !13 = !DILocation(line: 24, column: 5, scope: !4)
 // CHECK:STDOUT: !14 = !DILocation(line: 22, column: 3, scope: !4)
 // CHECK:STDOUT: !15 = !DILocation(line: 18, column: 1, scope: !4)
+// CHECK:STDOUT:

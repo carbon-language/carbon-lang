@@ -30,6 +30,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_class_template.carbon'
 // CHECK:STDOUT: source_filename = "use_class_template.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -75,3 +76,4 @@ fn F() {
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 8, column: 3, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 6, column: 1, scope: !11)
+// CHECK:STDOUT:

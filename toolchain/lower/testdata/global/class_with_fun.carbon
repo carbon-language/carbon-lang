@@ -17,6 +17,7 @@ fn ret_a() -> A {
 
 var a: A = {};
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'class_with_fun.carbon'
 // CHECK:STDOUT: source_filename = "class_with_fun.carbon"
 // CHECK:STDOUT:
@@ -61,3 +62,4 @@ var a: A = {};
 // CHECK:STDOUT: !11 = !{null}
 // CHECK:STDOUT: !12 = !DILocation(line: 18, column: 1, scope: !9)
 // CHECK:STDOUT: !13 = !DILocation(line: 0, scope: !9)
+// CHECK:STDOUT:

@@ -48,6 +48,7 @@ fn W() -> i32 { return w; }
 fn Y() -> i32 { return y; }
 fn Z() -> i32 { return z; }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'simple.carbon'
 // CHECK:STDOUT: source_filename = "simple.carbon"
 // CHECK:STDOUT:
@@ -75,6 +76,8 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 4, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 0, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_simple.carbon'
 // CHECK:STDOUT: source_filename = "import_simple.carbon"
 // CHECK:STDOUT:
@@ -102,6 +105,8 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !8 = !DILocation(line: 7, column: 10, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 7, column: 3, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'tuple_pattern.carbon'
 // CHECK:STDOUT: source_filename = "tuple_pattern.carbon"
 // CHECK:STDOUT:
@@ -144,6 +149,8 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: !8 = !DILocation(line: 6, column: 14, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 8, column: 1, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 0, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_tuple_pattern.carbon'
 // CHECK:STDOUT: source_filename = "import_tuple_pattern.carbon"
 // CHECK:STDOUT:
@@ -206,3 +213,4 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: !16 = distinct !DISubprogram(name: "Z", linkageName: "_CZ.Main", scope: null, file: !1, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !17 = !DILocation(line: 10, column: 24, scope: !16)
 // CHECK:STDOUT: !18 = !DILocation(line: 10, column: 17, scope: !16)
+// CHECK:STDOUT:

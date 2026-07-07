@@ -14,6 +14,7 @@ fn Main() {
   return;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'no_value.carbon'
 // CHECK:STDOUT: source_filename = "no_value.carbon"
 // CHECK:STDOUT:
@@ -36,3 +37,4 @@ fn Main() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT:

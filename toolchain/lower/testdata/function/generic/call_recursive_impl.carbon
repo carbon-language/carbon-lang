@@ -41,6 +41,7 @@ fn Run() {
   G(Y, 0);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_impl.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_impl.carbon"
 // CHECK:STDOUT:
@@ -151,3 +152,4 @@ fn Run() {
 // CHECK:STDOUT: !38 = !DILocation(line: 36, column: 15, scope: !31)
 // CHECK:STDOUT: !39 = !DILocation(line: 36, column: 10, scope: !31)
 // CHECK:STDOUT: !40 = !DILocation(line: 36, column: 3, scope: !31)
+// CHECK:STDOUT:
