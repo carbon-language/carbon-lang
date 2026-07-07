@@ -29,13 +29,9 @@ class A {
 
   base: { }
   // We should resume parsing here after the previous error.
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+8]]:3: error: `base` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:3: error: `base` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:   var n: i32;
   // CHECK:STDERR:   ^~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:7: error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:   var n: i32;
-  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   var n: i32;
 }
@@ -68,10 +64,8 @@ class B {
 // CHECK:STDOUT:         {kind: 'BaseColon', text: ':'},
 // CHECK:STDOUT:           {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'BaseDecl', text: 'var', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'InvalidParseStart', text: 'n', has_error: yes},
-// CHECK:STDOUT:       {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 19},
+// CHECK:STDOUT:       {kind: 'BaseDecl', text: ';', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 17},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:         {kind: 'BaseModifier', text: 'base'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},

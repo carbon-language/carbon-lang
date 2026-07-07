@@ -250,12 +250,11 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
                .facet_value_inst_id = replacement_self_inst_id}));
     }
 
-    auto period_self_facet_type =
-        context().types().GetAs<SemIR::FacetType>(period_self_type_id);
     auto identified_period_self_type_id = RequireIdentifiedFacetType(
         context(), loc_id_,
         context().constant_values().Get(replacement_self_inst_id),
-        period_self_facet_type, [&](auto& /*builder*/) {
+        context().types().GetTypeInstId(period_self_type_id),
+        [&](auto& /*builder*/) {
           // Given `I where .Self == ()`, the type of `.Self` is `I` and we're
           // replacing `.Self` with some `T` that must also implement `I`.
           // However `I` can be a generic with arbitrary complexity and the
@@ -404,7 +403,7 @@ auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
 }
 
 auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
-                                SemIR::TypeInstId self_type_inst_id,
+                                SemIR::InstId self_inst_id,
                                 SemIR::TypeInstId facet_type_inst_id)
     -> SemIR::TypeInstId {
   auto canon_facet_type_inst_id =
@@ -413,8 +412,7 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::TypeInstId;
   }
 
-  auto period_self_replacement_id =
-      context.constant_values().Get(self_type_inst_id);
+  auto period_self_replacement_id = context.constant_values().Get(self_inst_id);
 
   auto orig_facet_type =
       context.insts().GetAs<SemIR::FacetType>(canon_facet_type_inst_id);

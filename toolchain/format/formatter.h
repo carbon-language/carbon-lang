@@ -26,7 +26,10 @@ namespace Carbon::Format {
 class Formatter {
  public:
   explicit Formatter(const Lex::TokenizedBuffer* tokens, llvm::raw_ostream* out)
-      : tokens_(tokens), out_(out) {}
+      : tokens_(tokens),
+        out_(out),
+        next_comment_(tokens->comments().begin()),
+        comments_end_(tokens->comments().end()) {}
 
   // See class comments.
   auto Run() -> bool;
@@ -42,11 +45,25 @@ class Formatter {
     // The current line has content, and will need a separator, typically a
     // single space or newline.
     NeedsSeparator,
+    // The current line has content and is complete; a newline is pending but
+    // has not yet been emitted. We defer the newline so that a trailing comment
+    // can still be attached to this line before it is broken. The newline is
+    // materialized by the next content emitted (see `PrepareForPackedContent`)
+    // or when the file ends.
+    EndOfLine,
   };
 
-  // Ensure output is on an empty line, setting line_state_ to Empty. May output
-  // a newline, dependent on line state. Does not indent, allowing blank lines.
+  // Marks the current line as complete, so the next content starts a new line.
+  // The newline is deferred rather than emitted immediately, allowing a
+  // trailing comment to be attached first. Does not indent, allowing blank
+  // lines.
   auto RequireEmptyLine() -> void;
+
+  // Emits the comment at `next_comment_` and advances past it. A trailing
+  // comment is kept on the current line (separated by a space) when there is
+  // still content to attach it to; otherwise the comment is emitted on its own
+  // line.
+  auto EmitComment() -> void;
 
   // Ensures there is a separator before adding new content. May do
   // `PrepareForPackedContent` or output a separator space, dependent on line
@@ -70,6 +87,10 @@ class Formatter {
 
   // The output stream for formatted content.
   llvm::raw_ostream* out_;
+
+  // The next comment to emit, and one past the last comment.
+  Lex::CommentIterator next_comment_;
+  Lex::CommentIterator comments_end_;
 
   // The state of the line currently written to output.
   LineState line_state_ = LineState::Empty;

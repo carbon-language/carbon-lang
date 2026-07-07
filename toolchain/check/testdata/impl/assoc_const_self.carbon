@@ -789,14 +789,15 @@ fn CallF() {
 // CHECK:STDOUT:   %ImplicitAs.type.418: type = facet_type <@ImplicitAs, @ImplicitAs(%.Self.as_type)> [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness.78b: <witness> = lookup_impl_witness %.Self, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.e15: %.Self.as_type = impl_witness_access %I.lookup_impl_witness.78b, element0 [symbolic_self]
-// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %empty_struct_type impls @ImplicitAs, @ImplicitAs(%.Self.as_type) and %impl.elem0.e15 = %empty_struct> [concrete]
-// CHECK:STDOUT:   %pattern_type.692: type = pattern_type %I_where.type [concrete]
+// CHECK:STDOUT:   %I_where.type.14de72.1: type = facet_type <@I where %empty_struct_type impls @ImplicitAs, @ImplicitAs(%.Self.as_type) and %impl.elem0.e15 = %empty_struct> [concrete]
+// CHECK:STDOUT:   %pattern_type.692: type = pattern_type %I_where.type.14de72.1 [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.692 = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %T: %I_where.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T: %I_where.type.14de72.1 = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CallF.type: type = fn_type @CallF [concrete]
 // CHECK:STDOUT:   %CallF: %CallF.type = struct_value () [concrete]
+// CHECK:STDOUT:   %I_where.type.14de72.2: type = facet_type <@I where %empty_struct_type impls @ImplicitAs, @ImplicitAs(%empty_struct_type) and %impl.elem0.e15 = %empty_struct> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -820,7 +821,7 @@ fn CallF() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc8_7.1: %pattern_type.692 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8_12.1: type = splice_block %.loc8_12.2 [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:     %.loc8_12.1: type = splice_block %.loc8_12.2 [concrete = constants.%I_where.type.14de72.1] {
 // CHECK:STDOUT:       %.Self.frozen.loc8_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.Self.frozen.loc8_12: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.3a0]
@@ -847,13 +848,13 @@ fn CallF() {
 // CHECK:STDOUT:       %impls.loc8_21.2 = requirement_impls %.loc8_19.2, %ImplicitAs.type.loc8_48.2 [concrete]
 // CHECK:STDOUT:       %impl.elem0.loc8_54.2: %.Self.as_type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.e15]
 // CHECK:STDOUT:       %rewrite.loc8_57.2 = requirement_rewrite %impl.elem0.loc8_54.2, %.loc8_60.2 [concrete]
-// CHECK:STDOUT:       %.loc8_12.2: type = where_expr [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       %.loc8_12.2: type = where_expr [concrete = constants.%I_where.type.14de72.1] {
 // CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %I.ref [concrete]
 // CHECK:STDOUT:         %impls.loc8_21.2 = requirement_impls %.loc8_19.2, %ImplicitAs.type.loc8_48.2 [concrete]
 // CHECK:STDOUT:         %rewrite.loc8_57.2 = requirement_rewrite %impl.elem0.loc8_54.2, %.loc8_60.2 [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc8_7.2: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc8_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_7.2: %I_where.type.14de72.1 = symbolic_binding T, 0 [symbolic = %T.loc8_7.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallF.decl: %CallF.type = fn_decl @CallF [concrete = constants.%CallF] {} {}
 // CHECK:STDOUT: }
@@ -875,9 +876,9 @@ fn CallF() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc8_7.2: %I_where.type) {
+// CHECK:STDOUT: generic fn @F(%T.loc8_7.2: %I_where.type.14de72.1) {
 // CHECK:STDOUT:   %T.patt.loc8_7.2: %pattern_type.692 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_7.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc8_7.1: %I_where.type = symbolic_binding T, 0 [symbolic = %T.loc8_7.1 (constants.%T)]
+// CHECK:STDOUT:   %T.loc8_7.1: %I_where.type.14de72.1 = symbolic_binding T, 0 [symbolic = %T.loc8_7.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -886,6 +887,7 @@ fn CallF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc19: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where constants.%empty_struct_type impls @ImplicitAs, @ImplicitAs(constants.%empty_struct_type) and constants.%impl.elem0.e15 = constants.%empty_struct> [concrete = constants.%I_where.type.14de72.2]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

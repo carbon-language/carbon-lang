@@ -68,9 +68,18 @@ struct CommentData {
   // buffer provided.
   int32_t start;
 
-  // The comment's length.
-  int32_t length;
+  // The comment's length, in the low 31 bits. The high bit is stolen for
+  // `is_trailing` below to keep `CommentData` at 8 bytes. A byte length is
+  // non-negative and the source size is required to be less than `INT32_MAX`
+  // (see `Lex`), so the length always fits in 31 bits.
+  uint32_t length : 31;
+
+  // Whether this is a _trailing_ comment: one that follows other content on its
+  // line, rather than being the only non-whitespace on the line. Trailing
+  // comments are never coalesced with adjacent comments.
+  uint32_t is_trailing : 1;
 };
+static_assert(sizeof(CommentData) == 8, "CommentData should pack to 8 bytes");
 
 // Indices for `CommentData` within the buffer.
 struct CommentIndex : public IndexBase<CommentIndex> {
@@ -195,6 +204,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Returns the comment's full text range.
   auto GetCommentText(CommentIndex comment_index) const -> llvm::StringRef;
+
+  // Returns whether the comment is a trailing comment: one that follows other
+  // content on its line.
+  auto IsTrailingComment(CommentIndex comment_index) const -> bool;
 
   // Returns tokens as YAML. This prints the tracked token information on a
   // single line for each token. We use the single-line format so that output is
@@ -335,9 +348,12 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto PrintToken(llvm::raw_ostream& output_stream, TokenIndex token,
                   PrintWidths widths) const -> void;
 
-  // Adds a comment. This uses the indent to potentially stitch together two
-  // adjacent comments.
-  auto AddComment(int32_t indent, int32_t start, int32_t end) -> void;
+  // Adds a comment. For full-line comments (`is_trailing` is false), this uses
+  // the indent to potentially stitch together two adjacent comments into a
+  // single block. Trailing comments are never stitched, either onto a preceding
+  // comment or as the target of a following one.
+  auto AddComment(int32_t indent, int32_t start, int32_t end, bool is_trailing)
+      -> void;
 
   // Used to allocate computed string literals.
   llvm::BumpPtrAllocator allocator_;

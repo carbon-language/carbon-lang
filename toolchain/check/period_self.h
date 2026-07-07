@@ -74,7 +74,7 @@ auto SubstPeriodSelf(
 // instruction is added for the output FacetType if anything does get replaced,
 // and the original instruction id is preserved otherwise.
 auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
-                                SemIR::TypeInstId self_type_inst_id,
+                                SemIR::InstId self_inst_id,
                                 SemIR::TypeInstId facet_type_inst_id)
     -> SemIR::TypeInstId;
 

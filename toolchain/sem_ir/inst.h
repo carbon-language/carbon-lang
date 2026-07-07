@@ -485,6 +485,10 @@ class InstStore {
     return Get(inst_id).As<InstT>();
   }
 
+  // Use `Get()` when the instruction type is known.
+  template <typename InstT, typename KnownInstT>
+  auto GetAs(KnownInstId<KnownInstT> inst_id) const = delete;
+
   // Returns the requested instruction as the specified type, if it is of that
   // type.
   template <typename InstT>
