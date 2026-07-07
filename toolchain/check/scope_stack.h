@@ -118,13 +118,18 @@ class ScopeStack {
            !return_scope_stack_.back().nested_scope_index.has_value();
   }
 
-  // Swaps over the top two scopes in a `for` statement. Given:
+  // Merges the innermost scope into its grandparent scope, and pops the
+  // now-empty scope. This is used when handling a `for` statement. Given:
   //
   //   for (var a: i32 in MakeTempRange()) {
   //
   // we have an outer scope containing `var a: i32` and an inner scope
-  // containing `MakeTempRange()`, and we want them the other way around.
-  auto SwapTopTwoScopesInForStmt() -> void;
+  // containing `MakeTempRange()`, and we want them the other way around, so we
+  // create an extra enclosing scope in advance and merge the inner scope into
+  // it.
+  //
+  // Requires that no names were introduced in the innermost scope.
+  auto MergeTopScopeIntoGrandparentAndPop() -> void;
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.

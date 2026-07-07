@@ -195,22 +195,18 @@ auto ScopeStack::PopTo(ScopeIndex index, bool check_unused) -> void {
                PeekIndex());
 }
 
-auto ScopeStack::SwapTopTwoScopesInForStmt() -> void {
-  CARBON_CHECK(scope_stack_.size() >= 2);
-  auto& outer = scope_stack_[scope_stack_.size() - 2];
-  auto& inner = scope_stack_[scope_stack_.size() - 1];
+auto ScopeStack::MergeTopScopeIntoGrandparentAndPop() -> void {
+  CARBON_CHECK(scope_stack_.size() >= 3);
+  auto& grandparent = scope_stack_[scope_stack_.size() - 3];
+  auto& parent = scope_stack_[scope_stack_.size() - 2];
+  auto& current = scope_stack_[scope_stack_.size() - 1];
 
-  // Swap the scope indexes so that references to them (such as from lexical
-  // lookup results) remain stable. This means that we have an outer scope whose
-  // index is less than that of an inner scope, which would break PopTo, but we
-  // don't PopTo past a `for` scope.
-  // TODO: This is a hack. Consider rewriting the lexical lookups table instead.
-  std::swap(outer.index, inner.index);
-  std::swap(outer.num_names, inner.num_names);
-  std::swap(outer.names, inner.names);
+  CARBON_CHECK(current.num_names == 0);
+  CARBON_CHECK(grandparent.has_destroy_array && parent.has_destroy_array &&
+               current.has_destroy_array);
+  destroy_id_stack_.MergeTopArrayIntoGrandparent();
 
-  CARBON_CHECK(outer.has_destroy_array && inner.has_destroy_array);
-  destroy_id_stack_.SwapTopTwoArrays();
+  Pop();
 }
 
 auto ScopeStack::MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id,

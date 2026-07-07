@@ -86,14 +86,16 @@ class ArrayStack {
     llvm::append_range(values_, values);
   }
 
-  // Swaps over the top two arrays on the stack.
-  auto SwapTopTwoArrays() -> void {
-    CARBON_CHECK(array_offsets_.size() >= 2);
+  // Merges the top array into the the array two before it, leaving the top
+  // array empty.
+  auto MergeTopArrayIntoGrandparent() -> void {
+    CARBON_CHECK(array_offsets_.size() >= 3);
     auto new_mid =
         std::rotate(values_.begin() + array_offsets_[array_offsets_.size() - 2],
                     values_.begin() + array_offsets_[array_offsets_.size() - 1],
                     values_.end());
-    array_offsets_[array_offsets_.size() - 1] = new_mid - values_.begin();
+    array_offsets_[array_offsets_.size() - 2] = new_mid - values_.begin();
+    array_offsets_[array_offsets_.size() - 1] = values_.size();
   }
 
   // Returns the current number of values in all arrays.

@@ -119,7 +119,10 @@ auto HandleParseNode(Context& context, Parse::WhileStatementId node_id)
 
 auto HandleParseNode(Context& context, Parse::ForHeaderStartId node_id)
     -> bool {
-  // Create a scope to hold names in the pattern.
+  // Create a scope for the range and cursor of the for loop.
+  context.scope_stack().PushForSameRegion();
+
+  // Create a scope for any variables introduced in the pattern.
   context.scope_stack().PushForSameRegion();
 
   // Begin an implicit let declaration context for the pattern.
@@ -140,8 +143,8 @@ auto HandleParseNode(Context& context, Parse::ForInId node_id) -> bool {
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
   context.full_pattern_stack().StartPatternInitializer();
 
-  // Create a new scope to hold the range expression and the cursor. This comes
-  // before the pattern in control flow order, but we'll reorder temporary
+  // Create a temporary scope to hold the range expression and the cursor. This
+  // comes before the pattern in control flow order, but we'll reorder temporary
   // destruction later.
   context.scope_stack().PushForSameRegion();
   return true;
@@ -196,11 +199,13 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
       {.lhs_id = init_result.storage_id, .rhs_id = init_result.init_id});
   cursor_var_id = init_result.storage_id;
 
-  // Now we're finished with the loop initialization, swap over the top two
-  // scopes. The outer scope currently contains the loop variables, whereas the
-  // inner one contains the range, and that's backwards from a control flow and
-  // destruction order perspective.
-  context.scope_stack().SwapTopTwoScopesInForStmt();
+  // Now we're finished with the loop initialization, merge the scope containing
+  // the range expression into its grandparent scope. The parent scope currently
+  // contains the loop variables, whereas the current scope contains the range,
+  // and that's backwards from a control flow and destruction order perspective.
+  // We created the grandparent scope for this purpose when handling the
+  // ForHeaderStart node.
+  context.scope_stack().MergeTopScopeIntoGrandparentAndPop();
 
   // Start emitting the loop header block.
   auto loop_header_id = StartLoopHeader(context, start_node_id);
