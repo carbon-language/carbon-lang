@@ -75,7 +75,7 @@ The common type of two types `T` and `U` is `(T as CommonType(U)).Result`, where
 defined as follows:
 
 ```
-constraint CommonType(U:! CommonTypeWith(Self)) {
+constraint CommonType(U: CommonTypeWith(Self)) {
   extend CommonTypeWith(U) where .Result == U.Result;
 }
 ```
@@ -87,8 +87,8 @@ The interface `CommonTypeWith` is used to customize the behavior of
 `CommonType`:
 
 ```
-interface CommonTypeWith(U:! type) {
-  let Result:! type
+interface CommonTypeWith(U: type) {
+  let Result: type
     where Self impls ImplicitAs(.Self) and
           U impls ImplicitAs(.Self);
 }
@@ -120,15 +120,15 @@ The interface `SymmetricCommonTypeWith` is an implementation detail of the
 `CommonType` constraint. It is defined and implemented as follows:
 
 ```
-interface SymmetricCommonTypeWith(U:! type) {
-  let Result:! type
+interface SymmetricCommonTypeWith(U: type) {
+  let Result: type
     where Self impls ImplicitAs(.Self) and
           U impls ImplicitAs(.Self);
 }
 match_first {
-  impl forall [T:! type, U:! CommonTypeWith(T)]
+  impl forall [T: type, U: CommonTypeWith(T)]
       T as SymmetricCommonTypeWith(U) where .Result = U.Result {}
-  impl forall [U:! type, T:! CommonTypeWith(U)]
+  impl forall [U: type, T: CommonTypeWith(U)]
       T as SymmetricCommonTypeWith(U) where .Result = T.Result {}
 }
 ```
@@ -139,7 +139,7 @@ declarations above are used. The `CommonType` constraint is then defined as
 follows:
 
 ```
-constraint CommonType(U:! SymmetricCommonTypeWith(Self)) {
+constraint CommonType(U: SymmetricCommonTypeWith(Self)) {
   extend SymmetricCommonTypeWith(U) where .Result == U.Result;
 }
 ```
@@ -153,10 +153,10 @@ the `CommonType` constraint is not met. For example, given:
 
 ```
 // Implementation #1
-impl forall [T:! type] MyX as CommonTypeWith(T) where .Result = MyX {}
+impl forall [T: type] MyX as CommonTypeWith(T) where .Result = MyX {}
 
 // Implementation #2
-impl forall [T:! type] MyY as CommonTypeWith(T) where .Result = MyY {}
+impl forall [T: type] MyY as CommonTypeWith(T) where .Result = MyY {}
 ```
 
 `MyX as CommonTypeWith(MyY)` will select #1, and `MyY as CommonTypeWith(MyX)`
@@ -168,7 +168,7 @@ because result types differ.
 If `T` is the same type as `U`, the result is that type:
 
 ```
-final impl forall [T:! type] T as CommonTypeWith(T) where .Result = T {}
+final impl forall [T: type] T as CommonTypeWith(T) where .Result = T {}
 ```
 
 _Note:_ This rule is intended to be considered more specialized than the other
@@ -179,7 +179,7 @@ assumed to be `T`, even in contexts where `T` involves a symbolic binding and so
 the result would normally be an unknown type whose facet type is `type`.
 
 ```
-fn F[T:! Hashable](c: bool, x: T, y: T) -> HashCode {
+fn F[T: Hashable](c: bool, x: T, y: T) -> HashCode {
   // OK, type of `if` expression is `T`.
   return (if c then x else y).Hash();
 }
@@ -190,7 +190,7 @@ fn F[T:! Hashable](c: bool, x: T, y: T) -> HashCode {
 If `T` implicitly converts to `U`, the common type is `U`:
 
 ```
-impl forall [T:! type, U:! ImplicitAs(T)]
+impl forall [T: type, U: ImplicitAs(T)]
     T as CommonTypeWith(U) where .Result = T {}
 ```
 

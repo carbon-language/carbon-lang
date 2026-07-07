@@ -69,6 +69,7 @@ The following words are interpreted as keywords:
 -   `for`
 -   `forall`
 -   `friend`
+-   `generic`
 -   `if`
 -   `impl`
 -   `impls`
@@ -92,6 +93,7 @@ The following words are interpreted as keywords:
 -   `require`
 -   `return`
 -   `returned`
+-   `runtime`
 -   `Self`
 -   `self`
 -   `template`

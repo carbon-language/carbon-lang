@@ -96,7 +96,6 @@ source file:
 | `,`             | Separate tuple and struct elements                                                                           |
 | `.`             | Member access                                                                                                |
 | `:`             | Name binding patterns                                                                                        |
-| `:!`            | Compile-time binding patterns                                                                                |
 | `;`             | Statement separator                                                                                          |
 
 ## Alternatives considered
