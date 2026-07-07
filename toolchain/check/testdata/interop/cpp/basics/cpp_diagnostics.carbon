@@ -303,17 +303,19 @@ import Cpp library "indirect_warning.h";
 
 // --- fail_import_cpp_library_lexer_error.carbon
 
-library "[[@TEST_NAME]]";  // Trailing comment
+library "[[@TEST_NAME]]";
 
-// TODO: Move this warning to be after the lexer trailing comment error.
+//!Lexer error: whitespace is required after the comment introducer.
+
+// TODO: Move this warning to be after the lexer error.
 // CHECK:STDERR: fail_import_cpp_library_lexer_error.carbon:[[@LINE+9]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1" [CppInteropParseWarning]
 // CHECK:STDERR:     2 | #warning "warning1"
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_library_lexer_error.carbon:[[@LINE-8]]:44: error: trailing comments are not permitted [TrailingComment]
-// CHECK:STDERR: library "import_cpp_library_lexer_error";  // Trailing comment
-// CHECK:STDERR:                                            ^
+// CHECK:STDERR: fail_import_cpp_library_lexer_error.carbon:[[@LINE-8]]:3: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
+// CHECK:STDERR: //!Lexer error: whitespace is required after the comment introducer.
+// CHECK:STDERR:   ^
 // CHECK:STDERR:
 import Cpp library "one_warning.h";
 

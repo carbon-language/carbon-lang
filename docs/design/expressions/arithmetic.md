@@ -219,15 +219,15 @@ following family of interfaces:
 ```
 // Unary `-`.
 interface Negate {
-  default let Result:! type = Self;
+  default let Result: type = Self;
   fn Op(self) -> Result;
 }
 ```
 
 ```
 // Binary `+`.
-interface AddWith(U:! type) {
-  default let Result:! type = Self;
+interface AddWith(U: type) {
+  default let Result: type = Self;
   fn Op(self, other: U) -> Result;
 }
 constraint Add {
@@ -237,8 +237,8 @@ constraint Add {
 
 ```
 // Binary `-`.
-interface SubWith(U:! type) {
-  default let Result:! type = Self;
+interface SubWith(U: type) {
+  default let Result: type = Self;
   fn Op(self, other: U) -> Result;
 }
 constraint Sub {
@@ -248,8 +248,8 @@ constraint Sub {
 
 ```
 // Binary `*`.
-interface MulWith(U:! type) {
-  default let Result:! type = Self;
+interface MulWith(U: type) {
+  default let Result: type = Self;
   fn Op(self, other: U) -> Result;
 }
 constraint Mul {
@@ -259,8 +259,8 @@ constraint Mul {
 
 ```
 // Binary `/`.
-interface DivWith(U:! type) {
-  default let Result:! type = Self;
+interface DivWith(U: type) {
+  default let Result: type = Self;
   fn Op(self, other: U) -> Result;
 }
 constraint Div {
@@ -270,8 +270,8 @@ constraint Div {
 
 ```
 // Binary `%`.
-interface ModWith(U:! type) {
-  default let Result:! type = Self;
+interface ModWith(U: type) {
+  default let Result: type = Self;
   fn Op(self, other: U) -> Result;
 }
 constraint Mod {
