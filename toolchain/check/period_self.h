@@ -94,6 +94,14 @@ auto IsPeriodSelf(Context& context, SemIR::InstId inst_id,
 // This supports substitution in a canonical or non-canonical instruction.
 auto ThawPeriodSelf(Context& context, SemIR::InstId inst_id) -> SemIR::InstId;
 
+// Find all `.Self` with their frozen flag unset in the EntityName and replace
+// them with a new `.Self` where the frozen flag is enabled. The frozen flag
+// prevents substiting `.Self` while inside the construction of a facet type,
+// but this is used to enable comparison between the instructions and other
+// frozen instructions inside the construction of a facet type.
+auto FreezePeriodSelf(Context& context, SemIR::ConstantId const_id)
+    -> SemIR::ConstantId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_PERIOD_SELF_H_

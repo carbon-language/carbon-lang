@@ -43,10 +43,10 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %.Self.frozen.as_type.f3f: type = facet_access_type %.Self.frozen.063 [symbolic]
 // CHECK:STDOUT:   %Empty.lookup_impl_witness.88a: <witness> = lookup_impl_witness %.Self.frozen.063, @Empty, @Empty(%T) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.c2e: type = impl_witness_access %Empty.lookup_impl_witness.88a, element0 [symbolic]
+// CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %.Self.913: %Empty.type.95d624.2 = symbolic_binding .Self [symbolic]
 // CHECK:STDOUT:   %Empty.lookup_impl_witness.67b: <witness> = lookup_impl_witness %.Self.913, @Empty, @Empty(%T) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.d8a: type = impl_witness_access %Empty.lookup_impl_witness.67b, element0 [symbolic]
-// CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %Empty_where.type.696: type = facet_type <@Empty, @Empty(%T) where %impl.elem0.d8a = %ptr.e8f> [symbolic]
 // CHECK:STDOUT:   %pattern_type.a0f: type = pattern_type %Empty_where.type.696 [symbolic]
 // CHECK:STDOUT:   %U.param_patt.558: %pattern_type.a0f = value_param_pattern [symbolic]
@@ -65,10 +65,10 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %.Self.frozen.as_type.941: type = facet_access_type %.Self.frozen.869 [symbolic_self]
 // CHECK:STDOUT:   %Empty.lookup_impl_witness.635: <witness> = lookup_impl_witness %.Self.frozen.869, @Empty, @Empty(%i32) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.31d: type = impl_witness_access %Empty.lookup_impl_witness.635, element0 [symbolic_self]
+// CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %.Self.98b: %Empty.type.39c = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %Empty.lookup_impl_witness.4f6: <witness> = lookup_impl_witness %.Self.98b, @Empty, @Empty(%i32) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.f25: type = impl_witness_access %Empty.lookup_impl_witness.4f6, element0 [symbolic_self]
-// CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %Empty_where.type.944: type = facet_type <@Empty, @Empty(%i32) where %impl.elem0.f25 = %ptr.d08> [concrete]
 // CHECK:STDOUT:   %pattern_type.12c: type = pattern_type %Empty_where.type.944 [concrete]
 // CHECK:STDOUT:   %U.param_patt.a6a: %pattern_type.12c = value_param_pattern [concrete]
@@ -102,16 +102,14 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %.loc21_41.2: @H.%Empty.assoc_type (%Empty.assoc_type.c44b55.2) = specific_constant @A.%assoc0, @Empty.WithSelf(constants.%T, constants.%.Self.frozen.063) [symbolic = %assoc0 (constants.%assoc0.3a7cb1.2)]
 // CHECK:STDOUT:       %A.ref: @H.%Empty.assoc_type (%Empty.assoc_type.c44b55.2) = name_ref A, %.loc21_41.2 [symbolic = %assoc0 (constants.%assoc0.3a7cb1.2)]
 // CHECK:STDOUT:       %impl.elem0.loc21_41.3: type = impl_witness_access constants.%Empty.lookup_impl_witness.88a, element0 [symbolic = %impl.elem0.loc21_41.1 (constants.%impl.elem0.c2e)]
-// CHECK:STDOUT:       %impl.elem0.loc21_41.4: type = impl_witness_access constants.%Empty.lookup_impl_witness.67b, element0 [symbolic = %impl.elem0.loc21_41.2 (constants.%impl.elem0.d8a)]
 // CHECK:STDOUT:       %T.ref.loc21_46: type = name_ref T, %T.loc21_7.2 [symbolic = %T.loc21_7.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc21_47.2: type = ptr_type %T.ref.loc21_46 [symbolic = %ptr.loc21_47.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:       %rewrite.loc21_44.1 = requirement_rewrite %impl.elem0.loc21_41.3, %ptr.loc21_47.2 [concrete]
-// CHECK:STDOUT:       %impl.elem0.loc21_41.5: type = impl_witness_access constants.%Empty.lookup_impl_witness.67b, element0 [symbolic = %impl.elem0.loc21_41.2 (constants.%impl.elem0.d8a)]
-// CHECK:STDOUT:       %impl.elem0.loc21_41.6: type = impl_witness_access constants.%Empty.lookup_impl_witness.67b, element0 [symbolic = %impl.elem0.loc21_41.2 (constants.%impl.elem0.d8a)]
-// CHECK:STDOUT:       %rewrite.loc21_44.2 = requirement_rewrite %impl.elem0.loc21_41.6, %ptr.loc21_47.2 [concrete]
+// CHECK:STDOUT:       %impl.elem0.loc21_41.4: type = impl_witness_access constants.%Empty.lookup_impl_witness.67b, element0 [symbolic = %impl.elem0.loc21_41.2 (constants.%impl.elem0.d8a)]
+// CHECK:STDOUT:       %rewrite.loc21_44.2 = requirement_rewrite %impl.elem0.loc21_41.4, %ptr.loc21_47.2 [concrete]
 // CHECK:STDOUT:       %.loc21_35.2: type = where_expr [symbolic = %Empty_where.type (constants.%Empty_where.type.696)] {
 // CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %Empty.type.loc21_33.2 [concrete]
-// CHECK:STDOUT:         %rewrite.loc21_44.2 = requirement_rewrite %impl.elem0.loc21_41.6, %ptr.loc21_47.2 [concrete]
+// CHECK:STDOUT:         %rewrite.loc21_44.2 = requirement_rewrite %impl.elem0.loc21_41.4, %ptr.loc21_47.2 [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.696) = wrapper_binding U, %U.param
@@ -134,10 +132,10 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %assoc0: @H.%Empty.assoc_type (%Empty.assoc_type.c44b55.2) = assoc_entity element0, @Empty.WithSelf.%A [symbolic = %assoc0 (constants.%assoc0.3a7cb1.2)]
 // CHECK:STDOUT:   %Empty.lookup_impl_witness.loc21_41.1: <witness> = lookup_impl_witness %.Self.frozen.loc21_35.1, @Empty, @Empty(%T.loc21_7.1) [symbolic = %Empty.lookup_impl_witness.loc21_41.1 (constants.%Empty.lookup_impl_witness.88a)]
 // CHECK:STDOUT:   %impl.elem0.loc21_41.1: type = impl_witness_access %Empty.lookup_impl_witness.loc21_41.1, element0 [symbolic = %impl.elem0.loc21_41.1 (constants.%impl.elem0.c2e)]
+// CHECK:STDOUT:   %ptr.loc21_47.1: type = ptr_type %T.loc21_7.1 [symbolic = %ptr.loc21_47.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:   %.Self: @H.%Empty.type.loc21_33.1 (%Empty.type.95d624.2) = symbolic_binding .Self [symbolic = %.Self (constants.%.Self.913)]
 // CHECK:STDOUT:   %Empty.lookup_impl_witness.loc21_41.2: <witness> = lookup_impl_witness %.Self, @Empty, @Empty(%T.loc21_7.1) [symbolic = %Empty.lookup_impl_witness.loc21_41.2 (constants.%Empty.lookup_impl_witness.67b)]
 // CHECK:STDOUT:   %impl.elem0.loc21_41.2: type = impl_witness_access %Empty.lookup_impl_witness.loc21_41.2, element0 [symbolic = %impl.elem0.loc21_41.2 (constants.%impl.elem0.d8a)]
-// CHECK:STDOUT:   %ptr.loc21_47.1: type = ptr_type %T.loc21_7.1 [symbolic = %ptr.loc21_47.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:   %Empty_where.type: type = facet_type <@Empty, @Empty(%T.loc21_7.1) where %impl.elem0.loc21_41.2 = %ptr.loc21_47.1> [symbolic = %Empty_where.type (constants.%Empty_where.type.696)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Empty_where.type [symbolic = %pattern_type (constants.%pattern_type.a0f)]
 // CHECK:STDOUT:   %U.param_patt.loc21_24.2: @H.%pattern_type (%pattern_type.a0f) = value_param_pattern [symbolic = %U.param_patt.loc21_24.2 (constants.%U.param_patt.558)]
@@ -165,10 +163,10 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.3a7cb1.2
 // CHECK:STDOUT:   %Empty.lookup_impl_witness.loc21_41.1 => constants.%Empty.lookup_impl_witness.88a
 // CHECK:STDOUT:   %impl.elem0.loc21_41.1 => constants.%impl.elem0.c2e
+// CHECK:STDOUT:   %ptr.loc21_47.1 => constants.%ptr.e8f
 // CHECK:STDOUT:   %.Self => constants.%.Self.913
 // CHECK:STDOUT:   %Empty.lookup_impl_witness.loc21_41.2 => constants.%Empty.lookup_impl_witness.67b
 // CHECK:STDOUT:   %impl.elem0.loc21_41.2 => constants.%impl.elem0.d8a
-// CHECK:STDOUT:   %ptr.loc21_47.1 => constants.%ptr.e8f
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.696
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a0f
 // CHECK:STDOUT:   %U.param_patt.loc21_24.2 => constants.%U.param_patt.558
@@ -188,10 +186,10 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.023
 // CHECK:STDOUT:   %Empty.lookup_impl_witness.loc21_41.1 => constants.%Empty.lookup_impl_witness.635
 // CHECK:STDOUT:   %impl.elem0.loc21_41.1 => constants.%impl.elem0.31d
+// CHECK:STDOUT:   %ptr.loc21_47.1 => constants.%ptr.d08
 // CHECK:STDOUT:   %.Self => constants.%.Self.98b
 // CHECK:STDOUT:   %Empty.lookup_impl_witness.loc21_41.2 => constants.%Empty.lookup_impl_witness.4f6
 // CHECK:STDOUT:   %impl.elem0.loc21_41.2 => constants.%impl.elem0.f25
-// CHECK:STDOUT:   %ptr.loc21_47.1 => constants.%ptr.d08
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.944
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.12c
 // CHECK:STDOUT:   %U.param_patt.loc21_24.2 => constants.%U.param_patt.a6a

@@ -102,17 +102,21 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
 
   // Make rewrite constraints from the self facet type available immediately to
   // expressions in rewrite constraints for this `where` expression.
+  //
+  // Note that the where_stack rewrites need to be frozen. The rewrites in
+  // the base facet type will be thawed since their `WhereExpr` would have
+  // already been handled, so we need to freeze them again here.
   if (auto self_facet_type = context.types().TryGetAs<SemIR::FacetType>(
           self_with_constraints_type_id)) {
     const auto& base_facet_type_info =
         context.facet_types().Get(self_facet_type->facet_type_id);
     for (const auto& rewrite : base_facet_type_info.rewrite_constraints) {
       if (rewrite.lhs_id != SemIR::ErrorInst::InstId) {
-        context.where_stack().back().rewrites.Insert(
-            context.constant_values().Get(
-                GetImplWitnessAccessWithoutSubstitution(context,
-                                                        rewrite.lhs_id)),
-            rewrite.rhs_id);
+        auto const_id = context.constant_values().Get(
+            GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
+        auto frozen_const_id = FreezePeriodSelf(context, const_id);
+        context.where_stack().back().rewrites.Insert(frozen_const_id,
+                                                     rewrite.rhs_id);
       }
     }
   }
@@ -216,9 +220,13 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     // immediately, before they are evaluated. This happens directly where the
     // `ImplWitnessAccess` that refers to the rewrite constraint would have been
     // created, and the value of the constraint will be used instead.
+    //
+    // Note that the where_stack rewrites need to be frozen. Since this
+    // expression is inside of facet type construction, it will already be
+    // frozen.
     context.where_stack().back().rewrites.Insert(
-        context.constant_values().Get(ThawPeriodSelf(
-            context, GetImplWitnessAccessWithoutSubstitution(context, lhs_id))),
+        context.constant_values().Get(
+            GetImplWitnessAccessWithoutSubstitution(context, lhs_id)),
         rhs_id);
   }
   return true;
@@ -357,16 +365,23 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
     // Track any rewrites that are inherited from the impls constraint as the
     // LHS can be referring to `.Self` or a member of it, which makes those
     // rewrites modification of this facet type's self.
+    //
+    // Note that the where_stack rewrites need to be frozen. Since this
+    // expression is inside of facet type construction, it will already be
+    // frozen.
+    //
+    // TODO: Now that we don't allow nested `where`, there should be no rewrites
+    // to add here?
     if (IsPeriodSelfAccess(context, lhs_as_type.inst_id)) {
       auto facet_type =
           context.types().GetAs<SemIR::FacetType>(rhs_as_type.type_id);
       const auto& facet_type_info =
           context.facet_types().Get(facet_type.facet_type_id);
       for (const auto& rewrite : facet_type_info.rewrite_constraints) {
-        auto lhs = SubstPeriodSelf(
+        auto lhs_id = SubstPeriodSelf(
             context, rhs_node, context.constant_values().Get(rewrite.lhs_id),
             context.constant_values().Get(lhs_as_type.inst_id));
-        context.where_stack().back().rewrites.Insert(lhs, rewrite.rhs_id);
+        context.where_stack().back().rewrites.Insert(lhs_id, rewrite.rhs_id);
       }
     }
   }

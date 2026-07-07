@@ -343,14 +343,13 @@ fn F(unused T:! type where C impls N(.Self)) {}
 // CHECK:STDOUT:       %.loc11_29: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type.e90]
 // CHECK:STDOUT:       %Member.ref: %I.assoc_type = name_ref Member, @Member.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:       %impl.elem0.loc11_29.1: type = impl_witness_access constants.%I.lookup_impl_witness.ced, element0 [symbolic_self = constants.%impl.elem0.125]
-// CHECK:STDOUT:       %impl.elem0.loc11_29.2: type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.e55]
 // CHECK:STDOUT:       %.loc11_41: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %equiv.loc11_37.1 = requirement_equivalent %impl.elem0.loc11_29.1, %.loc11_41 [concrete]
-// CHECK:STDOUT:       %impl.elem0.loc11_29.3: type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.e55]
-// CHECK:STDOUT:       %equiv.loc11_37.2 = requirement_equivalent %impl.elem0.loc11_29.3, %.loc11_41 [concrete]
+// CHECK:STDOUT:       %impl.elem0.loc11_29.2: type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.e55]
+// CHECK:STDOUT:       %equiv.loc11_37.2 = requirement_equivalent %impl.elem0.loc11_29.2, %.loc11_41 [concrete]
 // CHECK:STDOUT:       %.loc11_23.2: type = where_expr [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:         %equiv.loc11_37.2 = requirement_equivalent %impl.elem0.loc11_29.3, %.loc11_41 [concrete]
+// CHECK:STDOUT:         %equiv.loc11_37.2 = requirement_equivalent %impl.elem0.loc11_29.2, %.loc11_41 [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc11_18.2: %I_where.type = symbolic_binding U, 0 [symbolic = %U.loc11_18.1 (constants.%U)]

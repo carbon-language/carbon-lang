@@ -510,92 +510,104 @@ auto IsPeriodSelf(Context& context, SemIR::InstId inst_id, bool canonicalize)
   return TryGetAsPeriodSelf(context, inst_id, canonicalize).has_value();
 }
 
+class FreezeAndThawCallbacks : public SubstInstCallbacks {
+ public:
+  explicit FreezeAndThawCallbacks(Context* context, bool match_frozen)
+      : SubstInstCallbacks(context), match_frozen_(match_frozen) {}
+  auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+    // For canonical insts, if the inst is a concrete constant, then there is
+    // no frozen `.Self` to replace. But for non-canonical insts, we need to
+    // look for `.Self` in the inst's operands even if its constant value is
+    // concrete, since we're thawing `.Self` in the non-canonical inst itself,
+    // not just its constant value.
+    //
+    // AlwaysUnique constants are not canonicalized, and they report a
+    // concrete value even if they depend on a symbolic value. So we have to
+    // substitute into them always.
+    auto const_id = context().constant_values().Get(inst_id);
+    if (context().constant_values().GetInstId(const_id) == inst_id &&
+        const_id.is_concrete() &&
+        context().insts().Get(inst_id).kind().constant_kind() !=
+            SemIR::InstConstantKind::AlwaysUnique) {
+      return FullySubstituted;
+    }
+
+    // Base case for non-canonical insts. The operands of these insts include
+    // themselves.
+    if (inst_id == SemIR::TypeType::TypeInstId ||
+        inst_id == SemIR::ErrorInst::InstId) {
+      return FullySubstituted;
+    }
+
+    if (auto found = cache_.Lookup(inst_id)) {
+      inst_id = found.value();
+      return FullySubstituted;
+    }
+
+    // No need to canonicalize, Subst will recurse to find it and we want to
+    // preserve structure.
+    if (auto period_self =
+            TryGetAsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
+      auto entity_name =
+          context().entity_names().Get(period_self->bind.entity_name_id);
+      if (!!entity_name.is_frozen_period_self == match_frozen_) {
+        entity_name.is_frozen_period_self = !entity_name.is_frozen_period_self;
+        auto bind = period_self->bind;
+        bind.entity_name_id =
+            context().entity_names().AddCanonical(entity_name);
+        auto subst_id = Rebuild(inst_id, bind);
+        cache_.Insert(inst_id, subst_id);
+        inst_id = subst_id;
+        return FullySubstituted;
+      }
+    }
+
+    return SubstOperands;
+  }
+
+  auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
+    cache_.Insert(orig_inst_id, orig_inst_id);
+    return orig_inst_id;
+  }
+
+  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
+      -> SemIR::InstId override {
+    auto inserted = cache_.Insert(orig_inst_id, [&] {
+      if (context().constant_values().GetConstantInstId(orig_inst_id) ==
+          orig_inst_id) {
+        return RebuildNewInst(SemIR::LocId(orig_inst_id), new_inst);
+      } else {
+        return AddInst(context(), SemIR::LocIdAndInst::RuntimeVerified(
+                                      context().sem_ir(),
+                                      SemIR::LocId(orig_inst_id), new_inst));
+      }
+    });
+    return inserted.value();
+  }
+
+ private:
+  // If true, we are finding frozen `.Self` and thawing them. If false, then the
+  // inverse.
+  bool match_frozen_;
+
+  // Track replacements that have been done, so that we avoid re-evaluating
+  // the same instructions repeatedly. Without this, a facet type can create a
+  // quadratic number of evaluations, as each one produces many more,
+  // repeatedly.
+  Map<SemIR::InstId, SemIR::InstId, 16> cache_;
+};
+
 auto ThawPeriodSelf(Context& context, SemIR::InstId inst_id) -> SemIR::InstId {
-  class MakeInactiveCallbacks : public SubstInstCallbacks {
-   public:
-    explicit MakeInactiveCallbacks(Context* context)
-        : SubstInstCallbacks(context) {}
-    auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
-      // For canonical insts, if the inst is a concrete constant, then there is
-      // no frozen `.Self` to replace. But for non-canonical insts, we need to
-      // look for `.Self` in the inst's operands even if its constant value is
-      // concrete, since we're thawing `.Self` in the non-canonical inst itself,
-      // not just its constant value.
-      //
-      // AlwaysUnique constants are not canonicalized, and they report a
-      // concrete value even if they depend on a symbolic value. So we have to
-      // substitute into them always.
-      auto const_id = context().constant_values().Get(inst_id);
-      if (context().constant_values().GetInstId(const_id) == inst_id &&
-          const_id.is_concrete() &&
-          context().insts().Get(inst_id).kind().constant_kind() !=
-              SemIR::InstConstantKind::AlwaysUnique) {
-        return FullySubstituted;
-      }
-
-      // Base case for non-canonical insts. The operands of these insts include
-      // themselves.
-      if (inst_id == SemIR::TypeType::TypeInstId ||
-          inst_id == SemIR::ErrorInst::InstId) {
-        return FullySubstituted;
-      }
-
-      if (auto found = cache_.Lookup(inst_id)) {
-        inst_id = found.value();
-        return FullySubstituted;
-      }
-
-      // No need to canonicalize, Subst will recurse to find it and we want to
-      // preserve structure.
-      if (auto period_self =
-              TryGetAsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
-        auto entity_name =
-            context().entity_names().Get(period_self->bind.entity_name_id);
-        if (entity_name.is_frozen_period_self) {
-          entity_name.is_frozen_period_self = false;
-          auto bind = period_self->bind;
-          bind.entity_name_id =
-              context().entity_names().AddCanonical(entity_name);
-          auto subst_id = Rebuild(inst_id, bind);
-          cache_.Insert(inst_id, subst_id);
-          inst_id = subst_id;
-          return FullySubstituted;
-        }
-      }
-
-      return SubstOperands;
-    }
-
-    auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
-      cache_.Insert(orig_inst_id, orig_inst_id);
-      return orig_inst_id;
-    }
-
-    auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
-        -> SemIR::InstId override {
-      auto inserted = cache_.Insert(orig_inst_id, [&] {
-        if (context().constant_values().GetConstantInstId(orig_inst_id) ==
-            orig_inst_id) {
-          return RebuildNewInst(SemIR::LocId(orig_inst_id), new_inst);
-        } else {
-          return AddInst(context(), SemIR::LocIdAndInst::RuntimeVerified(
-                                        context().sem_ir(),
-                                        SemIR::LocId(orig_inst_id), new_inst));
-        }
-      });
-      return inserted.value();
-    }
-
-   private:
-    // Track replacements that have been done, so that we avoid re-evaluating
-    // the same instructions repeatedly. Without this, a facet type can create a
-    // quadratic number of evaluations, as each one produces many more,
-    // repeatedly.
-    Map<SemIR::InstId, SemIR::InstId, 16> cache_;
-  };
-
-  MakeInactiveCallbacks callbacks(&context);
+  FreezeAndThawCallbacks callbacks(&context, /*match_frozen=*/true);
   return SubstInst(context, inst_id, callbacks);
+}
+
+auto FreezePeriodSelf(Context& context, SemIR::ConstantId const_id)
+    -> SemIR::ConstantId {
+  FreezeAndThawCallbacks callbacks(&context, /*match_frozen=*/false);
+  auto inst_id = SubstInst(
+      context, context.constant_values().GetInstId(const_id), callbacks);
+  return context.constant_values().Get(inst_id);
 }
 
 }  // namespace Carbon::Check

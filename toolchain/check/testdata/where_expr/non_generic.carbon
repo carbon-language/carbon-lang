@@ -27,11 +27,11 @@ fn NotGenericF(unused U: I where .T == i32) {}
 // CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness.ced: <witness> = lookup_impl_witness %.Self.frozen, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.125: type = impl_witness_access %I.lookup_impl_witness.ced, element0 [symbolic_self]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %.Self: %I.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness.78b: <witness> = lookup_impl_witness %.Self, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.e55: type = impl_witness_access %I.lookup_impl_witness.78b, element0 [symbolic_self]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where TODO> [concrete]
 // CHECK:STDOUT:   %pattern_type.603: type = pattern_type %I_where.type [concrete]
 // CHECK:STDOUT:   %U.param_patt: %pattern_type.603 = value_param_pattern [concrete]
@@ -55,14 +55,13 @@ fn NotGenericF(unused U: I where .T == i32) {}
 // CHECK:STDOUT:       %.loc17_34: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type]
 // CHECK:STDOUT:       %T.ref: %I.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:       %impl.elem0.loc17_34.1: type = impl_witness_access constants.%I.lookup_impl_witness.ced, element0 [symbolic_self = constants.%impl.elem0.125]
-// CHECK:STDOUT:       %impl.elem0.loc17_34.2: type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.e55]
 // CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %equiv.loc17_37.1 = requirement_equivalent %impl.elem0.loc17_34.1, %i32 [concrete]
-// CHECK:STDOUT:       %impl.elem0.loc17_34.3: type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.e55]
-// CHECK:STDOUT:       %equiv.loc17_37.2 = requirement_equivalent %impl.elem0.loc17_34.3, %i32 [concrete]
+// CHECK:STDOUT:       %impl.elem0.loc17_34.2: type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.e55]
+// CHECK:STDOUT:       %equiv.loc17_37.2 = requirement_equivalent %impl.elem0.loc17_34.2, %i32 [concrete]
 // CHECK:STDOUT:       %.loc17_28.2: type = where_expr [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:         %equiv.loc17_37.2 = requirement_equivalent %impl.elem0.loc17_34.3, %i32 [concrete]
+// CHECK:STDOUT:         %equiv.loc17_37.2 = requirement_equivalent %impl.elem0.loc17_34.2, %i32 [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: %I_where.type = wrapper_binding U, %U.param

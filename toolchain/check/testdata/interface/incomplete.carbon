@@ -176,16 +176,14 @@ interface A(T:! type) {
 // CHECK:STDOUT:     %.loc16_20: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type]
 // CHECK:STDOUT:     %T.ref: %I.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0.loc16_20.1: %C = impl_witness_access constants.%I.lookup_impl_witness.ced, element0 [symbolic_self = constants.%impl.elem0.aef]
-// CHECK:STDOUT:     %impl.elem0.loc16_20.2: %C = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.cc9]
 // CHECK:STDOUT:     %.loc16_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %rewrite.loc16_23.1 = requirement_rewrite %impl.elem0.loc16_20.1, <error> [concrete]
-// CHECK:STDOUT:     %impl.elem0.loc16_20.3: %C = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.cc9]
-// CHECK:STDOUT:     %impl.elem0.loc16_20.4: %C = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.cc9]
-// CHECK:STDOUT:     %rewrite.loc16_23.2 = requirement_rewrite %impl.elem0.loc16_20.4, <error> [concrete]
+// CHECK:STDOUT:     %impl.elem0.loc16_20.2: %C = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.cc9]
+// CHECK:STDOUT:     %rewrite.loc16_23.2 = requirement_rewrite %impl.elem0.loc16_20.2, <error> [concrete]
 // CHECK:STDOUT:     %.loc16_14: type = where_expr [concrete = <error>] {
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:       %rewrite.loc16_23.2 = requirement_rewrite %impl.elem0.loc16_20.4, <error> [concrete]
+// CHECK:STDOUT:       %rewrite.loc16_23.2 = requirement_rewrite %impl.elem0.loc16_20.2, <error> [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
