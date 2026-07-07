@@ -396,10 +396,6 @@ static auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool {
         : SubstInstCallbacks(context), found_(found) {}
 
     auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
-      if (skip_type_next_) {
-        skip_type_next_ = false;
-        return FullySubstituted;
-      }
       if (*found_ || inst_id == SemIR::TypeType::TypeInstId ||
           inst_id == SemIR::ErrorInst::InstId) {
         return FullySubstituted;
@@ -421,13 +417,7 @@ static auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool {
         }
       }
 
-      auto type_id = context().insts().Get(inst_id).type_id();
-      if (type_id.has_value() &&
-          context().types().Is<SemIR::FacetType>(type_id)) {
-        skip_type_next_ = true;
-      }
-
-      return SubstOperands;
+      return SubstOperandsSkipType;
     }
 
     auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst /*new_inst*/)
@@ -438,7 +428,6 @@ static auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool {
 
    private:
     bool* found_;
-    bool skip_type_next_ = false;
     Set<SemIR::InstId> searched_;
   };
 
