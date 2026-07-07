@@ -66,8 +66,9 @@ constraint S(N:! Core.IntLiteral) {
   extend require impls CanFailToMonomorphize(N);
 }
 
-// When we identify `T as (S(N) where .Z2 impls Y)`
-// - we replace `.Self of type S(N)` with `T`
+// When we call `F` and convert `T` to `S(N) where .Z2 impls Y`:
+// - we identify `T as (S(N) where .Z2 impls Y)` for impl lookup
+// - that replaces `.Self of type S(N)` with `T`
 // - that identifies `T as S(N)`
 // If the N is invalid, the identify fails in the middle of SubstPeriodSelf
 //
@@ -81,10 +82,10 @@ fn G(T:! Y) {
   // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE+13]]:3: error: facet type `S(-1) where .(CanFailToMonomorphize(-1).Z2) impls Y` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   F(-1, T);
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-18]]:24: note: `CanFailToMonomorphize(N)` evaluates to incomplete type `CanFailToMonomorphize(-1)` [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-19]]:24: note: `CanFailToMonomorphize(N)` evaluates to incomplete type `CanFailToMonomorphize(-1)` [IncompleteTypeInMonomorphization]
   // CHECK:STDERR:   extend require impls CanFailToMonomorphize(N);
   // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-26]]:22: note: array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-27]]:22: note: array bound of -1 is negative [ArrayBoundNegative]
   // CHECK:STDERR:   let Z1:! array((), N);
   // CHECK:STDERR:                      ^
   // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-12]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
