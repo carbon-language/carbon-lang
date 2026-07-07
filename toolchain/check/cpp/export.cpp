@@ -885,6 +885,10 @@ static auto ExportGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
 
   // Create `clang::TemplateTypeParmDecl`s for each of the function's
   // symbolic parameters.
+  //
+  // TODO: handle the case where the function is within an enclosing generic,
+  // and only include the bindings introduced in the inner function here. See
+  // `fail_todo_enclosing_generic.carbon`.
   for (auto binding_inst_id : bindings) {
     binding_inst_id =
         context.constant_values().GetConstantInstId(binding_inst_id);
