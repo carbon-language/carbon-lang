@@ -11,6 +11,7 @@
 #include <string>
 
 #include "common/set.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/base/install_paths_test_helpers.h"
@@ -137,7 +138,7 @@ TEST(SourceGenTest, IdentifierByteSumStableAcrossSeeds) {
         c.number, c.min_length, c.max_length, c.uniform, c.unique));
     std::optional<ssize_t> expected_sum;
     bool any_different = false;
-    std::optional<llvm::SmallVector<llvm::StringRef>> first;
+    std::optional<llvm::SmallVector<std::string>> first;
     constexpr int NumSeeds = 8;
     for (int seed : llvm::seq(NumSeeds)) {
       // Each iteration constructs a fresh generator with an independent random
@@ -156,12 +157,12 @@ TEST(SourceGenTest, IdentifierByteSumStableAcrossSeeds) {
       ssize_t sum = SumSizes(idents);
       if (!expected_sum) {
         expected_sum = sum;
-        first = idents;
+        first.emplace(idents.begin(), idents.end());
         continue;
       }
       // The byte sum must be identical regardless of the seed.
       EXPECT_THAT(sum, Eq(*expected_sum));
-      if (idents != *first) {
+      if (!llvm::equal(idents, *first)) {
         any_different = true;
       }
     }
