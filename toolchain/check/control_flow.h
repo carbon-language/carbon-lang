@@ -92,7 +92,8 @@ auto AddInstWithCleanupInNoBlock(Context& context, LocT loc, InstT inst)
   return inst_id;
 }
 
-// Adds cleanups for the given variables.
+// Adds cleanups for variables added after `depth`, and before `end_depth`
+// if it's not `None`.
 auto AddCleanups(Context& context, ScopeStack::CleanupScopeDepth depth,
                  ScopeStack::CleanupScopeDepth end_depth =
                      ScopeStack::CleanupScopeDepth::None) -> void;
@@ -114,7 +115,8 @@ auto AddBranchWithCleanups(Context& context, SemIR::LocId loc_id,
                            ScopeStack::CleanupScopeDepth depth) -> void;
 
 // Adds a return instruction, along with cleanups for all live variables or
-// temporaries in the current function.
+// temporaries in the current function. If no instruction is passed, it
+// defaults to `SemIR::Return{}`.
 auto AddReturnInstWithCleanups(Context& context,
                                SemIR::LocIdAndInst loc_id_and_inst) -> void;
 
