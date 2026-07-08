@@ -271,7 +271,7 @@ And we can nest the rewrite constraint on the right-hand-side of another `where`
 fn F(T:! Y where .Y1 impls (Z(.Self) where .Z1 = ()));
 ```
 
-This alternative would have all `.Self` refernences refer to `T` but the
+This alternative would have all `.Self` references refer to `T` but the
 semantics of the language require the `.Self` references in `.Z1` to refer to
 `T.Y1`. This creates a contradiction in the implementation, and leaves us with
 the same problem as we began with.
