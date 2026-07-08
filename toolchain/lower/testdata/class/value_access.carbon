@@ -21,6 +21,7 @@ fn F(c: C) -> i32 {
   return c.a.1;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'value_access.carbon'
 // CHECK:STDOUT: source_filename = "value_access.carbon"
 // CHECK:STDOUT:
@@ -69,3 +70,4 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
 // CHECK:STDOUT: !11 = !DILocation(line: 21, column: 10, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 21, column: 3, scope: !4)
+// CHECK:STDOUT:

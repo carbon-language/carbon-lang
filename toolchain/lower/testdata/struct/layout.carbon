@@ -73,6 +73,7 @@ fn F() {
   G(&insert_padding.b);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'no_padding.carbon'
 // CHECK:STDOUT: source_filename = "no_padding.carbon"
 // CHECK:STDOUT:
@@ -143,6 +144,8 @@ fn F() {
 // CHECK:STDOUT: !26 = !{!27}
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !22, type: !25)
 // CHECK:STDOUT: !28 = !DILocation(line: 7, column: 3, scope: !22)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'avoid_tail_padding.carbon'
 // CHECK:STDOUT: source_filename = "avoid_tail_padding.carbon"
 // CHECK:STDOUT:
@@ -205,6 +208,8 @@ fn F() {
 // CHECK:STDOUT: !22 = !{!23}
 // CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !18, type: !21)
 // CHECK:STDOUT: !24 = !DILocation(line: 7, column: 3, scope: !18)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_tail_padding.carbon'
 // CHECK:STDOUT: source_filename = "use_tail_padding.carbon"
 // CHECK:STDOUT:
@@ -282,6 +287,8 @@ fn F() {
 // CHECK:STDOUT: !28 = !{!29}
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !27, type: !23)
 // CHECK:STDOUT: !30 = !DILocation(line: 8, column: 3, scope: !27)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'implicit_padding.carbon'
 // CHECK:STDOUT: source_filename = "implicit_padding.carbon"
 // CHECK:STDOUT:
@@ -359,6 +366,8 @@ fn F() {
 // CHECK:STDOUT: !28 = !{!29}
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !27, type: !23)
 // CHECK:STDOUT: !30 = !DILocation(line: 8, column: 3, scope: !27)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'insert_padding.carbon'
 // CHECK:STDOUT: source_filename = "insert_padding.carbon"
 // CHECK:STDOUT:
@@ -431,3 +440,4 @@ fn F() {
 // CHECK:STDOUT: !26 = !{!27}
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !21)
 // CHECK:STDOUT: !28 = !DILocation(line: 9, column: 3, scope: !25)
+// CHECK:STDOUT:

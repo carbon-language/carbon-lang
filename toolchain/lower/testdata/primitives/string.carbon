@@ -35,6 +35,7 @@ fn Copy(s: str) -> str {
   return s;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'string.carbon'
 // CHECK:STDOUT: source_filename = "string.carbon"
 // CHECK:STDOUT:
@@ -103,3 +104,4 @@ fn Copy(s: str) -> str {
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
 // CHECK:STDOUT: !21 = !DILocation(line: 35, column: 10, scope: !15)
 // CHECK:STDOUT: !22 = !DILocation(line: 35, column: 3, scope: !15)
+// CHECK:STDOUT:

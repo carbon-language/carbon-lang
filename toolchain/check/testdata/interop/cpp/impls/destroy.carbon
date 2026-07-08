@@ -320,11 +320,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PublicDestroy() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.bdc = ref_binding_pattern a [concrete = constants.%a.patt.e26]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.bdc = var_pattern %a.patt [concrete = constants.%a.var_patt.17b]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %PublicDestructor = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %PublicDestructor = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc11_41.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc11_41.2: init %PublicDestructor to %a.var = class_init () [concrete = constants.%PublicDestructor.val]
 // CHECK:STDOUT:   %.loc11_3: init %PublicDestructor = converted %.loc11_41.1, %.loc11_41.2 [concrete = constants.%PublicDestructor.val]
@@ -334,6 +330,10 @@ fn F() {
 // CHECK:STDOUT:     %PublicDestructor.ref: type = name_ref PublicDestructor, imports.%PublicDestructor.decl [concrete = constants.%PublicDestructor]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %PublicDestructor = wrapper_binding a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.bdc = ref_binding_pattern a [concrete = constants.%a.patt.e26]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.bdc = var_pattern %a.patt [concrete = constants.%a.var_patt.17b]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PublicDestructor.cpp_destructor.bound: <bound method> = bound_method %a.var, constants.%PublicDestructor.cpp_destructor
 // CHECK:STDOUT:   %PublicDestructor.cpp_destructor.call: init %empty_tuple.type = call %PublicDestructor.cpp_destructor.bound(%a.var)
 // CHECK:STDOUT:   return
@@ -343,11 +343,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TrivialDestroy() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.a12 = ref_binding_pattern a [concrete = constants.%a.patt.b64]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.a12 = var_pattern %a.patt [concrete = constants.%a.var_patt.d25]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %TrivialDestructor = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %TrivialDestructor = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc15_42.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc15_42.2: init %TrivialDestructor to %a.var = class_init () [concrete = constants.%TrivialDestructor.val]
 // CHECK:STDOUT:   %.loc15_3: init %TrivialDestructor = converted %.loc15_42.1, %.loc15_42.2 [concrete = constants.%TrivialDestructor.val]
@@ -357,6 +353,10 @@ fn F() {
 // CHECK:STDOUT:     %TrivialDestructor.ref: type = name_ref TrivialDestructor, imports.%TrivialDestructor.decl [concrete = constants.%TrivialDestructor]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %TrivialDestructor = wrapper_binding a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.a12 = ref_binding_pattern a [concrete = constants.%a.patt.b64]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.a12 = var_pattern %a.patt [concrete = constants.%a.var_patt.d25]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TrivialDestructor.Op.decl: %TrivialDestructor.Op.type = fn_decl @TrivialDestructor.Op [concrete = constants.%TrivialDestructor.Op] {
 // CHECK:STDOUT:     %.1: %pattern_type.a12 = specific_constant constants.%self.param_patt.e73, @Destroy.WithSelf.Op(constants.%Destroy.facet.c09) [concrete = constants.%self.param_patt.e73]
 // CHECK:STDOUT:     %self.patt: %pattern_type.a12 = at_binding_pattern self, %.1 [concrete = constants.%self.patt.b81]
@@ -405,11 +405,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyClassWithProtectedBaseDestructor() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.746 = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.746 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %Derived = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %Derived = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc20_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
 // CHECK:STDOUT:   %.loc20_38.1: %struct_type.base.f5e = struct_literal (%.loc20_37.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc20_38.2: ref %.a6c = class_element_access %a.var, element0
@@ -421,6 +417,10 @@ fn F() {
 // CHECK:STDOUT:   assign %a.var, %.loc20_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %a: ref %Derived = wrapper_binding a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.746 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.746 = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>
@@ -460,11 +460,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyClassWithPrivateBaseDestructor() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.746 = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.746 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %Derived = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %Derived = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc21_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
 // CHECK:STDOUT:   %.loc21_38.1: %struct_type.base.f5e = struct_literal (%.loc21_37.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc21_38.2: ref %.c73 = class_element_access %a.var, element0
@@ -476,6 +472,10 @@ fn F() {
 // CHECK:STDOUT:   assign %a.var, %.loc21_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %a: ref %Derived = wrapper_binding a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.746 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.746 = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>

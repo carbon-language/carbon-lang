@@ -1217,7 +1217,7 @@ The interface might look like:
 
 ```carbon
 interface Pointer {
-  let ValueT:! Type;
+  let ValueT: Type;
   fn Dereference(self) -> ValueT*;
 }
 ```
@@ -1226,12 +1226,12 @@ Here is an example using a hypothetical `TaggedPtr` that carries some extra
 integer tag next to the pointer it emulates:
 
 ```carbon
-class TaggedPtr(T:! Type) {
+class TaggedPtr(T: Type) {
   var tag: Int32;
   var ptr: T*;
 }
-external impl [T:! Type] TaggedPtr(T) as Pointer {
-  let ValueT:! T;
+external impl [T: Type] TaggedPtr(T) as Pointer {
+  let ValueT: T;
   fn Dereference(self) -> T* { return self.ptr; }
 }
 
@@ -1248,8 +1248,8 @@ that formed by `var` declarations. This interface is implemented for normal
 pointers as a no-op:
 
 ```carbon
-impl [T:! Type] T* as Pointer {
-  let ValueT:! Type = T;
+impl [T: Type] T* as Pointer {
+  let ValueT: Type = T;
   fn Dereference(self) -> T* { return self; }
 }
 ```
@@ -1406,7 +1406,7 @@ will require that the type containing that specifier satisfies the constraint
 
 ```carbon
 interface ReferenceImplicitAs {
-  let T:! type;
+  let T: type;
   fn Convert(ref self: const Self) -> T;
 }
 ```

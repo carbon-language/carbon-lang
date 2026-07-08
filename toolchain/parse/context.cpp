@@ -145,18 +145,18 @@ auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> Lex::TokenIndex {
     return *(position_ - 1);
   }
 
-  Lex::LineIndex root_line = tokens().GetLine(skip_root);
-  int root_line_indent = tokens().GetIndentColumnNumber(root_line);
+  int root_line_indent =
+      tokens().GetIndentColumnNumber(tokens().GetLine(skip_root));
 
-  // We will keep scanning through tokens on the same line as the root or
-  // lines with greater indentation than root's line.
-  auto is_same_line_or_indent_greater_than_root = [&](Lex::TokenIndex t) {
-    Lex::LineIndex l = tokens().GetLine(t);
-    if (l == root_line) {
-      return true;
-    }
-
-    return tokens().GetIndentColumnNumber(l) > root_line_indent;
+  // We keep scanning through tokens that don't start their own line and
+  // through lines indented more than the root's line. Tokens that don't start
+  // their line include the rest of the root's line and, because comments run
+  // to the end of the line, tokens after a multi-line string literal's
+  // closing delimiter (as in `''' + "more"`), both of which continue the
+  // construct regardless of indentation.
+  auto keep_scanning = [&](Lex::TokenIndex t) {
+    int indent = tokens().GetIndentColumnNumber(tokens().GetLine(t));
+    return tokens().GetColumnNumber(t) > indent || indent > root_line_indent;
   };
 
   do {
@@ -179,8 +179,7 @@ auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> Lex::TokenIndex {
 
     // Otherwise just step forward one token.
     ++position_;
-  } while (position_ != end_ &&
-           is_same_line_or_indent_greater_than_root(*position_));
+  } while (position_ != end_ && keep_scanning(*position_));
 
   return *(position_ - 1);
 }

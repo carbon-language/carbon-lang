@@ -162,11 +162,7 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %v.patt.loc9_15.1: @ErrorIfNIsZero.%pattern_type (%pattern_type.142) = ref_binding_pattern v [symbolic = %v.patt.loc9_15.2 (constants.%v.patt.834)]
-// CHECK:STDOUT:       %v.var_patt.loc9_3.1: @ErrorIfNIsZero.%pattern_type (%pattern_type.142) = var_pattern %v.patt.loc9_15.1 [symbolic = %v.var_patt.loc9_3.2 (constants.%v.var_patt.cd4)]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v.var: ref @ErrorIfNIsZero.%Int.loc9_27.2 (%Int) = var %v.var_patt.loc9_3.1
+// CHECK:STDOUT:     %v.var: ref @ErrorIfNIsZero.%Int.loc9_27.2 (%Int) = var_storage %v.var_patt.loc9_3.1
 // CHECK:STDOUT:     %DefaultOrUnformed.facet.loc9_28.1: %DefaultOrUnformed.type = facet_value constants.%Int, (constants.%DefaultOrUnformed.lookup_impl_witness) [symbolic = %DefaultOrUnformed.facet.loc9_28.2 (constants.%DefaultOrUnformed.facet.e73)]
 // CHECK:STDOUT:     %.loc9_28.1: %DefaultOrUnformed.type = converted constants.%Int, %DefaultOrUnformed.facet.loc9_28.1 [symbolic = %DefaultOrUnformed.facet.loc9_28.2 (constants.%DefaultOrUnformed.facet.e73)]
 // CHECK:STDOUT:     %as_type: type = facet_access_type %.loc9_28.1 [symbolic = %Int.loc9_27.2 (constants.%Int)]
@@ -182,6 +178,10 @@ fn CallNegative() {
 // CHECK:STDOUT:       %Int.loc9_27.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc9_27.2 (constants.%Int)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @ErrorIfNIsZero.%Int.loc9_27.2 (%Int) = wrapper_binding v, %v.var
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %v.patt.loc9_15.1: @ErrorIfNIsZero.%pattern_type (%pattern_type.142) = ref_binding_pattern v [symbolic = %v.patt.loc9_15.2 (constants.%v.patt.834)]
+// CHECK:STDOUT:       %v.var_patt.loc9_3.1: @ErrorIfNIsZero.%pattern_type (%pattern_type.142) = var_pattern %v.patt.loc9_15.1 [symbolic = %v.var_patt.loc9_3.2 (constants.%v.var_patt.cd4)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %impl.elem0.loc9_3.1: @ErrorIfNIsZero.%.loc9_3.3 (%.2c6) = impl_witness_access constants.%Destroy.lookup_impl_witness.173, element0 [symbolic = %impl.elem0.loc9_3.2 (constants.%impl.elem0.604)]
 // CHECK:STDOUT:     %bound_method.loc9_3.1: <bound method> = bound_method %v.var, %impl.elem0.loc9_3.1
 // CHECK:STDOUT:     %Destroy.facet.loc9_3.1: %Destroy.type = facet_value constants.%Int, (constants.%Destroy.lookup_impl_witness.173) [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet.7bb)]

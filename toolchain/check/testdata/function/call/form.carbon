@@ -395,7 +395,7 @@ fn G() {
 // CHECK:STDOUT:   %bound_method.loc4_7.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc4_7.2(%int_0) [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   %.loc4: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
-// CHECK:STDOUT:   %x.var: ref %i32 = var @F.%x.var_patt
+// CHECK:STDOUT:   %x.var: ref %i32 = var_storage @F.%x.var_patt
 // CHECK:STDOUT:   assign %x.var, %.loc4
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%x.var)
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.1a2547.2
@@ -538,13 +538,13 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = ref_binding_pattern _ [concrete = constants.%_.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: ref %i32 = call %F.ref()
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %_: ref %i32 = wrapper_binding _, %F.call
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = ref_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -584,16 +584,16 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = ref_binding_pattern _ [concrete = constants.%_.patt]
-// CHECK:STDOUT:     %_.var_patt: %pattern_type.6b6 = var_pattern %_.patt [concrete = constants.%_.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.var: ref %i32 = var %_.var_patt
+// CHECK:STDOUT:   %_.var: ref %i32 = var_storage %_.var_patt
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
 // CHECK:STDOUT:   assign %_.var, %F.call
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %_: ref %i32 = wrapper_binding _, %_.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = ref_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.var_patt: %pattern_type.6b6 = var_pattern %_.patt [concrete = constants.%_.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %_.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%_.var)
 // CHECK:STDOUT:   <elided>
@@ -637,13 +637,13 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = value_binding_pattern _ [concrete = constants.%_.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: %i32 = call %F.ref()
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %_: %i32 = wrapper_binding _, %F.call
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -852,11 +852,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.6b6 = ref_binding_pattern v [concrete = constants.%v.patt.113]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.6b6 = var_pattern %v.patt [concrete = constants.%v.var_patt.68d]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var.loc11: ref %i32 = var %v.var_patt
+// CHECK:STDOUT:   %v.var.loc11: ref %i32 = var_storage %v.var_patt
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc11: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc11_3.1: <bound method> = bound_method %int_0, %impl.elem0.loc11 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -868,10 +864,10 @@ fn G() {
 // CHECK:STDOUT:   %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %v: ref %i32 = wrapper_binding v, %v.var.loc11
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.6b6 = var_pattern %x.patt [concrete = constants.%x.var_patt]
+// CHECK:STDOUT:     %v.patt: %pattern_type.6b6 = ref_binding_pattern v [concrete = constants.%v.patt.113]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.6b6 = var_pattern %v.patt [concrete = constants.%v.var_patt.68d]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %i32 = var %x.var_patt
+// CHECK:STDOUT:   %x.var: ref %i32 = var_storage %x.var_patt
 // CHECK:STDOUT:   %F.ref.loc13: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %i32.loc13_34: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc13_30: Core.Form = init_form %i32.loc13_34 [concrete = constants.%.795]
@@ -883,14 +879,15 @@ fn G() {
 // CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_40.2: <bound method> = bound_method %.loc13_40, %specific_fn.loc13
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc13_40.2(%.loc13_40)
-// CHECK:STDOUT:   %v.var.1: ref %i32 = var constants.%v.var_patt.13561f.1
+// CHECK:STDOUT:   %v.var.1: ref %i32 = var_storage constants.%v.var_patt.13561f.1
 // CHECK:STDOUT:   assign %v.var.1, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %F.call.loc13: init %i32 = call %F.specific_fn.loc13(%v.var.1)
 // CHECK:STDOUT:   assign %x.var, %F.call.loc13
 // CHECK:STDOUT:   %i32.loc13_17: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %x: ref %i32 = wrapper_binding x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.6b6 = ref_binding_pattern y [concrete = constants.%y.patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.6b6 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref.loc14: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %i32.loc14_38: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -902,7 +899,7 @@ fn G() {
 // CHECK:STDOUT:   %i32.loc14_21: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %y: ref %i32 = wrapper_binding y, %F.call.loc14
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %z.patt: %pattern_type.6b6 = value_binding_pattern z [concrete = constants.%z.patt]
+// CHECK:STDOUT:     %y.patt: %pattern_type.6b6 = ref_binding_pattern y [concrete = constants.%y.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref.loc15: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %i32.loc15_34: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -913,6 +910,9 @@ fn G() {
 // CHECK:STDOUT:   %F.call.loc15: %i32 = call %F.specific_fn.loc15(%.loc15_40)
 // CHECK:STDOUT:   %i32.loc15_17: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %z: %i32 = wrapper_binding z, %F.call.loc15
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %z.patt: %pattern_type.6b6 = value_binding_pattern z [concrete = constants.%z.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Op.ref: %Destroy.assoc_type = name_ref Op, imports.%Core.import_ref.c64 [concrete = constants.%assoc0.ae8]
 // CHECK:STDOUT:   %impl.elem0.1: %.22e = impl_witness_access constants.%custom_witness.df9cc1.2, element0 [concrete = constants.%Destroy.Op.1a2547.2]
 // CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %v.var.1, %impl.elem0.1

@@ -374,9 +374,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.203 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo_short.ref: %foo_short.cpp_overload_set.type = name_ref foo_short, imports.%foo_short.cpp_overload_set.value [concrete = constants.%foo_short.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc7_37.1: ref %i16 = temporary_storage
@@ -387,6 +384,9 @@ fn F() {
 // CHECK:STDOUT:   %.loc7_37.4: %i16 = acquire_value %.loc7_37.3
 // CHECK:STDOUT:   %i16: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %x: %i16 = wrapper_binding x, %.loc7_37.4
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.203 = value_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc7_37.3, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc7_37.3)
 // CHECK:STDOUT:   return

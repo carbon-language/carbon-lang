@@ -24,6 +24,7 @@ fn For() {
   }
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'break_continue.carbon'
 // CHECK:STDOUT: source_filename = "break_continue.carbon"
 // CHECK:STDOUT:
@@ -411,3 +412,4 @@ fn For() {
 // CHECK:STDOUT: !147 = !{!148}
 // CHECK:STDOUT: !148 = !DILocalVariable(arg: 1, scope: !146, type: !22)
 // CHECK:STDOUT: !149 = !DILocation(line: 59, column: 28, scope: !146)
+// CHECK:STDOUT:

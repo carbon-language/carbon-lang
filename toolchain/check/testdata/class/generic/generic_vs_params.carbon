@@ -168,28 +168,24 @@ class Foo[T:! type];
 // CHECK:STDOUT:     %T.loc8_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_10.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
+// CHECK:STDOUT:   %a.var: ref %NotGenericNoParams = var_storage %a.var_patt [concrete]
+// CHECK:STDOUT:   %NotGenericNoParams.ref: type = name_ref NotGenericNoParams, %NotGenericNoParams.decl [concrete = constants.%NotGenericNoParams]
+// CHECK:STDOUT:   %a: ref %NotGenericNoParams = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.2dc = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.2dc = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %NotGenericNoParams = var %a.var_patt [concrete]
-// CHECK:STDOUT:   %NotGenericNoParams.ref: type = name_ref NotGenericNoParams, %NotGenericNoParams.decl [concrete = constants.%NotGenericNoParams]
-// CHECK:STDOUT:   %a: ref %NotGenericNoParams = wrapper_binding a, %a.var [concrete = %a.var]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.8e7 = ref_binding_pattern b [concrete = constants.%b.patt]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.8e7 = var_pattern %b.patt [concrete = constants.%b.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %NotGenericButParams = var %b.var_patt [concrete]
+// CHECK:STDOUT:   %b.var: ref %NotGenericButParams = var_storage %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc16: type = splice_block %NotGenericButParams [concrete = constants.%NotGenericButParams] {
 // CHECK:STDOUT:     %NotGenericButParams.ref: %NotGenericButParams.type = name_ref NotGenericButParams, %NotGenericButParams.decl [concrete = constants.%NotGenericButParams.generic]
 // CHECK:STDOUT:     %NotGenericButParams: type = class_type @NotGenericButParams [concrete = constants.%NotGenericButParams]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %NotGenericButParams = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.053 = ref_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.053 = var_pattern %c.patt [concrete = constants.%c.var_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.8e7 = ref_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.8e7 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %GenericAndParams.421 = var %c.var_patt [concrete]
+// CHECK:STDOUT:   %c.var: ref %GenericAndParams.421 = var_storage %c.var_patt [concrete]
 // CHECK:STDOUT:   %.loc17: type = splice_block %GenericAndParams.loc17 [concrete = constants.%GenericAndParams.421] {
 // CHECK:STDOUT:     %GenericAndParams.ref.loc17: %GenericAndParams.type.aa5 = name_ref GenericAndParams, %GenericAndParams.decl [concrete = constants.%GenericAndParams.generic.128]
 // CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, %X.decl [concrete = constants.%X]
@@ -197,10 +193,10 @@ class Foo[T:! type];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %GenericAndParams.421 = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.a4a = ref_binding_pattern d [concrete = constants.%d.patt]
-// CHECK:STDOUT:     %d.var_patt: %pattern_type.a4a = var_pattern %d.patt [concrete = constants.%d.var_patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.053 = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.053 = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %GenericNoParams.ee8 = var %d.var_patt [concrete]
+// CHECK:STDOUT:   %d.var: ref %GenericNoParams.ee8 = var_storage %d.var_patt [concrete]
 // CHECK:STDOUT:   %.loc18_12.1: type = splice_block %GenericNoParams.ref [concrete = constants.%GenericNoParams.ee8] {
 // CHECK:STDOUT:     %C.ref.loc18: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %X.ref.loc18: type = name_ref X, %X.decl [concrete = constants.%X]
@@ -210,10 +206,10 @@ class Foo[T:! type];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %GenericNoParams.ee8 = wrapper_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %e.patt: %pattern_type.4e2 = ref_binding_pattern e [concrete = constants.%e.patt]
-// CHECK:STDOUT:     %e.var_patt: %pattern_type.4e2 = var_pattern %e.patt [concrete = constants.%e.var_patt]
+// CHECK:STDOUT:     %d.patt: %pattern_type.a4a = ref_binding_pattern d [concrete = constants.%d.patt]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.a4a = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e.var: ref %GenericAndParams.353 = var %e.var_patt [concrete]
+// CHECK:STDOUT:   %e.var: ref %GenericAndParams.353 = var_storage %e.var_patt [concrete]
 // CHECK:STDOUT:   %.loc19_31: type = splice_block %GenericAndParams.loc19 [concrete = constants.%GenericAndParams.353] {
 // CHECK:STDOUT:     %C.ref.loc19: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %X.ref.loc19_10: type = name_ref X, %X.decl [concrete = constants.%X]
@@ -224,6 +220,10 @@ class Foo[T:! type];
 // CHECK:STDOUT:     %GenericAndParams.loc19: type = class_type @GenericAndParams.loc10, @GenericAndParams.loc10(constants.%X, constants.%X) [concrete = constants.%GenericAndParams.353]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: ref %GenericAndParams.353 = wrapper_binding e, %e.var [concrete = %e.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %e.patt: %pattern_type.4e2 = ref_binding_pattern e [concrete = constants.%e.patt]
+// CHECK:STDOUT:     %e.var_patt: %pattern_type.4e2 = var_pattern %e.patt [concrete = constants.%e.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NotGenericNoParams {

@@ -17,6 +17,7 @@ fn F() -> i32 {
   return c.1.(1);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'tuple.carbon'
 // CHECK:STDOUT: source_filename = "tuple.carbon"
 // CHECK:STDOUT:
@@ -144,3 +145,4 @@ fn F() -> i32 {
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !30, type: !26)
 // CHECK:STDOUT: !33 = !DILocation(line: 14, column: 3, scope: !30)
+// CHECK:STDOUT:

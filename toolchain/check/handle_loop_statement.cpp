@@ -129,14 +129,14 @@ auto HandleParseNode(Context& context, Parse::ForHeaderStartId node_id)
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Let>();
   context.pattern_block_stack().Push();
   context.full_pattern_stack().PushNameBindingDecl();
-  BeginSubpattern(context);
+  BeginExprRegionForPattern(context);
 
   context.node_stack().Push(node_id);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::ForInId node_id) -> bool {
-  EndSubpattern(context, context.node_stack());
+  EndExprRegionForPattern(context, context.node_stack());
   auto pattern_block_id = context.pattern_block_stack().Pop();
   AddInst<SemIR::NameBindingDecl>(context, node_id,
                                   {.pattern_block_id = pattern_block_id});

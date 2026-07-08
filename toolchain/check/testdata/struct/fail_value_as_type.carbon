@@ -46,17 +46,17 @@ var x: {.a = 1};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: <error> = ref_binding_pattern x [concrete = <error>]
-// CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete = <error>]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %x.var: ref <error> = var_storage %x.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %.loc22_15.1: %struct_type.a = struct_literal (%int_1) [concrete = constants.%struct]
 // CHECK:STDOUT:     %.loc22_15.2: type = converted %.loc22_15.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: <error> = wrapper_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: <error> = ref_binding_pattern x [concrete = <error>]
+// CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -156,6 +156,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
   return CompareGeneric(a, b);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'pass_as_arg.carbon'
 // CHECK:STDOUT: source_filename = "pass_as_arg.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -254,6 +255,8 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !30 = !{!"any pointer", !9, i64 0}
 // CHECK:STDOUT: !31 = !{!32, !32, i64 0}
 // CHECK:STDOUT: !32 = !{!"_ZTSN1C1EE", !9, i64 0}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'convert.carbon'
 // CHECK:STDOUT: source_filename = "convert.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -344,6 +347,8 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !31 = !{!"any pointer", !9, i64 0}
 // CHECK:STDOUT: !32 = !{!33, !33, i64 0}
 // CHECK:STDOUT: !33 = !{!"_ZTSN1C1EE", !9, i64 0}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_bitmask.carbon'
 // CHECK:STDOUT: source_filename = "use_bitmask.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -420,6 +425,8 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !32 = !DILocation(line: 20, column: 12, scope: !19)
 // CHECK:STDOUT: !33 = !DILocation(line: 20, column: 3, scope: !19)
 // CHECK:STDOUT: !34 = !DILocation(line: 13, column: 1, scope: !19)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'compare.carbon'
 // CHECK:STDOUT: source_filename = "compare.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -485,6 +492,8 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 2, scope: !27, type: !15)
 // CHECK:STDOUT: !31 = !DILocation(line: 11, column: 10, scope: !27)
 // CHECK:STDOUT: !32 = !DILocation(line: 11, column: 3, scope: !27)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'compare_class.carbon'
 // CHECK:STDOUT: source_filename = "compare_class.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -796,3 +805,4 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !111 = !DILocalVariable(arg: 2, scope: !108, type: !14)
 // CHECK:STDOUT: !112 = !DILocation(line: 30, column: 10, scope: !108)
 // CHECK:STDOUT: !113 = !DILocation(line: 30, column: 3, scope: !108)
+// CHECK:STDOUT:

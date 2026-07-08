@@ -17,6 +17,7 @@ fn Main() {
   DoNothing(a);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'var_param.carbon'
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
@@ -75,3 +76,4 @@ fn Main() {
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !18, type: !7)
 // CHECK:STDOUT: !21 = !DILocation(line: 16, column: 3, scope: !18)
+// CHECK:STDOUT:

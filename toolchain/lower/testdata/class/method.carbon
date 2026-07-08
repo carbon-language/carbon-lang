@@ -22,6 +22,7 @@ fn F(p: C*) {
   (*p).Set(n);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'method.carbon'
 // CHECK:STDOUT: source_filename = "method.carbon"
 // CHECK:STDOUT:
@@ -55,3 +56,4 @@ fn F(p: C*) {
 // CHECK:STDOUT: !10 = !DILocation(line: 21, column: 16, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 22, column: 3, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 20, column: 1, scope: !4)
+// CHECK:STDOUT:

@@ -92,11 +92,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PartialConstant(%x.param: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: <error> = ref_binding_pattern a [concrete = <error>]
-// CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete = <error>]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %a.var: ref <error> = var_storage %a.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   br !.loc9_20
 // CHECK:STDOUT:
@@ -129,10 +125,10 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: !.loc9_15:
 // CHECK:STDOUT:   %a: <error> = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: <error> = ref_binding_pattern b [concrete = <error>]
-// CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete = <error>]
+// CHECK:STDOUT:     %a.patt: <error> = ref_binding_pattern a [concrete = <error>]
+// CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref <error> = var %b.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %b.var: ref <error> = var_storage %b.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   br !.loc14_20
 // CHECK:STDOUT:
@@ -165,6 +161,10 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc14_15:
 // CHECK:STDOUT:   %b: <error> = wrapper_binding b, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: <error> = ref_binding_pattern b [concrete = <error>]
+// CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -212,11 +212,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @KnownValueButNonConstantCondition(%x.param: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete = <error>]
-// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete = <error>]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %c.var: ref <error> = var_storage %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   br !.loc11_20
 // CHECK:STDOUT:
@@ -249,10 +245,10 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: !.loc11_15:
 // CHECK:STDOUT:   %c: <error> = wrapper_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: <error> = ref_binding_pattern d [concrete = <error>]
-// CHECK:STDOUT:     %d.var_patt: <error> = var_pattern %d.patt [concrete = <error>]
+// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete = <error>]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref <error> = var %d.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %d.var: ref <error> = var_storage %d.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %d.var, <error>
 // CHECK:STDOUT:   br !.loc16_20
 // CHECK:STDOUT:
@@ -285,6 +281,10 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc16_15:
 // CHECK:STDOUT:   %d: <error> = wrapper_binding d, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: <error> = ref_binding_pattern d [concrete = <error>]
+// CHECK:STDOUT:     %d.var_patt: <error> = var_pattern %d.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

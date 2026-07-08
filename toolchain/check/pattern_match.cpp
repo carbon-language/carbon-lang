@@ -531,7 +531,9 @@ auto MatchContext::DoPreWork(State state, SemIR::AnyParamPattern param_pattern,
                  .work = PreWork{.scrutinee_id = param_id},
                  .allow_unmarked_ref = entry.allow_unmarked_ref});
       } else {
-        results_stack_.AppendToTop(param_id);
+        if (need_subpattern_results()) {
+          results_stack_.AppendToTop(param_id);
+        }
       }
 
       callee_state->PushCallParamPattern(context_, loc_id, entry.pattern_id,

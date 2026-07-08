@@ -68,16 +68,12 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT:   %Main.a_ptr_ref: ref %ptr.77f = import_ref Main//implicit, a_ptr_ref, loaded [concrete = %a_ptr_ref.var]
 // CHECK:STDOUT:   %Main.import_ref.499: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.ff5) = import_ref Main//implicit, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.ce9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.90e = impl_witness_table (%Main.import_ref.499), @ptr.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %a_ref.var: ref %const.13f = var constants.%a_ref.var_patt [concrete]
-// CHECK:STDOUT:   %a_ptr_ref.var: ref %ptr.77f = var constants.%a_ptr_ref.var_patt [concrete]
+// CHECK:STDOUT:   %a_ref.var: ref %const.13f = var_storage constants.%a_ref.var_patt [concrete]
+// CHECK:STDOUT:   %a_ptr_ref.var: ref %ptr.77f = var_storage constants.%a_ptr_ref.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7d2 = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.7d2 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %ptr.77f = var %a.var_patt [concrete]
+// CHECK:STDOUT:   %a.var: ref %ptr.77f = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6: type = splice_block %ptr.loc6 [concrete = constants.%ptr.77f] {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:     %const.loc6: type = const_type %C.ref.loc6 [concrete = constants.%const.13f]
@@ -85,16 +81,20 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr.77f = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_ptr.patt: %pattern_type.7d2 = ref_binding_pattern a_ptr [concrete = constants.%a_ptr.patt]
-// CHECK:STDOUT:     %a_ptr.var_patt: %pattern_type.7d2 = var_pattern %a_ptr.patt [concrete = constants.%a_ptr.var_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7d2 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.7d2 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a_ptr.var: ref %ptr.77f = var %a_ptr.var_patt [concrete]
+// CHECK:STDOUT:   %a_ptr.var: ref %ptr.77f = var_storage %a_ptr.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr.77f] {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:     %const.loc7: type = const_type %C.ref.loc7 [concrete = constants.%const.13f]
 // CHECK:STDOUT:     %ptr.loc7: type = ptr_type %const.loc7 [concrete = constants.%ptr.77f]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ptr: ref %ptr.77f = wrapper_binding a_ptr, %a_ptr.var [concrete = %a_ptr.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a_ptr.patt: %pattern_type.7d2 = ref_binding_pattern a_ptr [concrete = constants.%a_ptr.patt]
+// CHECK:STDOUT:     %a_ptr.var_patt: %pattern_type.7d2 = var_pattern %a_ptr.patt [concrete = constants.%a_ptr.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

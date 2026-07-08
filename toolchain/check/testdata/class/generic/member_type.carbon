@@ -314,11 +314,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.1e8 = ref_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.1e8 = var_pattern %c.patt [concrete = constants.%c.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %Inner.096 = var %c.var_patt
+// CHECK:STDOUT:   %c.var: ref %Inner.096 = var_storage %c.var_patt
 // CHECK:STDOUT:   %Outer.ref.loc13_29: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:   %i32.loc13_35: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %Copy.facet.loc13_38: %Copy.type = facet_value %i32.loc13_35, (constants.%Copy.impl_witness.0e0) [concrete = constants.%Copy.facet.987]
@@ -352,6 +348,10 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, %.loc13_20.2 [concrete = constants.%Inner.096]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %Inner.096 = wrapper_binding c, %c.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.1e8 = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.1e8 = var_pattern %c.patt [concrete = constants.%c.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: ref %Inner.096 = name_ref c, %c
 // CHECK:STDOUT:   %n.ref: %Inner.elem.362 = name_ref n, @Inner.%.loc6 [concrete = @Inner.%.loc6]
 // CHECK:STDOUT:   %.loc14_11.1: ref %i32 = class_element_access %c.ref, element0
@@ -842,11 +842,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.9d0 = ref_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.9d0 = var_pattern %c.patt [concrete = constants.%c.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %C.b7f = var %c.var_patt
+// CHECK:STDOUT:   %c.var: ref %C.b7f = var_storage %c.var_patt
 // CHECK:STDOUT:   %.loc23_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc23_26.2: init %C.b7f to %c.var = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc23_3: init %C.b7f = converted %.loc23_26.1, %.loc23_26.2 [concrete = constants.%C.val]
@@ -859,6 +855,10 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %.loc23_20.2 [concrete = constants.%C.b7f]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C.b7f = wrapper_binding c, %c.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.9d0 = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.9d0 = var_pattern %c.patt [concrete = constants.%c.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: ref %C.b7f = name_ref c, %c
 // CHECK:STDOUT:   %Outer.ref.loc24: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:   %i32.loc24: type = type_literal constants.%i32 [concrete = constants.%i32]

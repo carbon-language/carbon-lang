@@ -19,6 +19,7 @@ fn Run() -> i32 {
   return a;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'nested.carbon'
 // CHECK:STDOUT: source_filename = "nested.carbon"
 // CHECK:STDOUT:
@@ -91,3 +92,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !20 = !{!21}
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !22 = !DILocation(line: 16, column: 5, scope: !17)
+// CHECK:STDOUT:

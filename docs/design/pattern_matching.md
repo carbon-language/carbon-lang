@@ -295,7 +295,7 @@ the type of the scrutinee and deduced values are substituted back into the type
 before pattern matching is performed.
 
 ```carbon
-fn G[T:! Type](p: T*);
+fn G[T: Type](p: T*);
 class X { impl as ImplicitAs(i32*); }
 // ✅ Deduces `T = i32` then implicitly and
 // trivially converts `p` to `i32*`.
@@ -493,7 +493,7 @@ alternative, and the arguments of the alternative match the given tuple pattern
 (if any).
 
 ```carbon
-choice Optional(T:! Type) {
+choice Optional(T: Type) {
   None,
   Some(T)
 }
@@ -532,7 +532,7 @@ meaningful due to a type error are instead treated as not matching. This
 includes cases where an `==` fails because of a missing `EqWith` implementation.
 
 ```carbon
-fn TypeName[template T:! Type](x: T) -> String {
+fn TypeName[template T: Type](x: T) -> String {
   match (x) {
     // ✅ OK, the type of `x` is a template parameter.
     case _: i32 => { return "int"; }
@@ -547,7 +547,7 @@ Cases where the match is invalid for reasons not involving the template
 parameter are rejected when type-checking the template:
 
 ```carbon
-fn MeaninglessMatch[template T:! Type](x: T*) {
+fn MeaninglessMatch[template T: Type](x: T*) {
   match (*x) {
     // ✅ OK, `T` could be a tuple.
     case (_: auto, _: auto) => {}
@@ -626,7 +626,7 @@ We will diagnose the following situations:
     example:
 
     ```carbon
-    choice Optional(T:! Type) {
+    choice Optional(T: Type) {
       None,
       Some(T)
     }

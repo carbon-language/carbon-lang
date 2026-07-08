@@ -23,6 +23,7 @@ fn Bar() {
   Foo.Baz();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'function.carbon'
 // CHECK:STDOUT: source_filename = "function.carbon"
 // CHECK:STDOUT:
@@ -63,3 +64,4 @@ fn Bar() {
 // CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Bar", linkageName: "_CBar.Main", scope: null, file: !1, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !11 = !DILocation(line: 23, column: 3, scope: !10)
 // CHECK:STDOUT: !12 = !DILocation(line: 22, column: 1, scope: !10)
+// CHECK:STDOUT:

@@ -154,6 +154,7 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
   return &Cpp.X.static_tmpl(Cpp.Y);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_global.carbon'
 // CHECK:STDOUT: source_filename = "import_global.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -190,6 +191,8 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 6, column: 1, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_inline.carbon'
 // CHECK:STDOUT: source_filename = "import_inline.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -306,6 +309,8 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 7, column: 3, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 6, column: 1, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'todo_import_thread_local.carbon'
 // CHECK:STDOUT: source_filename = "todo_import_thread_local.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -416,6 +421,8 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: !20 = !DILocation(line: 14, column: 10, scope: !16)
 // CHECK:STDOUT: !21 = !DILocation(line: 14, column: 3, scope: !16)
 // CHECK:STDOUT: !22 = !{!"branch_weights", i32 1, i32 1023}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_static.carbon'
 // CHECK:STDOUT: source_filename = "import_static.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -455,6 +462,8 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !15 = !DILocation(line: 7, column: 10, scope: !11)
 // CHECK:STDOUT: !16 = !DILocation(line: 7, column: 3, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_var_template.carbon'
 // CHECK:STDOUT: source_filename = "import_var_template.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -506,6 +515,8 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !21 = !DILocation(line: 11, column: 3, scope: !17)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_static_template.carbon'
 // CHECK:STDOUT: source_filename = "import_static_template.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -557,3 +568,4 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !21 = !DILocation(line: 11, column: 3, scope: !17)
+// CHECK:STDOUT:

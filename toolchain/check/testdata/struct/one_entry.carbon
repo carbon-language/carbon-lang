@@ -30,7 +30,7 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.2cb: %struct_type.a.a6c = struct_value (%int_4.0c1) [concrete]
-// CHECK:STDOUT:   %.587: ref %i32 = struct_access file.%x.var, element0 [concrete]
+// CHECK:STDOUT:   %.fb9: ref %i32 = struct_access file.%x.var, element0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.914: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -86,26 +86,26 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.506 = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.506 = var_pattern %x.patt [concrete = constants.%x.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %struct_type.a.a92 = var %x.var_patt [concrete]
+// CHECK:STDOUT:   %x.var: ref %struct_type.a.a92 = var_storage %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15: type = splice_block %struct_type.a.loc15 [concrete = constants.%struct_type.a.a92] {
 // CHECK:STDOUT:     %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.loc15: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.a92]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.a92 = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.506 = ref_binding_pattern y [concrete = constants.%y.patt]
-// CHECK:STDOUT:     %y.var_patt: %pattern_type.506 = var_pattern %y.patt [concrete = constants.%y.var_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.506 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.506 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %struct_type.a.a92 = var %y.var_patt [concrete]
+// CHECK:STDOUT:   %y.var: ref %struct_type.a.a92 = var_storage %y.var_patt [concrete]
 // CHECK:STDOUT:   %.loc16: type = splice_block %struct_type.a.loc16 [concrete = constants.%struct_type.a.a92] {
 // CHECK:STDOUT:     %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.loc16: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.a92]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %struct_type.a.a92 = wrapper_binding y, %y.var [concrete = %y.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %pattern_type.506 = ref_binding_pattern y [concrete = constants.%y.patt]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.506 = var_pattern %y.patt [concrete = constants.%y.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -122,7 +122,7 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   %.loc15_1: init %struct_type.a.a92 = converted %.loc15_27.1, %.loc15_27.3 [concrete = constants.%struct.751]
 // CHECK:STDOUT:   assign file.%x.var, %.loc15_1
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.a92 = name_ref x, file.%x [concrete = file.%x.var]
-// CHECK:STDOUT:   %.loc16_20.1: ref %i32 = struct_access %x.ref, element0 [concrete = constants.%.587]
+// CHECK:STDOUT:   %.loc16_20.1: ref %i32 = struct_access %x.ref, element0 [concrete = constants.%.fb9]
 // CHECK:STDOUT:   %.loc16_20.2: %i32 = acquire_value %.loc16_20.1
 // CHECK:STDOUT:   %impl.elem0.loc16: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc16_20.1: <bound method> = bound_method %.loc16_20.2, %impl.elem0.loc16

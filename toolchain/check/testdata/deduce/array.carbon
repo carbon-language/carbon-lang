@@ -287,11 +287,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -317,6 +313,10 @@ fn G() {
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %C.ref.loc9 [concrete = constants.%array_type.9a3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type.9a3 = wrapper_binding a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.9a3 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.e0d]
@@ -543,11 +543,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -573,6 +569,10 @@ fn G() {
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %C.ref [concrete = constants.%array_type.9a3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type.9a3 = wrapper_binding a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.9a3 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_3.1ba) [concrete = constants.%F.specific_fn]
@@ -742,11 +742,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -772,6 +768,10 @@ fn G() {
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %C.ref [concrete = constants.%array_type.9a3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type.9a3 = wrapper_binding a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.9a3 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C, constants.%int_3) [concrete = constants.%F.specific_fn]
@@ -967,11 +967,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc10_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -997,6 +993,10 @@ fn G() {
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %C.ref.loc10 [concrete = constants.%array_type.9a3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type.9a3 = wrapper_binding a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.9a3 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.e0d]
@@ -1236,11 +1236,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.0ed = ref_binding_pattern a [concrete = constants.%a.patt.7d5]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.0ed = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.cec = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %array_type.cec = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc11_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc11_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc11_34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -1266,6 +1262,10 @@ fn G() {
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %D.ref [concrete = constants.%array_type.cec]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type.cec = wrapper_binding a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.0ed = ref_binding_pattern a [concrete = constants.%a.patt.7d5]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.0ed = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.cec = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_3.1ba) [concrete = constants.%F.specific_fn]
@@ -1495,11 +1495,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %array_type.9a3 = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -1525,6 +1521,10 @@ fn G() {
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %C.ref [concrete = constants.%array_type.9a3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type.9a3 = wrapper_binding a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.3f5 = ref_binding_pattern a [concrete = constants.%a.patt.b51]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.3f5 = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.9a3 = name_ref a, %a
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3

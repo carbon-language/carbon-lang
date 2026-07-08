@@ -126,11 +126,12 @@ expressions of binding patterns, and expressions that are used as patterns
 themselves (although those have not been implemented yet). The parse tree
 doesn't mark these situations in advance: any given subpattern might turn out to
 be one that emits non-pattern instructions. To handle these situations, we
-speculatively push an instruction block onto the (non-pattern) stack whenever we
-are about to begin handling a subpattern, and then pop it at the end of the
-subpattern, with different treatment depending on whether the subpattern turned
-out to involve a subexpression. This is handled by `BeginSubpattern`,
-`ConsumeSubpatternExpr`, `EndSubpattern`, and `EndEmptySubpattern`.
+speculatively prepare to build an `ExprRegion` whenever we are about to begin
+handling a pattern that might be a binding or expression pattern, and then
+either consume or discard the region once we've passed the point where the
+expression (if any) would appear. This is handled by `BeginExprRegionForPattern`,
+`ConsumeExprRegionForPattern`, `EndExprRegionForPattern`, and
+`EndEmptyExprRegionForPattern`.
 
 One further complication here is that the type expression can contain control
 flow (such as an `if` expression). Consequently, we can't represent the type

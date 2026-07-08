@@ -145,11 +145,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   if %true br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %A.patt: %pattern_type.6b6 = ref_binding_pattern A [concrete = constants.%A.patt]
-// CHECK:STDOUT:     %A.var_patt: %pattern_type.6b6 = var_pattern %A.patt [concrete = constants.%A.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.var: ref %i32 = var %A.var_patt
+// CHECK:STDOUT:   %A.var: ref %i32 = var_storage %A.var_patt
 // CHECK:STDOUT:   %int_0.loc26: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc26: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc26_5.1: <bound method> = bound_method %int_0.loc26, %impl.elem0.loc26 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -160,6 +156,10 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   assign %A.var, %.loc26
 // CHECK:STDOUT:   %i32.loc26: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %A: ref %i32 = wrapper_binding A, %A.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %A.patt: %pattern_type.6b6 = ref_binding_pattern A [concrete = constants.%A.patt]
+// CHECK:STDOUT:     %A.var_patt: %pattern_type.6b6 = var_pattern %A.patt [concrete = constants.%A.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref.loc29: ref %i32 = name_ref A, %A
 // CHECK:STDOUT:   %.loc29: %i32 = acquire_value %A.ref.loc29
 // CHECK:STDOUT:   %impl.elem0.loc29: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

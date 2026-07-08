@@ -71,11 +71,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %NS.patt: %pattern_type.cb1 = ref_binding_pattern NS [concrete = constants.%NS.patt]
-// CHECK:STDOUT:     %NS.var_patt: %pattern_type.cb1 = var_pattern %NS.patt [concrete = constants.%NS.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NS.var: ref %empty_tuple.type = var %NS.var_patt
+// CHECK:STDOUT:   %NS.var: ref %empty_tuple.type = var_storage %NS.var_patt
 // CHECK:STDOUT:   %.loc5_17.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_17.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_3: init %empty_tuple.type = converted %.loc5_17.1, %.loc5_17.2 [concrete = constants.%empty_tuple]
@@ -85,16 +81,16 @@ fn Main() {
 // CHECK:STDOUT:     %.loc5_12.3: type = converted %.loc5_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS: ref %empty_tuple.type = wrapper_binding NS, %NS.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %NS.patt: %pattern_type.cb1 = ref_binding_pattern NS [concrete = constants.%NS.patt]
+// CHECK:STDOUT:     %NS.var_patt: %pattern_type.cb1 = var_pattern %NS.patt [concrete = constants.%NS.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS.ref: ref %empty_tuple.type = name_ref NS, %NS
 // CHECK:STDOUT:   %.loc6_9.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_9.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_6: init %empty_tuple.type = converted %.loc6_9.1, %.loc6_9.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %NS.ref, %.loc6_6
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt.loc8: %pattern_type.cb1 = ref_binding_pattern x [concrete = constants.%x.patt.06838d.1]
-// CHECK:STDOUT:     %x.var_patt.loc8: %pattern_type.cb1 = var_pattern %x.patt.loc8 [concrete = constants.%x.var_patt.28d573.1]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var.loc8: ref %empty_tuple.type = var %x.var_patt.loc8
+// CHECK:STDOUT:   %x.var.loc8: ref %empty_tuple.type = var_storage %x.var_patt.loc8
 // CHECK:STDOUT:   %.loc8_23.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_23.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_3: init %empty_tuple.type = converted %.loc8_23.1, %.loc8_23.2 [concrete = constants.%empty_tuple]
@@ -104,15 +100,15 @@ fn Main() {
 // CHECK:STDOUT:     %.loc8_18.3: type = converted %.loc8_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.loc8: ref %empty_tuple.type = wrapper_binding x, %x.var.loc8
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt.loc8: %pattern_type.cb1 = ref_binding_pattern x [concrete = constants.%x.patt.06838d.1]
+// CHECK:STDOUT:     %x.var_patt.loc8: %pattern_type.cb1 = var_pattern %x.patt.loc8 [concrete = constants.%x.var_patt.28d573.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt.loc10: %pattern_type.cb1 = ref_binding_pattern x [concrete = constants.%x.patt.06838d.2]
-// CHECK:STDOUT:     %x.var_patt.loc10: %pattern_type.cb1 = var_pattern %x.patt.loc10 [concrete = constants.%x.var_patt.28d573.2]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var.loc10: ref %empty_tuple.type = var %x.var_patt.loc10
+// CHECK:STDOUT:   %x.var.loc10: ref %empty_tuple.type = var_storage %x.var_patt.loc10
 // CHECK:STDOUT:   %.loc10_18.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc10_18.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc10_5: init %empty_tuple.type = converted %.loc10_18.1, %.loc10_18.2 [concrete = constants.%empty_tuple]
@@ -122,6 +118,10 @@ fn Main() {
 // CHECK:STDOUT:     %.loc10_13.3: type = converted %.loc10_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.loc10: ref %empty_tuple.type = wrapper_binding x, %x.var.loc10
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt.loc10: %pattern_type.cb1 = ref_binding_pattern x [concrete = constants.%x.patt.06838d.2]
+// CHECK:STDOUT:     %x.var_patt.loc10: %pattern_type.cb1 = var_pattern %x.patt.loc10 [concrete = constants.%x.var_patt.28d573.2]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: ref %empty_tuple.type = name_ref x, %x.loc10
 // CHECK:STDOUT:   %.loc13_10.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc13_10.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]

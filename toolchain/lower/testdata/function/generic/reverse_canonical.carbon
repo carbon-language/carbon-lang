@@ -47,6 +47,7 @@ fn Main() {
   first(x, x, y);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'reverse_canonical.carbon'
 // CHECK:STDOUT: source_filename = "reverse_canonical.carbon"
 // CHECK:STDOUT:
@@ -275,3 +276,4 @@ fn Main() {
 // CHECK:STDOUT: !95 = !DILocalVariable(arg: 2, scope: !92, type: !17)
 // CHECK:STDOUT: !96 = !DILocalVariable(arg: 3, scope: !92, type: !17)
 // CHECK:STDOUT: !97 = !DILocation(line: 40, column: 1, scope: !92)
+// CHECK:STDOUT:

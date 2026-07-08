@@ -187,11 +187,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.831 = ref_binding_pattern a [concrete = constants.%a.patt.d4ccad.1]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.831 = var_pattern %a.patt [concrete = constants.%a.var_patt.41b89c.1]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref bool = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref bool = var_storage %a.var_patt
 // CHECK:STDOUT:   %true.loc23_53: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %impl.elem0.loc23: %.15e = impl_witness_access constants.%Copy.impl_witness.713, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc23: <bound method> = bound_method %true.loc23_53, %impl.elem0.loc23 [concrete = constants.%bool.as.Copy.impl.Op.bound]
@@ -229,10 +225,10 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT: !.loc23_15:
 // CHECK:STDOUT:   %a: ref bool = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = ref_binding_pattern b [concrete = constants.%b.patt]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.831 = var_pattern %b.patt [concrete = constants.%b.var_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.831 = ref_binding_pattern a [concrete = constants.%a.patt.d4ccad.1]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.831 = var_pattern %a.patt [concrete = constants.%a.var_patt.41b89c.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref bool = var %b.var_patt
+// CHECK:STDOUT:   %b.var: ref bool = var_storage %b.var_patt
 // CHECK:STDOUT:   %true.loc24_54: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %impl.elem0.loc24: %.15e = impl_witness_access constants.%Copy.impl_witness.713, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %true.loc24_54, %impl.elem0.loc24 [concrete = constants.%bool.as.Copy.impl.Op.bound]
@@ -270,10 +266,10 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT: !.loc24_15:
 // CHECK:STDOUT:   %b: ref bool = wrapper_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.831 = ref_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.831 = var_pattern %c.patt [concrete = constants.%c.var_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = ref_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.831 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref bool = var %c.var_patt
+// CHECK:STDOUT:   %c.var: ref bool = var_storage %c.var_patt
 // CHECK:STDOUT:   %true.loc25_54: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %impl.elem0.loc25: %.15e = impl_witness_access constants.%Copy.impl_witness.713, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc25: <bound method> = bound_method %true.loc25_54, %impl.elem0.loc25 [concrete = constants.%bool.as.Copy.impl.Op.bound]
@@ -311,10 +307,10 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT: !.loc25_15:
 // CHECK:STDOUT:   %c: ref bool = wrapper_binding c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.cb1 = ref_binding_pattern d [concrete = constants.%d.patt]
-// CHECK:STDOUT:     %d.var_patt: %pattern_type.cb1 = var_pattern %d.patt [concrete = constants.%d.var_patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.831 = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.831 = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var %d.var_patt
+// CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var_storage %d.var_patt
 // CHECK:STDOUT:   %.loc26_56.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc26_56.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc26_3: init %empty_tuple.type = converted %.loc26_56.1, %.loc26_56.2 [concrete = constants.%empty_tuple]
@@ -350,6 +346,10 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc26_15:
 // CHECK:STDOUT:   %d: ref %empty_tuple.type = wrapper_binding d, %d.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %pattern_type.cb1 = ref_binding_pattern d [concrete = constants.%d.patt]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.cb1 = var_pattern %d.patt [concrete = constants.%d.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound.loc26: <bound method> = bound_method %d.var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc26: init %empty_tuple.type = call %Destroy.Op.bound.loc26(%d.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc25: <bound method> = bound_method %c.var, constants.%Destroy.Op.1a2547.2
@@ -367,11 +367,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PartialConstant(%x.param: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.831 = ref_binding_pattern a [concrete = constants.%a.patt.d4ccad.2]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.831 = var_pattern %a.patt [concrete = constants.%a.var_patt.41b89c.2]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref bool = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref bool = var_storage %a.var_patt
 // CHECK:STDOUT:   %true.loc30_50: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %impl.elem0: %.15e = impl_witness_access constants.%Copy.impl_witness.713, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %true.loc30_50, %impl.elem0 [concrete = constants.%bool.as.Copy.impl.Op.bound]
@@ -408,6 +404,10 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc30_15:
 // CHECK:STDOUT:   %a: ref bool = wrapper_binding a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.831 = ref_binding_pattern a [concrete = constants.%a.patt.d4ccad.2]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.831 = var_pattern %a.patt [concrete = constants.%a.var_patt.41b89c.2]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   return

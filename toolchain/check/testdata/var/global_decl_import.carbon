@@ -37,19 +37,19 @@ fn G() -> {.v: ()} {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.v [concrete]
 // CHECK:STDOUT:   %x.patt: %pattern_type = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
-// CHECK:STDOUT:   %.267: ref %empty_tuple.type = struct_access imports.%x.var, element0 [concrete]
+// CHECK:STDOUT:   %.7ba: ref %empty_tuple.type = struct_access imports.%x.var, element0 [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.v = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.x: ref %struct_type.v = import_ref Main//decl, x, loaded [concrete = %x.var]
-// CHECK:STDOUT:   %x.var: ref %struct_type.v = var constants.%x.var_patt [concrete]
+// CHECK:STDOUT:   %x.var: ref %struct_type.v = var_storage constants.%x.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %struct_type.v {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: ref %struct_type.v = name_ref x, imports.%Main.x [concrete = imports.%x.var]
-// CHECK:STDOUT:   %.loc8_10.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.267]
+// CHECK:STDOUT:   %.loc8_10.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.7ba]
 // CHECK:STDOUT:   %.loc8_10.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_10.3: init %empty_tuple.type = converted %.loc8_10.1, %.loc8_10.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_10.4: init %struct_type.v = struct_init (%.loc8_10.3) [concrete = constants.%struct]

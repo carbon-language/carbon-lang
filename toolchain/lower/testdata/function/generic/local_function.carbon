@@ -23,6 +23,7 @@ fn Run() -> i32 {
   return F(i32, 0);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'local_function.carbon'
 // CHECK:STDOUT: source_filename = "local_function.carbon"
 // CHECK:STDOUT:
@@ -72,3 +73,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !18 = !{!19}
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !20 = !DILocation(line: 18, column: 21, scope: !17)
+// CHECK:STDOUT:

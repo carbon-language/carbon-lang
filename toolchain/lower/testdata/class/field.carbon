@@ -68,6 +68,7 @@ fn Run() {
   var _: Use = {.a = &o, .b = {.v = 42}};
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -160,6 +161,8 @@ fn Run() {
 // CHECK:STDOUT: !35 = !{!36}
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !34, type: !8)
 // CHECK:STDOUT: !37 = !DILocation(line: 14, column: 3, scope: !34)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'inplace_init_with_nonconst.carbon'
 // CHECK:STDOUT: source_filename = "inplace_init_with_nonconst.carbon"
 // CHECK:STDOUT:
@@ -241,6 +244,8 @@ fn Run() {
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !23, type: !15)
 // CHECK:STDOUT: !26 = !DILocation(line: 15, column: 3, scope: !23)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'implicit_init_with_nonempty_nonconst.carbon'
 // CHECK:STDOUT: source_filename = "implicit_init_with_nonempty_nonconst.carbon"
 // CHECK:STDOUT:
@@ -346,3 +351,4 @@ fn Run() {
 // CHECK:STDOUT: !35 = !{!36}
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !34, type: !22)
 // CHECK:STDOUT: !37 = !DILocation(line: 17, column: 3, scope: !34)
+// CHECK:STDOUT:

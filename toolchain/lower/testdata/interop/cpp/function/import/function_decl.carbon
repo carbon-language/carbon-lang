@@ -132,6 +132,7 @@ fn MyF() -> i32 {
   return value;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_function_decl.carbon'
 // CHECK:STDOUT: source_filename = "import_function_decl.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -169,6 +170,8 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 7, column: 3, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 6, column: 1, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_inline_function_decl.carbon'
 // CHECK:STDOUT: source_filename = "import_inline_function_decl.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -212,6 +215,8 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 7, column: 3, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 6, column: 1, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_inline_used_function_decl.carbon'
 // CHECK:STDOUT: source_filename = "import_inline_used_function_decl.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -260,6 +265,8 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 7, column: 3, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 6, column: 1, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_multiple_inline_function_decls.carbon'
 // CHECK:STDOUT: source_filename = "import_multiple_inline_function_decls.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -323,6 +330,8 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !15 = !DILocation(line: 8, column: 3, scope: !11)
 // CHECK:STDOUT: !16 = !DILocation(line: 9, column: 3, scope: !11)
 // CHECK:STDOUT: !17 = !DILocation(line: 6, column: 1, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_inline_recursive_function_decl.carbon'
 // CHECK:STDOUT: source_filename = "import_inline_recursive_function_decl.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -376,6 +385,8 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 8, column: 3, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 6, column: 1, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_with_default_args.carbon'
 // CHECK:STDOUT: source_filename = "call_with_default_args.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -492,3 +503,4 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !29 = !{!30}
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !26, type: !14)
 // CHECK:STDOUT: !31 = !DILocation(line: 11, column: 3, scope: !26)
+// CHECK:STDOUT:

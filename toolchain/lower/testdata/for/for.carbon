@@ -24,6 +24,7 @@ fn For() {
   H();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'for.carbon'
 // CHECK:STDOUT: source_filename = "for.carbon"
 // CHECK:STDOUT:
@@ -394,3 +395,4 @@ fn For() {
 // CHECK:STDOUT: !143 = !{!144}
 // CHECK:STDOUT: !144 = !DILocalVariable(arg: 1, scope: !142, type: !18)
 // CHECK:STDOUT: !145 = !DILocation(line: 59, column: 28, scope: !142)
+// CHECK:STDOUT:

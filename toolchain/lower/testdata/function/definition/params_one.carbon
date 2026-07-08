@@ -12,6 +12,7 @@
 
 fn Foo(_: i32) {}
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'params_one.carbon'
 // CHECK:STDOUT: source_filename = "params_one.carbon"
 // CHECK:STDOUT:
@@ -37,3 +38,4 @@ fn Foo(_: i32) {}
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 13, column: 1, scope: !4)
+// CHECK:STDOUT:

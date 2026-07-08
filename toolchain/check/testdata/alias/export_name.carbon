@@ -212,13 +212,13 @@ var d: D* = &c;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %d.var: ref %C = var_storage %d.var_patt [concrete]
+// CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
+// CHECK:STDOUT:   %d: ref %C = wrapper_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type = ref_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %C = var %d.var_patt [concrete]
-// CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
-// CHECK:STDOUT:   %d: ref %C = wrapper_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export.carbon"] {
@@ -261,13 +261,13 @@ var d: D* = &c;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %c.var: ref <error> = var_storage %c.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c: <error> = wrapper_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete = <error>]
 // CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [concrete = <error>]
-// CHECK:STDOUT:   %c: <error> = wrapper_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -333,23 +333,23 @@ var d: D* = &c;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt [concrete]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.fcb = ref_binding_pattern d [concrete = constants.%d.patt]
-// CHECK:STDOUT:     %d.var_patt: %pattern_type.fcb = var_pattern %d.patt [concrete = constants.%d.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %ptr.6b6 = var %d.var_patt [concrete]
+// CHECK:STDOUT:   %d.var: ref %ptr.6b6 = var_storage %d.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8: type = splice_block %ptr [concrete = constants.%ptr.6b6] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr: type = ptr_type %D.ref [concrete = constants.%ptr.6b6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %ptr.6b6 = wrapper_binding d, %d.var [concrete = %d.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %pattern_type.fcb = ref_binding_pattern d [concrete = constants.%d.patt]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.fcb = var_pattern %d.patt [concrete = constants.%d.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_orig.carbon"] {

@@ -16,6 +16,7 @@ fn G() {
   var _: array((i32, i32, i32), 2) = (F(), F());
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'array_in_place.carbon'
 // CHECK:STDOUT: source_filename = "array_in_place.carbon"
 // CHECK:STDOUT:
@@ -91,3 +92,4 @@ fn G() {
 // CHECK:STDOUT: !27 = !{!28}
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !26, type: !22)
 // CHECK:STDOUT: !29 = !DILocation(line: 16, column: 3, scope: !26)
+// CHECK:STDOUT:

@@ -31,6 +31,7 @@ fn For() {
   }
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'bindings.carbon'
 // CHECK:STDOUT: source_filename = "bindings.carbon"
 // CHECK:STDOUT:
@@ -313,3 +314,4 @@ fn For() {
 // CHECK:STDOUT: !99 = !DILocation(line: 63, column: 12, scope: !94)
 // CHECK:STDOUT: !100 = !DILocation(line: 63, column: 26, scope: !94)
 // CHECK:STDOUT: !101 = !DILocation(line: 63, column: 5, scope: !94)
+// CHECK:STDOUT:

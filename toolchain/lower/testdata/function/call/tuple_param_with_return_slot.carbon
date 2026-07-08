@@ -18,6 +18,7 @@ fn Main() {
   F((), (1,), (2, 3));
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'tuple_param_with_return_slot.carbon'
 // CHECK:STDOUT: source_filename = "tuple_param_with_return_slot.carbon"
 // CHECK:STDOUT:
@@ -105,3 +106,4 @@ fn Main() {
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !28, type: !7)
 // CHECK:STDOUT: !33 = !DILocation(line: 18, column: 3, scope: !28)
+// CHECK:STDOUT:

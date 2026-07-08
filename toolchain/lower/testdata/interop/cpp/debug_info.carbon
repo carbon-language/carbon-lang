@@ -22,6 +22,7 @@ fn Call() -> i32 {
   return Cpp.f();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'debug_info.carbon'
 // CHECK:STDOUT: source_filename = "debug_info.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -68,3 +69,4 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !3, line: 21, type: !14, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !19 = !DILocation(line: 22, column: 10, scope: !18)
 // CHECK:STDOUT: !20 = !DILocation(line: 22, column: 3, scope: !18)
+// CHECK:STDOUT:

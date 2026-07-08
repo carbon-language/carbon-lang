@@ -19,6 +19,7 @@ fn Example() -> char {
   return c;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -75,3 +76,4 @@ fn Example() -> char {
 // CHECK:STDOUT: !18 = !{!19}
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !20 = !DILocation(line: 5, column: 3, scope: !17)
+// CHECK:STDOUT:

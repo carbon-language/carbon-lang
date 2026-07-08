@@ -83,6 +83,7 @@ impl C(B) as I {
   fn F() {}
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'impl.carbon'
 // CHECK:STDOUT: source_filename = "impl.carbon"
 // CHECK:STDOUT:
@@ -124,6 +125,8 @@ impl C(B) as I {
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !13, type: !8)
 // CHECK:STDOUT: !16 = !DILocation(line: 19, column: 10, scope: !13)
 // CHECK:STDOUT: !17 = !DILocation(line: 19, column: 3, scope: !13)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic_impls.carbon'
 // CHECK:STDOUT: source_filename = "generic_impls.carbon"
 // CHECK:STDOUT:
@@ -222,6 +225,8 @@ impl C(B) as I {
 // CHECK:STDOUT: !33 = !{!34}
 // CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !32, type: !7)
 // CHECK:STDOUT: !35 = !DILocation(line: 21, column: 3, scope: !32)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic_class_impls.carbon'
 // CHECK:STDOUT: source_filename = "generic_class_impls.carbon"
 // CHECK:STDOUT:
@@ -252,3 +257,4 @@ impl C(B) as I {
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.a6a60dfee2d7d273.Main:I.Main", scope: null, file: !1, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !9 = !DILocation(line: 18, column: 3, scope: !8)
+// CHECK:STDOUT:

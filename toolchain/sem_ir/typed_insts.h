@@ -2323,7 +2323,7 @@ struct VarPattern {
 struct VarStorage {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::VarStorage.Define<Parse::NodeId>(
-      {.ir_name = "var",
+      {.ir_name = "var_storage",
        .expr_category = ExprCategory::DurableRef,
        .constant_kind = InstConstantKind::ConditionalUnique,
        .constant_needs_inst_id = InstConstantNeedsInstIdKind::Permanent,

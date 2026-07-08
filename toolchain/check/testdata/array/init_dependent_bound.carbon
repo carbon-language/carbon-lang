@@ -113,11 +113,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %arr.patt.loc7_17.1: @G.%pattern_type (%pattern_type.bd6) = ref_binding_pattern arr [symbolic = %arr.patt.loc7_17.2 (constants.%arr.patt.770)]
-// CHECK:STDOUT:       %arr.var_patt.loc7_3.1: @G.%pattern_type (%pattern_type.bd6) = var_pattern %arr.patt.loc7_17.1 [symbolic = %arr.var_patt.loc7_3.2 (constants.%arr.var_patt.5fc)]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc7_29.2 (%array_type.1b3) = var %arr.var_patt.loc7_3.1
+// CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc7_29.2 (%array_type.1b3) = var_storage %arr.var_patt.loc7_3.1
 // CHECK:STDOUT:     %.loc7_34.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_34.2: init @G.%array_type.loc7_29.2 (%array_type.1b3) to %arr.var = array_init () [symbolic = %array (constants.%array.ca4)]
 // CHECK:STDOUT:     %.loc7_3.1: init @G.%array_type.loc7_29.2 (%array_type.1b3) = converted %.loc7_34.1, %.loc7_34.2 [symbolic = %array (constants.%array.ca4)]
@@ -128,6 +124,10 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %array_type.loc7_29.1: type = array_type %int_0, %T.ref [symbolic = %array_type.loc7_29.2 (constants.%array_type.1b3)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr: ref @G.%array_type.loc7_29.2 (%array_type.1b3) = wrapper_binding arr, %arr.var
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %arr.patt.loc7_17.1: @G.%pattern_type (%pattern_type.bd6) = ref_binding_pattern arr [symbolic = %arr.patt.loc7_17.2 (constants.%arr.patt.770)]
+// CHECK:STDOUT:       %arr.var_patt.loc7_3.1: @G.%pattern_type (%pattern_type.bd6) = var_pattern %arr.patt.loc7_17.1 [symbolic = %arr.var_patt.loc7_3.2 (constants.%arr.var_patt.5fc)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %impl.elem0.loc7_3.1: @G.%.loc7_3.4 (%.1e5) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc7_3.1: <bound method> = bound_method %arr.var, %impl.elem0.loc7_3.1
 // CHECK:STDOUT:     %Destroy.facet.loc7_3.1: %Destroy.type = facet_value constants.%array_type.1b3, (constants.%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc7_3.3 (constants.%Destroy.facet.a52)]
@@ -220,11 +220,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %arr.patt: <error> = ref_binding_pattern arr [concrete = <error>]
-// CHECK:STDOUT:       %arr.var_patt: <error> = var_pattern %arr.patt [concrete = <error>]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %arr.var: ref <error> = var %arr.var_patt [concrete = <error>]
+// CHECK:STDOUT:     %arr.var: ref <error> = var_storage %arr.var_patt [concrete = <error>]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -232,6 +228,10 @@ fn H() { G(3); }
 // CHECK:STDOUT:     assign %arr.var, <error>
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %arr: <error> = wrapper_binding arr, <error> [concrete = <error>]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %arr.patt: <error> = ref_binding_pattern arr [concrete = <error>]
+// CHECK:STDOUT:       %arr.var_patt: <error> = var_pattern %arr.patt [concrete = <error>]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

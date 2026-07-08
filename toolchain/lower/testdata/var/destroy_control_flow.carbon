@@ -113,6 +113,7 @@ fn WhileContinue(cond: bool) {
   Use(ref a);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'destructible.carbon'
 // CHECK:STDOUT: source_filename = "destructible.carbon"
 // CHECK:STDOUT:
@@ -143,6 +144,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 5, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'if_then.carbon'
 // CHECK:STDOUT: source_filename = "if_then.carbon"
 // CHECK:STDOUT:
@@ -219,6 +222,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !18, type: !7)
 // CHECK:STDOUT: !21 = !DILocation(line: 9, column: 5, scope: !18)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'if_else.carbon'
 // CHECK:STDOUT: source_filename = "if_else.carbon"
 // CHECK:STDOUT:
@@ -305,6 +310,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !21 = !{!22}
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !20, type: !7)
 // CHECK:STDOUT: !23 = !DILocation(line: 9, column: 5, scope: !20)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'if_return.carbon'
 // CHECK:STDOUT: source_filename = "if_return.carbon"
 // CHECK:STDOUT:
@@ -380,6 +387,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !18 = !{!19}
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !20 = !DILocation(line: 9, column: 5, scope: !17)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'while_break.carbon'
 // CHECK:STDOUT: source_filename = "while_break.carbon"
 // CHECK:STDOUT:
@@ -477,6 +486,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !23, type: !7)
 // CHECK:STDOUT: !26 = !DILocation(line: 13, column: 7, scope: !23)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'while_continue.carbon'
 // CHECK:STDOUT: source_filename = "while_continue.carbon"
 // CHECK:STDOUT:
@@ -574,3 +585,4 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !23, type: !7)
 // CHECK:STDOUT: !26 = !DILocation(line: 13, column: 7, scope: !23)
+// CHECK:STDOUT:

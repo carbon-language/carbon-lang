@@ -37,6 +37,7 @@ fn H() {
   G(D);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_different_associated_const.carbon'
 // CHECK:STDOUT: source_filename = "call_different_associated_const.carbon"
 // CHECK:STDOUT:
@@ -94,3 +95,4 @@ fn H() {
 // CHECK:STDOUT: !13 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.1ba7ae4c6ee83247", scope: null, file: !1, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !14 = !DILocation(line: 23, column: 3, scope: !13)
 // CHECK:STDOUT: !15 = !DILocation(line: 22, column: 1, scope: !13)
+// CHECK:STDOUT:

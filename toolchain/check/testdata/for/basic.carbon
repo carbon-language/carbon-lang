@@ -138,7 +138,7 @@ fn Run() {
 // CHECK:STDOUT:   %NewCursor.ref: %TrivialRange.as.Iterate.impl.NewCursor.type.de32c1.1 = name_ref NewCursor, @TrivialRange.as.Iterate.impl.%TrivialRange.as.Iterate.impl.NewCursor.decl.loc6_31.1 [concrete = constants.%TrivialRange.as.Iterate.impl.NewCursor.93de00.1]
 // CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.bound: <bound method> = bound_method %.loc18_20.3, %NewCursor.ref [concrete = constants.%TrivialRange.as.Iterate.impl.NewCursor.bound.410]
 // CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.call: init %empty_tuple.type = call %TrivialRange.as.Iterate.impl.NewCursor.bound(%.loc18_20.3)
-// CHECK:STDOUT:   %var: ref %empty_tuple.type = var invalid
+// CHECK:STDOUT:   %var: ref %empty_tuple.type = var_storage invalid
 // CHECK:STDOUT:   assign %var, %TrivialRange.as.Iterate.impl.NewCursor.call
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:

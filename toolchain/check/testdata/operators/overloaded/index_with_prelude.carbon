@@ -177,9 +177,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %ElementType.ref.loc8_62
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.ea5 = value_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14_25.1: ref %SubscriptType.f8f = temporary_storage
 // CHECK:STDOUT:   %.loc14_25.2: init %SubscriptType.f8f to %.loc14_25.1 = class_init () [concrete = constants.%SubscriptType.val]
 // CHECK:STDOUT:   %.loc14_25.3: init %SubscriptType.f8f = converted @__global_init.%.loc14, %.loc14_25.2 [concrete = constants.%SubscriptType.val]
@@ -188,7 +185,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %SubscriptType.ref: type = name_ref SubscriptType, %SubscriptType.decl [concrete = constants.%SubscriptType.f8f]
 // CHECK:STDOUT:   %s: %SubscriptType.f8f = wrapper_binding s, %.loc14_25.5
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %s.patt: %pattern_type.ea5 = value_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_13.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc15_13.2: init %C to %.loc15_13.1 = class_init () [concrete = constants.%C.val]
@@ -198,12 +195,15 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: %C = wrapper_binding c, %.loc15_13.5
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.67c = value_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_25.1: ref %ElementType = temporary @__global_init.%.loc16, @__global_init.%C.as.IndexWith.impl.At.call
 // CHECK:STDOUT:   %.loc16_25.2: %ElementType = acquire_value %.loc16_25.1
 // CHECK:STDOUT:   %ElementType.ref: type = name_ref ElementType, %ElementType.decl [concrete = constants.%ElementType]
 // CHECK:STDOUT:   %x: %ElementType = wrapper_binding x, %.loc16_25.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.67c = value_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %.loc8_41 {
@@ -379,9 +379,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %C.ref.loc8_69
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.8b4 = value_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple.loc14: %tuple.type.748 = tuple_value (@__global_init.%.loc14_21.2, @__global_init.%.loc14_30.2) [concrete = constants.%tuple.adf]
 // CHECK:STDOUT:   %.loc14_34: %tuple.type.748 = converted @__global_init.%.loc14_34, %tuple.loc14 [concrete = constants.%tuple.adf]
 // CHECK:STDOUT:   %.loc14_13.1: type = splice_block %.loc14_13.3 [concrete = constants.%tuple.type.748] {
@@ -392,7 +389,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: %tuple.type.748 = wrapper_binding s, %.loc14_34
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %e.patt: %pattern_type.98b = value_binding_pattern e [concrete = constants.%e.patt]
+// CHECK:STDOUT:     %s.patt: %pattern_type.8b4 = value_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_15.1: init %empty_tuple.type = as_compatible @__global_init.%tuple.type.as.IndexWith.impl.At.call
 // CHECK:STDOUT:   %.loc15_15.2: ref %empty_tuple.type = temporary_storage
@@ -402,6 +399,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc15_15.5: %C = converted @__global_init.%tuple.type.as.IndexWith.impl.At.call, %.loc15_15.4 [concrete = constants.%empty_tuple.4db]
 // CHECK:STDOUT:   %C.ref.loc15: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %e: %C = wrapper_binding e, %.loc15_15.5
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %e.patt: %pattern_type.98b = value_binding_pattern e [concrete = constants.%e.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @tuple.type.as.IndexWith.impl: %.loc8_11.2 as %.loc8_48 {
@@ -571,9 +571,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %ElementType.ref.loc8_62
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14_13.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc14_13.2: init %C to %.loc14_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc14_13.3: init %C = converted @__global_init.%.loc14, %.loc14_13.2 [concrete = constants.%C.val]
@@ -582,10 +579,13 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: %C = wrapper_binding c, %.loc14_13.5
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.67c = value_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ElementType.ref: type = name_ref ElementType, %ElementType.decl [concrete = constants.%ElementType]
 // CHECK:STDOUT:   %x: %ElementType = wrapper_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.67c = value_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %.loc8_41 {
@@ -705,9 +705,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_13.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc6_13.2: init %C to %.loc6_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc6_13.3: init %C = converted @__global_init.%.loc6, %.loc6_13.2 [concrete = constants.%C.val]
@@ -716,10 +713,13 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: %C = wrapper_binding c, %.loc6_13.5
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = value_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %x: %i32 = wrapper_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = value_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

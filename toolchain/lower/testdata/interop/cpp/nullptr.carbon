@@ -49,6 +49,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
   return Cpp.nullptr;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'simple.carbon'
 // CHECK:STDOUT: source_filename = "simple.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -300,3 +301,4 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: !79 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.a636f8d928e21310", scope: null, file: !80, line: 30, type: !50, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !80 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
 // CHECK:STDOUT: !81 = !DILocation(line: 31, column: 5, scope: !79)
+// CHECK:STDOUT:

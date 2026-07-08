@@ -198,9 +198,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc8: %pattern_type.7fc = value_binding_pattern _ [concrete = constants.%_.patt.abb]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc8_43: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc8_46: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %int_3.loc8_49: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -247,6 +244,9 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_50.19: %initializer_list = acquire_value %.loc8_50.18
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %_.loc8: %initializer_list = wrapper_binding _, %.loc8_50.19
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt.loc8: %pattern_type.7fc = value_binding_pattern _ [concrete = constants.%_.patt.abb]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Consume.ref: %Consume.cpp_overload_set.type = name_ref Consume, imports.%Consume.cpp_overload_set.value [concrete = constants.%Consume.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1.loc10_16: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -296,9 +296,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_23.20: ref %initializer_list = value_as_ref %.loc10_23.19
 // CHECK:STDOUT:   %addr.loc10: %ptr.fac = addr_of %.loc10_23.20
 // CHECK:STDOUT:   %Consume__carbon_thunk.call: init %empty_tuple.type = call imports.%Consume__carbon_thunk.decl(%addr.loc10)
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc12: %pattern_type.ed6 = value_binding_pattern _ [concrete = constants.%_.patt.100]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc12_37: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc12_40: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %int_3.loc12_43: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -357,6 +354,9 @@ fn F() {
 // CHECK:STDOUT:     %InitListConstructor.ref: type = name_ref InitListConstructor, imports.%InitListConstructor.decl [concrete = constants.%InitListConstructor]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc12: %InitListConstructor = wrapper_binding _, %.loc12_44.25
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt.loc12: %pattern_type.ed6 = value_binding_pattern _ [concrete = constants.%_.patt.100]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitListConstructor.cpp_destructor.bound: <bound method> = bound_method %.loc12_44.24, constants.%InitListConstructor.cpp_destructor
 // CHECK:STDOUT:   %InitListConstructor.cpp_destructor.call: init %empty_tuple.type = call %InitListConstructor.cpp_destructor.bound(%.loc12_44.24)
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.bound.loc12: <bound method> = bound_method %.loc12_44.19, constants.%initializer_list.cpp_destructor

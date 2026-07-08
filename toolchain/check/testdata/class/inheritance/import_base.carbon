@@ -253,11 +253,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.860 = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.860 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %Child = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %Child = var_storage %a.var_patt
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc7_49.1: %struct_type.x.unused_y.76a = struct_literal (%int_0, %int_1) [concrete = constants.%struct.0bf]
@@ -287,6 +283,10 @@ fn Run() {
 // CHECK:STDOUT:   assign %a.var, %.loc7_3
 // CHECK:STDOUT:   %Child.ref: type = name_ref Child, imports.%Main.Child [concrete = constants.%Child]
 // CHECK:STDOUT:   %a: ref %Child = wrapper_binding a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.860 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.860 = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref.loc8: ref %Child = name_ref a, %a
 // CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, imports.%Main.import_ref.230 [concrete = imports.%.11f]
 // CHECK:STDOUT:   %.loc8_4.1: ref %Base = as_compatible %a.ref.loc8

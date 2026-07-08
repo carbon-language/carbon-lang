@@ -63,7 +63,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.patt: %pattern_type = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   %c.var_patt: %pattern_type = var_pattern %c.patt [concrete = constants.%c.var_patt]
-// CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
+// CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
