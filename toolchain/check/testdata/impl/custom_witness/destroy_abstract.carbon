@@ -17,8 +17,8 @@ abstract class Otter {
   protected var fur_status: i32;
 }
 
-class RiverOtter {
-  extend base: Otter;
+class C {
+  extend base: AbstractBase;
 }
 
 fn Run() {
