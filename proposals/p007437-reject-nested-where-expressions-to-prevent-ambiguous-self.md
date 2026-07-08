@@ -45,13 +45,55 @@ A `where` that introduces a shadowing `.Self` referring the same value (the same
 binding, the same left-hand-side of `impls`) but a different type, gives more
 visibility to the facet type being defined. But a `where` that introduces a
 shadowing `.Self` referring to a different value creates an _ambiguous `.Self`_.
-As part of the canonical type representation, an ambiguous `.Self` cannot be
-later resolved when `.Self` is replaced, since we can lose the ability to know
-or deduce which value the `.Self` refers to.
 
-When we replace `.Self` incorrectly, it leads to incoherence as the internal
-representation no longer matches the meaning of the code as written. Or it leads
-to crashes in the toolchain implementation as inconsistency develops.
+The Carbon toolchain is built on a compile-time evaluation model, where all
+types have a canonicalized constant value in order to allow cheap type
+comparison through the constant value identifier. In a canonical type
+representation all `.Self` references look the same, as they can not refer to
+their surrounding context. Any valid way of constructing the same facet type
+must result in the same canonical constant, including building a facet type from
+other non-local facet types.
+
+These `.Self` references must then be replaced to form a more specific type
+constant once the target facet they refer to is known. For an ambiguous `.Self`,
+we don't know when we're supposed to replace the `.Self` so we can replace it
+incorrectly. Doing so leads to incoherence as the internal representation no
+longer matches the meaning of the code as written. Or it leads to crashes in the
+toolchain implementation as inconsistency develops.
+
+In the following example, `.Self` in the argument to `Z` refers to `T` and must
+be replaced by `T` eventually. But there is a second `.Self` nested in the
+rewrite constraint for `.Z1` that refers to whatever the `(Y where...)` facet
+type ends up constraining. In order to use `T.Z1` we need the type of `T` with
+all `.Self` references replaced by `T`.
+
+```carbon
+interface Z { let Z1: type; }
+interface Y { let Y1: type; }
+
+fn F(generic T: Z(.Self) where .Z1 = (Y where .Self.(Y.Y1) == ()),
+     generic U: T.Z1);
+```
+
+The `.Self` in the rewrite constraint looks the same as the `.Self` in the
+argument to `Z` so they are both replaced with `T`, which is incorrect. The
+second one should eventually be replaced with `U`, since that is the facet which
+it is constraining. It is also incorrect because we don't know that `T`
+implements `Y`.
+
+Building on the previous example, in this call to `G`, we end up with `W` being
+constrained by the facet type `T.Z1`. `T.Z1` refers to the type of `T` where
+`.Self` is replaced by `T`, which is evaluated to `Y where T.(Y.Y1) == ()`. This
+facet type incorrectly involves the symbolic type `T`, which `G` has no generic
+parameter for, so it cannot be made concrete in a specific of `G`.
+
+```carbon
+fn G(generic V: type, generic W:! V);
+
+fn F(generic T: Z(.Self) where .Z1 = (Y where .Self.(Y.Y1) == ())) {
+    G(T.Z1);
+}
+```
 
 ## Background
 
@@ -103,11 +145,15 @@ fn F(T:! Z where .Self impls GetYWithRewrite());
 ```
 
 Prior to this proposal, ambiguous `.Self` was already disallowed, but we
-required diagnosing the _use_ of a `.Self` that is ambiguous. But it is not
-always possible to disagnose the use when `.Self` is introduced into a facet
-type through eval, which causes ambiguous `.Self` to become part of the
-canonical facet type. So we now reject the facet types that allow the
-introduction of an ambiguous `.Self`.
+required diagnosing the _use_ of a `.Self` that is ambiguous. This limits
+implementation strategies for the language. So we now reject the facet types
+that allow the introduction of an ambiguous `.Self`.
+
+In an implementation that uses compile-time evaluation, a facet type can be
+constructed through eval which can introduce a `.Self` from another non-local
+context, such as from the return of a compile-time function call or from an
+`alias`. Once this is done, the `.Self` becomes ambiguous in the resulting facet
+type.
 
 The language retains the same expressivity in facet types as before. When a
 facet type would have used an ambiguous `.Self` in a nested facet type, the
@@ -188,7 +234,7 @@ By avoiding ambiguity in the syntax, we avoid requiring context to disambiguate.
 
 ### Allow nested `.Self` but it refers to the top level facet value
 
-The design requires that constraints all constraint the "current type" in some
+The design requires that constraints all constrain the "current type" in some
 way. In a facet type, that means they contain a reference to `.Self`, and that
 `.Self` refers to the "current type". This alternative would have nested `.Self`
 refer to the top-level type being constrained, which would prevent writing
@@ -207,6 +253,28 @@ these `.Self` references are ambiguous.
 fn F(T:! Z where .Z1 = (Y where .Z2 == ()),
      U: T.Z1 where .Y1 == ())
 ```
+
+While the design does not allow writing `.Self` on the left-hand-side of a
+rewrite constraint, our implementation based on compile-time evaluation does
+insert `.Self` into its model of the rewrite constraint. In particular, in this
+example, we have two `.Self` in the left-hand-side of the rewrite constraint:
+The `.Z1` is treated as a reference to an associated constant `Z1` in the
+interface `Z(.Self)` for the facet `.Self`.
+
+```carbon
+fn F(T:! Z(.Self) where .Z1 = ());
+```
+
+And we can nest the rewrite constraint on the right-hand-side of another `where`:
+
+```carbon
+fn F(T:! Y where .Y1 impls (Z(.Self) where .Z1 = ()));
+```
+
+This alternative would have all `.Self` refernences refer to `T` but the
+semantics of the language require the `.Self` references in `.Z1` to refer to
+`T.Y1`. This creates a contradiction in the implementation, and leaves us with
+the same problem as we began with.
 
 ### Allow ambiguous `.Self` but disambiguate based on context
 
