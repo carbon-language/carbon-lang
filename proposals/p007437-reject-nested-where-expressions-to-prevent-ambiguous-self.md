@@ -254,3 +254,37 @@ fn G(T:! type where C(.Self) impls type * x) {}
 Because of these issues, we chose to pursue disallowing nested `where` to
 prevent the _introduction_ of an ambiguous `.Self` instead of rejecting the
 _use_ of an ambiguous `.Self`.
+
+### Disallow use of ambiguous `.Self` through name lookup
+
+We can use surrounding context to determine if a `.Self` name would be
+ambiguous, and then diagnose the use of it and prevent the name lookup. However
+because evaluation can introduce `.Self` into a facet type too, through an alias
+or a function call, local context is not enough. We need to find the ambiguous
+`.Self` in the final facet type, but by then they are ambiguous so we can't
+tell.
+
+### Disallow nested `where` syntactically but allow it from eval
+
+If we disallow writing `where` in the right-hand-side of another `where`, then
+we prevent writing an ambiguous `.Self` directly. While a `.Self` can also be
+introduced from eval, at this time the `.Self` can not be ambiguous, as its type
+can not be `.Self`-dependent. This comes from:
+
+-   A call to an `eval fn` is not evaluated until all inputs are concrete. So
+    there can't be a `.Self` in the inputs. That means the function can not return
+    a facet type that involves `.Self` on the left-hand-side of the `where`. So any
+    use of `.Self` on the right-hand-side can be disamiguated.
+-   An alias has no input parameters, so it can not evaluated to a facet type
+    that involves `.Self` on the left-hand-side of the `where`. So any use of
+    `.Self` on the right-hand-side can be disamiguated.
+
+As such, we could say that eval is allowed to add a nested `where` since the
+facet type will be concrete, and not `.Self`-dependent (has no dependency on the
+`.Self` from the outer facet type).
+
+However we do plan to add generic parameters to aliases, which will allow
+passing `.Self` as an argument, and thus allow aliases to evaluate to a
+`.Self`-dependent facet type. To avoid churn on this rule, we just designed it
+to also handle parameterized aliases, and ban nesting a `where` on the
+right-hand-side of another `where` in all cases, even through evaluation.
