@@ -177,7 +177,7 @@ void G() {
 // CHECK:STDOUT:   %I.WithSelf.Doit.type.2ce: type = fn_type @I.WithSelf.Doit, @I.WithSelf(%I.facet.9f8) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.Doit.450: %I.WithSelf.Doit.type.2ce = struct_value () [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %I.type = symbolic_binding T, 0 [symbolic]
@@ -235,7 +235,7 @@ void G() {
 // CHECK:STDOUT:     %t.patt.loc20_14.1: @F.%pattern_type (%pattern_type.b3a) = at_binding_pattern t, %t.param_patt.loc20_14.1 [symbolic = %t.patt.loc20_14.2 (constants.%t.patt.030)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc20_10: type = splice_block %I.ref [concrete = constants.%I.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc20_7.2: %I.type = symbolic_binding T, 0 [symbolic = %T.loc20_7.1 (constants.%T)]

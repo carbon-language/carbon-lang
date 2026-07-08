@@ -99,7 +99,7 @@ fn Test() {
 // CHECK:STDOUT:   %Sink_X.type: type = fn_type @Sink_X [concrete]
 // CHECK:STDOUT:   %Sink_X: %Sink_X.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.184347.2: Core.Form = init_form %T.67d [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %T.67d [symbolic]
 // CHECK:STDOUT:   %return.param_patt.41d2d9.2: %pattern_type.51d1c4.2 = out_param_pattern [symbolic]
@@ -185,7 +185,7 @@ fn Test() {
 // CHECK:STDOUT:     %T.ref.loc31_24: type = name_ref T, %T.loc31_12.2 [symbolic = %T.loc31_12.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %.loc31_24.3: Core.Form = init_form %T.ref.loc31_24 [symbolic = %.loc31_24.2 (constants.%.184347.2)]
 // CHECK:STDOUT:     %.loc31_15.1: type = splice_block %.loc31_15.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc31_15.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc31_12.2: type = symbolic_binding T, 0 [symbolic = %T.loc31_12.1 (constants.%T.67d)]

@@ -98,7 +98,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Scalar.patt: %pattern_type.98f = symbolic_binding_pattern Scalar, 0 [symbolic]
 // CHECK:STDOUT:   %Scalar: type = symbolic_binding Scalar, 0 [symbolic]
@@ -206,7 +206,7 @@ fn B() {
 // CHECK:STDOUT:     %Scalar.patt.loc4_25.1: %pattern_type.98f = symbolic_binding_pattern Scalar, 0 [symbolic = %Scalar.patt.loc4_25.2 (constants.%Scalar.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_28.1: type = splice_block %.loc4_28.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_28.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Scalar.loc4_25.2: type = symbolic_binding Scalar, 0 [symbolic = %Scalar.loc4_25.1 (constants.%Scalar)]
@@ -228,12 +228,12 @@ fn B() {
 // CHECK:STDOUT:     %s.patt.loc15_69.1: @CallGenericMethod.%pattern_type.loc15_69 (%pattern_type.51d) = at_binding_pattern s, %s.param_patt.loc15_69.1 [symbolic = %s.patt.loc15_69.2 (constants.%s.patt.a4f)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_26.1: type = splice_block %.loc15_26.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.loc15_23: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc15_23: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc15_26.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc15_23.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_23.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc15_45: type = splice_block %Generic.type.loc15_45.2 [symbolic = %Generic.type.loc15_45.1 (constants.%Generic.type.ee14e9.2)] {
-// CHECK:STDOUT:       %.Self.loc15_33: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc15_33: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.30d = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
 // CHECK:STDOUT:       %T.ref.loc15_44: type = name_ref T, %T.loc15_23.2 [symbolic = %T.loc15_23.1 (constants.%T)]
 // CHECK:STDOUT:       %Generic.type.loc15_45.2: type = facet_type <@Generic, @Generic(constants.%T)> [symbolic = %Generic.type.loc15_45.1 (constants.%Generic.type.ee14e9.2)]
@@ -528,7 +528,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %V.patt: %pattern_type.98f = symbolic_binding_pattern V, 0 [symbolic]
 // CHECK:STDOUT:   %V: type = symbolic_binding V, 0 [symbolic]
@@ -603,12 +603,12 @@ fn B() {
 // CHECK:STDOUT:     %W.patt.loc3_24.1: %pattern_type.98f = symbolic_binding_pattern W, 1 [symbolic = %W.patt.loc3_24.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc3_17.1: type = splice_block %.loc3_17.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.loc3_14: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc3_14: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc3_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc3_14.2: type = symbolic_binding V, 0 [symbolic = %V.loc3_14.1 (constants.%V)]
 // CHECK:STDOUT:     %.loc3_27.1: type = splice_block %.loc3_27.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.loc3_24: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc3_24: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc3_27.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.loc3_24.2: type = symbolic_binding W, 1 [symbolic = %W.loc3_24.1 (constants.%W)]
@@ -624,7 +624,7 @@ fn B() {
 // CHECK:STDOUT:     %.loc7_36: type = converted %.loc7_35, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.type.loc7_36.1: type = facet_type <@I, @I(constants.%T.67d, constants.%empty_tuple.type)> [symbolic = %I.type.loc7_36.2 (constants.%I.type.269)]
 // CHECK:STDOUT:     %.loc7_18.1: type = splice_block %.loc7_18.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc7_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc7_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_15.2 (constants.%T.67d)]
@@ -635,7 +635,7 @@ fn B() {
 // CHECK:STDOUT:     %t.patt.loc9_29.1: @A.%pattern_type (%pattern_type.d7b) = at_binding_pattern t, %t.param_patt.loc9_29.1 [symbolic = %t.patt.loc9_29.2 (constants.%t.patt.9d2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_18.1: type = splice_block %I.type [concrete = constants.%I.type.722] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref: %I.type.335 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
 // CHECK:STDOUT:       %.loc9_13: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc9_17: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -841,7 +841,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %V.patt: %pattern_type.98f = symbolic_binding_pattern V, 0 [symbolic]
 // CHECK:STDOUT:   %V: type = symbolic_binding V, 0 [symbolic]
@@ -902,12 +902,12 @@ fn B() {
 // CHECK:STDOUT:     %W.patt.loc3_24.1: %pattern_type.98f = symbolic_binding_pattern W, 1 [symbolic = %W.patt.loc3_24.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc3_17.1: type = splice_block %.loc3_17.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.loc3_14: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc3_14: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc3_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc3_14.2: type = symbolic_binding V, 0 [symbolic = %V.loc3_14.1 (constants.%V)]
 // CHECK:STDOUT:     %.loc3_27.1: type = splice_block %.loc3_27.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.loc3_24: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc3_24: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc3_27.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.loc3_24.2: type = symbolic_binding W, 1 [symbolic = %W.loc3_24.1 (constants.%W)]
@@ -923,7 +923,7 @@ fn B() {
 // CHECK:STDOUT:     %.loc7_36: type = converted %.loc7_35, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.type.loc7_36.1: type = facet_type <@I, @I(constants.%T.67d, constants.%empty_tuple.type)> [symbolic = %I.type.loc7_36.2 (constants.%I.type.269)]
 // CHECK:STDOUT:     %.loc7_18.1: type = splice_block %.loc7_18.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc7_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc7_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_15.2 (constants.%T.67d)]
@@ -934,7 +934,7 @@ fn B() {
 // CHECK:STDOUT:     %t.patt.loc9_29.1: @A.%pattern_type (%pattern_type.67d) = at_binding_pattern t, %t.param_patt.loc9_29.1 [symbolic = %t.patt.loc9_29.2 (constants.%t.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_18.1: type = splice_block %I.type [concrete = constants.%I.type.6c0] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref: %I.type.335 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
 // CHECK:STDOUT:       %.loc9_13: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc9_17: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -1102,7 +1102,7 @@ fn B() {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %V.patt: %pattern_type.98f = symbolic_binding_pattern V, 0 [symbolic]
 // CHECK:STDOUT:   %V: type = symbolic_binding V, 0 [symbolic]
@@ -1159,12 +1159,12 @@ fn B() {
 // CHECK:STDOUT:     %W.patt.loc5_20.1: %pattern_type.98f = symbolic_binding_pattern W, 1 [symbolic = %W.patt.loc5_20.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5_13.1: type = splice_block %.loc5_13.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.loc5_10: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc5_10: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc5_13.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc5_10.2: type = symbolic_binding V, 0 [symbolic = %V.loc5_10.1 (constants.%V)]
 // CHECK:STDOUT:     %.loc5_23.1: type = splice_block %.loc5_23.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.loc5_20: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc5_20: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc5_23.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.loc5_20.2: type = symbolic_binding W, 1 [symbolic = %W.loc5_20.1 (constants.%W)]
@@ -1179,7 +1179,7 @@ fn B() {
 // CHECK:STDOUT:     %C.loc7_31.1: type = class_type @C, @C(constants.%T.67d, constants.%empty_tuple.type) [symbolic = %C.loc7_31.2 (constants.%C.ab0)]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.loc7_18.1: type = splice_block %.loc7_18.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc7_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc7_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_15.2 (constants.%T.67d)]
@@ -1190,7 +1190,7 @@ fn B() {
 // CHECK:STDOUT:     %t.patt.loc9_21.1: @A.%pattern_type (%pattern_type.b3a) = at_binding_pattern t, %t.param_patt.loc9_21.1 [symbolic = %t.patt.loc9_21.2 (constants.%t.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_10: type = splice_block %I.ref [concrete = constants.%I.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc9_7.2: %I.type = symbolic_binding T, 0 [symbolic = %T.loc9_7.1 (constants.%T.dda)]

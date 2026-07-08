@@ -390,8 +390,7 @@ static auto CollectFacetWitnessSources(
       ++no_symbolic_final_lookups;
       auto identified_id = TryToIdentifyFacetType(
           context, loc_id, facet_const_id,
-          context.types().GetTypeInstId(type_id), allow_partially_identified,
-          /*subst_period_self=*/true);
+          context.types().GetTypeInstId(type_id), allow_partially_identified);
       --no_symbolic_final_lookups;
 
       if (identified_id.has_value()) {
@@ -472,8 +471,7 @@ static auto CollectFacetWitnessSources(
       auto identified_id = TryToIdentifyFacetType(
           context, loc_id, canon_self_const_id,
           context.types().GetTypeInstIdForTypeConstantId(facet_type_const_id),
-          /*allow_partially_identified=*/true,
-          /*subst_period_self=*/false);
+          /*allow_partially_identified=*/true);
       if (identified_id.has_value()) {
         witnesses.push_back({.facet_const_id = canon_self_const_id,
                              .identified_facet_type_id = identified_id});

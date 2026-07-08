@@ -191,7 +191,7 @@ fn Interface.C.F(unused self, U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   %self.param_patt.f45: %pattern_type.f25 = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt.134: %pattern_type.f25 = at_binding_pattern self, %self.param_patt.f45 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %U.patt.014: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %U.091: type = symbolic_binding U, 1 [symbolic]
@@ -253,7 +253,7 @@ fn Interface.C.F(unused self, U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc20: @C.F.%C (%C) = wrapper_binding self, %self.param.loc20
 // CHECK:STDOUT:     %.loc20_35.1: type = splice_block %.loc20_35.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.loc20: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc20: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc20_35.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc20: type = symbolic_binding U, 1 [symbolic = %U.loc14_17.1 (constants.%U.091)]
@@ -311,7 +311,7 @@ fn Interface.C.F(unused self, U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self.loc14: @C.F.%C (%C) = wrapper_binding self, %self.param.loc14
 // CHECK:STDOUT:       %.loc14_20.1: type = splice_block %.loc14_20.2 [concrete = type] {
-// CHECK:STDOUT:         %.Self.loc14: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:         %.Self.frozen.loc14: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:         %.loc14_20.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %U.loc14_17.2: type = symbolic_binding U, 1 [symbolic = %U.loc14_17.1 (constants.%U.091)]

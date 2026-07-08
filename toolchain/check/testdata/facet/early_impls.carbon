@@ -224,6 +224,58 @@ constraint NY {
 // `C(.Self)` is used as the implied `.Self` in `.Y1 impls X`.
 fn F(unused V:! Z where C(.Self) impls NY and .Z1 = D(C(.Self).(Y.Y1))) {}
 
+// --- early_impls_with_period_self_not_replaced.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+class C;
+
+class NeedZ(V:! Z(.Self));
+class NeedZU(U:! type, V:! Z(U));
+
+interface S(T:! type);
+
+// The conversion `C as Z(.Self)` written explicitly, where the `.Self` refers
+// to `T` and thus must not be replaced. It is not `C as Z(C)`.
+fn F1(unused T:! type where C impls Z(.Self) and (C as Z(.Self)) impls S(.Self)) {}
+
+// NeedZU contains a `C as Z(.Self)` conversion and identify step, but the
+// `.Self` has been smuggled out of the facet type being constructed and placed
+// into a new facet type, which is the type of the `V` parameter. The `.Self`
+// refers to `T` and we need to keep track of that so it is not replaced during
+// the conversion.
+fn F2(unused T:! type where C impls Z(.Self) and NeedZU(.Self, C) impls S(.Self)) {}
+
+// NeedZ contains a `C as Z(.Self)` conversion but the `.Self` refers to the `V`
+// parameter which is being replaced by `C`, so it's `C as Z(C)`. The `.Self`
+// there should be replaced during the conversion.
+impl C as Z(C) {}
+fn F3(unused T:! type where C impls Z(.Self) and NeedZ(C) impls S(.Self)) {}
+
+// --- fail_early_impls_with_period_self_replaced.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+class C;
+
+class NeedZ(V:! Z(.Self));
+
+interface S(T:! type);
+
+// NeedZ contains a `C as Z(.Self)` conversion but the `.Self` refers to the `V`
+// parameter which is being replaced by `C`, so it's `C as Z(C)`. The `.Self`
+// there should be replaced during the conversion. We show that it was replaced
+// because the `C impls Z(.Self)` constraint does not satisfy `C as Z(C)` so the
+// conversion fails.
+// CHECK:STDERR: fail_early_impls_with_period_self_replaced.carbon:[[@LINE+7]]:49: error: cannot convert type `C` into type implementing `Z(.Self)` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fn F(unused T:! type where C impls Z(.Self) and NeedZ(C) impls S(.Self)) {}
+// CHECK:STDERR:                                                 ^~~~~~~~
+// CHECK:STDERR: fail_early_impls_with_period_self_replaced.carbon:[[@LINE-12]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: class NeedZ(V:! Z(.Self));
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(unused T:! type where C impls Z(.Self) and NeedZ(C) impls S(.Self)) {}
+
 // --- period_self_impls_named_constraint_used_in_later_constraint.carbon
 library "[[@TEST_NAME]]";
 
