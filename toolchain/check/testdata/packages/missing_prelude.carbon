@@ -131,13 +131,13 @@ let n: type = i32;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n.var: ref <error> = var_storage %n.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %.loc8: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: <error> = ref_binding_pattern n [concrete = <error>]
 // CHECK:STDOUT:     %n.var_patt: <error> = var_pattern %n.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref <error> = var_storage %n.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc8: type = type_literal <error> [concrete = <error>]
-// CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -169,13 +169,13 @@ let n: type = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %n.var: ref <error> = var_storage %n.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %.loc10: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: <error> = ref_binding_pattern n [concrete = <error>]
 // CHECK:STDOUT:     %n.var_patt: <error> = var_pattern %n.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref <error> = var_storage %n.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc10: type = type_literal <error> [concrete = <error>]
-// CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -463,15 +463,15 @@ let n: type = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.e00 = value_binding_pattern n [concrete = constants.%n.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21_17: %X = converted @__global_init.%.loc21_17.3, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc21_12: type = splice_block %X.ref [concrete = constants.%X] {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Core.X [concrete = constants.%X]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: %X = wrapper_binding n, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %pattern_type.e00 = value_binding_pattern n [concrete = constants.%n.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.b3bc94.4: type) [from "prelude_fake_int.carbon"] {
@@ -667,9 +667,6 @@ let n: type = i32;
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_29.2: @Int.%T.loc6_12.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_29.1 (constants.%N)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.0c6 = value_binding_pattern n [concrete = constants.%n.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_15.1: ref %Int.382 = temporary_storage
 // CHECK:STDOUT:   %.loc8_15.2: init %Int.382 to %.loc8_15.1 = class_init () [concrete = constants.%Int.val]
 // CHECK:STDOUT:   %.loc8_15.3: init %Int.382 = converted @__global_init.%.loc8, %.loc8_15.2 [concrete = constants.%Int.val]
@@ -677,6 +674,9 @@ let n: type = i32;
 // CHECK:STDOUT:   %.loc8_15.5: %Int.382 = acquire_value %.loc8_15.4 [concrete = constants.%Int.val]
 // CHECK:STDOUT:   %.loc8_8: type = type_literal constants.%Int.382 [concrete = constants.%Int.382]
 // CHECK:STDOUT:   %n: %Int.382 = wrapper_binding n, %.loc8_15.5
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %pattern_type.0c6 = value_binding_pattern n [concrete = constants.%n.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Int(%T.loc6_12.2: type, %N.loc6_29.2: @Int.%T.loc6_12.1 (%T)) {

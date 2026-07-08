@@ -215,10 +215,6 @@ fn Var5() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Var() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete = <error>]
-// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var_storage %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %.loc13_28.1: type = splice_block %.loc13_28.3 [concrete = constants.%tuple.type.ea9] {
@@ -227,6 +223,10 @@ fn Var5() {
 // CHECK:STDOUT:     %.loc13_28.3: type = converted %.loc13_28.2, constants.%tuple.type.ea9 [concrete = constants.%tuple.type.ea9]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: <error> = wrapper_binding v, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete = <error>]
+// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !observes:
@@ -285,9 +285,6 @@ fn Var5() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %Abstract3) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %l.patt: %pattern_type.ac0 = value_binding_pattern l [concrete = constants.%l.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract3 = name_ref a, %a
 // CHECK:STDOUT:   %.loc7_35.1: %tuple.type.4cc = tuple_literal (%a.ref)
 // CHECK:STDOUT:   %tuple: %tuple.type.4cc = tuple_value (%a.ref)
@@ -298,6 +295,9 @@ fn Var5() {
 // CHECK:STDOUT:     %.loc7_28.3: type = converted %.loc7_28.2, constants.%tuple.type.4cc [concrete = constants.%tuple.type.4cc]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %l: %tuple.type.4cc = wrapper_binding l, %.loc7_35.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %l.patt: %pattern_type.ac0 = value_binding_pattern l [concrete = constants.%l.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !observes:
@@ -358,10 +358,6 @@ fn Var5() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Var2() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v2.patt: <error> = ref_binding_pattern v2 [concrete = <error>]
-// CHECK:STDOUT:     %v2.var_patt: <error> = var_pattern %v2.patt [concrete = <error>]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref <error> = var_storage %v2.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v2.var, <error>
 // CHECK:STDOUT:   %.loc14_39.1: type = splice_block %.loc14_39.3 [concrete = constants.%tuple.type.417] {
@@ -371,6 +367,10 @@ fn Var5() {
 // CHECK:STDOUT:     %.loc14_39.3: type = converted %.loc14_39.2, constants.%tuple.type.417 [concrete = constants.%tuple.type.417]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: <error> = wrapper_binding v2, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v2.patt: <error> = ref_binding_pattern v2 [concrete = <error>]
+// CHECK:STDOUT:     %v2.var_patt: <error> = var_pattern %v2.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !observes:
@@ -421,10 +421,6 @@ fn Var5() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Var3() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v3.patt: <error> = ref_binding_pattern v3 [concrete = <error>]
-// CHECK:STDOUT:     %v3.var_patt: <error> = var_pattern %v3.patt [concrete = <error>]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v3.var: ref <error> = var_storage %v3.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v3.var, <error>
 // CHECK:STDOUT:   %.loc13_32.1: type = splice_block %.loc13_32.4 [concrete = constants.%tuple.type.427] {
@@ -435,6 +431,10 @@ fn Var5() {
 // CHECK:STDOUT:     %.loc13_32.4: type = converted %.loc13_32.2, constants.%tuple.type.427 [concrete = constants.%tuple.type.427]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v3: <error> = wrapper_binding v3, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v3.patt: <error> = ref_binding_pattern v3 [concrete = <error>]
+// CHECK:STDOUT:     %v3.var_patt: <error> = var_pattern %v3.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !observes:
@@ -485,10 +485,6 @@ fn Var5() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Var4() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v4.patt: <error> = ref_binding_pattern v4 [concrete = <error>]
-// CHECK:STDOUT:     %v4.var_patt: <error> = var_pattern %v4.patt [concrete = <error>]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v4.var: ref <error> = var_storage %v4.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v4.var, <error>
 // CHECK:STDOUT:   %.loc13_32.1: type = splice_block %.loc13_32.4 [concrete = constants.%tuple.type.9db] {
@@ -499,6 +495,10 @@ fn Var5() {
 // CHECK:STDOUT:     %.loc13_32.4: type = converted %.loc13_32.2, constants.%tuple.type.9db [concrete = constants.%tuple.type.9db]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v4: <error> = wrapper_binding v4, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v4.patt: <error> = ref_binding_pattern v4 [concrete = <error>]
+// CHECK:STDOUT:     %v4.var_patt: <error> = var_pattern %v4.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !observes:
@@ -582,10 +582,6 @@ fn Var5() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Var5() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v5.patt: <error> = ref_binding_pattern v5 [concrete = <error>]
-// CHECK:STDOUT:     %v5.var_patt: <error> = var_pattern %v5.patt [concrete = <error>]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v5.var: ref <error> = var_storage %v5.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v5.var, <error>
 // CHECK:STDOUT:   %.loc14_28.1: type = splice_block %.loc14_28.3 [concrete = constants.%tuple.type.763] {
@@ -594,6 +590,10 @@ fn Var5() {
 // CHECK:STDOUT:     %.loc14_28.3: type = converted %.loc14_28.2, constants.%tuple.type.763 [concrete = constants.%tuple.type.763]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v5: <error> = wrapper_binding v5, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v5.patt: <error> = ref_binding_pattern v5 [concrete = <error>]
+// CHECK:STDOUT:     %v5.var_patt: <error> = var_pattern %v5.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !observes:

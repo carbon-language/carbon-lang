@@ -191,12 +191,12 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %x.var: ref %TwoNonType = var_storage %x.var_patt [concrete]
+// CHECK:STDOUT:   %x: ref %TwoNonType = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.2aa = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.2aa = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %TwoNonType = var_storage %x.var_patt [concrete]
-// CHECK:STDOUT:   %x: ref %TwoNonType = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -259,18 +259,18 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %x.var: ref %DependentNonType.43e = var_storage %x.var_patt [concrete]
+// CHECK:STDOUT:   %x: ref %DependentNonType.43e = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.eef = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.eef = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %DependentNonType.43e = var_storage %x.var_patt [concrete]
-// CHECK:STDOUT:   %x: ref %DependentNonType.43e = wrapper_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %y.var: ref %DependentNonType.d43 = var_storage %y.var_patt [concrete]
+// CHECK:STDOUT:   %y: ref %DependentNonType.d43 = wrapper_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.70d = ref_binding_pattern y [concrete = constants.%y.patt]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.70d = var_pattern %y.patt [concrete = constants.%y.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %DependentNonType.d43 = var_storage %y.var_patt [concrete]
-// CHECK:STDOUT:   %y: ref %DependentNonType.d43 = wrapper_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

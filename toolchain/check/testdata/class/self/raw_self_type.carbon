@@ -161,10 +161,6 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %Self.patt: %pattern_type.8c5 = ref_binding_pattern r#Self [concrete = constants.%Self.patt]
-// CHECK:STDOUT:     %Self.var_patt: %pattern_type.8c5 = var_pattern %Self.patt [concrete = constants.%Self.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.var: ref %ptr.7ee = var_storage %Self.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%ptr.7ee, (constants.%DefaultOrUnformed.impl_witness.a7b) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc17_22.1: %DefaultOrUnformed.type = converted constants.%ptr.7ee, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
@@ -179,8 +175,8 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self: ref %ptr.7ee = wrapper_binding r#Self, %Self.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.8c5 = ref_binding_pattern p [concrete = constants.%p.patt]
-// CHECK:STDOUT:     %p.var_patt: %pattern_type.8c5 = var_pattern %p.patt [concrete = constants.%p.var_patt]
+// CHECK:STDOUT:     %Self.patt: %pattern_type.8c5 = ref_binding_pattern r#Self [concrete = constants.%Self.patt]
+// CHECK:STDOUT:     %Self.var_patt: %pattern_type.8c5 = var_pattern %Self.patt [concrete = constants.%Self.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.7ee = var_storage %p.var_patt
 // CHECK:STDOUT:   %Self.ref.loc18_27: ref %ptr.7ee = name_ref r#Self, %Self
@@ -196,6 +192,10 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:     %ptr.loc18: type = ptr_type %Self.ref.loc18_19 [concrete = constants.%ptr.7ee]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.7ee = wrapper_binding p, %p.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %pattern_type.8c5 = ref_binding_pattern p [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.var_patt: %pattern_type.8c5 = var_pattern %p.patt [concrete = constants.%p.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound.loc18: <bound method> = bound_method %p.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc18: init %empty_tuple.type = call %Destroy.Op.bound.loc18(%p.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc17: <bound method> = bound_method %Self.var, constants.%Destroy.Op

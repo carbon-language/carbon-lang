@@ -96,16 +96,12 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     .a_ref = %a_ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_orig.patt: %pattern_type.6b6 = ref_binding_pattern a_orig [concrete = constants.%a_orig.patt]
-// CHECK:STDOUT:     %a_orig.var_patt: %pattern_type.6b6 = var_pattern %a_orig.patt [concrete = constants.%a_orig.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_orig.var: ref %i32 = var_storage %a_orig.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc4: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a_orig: ref %i32 = wrapper_binding a_orig, %a_orig.var [concrete = %a_orig.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_ref.patt: %pattern_type.f00 = ref_binding_pattern a_ref [concrete = constants.%a_ref.patt]
-// CHECK:STDOUT:     %a_ref.var_patt: %pattern_type.f00 = var_pattern %a_ref.patt [concrete = constants.%a_ref.var_patt]
+// CHECK:STDOUT:     %a_orig.patt: %pattern_type.6b6 = ref_binding_pattern a_orig [concrete = constants.%a_orig.patt]
+// CHECK:STDOUT:     %a_orig.var_patt: %pattern_type.6b6 = var_pattern %a_orig.patt [concrete = constants.%a_orig.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref.var: ref %ptr.d08 = var_storage %a_ref.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5: type = splice_block %ptr [concrete = constants.%ptr.d08] {
@@ -113,6 +109,10 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc5 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref: ref %ptr.d08 = wrapper_binding a_ref, %a_ref.var [concrete = %a_ref.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a_ref.patt: %pattern_type.f00 = ref_binding_pattern a_ref [concrete = constants.%a_ref.patt]
+// CHECK:STDOUT:     %a_ref.var_patt: %pattern_type.f00 = var_pattern %a_ref.patt [concrete = constants.%a_ref.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -190,16 +190,16 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.f00 = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.f00 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr.d08 = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4: type = splice_block %ptr [concrete = constants.%ptr.d08] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr.d08 = wrapper_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.f00 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.f00 = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

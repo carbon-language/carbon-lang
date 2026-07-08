@@ -1975,10 +1975,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @L() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %obj.patt: %pattern_type.f0f = ref_binding_pattern obj [concrete = constants.%obj.patt]
-// CHECK:STDOUT:     %obj.var_patt: %pattern_type.f0f = var_pattern %obj.patt [concrete = constants.%obj.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj.var: ref %AnyParam.591 = var_storage %obj.var_patt
 // CHECK:STDOUT:   %.loc13_58.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc13_58.2: init %AnyParam.591 to %obj.var = class_init () [concrete = constants.%AnyParam.val]
@@ -1991,6 +1987,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericInterface.type.cd1, constants.%GenericInterface.generic) [concrete = constants.%AnyParam.591]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj: ref %AnyParam.591 = wrapper_binding obj, %obj.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %obj.patt: %pattern_type.f0f = ref_binding_pattern obj [concrete = constants.%obj.patt]
+// CHECK:STDOUT:     %obj.var_patt: %pattern_type.f0f = var_pattern %obj.patt [concrete = constants.%obj.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj.ref: ref %AnyParam.591 = name_ref obj, %obj
 // CHECK:STDOUT:   %PackageHasParam.ref.loc14: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
@@ -2227,10 +2227,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @M() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %obj.patt: %pattern_type.f0f = ref_binding_pattern obj [concrete = constants.%obj.patt]
-// CHECK:STDOUT:     %obj.var_patt: %pattern_type.f0f = var_pattern %obj.patt [concrete = constants.%obj.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj.var: ref %AnyParam.591 = var_storage %obj.var_patt
 // CHECK:STDOUT:   %.loc9_50.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_50.2: init %AnyParam.591 to %obj.var = class_init () [concrete = constants.%AnyParam.val]
@@ -2244,6 +2240,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericInterface.type.cd1, constants.%GenericInterface.generic) [concrete = constants.%AnyParam.591]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj: ref %AnyParam.591 = wrapper_binding obj, %obj.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %obj.patt: %pattern_type.f0f = ref_binding_pattern obj [concrete = constants.%obj.patt]
+// CHECK:STDOUT:     %obj.var_patt: %pattern_type.f0f = var_pattern %obj.patt [concrete = constants.%obj.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj.ref: ref %AnyParam.591 = name_ref obj, %obj
 // CHECK:STDOUT:   %PackageHasParam.ref.loc10: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
@@ -2523,10 +2523,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @L() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %obj.patt: %pattern_type.005 = ref_binding_pattern obj [concrete = constants.%obj.patt]
-// CHECK:STDOUT:     %obj.var_patt: %pattern_type.005 = var_pattern %obj.patt [concrete = constants.%obj.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj.var: ref %AnyParam.21c = var_storage %obj.var_patt
 // CHECK:STDOUT:   %.loc13_54.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc13_54.2: init %AnyParam.21c to %obj.var = class_init () [concrete = constants.%AnyParam.val]
@@ -2539,6 +2535,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericClass.type, constants.%GenericClass.generic) [concrete = constants.%AnyParam.21c]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj: ref %AnyParam.21c = wrapper_binding obj, %obj.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %obj.patt: %pattern_type.005 = ref_binding_pattern obj [concrete = constants.%obj.patt]
+// CHECK:STDOUT:     %obj.var_patt: %pattern_type.005 = var_pattern %obj.patt [concrete = constants.%obj.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj.ref: ref %AnyParam.21c = name_ref obj, %obj
 // CHECK:STDOUT:   %PackageHasParam.ref.loc14: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
@@ -2767,10 +2767,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @M() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %obj.patt: %pattern_type.005 = ref_binding_pattern obj [concrete = constants.%obj.patt]
-// CHECK:STDOUT:     %obj.var_patt: %pattern_type.005 = var_pattern %obj.patt [concrete = constants.%obj.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj.var: ref %AnyParam.21c = var_storage %obj.var_patt
 // CHECK:STDOUT:   %.loc8_74.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_74.2: init %AnyParam.21c to %obj.var = class_init () [concrete = constants.%AnyParam.val]
@@ -2784,6 +2780,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericClass.type, constants.%GenericClass.generic) [concrete = constants.%AnyParam.21c]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj: ref %AnyParam.21c = wrapper_binding obj, %obj.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %obj.patt: %pattern_type.005 = ref_binding_pattern obj [concrete = constants.%obj.patt]
+// CHECK:STDOUT:     %obj.var_patt: %pattern_type.005 = var_pattern %obj.patt [concrete = constants.%obj.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj.ref: ref %AnyParam.21c = name_ref obj, %obj
 // CHECK:STDOUT:   %PackageHasParam.ref.loc9: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]

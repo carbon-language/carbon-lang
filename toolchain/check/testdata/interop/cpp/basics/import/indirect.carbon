@@ -282,10 +282,6 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() -> out %return.param: %tuple.type.e55 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %ax.patt: %pattern_type.88a = ref_binding_pattern ax [concrete = constants.%ax.patt]
-// CHECK:STDOUT:     %ax.var_patt: %pattern_type.88a = var_pattern %ax.patt [concrete = constants.%ax.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ax.var: ref %X = var_storage %ax.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc9_3.1: ref %X = splice_block %ax.var {}
@@ -303,6 +299,10 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   assign %ax.var, %.loc9_3.3
 // CHECK:STDOUT:   %AX.ref: type = name_ref AX, imports.%Main.AX [concrete = constants.%X]
 // CHECK:STDOUT:   %ax: ref %X = wrapper_binding ax, %ax.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %ax.patt: %pattern_type.88a = ref_binding_pattern ax [concrete = constants.%ax.patt]
+// CHECK:STDOUT:     %ax.var_patt: %pattern_type.88a = var_pattern %ax.patt [concrete = constants.%ax.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ax.ref.loc10_11: ref %X = name_ref ax, %ax
 // CHECK:STDOUT:   %x.ref: %X.elem = name_ref x, @X.%.1 [concrete = @X.%.1]
 // CHECK:STDOUT:   %.loc10_13.1: ref %i32 = class_element_access %ax.ref.loc10_11, element0

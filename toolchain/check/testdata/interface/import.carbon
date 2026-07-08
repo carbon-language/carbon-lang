@@ -109,16 +109,16 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [concrete = constants.%Empty.type] {} {}
 // CHECK:STDOUT:   %Basic.decl: type = interface_decl @Basic [concrete = constants.%Basic.type] {} {}
 // CHECK:STDOUT:   %ForwardDeclared.decl: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f_ref.patt: %pattern_type.1c1 = ref_binding_pattern f_ref [concrete = constants.%f_ref.patt]
-// CHECK:STDOUT:     %f_ref.var_patt: %pattern_type.1c1 = var_pattern %f_ref.patt [concrete = constants.%f_ref.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var_storage %f_ref.var_patt [concrete]
 // CHECK:STDOUT:   %.loc20: type = splice_block %struct_type.f [concrete = constants.%struct_type.f] {
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, %ForwardDeclared.decl [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete = constants.%struct_type.f]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f_ref: ref %struct_type.f = wrapper_binding f_ref, %f_ref.var [concrete = %f_ref.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f_ref.patt: %pattern_type.1c1 = ref_binding_pattern f_ref [concrete = constants.%f_ref.patt]
+// CHECK:STDOUT:     %f_ref.var_patt: %pattern_type.1c1 = var_pattern %f_ref.patt [concrete = constants.%f_ref.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
@@ -361,16 +361,16 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc14: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:   %F.ref.loc14: %ForwardDeclared.assoc_type = name_ref F, imports.%Main.import_ref.86f [concrete = constants.%assoc1.c68]
 // CHECK:STDOUT:   %UseForwardDeclaredF: %ForwardDeclared.assoc_type = alias_binding UseForwardDeclaredF, %F.ref.loc14 [concrete = constants.%assoc1.c68]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type.7a7 = ref_binding_pattern f [concrete = constants.%f.patt.752]
-// CHECK:STDOUT:     %f.var_patt: %pattern_type.7a7 = var_pattern %f.patt [concrete = constants.%f.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %ptr.b71 = var_storage %f.var_patt [concrete]
 // CHECK:STDOUT:   %.loc16: type = splice_block %ptr [concrete = constants.%ptr.b71] {
 // CHECK:STDOUT:     %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %ptr: type = ptr_type %ForwardDeclared.ref.loc16 [concrete = constants.%ptr.b71]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %ptr.b71 = wrapper_binding f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %pattern_type.7a7 = ref_binding_pattern f [concrete = constants.%f.patt.752]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type.7a7 = var_pattern %f.patt [concrete = constants.%f.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty [from "a.carbon"] {

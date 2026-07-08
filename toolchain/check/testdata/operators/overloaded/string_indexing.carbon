@@ -150,9 +150,6 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestStringIndexing() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.2ff = value_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %str.loc5: %ptr.b46 = string_literal "Test" [concrete = constants.%str.4f8]
 // CHECK:STDOUT:   %int_4.loc5: %u64 = int_value 4 [concrete = constants.%int_4]
 // CHECK:STDOUT:   %String.val.loc5: %str.3d4 = struct_value (%str.loc5, %int_4.loc5) [concrete = constants.%String.val]
@@ -171,7 +168,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %char.loc5: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %c: %char = wrapper_binding c, %.loc5_32.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.2ff = value_binding_pattern d [concrete = constants.%d.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.2ff = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %str.loc6: %ptr.b46 = string_literal "Test" [concrete = constants.%str.4f8]
 // CHECK:STDOUT:   %int_4.loc6: %u64 = int_value 4 [concrete = constants.%int_4]
@@ -190,6 +187,9 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %.loc6_32.4: %char = converted %str.as.IndexWith.impl.At.call.loc6, %.loc6_32.3 [concrete = constants.%int_116]
 // CHECK:STDOUT:   %char.loc6: type = type_literal constants.%char [concrete = constants.%char]
 // CHECK:STDOUT:   %d: %char = wrapper_binding d, %.loc6_32.4
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %pattern_type.2ff = value_binding_pattern d [concrete = constants.%d.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !observes:

@@ -66,11 +66,11 @@ let a_test: bool = a;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:   %a: bool = alias_binding a, %false [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc7: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %a_test: bool = wrapper_binding a_test, @__global_init.%a.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_test.patt: %pattern_type = value_binding_pattern a_test [concrete = constants.%a_test.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %a_test: bool = wrapper_binding a_test, @__global_init.%a.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

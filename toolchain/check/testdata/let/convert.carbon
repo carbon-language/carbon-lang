@@ -59,9 +59,6 @@ fn G() {
 // CHECK:STDOUT: fn @F() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.777 = value_binding_pattern w [concrete = constants.%w.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.ref: ref %tuple.type.555 = name_ref v, %v
 // CHECK:STDOUT:   %tuple.elem0.loc8: ref %i32 = tuple_access %v.ref, element0
 // CHECK:STDOUT:   %.loc8_28.1: %i32 = acquire_value %tuple.elem0.loc8
@@ -79,6 +76,9 @@ fn G() {
 // CHECK:STDOUT:     %.loc8_24.3: type = converted %.loc8_24.2, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w: %tuple.type.555 = wrapper_binding w, %.loc8_28.4
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %w.patt: %pattern_type.777 = value_binding_pattern w [concrete = constants.%w.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !observes:

@@ -147,10 +147,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %result.patt: %pattern_type.98b = ref_binding_pattern result [concrete = constants.%result.patt.29e]
-// CHECK:STDOUT:     %result.var_patt: %pattern_type.98b = var_pattern %result.patt [concrete = constants.%result.var_patt.d89]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc21_43.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2) [concrete = constants.%struct]
@@ -175,6 +171,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:   assign %return.param, %.loc21_12
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %result: ref %C = wrapper_binding result, %return.param
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %result.patt: %pattern_type.98b = ref_binding_pattern result [concrete = constants.%result.patt.29e]
+// CHECK:STDOUT:     %result.var_patt: %pattern_type.98b = var_pattern %result.patt [concrete = constants.%result.var_patt.d89]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21_22: %C = acquire_value %result
 // CHECK:STDOUT:   return %.loc21_22 to %return.param
 // CHECK:STDOUT:
@@ -183,10 +183,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %result.patt: %pattern_type.6b6 = ref_binding_pattern result [concrete = constants.%result.patt.808]
-// CHECK:STDOUT:     %result.var_patt: %pattern_type.6b6 = var_pattern %result.patt [concrete = constants.%result.var_patt.a44]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %result.var: ref %i32 = var_storage %result.var_patt
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
@@ -198,6 +194,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:   assign %result.var, %.loc26_12
 // CHECK:STDOUT:   %i32.loc26: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %result: ref %i32 = wrapper_binding result, %result.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %result.patt: %pattern_type.6b6 = ref_binding_pattern result [concrete = constants.%result.patt.808]
+// CHECK:STDOUT:     %result.var_patt: %pattern_type.6b6 = var_pattern %result.patt [concrete = constants.%result.var_patt.a44]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc26_22: %i32 = acquire_value %result
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %result.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%result.var)
