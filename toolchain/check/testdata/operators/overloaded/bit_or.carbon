@@ -70,6 +70,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.BitOrWith.impl.Op.call: init %C to %.loc30_26.1 = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %C.as.BitOrWith.impl.Op.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%a.param: %ptr.00e, %b.param: %C) {
@@ -81,5 +83,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
 // CHECK:STDOUT:   %C.as.BitOrAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc38, %b.ref)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -228,6 +228,8 @@ fn Var5() {
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- abstract_let.carbon
@@ -297,6 +299,8 @@ fn Var5() {
 // CHECK:STDOUT:     %l.patt: %pattern_type.ac0 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_twice.carbon
@@ -368,6 +372,8 @@ fn Var5() {
 // CHECK:STDOUT:     %v2.var_patt: <error> = var_pattern %v2.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_first.carbon
@@ -430,6 +436,8 @@ fn Var5() {
 // CHECK:STDOUT:     %v3.var_patt: <error> = var_pattern %v3.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_second.carbon
@@ -492,6 +500,8 @@ fn Var5() {
 // CHECK:STDOUT:     %v4.var_patt: <error> = var_pattern %v4.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- lib.carbon
@@ -585,5 +595,7 @@ fn Var5() {
 // CHECK:STDOUT:     %v5.var_patt: <error> = var_pattern %v5.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

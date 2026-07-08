@@ -118,6 +118,8 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %A.call.loc6: init %empty_tuple.type = call %A.ref.loc6()
 // CHECK:STDOUT:   assign file.%package_a.var, %A.call.loc6
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- same_package.carbon
@@ -195,5 +197,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %B.call.loc8: init %empty_tuple.type = call %B.ref.loc8()
 // CHECK:STDOUT:   assign file.%package_b.var, %B.call.loc8
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

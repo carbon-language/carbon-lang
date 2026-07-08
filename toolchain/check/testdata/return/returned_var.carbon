@@ -177,6 +177,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21_22: %C = acquire_value %result
 // CHECK:STDOUT:   return %.loc21_22 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %i32 {
@@ -200,6 +202,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %result.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%result.var)
 // CHECK:STDOUT:   return %.loc26_22
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc26_12.1(%self.param: ref %i32.builtin) = "no_op";
@@ -207,5 +211,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: fn @Destroy.Op.loc26_12.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -151,6 +151,8 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT:   %.loc12_13.2: %ptr.faf = converted %p.ref.loc12, %.loc12_13.1
 // CHECK:STDOUT:   %TakeConst.call: init %empty_tuple.type = call %TakeConst.ref(%.loc12_13.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Const(%p.param: %ptr.faf) {
@@ -159,6 +161,8 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT:   %p.ref: %ptr.faf = name_ref p, %p
 // CHECK:STDOUT:   %TakeConst.call: init %empty_tuple.type = call %TakeConst.ref(%p.ref)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonConstConst(%p.param: %ptr.845) {
@@ -169,6 +173,8 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT:   %.loc25_18.2: %ptr.b53 = converted %p.ref, %.loc25_18.1
 // CHECK:STDOUT:   %TakeConstConst.call: init %empty_tuple.type = call %TakeConstConst.ref(%.loc25_18.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_nested_qualifiers.carbon
@@ -195,6 +201,8 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT:   %.loc22: %ptr.b53 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %TakeConstConst.call: init %empty_tuple.type = call %TakeConstConst.ref(<error>)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstNonConst(%p.param: %ptr.060) {
@@ -204,5 +212,7 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT:   %.loc38: %ptr.b53 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %TakeConstConst.call: init %empty_tuple.type = call %TakeConstConst.ref(<error>)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

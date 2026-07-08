@@ -37,6 +37,7 @@
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/observe.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -129,6 +130,10 @@ class Context {
 
   auto require_impls_stack() -> RequireImplsStack& {
     return require_impls_stack_;
+  }
+
+  auto observe_stack() -> ArrayStack<SemIR::ObserveId>& {
+    return observe_stack_;
   }
 
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
@@ -356,6 +361,10 @@ class Context {
   auto require_impls_blocks() -> SemIR::RequireImplsBlockStore& {
     return sem_ir().require_impls_blocks();
   }
+  auto observes() -> SemIR::ObserveStore& { return sem_ir().observes(); }
+  auto observe_blocks() -> SemIR::ObserveBlockStore& {
+    return sem_ir().observe_blocks();
+  }
   auto associated_constants() -> SemIR::AssociatedConstantStore& {
     return sem_ir().associated_constants();
   }
@@ -463,6 +472,10 @@ class Context {
   // The stack of RequireImpls for in-progress Interface and Constraint
   // definitions.
   RequireImplsStack require_impls_stack_;
+
+  // The stack of Observe for in-progress Interface and Function
+  // definitions.
+  ArrayStack<SemIR::ObserveId> observe_stack_;
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;

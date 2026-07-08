@@ -114,6 +114,8 @@ fn M() {
 // CHECK:STDOUT:   fn(%x.param: @F.%T.loc19_7.1 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -131,6 +133,8 @@ fn M() {
 // CHECK:STDOUT:     %F.specific_fn.loc25_3.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc25_3.2 (constants.%F.specific_fn.eab)]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc25_3.1(%x.ref)
 // CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -154,6 +158,8 @@ fn M() {
 // CHECK:STDOUT:     %F.specific_fn.loc32_3.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc32_3.2 (constants.%F.specific_fn.eab)]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc32_3.1(%x.ref.loc32)
 // CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -171,6 +177,8 @@ fn M() {
 // CHECK:STDOUT:   %.loc44: %C = acquire_value %n.ref.loc44
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn(%.loc44)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {

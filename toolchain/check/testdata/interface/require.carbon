@@ -411,6 +411,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   @Z.WithSelf.Self.as_type.impls.Y.type.require {
 // CHECK:STDOUT:     require @Z.WithSelf.Self.as_type.impls.Y.type.require.%Self.as_type.loc9_18.1 impls @Z.WithSelf.Self.as_type.impls.Y.type.require.%Y.ref
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.WithSelf.Self.as_type.impls.Y.type.require(@Z.%Self: %Z.type) {
@@ -480,6 +482,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   @Z.WithSelf.Self.as_type.impls.Y.type.require {
 // CHECK:STDOUT:     require @Z.WithSelf.Self.as_type.impls.Y.type.require.%Self.as_type.loc9_18.1 impls @Z.WithSelf.Self.as_type.impls.Y.type.require.%Y.type.loc9_30.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.WithSelf.Self.as_type.impls.Y.type.require(@Z.%Self: %Z.type) {
@@ -545,6 +549,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   @Z.WithSelf.Self.as_type.impls.Y.type.require {
 // CHECK:STDOUT:     require @Z.WithSelf.Self.as_type.impls.Y.type.require.%Self.as_type.loc9_11.1 impls @Z.WithSelf.Self.as_type.impls.Y.type.require.%Y.ref
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.WithSelf.Self.as_type.impls.Y.type.require(@Z.%Self: %Z.type) {
@@ -598,6 +604,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   @Z.WithSelf.Self.as_type.impls.Y.type.require {
 // CHECK:STDOUT:     require @Z.WithSelf.Self.as_type.impls.Y.type.require.%.loc9 impls @Z.WithSelf.Self.as_type.impls.Y.type.require.%Y.ref
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.WithSelf.Self.as_type.impls.Y.type.require(@Z.%Self: %Z.type) {
@@ -658,6 +666,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   @Z.WithSelf.C.impls.Y.type.require {
 // CHECK:STDOUT:     require @Z.WithSelf.C.impls.Y.type.require.%C.loc9_17.1 impls @Z.WithSelf.C.impls.Y.type.require.%Y.ref
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.WithSelf.C.impls.Y.type.require(@Z.%Self: %Z.type) {
@@ -730,6 +740,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   @Z.WithSelf.Self.as_type.impls.Y_where.type.require {
 // CHECK:STDOUT:     require @Z.WithSelf.Self.as_type.impls.Y_where.type.require.%Self.as_type.loc7_11.1 impls @Z.WithSelf.Self.as_type.impls.Y_where.type.require.%.loc7_19
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.WithSelf.Self.as_type.impls.Y_where.type.require(@Z.%Self: %Z.type) {
@@ -809,6 +821,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     @Z.WithSelf.T.impls.Z.type.require {
 // CHECK:STDOUT:       require @Z.WithSelf.T.impls.Z.type.require.%T.ref impls @Z.WithSelf.T.impls.Z.type.require.%Z.type.loc5_25.1
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -895,6 +909,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   @Z.WithSelf.Self.as_type.impls.Y_where.type.require {
 // CHECK:STDOUT:     require @Z.WithSelf.Self.as_type.impls.Y_where.type.require.%Self.as_type.loc10_11.1 impls @Z.WithSelf.Self.as_type.impls.Y_where.type.require.%.loc10_19
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.WithSelf.Self.as_type.impls.Y_where.type.require(@Z.%Self: %Z.type) {
@@ -972,6 +988,8 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     @Z.WithSelf.Self.as_type.impls.Z.type.require {
 // CHECK:STDOUT:       require @Z.WithSelf.Self.as_type.impls.Z.type.require.%Self.as_type.loc11_11.1 impls @Z.WithSelf.Self.as_type.impls.Z.type.require.%Z.type.loc11_20
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

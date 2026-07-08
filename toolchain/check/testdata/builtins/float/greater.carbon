@@ -48,5 +48,7 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %b.ref: %f64.dc1 = name_ref b, %b
 // CHECK:STDOUT:   %Greater.call: init bool = call %Greater.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Greater.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

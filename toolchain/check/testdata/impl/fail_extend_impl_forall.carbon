@@ -102,6 +102,8 @@ class C {
 // CHECK:STDOUT:     witness = (@GenericInterface.WithSelf.%GenericInterface.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -179,6 +181,8 @@ class C {
 // CHECK:STDOUT:   fn(%x.param: @C.as.GenericInterface.impl.F.%T (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

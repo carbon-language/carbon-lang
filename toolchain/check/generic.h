@@ -168,6 +168,8 @@ auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
                            SemIR::GenericId target_generic_id)
     -> SemIR::SpecificId;
 
+auto DiagnoseImplsOnNonFacetType(Context& context, SemIR::LocId loc_id) -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_GENERIC_H_

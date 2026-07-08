@@ -168,6 +168,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %.loc6_29.12: init %struct_type.x.y to %return.param = struct_init (%.loc6_29.6, %.loc6_29.11) [concrete = constants.%struct.005]
 // CHECK:STDOUT:   %.loc6_48: init %struct_type.x.y = converted %.loc6_29.1, %.loc6_29.12 [concrete = constants.%struct.005]
 // CHECK:STDOUT:   return %.loc6_48 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- as_type.carbon
@@ -199,6 +201,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %.loc5_24.2: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %.loc5_24.3: type = converted %.loc5_22, constants.%tuple.type.b6b [concrete = constants.%tuple.type.b6b]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- as_tuple.carbon
@@ -256,6 +260,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %Destroy.Op.bound.loc13_32: <bound method> = bound_method %.loc13_32.2, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc13_32: init %empty_tuple.type = call %Destroy.Op.bound.loc13_32(%.loc13_32.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc13_40.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -263,6 +269,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT: fn @Destroy.Op.loc13_40.2(%self.param: ref %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Var() {
@@ -296,11 +304,15 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%b.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc20(%self.param: ref %tuple.type.359) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- identity.carbon
@@ -332,6 +344,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %m.patt: %pattern_type.6cb = value_binding_pattern m [concrete = constants.%m.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Reference(%p.param: %ptr.db8) {
@@ -349,6 +363,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %q.patt: %pattern_type.990 = value_binding_pattern q [concrete = constants.%q.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Initializing() {
@@ -368,6 +384,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc24_3.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -375,6 +393,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT: fn @Destroy.Op.loc24_3.2(%self.param: ref %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- overloaded.carbon
@@ -431,5 +451,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %X.as.As.impl.Convert.call: init %Y to %.loc19_29.1 = call %bound_method(%.loc19_23.3)
 // CHECK:STDOUT:   %.loc19_29.2: init %Y = converted %.loc19_23.1, %X.as.As.impl.Convert.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

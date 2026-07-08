@@ -144,6 +144,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc10: init %i32 = converted %int_456, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_456.8dd]
 // CHECK:STDOUT:   assign %static_field.ref, %.loc10
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -164,5 +166,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc6: init %i32 = converted %int_123, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_123.2bf]
 // CHECK:STDOUT:   assign @C.%static_field_with_init.var, %.loc6
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -80,6 +80,8 @@ fn F() {
 // CHECK:STDOUT: fn @G(%a.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -89,5 +91,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc28: %i32 = converted %float, <error> [concrete = <error>]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref(<error>)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

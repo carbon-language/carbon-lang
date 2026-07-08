@@ -141,5 +141,7 @@ final impl C(invalid) as I {}
 // CHECK:STDOUT: fn @C.as.Simple.impl.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

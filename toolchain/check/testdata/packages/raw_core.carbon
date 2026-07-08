@@ -128,6 +128,8 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Core.F [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "package_raw_core.carbon"];
@@ -139,6 +141,8 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_raw_core_not_core.carbon
@@ -181,6 +185,8 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core.048aa3.1 [concrete = imports.%Core.048aa3.1]
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
@@ -189,6 +195,8 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %Int.ref: <error> = name_ref Int, <error> [concrete = <error>]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- class_raw_core.carbon
@@ -310,5 +318,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %.loc6_1: init %Core = converted %.loc6_40.1, %.loc6_40.4 [concrete = constants.%Core.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

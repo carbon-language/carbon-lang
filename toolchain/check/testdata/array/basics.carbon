@@ -166,6 +166,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %.loc6_1: init %array_type = converted %a.ref, %.loc6_23.13 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%b.var, %.loc6_1
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- array_in_place.carbon
@@ -227,6 +229,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -234,16 +238,22 @@ var a: array(1, 1);
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.3(%self.param: ref %tuple.type.a8c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.4(%self.param: ref %array_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- array_vs_tuple.carbon
@@ -331,6 +341,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%a.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref %empty_tuple.type) = "no_op";
@@ -338,11 +350,15 @@ var a: array(1, 1);
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc7(%self.param: ref %array_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- assign_return_value.carbon
@@ -398,6 +414,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %Destroy.Op.bound.loc8_3: <bound method> = bound_method %t.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc8_3: init %empty_tuple.type = call %Destroy.Op.bound.loc8_3(%t.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_34.1(%self.param: ref %empty_tuple.type) = "no_op";
@@ -405,11 +423,15 @@ var a: array(1, 1);
 // CHECK:STDOUT: fn @Destroy.Op.loc8_34.2(%self.param: ref %tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3(%self.param: ref %array_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nine_elements.carbon
@@ -521,5 +543,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %.loc9_1: init %array_type = converted %a.ref, %.loc9_23.37 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%b.var, %.loc9_1
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

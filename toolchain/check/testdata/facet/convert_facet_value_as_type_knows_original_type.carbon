@@ -122,6 +122,8 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %Feed.specific_fn: <specific function> = specific_function %Feed.ref, @Feed(constants.%Eats.facet) [concrete = constants.%Feed.specific_fn]
 // CHECK:STDOUT:   %Feed.call: init %empty_tuple.type = call %Feed.specific_fn()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- facet_type_in_type_position.carbon
@@ -215,6 +217,8 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %Destroy.Op.call.loc26: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.4ea)
 // CHECK:STDOUT:   %Destroy.Op.call.loc22: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.4ea)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc27_8.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -222,6 +226,8 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT: fn @Destroy.Op.loc27_8.2(%self.param: ref %Goat) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- facet_access_type_converts_back_to_original_facet_value.carbon
@@ -261,6 +267,8 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:     %G.specific_fn.loc27_3.1: <specific function> = specific_function %G.ref, @G(constants.%A, constants.%B) [symbolic = %G.specific_fn.loc27_3.2 (constants.%G.specific_fn)]
 // CHECK:STDOUT:     %G.call: init %empty_tuple.type = call %G.specific_fn.loc27_3.1(%x.ref)
 // CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -246,6 +246,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (@HasF.WithSelf.%HasF.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasG {
@@ -263,6 +265,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (@HasG.WithSelf.%HasG.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasF.impl: %Self.ref as %HasF.ref {
@@ -320,11 +324,15 @@ fn P(o: O) {
 // CHECK:STDOUT: fn @C.as.HasF.impl.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.HasG.impl.G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H(%c.param: %C) {
@@ -346,6 +354,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %impl.elem0.loc25: %.ccf = impl_witness_access constants.%HasG.impl_witness, element0 [concrete = constants.%C.as.HasG.impl.G]
 // CHECK:STDOUT:   %C.as.HasG.impl.G.call.loc25: init %empty_tuple.type = call %impl.elem0.loc25()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%Self.c62) {
@@ -476,6 +486,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (@HasA1.WithSelf.%HasA1.WithSelf.A.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasA2 {
@@ -492,6 +504,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (@HasA2.WithSelf.%HasA2.WithSelf.A.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @D.as.HasA1.impl: %Self.ref as %HasA1.ref {
@@ -548,11 +562,15 @@ fn P(o: O) {
 // CHECK:STDOUT: fn @D.as.HasA1.impl.A() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D.as.HasA2.impl.A() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%d.param: %D) {
@@ -562,6 +580,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %d.ref: %D = name_ref d, %d
 // CHECK:STDOUT:   %A.ref.loc31: <error> = name_ref A, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasA1.WithSelf(constants.%Self.1db) {
@@ -686,6 +706,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (@HasI.WithSelf.%HasI.WithSelf.I.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @E.as.HasI.impl: %Self.ref as %HasI.ref {
@@ -739,11 +761,15 @@ fn P(o: O) {
 // CHECK:STDOUT: fn @B.J() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @E.as.HasI.impl.I() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H(%e.param: %E) {
@@ -763,6 +789,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %J.ref.loc23: %B.J.type = name_ref J, @B.%B.J.decl [concrete = constants.%B.J]
 // CHECK:STDOUT:   %B.J.call.loc23: init %empty_tuple.type = call %J.ref.loc23()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasI.WithSelf(constants.%Self) {
@@ -859,6 +887,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (@HasK.WithSelf.%HasK.WithSelf.K.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @L.as.HasK.impl: %Self.ref as %HasK.ref {
@@ -906,6 +936,8 @@ fn P(o: O) {
 // CHECK:STDOUT: fn @Base.K() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasK.WithSelf.K(@HasK.%Self: %HasK.type) {
@@ -915,6 +947,8 @@ fn P(o: O) {
 // CHECK:STDOUT: fn @L.as.HasK.impl.K() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @M(%l.param: %L) {
@@ -924,6 +958,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %l.ref: %L = name_ref l, %l
 // CHECK:STDOUT:   %K.ref.loc29: <error> = name_ref K, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasK.WithSelf(constants.%Self) {
@@ -1034,6 +1070,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (@HasN1.WithSelf.%HasN1.WithSelf.N.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasN2 {
@@ -1050,6 +1088,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (@HasN2.WithSelf.%HasN2.WithSelf.N.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @O.as.HasN1.impl: %Self.ref as %HasN1.ref {
@@ -1116,6 +1156,8 @@ fn P(o: O) {
 // CHECK:STDOUT: fn @NBase.N() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasN1.WithSelf.N(@HasN1.%Self: %HasN1.type) {
@@ -1129,11 +1171,15 @@ fn P(o: O) {
 // CHECK:STDOUT: fn @O.as.HasN1.impl.N() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @O.as.HasN2.impl.N() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @O.N();
@@ -1147,6 +1193,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %N.ref.loc29: %O.N.type = name_ref N, @O.%O.N.decl [concrete = constants.%O.N]
 // CHECK:STDOUT:   %O.N.call.loc29: init %empty_tuple.type = call %N.ref.loc29()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasN1.WithSelf(constants.%Self.97e) {

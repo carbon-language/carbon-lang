@@ -162,5 +162,7 @@ fn F() {
 // CHECK:STDOUT:   %system_function.ref: %system_function.cpp_overload_set.type = name_ref system_function, imports.%system_function.cpp_overload_set.value [concrete = constants.%system_function.cpp_overload_set.value]
 // CHECK:STDOUT:   %system_function.call: init %empty_tuple.type = call imports.%system_function.decl()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

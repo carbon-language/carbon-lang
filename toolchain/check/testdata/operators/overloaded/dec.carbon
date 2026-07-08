@@ -51,5 +51,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.Dec.impl.Op.call: init %empty_tuple.type = call %bound_method(%c.ref)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

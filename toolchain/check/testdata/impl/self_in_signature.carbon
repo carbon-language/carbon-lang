@@ -211,6 +211,8 @@ impl D as SelfNested {
 // CHECK:STDOUT:   witness = (@UseSelf.WithSelf.%UseSelf.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @SelfNested {
@@ -248,6 +250,8 @@ impl D as SelfNested {
 // CHECK:STDOUT:   witness = (@SelfNested.WithSelf.%SelfNested.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.UseSelf.impl: %C.ref as %UseSelf.ref {
@@ -401,6 +405,8 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %.loc24_52.2: init %C to %return.param = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc24_53: init %C = converted %.loc24_52.1, %.loc24_52.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc24_53 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D.as.UseSelf.impl.F(%self.param: %D, %x.param: %D) -> out %return.param: %D {
@@ -409,6 +415,8 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %.loc28_55.2: init %D to %return.param = class_init () [concrete = constants.%D.val]
 // CHECK:STDOUT:   %.loc28_56: init %D = converted %.loc28_55.1, %.loc28_55.2 [concrete = constants.%D.val]
 // CHECK:STDOUT:   return %.loc28_56 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @SelfNested.WithSelf.F(@SelfNested.%Self: %SelfNested.type) {

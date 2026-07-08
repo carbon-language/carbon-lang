@@ -400,6 +400,8 @@ import Other library "o1";
 // CHECK:STDOUT:   %.loc7_1: init %C2 = converted %.loc7_15.1, %.loc7_15.2 [concrete = constants.%C2.val]
 // CHECK:STDOUT:   assign file.%c2.var, %.loc7_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- dup_c1.carbon
@@ -464,6 +466,8 @@ import Other library "o1";
 // CHECK:STDOUT:   %.loc6_1: init %C1 = converted %.loc6_15.1, %.loc6_15.2 [concrete = constants.%C1.val]
 // CHECK:STDOUT:   assign file.%c1.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_ns.carbon
@@ -539,6 +543,8 @@ import Other library "o1";
 // CHECK:STDOUT:   %.loc4_1: init %C = converted %.loc4_16.1, %.loc4_16.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc4_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mix_other.carbon
@@ -645,6 +651,8 @@ import Other library "o1";
 // CHECK:STDOUT:   %.loc7_1: init %O2 = converted %.loc7_21.1, %.loc7_21.2 [concrete = constants.%O2.val]
 // CHECK:STDOUT:   assign file.%o2.var, %.loc7_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- dup_o1.carbon
@@ -719,6 +727,8 @@ import Other library "o1";
 // CHECK:STDOUT:   %.loc6_1: init %O1 = converted %.loc6_21.1, %.loc6_21.2 [concrete = constants.%O1.val]
 // CHECK:STDOUT:   assign file.%o1.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_conflict.carbon

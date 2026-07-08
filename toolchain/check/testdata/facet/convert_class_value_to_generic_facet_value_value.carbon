@@ -275,6 +275,8 @@ fn B() {
 // CHECK:STDOUT:     witness = (@Generic.WithSelf.%Generic.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -312,6 +314,8 @@ fn B() {
 // CHECK:STDOUT: fn @ImplsGeneric.as.Generic.impl.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @CallGenericMethod(%T.loc15_23.2: type, %U.loc15_33.2: @CallGenericMethod.%Generic.type.loc15_45.1 (%Generic.type.ee14e9.2)) {
@@ -352,6 +356,8 @@ fn B() {
 // CHECK:STDOUT:     %specific_impl_fn.loc16_4.1: <specific function> = specific_impl_function %impl.elem0.loc16_4.1, @Generic.WithSelf.F(constants.%T, constants.%U) [symbolic = %specific_impl_fn.loc16_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %Generic.WithSelf.F.call: init %empty_tuple.type = call %specific_impl_fn.loc16_4.1()
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -379,6 +385,8 @@ fn B() {
 // CHECK:STDOUT:   %Destroy.Op.call.loc20_44: init %empty_tuple.type = call constants.%Destroy.Op.bound.852(constants.%.b65)
 // CHECK:STDOUT:   %Destroy.Op.call.loc20_24: init %empty_tuple.type = call constants.%Destroy.Op.bound.047(constants.%.cd4)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc20_44.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -386,11 +394,15 @@ fn B() {
 // CHECK:STDOUT: fn @Destroy.Op.loc20_44.2(%self.param: ref %GenericParam) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc20_24(%self.param: ref %ImplsGeneric) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%Scalar) {
@@ -662,6 +674,8 @@ fn B() {
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -706,6 +720,8 @@ fn B() {
 // CHECK:STDOUT:   fn(%t.param: @A.%T.as_type.loc9_31.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -727,6 +743,8 @@ fn B() {
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.specific_fn(%.loc12_8.3)
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.115)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc12_8.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -734,6 +752,8 @@ fn B() {
 // CHECK:STDOUT: fn @Destroy.Op.loc12_8.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%V, constants.%W) {
@@ -953,6 +973,8 @@ fn B() {
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -997,6 +1019,8 @@ fn B() {
 // CHECK:STDOUT:   fn(%t.param: @A.%T.as_type.loc9_31.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1009,6 +1033,8 @@ fn B() {
 // CHECK:STDOUT:   %.loc19_6.3: init %C to %.loc19_6.2 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc19_8: init %C = converted %.loc19_6.1, %.loc19_6.3 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%V, constants.%W) {
@@ -1188,6 +1214,8 @@ fn B() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.I.impl(%T.loc7_15.1: type) {
@@ -1239,6 +1267,8 @@ fn B() {
 // CHECK:STDOUT:   fn(%t.param: @A.%T.as_type.loc9_23.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1256,6 +1286,8 @@ fn B() {
 // CHECK:STDOUT:   %.loc19_6.3: init %C.b48 to %.loc19_6.2 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc19_8: init %C.b48 = converted %.loc19_6.1, %.loc19_6.3 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {

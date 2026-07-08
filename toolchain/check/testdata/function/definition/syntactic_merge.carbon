@@ -275,11 +275,15 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo(%a.param.loc8: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar(%a.param.loc11: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- spacing.carbon
@@ -330,6 +334,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo(%a.param.loc7: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_parens.carbon
@@ -384,6 +390,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo.loc14(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_only_implicit_params.carbon
@@ -421,6 +429,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo.loc23() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_raw_identifier.carbon
@@ -475,6 +485,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo.loc14(%_.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.carbon
@@ -592,11 +604,15 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo(%a.param: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar(%a.param: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_name_mismatch.carbon
@@ -656,6 +672,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo.loc15(%b.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_alias.carbon
@@ -713,6 +731,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo.loc15(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduced_alias.carbon
@@ -787,6 +807,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -860,6 +882,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %.loc8_25.2: init %C to %return.param.loc8 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc8_26: init %C = converted %.loc8_25.1, %.loc8_25.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc8_26 to %return.param.loc8
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- alias_two_file.carbon
@@ -950,6 +974,8 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo(%a.param: %C) [from "alias_two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_repeat_const.carbon
@@ -1012,5 +1038,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo.loc18(%a.param: %const) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

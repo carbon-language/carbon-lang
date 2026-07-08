@@ -119,6 +119,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_constant_result.carbon
@@ -223,5 +225,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %w.var_patt: <error> = var_pattern %w.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

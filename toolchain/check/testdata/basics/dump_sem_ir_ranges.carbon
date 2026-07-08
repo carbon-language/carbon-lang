@@ -139,6 +139,8 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   assign %b.ref.loc11, %A.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C() -> out %return.param: %empty_tuple.type {
@@ -167,6 +169,8 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %c.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%c.var)
 // CHECK:STDOUT:   return %.loc20_11
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- class.carbon
@@ -248,6 +252,8 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %Destroy.Op.bound.loc13: <bound method> = bound_method %.loc13_7.2, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc13: init %empty_tuple.type = call %Destroy.Op.bound.loc13(%.loc13_7.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_tuple.type) = "no_op";

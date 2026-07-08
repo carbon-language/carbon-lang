@@ -121,6 +121,8 @@ fn G(T:! Z) {
 // CHECK:STDOUT:     %F.specific_fn.loc9_3.1: <specific function> = specific_function %F.ref, @F(constants.%T.f45530.2) [symbolic = %F.specific_fn.loc9_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc9_3.1()
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -180,6 +182,8 @@ fn G(T:! Z) {
 // CHECK:STDOUT:     %F.specific_fn.loc10_3.1: <specific function> = specific_function %F.ref, @F(constants.%E1.facet) [symbolic = %F.specific_fn.loc10_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc10_3.1()
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

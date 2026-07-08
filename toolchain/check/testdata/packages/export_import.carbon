@@ -346,6 +346,8 @@ export Poison;
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_20.1, %.loc6_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_export_in_impl.impl.carbon
@@ -409,6 +411,8 @@ export Poison;
 // CHECK:STDOUT:   %.loc4_1: init %C = converted %.loc4_20.1, %.loc4_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc4_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_export.carbon
@@ -469,6 +473,8 @@ export Poison;
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_20.1, %.loc6_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_import_then_export.carbon
@@ -529,6 +535,8 @@ export Poison;
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_20.1, %.loc6_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_import_when_export.carbon
@@ -589,6 +597,8 @@ export Poison;
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_20.1, %.loc6_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_base_and_export.carbon
@@ -649,6 +659,8 @@ export Poison;
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_20.1, %.loc7_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_and_base.carbon
@@ -709,6 +721,8 @@ export Poison;
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_20.1, %.loc7_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_copy.carbon
@@ -769,6 +783,8 @@ export Poison;
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_20.1, %.loc7_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_non_export.carbon
@@ -841,6 +857,8 @@ export Poison;
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_20.1, %.loc7_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- indirect_use_non_export_then_base.carbon
@@ -903,6 +921,8 @@ export Poison;
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_29.1, %.loc6_29.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%indirect_c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_export_poisoned.carbon

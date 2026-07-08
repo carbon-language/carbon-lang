@@ -151,5 +151,7 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:   %.loc10_44: init %A to %.loc10_1 = mark_in_place_init %A__carbon_thunk.call.loc10
 // CHECK:STDOUT:   assign file.%a2.var, %.loc10_44
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -249,6 +249,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I3 {
@@ -274,6 +276,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (@I3.WithSelf.%T1, @I3.WithSelf.%T2, @I3.WithSelf.%T3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonType {
@@ -291,6 +295,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (@NonType.WithSelf.%Y)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self.37e) {}
@@ -364,6 +370,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C1.as.I.impl: %C1.ref as %.loc5_14 {
@@ -477,6 +485,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C2.as.I.impl: %C2.ref.loc5 as %.loc5_14 {
@@ -578,6 +588,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C3.as.I.impl.a51: %C3.ref as %I.ref;
@@ -696,6 +708,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C4.as.I.impl.eff: %C4.ref as %.loc9_14;
@@ -858,6 +872,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T1, imports.%Main.T2, imports.%Main.T3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C5.as.<error>.impl.f79ae5.1: %C5.ref as <error>;
@@ -953,6 +969,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C6.as.I.impl.6c7: %C6.ref as %.loc5_14;
@@ -1059,6 +1077,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C7.as.<error>.impl: %C7.ref as <error> {
@@ -1155,6 +1175,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C8.as.<error>.impl: %C8.ref as <error> {
@@ -1250,6 +1272,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C9.as.<error>.impl: %C9.ref as <error> {
@@ -1344,6 +1368,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @CA.as.<error>.impl: %CA.ref as <error> {
@@ -1442,6 +1468,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @CB.as.I.impl: %CB.ref as %.loc6_14 {
@@ -1545,6 +1573,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.Y)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @CC.as.NonType.impl: %CC.ref as %.loc6_20 {
@@ -1609,6 +1639,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (@IF.WithSelf.%IF.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @IF.WithSelf.F(@IF.%Self: %IF.type) {
@@ -1688,6 +1720,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @CD.as.IF.impl: %CD.ref as %.loc10_15 {
@@ -1716,6 +1750,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: fn @CD.as.IF.impl.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF.WithSelf(constants.%Self) {

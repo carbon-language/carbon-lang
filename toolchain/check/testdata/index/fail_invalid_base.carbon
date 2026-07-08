@@ -144,5 +144,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %int_0.loc40: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

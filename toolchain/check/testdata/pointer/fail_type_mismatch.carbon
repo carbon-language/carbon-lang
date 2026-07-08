@@ -89,5 +89,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   %p.ref: %ptr.bf9 = name_ref p, %p
 // CHECK:STDOUT:   %.loc23: %const.987 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

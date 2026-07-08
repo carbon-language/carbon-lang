@@ -110,6 +110,8 @@ fn Test(x: i32) {
 // CHECK:STDOUT:   fn(%x.param: ref @TestOp.%T.as_type.loc22_32.1 (%T.as_type.b38)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -133,6 +135,8 @@ fn Test(x: i32) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc22_25.1(%self.param: ref %i32.builtin) = "no_op";
@@ -140,6 +144,8 @@ fn Test(x: i32) {
 // CHECK:STDOUT: fn @Destroy.Op.loc22_25.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestOp(constants.%T.dda) {

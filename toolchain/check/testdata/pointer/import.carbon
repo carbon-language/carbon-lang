@@ -134,6 +134,8 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.d08 = call %bound_method.loc5_19.2(%addr) [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%a_ref.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -211,5 +213,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.d08 = call %bound_method.loc4_15.2(%.loc4)
 // CHECK:STDOUT:   assign file.%a.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

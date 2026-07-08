@@ -207,6 +207,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_special_name_call_escaped.carbon
@@ -234,6 +236,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %base.ref: %base.cpp_overload_set.type = name_ref r#base, imports.%base.cpp_overload_set.value [concrete = constants.%base.cpp_overload_set.value]
 // CHECK:STDOUT:   %base.call: init %empty_tuple.type = call imports.%base.decl()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overloaded.carbon
@@ -261,6 +265,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_variadic.carbon
@@ -285,6 +291,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_import_static.carbon
@@ -312,6 +320,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_template_function.carbon
@@ -382,6 +392,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc8_13.2: %i32 = converted %int_1, %.loc8_13.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_13.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %i32 {
@@ -399,5 +411,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc14_20.2: %i32 = converted %int_1, %.loc14_20.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %bar.call: init %i32 = call imports.%bar.decl(%.loc14_20.2)
 // CHECK:STDOUT:   return %bar.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

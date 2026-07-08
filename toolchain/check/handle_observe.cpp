@@ -2,28 +2,121 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "common/hashtable_key_context.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
+#include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
+#include "toolchain/check/type.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/parse/node_kind.h"
+#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::ObserveIntroducerId node_id)
     -> bool {
-  return context.TODO(node_id, "ObserveIntroducerId");
+  auto scope_inst_id = context.scope_stack().PeekInstId();
+  if (!context.insts()
+           .IsOneOf<SemIR::InterfaceWithSelfDecl, SemIR::FunctionDecl>(
+               scope_inst_id)) {
+    CARBON_DIAGNOSTIC(
+        ObserveInWrongScope, Error,
+        "`observe` can only be used in an `interface` or `function`");
+    context.emitter().Emit(node_id, ObserveInWrongScope);
+    scope_inst_id = SemIR::ErrorInst::InstId;
+  }
+
+  context.args_type_info_stack().Push();
+
+  context.node_stack().Push(node_id, scope_inst_id);
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::ObserveEqualEqualId node_id)
     -> bool {
-  return context.TODO(node_id, "ObserveEqualEqualId");
+  auto [rhs_node_id, rhs_inst_id] = context.node_stack().PopExprWithNodeId();
+  auto [lhs_node_id, lhs_inst_id] = context.node_stack().PopExprWithNodeId();
+
+  if (context.node_stack().Peek<Parse::NodeKind::ObserveIntroducer>() ==
+      SemIR::ErrorInst::InstId) {
+    context.node_stack().Push(rhs_node_id, rhs_inst_id);
+    return true;
+  }
+
+  auto rhs_as_type = ExprAsType(context, rhs_node_id, rhs_inst_id);
+  auto lhs_as_type = ExprAsType(context, lhs_node_id, lhs_inst_id);
+
+  // TODO: Type check lhs and rhs are same type.
+
+  // Push rhs again for chain == expressions.
+  context.node_stack().Push(rhs_node_id, rhs_inst_id);
+  context.args_type_info_stack().AddInstId(
+      AddInstInNoBlock<SemIR::ObserveEquivalent>(
+          context, node_id,
+          {.lhs_id = GetCanonicalFacetOrTypeValue(context, lhs_as_type.inst_id),
+           .rhs_id =
+               GetCanonicalFacetOrTypeValue(context, rhs_as_type.inst_id)}));
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::ObserveImplsId node_id) -> bool {
-  return context.TODO(node_id, "ObserveImplsId");
+  auto [rhs_node_id, rhs_inst_id] = context.node_stack().PopExprWithNodeId();
+  auto [lhs_node_id, lhs_inst_id] = context.node_stack().PopExprWithNodeId();
+
+  if (context.node_stack().Peek<Parse::NodeKind::ObserveIntroducer>() ==
+      SemIR::ErrorInst::InstId) {
+    context.node_stack().Push(rhs_node_id, rhs_inst_id);
+    return true;
+  }
+
+  auto rhs_as_type = ExprAsType(context, rhs_node_id, rhs_inst_id);
+  auto lhs_as_type = ExprAsType(context, lhs_node_id, lhs_inst_id);
+
+  if (!context.types().IsFacetTypeOrError(rhs_as_type.type_id)) {
+    DiagnoseImplsOnNonFacetType(context, rhs_node_id);
+    auto [node_id, scope_inst_id] =
+        context.node_stack()
+            .PopWithNodeId<Parse::NodeKind::ObserveIntroducer>();
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+  }
+
+  // Dummy node for ObserveDeclId.
+  context.node_stack().Push(rhs_node_id, rhs_inst_id);
+  context.args_type_info_stack().AddInstId(
+      AddInstInNoBlock<SemIR::ObserveImpls>(
+          context, node_id,
+          {.lhs_id = GetCanonicalFacetOrTypeValue(context, lhs_as_type.inst_id),
+           .rhs_id =
+               GetCanonicalFacetOrTypeValue(context, rhs_as_type.inst_id)}));
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::ObserveDeclId node_id) -> bool {
-  return context.TODO(node_id, "ObserveDeclId");
+  context.node_stack().PopAndIgnore();
+  auto scope_inst_id =
+      context.node_stack().Pop<Parse::NodeKind::ObserveIntroducer>();
+  auto operations_id = context.args_type_info_stack().Pop();
+
+  if (scope_inst_id == SemIR::ErrorInst::InstId) {
+    // We already diagnosed the errors.
+    return true;
+  }
+
+  auto observe_decl = SemIR::ObserveDecl{// To be filled in after.
+                                         .observe_id = SemIR::ObserveId::None};
+  auto decl_id = AddPlaceholderInst(context, node_id, observe_decl);
+  observe_decl.observe_id =
+      context.observes().Add({.decl_id = decl_id,
+                              .operations_id = operations_id,
+                              .enclosing_scope_inst_id = scope_inst_id});
+  ReplaceInstBeforeConstantUse(context, decl_id, observe_decl);
+  context.observe_stack().AppendToTop(observe_decl.observe_id);
+  return true;
 }
 
 }  // namespace Carbon::Check

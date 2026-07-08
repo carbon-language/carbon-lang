@@ -95,10 +95,14 @@ fn DivLiteral(a: Literal(), b: Literal()) -> Literal() = "float.div";
 // CHECK:STDOUT:   %b.ref: %f64.dc1 = name_ref b, %b
 // CHECK:STDOUT:   %Div.call: init %f64.dc1 = call %Div.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Div.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

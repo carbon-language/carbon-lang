@@ -326,6 +326,8 @@ fn Generic(unused T:! ()).WrongType() {}
 // CHECK:STDOUT:     %.loc11_36.1: ref @Class.F.%T.as_type.loc6_11.1 (%T.as_type) = splice_block %return.param.loc11 {}
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @Class.F.%T.as_type.loc6_11.1 (%T.as_type) to %.loc11_36.1 = call %bound_method.loc12_10.2(%n.ref)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param.loc11
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -366,6 +368,8 @@ fn Generic(unused T:! ()).WrongType() {}
 // CHECK:STDOUT:     %.loc15_36.1: ref @Class.G.%T.as_type.loc7_17.1 (%T.as_type) = splice_block %return.param.loc15 {}
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @Class.G.%T.as_type.loc7_17.1 (%T.as_type) to %.loc15_36.1 = call %bound_method.loc16_14.2(%.loc16_14.2)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param.loc15
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -563,6 +567,8 @@ fn Generic(unused T:! ()).WrongType() {}
 // CHECK:STDOUT:   fn(%self.param.loc11: @B.F.%B (%B), %a.param.loc11: @B.F.%T.loc7 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

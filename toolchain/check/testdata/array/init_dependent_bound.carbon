@@ -138,6 +138,8 @@ fn H() { G(3); }
 // CHECK:STDOUT:     %bound_method.loc7_3.2: <bound method> = bound_method %arr.var, %specific_impl_fn.loc7_3.1
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc7_3.2(%arr.var)
 // CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -233,6 +235,8 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %arr.var_patt: <error> = var_pattern %arr.patt [concrete = <error>]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

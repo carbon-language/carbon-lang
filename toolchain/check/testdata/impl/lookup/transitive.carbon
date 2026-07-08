@@ -104,6 +104,8 @@ fn Call() {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%Self: %I.type) {
@@ -185,6 +187,8 @@ fn Call() {
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %I.ref {
@@ -226,6 +230,8 @@ fn Call() {
 // CHECK:STDOUT: fn @C.as.I.impl.F(%self.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
@@ -385,6 +391,8 @@ fn Call() {
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: imports.%Main.import_ref.335 as imports.%Main.import_ref.e90 [from "c.carbon"] {
@@ -414,6 +422,8 @@ fn Call() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc9_7.2, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc9_7.2)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Get [from "get.carbon"];
@@ -435,6 +445,8 @@ fn Call() {
 // CHECK:STDOUT: fn @Destroy.Op.loc9_7.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self.dda) {

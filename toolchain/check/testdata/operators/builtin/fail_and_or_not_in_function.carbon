@@ -122,6 +122,8 @@ fn F() {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6, %impl.elem0
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_and_val.carbon
@@ -161,6 +163,8 @@ fn F() {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6, %impl.elem0
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_or_val.carbon
