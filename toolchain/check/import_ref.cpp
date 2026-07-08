@@ -713,7 +713,7 @@ static auto GetLocalNameId(ImportContext& context, SemIR::NameId import_name_id)
 
 // Returns the id for a local symbolic EntityName from an imported one,
 // preserving only the `NameId`, the `CompileTimeBindIndex`, and whether it is a
-// template, is marked unused, or an "active" `.Self`. Other parts of the
+// template, is marked unused, or a "frozen" `.Self`. Other parts of the
 // EntityName are not kept and are not considered part of the canonical
 // EntityName (even if they are present there).
 //
