@@ -2359,7 +2359,7 @@ static auto LookupBuiltinName(Context& context, SemIR::LocId loc_id,
   const clang::ASTContext& ast_context = context.ast_context();
 
   // List of types based on
-  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p005448.md#details
+  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p005448-carbon-c-interop-primitive-types.md#details
   auto builtin_type =
       llvm::StringSwitch<clang::QualType>(*name)
           .Case("signed_char", ast_context.SignedCharTy)

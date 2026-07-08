@@ -188,5 +188,7 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:   %B.call.loc8: init %empty_tuple.type = call %B.ref.loc8()
 // CHECK:STDOUT:   assign file.%package_b.var, %B.call.loc8
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

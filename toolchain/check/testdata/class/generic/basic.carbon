@@ -238,6 +238,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     %bound_method.loc7_12.2: <bound method> = bound_method %addr, %specific_impl_fn.loc7_12.1
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @Class.GetAddr.%ptr.loc6_28.1 (%ptr.215) = call %bound_method.loc7_12.2(%addr)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -278,6 +280,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     %.loc10_24.1: ref @Class.GetValue.%T.as_type.loc10_24.1 (%T.as_type) = splice_block %return.param {}
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @Class.GetValue.%T.as_type.loc10_24.1 (%T.as_type) to %.loc10_24.1 = call %bound_method.loc11_16.2(%.loc11_16.2)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

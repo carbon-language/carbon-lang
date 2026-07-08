@@ -1266,5 +1266,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %.loc18_10: init %empty_tuple.type = converted %.loc18_13.1, %.loc18_13.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %.loc18_7, %.loc18_10
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

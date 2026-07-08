@@ -63,11 +63,15 @@ fn Bar() {
 // CHECK:STDOUT: fn @Baz.loc18() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz.loc21() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {
@@ -76,5 +80,7 @@ fn Bar() {
 // CHECK:STDOUT:   %Baz.ref: %Baz.type.280 = name_ref Baz, file.%Baz.decl.loc21 [concrete = constants.%Baz.f49]
 // CHECK:STDOUT:   %Baz.call: init %empty_tuple.type = call %Baz.ref()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

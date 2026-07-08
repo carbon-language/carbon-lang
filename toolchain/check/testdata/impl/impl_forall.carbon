@@ -74,6 +74,8 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   witness = (@Simple.WithSelf.%Simple.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as.Simple.impl(%T.loc19_15.2: type) {
@@ -107,6 +109,8 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

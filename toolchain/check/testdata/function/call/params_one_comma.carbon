@@ -87,6 +87,8 @@ fn Main() {
 // CHECK:STDOUT: fn @Foo(%a.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -112,5 +114,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc19_7.2: %i32 = converted %int_1.loc19, %.loc19_7.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %Foo.call.loc19: init %empty_tuple.type = call %Foo.ref.loc19(%.loc19_7.2)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

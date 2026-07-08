@@ -34,6 +34,7 @@
 #include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/observe.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/type_info.h"
@@ -213,6 +214,12 @@ class ImportContext {
   auto import_require_impls_blocks() -> const SemIR::RequireImplsBlockStore& {
     return import_ir().require_impls_blocks();
   }
+  auto import_observes() -> const SemIR::ObserveStore& {
+    return import_ir().observes();
+  }
+  auto import_observe_blocks() -> const SemIR::ObserveBlockStore& {
+    return import_ir().observe_blocks();
+  }
   auto import_specifics() -> const SemIR::SpecificStore& {
     return import_ir().specifics();
   }
@@ -294,6 +301,12 @@ class ImportContext {
   }
   auto local_require_impls_blocks() -> SemIR::RequireImplsBlockStore& {
     return local_ir().require_impls_blocks();
+  }
+  auto local_observes() -> SemIR::ObserveStore& {
+    return local_ir().observes();
+  }
+  auto local_observe_blocks() -> SemIR::ObserveBlockStore& {
+    return local_ir().observe_blocks();
   }
   auto local_specifics() -> SemIR::SpecificStore& {
     return local_ir().specifics();
@@ -811,6 +824,52 @@ static auto GetLocalCanonicalRequireImplsBlockId(
     return SemIR::RequireImplsBlockId::None;
   }
   return context.local_require_impls_blocks().Add(contents);
+}
+
+// Imports the ObserveDecl instructions for each ObserveId in the block, and
+// gets the local ObserveIds from them. The returned vector is only complete if
+// there is no more work to do in the resolver on return.
+static auto GetLocalObserveBlockContents(ImportRefResolver& resolver,
+                                         SemIR::ObserveBlockId import_block_id)
+    -> llvm::SmallVector<SemIR::ObserveId> {
+  llvm::SmallVector<SemIR::ObserveId> observe_decl_ids;
+  if (!import_block_id.has_value() ||
+      import_block_id == SemIR::ObserveBlockId::Empty) {
+    return observe_decl_ids;
+  }
+
+  // Import the ObserveDecl for each Observe in the block.
+  auto import_block = resolver.import_observe_blocks().Get(import_block_id);
+  observe_decl_ids.reserve(import_block.size());
+  for (auto import_observe_id : import_block) {
+    const auto& import_observe =
+        resolver.import_observes().Get(import_observe_id);
+    auto local_decl_id =
+        GetLocalConstantInstId(resolver, import_observe.decl_id);
+    // If `local_decl_id` is None, the resolver will have more work to do, and
+    // we will call this function to try get all the decl instructions again.
+    if (local_decl_id.has_value()) {
+      // Importing the ObserveDecl instruction in `local_decl_id` also imported
+      // the Observe structure that it points to through the ObserveId.
+      observe_decl_ids.push_back(resolver.local_insts()
+                                     .GetAs<SemIR::ObserveDecl>(local_decl_id)
+                                     .observe_id);
+    }
+  }
+
+  return observe_decl_ids;
+}
+
+// Gets the local block of ObserveIds from the imported block. Only valid
+// to call once there is no more work to do after the call to
+// GetLocalObserveBlockContents().
+static auto GetLocalCanonicalObserveBlockId(
+    ImportContext& context, SemIR::ObserveBlockId import_block_id,
+    llvm::ArrayRef<SemIR::ObserveId> contents) -> SemIR::ObserveBlockId {
+  if (!import_block_id.has_value()) {
+    return SemIR::ObserveBlockId::None;
+  }
+  return context.local_observe_blocks().Add(contents);
 }
 
 // Gets a local instruction block containing ImportRefs referring to the
@@ -2887,6 +2946,69 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::ObserveDecl inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  const auto& import_observe = resolver.import_observes().Get(inst.observe_id);
+
+  auto operations =
+      GetLocalInstBlockContents(resolver, import_observe.operations_id);
+  auto operations_id = GetLocalCanonicalInstBlockId(
+      resolver, import_observe.operations_id, operations);
+  auto enclosing_scope_inst_id =
+      GetLocalConstantInstId(resolver, import_observe.enclosing_scope_inst_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  SemIR::ObserveDecl observe_decl = {.observe_id = SemIR::ObserveId::None};
+  auto observe_decl_id =
+      AddPlaceholderImportedInst(resolver, import_inst_id, observe_decl);
+  auto observe_id = resolver.local_observes().Add(
+      {.decl_id = observe_decl_id,
+       .operations_id = operations_id,
+       .enclosing_scope_inst_id = enclosing_scope_inst_id});
+  observe_decl.observe_id = observe_id;
+  return ResolveResult::Done(
+      ReplacePlaceholderImportedInst(resolver, observe_decl_id, observe_decl),
+      observe_decl_id);
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::ObserveEquivalent inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  auto lhs_id = GetLocalConstantInstId(resolver, inst.lhs_id);
+  auto rhs_id = GetLocalConstantInstId(resolver, inst.rhs_id);
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto observe_equivalent =
+      SemIR::ObserveEquivalent{.lhs_id = lhs_id, .rhs_id = rhs_id};
+  auto observe_equivalent_id =
+      AddPlaceholderImportedInst(resolver, import_inst_id, observe_equivalent);
+  return ResolveResult::Done(SetConstantValue(
+      resolver.local_context(), observe_equivalent_id, observe_equivalent));
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::ObserveImpls inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  auto lhs_id = GetLocalConstantInstId(resolver, inst.lhs_id);
+  auto rhs_id = GetLocalConstantInstId(resolver, inst.rhs_id);
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto observe_impls = SemIR::ObserveImpls{.lhs_id = lhs_id, .rhs_id = rhs_id};
+  auto observe_impls_id =
+      AddPlaceholderImportedInst(resolver, import_inst_id, observe_impls);
+  return ResolveResult::Done(SetConstantValue(resolver.local_context(),
+                                              observe_impls_id, observe_impls));
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImportRefLoaded /*inst*/,
                                 SemIR::InstId inst_id) -> ResolveResult {
   // Return the constant for the instruction of the imported constant.
@@ -3020,6 +3142,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       GetLocalGenericData(resolver, import_interface.generic_id);
   auto require_impls = GetLocalRequireImplsBlockContents(
       resolver, import_interface.require_impls_block_id);
+  auto observes =
+      GetLocalObserveBlockContents(resolver, import_interface.observe_block_id);
 
   std::optional<SemIR::InstId> self_param_id;
   if (import_interface.is_complete()) {
@@ -3049,6 +3173,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       AddLoadedImportRefBlock(resolver, param_patterns);
   new_interface.require_impls_block_id = GetLocalCanonicalRequireImplsBlockId(
       resolver, import_interface.require_impls_block_id, require_impls);
+  new_interface.observe_block_id = GetLocalCanonicalObserveBlockId(
+      resolver, import_interface.observe_block_id, observes);
 
   if (import_interface.is_complete()) {
     CARBON_CHECK(self_param_id);
@@ -4353,6 +4479,15 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::Namespace inst): {
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
+    }
+    case CARBON_KIND(SemIR::ObserveDecl inst): {
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
+    }
+    case CARBON_KIND(SemIR::ObserveEquivalent inst): {
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
+    }
+    case CARBON_KIND(SemIR::ObserveImpls inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::OutParamPattern inst): {

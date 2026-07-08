@@ -125,6 +125,8 @@ var x: Cpp.TwoTemplates(Cpp.A, true);
 // CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call: init %TwoTemplates to %.loc7_1 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign file.%x.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_template_mismatch.carbon
@@ -142,5 +144,7 @@ var x: Cpp.TwoTemplates(Cpp.A, true);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

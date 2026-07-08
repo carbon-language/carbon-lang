@@ -101,6 +101,8 @@ fn B() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A(%T.loc4_7.2: %Z.type) {
@@ -118,6 +120,8 @@ fn B() {
 // CHECK:STDOUT:   fn(%x.param: @A.%struct_type.a.loc4_29.1 (%struct_type.a)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -212,6 +216,8 @@ fn B() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A.loc4(%T.loc4_7.2: %Z.type) {
@@ -229,6 +235,8 @@ fn B() {
 // CHECK:STDOUT:   fn(%x.param: @A.loc4.%struct_type.a.loc4_33.1 (%struct_type.a)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -242,6 +250,8 @@ fn B() {
 // CHECK:STDOUT:   %.loc24_16: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc24_17: %struct_type.b = struct_literal (%.loc24_16) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A.1(imports.%Lib.import_ref.78f: %Z.type) [from "lib.carbon"] {

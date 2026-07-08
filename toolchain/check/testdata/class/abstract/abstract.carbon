@@ -335,6 +335,8 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_var_function_param.carbon
@@ -383,6 +385,8 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: fn @F(%_.param: ref <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- abstract_let.carbon
@@ -441,6 +445,8 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:     %l.patt: %pattern_type = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_adapter.carbon
@@ -557,6 +563,8 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %p.ref: %Abstract = name_ref p, %p
 // CHECK:STDOUT:   %Param.call: init %empty_tuple.type = call %Param.ref(%p.ref)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_nonabstract_derived.carbon
@@ -652,6 +660,8 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %.loc13_30.8: init %Derived to %return.param = class_init (%.loc13_30.4, %.loc13_30.7) [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   %.loc13_31: init %Derived = converted %.loc13_30.1, %.loc13_30.8 [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   return %.loc13_31 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_return_abstract.carbon
@@ -735,6 +745,8 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Abstract = name_ref a, %a
 // CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- access_abstract_subobject.carbon
@@ -853,6 +865,8 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %.loc14_16.3: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc14_18: init %empty_struct_type = converted %.loc14_16.2, %.loc14_16.3 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return %.loc14_18
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d.param: %Derived) -> out %return.param: %empty_struct_type {
@@ -866,6 +880,8 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %.loc18_11.5: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc18_13: init %empty_struct_type = converted %.loc18_11.4, %.loc18_11.5 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return %.loc18_13
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_let_temporary_struct_literal.carbon
@@ -926,6 +942,8 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:     %l.patt: %pattern_type.169 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_abstract_let_temporary.carbon
@@ -1021,6 +1039,8 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:     %l.patt: %pattern_type.169 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_call_abstract_return.carbon
@@ -1082,6 +1102,8 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %ReturnAbstract.ref: %ReturnAbstract.type = name_ref ReturnAbstract, file.%ReturnAbstract.decl [concrete = constants.%ReturnAbstract]
 // CHECK:STDOUT:   %ReturnAbstract.call: init <error> = call %ReturnAbstract.ref()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_assign_to_abstract_ref.carbon
@@ -1140,5 +1162,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %.loc14: %Abstract = acquire_value %a.ref.loc14_7
 // CHECK:STDOUT:   assign %a.ref.loc14_3, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

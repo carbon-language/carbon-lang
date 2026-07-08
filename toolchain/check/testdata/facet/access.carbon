@@ -513,6 +513,8 @@ fn F(T:! Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:     %specific_impl_fn.loc10_4.1: <specific function> = specific_impl_function %impl.elem0.loc10_4.1, @I.WithSelf.DoIt(constants.%T) [symbolic = %specific_impl_fn.loc10_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %I.WithSelf.DoIt.call: init %empty_tuple.type = call %specific_impl_fn.loc10_4.1()
 // CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -564,6 +566,8 @@ fn F(T:! Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %I.WithSelf.Make.call: init @Use.%T.as_type.loc8_18.1 (%T.as_type) to %.loc8_18.1 = call %specific_impl_fn.loc10_11.1()
 // CHECK:STDOUT:     return %I.WithSelf.Make.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -666,6 +670,8 @@ fn F(T:! Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:     %.loc9_24.1: ref @Use.%T.as_type.loc9_18.1 (%T.as_type) = splice_block %return.param {}
 // CHECK:STDOUT:     %I.WithSelf.Copy.call: init @Use.%T.as_type.loc9_18.1 (%T.as_type) to %.loc9_24.1 = call %bound_method.loc10_17(%x.ref)
 // CHECK:STDOUT:     return %I.WithSelf.Copy.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -721,6 +727,8 @@ fn F(T:! Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:     %specific_impl_fn.loc10_4.1: <specific function> = specific_impl_function %impl.elem0.loc10_4.1, @I.WithSelf.Hello(constants.%T) [symbolic = %specific_impl_fn.loc10_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %I.WithSelf.Hello.call: init %empty_tuple.type = call %specific_impl_fn.loc10_4.1()
 // CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -783,6 +791,8 @@ fn F(T:! Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %I.WithSelf.Copy.call: init @UseIndirect.%T.as_type.loc8_26.1 (%T.as_type) to %.loc8_32.1 = call %bound_method.loc10_21(%x.ref)
 // CHECK:STDOUT:     return %I.WithSelf.Copy.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -186,6 +186,8 @@ var c: Other.C = {};
 // CHECK:STDOUT: fn @C() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- define.carbon
@@ -249,6 +251,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_19.1, %.loc6_19.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern.carbon
@@ -298,6 +302,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %.loc14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_merge_define_extern.carbon
@@ -362,6 +368,8 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %.loc19_1: init %C = converted %.loc19_19.1, %.loc19_19.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc19_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon
@@ -426,5 +434,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %.loc19_1: init %C = converted %.loc19_19.1, %.loc19_19.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc19_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

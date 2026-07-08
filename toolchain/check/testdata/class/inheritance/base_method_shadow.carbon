@@ -254,5 +254,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %.loc37_4.4: ref %B = converted %.loc37_4.1, %.loc37_4.3
 // CHECK:STDOUT:   %B.F.call.loc37: init %empty_tuple.type = call %B.F.bound.loc37(%.loc37_4.4)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

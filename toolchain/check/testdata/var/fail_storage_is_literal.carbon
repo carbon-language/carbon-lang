@@ -69,5 +69,7 @@ fn Main() {
 // CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

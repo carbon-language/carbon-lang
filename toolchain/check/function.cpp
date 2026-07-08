@@ -458,6 +458,7 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
   // Create the function scope and the entry block.
   context.scope_stack().PushForFunctionBody(decl_id);
   context.inst_block_stack().Push();
+  context.observe_stack().PushArray();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
   StartGenericDefinition(context,
                          context.functions().Get(function_id).generic_id);
@@ -470,8 +471,13 @@ auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
   context.inst_block_stack().Pop();
   context.scope_stack().Pop(/*check_unused=*/true);
 
+  auto observe_block_id =
+      context.observe_blocks().Add(context.observe_stack().PeekArray());
+  context.observe_stack().PopArray();
+
   auto& function = context.functions().Get(function_id);
   function.body_block_ids = context.region_stack().PopRegion();
+  function.observe_block_id = observe_block_id;
 
   // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);

@@ -336,10 +336,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   auto rhs_as_type = ExprAsType(context, rhs_node, rhs_id);
   if (rhs_as_type.type_id != SemIR::ErrorInst::TypeId &&
       !context.types().IsFacetType(rhs_as_type.type_id)) {
-    CARBON_DIAGNOSTIC(
-        ImplsOnNonFacetType, Error,
-        "right argument of `impls` requirement must be a facet type");
-    context.emitter().Emit(rhs_node, ImplsOnNonFacetType);
+    DiagnoseImplsOnNonFacetType(context, rhs_node);
     rhs_as_type.type_id = SemIR::ErrorInst::TypeId;
     rhs_as_type.inst_id = SemIR::ErrorInst::TypeInstId;
   }

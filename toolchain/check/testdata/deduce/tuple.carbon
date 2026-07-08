@@ -213,6 +213,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %.loc7_43.1: ref @F.%U.loc7_17.1 (%U) = splice_block %return.param {}
 // CHECK:STDOUT:     %F.call: init @F.%U.loc7_17.1 (%U) to %.loc7_43.1 = call %F.specific_fn.loc7_54.1(%pair.ref)
 // CHECK:STDOUT:     return %F.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -224,6 +226,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %.loc9_23.1: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %F.call: init %D to %.loc9_23.1 = call %F.specific_fn(%pair.ref)
 // CHECK:STDOUT:   return %F.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
@@ -500,6 +504,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %bound_method.loc6_67.2: <bound method> = bound_method %B.ref.loc6_67, %specific_fn [symbolic = %bound_method.loc6_67.3 (constants.%bound_method.523)]
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_67.2(%B.ref.loc6_67) [symbolic = %B.loc6_16.1 (constants.%B)]
 // CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -510,6 +516,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_1.0c6, constants.%int_2.295) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%h.ref)
 // CHECK:STDOUT:   return %F.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasPair(constants.%Pair) {
@@ -698,6 +706,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %pair.ref: %tuple.type.af1 = name_ref pair, %pair
 // CHECK:STDOUT:   return <error> to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {

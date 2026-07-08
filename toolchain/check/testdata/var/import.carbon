@@ -57,6 +57,8 @@ var a: () = a_ref;
 // CHECK:STDOUT:   %.loc4_1: init %empty_tuple.type = converted %.loc4_18.1, %.loc4_18.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%a_ref.var, %.loc4_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -102,5 +104,7 @@ var a: () = a_ref;
 // CHECK:STDOUT:   %.loc4_1: init %empty_tuple.type = converted %a_ref.ref, %.loc4_13 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc4_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

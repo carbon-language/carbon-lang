@@ -114,5 +114,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %.loc45_5: ref <error> = deref %.loc45_4.2 [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref.loc45: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

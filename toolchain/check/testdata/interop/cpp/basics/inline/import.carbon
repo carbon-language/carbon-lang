@@ -79,6 +79,8 @@ fn Run() {
 // CHECK:STDOUT:   %func.ref: %func.cpp_overload_set.type = name_ref func, imports.%func.cpp_overload_set.value [concrete = constants.%func.cpp_overload_set.value]
 // CHECK:STDOUT:   %func.call: init %empty_tuple.type = call imports.%func.decl()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- with_language_marker.carbon
@@ -112,5 +114,7 @@ fn Run() {
 // CHECK:STDOUT:   %another_func.ref: %another_func.cpp_overload_set.type = name_ref another_func, imports.%another_func.cpp_overload_set.value [concrete = constants.%another_func.cpp_overload_set.value]
 // CHECK:STDOUT:   %another_func.call: init %empty_tuple.type = call imports.%another_func.decl()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

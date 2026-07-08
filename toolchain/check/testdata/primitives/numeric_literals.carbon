@@ -164,5 +164,7 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:   %float.loc23: Core.FloatLiteral = float_literal_value 10e7 [concrete = constants.%float.8d2]
 // CHECK:STDOUT:   %float.loc24: Core.FloatLiteral = float_literal_value 10e-9 [concrete = constants.%float.48b]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

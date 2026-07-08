@@ -229,6 +229,8 @@ fn CallF() {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%V)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.I.impl: %.loc8_7.2 as %.loc8_14 {
@@ -375,6 +377,8 @@ fn CallF() {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%V)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.I.impl: %.loc15_7.2 as %.loc15_14.1 {
@@ -523,6 +527,8 @@ fn CallF() {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%V)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.ImplicitAs.impl: %.loc10_7.2 as %ImplicitAs.type {
@@ -584,6 +590,8 @@ fn CallF() {
 // CHECK:STDOUT:   %.loc11_46.2: init %C to %return.param = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc11_47: init %C = converted %.loc11_46.1, %.loc11_46.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc11_47 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self.37e) {
@@ -729,6 +737,8 @@ fn CallF() {
 // CHECK:STDOUT:     witness = (@I.WithSelf.%V)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -874,6 +884,8 @@ fn CallF() {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%V)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc8_7.2: %I_where.type.14de72.1) {
@@ -889,6 +901,8 @@ fn CallF() {
 // CHECK:STDOUT:   %.loc19: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where constants.%empty_struct_type impls @ImplicitAs, @ImplicitAs(constants.%empty_struct_type) and constants.%impl.elem0.e15 = constants.%empty_struct> [concrete = constants.%I_where.type.14de72.2]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self.37e) {

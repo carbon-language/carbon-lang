@@ -345,6 +345,8 @@ class Foo[T:! type];
 // CHECK:STDOUT:   %.loc19_1: init %GenericAndParams.353 = converted %.loc19_36.1, %.loc19_36.2 [concrete = constants.%GenericAndParams.val.150]
 // CHECK:STDOUT:   assign file.%e.var, %.loc19_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.loc6(constants.%T) {
@@ -471,6 +473,8 @@ class Foo[T:! type];
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_7.2 [symbolic = %T.loc11_7.1 (constants.%T)]
 // CHECK:STDOUT:     %A: type = class_type @A [concrete = constants.%A]
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

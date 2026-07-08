@@ -69,5 +69,7 @@ let not_8_bit: CharLiteral = '\u{1E15}';
 // CHECK:STDOUT:   %.loc8: Core.CharLiteral = char_value U+0080 [concrete = constants.%.ae7]
 // CHECK:STDOUT:   %.loc9: Core.CharLiteral = char_value U+1E15 [concrete = constants.%.a81]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

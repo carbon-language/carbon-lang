@@ -150,6 +150,8 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float]
 // CHECK:STDOUT:   %FloatLiteralToFloatLiteral.call: init Core.FloatLiteral = call %FloatLiteralToFloatLiteral.ref(%float) [concrete = constants.%float]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- literal_f64.carbon
@@ -224,6 +226,8 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT:   %float.loc10: Core.FloatLiteral = float_literal_value 10e308 [concrete = constants.%float.82f]
 // CHECK:STDOUT:   %FloatLiteralToFloat64.call.loc10: init %f64.dc1 = call %FloatLiteralToFloat64.ref.loc10(%float.loc10) [concrete = constants.%float.7ae]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- literal_f32.carbon
@@ -298,6 +302,8 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT:   %float.loc10: Core.FloatLiteral = float_literal_value 10e38 [concrete = constants.%float.cfc]
 // CHECK:STDOUT:   %FloatLiteralToFloat32.call.loc10: init %f32.c73 = call %FloatLiteralToFloat32.ref.loc10(%float.loc10) [concrete = constants.%float.021]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- identity_f64.carbon
@@ -399,6 +405,8 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT:   %.loc8_31.2: %f64.dc1 = converted %float.loc8, %.loc8_31.1 [concrete = constants.%float.672]
 // CHECK:STDOUT:   %Float64ToFloat64.call.loc8: init %f64.dc1 = call %Float64ToFloat64.ref.loc8(%.loc8_31.2) [concrete = constants.%float.672]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- identity_f32.carbon
@@ -500,6 +508,8 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT:   %.loc8_31.2: %f32.c73 = converted %float.loc8, %.loc8_31.1 [concrete = constants.%float.c47]
 // CHECK:STDOUT:   %Float32ToFloat32.call.loc8: init %f32.c73 = call %Float32ToFloat32.ref.loc8(%.loc8_31.2) [concrete = constants.%float.c47]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- truncate.carbon
@@ -583,6 +593,8 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT:   %.loc9_31.2: %f64.dc1 = converted %float.loc9, %.loc9_31.1 [concrete = constants.%float.7b6]
 // CHECK:STDOUT:   %Float64ToFloat32.call.loc9: init %f32.c73 = call %Float64ToFloat32.ref.loc9(%.loc9_31.2) [concrete = constants.%float.021]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- extend.carbon
@@ -666,5 +678,7 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT:   %.loc8_31.2: %f32.c73 = converted %float.loc8, %.loc8_31.1 [concrete = constants.%float.518]
 // CHECK:STDOUT:   %Float32ToFloat64.call.loc8: init %f64.dc1 = call %Float32ToFloat64.ref.loc8(%.loc8_31.2) [concrete = constants.%float.84e]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

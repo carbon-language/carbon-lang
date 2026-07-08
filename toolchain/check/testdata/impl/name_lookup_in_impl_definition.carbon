@@ -98,6 +98,8 @@ impl forall [T:! type] T as I where .U = C {
 // CHECK:STDOUT:     %.loc13_31.3: init %C = as_compatible %.loc13_31.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:     %.loc13_31.4: init %C = converted %.loc13_27.2, %.loc13_31.3 [concrete = constants.%C.val]
 // CHECK:STDOUT:     return %.loc13_31.4
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

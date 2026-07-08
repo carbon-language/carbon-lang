@@ -116,5 +116,7 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc7: init %ptr.77f = call %bound_method.loc7_23.2(%.loc7)
 // CHECK:STDOUT:   assign file.%a_ptr.var, %ptr.as.Copy.impl.Op.call.loc7
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
