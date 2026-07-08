@@ -803,31 +803,31 @@ inline constexpr auto IndexInFacetValue::None = IndexInFacetValue(-1);
 inline constexpr auto IndexInFacetValue::Unstable = IndexInFacetValue(-2);
 
 // Looks in the identified facet type and returns the index of a witness that
-// `query_self_const_id` impls `query_specific_interface` in the defined
-// interface order for that facet type.
+// `req_self_const_id` impls `req_specific_interface` in the defined interface
+// order for that facet type.
 //
-// The IdentifiedFacetType must not be partially identified in order to find an
-// index, as that implies the interface order is not yet stable. In that case,
-// no index will be found.
+// The `req_self_const_id` and `req_specific_interface` should come from an
+// IdentifiedFacetType, which means the self has been canonicalized and they
+// have `.Self` replaced. This allows them to be compared with the requirements
+// of the `identified_facet_type_id`.
 //
-// If the `query_specific_interface` is not part of the facet type, returns -1
-// to indicate it was not found.
+// The `identified_facet_type_id` must be fully identified (not partially
+// identified) in order to find an index, as that implies the interface order is
+// not yet stable. In that case, no index will be found.
+//
+// If the `req_specific_interface` is not part of the facet type, returns -1 to
+// indicate it was not found.
 static auto IndexOfImplWitnessInIdentifiedFacetType(
     Context& context, SemIR::IdentifiedFacetTypeId identified_facet_type_id,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterface query_specific_interface) -> IndexInFacetValue {
-  // The self in the identified facet type is a canonicalized facet value, so we
-  // canonicalize the query for comparison.
-  auto canonical_query_self_const_id =
-      GetCanonicalFacetOrTypeValue(context, query_self_const_id);
-
+    SemIR::ConstantId req_self_const_id,
+    SemIR::SpecificInterface req_specific_interface) -> IndexInFacetValue {
   const auto& identified =
       context.identified_facet_types().Get(identified_facet_type_id);
   auto facet_type_req_impls = llvm::enumerate(identified.required_impls());
   auto it = llvm::find_if(facet_type_req_impls, [&](auto e) {
-    auto [req_self, req_specific_interface] = e.value();
-    return req_self == canonical_query_self_const_id &&
-           req_specific_interface == query_specific_interface;
+    auto [identified_self, identified_specific_interface] = e.value();
+    return identified_self == req_self_const_id &&
+           identified_specific_interface == req_specific_interface;
   });
   if (it == facet_type_req_impls.end()) {
     return IndexInFacetValue::None;
@@ -841,8 +841,8 @@ static auto IndexOfImplWitnessInIdentifiedFacetType(
 
 static auto FindFinalWitnessFromFacetValue(
     Context& context, llvm::ArrayRef<FacetWitnessSource> witness_sources,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
+    SemIR::ConstantId req_self_const_id,
+    SemIR::SpecificInterface req_specific_interface) -> SemIR::InstId {
   for (auto [facet, identified_id] : witness_sources) {
     auto facet_value =
         context.constant_values().TryGetInstAs<SemIR::FacetValue>(facet);
@@ -852,7 +852,7 @@ static auto FindFinalWitnessFromFacetValue(
     }
 
     auto index_in_facet_value = IndexOfImplWitnessInIdentifiedFacetType(
-        context, identified_id, query_self_const_id, query_specific_interface);
+        context, identified_id, req_self_const_id, req_specific_interface);
     auto stable_index = index_in_facet_value.GetStableIndex();
     if (stable_index < 0) {
       // No witness in this facet, keep looking.
@@ -872,11 +872,11 @@ static auto FindFinalWitnessFromFacetValue(
 static auto FindNonFinalWitness(
     Context& context, SemIR::LocId loc_id,
     llvm::ArrayRef<FacetWitnessSource> witness_sources,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterface query_specific_interface) -> bool {
+    SemIR::ConstantId req_self_const_id,
+    SemIR::SpecificInterface req_specific_interface) -> bool {
   for (auto [_, identified_id] : witness_sources) {
     auto index = IndexOfImplWitnessInIdentifiedFacetType(
-        context, identified_id, query_self_const_id, query_specific_interface);
+        context, identified_id, req_self_const_id, req_specific_interface);
     if (index.WasFound()) {
       return true;
     }
@@ -885,15 +885,15 @@ static auto FindNonFinalWitness(
   // TODO: Remove SpecificInterfaceId from LookupCustomWitness apis, switch to
   // just SpecificInterface.
   auto query_specific_interface_id =
-      context.specific_interfaces().Add(query_specific_interface);
+      context.specific_interfaces().Add(req_specific_interface);
 
   // Consider a custom witness for core interfaces.
   // TODO: This needs to expand to more interfaces, and we might want to have
   // that dispatch in custom_witness.cpp instead of here.
   auto core_interface =
-      GetCoreInterface(context, query_specific_interface.interface_id);
+      GetCoreInterface(context, req_specific_interface.interface_id);
   if (auto witness_id = LookupCustomWitness(
-          context, loc_id, core_interface, query_self_const_id,
+          context, loc_id, core_interface, req_self_const_id,
           query_specific_interface_id, false)) {
     // If there's a final witness, we would have already found it via evaluating
     // the LookupImplWitness instruction.
@@ -902,22 +902,22 @@ static auto FindNonFinalWitness(
   }
 
   auto query_type_structure = BuildTypeStructure(
-      context, context.constant_values().GetInstId(query_self_const_id),
-      query_specific_interface);
+      context, context.constant_values().GetInstId(req_self_const_id),
+      req_specific_interface);
   // We looked for errors in the query self and facet type already, and we're
   // not dealing with monomorphizations here.
   CARBON_CHECK(query_type_structure, "error in impl lookup query");
 
   auto candidates = CollectCandidateImplsForQuery(
-      context, /*final_only=*/false, query_self_const_id, *query_type_structure,
-      query_specific_interface);
+      context, /*final_only=*/false, req_self_const_id, *query_type_structure,
+      req_specific_interface);
 
   for (const auto& candidate : candidates.impls) {
     const auto& impl = *candidate.impl;
     context.impl_lookup_stack().back().impl_loc = impl.definition_id;
 
     auto witness_id = TryGetSpecificWitnessIdForImpl(
-        context, loc_id, query_self_const_id, query_specific_interface, impl);
+        context, loc_id, req_self_const_id, req_specific_interface, impl);
     if (witness_id.has_value()) {
       // We looked for errors in the query self and facet type already, and
       // we're not dealing with monomorphizations here.
