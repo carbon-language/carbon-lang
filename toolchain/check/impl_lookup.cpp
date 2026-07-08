@@ -485,25 +485,10 @@ static auto CollectFacetWitnessSources(
 // Given a query `orig_inst_self` and `orig_interface`, try find a matching
 // witness from impl lookup to use for the query.
 static auto TryFindMatchingWitnessFromImplLookup(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId canonical_query_self_const_id,
     llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls,
     llvm::ArrayRef<SemIR::InstId> found_witness_inst_ids,
     SemIR::ConstantId orig_const_self, SemIR::SpecificInterface orig_interface)
     -> SemIR::InstId {
-  // The `req_impls` come from an IdentifiedFacetType so they have `.Self`
-  // replaced. We need to do the same for the self and interface in the
-  // `orig_witness` for comparing with them.
-  orig_const_self = SubstPeriodSelf(context, loc_id, orig_const_self,
-                                    canonical_query_self_const_id);
-  orig_interface = SubstPeriodSelf(context, loc_id, orig_interface,
-                                   canonical_query_self_const_id);
-
-  // Witnesses have a canonicalized self value. Perform the same
-  // canonicalization here so that we can compare them.
-  orig_const_self =
-      GetCanonicalQuerySelfForLookupImplWitness(context, orig_const_self);
-
   for (auto [req_impl, found_witness_inst_id] :
        llvm::zip_equal(req_impls, found_witness_inst_ids)) {
     auto [req_const_self, req_interface] = req_impl;
@@ -531,7 +516,7 @@ static auto VerifyQueryFacetTypeConstraints(
       // found in impl lookup instead of performing impl lookup again.
       if (auto lookup = new_inst.TryAs<SemIR::LookupImplWitness>()) {
         auto witness = TryFindMatchingWitnessFromImplLookup(
-            context, loc_id, query_self_const_id, req_impls, witness_inst_ids,
+            req_impls, witness_inst_ids,
             context.constant_values().Get(lookup->query_self_inst_id),
             context.specific_interfaces().Get(
                 lookup->query_specific_interface_id));
