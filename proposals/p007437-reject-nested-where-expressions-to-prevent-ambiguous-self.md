@@ -272,9 +272,11 @@ fn F(T:! Y where .Y1 impls (Z(.Self) where .Z1 = ()));
 ```
 
 This alternative would have all `.Self` references refer to `T` but the
-semantics of the language require the `.Self` references in `.Z1` to refer to
-`T.Y1`. This creates a contradiction in the implementation, and leaves us with
-the same problem as we began with.
+semantics of the language require the one of the two `.Self` references in `.Z1`
+to refer to `T.Y1`. It is a reference to an associated constant `Z1` in the
+interface `Z(.Self = T)` for the facet `.Self = .Y1`. This creates a
+contradiction in the implementation, and leaves us with the same problem as we
+began with.
 
 ### Allow ambiguous `.Self` but disambiguate based on context
 
