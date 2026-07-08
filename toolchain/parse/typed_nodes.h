@@ -1462,6 +1462,11 @@ struct StructPatternDesignatedField {
   AnyPatternId pattern;
 };
 
+using StructPatternFieldId =
+    NodeIdOneOf<StructPatternDesignatedField, LetBindingPattern,
+                VariablePattern, VarBindingPattern, UnusedPattern,
+                UnderscoreName>;
+
 struct StructPattern {
   static constexpr auto Kind = NodeKind::StructPattern.Define(
       {.category = NodeCategory::Pattern,
@@ -1469,11 +1474,7 @@ struct StructPattern {
 
   StructPatternStartId left_brace;
 
-  CommaSeparatedList<
-      NodeIdOneOf<StructPatternDesignatedField, LetBindingPattern,
-                  VariablePattern, VarBindingPattern, UnderscoreName>,
-      PatternListCommaId>
-      fields;
+  CommaSeparatedList<StructPatternFieldId, PatternListCommaId> fields;
 
   Lex::CloseCurlyBraceTokenIndex token;
 };

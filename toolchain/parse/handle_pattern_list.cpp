@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 
@@ -37,47 +38,9 @@ auto HandlePatternListElementAsStruct(Context& context) -> void {
       HandlePatternListElement(context, StateKind::StructPatternUnderscore,
                                StateKind::PatternListElementFinishAsStruct);
       break;
-    case Lex::TokenKind::Var:
-      HandlePatternListElement(context, StateKind::VariablePattern,
-                               StateKind::PatternListElementFinishAsStruct);
-      break;
-    case Lex::TokenKind::Let:
-    case Lex::TokenKind::Ref:
-    case Lex::TokenKind::Identifier:
-      HandlePatternListElement(context, StateKind::BindingPattern,
-                               StateKind::PatternListElementFinishAsStruct);
-      break;
     default:
-      auto state = context.PopState();
-      state.has_error = true;
-
-      CARBON_DIAGNOSTIC(ExpectedStructPatternField, Error,
-                        "expected `.field = value` or Binding Pattern");
-
-      context.emitter().Emit(*context.position(), ExpectedStructPatternField);
-
-      auto recovery_pos =
-          context.FindNextOf({Lex::TokenKind::Equal, Lex::TokenKind::Comma});
-
-      if (!recovery_pos ||
-          context.tokens().GetKind(*recovery_pos) == Lex::TokenKind::Comma) {
-        context.PushState(state, StateKind::PatternListElementFinishAsStruct);
-        break;
-      }
-
-      context.SkipTo(*recovery_pos);
-
-      if (context.PositionIs(Lex::TokenKind::Equal)) {
-        state.token = context.ConsumeChecked(Lex::TokenKind::Equal);
-
-        context.PushState(state, StateKind::StructPatternDesignatedFieldFinish);
-        context.PushStateForPattern(
-            StateKind::Pattern, state.in_var_pattern, state.in_unused_pattern,
-            state.in_struct_pattern, state.ambient_precedence);
-      } else {
-        context.PushState(state, StateKind::PatternListElementFinishAsStruct);
-      }
-
+      HandlePatternListElement(context, StateKind::Pattern,
+                               StateKind::PatternListElementFinishAsStruct);
       break;
   }
 }
@@ -94,42 +57,48 @@ auto HandlePatternListElementAsImplicit(Context& context) -> void {
 
 auto HandleStructPatternDesignatedFieldFinish(Context& context) -> void {
   auto state = context.PopState();
-
-  if (state.has_error) {
-    context.AddLeafNode(NodeKind::InvalidParse, state.token,
-                        /*has_error=*/true);
-    context.ReturnErrorOnState();
-  } else {
-    context.AddNode(NodeKind::StructPatternDesignatedField, state.token,
-                    state.has_error);
-  }
+  context.AddNode(NodeKind::StructPatternDesignatedField, state.token,
+                  state.has_error);
 }
 
 auto HandleStructPatternFieldAfterDesignator(Context& context) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
+  auto skip_to_recovery_position = [&](bool add_invalid_parse) {
     auto recovery_pos =
-        context.FindNextOf({Lex::TokenKind::Equal, Lex::TokenKind::Comma});
-    if (!recovery_pos ||
-        context.tokens().GetKind(*recovery_pos) == Lex::TokenKind::Comma) {
-      context.PushState(state, StateKind::StructPatternDesignatedFieldFinish);
-      return;
+        context.FindNextOf({Lex::TokenKind::Equal, Lex::TokenKind::Comma,
+                            Lex::TokenKind::CloseCurlyBrace});
+
+    if (add_invalid_parse) {
+      if (context.tokens().GetKind(*recovery_pos) != Lex::TokenKind::Equal) {
+        context.AddInvalidParse(*context.position());
+      }
     }
     context.SkipTo(*recovery_pos);
+  };
+
+  if (state.has_error) {
+    // recover from error returned when parsing designator
+    skip_to_recovery_position(/*add_invalid_parse=*/false);
   }
 
   if (!context.PositionIs(Lex::TokenKind::Equal)) {
-    CARBON_DIAGNOSTIC(ExpectedStructPatternDesignatedField, Error,
-                      "expected `.field = value`");
+    if (!state.has_error) {
+      state.has_error = true;
 
-    context.emitter().Emit(*context.position(),
-                           ExpectedStructPatternDesignatedField);
+      CARBON_DIAGNOSTIC(ExpectedStructPatternDesignatedField, Error,
+                        "expected `= value` after `.field`");
+      context.emitter().Emit(*context.position(),
+                             ExpectedStructPatternDesignatedField);
+    }
+    skip_to_recovery_position(/*add_invalid_parse=*/true);
 
-    state.has_error = true;
-    context.PushState(state, StateKind::StructPatternDesignatedFieldFinish);
-
-    return;
+    if (context.PositionIs(Lex::TokenKind::Comma) ||
+        context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
+      context.PushState(state, StateKind::StructPatternDesignatedFieldFinish);
+      return;
+    }
   }
 
   state.token = context.ConsumeChecked(Lex::TokenKind::Equal);
@@ -142,6 +111,17 @@ auto HandleStructPatternFieldAfterDesignator(Context& context) -> void {
 
 auto HandleStructPatternUnderscore(Context& context) -> void {
   auto state = context.PopState();
+
+  if (context.PositionKind(Lookahead::NextToken)
+          .is_binding_pattern_operator()) {
+    context.PushStateForPattern(StateKind::BindingPattern, state.in_var_pattern,
+                                state.in_unused_pattern,
+                                state.in_struct_pattern,
+                                state.ambient_precedence);
+
+    return;
+  }
+
   auto underscore = context.ConsumeChecked(Lex::TokenKind::Underscore);
 
   bool is_last = context.PositionIs(Lex::TokenKind::CloseCurlyBrace);
@@ -155,6 +135,7 @@ auto HandleStructPatternUnderscore(Context& context) -> void {
                            context.PositionKind());
     state.has_error = true;
   }
+
   context.AddNode(NodeKind::UnderscoreName, underscore, state.has_error);
 
   if (state.has_error) {
@@ -220,6 +201,26 @@ static auto HandlePatternList(Context& context, NodeKind node_kind,
                               StateKind finish_state_empty,
                               StateKind finish_state_nonempty) -> void {
   auto state = context.PopState();
+
+  if (state.in_struct_pattern) {
+    if (node_kind == NodeKind::TuplePatternStart ||
+        node_kind == NodeKind::StructPatternStart) {
+      CARBON_DIAGNOSTIC(
+          NestedPatternListInStructPattern, Error,
+          "{0:Tuple|Struct} pattern nested within a struct pattern",
+          Diagnostics::BoolAsSelect);
+      context.emitter().Emit(*context.position(),
+                             NestedPatternListInStructPattern,
+                             node_kind == NodeKind::TuplePatternStart);
+
+      context.ReturnErrorOnState();
+    }
+  }
+
+  if (node_kind == NodeKind::StructPatternStart) {
+    state.in_struct_pattern = true;
+  }
+
   auto open_token = context.ConsumeChecked(open_token_kind);
   bool empty = context.PositionIs(close_token_kind);
 

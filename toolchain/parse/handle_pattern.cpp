@@ -54,7 +54,9 @@ auto HandlePattern(Context& context) -> void {
             state.ambient_precedence);
         break;
       }
-      context.PushState(StateKind::ExprPattern);
+      context.PushStateForPattern(
+          StateKind::ExprPattern, state.in_var_pattern, state.in_unused_pattern,
+          state.in_struct_pattern, state.ambient_precedence);
       context.PushStateForExpr(state.ambient_precedence);
       break;
   }
@@ -62,6 +64,16 @@ auto HandlePattern(Context& context) -> void {
 
 auto HandleExprPattern(Context& context) -> void {
   auto state = context.PopState();
+
+  // TODO: Allow ExprPatterns in StructPatterns
+  if (!state.has_error) {
+    if (state.in_struct_pattern) {
+      CARBON_DIAGNOSTIC(ExprPatternInStructPattern, Error,
+                        "Expression pattern nested within a struct pattern");
+      context.emitter().Emit(*context.position(), ExprPatternInStructPattern);
+      state.has_error = true;
+    }
+  }
 
   // If we parsed an expression followed by a binding operator, we most likely
   // have a malformed attempt to introduce a binding pattern that we interpreted
