@@ -41,6 +41,7 @@ fn G(a: A(B)) {
   F(a);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'library_with_period_self_in_impl.carbon'
 // CHECK:STDOUT: source_filename = "library_with_period_self_in_impl.carbon"
 // CHECK:STDOUT:
@@ -51,6 +52,8 @@ fn G(a: A(B)) {
 // CHECK:STDOUT: !1 = !DIFile(filename: "library_with_period_self_in_impl.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_period_self_in_impl.carbon'
 // CHECK:STDOUT: source_filename = "import_period_self_in_impl.carbon"
 // CHECK:STDOUT:
@@ -103,3 +106,4 @@ fn G(a: A(B)) {
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !18, type: !7)
 // CHECK:STDOUT: !23 = !DILocation(line: 13, column: 12, scope: !18)
 // CHECK:STDOUT: !24 = !DILocation(line: 13, column: 5, scope: !18)
+// CHECK:STDOUT:

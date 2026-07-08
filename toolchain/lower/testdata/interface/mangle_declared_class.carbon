@@ -26,6 +26,7 @@ impl D as N {
   fn F() {}
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'mangle_declared_class.carbon'
 // CHECK:STDOUT: source_filename = "mangle_declared_class.carbon"
 // CHECK:STDOUT:
@@ -56,3 +57,4 @@ impl D as N {
 // CHECK:STDOUT: !7 = !DILocation(line: 18, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "F", linkageName: "_CF.D.Main:I.Main", scope: null, file: !1, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !9 = !DILocation(line: 26, column: 3, scope: !8)
+// CHECK:STDOUT:

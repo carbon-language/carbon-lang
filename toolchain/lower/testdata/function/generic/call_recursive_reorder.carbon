@@ -31,6 +31,7 @@ fn M() {
   F(ptr_f64, ptr_bool, 0);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_reorder.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_reorder.carbon"
 // CHECK:STDOUT:
@@ -153,3 +154,4 @@ fn M() {
 // CHECK:STDOUT: !44 = !DILocation(line: 19, column: 18, scope: !34)
 // CHECK:STDOUT: !45 = !DILocation(line: 19, column: 10, scope: !34)
 // CHECK:STDOUT: !46 = !DILocation(line: 19, column: 3, scope: !34)
+// CHECK:STDOUT:

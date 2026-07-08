@@ -14,6 +14,7 @@ fn Not(b: bool) -> bool {
   return not b;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'not.carbon'
 // CHECK:STDOUT: source_filename = "not.carbon"
 // CHECK:STDOUT:
@@ -41,3 +42,4 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 14, column: 10, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT:

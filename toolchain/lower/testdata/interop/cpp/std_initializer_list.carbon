@@ -111,6 +111,7 @@ fn InitNontrivialDtor() {
   WithinLifetime();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_pointer_pointer.carbon'
 // CHECK:STDOUT: source_filename = "use_pointer_pointer.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -359,6 +360,8 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: !53 = !{!54}
 // CHECK:STDOUT: !54 = !DILocalVariable(arg: 1, scope: !52, type: !28)
 // CHECK:STDOUT: !55 = !DILocation(line: 23, column: 58, scope: !52)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_pointer_size.carbon'
 // CHECK:STDOUT: source_filename = "use_pointer_size.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -608,3 +611,4 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: !55 = !{!56}
 // CHECK:STDOUT: !56 = !DILocalVariable(arg: 1, scope: !54, type: !28)
 // CHECK:STDOUT: !57 = !DILocation(line: 23, column: 58, scope: !54)
+// CHECK:STDOUT:

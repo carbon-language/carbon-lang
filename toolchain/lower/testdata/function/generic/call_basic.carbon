@@ -55,6 +55,7 @@ fn M() {
   let _: f64 = G(p);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_basic.carbon'
 // CHECK:STDOUT: source_filename = "call_basic.carbon"
 // CHECK:STDOUT:
@@ -391,3 +392,4 @@ fn M() {
 // CHECK:STDOUT: !114 = !DILocalVariable(arg: 1, scope: !112, type: !7)
 // CHECK:STDOUT: !115 = !DILocation(line: 23, column: 10, scope: !112)
 // CHECK:STDOUT: !116 = !DILocation(line: 23, column: 3, scope: !112)
+// CHECK:STDOUT:

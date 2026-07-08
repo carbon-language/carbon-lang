@@ -28,6 +28,7 @@ fn Call() {
   LetThenVar(1, {});
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'var_param.carbon'
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
@@ -191,3 +192,4 @@ fn Call() {
 // CHECK:STDOUT: !56 = !{!57}
 // CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !55, type: !7)
 // CHECK:STDOUT: !58 = !DILocation(line: 20, column: 15, scope: !55)
+// CHECK:STDOUT:

@@ -32,6 +32,7 @@ fn Convert(p: Derived*) -> Base* {
   return p;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'base.carbon'
 // CHECK:STDOUT: source_filename = "base.carbon"
 // CHECK:STDOUT:
@@ -102,3 +103,4 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT: !21 = !{!22}
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !20, type: !7)
 // CHECK:STDOUT: !23 = !DILocation(line: 32, column: 3, scope: !20)
+// CHECK:STDOUT:

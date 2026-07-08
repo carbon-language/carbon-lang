@@ -20,6 +20,7 @@ fn F() {
   Sink(c);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'global.carbon'
 // CHECK:STDOUT: source_filename = "global.carbon"
 // CHECK:STDOUT:
@@ -58,3 +59,4 @@ fn F() {
 // CHECK:STDOUT: !8 = !DILocation(line: 19, column: 1, scope: !4)
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !1, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !10 = !DILocation(line: 0, scope: !9)
+// CHECK:STDOUT:

@@ -82,6 +82,7 @@ fn Main_method_no_template () {
   first_function(local1);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'self_canonical.carbon'
 // CHECK:STDOUT: source_filename = "self_canonical.carbon"
 // CHECK:STDOUT:
@@ -236,3 +237,4 @@ fn Main_method_no_template () {
 // CHECK:STDOUT: !58 = !DILocation(line: 40, column: 19, scope: !49)
 // CHECK:STDOUT: !59 = !DILocation(line: 40, column: 3, scope: !49)
 // CHECK:STDOUT: !60 = !DILocation(line: 35, column: 1, scope: !49)
+// CHECK:STDOUT:

@@ -77,6 +77,7 @@ fn AddSubInt8() {
   Discard('x' - (1 as i8));
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'char_literals.carbon'
 // CHECK:STDOUT: source_filename = "char_literals.carbon"
 // CHECK:STDOUT:
@@ -403,3 +404,4 @@ fn AddSubInt8() {
 // CHECK:STDOUT: !147 = !{!148}
 // CHECK:STDOUT: !148 = !DILocalVariable(arg: 1, scope: !144, type: !7)
 // CHECK:STDOUT: !149 = !DILocation(line: 60, column: 29, scope: !144)
+// CHECK:STDOUT:

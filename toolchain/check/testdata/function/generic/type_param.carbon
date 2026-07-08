@@ -111,10 +111,6 @@ fn F(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %p.patt.loc16_8.1: @F.%pattern_type.loc16 (%pattern_type.4f4) = ref_binding_pattern p [symbolic = %p.patt.loc16_8.2 (constants.%p.patt)]
-// CHECK:STDOUT:       %p.var_patt.loc16_3.1: @F.%pattern_type.loc16 (%pattern_type.4f4) = var_pattern %p.patt.loc16_8.1 [symbolic = %p.var_patt.loc16_3.2 (constants.%p.var_patt)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p.var: ref @F.%ptr.loc16_11.2 (%ptr) = var_storage %p.var_patt.loc16_3.1
 // CHECK:STDOUT:     %DefaultOrUnformed.facet.loc16_12.1: %DefaultOrUnformed.type = facet_value constants.%ptr, (constants.%DefaultOrUnformed.lookup_impl_witness) [symbolic = %DefaultOrUnformed.facet.loc16_12.2 (constants.%DefaultOrUnformed.facet)]
 // CHECK:STDOUT:     %.loc16_12.1: %DefaultOrUnformed.type = converted constants.%ptr, %DefaultOrUnformed.facet.loc16_12.1 [symbolic = %DefaultOrUnformed.facet.loc16_12.2 (constants.%DefaultOrUnformed.facet)]
@@ -130,7 +126,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: ref @F.%ptr.loc16_11.2 (%ptr) = wrapper_binding p, %p.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %n.patt.loc17_15.1: @F.%pattern_type.loc17 (%pattern_type.51d) = value_binding_pattern n [symbolic = %n.patt.loc17_15.2 (constants.%n.patt)]
+// CHECK:STDOUT:       %p.patt.loc16_8.1: @F.%pattern_type.loc16 (%pattern_type.4f4) = ref_binding_pattern p [symbolic = %p.patt.loc16_8.2 (constants.%p.patt)]
+// CHECK:STDOUT:       %p.var_patt.loc16_3.1: @F.%pattern_type.loc16 (%pattern_type.4f4) = var_pattern %p.patt.loc16_8.1 [symbolic = %p.var_patt.loc16_3.2 (constants.%p.var_patt)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p.ref: ref @F.%ptr.loc16_11.2 (%ptr) = name_ref p, %p
 // CHECK:STDOUT:     %.loc17_22: @F.%ptr.loc16_11.2 (%ptr) = acquire_value %p.ref
@@ -138,6 +135,9 @@ fn F(T:! type) {
 // CHECK:STDOUT:     %.loc17_21.2: @F.%T.loc15_7.1 (%T.67d) = acquire_value %.loc17_21.1
 // CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, %T.loc15_7.2 [symbolic = %T.loc15_7.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %n: @F.%T.loc15_7.1 (%T.67d) = wrapper_binding n, %.loc17_21.2
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %n.patt.loc17_15.1: @F.%pattern_type.loc17 (%pattern_type.51d) = value_binding_pattern n [symbolic = %n.patt.loc17_15.2 (constants.%n.patt)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %impl.elem0.loc16_3.1: @F.%.loc16_3.3 (%.9f8) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc16_3.2 (constants.%impl.elem0.258)]
 // CHECK:STDOUT:     %bound_method.loc16_3.1: <bound method> = bound_method %p.var, %impl.elem0.loc16_3.1
 // CHECK:STDOUT:     %Destroy.facet.loc16_3.1: %Destroy.type = facet_value constants.%ptr, (constants.%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc16_3.3 (constants.%Destroy.facet)]

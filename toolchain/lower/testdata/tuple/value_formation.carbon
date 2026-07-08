@@ -18,6 +18,7 @@ fn F() {
   G((a, b));
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'value_formation.carbon'
 // CHECK:STDOUT: source_filename = "value_formation.carbon"
 // CHECK:STDOUT:
@@ -123,3 +124,4 @@ fn F() {
 // CHECK:STDOUT: !25 = !{!26}
 // CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !21, type: !24)
 // CHECK:STDOUT: !27 = !DILocation(line: 17, column: 3, scope: !21)
+// CHECK:STDOUT:

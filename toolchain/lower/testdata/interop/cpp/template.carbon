@@ -89,6 +89,7 @@ fn Call3() {
   //@dump-sem-ir-end
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call.carbon'
 // CHECK:STDOUT: source_filename = "call.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -195,6 +196,8 @@ fn Call3() {
 // CHECK:STDOUT: !32 = !{!33, !33, i64 0}
 // CHECK:STDOUT: !33 = !{!"p1 _ZTS5Class", !34, i64 0}
 // CHECK:STDOUT: !34 = !{!"any pointer", !9, i64 0}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'variadic.carbon'
 // CHECK:STDOUT: source_filename = "variadic.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -256,6 +259,8 @@ fn Call3() {
 // CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Call3", linkageName: "_CCall3.Main", scope: null, file: !1, line: 21, type: !12, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !20 = !DILocation(line: 23, column: 3, scope: !19)
 // CHECK:STDOUT: !21 = !DILocation(line: 21, column: 1, scope: !19)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'variadic_thunk.carbon'
 // CHECK:STDOUT: source_filename = "variadic_thunk.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -384,3 +389,4 @@ fn Call3() {
 // CHECK:STDOUT: !25 = !DILocation(line: 24, column: 11, scope: !24)
 // CHECK:STDOUT: !26 = !DILocation(line: 24, column: 3, scope: !24)
 // CHECK:STDOUT: !27 = !DILocation(line: 22, column: 1, scope: !24)
+// CHECK:STDOUT:

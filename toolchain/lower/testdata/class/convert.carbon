@@ -25,6 +25,7 @@ fn DoIt() {
   Consume(w);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'convert.carbon'
 // CHECK:STDOUT: source_filename = "convert.carbon"
 // CHECK:STDOUT:
@@ -128,3 +129,4 @@ fn DoIt() {
 // CHECK:STDOUT: !38 = !{!39}
 // CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !37, type: !8)
 // CHECK:STDOUT: !40 = !DILocation(line: 24, column: 3, scope: !37)
+// CHECK:STDOUT:

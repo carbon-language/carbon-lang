@@ -88,6 +88,7 @@ fn F(ref r: Cpp.A) {
   r.f(1, 2);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_by_val.carbon'
 // CHECK:STDOUT: source_filename = "call_by_val.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -175,6 +176,8 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT: !25 = !{!26, !8, i64 8}
 // CHECK:STDOUT: !26 = !{!"_ZTS1A", !27, i64 0, !8, i64 8}
 // CHECK:STDOUT: !27 = !{!"_ZTS4Base"}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_by_ref.carbon'
 // CHECK:STDOUT: source_filename = "call_by_ref.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -249,6 +252,8 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT: !23 = !{!24, !8, i64 8}
 // CHECK:STDOUT: !24 = !{!"_ZTS1A", !25, i64 0, !8, i64 8}
 // CHECK:STDOUT: !25 = !{!"_ZTS4Base"}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_virtual.carbon'
 // CHECK:STDOUT: source_filename = "call_virtual.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -308,6 +313,8 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT: !17 = !DILocation(line: 7, column: 3, scope: !11)
 // CHECK:STDOUT: !18 = !DILocation(line: 8, column: 3, scope: !11)
 // CHECK:STDOUT: !19 = !DILocation(line: 6, column: 1, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_thunk.carbon'
 // CHECK:STDOUT: source_filename = "call_thunk.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -422,6 +429,8 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT: !33 = !{!34}
 // CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !29, type: !32)
 // CHECK:STDOUT: !35 = !DILocation(line: 8, column: 14, scope: !29)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_with_ref_self.carbon'
 // CHECK:STDOUT: source_filename = "call_with_ref_self.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -462,3 +471,4 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
 // CHECK:STDOUT: !17 = !DILocation(line: 12, column: 3, scope: !11)
 // CHECK:STDOUT: !18 = !DILocation(line: 11, column: 1, scope: !11)
+// CHECK:STDOUT:

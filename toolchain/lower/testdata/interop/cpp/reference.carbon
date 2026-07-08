@@ -128,6 +128,7 @@ fn GetRefs() {
   let ref _: const i32 = Cpp.ReturnConstIntRef();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'pass_references.carbon'
 // CHECK:STDOUT: source_filename = "pass_references.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -314,6 +315,8 @@ fn GetRefs() {
 // CHECK:STDOUT: !44 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !45 = !DILocation(line: 9, column: 28, scope: !43)
 // CHECK:STDOUT: !46 = !DILocation(line: 9, column: 21, scope: !43)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'pass_references_via_thunk.carbon'
 // CHECK:STDOUT: source_filename = "pass_references_via_thunk.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -527,6 +530,8 @@ fn GetRefs() {
 // CHECK:STDOUT: !46 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !47 = !DILocation(line: 9, column: 28, scope: !45)
 // CHECK:STDOUT: !48 = !DILocation(line: 9, column: 21, scope: !45)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'return_references.carbon'
 // CHECK:STDOUT: source_filename = "return_references.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -584,6 +589,8 @@ fn GetRefs() {
 // CHECK:STDOUT: !18 = !DILocation(line: 22, column: 20, scope: !11)
 // CHECK:STDOUT: !19 = !DILocation(line: 23, column: 26, scope: !11)
 // CHECK:STDOUT: !20 = !DILocation(line: 16, column: 1, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'return_references_via_thunk.carbon'
 // CHECK:STDOUT: source_filename = "return_references_via_thunk.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -692,3 +699,4 @@ fn GetRefs() {
 // CHECK:STDOUT: !18 = !DILocation(line: 23, column: 20, scope: !11)
 // CHECK:STDOUT: !19 = !DILocation(line: 24, column: 26, scope: !11)
 // CHECK:STDOUT: !20 = !DILocation(line: 17, column: 1, scope: !11)
+// CHECK:STDOUT:

@@ -16,6 +16,7 @@ fn Main() {
   F((), (1,), (2, 3));
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'tuple_param.carbon'
 // CHECK:STDOUT: source_filename = "tuple_param.carbon"
 // CHECK:STDOUT:
@@ -56,3 +57,4 @@ fn Main() {
 // CHECK:STDOUT: !14 = !{null}
 // CHECK:STDOUT: !15 = !DILocation(line: 16, column: 3, scope: !12)
 // CHECK:STDOUT: !16 = !DILocation(line: 15, column: 1, scope: !12)
+// CHECK:STDOUT:

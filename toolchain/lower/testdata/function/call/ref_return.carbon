@@ -19,6 +19,7 @@ fn Main() {
   Echo(ref a) = 1;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'ref_return.carbon'
 // CHECK:STDOUT: source_filename = "ref_return.carbon"
 // CHECK:STDOUT:
@@ -79,3 +80,4 @@ fn Main() {
 // CHECK:STDOUT: !21 = !{!22}
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !18, type: !8)
 // CHECK:STDOUT: !23 = !DILocation(line: 18, column: 3, scope: !18)
+// CHECK:STDOUT:

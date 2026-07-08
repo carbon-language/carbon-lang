@@ -31,6 +31,7 @@ fn TestConvertI64ToF128(a: i64) -> f128 { return ConvertI64ToF128(a); }
 fn ConvertU64ToF128(a: u64) -> f128 = "int.convert_float";
 fn TestConvertU64ToF128(a: u64) -> f128 { return ConvertU64ToF128(a); }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'int_to_float.carbon'
 // CHECK:STDOUT: source_filename = "int_to_float.carbon"
 // CHECK:STDOUT:
@@ -128,3 +129,4 @@ fn TestConvertU64ToF128(a: u64) -> f128 { return ConvertU64ToF128(a); }
 // CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !39, type: !42)
 // CHECK:STDOUT: !45 = !DILocation(line: 19, column: 50, scope: !39)
 // CHECK:STDOUT: !46 = !DILocation(line: 19, column: 43, scope: !39)
+// CHECK:STDOUT:

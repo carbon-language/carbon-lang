@@ -15,6 +15,7 @@ fn Main() -> i32 {
   return var;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'return_var_byval.carbon'
 // CHECK:STDOUT: source_filename = "return_var_byval.carbon"
 // CHECK:STDOUT:
@@ -61,3 +62,4 @@ fn Main() -> i32 {
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !11, type: !7)
 // CHECK:STDOUT: !16 = !DILocation(line: 14, column: 12, scope: !11)
+// CHECK:STDOUT:

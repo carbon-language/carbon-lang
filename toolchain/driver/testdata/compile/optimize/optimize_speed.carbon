@@ -34,6 +34,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
   }
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'foo.carbon'
 // CHECK:STDOUT: source_filename = "foo.carbon"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
@@ -158,3 +159,4 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !44 = !{!45}
 // CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !43, type: !7)
 // CHECK:STDOUT: !46 = !DILocation(line: 17, column: 3, scope: !43)
+// CHECK:STDOUT:

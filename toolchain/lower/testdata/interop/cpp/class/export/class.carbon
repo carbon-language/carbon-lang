@@ -94,6 +94,7 @@ fn G() {
   Cpp.F(ref c);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'pointer.carbon'
 // CHECK:STDOUT: source_filename = "pointer.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -148,6 +149,8 @@ fn G() {
 // CHECK:STDOUT: !16 = !{null}
 // CHECK:STDOUT: !17 = !DILocation(line: 15, column: 13, scope: !14)
 // CHECK:STDOUT: !18 = !DILocation(line: 15, column: 1, scope: !14)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'layout.carbon'
 // CHECK:STDOUT: source_filename = "layout.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -446,6 +449,8 @@ fn G() {
 // CHECK:STDOUT: !73 = !{!74}
 // CHECK:STDOUT: !74 = !DILocalVariable(arg: 1, scope: !72, type: !21)
 // CHECK:STDOUT: !75 = !DILocation(line: 23, column: 1, scope: !72)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'field.carbon'
 // CHECK:STDOUT: source_filename = "field.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -570,3 +575,4 @@ fn G() {
 // CHECK:STDOUT: !45 = !DILocation(line: 19, column: 14, scope: !41)
 // CHECK:STDOUT: !46 = !DILocation(line: 20, column: 3, scope: !41)
 // CHECK:STDOUT: !47 = !DILocation(line: 18, column: 1, scope: !41)
+// CHECK:STDOUT:

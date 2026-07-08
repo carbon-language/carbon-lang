@@ -19,6 +19,7 @@ fn IncrSigned() {
   ++from;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'increment.carbon'
 // CHECK:STDOUT: source_filename = "increment.carbon"
 // CHECK:STDOUT:
@@ -117,3 +118,4 @@ fn IncrSigned() {
 // CHECK:STDOUT: !39 = !{!40}
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !38, type: !13)
 // CHECK:STDOUT: !41 = !DILocation(line: 59, column: 28, scope: !38)
+// CHECK:STDOUT:

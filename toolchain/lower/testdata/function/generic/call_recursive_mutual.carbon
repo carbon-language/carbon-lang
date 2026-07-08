@@ -41,6 +41,7 @@ fn M() {
   F(ptr_f64, 0);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_mutual.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_mutual.carbon"
 // CHECK:STDOUT:
@@ -285,3 +286,4 @@ fn M() {
 // CHECK:STDOUT: !95 = !DILocation(line: 29, column: 15, scope: !88)
 // CHECK:STDOUT: !96 = !DILocation(line: 29, column: 10, scope: !88)
 // CHECK:STDOUT: !97 = !DILocation(line: 29, column: 3, scope: !88)
+// CHECK:STDOUT:

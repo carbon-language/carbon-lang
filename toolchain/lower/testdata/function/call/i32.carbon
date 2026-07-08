@@ -18,6 +18,7 @@ fn Main() {
   var _: i32 = Echo(1);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'i32.carbon'
 // CHECK:STDOUT: source_filename = "i32.carbon"
 // CHECK:STDOUT:
@@ -76,3 +77,4 @@ fn Main() {
 // CHECK:STDOUT: !20 = !{!21}
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !22 = !DILocation(line: 18, column: 3, scope: !17)
+// CHECK:STDOUT:

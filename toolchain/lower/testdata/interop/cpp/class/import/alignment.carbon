@@ -56,6 +56,7 @@ fn Packed(n: i32) {
   Cpp.Take(ref a);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'alignment.carbon'
 // CHECK:STDOUT: source_filename = "alignment.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -246,3 +247,4 @@ fn Packed(n: i32) {
 // CHECK:STDOUT: !58 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.3e10857902c69c1a", scope: null, file: !52, line: 9, type: !25, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !59 = !DILocation(line: 9, column: 28, scope: !58)
 // CHECK:STDOUT: !60 = !DILocation(line: 9, column: 21, scope: !58)
+// CHECK:STDOUT:

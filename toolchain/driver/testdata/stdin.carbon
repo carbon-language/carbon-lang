@@ -102,6 +102,7 @@
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = '-'
 // CHECK:STDOUT: source_filename = "-"
 // CHECK:STDOUT:
@@ -112,3 +113,4 @@
 // CHECK:STDOUT: !1 = !DIFile(filename: "-", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:

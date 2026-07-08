@@ -42,6 +42,7 @@ fn Run() {
   G(Y);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_different_impls_with_const.carbon'
 // CHECK:STDOUT: source_filename = "call_different_impls_with_const.carbon"
 // CHECK:STDOUT:
@@ -149,3 +150,4 @@ fn Run() {
 // CHECK:STDOUT: !31 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.01a101e5421592ac", scope: null, file: !1, line: 36, type: !27, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !32 = !DILocation(line: 37, column: 16, scope: !31)
 // CHECK:STDOUT: !33 = !DILocation(line: 36, column: 1, scope: !31)
+// CHECK:STDOUT:

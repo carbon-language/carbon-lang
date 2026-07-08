@@ -21,6 +21,7 @@ fn Make() -> C {
   return var;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'return_var.carbon'
 // CHECK:STDOUT: source_filename = "return_var.carbon"
 // CHECK:STDOUT:
@@ -49,3 +50,4 @@ fn Make() -> C {
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !DILocation(line: 20, column: 7, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 21, column: 3, scope: !4)
+// CHECK:STDOUT:

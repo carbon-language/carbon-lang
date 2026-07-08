@@ -102,6 +102,7 @@ fn Convert() {
   Cpp.take(Cpp.make());
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'nonnull.carbon'
 // CHECK:STDOUT: source_filename = "nonnull.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -203,6 +204,8 @@ fn Convert() {
 // CHECK:STDOUT: !32 = distinct !DISubprogram(name: "ReturnPtrWithThunk", linkageName: "_CReturnPtrWithThunk.Main", scope: null, file: !1, line: 26, type: !20, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !33 = !DILocation(line: 27, column: 10, scope: !32)
 // CHECK:STDOUT: !34 = !DILocation(line: 27, column: 3, scope: !32)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'nullable.carbon'
 // CHECK:STDOUT: source_filename = "nullable.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -430,6 +433,8 @@ fn Convert() {
 // CHECK:STDOUT: !79 = !DILocation(line: 169, column: 5, scope: !75)
 // CHECK:STDOUT: !80 = !DILocation(line: 167, column: 18, scope: !75)
 // CHECK:STDOUT: !81 = !DILocation(line: 170, column: 5, scope: !75)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'add_const.carbon'
 // CHECK:STDOUT: source_filename = "add_const.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -681,3 +686,4 @@ fn Convert() {
 // CHECK:STDOUT: !95 = !DILocation(line: 169, column: 5, scope: !91)
 // CHECK:STDOUT: !96 = !DILocation(line: 167, column: 18, scope: !91)
 // CHECK:STDOUT: !97 = !DILocation(line: 170, column: 5, scope: !91)
+// CHECK:STDOUT:

@@ -18,6 +18,7 @@ fn Run() {
   var _: array(i32, 3) = d;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'base.carbon'
 // CHECK:STDOUT: source_filename = "base.carbon"
 // CHECK:STDOUT:
@@ -184,3 +185,4 @@ fn Run() {
 // CHECK:STDOUT: !49 = !{!50}
 // CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !48, type: !28)
 // CHECK:STDOUT: !51 = !DILocation(line: 14, column: 3, scope: !48)
+// CHECK:STDOUT:

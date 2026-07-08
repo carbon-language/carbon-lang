@@ -56,6 +56,7 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
   return p unsafe as const i32*;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'pass.carbon'
 // CHECK:STDOUT: source_filename = "pass.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -380,6 +381,8 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: !123 = !DILocation(line: 169, column: 5, scope: !119)
 // CHECK:STDOUT: !124 = !DILocation(line: 167, column: 18, scope: !119)
 // CHECK:STDOUT: !125 = !DILocation(line: 170, column: 5, scope: !119)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'receive.carbon'
 // CHECK:STDOUT: source_filename = "receive.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -440,3 +443,4 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !23, type: !14)
 // CHECK:STDOUT: !26 = !DILocation(line: 15, column: 3, scope: !23)
+// CHECK:STDOUT:
