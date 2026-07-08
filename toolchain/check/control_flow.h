@@ -97,9 +97,13 @@ auto AddCleanups(Context& context, ScopeStack::CleanupScopeDepth depth,
                  ScopeStack::CleanupScopeDepth end_depth =
                      ScopeStack::CleanupScopeDepth::None) -> void;
 
-// Pops a scope from the scope stack and adds any cleanups for variables within
-// that scope.
-auto PopScopeWithCleanups(Context& context) -> void;
+// Pushes a scope onto the scope stack for a statement that needs a scope, such
+// as a code block or a for statement.
+auto PushStatementScope(Context& context) -> void;
+
+// Pops a statement scope from the scope stack and adds any cleanups for
+// variables within that scope.
+auto PopStatementScopeWithCleanups(Context& context) -> void;
 
 // Adds a branch to the given target block, which should be in the current scope
 // or an enclosing scope, along with cleanups for all variables and temporaries

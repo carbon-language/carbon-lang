@@ -12,12 +12,12 @@ namespace Carbon::Check {
 auto HandleParseNode(Context& context, Parse::CodeBlockStartId node_id)
     -> bool {
   context.node_stack().Push(node_id);
-  context.scope_stack().PushForSameRegion();
+  PushStatementScope(context);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::CodeBlockId /*node_id*/) -> bool {
-  PopScopeWithCleanups(context);
+  PopStatementScopeWithCleanups(context);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::CodeBlockStart>();
   return true;
