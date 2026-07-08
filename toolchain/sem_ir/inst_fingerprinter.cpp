@@ -242,6 +242,9 @@ struct Worklist {
   // Add a string to the contents.
   auto AddString(llvm::StringRef string) -> void { store->AddString(string); }
 
+  // Add an integer to the contents.
+  auto AddInteger(uint64_t value) -> void { store->AddInteger(value); }
+
   // Each of the following `Add` functions adds a typed argument to the contents
   // of the current instruction. If we don't yet have a fingerprint for the
   // argument, it instead adds that argument to the worklist instead.
@@ -280,6 +283,9 @@ struct Worklist {
       // also be a compatible change from the perspective of users of a generic.
     } else {
       Add(entity_name.name_id);
+      if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
+        AddInteger(entity_name.is_frozen_period_self);
+      }
     }
     Add(entity_name.parent_scope_id);
 

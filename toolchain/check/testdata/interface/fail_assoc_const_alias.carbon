@@ -84,7 +84,7 @@ interface C {
 // CHECK:STDOUT:   %Self.c1f: %J2.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.c1f [symbolic]
 // CHECK:STDOUT:   %I2.lookup_impl_witness.b5c: <witness> = lookup_impl_witness %Self.c1f, @I2 [symbolic]
-// CHECK:STDOUT:   %.eef: require_specific_def_type = require_specific_def @V.as_type.as.I2.impl(%Self.c1f) [symbolic]
+// CHECK:STDOUT:   %.be9: require_specific_def_type = require_specific_def @V.as_type.as.I2.impl(%Self.c1f) [symbolic]
 // CHECK:STDOUT:   %I2.facet.39b: %I2.type = facet_value %Self.as_type, (%I2.lookup_impl_witness.b5c) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.422: type = impl_witness_access %I2.lookup_impl_witness.b5c, element0 [symbolic]
 // CHECK:STDOUT:   %.932: Core.Form = init_form %impl.elem0.422 [symbolic]
@@ -140,7 +140,7 @@ interface C {
 // CHECK:STDOUT: generic fn @J2.WithSelf.F2(@J2.%Self: %J2.type) {
 // CHECK:STDOUT:   %Self: %J2.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c1f)]
 // CHECK:STDOUT:   %Self.as_type.loc14_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %.loc14_14.1: require_specific_def_type = require_specific_def @V.as_type.as.I2.impl(%Self) [symbolic = %.loc14_14.1 (constants.%.eef)]
+// CHECK:STDOUT:   %.loc14_14.1: require_specific_def_type = require_specific_def @V.as_type.as.I2.impl(%Self) [symbolic = %.loc14_14.1 (constants.%.be9)]
 // CHECK:STDOUT:   %I2.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I2 [symbolic = %I2.lookup_impl_witness (constants.%I2.lookup_impl_witness.b5c)]
 // CHECK:STDOUT:   %I2.facet.loc14_14.1: %I2.type = facet_value %Self.as_type.loc14_14.1, (%I2.lookup_impl_witness) [symbolic = %I2.facet.loc14_14.1 (constants.%I2.facet.39b)]
 // CHECK:STDOUT:   %impl.elem0.loc14_14.1: type = impl_witness_access %I2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_14.1 (constants.%impl.elem0.422)]
@@ -157,7 +157,7 @@ interface C {
 // CHECK:STDOUT: specific @J2.WithSelf.F2(constants.%Self.c1f) {
 // CHECK:STDOUT:   %Self => constants.%Self.c1f
 // CHECK:STDOUT:   %Self.as_type.loc14_14.1 => constants.%Self.as_type
-// CHECK:STDOUT:   %.loc14_14.1 => constants.%.eef
+// CHECK:STDOUT:   %.loc14_14.1 => constants.%.be9
 // CHECK:STDOUT:   %I2.lookup_impl_witness => constants.%I2.lookup_impl_witness.b5c
 // CHECK:STDOUT:   %I2.facet.loc14_14.1 => constants.%I2.facet.39b
 // CHECK:STDOUT:   %impl.elem0.loc14_14.1 => constants.%impl.elem0.422

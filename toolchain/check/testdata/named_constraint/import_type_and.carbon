@@ -151,7 +151,7 @@ fn F(_:! N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %N.type: type = facet_type <@N> [concrete]
 // CHECK:STDOUT:   %Self.f45: %N.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
@@ -198,7 +198,7 @@ fn F(_:! N) {}
 // CHECK:STDOUT:     %_.patt.loc5_7.1: %pattern_type.9a5 = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc5_7.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5: type = splice_block %N.ref [concrete = constants.%N.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %N.ref: type = name_ref N, imports.%Main.N [concrete = constants.%N.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %_.loc5_7.2: %N.type = symbolic_binding _, 0 [symbolic = %_.loc5_7.1 (constants.%_)]
