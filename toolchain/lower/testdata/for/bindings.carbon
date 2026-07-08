@@ -43,38 +43,38 @@ fn For() {
 // CHECK:STDOUT: define void @_CFor.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %r.var = alloca {}, align 1, !dbg !7
-// CHECK:STDOUT:   %var = alloca {}, align 1, !dbg !8
-// CHECK:STDOUT:   %.loc29_33.1.temp = alloca <{ { i32, i32 }, i1 }>, align 4, !dbg !8
-// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !9
-// CHECK:STDOUT:   %.loc29_33.8.temp = alloca { i32, i32 }, align 4, !dbg !8
+// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !8
+// CHECK:STDOUT:   %var = alloca {}, align 1, !dbg !9
+// CHECK:STDOUT:   %.loc29_33.1.temp = alloca <{ { i32, i32 }, i1 }>, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc29_33.8.temp = alloca { i32, i32 }, align 4, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %r.var), !dbg !7
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %r.var, ptr align 1 @EmptyRange.val.loc27_3, i64 0, i1 false), !dbg !7
-// CHECK:STDOUT:   call void @"_CNewCursor.EmptyRange.a081b942542726db.Main:Iterate.Core.c9f733d9bf35d2e5"(ptr %r.var), !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %var), !dbg !8
-// CHECK:STDOUT:   br label %for.next, !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !8
+// CHECK:STDOUT:   call void @"_CNewCursor.EmptyRange.a081b942542726db.Main:Iterate.Core.c9f733d9bf35d2e5"(ptr %r.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %var), !dbg !9
+// CHECK:STDOUT:   br label %for.next, !dbg !9
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.next:                                         ; preds = %for.body, %entry
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_33.1.temp), !dbg !8
-// CHECK:STDOUT:   call void @"_CNext.EmptyRange.a081b942542726db.Main:Iterate.Core.c9f733d9bf35d2e5"(ptr %.loc29_33.1.temp, ptr %r.var, ptr %var), !dbg !8
-// CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.04b328ae73286f7d(ptr %.loc29_33.1.temp), !dbg !8
-// CHECK:STDOUT:   br i1 %Optional.HasValue.call, label %for.body, label %for.done, !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_33.1.temp), !dbg !9
+// CHECK:STDOUT:   call void @"_CNext.EmptyRange.a081b942542726db.Main:Iterate.Core.c9f733d9bf35d2e5"(ptr %.loc29_33.1.temp, ptr %r.var, ptr %var), !dbg !9
+// CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.04b328ae73286f7d(ptr %.loc29_33.1.temp), !dbg !9
+// CHECK:STDOUT:   br i1 %Optional.HasValue.call, label %for.body, label %for.done, !dbg !9
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.body:                                         ; preds = %for.next
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_33.8.temp), !dbg !8
-// CHECK:STDOUT:   call void @_CGet.Optional.Core.04b328ae73286f7d(ptr %.loc29_33.8.temp, ptr %.loc29_33.1.temp), !dbg !8
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc29_33.8.temp, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc29_33.8.temp, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   %.loc29_33.11 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc29_33.12 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !8
-// CHECK:STDOUT:   store i32 %.loc29_33.12, ptr %n.var, align 4, !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_33.8.temp), !dbg !9
+// CHECK:STDOUT:   call void @_CGet.Optional.Core.04b328ae73286f7d(ptr %.loc29_33.8.temp, ptr %.loc29_33.1.temp), !dbg !9
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc29_33.8.temp, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc29_33.8.temp, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   %.loc29_33.11 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc29_33.12 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !9
+// CHECK:STDOUT:   store i32 %.loc29_33.12, ptr %n.var, align 4, !dbg !8
 // CHECK:STDOUT:   call void @_CF.Main(i32 %.loc29_33.11, ptr %n.var), !dbg !10
 // CHECK:STDOUT:   br label %for.next, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.done:                                         ; preds = %for.next
-// CHECK:STDOUT:   call void @"_COp.eff30dc40f4a53d2:core.Destroy.Core"(ptr %.loc29_33.8.temp), !dbg !8
-// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %n.var), !dbg !9
-// CHECK:STDOUT:   call void @"_COp.a79511dff093d1a6:core.Destroy.Core"(ptr %.loc29_33.1.temp), !dbg !8
+// CHECK:STDOUT:   call void @"_COp.eff30dc40f4a53d2:core.Destroy.Core"(ptr %.loc29_33.8.temp), !dbg !9
+// CHECK:STDOUT:   call void @"_COp.a79511dff093d1a6:core.Destroy.Core"(ptr %.loc29_33.1.temp), !dbg !9
+// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %n.var), !dbg !8
 // CHECK:STDOUT:   call void @"_COp.88c97397fb274b67:core.Destroy.Core"(ptr %r.var), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
@@ -218,8 +218,8 @@ fn For() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 27, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 29, column: 7, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 29, column: 17, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 29, column: 17, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 29, column: 7, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 30, column: 5, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 29, column: 3, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 26, column: 1, scope: !4)
