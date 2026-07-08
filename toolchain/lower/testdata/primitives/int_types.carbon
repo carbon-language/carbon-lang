@@ -45,6 +45,7 @@ fn ImplicitWidenUnsignedToSigned(a: u8) -> i32 { return a; }
 fn ImplicitWidenCustom(a: Core.Int(4)) -> Core.Int(5) { return a; }
 fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'pass_and_return.carbon'
 // CHECK:STDOUT: source_filename = "pass_and_return.carbon"
 // CHECK:STDOUT:
@@ -109,6 +110,8 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: !29 = !{!30}
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !25, type: !28)
 // CHECK:STDOUT: !31 = !DILocation(line: 7, column: 36, scope: !25)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'load_and_store.carbon'
 // CHECK:STDOUT: source_filename = "load_and_store.carbon"
 // CHECK:STDOUT:
@@ -160,6 +163,8 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: !22 = !DILocation(line: 11, column: 25, scope: !15)
 // CHECK:STDOUT: !23 = !DILocation(line: 12, column: 3, scope: !15)
 // CHECK:STDOUT: !24 = !DILocation(line: 13, column: 3, scope: !15)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'convert.carbon'
 // CHECK:STDOUT: source_filename = "convert.carbon"
 // CHECK:STDOUT:
@@ -392,3 +397,4 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: !110 = !{!111}
 // CHECK:STDOUT: !111 = !DILocalVariable(arg: 1, scope: !107, type: !38)
 // CHECK:STDOUT: !112 = !DILocation(line: 60, column: 29, scope: !107)
+// CHECK:STDOUT:

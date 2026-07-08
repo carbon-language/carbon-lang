@@ -36,6 +36,7 @@ fn M() -> i32 {
   return m;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_basic_depth.carbon'
 // CHECK:STDOUT: source_filename = "call_basic_depth.carbon"
 // CHECK:STDOUT:
@@ -143,3 +144,4 @@ fn M() -> i32 {
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !35, type: !7)
 // CHECK:STDOUT: !38 = !DILocation(line: 20, column: 3, scope: !35)
 // CHECK:STDOUT: !39 = !DILocation(line: 21, column: 3, scope: !35)
+// CHECK:STDOUT:

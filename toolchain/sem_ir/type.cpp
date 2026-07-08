@@ -47,6 +47,16 @@ auto TypeStore::TryGetTypeIdForTypeConstantId(ConstantId constant_id) const
   return TypeId::ForTypeConstant(constant_id);
 }
 
+auto TypeStore::GetTypeInstIdForTypeConstantId(ConstantId constant_id) const
+    -> TypeInstId {
+  return GetTypeInstId(GetTypeIdForTypeConstantId(constant_id));
+}
+
+auto TypeStore::TryGetTypeInstIdForTypeConstantId(ConstantId constant_id) const
+    -> TypeInstId {
+  return GetTypeInstId(TryGetTypeIdForTypeConstantId(constant_id));
+}
+
 auto TypeStore::GetTypeIdForTypeInstId(InstId inst_id) const -> TypeId {
   auto constant_id = file_->constant_values().Get(inst_id);
   CheckTypeOfConstantIsTypeType(*file_, constant_id);

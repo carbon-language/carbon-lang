@@ -15,6 +15,7 @@ fn F(T:! type) {
   let _: T = *p;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'type_param.carbon'
 // CHECK:STDOUT: source_filename = "type_param.carbon"
 // CHECK:STDOUT:
@@ -25,3 +26,4 @@ fn F(T:! type) {
 // CHECK:STDOUT: !1 = !DIFile(filename: "type_param.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:

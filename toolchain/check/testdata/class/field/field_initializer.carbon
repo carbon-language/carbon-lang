@@ -123,13 +123,13 @@ var C: Class = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
+// CHECK:STDOUT:   %C.var: ref %Class = var_storage %C.var_patt [concrete]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %C: ref %Class = wrapper_binding C, %C.var [concrete = %C.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %C.patt: %pattern_type.f15 = ref_binding_pattern C [concrete = constants.%C.patt]
 // CHECK:STDOUT:     %C.var_patt: %pattern_type.f15 = var_pattern %C.patt [concrete = constants.%C.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.var: ref %Class = var_storage %C.var_patt [concrete]
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %C: ref %Class = wrapper_binding C, %C.var [concrete = %C.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

@@ -12,6 +12,7 @@
 
 fn Foo() {}
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'params_zero.carbon'
 // CHECK:STDOUT: source_filename = "params_zero.carbon"
 // CHECK:STDOUT:
@@ -34,3 +35,4 @@ fn Foo() {}
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 13, column: 1, scope: !4)
+// CHECK:STDOUT:

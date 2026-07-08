@@ -112,6 +112,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
   return Cpp.f(x);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_ints.carbon'
 // CHECK:STDOUT: source_filename = "import_ints.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -547,6 +548,8 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: !152 = !{!153}
 // CHECK:STDOUT: !153 = !DILocalVariable(arg: 1, scope: !149, type: !34)
 // CHECK:STDOUT: !154 = !DILocation(line: 35, column: 3, scope: !149)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_class.carbon'
 // CHECK:STDOUT: source_filename = "import_class.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -641,6 +644,8 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: !26 = !DILocation(line: 13, column: 3, scope: !25)
 // CHECK:STDOUT: !27 = !DILocation(line: 13, column: 18, scope: !25)
 // CHECK:STDOUT: !28 = !DILocation(line: 12, column: 1, scope: !25)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'indirect_return_with_args.carbon'
 // CHECK:STDOUT: source_filename = "indirect_return_with_args.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -705,3 +710,4 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: !21 = !{!"any pointer", !9, i64 0}
 // CHECK:STDOUT: !22 = !{!23, !23, i64 0}
 // CHECK:STDOUT: !23 = !{!"p1 _ZTS1C", !21, i64 0}
+// CHECK:STDOUT:

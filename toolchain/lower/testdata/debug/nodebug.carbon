@@ -14,6 +14,7 @@
 fn F() {
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'nodebug.carbon'
 // CHECK:STDOUT: source_filename = "nodebug.carbon"
 // CHECK:STDOUT:
@@ -24,3 +25,4 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT:

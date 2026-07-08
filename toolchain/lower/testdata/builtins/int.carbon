@@ -222,6 +222,7 @@ fn TestInt32ToUint64(a: i32) -> u64 { return Int32ToUint64(a); }
 fn TestUint32ToInt64(a: u32) -> i64 { return Uint32ToInt64(a); }
 fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -490,6 +491,8 @@ fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 // CHECK:STDOUT: !124 = !DILocalVariable(arg: 2, scope: !121, type: !7)
 // CHECK:STDOUT: !125 = !DILocation(line: 59, column: 51, scope: !121)
 // CHECK:STDOUT: !126 = !DILocation(line: 59, column: 44, scope: !121)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'compound_assign.carbon'
 // CHECK:STDOUT: source_filename = "compound_assign.carbon"
 // CHECK:STDOUT:
@@ -750,6 +753,8 @@ fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 // CHECK:STDOUT: !105 = !DILocalVariable(arg: 2, scope: !100, type: !94)
 // CHECK:STDOUT: !106 = !DILocation(line: 50, column: 48, scope: !100)
 // CHECK:STDOUT: !107 = !DILocation(line: 50, column: 1, scope: !100)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'mixed_shift.carbon'
 // CHECK:STDOUT: source_filename = "mixed_shift.carbon"
 // CHECK:STDOUT:
@@ -916,6 +921,8 @@ fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 // CHECK:STDOUT: !75 = !DILocalVariable(arg: 2, scope: !72, type: !37)
 // CHECK:STDOUT: !76 = !DILocation(line: 32, column: 59, scope: !72)
 // CHECK:STDOUT: !77 = !DILocation(line: 32, column: 52, scope: !72)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'mixed_compare.carbon'
 // CHECK:STDOUT: source_filename = "mixed_compare.carbon"
 // CHECK:STDOUT:
@@ -1087,6 +1094,8 @@ fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 // CHECK:STDOUT: !76 = !DILocalVariable(arg: 2, scope: !73, type: !9)
 // CHECK:STDOUT: !77 = !DILocation(line: 26, column: 54, scope: !73)
 // CHECK:STDOUT: !78 = !DILocation(line: 26, column: 47, scope: !73)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'convert.carbon'
 // CHECK:STDOUT: source_filename = "convert.carbon"
 // CHECK:STDOUT:
@@ -1265,3 +1274,4 @@ fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 // CHECK:STDOUT: !87 = !DILocalVariable(arg: 1, scope: !83, type: !14)
 // CHECK:STDOUT: !88 = !DILocation(line: 35, column: 47, scope: !83)
 // CHECK:STDOUT: !89 = !DILocation(line: 35, column: 40, scope: !83)
+// CHECK:STDOUT:

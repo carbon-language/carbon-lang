@@ -33,6 +33,7 @@ fn J() {
   NoOp2(I());
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'no_op.carbon'
 // CHECK:STDOUT: source_filename = "no_op.carbon"
 // CHECK:STDOUT:
@@ -95,3 +96,4 @@ fn J() {
 // CHECK:STDOUT: !13 = distinct !DISubprogram(name: "J", linkageName: "_CJ.Main", scope: null, file: !1, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !14 = !DILocation(line: 33, column: 9, scope: !13)
 // CHECK:STDOUT: !15 = !DILocation(line: 32, column: 1, scope: !13)
+// CHECK:STDOUT:

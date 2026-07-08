@@ -39,6 +39,7 @@ fn Test() {
   TakePointerSize(MakePointerSize((1, 2, 3, 4)));
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'std_initializer_list_make.carbon'
 // CHECK:STDOUT: source_filename = "std_initializer_list_make.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -146,3 +147,4 @@ fn Test() {
 // CHECK:STDOUT: !32 = !{!33}
 // CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !28, type: !31)
 // CHECK:STDOUT: !34 = !DILocation(line: 26, column: 35, scope: !28)
+// CHECK:STDOUT:

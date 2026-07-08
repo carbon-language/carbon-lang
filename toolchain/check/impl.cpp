@@ -79,8 +79,8 @@ auto CheckAssociatedFunctionImplementation(
 
   return BuildThunk(context, interface_function_type.function_id,
                     interface_function_specific_id,
-                    /*signature_self_type_override_id=*/SemIR::TypeId::None,
-                    impl_decl_id, defer_thunk_definition);
+                    /*override_self_type_id=*/SemIR::TypeId::None, impl_decl_id,
+                    defer_thunk_definition);
 }
 
 static auto GetScopeInstId(Context& context, SemIR::InstId scope_inst_id)
@@ -874,15 +874,14 @@ auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
                                 SemIR::TypeInstId constraint_id)
     -> SemIR::SpecificInterface {
   auto canon_constraint_id =
-      context.constant_values().GetConstantInstId(constraint_id);
+      context.constant_values().GetConstantTypeInstId(constraint_id);
   if (canon_constraint_id == SemIR::ErrorInst::TypeInstId) {
     return SemIR::SpecificInterface::None;
   }
-  auto facet_type =
-      context.insts().GetAs<SemIR::FacetType>(canon_constraint_id);
   auto identified_id = RequireIdentifiedFacetType(
       context, SemIR::LocId(constraint_id),
-      context.constant_values().Get(self_id), facet_type, [&](auto& builder) {
+      context.constant_values().Get(self_id), canon_constraint_id,
+      [&](auto& builder) {
         CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Context,
                           "facet type {0} cannot be identified in `impl as`",
                           InstIdAsType);

@@ -20,6 +20,7 @@ fn Foo.Bar.Baz() {
   Foo.Bar.Wiz();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'nested.carbon'
 // CHECK:STDOUT: source_filename = "nested.carbon"
 // CHECK:STDOUT:
@@ -52,3 +53,4 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Baz", linkageName: "_CBaz.Bar.Foo.Main", scope: null, file: !1, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !9 = !DILocation(line: 20, column: 3, scope: !8)
 // CHECK:STDOUT: !10 = !DILocation(line: 19, column: 1, scope: !8)
+// CHECK:STDOUT:

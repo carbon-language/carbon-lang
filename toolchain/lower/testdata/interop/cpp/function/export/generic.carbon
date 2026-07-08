@@ -46,6 +46,7 @@ fn Run() {
   Cpp.G();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic_type_impls_interface.carbon'
 // CHECK:STDOUT: source_filename = "generic_type_impls_interface.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -325,3 +326,4 @@ fn Run() {
 // CHECK:STDOUT: !64 = !DILocalVariable(arg: 1, scope: !62, type: !19)
 // CHECK:STDOUT: !65 = !DILocation(line: 20, column: 3, scope: !62)
 // CHECK:STDOUT: !66 = !DILocation(line: 19, column: 1, scope: !62)
+// CHECK:STDOUT:

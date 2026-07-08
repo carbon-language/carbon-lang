@@ -674,10 +674,6 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @IntRange.as.Iterate.impl.Next.%IntRange (%IntRange.2c4), %cursor.param: @IntRange.as.Iterate.impl.Next.%ptr.loc11_38.1 (%ptr.41e)) -> out %return.param: @IntRange.as.Iterate.impl.Next.%Optional.loc11_69.1 (%Optional.5ec) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %value.patt.loc12_16.1: @IntRange.as.Iterate.impl.Next.%pattern_type.loc12 (%pattern_type.142cb7.1) = ref_binding_pattern value [symbolic = %value.patt.loc12_16.2 (constants.%value.patt.505)]
-// CHECK:STDOUT:       %value.var_patt.loc12_7.1: @IntRange.as.Iterate.impl.Next.%pattern_type.loc12 (%pattern_type.142cb7.1) = var_pattern %value.patt.loc12_16.1 [symbolic = %value.var_patt.loc12_7.2 (constants.%value.var_patt)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %value.var: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_37.1 (%Int.67af24.1) = var_storage %value.var_patt.loc12_7.1
 // CHECK:STDOUT:     %cursor.ref.loc12: @IntRange.as.Iterate.impl.Next.%ptr.loc11_38.1 (%ptr.41e) = name_ref cursor, %cursor
 // CHECK:STDOUT:     %.loc12_32.1: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_37.1 (%Int.67af24.1) = deref %cursor.ref.loc12
@@ -699,6 +695,10 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:       %Int.loc12: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc11_37.1 (constants.%Int.67af24.1)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %value: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_37.1 (%Int.67af24.1) = wrapper_binding value, %value.var
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %value.patt.loc12_16.1: @IntRange.as.Iterate.impl.Next.%pattern_type.loc12 (%pattern_type.142cb7.1) = ref_binding_pattern value [symbolic = %value.patt.loc12_16.2 (constants.%value.patt.505)]
+// CHECK:STDOUT:       %value.var_patt.loc12_7.1: @IntRange.as.Iterate.impl.Next.%pattern_type.loc12 (%pattern_type.142cb7.1) = var_pattern %value.patt.loc12_16.1 [symbolic = %value.var_patt.loc12_7.2 (constants.%value.var_patt)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %value.ref.loc13: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_37.1 (%Int.67af24.1) = name_ref value, %value
 // CHECK:STDOUT:     %self.ref: @IntRange.as.Iterate.impl.Next.%IntRange (%IntRange.2c4) = name_ref self, %self
 // CHECK:STDOUT:     %end.ref: @IntRange.as.Iterate.impl.Next.%IntRange.elem (%IntRange.elem.bed) = name_ref end, @IntRange.%.loc23 [concrete = @IntRange.%.loc23]
@@ -1111,10 +1111,6 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %x.patt: %pattern_type.0f3 = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:       %x.var_patt: %pattern_type.0f3 = var_pattern %x.patt [concrete = constants.%x.var_patt]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x.var: ref %IntRange.bbd = var_storage %x.var_patt
 // CHECK:STDOUT:     %Range.ref: %Range.type = name_ref Range, imports.%Main.Range [concrete = constants.%Range]
 // CHECK:STDOUT:     %y.ref: Core.IntLiteral = name_ref y, %y.loc4_10.2 [symbolic = %y.loc4_10.1 (constants.%y)]
@@ -1134,6 +1130,10 @@ fn Read(y:! Core.IntLiteral) {
 // CHECK:STDOUT:       %IntRange: type = class_type @IntRange, @IntRange(constants.%int_32) [concrete = constants.%IntRange.bbd]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: ref %IntRange.bbd = wrapper_binding x, %x.var
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %x.patt: %pattern_type.0f3 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:       %x.var_patt: %pattern_type.0f3 = var_pattern %x.patt [concrete = constants.%x.var_patt]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:     return

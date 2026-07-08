@@ -33,6 +33,7 @@ fn Uses() {
   BoolParam(false);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'types.carbon'
 // CHECK:STDOUT: source_filename = "types.carbon"
 // CHECK:STDOUT:
@@ -67,3 +68,4 @@ fn Uses() {
 // CHECK:STDOUT: !8 = !DILocation(line: 32, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 33, column: 3, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 30, column: 1, scope: !4)
+// CHECK:STDOUT:

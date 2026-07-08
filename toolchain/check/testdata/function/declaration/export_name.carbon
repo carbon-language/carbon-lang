@@ -101,16 +101,16 @@ var f: () = F();
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type = ref_binding_pattern f [concrete = constants.%f.patt]
-// CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete = constants.%f.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var_storage %f.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6_9.1: type = splice_block %.loc6_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = wrapper_binding f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %pattern_type = ref_binding_pattern f [concrete = constants.%f.patt]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete = constants.%f.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "export.carbon"];

@@ -167,6 +167,7 @@ fn Four() {
   let _: Cpp.C = (5, 6, 7, 8);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_default.carbon'
 // CHECK:STDOUT: source_filename = "import_default.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -267,6 +268,8 @@ fn Four() {
 // CHECK:STDOUT: !22 = !{!23, !8, i64 0}
 // CHECK:STDOUT: !23 = !{!"_ZTS1C", !8, i64 0, !8, i64 4}
 // CHECK:STDOUT: !24 = !{!23, !8, i64 4}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'implicit_default.carbon'
 // CHECK:STDOUT: source_filename = "implicit_default.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -366,6 +369,8 @@ fn Four() {
 // CHECK:STDOUT: !29 = !{!30, !8, i64 0}
 // CHECK:STDOUT: !30 = !{!"_ZTS1C", !8, i64 0, !8, i64 4}
 // CHECK:STDOUT: !31 = !{!30, !8, i64 4}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'defaulted_default.carbon'
 // CHECK:STDOUT: source_filename = "defaulted_default.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -524,6 +529,8 @@ fn Four() {
 // CHECK:STDOUT: !40 = !{!"_ZTS26ImplicitlyDefaultedDefault", !8, i64 0}
 // CHECK:STDOUT: !41 = !{!42, !8, i64 0}
 // CHECK:STDOUT: !42 = !{!"_ZTS26ExplicitlyDefaultedDefault", !8, i64 0}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_copy.carbon'
 // CHECK:STDOUT: source_filename = "call_copy.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -600,6 +607,8 @@ fn Four() {
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !22, type: !14)
 // CHECK:STDOUT: !26 = !DILocation(line: 5, column: 3, scope: !22)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_c1_in_thunk.carbon'
 // CHECK:STDOUT: source_filename = "call_c1_in_thunk.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -690,6 +699,8 @@ fn Four() {
 // CHECK:STDOUT: !18 = !{!"any pointer", !9, i64 0}
 // CHECK:STDOUT: !19 = !{!20, !20, i64 0}
 // CHECK:STDOUT: !20 = !{!"vtable pointer", !10, i64 0}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_multi_argument.carbon'
 // CHECK:STDOUT: source_filename = "call_multi_argument.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -1029,3 +1040,4 @@ fn Four() {
 // CHECK:STDOUT: !34 = !DILocation(line: 28, column: 18, scope: !33)
 // CHECK:STDOUT: !35 = !DILocation(line: 29, column: 18, scope: !33)
 // CHECK:STDOUT: !36 = !DILocation(line: 27, column: 1, scope: !33)
+// CHECK:STDOUT:

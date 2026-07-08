@@ -104,6 +104,7 @@ fn AddSubUInt32(c: char, i: u32) {
   Discard(c - i);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'char.carbon'
 // CHECK:STDOUT: source_filename = "char.carbon"
 // CHECK:STDOUT:
@@ -1011,3 +1012,4 @@ fn AddSubUInt32(c: char, i: u32) {
 // CHECK:STDOUT: !451 = !{!452}
 // CHECK:STDOUT: !452 = !DILocalVariable(arg: 1, scope: !448, type: !7)
 // CHECK:STDOUT: !453 = !DILocation(line: 60, column: 29, scope: !448)
+// CHECK:STDOUT:

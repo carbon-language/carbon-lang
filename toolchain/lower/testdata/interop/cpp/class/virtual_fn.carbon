@@ -49,6 +49,7 @@ void delete_new_Base() {
 }
 ''';
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'override_virtual_dtor.carbon'
 // CHECK:STDOUT: source_filename = "override_virtual_dtor.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -418,3 +419,4 @@ void delete_new_Base() {
 // CHECK:STDOUT: !58 = !{!59}
 // CHECK:STDOUT: !59 = !DILocalVariable(arg: 1, scope: !57, type: !25)
 // CHECK:STDOUT: !60 = !DILocation(line: 19, column: 3, scope: !57)
+// CHECK:STDOUT:

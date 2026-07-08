@@ -24,6 +24,7 @@ fn While() {
   H();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'while.carbon'
 // CHECK:STDOUT: source_filename = "while.carbon"
 // CHECK:STDOUT:
@@ -73,3 +74,4 @@ fn While() {
 // CHECK:STDOUT: !11 = !DILocation(line: 21, column: 3, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 24, column: 3, scope: !4)
 // CHECK:STDOUT: !13 = !DILocation(line: 19, column: 1, scope: !4)
+// CHECK:STDOUT:

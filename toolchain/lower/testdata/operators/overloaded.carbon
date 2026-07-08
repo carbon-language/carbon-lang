@@ -30,6 +30,7 @@ fn Calculate(a: Number, b: Number) -> Number {
   return -a * b;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'overloaded.carbon'
 // CHECK:STDOUT: source_filename = "overloaded.carbon"
 // CHECK:STDOUT:
@@ -168,3 +169,4 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !42 = !{!43}
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !41, type: !7)
 // CHECK:STDOUT: !44 = !DILocation(line: 30, column: 10, scope: !41)
+// CHECK:STDOUT:

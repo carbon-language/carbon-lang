@@ -72,6 +72,7 @@ fn InitLet() {
   G();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'let_param.carbon'
 // CHECK:STDOUT: source_filename = "let_param.carbon"
 // CHECK:STDOUT:
@@ -134,6 +135,8 @@ fn InitLet() {
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !18, type: !7)
 // CHECK:STDOUT: !21 = !DILocation(line: 12, column: 5, scope: !18)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'var_param.carbon'
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
@@ -199,6 +202,8 @@ fn InitLet() {
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !18, type: !7)
 // CHECK:STDOUT: !21 = !DILocation(line: 6, column: 6, scope: !18)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'return_slot.carbon'
 // CHECK:STDOUT: source_filename = "return_slot.carbon"
 // CHECK:STDOUT:
@@ -292,3 +297,4 @@ fn InitLet() {
 // CHECK:STDOUT: !26 = !DILocation(line: 22, column: 14, scope: !25)
 // CHECK:STDOUT: !27 = !DILocation(line: 23, column: 3, scope: !25)
 // CHECK:STDOUT: !28 = !DILocation(line: 21, column: 1, scope: !25)
+// CHECK:STDOUT:

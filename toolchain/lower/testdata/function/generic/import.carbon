@@ -56,6 +56,7 @@ fn Call() -> i32 {
   return *p;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'indirectly_imported.carbon'
 // CHECK:STDOUT: source_filename = "indirectly_imported.carbon"
 // CHECK:STDOUT:
@@ -80,6 +81,8 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 6, column: 1, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'directly_imported.carbon'
 // CHECK:STDOUT: source_filename = "directly_imported.carbon"
 // CHECK:STDOUT:
@@ -104,6 +107,8 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 8, column: 1, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use.carbon'
 // CHECK:STDOUT: source_filename = "use.carbon"
 // CHECK:STDOUT:
@@ -202,3 +207,4 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !35 = !DILocation(line: 9, column: 3, scope: !31)
 // CHECK:STDOUT: !36 = !DILocation(line: 10, column: 3, scope: !31)
 // CHECK:STDOUT: !37 = !DILocation(line: 11, column: 3, scope: !31)
+// CHECK:STDOUT:

@@ -102,6 +102,7 @@ fn MyF() {
   Cpp.foo();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_extern_c_function.carbon'
 // CHECK:STDOUT: source_filename = "import_extern_c_function.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -139,6 +140,8 @@ fn MyF() {
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 7, column: 3, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 6, column: 1, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'extern_c_function_with_cpp_overload_set.carbon'
 // CHECK:STDOUT: source_filename = "extern_c_function_with_cpp_overload_set.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -180,6 +183,8 @@ fn MyF() {
 // CHECK:STDOUT: !14 = !DILocation(line: 10, column: 3, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 11, column: 3, scope: !11)
 // CHECK:STDOUT: !16 = !DILocation(line: 9, column: 1, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_extern_c_variable.carbon'
 // CHECK:STDOUT: source_filename = "import_extern_c_variable.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -217,6 +222,8 @@ fn MyF() {
 // CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !15 = !DILocation(line: 7, column: 10, scope: !11)
 // CHECK:STDOUT: !16 = !DILocation(line: 7, column: 3, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_extern_c_with_special_name.carbon'
 // CHECK:STDOUT: source_filename = "import_extern_c_with_special_name.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -283,6 +290,8 @@ fn MyF() {
 // CHECK:STDOUT: !20 = !{!21, !21, i64 0}
 // CHECK:STDOUT: !21 = !{!"p1 _ZTS1X", !22, i64 0}
 // CHECK:STDOUT: !22 = !{!"any pointer", !9, i64 0}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_extern_c_with_asm_label.carbon'
 // CHECK:STDOUT: source_filename = "import_extern_c_with_asm_label.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -320,3 +329,4 @@ fn MyF() {
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 7, column: 3, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 6, column: 1, scope: !11)
+// CHECK:STDOUT:

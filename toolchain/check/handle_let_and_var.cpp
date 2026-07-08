@@ -157,16 +157,12 @@ static auto EndFullPattern(Context& context) -> void {
     context.pattern_block_stack().PopAndDiscard();
     return;
   }
-  auto pattern_block_id = context.pattern_block_stack().Pop();
 
   // For non-static class fields, a `FieldDecl` has been created; skip
   // creating a name binding and var storage.
   if (InNonStaticFieldDecl(context)) {
     return;
   }
-
-  AddInst<SemIR::NameBindingDecl>(context, context.node_stack().PeekNodeId(),
-                                  {.pattern_block_id = pattern_block_id});
 
   // Emit storage for any `var`s in the pattern now.
   bool returned =
@@ -341,6 +337,13 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
     context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
                            ExpectedInitializerAfterLet);
   }
+
+  auto pattern_block_id = context.pattern_block_stack().Pop();
+  if (!InNonStaticFieldDecl(context)) {
+    AddInst<SemIR::NameBindingDecl>(context, node_id,
+                                    {.pattern_block_id = pattern_block_id});
+  }
+
   context.full_pattern_stack().PopFullPattern();
   return true;
 }
@@ -411,6 +414,12 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
                            KeywordModifierSet::Static);
 
   LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
+
+  auto pattern_block_id = context.pattern_block_stack().Pop();
+  if (!InNonStaticFieldDecl(context)) {
+    AddInst<SemIR::NameBindingDecl>(context, node_id,
+                                    {.pattern_block_id = pattern_block_id});
+  }
 
   context.full_pattern_stack().PopFullPattern();
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
