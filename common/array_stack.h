@@ -98,6 +98,13 @@ class ArrayStack {
     array_offsets_[array_offsets_.size() - 1] = values_.size();
   }
 
+  // Merges the top array into the parent array directly before it, leaving the
+  // top array empty.
+  auto MergeTopArrayIntoParent() -> void {
+    CARBON_CHECK(array_offsets_.size() >= 2);
+    array_offsets_.back() = values_.size();
+  }
+
   // Returns the current number of values in all arrays.
   auto all_values_size() const -> size_t { return values_.size(); }
 

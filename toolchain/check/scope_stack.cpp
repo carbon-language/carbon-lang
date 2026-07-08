@@ -209,6 +209,16 @@ auto ScopeStack::MergeTopScopeIntoGrandparentAndPop() -> void {
   Pop();
 }
 
+auto ScopeStack::MergeTopCleanupScopeIntoParent() -> void {
+  CARBON_CHECK(scope_stack_.size() >= 2);
+  auto& parent = scope_stack_[scope_stack_.size() - 2];
+  auto& current = scope_stack_[scope_stack_.size() - 1];
+  if (current.has_destroy_array) {
+    CARBON_CHECK(parent.has_destroy_array);
+    destroy_id_stack_.MergeTopArrayIntoParent();
+  }
+}
+
 auto ScopeStack::MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id,
                           bool is_reachable) -> void {
   auto& lexical_results = lexical_lookup_.Get(name_id);

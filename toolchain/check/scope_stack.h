@@ -131,6 +131,9 @@ class ScopeStack {
   // Requires that no names were introduced in the innermost scope.
   auto MergeTopScopeIntoGrandparentAndPop() -> void;
 
+  // Merges the cleanup array of the innermost scope into its parent scope.
+  auto MergeTopCleanupScopeIntoParent() -> void;
+
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>

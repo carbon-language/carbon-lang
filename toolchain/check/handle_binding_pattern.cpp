@@ -468,6 +468,7 @@ auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternId node_id) -> bool {
   // Pop the `.Self` facet value name introduced by the
   // CompileTimeBindingPatternStart.
+  context.scope_stack().MergeTopCleanupScopeIntoParent();
   context.scope_stack().Pop(/*check_unused=*/true);
 
   auto node_kind = Parse::NodeKind::CompileTimeBindingPattern;
