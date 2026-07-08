@@ -1240,10 +1240,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%t.param: @F.%T.as_type.loc5_25.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %a.patt.loc6_8.1: @F.%pattern_type.loc6 (%pattern_type.77f685.2) = ref_binding_pattern a [symbolic = %a.patt.loc6_8.2 (constants.%a.patt)]
-// CHECK:STDOUT:       %a.var_patt.loc6_3.1: @F.%pattern_type.loc6 (%pattern_type.77f685.2) = var_pattern %a.patt.loc6_8.1 [symbolic = %a.var_patt.loc6_3.2 (constants.%a.var_patt)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.var: ref @F.%as_type.loc6_11.2 (%as_type.a0914b.2) = var_storage %a.var_patt.loc6_3.1
 // CHECK:STDOUT:     %t.ref: @F.%T.as_type.loc5_25.1 (%T.as_type) = name_ref t, %t
 // CHECK:STDOUT:     %GetA.ref: %Transitive.assoc_type = name_ref GetA, imports.%Main.import_ref.5c5 [concrete = constants.%assoc3]
@@ -1267,8 +1263,8 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: ref @F.%as_type.loc6_11.2 (%as_type.a0914b.2) = wrapper_binding a, %a.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %b.patt.loc15_8.1: @F.%pattern_type.loc15 (%pattern_type.86a) = ref_binding_pattern b [symbolic = %b.patt.loc15_8.2 (constants.%b.patt)]
-// CHECK:STDOUT:       %b.var_patt.loc15_3.1: @F.%pattern_type.loc15 (%pattern_type.86a) = var_pattern %b.patt.loc15_8.1 [symbolic = %b.var_patt.loc15_3.2 (constants.%b.var_patt)]
+// CHECK:STDOUT:       %a.patt.loc6_8.1: @F.%pattern_type.loc6 (%pattern_type.77f685.2) = ref_binding_pattern a [symbolic = %a.patt.loc6_8.2 (constants.%a.patt)]
+// CHECK:STDOUT:       %a.var_patt.loc6_3.1: @F.%pattern_type.loc6 (%pattern_type.77f685.2) = var_pattern %a.patt.loc6_8.1 [symbolic = %a.var_patt.loc6_3.2 (constants.%a.var_patt)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.var: ref @F.%as_type.loc15_11.2 (%as_type.f86e2d.2) = var_storage %b.var_patt.loc15_3.1
 // CHECK:STDOUT:     %a.ref.loc15: ref @F.%as_type.loc6_11.2 (%as_type.a0914b.2) = name_ref a, %a
@@ -1288,6 +1284,10 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:       %.loc15_11.3: type = converted %impl.elem1.loc15_11.1, %as_type.loc15_11.1 [symbolic = %as_type.loc15_11.2 (constants.%as_type.f86e2d.2)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: ref @F.%as_type.loc15_11.2 (%as_type.f86e2d.2) = wrapper_binding b, %b.var
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %b.patt.loc15_8.1: @F.%pattern_type.loc15 (%pattern_type.86a) = ref_binding_pattern b [symbolic = %b.patt.loc15_8.2 (constants.%b.patt)]
+// CHECK:STDOUT:       %b.var_patt.loc15_3.1: @F.%pattern_type.loc15 (%pattern_type.86a) = var_pattern %b.patt.loc15_8.1 [symbolic = %b.var_patt.loc15_3.2 (constants.%b.var_patt)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.ref: ref @F.%as_type.loc15_11.2 (%as_type.f86e2d.2) = name_ref b, %b
 // CHECK:STDOUT:     %InQ.ref: %Q.assoc_type = name_ref InQ, imports.%Main.import_ref.e2a [concrete = constants.%assoc0.6a1]
 // CHECK:STDOUT:     %impl.elem0.loc16_4.1: @F.%.loc16_4 (%.786) = impl_witness_access constants.%Q.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc16_4.2 (constants.%impl.elem0.8e3)]
@@ -2194,10 +2194,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%t.param: @G.%T.as_type.loc6_25.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %a.patt.loc7_8.1: @G.%pattern_type.loc7 (%pattern_type.c73ac0.2) = ref_binding_pattern a [symbolic = %a.patt.loc7_8.2 (constants.%a.patt)]
-// CHECK:STDOUT:       %a.var_patt.loc7_3.1: @G.%pattern_type.loc7 (%pattern_type.c73ac0.2) = var_pattern %a.patt.loc7_8.1 [symbolic = %a.var_patt.loc7_3.2 (constants.%a.var_patt)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.var: ref @G.%as_type.loc7_11.2 (%as_type.6a024f.2) = var_storage %a.var_patt.loc7_3.1
 // CHECK:STDOUT:     %t.ref: @G.%T.as_type.loc6_25.1 (%T.as_type) = name_ref t, %t
 // CHECK:STDOUT:     %GetA.ref: %Transitive.assoc_type = name_ref GetA, imports.%Main.import_ref.5c5 [concrete = constants.%assoc3]
@@ -2220,6 +2216,10 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:       %.loc7_11.3: type = converted %impl.elem0.loc7_11.1, %as_type.loc7_11.1 [symbolic = %as_type.loc7_11.2 (constants.%as_type.6a024f.2)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: ref @G.%as_type.loc7_11.2 (%as_type.6a024f.2) = wrapper_binding a, %a.var
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %a.patt.loc7_8.1: @G.%pattern_type.loc7 (%pattern_type.c73ac0.2) = ref_binding_pattern a [symbolic = %a.patt.loc7_8.2 (constants.%a.patt)]
+// CHECK:STDOUT:       %a.var_patt.loc7_3.1: @G.%pattern_type.loc7 (%pattern_type.c73ac0.2) = var_pattern %a.patt.loc7_8.1 [symbolic = %a.var_patt.loc7_3.2 (constants.%a.var_patt)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref.loc9_11: %Transitive.type = name_ref T, %T.loc6_7.2 [symbolic = %T.loc6_7.1 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc9_12: type = facet_access_type %T.ref.loc9_11 [symbolic = %T.as_type.loc6_25.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc9_12.1: type = converted %T.ref.loc9_11, %T.as_type.loc9_12 [symbolic = %T.as_type.loc6_25.1 (constants.%T.as_type)]
@@ -2827,10 +2827,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%t.param: @G.%T.as_type.loc6_25.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %a.patt.loc7_8.1: @G.%pattern_type.loc7 (%pattern_type.c73ac0.2) = ref_binding_pattern a [symbolic = %a.patt.loc7_8.2 (constants.%a.patt)]
-// CHECK:STDOUT:       %a.var_patt.loc7_3.1: @G.%pattern_type.loc7 (%pattern_type.c73ac0.2) = var_pattern %a.patt.loc7_8.1 [symbolic = %a.var_patt.loc7_3.2 (constants.%a.var_patt)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.var: ref @G.%as_type.loc7_11.2 (%as_type.6a024f.2) = var_storage %a.var_patt.loc7_3.1
 // CHECK:STDOUT:     %t.ref: @G.%T.as_type.loc6_25.1 (%T.as_type) = name_ref t, %t
 // CHECK:STDOUT:     %GetA.ref: %Transitive.assoc_type = name_ref GetA, imports.%Main.import_ref.5c5 [concrete = constants.%assoc3]
@@ -2853,6 +2849,10 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:       %.loc7_11.3: type = converted %impl.elem0.loc7_11.1, %as_type.loc7_11.1 [symbolic = %as_type.loc7_11.2 (constants.%as_type.6a024f.2)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: ref @G.%as_type.loc7_11.2 (%as_type.6a024f.2) = wrapper_binding a, %a.var
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %a.patt.loc7_8.1: @G.%pattern_type.loc7 (%pattern_type.c73ac0.2) = ref_binding_pattern a [symbolic = %a.patt.loc7_8.2 (constants.%a.patt)]
+// CHECK:STDOUT:       %a.var_patt.loc7_3.1: @G.%pattern_type.loc7 (%pattern_type.c73ac0.2) = var_pattern %a.patt.loc7_8.1 [symbolic = %a.var_patt.loc7_3.2 (constants.%a.var_patt)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.ref.loc13: ref @G.%as_type.loc7_11.2 (%as_type.6a024f.2) = name_ref a, %a
 // CHECK:STDOUT:     %Q.ref: type = name_ref Q, imports.%Main.Q [concrete = constants.%Q.type]
 // CHECK:STDOUT:     %InQ.ref: %Q.assoc_type = name_ref InQ, imports.%Main.import_ref.e2a [concrete = constants.%assoc0.6a1]
@@ -3391,10 +3391,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:     %as_type.loc6_19.2: type = facet_access_type %impl.elem1.loc6_19.1 [symbolic = %as_type.loc6_19.3 (constants.%as_type.f86e2d.2)]
 // CHECK:STDOUT:     %.loc6_19.3: type = converted %impl.elem1.loc6_19.1, %as_type.loc6_19.2 [symbolic = %as_type.loc6_19.3 (constants.%as_type.f86e2d.2)]
 // CHECK:STDOUT:     %G.observe.decl = observe_decl @G.observe [concrete]
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %a.patt.loc8_8.1: @G.%pattern_type.loc8 (%pattern_type.77f685.2) = ref_binding_pattern a [symbolic = %a.patt.loc8_8.2 (constants.%a.patt)]
-// CHECK:STDOUT:       %a.var_patt.loc8_3.1: @G.%pattern_type.loc8 (%pattern_type.77f685.2) = var_pattern %a.patt.loc8_8.1 [symbolic = %a.var_patt.loc8_3.2 (constants.%a.var_patt)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.var: ref @G.%as_type.loc6_12.2 (%as_type.a0914b.2) = var_storage %a.var_patt.loc8_3.1
 // CHECK:STDOUT:     %t.ref: @G.%T.as_type.loc5_25.1 (%T.as_type) = name_ref t, %t
 // CHECK:STDOUT:     %GetA.ref: %Transitive.assoc_type = name_ref GetA, imports.%Main.import_ref.5c5 [concrete = constants.%assoc3]
@@ -3417,6 +3413,10 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:       %.loc8_11.3: type = converted %impl.elem0.loc8_11, %as_type.loc8 [symbolic = %as_type.loc6_12.2 (constants.%as_type.a0914b.2)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: ref @G.%as_type.loc6_12.2 (%as_type.a0914b.2) = wrapper_binding a, %a.var
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %a.patt.loc8_8.1: @G.%pattern_type.loc8 (%pattern_type.77f685.2) = ref_binding_pattern a [symbolic = %a.patt.loc8_8.2 (constants.%a.patt)]
+// CHECK:STDOUT:       %a.var_patt.loc8_3.1: @G.%pattern_type.loc8 (%pattern_type.77f685.2) = var_pattern %a.patt.loc8_8.1 [symbolic = %a.var_patt.loc8_3.2 (constants.%a.var_patt)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.ref: ref @G.%as_type.loc6_12.2 (%as_type.a0914b.2) = name_ref a, %a
 // CHECK:STDOUT:     %T.ref.loc17: %Transitive.type = name_ref T, %T.loc5_7.2 [symbolic = %T.loc5_7.1 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc17: type = facet_access_type %T.ref.loc17 [symbolic = %T.as_type.loc5_25.1 (constants.%T.as_type)]
@@ -6375,10 +6375,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%t.param: @F.%T.as_type.loc8_19.1 (%T.as_type.a68)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %u.patt.loc9_8.1: @F.%pattern_type.loc9 (%pattern_type.439) = ref_binding_pattern u [symbolic = %u.patt.loc9_8.2 (constants.%u.patt)]
-// CHECK:STDOUT:       %u.var_patt.loc9_3.1: @F.%pattern_type.loc9 (%pattern_type.439) = var_pattern %u.patt.loc9_8.1 [symbolic = %u.var_patt.loc9_3.2 (constants.%u.var_patt)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u.var: ref @F.%as_type.loc9_11.2 (%as_type.93c) = var_storage %u.var_patt.loc9_3.1
 // CHECK:STDOUT:     %t.ref.loc9: @F.%T.as_type.loc8_19.1 (%T.as_type.a68) = name_ref t, %t
 // CHECK:STDOUT:     %.loc9_17.1: %I.assoc_type.cf6 = specific_constant imports.%Main.import_ref.c5a, @I.WithSelf(constants.%facet_value, constants.%T.e69) [concrete = constants.%assoc1.9b4]
@@ -6401,6 +6397,10 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:       %.loc9_11.4: type = converted %impl.elem0.loc9_11.1, %as_type.loc9_11.1 [symbolic = %as_type.loc9_11.2 (constants.%as_type.93c)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u: ref @F.%as_type.loc9_11.2 (%as_type.93c) = wrapper_binding u, %u.var
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %u.patt.loc9_8.1: @F.%pattern_type.loc9 (%pattern_type.439) = ref_binding_pattern u [symbolic = %u.patt.loc9_8.2 (constants.%u.patt)]
+// CHECK:STDOUT:       %u.var_patt.loc9_3.1: @F.%pattern_type.loc9 (%pattern_type.439) = var_pattern %u.patt.loc9_8.1 [symbolic = %u.var_patt.loc9_3.2 (constants.%u.var_patt)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %t.ref.loc19: @F.%T.as_type.loc8_19.1 (%T.as_type.a68) = name_ref t, %t
 // CHECK:STDOUT:     %.loc19_4.1: %I.assoc_type.cf6 = specific_constant imports.%Main.import_ref.f14, @I.WithSelf(constants.%facet_value, constants.%T.e69) [concrete = constants.%assoc2.e5d]
 // CHECK:STDOUT:     %TakesT.ref: %I.assoc_type.cf6 = name_ref TakesT, %.loc19_4.1 [concrete = constants.%assoc2.e5d]
