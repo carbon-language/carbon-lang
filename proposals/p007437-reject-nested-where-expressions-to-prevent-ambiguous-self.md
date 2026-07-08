@@ -21,6 +21,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Alternatives considered](#alternatives-considered)
     -   [Allow nested `.Self` but it refers to the top level facet value](#allow-nested-self-but-it-refers-to-the-top-level-facet-value)
     -   [Allow ambiguous `.Self` but disambiguate based on context](#allow-ambiguous-self-but-disambiguate-based-on-context)
+    -   [Disallow use of ambiguous `.Self` through name lookup](#disallow-use-of-ambiguous-self-through-name-lookup)
+    -   [Disallow nested `where` syntactically but allow it from eval](#disallow-nested-where-syntactically-but-allow-it-from-eval)
 
 <!-- tocstop -->
 
