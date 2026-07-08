@@ -53,8 +53,10 @@ to crashes in the toolchain implementation as inconsistency develops.
 
 ## Background
 
--   [#7138](https://github.com/carbon-language/carbon-lang/issues/7138): Leads issue "How to treat ambiguous .Self?"
--   [p2173](/proposals/p002173-associated-constant-assignment-versus-equality.md): Proposal "Associated constant assignment versus equality"
+-   [#7138](https://github.com/carbon-language/carbon-lang/issues/7138): Leads
+    issue "How to treat ambiguous .Self?"
+-   [p2173](/proposals/p002173-associated-constant-assignment-versus-equality.md):
+    Proposal "Associated constant assignment versus equality"
 
 ## Proposal
 
@@ -134,13 +136,13 @@ constraint's expression:
     contain an arbitrary compile-time expression. That expression may be a facet
     type with a `where` expression. That `where` expression would introduce a
     `.Self` that refers to an unknown facet value until the associated constant
-    being rewritten was used as the constraining facet type for some facet
-    value. In this example, if a type `T` was constrained by the `.X` associated
+    being rewritten was used as the constraining facet type for some facet value.
+    In this example, if a type `T` was constrained by the `.X` associated
     constraint, the nested `.Self` would refer to that `T`.
 -   In a same-type constraint, it is possible to write an arbitrary compile-time
     expression on either side of the `==` operator. The expression may contain a
-    facet type with a `where` expression. That `where` expression would
-    introduce a `.Self` that does not refer to any facet value.
+    facet type with a `where` expression. That `where` expression would introduce
+    a `.Self` that does not refer to any facet value.
 
 It is possible for `.Self` to be introduced syntactically, by writing a `where`
 expression directly on the right-hand-side of another `where`. These are more
@@ -154,16 +156,16 @@ fn F(T:! Z where .Z1 = (Y where .Y1 = {}))
 //                        `where`.
 ```
 
-A `where` can also be introduced through evaluation. For example, a reference
-to an `alias` does not contain a `where` in its syntax, but the alias may
-evaluate to a facet type that contains a `where`, and this may contain `.Self`
-references that become ambiguous in the larger facet type. To prevent this, we
-also reject non-extend constraints in a facet type from appearing inside the
-non-extend constraints of another facet type. Non-extend constraints all come
-from the right-hand-side of a `where` expression. When they appear in a nested
-facet type that is inside a non-extend constraint, it implies a `where` nested
-on the right-hand-side of another `where`, and the potential for an ambiguous
-`.Self` in the nested facet type.
+A `where` can also be introduced through evaluation. For example, a reference to
+an `alias` does not contain a `where` in its syntax, but the alias may evaluate
+to a facet type that contains a `where`, and this may contain `.Self` references
+that become ambiguous in the larger facet type. To prevent this, we also reject
+non-extend constraints in a facet type from appearing inside the non-extend
+constraints of another facet type. Non-extend constraints all come from the
+right-hand-side of a `where` expression. When they appear in a nested facet type
+that is inside a non-extend constraint, it implies a `where` nested on the
+right-hand-side of another `where`, and the potential for an ambiguous `.Self`
+in the nested facet type.
 
 ```carbon
 alias A = Y where .Y1 = {};
@@ -176,7 +178,9 @@ fn F(T:! Z where .Z1 = A)
 
 ## Rationale
 
-The proposal advances the principle of [Low context-sensitivity](/docs/project/principles/low_context_sensitivity.md). By avoiding ambiguity in the syntax, we avoid requiring context to disambiguate.
+The proposal advances the principle of
+[Low context-sensitivity](/docs/project/principles/low_context_sensitivity.md).
+By avoiding ambiguity in the syntax, we avoid requiring context to disambiguate.
 
 ## Alternatives considered
 
@@ -189,7 +193,9 @@ refer to the top-level type being constrained, which would prevent writing
 constraints other than rewrite constraints on the right-hand-side of a nested
 `where`.
 
-If a nested facet type on the right-hand-side of a rewrite constraint contains `.Self` and it refers to the top level facet value we defer the ambiguity until the rewrite constraint's value is used elsewhere.
+If a nested facet type on the right-hand-side of a rewrite constraint contains
+`.Self` and it refers to the top level facet value we defer the ambiguity until
+the rewrite constraint's value is used elsewhere.
 
 In this example the facet type of `U` contains a `.Self.(Z.Z2)` that would refer
 to `T` and `.Self.(Y.Y1)` that would refer to `U`. In the canonical facet type,
@@ -209,30 +215,42 @@ it to a unique value (options 1, 1b, 3, 4).
 To do so requires "disambiguating" the `.Self` references, which we attempted to
 do numerous times with various strategies over 2025 and 2026:
 
--   [2026-06-04](https://docs.google.com/document/d/1mjllGO3ZCL4qGt9uJHUtcxKoHAGEY7Y999ie4EtBWB8/edit?tab=t.4yc1be253c33#heading=h.xiezkm442a2e): Numbering distance of `.Self` through generic arguments?
--   [2026-04-28](https://docs.google.com/document/d/1mjllGO3ZCL4qGt9uJHUtcxKoHAGEY7Y999ie4EtBWB8/edit?tab=t.h6lecvcwu214#heading=h.twhpk59ki1vo): Change how `.Self` is introduced?
--   [2026-04-13](https://docs.google.com/document/d/1mjllGO3ZCL4qGt9uJHUtcxKoHAGEY7Y999ie4EtBWB8/edit?tab=t.h6lecvcwu214#heading=h.pjdpgj7z1v1j): Restrict use of `.Self` in impls constraints?
--   [2025-10-16](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.ay4or45dwwxd): Attempting to use different instruction types for `.Self`.
--   [2025-09-11](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.4r024sqi9b4b): Replace `.Self` by modifying side-car data instead of modifying binding types?
--   [2025-09-08](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.rg3417ebho7q): Numbering distance of `.Self` from the binding/facet it refers to?
--   [2025-08-12](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.8dh7ckcudkx2): Special FacetAccessType for `.Self` usage to avoid toolchain cycles?
--   [2025-07-07](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.7urbxcq23olv): Numbering strategies for disambiguating `.Self` uses.
--   [2025-06-30](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.4qd5dkyfn2k3): Determining `.Self` distances.
+-   [2026-06-04](https://docs.google.com/document/d/1mjllGO3ZCL4qGt9uJHUtcxKoHAGEY7Y999ie4EtBWB8/edit?tab=t.4yc1be253c33#heading=h.xiezkm442a2e):
+    Numbering distance of `.Self` through generic arguments?
+-   [2026-04-28](https://docs.google.com/document/d/1mjllGO3ZCL4qGt9uJHUtcxKoHAGEY7Y999ie4EtBWB8/edit?tab=t.h6lecvcwu214#heading=h.twhpk59ki1vo):
+    Change how `.Self` is introduced?
+-   [2026-04-13](https://docs.google.com/document/d/1mjllGO3ZCL4qGt9uJHUtcxKoHAGEY7Y999ie4EtBWB8/edit?tab=t.h6lecvcwu214#heading=h.pjdpgj7z1v1j):
+    Restrict use of `.Self` in impls constraints?
+-   [2025-10-16](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.ay4or45dwwxd):
+    Attempting to use different instruction types for `.Self`.
+-   [2025-09-11](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.4r024sqi9b4b):
+    Replace `.Self` by modifying side-car data instead of modifying binding types?
+-   [2025-09-08](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.rg3417ebho7q):
+    Numbering distance of `.Self` from the binding/facet it refers to?
+-   [2025-08-12](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.8dh7ckcudkx2):
+    Special FacetAccessType for `.Self` usage to avoid toolchain cycles?
+-   [2025-07-07](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.7urbxcq23olv):
+    Numbering strategies for disambiguating `.Self` uses.
+-   [2025-06-30](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.4qd5dkyfn2k3):
+    Determining `.Self` distances.
 
-Each numbering strategy has failed, as [we can always construct](https://github.com/carbon-language/carbon-lang/issues/7138#issuecomment-4709736280) a facet type with
-ambiguous `.Self` and then [use that facet type as a generic argument](https://discord.com/channels/655572317891461132/941071822756143115/1514762686045487154). And the
-use of the facet type in the new generic context does not have the information
-available to it needed to disambiguate the `.Self` references.
+Each numbering strategy has failed, as
+[we can always construct](https://github.com/carbon-language/carbon-lang/issues/7138#issuecomment-4709736280)
+a facet type with ambiguous `.Self` and then
+[use that facet type as a generic argument](https://discord.com/channels/655572317891461132/941071822756143115/1514762686045487154).
+And the use of the facet type in the new generic context does not have the
+information available to it needed to disambiguate the `.Self` references.
 
 The complexity involved in tracking and replacing `.Self` becomes arbitrarily
-complex, with `.Self` representing free variables in [a lambda
-calculus](https://discord.com/channels/655572317891461132/941071822756143115/1514765334488547459)
+complex, with `.Self` representing free variables in
+[a lambda calculus](https://discord.com/channels/655572317891461132/941071822756143115/1514765334488547459)
 embededed in a facet type.
 
 Even detecting if a `.Self` is ambiguous from context is challenging since
-evaluation can distort the context. In [this example](https://github.com/carbon-language/carbon-lang/issues/7138#issuecomment-4752416144), the facet type contains a
-`.Self` reference which is ambiguous, but which we can't determine it is so from
-local context alone:
+evaluation can distort the context. In
+[this example](https://github.com/carbon-language/carbon-lang/issues/7138#issuecomment-4752416144),
+the facet type contains a `.Self` reference which is ambiguous, but which we
+can't determine it is so from local context alone:
 
 ```carbon
 interface I {}
@@ -273,11 +291,11 @@ can not be `.Self`-dependent. This comes from:
 
 -   A call to an `eval fn` is not evaluated until all inputs are concrete. So
     there can't be a `.Self` in the inputs. That means the function can not return
-    a facet type that involves `.Self` on the left-hand-side of the `where`. So any
-    use of `.Self` on the right-hand-side can be disamiguated.
--   An alias has no input parameters, so it can not evaluated to a facet type
-    that involves `.Self` on the left-hand-side of the `where`. So any use of
-    `.Self` on the right-hand-side can be disamiguated.
+    a facet type that involves `.Self` on the left-hand-side of the `where`. So
+    any use of `.Self` on the right-hand-side can be disamiguated.
+-   An alias has no input parameters, so it can not evaluated to a facet type that
+    involves `.Self` on the left-hand-side of the `where`. So any use of `.Self`
+    on the right-hand-side can be disamiguated.
 
 As such, we could say that eval is allowed to add a nested `where` since the
 facet type will be concrete, and not `.Self`-dependent (has no dependency on the
