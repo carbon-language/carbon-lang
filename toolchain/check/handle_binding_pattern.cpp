@@ -19,6 +19,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/check/unused.h"
+#include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
@@ -147,7 +148,22 @@ static auto HandleAnyBindingPatternType(Context& context,
 
   // We are leaving the scope of the `.Self`; they should no longer be frozen in
   // the binding's type.
-  original_inst_id = ThawPeriodSelf(context, original_inst_id);
+  auto thawed_inst_id = ThawPeriodSelf(context, original_inst_id);
+  if (thawed_inst_id != original_inst_id) {
+    // If ThawPeriodSelf changed the instruction, it means there is a `.Self`
+    // reference in the type. Diagnose if the type is not a facet type.
+    auto const_inst_id =
+        context.constant_values().GetConstantInstId(original_inst_id);
+    if (!context.insts().Is<SemIR::FacetType>(const_inst_id) &&
+        const_inst_id != SemIR::ErrorInst::InstId) {
+      CARBON_DIAGNOSTIC(PeriodSelfInNonFacetType, Error,
+                        "`.Self` used in a type that is not a facet type");
+      context.emitter().Emit(node_id, PeriodSelfInNonFacetType);
+      original_inst_id = SemIR::ErrorInst::InstId;
+    } else {
+      original_inst_id = thawed_inst_id;
+    }
+  }
 
   if (node_kind == Parse::FormBindingPattern::Kind) {
     auto as_form = FormExprAsForm(context, node_id, original_inst_id);
