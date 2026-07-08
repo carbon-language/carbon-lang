@@ -73,6 +73,8 @@ impl AC as AI {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl.e103db.1: %AC.ref as %AI.ref {

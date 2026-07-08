@@ -97,6 +97,8 @@ var a: A = Make();
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %empty_struct_type = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign file.%a.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- simple_init.carbon
@@ -129,6 +131,8 @@ var a: A = Make();
 // CHECK:STDOUT:   %.loc4_1: init %empty_struct_type = converted %.loc4_14.1, %.loc4_14.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%a.var, %.loc4_1
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- simple_init_with_fn.carbon
@@ -162,6 +166,8 @@ var a: A = Make();
 // CHECK:STDOUT:   %Make.call: init %empty_struct_type = call %Make.ref()
 // CHECK:STDOUT:   assign file.%a.var, %Make.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- class_init.carbon
@@ -193,6 +199,8 @@ var a: A = Make();
 // CHECK:STDOUT:   %.loc6_1: init %A = converted %.loc6_13.1, %.loc6_13.2 [concrete = constants.%A.val]
 // CHECK:STDOUT:   assign file.%a.var, %.loc6_1
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- class_init_from_fn.carbon
@@ -223,5 +231,7 @@ var a: A = Make();
 // CHECK:STDOUT:   %Make.call: init %A to %.loc8 = call %Make.ref()
 // CHECK:STDOUT:   assign file.%a.var, %Make.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

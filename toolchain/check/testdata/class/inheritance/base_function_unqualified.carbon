@@ -100,6 +100,8 @@ fn Derived.H() {
 // CHECK:STDOUT:   %F.ref: %Base.F.type = name_ref F, @Base.%Base.F.decl [concrete = constants.%Base.F]
 // CHECK:STDOUT:   %Base.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.H() {
@@ -107,5 +109,7 @@ fn Derived.H() {
 // CHECK:STDOUT:   %F.ref: %Base.F.type = name_ref F, @Base.%Base.F.decl [concrete = constants.%Base.F]
 // CHECK:STDOUT:   %Base.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

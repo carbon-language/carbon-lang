@@ -277,6 +277,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.I.impl: %.loc4_7.2 as %I.ref.loc4 {
@@ -356,6 +358,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.I.impl: %.loc4_7.2 as %I.ref.loc4 {
@@ -376,6 +380,8 @@ impl C as Y {}
 // CHECK:STDOUT: fn @empty_struct_type.as.I.impl.G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
@@ -469,6 +475,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.I.impl: %.loc4_7.2 as file.%.loc4_14.2 {
@@ -573,6 +581,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.I.impl: %.loc6_7.2 as %.loc6_14 {
@@ -700,6 +710,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref.loc7 as %.loc7_13 {
@@ -724,6 +736,8 @@ impl C as Y {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
@@ -843,6 +857,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref.loc7 as %.loc7_13 {
@@ -867,6 +883,8 @@ impl C as Y {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
@@ -953,6 +971,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref.loc7 as %I.ref.loc7 {
@@ -976,6 +996,8 @@ impl C as Y {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc13: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
@@ -1059,6 +1081,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @D.as.<error>.impl: %D.ref.loc13 as <error> {
@@ -1210,6 +1234,8 @@ impl C as Y {}
 // CHECK:STDOUT:     witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1386,6 +1412,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @D.as.I.impl: %D.ref.loc5 as %I.ref.loc5 {
@@ -1423,6 +1451,8 @@ impl C as Y {}
 // CHECK:STDOUT: fn @F(%x.param.loc14: %C.fd5) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
@@ -1511,6 +1541,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
@@ -1522,6 +1554,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.<error>.impl: %.loc10_7.2 as <error>;
@@ -1621,6 +1655,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T, @I.WithSelf.%U)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref.loc9 as %.loc9_13 {
@@ -1808,6 +1844,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Y {
@@ -1819,6 +1857,8 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.X.impl: %C.ref.loc12 as %X.ref.loc12 {
@@ -1856,6 +1896,8 @@ impl C as Y {}
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1873,6 +1915,8 @@ impl C as Y {}
 // CHECK:STDOUT:   fn(%u.param.loc35: @G.%U.as_type.loc7_16.1 (%U.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1893,6 +1937,8 @@ impl C as Y {}
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%X.facet) [concrete = constants.%G.specific_fn]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn(%c.ref)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {

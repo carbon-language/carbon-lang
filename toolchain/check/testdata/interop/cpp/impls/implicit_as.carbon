@@ -508,6 +508,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %Dest.cpp_destructor.bound: <bound method> = bound_method %.loc8_21.4, %Op.ref
 // CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc8_21.4)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonConstConversion.loc12(%s.param: ref %NonConstConversion.689) {
@@ -533,6 +535,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %Dest.cpp_destructor.bound: <bound method> = bound_method %.loc14_21.4, %Op.ref
 // CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc14_21.4)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstructorConversion(%s.param: %Source2) {
@@ -561,6 +565,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %Dest2.cpp_destructor.bound: <bound method> = bound_method %.loc20_22.5, %Op.ref
 // CHECK:STDOUT:   %Dest2.cpp_destructor.call: init %empty_tuple.type = call %Dest2.cpp_destructor.bound(%.loc20_22.5)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_expr_category.carbon
@@ -595,6 +601,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_access.carbon
@@ -686,6 +694,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %InaccessibleConstructor.cpp_destructor.bound: <bound method> = bound_method %.loc16_40.5, %Op.ref
 // CHECK:STDOUT:   %InaccessibleConstructor.cpp_destructor.call: init %empty_tuple.type = call %InaccessibleConstructor.cpp_destructor.bound(%.loc16_40.5)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InaccessibleConversionTest(%s.param: %InaccessibleConversion) {
@@ -712,6 +722,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %Dest.cpp_destructor.bound: <bound method> = bound_method %.loc30_21.4, %Op.ref
 // CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc30_21.4)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deleted.carbon
@@ -754,6 +766,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %_.patt: %pattern_type.937 = value_binding_pattern _ [concrete = constants.%_.patt.a57]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DeletedConversionTest(%s.param: %DeletedConversion) {
@@ -769,6 +783,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_explicit.carbon
@@ -811,6 +827,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %_.patt: %pattern_type.eae = value_binding_pattern _ [concrete = constants.%_.patt.411]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ExplicitConversionTest(%s.param: %ExplicitConversion) {
@@ -826,6 +844,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- i32_to_int.carbon
@@ -888,6 +908,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %IntConstructor.cpp_destructor.bound: <bound method> = bound_method %.loc8_31.4, %Op.ref
 // CHECK:STDOUT:   %IntConstructor.cpp_destructor.call: init %empty_tuple.type = call %IntConstructor.cpp_destructor.bound(%.loc8_31.4)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_u32_to_int_conversion_in_carbon.carbon
@@ -952,6 +974,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %IntConstructor.cpp_destructor.bound: <bound method> = bound_method %.loc19_31.5, %Op.ref
 // CHECK:STDOUT:   %IntConstructor.cpp_destructor.call: init %empty_tuple.type = call %IntConstructor.cpp_destructor.bound(%.loc19_31.5)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- default_constructor.carbon
@@ -1013,6 +1037,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %DefaultConstructor.cpp_destructor.bound: <bound method> = bound_method %.loc9_36.5, %Op.ref
 // CHECK:STDOUT:   %DefaultConstructor.cpp_destructor.call: init %empty_tuple.type = call %DefaultConstructor.cpp_destructor.bound(%.loc9_36.5)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- construct_multi_argument.carbon
@@ -1230,6 +1256,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %Two.cpp_destructor.bound: <bound method> = bound_method %.loc8_25.5, %Op.ref.loc8
 // CHECK:STDOUT:   %Two.cpp_destructor.call: init %empty_tuple.type = call %Two.cpp_destructor.bound(%.loc8_25.5)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_aggregate_from_tuple.carbon
@@ -1292,6 +1320,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %_.patt.loc31: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_aggregate_from_struct.carbon
@@ -1354,6 +1384,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %_.patt.loc31: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- non_aggregate_from_tuple.carbon
@@ -1520,6 +1552,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %NonAggregate.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_30.5, %Op.ref.loc8
 // CHECK:STDOUT:   %NonAggregate.cpp_destructor.call.loc8: init %empty_tuple.type = call %NonAggregate.cpp_destructor.bound.loc8(%.loc8_30.5)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_aggregate_from_struct.carbon
@@ -1582,5 +1616,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:     %_.patt.loc31: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

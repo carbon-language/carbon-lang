@@ -130,6 +130,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Basic {
@@ -150,6 +152,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   witness = (@Basic.WithSelf.%T, @Basic.WithSelf.%Basic.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
@@ -170,6 +174,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   witness = (@ForwardDeclared.WithSelf.%T, @ForwardDeclared.WithSelf.%ForwardDeclared.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Basic.WithSelf.F(@Basic.%Self: %Basic.type) {
@@ -190,6 +196,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %struct_type.f = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign file.%f_ref.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty.WithSelf(constants.%Self.d44) {}
@@ -371,6 +379,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Basic [from "a.carbon"] {
@@ -381,6 +391,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   witness = (imports.%Main.T.e1d, imports.%Main.F.a88)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared [from "a.carbon"] {
@@ -391,11 +403,15 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   witness = (imports.%Main.T.c9b, imports.%Main.F.511)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseEmpty(%e.param: %Empty.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Basic.WithSelf.F(imports.%Main.import_ref.316a0d.2: %Basic.type) [from "a.carbon"] {
@@ -405,6 +421,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: fn @UseBasic(%e.param: %Basic.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @ForwardDeclared.WithSelf.F(imports.%Main.import_ref.a75fa2.2: %ForwardDeclared.type) [from "a.carbon"] {
@@ -414,6 +432,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: fn @UseForwardDeclared(%f.param: %ForwardDeclared.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -428,6 +448,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.b71 = call %bound_method.loc16_27.2(%addr) [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%f.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty.WithSelf(constants.%Self.4e8) {

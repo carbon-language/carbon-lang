@@ -115,6 +115,8 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   witness = (@Add.WithSelf.%Add.WithSelf.Op.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Add.WithSelf.Op(@Add.%Self: %Add.type) {
@@ -250,6 +252,8 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   witness = (imports.%Main.Op)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.Add.impl: %C.ref as %Add.ref {
@@ -320,6 +324,8 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %.loc9_66.3: init %C = as_compatible %.loc9_66.2 [concrete = constants.%empty_tuple.4db]
 // CHECK:STDOUT:   %.loc9_66.4: init %C = converted %.loc9_62.2, %.loc9_66.3 [concrete = constants.%empty_tuple.4db]
 // CHECK:STDOUT:   return %.loc9_66.4
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param: %C, %y.param: %C) -> out %return.param: %C {
@@ -332,6 +338,8 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %y.ref: %C = name_ref y, %y
 // CHECK:STDOUT:   %C.as.Add.impl.Op.call: init %C = call %bound_method(%x.ref, %y.ref)
 // CHECK:STDOUT:   return %C.as.Add.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.WithSelf(constants.%Self) {

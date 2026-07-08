@@ -85,42 +85,29 @@ void G() { F(); }
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+9]]:1: in import [InImport]
+// CHECK:STDERR: other.carbon:7:1: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
+// CHECK:STDERR: fn HasGenericArg(T:! type, a: T) { a; }
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: other.carbon:7:1: error: semantics TODO: `unsupported: C++ calling a Carbon function with generic parameters` [SemanticsTodo]
+// CHECK:STDERR: other.carbon:7:1: note: calling function declared here [InCallToEntity]
 // CHECK:STDERR: fn HasGenericArg(T:! type, a: T) { a; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Other;
 import Cpp inline '''
 void G() {
-  // CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+8]]:18: error: no member named 'HasGenericArg' in namespace 'Carbon::Other' [CppInteropParseError]
-  // CHECK:STDERR:    20 |   Carbon::Other::HasGenericArg<int>(123);
-  // CHECK:STDERR:       |                  ^~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+4]]:35: error: expected '(' for function-style cast or type construction [CppInteropParseError]
-  // CHECK:STDERR:    20 |   Carbon::Other::HasGenericArg<int>(123);
-  // CHECK:STDERR:       |                                ~~~^
-  // CHECK:STDERR:
   Carbon::Other::HasGenericArg<int>(123);
 }
 ''';
 
-// --- fail_todo_deduced.carbon
+// --- deduced.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_deduced.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: other.carbon:8:1: error: semantics TODO: `unsupported: C++ calling a Carbon function with generic parameters` [SemanticsTodo]
-// CHECK:STDERR: fn HasDeducedArg[T:! type](a: T) { a; }
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 import Other;
 import Cpp inline '''
 void G() {
-  // CHECK:STDERR: fail_todo_deduced.carbon:[[@LINE+4]]:18: error: no member named 'HasDeducedArg' in namespace 'Carbon::Other' [CppInteropParseError]
-  // CHECK:STDERR:    16 |   Carbon::Other::HasDeducedArg(123);
-  // CHECK:STDERR:       |                  ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   Carbon::Other::HasDeducedArg(123);
 }
 ''';

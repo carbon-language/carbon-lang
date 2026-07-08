@@ -80,5 +80,7 @@ fn G() {
 // CHECK:STDOUT:     %w.patt: %pattern_type.777 = value_binding_pattern w [concrete = constants.%w.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

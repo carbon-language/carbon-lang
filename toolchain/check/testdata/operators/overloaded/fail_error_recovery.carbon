@@ -86,6 +86,8 @@ fn G(n: i32) {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %impl.elem1: <error> = impl_witness_access <error>, element1 [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%n.param: %i32) {
@@ -93,5 +95,7 @@ fn G(n: i32) {
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

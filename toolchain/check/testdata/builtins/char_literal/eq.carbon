@@ -64,5 +64,7 @@ let b: bool = Eq('a', 'b');
 // CHECK:STDOUT:   %.loc22_23: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
 // CHECK:STDOUT:   %Eq.call.loc22: init bool = call %Eq.ref.loc22(%.loc22_18, %.loc22_23) [concrete = constants.%false]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -272,6 +272,8 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_35: <bound method> = bound_method %.loc10_35.2, constants.%Destroy.Op.1a2547.6
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_35: init %empty_tuple.type = call %Destroy.Op.bound.loc10_35(%.loc10_35.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_36.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -279,6 +281,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_36.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_36.3(%self.param: ref bool) = "no_op";
@@ -286,16 +290,22 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_36.4(%self.param: ref %struct_type.has_value.value.9e7) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_36.5(%self.param: ref %Optional.f82) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_35(%self.param: ref %EmptyRange.de0) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var.carbon
@@ -456,6 +466,8 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_8: <bound method> = bound_method %c.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_8: init %empty_tuple.type = call %Destroy.Op.bound.loc10_8(%c.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_40.1(%self.param: ref bool) = "no_op";
@@ -465,21 +477,29 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_40.3(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_40.4(%self.param: ref %struct_type.has_value.value.9e7) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_40.5(%self.param: ref %Optional.f82) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_39(%self.param: ref %EmptyRange.de0) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple.carbon
@@ -657,6 +677,8 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_60: <bound method> = bound_method %.loc10_60.2, constants.%Destroy.Op.1a2547.6
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_60: init %empty_tuple.type = call %Destroy.Op.bound.loc10_60(%.loc10_60.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_61.1(%self.param: ref bool) = "no_op";
@@ -664,16 +686,22 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_61.2(%self.param: ref %tuple.type.784) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_61.3(%self.param: ref %struct_type.has_value.value.6f9) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_61.4(%self.param: ref %Optional.8b2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_61.5(%self.param: ref %empty_struct_type) = "no_op";
@@ -681,6 +709,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_60(%self.param: ref %EmptyRange.012) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple_class.carbon
@@ -860,6 +890,8 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc10_48: <bound method> = bound_method %.loc10_48.2, constants.%Destroy.Op.1a2547.7
 // CHECK:STDOUT:   %Destroy.Op.call.loc10_48: init %empty_tuple.type = call %Destroy.Op.bound.loc10_48(%.loc10_48.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_49.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -867,11 +899,15 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_49.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_49.3(%self.param: ref %tuple.type.748) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_49.4(%self.param: ref bool) = "no_op";
@@ -879,15 +915,21 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_49.5(%self.param: ref %struct_type.has_value.value.9b1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_49.6(%self.param: ref %Optional.8e2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_48(%self.param: ref %EmptyRange.617) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

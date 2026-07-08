@@ -138,6 +138,8 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT: fn @DuplicateVirtual() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TwoAccess();
@@ -145,6 +147,8 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT: fn @ModifiersConflict() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InvalidModifier();
@@ -152,10 +156,14 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT: fn @ModifiersConflict2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @ExternOrderAndConflict() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

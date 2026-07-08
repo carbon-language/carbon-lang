@@ -130,6 +130,8 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:   %MakeB.call: init %B to %.loc15 = call %MakeB.ref()
 // CHECK:STDOUT:   assign file.%b.var, %MakeB.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- if_expression_in_eval_fn.carbon
@@ -198,5 +200,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:   %MakeB.call: init %B to %.loc11 = call %MakeB.ref()
 // CHECK:STDOUT:   assign file.%b.var, %MakeB.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

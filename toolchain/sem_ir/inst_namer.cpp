@@ -189,6 +189,10 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
       [[fallthrough]];
     case ScopeIdTypeEnum::For<NamedConstraintWithSelfId>:
 
+      offset += sem_ir_->observes().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<ObserveId>:
+
       offset += sem_ir_->require_impls().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<RequireImplsId>:
@@ -633,6 +637,36 @@ auto InstNamer::PushEntity(FunctionId function_id, ScopeId scope_id,
   }
   PushBlockId(scope_id, fn.pattern_block_id);
   PushBlockId(scope_id, fn.call_params_id);
+}
+
+auto InstNamer::PushEntity(ObserveId observe_id, ScopeId /*scope_id*/,
+                           Scope& scope) -> void {
+  const auto& observe = sem_ir_->observes().Get(observe_id);
+  LocId observe_loc(observe.decl_id);
+
+  llvm::StringRef scope_prefix;
+  CARBON_KIND_SWITCH(sem_ir_->insts().Get(observe.enclosing_scope_inst_id)) {
+    case CARBON_KIND(SemIR::InterfaceWithSelfDecl interface): {
+      scope_prefix = MaybePushEntity(interface.interface_id);
+      break;
+    }
+    case CARBON_KIND(SemIR::FunctionDecl fn): {
+      scope_prefix = MaybePushEntity(fn.function_id);
+      break;
+    }
+    default: {
+      scope_prefix = "<unexpected scope>";
+      break;
+    }
+  }
+
+  // TODO: Currently observe declarations in the same scope have the same name.
+  // Generate unique names for them like we do when we are pushing
+  // RequireImplsId entity.
+  scope.name =
+      globals_.AllocateName(*this, observe_loc,
+                            llvm::formatv("{0}{1}observe", scope_prefix,
+                                          scope_prefix.empty() ? "" : "."));
 }
 
 auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
@@ -1288,6 +1322,18 @@ auto InstNamer::NamingContext::NameInst() -> void {
     // The namespace is specified here due to the name conflict.
     case CARBON_KIND(SemIR::Namespace inst): {
       AddInstNameId(sem_ir().name_scopes().Get(inst.name_scope_id).name_id());
+      return;
+    }
+    case CARBON_KIND(ObserveDecl inst): {
+      AddEntityNameAndMaybePush(inst.observe_id, ".decl");
+      return;
+    }
+    case ObserveEquivalent::Kind: {
+      AddInstName("eq");
+      return;
+    }
+    case ObserveImpls::Kind: {
+      AddInstName("impls");
       return;
     }
     case CARBON_KIND_ANY(AnyParam, inst): {

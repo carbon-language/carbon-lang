@@ -122,6 +122,8 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT:     %.loc19_11.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc19_12: init %empty_tuple.type = converted %.loc19_11.1, %.loc19_11.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     return %.loc19_12
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -337,6 +337,8 @@ fn F() {
 // CHECK:STDOUT:   %PublicDestructor.cpp_destructor.bound: <bound method> = bound_method %a.var, constants.%PublicDestructor.cpp_destructor
 // CHECK:STDOUT:   %PublicDestructor.cpp_destructor.call: init %empty_tuple.type = call %PublicDestructor.cpp_destructor.bound(%a.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PublicDestructor.cpp_destructor(%self.param: ref %PublicDestructor);
@@ -369,6 +371,8 @@ fn F() {
 // CHECK:STDOUT:   %TrivialDestructor.cpp_destructor.bound: <bound method> = bound_method %a.var, %Op.ref
 // CHECK:STDOUT:   %TrivialDestructor.cpp_destructor.call: init %empty_tuple.type = call %TrivialDestructor.cpp_destructor.bound(%a.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TrivialDestructor.cpp_destructor(%self.param: ref %TrivialDestructor) = "no_op";
@@ -379,6 +383,8 @@ fn F() {
 // CHECK:STDOUT:   %TrivialDestructor.cpp_destructor.bound: <bound method> = bound_method %self.param, %Op.ref
 // CHECK:STDOUT:   %TrivialDestructor.cpp_destructor.call: init %empty_tuple.type = call %TrivialDestructor.cpp_destructor.bound(%self.param)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_destroy_protected_base_destructor.carbon
@@ -424,16 +430,22 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc20_3.1(%self.param: ref %struct_type.base.454) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc20_3.2(%self.param: ref %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_destroy_private_base_destructor.carbon
@@ -479,15 +491,21 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc21_3.1(%self.param: ref %struct_type.base.9aa) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc21_3.2(%self.param: ref %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

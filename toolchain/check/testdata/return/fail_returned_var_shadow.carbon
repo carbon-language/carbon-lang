@@ -187,6 +187,8 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc17: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc17: init %empty_tuple.type = call %Destroy.Op.bound.loc17(%v.var)
 // CHECK:STDOUT:   return %.loc27
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc25_14.1(%self.param: ref %i32.builtin) = "no_op";
@@ -194,6 +196,8 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT: fn @Destroy.Op.loc25_14.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DifferentScopes() -> out %return.param: %i32 {
@@ -254,5 +258,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc32: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc32: init %empty_tuple.type = call %Destroy.Op.bound.loc32(%v.var)
 // CHECK:STDOUT:   return %.loc44
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

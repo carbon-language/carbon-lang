@@ -135,10 +135,14 @@ fn F() {
 // CHECK:STDOUT:   %a.ref: %u32 = name_ref a, %a
 // CHECK:STDOUT:   %Negate.call: init %u32 = call %Negate.ref(%a.ref)
 // CHECK:STDOUT:   return %Negate.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

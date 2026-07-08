@@ -93,10 +93,14 @@ fn MulLiteral(a: Literal(), b: Literal()) -> Literal() = "float.mul";
 // CHECK:STDOUT:   %b.ref: %f64.dc1 = name_ref b, %b
 // CHECK:STDOUT:   %Mul.call: init %f64.dc1 = call %Mul.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Mul.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

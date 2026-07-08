@@ -198,6 +198,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NotGenericButParams {
@@ -209,6 +211,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @GenericAndParams.loc6(%T.loc6_29.2: type) {
@@ -228,6 +232,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -246,6 +252,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -267,6 +275,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -477,6 +487,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {}
@@ -506,6 +518,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {}
@@ -535,6 +549,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar.WithSelf(constants.%Self) {}
@@ -585,6 +601,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

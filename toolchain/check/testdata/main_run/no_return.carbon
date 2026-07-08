@@ -50,6 +50,8 @@ fn Run(unused argc: i32, unused argv: i32*) {}
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- with_params.carbon
@@ -106,5 +108,7 @@ fn Run(unused argc: i32, unused argv: i32*) {}
 // CHECK:STDOUT: fn @Run(%argc.param: %i32, %argv.param: %ptr) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -141,6 +141,8 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:   %int_5: %u8 = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str, %int_5) [concrete = constants.%String.val]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_overfill_small_string.carbon
@@ -167,5 +169,7 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %str: %ptr.093 = string_literal "A string so long its size does not fit in `u8`. This results in an error,\nbecause we can't form a `Core.String` value that describes this string.\n\nThis string contains 256 characters. Among them are:\n\n* 6 `g`s,\n* 21 `s`s,\n* 9 newlines,\n* and only one `p`.\n" [concrete = constants.%str.9e7]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

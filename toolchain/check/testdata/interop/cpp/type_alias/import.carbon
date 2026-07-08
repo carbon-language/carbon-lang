@@ -153,6 +153,8 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc8: <bound method> = bound_method %n.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc8: init %empty_tuple.type = call %Destroy.Op.bound.loc8(%n.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10(%self.param: ref %ptr.d08) = "no_op";
@@ -162,6 +164,8 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_class_typedef.carbon
@@ -246,6 +250,8 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc9: <bound method> = bound_method %pd.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc9: init %empty_tuple.type = call %Destroy.Op.bound.loc9(%pd.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %ptr.0a2) = "no_op";

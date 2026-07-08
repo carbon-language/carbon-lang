@@ -202,6 +202,8 @@ fn H(T:! type) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -224,6 +226,8 @@ fn H(T:! type) {
 // CHECK:STDOUT:     %F.ref: @D.G.%C.F.type (%C.F.type.55fb78.2) = name_ref F, %.loc25 [symbolic = %C.F (constants.%C.F.6da92d.2)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc16_9.2 [symbolic = %T.loc16_9.1 (constants.%T.091)]
 // CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -471,6 +475,8 @@ fn H(T:! type) {
 // CHECK:STDOUT:     %B.facet.loc21_7.1: @D.G.%B.type.loc21_15.2 (%B.type.4a0be4.2) = facet_value %T.ref, (constants.%B.lookup_impl_witness.fc3) [symbolic = %B.facet.loc21_7.2 (constants.%B.facet.f68)]
 // CHECK:STDOUT:     %.loc21_7.1: @D.G.%B.type.loc21_15.2 (%B.type.4a0be4.2) = converted %T.ref, %B.facet.loc21_7.1 [symbolic = %B.facet.loc21_7.2 (constants.%B.facet.f68)]
 // CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -63,11 +63,15 @@ cc_binary(
     name = "compile_benchmark",
     testonly = 1,
     srcs = ["compile_benchmark.cpp"],
+    # The subprocess benchmarks execute the installed toolchain binaries.
+    data = ["//toolchain/install:install_data"],
     deps = [
         ":source_gen_lib",
         "//common:all_llvm_targets",
+        "//common:filesystem",
         "//testing/base:benchmark_main",
         "//testing/base:global_exe_path",
+        "//toolchain/base:install_paths",
         "//toolchain/base:install_paths_test_helpers",
         "//toolchain/driver",
         "//toolchain/driver:clang_runner",
@@ -83,8 +87,10 @@ sh_test(
     srcs = [":compile_benchmark"],
     args = [
         "--benchmark_dry_run",
-        # The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=/256$$",
+        # Dry-run the smallest (256-line) case of every benchmark. The optional
+        # `/real_time` suffix is present on the subprocess benchmarks, which use
+        # real time. The `$$` is repeated for Bazel escaping of `$`.
+        "--benchmark_filter=/256(/real_time)?$$",
     ],
     env = cc_env(),
 )

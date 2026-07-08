@@ -92,5 +92,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_11.2: %i32 = converted %int_42, %.loc8_11.1 [concrete = constants.%int_42.ac4]
 // CHECK:STDOUT:   %X.f.call: init %empty_tuple.type = call imports.%X.f.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

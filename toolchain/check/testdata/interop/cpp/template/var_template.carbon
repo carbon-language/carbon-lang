@@ -159,5 +159,7 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   %B.ref.loc10: type = name_ref B, imports.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %addr.loc10: %ptr.dc0 = addr_of imports.%var.var.302 [concrete = constants.%addr.cd4]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

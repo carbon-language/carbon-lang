@@ -178,6 +178,8 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:     %specific_impl_fn.loc16_4.1: <specific function> = specific_impl_function %impl.elem0.loc16_4.1, @Y.WithSelf.YF(constants.%Y.facet) [symbolic = %specific_impl_fn.loc16_4.2 (constants.%specific_impl_fn.aad)]
 // CHECK:STDOUT:     %Y.WithSelf.YF.call: init %empty_tuple.type = call %specific_impl_fn.loc16_4.1()
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -282,6 +284,8 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:     %specific_impl_fn.loc16_4.1: <specific function> = specific_impl_function %impl.elem0.loc16_4.1, @Y.WithSelf.YF(constants.%Y.facet) [symbolic = %specific_impl_fn.loc16_4.2 (constants.%specific_impl_fn.aad)]
 // CHECK:STDOUT:     %Y.WithSelf.YF.call: init %empty_tuple.type = call %specific_impl_fn.loc16_4.1()
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

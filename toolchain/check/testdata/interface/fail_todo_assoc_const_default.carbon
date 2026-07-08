@@ -112,6 +112,8 @@ interface I {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T, @I.WithSelf.%N)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self.37e) {}

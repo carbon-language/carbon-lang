@@ -248,6 +248,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc18: <bound method> = bound_method %o.var, constants.%Destroy.Op.1a2547.6
 // CHECK:STDOUT:   %Destroy.Op.call.loc18: init %empty_tuple.type = call %Destroy.Op.bound.loc18(%o.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Inner.G() {
@@ -287,6 +289,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc29: <bound method> = bound_method %o.var, constants.%Destroy.Op.1a2547.6
 // CHECK:STDOUT:   %Destroy.Op.call.loc29: init %empty_tuple.type = call %Destroy.Op.bound.loc29(%o.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Outer.H() {
@@ -326,6 +330,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc36: <bound method> = bound_method %o.var, constants.%Destroy.Op.1a2547.6
 // CHECK:STDOUT:   %Destroy.Op.call.loc36: init %empty_tuple.type = call %Destroy.Op.bound.loc36(%o.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc19_5.1(%self.param: ref %ptr.001) = "no_op";
@@ -335,21 +341,29 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: fn @Destroy.Op.loc19_5.3(%self.param: ref %struct_type.pi.po.qi) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc19_5.4(%self.param: ref %Inner) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_5.1(%self.param: ref %struct_type.po.qo.pi) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_5.2(%self.param: ref %Outer) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %ptr.286) {
@@ -447,5 +461,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc53: init %ptr.001 = call %bound_method.loc53_12.2(%.loc53_12.3)
 // CHECK:STDOUT:   assign %.loc53_4.2, %ptr.as.Copy.impl.Op.call.loc53
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

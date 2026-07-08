@@ -191,6 +191,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (@ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -358,6 +360,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (@Action.WithSelf.%Action.WithSelf.Op.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -418,6 +422,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: fn @A.as.Action.impl.Op(%self.param: %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %A) {
@@ -432,6 +438,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %A.as.Action.impl.Op.call: init %empty_tuple.type = call %bound_method(%a.ref)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Action(constants.%T) {
@@ -604,6 +612,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (imports.%Main.Op)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -652,6 +662,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %A.as.Action.impl.Op.call: init %empty_tuple.type = call %bound_method(%a.ref)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.as.Action.impl.Op [from "action.carbon"];
@@ -811,6 +823,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (imports.%Main.Op)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -863,6 +877,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %.loc8: %Action.assoc_type.35c = specific_constant imports.%Main.import_ref.00f, @Action.WithSelf(constants.%C, constants.%Self.ea2) [concrete = constants.%assoc0.940]
 // CHECK:STDOUT:   %Op.ref: %Action.assoc_type.35c = name_ref Op, %.loc8 [concrete = constants.%assoc0.940]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Action(constants.%T) {
@@ -1058,6 +1074,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (@Factory.WithSelf.%Factory.WithSelf.Make.decl, @Factory.WithSelf.%Factory.WithSelf.Method.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1383,6 +1401,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (imports.%Main.Make, imports.%Main.Method)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1448,6 +1468,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %.loc4_15.1: ref %B = splice_block %return.param {}
 // CHECK:STDOUT:   %A.as.Factory.impl.Make.call: init %B to %.loc4_15.1 = call %impl.elem0()
 // CHECK:STDOUT:   return %A.as.Factory.impl.Make.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.as.Factory.impl.Make [from "factory.carbon"];
@@ -1465,6 +1487,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %.loc7_23.1: ref %B = splice_block %return.param {}
 // CHECK:STDOUT:   %A.as.Factory.impl.Method.call: init %B to %.loc7_23.1 = call %bound_method(%a.ref)
 // CHECK:STDOUT:   return %A.as.Factory.impl.Method.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.as.Factory.impl.Method [from "factory.carbon"];
@@ -1679,6 +1703,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (imports.%Main.Make, imports.%Main.Method)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1747,6 +1773,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %.loc13: %Factory.assoc_type.fc0 = specific_constant imports.%Main.import_ref.a26, @Factory.WithSelf(constants.%C, constants.%Self.3e3) [concrete = constants.%assoc0.c53]
 // CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.fc0 = name_ref Make, %.loc13 [concrete = constants.%assoc0.c53]
 // CHECK:STDOUT:   return <error> to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InstanceC(%a.param: %A) -> out %return.param: %C {
@@ -1758,6 +1786,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %.loc21: %Factory.assoc_type.fc0 = specific_constant imports.%Main.import_ref.1ef, @Factory.WithSelf(constants.%C, constants.%Self.3e3) [concrete = constants.%assoc1.f6c]
 // CHECK:STDOUT:   %Method.ref: %Factory.assoc_type.fc0 = name_ref Method, %.loc21 [concrete = constants.%assoc1.f6c]
 // CHECK:STDOUT:   return <error> to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory(constants.%T) {

@@ -611,6 +611,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc6_40.8: init %D to %return.param = class_init (%.loc6_40.4, %.loc6_40.7) [concrete = constants.%D.val]
 // CHECK:STDOUT:   %.loc6_41: init %D = converted %.loc6_40.1, %.loc6_40.8 [concrete = constants.%D.val]
 // CHECK:STDOUT:   return %.loc6_41 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc8(%self.param: %C.771) -> out %return.param: %D {
@@ -619,6 +621,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc8_62.1: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %Make.call: init %D to %.loc8_62.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc9(%self.param: %C.83b) -> out %return.param: %D {
@@ -627,6 +631,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc9_62.1: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %Make.call: init %D to %.loc9_62.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc10(%self.param: %C.5ce) -> out %return.param: %D {
@@ -635,6 +641,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc10_62.1: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %Make.call: init %D to %.loc10_62.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc11(%self.param: %C.b3e) -> out %return.param: %D {
@@ -643,6 +651,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc11_62.1: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %Make.call: init %D to %.loc11_62.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc12(%self.param: %C.8ee) -> out %return.param: %D {
@@ -651,6 +661,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc12_62.1: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %Make.call: init %D to %.loc12_62.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc13(%self.param: %C.5c1) -> out %return.param: %D {
@@ -659,6 +671,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc13_62.1: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %Make.call: init %D to %.loc13_62.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc14(%self.param: %C.57b) -> out %return.param: %D {
@@ -667,6 +681,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc14_62.1: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %Make.call: init %D to %.loc14_62.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc15(%self.param: %C.b0a) -> out %return.param: %D {
@@ -675,6 +691,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc15_62.1: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %Make.call: init %D to %.loc15_62.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%N.37f) {
@@ -1363,6 +1381,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %Destroy.Op.call.loc8_26.8: init %empty_tuple.type = call constants.%Destroy.Op.bound.d6e(constants.%.027)
 // CHECK:STDOUT:   %Destroy.Op.call.loc7_26.9: init %empty_tuple.type = call constants.%Destroy.Op.bound.234(constants.%.de3)
 // CHECK:STDOUT:   return %Make.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.1 [from "library.carbon"];
@@ -1372,6 +1392,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT: fn @Destroy.Op.loc7_26.2(%self.param: ref %C.771) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.2 [from "library.carbon"];
@@ -1379,6 +1401,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT: fn @Destroy.Op.loc8(%self.param: ref %C.83b) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.3 [from "library.carbon"];
@@ -1386,6 +1410,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT: fn @Destroy.Op.loc9(%self.param: ref %C.5ce) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.4 [from "library.carbon"];
@@ -1393,6 +1419,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT: fn @Destroy.Op.loc10(%self.param: ref %C.b3e) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.5 [from "library.carbon"];
@@ -1400,6 +1428,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT: fn @Destroy.Op.loc11(%self.param: ref %C.8ee) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.6 [from "library.carbon"];
@@ -1407,6 +1437,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT: fn @Destroy.Op.loc12(%self.param: ref %C.5c1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.7 [from "library.carbon"];
@@ -1414,6 +1446,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT: fn @Destroy.Op.loc13(%self.param: ref %C.57b) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.8 [from "library.carbon"];
@@ -1421,6 +1455,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT: fn @Destroy.Op.loc14(%self.param: ref %C.b0a) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make [from "library.carbon"];

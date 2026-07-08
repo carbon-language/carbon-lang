@@ -280,6 +280,8 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %F.call: init %C.8d3 to %.loc7 = call %F.ref()
 // CHECK:STDOUT:   assign file.%c.var, %F.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_symbolic_decl.carbon
@@ -342,5 +344,7 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %.loc7_18.3: init %struct_type.x = struct_init (%Int.as.Copy.impl.Op.call) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc7_24: init %struct_type.x = converted %impl.elem0.loc7_18.1, %.loc7_18.3 [concrete = constants.%struct]
 // CHECK:STDOUT:   return %.loc7_24
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

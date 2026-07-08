@@ -104,5 +104,7 @@ var b: i32 = ((2));
 // CHECK:STDOUT:   %.loc15: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc15 [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   assign file.%b.var, %.loc15
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -52,8 +52,18 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
                       SemIR::FieldDecl field_decl) -> clang::FieldDecl*;
 
 // Get a `clang::FunctionDecl` that can be used to call a Carbon function.
+// If the function is generic, a `clang::FunctionTemplateDecl` will be
+// created instead.
 auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                         SemIR::FunctionId function_id) -> clang::FunctionDecl*;
+                         SemIR::FunctionId function_id) -> clang::NamedDecl*;
+
+// Creates a C++ function template specialization for a generic Carbon
+// function.
+//
+// Returns true if a specialization was added, false otherwise.
+auto ExportFunctionSpecializationToCpp(
+    Context& context, clang::FunctionTemplateDecl* function_template_decl,
+    llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool;
 
 // Export a Carbon destructor into C++.
 //

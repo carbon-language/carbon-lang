@@ -92,5 +92,7 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   %bound_method.loc17_36.2: <bound method> = bound_method %p.ref, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.7ee = call %bound_method.loc17_36.2(%p.ref)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

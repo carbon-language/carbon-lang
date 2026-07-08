@@ -284,5 +284,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:   %.loc4_1: init %array_type = converted %.loc4_130.1, %.loc4_130.8 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%arr.var, %.loc4_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

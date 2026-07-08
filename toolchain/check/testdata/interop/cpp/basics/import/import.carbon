@@ -140,6 +140,8 @@ fn F() {
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, %x [concrete = <error>]
 // CHECK:STDOUT:   %Foo.ref: <error> = name_ref Foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_function_api.carbon
@@ -187,5 +189,7 @@ fn F() {
 // CHECK:STDOUT:   %FooInt.ref: <error> = name_ref FooInt, imports.%Main.FooInt [concrete = <error>]
 // CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
