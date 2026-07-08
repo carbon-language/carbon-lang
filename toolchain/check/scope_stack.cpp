@@ -132,7 +132,7 @@ auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
        /*lexical_lookup_has_load_error=*/false);
 
   return_scope_stack_.push_back(
-      {.decl_id = scope_inst_id, .cleanup_stack_depth = cleanup_stack_depth()});
+      {.decl_id = scope_inst_id, .cleanup_scope_depth = cleanup_scope_depth()});
   auto& scope = scope_stack_.back();
   if (!scope.has_destroy_array) {
     scope.has_destroy_array = true;

@@ -161,7 +161,7 @@ auto AddCleanups(Context& context, ScopeStack::CleanupScopeDepth depth,
 }
 
 auto PopScopeWithCleanups(Context& context) -> void {
-  AddCleanups(context, context.scope_stack().enclosing_cleanup_stack_depth());
+  AddCleanups(context, context.scope_stack().enclosing_cleanup_scope_depth());
   // This is a function-local scope, so we always want 'unused' warnings.
   context.scope_stack().Pop(/*check_unused=*/true);
 }
@@ -200,7 +200,7 @@ auto AddBranchWithCleanups(Context& context, SemIR::LocId loc_id,
 
 auto AddReturnInstWithCleanups(Context& context,
                                SemIR::LocIdAndInst loc_id_and_inst) -> void {
-  AddCleanups(context, context.scope_stack().function_cleanup_stack_depth());
+  AddCleanups(context, context.scope_stack().function_cleanup_scope_depth());
   AddInst(context, loc_id_and_inst);
 }
 

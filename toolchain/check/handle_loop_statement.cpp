@@ -61,10 +61,10 @@ static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
   // also destroys those temporaries.
   context.break_continue_stack().push_back(
       {.break_target = loop_exit_id,
-       .break_depth = context.scope_stack().cleanup_stack_depth(),
+       .break_depth = context.scope_stack().cleanup_scope_depth(),
        .continue_target = loop_header_id,
        .continue_depth =
-           context.scope_stack().enclosing_cleanup_stack_depth()});
+           context.scope_stack().enclosing_cleanup_scope_depth()});
 }
 
 // Finishes emitting the body for a `while`-like loop. Adds a back-edge to the
