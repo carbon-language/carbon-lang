@@ -12,7 +12,7 @@
 
 library "[[@TEST_NAME]]";
 
-abstract class Otter {
+abstract class AbstractBase {
   var whisker_count: i32;
   protected var fur_status: i32;
 }
