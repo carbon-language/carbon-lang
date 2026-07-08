@@ -280,16 +280,6 @@ def libcxx_feature(llvm_bindir = None, clang_bindir = None):
             ),
             flag_set(
                 actions = ACTION_NAME_GROUPS.all_cc_link_actions,
-                flag_groups = [flag_group(flags = [
-                    "-unwindlib=libunwind",
-                ])],
-                with_features = [
-                    # libc++ is only used on non-Windows platforms.
-                    with_feature_set(not_features = ["windows_target"]),
-                ],
-            ),
-            flag_set(
-                actions = ACTION_NAME_GROUPS.all_cc_link_actions,
                 flag_groups = [flag_group(flags = extra_link_flags + [
                     # Force linking the static libc++abi archive here. This
                     # *should* be linked automatically, but not every release of
