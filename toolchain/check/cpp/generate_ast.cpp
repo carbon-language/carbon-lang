@@ -338,6 +338,21 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
       const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
       const clang::DeclContext* original_decl_context) -> bool override;
 
+  auto LoadExternalSpecializations(
+      const clang::Decl* decl,
+      llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool override {
+    const auto* function_template_decl =
+        llvm::dyn_cast<clang::FunctionTemplateDecl>(decl);
+    if (!function_template_decl) {
+      return false;
+    }
+
+    return ExportFunctionSpecializationToCpp(
+        *context_,
+        const_cast<clang::FunctionTemplateDecl*>(function_template_decl),
+        template_args);
+  }
+
   auto CompleteType(clang::TagDecl* tag_decl) -> void override;
 
   auto layoutRecordType(
@@ -367,7 +382,7 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
 
   auto GetOrExportFunctionToCpp(SemIR::InstId target_inst_id,
                                 SemIR::FunctionId function_id)
-      -> clang::FunctionDecl*;
+      -> clang::NamedDecl*;
   // Get a current best-effort location for the current position within C++
   // processing.
   auto GetCurrentCppLocId() -> SemIR::LocId {
@@ -460,19 +475,28 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
 
 auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
     SemIR::InstId target_inst_id, SemIR::FunctionId function_id)
-    -> clang::FunctionDecl* {
+    -> clang::NamedDecl* {
   SemIR::Function& function = context_->functions().Get(function_id);
   if (const auto* clang_decl =
           context_->clang_decls().Lookup(function.first_decl_id())) {
-    return cast<clang::FunctionDecl>(clang_decl->decl());
+    return cast<clang::NamedDecl>(clang_decl->decl());
   }
 
-  auto* clang_function_decl =
+  auto* named_decl =
       ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id), function_id);
-
-  if (!clang_function_decl) {
+  if (!named_decl) {
     return nullptr;
   }
+
+  if (auto* function_template_decl =
+          llvm::dyn_cast<clang::FunctionTemplateDecl>(named_decl)) {
+    context_->clang_decls().Add(
+        {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(function_template_decl),
+         .inst_id = function.first_decl_id()});
+    return function_template_decl;
+  }
+
+  auto* clang_function_decl = llvm::cast<clang::FunctionDecl>(named_decl);
 
   SemIR::ClangDeclSignature thunk_signature;
   thunk_signature.kind = SemIR::ClangDeclSignature::Normal;
