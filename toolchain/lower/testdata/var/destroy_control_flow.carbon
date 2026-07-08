@@ -71,7 +71,7 @@ fn IfReturn(cond: bool) {
   }
 }
 
-// --- todo_while_break.carbon
+// --- while_break.carbon
 
 library "[[@TEST_NAME]]";
 import library "destructible";
@@ -380,8 +380,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !18 = !{!19}
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !20 = !DILocation(line: 9, column: 5, scope: !17)
-// CHECK:STDOUT: ; ModuleID = 'todo_while_break.carbon'
-// CHECK:STDOUT: source_filename = "todo_while_break.carbon"
+// CHECK:STDOUT: ; ModuleID = 'while_break.carbon'
+// CHECK:STDOUT: source_filename = "while_break.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @Destructible.val.loc6_3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
@@ -451,7 +451,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "todo_while_break.carbon", directory: "")
+// CHECK:STDOUT: !1 = !DIFile(filename: "while_break.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "WhileBreak", linkageName: "_CWhileBreak.Main", scope: null, file: !1, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !8)
