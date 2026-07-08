@@ -13,21 +13,25 @@ auto HandlePattern(Context& context) -> void {
     case Lex::TokenKind::OpenParen:
       context.PushStateForPattern(StateKind::PatternListAsTuple,
                                   state.in_var_pattern, state.in_unused_pattern,
+                                  state.in_struct_pattern,
                                   state.ambient_precedence);
       break;
     case Lex::TokenKind::OpenCurlyBrace:
       context.PushStateForPattern(StateKind::PatternListAsStruct,
                                   state.in_var_pattern, state.in_unused_pattern,
+                                  state.in_struct_pattern,
                                   state.ambient_precedence);
       break;
     case Lex::TokenKind::Var:
       context.PushStateForPattern(StateKind::VariablePattern,
                                   state.in_var_pattern, state.in_unused_pattern,
+                                  state.in_struct_pattern,
                                   state.ambient_precedence);
       break;
     case Lex::TokenKind::Unused:
       context.PushStateForPattern(StateKind::UnusedPattern,
                                   state.in_var_pattern, state.in_unused_pattern,
+                                  state.in_struct_pattern,
                                   state.ambient_precedence);
       break;
     case Lex::TokenKind::Template:
@@ -37,6 +41,7 @@ auto HandlePattern(Context& context) -> void {
     case Lex::TokenKind::SelfValueIdentifier:
       context.PushStateForPattern(StateKind::BindingPattern,
                                   state.in_var_pattern, state.in_unused_pattern,
+                                  state.in_struct_pattern,
                                   state.ambient_precedence);
       break;
     default:
@@ -45,7 +50,8 @@ auto HandlePattern(Context& context) -> void {
               .is_binding_pattern_operator()) {
         context.PushStateForPattern(
             StateKind::BindingPattern, state.in_var_pattern,
-            state.in_unused_pattern, state.ambient_precedence);
+            state.in_unused_pattern, state.in_struct_pattern,
+            state.ambient_precedence);
         break;
       }
       context.PushState(StateKind::ExprPattern);

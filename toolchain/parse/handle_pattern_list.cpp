@@ -13,10 +13,10 @@ static auto HandlePatternListElement(Context& context, StateKind pattern_state,
   auto state = context.PopState();
 
   context.PushStateForPattern(finish_state_kind, state.in_var_pattern,
-                              state.in_unused_pattern,
+                              state.in_unused_pattern, state.in_struct_pattern,
                               state.ambient_precedence);
   context.PushStateForPattern(pattern_state, state.in_var_pattern,
-                              state.in_unused_pattern,
+                              state.in_unused_pattern, state.in_struct_pattern,
                               state.ambient_precedence);
 }
 
@@ -71,9 +71,9 @@ auto HandlePatternListElementAsStruct(Context& context) -> void {
         state.token = context.ConsumeChecked(Lex::TokenKind::Equal);
 
         context.PushState(state, StateKind::StructPatternDesignatedFieldFinish);
-        context.PushStateForPattern(StateKind::Pattern, state.in_var_pattern,
-                                    state.in_unused_pattern,
-                                    state.ambient_precedence);
+        context.PushStateForPattern(
+            StateKind::Pattern, state.in_var_pattern, state.in_unused_pattern,
+            state.in_struct_pattern, state.ambient_precedence);
       } else {
         context.PushState(state, StateKind::PatternListElementFinishAsStruct);
       }
@@ -136,7 +136,7 @@ auto HandleStructPatternFieldAfterDesignator(Context& context) -> void {
 
   context.PushState(state, StateKind::StructPatternDesignatedFieldFinish);
   context.PushStateForPattern(StateKind::Pattern, state.in_var_pattern,
-                              state.in_unused_pattern,
+                              state.in_unused_pattern, state.in_struct_pattern,
                               state.ambient_precedence);
 }
 
@@ -186,9 +186,9 @@ static auto HandlePatternListElementFinish(Context& context,
   }
 
   if (list_token_kind == Context::ListTokenKind::Comma) {
-    context.PushStateForPattern(param_state_kind, state.in_var_pattern,
-                                state.in_unused_pattern,
-                                state.ambient_precedence);
+    context.PushStateForPattern(
+        param_state_kind, state.in_var_pattern, state.in_unused_pattern,
+        state.in_struct_pattern, state.ambient_precedence);
   }
 }
 
@@ -225,13 +225,14 @@ static auto HandlePatternList(Context& context, NodeKind node_kind,
 
   context.PushStateForPattern(
       empty ? finish_state_empty : finish_state_nonempty, state.in_var_pattern,
-      state.in_unused_pattern, state.ambient_precedence);
+      state.in_unused_pattern, state.in_struct_pattern,
+      state.ambient_precedence);
   context.AddLeafNode(node_kind, open_token);
 
   if (!empty) {
-    context.PushStateForPattern(param_state, state.in_var_pattern,
-                                state.in_unused_pattern,
-                                PrecedenceGroup::ForTopLevelExpr());
+    context.PushStateForPattern(
+        param_state, state.in_var_pattern, state.in_unused_pattern,
+        state.in_struct_pattern, PrecedenceGroup::ForTopLevelExpr());
   }
 }
 

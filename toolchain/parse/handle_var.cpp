@@ -27,6 +27,7 @@ static auto HandleVar(Context& context, StateKind finish_state_kind,
 
   context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true,
                               /*in_unused_pattern=*/false,
+                              /*in_struct_pattern=*/false,
                               PrecedenceGroup::ForTopLevelPattern());
 }
 
@@ -98,7 +99,7 @@ auto HandleVariablePattern(Context& context) -> void {
   context.ConsumeChecked(Lex::TokenKind::Var);
 
   context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true,
-                              state.in_unused_pattern,
+                              state.in_unused_pattern, state.in_struct_pattern,
                               state.ambient_precedence);
 }
 
