@@ -131,8 +131,11 @@ class ScopeStack {
   // Requires that no names were introduced in the innermost scope.
   auto MergeTopScopeIntoGrandparentAndPop() -> void;
 
-  // Merges the cleanup array of the innermost scope into its parent scope.
-  auto MergeTopCleanupScopeIntoParent() -> void;
+  // Discards the cleanups in the current scope from cleanup tracking.
+  auto DiscardTopScopeCleanups() -> void {
+    destroy_id_stack_.PopArray();
+    destroy_id_stack_.PushArray();
+  }
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.

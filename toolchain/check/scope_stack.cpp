@@ -169,17 +169,34 @@ auto ScopeStack::Pop(bool check_unused) -> void {
     if (return_scope_stack_.back().decl_id == scope.scope_inst_id) {
       // Leaving the function scope.
       return_scope_stack_.pop_back();
+      if (scope.has_destroy_array) {
+        destroy_id_stack_.PopArray();
+      }
     } else {
       if (return_scope_stack_.back().nested_scope_index == scope.index) {
         // Returned to a function scope from a non-function nested entity scope.
         return_scope_stack_.back().nested_scope_index = ScopeIndex::None;
       }
-    }
-    if (scope.has_destroy_array) {
-      destroy_id_stack_.PopArray();
+      if (scope.has_destroy_array) {
+        if (!destroy_id_stack_.PeekArray().empty()) {
+          CARBON_CHECK(
+              !scope_stack_.empty() && scope_stack_.back().has_destroy_array,
+              "Popping scope with cleanups but outer scope does not "
+              "have a destroy array");
+        }
+        if (!scope_stack_.empty() && scope_stack_.back().has_destroy_array) {
+          destroy_id_stack_.MergeTopArrayIntoParent();
+        }
+        destroy_id_stack_.PopArray();
+      }
     }
   } else {
     CARBON_CHECK(!scope.has_returned_var);
+    if (scope.has_destroy_array) {
+      CARBON_CHECK(destroy_id_stack_.PeekArray().empty(),
+                   "Popping scope outside function with cleanups");
+      destroy_id_stack_.PopArray();
+    }
   }
 
   VerifyNextCompileTimeBindIndex("Pop", scope);
@@ -207,16 +224,6 @@ auto ScopeStack::MergeTopScopeIntoGrandparentAndPop() -> void {
   destroy_id_stack_.MergeTopArrayIntoGrandparent();
 
   Pop();
-}
-
-auto ScopeStack::MergeTopCleanupScopeIntoParent() -> void {
-  CARBON_CHECK(scope_stack_.size() >= 2);
-  auto& parent = scope_stack_[scope_stack_.size() - 2];
-  auto& current = scope_stack_[scope_stack_.size() - 1];
-  if (current.has_destroy_array) {
-    CARBON_CHECK(parent.has_destroy_array);
-    destroy_id_stack_.MergeTopArrayIntoParent();
-  }
 }
 
 auto ScopeStack::MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id,

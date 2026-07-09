@@ -160,14 +160,9 @@ auto AddCleanups(Context& context, ScopeStack::CleanupScopeDepth depth,
   }
 }
 
-auto PushStatementScope(Context& context) -> void {
-  context.scope_stack().PushForSameRegion();
-}
-
-auto PopStatementScopeWithCleanups(Context& context) -> void {
+auto AddAndDiscardCleanups(Context& context) -> void {
   AddCleanups(context, context.scope_stack().enclosing_cleanup_scope_depth());
-  // This is a function-local scope, so we always want 'unused' warnings.
-  context.scope_stack().Pop(/*check_unused=*/true);
+  context.scope_stack().DiscardTopScopeCleanups();
 }
 
 // TODO: When we have multiple branches or returns in the same function, share

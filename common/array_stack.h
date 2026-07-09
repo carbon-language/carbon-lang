@@ -86,6 +86,13 @@ class ArrayStack {
     llvm::append_range(values_, values);
   }
 
+  // Merges the top array into the parent array directly before it, leaving the
+  // top array empty.
+  auto MergeTopArrayIntoParent() -> void {
+    CARBON_CHECK(array_offsets_.size() >= 2);
+    array_offsets_.back() = values_.size();
+  }
+
   // Merges the top array into the the array two before it, leaving the top
   // array empty.
   auto MergeTopArrayIntoGrandparent() -> void {
@@ -96,13 +103,6 @@ class ArrayStack {
                     values_.end());
     array_offsets_[array_offsets_.size() - 2] = new_mid - values_.begin();
     array_offsets_[array_offsets_.size() - 1] = values_.size();
-  }
-
-  // Merges the top array into the parent array directly before it, leaving the
-  // top array empty.
-  auto MergeTopArrayIntoParent() -> void {
-    CARBON_CHECK(array_offsets_.size() >= 2);
-    array_offsets_.back() = values_.size();
   }
 
   // Returns the current number of values in all arrays.

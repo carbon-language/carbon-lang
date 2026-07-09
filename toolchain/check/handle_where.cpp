@@ -530,7 +530,6 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   context.where_stack().pop_back();
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
-  context.scope_stack().MergeTopCleanupScopeIntoParent();
   context.scope_stack().Pop(/*check_unused=*/true);
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
 

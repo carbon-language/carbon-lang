@@ -83,6 +83,7 @@ static auto FinishLoopBody(Context& context, Parse::NodeId node_id) -> void {
 
   // Clean up anything created in the loop header and pop the loop scope.
   AddCleanups(context, blocks.continue_depth, blocks.break_depth);
+  context.scope_stack().DiscardTopScopeCleanups();
   context.scope_stack().Pop(/*check_unused=*/true);
 }
 
@@ -120,7 +121,7 @@ auto HandleParseNode(Context& context, Parse::WhileStatementId node_id)
 auto HandleParseNode(Context& context, Parse::ForHeaderStartId node_id)
     -> bool {
   // Create a scope for the range and cursor of the for loop.
-  PushStatementScope(context);
+  context.scope_stack().PushForSameRegion();
 
   // Create a scope for any variables introduced in the pattern.
   context.scope_stack().PushForSameRegion();
@@ -252,7 +253,8 @@ auto HandleParseNode(Context& context, Parse::ForStatementId node_id) -> bool {
   FinishLoopBody(context, node_id);
 
   // Pop the scope that the range and cursor live in.
-  PopStatementScopeWithCleanups(context);
+  AddAndDiscardCleanups(context);
+  context.scope_stack().Pop(/*check_unused=*/true);
   return true;
 }
 
