@@ -319,6 +319,31 @@ struct ExportDecl {
   Lex::SemiTokenIndex token;
 };
 
+// MatchFirst nodes
+// ---------------
+
+using MatchFirstIntroducer =
+    LeafNode<NodeKind::MatchFirstIntroducer, Lex::MatchFirstTokenIndex>;
+
+struct MatchFirstDefinitionStart {
+  static constexpr auto Kind = NodeKind::MatchFirstDefinitionStart.Define(
+      {.bracketed_by = MatchFirstIntroducer::Kind});
+  MatchFirstIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  Lex::OpenCurlyBraceTokenIndex token;
+};
+
+// A match_first block: `match_first { ... }`.
+struct MatchFirst {
+  static constexpr auto Kind = NodeKind::MatchFirst.Define(
+      {.category = NodeCategory::Decl,
+       .bracketed_by = MatchFirstDefinitionStart::Kind});
+
+  MatchFirstDefinitionStartId start;
+  llvm::SmallVector<AnyDeclId> members;
+  Lex::CloseCurlyBraceTokenIndex token;
+};
+
 // Namespace nodes
 // ---------------
 
