@@ -400,6 +400,27 @@ fn G() {
   C as (Z where .Z1 = .Self);
 }
 
+// --- assoc_const_impls_in_decl.carbon
+library "[[@TEST_NAME]]";
+
+interface I { let X:! type; }
+interface J {}
+
+// Test that we avoid an infinite impl lookup cycle from an LookupImplWitness
+// instruction in the impl declaration. When matching this impl during impl
+// lookup, we deduce and replace `T` with a specific argument, and resolve that
+// specific's decl eval block. Doing so re-evaluates the lookup for `I` inside
+// `.X`. If that lookup found this impl (since it's a final impl, eval can find
+// it), we would deduce and produce an infinite cycle. Instructions inside the
+// impl decl should not be able to find the impl.
+final impl forall [T:! type] T as I where .X impls J and .X = () {}
+
+fn F(unused T:! I where .X = ()) {}
+fn G() {
+  class C;
+  F(C);
+}
+
 // CHECK:STDOUT: --- fail_many_different.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

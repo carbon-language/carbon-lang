@@ -468,7 +468,7 @@ fn H(T:! (L where .Self impls M) where C(.W) impls Z(.Self)) {
   C(()) as Z(T);
 }
 
-// --- fail_todo_concrete_access_witness_m_in_earlier_constraint.carbon
+// --- concrete_access_witness_m_in_earlier_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
@@ -484,14 +484,7 @@ class C(C1:! type);
 // Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
 // (since the type of `.Self` contains `M`) and the `final impl`. So we can get
 // a witness for `C(())` from `T`.
-//
-// TODO: How come we don't get `.W` evaluating to `()` when `M` comes from an
-// earlier constraint? Is the `where_stack` not working with `.Self`?
 fn G(T:! L where .Self impls M and C(.W) impls Z(.Self)) {
-  // CHECK:STDERR: fail_todo_concrete_access_witness_m_in_earlier_constraint.carbon:[[@LINE+4]]:3: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   C(()) as Z(T);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   C(()) as Z(T);
 }
 

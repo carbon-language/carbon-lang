@@ -48,7 +48,7 @@ fn F(U:! type, unused T:! I(U) where .X = ()) {}
 fn G() {
   // This finds the impl where `.X = {}`, but F requires that `.X = ()`.
   //
-  // CHECK:STDERR: fail_generic_interface_facet_value_wrong_specific_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `I({}) where .(I({}).X) = ()` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_generic_interface_facet_value_wrong_specific_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `I({}) where {} = ()` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F({}, C);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_generic_interface_facet_value_wrong_specific_impl.carbon:[[@LINE-7]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]

@@ -256,15 +256,15 @@ static auto TreatImplAsFinal(Context& context, const SemIR::Impl& impl)
 static auto TryGetSpecificWitnessIdForImpl(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    const SemIR::SpecificInterface& interface, const SemIR::Impl& impl)
-    -> SemIR::ConstantId {
+    const SemIR::SpecificInterface& interface, SemIR::ImplId impl_id,
+    const SemIR::Impl& impl) -> SemIR::ConstantId {
   // The impl may have generic arguments, in which case we need to deduce them
   // to find what they are given the specific type and interface query. We use
   // that specific to map values in the impl to the deduced values.
   auto specific_id = SemIR::SpecificId::None;
   if (impl.generic_id.has_value()) {
     specific_id = DeduceImplArguments(
-        context, loc_id, impl, query_self_const_id, interface.specific_id);
+        context, loc_id, impl_id, query_self_const_id, interface.specific_id);
     if (!specific_id.has_value()) {
       return SemIR::ConstantId::None;
     }
@@ -672,6 +672,7 @@ class ImportImplFilter {
 }  // namespace
 
 struct CandidateImpl {
+  SemIR::ImplId impl_id;
   const SemIR::Impl* impl;
 
   // Used for sorting the candidates to find the most-specialized match.
@@ -717,13 +718,17 @@ static auto CollectCandidateImplsForQuery(
   for (auto [id, impl] : context.impls().enumerate()) {
     CARBON_CHECK(impl.witness_id.has_value());
 
+    // If the impl's interface_id differs from the query, then this impl can
+    // not possibly provide the queried interface.
+    if (impl.interface.interface_id != query_specific_interface.interface_id) {
+      continue;
+    }
+
     if (final_only && !TreatImplAsFinal(context, impl)) {
       continue;
     }
 
-    // If the impl's interface_id differs from the query, then this impl can
-    // not possibly provide the queried interface.
-    if (impl.interface.interface_id != query_specific_interface.interface_id) {
+    if (llvm::is_contained(context.forbidden_impls(), id)) {
       continue;
     }
 
@@ -756,7 +761,7 @@ static auto CollectCandidateImplsForQuery(
       continue;
     }
 
-    candidates.impls.push_back({&impl, std::move(*type_structure)});
+    candidates.impls.push_back({id, &impl, std::move(*type_structure)});
   }
 
   auto compare = [](auto& lhs, auto& rhs) -> bool {
@@ -911,11 +916,13 @@ static auto FindNonFinalWitness(
       req_specific_interface);
 
   for (const auto& candidate : candidates.impls) {
+    auto impl_id = candidate.impl_id;
     const auto& impl = *candidate.impl;
     context.impl_lookup_stack().back().impl_loc = impl.definition_id;
 
-    auto witness_id = TryGetSpecificWitnessIdForImpl(
-        context, loc_id, req_self_const_id, req_specific_interface, impl);
+    auto witness_id =
+        TryGetSpecificWitnessIdForImpl(context, loc_id, req_self_const_id,
+                                       req_specific_interface, impl_id, impl);
     if (witness_id.has_value()) {
       // We looked for errors in the query self and facet type already, and
       // we're not dealing with monomorphizations here.
@@ -1179,26 +1186,6 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  // If the query is on `.Self` and looking for the same interface as `.Self`
-  // provides, do not look for a witness in monomorphization - a non-final
-  // witness will be found from the facet type. This happens inside an `impl`
-  // declaration, and we must avoid finding that same `impl` and trying to
-  // deduce `.Self` for it, as that results in a specific declaration for the
-  // `impl` which evaluates this lookup again, producing a cycle.
-  //
-  // If the query is for `.Self` and for the facet type of `.Self`, then there
-  // is no final witness yet.
-  if (auto bind = context.insts().TryGetAs<SemIR::SymbolicBinding>(
-          eval_query.query_self_inst_id)) {
-    const auto& entity = context.entity_names().Get(bind->entity_name_id);
-    if (entity.name_id == SemIR::NameId::PeriodSelf) {
-      if (FacetTypeIsSingleInterface(context, bind->type_id,
-                                     query_specific_interface)) {
-        return SemIR::ConstantId::None;
-      }
-    }
-  }
-
   // Check to see if this result is in the cache. But skip the cache if we're
   // re-checking a poisoned result and need to redo the lookup.
   auto impl_lookup_cache_key = Context::ImplLookupCacheKey{
@@ -1261,6 +1248,7 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
   // Only consider candidates when a custom witness didn't apply.
   if (!used_custom_witness) {
     for (const auto& candidate : candidates.impls) {
+      auto impl_id = candidate.impl_id;
       const auto& impl = *candidate.impl;
 
       // In monomorphization, while resolving a specific, there may be no stack
@@ -1271,7 +1259,8 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
       }
 
       auto witness_id = TryGetSpecificWitnessIdForImpl(
-          context, loc_id, query_self_const_id, query_specific_interface, impl);
+          context, loc_id, query_self_const_id, query_specific_interface,
+          impl_id, impl);
       if (witness_id.has_value()) {
         PoisonImplLookupQuery(context, loc_id, mode, eval_query, witness_id,
                               impl);
@@ -1308,13 +1297,13 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
 auto LookupMatchesImpl(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
                        SemIR::SpecificInterface query_specific_interface,
-                       SemIR::ImplId target_impl) -> bool {
+                       SemIR::ImplId target_impl_id) -> bool {
   if (query_self_const_id == SemIR::ErrorInst::ConstantId) {
     return false;
   }
   auto witness_id = TryGetSpecificWitnessIdForImpl(
       context, loc_id, query_self_const_id, query_specific_interface,
-      context.impls().Get(target_impl));
+      target_impl_id, context.impls().Get(target_impl_id));
   // TODO: If this fails, it would be because there is an error in the specific
   // interface. Should we check for that and return false?
   CARBON_CHECK(witness_id != SemIR::ErrorInst::ConstantId,
