@@ -150,11 +150,6 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
             inst_id = GetReplacement(inst_id);
           }
           break;
-        case SubstPeriodSelfBehaviour::ExplicitOnly:
-          if (!is_implicit_self_in_desigator) {
-            inst_id = GetReplacement(inst_id);
-          }
-          break;
       }
       return FullySubstituted;
     }
@@ -451,15 +446,13 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
   };
   auto replace_rewrite = [&](SemIR::FacetTypeInfo::RewriteConstraint r)
       -> SemIR::FacetTypeInfo::RewriteConstraint {
-    // Designators in rewrite constraints are left alone so they can be found
-    // for rewrite constraint resolution. Using rewrites later requires further
-    // substitution of the `.Self` references inside designators.
-    //
-    // The LHS is always a simple designator since only that is allowed, so we
-    // just substitute the RHS.
-    auto rhs = SubstPeriodSelf(
-        context, loc_id, context.constant_values().Get(r.rhs_id),
-        period_self_replacement_id, SubstPeriodSelfBehaviour::ExplicitOnly);
+    // The LHS access instruction is not substituted so it keeps its `.Self`.
+    // This avoids evaluation replacing it with a concrete value from a final
+    // impl, as that would drop the association with the associated constant
+    // being rewritten.
+    auto rhs = SubstPeriodSelf(context, loc_id,
+                               context.constant_values().Get(r.rhs_id),
+                               period_self_replacement_id);
     return {r.lhs_id, context.constant_values().GetInstId(rhs)};
   };
 
