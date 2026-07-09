@@ -341,6 +341,10 @@ CARBON_DIAGNOSTIC_KIND(ExportPrevious)
 CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(InterfaceIncompleteWithinDefinition)
 
+// MatchFirst checking.
+CARBON_DIAGNOSTIC_KIND(MatchFirstInWrongScope)
+CARBON_DIAGNOSTIC_KIND(MatchFirstInWrongScopeNote)
+
 // Named constraint checking.
 CARBON_DIAGNOSTIC_KIND(NamedConstraintForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(NamedConstraintIncompleteWithinDefinition)
