@@ -128,6 +128,11 @@ auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
   destroy_id_stack_.PushArray();
 }
 
+auto ScopeStack::PushForMatchFirstBlock(SemIR::InstId scope_inst_id) -> void {
+  Push(scope_inst_id, SemIR::NameScopeId::None, SemIR::SpecificId::None,
+       /*lexical_lookup_has_load_error=*/false);
+}
+
 auto ScopeStack::Pop(bool check_unused) -> void {
   auto scope = scope_stack_.pop_back_val();
 

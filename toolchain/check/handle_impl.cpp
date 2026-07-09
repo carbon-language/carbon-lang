@@ -258,6 +258,16 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
   // The impl decl has a scope stack entry for the DeclNameStack, so we look at
   // the parent scope of that.
   auto parent_scope_inst_id = context.scope_stack().PeekParentInstId();
+  while (parent_scope_inst_id.has_value()) {
+    if (auto match_first = context.insts().TryGetAs<SemIR::MatchFirstDecl>(
+            parent_scope_inst_id)) {
+      parent_scope_inst_id = match_first->enclosing_scope_inst_id;
+      // TODO: Save the match first as an identifier on the Impl for choosing a
+      // best candidate later.
+    } else {
+      break;
+    }
+  }
 
   auto impl_id = SemIR::ImplId::None;
   {

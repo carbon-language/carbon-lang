@@ -8,18 +8,24 @@
 
 namespace Carbon::Check {
 
-auto HandleParseNode(Context& context, Parse::MatchFirstIntroducerId node_id)
-    -> bool {
-  return context.TODO(node_id, "HandleMatchFirstIntroducer");
+auto HandleParseNode(Context& /*context*/,
+                     Parse::MatchFirstIntroducerId /*node_id*/) -> bool {
+  return true;
 }
 
 auto HandleParseNode(Context& context,
                      Parse::MatchFirstDefinitionStartId node_id) -> bool {
-  return context.TODO(node_id, "HandleMatchFirstDefinitionStart");
+  auto enclosing_scope_inst_id = context.scope_stack().PeekInstId();
+  auto decl_id = AddInst<SemIR::MatchFirstDecl>(
+      context, node_id, {.enclosing_scope_inst_id = enclosing_scope_inst_id});
+  context.scope_stack().PushForMatchFirstBlock(decl_id);
+  return true;
 }
 
-auto HandleParseNode(Context& context, Parse::MatchFirstId node_id) -> bool {
-  return context.TODO(node_id, "HandleMatchFirst");
+auto HandleParseNode(Context& context, Parse::MatchFirstId /*node_id*/)
+    -> bool {
+  context.scope_stack().Pop();
+  return true;
 }
 
 }  // namespace Carbon::Check
