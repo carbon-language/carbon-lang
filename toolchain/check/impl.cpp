@@ -390,7 +390,8 @@ auto AddImpl(Context& context, const SemIR::Impl& impl,
   return impl_id;
 }
 
-// Returns whether the `LookupImplWitness` of `witness_id` matches `interface`.
+// Returns whether the `LookupImplWitness` of `witness_id` is for the same
+// specific interface as the impl decl's `impl_interface`.
 static auto WitnessQueryMatchesInterface(
     Context& context, SemIR::LocId loc_id, SemIR::InstId impl_self,
     SemIR::InstId access_witness_id,
@@ -401,12 +402,8 @@ static auto WitnessQueryMatchesInterface(
       context.specific_interfaces().Get(lookup.query_specific_interface_id);
 
   // The `impl_interface` comes from an IdentifiedFacetType so it has `.Self`
-  // replaced. The access comes from a rewrite constraint, which do not have
-  // `.Self` replaced, so we need to do that here.
-  //
-  // TODO: Do this more eagerly as soon as we know the full decl before we
-  // construct the witness table from it? We do replace `.Self` in the facet
-  // type, but we don't replace the designators.
+  // replaced. The access comes from the LHS of a rewrite constraint, which do
+  // not have `.Self` replaced, so we need to do that here.
   access_interface = SubstPeriodSelf(context, loc_id, access_interface,
                                      context.constant_values().Get(impl_self));
   return access_interface == impl_interface;
