@@ -46,8 +46,8 @@ binding, the same left-hand-side of `impls`) but a different type, gives more
 visibility to the facet type being defined. But a `where` that introduces a
 shadowing `.Self` referring to a different value creates an _ambiguous `.Self`_.
 
-The Carbon toolchain is built on a compile-time evaluation model, where all
-types have a canonicalized constant value in order to allow cheap type
+The Carbon reference toolchain is built on a compile-time evaluation model,
+where all types have a canonicalized constant value in order to allow cheap type
 comparison through the constant value identifier. In a canonical type
 representation all `.Self` references look the same, as they can not refer to
 their surrounding context. Any valid way of constructing the same facet type
@@ -91,7 +91,7 @@ parameter for, so it cannot be made concrete in a specific of `G`.
 fn G(generic V: type, generic W: V);
 
 fn F(generic T: Z(.Self) where .Z1 = (Y where .Self.(Y.Y1) == ())) {
-    G(T.Z1);
+  G(T.Z1);
 }
 ```
 
@@ -161,6 +161,41 @@ nested facet type can be moved to a named constraint where `.Self` can be used
 without ambiguity internally, and the outer `.Self` can be passed in as a
 generic argument.
 
+For each rejected case above, we can demonstrate moving the nested `where` to a
+named constraint to make it valid:musteval fn GetYWithRewrite() -> type { return
+Y where .Y1 = {}; } fn F(generic T: Z where .Self impls GetYWithRewrite());
+
+```carbon
+// Now accepted, the `where` in `N` is no longer nested inside another `where`.
+constraint N {
+  // This can also be written as two separate `require` statements, for `U`
+  // and `X`.
+  require impls U where .Self impls X;
+}
+fn F(generic T: Z where .Self impls N);
+
+// Now accepted, the `where` in `N` is no longer nested inside another `where`.
+constraint N {
+  require impls Y where .Self impls X;
+}
+fn F(generic T: Z where .Z1 = N);
+
+// Now accepted, the `where` in `N` after evaluation is no longer nested inside
+// another `where`.
+musteval fn GetYWithRewrite() -> type {
+  return Y where .Y1 = {};
+}
+constraint N {
+  require impls GetYWithRewrite();
+}
+fn F(generic T: Z where .Self impls N);
+```
+
+This leads to a recommended best practice: Only use `where` expressions in
+contexts where they are immediately used to constrain something. If you factor
+out a `where` expression, turn it into a named `constraint` rather than using an
+`alias` or `eval fn`, as named constraints can be composed more freely.
+
 ## Details
 
 The name `.Self` is introduced by either of:
@@ -168,10 +203,11 @@ The name `.Self` is introduced by either of:
 -   A compile-time binding, for its type: `T: Z(.Self)`.
 -   The `where` keyword, in a facet type: `type where .Self impls Z(.Self)`.
 
-If it is shadowing, the `.Self` introduced by the first `where` keyword in a
-facet type always refers to the same value as the the compile-time binding - to
-the binding itself. So it can not introduce an ambiguous `.Self` and we do not
-need to ever reject them.
+Generally, if it is shadowing, the `.Self` introduced by the first `where`
+keyword in a facet type always refers to the same value as the the compile-time
+binding - to the binding itself. So it does not introduce an ambiguous `.Self`.
+Though it is possible for evaluation to nest that `where` into the
+right-hand-side of another `where` by composing facet types.
 
 A `where` on the right-hand-side of another `where` expression can introduce a
 new value for its `.Self` in multiple ways when writing a facet type in a
@@ -230,6 +266,12 @@ The proposal advances the principle of
 [Low context-sensitivity](/docs/project/principles/low_context_sensitivity.md).
 By avoiding ambiguity in the syntax, we avoid requiring context to disambiguate.
 
+The proposal also advances our goal of
+[Code that is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write),
+and the sub-goal to "Design features to be simple to implement" in particular.
+We are reducing the complexity of behaviour required for `.Self` in order to give
+more implementation choices, and to make the constant evaluation model possible.
+
 ## Alternatives considered
 
 ### Allow nested `.Self` but it refers to the top level facet value
@@ -265,7 +307,8 @@ interface `Z(.Self)` for the facet `.Self`.
 fn F(generic T: Z(.Self) where .Z1 = ());
 ```
 
-And we can nest the rewrite constraint on the right-hand-side of another `where`:
+And we can nest the rewrite constraint on the right-hand-side of another
+`where`:
 
 ```carbon
 fn F(generic T: Y where .Y1 impls (Z(.Self) where .Z1 = ()));
@@ -329,11 +372,11 @@ interface I {}
 class C(T: type);
 
 class X {
-    impl type as Core.MulWith(X) where .Result = type {
-        eval fn Op(unused self, _: X) -> type {
-            return I where .Self == i32;
-        }
+  impl type as Core.MulWith(X) where .Result = type {
+    eval fn Op(unused self, _: X) -> type {
+       return I where .Self == i32;
     }
+  }
 }
 
 alias x = {} as X;
