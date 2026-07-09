@@ -361,9 +361,9 @@ auto DeductionContext::Deduce() -> bool {
     CARBON_KIND_SWITCH(param_inst) {
       // Deducing a symbolic binding pattern from an argument deduces the
       // binding as having that constant value. For example, deducing
-      // `(T: type)` against `(i32)` deduces `T` to be `i32`. This only arises
-      // when initializing a generic parameter from an explicitly specified
-      // argument, and in this case, the argument is required to be a
+      // `(generic T: type)` against `(i32)` deduces `T` to be `i32`. This only
+      // arises when initializing a generic parameter from an explicitly
+      // specified argument, and in this case, the argument is required to be a
       // compile-time constant.
       case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
         auto& entity_name = context().entity_names().Get(bind.entity_name_id);

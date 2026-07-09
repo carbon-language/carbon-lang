@@ -50,52 +50,22 @@ static auto GetLeafBindingPatternInstKind(Parse::NodeKind node_kind,
   }
 }
 
-// Diagnoses an explicit `runtime` keyword on a parameter that is required to be
-// a checked generic, and returns false so the caller builds an error binding.
-// The parser preserves the keyword as a `RuntimeBindingName` node precisely so
-// this diagnostic can name it. `is_deduced` selects the message: a deduced
-// (`[...]`) parameter versus an explicit parameter of a compile-time entity.
-static auto DiagnoseInvalidRuntimeParam(Context& context, Parse::NodeId node_id,
-                                        bool is_deduced) -> bool {
-  if (is_deduced) {
-    CARBON_DIAGNOSTIC(DeducedRuntimeParamNotSupported, Error,
-                      "deduced runtime parameters are not yet supported");
-    context.emitter().Emit(node_id, DeducedRuntimeParamNotSupported);
-  } else {
-    CARBON_DIAGNOSTIC(
-        RuntimeModifierNotAllowed, Error,
-        "`runtime` is not allowed for parameters of compile-time entities");
-    context.emitter().Emit(node_id, RuntimeModifierNotAllowed);
-  }
-  return false;
-}
-
-// Returns whether the parameter being checked is a deduced (`[...]`) parameter.
-static auto IsDeducedParam(Context& context) -> bool {
-  return context.full_pattern_stack().CurrentKind() ==
-         FullPatternStack::Kind::ImplicitParamList;
-}
-
 // Returns true if a parameter is valid in the given `introducer_kind`.
-static auto IsValidParamForIntroducer(Context& context, Parse::NodeId node_id,
+// `is_deduced` is whether this is a deduced (`[...]`) parameter.
+static auto IsValidParamForIntroducer(Context& context, SemIR::LocId loc_id,
                                       SemIR::NameId name_id,
                                       Lex::TokenKind introducer_kind,
-                                      bool is_generic, bool has_runtime_keyword)
+                                      bool is_generic, bool is_deduced)
     -> bool {
   switch (introducer_kind) {
     case Lex::TokenKind::Fn: {
       // `self` in the implicit parameter list is diagnosed separately (see
       // `SelfInImplicitParamList`), so skip it here to avoid a redundant
       // diagnostic.
-      if (IsDeducedParam(context) &&
-          !(is_generic || name_id == SemIR::NameId::SelfValue)) {
-        if (has_runtime_keyword) {
-          return DiagnoseInvalidRuntimeParam(context, node_id,
-                                             /*is_deduced=*/true);
-        }
+      if (is_deduced && !(is_generic || name_id == SemIR::NameId::SelfValue)) {
         CARBON_DIAGNOSTIC(ImplictParamMustBeConstant, Error,
                           "implicit parameters of functions must be constant");
-        context.emitter().Emit(node_id, ImplictParamMustBeConstant);
+        context.emitter().Emit(loc_id, ImplictParamMustBeConstant);
         return false;
       }
       // Parameters can have incomplete types in a function declaration, but not
@@ -109,8 +79,7 @@ static auto IsValidParamForIntroducer(Context& context, Parse::NodeId node_id,
         // choice type itself.
 
         // Implicit param lists are prevented during parse.
-        CARBON_CHECK(context.full_pattern_stack().CurrentKind() !=
-                         FullPatternStack::Kind::ImplicitParamList,
+        CARBON_CHECK(!is_deduced,
                      "choice alternative with implicit parameters");
         // Don't fall through to the `Class` logic for choice alternatives.
         return true;
@@ -122,17 +91,13 @@ static auto IsValidParamForIntroducer(Context& context, Parse::NodeId node_id,
       if (name_id == SemIR::NameId::SelfValue) {
         CARBON_DIAGNOSTIC(SelfParameterNotAllowed, Error,
                           "`self` parameter only allowed on functions");
-        context.emitter().Emit(node_id, SelfParameterNotAllowed);
+        context.emitter().Emit(loc_id, SelfParameterNotAllowed);
         return false;
       }
       if (!is_generic) {
-        if (has_runtime_keyword) {
-          return DiagnoseInvalidRuntimeParam(context, node_id,
-                                             IsDeducedParam(context));
-        }
         CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
                           "parameters of generic types must be constant");
-        context.emitter().Emit(node_id, GenericParamMustBeConstant);
+        context.emitter().Emit(loc_id, GenericParamMustBeConstant);
         return false;
       }
       return true;
@@ -215,13 +180,9 @@ static auto HandleAnyBindingPattern(
   // A non-generic template binding is diagnosed by the parser.
   is_template &= is_generic;
 
-  // Whether the binding has an explicit `runtime` keyword. A runtime binding's
-  // phase is already captured by its node kind, so we track the keyword only so
-  // that where it is invalid for the context (a parameter that must be a checked
-  // generic), the diagnostic can name it.
-  bool has_runtime_keyword =
-      context.node_stack()
-          .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::RuntimeBindingName>();
+  // The name in a runtime binding may be wrapped in `runtime`; discard it.
+  context.node_stack()
+      .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::RuntimeBindingName>();
 
   // The name in a runtime binding may be wrapped in `ref`.
   bool is_ref =
@@ -325,8 +286,10 @@ static auto HandleAnyBindingPattern(
   switch (context.full_pattern_stack().CurrentKind()) {
     case FullPatternStack::Kind::ImplicitParamList:
     case FullPatternStack::Kind::ExplicitParamList: {
+      bool is_deduced = context.full_pattern_stack().CurrentKind() ==
+                        FullPatternStack::Kind::ImplicitParamList;
       if (!IsValidParamForIntroducer(context, node_id, name_id, introducer.kind,
-                                     is_generic, has_runtime_keyword)) {
+                                     is_generic, is_deduced)) {
         if (name_id != SemIR::NameId::Underscore) {
           AddNameToLookup(context, name_id, SemIR::ErrorInst::InstId);
         }

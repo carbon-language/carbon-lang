@@ -16,6 +16,11 @@ namespace Carbon::Parse {
 static auto ExplicitParamListContext(Context& context,
                                      BindingContext decl_context)
     -> BindingContext {
+  // A compile-time entity's parameters are compile-time whether or not this
+  // list is a name qualifier, so there is no need to look ahead for the `.`.
+  if (decl_context == BindingContext::CompileTimeEntityParam) {
+    return decl_context;
+  }
   auto open_paren = *context.position();
   auto close_paren = context.tokens().GetMatchedClosingToken(open_paren);
   auto after_close = Lex::TokenIndex(close_paren.index + 1);

@@ -17,7 +17,7 @@ class C {}
 interface I {}
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_runtime_generic_param.carbon:[[@LINE+4]]:14: error: deduced runtime parameters are not yet supported [DeducedRuntimeParamNotSupported]
+// CHECK:STDERR: fail_runtime_generic_param.carbon:[[@LINE+4]]:14: error: parameters of generic types must be constant [GenericParamMustBeConstant]
 // CHECK:STDERR: impl forall [runtime T: type] C as I {}
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~
 // CHECK:STDERR:

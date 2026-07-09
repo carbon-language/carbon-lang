@@ -37,7 +37,7 @@ var e: C(X).GenericAndParams(X) = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:9: error: deduced runtime parameters are not yet supported [DeducedRuntimeParamNotSupported]
+// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:9: error: parameters of generic types must be constant [GenericParamMustBeConstant]
 // CHECK:STDERR: class A[runtime T: type]() {}
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -47,7 +47,7 @@ class A[runtime T: type]() {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+4]]:9: error: `runtime` is not allowed for parameters of compile-time entities [RuntimeModifierNotAllowed]
+// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+4]]:9: error: parameters of generic types must be constant [GenericParamMustBeConstant]
 // CHECK:STDERR: class A(runtime T: type) {}
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~
 // CHECK:STDERR:

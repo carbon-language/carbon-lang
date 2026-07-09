@@ -169,8 +169,8 @@ using UnderscoreName =
     LeafNode<NodeKind::UnderscoreName, Lex::UnderscoreTokenIndex,
              NodeCategory::NonExprName>;
 
-// A name qualifier with parameters, such as `A(T: type).` or `A[T: type](N:
-// T).`.
+// A name qualifier with parameters, such as `A(T: type).` or
+// `A[T: type](N: T).`.
 struct IdentifierNameQualifierWithParams {
   static constexpr auto Kind =
       NodeKind::IdentifierNameQualifierWithParams.Define(
@@ -358,11 +358,11 @@ struct RefBindingName {
 };
 
 // An explicit `runtime` keyword on a runtime binding: `runtime name`. The
-// keyword is preserved so its token is accounted for and `check` can see that
-// the binding's phase was written explicitly. It is only meaningful where it
-// overrides a generic contextual default; where it is redundant or invalid it
-// is diagnosed (by the parser or by `check`), but the binding remains
-// well-formed.
+// keyword is preserved so its token is accounted for and the check phase can
+// see that the binding's phase was written explicitly. It is only meaningful
+// where it overrides a generic contextual default; where it is redundant or
+// invalid it is diagnosed (by the parser or by the check phase), but the
+// binding remains well-formed.
 struct RuntimeBindingName {
   static constexpr auto Kind =
       NodeKind::RuntimeBindingName.Define({.child_count = 1});
@@ -493,7 +493,7 @@ struct ExplicitParamList {
 using ImplicitParamListStart = LeafNode<NodeKind::ImplicitParamListStart,
                                         Lex::OpenSquareBracketTokenIndex>;
 
-// An implicit parameter list: `[T: type, self: Self]`.
+// An implicit parameter list: `[T: type]`.
 struct ImplicitParamList {
   static constexpr auto Kind = NodeKind::ImplicitParamList.Define(
       {.bracketed_by = ImplicitParamListStart::Kind});
