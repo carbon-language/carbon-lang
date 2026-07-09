@@ -12,9 +12,9 @@
 
 match_first {}
 
-// --- missing_braces.carbon
+// --- fail_missing_braces.carbon
 
-// CHECK:STDERR: missing_braces.carbon:[[@LINE+4]]:12: error: expected `{` after `match_first` [ExpectedCurlyBraceAfter]
+// CHECK:STDERR: fail_missing_braces.carbon:[[@LINE+4]]:12: error: expected `{` after `match_first` [ExpectedCurlyBraceAfter]
 // CHECK:STDERR: match_first;
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
@@ -42,7 +42,7 @@ impl forall [T:! J] T as Interface {
 // CHECK:STDOUT:     {kind: 'MatchFirst', text: '}', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: missing_braces.carbon
+// CHECK:STDOUT: - filename: fail_missing_braces.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'MatchFirstIntroducer', text: 'match_first'},
