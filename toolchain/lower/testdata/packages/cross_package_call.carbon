@@ -41,6 +41,7 @@ fn CallCAsI() {
   (A.C as A.I).F();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'a.carbon'
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
@@ -84,6 +85,8 @@ fn CallCAsI() {
 // CHECK:STDOUT: !14 = !DILocation(line: 7, column: 26, scope: !8)
 // CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.A:I.A", scope: null, file: !1, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !16 = !DILocation(line: 16, column: 3, scope: !15)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
@@ -137,3 +140,4 @@ fn CallCAsI() {
 // CHECK:STDOUT: !15 = distinct !DISubprogram(name: "CallCAsI", linkageName: "_CCallCAsI.Main", scope: null, file: !1, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !16 = !DILocation(line: 9, column: 3, scope: !15)
 // CHECK:STDOUT: !17 = !DILocation(line: 8, column: 1, scope: !15)
+// CHECK:STDOUT:

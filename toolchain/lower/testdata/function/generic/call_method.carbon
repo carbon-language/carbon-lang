@@ -22,6 +22,7 @@ fn CallF() -> i32 {
   return c.F(n);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_method.carbon'
 // CHECK:STDOUT: source_filename = "call_method.carbon"
 // CHECK:STDOUT:
@@ -109,3 +110,4 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !26, type: !22)
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 2, scope: !26, type: !7)
 // CHECK:STDOUT: !32 = !DILocation(line: 15, column: 5, scope: !26)
+// CHECK:STDOUT:

@@ -115,10 +115,6 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.506 = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.506 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %struct_type.a.a92 = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15: type = splice_block %struct_type.a.loc15 [concrete = constants.%struct_type.a.a92] {
 // CHECK:STDOUT:     %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -126,8 +122,8 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %struct_type.a.a92 = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.20e3 = ref_binding_pattern b [concrete = constants.%b.patt]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.20e3 = var_pattern %b.patt [concrete = constants.%b.var_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.506 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.506 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %struct_type.a.b = var_storage %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc20: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b] {
@@ -137,8 +133,8 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %struct_type.a.b = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.506 = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.506 = var_pattern %x.patt [concrete = constants.%x.var_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.20e3 = ref_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.20e3 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.a92 = var_storage %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc26: type = splice_block %struct_type.a.loc26 [concrete = constants.%struct_type.a.a92] {
@@ -147,8 +143,8 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.a92 = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.b29 = ref_binding_pattern y [concrete = constants.%y.patt]
-// CHECK:STDOUT:     %y.var_patt: %pattern_type.b29 = var_pattern %y.patt [concrete = constants.%y.var_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.506 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.506 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.b.0bf = var_storage %y.var_patt [concrete]
 // CHECK:STDOUT:   %.loc32: type = splice_block %struct_type.b [concrete = constants.%struct_type.b.0bf] {
@@ -156,6 +152,10 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %i32} [concrete = constants.%struct_type.b.0bf]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %struct_type.b.0bf = wrapper_binding y, %y.var [concrete = %y.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %pattern_type.b29 = ref_binding_pattern y [concrete = constants.%y.patt]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.b29 = var_pattern %y.patt [concrete = constants.%y.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -188,5 +188,7 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.a92 = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   assign file.%y.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

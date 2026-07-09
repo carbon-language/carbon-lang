@@ -335,6 +335,8 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %bound_method.loc19_39.2: <bound method> = bound_method %.loc19_39.3, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.432 = call %bound_method.loc19_39.2(%.loc19_39.3)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertBToA(%p.param: %ptr.432) -> out %return.param: %ptr.d43 {
@@ -350,6 +352,8 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %bound_method.loc20_39.2: <bound method> = bound_method %.loc20_39.3, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.d43 = call %bound_method.loc20_39.2(%.loc20_39.3)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToA(%p.param: %ptr.6b6) -> out %return.param: %ptr.d43 {
@@ -366,13 +370,12 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %bound_method.loc21_39.2: <bound method> = bound_method %.loc21_39.4, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.d43 = call %bound_method.loc21_39.2(%.loc21_39.4)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertValue(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.9ef = value_binding_pattern a [concrete = constants.%a.patt.bb7b23.1]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc24_21.1: %A = as_compatible %c.ref
 // CHECK:STDOUT:   %.loc24_21.2: ref %B = class_element_access %.loc24_21.1, element0
@@ -381,7 +384,12 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %.loc24_21.5: %A = acquire_value %.loc24_21.4
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a: %A = wrapper_binding a, %.loc24_21.5
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.9ef = value_binding_pattern a [concrete = constants.%a.patt.bb7b23.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertRef(%c.param: %ptr.6b6) -> out %return.param: %ptr.d43 {
@@ -400,13 +408,12 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %bound_method.loc28_10.2: <bound method> = bound_method %addr, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.d43 = call %bound_method.loc28_10.2(%addr)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertInit() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.9ef = value_binding_pattern a [concrete = constants.%a.patt.bb7b23.2]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc32_46.1: %struct_type.a.a6c = struct_literal (%int_1) [concrete = constants.%struct.48c]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
@@ -457,8 +464,13 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %.loc32_66.7: %A = acquire_value %.loc32_66.6
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a: %A = wrapper_binding a, %.loc32_66.7
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.9ef = value_binding_pattern a [concrete = constants.%a.patt.bb7b23.2]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.320)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc32_66.1(%self.param: ref %i32.builtin) = "no_op";
@@ -466,16 +478,22 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT: fn @Destroy.Op.loc32_66.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc32_66.3(%self.param: ref %struct_type.a.a92) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc32_66.4(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- qualified.carbon
@@ -504,6 +522,8 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %.loc15_17.4: %ptr.903 = converted %p.ref, %.loc15_17.3
 // CHECK:STDOUT:   %TakeConstAPtr.call: init %empty_tuple.type = call %TakeConstAPtr.ref(%.loc15_17.4)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassConstBPtr(%p.param: %ptr.c09) {
@@ -516,6 +536,8 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %.loc21_17.3: %ptr.903 = converted %p.ref, %addr
 // CHECK:STDOUT:   %TakeConstAPtr.call: init %empty_tuple.type = call %TakeConstAPtr.ref(%.loc21_17.3)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- const_qualified_non_ptr.carbon
@@ -540,6 +562,8 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %.loc15_14.4: %const.b97 = acquire_value %.loc15_14.3
 // CHECK:STDOUT:   %TakeConstA.call: init %empty_tuple.type = call %TakeConstA.ref(%.loc15_14.4)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassConstB(%p.param: %const.825) {
@@ -552,6 +576,8 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %.loc21_14.4: %const.b97 = acquire_value %.loc21_14.3
 // CHECK:STDOUT:   %TakeConstA.call: init %empty_tuple.type = call %TakeConstA.ref(%.loc21_14.4)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- partial_qualified_non_ptr.carbon
@@ -576,6 +602,8 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %.loc15_16.4: %.3d6 = acquire_value %.loc15_16.3
 // CHECK:STDOUT:   %TakePartialA.call: init %empty_tuple.type = call %TakePartialA.ref(%.loc15_16.4)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassPartialB(%b.param: %.640) {
@@ -588,5 +616,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %.loc21_16.4: %.3d6 = acquire_value %.loc21_16.3
 // CHECK:STDOUT:   %TakePartialA.call: init %empty_tuple.type = call %TakePartialA.ref(%.loc21_16.4)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

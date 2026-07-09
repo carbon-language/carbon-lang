@@ -213,10 +213,6 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Outer.F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %o.patt: %pattern_type.d6c = ref_binding_pattern o [concrete = constants.%o.patt.a05f50.1]
-// CHECK:STDOUT:     %o.var_patt: %pattern_type.d6c = var_pattern %o.patt [concrete = constants.%o.var_patt.6496fb.1]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %o.var: ref %Outer = var_storage %o.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc18: %DefaultOrUnformed.type = facet_value constants.%Outer, (constants.%DefaultOrUnformed.impl_witness.474) [concrete = constants.%DefaultOrUnformed.facet.1fd]
 // CHECK:STDOUT:   %.loc18_24.1: %DefaultOrUnformed.type = converted constants.%Outer, %DefaultOrUnformed.facet.loc18 [concrete = constants.%DefaultOrUnformed.facet.1fd]
@@ -229,8 +225,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:   %o: ref %Outer = wrapper_binding o, %o.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %i.patt: %pattern_type.dc4 = ref_binding_pattern i [concrete = constants.%i.patt.539460.1]
-// CHECK:STDOUT:     %i.var_patt: %pattern_type.dc4 = var_pattern %i.patt [concrete = constants.%i.var_patt.15311d.1]
+// CHECK:STDOUT:     %o.patt: %pattern_type.d6c = ref_binding_pattern o [concrete = constants.%o.patt.a05f50.1]
+// CHECK:STDOUT:     %o.var_patt: %pattern_type.d6c = var_pattern %o.patt [concrete = constants.%o.var_patt.6496fb.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %Inner = var_storage %i.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc19: %DefaultOrUnformed.type = facet_value constants.%Inner, (constants.%DefaultOrUnformed.impl_witness.b1a) [concrete = constants.%DefaultOrUnformed.facet.eb3]
@@ -243,19 +239,21 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   assign %i.var, %T.as.DefaultOrUnformed.impl.Op.call.loc19
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   %i: ref %Inner = wrapper_binding i, %i.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %i.patt: %pattern_type.dc4 = ref_binding_pattern i [concrete = constants.%i.patt.539460.1]
+// CHECK:STDOUT:     %i.var_patt: %pattern_type.dc4 = var_pattern %i.patt [concrete = constants.%i.var_patt.15311d.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound.loc19: <bound method> = bound_method %i.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc19: init %empty_tuple.type = call %Destroy.Op.bound.loc19(%i.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc18: <bound method> = bound_method %o.var, constants.%Destroy.Op.1a2547.6
 // CHECK:STDOUT:   %Destroy.Op.call.loc18: init %empty_tuple.type = call %Destroy.Op.bound.loc18(%o.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Inner.G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %o.patt: %pattern_type.d6c = ref_binding_pattern o [concrete = constants.%o.patt.a05f50.2]
-// CHECK:STDOUT:     %o.var_patt: %pattern_type.d6c = var_pattern %o.patt [concrete = constants.%o.var_patt.6496fb.2]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %o.var: ref %Outer = var_storage %o.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc29: %DefaultOrUnformed.type = facet_value constants.%Outer, (constants.%DefaultOrUnformed.impl_witness.474) [concrete = constants.%DefaultOrUnformed.facet.1fd]
 // CHECK:STDOUT:   %.loc29_26.1: %DefaultOrUnformed.type = converted constants.%Outer, %DefaultOrUnformed.facet.loc29 [concrete = constants.%DefaultOrUnformed.facet.1fd]
@@ -268,8 +266,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:   %o: ref %Outer = wrapper_binding o, %o.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %i.patt: %pattern_type.dc4 = ref_binding_pattern i [concrete = constants.%i.patt.539460.2]
-// CHECK:STDOUT:     %i.var_patt: %pattern_type.dc4 = var_pattern %i.patt [concrete = constants.%i.var_patt.15311d.2]
+// CHECK:STDOUT:     %o.patt: %pattern_type.d6c = ref_binding_pattern o [concrete = constants.%o.patt.a05f50.2]
+// CHECK:STDOUT:     %o.var_patt: %pattern_type.d6c = var_pattern %o.patt [concrete = constants.%o.var_patt.6496fb.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %Inner = var_storage %i.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc30: %DefaultOrUnformed.type = facet_value constants.%Inner, (constants.%DefaultOrUnformed.impl_witness.b1a) [concrete = constants.%DefaultOrUnformed.facet.eb3]
@@ -282,19 +280,21 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   assign %i.var, %T.as.DefaultOrUnformed.impl.Op.call.loc30
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   %i: ref %Inner = wrapper_binding i, %i.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %i.patt: %pattern_type.dc4 = ref_binding_pattern i [concrete = constants.%i.patt.539460.2]
+// CHECK:STDOUT:     %i.var_patt: %pattern_type.dc4 = var_pattern %i.patt [concrete = constants.%i.var_patt.15311d.2]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound.loc30: <bound method> = bound_method %i.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc30: init %empty_tuple.type = call %Destroy.Op.bound.loc30(%i.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc29: <bound method> = bound_method %o.var, constants.%Destroy.Op.1a2547.6
 // CHECK:STDOUT:   %Destroy.Op.call.loc29: init %empty_tuple.type = call %Destroy.Op.bound.loc29(%o.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Outer.H() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %o.patt: %pattern_type.d6c = ref_binding_pattern o [concrete = constants.%o.patt.a05f50.3]
-// CHECK:STDOUT:     %o.var_patt: %pattern_type.d6c = var_pattern %o.patt [concrete = constants.%o.var_patt.6496fb.3]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %o.var: ref %Outer = var_storage %o.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc36: %DefaultOrUnformed.type = facet_value constants.%Outer, (constants.%DefaultOrUnformed.impl_witness.474) [concrete = constants.%DefaultOrUnformed.facet.1fd]
 // CHECK:STDOUT:   %.loc36_24.1: %DefaultOrUnformed.type = converted constants.%Outer, %DefaultOrUnformed.facet.loc36 [concrete = constants.%DefaultOrUnformed.facet.1fd]
@@ -307,8 +307,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:   %o: ref %Outer = wrapper_binding o, %o.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %i.patt: %pattern_type.dc4 = ref_binding_pattern i [concrete = constants.%i.patt.539460.3]
-// CHECK:STDOUT:     %i.var_patt: %pattern_type.dc4 = var_pattern %i.patt [concrete = constants.%i.var_patt.15311d.3]
+// CHECK:STDOUT:     %o.patt: %pattern_type.d6c = ref_binding_pattern o [concrete = constants.%o.patt.a05f50.3]
+// CHECK:STDOUT:     %o.var_patt: %pattern_type.d6c = var_pattern %o.patt [concrete = constants.%o.var_patt.6496fb.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %Inner = var_storage %i.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc37: %DefaultOrUnformed.type = facet_value constants.%Inner, (constants.%DefaultOrUnformed.impl_witness.b1a) [concrete = constants.%DefaultOrUnformed.facet.eb3]
@@ -321,11 +321,17 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   assign %i.var, %T.as.DefaultOrUnformed.impl.Op.call.loc37
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   %i: ref %Inner = wrapper_binding i, %i.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %i.patt: %pattern_type.dc4 = ref_binding_pattern i [concrete = constants.%i.patt.539460.3]
+// CHECK:STDOUT:     %i.var_patt: %pattern_type.dc4 = var_pattern %i.patt [concrete = constants.%i.var_patt.15311d.3]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound.loc37: <bound method> = bound_method %i.var, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc37: init %empty_tuple.type = call %Destroy.Op.bound.loc37(%i.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc36: <bound method> = bound_method %o.var, constants.%Destroy.Op.1a2547.6
 // CHECK:STDOUT:   %Destroy.Op.call.loc36: init %empty_tuple.type = call %Destroy.Op.bound.loc36(%o.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc19_5.1(%self.param: ref %ptr.001) = "no_op";
@@ -335,28 +341,33 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: fn @Destroy.Op.loc19_5.3(%self.param: ref %struct_type.pi.po.qi) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc19_5.4(%self.param: ref %Inner) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_5.1(%self.param: ref %struct_type.po.qo.pi) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_5.2(%self.param: ref %Outer) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %ptr.286) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.36a = value_binding_pattern b [concrete = constants.%b.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref.loc46: %ptr.286 = name_ref a, %a
 // CHECK:STDOUT:   %.loc46_26: ref %Outer = deref %a.ref.loc46
 // CHECK:STDOUT:   %pi.ref.loc46: %Outer.elem.fe3 = name_ref pi, @Outer.%.loc42 [concrete = @Outer.%.loc42]
@@ -368,6 +379,9 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:     %ptr.loc46: type = ptr_type %Inner.ref [concrete = constants.%ptr.001]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %ptr.001 = wrapper_binding b, %.loc46_29.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.36a = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref.loc48_3: %ptr.286 = name_ref a, %a
 // CHECK:STDOUT:   %.loc48_4.1: ref %Outer = deref %a.ref.loc48_3
 // CHECK:STDOUT:   %po.ref.loc48: %Outer.elem.3ef = name_ref po, @Outer.%.loc40 [concrete = @Outer.%.loc40]
@@ -447,5 +461,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc53: init %ptr.001 = call %bound_method.loc53_12.2(%.loc53_12.3)
 // CHECK:STDOUT:   assign %.loc53_4.2, %ptr.as.Copy.impl.Op.call.loc53
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

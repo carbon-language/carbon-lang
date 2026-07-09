@@ -104,10 +104,6 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mismatch() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.fb7 = ref_binding_pattern v [concrete = constants.%v.patt]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.fb7 = var_pattern %v.patt [concrete = constants.%v.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %f64.dc1 = var_storage %v.var_patt
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 0e-1 [concrete = constants.%float.1f7]
 // CHECK:STDOUT:   %impl.elem0: %.2d7 = impl_witness_access constants.%ImplicitAs.impl_witness.43c, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.cf0]
@@ -119,10 +115,16 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   assign %v.var, %.loc23_12
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %v: ref %f64.dc1 = wrapper_binding v, %v.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: %pattern_type.fb7 = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.fb7 = var_pattern %v.patt [concrete = constants.%v.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc23_17: %f64.dc1 = acquire_value %v
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   return %.loc23_17
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc23_12.1(%self.param: ref %f64.794) = "no_op";
@@ -130,5 +132,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: fn @Destroy.Op.loc23_12.2(%self.param: ref %f64.dc1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

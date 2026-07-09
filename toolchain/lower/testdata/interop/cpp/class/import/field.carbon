@@ -108,6 +108,7 @@ fn AccessP(a: Cpp.A) -> i32 {
   return *a.p;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'access_struct.carbon'
 // CHECK:STDOUT: source_filename = "access_struct.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -160,6 +161,8 @@ fn AccessP(a: Cpp.A) -> i32 {
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !20, type: !15)
 // CHECK:STDOUT: !23 = !DILocation(line: 13, column: 10, scope: !20)
 // CHECK:STDOUT: !24 = !DILocation(line: 13, column: 3, scope: !20)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'assign_struct.carbon'
 // CHECK:STDOUT: source_filename = "assign_struct.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -211,6 +214,8 @@ fn AccessP(a: Cpp.A) -> i32 {
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !19, type: !14)
 // CHECK:STDOUT: !22 = !DILocation(line: 13, column: 3, scope: !19)
 // CHECK:STDOUT: !23 = !DILocation(line: 12, column: 1, scope: !19)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'access_union.carbon'
 // CHECK:STDOUT: source_filename = "access_union.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -263,6 +268,8 @@ fn AccessP(a: Cpp.A) -> i32 {
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !20, type: !15)
 // CHECK:STDOUT: !23 = !DILocation(line: 11, column: 10, scope: !20)
 // CHECK:STDOUT: !24 = !DILocation(line: 11, column: 3, scope: !20)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'assign_union.carbon'
 // CHECK:STDOUT: source_filename = "assign_union.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -314,6 +321,8 @@ fn AccessP(a: Cpp.A) -> i32 {
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !19, type: !14)
 // CHECK:STDOUT: !22 = !DILocation(line: 11, column: 3, scope: !19)
 // CHECK:STDOUT: !23 = !DILocation(line: 10, column: 1, scope: !19)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'access_anon_union.carbon'
 // CHECK:STDOUT: source_filename = "access_anon_union.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -368,3 +377,4 @@ fn AccessP(a: Cpp.A) -> i32 {
 // CHECK:STDOUT: !23 = !DILocation(line: 11, column: 11, scope: !20)
 // CHECK:STDOUT: !24 = !DILocation(line: 11, column: 10, scope: !20)
 // CHECK:STDOUT: !25 = !DILocation(line: 11, column: 3, scope: !20)
+// CHECK:STDOUT:

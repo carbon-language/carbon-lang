@@ -244,6 +244,7 @@ cc_library(
         "//common:error",
         "//common:find",
         "//common:growing_range",
+        "//common:hashtable_key_context",
         "//common:map",
         "//common:ostream",
         "//common:pretty_stack_trace_function",

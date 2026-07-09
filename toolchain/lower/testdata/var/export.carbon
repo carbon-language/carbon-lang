@@ -27,6 +27,7 @@ fn Run() -> i32 {
   return Cpp.Get();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'var_export.carbon'
 // CHECK:STDOUT: source_filename = "var_export.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -85,3 +86,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !19 = !{null}
 // CHECK:STDOUT: !20 = !DILocation(line: 5, column: 1, scope: !17)
 // CHECK:STDOUT: !21 = !DILocation(line: 0, scope: !17)
+// CHECK:STDOUT:

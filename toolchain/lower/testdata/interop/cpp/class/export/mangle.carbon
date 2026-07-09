@@ -26,6 +26,7 @@ void f1(Carbon::Other::Class1*) {
 
 ''';
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'other.carbon'
 // CHECK:STDOUT: source_filename = "other.carbon"
 // CHECK:STDOUT:
@@ -36,6 +37,8 @@ void f1(Carbon::Other::Class1*) {
 // CHECK:STDOUT: !1 = !DIFile(filename: "other.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'namespace.carbon'
 // CHECK:STDOUT: source_filename = "namespace.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -69,3 +72,4 @@ void f1(Carbon::Other::Class1*) {
 // CHECK:STDOUT: !11 = !{!12, !12, i64 0}
 // CHECK:STDOUT: !12 = !{!"p1 _ZTSN6Carbon5Other6Class1E", !13, i64 0}
 // CHECK:STDOUT: !13 = !{!"any pointer", !9, i64 0}
+// CHECK:STDOUT:

@@ -111,6 +111,8 @@ fn MyF() {
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_import_without_definition.carbon
@@ -141,6 +143,8 @@ fn MyF() {
 // CHECK:STDOUT:   %foo.ref.loc20: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.call.loc20: init %empty_tuple.type = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- automatic_return_type.carbon
@@ -261,9 +265,6 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %r1.patt: %pattern_type.6b6 = value_binding_pattern r1 [concrete = constants.%r1.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %WithoutThunk.ref: %WithoutThunk.cpp_overload_set.type = name_ref WithoutThunk, imports.%WithoutThunk.cpp_overload_set.value [concrete = constants.%WithoutThunk.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -280,7 +281,7 @@ fn MyF() {
 // CHECK:STDOUT:   %i32.loc13: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %r1: %i32 = wrapper_binding r1, %.loc13_42.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %r2.patt: %pattern_type.6b6 = value_binding_pattern r2 [concrete = constants.%r2.patt]
+// CHECK:STDOUT:     %r1.patt: %pattern_type.6b6 = value_binding_pattern r1 [concrete = constants.%r1.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ThunkOnArg.ref: %ThunkOnArg.cpp_overload_set.type = name_ref ThunkOnArg, imports.%ThunkOnArg.cpp_overload_set.value [concrete = constants.%ThunkOnArg.cpp_overload_set.value]
@@ -306,7 +307,7 @@ fn MyF() {
 // CHECK:STDOUT:   %i32.loc14: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %r2: %i32 = wrapper_binding r2, %.loc14_40.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %r3.patt: %pattern_type.203 = value_binding_pattern r3 [concrete = constants.%r3.patt]
+// CHECK:STDOUT:     %r2.patt: %pattern_type.6b6 = value_binding_pattern r2 [concrete = constants.%r2.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ThunkOnReturn.ref: %ThunkOnReturn.cpp_overload_set.type = name_ref ThunkOnReturn, imports.%ThunkOnReturn.cpp_overload_set.value [concrete = constants.%ThunkOnReturn.cpp_overload_set.value]
@@ -327,7 +328,7 @@ fn MyF() {
 // CHECK:STDOUT:   %i16.loc15: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %r3: %i16 = wrapper_binding r3, %.loc15_43.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %r4.patt: %pattern_type.203 = value_binding_pattern r4 [concrete = constants.%r4.patt]
+// CHECK:STDOUT:     %r3.patt: %pattern_type.203 = value_binding_pattern r3 [concrete = constants.%r3.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ThunkOnBoth.ref: %ThunkOnBoth.cpp_overload_set.type = name_ref ThunkOnBoth, imports.%ThunkOnBoth.cpp_overload_set.value [concrete = constants.%ThunkOnBoth.cpp_overload_set.value]
@@ -355,6 +356,9 @@ fn MyF() {
 // CHECK:STDOUT:   %.loc16_41.4: %i16 = acquire_value %.loc16_41.3
 // CHECK:STDOUT:   %i16.loc16: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %r4: %i16 = wrapper_binding r4, %.loc16_41.4
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %r4.patt: %pattern_type.203 = value_binding_pattern r4 [concrete = constants.%r4.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound.loc16: <bound method> = bound_method %.loc16_41.3, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc16_41: init %empty_tuple.type = call %Destroy.Op.bound.loc16(%.loc16_41.3)
 // CHECK:STDOUT:   %Destroy.Op.call.loc16_40: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.597)
@@ -362,6 +366,8 @@ fn MyF() {
 // CHECK:STDOUT:   %Destroy.Op.call.loc15: init %empty_tuple.type = call %Destroy.Op.bound.loc15(%.loc15_43.3)
 // CHECK:STDOUT:   %Destroy.Op.call.loc14: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.597)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc16_41.1(%self.param: ref %i16.builtin) = "no_op";
@@ -369,5 +375,7 @@ fn MyF() {
 // CHECK:STDOUT: fn @Destroy.Op.loc16_41.2(%self.param: ref %i16) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

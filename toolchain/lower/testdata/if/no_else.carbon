@@ -20,6 +20,7 @@ fn If(b: bool) {
   G();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'no_else.carbon'
 // CHECK:STDOUT: source_filename = "no_else.carbon"
 // CHECK:STDOUT:
@@ -75,3 +76,4 @@ fn If(b: bool) {
 // CHECK:STDOUT: !18 = !DILocation(line: 17, column: 3, scope: !10)
 // CHECK:STDOUT: !19 = !DILocation(line: 20, column: 3, scope: !10)
 // CHECK:STDOUT: !20 = !DILocation(line: 16, column: 1, scope: !10)
+// CHECK:STDOUT:

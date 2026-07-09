@@ -116,13 +116,13 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %n.var: ref %i32 = var_storage %n.var_patt [concrete]
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %n: ref %i32 = wrapper_binding n, %n.var [concrete = %n.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = ref_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:     %n.var_patt: %pattern_type.6b6 = var_pattern %n.patt [concrete = constants.%n.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref %i32 = var_storage %n.var_patt [concrete]
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %n: ref %i32 = wrapper_binding n, %n.var [concrete = %n.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Outer(%T.loc4_14.2: %Copy.type) {
@@ -203,6 +203,8 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:     %.loc7_17.1: ref @Inner.Get.%T.as_type.loc7_17.1 (%T.as_type) = splice_block %return.param {}
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @Inner.Get.%T.as_type.loc7_17.1 (%T.as_type) to %.loc7_17.1 = call %bound_method.loc7_28.2(%U.ref)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -232,6 +234,8 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   %Inner.Get.call: init %i32 = call %Inner.Get.specific_fn()
 // CHECK:STDOUT:   assign file.%n.var, %Inner.Get.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%T.f84) {

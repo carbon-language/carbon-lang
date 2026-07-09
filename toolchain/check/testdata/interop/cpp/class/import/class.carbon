@@ -391,6 +391,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %foo.ref: %Bar.foo.cpp_overload_set.type = name_ref foo, imports.%Bar.foo.cpp_overload_set.value [concrete = constants.%Bar.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call imports.%Bar.foo.decl()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_static_data_member.carbon
@@ -417,9 +419,6 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete = constants.%bar.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Bar.ref.loc8_33: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:   %foo.ref: ref %ptr.227 = name_ref foo, imports.%foo.var [concrete = imports.%foo.var]
@@ -430,7 +429,12 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc8_22 [concrete = constants.%ptr.227]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar: %ptr.227 = wrapper_binding bar, %.loc8_37
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete = constants.%bar.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_data_member.carbon
@@ -472,9 +476,6 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr.227) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %foo_bar.patt: %pattern_type = value_binding_pattern foo_bar [concrete = constants.%foo_bar.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar.ref: %ptr.227 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc8_37.1: ref %Bar = deref %bar.ref
 // CHECK:STDOUT:   %foo.ref: %Bar.elem = name_ref foo, @Bar.%.1 [concrete = @Bar.%.1]
@@ -486,7 +487,12 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     %ptr.loc8: type = ptr_type %Bar.ref.loc8 [concrete = constants.%ptr.227]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo_bar: %ptr.227 = wrapper_binding foo_bar, %.loc8_37.3
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %foo_bar.patt: %pattern_type = value_binding_pattern foo_bar [concrete = constants.%foo_bar.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_dynamic.carbon
@@ -549,6 +555,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8, %f.ref
 // CHECK:STDOUT:   %Bar.f.call: init %empty_tuple.type = call imports.%Bar.f.decl(%.loc8)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_to_inherit_public.carbon
@@ -603,6 +611,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %foo.ref: %Bar.foo.cpp_overload_set.type = name_ref foo, imports.%Bar.foo.cpp_overload_set.value [concrete = constants.%Bar.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call imports.%Bar.foo.decl()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_template.carbon

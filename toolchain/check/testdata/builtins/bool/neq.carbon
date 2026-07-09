@@ -62,10 +62,6 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.794 = ref_binding_pattern a [concrete = constants.%a.patt.c70]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.794 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C.4b2 = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc12_25.1: type = splice_block %C.loc12 [concrete = constants.%C.4b2] {
 // CHECK:STDOUT:     %C.ref.loc12: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
@@ -78,6 +74,10 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %C.loc12: type = class_type @C, @C(constants.%false) [concrete = constants.%C.4b2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %C.4b2 = wrapper_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.794 = ref_binding_pattern a [concrete = constants.%a.patt.c70]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.794 = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -87,6 +87,8 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %False.call.loc12: init %C.4b2 to %.loc12 = call %False.ref.loc12()
 // CHECK:STDOUT:   assign file.%a.var, %False.call.loc12
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- prelude.carbon
@@ -119,10 +121,6 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.794 = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.794 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C.4b2 = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_22.1: type = splice_block %C.loc10 [concrete = constants.%C.4b2] {
 // CHECK:STDOUT:     %C.ref.loc10: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
@@ -136,6 +134,10 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %C.loc10: type = class_type @C, @C(constants.%false) [concrete = constants.%C.4b2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %C.4b2 = wrapper_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.794 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.794 = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -145,5 +147,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %False.call.loc10: init %C.4b2 to %.loc10 = call %False.ref.loc10()
 // CHECK:STDOUT:   assign file.%a.var, %False.call.loc10
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

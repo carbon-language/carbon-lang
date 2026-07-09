@@ -39,10 +39,6 @@ fn A() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt.loc18_17: %pattern_type.cb1 = ref_binding_pattern n [concrete = constants.%n.patt.785a0d.1]
-// CHECK:STDOUT:     %n.var_patt.loc18_5: %pattern_type.cb1 = var_pattern %n.patt.loc18_17 [concrete = constants.%n.var_patt.961036.1]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var.loc18_5: ref %empty_tuple.type = var_storage %n.var_patt.loc18_5
 // CHECK:STDOUT:   %.loc18_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
@@ -53,13 +49,13 @@ fn A() {
 // CHECK:STDOUT:     %.loc18_20.3: type = converted %.loc18_20.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.loc18_17: ref %empty_tuple.type = wrapper_binding n, %n.var.loc18_5
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt.loc18_17: %pattern_type.cb1 = ref_binding_pattern n [concrete = constants.%n.patt.785a0d.1]
+// CHECK:STDOUT:     %n.var_patt.loc18_5: %pattern_type.cb1 = var_pattern %n.patt.loc18_17 [concrete = constants.%n.var_patt.961036.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt.loc18_49: %pattern_type.cb1 = ref_binding_pattern n [concrete = constants.%n.patt.785a0d.2]
-// CHECK:STDOUT:     %n.var_patt.loc18_37: %pattern_type.cb1 = var_pattern %n.patt.loc18_49 [concrete = constants.%n.var_patt.961036.2]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var.loc18_37: ref %empty_tuple.type = var_storage %n.var_patt.loc18_37
 // CHECK:STDOUT:   %.loc18_57.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_57.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
@@ -70,6 +66,10 @@ fn A() {
 // CHECK:STDOUT:     %.loc18_52.3: type = converted %.loc18_52.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.loc18_49: ref %empty_tuple.type = wrapper_binding n, %n.var.loc18_37
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt.loc18_49: %pattern_type.cb1 = ref_binding_pattern n [concrete = constants.%n.patt.785a0d.2]
+// CHECK:STDOUT:     %n.var_patt.loc18_37: %pattern_type.cb1 = var_pattern %n.patt.loc18_49 [concrete = constants.%n.var_patt.961036.2]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
@@ -78,6 +78,8 @@ fn A() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc18_5: <bound method> = bound_method %n.var.loc18_5, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc18_5: init %empty_tuple.type = call %Destroy.Op.bound.loc18_5(%n.var.loc18_5)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_tuple.type) = "no_op";

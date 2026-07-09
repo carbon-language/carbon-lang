@@ -46,21 +46,21 @@ let not_8_bit: CharLiteral = '\u{1E15}';
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %ascii_x.patt: %pattern_type = value_binding_pattern ascii_x [concrete = constants.%ascii_x.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CharLiteral.ref.loc7: type = name_ref CharLiteral, imports.%Main.CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %ascii_x: Core.CharLiteral = wrapper_binding ascii_x, @__global_init.%.loc7
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_7_bit.patt: %pattern_type = value_binding_pattern not_7_bit [concrete = constants.%not_7_bit.patt]
+// CHECK:STDOUT:     %ascii_x.patt: %pattern_type = value_binding_pattern ascii_x [concrete = constants.%ascii_x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CharLiteral.ref.loc8: type = name_ref CharLiteral, imports.%Main.CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %not_7_bit: Core.CharLiteral = wrapper_binding not_7_bit, @__global_init.%.loc8
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_8_bit.patt: %pattern_type = value_binding_pattern not_8_bit [concrete = constants.%not_8_bit.patt]
+// CHECK:STDOUT:     %not_7_bit.patt: %pattern_type = value_binding_pattern not_7_bit [concrete = constants.%not_7_bit.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CharLiteral.ref.loc9: type = name_ref CharLiteral, imports.%Main.CharLiteral [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   %not_8_bit: Core.CharLiteral = wrapper_binding not_8_bit, @__global_init.%.loc9
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %not_8_bit.patt: %pattern_type = value_binding_pattern not_8_bit [concrete = constants.%not_8_bit.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -69,5 +69,7 @@ let not_8_bit: CharLiteral = '\u{1E15}';
 // CHECK:STDOUT:   %.loc8: Core.CharLiteral = char_value U+0080 [concrete = constants.%.ae7]
 // CHECK:STDOUT:   %.loc9: Core.CharLiteral = char_value U+1E15 [concrete = constants.%.a81]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -45,6 +45,7 @@ fn DoThing() {
   Cpp.Use(ref d);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'dynamic_base_from_cpp.carbon'
 // CHECK:STDOUT: source_filename = "dynamic_base_from_cpp.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -290,3 +291,4 @@ fn DoThing() {
 // CHECK:STDOUT: !61 = !{!"vtable pointer", !10, i64 0}
 // CHECK:STDOUT: !62 = !{!63, !63, i64 0}
 // CHECK:STDOUT: !63 = !{!"p1 _ZTS11FurtherBase", !13, i64 0}
+// CHECK:STDOUT:

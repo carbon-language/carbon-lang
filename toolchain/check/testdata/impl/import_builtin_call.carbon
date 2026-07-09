@@ -107,6 +107,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Double.specific_fn: <specific function> = specific_function %Double.ref, @Double(constants.%int_64) [concrete = constants.%Double.specific_fn]
 // CHECK:STDOUT:   %Double.call: init %MyInt.9fc = call %Double.specific_fn(%n.ref)
 // CHECK:STDOUT:   return %Double.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_convert_symbolic.carbon
@@ -145,10 +147,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %m.patt: %pattern_type.e13 = ref_binding_pattern m [concrete = constants.%m.patt]
-// CHECK:STDOUT:     %m.var_patt: %pattern_type.e13 = var_pattern %m.patt [concrete = constants.%m.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %m.var: ref %i64.builtin = var_storage %m.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7_14.1: type = splice_block %.loc7_14.3 [concrete = constants.%i64.builtin] {
 // CHECK:STDOUT:     %Int.ref.loc7: %Int.type = name_ref Int, imports.%Main.Int [concrete = constants.%Int]
@@ -159,8 +157,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %m: ref %i64.builtin = wrapper_binding m, %m.var [concrete = %m.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.e13 = ref_binding_pattern n [concrete = constants.%n.patt.914]
-// CHECK:STDOUT:     %n.var_patt: %pattern_type.e13 = var_pattern %n.patt [concrete = constants.%n.var_patt]
+// CHECK:STDOUT:     %m.patt: %pattern_type.e13 = ref_binding_pattern m [concrete = constants.%m.patt]
+// CHECK:STDOUT:     %m.var_patt: %pattern_type.e13 = var_pattern %m.patt [concrete = constants.%m.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %i64.builtin = var_storage %n.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8_14.1: type = splice_block %.loc8_14.3 [concrete = constants.%i64.builtin] {
@@ -171,6 +169,10 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %.loc8_14.3: type = converted %Int.call.loc8, %.loc8_14.2 [concrete = constants.%i64.builtin]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %i64.builtin = wrapper_binding n, %n.var [concrete = %n.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %pattern_type.e13 = ref_binding_pattern n [concrete = constants.%n.patt.914]
+// CHECK:STDOUT:     %n.var_patt: %pattern_type.e13 = var_pattern %n.patt [concrete = constants.%n.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -197,5 +199,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %MakeFromClass.call: init %i64.builtin = call %MakeFromClass.specific_fn()
 // CHECK:STDOUT:   assign file.%n.var, %MakeFromClass.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

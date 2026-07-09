@@ -28,7 +28,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
@@ -85,7 +85,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %T.patt.loc15_14.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_17.1: type = splice_block %.loc15_17.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc15_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc15_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_14.1 (constants.%T)]
@@ -158,6 +158,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %.loc18_35.2: init @Class.MakeSelf.%Class (%Class) to %return.param = class_init () [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:     %.loc18_36: init @Class.MakeSelf.%Class (%Class) = converted %.loc18_35.1, %.loc18_35.2 [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:     return %.loc18_36 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -179,6 +181,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %.loc19_40.2: init @Class.MakeClass.%Class.loc19_28.1 (%Class) to %return.param = class_init () [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:     %.loc19_41: init @Class.MakeClass.%Class.loc19_28.1 (%Class) = converted %.loc19_40.1, %.loc19_40.2 [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:     return %.loc19_41 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -207,10 +211,6 @@ class Class(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %c.patt.loc21_17.1: @Class.F.%pattern_type (%pattern_type.36e) = ref_binding_pattern c [symbolic = %c.patt.loc21_17.2 (constants.%c.patt)]
-// CHECK:STDOUT:       %c.var_patt.loc21_5.1: @Class.F.%pattern_type (%pattern_type.36e) = var_pattern %c.patt.loc21_17.1 [symbolic = %c.var_patt.loc21_5.2 (constants.%c.var_patt)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c.var: ref @Class.F.%Class.loc21_26.2 (%Class) = var_storage %c.var_patt.loc21_5.1
 // CHECK:STDOUT:     %.loc21_30: @Class.F.%Class.MakeSelf.type (%Class.MakeSelf.type) = specific_constant @Class.%Class.MakeSelf.decl, @Class(constants.%T) [symbolic = %Class.MakeSelf (constants.%Class.MakeSelf)]
 // CHECK:STDOUT:     %MakeSelf.ref: @Class.F.%Class.MakeSelf.type (%Class.MakeSelf.type) = name_ref MakeSelf, %.loc21_30 [symbolic = %Class.MakeSelf (constants.%Class.MakeSelf)]
@@ -225,8 +225,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: ref @Class.F.%Class.loc21_26.2 (%Class) = wrapper_binding c, %c.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %s.patt.loc22_17.1: @Class.F.%pattern_type (%pattern_type.36e) = ref_binding_pattern s [symbolic = %s.patt.loc22_17.2 (constants.%s.patt)]
-// CHECK:STDOUT:       %s.var_patt.loc22_5.1: @Class.F.%pattern_type (%pattern_type.36e) = var_pattern %s.patt.loc22_17.1 [symbolic = %s.var_patt.loc22_5.2 (constants.%s.var_patt)]
+// CHECK:STDOUT:       %c.patt.loc21_17.1: @Class.F.%pattern_type (%pattern_type.36e) = ref_binding_pattern c [symbolic = %c.patt.loc21_17.2 (constants.%c.patt)]
+// CHECK:STDOUT:       %c.var_patt.loc21_5.1: @Class.F.%pattern_type (%pattern_type.36e) = var_pattern %c.patt.loc21_17.1 [symbolic = %c.var_patt.loc21_5.2 (constants.%c.var_patt)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s.var: ref @Class.F.%Class.loc21_26.2 (%Class) = var_storage %s.var_patt.loc22_5.1
 // CHECK:STDOUT:     %.loc22_26: @Class.F.%Class.MakeClass.type (%Class.MakeClass.type) = specific_constant @Class.%Class.MakeClass.decl, @Class(constants.%T) [symbolic = %Class.MakeClass (constants.%Class.MakeClass)]
@@ -240,6 +240,10 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc22_19.2 [symbolic = %Class.loc21_26.2 (constants.%Class)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s: ref @Class.F.%Class.loc21_26.2 (%Class) = wrapper_binding s, %s.var
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %s.patt.loc22_17.1: @Class.F.%pattern_type (%pattern_type.36e) = ref_binding_pattern s [symbolic = %s.patt.loc22_17.2 (constants.%s.patt)]
+// CHECK:STDOUT:       %s.var_patt.loc22_5.1: @Class.F.%pattern_type (%pattern_type.36e) = var_pattern %s.patt.loc22_17.1 [symbolic = %s.var_patt.loc22_5.2 (constants.%s.var_patt)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %impl.elem0.loc22_5.1: @Class.F.%.loc22_5.4 (%.73f) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc22_5.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc22_5.1: <bound method> = bound_method %s.var, %impl.elem0.loc22_5.1
 // CHECK:STDOUT:     %Destroy.facet.loc22_5.1: %Destroy.type = facet_value constants.%Class, (constants.%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc22_5.3 (constants.%Destroy.facet.86d)]
@@ -259,6 +263,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %bound_method.loc21_5.2: <bound method> = bound_method %c.var, %specific_impl_fn.loc21
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call.loc21: init %empty_tuple.type = call %bound_method.loc21_5.2(%c.var)
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -17,6 +17,7 @@ fn Main() {
   F();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'code_after_return.carbon'
 // CHECK:STDOUT: source_filename = "code_after_return.carbon"
 // CHECK:STDOUT:
@@ -47,3 +48,4 @@ fn Main() {
 // CHECK:STDOUT: !7 = !DILocation(line: 13, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !1, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !9 = !DILocation(line: 16, column: 3, scope: !8)
+// CHECK:STDOUT:

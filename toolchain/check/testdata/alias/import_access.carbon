@@ -110,13 +110,13 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %inst.var: ref %C = var_storage %inst.var_patt [concrete]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Test.A [concrete = constants.%C]
+// CHECK:STDOUT:   %inst: ref %C = wrapper_binding inst, %inst.var [concrete = %inst.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %inst.patt: %pattern_type = ref_binding_pattern inst [concrete = constants.%inst.patt]
 // CHECK:STDOUT:     %inst.var_patt: %pattern_type = var_pattern %inst.patt [concrete = constants.%inst.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst.var: ref %C = var_storage %inst.var_patt [concrete]
-// CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Test.A [concrete = constants.%C]
-// CHECK:STDOUT:   %inst: ref %C = wrapper_binding inst, %inst.var [concrete = %inst.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "def.carbon"] {
@@ -133,6 +133,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %.loc4_1: init %C = converted %.loc4_16.1, %.loc4_16.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%inst.var, %.loc4_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_def.carbon
@@ -153,13 +155,13 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %inst.var: ref <error> = var_storage %inst.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [concrete = <error>]
+// CHECK:STDOUT:   %inst: <error> = wrapper_binding inst, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %inst.patt: <error> = ref_binding_pattern inst [concrete = <error>]
 // CHECK:STDOUT:     %inst.var_patt: <error> = var_pattern %inst.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst.var: ref <error> = var_storage %inst.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [concrete = <error>]
-// CHECK:STDOUT:   %inst: <error> = wrapper_binding inst, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -167,6 +169,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%inst.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_other_def.carbon
@@ -189,16 +193,16 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %inst.patt: <error> = ref_binding_pattern inst [concrete = <error>]
-// CHECK:STDOUT:     %inst.var_patt: <error> = var_pattern %inst.patt [concrete = <error>]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref <error> = var_storage %inst.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:     %A.ref: <error> = name_ref A, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst: <error> = wrapper_binding inst, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %inst.patt: <error> = ref_binding_pattern inst [concrete = <error>]
+// CHECK:STDOUT:     %inst.var_patt: <error> = var_pattern %inst.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -206,5 +210,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%inst.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

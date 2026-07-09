@@ -167,16 +167,16 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     .v = %v
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Abstract2.decl: type = class_decl @Abstract2 [concrete = constants.%Abstract2] {} {}
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete = <error>]
-// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var_storage %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc12: type = splice_block %struct_type.m2 [concrete = constants.%struct_type.m2.bb3] {
 // CHECK:STDOUT:     %Abstract2.ref: type = name_ref Abstract2, %Abstract2.decl [concrete = constants.%Abstract2]
 // CHECK:STDOUT:     %struct_type.m2: type = struct_type {.m2: %Abstract2} [concrete = constants.%struct_type.m2.bb3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: <error> = wrapper_binding v, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete = <error>]
+// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract2 {
@@ -191,6 +191,8 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%v.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- abstract_let.carbon
@@ -235,9 +237,6 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %Abstract3) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %l.patt: %pattern_type.2be = value_binding_pattern l [concrete = constants.%l.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract3 = name_ref a, %a
 // CHECK:STDOUT:   %.loc7_44.1: %struct_type.m3.937 = struct_literal (%a.ref)
 // CHECK:STDOUT:   %struct: %struct_type.m3.937 = struct_value (%a.ref)
@@ -247,7 +246,12 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     %struct_type.m3: type = struct_type {.m3: %Abstract3} [concrete = constants.%struct_type.m3.937]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %l: %struct_type.m3.937 = wrapper_binding l, %.loc7_44.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %l.patt: %pattern_type.2be = value_binding_pattern l [concrete = constants.%l.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_twice.carbon
@@ -268,10 +272,6 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Abstract4.decl: type = class_decl @Abstract4 [concrete = constants.%Abstract4] {} {}
 // CHECK:STDOUT:   %Abstract5.decl: type = class_decl @Abstract5 [concrete = constants.%Abstract5] {} {}
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v2.patt: <error> = ref_binding_pattern v2 [concrete = <error>]
-// CHECK:STDOUT:     %v2.var_patt: <error> = var_pattern %v2.patt [concrete = <error>]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref <error> = var_storage %v2.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc13: type = splice_block %struct_type.m4.m5 [concrete = constants.%struct_type.m4.m5.5e1] {
 // CHECK:STDOUT:     %Abstract4.ref: type = name_ref Abstract4, %Abstract4.decl [concrete = constants.%Abstract4]
@@ -279,6 +279,10 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     %struct_type.m4.m5: type = struct_type {.m4: %Abstract4, .m5: %Abstract5} [concrete = constants.%struct_type.m4.m5.5e1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: <error> = wrapper_binding v2, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v2.patt: <error> = ref_binding_pattern v2 [concrete = <error>]
+// CHECK:STDOUT:     %v2.var_patt: <error> = var_pattern %v2.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract4 {
@@ -301,6 +305,8 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%v2.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_first.carbon
@@ -320,10 +326,6 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     .v3 = %v3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Abstract6.decl: type = class_decl @Abstract6 [concrete = constants.%Abstract6] {} {}
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v3.patt: <error> = ref_binding_pattern v3 [concrete = <error>]
-// CHECK:STDOUT:     %v3.var_patt: <error> = var_pattern %v3.patt [concrete = <error>]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v3.var: ref <error> = var_storage %v3.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc12_33: type = splice_block %struct_type.m6.c1 [concrete = constants.%struct_type.m6.c1.a63] {
 // CHECK:STDOUT:     %Abstract6.ref: type = name_ref Abstract6, %Abstract6.decl [concrete = constants.%Abstract6]
@@ -332,6 +334,10 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     %struct_type.m6.c1: type = struct_type {.m6: %Abstract6, .c1: %empty_tuple.type} [concrete = constants.%struct_type.m6.c1.a63]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v3: <error> = wrapper_binding v3, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v3.patt: <error> = ref_binding_pattern v3 [concrete = <error>]
+// CHECK:STDOUT:     %v3.var_patt: <error> = var_pattern %v3.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract6 {
@@ -346,6 +352,8 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%v3.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_second.carbon
@@ -365,10 +373,6 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     .v4 = %v4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Abstract7.decl: type = class_decl @Abstract7 [concrete = constants.%Abstract7] {} {}
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v4.patt: <error> = ref_binding_pattern v4 [concrete = <error>]
-// CHECK:STDOUT:     %v4.var_patt: <error> = var_pattern %v4.patt [concrete = <error>]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v4.var: ref <error> = var_storage %v4.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc12_33: type = splice_block %struct_type.c2.m7 [concrete = constants.%struct_type.c2.m7.518] {
 // CHECK:STDOUT:     %.loc12_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -377,6 +381,10 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     %struct_type.c2.m7: type = struct_type {.c2: %empty_tuple.type, .m7: %Abstract7} [concrete = constants.%struct_type.c2.m7.518]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v4: <error> = wrapper_binding v4, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v4.patt: <error> = ref_binding_pattern v4 [concrete = <error>]
+// CHECK:STDOUT:     %v4.var_patt: <error> = var_pattern %v4.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract7 {
@@ -391,6 +399,8 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%v4.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- lib.carbon
@@ -437,16 +447,16 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     .v5 = %v5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v5.patt: <error> = ref_binding_pattern v5 [concrete = <error>]
-// CHECK:STDOUT:     %v5.var_patt: <error> = var_pattern %v5.patt [concrete = <error>]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v5.var: ref <error> = var_storage %v5.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc13: type = splice_block %struct_type.m [concrete = constants.%struct_type.m.b92] {
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, imports.%Main.Abstract [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %struct_type.m: type = struct_type {.m: %Abstract} [concrete = constants.%struct_type.m.b92]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v5: <error> = wrapper_binding v5, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v5.patt: <error> = ref_binding_pattern v5 [concrete = <error>]
+// CHECK:STDOUT:     %v5.var_patt: <error> = var_pattern %v5.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract [from "lib.carbon"] {
@@ -460,5 +470,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%v5.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

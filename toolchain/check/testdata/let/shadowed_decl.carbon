@@ -105,9 +105,6 @@ fn F(unused a: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt.loc16: %pattern_type.6b6 = value_binding_pattern a [concrete = constants.%a.patt.bb2]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc16: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc16_16.1: <bound method> = bound_method %int_1, %impl.elem0.loc16 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -118,6 +115,9 @@ fn F(unused a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc16_16.2: %i32 = converted %int_1, %.loc16_16.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a.loc16: %i32 = wrapper_binding a, %.loc16_16.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt.loc16: %pattern_type.6b6 = value_binding_pattern a [concrete = constants.%a.patt.bb2]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a.loc16
 // CHECK:STDOUT:   %impl.elem0.loc18: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc18_10.1: <bound method> = bound_method %a.ref, %impl.elem0.loc18
@@ -125,5 +125,7 @@ fn F(unused a: i32) -> i32 {
 // CHECK:STDOUT:   %bound_method.loc18_10.2: <bound method> = bound_method %a.ref, %specific_fn.loc18
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc18_10.2(%a.ref)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -171,9 +171,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%input.param: %ptr.037) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.712 = value_binding_pattern p [concrete = constants.%p.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.037 = name_ref input, %input
 // CHECK:STDOUT:   %impl.elem0: %.fec = impl_witness_access constants.%ImplicitAs.impl_witness.36b, element0 [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.313]
 // CHECK:STDOUT:   %bound_method.loc10_29.1: <bound method> = bound_method %input.ref, %impl.elem0
@@ -188,7 +185,12 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %ptr.loc10: type = ptr_type %void.ref [concrete = constants.%ptr.00a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.00a = wrapper_binding p, %.loc10_29.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %pattern_type.712 = value_binding_pattern p [concrete = constants.%p.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit_as_from_carbon_class_pointer_to_void_pointer.carbon
@@ -224,9 +226,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%input.param: %ptr.6b6) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.712 = value_binding_pattern p [concrete = constants.%p.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.6b6 = name_ref input, %input
 // CHECK:STDOUT:   %impl.elem0: %.4f2 = impl_witness_access constants.%ImplicitAs.impl_witness.184, element0 [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.458]
 // CHECK:STDOUT:   %bound_method.loc10_29.1: <bound method> = bound_method %input.ref, %impl.elem0
@@ -241,7 +240,12 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %ptr.loc10: type = ptr_type %void.ref [concrete = constants.%ptr.00a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.00a = wrapper_binding p, %.loc10_29.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %pattern_type.712 = value_binding_pattern p [concrete = constants.%p.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- explicit_as_from_cpp_class_pointer_to_void_pointer.carbon
@@ -289,9 +293,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%input.param: %ptr.037) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.712 = value_binding_pattern p [concrete = constants.%p.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.037 = name_ref input, %input
 // CHECK:STDOUT:   %Cpp.ref.loc10_38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %void.ref.loc10_41: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
@@ -309,7 +310,12 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %ptr.loc10_25: type = ptr_type %void.ref.loc10_20 [concrete = constants.%ptr.00a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.00a = wrapper_binding p, %.loc10_35.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %pattern_type.712 = value_binding_pattern p [concrete = constants.%p.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- explicit_as_from_carbon_class_pointer_to_void_pointer.carbon
@@ -355,9 +361,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%input.param: %ptr.6b6) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.712 = value_binding_pattern p [concrete = constants.%p.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.6b6 = name_ref input, %input
 // CHECK:STDOUT:   %Cpp.ref.loc10_38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %void.ref.loc10_41: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
@@ -375,7 +378,12 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %ptr.loc10_25: type = ptr_type %void.ref.loc10_20 [concrete = constants.%ptr.00a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.00a = wrapper_binding p, %.loc10_35.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %pattern_type.712 = value_binding_pattern p [concrete = constants.%p.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon
@@ -400,9 +408,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%input.param: %ptr.00a) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.de6 = value_binding_pattern p [concrete = constants.%p.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.00a = name_ref input, %input
 // CHECK:STDOUT:   %Cpp.ref.loc17_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref.loc17_38: type = name_ref S, imports.%S.decl [concrete = constants.%S]
@@ -414,7 +419,12 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %ptr.loc17_22: type = ptr_type %S.ref.loc17_20 [concrete = constants.%ptr.037]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.037 = wrapper_binding p, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %pattern_type.de6 = value_binding_pattern p [concrete = constants.%p.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon
@@ -430,9 +440,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%input.param: %ptr.00a) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.fcb = value_binding_pattern p [concrete = constants.%p.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.00a = name_ref input, %input
 // CHECK:STDOUT:   %C.ref.loc17_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %ptr.loc17_32: type = ptr_type %C.ref.loc17_31 [concrete = constants.%ptr.6b6]
@@ -442,7 +449,12 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %ptr.loc17_18: type = ptr_type %C.ref.loc17_17 [concrete = constants.%ptr.6b6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.6b6 = wrapper_binding p, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %pattern_type.fcb = value_binding_pattern p [concrete = constants.%p.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unsafe_as_from_void_pointer_to_cpp_class_pointer.carbon
@@ -481,9 +493,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%input.param: %ptr.00a) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.de6 = value_binding_pattern p [concrete = constants.%p.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.00a = name_ref input, %input
 // CHECK:STDOUT:   %Cpp.ref.loc10_42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref.loc10_45: type = name_ref S, imports.%S.decl [concrete = constants.%S]
@@ -501,7 +510,12 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %ptr.loc10_22: type = ptr_type %S.ref.loc10_20 [concrete = constants.%ptr.037]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.037 = wrapper_binding p, %.loc10_39.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %pattern_type.de6 = value_binding_pattern p [concrete = constants.%p.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unsafe_as_from_void_pointer_to_carbon_class_pointer.carbon
@@ -534,9 +548,6 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%input.param: %ptr.00a) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.fcb = value_binding_pattern p [concrete = constants.%p.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.00a = name_ref input, %input
 // CHECK:STDOUT:   %C.ref.loc10_38: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %ptr.loc10_39: type = ptr_type %C.ref.loc10_38 [concrete = constants.%ptr.6b6]
@@ -552,6 +563,11 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %ptr.loc10_18: type = ptr_type %C.ref.loc10_17 [concrete = constants.%ptr.6b6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.6b6 = wrapper_binding p, %.loc10_35.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %pattern_type.fcb = value_binding_pattern p [concrete = constants.%p.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

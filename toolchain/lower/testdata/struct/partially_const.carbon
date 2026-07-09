@@ -14,6 +14,7 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
   return {.a = 0, .b = n, .c = 0};
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'partially_const.carbon'
 // CHECK:STDOUT: source_filename = "partially_const.carbon"
 // CHECK:STDOUT:
@@ -47,3 +48,4 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
 // CHECK:STDOUT: !11 = !DILocation(line: 14, column: 10, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT:

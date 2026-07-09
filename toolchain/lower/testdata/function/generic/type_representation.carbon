@@ -74,6 +74,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
   return F(a);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'type_representation.carbon'
 // CHECK:STDOUT: source_filename = "type_representation.carbon"
 // CHECK:STDOUT:
@@ -380,3 +381,4 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: !114 = !DILocation(line: 18, column: 14, scope: !110)
 // CHECK:STDOUT: !115 = !DILocation(line: 19, column: 10, scope: !110)
 // CHECK:STDOUT: !116 = !DILocation(line: 19, column: 3, scope: !110)
+// CHECK:STDOUT:

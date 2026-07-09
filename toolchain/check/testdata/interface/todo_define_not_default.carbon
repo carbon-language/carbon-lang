@@ -148,6 +148,8 @@ interface I {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.F.decl, @I.WithSelf.%I.WithSelf.G.decl, @I.WithSelf.%T, @I.WithSelf.%N)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%Self: %I.type) {
@@ -156,6 +158,8 @@ interface I {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

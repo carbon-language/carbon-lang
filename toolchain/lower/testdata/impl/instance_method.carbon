@@ -28,6 +28,7 @@ fn Call(a: A*) -> A* {
   return (*a).Get();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'instance_method.carbon'
 // CHECK:STDOUT: source_filename = "instance_method.carbon"
 // CHECK:STDOUT:
@@ -65,3 +66,4 @@ fn Call(a: A*) -> A* {
 // CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !11, type: !7)
 // CHECK:STDOUT: !14 = !DILocation(line: 28, column: 10, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 28, column: 3, scope: !11)
+// CHECK:STDOUT:

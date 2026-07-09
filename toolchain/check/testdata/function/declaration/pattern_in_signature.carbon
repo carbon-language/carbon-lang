@@ -103,6 +103,8 @@ fn CallF(ab: ({}, {}), c: {}) {
 // CHECK:STDOUT: fn @F(%a.param: %empty_struct_type, %b.param: %empty_struct_type, %c.param: %empty_struct_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallF(%ab.param: %tuple.type.b6b, %c.param: %empty_struct_type) {
@@ -114,5 +116,7 @@ fn CallF(ab: ({}, {}), c: {}) {
 // CHECK:STDOUT:   %tuple.elem1: %empty_struct_type = tuple_access %ab.ref, element1
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%tuple.elem0, %tuple.elem1, %c.ref)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -139,9 +139,6 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %struct_type.a.b {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.3e6 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeF64.ref: %MakeF64.type = name_ref MakeF64, file.%MakeF64.decl [concrete = constants.%MakeF64]
 // CHECK:STDOUT:   %MakeF64.call: init %f64.dc1 = call %MakeF64.ref()
 // CHECK:STDOUT:   %MakeI32.ref: %MakeI32.type = name_ref MakeI32, file.%MakeI32.decl [concrete = constants.%MakeI32]
@@ -160,7 +157,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: %struct_type.a.b = wrapper_binding x, %.loc19_62.6
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.cc6 = value_binding_pattern y [concrete = constants.%y.patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.3e6 = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %struct_type.a.b = name_ref x, %x
 // CHECK:STDOUT:   %.loc20_31.1: %f64.dc1 = struct_access %x.ref, element1
@@ -173,6 +170,9 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %struct_type.b.a: type = struct_type {.b: %f64.dc1, .a: %i32} [concrete = constants.%struct_type.b.a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: %struct_type.b.a = wrapper_binding y, %.loc20_31.3
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %pattern_type.cc6 = value_binding_pattern y [concrete = constants.%y.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.ref: %struct_type.b.a = name_ref y, %y
 // CHECK:STDOUT:   %.loc21_10.1: %i32 = struct_access %y.ref, element1
 // CHECK:STDOUT:   %impl.elem0.loc21_10.1: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -193,5 +193,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.loc21_10.7: init %struct_type.a.b to %return.param = struct_init (%.loc21_10.3, %.loc21_10.6)
 // CHECK:STDOUT:   %.loc21_11: init %struct_type.a.b = converted %y.ref, %.loc21_10.7
 // CHECK:STDOUT:   return %.loc21_11 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

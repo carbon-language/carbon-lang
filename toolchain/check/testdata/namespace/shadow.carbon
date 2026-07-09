@@ -145,10 +145,6 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   if %true br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %A.patt: %pattern_type.6b6 = ref_binding_pattern A [concrete = constants.%A.patt]
-// CHECK:STDOUT:     %A.var_patt: %pattern_type.6b6 = var_pattern %A.patt [concrete = constants.%A.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.var: ref %i32 = var_storage %A.var_patt
 // CHECK:STDOUT:   %int_0.loc26: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc26: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
@@ -160,6 +156,10 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   assign %A.var, %.loc26
 // CHECK:STDOUT:   %i32.loc26: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %A: ref %i32 = wrapper_binding A, %A.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %A.patt: %pattern_type.6b6 = ref_binding_pattern A [concrete = constants.%A.patt]
+// CHECK:STDOUT:     %A.var_patt: %pattern_type.6b6 = var_pattern %A.patt [concrete = constants.%A.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref.loc29: ref %i32 = name_ref A, %A
 // CHECK:STDOUT:   %.loc29: %i32 = acquire_value %A.ref.loc29
 // CHECK:STDOUT:   %impl.elem0.loc29: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -182,6 +182,8 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc26_5.2: <bound method> = bound_method %A.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc26_5.2: init %empty_tuple.type = call %Destroy.Op.bound.loc26_5.2(%A.var)
 // CHECK:STDOUT:   return %.loc31
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc26_5.1(%self.param: ref %i32.builtin) = "no_op";
@@ -189,5 +191,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: fn @Destroy.Op.loc26_5.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

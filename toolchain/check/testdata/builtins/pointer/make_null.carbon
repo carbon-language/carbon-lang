@@ -86,9 +86,6 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.b42 = value_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_48.1: %.b2d = value_of_initializer @__global_init.%MakeNullEmptyStruct.call
 // CHECK:STDOUT:   %.loc11_48.2: %.b2d = converted @__global_init.%MakeNullEmptyStruct.call, %.loc11_48.1
 // CHECK:STDOUT:   %.loc11_24.1: type = splice_block %.loc11_24.3 [concrete = constants.%.b2d] {
@@ -102,7 +99,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: %.b2d = wrapper_binding s, %.loc11_48.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.e22 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %s.patt: %pattern_type.b42 = value_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_37.1: %.9e8 = value_of_initializer @__global_init.%MakeNullC.call
 // CHECK:STDOUT:   %.loc12_37.2: %.9e8 = converted @__global_init.%MakeNullC.call, %.loc12_37.1
@@ -115,6 +112,9 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:     %.loc12_23.3: type = converted %MakeUnformed.call.loc12, %.loc12_23.2 [concrete = constants.%.9e8]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: %.9e8 = wrapper_binding c, %.loc12_37.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.e22 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -124,6 +124,8 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   %MakeNullC.ref: %MakeNullC.type = name_ref MakeNullC, file.%MakeNullC.decl [concrete = constants.%MakeNullC]
 // CHECK:STDOUT:   %MakeNullC.call: init %.9e8 = call %MakeNullC.ref()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_generic.carbon
@@ -149,9 +151,6 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.b42 = value_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_39.1: %.b2d = value_of_initializer @__global_init.%MakeNull.call.loc10
 // CHECK:STDOUT:   %.loc10_39.2: %.b2d = converted @__global_init.%MakeNull.call.loc10, %.loc10_39.1
 // CHECK:STDOUT:   %.loc10_24.1: type = splice_block %.loc10_24.3 [concrete = constants.%.b2d] {
@@ -165,7 +164,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: %.b2d = wrapper_binding s, %.loc10_39.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.e22 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %s.patt: %pattern_type.b42 = value_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_37.1: %.9e8 = value_of_initializer @__global_init.%MakeNull.call.loc11
 // CHECK:STDOUT:   %.loc11_37.2: %.9e8 = converted @__global_init.%MakeNull.call.loc11, %.loc11_37.1
@@ -178,6 +177,9 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:     %.loc11_23.3: type = converted %MakeUnformed.call.loc11, %.loc11_23.2 [concrete = constants.%.9e8]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: %.9e8 = wrapper_binding c, %.loc11_37.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.e22 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -192,5 +194,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   %MakeNull.specific_fn.loc11: <specific function> = specific_function %MakeNull.ref.loc11, @MakeNull(constants.%C) [concrete = constants.%MakeNull.specific_fn.75f]
 // CHECK:STDOUT:   %MakeNull.call.loc11: init %.9e8 = call %MakeNull.specific_fn.loc11()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

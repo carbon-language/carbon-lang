@@ -430,16 +430,12 @@ private export C;
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var_storage %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -447,6 +443,10 @@ private export C;
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc: ref %NSC = wrapper_binding nsc, %nsc.var [concrete = %nsc.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export.carbon"] {
@@ -486,6 +486,8 @@ private export C;
 // CHECK:STDOUT:   %.loc7_1: init %NSC = converted %.loc7_27.1, %.loc7_27.5 [concrete = constants.%NSC.val]
 // CHECK:STDOUT:   assign file.%nsc.var, %.loc7_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_export.impl.carbon
@@ -537,16 +539,12 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_29.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_29.2 = import <none>
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var_storage %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -554,6 +552,10 @@ private export C;
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc: ref %NSC = wrapper_binding nsc, %nsc.var [concrete = %nsc.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_export.carbon"] {
@@ -593,6 +595,8 @@ private export C;
 // CHECK:STDOUT:   %.loc5_1: init %NSC = converted %.loc5_27.1, %.loc5_27.5 [concrete = constants.%NSC.val]
 // CHECK:STDOUT:   assign file.%nsc.var, %.loc5_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_export.carbon
@@ -643,16 +647,12 @@ private export C;
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var_storage %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -660,6 +660,10 @@ private export C;
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc: ref %NSC = wrapper_binding nsc, %nsc.var [concrete = %nsc.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_export.carbon"] {
@@ -699,6 +703,8 @@ private export C;
 // CHECK:STDOUT:   %.loc7_1: init %NSC = converted %.loc7_27.1, %.loc7_27.5 [concrete = constants.%NSC.val]
 // CHECK:STDOUT:   assign file.%nsc.var, %.loc7_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_export_ns.carbon
@@ -828,16 +834,12 @@ private export C;
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var_storage %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -845,6 +847,10 @@ private export C;
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc: ref %NSC = wrapper_binding nsc, %nsc.var [concrete = %nsc.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -884,6 +890,8 @@ private export C;
 // CHECK:STDOUT:   %.loc8_1: init %NSC = converted %.loc8_27.1, %.loc8_27.5 [concrete = constants.%NSC.val]
 // CHECK:STDOUT:   assign file.%nsc.var, %.loc8_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_both_reversed.carbon
@@ -934,16 +942,12 @@ private export C;
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var_storage %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -951,6 +955,10 @@ private export C;
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc: ref %NSC = wrapper_binding nsc, %nsc.var [concrete = %nsc.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.533 = ref_binding_pattern nsc [concrete = constants.%nsc.patt]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.533 = var_pattern %nsc.patt [concrete = constants.%nsc.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export.carbon"] {
@@ -990,6 +998,8 @@ private export C;
 // CHECK:STDOUT:   %.loc8_1: init %NSC = converted %.loc8_27.1, %.loc8_27.5 [concrete = constants.%NSC.val]
 // CHECK:STDOUT:   assign file.%nsc.var, %.loc8_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_not_reexporting.carbon
@@ -1076,13 +1086,13 @@ private export C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt [concrete]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
+// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt [concrete]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "repeat_export.carbon"] {
@@ -1105,6 +1115,8 @@ private export C;
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_20.1, %.loc6_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_modifiers.carbon

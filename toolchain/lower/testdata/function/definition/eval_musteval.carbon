@@ -43,6 +43,7 @@ fn F() -> i32 {
   return MustEval(1);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'eval.carbon'
 // CHECK:STDOUT: source_filename = "eval.carbon"
 // CHECK:STDOUT:
@@ -90,6 +91,8 @@ fn F() -> i32 {
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !15, type: !7)
 // CHECK:STDOUT: !18 = !DILocation(line: 16, column: 10, scope: !15)
 // CHECK:STDOUT: !19 = !DILocation(line: 16, column: 3, scope: !15)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'musteval.carbon'
 // CHECK:STDOUT: source_filename = "musteval.carbon"
 // CHECK:STDOUT:
@@ -113,3 +116,4 @@ fn F() -> i32 {
 // CHECK:STDOUT: !6 = !{!7}
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !8 = !DILocation(line: 11, column: 3, scope: !4)
+// CHECK:STDOUT:

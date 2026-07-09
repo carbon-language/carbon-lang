@@ -168,10 +168,6 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.506 = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.506 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %struct_type.a = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
 // CHECK:STDOUT:     %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -179,8 +175,8 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %struct_type.a = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.1fb = ref_binding_pattern b [concrete = constants.%b.patt]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.1fb = var_pattern %b.patt [concrete = constants.%b.var_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.506 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.506 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %struct_type.a.d.01c = var_storage %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6_43: type = splice_block %struct_type.a.d [concrete = constants.%struct_type.a.d.01c] {
@@ -194,8 +190,8 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %struct_type.a.d.01c = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.20c = ref_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.20c = var_pattern %c.patt [concrete = constants.%c.var_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.1fb = ref_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.1fb = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C.8d3 = var_storage %c.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7_26.1: type = splice_block %C [concrete = constants.%C.8d3] {
@@ -222,6 +218,10 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%struct.631) [concrete = constants.%C.8d3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C.8d3 = wrapper_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.20c = ref_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.20c = var_pattern %c.patt [concrete = constants.%c.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -280,6 +280,8 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %F.call: init %C.8d3 to %.loc7 = call %F.ref()
 // CHECK:STDOUT:   assign file.%c.var, %F.call
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_symbolic_decl.carbon
@@ -342,5 +344,7 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %.loc7_18.3: init %struct_type.x = struct_init (%Int.as.Copy.impl.Op.call) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc7_24: init %struct_type.x = converted %impl.elem0.loc7_18.1, %.loc7_18.3 [concrete = constants.%struct]
 // CHECK:STDOUT:   return %.loc7_24
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -40,6 +40,7 @@ fn Main() {
   GenericF(0);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'a.carbon'
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
@@ -87,6 +88,8 @@ fn Main() {
 // CHECK:STDOUT: !18 = !{!19}
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !20 = !DILocation(line: 18, column: 3, scope: !17)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
@@ -148,3 +151,4 @@ fn Main() {
 // CHECK:STDOUT: !18 = !DILocation(line: 18, column: 16, scope: !9)
 // CHECK:STDOUT: !19 = !DILocation(line: 19, column: 10, scope: !9)
 // CHECK:STDOUT: !20 = !DILocation(line: 19, column: 3, scope: !9)
+// CHECK:STDOUT:

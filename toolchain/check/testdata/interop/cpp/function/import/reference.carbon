@@ -518,10 +518,6 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
@@ -532,6 +528,10 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %s.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
+// CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
@@ -540,6 +540,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_param_lvalue_ref.carbon
@@ -599,10 +601,6 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.0f5 = ref_binding_pattern v [concrete = constants.%v.patt]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.0f5 = var_pattern %v.patt [concrete = constants.%v.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %S = var_storage %v.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.eff) [concrete = constants.%DefaultOrUnformed.facet.176]
 // CHECK:STDOUT:   %.loc8_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc8 [concrete = constants.%DefaultOrUnformed.facet.176]
@@ -618,7 +616,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %S = wrapper_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = value_binding_pattern s [concrete = constants.%s.patt]
+// CHECK:STDOUT:     %v.patt: %pattern_type.0f5 = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.0f5 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.ref: ref %S = name_ref v, %v
 // CHECK:STDOUT:   %.loc9_18: %S = acquire_value %v.ref
@@ -627,6 +626,9 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %S.ref.loc9: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: %S = wrapper_binding s, %.loc9_18
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = value_binding_pattern s [concrete = constants.%s.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref.loc18: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref.loc18: %S = name_ref s, %s
@@ -638,10 +640,6 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %const.loc28: type = const_type %S.ref.loc28 [concrete = constants.%const]
 // CHECK:STDOUT:   %.loc28_21.1: %const = as_compatible %s.ref.loc28
 // CHECK:STDOUT:   %.loc28_21.2: %const = converted %s.ref.loc28, %.loc28_21.1
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: %pattern_type.5f6 = ref_binding_pattern t [concrete = constants.%t.patt]
-// CHECK:STDOUT:     %t.var_patt: %pattern_type.5f6 = var_pattern %t.patt [concrete = constants.%t.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref %T.ed0 = var_storage %t.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc30: %DefaultOrUnformed.type = facet_value constants.%T.ed0, (constants.%DefaultOrUnformed.impl_witness.537) [concrete = constants.%DefaultOrUnformed.facet.e0e]
 // CHECK:STDOUT:   %.loc30_15.1: %DefaultOrUnformed.type = converted constants.%T.ed0, %DefaultOrUnformed.facet.loc30 [concrete = constants.%DefaultOrUnformed.facet.e0e]
@@ -656,13 +654,13 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T.ed0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %T.ed0 = wrapper_binding t, %t.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %t.patt: %pattern_type.5f6 = ref_binding_pattern t [concrete = constants.%t.patt]
+// CHECK:STDOUT:     %t.var_patt: %pattern_type.5f6 = var_pattern %t.patt [concrete = constants.%t.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc39: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref.loc39: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T.ed0 = name_ref t, %t
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %u.patt: %pattern_type.0f5 = ref_binding_pattern u [concrete = constants.%u.patt]
-// CHECK:STDOUT:     %u.var_patt: %pattern_type.0f5 = var_pattern %u.patt [concrete = constants.%u.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %u.var: ref %S = var_storage %u.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc41: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.eff) [concrete = constants.%DefaultOrUnformed.facet.176]
 // CHECK:STDOUT:   %.loc41_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc41 [concrete = constants.%DefaultOrUnformed.facet.176]
@@ -677,6 +675,10 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %S.ref.loc41: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %u: ref %S = wrapper_binding u, %u.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %u.patt: %pattern_type.0f5 = ref_binding_pattern u [concrete = constants.%u.patt]
+// CHECK:STDOUT:     %u.var_patt: %pattern_type.0f5 = var_pattern %u.patt [concrete = constants.%u.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc50_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref.loc50: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: ref %S = name_ref u, %u
@@ -692,6 +694,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %S.cpp_destructor.bound.loc8: <bound method> = bound_method %v.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call.loc8: init %empty_tuple.type = call %S.cpp_destructor.bound.loc8(%v.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_param_rvalue_ref.carbon
@@ -738,6 +742,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %addr: %ptr.037 = addr_of %_.var
 // CHECK:STDOUT:   %TakesRValue__carbon_thunk.call: init %empty_tuple.type = call imports.%TakesRValue__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_param_rvalue_ref.carbon
@@ -798,10 +804,6 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.eff) [concrete = constants.%DefaultOrUnformed.facet.176]
 // CHECK:STDOUT:   %.loc8_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc8 [concrete = constants.%DefaultOrUnformed.facet.176]
@@ -816,13 +818,13 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %s.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
+// CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesRValue.ref.loc17: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: %pattern_type.5f6 = ref_binding_pattern t [concrete = constants.%t.patt]
-// CHECK:STDOUT:     %t.var_patt: %pattern_type.5f6 = var_pattern %t.patt [concrete = constants.%t.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref %T.ed0 = var_storage %t.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc19: %DefaultOrUnformed.type = facet_value constants.%T.ed0, (constants.%DefaultOrUnformed.impl_witness.537) [concrete = constants.%DefaultOrUnformed.facet.e0e]
 // CHECK:STDOUT:   %.loc19_15.1: %DefaultOrUnformed.type = converted constants.%T.ed0, %DefaultOrUnformed.facet.loc19 [concrete = constants.%DefaultOrUnformed.facet.e0e]
@@ -837,6 +839,10 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T.ed0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %T.ed0 = wrapper_binding t, %t.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %t.patt: %pattern_type.5f6 = ref_binding_pattern t [concrete = constants.%t.patt]
+// CHECK:STDOUT:     %t.var_patt: %pattern_type.5f6 = var_pattern %t.patt [concrete = constants.%t.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesRValue.ref.loc28: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T.ed0 = name_ref t, %t
@@ -858,6 +864,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_param_const_lvalue_ref_with_ref.carbon
@@ -899,10 +907,6 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
@@ -913,6 +917,10 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %s.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
+// CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstLValue.ref.loc9: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref.loc9: ref %S = name_ref s, %s
@@ -941,6 +949,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_param_const_lvalue_ref_with_value.carbon
@@ -980,9 +990,6 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = value_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_19.2: ref %S = temporary_storage
 // CHECK:STDOUT:   %.loc8_19.3: init %S to %.loc8_19.2 = class_init () [concrete = constants.%S.val]
@@ -994,6 +1001,9 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: %S = wrapper_binding s, %.loc8_19.6
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = value_binding_pattern s [concrete = constants.%s.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstLValue.ref.loc9: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref.loc9: %S = name_ref s, %s
@@ -1018,6 +1028,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %.loc11_40.2: %ptr.711 = converted %addr.loc11, %.loc11_40.1
 // CHECK:STDOUT:   %TakesConstLValue__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%TakesConstLValue__carbon_thunk.decl(%.loc11_40.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- param_value_arg_for_const_rvalue_ref.carbon
@@ -1070,6 +1082,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %.loc9_26.2: %ptr.711 = converted %addr.loc9, %.loc9_26.1
 // CHECK:STDOUT:   %TakesConstRValue__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%TakesConstRValue__carbon_thunk.decl(%.loc9_26.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_param_lvalue_ref_arg_const_rvalue_ref.carbon
@@ -1125,10 +1139,6 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var_storage %s.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.eff) [concrete = constants.%DefaultOrUnformed.facet.176]
 // CHECK:STDOUT:   %.loc8_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc8 [concrete = constants.%DefaultOrUnformed.facet.176]
@@ -1143,13 +1153,13 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %s.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
+// CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstRValue.ref.loc17: %TakesConstRValue.cpp_overload_set.type = name_ref TakesConstRValue, imports.%TakesConstRValue.cpp_overload_set.value [concrete = constants.%TakesConstRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: %pattern_type.5f6 = ref_binding_pattern t [concrete = constants.%t.patt]
-// CHECK:STDOUT:     %t.var_patt: %pattern_type.5f6 = var_pattern %t.patt [concrete = constants.%t.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref %T.ed0 = var_storage %t.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc19: %DefaultOrUnformed.type = facet_value constants.%T.ed0, (constants.%DefaultOrUnformed.impl_witness.537) [concrete = constants.%DefaultOrUnformed.facet.e0e]
 // CHECK:STDOUT:   %.loc19_15.1: %DefaultOrUnformed.type = converted constants.%T.ed0, %DefaultOrUnformed.facet.loc19 [concrete = constants.%DefaultOrUnformed.facet.e0e]
@@ -1164,6 +1174,10 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T.ed0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %T.ed0 = wrapper_binding t, %t.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %t.patt: %pattern_type.5f6 = ref_binding_pattern t [concrete = constants.%t.patt]
+// CHECK:STDOUT:     %t.var_patt: %pattern_type.5f6 = var_pattern %t.patt [concrete = constants.%t.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstRValue.ref.loc28: %TakesConstRValue.cpp_overload_set.type = name_ref TakesConstRValue, imports.%TakesConstRValue.cpp_overload_set.value [concrete = constants.%TakesConstRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T.ed0 = name_ref t, %t
@@ -1172,6 +1186,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_return_lvalue_ref.carbon
@@ -1199,9 +1215,6 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type = ref_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnsLValue.ref: %ReturnsLValue.cpp_overload_set.type = name_ref ReturnsLValue, imports.%ReturnsLValue.cpp_overload_set.value [concrete = constants.%ReturnsLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %ReturnsLValue.call: ref %S = call imports.%ReturnsLValue.decl()
@@ -1210,7 +1223,12 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %ReturnsLValue.call
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %pattern_type = ref_binding_pattern s [concrete = constants.%s.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_return_rvalue_ref.carbon
@@ -1238,9 +1256,6 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type = ref_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnsRValue.ref: %ReturnsRValue.cpp_overload_set.type = name_ref ReturnsRValue, imports.%ReturnsRValue.cpp_overload_set.value [concrete = constants.%ReturnsRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %ReturnsRValue.call: ref %S = call imports.%ReturnsRValue.decl()
@@ -1249,7 +1264,12 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = wrapper_binding s, %ReturnsRValue.call
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %pattern_type = ref_binding_pattern s [concrete = constants.%s.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_return_const_lvalue_ref.carbon
@@ -1278,9 +1298,6 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type = ref_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnConstLValue.ref: %ReturnConstLValue.cpp_overload_set.type = name_ref ReturnConstLValue, imports.%ReturnConstLValue.cpp_overload_set.value [concrete = constants.%ReturnConstLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %ReturnConstLValue.call: ref %const = call imports.%ReturnConstLValue.decl()
@@ -1290,7 +1307,12 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:     %const: type = const_type %S.ref [concrete = constants.%const]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %const = wrapper_binding s, %ReturnConstLValue.call
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %pattern_type = ref_binding_pattern s [concrete = constants.%s.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- forwarding_reference.carbon
@@ -1366,6 +1388,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %.loc28_37.2: %ptr.faf = converted %addr, %.loc28_37.1
 // CHECK:STDOUT:   %TakeAnything_ExpectConstRRef__carbon_thunk.call: init %empty_tuple.type = call imports.%TakeAnything_ExpectConstRRef__carbon_thunk.decl(%.loc28_37.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassRef(%x.param: ref %X) {
@@ -1376,6 +1400,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %.loc34: %X = ref_tag %x.ref
 // CHECK:STDOUT:   %TakeAnything_ExpectLRef.call: init %empty_tuple.type = call imports.%TakeAnything_ExpectLRef.decl(%x.ref)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassConstRef(%x.param: ref %const) {
@@ -1392,6 +1418,8 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %.loc40_37.2: %ptr.faf = converted %addr, %.loc40_37.1
 // CHECK:STDOUT:   %TakeAnything_ExpectConstLRef__carbon_thunk.call: init %empty_tuple.type = call imports.%TakeAnything_ExpectConstLRef__carbon_thunk.decl(%.loc40_37.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassInit() {
@@ -1405,5 +1433,7 @@ fn PassConstRef(ref x: const X) {
 // CHECK:STDOUT:   %addr: %ptr.db8 = addr_of %_.var
 // CHECK:STDOUT:   %TakeAnything_ExpectRRef__carbon_thunk.call: init %empty_tuple.type = call imports.%TakeAnything_ExpectRRef__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

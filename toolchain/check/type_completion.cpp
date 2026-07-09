@@ -965,8 +965,7 @@ static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
 static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
                               SemIR::ConstantId initial_self_const_id,
                               SemIR::TypeInstId facet_type_inst_id,
-                              bool allow_partially_identified,
-                              bool subst_period_self, bool diagnose)
+                              bool allow_partially_identified, bool diagnose)
     -> SemIR::IdentifiedFacetTypeId {
   auto facet_type_id =
       context.insts().GetAs<SemIR::FacetType>(facet_type_inst_id).facet_type_id;
@@ -985,7 +984,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
     return identified_id;
   }
 
-  if (subst_period_self) {
+  {
     auto subst_id = SubstPeriodSelfInFacetType(
         context, loc_id,
         context.constant_values().GetInstId(initial_self_const_id),
@@ -1240,11 +1239,10 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
                             SemIR::ConstantId self_const_id,
                             SemIR::TypeInstId facet_type_inst_id,
-                            bool allow_partially_identified,
-                            bool subst_period_self)
+                            bool allow_partially_identified)
     -> SemIR::IdentifiedFacetTypeId {
   return IdentifyFacetType(context, loc_id, self_const_id, facet_type_inst_id,
-                           allow_partially_identified, subst_period_self,
+                           allow_partially_identified,
                            /*diagnose=*/false);
 }
 
@@ -1255,10 +1253,8 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 bool diagnose) -> SemIR::IdentifiedFacetTypeId {
   CARBON_CHECK(diagnostic_context);
   Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
-
   return IdentifyFacetType(context, loc_id, self_const_id, facet_type_inst_id,
-                           /*allow_partially_identified=*/false,
-                           /*subst_period_self=*/true, diagnose);
+                           /*allow_partially_identified=*/false, diagnose);
 }
 
 }  // namespace Carbon::Check

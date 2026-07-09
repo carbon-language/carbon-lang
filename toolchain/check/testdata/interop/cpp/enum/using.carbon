@@ -92,9 +92,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %col.patt: %pattern_type.732 = value_binding_pattern col [concrete = constants.%col.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc18_32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Color.ref.loc18_35: type = name_ref Color, imports.%Color.decl [concrete = constants.%Color]
 // CHECK:STDOUT:   %Red.ref: %Color = name_ref Red, imports.%int_0.59e [concrete = constants.%int_0.59e]
@@ -104,7 +101,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %col: %Color = wrapper_binding col, %Red.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %colb.patt: %pattern_type.732 = value_binding_pattern colb [concrete = constants.%colb.patt]
+// CHECK:STDOUT:     %col.patt: %pattern_type.732 = value_binding_pattern col [concrete = constants.%col.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc19_33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Blue.ref: %Color = name_ref Blue, imports.%int_1.b76 [concrete = constants.%int_1.b76]
@@ -114,7 +111,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %colb: %Color = wrapper_binding colb, %Blue.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pet.patt: %pattern_type.8cd = value_binding_pattern pet [concrete = constants.%pet.patt]
+// CHECK:STDOUT:     %colb.patt: %pattern_type.732 = value_binding_pattern colb [concrete = constants.%colb.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc20_37: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Zoo.ref.loc20_40: type = name_ref Zoo, imports.%Zoo.decl [concrete = constants.%Zoo]
@@ -127,7 +124,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pet: %Animal = wrapper_binding pet, %Cat.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pet2.patt: %pattern_type.8cd = value_binding_pattern pet2 [concrete = constants.%pet2.patt]
+// CHECK:STDOUT:     %pet.patt: %pattern_type.8cd = value_binding_pattern pet [concrete = constants.%pet.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc21_38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Dog.ref: %Animal = name_ref Dog, imports.%int_1.e7b [concrete = constants.%int_1.e7b]
@@ -137,6 +134,11 @@ fn F() {
 // CHECK:STDOUT:     %Animal.ref.loc21: type = name_ref Animal, imports.%Animal.decl [concrete = constants.%Animal]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pet2: %Animal = wrapper_binding pet2, %Dog.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %pet2.patt: %pattern_type.8cd = value_binding_pattern pet2 [concrete = constants.%pet2.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -30,6 +30,7 @@ library "[[@TEST_NAME]]";
 
 var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'element_tail_padding.carbon'
 // CHECK:STDOUT: source_filename = "element_tail_padding.carbon"
 // CHECK:STDOUT:
@@ -113,6 +114,8 @@ var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 // CHECK:STDOUT: !30 = !{!31}
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !29, type: !25)
 // CHECK:STDOUT: !32 = !DILocation(line: 9, column: 3, scope: !29)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'constant_with_padding.carbon'
 // CHECK:STDOUT: source_filename = "constant_with_padding.carbon"
 // CHECK:STDOUT:
@@ -145,3 +148,4 @@ var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 3, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 0, scope: !4)
+// CHECK:STDOUT:

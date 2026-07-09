@@ -19,6 +19,7 @@ fn Get() -> ref array(i32, 4) {
   return a;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'global_array_reference.carbon'
 // CHECK:STDOUT: source_filename = "global_array_reference.carbon"
 // CHECK:STDOUT:
@@ -62,3 +63,4 @@ fn Get() -> ref array(i32, 4) {
 // CHECK:STDOUT: !11 = !{null}
 // CHECK:STDOUT: !12 = !DILocation(line: 3, column: 1, scope: !9)
 // CHECK:STDOUT: !13 = !DILocation(line: 0, scope: !9)
+// CHECK:STDOUT:

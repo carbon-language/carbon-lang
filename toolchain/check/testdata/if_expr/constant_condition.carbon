@@ -223,6 +223,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc15_25.2(%int_1) [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %.loc15_25: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   return %.loc15_25
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> out %return.param: %i32 {
@@ -235,6 +237,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc16_25.2(%int_2) [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   %.loc16_25: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   return %.loc16_25
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %i32 {
@@ -264,6 +268,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %bound_method.loc19_10.2: <bound method> = bound_method %.loc19_10, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc19_10.2(%.loc19_10)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %i32 {
@@ -293,14 +299,12 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %bound_method.loc23_10.2: <bound method> = bound_method %.loc23_10, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc23_10.2(%.loc23_10)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.6b6 = ref_binding_pattern v [concrete = constants.%v.patt]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.6b6 = var_pattern %v.patt [concrete = constants.%v.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var_storage %v.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc27: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
@@ -332,8 +336,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !.loc27_8:
 // CHECK:STDOUT:   %v: ref %i32 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.f00 = ref_binding_pattern w [concrete = constants.%w.patt]
-// CHECK:STDOUT:     %w.var_patt: %pattern_type.f00 = var_pattern %w.patt [concrete = constants.%w.var_patt]
+// CHECK:STDOUT:     %v.patt: %pattern_type.6b6 = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.6b6 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %ptr.d08 = var_storage %w.var_patt
 // CHECK:STDOUT:   %v.ref: ref %i32 = name_ref v, %v
@@ -365,6 +369,10 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc28_8:
 // CHECK:STDOUT:   %w: ref %ptr.d08 = wrapper_binding w, %w.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %w.patt: %pattern_type.f00 = ref_binding_pattern w [concrete = constants.%w.patt]
+// CHECK:STDOUT:     %w.var_patt: %pattern_type.f00 = var_pattern %w.patt [concrete = constants.%w.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.ref: ref %ptr.d08 = name_ref w, %w
 // CHECK:STDOUT:   %.loc29_11: %ptr.d08 = acquire_value %w.ref
 // CHECK:STDOUT:   %.loc29_10.1: ref %i32 = deref %.loc29_11
@@ -379,6 +387,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc27: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc27: init %empty_tuple.type = call %Destroy.Op.bound.loc27(%v.var)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc28(%self.param: ref %ptr.d08) = "no_op";
@@ -388,14 +398,12 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: fn @Destroy.Op.loc27_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PartiallyConstant(%t.param: type) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.6b6 = ref_binding_pattern v [concrete = constants.%v.patt]
-// CHECK:STDOUT:     %v.var_patt: %pattern_type.6b6 = var_pattern %v.patt [concrete = constants.%v.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var_storage %v.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc33: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
@@ -426,8 +434,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !.loc33_8:
 // CHECK:STDOUT:   %v: ref %i32 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.f00 = ref_binding_pattern w [concrete = constants.%w.patt]
-// CHECK:STDOUT:     %w.var_patt: %pattern_type.f00 = var_pattern %w.patt [concrete = constants.%w.var_patt]
+// CHECK:STDOUT:     %v.patt: %pattern_type.6b6 = ref_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.6b6 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %ptr.d08 = var_storage %w.var_patt
 // CHECK:STDOUT:   %v.ref: ref %i32 = name_ref v, %v
@@ -459,6 +467,10 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc34_8:
 // CHECK:STDOUT:   %w: ref %ptr.d08 = wrapper_binding w, %w.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %w.patt: %pattern_type.f00 = ref_binding_pattern w [concrete = constants.%w.patt]
+// CHECK:STDOUT:     %w.var_patt: %pattern_type.f00 = var_pattern %w.patt [concrete = constants.%w.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.ref: ref %ptr.d08 = name_ref w, %w
 // CHECK:STDOUT:   %.loc35_11: %ptr.d08 = acquire_value %w.ref
 // CHECK:STDOUT:   %.loc35_10.1: ref %i32 = deref %.loc35_11
@@ -473,5 +485,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc33: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc33: init %empty_tuple.type = call %Destroy.Op.bound.loc33(%v.var)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

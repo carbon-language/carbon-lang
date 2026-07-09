@@ -237,6 +237,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT: fn @D() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- e.carbon
@@ -279,16 +281,16 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %e.patt: %pattern_type = ref_binding_pattern e [concrete = constants.%e.patt]
-// CHECK:STDOUT:     %e.var_patt: %pattern_type = var_pattern %e.patt [concrete = constants.%e.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var_storage %e.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5_9.1: type = splice_block %.loc5_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc5_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = wrapper_binding e, %e.var [concrete = %e.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %e.patt: %pattern_type = ref_binding_pattern e [concrete = constants.%e.patt]
+// CHECK:STDOUT:     %e.var_patt: %pattern_type = var_pattern %e.patt [concrete = constants.%e.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D [from "d.carbon"];
@@ -302,6 +304,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()
 // CHECK:STDOUT:   assign file.%e.var, %D.call
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_named_indirectly_same_package.carbon
@@ -346,6 +350,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Same.F [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init <error> = call %F.ref()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "b.carbon"];
@@ -390,6 +396,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Same.F [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init <error> = call %F.ref()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "b.carbon"];

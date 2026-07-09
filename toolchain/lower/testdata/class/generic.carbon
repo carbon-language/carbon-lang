@@ -102,6 +102,7 @@ fn AccessTuple() -> (i32, i32, i32) {
   return c.GetT();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'classes.carbon'
 // CHECK:STDOUT: source_filename = "classes.carbon"
 // CHECK:STDOUT:
@@ -112,6 +113,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !1 = !DIFile(filename: "classes.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'create.carbon'
 // CHECK:STDOUT: source_filename = "create.carbon"
 // CHECK:STDOUT:
@@ -157,6 +160,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !11 = distinct !DISubprogram(name: "CreateAdapter", linkageName: "_CCreateAdapter.Create", scope: null, file: !1, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DILocation(line: 11, column: 10, scope: !11)
 // CHECK:STDOUT: !13 = !DILocation(line: 11, column: 3, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'create_generic.carbon'
 // CHECK:STDOUT: source_filename = "create_generic.carbon"
 // CHECK:STDOUT:
@@ -280,6 +285,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !45 = !DILocation(line: 53, column: 12, scope: !38)
 // CHECK:STDOUT: !46 = !DILocation(line: 53, column: 26, scope: !38)
 // CHECK:STDOUT: !47 = !DILocation(line: 53, column: 5, scope: !38)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'access.carbon'
 // CHECK:STDOUT: source_filename = "access.carbon"
 // CHECK:STDOUT:
@@ -557,3 +564,4 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !99 = !DILocation(line: 59, column: 26, scope: !93)
 // CHECK:STDOUT: !100 = !DILocation(line: 59, column: 39, scope: !93)
 // CHECK:STDOUT: !101 = !DILocation(line: 59, column: 5, scope: !93)
+// CHECK:STDOUT:

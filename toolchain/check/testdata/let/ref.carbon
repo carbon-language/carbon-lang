@@ -65,16 +65,11 @@ fn F() {
 // CHECK:STDOUT: fn @F(%a.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.6b6 = ref_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.ref.loc7: ref %i32 = name_ref b, %b
 // CHECK:STDOUT:   %i32.loc7: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %c: ref %i32 = wrapper_binding c, %b.ref.loc7
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.6b6 = ref_binding_pattern d [concrete = constants.%d.patt]
-// CHECK:STDOUT:     %e.patt: %pattern_type.6b6 = ref_binding_pattern e [concrete = constants.%e.patt]
-// CHECK:STDOUT:     %.loc8_44: %pattern_type.394 = tuple_pattern (%d.patt, %e.patt) [concrete = constants.%.dd8]
+// CHECK:STDOUT:     %c.patt: %pattern_type.6b6 = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.ref.loc8: ref %i32 = name_ref b, %b
 // CHECK:STDOUT:   %c.ref: ref %i32 = name_ref c, %c
@@ -83,6 +78,13 @@ fn F() {
 // CHECK:STDOUT:   %d: ref %i32 = wrapper_binding d, %b.ref.loc8
 // CHECK:STDOUT:   %i32.loc8_41: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %e: ref %i32 = wrapper_binding e, %c.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %pattern_type.6b6 = ref_binding_pattern d [concrete = constants.%d.patt]
+// CHECK:STDOUT:     %e.patt: %pattern_type.6b6 = ref_binding_pattern e [concrete = constants.%e.patt]
+// CHECK:STDOUT:     %.loc8_44: %pattern_type.394 = tuple_pattern (%d.patt, %e.patt) [concrete = constants.%.dd8]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

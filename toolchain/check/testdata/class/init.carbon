@@ -181,6 +181,8 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.loc21_31.6: init %Class to %return.param = class_init (%.loc21_31.3, %.loc21_31.5)
 // CHECK:STDOUT:   %.loc21_32: init %Class = converted %.loc21_31.1, %.loc21_31.6
 // CHECK:STDOUT:   return %.loc21_32 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeReorder(%n.param: %i32, %next.param: %ptr.7ee) -> out %return.param: %Class {
@@ -205,5 +207,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.loc25_31.6: init %Class to %return.param = class_init (%.loc25_31.3, %.loc25_31.5)
 // CHECK:STDOUT:   %.loc25_32: init %Class = converted %.loc25_31.1, %.loc25_31.6
 // CHECK:STDOUT:   return %.loc25_32 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -16,6 +16,7 @@ fn Or(b: bool, c: bool) -> bool {
   return b or c;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'or_empty_block.carbon'
 // CHECK:STDOUT: source_filename = "or_empty_block.carbon"
 // CHECK:STDOUT:
@@ -51,3 +52,4 @@ fn Or(b: bool, c: bool) -> bool {
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 2, scope: !4, type: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 16, column: 10, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 16, column: 3, scope: !4)
+// CHECK:STDOUT:

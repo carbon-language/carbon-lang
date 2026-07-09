@@ -24,6 +24,7 @@ fn LoadStore(p: bool*, b: bool) -> bool {
   return v;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'bool.carbon'
 // CHECK:STDOUT: source_filename = "bool.carbon"
 // CHECK:STDOUT:
@@ -74,3 +75,4 @@ fn LoadStore(p: bool*, b: bool) -> bool {
 // CHECK:STDOUT: !17 = !DILocation(line: 22, column: 17, scope: !11)
 // CHECK:STDOUT: !18 = !DILocation(line: 23, column: 3, scope: !11)
 // CHECK:STDOUT: !19 = !DILocation(line: 24, column: 3, scope: !11)
+// CHECK:STDOUT:

@@ -140,9 +140,6 @@ fn F() -> {} {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc4: %pattern_type.a96 = value_binding_pattern _ [concrete = constants.%_.patt.bc3]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc4_14: %empty_struct_type = converted @__global_init.%.loc4, %empty_struct [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [concrete = constants.%empty_struct_type] {
@@ -151,8 +148,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc4: %empty_struct_type = wrapper_binding _, %.loc4_14
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc5: %pattern_type.a96 = ref_binding_pattern _ [concrete = constants.%_.patt.7e8]
-// CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc5 [concrete = constants.%_.var_patt.d5b]
+// CHECK:STDOUT:     %_.patt.loc4: %pattern_type.a96 = value_binding_pattern _ [concrete = constants.%_.patt.bc3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.var: ref %empty_struct_type = var_storage %_.var_patt
 // CHECK:STDOUT:   %.loc5_9.1: type = splice_block %.loc5_9.3 [concrete = constants.%empty_struct_type] {
@@ -160,14 +156,15 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc5: ref %empty_struct_type = wrapper_binding _, %_.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt.loc5: %pattern_type.a96 = ref_binding_pattern _ [concrete = constants.%_.patt.7e8]
+// CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc5 [concrete = constants.%_.var_patt.d5b]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc8: %pattern_type.a96 = value_binding_pattern _ [concrete = constants.%_.patt.bc9]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_16.2: %empty_struct_type = converted %.loc8_16.1, %empty_struct [concrete = constants.%empty_struct]
@@ -177,8 +174,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc8: %empty_struct_type = wrapper_binding _, %.loc8_16.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc9: %pattern_type.a96 = ref_binding_pattern _ [concrete = constants.%_.patt.3b4]
-// CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc9 [concrete = constants.%_.var_patt.f52]
+// CHECK:STDOUT:     %_.patt.loc8: %pattern_type.a96 = value_binding_pattern _ [concrete = constants.%_.patt.bc9]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.var: ref %empty_struct_type = var_storage %_.var_patt
 // CHECK:STDOUT:   %.loc9_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -190,9 +186,15 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc9_11.3: type = converted %.loc9_11.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc9: ref %empty_struct_type = wrapper_binding _, %_.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt.loc9: %pattern_type.a96 = ref_binding_pattern _ [concrete = constants.%_.patt.3b4]
+// CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc9 [concrete = constants.%_.var_patt.f52]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %_.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%_.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_struct_type) = "no_op";
@@ -205,6 +207,8 @@ fn F() -> {} {
 // CHECK:STDOUT:   %.loc5_1: init %empty_struct_type = converted %.loc5_14.1, %.loc5_14.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%_.var, %.loc5_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- function.carbon
@@ -269,6 +273,8 @@ fn F() -> {} {
 // CHECK:STDOUT: fn @G(%_.param: %empty_struct_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
@@ -279,13 +285,15 @@ fn F() -> {} {
 // CHECK:STDOUT:   %.loc9_6.2: %empty_struct_type = converted %.loc9_6.1, %empty_struct [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc9_6.2)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- function_generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %_.patt: %pattern_type = symbolic_binding_pattern _, 0 [symbolic]
 // CHECK:STDOUT:   %_: type = symbolic_binding _, 0 [symbolic]
@@ -317,7 +325,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.patt.loc4_7.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_7.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_10.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %_.loc4_7.2: type = symbolic_binding _, 0 [symbolic = %_.loc4_7.1 (constants.%_)]
@@ -334,6 +342,8 @@ fn F() -> {} {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -345,6 +355,8 @@ fn F() -> {} {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {
@@ -363,7 +375,7 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %_.patt: %pattern_type = symbolic_binding_pattern _, 0 [symbolic]
 // CHECK:STDOUT:   %_: type = symbolic_binding _, 0 [symbolic]
@@ -395,7 +407,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.patt.loc4_7.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_7.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_10.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %_.loc4_7.2: type = symbolic_binding _, 0 [symbolic = %_.loc4_7.1 (constants.%_)]
@@ -418,6 +430,8 @@ fn F() -> {} {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {
@@ -434,7 +448,7 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %_.patt: %pattern_type = symbolic_binding_pattern _, 0 [symbolic]
 // CHECK:STDOUT:   %_: type = symbolic_binding _, 0 [symbolic]
@@ -462,7 +476,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.patt.loc4_7.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_7.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_10.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %_.loc4_7.2: type = symbolic_binding _, 0 [symbolic = %_.loc4_7.1 (constants.%_)]
@@ -471,7 +485,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.patt.loc6_7.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc6_7.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_10.1: type = splice_block %.loc6_10.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc6_10.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %_.loc6_7.2: type = symbolic_binding _, 0 [symbolic = %_.loc6_7.1 (constants.%_)]
@@ -494,6 +508,8 @@ fn F() -> {} {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

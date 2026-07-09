@@ -217,6 +217,8 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %bound_method.loc4_36.2: <bound method> = bound_method %.loc4_36.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc4_36.2(%.loc4_36.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Point.First(%self.param: %Point, %other.param: %Point) -> out %return.param: %i32 {
@@ -231,6 +233,8 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %bound_method.loc5_59.2: <bound method> = bound_method %.loc5_59.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc5_59.2(%.loc5_59.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGet(%p.param: %Point) -> out %return.param: %i32 {
@@ -240,6 +244,8 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %p.ref: %Point = name_ref p, %p
 // CHECK:STDOUT:   %Point.Get.call: init %i32 = call %Get.ref(%p.ref)
 // CHECK:STDOUT:   return %Point.Get.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFirst(%p.param: %Point, %q.param: %Point) -> out %return.param: %i32 {
@@ -250,6 +256,8 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %q.ref: %Point = name_ref q, %q
 // CHECK:STDOUT:   %Point.First.call: init %i32 = call %First.ref(%p.ref, %q.ref)
 // CHECK:STDOUT:   return %Point.First.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallViaAlias(%p.param: %Point) -> out %return.param: %i32 {
@@ -261,5 +269,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %p.ref: %Point = name_ref p, %p
 // CHECK:STDOUT:   %Point.Get.call: init %i32 = call %A.ref(%p.ref)
 // CHECK:STDOUT:   return %Point.Get.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

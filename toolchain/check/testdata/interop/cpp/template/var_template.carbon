@@ -96,9 +96,6 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pa.patt: %pattern_type.1fa = value_binding_pattern pa [concrete = constants.%pa.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr.25f] {
 // CHECK:STDOUT:     %Cpp.ref.loc7: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %A.ref.loc7: type = name_ref A, imports.%A.decl [concrete = constants.%A]
@@ -106,7 +103,7 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pa: %ptr.25f = wrapper_binding pa, @__global_init.%addr.loc7
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pb.patt: %pattern_type.733 = value_binding_pattern pb [concrete = constants.%pb.patt]
+// CHECK:STDOUT:     %pa.patt: %pattern_type.1fa = value_binding_pattern pa [concrete = constants.%pa.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8: type = splice_block %ptr.loc8 [concrete = constants.%ptr.dc0] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -115,7 +112,7 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pb: %ptr.dc0 = wrapper_binding pb, @__global_init.%addr.loc8
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pwa.patt: %pattern_type.1fa = value_binding_pattern pwa [concrete = constants.%pwa.patt]
+// CHECK:STDOUT:     %pb.patt: %pattern_type.733 = value_binding_pattern pb [concrete = constants.%pb.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9: type = splice_block %ptr.loc9 [concrete = constants.%ptr.25f] {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -124,7 +121,7 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pwa: %ptr.25f = wrapper_binding pwa, @__global_init.%addr.loc9
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pwb.patt: %pattern_type.733 = value_binding_pattern pwb [concrete = constants.%pwb.patt]
+// CHECK:STDOUT:     %pwa.patt: %pattern_type.1fa = value_binding_pattern pwa [concrete = constants.%pwa.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10: type = splice_block %ptr.loc10 [concrete = constants.%ptr.dc0] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -132,6 +129,9 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:     %ptr.loc10: type = ptr_type %B.ref.loc10 [concrete = constants.%ptr.dc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pwb: %ptr.dc0 = wrapper_binding pwb, @__global_init.%addr.loc10
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %pwb.patt: %pattern_type.733 = value_binding_pattern pwb [concrete = constants.%pwb.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -159,5 +159,7 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   %B.ref.loc10: type = name_ref B, imports.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %addr.loc10: %ptr.dc0 = addr_of imports.%var.var.302 [concrete = constants.%addr.cd4]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

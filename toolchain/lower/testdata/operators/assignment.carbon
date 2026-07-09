@@ -22,6 +22,7 @@ fn G() -> (i32, i32) {
   return b;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'assignment.carbon'
 // CHECK:STDOUT: source_filename = "assignment.carbon"
 // CHECK:STDOUT:
@@ -119,3 +120,4 @@ fn G() -> (i32, i32) {
 // CHECK:STDOUT: !30 = !{!31}
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !27, type: !21)
 // CHECK:STDOUT: !32 = !DILocation(line: 20, column: 3, scope: !27)
+// CHECK:STDOUT:

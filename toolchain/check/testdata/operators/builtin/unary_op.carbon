@@ -101,16 +101,16 @@ fn Constant() {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_true.patt: %pattern_type.831 = value_binding_pattern not_true [concrete = constants.%not_true.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %not_true: bool = wrapper_binding not_true, @__global_init.%.loc19
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_false.patt: %pattern_type.831 = value_binding_pattern not_false [concrete = constants.%not_false.patt]
+// CHECK:STDOUT:     %not_true.patt: %pattern_type.831 = value_binding_pattern not_true [concrete = constants.%not_true.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc20: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %not_false: bool = wrapper_binding not_false, @__global_init.%.loc20
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %not_false.patt: %pattern_type.831 = value_binding_pattern not_false [concrete = constants.%not_false.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [concrete = constants.%Constant] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -122,14 +122,12 @@ fn Constant() {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc16, %impl.elem0
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%.loc16)
 // CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var_storage %a.var_patt
 // CHECK:STDOUT:   %.loc23_50.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc23_50.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
@@ -158,8 +156,8 @@ fn Constant() {
 // CHECK:STDOUT: !.loc23_15:
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = ref_binding_pattern b [concrete = constants.%b.patt.454]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.831 = var_pattern %b.patt [concrete = constants.%b.var_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref bool = var_storage %b.var_patt
 // CHECK:STDOUT:   %true.loc24: bool = bool_literal true [concrete = constants.%true]
@@ -189,11 +187,17 @@ fn Constant() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc24_15:
 // CHECK:STDOUT:   %b: ref bool = wrapper_binding b, %b.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = ref_binding_pattern b [concrete = constants.%b.patt.454]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.831 = var_pattern %b.patt [concrete = constants.%b.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound.loc24: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc24: init %empty_tuple.type = call %Destroy.Op.bound.loc24(%b.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc23: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc23: init %empty_tuple.type = call %Destroy.Op.bound.loc23(%a.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc24(%self.param: ref bool) = "no_op";
@@ -207,5 +211,7 @@ fn Constant() {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:   %.loc20: bool = not %false [concrete = constants.%true]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

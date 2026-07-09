@@ -55,6 +55,7 @@ fn G() {
   let unused t: type = type where D impls J(.Self);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -77,6 +78,8 @@ fn G() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'no_period_self_dependence.carbon'
 // CHECK:STDOUT: source_filename = "no_period_self_dependence.carbon"
 // CHECK:STDOUT:
@@ -124,3 +127,4 @@ fn G() {
 // CHECK:STDOUT: !17 = !{!18}
 // CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !16, type: !7)
 // CHECK:STDOUT: !19 = !DILocation(line: 16, column: 3, scope: !16)
+// CHECK:STDOUT:

@@ -31,7 +31,7 @@ fn F() {
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
 // CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Animal.type [concrete]
 // CHECK:STDOUT:   %T.patt.e44e2f.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.443025.1: %Animal.type = symbolic_binding T, 0 [symbolic]
@@ -76,7 +76,7 @@ fn F() {
 // CHECK:STDOUT:     %T.patt.loc17_23.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc17_23.2 (constants.%T.patt.e44e2f.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc17_23.2: %Animal.type = symbolic_binding T, 0 [symbolic = %T.loc17_23.1 (constants.%T.443025.1)]
@@ -85,7 +85,7 @@ fn F() {
 // CHECK:STDOUT:     %T.patt.loc19_18.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_18.2 (constants.%T.patt.e44e2f.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc19: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc19_18.2: %Animal.type = symbolic_binding T, 0 [symbolic = %T.loc19_18.1 (constants.%T.443025.2)]
@@ -107,6 +107,8 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Goat.as.Animal.impl: %Goat.ref as %Animal.ref {
@@ -135,6 +137,8 @@ fn F() {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -152,6 +156,8 @@ fn F() {
 // CHECK:STDOUT:     %FeedAnimal.specific_fn.loc19_31.1: <specific function> = specific_function %FeedAnimal.ref, @FeedAnimal(constants.%T.443025.2) [symbolic = %FeedAnimal.specific_fn.loc19_31.2 (constants.%FeedAnimal.specific_fn.5bd)]
 // CHECK:STDOUT:     %FeedAnimal.call: init %empty_tuple.type = call %FeedAnimal.specific_fn.loc19_31.1()
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,6 +170,8 @@ fn F() {
 // CHECK:STDOUT:   %HandleAnimal.specific_fn: <specific function> = specific_function %HandleAnimal.ref, @HandleAnimal(constants.%Animal.facet) [concrete = constants.%HandleAnimal.specific_fn]
 // CHECK:STDOUT:   %HandleAnimal.call: init %empty_tuple.type = call %HandleAnimal.specific_fn()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self) {

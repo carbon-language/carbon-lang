@@ -58,5 +58,7 @@ fn F(unused n: C) {}
 // CHECK:STDOUT: fn @F(%n.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

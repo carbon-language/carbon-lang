@@ -126,34 +126,34 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:     .a_val = %a_val
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d_val.patt: %pattern_type = ref_binding_pattern d_val [concrete = constants.%d_val.patt]
-// CHECK:STDOUT:     %d_val.var_patt: %pattern_type = var_pattern %d_val.patt [concrete = constants.%d_val.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d_val.var: ref %C = var_storage %d_val.var_patt [concrete]
 // CHECK:STDOUT:   %d.ref: type = name_ref d, imports.%Main.d [concrete = constants.%C]
 // CHECK:STDOUT:   %d_val: ref %C = wrapper_binding d_val, %d_val.var [concrete = %d_val.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c_val.patt: %pattern_type = ref_binding_pattern c_val [concrete = constants.%c_val.patt]
-// CHECK:STDOUT:     %c_val.var_patt: %pattern_type = var_pattern %c_val.patt [concrete = constants.%c_val.var_patt]
+// CHECK:STDOUT:     %d_val.patt: %pattern_type = ref_binding_pattern d_val [concrete = constants.%d_val.patt]
+// CHECK:STDOUT:     %d_val.var_patt: %pattern_type = var_pattern %d_val.patt [concrete = constants.%d_val.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c_val.var: ref %C = var_storage %c_val.var_patt [concrete]
 // CHECK:STDOUT:   %c.ref: type = name_ref c, imports.%Main.c [concrete = constants.%C]
 // CHECK:STDOUT:   %c_val: ref %C = wrapper_binding c_val, %c_val.var [concrete = %c_val.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b_val.patt: %pattern_type = ref_binding_pattern b_val [concrete = constants.%b_val.patt]
-// CHECK:STDOUT:     %b_val.var_patt: %pattern_type = var_pattern %b_val.patt [concrete = constants.%b_val.var_patt]
+// CHECK:STDOUT:     %c_val.patt: %pattern_type = ref_binding_pattern c_val [concrete = constants.%c_val.patt]
+// CHECK:STDOUT:     %c_val.var_patt: %pattern_type = var_pattern %c_val.patt [concrete = constants.%c_val.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_val.var: ref %C = var_storage %b_val.var_patt [concrete]
 // CHECK:STDOUT:   %b.ref: type = name_ref b, imports.%Main.b [concrete = constants.%C]
 // CHECK:STDOUT:   %b_val: ref %C = wrapper_binding b_val, %b_val.var [concrete = %b_val.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_val.patt: %pattern_type = ref_binding_pattern a_val [concrete = constants.%a_val.patt]
-// CHECK:STDOUT:     %a_val.var_patt: %pattern_type = var_pattern %a_val.patt [concrete = constants.%a_val.var_patt]
+// CHECK:STDOUT:     %b_val.patt: %pattern_type = ref_binding_pattern b_val [concrete = constants.%b_val.patt]
+// CHECK:STDOUT:     %b_val.var_patt: %pattern_type = var_pattern %b_val.patt [concrete = constants.%b_val.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_val.var: ref %C = var_storage %a_val.var_patt [concrete]
 // CHECK:STDOUT:   %a.ref: type = name_ref a, imports.%Main.a [concrete = constants.%C]
 // CHECK:STDOUT:   %a_val: ref %C = wrapper_binding a_val, %a_val.var [concrete = %a_val.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a_val.patt: %pattern_type = ref_binding_pattern a_val [concrete = constants.%a_val.patt]
+// CHECK:STDOUT:     %a_val.var_patt: %pattern_type = var_pattern %a_val.patt [concrete = constants.%a_val.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -209,5 +209,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc10_1: init %C = converted %.loc10_29.1, %.loc10_29.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%a_val.var, %.loc10_1
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

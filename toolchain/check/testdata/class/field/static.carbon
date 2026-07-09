@@ -108,20 +108,20 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %static_field.patt: %pattern_type.6b6 = ref_binding_pattern static_field [concrete = constants.%static_field.patt]
-// CHECK:STDOUT:     %static_field.var_patt: %pattern_type.6b6 = var_pattern %static_field.patt [concrete = constants.%static_field.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %static_field.var: ref %i32 = var_storage %static_field.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %static_field: ref %i32 = wrapper_binding static_field, %static_field.var [concrete = %static_field.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %static_field_with_init.patt: %pattern_type.6b6 = ref_binding_pattern static_field_with_init [concrete = constants.%static_field_with_init.patt]
-// CHECK:STDOUT:     %static_field_with_init.var_patt: %pattern_type.6b6 = var_pattern %static_field_with_init.patt [concrete = constants.%static_field_with_init.var_patt]
+// CHECK:STDOUT:     %static_field.patt: %pattern_type.6b6 = ref_binding_pattern static_field [concrete = constants.%static_field.patt]
+// CHECK:STDOUT:     %static_field.var_patt: %pattern_type.6b6 = var_pattern %static_field.patt [concrete = constants.%static_field.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %static_field_with_init.var: ref %i32 = var_storage %static_field_with_init.var_patt [concrete]
 // CHECK:STDOUT:   %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %static_field_with_init: ref %i32 = wrapper_binding static_field_with_init, %static_field_with_init.var [concrete = %static_field_with_init.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %static_field_with_init.patt: %pattern_type.6b6 = ref_binding_pattern static_field_with_init [concrete = constants.%static_field_with_init.patt]
+// CHECK:STDOUT:     %static_field_with_init.var_patt: %pattern_type.6b6 = var_pattern %static_field_with_init.patt [concrete = constants.%static_field_with_init.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -144,6 +144,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc10: init %i32 = converted %int_456, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_456.8dd]
 // CHECK:STDOUT:   assign %static_field.ref, %.loc10
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -164,5 +166,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc6: init %i32 = converted %int_123, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_123.2bf]
 // CHECK:STDOUT:   assign @C.%static_field_with_init.var, %.loc6
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

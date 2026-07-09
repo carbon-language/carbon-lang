@@ -46,6 +46,7 @@ fn G() {
   F({});
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'with_cleanup.carbon'
 // CHECK:STDOUT: source_filename = "with_cleanup.carbon"
 // CHECK:STDOUT:
@@ -99,6 +100,8 @@ fn G() {
 // CHECK:STDOUT: !15 = !{!16}
 // CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
 // CHECK:STDOUT: !17 = !DILocation(line: 13, column: 6, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'struct_literal_cleanup.carbon'
 // CHECK:STDOUT: source_filename = "struct_literal_cleanup.carbon"
 // CHECK:STDOUT:
@@ -154,3 +157,4 @@ fn G() {
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !10, type: !13)
 // CHECK:STDOUT: !16 = !DILocation(line: 11, column: 6, scope: !10)
+// CHECK:STDOUT:

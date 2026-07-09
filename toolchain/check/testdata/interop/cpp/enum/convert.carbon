@@ -141,9 +141,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.203 = value_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Enum.ref.loc8: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %a.ref.loc8: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0.822]
@@ -153,7 +150,7 @@ fn F() {
 // CHECK:STDOUT:   %i16.loc8_17: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %a: %i16 = wrapper_binding a, %.loc8_34.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.926 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.203 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
 // CHECK:STDOUT:   %i16.loc9: type = type_literal constants.%i16 [concrete = constants.%i16]
@@ -174,7 +171,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %Enum = wrapper_binding b, %.loc9_40.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.d91 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.926 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc10_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %a.ref.loc10: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0.822]
@@ -187,6 +184,11 @@ fn F() {
 // CHECK:STDOUT:     %Other.ref.loc10_20: type = name_ref Other, imports.%Other.decl [concrete = constants.%Other]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: %Other = wrapper_binding c, %.loc10_35.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.d91 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

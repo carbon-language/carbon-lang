@@ -99,7 +99,7 @@ fn Test() {
 // CHECK:STDOUT:   %Sink_X.type: type = fn_type @Sink_X [concrete]
 // CHECK:STDOUT:   %Sink_X: %Sink_X.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.184347.2: Core.Form = init_form %T.67d [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %T.67d [symbolic]
 // CHECK:STDOUT:   %return.param_patt.41d2d9.2: %pattern_type.51d1c4.2 = out_param_pattern [symbolic]
@@ -185,7 +185,7 @@ fn Test() {
 // CHECK:STDOUT:     %T.ref.loc31_24: type = name_ref T, %T.loc31_12.2 [symbolic = %T.loc31_12.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %.loc31_24.3: Core.Form = init_form %T.ref.loc31_24 [symbolic = %.loc31_24.2 (constants.%.184347.2)]
 // CHECK:STDOUT:     %.loc31_15.1: type = splice_block %.loc31_15.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc31_15.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc31_12.2: type = symbolic_binding T, 0 [symbolic = %T.loc31_12.1 (constants.%T.67d)]
@@ -269,6 +269,8 @@ fn Test() {
 // CHECK:STDOUT:   %.loc20_49.4: init %X to %return.param = class_init (%.loc20_49.3)
 // CHECK:STDOUT:   %.loc20_50: init %X = converted %.loc20_49.1, %.loc20_49.4
 // CHECK:STDOUT:   return %.loc20_50 to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @X.as.ImplicitAs.impl.Convert(%self.param: %X) -> out %return.param: %i32 {
@@ -283,6 +285,8 @@ fn Test() {
 // CHECK:STDOUT:   %bound_method.loc24_43.2: <bound method> = bound_method %.loc24_43.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc24_43.2(%.loc24_43.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Sink_i32(%n.param: %i32);
@@ -309,6 +313,8 @@ fn Test() {
 // CHECK:STDOUT:     %.loc31_24.1: ref @Source.%T.loc31_12.1 (%T.67d) = splice_block %return.param {}
 // CHECK:STDOUT:     %Source.call: init @Source.%T.loc31_12.1 (%T.67d) to %.loc31_24.1 = call %Source.specific_fn.loc31_35.1()
 // CHECK:STDOUT:     return %Source.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -348,6 +354,8 @@ fn Test() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc34: <bound method> = bound_method %.loc34_20.2, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc34: init %empty_tuple.type = call %Destroy.Op.bound.loc34(%.loc34_20.2)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc35_20.1(%self.param: ref %i32.builtin) = "no_op";
@@ -355,16 +363,22 @@ fn Test() {
 // CHECK:STDOUT: fn @Destroy.Op.loc35_20.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc35_20.3(%self.param: ref %struct_type.n) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc35_20.4(%self.param: ref %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%T.67d) {

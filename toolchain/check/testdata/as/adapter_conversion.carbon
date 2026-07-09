@@ -189,13 +189,10 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b_val.patt: %pattern_type.e39 = value_binding_pattern b_val [concrete = constants.%b_val.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %b_val: %B = wrapper_binding b_val, @__global_init.%.loc22_22.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b_ptr.patt: %pattern_type.3c8 = value_binding_pattern b_ptr [concrete = constants.%b_ptr.patt]
+// CHECK:STDOUT:     %b_val.patt: %pattern_type.e39 = value_binding_pattern b_val [concrete = constants.%b_val.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc23: type = splice_block %ptr [concrete = constants.%ptr.432] {
 // CHECK:STDOUT:     %B.ref.loc23: type = name_ref B, %B.decl [concrete = constants.%B]
@@ -203,12 +200,15 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ptr: %ptr.432 = wrapper_binding b_ptr, @__global_init.%addr
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b_factory.patt: %pattern_type.e39 = ref_binding_pattern b_factory [concrete = constants.%b_factory.patt]
-// CHECK:STDOUT:     %b_factory.var_patt: %pattern_type.e39 = var_pattern %b_factory.patt [concrete = constants.%b_factory.var_patt]
+// CHECK:STDOUT:     %b_ptr.patt: %pattern_type.3c8 = value_binding_pattern b_ptr [concrete = constants.%b_ptr.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_factory.var: ref %B = var_storage %b_factory.var_patt [concrete]
 // CHECK:STDOUT:   %B.ref.loc25: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %b_factory: ref %B = wrapper_binding b_factory, %b_factory.var [concrete = %b_factory.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b_factory.patt: %pattern_type.e39 = ref_binding_pattern b_factory [concrete = constants.%b_factory.patt]
+// CHECK:STDOUT:     %b_factory.var_patt: %pattern_type.e39 = var_pattern %b_factory.patt [concrete = constants.%b_factory.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -232,6 +232,8 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %.loc25_29.2: init %B = converted %A.Make.call, %.loc25_29.1
 // CHECK:STDOUT:   assign file.%b_factory.var, %.loc25_29.2
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- adapt_i32.carbon
@@ -268,16 +270,16 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.9ef = value_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a: %A = wrapper_binding a, @__global_init.%.loc9_23.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = value_binding_pattern n [concrete = constants.%n.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.9ef = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %n: %i32 = wrapper_binding n, @__global_init.%.loc10_16.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = value_binding_pattern n [concrete = constants.%n.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -299,6 +301,8 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %.loc10_16.1: %i32 = as_compatible %a.ref
 // CHECK:STDOUT:   %.loc10_16.2: %i32 = converted %a.ref, %.loc10_16.1
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- multi_level_adapt.carbon
@@ -313,11 +317,11 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [concrete = constants.%D]
+// CHECK:STDOUT:   %d: %D = wrapper_binding d, @__global_init.%.loc10_15.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type = value_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [concrete = constants.%D]
-// CHECK:STDOUT:   %d: %D = wrapper_binding d, @__global_init.%.loc10_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -328,6 +332,8 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %.loc10_15.1: %D = as_compatible %empty_struct [concrete = constants.%D.val]
 // CHECK:STDOUT:   %.loc10_15.2: %D = converted %.loc10_13, %.loc10_15.1 [concrete = constants.%D.val]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init_class_value.carbon
@@ -371,13 +377,13 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b_value.patt: %pattern_type.e39 = value_binding_pattern b_value [concrete = constants.%b_value.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14_42.1: ref %B = temporary @__global_init.%.loc14_34.3, @__global_init.%.loc14_42.2 [concrete = constants.%.07b]
 // CHECK:STDOUT:   %.loc14_42.2: %B = acquire_value %.loc14_42.1 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %b_value: %B = wrapper_binding b_value, %.loc14_42.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b_value.patt: %pattern_type.e39 = value_binding_pattern b_value [concrete = constants.%b_value.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -409,6 +415,8 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %.loc14_42.1: init %B = as_compatible %.loc14_36 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc14_42.2: init %B = converted %.loc14_36, %.loc14_42.1 [concrete = constants.%B.val]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init_tuple_value.carbon
@@ -427,9 +435,6 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %A) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_value.patt: %pattern_type = value_binding_pattern a_value [concrete = constants.%a_value.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %.loc14_35: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Noncopyable.ref: type = name_ref Noncopyable, file.%Noncopyable.decl [concrete = constants.%Noncopyable]
@@ -443,6 +448,11 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %.loc14_52.2: %A = converted %.loc14_30.2, %.loc14_52.1
 // CHECK:STDOUT:   %A.ref.loc14_23: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a_value: %A = wrapper_binding a_value, %.loc14_52.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a_value.patt: %pattern_type = value_binding_pattern a_value [concrete = constants.%a_value.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
