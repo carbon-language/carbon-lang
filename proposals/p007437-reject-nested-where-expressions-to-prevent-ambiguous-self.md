@@ -75,7 +75,7 @@ fn F(generic T: Z(.Self) where .Z1 = (Y where .Self.(Y.Y1) == ()),
      generic U: T.Z1);
 ```
 
-The `.Self` in the rewrite constraint looks the same as the `.Self` in the
+The `.Self` in the same-type constraint looks the same as the `.Self` in the
 argument to `Z` so they are both replaced with `T`, which is incorrect. The
 second one should eventually be replaced with `U`, since that is the facet which
 it is constraining. It is also incorrect because we don't know that `T`
@@ -88,7 +88,7 @@ facet type incorrectly involves the symbolic type `T`, which `G` has no generic
 parameter for, so it cannot be made concrete in a specific of `G`.
 
 ```carbon
-fn G(generic V: type, generic W:! V);
+fn G(generic V: type, generic W: V);
 
 fn F(generic T: Z(.Self) where .Z1 = (Y where .Self.(Y.Y1) == ())) {
     G(T.Z1);
@@ -111,37 +111,37 @@ appearing inside the non-extend constraints of another facet type.
 
 ```carbon
 // Allowed, no nested `where`.
-fn F(T:! Z(.Self));
+fn F(generic T: Z(.Self));
 
 // Allowed, no nested `where`.
-fn F(T:! Z where .Self impls Y);
+fn F(generic T: Z where .Self impls Y);
 
 // Allowed, `where` is nested on the left-hand-side of another `where`.
-fn F(T:! (Z where .Self impls Y) where .Self impls X);
+fn F(generic T: (Z where .Self impls Y) where .Self impls X);
 
 // Rejected, `where` is nested on the right-hand-side of another `where`.
 // - This introduces a non-extend impls constraint inside a non-extend impls constraint.
-fn F(T:! Z where .Self impls (Y where .Self impls X));
+fn F(generic T: Z where .Self impls (Y where .Self impls X));
 
 // Allowed, the nested facet type has no nested `where`.
-fn F(T:! Z where .Z1 = Y(.Self));
+fn F(generic T: Z where .Z1 = Y(.Self));
 
 // Rejected, `where` is nested on the right-hand-side of another `where`.
 // - This introduces a non-extend impls constraint inside a rewrite constraint.
-fn F(T:! Z where .Z1 = (Y where .Self impls X));
+fn F(generic T: Z where .Z1 = (Y where .Self impls X));
 
 // Accepted, no nested `where`.
 musteval fn GetY() -> type {
   return Y;
 }
-fn F(T:! Z where .Self impls GetY());
+fn F(generic T: Z where .Self impls GetY());
 
 // Rejected, `where` is nested on the right-hand-side of another `where`.
 // - This introduces a rewrite constraint inside a non-extend impls constraint.
 musteval fn GetYWithRewrite() -> type {
   return Y where .Y1 = {};
 }
-fn F(T:! Z where .Self impls GetYWithRewrite());
+fn F(generic T: Z where .Self impls GetYWithRewrite());
 ```
 
 Prior to this proposal, ambiguous `.Self` was already disallowed, but we
@@ -165,7 +165,7 @@ generic argument.
 
 The name `.Self` is introduced by either of:
 
--   A compile-time binding, for its type: `T:! Z(.Self)`.
+-   A compile-time binding, for its type: `T: Z(.Self)`.
 -   The `where` keyword, in a facet type: `type where .Self impls Z(.Self)`.
 
 If it is shadowing, the `.Self` introduced by the first `where` keyword in a
@@ -198,10 +198,10 @@ straightforward to reject, and can be rejected by pointing directly to the
 invalid `where` keyword.
 
 ```carbon
-fn F(T:! Z where .Z1 = (Y where .Y1 = {}))
-//                        ^^^^^
-//                        Invalid `where` on the right-hand-side of another
-//                        `where`.
+fn F(generic T: Z where .Z1 = (Y where .Y1 = {}))
+//                               ^^^^^
+//                               Invalid `where` on the right-hand-side of
+//                               another `where`.
 ```
 
 A `where` can also be introduced through evaluation. For example, a reference to
@@ -218,10 +218,10 @@ in the nested facet type.
 ```carbon
 alias A = Y where .Y1 = {};
 
-fn F(T:! Z where .Z1 = A)
-//                     ^
-//                     Contains an invalid `where` on the right-hand-side of
-//                     another `where`.
+fn F(generic T: Z where .Z1 = A)
+//                            ^
+//                            Contains an invalid `where` on the right-hand-
+//                            side of another `where`.
 ```
 
 ## Rationale
@@ -250,7 +250,7 @@ to `T` and `.Self.(Y.Y1)` that would refer to `U`. In the canonical facet type,
 these `.Self` references are ambiguous.
 
 ```carbon
-fn F(T:! Z where .Z1 = (Y where .Z2 == ()),
+fn F(generic T: Z where .Z1 = (Y where .Z2 == ()),
      U: T.Z1 where .Y1 == ())
 ```
 
@@ -262,13 +262,13 @@ The `.Z1` is treated as a reference to an associated constant `Z1` in the
 interface `Z(.Self)` for the facet `.Self`.
 
 ```carbon
-fn F(T:! Z(.Self) where .Z1 = ());
+fn F(generic T: Z(.Self) where .Z1 = ());
 ```
 
 And we can nest the rewrite constraint on the right-hand-side of another `where`:
 
 ```carbon
-fn F(T:! Y where .Y1 impls (Z(.Self) where .Z1 = ()));
+fn F(generic T: Y where .Y1 impls (Z(.Self) where .Z1 = ()));
 ```
 
 This alternative would have all `.Self` references refer to `T` but the
@@ -326,7 +326,7 @@ can't determine it is so from local context alone:
 
 ```carbon
 interface I {}
-class C(T:! type);
+class C(T: type);
 
 class X {
     impl type as Core.MulWith(X) where .Result = type {
@@ -338,7 +338,7 @@ class X {
 
 alias x = {} as X;
 
-fn G(T:! type where C(.Self) impls type * x) {}
+fn G(generic T: type where C(.Self) impls type * x) {}
 ```
 
 Because of these issues, we chose to pursue disallowing nested `where` to
