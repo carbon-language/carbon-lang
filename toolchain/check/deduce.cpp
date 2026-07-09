@@ -680,11 +680,7 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
   if (!success) {
     return SemIR::SpecificId::None;
   }
-
-  context.forbidden_impls().push_back(impl_id);
-  auto specific_id = deduction.MakeSpecific();
-  context.forbidden_impls().pop_back();
-  return specific_id;
+  return deduction.MakeSpecific();
 }
 
 }  // namespace Carbon::Check
