@@ -429,9 +429,9 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
 // CHECK:STDOUT:             {kind: 'RefBindingName', text: 'ref', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'UnusedPattern', text: 'unused', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 7},
+// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'UnusedPattern', text: 'unused', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

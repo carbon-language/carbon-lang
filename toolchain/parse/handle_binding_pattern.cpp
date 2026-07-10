@@ -234,12 +234,14 @@ auto HandleBindingPattern(Context& context) -> void {
 
   // Now diagnose a misordered `unused` (recovered above), but only for an
   // otherwise-valid modifier: a redundant modifier sets `redundant_modifier`,
-  // and an invalid `template`/`ref` sets `has_error`.
+  // and an invalid `template`/`ref` sets `has_error`. Mark the binding in error
+  // once diagnosed, since recovery reordered the tokens the user wrote.
   if (misordered_unused_token && !redundant_modifier && !state.has_error) {
     CARBON_DIAGNOSTIC(UnusedAfterBindingModifier, Error,
                       "`unused` must be written before `{0}`", Lex::TokenKind);
     context.emitter().Emit(*misordered_unused_token, UnusedAfterBindingModifier,
                            misordered_unused_modifier);
+    state.has_error = true;
   }
 
   if (is_form) {
