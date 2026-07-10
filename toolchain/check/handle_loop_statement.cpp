@@ -78,12 +78,12 @@ static auto FinishLoopBody(Context& context, Parse::NodeId node_id) -> void {
   context.inst_block_stack().Pop();
 
   // Start emitting the loop exit block.
+  context.scope_stack().DiscardCleanupsSince(blocks.break_depth);
   context.inst_block_stack().Push(blocks.break_target);
   context.region_stack().AddToRegion(blocks.break_target, node_id);
 
   // Clean up anything created in the loop header and pop the loop scope.
-  AddCleanups(context, blocks.continue_depth, blocks.break_depth);
-  context.scope_stack().DiscardTopScopeCleanups();
+  AddAndDiscardCleanups(context);
   context.scope_stack().Pop(/*check_unused=*/true);
 }
 

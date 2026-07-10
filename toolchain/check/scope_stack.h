@@ -256,10 +256,14 @@ class ScopeStack {
     return values;
   }
 
-  // Discards the cleanups in the current scope from cleanup tracking.
-  auto DiscardTopScopeCleanups() -> void {
-    destroy_id_stack_.PopArray();
-    destroy_id_stack_.PushArray();
+  // Discards cleanups after the given depth, which must be within the current
+  // scope.
+  auto DiscardCleanupsSince(CleanupScopeDepth depth) -> void {
+    auto enclosing = enclosing_cleanup_scope_depth();
+    CARBON_CHECK(depth >= enclosing);
+    // TODO: Consider switching `destroy_id_stack_` from `ArrayStack` to
+    // `SmallVector` - `ArrayStack` gives us nothing here.
+    destroy_id_stack_.TruncateTopArray(depth.index - enclosing.index);
   }
 
   // Returns the current depth of the cleanup stack.

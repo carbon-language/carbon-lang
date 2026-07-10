@@ -86,11 +86,10 @@ class ArrayStack {
     llvm::append_range(values_, values);
   }
 
-  // Merges the top array into the parent array directly before it, leaving the
-  // top array empty.
-  auto MergeTopArrayIntoParent() -> void {
-    CARBON_CHECK(array_offsets_.size() >= 2);
-    array_offsets_.back() = values_.size();
+  // Truncates the top array on the stack to the given size.
+  auto TruncateTopArray(size_t size) -> void {
+    CARBON_CHECK(!array_offsets_.empty());
+    values_.truncate(array_offsets_.back() + size);
   }
 
   // Merges the top array into the the array two before it, leaving the top

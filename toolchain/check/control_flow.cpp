@@ -161,8 +161,9 @@ auto AddCleanups(Context& context, ScopeStack::CleanupScopeDepth depth,
 }
 
 auto AddAndDiscardCleanups(Context& context) -> void {
-  AddCleanups(context, context.scope_stack().enclosing_cleanup_scope_depth());
-  context.scope_stack().DiscardTopScopeCleanups();
+  auto depth = context.scope_stack().enclosing_cleanup_scope_depth();
+  AddCleanups(context, depth);
+  context.scope_stack().DiscardCleanupsSince(depth);
 }
 
 // TODO: When we have multiple branches or returns in the same function, share
