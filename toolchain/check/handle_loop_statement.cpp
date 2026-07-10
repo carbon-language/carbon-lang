@@ -120,7 +120,7 @@ auto HandleParseNode(Context& context, Parse::WhileStatementId node_id)
 
 auto HandleParseNode(Context& context, Parse::ForHeaderStartId node_id)
     -> bool {
-  // Create a scope for the range and cursor of the for loop.
+  // Create a scope that will eventually hold the range and cursor of the for loop.
   context.scope_stack().PushForSameRegion(ScopeStack::CleanupScopeKind::Owned);
 
   // Create a scope for any variables introduced in the pattern.
