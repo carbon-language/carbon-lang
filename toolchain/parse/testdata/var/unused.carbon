@@ -56,7 +56,7 @@ fn F(x: (), unused var y: ());
 
 // --- fail_ref_unused.carbon
 
-// CHECK:STDERR: fail_ref_unused.carbon:[[@LINE+4]]:10: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_ref_unused.carbon:[[@LINE+4]]:10: error: `unused` must be written before `ref` [UnusedAfterBindingModifier]
 // CHECK:STDERR: fn F(ref unused y: i32);
 // CHECK:STDERR:          ^~~~~~
 // CHECK:STDERR:
@@ -426,11 +426,13 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'unused', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: 'unused', has_error: yes},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: 'ref', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
+// CHECK:STDOUT:             {kind: 'RefBindingName', text: 'ref', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'UnusedPattern', text: 'unused', subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_nested.carbon

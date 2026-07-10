@@ -55,8 +55,8 @@ static auto GetLeafBindingPatternInstKind(Parse::NodeKind node_kind,
 static auto IsValidParamForIntroducer(Context& context, SemIR::LocId loc_id,
                                       SemIR::NameId name_id,
                                       Lex::TokenKind introducer_kind,
-                                      bool is_generic, bool is_deduced)
-    -> bool {
+                                      bool is_generic, bool is_deduced,
+                                      bool is_var) -> bool {
   switch (introducer_kind) {
     case Lex::TokenKind::Fn: {
       // `self` in the implicit parameter list is diagnosed separately (see
@@ -97,7 +97,14 @@ static auto IsValidParamForIntroducer(Context& context, SemIR::LocId loc_id,
       if (!is_generic) {
         CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
                           "parameters of generic types must be constant");
-        context.emitter().Emit(loc_id, GenericParamMustBeConstant);
+        auto builder =
+            context.emitter().Build(loc_id, GenericParamMustBeConstant);
+        if (is_var) {
+          CARBON_DIAGNOSTIC(VarParamIsRuntime, Note,
+                            "`var` parameters are runtime");
+          builder.Note(loc_id, VarParamIsRuntime);
+        }
+        builder.Emit();
         return false;
       }
       return true;
@@ -288,8 +295,9 @@ static auto HandleAnyBindingPattern(
     case FullPatternStack::Kind::ExplicitParamList: {
       bool is_deduced = context.full_pattern_stack().CurrentKind() ==
                         FullPatternStack::Kind::ImplicitParamList;
+      bool is_var = node_kind == Parse::NodeKind::VarBindingPattern;
       if (!IsValidParamForIntroducer(context, node_id, name_id, introducer.kind,
-                                     is_generic, is_deduced)) {
+                                     is_generic, is_deduced, is_var)) {
         if (name_id != SemIR::NameId::Underscore) {
           AddNameToLookup(context, name_id, SemIR::ErrorInst::InstId);
         }

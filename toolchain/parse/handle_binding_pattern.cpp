@@ -25,8 +25,8 @@ static auto ResolveBindingPhase(Context& context, Context::State& state,
                                 bool is_form,
                                 std::optional<Lex::TokenIndex> template_token,
                                 std::optional<Lex::TokenIndex> generic_token,
-                                std::optional<Lex::TokenIndex> runtime_token)
-    -> bool {
+                                std::optional<Lex::TokenIndex> runtime_token,
+                                bool& redundant_modifier) -> bool {
   // `template`/`generic` force a generic binding, `runtime` forces a runtime
   // binding, and otherwise the context's default applies.
   bool resolved_generic;
@@ -55,12 +55,14 @@ static auto ResolveBindingPhase(Context& context, Context::State& state,
         "`generic` is redundant here; this binding is a checked generic by "
         "default");
     context.emitter().Emit(*generic_token, RedundantGenericModifier);
+    redundant_modifier = true;
   } else if (runtime_token &&
              state.binding_context == BindingContext::ExplicitParam) {
     CARBON_DIAGNOSTIC(
         RedundantRuntimeModifier, Error,
         "`runtime` is redundant here; this binding is runtime by default");
     context.emitter().Emit(*runtime_token, RedundantRuntimeModifier);
+    redundant_modifier = true;
   }
 
   return resolved_generic;
@@ -92,6 +94,23 @@ auto HandleBindingPattern(Context& context) -> void {
     CARBON_DIAGNOSTIC(RefInsideVar, Error, "found `ref` inside `var` pattern");
     context.emitter().Emit(*ref_token, RefInsideVar);
     state.has_error = true;
+  }
+
+  // Recover from `unused` written after a phase keyword or `ref` by consuming
+  // it and wrapping the binding in `unused`, as if it had been written first.
+  // The misordering is diagnosed later, once we know the modifier is itself
+  // valid; a redundant or invalid modifier is diagnosed on its own, and we
+  // don't stack the ordering error on top of it.
+  std::optional<Lex::TokenIndex> misordered_unused_token;
+  Lex::TokenKind misordered_unused_modifier = Lex::TokenKind::Unused;
+  if ((template_token || generic_token || runtime_token || ref_token) &&
+      context.PositionIs(Lex::TokenKind::Unused)) {
+    misordered_unused_modifier = template_token  ? Lex::TokenKind::Template
+                                 : generic_token ? Lex::TokenKind::Generic
+                                 : runtime_token ? Lex::TokenKind::Runtime
+                                                 : Lex::TokenKind::Ref;
+    context.PushState(StateKind::FinishUnusedPattern);
+    misordered_unused_token = context.ConsumeChecked(Lex::TokenKind::Unused);
   }
 
   // The first item should be an identifier, the placeholder `_`, or `self`.
@@ -156,8 +175,10 @@ auto HandleBindingPattern(Context& context) -> void {
   // contextual defaults.
   bool is_form = token_kind == Lex::TokenKind::ColonQuestion;
 
-  bool resolved_generic = ResolveBindingPhase(
-      context, state, is_form, template_token, generic_token, runtime_token);
+  bool redundant_modifier = false;
+  bool resolved_generic =
+      ResolveBindingPhase(context, state, is_form, template_token,
+                          generic_token, runtime_token, redundant_modifier);
 
   // `self` is always a runtime receiver binding; its phase never comes from the
   // enclosing context's default. Forcing runtime here means that a misplaced
@@ -171,10 +192,9 @@ auto HandleBindingPattern(Context& context) -> void {
 
   // `template` and `ref` wrap the binding name, and each is only meaningful on
   // a particular kind of binding: `template` on a generic binding, and `ref` on
-  // a runtime `:` binding. Using one elsewhere is diagnosed, and we skip its
-  // wrapper node rather than attach it to a binding that can't hold it; that
-  // keeps the parse tree structurally valid for `check`, while the diagnostic
-  // still marks the file as errored.
+  // a runtime `:` binding. Using one elsewhere is diagnosed and marks the
+  // binding as errored; we skip its wrapper node rather than attach it to a
+  // binding that can't hold it, which would leave the parse tree malformed.
   if (template_token) {
     if (is_form || !resolved_generic) {
       if (!state.has_error) {
@@ -183,6 +203,7 @@ auto HandleBindingPattern(Context& context) -> void {
         context.emitter().Emit(*template_token,
                                ExpectedGenericBindingPatternAfterTemplate);
       }
+      state.has_error = true;
     } else {
       context.AddNode(NodeKind::TemplateBindingName, *template_token,
                       state.has_error);
@@ -196,6 +217,7 @@ auto HandleBindingPattern(Context& context) -> void {
         context.emitter().Emit(*ref_token,
                                ExpectedRuntimeBindingPatternAfterRef);
       }
+      state.has_error = true;
     } else {
       context.AddNode(NodeKind::RefBindingName, *ref_token, state.has_error);
     }
@@ -208,6 +230,16 @@ auto HandleBindingPattern(Context& context) -> void {
   if (runtime_token && !is_form && !resolved_generic) {
     context.AddNode(NodeKind::RuntimeBindingName, *runtime_token,
                     state.has_error);
+  }
+
+  // Now diagnose a misordered `unused` (recovered above), but only for an
+  // otherwise-valid modifier: a redundant modifier sets `redundant_modifier`,
+  // and an invalid `template`/`ref` sets `has_error`.
+  if (misordered_unused_token && !redundant_modifier && !state.has_error) {
+    CARBON_DIAGNOSTIC(UnusedAfterBindingModifier, Error,
+                      "`unused` must be written before `{0}`", Lex::TokenKind);
+    context.emitter().Emit(*misordered_unused_token, UnusedAfterBindingModifier,
+                           misordered_unused_modifier);
   }
 
   if (is_form) {

@@ -78,16 +78,13 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:          ^~~
 // CHECK:STDERR:
 fn F(x:? i32);
-// CHECK:STDERR: fail_form_param_not_form.carbon:[[@LINE+11]]:6: error: `ref` is only allowed on a runtime binding [ExpectedRuntimeBindingPatternAfterRef]
+// CHECK:STDERR: fail_form_param_not_form.carbon:[[@LINE+8]]:6: error: `ref` is only allowed on a runtime binding [ExpectedRuntimeBindingPatternAfterRef]
 // CHECK:STDERR: fn G(ref x:? i32);
 // CHECK:STDERR:      ^~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_form_param_not_form.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `type` to `Core.Form` [ConversionFailure]
+// CHECK:STDERR: fail_form_param_not_form.carbon:[[@LINE+4]]:10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: fn G(ref x:? i32);
-// CHECK:STDERR:              ^~~
-// CHECK:STDERR: fail_form_param_not_form.carbon:[[@LINE+4]]:14: note: type `type` does not implement interface `Core.ImplicitAs(Core.Form)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: fn G(ref x:? i32);
-// CHECK:STDERR:              ^~~
+// CHECK:STDERR:          ^~~~~~~
 // CHECK:STDERR:
 fn G(ref x:? i32);
 

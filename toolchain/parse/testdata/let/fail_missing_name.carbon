@@ -18,11 +18,11 @@ let : i32 = 4;
 
 // --- fail_compiletime_binding.carbon
 
-// CHECK:STDERR: fail_compiletime_binding.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: generic let : bool = true;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_compiletime_binding.carbon:[[@LINE+4]]:13: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: let generic : bool = true;
+// CHECK:STDERR:             ^
 // CHECK:STDERR:
-generic let : bool = true;
+let generic : bool = true;
 
 // CHECK:STDOUT: - filename: fail_runtime_binding.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -37,7 +37,13 @@ generic let : bool = true;
 // CHECK:STDOUT: - filename: fail_compiletime_binding.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'InvalidParseStart', text: 'generic', has_error: yes},
-// CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: ':', has_error: yes},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPatternStart', text: ':', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'BoolTypeLiteral', text: 'bool'},
+// CHECK:STDOUT:       {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
+// CHECK:STDOUT:       {kind: 'BoolLiteralTrue', text: 'true'},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

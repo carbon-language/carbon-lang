@@ -61,7 +61,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:7: error: phase keyword is not allowed on an associated constant [PhaseKeywordInAssociatedConstant]
   // CHECK:STDERR:   let runtime a: {.b: ()};
   // CHECK:STDERR:       ^~~~~~~
   // CHECK:STDERR:
@@ -73,13 +73,24 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_template.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR: fail_template.carbon:[[@LINE+4]]:7: error: phase keyword is not allowed on an associated constant [PhaseKeywordInAssociatedConstant]
   // CHECK:STDERR:   let template T: type;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
   let template T: type;
 }
 
+// --- fail_generic.carbon
+
+library "[[@TEST_NAME]]";
+
+interface I {
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:7: error: phase keyword is not allowed on an associated constant [PhaseKeywordInAssociatedConstant]
+  // CHECK:STDERR:   let generic a: type;
+  // CHECK:STDERR:       ^~~~~~~
+  // CHECK:STDERR:
+  let generic a: type;
+}
 
 // --- fail_underscore.carbon
 
@@ -183,6 +194,20 @@ interface I {
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
 // CHECK:STDOUT:       {kind: 'LibraryName', text: '"template"'},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
+// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
+// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_generic.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"generic"'},
 // CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},

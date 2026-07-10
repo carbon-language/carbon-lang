@@ -30,10 +30,23 @@ auto HandleAssociatedConstant(Context& context) -> void {
   // checked generic by context, so no phase keyword is used.
   auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier);
   if (!identifier) {
-    CARBON_DIAGNOSTIC(ExpectedAssociatedConstantIdentifier, Error,
-                      "expected identifier in associated constant declaration");
-    context.emitter().Emit(*context.position(),
-                           ExpectedAssociatedConstantIdentifier);
+    auto kind = context.PositionKind();
+    if (kind == Lex::TokenKind::Generic || kind == Lex::TokenKind::Runtime ||
+        kind == Lex::TokenKind::Template) {
+      // Diagnose a phase keyword specifically, rather than reporting a missing
+      // associated constant name.
+      CARBON_DIAGNOSTIC(
+          PhaseKeywordInAssociatedConstant, Error,
+          "phase keyword is not allowed on an associated constant");
+      context.emitter().Emit(*context.position(),
+                             PhaseKeywordInAssociatedConstant);
+    } else {
+      CARBON_DIAGNOSTIC(
+          ExpectedAssociatedConstantIdentifier, Error,
+          "expected identifier in associated constant declaration");
+      context.emitter().Emit(*context.position(),
+                             ExpectedAssociatedConstantIdentifier);
+    }
     state.has_error = true;
   }
 
