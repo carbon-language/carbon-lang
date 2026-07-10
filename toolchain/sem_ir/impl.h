@@ -22,6 +22,19 @@ struct ImplFields {
   // Note that this is None for an imported impl.
   InstId parent_scope_inst_id;
 
+  // The following members are set at the start of the impl declaration, and may
+  // be modified at the start of redeclarations.
+
+  // Whether the impl declaration is marked `final`.
+  bool is_final;
+
+  // The `MatchFirstDecl` of the `match_first` block that the impl is associated
+  // with.
+  InstId match_first_id = SemIR::InstId::None;
+
+  // The position of the impl in its associated `match_first` block.
+  int match_first_position = 0;
+
   // The following members always have values and do not change.
 
   // The type for which the impl is implementing a constraint.
@@ -49,9 +62,6 @@ struct ImplFields {
   // The first block of the impl body.
   // TODO: Handle control flow in the impl body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::None;
-
-  // Whether the impl declaration is marked `final`.
-  bool is_final;
 
   // The following members are set at the `}` of the impl definition.
   bool defined = false;
