@@ -1,0 +1,41 @@
+From 1234567890abcdef1234567890abcdef12345678 Mon Sep 17 00:00:00 2001
+From: Carbon Toolchain <carbon-toolchain@google.com>
+Date: Fri, 10 Jul 2026 23:42:00 +0000
+Subject: [PATCH] Exclude libc math C++ builtins from compiler-rt Bazel overlay
+
+In CMake, addtf3.cpp is only compiled when COMPILER_RT_USE_LIBC_MATH is ON,
+replacing addtf3.c. In the Bazel overlay, builtins_generic_srcs globbed
+all lib/builtins/*.cpp without excluding addtf3.cpp, causing compile failures
+when not using libc math.
+---
+ utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
+index ae4a99d6885c..1234567890ab 100644
+--- a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
+@@ -293,6 +293,11 @@ filegroup(
+     srcs = glob(BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS),
+ )
+ 
++BUILTINS_LIBC_MATH_EXCLUDES = [
++    # Sources requiring COMPILER_RT_USE_LIBC_MATH (e.g. LIBC_NAMESPACE::shared::*).
++    "lib/builtins/addtf3.cpp",
++]
++
+ # Source files for portable components of the compiler builtins library.
+ filegroup(
+     name = "builtins_generic_srcs",
+@@ -309,7 +314,8 @@ filegroup(
+             BUILTINS_TF_EXCLUDES +
+             BUILTINS_TF_SRCS_PATTERNS +
+             BUILTINS_ATOMICS_SRCS +
+-            BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS
++            BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS +
++            BUILTINS_LIBC_MATH_EXCLUDES
+         ),
+     ),
+ )
+-- 
+2.45.2
