@@ -370,7 +370,5 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   %.loc8_34.2: %i32 = converted %int_1.loc8, %.loc8_34.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %Int32ToInt64.call: init %i64 = call %Int32ToInt64.ref(%.loc8_34.2) [concrete = constants.%int_1.d98]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

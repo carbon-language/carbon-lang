@@ -192,8 +192,6 @@ fn CallNegative() {
 // CHECK:STDOUT:     %bound_method.loc9_3.2: <bound method> = bound_method %v.var, %specific_impl_fn.loc9_3.1
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc9_3.2(%v.var)
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -204,15 +202,11 @@ fn CallNegative() {
 // CHECK:STDOUT:   %ErrorIfNIsZero.specific_fn: <specific function> = specific_function %ErrorIfNIsZero.ref, @ErrorIfNIsZero(constants.%int_0) [concrete = constants.%ErrorIfNIsZero.specific_fn]
 // CHECK:STDOUT:   %ErrorIfNIsZero.call: init %empty_tuple.type = call %ErrorIfNIsZero.specific_fn()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %i0) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%N) {

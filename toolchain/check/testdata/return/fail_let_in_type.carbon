@@ -130,24 +130,18 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6]
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @HalfDozen() -> <error> {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6]
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @FirstPerfectNumber() -> <error> {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6]
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -156,7 +150,5 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %i32.loc27: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %i32.loc39: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

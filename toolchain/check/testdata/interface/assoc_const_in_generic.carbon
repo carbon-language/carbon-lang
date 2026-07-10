@@ -130,8 +130,6 @@ fn H() {
 // CHECK:STDOUT:     witness = (@I.WithSelf.%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,8 +162,6 @@ fn H() {
 // CHECK:STDOUT:     %.loc23: @G.%I.assoc_type (%I.assoc_type.b71) = specific_constant @I.WithSelf.%assoc0.loc16_22.1, @I.WithSelf(constants.%T, constants.%Self.191) [symbolic = %assoc0 (constants.%assoc0.13b)]
 // CHECK:STDOUT:     %F.ref: @G.%I.assoc_type (%I.assoc_type.b71) = name_ref F, %.loc23 [symbolic = %assoc0 (constants.%assoc0.13b)]
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -177,8 +173,6 @@ fn H() {
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%empty_struct_type) [concrete = constants.%G.specific_fn]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {

@@ -372,8 +372,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_11.2: %i32 = converted %int_1, %.loc8_11.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int_param_max.carbon
@@ -432,8 +430,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_11.2: %i32 = converted %int_2147483647, %.loc8_11.1 [concrete = constants.%int_2147483647.a0e]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int_param_min.carbon
@@ -509,8 +505,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_11.4: %i32 = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc8_11.3 [concrete = constants.%int_-2147483648.45f]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.4)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_signed_int_param.carbon
@@ -569,8 +563,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_11.2: %i32 = converted %int_1, %.loc8_11.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_signed_param.carbon
@@ -629,8 +621,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_11.2: %i32 = converted %int_1, %.loc8_11.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_unsigned_int_param.carbon
@@ -689,8 +679,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_11.2: %u32 = converted %int_1, %.loc8_11.1 [concrete = constants.%int_1.92d]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int32_t_param.carbon
@@ -749,8 +737,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_11.2: %i32 = converted %int_1, %.loc8_11.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int_params.carbon
@@ -821,8 +807,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_14.2: %i32 = converted %int_2, %.loc8_14.1 [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2, %.loc8_14.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_int_params.carbon
@@ -931,8 +915,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_15.2: %i32 = converted %int_4, %.loc9_15.1 [concrete = constants.%int_4.4eb]
 // CHECK:STDOUT:   %foo2.call: init %empty_tuple.type = call imports.%foo2.decl(%.loc9_12.2, %.loc9_15.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_unnamed_int_param.carbon
@@ -991,8 +973,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_11.2: %i32 = converted %int_1, %.loc8_11.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int_return.carbon
@@ -1032,8 +1012,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_26.2: %i32 = converted %foo_int.call, %.loc10_26.1
 // CHECK:STDOUT:   %Carbon_foo.call: init %empty_tuple.type = call %Carbon_foo.ref(%.loc10_26.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_long_param.carbon
@@ -1092,7 +1070,5 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_11.2: %i64 = converted %int_1, %.loc8_11.1 [concrete = constants.%int_1.d98]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

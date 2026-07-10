@@ -1161,8 +1161,6 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %c.var, %Op.ref.loc8
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%c.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_binary_operators.carbon
@@ -1970,8 +1968,6 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %c1.var, %Op.ref.loc8
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%c1.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref bool) = "no_op";
@@ -2142,8 +2138,6 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_27.3, %Op.ref.loc8
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_27.3)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_rewrite_spaceship.carbon
@@ -2312,8 +2306,6 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc15: <bound method> = bound_method %c1.var, %Op.ref.loc15
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc15: init %empty_tuple.type = call %C.cpp_destructor.bound.loc15(%c1.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref bool) = "no_op";
@@ -2447,8 +2439,6 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc12: <bound method> = bound_method %c1.var, %Op.ref.loc12
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc12: init %empty_tuple.type = call %C.cpp_destructor.bound.loc12(%c1.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref bool) = "no_op";
@@ -2578,8 +2568,6 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_31.3, %Op.ref.loc8
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_31.3)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_namespaces.carbon
@@ -2769,8 +2757,6 @@ fn F() {
 // CHECK:STDOUT:   %C1.cpp_destructor.bound: <bound method> = bound_method %.loc8_36.3, %Op.ref.loc8
 // CHECK:STDOUT:   %C1.cpp_destructor.call: init %empty_tuple.type = call %C1.cpp_destructor.bound(%.loc8_36.3)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_operands_in_namespace_operator_in_global.carbon
@@ -2877,8 +2863,6 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_31.3, %Op.ref.loc8
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_31.3)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_inner_class.carbon
@@ -3004,8 +2988,6 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_31.3, %Op.ref.loc8
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_31.3)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_inner_class_in_namespace.carbon
@@ -3140,8 +3122,6 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_35.3, %Op.ref.loc8
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_35.3)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_member_add_with.carbon
@@ -3270,8 +3250,6 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %c1.var, %Op.ref.loc8
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%c1.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- indirect_template_instantiation.carbon
@@ -3303,8 +3281,6 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc14_12.2: %ptr.307 = addr_of %.loc14_14
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %i32 = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc14_12.1, %addr.loc14_12.2)
 // CHECK:STDOUT:   return %operator_Plus__carbon_thunk.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overloading.carbon
@@ -3370,7 +3346,5 @@ fn F() {
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc10: <bound method> = bound_method %.loc10_29.3, %Op.ref.loc10
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc10: init %empty_tuple.type = call %C.cpp_destructor.bound.loc10(%.loc10_29.3)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

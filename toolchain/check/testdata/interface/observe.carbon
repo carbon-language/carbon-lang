@@ -506,8 +506,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (@P.WithSelf.%P.WithSelf.InP.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Q {
@@ -535,8 +533,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (@Q.WithSelf.%Q.WithSelf.InQ.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @R {
@@ -564,8 +560,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (@R.WithSelf.%R.WithSelf.InR.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Transitive {
@@ -1087,8 +1081,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (imports.%Main.InR)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Q [from "transitive.carbon"] {
@@ -1098,8 +1090,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (imports.%Main.InQ)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @P [from "transitive.carbon"] {
@@ -1109,8 +1099,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (imports.%Main.InP)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @R.WithSelf.InR(imports.%Main.import_ref.f6968b.2: %R.type) [from "transitive.carbon"] {
@@ -1344,8 +1332,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:     %bound_method.loc6_3.2: <bound method> = bound_method %a.var, %specific_impl_fn.loc6_3.1
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call.loc6: init %empty_tuple.type = call %bound_method.loc6_3.2(%a.var)
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1622,8 +1608,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -1648,8 +1632,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   @B.WithSelf.Self.as_type.impls.A.type.require {
 // CHECK:STDOUT:     require @B.WithSelf.Self.as_type.impls.A.type.require.%Self.as_type.loc4_23.1 impls @B.WithSelf.Self.as_type.impls.A.type.require.%A.ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C {
@@ -1674,8 +1656,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   @C.WithSelf.Self.as_type.impls.B.type.require {
 // CHECK:STDOUT:     require @C.WithSelf.Self.as_type.impls.B.type.require.%Self.as_type.loc5_23.1 impls @C.WithSelf.Self.as_type.impls.B.type.require.%B.ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @B.WithSelf.Self.as_type.impls.A.type.require(@B.%Self: %B.type) {
@@ -1702,8 +1682,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   fn(%x.param: @RequiresA.%T.as_type.loc7_31.1 (%T.as_type.3b8)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2030,8 +2008,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (imports.%Main.InP)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Q [from "transitive.carbon"] {
@@ -2041,8 +2017,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (imports.%Main.InQ)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @R [from "transitive.carbon"] {
@@ -2052,8 +2026,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (imports.%Main.InR)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Transitive [from "transitive.carbon"] {
@@ -2118,8 +2090,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   fn(%u.param: @TakesPQR.%U.as_type.loc5_38.1 (%U.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2671,8 +2641,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (imports.%Main.InP)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Q [from "transitive.carbon"] {
@@ -2682,8 +2650,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (imports.%Main.InQ)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @R [from "transitive.carbon"] {
@@ -2693,8 +2659,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (imports.%Main.InR)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Transitive [from "transitive.carbon"] {
@@ -2759,8 +2723,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   fn(%u.param: @TakesPQR.%U.as_type.loc5_38.1 (%U.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2868,8 +2830,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:     %bound_method.loc7_3.2: <bound method> = bound_method %a.var, %specific_impl_fn.loc7_3.1
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc7_3.2(%a.var)
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3237,8 +3197,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (imports.%Main.InR)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Q [from "transitive.carbon"] {
@@ -3248,8 +3206,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (imports.%Main.InQ)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @P [from "transitive.carbon"] {
@@ -3259,8 +3215,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = (imports.%Main.InP)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @R.WithSelf.InR(imports.%Main.import_ref.f6968b.2: %R.type) [from "transitive.carbon"] {
@@ -3794,8 +3748,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -3807,8 +3759,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C {
@@ -3820,8 +3770,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @D {
@@ -3833,8 +3781,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as_type.as.B.impl(%T.loc8_15.1: %A.type) {
@@ -3905,8 +3851,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   fn(%x.param: @RequiresB.%T.as_type.loc12_31.1 (%T.as_type.4de)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3924,8 +3868,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   fn(%x.param: @RequiresD.%T.as_type.loc13_31.1 (%T.as_type.8cd)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4223,8 +4165,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -4236,8 +4176,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RequiresA(%T.loc6_15.2: %A.type) {
@@ -4254,8 +4192,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   fn(%x.param: @RequiresA.%T.as_type.loc6_31.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4318,8 +4254,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:     %x.ref: @InnerF.%U.as_type.loc10_16.1 (%U.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %B.type: type = facet_type <@B> [concrete = constants.%B.type]
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4466,8 +4400,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -4479,8 +4411,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RequiresA(%T.loc6_15.2: %A.type) {
@@ -4497,8 +4427,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   fn(%x.param: @RequiresA.%T.as_type.loc6_31.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4527,8 +4455,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:       %x: @InnerF.%U.as_type.loc9_16.1 (%U.as_type) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4709,8 +4635,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -4722,8 +4646,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RequiresA(%T.loc6_15.2: %A.type) {
@@ -4740,8 +4662,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   fn(%x.param: @RequiresA.%T.as_type.loc6_31.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4804,8 +4724,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:     %x.ref: @InnerF.%U.as_type.loc9_16.1 (%U.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %B.type: type = facet_type <@B> [concrete = constants.%B.type]
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4961,8 +4879,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -4974,8 +4890,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RequiresA(%T.loc6_15.2: %A.type) {
@@ -4992,8 +4906,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   fn(%x.param: @RequiresA.%T.as_type.loc6_31.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -5030,8 +4942,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:     %x.ref: @F.%U.as_type.loc7_40.1 (%U.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %B.type: type = facet_type <@B> [concrete = constants.%B.type]
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -5230,8 +5140,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -5243,8 +5151,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RequiresA(%T.loc6_15.2: %A.type) {
@@ -5261,8 +5167,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   fn(%x.param: @RequiresA.%T.as_type.loc6_31.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -5438,8 +5342,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -5451,8 +5353,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TakesA(%T.loc6_12.2: %A.type) {
@@ -5469,8 +5369,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   fn(%x.param: @TakesA.%T.as_type.loc6_28.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -5752,8 +5650,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -5779,8 +5675,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:     %T.as_type.loc11_11.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc11_11.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc11: type = converted %T.ref, %T.as_type.loc11_11.1 [symbolic = %T.as_type.loc11_11.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -5897,8 +5791,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -5910,8 +5802,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @I(%T.loc5_14.2: %facet_type.8cb) {
@@ -6272,8 +6162,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @I(imports.%Main.import_ref.10abc5.4: %facet_type.8cb) [from "generic_observe.carbon"] {
@@ -6307,8 +6195,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.A.impl: %C.ref as %A.ref {
@@ -6368,8 +6254,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT: fn @Destroy.Op.loc8_13.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc8_7.2: %I.type.8a7) {
@@ -6448,8 +6332,6 @@ fn F[T:! I(C)](t: T) {
 // CHECK:STDOUT:     %bound_method.loc9_3.2: <bound method> = bound_method %u.var, %specific_impl_fn.loc9_3.1
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %bound_method.loc9_3.2(%u.var)
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

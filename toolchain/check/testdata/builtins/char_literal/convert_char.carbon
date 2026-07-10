@@ -173,7 +173,5 @@ let c: UInt(8) = ToChar('\u{1E15}');
 // CHECK:STDOUT:   %.loc8: Core.CharLiteral = char_value U+007F [concrete = constants.%.e28]
 // CHECK:STDOUT:   %ToChar.call.loc8: init %u8.builtin = call %ToChar.ref.loc8(%.loc8) [concrete = constants.%int_127]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

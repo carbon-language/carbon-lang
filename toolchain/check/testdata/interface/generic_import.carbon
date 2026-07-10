@@ -86,8 +86,6 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     witness = (@AddWith.WithSelf.%AddWith.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -174,8 +172,6 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -205,8 +201,6 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: fn @C.as.AddWith.impl.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(constants.%T) {

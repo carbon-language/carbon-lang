@@ -233,8 +233,6 @@ fn Call() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_tuple.type) = "no_op";
@@ -307,8 +305,6 @@ fn Call() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %y.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%y.var)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_tuple.type) = "no_op";
@@ -389,8 +385,6 @@ fn Call() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.var)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc5_3.1(%self.param: ref %empty_tuple.type) = "no_op";
@@ -398,8 +392,6 @@ fn Call() {
 // CHECK:STDOUT: fn @Destroy.Op.loc5_3.2(%self.param: ref %tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple_in_let_var.carbon
@@ -478,8 +470,6 @@ fn Call() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.var)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc5_7.1(%self.param: ref %empty_tuple.type) = "no_op";
@@ -487,8 +477,6 @@ fn Call() {
 // CHECK:STDOUT: fn @Destroy.Op.loc5_7.2(%self.param: ref %tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- function.carbon
@@ -583,8 +571,6 @@ fn Call() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %v.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%v.var)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_tuple.type) = "no_op";
@@ -692,8 +678,6 @@ fn Call() {
 // CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type, %y.param: ref %empty_tuple.type) [from "public_function.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_public_function.carbon
@@ -767,8 +751,6 @@ fn Call() {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %y.var, %impl.elem0
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %bound_method(%y.var)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "public_function.carbon"];
@@ -942,8 +924,6 @@ fn Call() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc8_22: <bound method> = bound_method %y.var, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc8_22: init %empty_tuple.type = call %Destroy.Op.bound.loc8_22(%y.var)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_tuple.type) = "no_op";
@@ -989,8 +969,6 @@ fn Call() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc7_12.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -998,8 +976,6 @@ fn Call() {
 // CHECK:STDOUT: fn @Destroy.Op.loc7_12.2(%self.param: ref %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_param_from_int_literal.carbon
@@ -1067,8 +1043,6 @@ fn Call() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %n.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%n.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc5_12.1(%self.param: ref %i32.builtin) = "no_op";
@@ -1076,7 +1050,5 @@ fn Call() {
 // CHECK:STDOUT: fn @Destroy.Op.loc5_12.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

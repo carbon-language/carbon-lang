@@ -143,8 +143,6 @@ extern library "basic" fn F();
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %F.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redecl.carbon

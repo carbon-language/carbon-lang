@@ -303,8 +303,6 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
@@ -316,8 +314,6 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Eats(%Food.loc21_20.2: type) {
@@ -337,8 +333,6 @@ fn F() {
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -422,8 +416,6 @@ fn F() {
 // CHECK:STDOUT:   fn(%e.param: @Feed.%T.as_type.loc31_50.1 (%T.as_type.b84), %food.param: @Feed.%Food.as_type.loc31_37.1 (%Food.as_type.bca)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -462,8 +454,6 @@ fn F() {
 // CHECK:STDOUT:     %Feed.specific_fn.loc32_64.1: <specific function> = specific_function %Feed.ref, @Feed(constants.%Food.5f8, constants.%Eats.facet.f11) [symbolic = %Feed.specific_fn.loc32_64.2 (constants.%Feed.specific_fn.292)]
 // CHECK:STDOUT:     %Feed.call: init %empty_tuple.type = call %Feed.specific_fn.loc32_64.1(%a.ref, %food.ref)
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -497,8 +487,6 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.Op.call.loc35_31: init %empty_tuple.type = call constants.%Destroy.Op.bound.a54(constants.%.202)
 // CHECK:STDOUT:   %Destroy.Op.call.loc35_19: init %empty_tuple.type = call constants.%Destroy.Op.bound.115(constants.%.4ea)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc35_31.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -506,15 +494,11 @@ fn F() {
 // CHECK:STDOUT: fn @Destroy.Op.loc35_31.2(%self.param: ref %Grass) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc35_19(%self.param: ref %Goat) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Edible.WithSelf(constants.%Self.59b) {

@@ -154,8 +154,6 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %H.ref: %H.type = name_ref H, file.%H.decl [concrete = constants.%H]
 // CHECK:STDOUT:   %H.call: init %empty_tuple.type = call %H.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- no_else.carbon
@@ -198,8 +196,6 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unreachable_fallthrough.carbon
@@ -266,7 +262,5 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %true, %impl.elem0.loc8 [concrete = constants.%bool.as.Copy.impl.Op.bound.1b3]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call.loc8: init bool = call %bound_method.loc8(%true) [concrete = constants.%true]
 // CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call.loc8
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

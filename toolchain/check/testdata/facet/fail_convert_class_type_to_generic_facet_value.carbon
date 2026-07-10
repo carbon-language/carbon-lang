@@ -160,8 +160,6 @@ fn G() {
 // CHECK:STDOUT:     witness = (@Generic.WithSelf.%Generic.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -207,8 +205,6 @@ fn G() {
 // CHECK:STDOUT: fn @ImplsGeneric.as.Generic.impl.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @CallGenericMethod(%T.loc27_23.2: type, %U.loc27_40.2: @CallGenericMethod.%Generic.type.loc27_52.1 (%Generic.type.ee14e9.2)) {
@@ -224,8 +220,6 @@ fn G() {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -235,8 +229,6 @@ fn G() {
 // CHECK:STDOUT:   %WrongGenericParam.ref: type = name_ref WrongGenericParam, file.%WrongGenericParam.decl [concrete = constants.%WrongGenericParam]
 // CHECK:STDOUT:   %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%Scalar) {

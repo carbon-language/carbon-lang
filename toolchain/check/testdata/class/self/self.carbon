@@ -232,8 +232,6 @@ class Class {
 // CHECK:STDOUT:   %bound_method.loc14_14.2: <bound method> = bound_method %.loc14_14.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc14_14.2(%.loc14_14.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.G(%self.param.loc17: ref %Class) -> out %return.param.loc17: %i32 {
@@ -248,8 +246,6 @@ class Class {
 // CHECK:STDOUT:   %bound_method.loc18_14.2: <bound method> = bound_method %.loc18_14.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc18_14.2(%.loc18_14.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_self_syntax_mismatch.carbon
@@ -336,15 +332,11 @@ class Class {
 // CHECK:STDOUT: fn @Class.F.loc16(%self.param: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.G.loc25(%self.param: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_self_type_mismatch.carbon
@@ -409,8 +401,6 @@ class Class {
 // CHECK:STDOUT: fn @Class.F.loc16(%self.param: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_return_self_value.carbon

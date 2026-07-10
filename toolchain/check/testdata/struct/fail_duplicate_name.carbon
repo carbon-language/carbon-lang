@@ -165,7 +165,5 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
 // CHECK:STDOUT:   assign file.%y.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

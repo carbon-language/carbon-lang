@@ -310,8 +310,6 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %F.call: init %C.372 to %.loc7 = call %F.ref()
 // CHECK:STDOUT:   assign file.%c.var, %F.call
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_symbolic_decl.carbon
@@ -374,7 +372,5 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %.loc7_18.2: init %tuple.type.a8a = tuple_init (%Int.as.Copy.impl.Op.call) [concrete = constants.%tuple.a1e]
 // CHECK:STDOUT:   %.loc7_24: init %tuple.type.a8a = converted %impl.elem0.loc7_18.1, %.loc7_18.2 [concrete = constants.%tuple.a1e]
 // CHECK:STDOUT:   return %.loc7_24
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

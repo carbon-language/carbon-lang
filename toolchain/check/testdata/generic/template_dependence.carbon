@@ -129,8 +129,6 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %.loc6_10.2, %specific_impl_fn.loc6_10.1
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @F.%ptr.loc5_29.1 (%ptr.e8f8f9.1) = call %bound_method.loc6_10.2(%.loc6_10.2)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -223,8 +221,6 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %.loc5_43.1: ref @F.%tuple.type (%tuple.type.a5e) = splice_block %return.param {}
 // CHECK:STDOUT:     %F.call: init @F.%tuple.type (%tuple.type.a5e) to %.loc5_43.1 = call %F.specific_fn.loc6_10.1()
 // CHECK:STDOUT:     return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

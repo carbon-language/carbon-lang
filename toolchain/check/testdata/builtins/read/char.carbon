@@ -73,7 +73,5 @@ fn Main() {
 // CHECK:STDOUT:     %m.patt: %pattern_type.6b6 = value_binding_pattern m [concrete = constants.%m.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

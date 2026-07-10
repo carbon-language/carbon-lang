@@ -183,7 +183,5 @@ var z: i32 = y;
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc17: init %i32 = call %bound_method.loc17_14.2(%.loc17)
 // CHECK:STDOUT:   assign file.%z.var, %Int.as.Copy.impl.Op.call.loc17
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

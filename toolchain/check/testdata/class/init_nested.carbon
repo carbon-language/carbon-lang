@@ -136,7 +136,5 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc28_45.4: init %Outer to %return.param = class_init (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44)
 // CHECK:STDOUT:   %.loc28_46: init %Outer = converted %.loc28_45.3, %.loc28_45.4
 // CHECK:STDOUT:   return %.loc28_46 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

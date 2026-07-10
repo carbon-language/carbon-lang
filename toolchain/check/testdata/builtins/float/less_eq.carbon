@@ -58,7 +58,5 @@ fn LessEq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.less_eq";
 // CHECK:STDOUT:   %b.ref: %f64.dc1 = name_ref b, %b
 // CHECK:STDOUT:   %LessEq.call: init bool = call %LessEq.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %LessEq.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

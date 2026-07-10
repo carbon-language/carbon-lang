@@ -180,8 +180,6 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %F.specific_fn.loc7_10.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc7_10.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init @F.%ptr.loc4_20.1 (%ptr) = call %F.specific_fn.loc7_10.1()
 // CHECK:STDOUT:     return %F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -318,8 +316,6 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %F.ref: %F.type.eb3ec9.1 = name_ref F, file.%F.decl.loc4 [concrete = constants.%F.7088cc.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_7.2 [symbolic = %T.loc13_7.1 (constants.%T)]
 // CHECK:STDOUT:     return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -470,8 +466,6 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %F.ref: %F.type.eb3ec9.1 = name_ref F, file.%F.decl.loc4 [concrete = constants.%F.7088cc.1]
 // CHECK:STDOUT:     %T.ref.loc21: type = name_ref T, %T.loc13_24.2 [symbolic = %T.loc13_24.1 (constants.%T.091)]
 // CHECK:STDOUT:     return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -622,8 +616,6 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %F.ref: %F.type.eb3ec9.1 = name_ref F, file.%F.decl.loc4 [concrete = constants.%F.7088cc.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_17.2 [symbolic = %T.loc13_17.1 (constants.%T.091)]
 // CHECK:STDOUT:     return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -147,8 +147,6 @@ fn Main() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc5_21.2(%.loc5)
 // CHECK:STDOUT:   assign file.%y.var, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inside_fn.carbon
@@ -280,8 +278,6 @@ fn Main() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %x.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%x.var)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.1(%self.param: ref %i32.builtin) = "no_op";
@@ -289,8 +285,6 @@ fn Main() {
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -304,8 +298,6 @@ fn Main() {
 // CHECK:STDOUT:   %.loc4: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   assign file.%x.var, %.loc4
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- namespace.carbon
@@ -355,8 +347,6 @@ fn Main() {
 // CHECK:STDOUT: fn @C.Foo() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -367,7 +357,5 @@ fn Main() {
 // CHECK:STDOUT:   %Foo.ref: %C.Foo.type = name_ref Foo, @C.%C.Foo.decl [concrete = constants.%C.Foo]
 // CHECK:STDOUT:   %C.Foo.call: init %empty_tuple.type = call %Foo.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

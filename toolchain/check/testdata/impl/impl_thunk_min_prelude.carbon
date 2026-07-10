@@ -154,7 +154,5 @@ fn Call() -> i32 {
 // CHECK:STDOUT:   %.loc18_13.2: %i32 = converted %int_2, %.loc18_13.1 [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   %i32.as.Add.impl.Op.call: init %i32 = call %i32.as.Add.impl.Op.specific_fn(%a.ref, %.loc18_13.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

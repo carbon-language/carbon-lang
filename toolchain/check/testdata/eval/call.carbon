@@ -200,8 +200,6 @@ fn H() {
 // CHECK:STDOUT:   %.loc8_5.2: ref %tuple.type.555 = temporary %.loc8_5.1, %F.call [concrete = constants.%.e1e]
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.e1e)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_5.1(%self.param: ref %i32.builtin) = "no_op";
@@ -209,15 +207,11 @@ fn H() {
 // CHECK:STDOUT: fn @Destroy.Op.loc8_5.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_5.3(%self.param: ref %tuple.type.555) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_in_place_init.carbon
@@ -265,8 +259,6 @@ fn H() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref %i32.builtin) = "no_op";
@@ -274,15 +266,11 @@ fn H() {
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.3(%self.param: ref %tuple.type.555) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_return_in_place_tuple.carbon
@@ -389,8 +377,6 @@ fn H() {
 // CHECK:STDOUT:   %.loc5_49.8: init %tuple.type.555 to %return.param = tuple_init (%.loc5_49.3, %.loc5_49.5, %.loc5_49.7) [concrete = constants.%tuple.479]
 // CHECK:STDOUT:   %.loc5_50: init %tuple.type.555 = converted %.loc5_49.1, %.loc5_49.8 [concrete = constants.%tuple.479]
 // CHECK:STDOUT:   return %.loc5_50 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
@@ -408,8 +394,6 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.e1e)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc17_32.1(%self.param: ref %i32.builtin) = "no_op";
@@ -417,15 +401,11 @@ fn H() {
 // CHECK:STDOUT: fn @Destroy.Op.loc17_32.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc17_32.3(%self.param: ref %tuple.type.555) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_in_place_class.carbon
@@ -469,8 +449,6 @@ fn H() {
 // CHECK:STDOUT:   %.loc6_28.2: init %C to %return.param = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc6_29: init %C = converted %.loc6_28.1, %.loc6_28.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc6_29 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
@@ -485,8 +463,6 @@ fn H() {
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn()
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.115)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc13_7.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -494,7 +470,5 @@ fn H() {
 // CHECK:STDOUT: fn @Destroy.Op.loc13_7.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

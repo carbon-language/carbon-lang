@@ -112,8 +112,6 @@ fn Run() {
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %struct_type.b = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign file.%a.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -201,7 +199,5 @@ fn Run() {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.5cd = call %bound_method.loc7_17.2(%.loc7_17.2)
 // CHECK:STDOUT:   assign %.loc7_4, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

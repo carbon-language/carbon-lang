@@ -437,8 +437,6 @@ interface B {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Incomplete;
@@ -582,8 +580,6 @@ interface B {
 // CHECK:STDOUT:   witness = (@J.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Incomplete;
@@ -679,8 +675,6 @@ interface B {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Incomplete;
@@ -852,8 +846,6 @@ interface B {
 // CHECK:STDOUT:   @X.WithSelf.Self.as_type.impls.Y.type.require {
 // CHECK:STDOUT:     require @X.WithSelf.Self.as_type.impls.Y.type.require.%Self.as_type.loc12_11.1 impls @X.WithSelf.Self.as_type.impls.Y.type.require.%Y.ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @Y {
@@ -898,8 +890,6 @@ interface B {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -965,8 +955,6 @@ interface B {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @A;

@@ -181,8 +181,6 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %ConstDeref.cpp_operator.bound: <bound method> = bound_method %.loc13, %Op.ref.loc13_43
 // CHECK:STDOUT:   %operator_Star__carbon_thunk.call: ref %i32 = call imports.%operator_Star__carbon_thunk.decl(%.loc13)
 // CHECK:STDOUT:   return %operator_Star__carbon_thunk.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mutable_deref.carbon
@@ -232,7 +230,5 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   %.loc13: %MutableDeref = acquire_value %int_ptr.ref
 // CHECK:STDOUT:   %MutableDeref.cpp_operator.call: ref %i32 = call %bound_method(%.loc13)
 // CHECK:STDOUT:   return %MutableDeref.cpp_operator.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

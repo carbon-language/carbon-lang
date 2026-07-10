@@ -176,8 +176,6 @@ fn G() -> C {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc16_12.1(%self.param: ref %i32.builtin) = "no_op";
@@ -185,8 +183,6 @@ fn G() -> C {
 // CHECK:STDOUT: fn @Destroy.Op.loc16_12.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %C {
@@ -221,7 +217,5 @@ fn G() -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

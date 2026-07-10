@@ -161,8 +161,6 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
@@ -174,8 +172,6 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -215,8 +211,6 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%Assoc, @I.WithSelf.%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as.Y.impl(%T.loc5_15.1: type) {
@@ -517,8 +511,6 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   witness = (imports.%Main.Assoc, imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z [from "impl_def.carbon"] {
@@ -527,8 +519,6 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Y [from "impl_def.carbon"] {
@@ -537,8 +527,6 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @U.as.Z.impl(imports.%Main.import_ref.b3bc94.1: type) [from "impl_def.carbon"] {
@@ -663,8 +651,6 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   fn(%c.param: %C.00e) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

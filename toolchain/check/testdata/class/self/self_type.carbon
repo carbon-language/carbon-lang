@@ -162,8 +162,6 @@ fn Class.F(self) -> i32 {
 // CHECK:STDOUT:   %.loc26_11.2: %Class = acquire_value %.loc26_11.1
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc26_11.2)
 // CHECK:STDOUT:   return %Class.F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.Make() -> out %return.param: %Class {
@@ -198,7 +196,5 @@ fn Class.F(self) -> i32 {
 // CHECK:STDOUT:   assign %s.ref.loc19_5, %.loc19_7
 // CHECK:STDOUT:   %.loc18_19: %Class = acquire_value %s
 // CHECK:STDOUT:   return %.loc18_19 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

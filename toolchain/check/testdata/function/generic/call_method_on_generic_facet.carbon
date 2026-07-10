@@ -195,8 +195,6 @@ fn G() {
 // CHECK:STDOUT:     witness = (@Generic.WithSelf.%Generic.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -214,8 +212,6 @@ fn G() {
 // CHECK:STDOUT:   witness = (@Other.WithSelf.%Other.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @ImplsGeneric.as.Generic.impl: %ImplsGeneric.ref as %Generic.type {
@@ -263,8 +259,6 @@ fn G() {
 // CHECK:STDOUT: fn @ImplsGeneric.as.Generic.impl.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Other.WithSelf.G(@Other.%Self: %Other.type) {
@@ -303,8 +297,6 @@ fn G() {
 // CHECK:STDOUT:     %specific_impl_fn.loc34_4.1: <specific function> = specific_impl_function %impl.elem0.loc34_4.1, @Generic.WithSelf.F(constants.%T, constants.%U) [symbolic = %specific_impl_fn.loc34_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %Generic.WithSelf.F.call: init %empty_tuple.type = call %specific_impl_fn.loc34_4.1()
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -318,8 +310,6 @@ fn G() {
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) [concrete = constants.%CallGenericMethod.specific_fn]
 // CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%Scalar) {

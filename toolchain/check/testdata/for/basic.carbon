@@ -193,8 +193,6 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.Op.call.loc18_35.3: init %empty_tuple.type = call %Destroy.Op.bound.loc18_35.3(%var)
 // CHECK:STDOUT:   %Destroy.Op.call.loc18_20: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.50e)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_35.1(%self.param: ref %empty_tuple.type) = "no_op";
@@ -204,15 +202,11 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc18_35.3(%self.param: ref %struct_type.has_value.value.da2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_35.4(%self.param: ref %Optional.21a) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_20.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -220,7 +214,5 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc18_20.2(%self.param: ref %TrivialRange) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

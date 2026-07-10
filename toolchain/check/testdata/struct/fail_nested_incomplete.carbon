@@ -75,7 +75,5 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:   %addr: <error> = addr_of %a.ref [concrete = <error>]
 // CHECK:STDOUT:   assign file.%p.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -57,7 +57,5 @@ let b: Bool() = false;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -209,8 +209,6 @@ impl C as I {
 // CHECK:STDOUT:     %F.specific_fn.loc19_3.1: <specific function> = specific_function %F.ref, @F(constants.%Z.facet) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc19_3.1()
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -271,8 +269,6 @@ impl C as I {
 // CHECK:STDOUT:     %F.specific_fn.loc19_3.1: <specific function> = specific_function %F.ref, @F(constants.%Z.facet) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc19_3.1()
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -314,8 +310,6 @@ impl C as I {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%Z.facet) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_fn_syntax_in_impl.carbon

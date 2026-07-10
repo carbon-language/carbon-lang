@@ -98,8 +98,6 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallAB() {
@@ -109,8 +107,6 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %B.call: init %empty_tuple.type = call %B.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallABC() {
@@ -122,7 +118,5 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %C.call: init %empty_tuple.type = call %C.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

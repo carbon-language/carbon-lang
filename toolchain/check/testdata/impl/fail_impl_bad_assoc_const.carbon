@@ -63,8 +63,6 @@ impl () as I {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.I.impl: %.loc24_7.2 as %I.ref {

@@ -166,8 +166,6 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @W {
@@ -179,8 +177,6 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
@@ -192,8 +188,6 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @DD.as.Y.impl: %DD.ref as %Y.ref {
@@ -269,8 +263,6 @@ fn F() {
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %CC, (constants.%Z.impl_witness.b3a) [concrete = constants.%Z.facet.737]
 // CHECK:STDOUT:   %.loc22_12: %Z.type = converted %CC, %Z.facet [concrete = constants.%Z.facet.737]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf(constants.%Self.765) {

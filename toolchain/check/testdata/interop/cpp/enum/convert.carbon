@@ -188,7 +188,5 @@ fn F() {
 // CHECK:STDOUT:     %c.patt: %pattern_type.d91 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

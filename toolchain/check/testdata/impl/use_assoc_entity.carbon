@@ -626,8 +626,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (@J.WithSelf.%U, @J.WithSelf.%J.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.J.impl: %.loc10_7.2 as %.loc10_14 {
@@ -714,8 +712,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc12_45.2: <bound method> = bound_method %u.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Negate.impl.Op.call: init %i32 = call %bound_method.loc12_45.2(%u.ref)
 // CHECK:STDOUT:   return %Int.as.Negate.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallMethod(%x.param: %empty_tuple.type) -> out %return.param: %i32 {
@@ -735,8 +731,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc18_18.2: %i32 = converted %int_40, %.loc18_18.1 [concrete = constants.%int_40.e3d]
 // CHECK:STDOUT:   %empty_tuple.type.as.J.impl.F.call: init %i32 = call %bound_method.loc18_11(%x.ref, %.loc18_18.2)
 // CHECK:STDOUT:   return %empty_tuple.type.as.J.impl.F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.J.impl.F(%self.param: %C, %u.param: %C) -> out %return.param: %C {
@@ -747,8 +741,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc29_45.3: init %C = as_compatible %.loc29_45.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc29_45.4: init %C = converted %self.ref, %.loc29_45.3 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc29_45.4
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.WithSelf(constants.%Self.653) {
@@ -994,8 +986,6 @@ fn F() {
 // CHECK:STDOUT:     %e5.patt: %pattern_type.6b6 = value_binding_pattern e5 [concrete = constants.%e5.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_associated_fn_in_impl.carbon
@@ -1025,8 +1015,6 @@ fn F() {
 // CHECK:STDOUT:   %F.ref: %E.as.J.impl.F.type = name_ref F, @E.as.J.impl.%E.as.J.impl.F.decl [concrete = constants.%E.as.J.impl.F]
 // CHECK:STDOUT:   %E.as.J.impl.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_associated_constant_in_impl.carbon
@@ -1115,8 +1103,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc12_14.2: <bound method> = bound_method %u.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc12_14.2(%u.ref)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_extend_fn.carbon
@@ -1153,8 +1139,6 @@ fn F() {
 // CHECK:STDOUT:   %F.ref: %.b5e = name_ref F, %impl.elem0 [concrete = constants.%E.as.J.impl.F]
 // CHECK:STDOUT:   %E.as.J.impl.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_extend_constant.carbon
@@ -1205,8 +1189,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_26: init %empty_tuple.type = converted %.loc11_25.1, %.loc11_25.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return %.loc11_26
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- associated_fn_use_in_def_before_decl.carbon
@@ -1236,8 +1218,6 @@ fn F() {
 // CHECK:STDOUT:   %G.ref: %A.as.J.impl.G.type = name_ref G, @A.as.J.impl.%A.as.J.impl.G.decl [concrete = constants.%A.as.J.impl.G]
 // CHECK:STDOUT:   %A.as.J.impl.G.call: init %empty_tuple.type = call %G.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_non-type_in_function.carbon
@@ -1280,7 +1260,5 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_25.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc11_27: init %empty_struct_type = converted %.loc11_25.1, %.loc11_25.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return %.loc11_27
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

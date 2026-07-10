@@ -116,7 +116,5 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.752 = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   assign file.%y.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

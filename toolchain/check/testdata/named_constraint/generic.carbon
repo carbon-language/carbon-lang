@@ -157,8 +157,6 @@ fn F(unused T:! Generic((), ())) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic constraint @GenericType(%T.loc4_25.2: type) {

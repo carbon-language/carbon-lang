@@ -439,8 +439,6 @@ impl () as I({}) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc10_48.2, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc10_48.2)
 // CHECK:STDOUT:   return %.loc10_48.14 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_48.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -450,8 +448,6 @@ impl () as I({}) {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_48.3(%self.param: ref %struct_type.d.c.b36) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inheritance_conversion.carbon
@@ -558,8 +554,6 @@ impl () as I({}) {
 // CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.5, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.432 = call %bound_method.loc14_37.2(%.loc14_37.5)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inheritance_value_conversion.carbon
@@ -619,8 +613,6 @@ impl () as I({}) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %B.as.X.impl.F.call: init %empty_tuple.type = call %B.as.X.impl.F.bound(%.6, %.10)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inheritance_value_conversion_pointer.carbon
@@ -727,8 +719,6 @@ impl () as I({}) {
 // CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.5, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.432 = call %bound_method.loc14_37.2(%.loc14_37.5)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inheritance_value_conversion_pointer_addr.carbon
@@ -835,8 +825,6 @@ impl () as I({}) {
 // CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.5, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.432 = call %bound_method.loc14_37.2(%.loc14_37.5)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inheritance_ref_conversion.carbon
@@ -896,8 +884,6 @@ impl () as I({}) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %B.as.X.impl.F.call: init %empty_tuple.type = call %B.as.X.impl.F.bound(%.6, %.9)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- form_parameter.carbon
@@ -979,8 +965,6 @@ impl () as I({}) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.I.impl.F.call: init %empty_tuple.type = call %F.ref(%x.param, %.5)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_inheritance_value_conversion_copy_return.carbon
@@ -1045,8 +1029,6 @@ impl () as I({}) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc23_14.3, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc23_14.3)
 // CHECK:STDOUT:   return <error> to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc23_14.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -1054,8 +1036,6 @@ impl () as I({}) {
 // CHECK:STDOUT: fn @Destroy.Op.loc23_14.2(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_function.carbon
@@ -1191,8 +1171,6 @@ impl () as I({}) {
 // CHECK:STDOUT:     %.loc10_32.1: ref @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.as_type.loc10_26.1 (%U.as_type.c1c) = splice_block %return.param {}
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.as_type.loc10_26.1 (%U.as_type.c1c) to %.loc10_32.1 = call %bound_method.loc10_43.2(%x.ref)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1216,8 +1194,6 @@ impl () as I({}) {
 // CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.specific_fn.loc10_34.1: <specific function> = specific_function %F.ref, @empty_tuple.type.as.I.impl.F.loc10_34.1(constants.%Copy.facet) [symbolic = %empty_tuple.type.as.I.impl.F.specific_fn.loc10_34.2 (constants.%empty_tuple.type.as.I.impl.F.specific_fn)]
 // CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.call: init @empty_tuple.type.as.I.impl.F.loc10_34.2.%ptr (%ptr.e8f) = call %empty_tuple.type.as.I.impl.F.specific_fn.loc10_34.1(%x.param)
 // CHECK:STDOUT:     return %empty_tuple.type.as.I.impl.F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1410,8 +1386,6 @@ impl () as I({}) {
 // CHECK:STDOUT:     %.loc10_49.1: ref @empty_tuple.type.as.I.impl.F.loc10_51.1.%U.as_type.loc10_43.1 (%U.as_type.c1c) = splice_block %return.param {}
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @empty_tuple.type.as.I.impl.F.loc10_51.1.%U.as_type.loc10_43.1 (%U.as_type.c1c) to %.loc10_49.1 = call %bound_method.loc10_60.2(%x.ref)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1437,8 +1411,6 @@ impl () as I({}) {
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %self.param, %empty_tuple.type.as.I.impl.F.specific_fn.loc10_51.1
 // CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.call: init @empty_tuple.type.as.I.impl.F.loc10_51.2.%ptr (%ptr.e8f) = call %bound_method(%self.param, %x.param)
 // CHECK:STDOUT:     return %empty_tuple.type.as.I.impl.F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1561,8 +1533,6 @@ impl () as I({}) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc10_29.2, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc10_29.2)
 // CHECK:STDOUT:   return %.loc10_29.14 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_29.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -1570,7 +1540,5 @@ impl () as I({}) {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_29.2(%self.param: ref %struct_type.b.a.1b0) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

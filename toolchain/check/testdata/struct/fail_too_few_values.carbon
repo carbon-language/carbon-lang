@@ -97,7 +97,5 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT:   %.loc19_36.4: init %i32 to %.loc19_36.3 = in_place_init %.loc19_36.2 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -391,8 +391,6 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %foo.ref: %Bar.foo.cpp_overload_set.type = name_ref foo, imports.%Bar.foo.cpp_overload_set.value [concrete = constants.%Bar.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call imports.%Bar.foo.decl()
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_static_data_member.carbon
@@ -433,8 +431,6 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete = constants.%bar.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_data_member.carbon
@@ -491,8 +487,6 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     %foo_bar.patt: %pattern_type = value_binding_pattern foo_bar [concrete = constants.%foo_bar.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_dynamic.carbon
@@ -555,8 +549,6 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8, %f.ref
 // CHECK:STDOUT:   %Bar.f.call: init %empty_tuple.type = call imports.%Bar.f.decl(%.loc8)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_to_inherit_public.carbon
@@ -611,8 +603,6 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %foo.ref: %Bar.foo.cpp_overload_set.type = name_ref foo, imports.%Bar.foo.cpp_overload_set.value [concrete = constants.%Bar.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call imports.%Bar.foo.decl()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_template.carbon

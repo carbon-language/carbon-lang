@@ -133,8 +133,6 @@ interface A(T:! type) {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -207,8 +205,6 @@ interface A(T:! type) {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.<error>.impl: %.loc16_7.2 as <error> {
@@ -296,8 +292,6 @@ interface A(T:! type) {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -321,8 +315,6 @@ interface A(T:! type) {
 // CHECK:STDOUT:     %T.ref: %I.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0.loc11_4.1: %C = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -372,8 +364,6 @@ interface A(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @A;
@@ -414,8 +404,6 @@ interface A(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @A.WithSelf.Self.as_type.impls.A.type.require(@A.%Self: %A.type) {
@@ -493,8 +481,6 @@ interface A(T:! type) {
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

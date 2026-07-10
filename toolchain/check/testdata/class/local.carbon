@@ -178,8 +178,6 @@ class A {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc26_19.2, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc26_19.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.Make() -> out %return.param: %B {
@@ -205,8 +203,6 @@ class A {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19_23: %B = acquire_value %b
 // CHECK:STDOUT:   return %.loc19_23 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc26_19.1(%self.param: ref %i32.builtin) = "no_op";
@@ -214,21 +210,15 @@ class A {
 // CHECK:STDOUT: fn @Destroy.Op.loc26_19.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc26_19.3(%self.param: ref %struct_type.n.9ed) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc26_19.4(%self.param: ref %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

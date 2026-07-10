@@ -131,7 +131,5 @@ fn F() {
 // CHECK:STDOUT:     %.loc16_51: %pattern_type.860 = tuple_pattern (%expr_patt.loc16_26, %expr_patt.loc16_43) [concrete = constants.%.2f0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

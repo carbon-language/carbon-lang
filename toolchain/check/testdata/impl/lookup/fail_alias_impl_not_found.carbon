@@ -84,8 +84,6 @@ fn F(c: C) {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -112,8 +110,6 @@ fn F(c: C) {
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc33: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {

@@ -84,8 +84,6 @@ interface I {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.F.decl, @I.WithSelf.%U, @I.WithSelf.%I.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%Self: %I.type, %T.loc16_9.2: type) {

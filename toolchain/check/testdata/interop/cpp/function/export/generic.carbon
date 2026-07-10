@@ -276,8 +276,6 @@ void G() {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.Doit.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.as.I.impl: %Self.ref as %I.ref {
@@ -355,15 +353,11 @@ void G() {
 // CHECK:STDOUT: fn @A.as.I.impl.Doit(%self.param: %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.as.I.impl.Doit(%self.param: %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc20_7.2: %I.type) {
@@ -394,8 +388,6 @@ void G() {
 // CHECK:STDOUT:     %bound_method.loc21_10: <bound method> = bound_method %t.ref, %specific_impl_fn.loc21_4.1
 // CHECK:STDOUT:     %I.WithSelf.Doit.call: init %empty_tuple.type = call %bound_method.loc21_10(%t.ref)
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -405,8 +397,6 @@ void G() {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %self.param, %impl.elem0
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %bound_method(%self.param)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc9_9.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -414,8 +404,6 @@ void G() {
 // CHECK:STDOUT: fn @Destroy.Op.loc9_9.2(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.__destroy_thunk(%self.param: ref %B) {
@@ -424,15 +412,11 @@ void G() {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %self.param, %impl.elem0
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %bound_method(%self.param)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc14(%self.param: ref %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F__carbon_thunkinst64000035(%_.param: ref %A) {
@@ -446,8 +430,6 @@ void G() {
 // CHECK:STDOUT:   %.loc20_19.3: %A = acquire_value %_.param
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%.loc20_19.3)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F__carbon_thunkinst64000050(%_.param: ref %B) {
@@ -461,8 +443,6 @@ void G() {
 // CHECK:STDOUT:   %.loc20_19.3: %B = acquire_value %_.param
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%.loc20_19.3)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self.37e) {

@@ -513,8 +513,6 @@ let inf_val: i32 = ConvertF64ToI32(Div(1.0, 0.0));
 // CHECK:STDOUT:   %float.loc104: Core.FloatLiteral = float_literal_value 16p28 [concrete = constants.%float.97b]
 // CHECK:STDOUT:   %ConvertFloatLiteralToU32.call.loc104: init %u32 = call %ConvertFloatLiteralToU32.ref.loc104(%float.loc104) [concrete = <error>]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_nan_inf.carbon
@@ -631,7 +629,5 @@ let inf_val: i32 = ConvertF64ToI32(Div(1.0, 0.0));
 // CHECK:STDOUT:   %.loc15_48.2: %f64.dc1 = converted %Div.call.loc15, %.loc15_48.1 [concrete = constants.%float.7ae]
 // CHECK:STDOUT:   %ConvertF64ToI32.call.loc15: init %i32 = call %ConvertF64ToI32.ref.loc15(%.loc15_48.2) [concrete = <error>]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

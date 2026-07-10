@@ -270,8 +270,6 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %bound_method.loc10_11.2: <bound method> = bound_method %.loc10_11.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc10_11.2(%.loc10_11.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc13_7.2: %Copy.type) {
@@ -312,8 +310,6 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:     %.loc13_37.1: ref @G.%T.as_type.loc13_31.1 (%T.as_type) = splice_block %return.param {}
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @G.%T.as_type.loc13_31.1 (%T.as_type) to %.loc13_37.1 = call %bound_method.loc14_11.2(%.loc14_11.2)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -355,8 +351,6 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:     %.loc17_37.1: ref @H.%U.as_type.loc17_31.1 (%U.as_type.c1c) = splice_block %return.param {}
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @H.%U.as_type.loc17_31.1 (%U.as_type.c1c) to %.loc17_37.1 = call %bound_method.loc18_11.2(%.loc18_11.2)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -261,8 +261,6 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:   %.loc24_57.2: init %RuntimeConvertTo to %return.param = class_init () [concrete = constants.%RuntimeConvertTo.val]
 // CHECK:STDOUT:   %.loc24_58: init %RuntimeConvertTo = converted %.loc24_57.1, %.loc24_57.2 [concrete = constants.%RuntimeConvertTo.val]
 // CHECK:STDOUT:   return %.loc24_58 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc27_7.2: %tuple.type, %A.loc27_28.2: @F.%tuple.elem0.loc27_32.1 (%tuple.elem0)) {
@@ -283,8 +281,6 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:   fn(%x.param: @F.%HoldsType.loc27_57.1 (%HoldsType.a83)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -314,8 +310,6 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:     %Destroy.Op.bound: <bound method> = bound_method %.loc40_19.3, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc40_19.3)
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,8 +318,6 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT: fn @Destroy.Op.loc40_19.2(%self.param: ref %RuntimeConvertTo) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%T) {

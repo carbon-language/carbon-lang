@@ -54,8 +54,6 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_lookup_type_where.carbon
@@ -104,7 +102,5 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

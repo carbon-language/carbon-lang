@@ -138,7 +138,5 @@ fn F() {
 // CHECK:STDOUT:     %pet2.patt: %pattern_type.8cd = value_binding_pattern pet2 [concrete = constants.%pet2.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

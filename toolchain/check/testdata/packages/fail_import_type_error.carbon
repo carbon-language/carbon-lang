@@ -113,8 +113,6 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   assign file.%c_ref.var, <error>
 // CHECK:STDOUT:   assign file.%d_ref.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -204,7 +202,5 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %d_ref.ref: <error> = name_ref d_ref, imports.%Implicit.d_ref [concrete = <error>]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

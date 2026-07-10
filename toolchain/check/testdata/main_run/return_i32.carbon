@@ -96,8 +96,6 @@ fn Run(unused argc: i32, unused argv: i32*) -> i32 { return 0; }
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc4_27.2(%int_0) [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   %.loc4_27: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   return %.loc4_27
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- with_params.carbon
@@ -191,7 +189,5 @@ fn Run(unused argc: i32, unused argv: i32*) -> i32 { return 0; }
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_62.2(%int_0) [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   %.loc5_62: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   return %.loc5_62
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

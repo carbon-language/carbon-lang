@@ -63,7 +63,5 @@ fn Foo(unused a: i32, unused b: i32) {}
 // CHECK:STDOUT: fn @Foo(%a.param: %i32, %b.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

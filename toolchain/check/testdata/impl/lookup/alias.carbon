@@ -92,8 +92,6 @@ fn G(c: C) {
 // CHECK:STDOUT:   witness = (@HasF.WithSelf.%HasF.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasF.impl: %C.ref as %HasF.ref {
@@ -127,8 +125,6 @@ fn G(c: C) {
 // CHECK:STDOUT: fn @C.as.HasF.impl.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c.param: %C) {
@@ -142,8 +138,6 @@ fn G(c: C) {
 // CHECK:STDOUT:   %impl.elem0.loc29: %.34f = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
 // CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc29: init %empty_tuple.type = call %impl.elem0.loc29()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%Self) {

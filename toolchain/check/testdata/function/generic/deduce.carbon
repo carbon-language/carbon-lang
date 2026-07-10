@@ -337,8 +337,6 @@ fn F() {
 // CHECK:STDOUT:     %ExplicitGenericParam.specific_fn.loc4_50.1: <specific function> = specific_function %ExplicitGenericParam.ref, @ExplicitGenericParam(constants.%T) [symbolic = %ExplicitGenericParam.specific_fn.loc4_50.2 (constants.%ExplicitGenericParam.specific_fn.2da)]
 // CHECK:STDOUT:     %ExplicitGenericParam.call: init @ExplicitGenericParam.%ptr.loc4_39.1 (%ptr.e8f) = call %ExplicitGenericParam.specific_fn.loc4_50.1()
 // CHECK:STDOUT:     return %ExplicitGenericParam.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -349,8 +347,6 @@ fn F() {
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn: <specific function> = specific_function %ExplicitGenericParam.ref, @ExplicitGenericParam(constants.%i32) [concrete = constants.%ExplicitGenericParam.specific_fn.330]
 // CHECK:STDOUT:   %ExplicitGenericParam.call: init %ptr.d08 = call %ExplicitGenericParam.specific_fn()
 // CHECK:STDOUT:   return %ExplicitGenericParam.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @CallExplicitGenericParamWithGenericArg(%T.loc10_44.2: type) {
@@ -375,8 +371,6 @@ fn F() {
 // CHECK:STDOUT:     %ExplicitGenericParam.specific_fn.loc11_10.1: <specific function> = specific_function %ExplicitGenericParam.ref, @ExplicitGenericParam(constants.%struct_type.a) [symbolic = %ExplicitGenericParam.specific_fn.loc11_10.2 (constants.%ExplicitGenericParam.specific_fn.f5a)]
 // CHECK:STDOUT:     %ExplicitGenericParam.call: init @CallExplicitGenericParamWithGenericArg.%ptr.loc10_63.1 (%ptr.88d) = call %ExplicitGenericParam.specific_fn.loc11_10.1()
 // CHECK:STDOUT:     return %ExplicitGenericParam.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -528,8 +522,6 @@ fn F() {
 // CHECK:STDOUT:     %ExplicitGenericParam.specific_fn.loc4_50.1: <specific function> = specific_function %ExplicitGenericParam.ref, @ExplicitGenericParam(constants.%T) [symbolic = %ExplicitGenericParam.specific_fn.loc4_50.2 (constants.%ExplicitGenericParam.specific_fn)]
 // CHECK:STDOUT:     %ExplicitGenericParam.call: init @ExplicitGenericParam.%ptr.loc4_39.1 (%ptr) = call %ExplicitGenericParam.specific_fn.loc4_50.1()
 // CHECK:STDOUT:     return %ExplicitGenericParam.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -548,8 +540,6 @@ fn F() {
 // CHECK:STDOUT:     %ExplicitGenericParam.specific_fn.loc7_3.1: <specific function> = specific_function %ExplicitGenericParam.ref, @ExplicitGenericParam(constants.%T) [symbolic = %ExplicitGenericParam.specific_fn.loc7_3.2 (constants.%ExplicitGenericParam.specific_fn)]
 // CHECK:STDOUT:     %ExplicitGenericParam.call: init @CallExplicitGenericParamConst.%ptr (%ptr) = call %ExplicitGenericParam.specific_fn.loc7_3.1()
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -558,8 +548,6 @@ fn F() {
 // CHECK:STDOUT:   %ExplicitGenericParam.ref: %ExplicitGenericParam.type = name_ref ExplicitGenericParam, file.%ExplicitGenericParam.decl [concrete = constants.%ExplicitGenericParam]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitGenericParam(constants.%T) {
@@ -711,8 +699,6 @@ fn F() {
 // CHECK:STDOUT:     %ExplicitAndAlsoDeduced.specific_fn.loc7_10.1: <specific function> = specific_function %ExplicitAndAlsoDeduced.ref, @ExplicitAndAlsoDeduced(constants.%T) [symbolic = %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 (constants.%ExplicitAndAlsoDeduced.specific_fn.c99)]
 // CHECK:STDOUT:     %ExplicitAndAlsoDeduced.call: init @ExplicitAndAlsoDeduced.%ptr.loc6_47.1 (%ptr.e8f) = call %ExplicitAndAlsoDeduced.specific_fn.loc7_10.1(%x.ref)
 // CHECK:STDOUT:     return %ExplicitAndAlsoDeduced.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -730,8 +716,6 @@ fn F() {
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.call: init %ptr.d43 = call %ExplicitAndAlsoDeduced.specific_fn(%.loc11_37.6)
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.367)
 // CHECK:STDOUT:   return %ExplicitAndAlsoDeduced.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc11_37.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -739,8 +723,6 @@ fn F() {
 // CHECK:STDOUT: fn @Destroy.Op.loc11_37.2(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(constants.%T) {
@@ -900,8 +882,6 @@ fn F() {
 // CHECK:STDOUT:     %ImplicitGenericParam.specific_fn.loc4_56.1: <specific function> = specific_function %ImplicitGenericParam.ref, @ImplicitGenericParam(constants.%T) [symbolic = %ImplicitGenericParam.specific_fn.loc4_56.2 (constants.%ImplicitGenericParam.specific_fn.0d7)]
 // CHECK:STDOUT:     %ImplicitGenericParam.call: init @ImplicitGenericParam.%ptr.loc4_45.1 (%ptr.e8f) = call %ImplicitGenericParam.specific_fn.loc4_56.1(%x.ref)
 // CHECK:STDOUT:     return %ImplicitGenericParam.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -912,8 +892,6 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn: <specific function> = specific_function %ImplicitGenericParam.ref, @ImplicitGenericParam(constants.%i32) [concrete = constants.%ImplicitGenericParam.specific_fn.ae4]
 // CHECK:STDOUT:   %ImplicitGenericParam.call: init %ptr.d08 = call %ImplicitGenericParam.specific_fn(%n.ref)
 // CHECK:STDOUT:   return %ImplicitGenericParam.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitGenericParam(constants.%T) {
@@ -1063,8 +1041,6 @@ fn F() {
 // CHECK:STDOUT:   fn(%x.param: @TupleParam.%tuple.type (%tuple.type.2d8)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1086,8 +1062,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc7_19.4: %tuple.type.94b = converted %.loc7_19.1, %tuple [concrete = constants.%tuple.946]
 // CHECK:STDOUT:   %TupleParam.call: init %empty_tuple.type = call %TupleParam.specific_fn(%.loc7_19.4)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TupleParam(constants.%T) {
@@ -1219,8 +1193,6 @@ fn F() {
 // CHECK:STDOUT:   fn(%x.param: @StructParam.%struct_type.a.b.loc4_51.1 (%struct_type.a.b.3aa)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1242,8 +1214,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc7_30.4: %struct_type.a.b.f91 = converted %.loc7_30.1, %struct [concrete = constants.%struct.72d]
 // CHECK:STDOUT:   %StructParam.call: init %empty_tuple.type = call %StructParam.specific_fn(%.loc7_30.4)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @StructParam(constants.%T) {
@@ -1346,8 +1316,6 @@ fn F() {
 // CHECK:STDOUT:   fn(%x.param: @BigStructParam.%struct_type.c.d.e.loc4_63.1 (%struct_type.c.d.e)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1358,8 +1326,6 @@ fn F() {
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
 // CHECK:STDOUT:   %.loc14: %struct_type.c.d = struct_literal (%int_3, %int_4) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @BigStructParam(constants.%T) {
@@ -1450,8 +1416,6 @@ fn F() {
 // CHECK:STDOUT:   fn(%x.param: @SmallStructParam.%struct_type.f.g.loc4_56.1 (%struct_type.f.g)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1463,8 +1427,6 @@ fn F() {
 // CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7]
 // CHECK:STDOUT:   %.loc14: %struct_type.f.g.h = struct_literal (%int_5, %int_6, %int_7) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SmallStructParam(constants.%T) {
@@ -1554,8 +1516,6 @@ fn F() {
 // CHECK:STDOUT:   fn(%x.param: @WrongNameStructParam.%struct_type.i.different.loc4_68.1 (%struct_type.i.different)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1566,8 +1526,6 @@ fn F() {
 // CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9]
 // CHECK:STDOUT:   %.loc14: %struct_type.i.j = struct_literal (%int_8, %int_9) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WrongNameStructParam(constants.%T) {
@@ -1657,8 +1615,6 @@ fn F() {
 // CHECK:STDOUT:   fn(%x.param: @WrongOrderStructParam.%struct_type.first.second.loc4_70.1 (%struct_type.first.second)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1669,8 +1625,6 @@ fn F() {
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [concrete = constants.%int_10]
 // CHECK:STDOUT:   %.loc14: %struct_type.second.first = struct_literal (%int_11, %int_10) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WrongOrderStructParam(constants.%T) {
@@ -1770,8 +1724,6 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitNotDeducible.ref: %ImplicitNotDeducible.type = name_ref ImplicitNotDeducible, file.%ImplicitNotDeducible.decl [concrete = constants.%ImplicitNotDeducible]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitNotDeducible(constants.%T, constants.%U) {
@@ -1878,8 +1830,6 @@ fn F() {
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12]
 // CHECK:STDOUT:   %.loc14: %struct_type.x = struct_literal (%int_12) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitNotDeducible(constants.%T) {
@@ -2021,8 +1971,6 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @EE.as.Z.impl: %EE.ref as %Z.ref {
@@ -2125,8 +2073,6 @@ fn F() {
 // CHECK:STDOUT:   %Z.facet.loc15_14: %Z.type = facet_value %CC, (constants.%Z.impl_witness.df9) [concrete = constants.%Z.facet.57d]
 // CHECK:STDOUT:   %.loc15_14: %Z.type = converted %CC, %Z.facet.loc15_14 [concrete = constants.%Z.facet.57d]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self) {

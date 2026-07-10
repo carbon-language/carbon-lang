@@ -64,7 +64,5 @@ let b: bool = Neq('a', 'a');
 // CHECK:STDOUT:   %.loc22_24: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %Neq.call.loc22: init bool = call %Neq.ref.loc22(%.loc22_19, %.loc22_24) [concrete = constants.%false]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -241,8 +241,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   witness = (@HasF.WithSelf.%HasF.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as.HasF.impl(%T.loc8_15.2: type) {
@@ -295,8 +293,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   fn(%self.param: @T.as.HasF.impl.F.%T (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -311,8 +307,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %bound_method.loc13_14: <bound method> = bound_method %x.ref, %specific_fn
 // CHECK:STDOUT:   %T.as.HasF.impl.F.call: init %empty_tuple.type = call %bound_method.loc13_14(%x.ref)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%Self) {
@@ -553,8 +547,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   witness = (@HasF.WithSelf.%HasF.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @ptr.as.HasF.impl(%T.loc8_15.2: type) {
@@ -640,8 +632,6 @@ fn G(x: A) {
 // CHECK:STDOUT:     %bound_method.loc9_29.2: <bound method> = bound_method %self.ref, %specific_impl_fn.loc9_29.1
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @ptr.as.HasF.impl.F.%ptr.loc9_8 (%ptr.e8f) = call %bound_method.loc9_29.2(%self.ref)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -656,8 +646,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %bound_method.loc13_21: <bound method> = bound_method %x.ref, %specific_fn
 // CHECK:STDOUT:   %ptr.as.HasF.impl.F.call: init %ptr.c28 = call %bound_method.loc13_21(%x.ref)
 // CHECK:STDOUT:   return %ptr.as.HasF.impl.F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%Self.c62) {
@@ -888,8 +876,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   witness = (@HasF.WithSelf.%HasF.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.HasF.impl(%T.loc10_15.2: type) {
@@ -959,8 +945,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   fn(%self.param: @C.as.HasF.impl.F.%C (%C.1d0)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -975,8 +959,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %bound_method.loc15_14: <bound method> = bound_method %x.ref, %specific_fn
 // CHECK:STDOUT:   %C.as.HasF.impl.F.call: init %empty_tuple.type = call %bound_method.loc15_14(%x.ref)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%Self) {
@@ -1209,8 +1191,6 @@ fn G(x: A) {
 // CHECK:STDOUT:     witness = (@HasF.WithSelf.%HasF.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1262,8 +1242,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   fn(%self.param: %empty_struct_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1282,8 +1260,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %bound_method.loc13_18: <bound method> = bound_method %x.ref, %specific_fn
 // CHECK:STDOUT:   %empty_struct_type.as.HasF.impl.F.call: init %empty_tuple.type = call %bound_method.loc13_18(%x.ref)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%T) {
@@ -1504,8 +1480,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   witness = (@HasF.WithSelf.%HasF.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as.HasF.impl(%T.loc12_15.2: type, %U.loc12_25.2: type) {
@@ -1560,8 +1534,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   fn(%self.param: @T.as.HasF.impl.F.%T (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1571,8 +1543,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %HasF.assoc_type = name_ref F, @HasF.WithSelf.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%Self) {
@@ -1741,8 +1711,6 @@ fn G(x: A) {
 // CHECK:STDOUT:     witness = (@HasF.WithSelf.%HasF.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1816,8 +1784,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   fn(%self.param: @T.as.HasF.impl.F.%T (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1830,8 +1796,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %.loc22: %HasF.assoc_type.43e = specific_constant @HasF.WithSelf.%assoc0.loc5_13.1, @HasF.WithSelf(constants.%B, constants.%Self.822) [concrete = constants.%assoc0.613]
 // CHECK:STDOUT:   %F.ref: %HasF.assoc_type.43e = name_ref F, %.loc22 [concrete = constants.%assoc0.613]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%T) {

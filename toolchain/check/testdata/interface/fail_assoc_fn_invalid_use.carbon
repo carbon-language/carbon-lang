@@ -100,8 +100,6 @@ fn Use(T:! I) {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%Self: %I.type) {
@@ -134,8 +132,6 @@ fn Use(T:! I) {
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0.loc13_4.1: @Use.%.loc13_4.2 (%.81d) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -759,8 +759,6 @@ fn F(_:! C(Z(.Self))) {}
 // CHECK:STDOUT:     witness = (@I.WithSelf.%I1)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -780,8 +778,6 @@ fn F(_:! C(Z(.Self))) {}
 // CHECK:STDOUT:     %.loc9_11.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc9_12: init %empty_tuple.type = converted %.loc9_11.1, %.loc9_11.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     return %.loc9_12
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -799,8 +795,6 @@ fn F(_:! C(Z(.Self))) {}
 // CHECK:STDOUT:     %.loc13_11.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc13_12: init %empty_tuple.type = converted %.loc13_11.1, %.loc13_11.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     return %.loc13_12
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

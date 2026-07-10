@@ -56,7 +56,5 @@ fn A() {
 // CHECK:STDOUT:   %.loc25: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

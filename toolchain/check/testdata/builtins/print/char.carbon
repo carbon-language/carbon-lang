@@ -88,7 +88,5 @@ fn Main() {
 // CHECK:STDOUT:   %.loc20_18.3: %char = converted %.loc20_18.1, %.loc20_18.2 [concrete = constants.%int_50]
 // CHECK:STDOUT:   %PrintChar.call.loc20: init %i32 = call %PrintChar.ref.loc20(%.loc20_18.3)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

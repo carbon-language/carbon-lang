@@ -196,8 +196,6 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %.loc6_26.1: ref @F.%T.loc6_7.1 (%T) = splice_block %return.param {}
 // CHECK:STDOUT:     %F.call: init @F.%T.loc6_7.1 (%T) to %.loc6_26.1 = call %F.specific_fn.loc6_37.1(%p.ref)
 // CHECK:STDOUT:     return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -209,8 +207,6 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %.loc8_16.1: ref %C = splice_block %return.param {}
 // CHECK:STDOUT:   %F.call: init %C to %.loc8_16.1 = call %F.specific_fn(%p.ref)
 // CHECK:STDOUT:   return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -383,8 +379,6 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %.loc6_32.1: ref @F.%T.loc6_7.1 (%T) = splice_block %return.param {}
 // CHECK:STDOUT:     %F.call: init @F.%T.loc6_7.1 (%T) to %.loc6_32.1 = call %F.specific_fn.loc6_43.1(%p.ref)
 // CHECK:STDOUT:     return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -396,8 +390,6 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %.loc8_22.1: ref %C = splice_block %return.param {}
 // CHECK:STDOUT:   %F.call: init %C to %.loc8_22.1 = call %F.specific_fn(%p.ref)
 // CHECK:STDOUT:   return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -570,8 +562,6 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %.loc6_26.1: ref @F.%T.loc6_7.1 (%T) = splice_block %return.param {}
 // CHECK:STDOUT:     %F.call: init @F.%T.loc6_7.1 (%T) to %.loc6_26.1 = call %F.specific_fn.loc6_37.1(%p.ref)
 // CHECK:STDOUT:     return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -583,8 +573,6 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %.loc8_22.1: ref %const = splice_block %return.param {}
 // CHECK:STDOUT:   %F.call: init %const to %.loc8_22.1 = call %F.specific_fn(%p.ref)
 // CHECK:STDOUT:   return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -755,8 +743,6 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %.loc6_32.1: ref @F.%T.loc6_7.1 (%T) = splice_block %return.param {}
 // CHECK:STDOUT:     %F.call: init @F.%T.loc6_7.1 (%T) to %.loc6_32.1 = call %F.specific_fn.loc6_43.1(%p.ref)
 // CHECK:STDOUT:     return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -765,8 +751,6 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %p.ref: %ptr.6b6 = name_ref p, %p
 // CHECK:STDOUT:   return <error> to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
