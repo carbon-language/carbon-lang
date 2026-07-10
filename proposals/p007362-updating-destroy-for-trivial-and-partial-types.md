@@ -20,9 +20,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Proposal](#proposal)
   - [Details](#details)
     - [`Destructor` interface](#destructor-interface)
-    - [`Destroy` interface](#destroy-interface)
-    - [`TrivialDestroy` interface](#trivialdestroy-interface)
-    - [`DynamicDestroy` interface](#dynamicdestroy-interface)
+      - [Empty `Destructor.Op()` should be an error](#empty-destructorop-should-be-an-error)
+    - [`Core.Destroy` interface](#coredestroy-interface)
+    - [`Core.TrivialDestroy` interface](#coretrivialdestroy-interface)
+    - [`Core.DynamicDestroy` interface](#coredynamicdestroy-interface)
+    - [Constraining on `Destructor` should be an error](#constraining-on-destructor-should-be-an-error)
   - [Rationale](#rationale)
   - [Alternatives considered](#alternatives-considered)
   - [Future work](#future-work)
@@ -82,14 +84,34 @@ interface DynamicDestroy {
 `Destructor` describes how an object performs cleanup and resource deallocation.
 `Destructor.Op()` tears down a single object of the calss that implements the
 interface. Subobjects and lifetime management are unaffected. Types only need
-to implement `Destructor` when custom destruction logic is required.
+to implement `Destructor` when custom destruction logic is required. Types that
+do not implement `Destructor` do not have a destructor.
 
-All types are provided with an implicit, toolchain-synthesised implementation of
-`Destructor` by default. Types that don't provide a user-defined implementation
-have trivial destruction. A type that has trivial destruction may be comprised
-of subobjects that do not have trivial destruction.
+Types that do not implement `Destructor` have _isolated trivial destruction_.
+A type comprised of subobjects that all have isolated trivial destruction has
+_trivial destruction_. See [`TrivialDestroy` interface] below.
 
-### `Destroy` interface
+#### Empty `Destructor.Op()` should be an error
+
+An empty `Destructor.Op()` definition should be an error. We should allow users
+to "reserve" non-trivial destruction by providing a spelling that communicates
+"no behaviour is intentional" using a clearer syntax.
+
+```carbon
+class C1 {
+  impl as Destructor {
+    // error: `C1.(Destructor.Op)()` defined as an empty method
+    fn Op(self) {}
+  }
+}
+
+class C2 {
+  // potential alternative spelling
+  impl as Destructor = default;
+}
+```
+
+### `Core.Destroy` interface
 
 `Destroy` destroys complete objects---including subobjects---and ends their
 lifetimes. Classes cannot customise `Destroy`: it is exclusively implemented by
@@ -101,43 +123,91 @@ describing non-destroyable types is not yet determined.
 
 `Destroy` behaves uniformly for all destroyable types.
 
-### `TrivialDestroy` interface
+> [!WARNING]
+> `Core.Destroy.Op` is unsafe.
 
-A type automatically impls `TrivialDestroy` if none of its subobjects' impl
-`Destructor`. `TrivialDestroy` can only be implemented by the compiler.
+### `Core.TrivialDestroy` interface
 
-### `DynamicDestroy` interface
+`TrivialDestroy` describes types that have trivial destruction.
+
+The toolchain automatically implements the interface `TrivialDestroy` for all
+types that have trivial destruction. `TrivialDestroy` cannot be explicitly
+implemented.
+
+### `Core.DynamicDestroy` interface
+
+`DynamicDestroy` dispatches destruction for objects pointing to dynamic types.
+`DynamicDestroy` can only be implemented by the toolchain, but there is interest
+in relaxing this restriction. The toolchain automatically implements
+`DynamicDestroy` for types that:
+
+* are final and implement `Destroy`, or
+* have a virtual pointer.
+
+`DynamicDestroy.Op` directly calls `Destroy.Op` for final types. Types with a
+virtual pointer are required to add a vtable entry containing `Destroy.Op`.
+`DynamicDestroy.Op` makes a virtual call to this vtable entry for such types.
+
+> [!NOTE]
+> `Core.DynamicDestroy.Op` is a safe function.
+
+### Constraining on `Destructor` should be an error
+
+Limiting an API to only accept objects that can be destroyed is a helpful
+constraint. Conversely, limiting an API to only accept objects that require some
+amount of custom clean-up during the destroy operation is an over-constraint.
+
+It is easy to mix up `Destructor` and `Destroy`. Users must implement
+`Destructor` for their class types to have a destructor. Only the toolchain is
+allowed to implement `Destroy`. Worse: Carbon and C++ differ on what these terms
+mean when considered independently, but agree on their combined meaning. Carbon
+class types that do not implement `Destructor` have no destructor, but they can
+be destroyed. C++ class types that do not explicitly define a destructor will
+have an implicit destructor synthesised by the compiler. C++ class types that do
+not have a destructor cannot be destroyed.
+
+Constraining on `Destructor` is considered to always be a mistake. Users should
+constrain their APIs using `Destroy` to restrict the interface to objects that
+can be destroyed. Users should constrain their APIs using `TrivialDestroy` to
+restrict the interface to types that have trivial destruction.
 
 ## Rationale
 
-TODO: How does this proposal effectively advance Carbon's goals? Rather than
-re-stating the full motivation, this should connect that motivation back to
-Carbon's stated goals and principles. This may evolve during review. Use links
-to appropriate sections of [`/docs/project/goals.md`](/docs/project/goals.md),
-and/or to documents in [`/docs/project/principles`](/docs/project/principles).
-For example:
+The destruction model advances these goals:
 
--   [Community and culture](/docs/project/goals.md#community-and-culture)
--   [Language tools and ecosystem](/docs/project/goals.md#language-tools-and-ecosystem)
--   [Performance-critical software](/docs/project/goals.md#performance-critical-software)
--   [Software and language evolution](/docs/project/goals.md#software-and-language-evolution)
--   [Code that is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write)
--   [Practical safety and testing mechanisms](/docs/project/goals.md#practical-safety-and-testing-mechanisms)
--   [Fast and scalable development](/docs/project/goals.md#fast-and-scalable-development)
--   [Modern OS platforms, hardware architectures, and environments](/docs/project/goals.md#modern-os-platforms-hardware-architectures-and-environments)
--   [Interoperability with and migration from existing C++ code](/docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code)
+-   [Code that is easy to read, understand, and write]: Types implement `Core.Destructor`, but are
+    not able to customise how those types are destroyed.
+-   [Software and language evolution]: This proposal is a successor to [P001154 Destructors]. It
+    uses experience to propose the language evolve in a direction that P001154 explicitly decided
+    against.
+-   [Practical safety and testing mechanisms]: `Core.Destructor` automates resource disposal during
+-   deinitialisation. Automated resource disposal helps avoid saftey-related bugs.
+-   [Interoperability with and migration from existing C++ code]: destructors are required in order
+    to destroy objects in C++.
 
 ## Alternatives considered
 
-TODO: What alternative solutions have you considered?
+This is a successor to [P001154 Destructors]. Several alternatives that were explored in P001154 are
+proposed in this document.
 
 ## Future work
 
+* Identify an alternative name for `Destructor` (draft leads issue WIP).
 * Add an opt-out from implementing `Destroy`.
 * Unify with copy and move semantics.
+* Explore how types with virtual pointers can:
+  * opt out from `DynamicDestroy`
+  * manually implement `DynamicDestroy`
 
 <!-- Links -->
 
 [Issue #6124]: https://github.com/carbon-language/carbon-lang/issues/6124
 [Issue #6161]: https://github.com/carbon-language/carbon-lang/issues/6161
 [Issue #6464]: https://github.com/carbon-language/carbon-lang/issues/6464
+[Constraining on `Destructor` should be an error]: #constraining-on-destructor-should-be-an-error
+[`Core.TrivialDestroy` interface]: #trivialdestroy-interface
+[P001154 Destructors]: proposals/p001154-destructors.md
+[Code that is easy to read, understand, and write]: /docs/project/goals.md#code-that-is-easy-to-read-understand-and-write
+[Software and language evolution]: /docs/project/goals.md#software-and-language-evolution
+[Practical safety and testing mechanisms]: /docs/project/goals.md#practical-safety-and-testing-mechanisms
+[Interoperability with and migration from existing C++ code]: /docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code
