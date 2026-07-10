@@ -75,10 +75,10 @@ Inside
     the matching `SemIR` type instruction (such as `FloatType` or
     `FloatLiteralType`). Use pre-established semantic helpers:
 
-     -   `TypeParam<I, T>`: Ensures different parameters resolve to identical type
-         structures (e.g., generic constraint matching).
-     -   `AnyInt`, `AnyFloat`, `AnySizedInt`, `AnySizedFloat`, `CharCompatible`,
-         `StdInitializerList`, `NoReturn`.
+    -   `TypeParam<I, T>`: Ensures different parameters resolve to identical type
+        structures (e.g., generic constraint matching).
+    -   `AnyInt`, `AnyFloat`, `AnySizedInt`, `AnySizedFloat`, `CharCompatible`,
+        `StdInitializerList`, `NoReturn`.
 
 2.  **Map Literal Name & Register Constraint Signature**: Declare a `BuiltinInfo`
     constant inside `namespace BuiltinFunctionInfo` matching the macro-defined
@@ -94,13 +94,13 @@ Inside
 3.  **Establish Compile-Time Residency Status**: Update
     `BuiltinFunctionKind::IsCompTimeOnly` to determine if a call requires
     compile-time evaluation:
-     -   **Checked/Diagnostics Primitives**: Return `true` immediately. Runtime
-         lowering of these is illegal (e.g. `IntConvertFloatChecked`).
-     -   **Runtime Primitives**: Return
-         `AnyLiteralTypes(sem_ir, arg_ids, return_type_id)` to enforce that
-         expressions involving unsized literal values (like `IntLiteral` or
-         `FloatLiteral`) are evaluated exclusively at compile-time (as they lack
-         runtime representation).
+    -   **Checked/Diagnostics Primitives**: Return `true` immediately. Runtime
+        lowering of these is illegal (e.g. `IntConvertFloatChecked`).
+    -   **Runtime Primitives**: Return
+        `AnyLiteralTypes(sem_ir, arg_ids, return_type_id)` to enforce that
+        expressions involving unsized literal values (like `IntLiteral` or
+        `FloatLiteral`) are evaluated exclusively at compile-time (as they lack
+        runtime representation).
 
 ---
 
@@ -111,10 +111,10 @@ execute compile-time computations:
 
 1.  **Implement Constant Evaluation Logic**:
 
-     -   Handle the builtin case inside `MakeConstantForBuiltinCall` (which
-         processes the compile-time execution of the call).
-     -   Confirm type validation phase is `Phase::Concrete` to reject incomplete
-         bindings:
+    -   Handle the builtin case inside `MakeConstantForBuiltinCall` (which
+        processes the compile-time execution of the call).
+    -   Confirm type validation phase is `Phase::Concrete` to reject incomplete
+        bindings:
 
            ```cpp
            case SemIR::BuiltinFunctionKind::IntConvertFloat: {
@@ -126,24 +126,24 @@ execute compile-time computations:
            }
            ```
 
-     -   Extract inputs safely from local value stores (e.g.
-         `context.ints().Get(arg.int_id)` or `context.floats().Get(arg.float_id)`).
-     -   Leverage high-precision LLVM mathematical structures (`llvm::APInt`,
-         `llvm::APFloat`, `llvm::APSInt`) to handle custom bits and signedness
-         safely.
+    -   Extract inputs safely from local value stores (e.g.
+        `context.ints().Get(arg.int_id)` or `context.floats().Get(arg.float_id)`).
+    -   Leverage high-precision LLVM mathematical structures (`llvm::APInt`,
+        `llvm::APFloat`, `llvm::APSInt`) to handle custom bits and signedness
+        safely.
 
 2.  **Diagnose Invalid Parameters or Exceptions**:
 
-     -   Define compile-time diagnostics inside
-         [kind.def](../../../toolchain/diagnostics/kind.def):
+    -   Define compile-time diagnostics inside
+        [kind.def](../../../toolchain/diagnostics/kind.def):
 
            ```cpp
            // toolchain/diagnostics/kind.def
            CARBON_DIAGNOSTIC_KIND(IntTooLargeForFloatType)
            ```
 
-     -   Emplace localized diagnostic formatting messages where they are caught in
-         `eval.cpp`:
+    -   Emplace localized diagnostic formatting messages where they are caught in
+        `eval.cpp`:
 
            ```cpp
            CARBON_DIAGNOSTIC(IntTooLargeForFloatType, Error,
@@ -152,14 +152,14 @@ execute compile-time computations:
            context.emitter().Emit(loc_id, IntTooLargeForFloatType, val, dest_type_id);
            ```
 
-     -   Return `SemIR::ErrorInst::ConstantId` to gracefully abort invalid constant
-         generation rather than crashing the compiler.
+    -   Return `SemIR::ErrorInst::ConstantId` to gracefully abort invalid constant
+        generation rather than crashing the compiler.
 
 3.  **Fast-Path Range Limits**:
-     -   Before evaluating expensive math operations on giant exponents (e.g.
-         `1.0e1000000`), executing range limits check against `dest_width + 64`
-         (sized) or `IntStore::MaxIntWidth` (unsized) is mandatory to prevent
-         out-of-bounds calculations and compile-time memory exhaustion.
+    -   Before evaluating expensive math operations on giant exponents (e.g.
+        `1.0e1000000`), executing range limits check against `dest_width + 64`
+        (sized) or `IntStore::MaxIntWidth` (unsized) is mandatory to prevent
+        out-of-bounds calculations and compile-time memory exhaustion.
 
 ---
 

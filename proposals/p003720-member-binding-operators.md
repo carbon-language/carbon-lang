@@ -235,12 +235,12 @@ How does this arise?
     Note that `C.F` is `__C_F` with type `__TypeOf_C_F`, and `C.Static` is
     `__C_Static` with type `__TypeOf_C_Static`.
 2.  It then looks at the expression to the left of the `.`:
-     -   If it is a facet value, the "member binding to type" (`BindToType`)
-         operator is applied.
-     -   If it is a reference expression, the "member binding to reference"
-         (`BindToRef`) operator is applied.
-     -   If it is a value expression, the "member binding to value" (`BindToValue`)
-         operator is applied.
+    -   If it is a facet value, the "member binding to type" (`BindToType`)
+        operator is applied.
+    -   If it is a reference expression, the "member binding to reference"
+        (`BindToRef`) operator is applied.
+    -   If it is a value expression, the "member binding to value" (`BindToValue`)
+        operator is applied.
 3.  The result of the member binding has a type that implements the call
     interface.
 
