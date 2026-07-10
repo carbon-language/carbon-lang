@@ -244,16 +244,10 @@ class ScopeStack {
     return Peek().cleanup_scope_kind != CleanupScopeKind::None;
   }
 
-  // Returns all values on `destroy_id_stack_` added since `depth`, and before
-  // `end_depth` if specified.
-  auto GetCleanupsSince(CleanupScopeDepth depth,
-                        CleanupScopeDepth end_depth = CleanupScopeDepth::None)
-      const -> llvm::ArrayRef<SemIR::InstId> {
-    auto values = destroy_id_stack_.PeekAllValues().slice(depth.index);
-    if (end_depth.has_value()) {
-      values = values.take_front(end_depth.index - depth.index);
-    }
-    return values;
+  // Returns all values on `destroy_id_stack_` added since `depth`.
+  auto GetCleanupsSince(CleanupScopeDepth depth) const
+      -> llvm::ArrayRef<SemIR::InstId> {
+    return destroy_id_stack_.PeekAllValues().slice(depth.index);
   }
 
   // Discards cleanups after the given depth, which must be within the current

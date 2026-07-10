@@ -92,12 +92,6 @@ auto AddInstWithCleanupInNoBlock(Context& context, LocT loc, InstT inst)
   return inst_id;
 }
 
-// Adds cleanups for variables added after `depth`, and before `end_depth`
-// if it's not `None`.
-auto AddCleanups(Context& context, ScopeStack::CleanupScopeDepth depth,
-                 ScopeStack::CleanupScopeDepth end_depth =
-                     ScopeStack::CleanupScopeDepth::None) -> void;
-
 // Adds any cleanups for variables and temporaries within the current statement
 // scope and discards them from cleanup tracking.
 auto AddAndDiscardCleanups(Context& context) -> void;
