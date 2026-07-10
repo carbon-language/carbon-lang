@@ -31,6 +31,9 @@ struct ImplFields {
   // The `MatchFirstDecl` of the `match_first` block that the impl is associated
   // with.
   InstId match_first_id = SemIR::InstId::None;
+  // The location of the `ImplDecl` that was associated with the
+  // `match_first_id`. Used for diagnostics, and not imported.
+  LocId decl_loc_in_match_first = SemIR::LocId::None;
 
   // The position of the impl in its associated `match_first` block.
   int match_first_position = 0;

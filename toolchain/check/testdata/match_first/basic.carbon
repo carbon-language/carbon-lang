@@ -76,8 +76,8 @@ interface Z {}
 final impl () as Z;
 match_first {
   // This is not seen as a redecl of the `final impl`. It's not valid to write
-  // this `impl` since it overlaps the `final impl`, but we already have a
-  // diagnostic.
+  // an `impl` in `match_first` that overlaps a `final impl`, but we already
+  // have a diagnostic.
   impl () as Z {}
 }
 
@@ -89,8 +89,8 @@ interface Z {}
 final impl () as Z {}
 match_first {
   // This is not seen as a redecl of the `final impl`. It's not valid to write
-  // this `impl` since it overlaps the `final impl`, but we already have a
-  // diagnostic.
+  // an `impl` in `match_first` that overlaps a `final impl`, but we already
+  // have a diagnostic.
   // CHECK:STDERR: fail_final_redecl_defined_once.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
   // CHECK:STDERR:   impl () as Z;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
@@ -106,8 +106,8 @@ interface Z {}
 final impl () as Z {}
 match_first {
   // This is not seen as a redecl of the `final impl`. It's not valid to write
-  // this `impl` since it overlaps the `final impl`, but we already have a
-  // diagnostic.
+  // an `impl` in `match_first` that overlaps a `final impl`, but we already
+  // have a diagnostic.
   // CHECK:STDERR: fail_final_redecl_defined_twice.carbon:[[@LINE+7]]:3: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
   // CHECK:STDERR:   impl () as Z {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
@@ -125,9 +125,9 @@ interface Z {}
 
 final impl () as Z;
 match_first {
-  // This is not seen as a redecl of the `final impl`. It's not valid to write
-  // this `impl` since it overlaps the `final impl`, but we already have a
-  // diagnostic.
+  // This _is_ seen as a redecl of the `final impl`. It's not valid to write
+  // an `impl` in `match_first` that overlaps a `final impl`, but we already
+  // have a diagnostic.
   // CHECK:STDERR: fail_final_final_redecl.carbon:[[@LINE+7]]:3: error: `final impl` in `match_first` block [FinalImplInMatchFirst]
   // CHECK:STDERR:   final impl () as Z {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
@@ -184,21 +184,13 @@ match_first {
 }
 impl () as Z {}
 
-// --- fail_todo_redecl_after_defined.carbon
+// --- redecl_after_defined.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
 
 impl () as Z {}
 match_first {
-  // TODO: We want to allow a redecl in match_first after the definition.
-  // CHECK:STDERR: fail_todo_redecl_after_defined.carbon:[[@LINE+7]]:3: error: redefinition of `impl () as Z` [ImplRedefinition]
-  // CHECK:STDERR:   impl () as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_redecl_after_defined.carbon:[[@LINE-6]]:1: note: previous definition was here [ImplPreviousDefinition]
-  // CHECK:STDERR: impl () as Z {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~
-  // CHECK:STDERR:
   impl () as Z;
 }
 
@@ -334,12 +326,31 @@ interface Z {}
 
 match_first {
   impl () as Z {}
-  // CHECK:STDERR: fail_redecl_after_defined_in_same_block.carbon:[[@LINE+7]]:3: error: redefinition of `impl () as Z` [ImplRedefinition]
+  // CHECK:STDERR: fail_redecl_after_defined_in_same_block.carbon:[[@LINE+7]]:3: error: impl declared in `match_first` more than once [ImplInTwoMatchFirst]
   // CHECK:STDERR:   impl () as Z;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_redecl_after_defined_in_same_block.carbon:[[@LINE-4]]:3: note: previous definition was here [ImplPreviousDefinition]
+  // CHECK:STDERR: fail_redecl_after_defined_in_same_block.carbon:[[@LINE-4]]:3: note: previous declaration here [ImplInTwoMatchFirstNote]
   // CHECK:STDERR:   impl () as Z {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  impl () as Z;
+}
+
+// --- fail_two_redecl_in_same_block.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+impl () as Z {}
+match_first {
+  impl () as Z;
+  // TODO: This "previous declaration" location is wrong. The redecl came after.
+  // CHECK:STDERR: fail_two_redecl_in_same_block.carbon:[[@LINE+7]]:3: error: impl declared in `match_first` more than once [ImplInTwoMatchFirst]
+  // CHECK:STDERR:   impl () as Z;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_two_redecl_in_same_block.carbon:[[@LINE-5]]:3: note: previous declaration here [ImplInTwoMatchFirstNote]
+  // CHECK:STDERR:   impl () as Z;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR:
   impl () as Z;
 }
@@ -373,10 +384,10 @@ match_first {
   impl () as Z {}
 }
 match_first {
-  // CHECK:STDERR: fail_redecl_defined_in_different_block_firset.carbon:[[@LINE+7]]:3: error: redefinition of `impl () as Z` [ImplRedefinition]
+  // CHECK:STDERR: fail_redecl_defined_in_different_block_firset.carbon:[[@LINE+7]]:3: error: impl declared in `match_first` more than once [ImplInTwoMatchFirst]
   // CHECK:STDERR:   impl () as Z;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_redecl_defined_in_different_block_firset.carbon:[[@LINE-6]]:3: note: previous definition was here [ImplPreviousDefinition]
+  // CHECK:STDERR: fail_redecl_defined_in_different_block_firset.carbon:[[@LINE-6]]:3: note: previous declaration here [ImplInTwoMatchFirstNote]
   // CHECK:STDERR:   impl () as Z {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
