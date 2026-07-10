@@ -117,6 +117,8 @@ fn Call3() {
 // CHECK:STDOUT:   %.loc8_11.2: %i32 = converted %int_1, %.loc8_11.1 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl.6431a3.1(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call2() {
@@ -141,6 +143,8 @@ fn Call3() {
 // CHECK:STDOUT:   %.loc14_14.2: %i32 = converted %int_2, %.loc14_14.1 [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl.6431a3.2(%.loc14_11.2, %.loc14_14.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call3() {
@@ -173,5 +177,7 @@ fn Call3() {
 // CHECK:STDOUT:   %.loc20_17.2: %i32 = converted %int_3, %.loc20_17.1 [concrete = constants.%int_3.410]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl.6431a3.3(%.loc20_11.2, %.loc20_14.2, %.loc20_17.2)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

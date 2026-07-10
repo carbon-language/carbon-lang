@@ -15,9 +15,9 @@ This extension is currently experimental, and being developed alongside Carbon.
 
 1.  Download and install a `carbon`
     [release](https://github.com/carbon-language/carbon-lang/releases).
-     -   By default, the extension will look for `carbon` under `./bazel-bin`. This
-         is for developers actively working on Carbon and running VS Code inside a
-         [carbon-lang](https://github.com/carbon-language/carbon-lang) clone.
+    -   By default, the extension will look for `carbon` under `./bazel-bin`. This
+        is for developers actively working on Carbon and running VS Code inside a
+        [carbon-lang](https://github.com/carbon-language/carbon-lang) clone.
 2.  Install the
     [Carbon Language extension](https://marketplace.visualstudio.com/items?itemName=carbon-lang.carbon-vscode).
 3.  Configure the installed path to `carbon`.

@@ -242,6 +242,9 @@ struct Worklist {
   // Add a string to the contents.
   auto AddString(llvm::StringRef string) -> void { store->AddString(string); }
 
+  // Add an integer to the contents.
+  auto AddInteger(uint64_t value) -> void { store->AddInteger(value); }
+
   // Each of the following `Add` functions adds a typed argument to the contents
   // of the current instruction. If we don't yet have a fingerprint for the
   // argument, it instead adds that argument to the worklist instead.
@@ -280,6 +283,9 @@ struct Worklist {
       // also be a compatible change from the perspective of users of a generic.
     } else {
       Add(entity_name.name_id);
+      if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
+        AddInteger(entity_name.is_frozen_period_self);
+      }
     }
     Add(entity_name.parent_scope_id);
 
@@ -476,6 +482,13 @@ struct Worklist {
     Add(sem_ir->constant_values().Get(require.facet_type_inst_id));
     store->AddInteger(require.extend_self);
     Add(require.parent_scope_id);
+  }
+
+  auto Add(ObserveId observe_id) -> void {
+    CARBON_CHECK(observe_id.has_value());
+    const auto& observe = sem_ir->observes().Get(observe_id);
+    Add(observe.operations_id);
+    Add(observe.enclosing_scope_inst_id);
   }
 
   auto Add(AssociatedConstantId assoc_const_id) -> void {

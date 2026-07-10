@@ -259,15 +259,15 @@ on advantages and disadvantages for each option.
 
     Advantages:
 
-     -   No need to teach developers they cannot (don't need to) `export` locally
-         introduced names.
+    -   No need to teach developers they cannot (don't need to) `export` locally
+        introduced names.
 
     Disadvantages:
 
-     -   Although the restricted placement might imply placement is tied to
-         specific libraries, that's not the case. This could mislead developers.
-           -   In theory, we could enforce this, but then we could end up breaking
-               code if the path a name is imported through changes.
+    -   Although the restricted placement might imply placement is tied to
+        specific libraries, that's not the case. This could mislead developers.
+        -   In theory, we could enforce this, but then we could end up breaking
+            code if the path a name is imported through changes.
 
 2.  `export name` with other declarations
 
@@ -276,15 +276,15 @@ on advantages and disadvantages for each option.
 
     Advantages:
 
-     -   `import` remains very special.
-     -   Makes it unambiguous that names valid for `export` are already imported.
+    -   `import` remains very special.
+    -   Makes it unambiguous that names valid for `export` are already imported.
 
     Disadvantages:
 
-     -   Prevents placing `export name` next to the import that is expected to add
-         the name.
-     -   Means `export import` and `export name` will be in different sections: no
-         single place to look for re-exports.
+    -   Prevents placing `export name` next to the import that is expected to add
+        the name.
+    -   Means `export import` and `export name` will be in different sections: no
+        single place to look for re-exports.
 
 3.  No ordering for `export name`
 
@@ -292,11 +292,11 @@ on advantages and disadvantages for each option.
 
     Advantages:
 
-     -   Maximum flexibility, HOA rule.
+    -   Maximum flexibility, HOA rule.
 
     Disadvantages:
 
-     -   Most inconsistent with the desire to treat `import` as special.
+    -   Most inconsistent with the desire to treat `import` as special.
 
 We're choosing option (2). The name lookup issues avoided by requiring `export`
 be below `import` directives seem worthwhile.

@@ -182,6 +182,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %bound_method.loc17_12.2: <bound method> = bound_method %n.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc17_12.2(%n.ref)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.G(%n.param.loc25: %i32) -> out %return.param.loc25: %i32 {
@@ -193,6 +195,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %bound_method.loc26_10.2: <bound method> = bound_method %n.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc26_10.2(%n.ref)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> out %return.param: %i32 {
@@ -209,5 +213,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc30_18.2: %i32 = converted %int_4, %.loc30_18.1 [concrete = constants.%int_4.4eb]
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %F.ref(%.loc30_18.2)
 // CHECK:STDOUT:   return %Class.F.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

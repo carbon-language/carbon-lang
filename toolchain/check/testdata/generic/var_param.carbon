@@ -42,7 +42,7 @@ fn Test(x: i32) {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT:   %T.patt.1df: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.dda: %I.type = symbolic_binding T, 0 [symbolic]
@@ -82,7 +82,7 @@ fn Test(x: i32) {
 // CHECK:STDOUT:     %x.param_patt.loc22_25.1: @TestOp.%pattern_type (%pattern_type.b3a) = var_param_pattern %x.patt.loc22_30.1 [symbolic = %x.param_patt.loc22_25.2 (constants.%x.param_patt.1e1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc22_15: type = splice_block %I.ref [concrete = constants.%I.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc22_12.2: %I.type = symbolic_binding T, 0 [symbolic = %T.loc22_12.1 (constants.%T.dda)]
@@ -110,6 +110,8 @@ fn Test(x: i32) {
 // CHECK:STDOUT:   fn(%x.param: ref @TestOp.%T.as_type.loc22_32.1 (%T.as_type.b38)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -133,6 +135,8 @@ fn Test(x: i32) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc22_25.1(%self.param: ref %i32.builtin) = "no_op";
@@ -140,6 +144,8 @@ fn Test(x: i32) {
 // CHECK:STDOUT: fn @Destroy.Op.loc22_25.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestOp(constants.%T.dda) {

@@ -30,6 +30,7 @@ auto FullPatternStack::StartPatternInitializer() -> void {
       std::swap(lookup_result.back().inst_id, inst_id);
     }
   }
+  next_var_index_stack_.back() = 0;
 }
 
 auto FullPatternStack::EndPatternInitializer() -> void {
@@ -44,15 +45,6 @@ auto FullPatternStack::EndPatternInitializer() -> void {
                  "initializer handling",
                  inst_id);
   }
-}
-
-auto FullPatternStack::BuildLocalVarStorage(Context& context,
-                                            bool is_returned_var) -> void {
-  for (auto& var_info : var_pattern_stack_.PeekArray()) {
-    var_info.storage_id =
-        GetOrAddVarStorage(context, var_info.pattern_id, is_returned_var);
-  }
-  next_var_index_stack_.back() = 0;
 }
 
 }  // namespace Carbon::Check

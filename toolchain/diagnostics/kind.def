@@ -398,6 +398,9 @@ CARBON_DIAGNOSTIC_KIND(RequireImplsUnidentifiedFacetType)
 CARBON_DIAGNOSTIC_KIND(RequireImplsNotImplemented)
 CARBON_DIAGNOSTIC_KIND(RequireInWrongScope)
 
+// Observe checking.
+CARBON_DIAGNOSTIC_KIND(ObserveInWrongScope)
+
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
 
@@ -509,6 +512,7 @@ CARBON_DIAGNOSTIC_KIND(TupleIndexOnANonTupleType)
 CARBON_DIAGNOSTIC_KIND(TupleIndexOutOfBounds)
 CARBON_DIAGNOSTIC_KIND(TupleInitElementCountMismatch)
 CARBON_DIAGNOSTIC_KIND(PartialOnFinal)
+CARBON_DIAGNOSTIC_KIND(PeriodSelfInNonFacetType)
 CARBON_DIAGNOSTIC_KIND(ReturnedVarHere)
 CARBON_DIAGNOSTIC_KIND(ReturnedVarNotInit)
 CARBON_DIAGNOSTIC_KIND(ReturnedVarShadowed)

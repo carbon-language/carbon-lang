@@ -151,5 +151,7 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:   %.loc11_14.1: ref %AbstractFinal = splice_block %return.param {}
 // CHECK:STDOUT:   %F.call: init %AbstractFinal to %.loc11_14.1 = call %F.ref()
 // CHECK:STDOUT:   return %F.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

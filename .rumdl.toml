@@ -43,6 +43,7 @@ style = "one-or-ordered"
 
 # Unordered list indentation
 [MD007]
+style = "fixed"
 indent = 4
 
 [MD077]

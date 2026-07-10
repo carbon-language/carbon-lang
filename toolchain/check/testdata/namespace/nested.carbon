@@ -61,6 +61,8 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: fn @Wiz() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
@@ -70,5 +72,7 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:   %Wiz.ref: %Wiz.type = name_ref Wiz, file.%Wiz.decl [concrete = constants.%Wiz]
 // CHECK:STDOUT:   %Wiz.call: init %empty_tuple.type = call %Wiz.ref()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

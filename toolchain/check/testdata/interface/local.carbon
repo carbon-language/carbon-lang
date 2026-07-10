@@ -84,6 +84,8 @@ fn F() {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.I.impl: %.loc19_9.2 as %I.ref {
@@ -121,6 +123,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_4.2: %empty_tuple.type = converted %.loc22_4.1, %empty_tuple [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G.call: init %empty_tuple.type = call %bound_method(%.loc22_4.2)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.G(@I.%Self: %I.type) {
@@ -136,6 +140,8 @@ fn F() {
 // CHECK:STDOUT: fn @empty_tuple.type.as.I.impl.G(%self.param: %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {

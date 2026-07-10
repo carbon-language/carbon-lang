@@ -63,6 +63,8 @@ interface Modifiers {
 // CHECK:STDOUT:   witness = (@Modifiers.WithSelf.%Modifiers.WithSelf.Final.decl, @Modifiers.WithSelf.%Modifiers.WithSelf.Default.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Modifiers.WithSelf.Final(@Modifiers.%Self: %Modifiers.type) {
@@ -71,6 +73,8 @@ interface Modifiers {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,6 +84,8 @@ interface Modifiers {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

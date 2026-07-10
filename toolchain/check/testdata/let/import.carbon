@@ -65,6 +65,8 @@ let b: () = Other.a;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -101,6 +103,8 @@ let b: () = Other.a;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %empty_tuple.type = name_ref a, imports.%Implicit.a
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- other.carbon
@@ -132,6 +136,8 @@ let b: () = Other.a;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_other.carbon
@@ -172,5 +178,7 @@ let b: () = Other.a;
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:   %a.ref: %empty_tuple.type = name_ref a, imports.%Other.a
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

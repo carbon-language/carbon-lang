@@ -35,7 +35,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt.d47011.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template]
 // CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0, template [template]
@@ -74,7 +74,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %ptr.loc5_37: type = ptr_type %T.ref.loc5_36 [template = %ptr.loc5_29.1 (constants.%ptr.e8f8f9.1)]
 // CHECK:STDOUT:     %.loc5_37.2: Core.Form = init_form %ptr.loc5_37 [template = %.loc5_37.1 (constants.%.cb6cb9.1)]
 // CHECK:STDOUT:     %.loc5_19.1: type = splice_block %.loc5_19.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc5_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_16.2: type = symbolic_binding T, 0, template [template = %T.loc5_16.1 (constants.%T.67db0b.1)]
@@ -129,6 +129,8 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %.loc6_10.2, %specific_impl_fn.loc6_10.1
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @F.%ptr.loc5_29.1 (%ptr.e8f8f9.1) = call %bound_method.loc6_10.2(%.loc6_10.2)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -150,7 +152,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0, template [template]
@@ -182,12 +184,12 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %.loc5_43.4: type = converted %.loc5_43.3, constants.%tuple.type.a5e [template = %tuple.type (constants.%tuple.type.a5e)]
 // CHECK:STDOUT:     %.loc5_43.5: Core.Form = init_form %.loc5_43.4 [template = %.loc5_43.2 (constants.%.f18)]
 // CHECK:STDOUT:     %.loc5_19.1: type = splice_block %.loc5_19.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.loc5_16: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc5_16: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc5_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_16.2: type = symbolic_binding T, 0, template [template = %T.loc5_16.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc5_29.1: type = splice_block %.loc5_29.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.loc5_26: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc5_26: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc5_29.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc5_26.2: type = symbolic_binding U, 1 [symbolic = %U.loc5_26.1 (constants.%U)]
@@ -221,6 +223,8 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %.loc5_43.1: ref @F.%tuple.type (%tuple.type.a5e) = splice_block %return.param {}
 // CHECK:STDOUT:     %F.call: init @F.%tuple.type (%tuple.type.a5e) to %.loc5_43.1 = call %F.specific_fn.loc6_10.1()
 // CHECK:STDOUT:     return %F.call to %return.param
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

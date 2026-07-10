@@ -172,6 +172,8 @@ fn Var() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc11_22.3, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc11_22.3)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc11_22.1(%self.param: ref %i16.builtin) = "no_op";
@@ -179,6 +181,8 @@ fn Var() {
 // CHECK:STDOUT: fn @Destroy.Op.loc11_22.2(%self.param: ref %i16) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_from_thunk_param.carbon
@@ -243,6 +247,8 @@ fn Var() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %c.var, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%c.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc11_3.1(%self.param: ref %ptr.00a) = "no_op";
@@ -250,16 +256,22 @@ fn Var() {
 // CHECK:STDOUT: fn @Destroy.Op.loc11_3.2(%self.param: ref %.a7d) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc11_3.3(%self.param: ref %MaybeUnformed.399) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc11_3.4(%self.param: ref %Cpp.nullptr_t) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_from_thunk_param.carbon
@@ -342,6 +354,8 @@ fn Var() {
 // CHECK:STDOUT:   %ReturnU8__carbon_thunk.call: init %empty_tuple.type = call imports.%ReturnU8__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc8_40.2: init %u8 to %.loc8_40.1 = mark_in_place_init %ReturnU8__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc8_40.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnU8() -> out %return.param: %u8;
@@ -428,6 +442,8 @@ fn Var() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %my_u32.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%my_u32.var)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnU32() -> out %return.param: %u32;
@@ -437,5 +453,7 @@ fn Var() {
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.2(%self.param: ref %u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

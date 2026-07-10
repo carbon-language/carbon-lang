@@ -267,6 +267,8 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc30_10.4: %Base = acquire_value %.loc30_10.3
 // CHECK:STDOUT:   %Base.F.call: init %i32 = call %Base.F.bound(%.loc30_10.4)
 // CHECK:STDOUT:   return %Base.F.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallIndirect(%p.param: %ptr.64c) -> out %return.param: %i32 {
@@ -282,6 +284,8 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc34_11.5: %Base = acquire_value %.loc34_11.4
 // CHECK:STDOUT:   %Base.F.call: init %i32 = call %Base.F.bound(%.loc34_11.5)
 // CHECK:STDOUT:   return %Base.F.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassDerivedToBase(%a.param: %Derived) -> out %return.param: %i32 {
@@ -292,6 +296,8 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %Base.G.bound: <bound method> = bound_method %a.ref, %G.ref
 // CHECK:STDOUT:   %Base.G.call: init %i32 = call %Base.G.bound(%a.ref)
 // CHECK:STDOUT:   return %Base.G.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassDerivedToBaseIndirect(%p.param: %ptr.64c) -> out %return.param: %i32 {
@@ -304,5 +310,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc42_11.2: %Derived = acquire_value %.loc42_11.1
 // CHECK:STDOUT:   %Base.G.call: init %i32 = call %Base.G.bound(%.loc42_11.2)
 // CHECK:STDOUT:   return %Base.G.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

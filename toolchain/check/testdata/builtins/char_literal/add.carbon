@@ -129,5 +129,7 @@ let c: CharLiteral = AddCharInt('a', Negate(98));
 // CHECK:STDOUT:   %int_1.loc16: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %AddCharInt.call.loc16: init Core.CharLiteral = call %AddCharInt.ref.loc16(%.loc16, %int_1.loc16) [concrete = constants.%.a8b]
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

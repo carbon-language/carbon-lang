@@ -148,6 +148,8 @@ let negative_lit_zero: Core.IntLiteral = RightShiftLit(0, -1);
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %RightShift.call: init %i32 = call %RightShift.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %RightShift.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- u32.carbon
@@ -167,5 +169,7 @@ let negative_lit_zero: Core.IntLiteral = RightShiftLit(0, -1);
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %RightShift.call: init %u32 = call %RightShift.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %RightShift.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

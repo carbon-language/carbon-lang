@@ -111,5 +111,7 @@ class C {
 // CHECK:STDOUT:   %bound_method.loc16_31.2: <bound method> = bound_method %.loc16_31.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc16_31.2(%.loc16_31.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -1010,6 +1010,27 @@ struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
 inline constexpr RequireImplsBlockId RequireImplsBlockId::Empty =
     RequireImplsBlockId(0);
 
+// The ID of an `Observe`.
+struct ObserveId : public IdBase<ObserveId> {
+  static constexpr llvm::StringLiteral Label = "observe";
+
+  using IdBase::IdBase;
+};
+
+// The ID of a `ObserveId` block.
+struct ObserveBlockId : public IdBase<ObserveBlockId> {
+  static constexpr llvm::StringLiteral Label = "observe_block";
+
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
+  static const ObserveBlockId Empty;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
+};
+
+inline constexpr ObserveBlockId ObserveBlockId::Empty = ObserveBlockId(0);
+
 // The ID of a bundle of arguments with an unspecified type.
 struct RawBundleId : public IdBase<RawBundleId> {
   static constexpr llvm::StringLiteral Label = "bundle";

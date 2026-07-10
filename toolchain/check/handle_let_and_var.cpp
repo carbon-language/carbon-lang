@@ -107,6 +107,18 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     return true;
   }
 
+  auto add_local_var = [&]() -> SemIR::InstId {
+    auto pattern_id = AddInst<SemIR::VarPattern>(
+        context, node_id, {.type_id = type_id, .subpattern_id = subpattern_id});
+    bool returned =
+        context.decl_introducer_state_stack().innermost().modifier_set.HasAnyOf(
+            KeywordModifierSet::Returned);
+    auto storage_id = GetOrAddVarStorage(context, pattern_id, returned);
+    context.full_pattern_stack().AddLocalVarPattern(
+        {.pattern_id = pattern_id, .storage_id = storage_id});
+    return pattern_id;
+  };
+
   auto pattern_id = SemIR::InstId::None;
   // In a parameter list, a `var` pattern is always a single `Call` parameter,
   // even if it contains multiple binding patterns.
@@ -118,18 +130,12 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
     case FullPatternStack::Kind::NameBindingDecl:
-      pattern_id = AddInst<SemIR::VarPattern>(
-          context, node_id,
-          {.type_id = type_id, .subpattern_id = subpattern_id});
-      context.full_pattern_stack().AddLocalVarPattern(pattern_id);
+      pattern_id = add_local_var();
       break;
     case FullPatternStack::Kind::ClassScopeVarDecl:
       if (InStaticClassScopeVar(context)) {
         // Handle static class fields the same as NameBindingDecls.
-        pattern_id = AddInst<SemIR::VarPattern>(
-            context, node_id,
-            {.type_id = type_id, .subpattern_id = subpattern_id});
-        context.full_pattern_stack().AddLocalVarPattern(pattern_id);
+        pattern_id = add_local_var();
       } else {
         // For non-static class fields, a `FieldDecl` was created in
         // `AddBindingPattern`. Use that as the `pattern_id` so that
@@ -163,12 +169,6 @@ static auto EndFullPattern(Context& context) -> void {
   if (InNonStaticFieldDecl(context)) {
     return;
   }
-
-  // Emit storage for any `var`s in the pattern now.
-  bool returned =
-      context.decl_introducer_state_stack().innermost().modifier_set.HasAnyOf(
-          KeywordModifierSet::Returned);
-  context.full_pattern_stack().BuildLocalVarStorage(context, returned);
 }
 
 static auto StartPatternInitializer(Context& context) -> bool {

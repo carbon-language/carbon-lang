@@ -172,6 +172,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc16: <bound method> = bound_method %n.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call.loc16: init %empty_tuple.type = call %Destroy.Op.bound.loc16(%n.var)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc17(%self.param: ref %ptr.d08) = "no_op";
@@ -181,5 +183,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: fn @Destroy.Op.loc16_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

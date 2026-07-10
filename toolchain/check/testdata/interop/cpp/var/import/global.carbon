@@ -182,6 +182,8 @@ fn MyF() {
 // CHECK:STDOUT:     %local_ref.patt: %pattern_type.8fa = value_binding_pattern local_ref [concrete = constants.%local_ref.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_unsupported_type.carbon
@@ -229,5 +231,7 @@ fn MyF() {
 // CHECK:STDOUT:     %local.patt: <error> = value_binding_pattern local [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

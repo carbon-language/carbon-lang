@@ -112,6 +112,8 @@ fn D();
 // CHECK:STDOUT: fn @A() [from "decl_in_api_definition_in_impl.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_decl_in_api.carbon

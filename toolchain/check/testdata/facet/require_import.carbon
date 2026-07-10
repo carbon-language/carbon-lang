@@ -54,7 +54,7 @@ fn F(B:! Y) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %X.type: type = facet_type <@X> [concrete]
 // CHECK:STDOUT:   %Self.f45: %X.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type.190: type = facet_access_type %Self.f45 [symbolic]
@@ -138,12 +138,12 @@ fn F(B:! Y) {
 // CHECK:STDOUT:     %B.patt.loc4_21.1: %pattern_type.cfb = symbolic_binding_pattern B, 1 [symbolic = %B.patt.loc4_21.2 (constants.%B.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_10: type = splice_block %X.ref [concrete = constants.%X.type] {
-// CHECK:STDOUT:       %.Self.loc4_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc4_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %X.ref: type = name_ref X, imports.%Main.X [concrete = constants.%X.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %A.loc4_7.2: %X.type = symbolic_binding A, 0 [symbolic = %A.loc4_7.1 (constants.%A)]
 // CHECK:STDOUT:     %.loc4_24: type = splice_block %Y.ref [concrete = constants.%Y.type] {
-// CHECK:STDOUT:       %.Self.loc4_21: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen.loc4_21: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Y.ref: type = name_ref Y, imports.%Main.Y [concrete = constants.%Y.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %B.loc4_21.2: %Y.type = symbolic_binding B, 1 [symbolic = %B.loc4_21.1 (constants.%B)]
@@ -165,6 +165,8 @@ fn F(B:! Y) {
 // CHECK:STDOUT:     witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -178,6 +180,8 @@ fn F(B:! Y) {
 // CHECK:STDOUT:   @Y.WithSelf.Self.as_type.impls.Z.type.require {
 // CHECK:STDOUT:     require imports.%Main.import_ref.4f9 impls imports.%Main.import_ref.5c2
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @X [from "a.carbon"] {
@@ -237,6 +241,8 @@ fn F(B:! Y) {
 // CHECK:STDOUT:     %specific_impl_fn.loc5_4.1: <specific function> = specific_impl_function %impl.elem0.loc5_4.1, @Z.WithSelf.F(constants.%A.as_type, constants.%Z.facet) [symbolic = %specific_impl_fn.loc5_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %Z.WithSelf.F.call: init %empty_tuple.type = call %specific_impl_fn.loc5_4.1()
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

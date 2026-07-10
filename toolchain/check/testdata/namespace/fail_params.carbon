@@ -53,7 +53,7 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   %F.type.14e: type = fn_type @F.loc22 [concrete]
 // CHECK:STDOUT:   %F.19f: %F.type.14e = struct_value () [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0 [symbolic]
@@ -88,7 +88,7 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %.loc38_17.1: type = splice_block %.loc38_17.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %.loc38_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = constants.%T.67db0b.1]
@@ -99,7 +99,7 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %F.decl.loc48: %F.type.eb3 = fn_decl @F.loc48 [concrete = constants.%F.708] {} {
 // CHECK:STDOUT:     %.loc48_17.1: type = splice_block %.loc48_17.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc48_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc48_14.3: type = symbolic_binding T, 0 [symbolic = %T.loc48_14.2 (constants.%T.67db0b.2)]
@@ -109,6 +109,8 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT: fn @F.loc22() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc48(%T.loc48_14.3: type) {
@@ -121,6 +123,8 @@ fn D(unused T:! type).F() {}
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -1641,7 +1641,7 @@ struct RequirementBaseFacetType {
   static constexpr auto Kind =
       InstKind::RequirementBaseFacetType.Define<Parse::NodeId>(
           {.ir_name = "requirement_base_facet_type",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // No type since not an expression
@@ -1658,7 +1658,7 @@ struct RequirementEquivalent {
   static constexpr auto Kind =
       InstKind::RequirementEquivalent.Define<Parse::RequirementEqualEqualId>(
           {.ir_name = "requirement_equivalent",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // No type since not an expression
@@ -1673,7 +1673,7 @@ struct RequirementImpls {
   static constexpr auto Kind =
       InstKind::RequirementImpls.Define<Parse::RequirementImplsId>(
           {.ir_name = "requirement_impls",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // No type since not an expression
@@ -1688,12 +1688,53 @@ struct RequirementRewrite {
   static constexpr auto Kind =
       InstKind::RequirementRewrite.Define<Parse::RequirementEqualId>(
           {.ir_name = "requirement_rewrite",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // No type since not an expression
   InstId lhs_id;
   InstId rhs_id;
+};
+
+// An observation that two expressions evaluate to the same constant, as
+// specified by an `expr == expr` clause in an `observe` declaration.
+struct ObserveEquivalent {
+  static constexpr auto Kind =
+      InstKind::ObserveEquivalent.Define<Parse::ObserveEqualEqualId>(
+          {.ir_name = "observe_equivalent",
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
+// An observation that the LHS expression is a facet type that implements the
+// interface on the RHS and meets any constraints in the RHS, as specified by an
+// `expr impls expr` clause in an `observe` declaration.
+struct ObserveImpls {
+  static constexpr auto Kind =
+      InstKind::ObserveImpls.Define<Parse::ObserveImplsId>(
+          {.ir_name = "observe_impls",
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
+// An `observe ...` declaration.
+struct ObserveDecl {
+  static constexpr auto Kind =
+      InstKind::ObserveDecl.Define<Parse::ObserveDeclId>(
+          {.ir_name = "observe_decl",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  // No type since not an expression
+  ObserveId observe_id;
 };
 
 struct Return {

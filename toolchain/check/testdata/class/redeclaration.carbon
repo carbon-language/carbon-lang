@@ -99,5 +99,7 @@ fn Class.F(unused self, unused b: ()) {}
 // CHECK:STDOUT: fn @Class.F(%self.param.loc21: %Class, %b.param.loc21: %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

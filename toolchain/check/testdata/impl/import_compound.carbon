@@ -182,6 +182,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   witness = (@NonInstance.WithSelf.%NonInstance.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Instance {
@@ -209,6 +211,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   witness = (@Instance.WithSelf.%Instance.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.NonInstance.impl: %struct_type.i as %NonInstance.ref {
@@ -247,6 +251,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT: fn @struct_type.i.as.NonInstance.impl.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Instance.WithSelf.G(@Instance.%Self: %Instance.type) {
@@ -262,6 +268,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT: fn @struct_type.i.as.Instance.impl.G(%self.param: %struct_type.i) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf(constants.%Self.a14) {
@@ -373,6 +381,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.NonInstance.impl: imports.%Main.import_ref.c9a as imports.%Main.import_ref.282 [from "lib.carbon"] {
@@ -392,6 +402,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %impl.elem0: %.a34 = impl_witness_access constants.%NonInstance.impl_witness, element0 [concrete = constants.%struct_type.i.as.NonInstance.impl.F]
 // CHECK:STDOUT:   %struct_type.i.as.NonInstance.impl.F.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @NonInstance.WithSelf.F(imports.%Main.import_ref.9ad11e.2: %NonInstance.type) [from "lib.carbon"] {
@@ -483,6 +495,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonInstanceCallImportFail(%n.param: %struct_type.i) {
@@ -492,6 +506,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %F.ref: %NonInstance.assoc_type = name_ref F, imports.%Main.import_ref.a5f [concrete = constants.%assoc0.8c6]
 // CHECK:STDOUT:   %.loc13: %NonInstance.type = converted %n.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @NonInstance.WithSelf.F(imports.%Main.import_ref.9ad11e.2: %NonInstance.type) [from "lib.carbon"] {
@@ -576,6 +592,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonInstanceCallIndirectImport(%p.param: %ptr) {
@@ -586,6 +604,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %.loc13_4.1: ref %struct_type.i = deref %p.ref
 // CHECK:STDOUT:   %.loc13_4.2: %NonInstance.type = converted %.loc13_4.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @NonInstance.WithSelf.F(imports.%Main.import_ref.9ad11e.2: %NonInstance.type) [from "lib.carbon"] {
@@ -701,6 +721,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   witness = (imports.%Main.G)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.Instance.impl: imports.%Main.import_ref.c9a as imports.%Main.import_ref.fd3 [from "lib.carbon"] {
@@ -717,6 +739,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %n.ref, %impl.elem0
 // CHECK:STDOUT:   %struct_type.i.as.Instance.impl.G.call: init %empty_tuple.type = call %bound_method(%n.ref)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Instance.WithSelf.G(imports.%Main.import_ref.a85b8b.2: %Instance.type) [from "lib.carbon"] {
@@ -746,6 +770,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %.loc10_4.4: %struct_type.i = converted %.loc10_4.1, %struct [concrete = constants.%struct]
 // CHECK:STDOUT:   %struct_type.i.as.Instance.impl.G.call: init %empty_tuple.type = call %bound_method(%.loc10_4.4)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance.WithSelf(constants.%Self) {
@@ -826,6 +852,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   witness = (imports.%Main.G)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.Instance.impl: imports.%Main.import_ref.c9a as imports.%Main.import_ref.fd3 [from "lib.carbon"] {
@@ -841,6 +869,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Instance.ref: type = name_ref Instance, imports.%Main.Instance [concrete = constants.%Instance.type]
 // CHECK:STDOUT:   %G.ref: %Instance.assoc_type = name_ref G, imports.%Main.import_ref.756 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Instance.WithSelf.G(imports.%Main.import_ref.a85b8b.2: %Instance.type) [from "lib.carbon"] {

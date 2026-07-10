@@ -357,5 +357,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

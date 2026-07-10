@@ -562,6 +562,8 @@ class V {
 // CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %.loc8_11.3, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.0e0 = call %bound_method.loc8_11.2(%.loc8_11.3)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertVal(%d.param: %Derived) {
@@ -574,6 +576,8 @@ class V {
 // CHECK:STDOUT:   %.loc16_13.4: %Base = acquire_value %.loc16_13.3
 // CHECK:STDOUT:   %AcceptVal.call: init %empty_tuple.type = call %AcceptVal.ref(%.loc16_13.4)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_static_member.carbon
@@ -624,6 +628,8 @@ class V {
 // CHECK:STDOUT:   %derived_fn.ref: %Derived.derived_fn.cpp_overload_set.type = name_ref derived_fn, imports.%Derived.derived_fn.cpp_overload_set.value [concrete = constants.%Derived.derived_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %Derived.derived_fn.call: init %empty_tuple.type = call imports.%Derived.derived_fn.decl()
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_base_field.carbon
@@ -674,6 +680,8 @@ class V {
 // CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %.loc8_11.5, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc8_11.2(%.loc8_11.5)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessQualified(%d.param: %Derived) -> out %return.param: %i32 {
@@ -693,6 +701,8 @@ class V {
 // CHECK:STDOUT:   %bound_method.loc14_11.2: <bound method> = bound_method %.loc14_11.5, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc14_11.2(%.loc14_11.5)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_base_method.carbon
@@ -744,6 +754,8 @@ class V {
 // CHECK:STDOUT:   %.loc8_3.4: %Base = acquire_value %.loc8_3.3
 // CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc8_3.4)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallQualified(%d.param: %Derived) {
@@ -759,6 +771,8 @@ class V {
 // CHECK:STDOUT:   %.loc14_3.4: %Base = acquire_value %.loc14_3.3
 // CHECK:STDOUT:   %g__carbon_thunk.call: init %empty_tuple.type = call imports.%g__carbon_thunk.decl(%.loc14_3.4)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallBaseQualifiedByDerived(%d.param: %Derived, %b.param: %Base) {
@@ -780,5 +794,7 @@ class V {
 // CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %b.ref, %f.ref.loc24
 // CHECK:STDOUT:   %f__carbon_thunk.call.loc24: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%b.ref)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -465,6 +465,8 @@ fn F() {
 // CHECK:STDOUT:     %carbon_double.patt: %pattern_type.fb7 = value_binding_pattern carbon_double [concrete = constants.%carbon_double.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_unsupported_types.carbon
@@ -519,6 +521,8 @@ fn F() {
 // CHECK:STDOUT:     %carbon_long_double.patt: %pattern_type.fb7 = value_binding_pattern carbon_long_double [concrete = constants.%carbon_long_double.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- override_builtin.carbon
@@ -602,5 +606,7 @@ fn F() {
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor.bound: <bound method> = bound_method %unsigned_int.var, constants.%unsigned_int.cpp_destructor
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor.call: init %empty_tuple.type = call %unsigned_int.cpp_destructor.bound(%unsigned_int.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
