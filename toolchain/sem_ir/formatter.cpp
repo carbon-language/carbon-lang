@@ -495,7 +495,7 @@ auto Formatter::FormatImpl(ImplId id, const Impl& impl_info) -> void {
   }
 
   PrepareToFormatDecl(impl_info.first_owning_decl_id);
-  FormatEntityStart("impl", impl_info, id);
+  FormatEntityStart(impl_info.is_final ? "final impl" : "impl", impl_info, id);
 
   llvm::SaveAndRestore impl_scope(scope_, inst_namer_.GetScopeFor(id));
 
