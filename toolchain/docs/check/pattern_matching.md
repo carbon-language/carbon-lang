@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Pattern instructions](#pattern-instructions)
 -   [Instruction ordering](#instruction-ordering)
-    -   [Name references](#name-references)
+    -   [Name references and expressions in patterns](#name-references-and-expressions-in-patterns)
     -   [Storage and initializing expressions](#storage-and-initializing-expressions)
     -   [The final ordering](#the-final-ordering)
 -   [Parser-driven pattern block pushing](#parser-driven-pattern-block-pushing)
@@ -86,7 +86,7 @@ any other expression.
 
 All the pattern instructions for a given full-pattern are grouped together in a
 distinct block that contains only pattern instructions, for reasons discussed
-[below](#name-references). Consequently,
+[below](#name-references-and-expressions-in-patterns). Consequently,
 `Check::Context` maintains `pattern_block_stack` as a separate `InstBlockStack`
 for pattern blocks, and operations like `AddInst` automatically put
 newly-created pattern insts on that stack.
@@ -128,8 +128,8 @@ violates that in two places:
 -   `%n_ref` takes the value of the referenced name (in this case `%n`) as an
     operand. `%n_ref` is part of the pattern, so it belongs in step 1, but `%n`
     is a name binding created during pattern matching in step 3. In general
-    this can happen any time a pattern uses the name of a binding that was
-    declared earlier in the same pattern.
+    this can happen any time a pattern contains an expression that uses the
+    name of a binding that was declared earlier in the same pattern.
 -   `%call` is an initializing expression, so it takes the storage to initialize
     (`%n_ref` in this case) as an output parameter. `%call` is part of the
     initializer, so it belongs in step 2, but `%n_ref` is part of step 3. In
@@ -148,66 +148,80 @@ we need it.
 
 We solve these two classes of problems in different ways.
 
-### Name references
+### Name references and expressions in patterns
 
-To solve the topological ordering problem with name references, we emit pattern
-insts into a separate block (on a separate stack of pattern blocks), and then
-splice it into the SemIR at the end of pattern matching, which must be after the
-inst that the `name_ref` refers to. For a local pattern match like our example,
-this splicing is performed by a `name_binding_decl` inst. We can do this without
-violating the topological ordering, because within a pattern-matching operation,
-non-pattern insts may be generated from the pattern insts, but can't actually
-depend on them.
+To solve the ordering problems for name references, we reorder both the insts
+that represent the pattern, and the insts that represent expressions within it
+(such as expression patterns and the types of binding patterns). Specifically,
+we sequence the expression insts so that they are evaluated in step 3, when
+matching the subpattern they're part of. This ensures that any name references
+in the expression will appear after the name bindings they refer to,
+because a binding can only be used lexically after it's been declared,
+and pattern matching proceeds in lexical order. Then, since the pattern insts
+will refer to those expression insts, we sequence all pattern insts after the
+step 3 insts. This respects the topological ordering, because within a
+pattern-matching operation, non-pattern insts may be generated from the
+pattern insts, but can't actually depend on them.
 
 > **TODO:** As of this writing, a `var_storage` inst takes the `var_pattern`
 > it was generated from as an operand, which violates this requirement and can
 > lead to violations of the topological ordering. We need to fix this.
 
-That still leaves the problem that we're creating a `name_ref` in step 1, but
-don't know its operand until step 3. We solve this as follows:
+Note that the pattern insts and the expression insts are still created in step
+1, but we defer actually adding them to the current inst block in order to
+achieve that ordering. We accomplish that as follows:
 
 During step 1:
 
+-   When we emit a pattern inst, we add it to a separate pattern block
+    (on a separate pattern block stack).
 -   When we are about to handle an expression within a pattern (such as an
     expression pattern or the type part of a binding pattern), we push an
-    `ExprRegion` onto the `inst_block_stack` to capture the expression insts,
-    and then pop it and store its ID at the end of the expression, so that we
-    can splice the expression evaluation into the pattern matching SemIR later.
-    This is handled by the `ExprRegionForPattern` functions in
+    `ExprRegion` onto the `inst_block_stack` to capture the expression insts.
+    Then, at the end of handling the expression, we pop the `ExprRegion` and
+    store its ID at the end of the expression, so that we can splice the
+    expression evaluation into the pattern matching SemIR later. This is
+    handled by the `ExprRegionForPattern` functions in
     `toolchain/check/pattern.h`.
 -   When we handle a binding pattern, we eagerly create a binding inst (in
-    addition to a binding pattern inst), and add its ID to name lookup, but we
-    create it in a placeholder state with no value, and we do not add it to any
-    block yet. We also add the binding inst and the `ExprRegion` for its type
-    expression to `bind_name_map` so that they can later be looked up using the
-    binding pattern as a key.
+    addition to a binding pattern inst), and add its ID to name lookup so that
+    we can resolve references to that name. However, we create the binding in a
+    placeholder state with no value, and we do not add it to any block yet. We
+    also add the binding inst and the `ExprRegion` for its type expression to
+    `bind_name_map` so that they can later be looked up using the binding
+    pattern as a key.
 -   When we handle a name expression (during step 1 or at any other time), we
     look up its name to find the ID of the binding, create a `name_ref` with
-    that binding as its value operand, and add it to the `inst_block_stack`.
+    that binding as its value operand, and add it to the current inst block.
 
 Then, during step 3:
 
 -   When we match a binding pattern inst with its scrutinee, we look up the
-    corresponding binding inst and its type's `ExprRegion` in `bind_name_map`,
-    splice the `ExprRegion` onto the top of the `inst_block_stack`, overwrite
-    the binding's value operand with the scrutinee ID, and add the binding inst
-    to the top of the `inst_block_stack` (as if we had just created it).
+    corresponding binding inst in `bind_name_map`, set its value operand to the
+    scrutinee ID, and add it to the current inst block (as if we had just
+    created it). The same `bind_name_map` lookup also returns the `ExprRegion`
+    for the binding's type expression, which we splice onto the top of the
+    `inst_block_stack`.
 -   When we match an expression pattern inst, we splice the `ExprRegion` onto
     the top of the `inst_block_stack`, and then compare it with the scrutinee
     (Note: expression pattern matching is not yet implemented).
+
+Finally, after step 3, we splice the pattern block into the main inst block.
+For local pattern matches, we mark this splicing with a `name_binding_decl`
+inst.
 
 ### Storage and initializing expressions
 
 To solve the ordering problems with initializing expressions like `%call`, we
 create and emit `var_storage` insts during the initial traversal of the pattern
-in step 1, so that they are sequenced before the insts in step 2, and track them
-in the `FullPatternStack` for later reuse. Then, when evaluating the initializer
-in step 2, we set its output operand to a placeholder ID. Finally, when we bring
-the `var_pattern` and its initializer together in step 3, we look up the
-corresponding `var_storage` inst in the `FullPatternStack`, and then rewrite the
-initializer inst (or make a rewritten copy of it) to have the `var_storage` inst
-as its output operand (see the `Initialize` in `convert.h` for details about
-that).
+in step 1, and track them in the `FullPatternStack` for later reuse. This
+ensures that they are sequenced before the insts in step 2 that initialize them.
+Then, when evaluating the initializer in step 2, we set its output operand to a
+placeholder ID. Finally, when we bring the `var_pattern` and its initializer
+together in step 3, we look up the corresponding `var_storage` inst in the
+`FullPatternStack`, and then rewrite the initializer inst to have the
+`var_storage` inst as its output operand (or in some cases, make a rewritten
+copy of it; see `Initialize` in `convert.h` for details about this process).
 
 Note that when the full pattern is part of a parameter list, we create the
 `var_storage` inst on demand in step 3, because parameters currently can't have
