@@ -337,7 +337,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @T.as.Z.impl.adf(%T.loc11_21.1: type) {
+// CHECK:STDOUT: generic final impl @T.as.Z.impl.adf(%T.loc11_21.1: type) {
 // CHECK:STDOUT:   %T.patt.loc11_21.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_21.2 (constants.%T.patt.d47)]
 // CHECK:STDOUT:   %T.loc11_21.2: type = symbolic_binding T, 0 [symbolic = %T.loc11_21.2 (constants.%T.67d)]
 // CHECK:STDOUT:   %Z_where.type: type = facet_type <@Z, @Z(constants.%C) where constants.%impl.elem0.3ed = %T.loc11_21.2> [symbolic = %Z_where.type (constants.%Z_where.type.b22)]
@@ -346,7 +346,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Z_where.type [symbolic = %require_complete (constants.%require_complete.d7e)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T.ref.loc11_30 as %.loc11_40 {
+// CHECK:STDOUT:   final impl: %T.ref.loc11_30 as %.loc11_40 {
 // CHECK:STDOUT:     %Z.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @T.as.Z.impl.adf [concrete]
 // CHECK:STDOUT:     %Z.impl_witness.loc11_53.1: <witness> = impl_witness %Z.impl_witness_table, @T.as.Z.impl.adf(constants.%T.67d) [symbolic = %Z.impl_witness.loc11_53.2 (constants.%Z.impl_witness.2d9)]
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%T.67d [symbolic = %T.loc11_21.2 (constants.%T.67d)]
@@ -1124,7 +1124,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @U.as.Ptr.impl(%U.loc7_21.1: type) {
+// CHECK:STDOUT: generic final impl @U.as.Ptr.impl(%U.loc7_21.1: type) {
 // CHECK:STDOUT:   %U.patt.loc7_21.2: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc7_21.2 (constants.%U.patt.d47)]
 // CHECK:STDOUT:   %U.loc7_21.2: type = symbolic_binding U, 0 [symbolic = %U.loc7_21.2 (constants.%U.67d)]
 // CHECK:STDOUT:   %ptr.loc7_54.2: type = ptr_type %U.loc7_21.2 [symbolic = %ptr.loc7_54.2 (constants.%ptr.e8f8f9.1)]
@@ -1134,7 +1134,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Ptr_where.type [symbolic = %require_complete (constants.%require_complete.2060e7.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %U.ref.loc7_30 as %.loc7_39 {
+// CHECK:STDOUT:   final impl: %U.ref.loc7_30 as %.loc7_39 {
 // CHECK:STDOUT:     %Ptr.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @U.as.Ptr.impl [concrete]
 // CHECK:STDOUT:     %Ptr.impl_witness.loc7_56.1: <witness> = impl_witness %Ptr.impl_witness_table, @U.as.Ptr.impl(constants.%U.67d) [symbolic = %Ptr.impl_witness.loc7_56.2 (constants.%Ptr.impl_witness.add6fd.1)]
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%ptr.e8f8f9.1 [symbolic = %ptr.loc7_54.2 (constants.%ptr.e8f8f9.1)]
@@ -1388,7 +1388,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @U.as.Ptr.impl(%U.loc7_21.1: type) {
+// CHECK:STDOUT: generic final impl @U.as.Ptr.impl(%U.loc7_21.1: type) {
 // CHECK:STDOUT:   %U.patt.loc7_21.2: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc7_21.2 (constants.%U.patt.d47)]
 // CHECK:STDOUT:   %U.loc7_21.2: type = symbolic_binding U, 0 [symbolic = %U.loc7_21.2 (constants.%U.67d)]
 // CHECK:STDOUT:   %ptr.loc7_54.2: type = ptr_type %U.loc7_21.2 [symbolic = %ptr.loc7_54.2 (constants.%ptr.e8f8f9.1)]
@@ -1398,7 +1398,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Ptr_where.type [symbolic = %require_complete (constants.%require_complete.206)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %U.ref.loc7_30 as %.loc7_39 {
+// CHECK:STDOUT:   final impl: %U.ref.loc7_30 as %.loc7_39 {
 // CHECK:STDOUT:     %Ptr.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @U.as.Ptr.impl [concrete]
 // CHECK:STDOUT:     %Ptr.impl_witness.loc7_56.1: <witness> = impl_witness %Ptr.impl_witness_table, @U.as.Ptr.impl(constants.%U.67d) [symbolic = %Ptr.impl_witness.loc7_56.2 (constants.%Ptr.impl_witness.add)]
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%ptr.e8f8f9.1 [symbolic = %ptr.loc7_54.2 (constants.%ptr.e8f8f9.1)]
@@ -1649,7 +1649,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @U.as.Ptr.impl(%U.loc7_21.1: type) {
+// CHECK:STDOUT: generic final impl @U.as.Ptr.impl(%U.loc7_21.1: type) {
 // CHECK:STDOUT:   %U.patt.loc7_21.2: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc7_21.2 (constants.%U.patt.d47)]
 // CHECK:STDOUT:   %U.loc7_21.2: type = symbolic_binding U, 0 [symbolic = %U.loc7_21.2 (constants.%U.67d)]
 // CHECK:STDOUT:   %ptr.loc7_54.2: type = ptr_type %U.loc7_21.2 [symbolic = %ptr.loc7_54.2 (constants.%ptr.e8f8f9.1)]
@@ -1659,7 +1659,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Ptr_where.type [symbolic = %require_complete (constants.%require_complete.206)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %U.ref.loc7_30 as %.loc7_39 {
+// CHECK:STDOUT:   final impl: %U.ref.loc7_30 as %.loc7_39 {
 // CHECK:STDOUT:     %Ptr.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @U.as.Ptr.impl [concrete]
 // CHECK:STDOUT:     %Ptr.impl_witness.loc7_56.1: <witness> = impl_witness %Ptr.impl_witness_table, @U.as.Ptr.impl(constants.%U.67d) [symbolic = %Ptr.impl_witness.loc7_56.2 (constants.%Ptr.impl_witness.add)]
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%ptr.e8f8f9.1 [symbolic = %ptr.loc7_54.2 (constants.%ptr.e8f8f9.1)]
