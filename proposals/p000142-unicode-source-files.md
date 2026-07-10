@@ -103,15 +103,15 @@ The choice to require NFC is really four choices:
 1.  Equivalence classes: we use a canonical normalization form rather than a
     compatibility normalization form or no normalization form at all.
 
-     -   If we use no normalization, invisibly-different ways of representing the
-         same glyph, such as with pre-combined diacritics versus with diacritics
-         expressed as separate combining characters, or with combining characters
-         in a different order, would be considered different characters.
-     -   If we use a canonical normalization form, all ways of encoding diacritics
-         are considered to form the same character, but ligatures such as `ﬃ` are
-         considered distinct from the character sequence that they decompose into.
-     -   If we use a compatibility normalization form, ligatures are considered
-         equivalent to the character sequence that they decompose into.
+    -   If we use no normalization, invisibly-different ways of representing the
+        same glyph, such as with pre-combined diacritics versus with diacritics
+        expressed as separate combining characters, or with combining characters
+        in a different order, would be considered different characters.
+    -   If we use a canonical normalization form, all ways of encoding diacritics
+        are considered to form the same character, but ligatures such as `ﬃ` are
+        considered distinct from the character sequence that they decompose into.
+    -   If we use a compatibility normalization form, ligatures are considered
+        equivalent to the character sequence that they decompose into.
 
     For a fixed-width font, a canonical normalization form is most likely to
     consider characters to be the same if they look the same. Unicode annexes
