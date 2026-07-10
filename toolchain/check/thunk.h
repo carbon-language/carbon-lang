@@ -42,13 +42,15 @@ auto BuildThunkDefinition(Context& context,
 // Given a declaration of a thunk and the function that it should call,
 // build a thunk body for calling a Carbon function from a C++
 // function. If the callee has a return value, the thunk returns it
-// through an explicit output parameter at the end of the parameter
-// list.
+// through an explicit output parameter. If export_as_constructor is true, the
+// output parameter comes before all other parameters (to match the Itanium ABI
+// for constructors), and otherwise it comes after.
 auto BuildThunkDefinitionForExport(Context& context,
                                    SemIR::FunctionId thunk_function_id,
                                    SemIR::FunctionId callee_function_id,
                                    SemIR::InstId thunk_id,
-                                   SemIR::InstId callee_id) -> void;
+                                   SemIR::InstId callee_id,
+                                   bool export_as_constructor) -> void;
 
 // Build a function that destroys an object of the given class.
 auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
