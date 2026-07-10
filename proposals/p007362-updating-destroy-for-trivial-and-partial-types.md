@@ -116,15 +116,22 @@ class C2 {
 `Destroy` destroys complete objects---including subobjects---and ends their
 lifetimes. Classes cannot customise `Destroy`: it is exclusively implemented by
 the compiler. Types requiring control over how subobjects are destroyed must use
-a raw storage type for subobjects.
+a raw storage type for subobjects. `Destroy` behaves uniformly for all
+destroyable types:
 
-Classes are allowed to opt out from being destroyable. The mechanism for
-describing non-destroyable types is not yet determined.
-
-`Destroy` behaves uniformly for all destroyable types.
+1. Remove qualifiers from the `Self` type.
+2. Call `self.(Core.Destructor.Op)()`, if `Self.Destructor` is implemented.
+3. Call `Destroy.Op()` on each subobject. The `.base` subobject has a `partial`
+   type during this step.
 
 > [!WARNING]
 > `Core.Destroy.Op` is unsafe.
+
+Types automatically implement `Destroy` unless they:
+
+* are abstract and not partial;
+* have a subobject that cannot be destroyed;
+* have explicitly opted out of being destructible (see [Future work])
 
 ### `Core.TrivialDestroy` interface
 
@@ -194,20 +201,24 @@ proposed in this document.
 
 * Identify an alternative name for `Destructor` (draft leads issue WIP).
 * Add an opt-out from implementing `Destroy`.
+* Describe why `Destructor.Op` is unsafe.
+  * [Issue #6124] notes that certain calls to `Destroy.Op` are considered safe. These should be
+    codified in the detailed description.
 * Unify with copy and move semantics.
 * Explore how types with virtual pointers can:
-  * opt out from `DynamicDestroy`
-  * manually implement `DynamicDestroy`
+  * opt out from `DynamicDestroy`.
+  * manually implement `DynamicDestroy`.
 
 <!-- Links -->
 
+[`Core.TrivialDestroy` interface]: #trivialdestroy-interface
+[Code that is easy to read, understand, and write]: /docs/project/goals.md#code-that-is-easy-to-read-understand-and-write
+[Constraining on `Destructor` should be an error]: #constraining-on-destructor-should-be-an-error
+[Future work]: #future-work
+[Interoperability with and migration from existing C++ code]: /docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code
 [Issue #6124]: https://github.com/carbon-language/carbon-lang/issues/6124
 [Issue #6161]: https://github.com/carbon-language/carbon-lang/issues/6161
 [Issue #6464]: https://github.com/carbon-language/carbon-lang/issues/6464
-[Constraining on `Destructor` should be an error]: #constraining-on-destructor-should-be-an-error
-[`Core.TrivialDestroy` interface]: #trivialdestroy-interface
 [P001154 Destructors]: proposals/p001154-destructors.md
-[Code that is easy to read, understand, and write]: /docs/project/goals.md#code-that-is-easy-to-read-understand-and-write
-[Software and language evolution]: /docs/project/goals.md#software-and-language-evolution
 [Practical safety and testing mechanisms]: /docs/project/goals.md#practical-safety-and-testing-mechanisms
-[Interoperability with and migration from existing C++ code]: /docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code
+[Software and language evolution]: /docs/project/goals.md#software-and-language-evolution
