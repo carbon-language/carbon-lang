@@ -11,6 +11,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/operator.h"
+#include "toolchain/check/scope_stack.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -139,8 +140,7 @@ auto IsCurrentPositionReachable(Context& context) -> bool {
 }
 
 auto MaybeAddCleanupForInst(Context& context, SemIR::InstId inst_id) -> void {
-  if (!context.scope_stack().IsInFunctionScope()) {
-    // Cleanup can only occur in function scopes.
+  if (!context.scope_stack().IsCleanupScope()) {
     return;
   }
 

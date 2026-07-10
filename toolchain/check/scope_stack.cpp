@@ -52,6 +52,7 @@ auto ScopeStack::VerifyNextCompileTimeBindIndex(llvm::StringLiteral label,
 
 auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
                       SemIR::SpecificId specific_id,
+                      CleanupScopeKind cleanup_scope_kind,
                       bool lexical_lookup_has_load_error) -> void {
   // If this scope doesn't have a specific of its own, it lives in the enclosing
   // scope's specific, if any.
@@ -60,7 +61,6 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
     enclosing_specific_id = PeekSpecificId();
   }
 
-  bool has_destroy_array = IsInFunctionScope();
   compile_time_binding_stack_.PushArray();
   scope_stack_.push_back(
       {.index = next_scope_index_,
@@ -71,7 +71,7 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
            compile_time_binding_stack_.all_values_size()),
        .lexical_lookup_has_load_error =
            LexicalLookupHasLoadError() || lexical_lookup_has_load_error,
-       .has_destroy_array = has_destroy_array});
+       .cleanup_scope_kind = cleanup_scope_kind});
   if (scope_stack_.back().is_lexical_scope()) {
     // For lexical lookups, unqualified lookup doesn't know how to find the
     // associated specific, so if we start adding lexical scopes associated with
@@ -97,14 +97,14 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
 
   VerifyNextCompileTimeBindIndex("Push", scope_stack_.back());
 
-  if (has_destroy_array) {
+  if (cleanup_scope_kind == CleanupScopeKind::Owned) {
     destroy_id_stack_.PushArray();
   }
 }
 
 auto ScopeStack::PushForDeclName() -> void {
   Push(SemIR::InstId::None, SemIR::NameScopeId::None, SemIR::SpecificId::None,
-       /*lexical_lookup_has_load_error=*/false);
+       CleanupScopeKind::None, /*lexical_lookup_has_load_error=*/false);
   MarkNestingIfInReturnScope();
 }
 
@@ -114,13 +114,20 @@ auto ScopeStack::PushForEntity(SemIR::InstId scope_inst_id,
                                bool lexical_lookup_has_load_error) -> void {
   CARBON_CHECK(scope_inst_id.has_value());
   CARBON_DCHECK(!sem_ir().insts().Is<SemIR::FunctionDecl>(scope_inst_id));
-  Push(scope_inst_id, scope_id, specific_id, lexical_lookup_has_load_error);
+  Push(scope_inst_id, scope_id, specific_id, CleanupScopeKind::None,
+       lexical_lookup_has_load_error);
   MarkNestingIfInReturnScope();
 }
 
-auto ScopeStack::PushForSameRegion() -> void {
+auto ScopeStack::PushForSameRegion(CleanupScopeKind cleanup_scope_kind)
+    -> void {
+  if (cleanup_scope_kind == CleanupScopeKind::Inherited &&
+      Peek().cleanup_scope_kind == CleanupScopeKind::None) {
+    cleanup_scope_kind = CleanupScopeKind::None;
+  }
+
   Push(SemIR::InstId::None, SemIR::NameScopeId::None, SemIR::SpecificId::None,
-       /*lexical_lookup_has_load_error=*/false);
+       cleanup_scope_kind, /*lexical_lookup_has_load_error=*/false);
 }
 
 auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
@@ -129,15 +136,10 @@ auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
   const auto& function = sem_ir().functions().Get(function_decl.function_id);
   auto self_specific = sem_ir().generics().GetSelfSpecific(function.generic_id);
   Push(scope_inst_id, SemIR::NameScopeId::None, self_specific,
-       /*lexical_lookup_has_load_error=*/false);
+       CleanupScopeKind::Owned, /*lexical_lookup_has_load_error=*/false);
 
   return_scope_stack_.push_back(
       {.decl_id = scope_inst_id, .cleanup_scope_depth = cleanup_scope_depth()});
-  auto& scope = scope_stack_.back();
-  if (!scope.has_destroy_array) {
-    scope.has_destroy_array = true;
-    destroy_id_stack_.PushArray();
-  }
 }
 
 auto ScopeStack::Pop(bool check_unused) -> void {
@@ -160,6 +162,12 @@ auto ScopeStack::Pop(bool check_unused) -> void {
     non_lexical_scope_stack_.pop_back();
   }
 
+  if (scope.cleanup_scope_kind == CleanupScopeKind::Owned) {
+    CARBON_CHECK(destroy_id_stack_.PeekArray().empty(),
+                 "Popping scope with cleanups");
+    destroy_id_stack_.PopArray();
+  }
+
   if (!return_scope_stack_.empty()) {
     if (scope.has_returned_var) {
       CARBON_CHECK(return_scope_stack_.back().returned_var.has_value());
@@ -169,33 +177,11 @@ auto ScopeStack::Pop(bool check_unused) -> void {
     if (return_scope_stack_.back().decl_id == scope.scope_inst_id) {
       // Leaving the function scope.
       return_scope_stack_.pop_back();
-      if (scope.has_destroy_array) {
-        destroy_id_stack_.PopArray();
-      }
     } else {
       if (return_scope_stack_.back().nested_scope_index == scope.index) {
         // Returned to a function scope from a non-function nested entity scope.
         return_scope_stack_.back().nested_scope_index = ScopeIndex::None;
       }
-      if (scope.has_destroy_array) {
-        if (!destroy_id_stack_.PeekArray().empty()) {
-          CARBON_CHECK(
-              !scope_stack_.empty() && scope_stack_.back().has_destroy_array,
-              "Popping scope with cleanups but outer scope does not "
-              "have a destroy array");
-        }
-        if (!scope_stack_.empty() && scope_stack_.back().has_destroy_array) {
-          destroy_id_stack_.MergeTopArrayIntoParent();
-        }
-        destroy_id_stack_.PopArray();
-      }
-    }
-  } else {
-    CARBON_CHECK(!scope.has_returned_var);
-    if (scope.has_destroy_array) {
-      CARBON_CHECK(destroy_id_stack_.PeekArray().empty(),
-                   "Popping scope outside function with cleanups");
-      destroy_id_stack_.PopArray();
     }
   }
 
@@ -219,8 +205,9 @@ auto ScopeStack::MergeTopScopeIntoGrandparentAndPop() -> void {
   auto& current = scope_stack_[scope_stack_.size() - 1];
 
   CARBON_CHECK(current.num_names == 0);
-  CARBON_CHECK(grandparent.has_destroy_array && parent.has_destroy_array &&
-               current.has_destroy_array);
+  CARBON_CHECK(grandparent.cleanup_scope_kind != CleanupScopeKind::None &&
+               parent.cleanup_scope_kind == CleanupScopeKind::Owned &&
+               current.cleanup_scope_kind == CleanupScopeKind::Owned);
   destroy_id_stack_.MergeTopArrayIntoGrandparent();
 
   Pop();
@@ -408,7 +395,7 @@ auto ScopeStack::Suspend() -> SuspendedScope {
   compile_time_binding_stack_.PopArray();
 
   // This would be easy to support if we had a need, but currently we do not.
-  CARBON_CHECK(!result.entry.has_destroy_array,
+  CARBON_CHECK(result.entry.cleanup_scope_kind == CleanupScopeKind::None,
                "Should not suspend a function definition scope.");
   CARBON_CHECK(!result.entry.has_returned_var,
                "Should not suspend a scope with a returned var.");

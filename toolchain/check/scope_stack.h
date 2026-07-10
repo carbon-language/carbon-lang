@@ -25,6 +25,24 @@ class ScopeStack {
  public:
   explicit ScopeStack(Context& context);
 
+  // The kind of cleanup scope that is associated with a scope. A cleanup scope
+  // contains the destructor calls that are necessary to perform when leaving a
+  // scope.
+  enum class CleanupScopeKind : uint8_t {
+    // This scope is not used for runtime expression evaluation, so should only
+    // contain constants. Any cleanups introduced here can be discarded.
+    // TODO: Is this the behavior we want for such scopes? Should we check that
+    // the cleanups themselves are constant?
+    None,
+    // This scope is associated with a subexpression, not a full-expression, so
+    // its cleanup scope is inherited from the parent scope.
+    Inherited,
+    // This scope is associated with a statement, so it owns a cleanup scope,
+    // and its cleanups must be run or explicitly discarded when exiting this
+    // scope.
+    Owned,
+  };
+
   // An index for the distance to the bottom of the cleanup stack.
   struct CleanupScopeDepth : public IndexBase<CleanupScopeDepth> {
     static constexpr llvm::StringLiteral Label = "cleanup_scope_depth";
@@ -68,7 +86,8 @@ class ScopeStack {
   // Pushes a scope which should be in the same region as the current scope.
   // These can be in a function without breaking `return` scoping. For example,
   // this is used by struct literals and code blocks.
-  auto PushForSameRegion() -> void;
+  auto PushForSameRegion(CleanupScopeKind cleanup_scope_kind =
+                             CleanupScopeKind::Inherited) -> void;
 
   // Pushes a function scope.
   auto PushForFunctionBody(SemIR::InstId scope_inst_id) -> void;
@@ -130,12 +149,6 @@ class ScopeStack {
   //
   // Requires that no names were introduced in the innermost scope.
   auto MergeTopScopeIntoGrandparentAndPop() -> void;
-
-  // Discards the cleanups in the current scope from cleanup tracking.
-  auto DiscardTopScopeCleanups() -> void {
-    destroy_id_stack_.PopArray();
-    destroy_id_stack_.PushArray();
-  }
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
@@ -226,6 +239,11 @@ class ScopeStack {
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;
 
+  // Returns whether this is a scope in which cleanups are tracked.
+  auto IsCleanupScope() const -> bool {
+    return Peek().cleanup_scope_kind != CleanupScopeKind::None;
+  }
+
   // Returns all values on `destroy_id_stack_` added since `depth`, and before
   // `end_depth` if specified.
   auto GetCleanupsSince(CleanupScopeDepth depth,
@@ -236,6 +254,12 @@ class ScopeStack {
       values = values.take_front(end_depth.index - depth.index);
     }
     return values;
+  }
+
+  // Discards the cleanups in the current scope from cleanup tracking.
+  auto DiscardTopScopeCleanups() -> void {
+    destroy_id_stack_.PopArray();
+    destroy_id_stack_.PushArray();
   }
 
   // Returns the current depth of the cleanup stack.
@@ -305,15 +329,15 @@ class ScopeStack {
     // unregistered when the scope ends.
     bool has_returned_var = false;
 
+    // The kind of cleanup scope that is associated with this scope.
+    CleanupScopeKind cleanup_scope_kind = CleanupScopeKind::None;
+
     // Whether there are any ids in the `names` set.
     int num_names = 0;
 
     // Names which are registered with lexical_lookup_, and will need to be
     // unregistered when the scope ends.
     Set<SemIR::NameId> names = {};
-
-    // Whether this scope pushed a cleanup array on `destroy_id_stack_`.
-    bool has_destroy_array = false;
   };
 
   // A scope in which `return` can be used.
@@ -345,8 +369,8 @@ class ScopeStack {
   // lexical_lookup_has_load_error is used to limit diagnostics when a given
   // namespace may contain a mix of both successful and failed name imports.
   auto Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
-            SemIR::SpecificId specific_id, bool lexical_lookup_has_load_error)
-      -> void;
+            SemIR::SpecificId specific_id, CleanupScopeKind cleanup_scope_kind,
+            bool lexical_lookup_has_load_error) -> void;
 
   auto Peek(int drop = 0) const -> const ScopeStackEntry& {
     CARBON_DCHECK(drop < static_cast<int>(scope_stack_.size()));

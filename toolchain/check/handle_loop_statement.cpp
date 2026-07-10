@@ -92,7 +92,7 @@ static auto FinishLoopBody(Context& context, Parse::NodeId node_id) -> void {
 
 auto HandleParseNode(Context& context, Parse::WhileConditionStartId node_id)
     -> bool {
-  context.scope_stack().PushForSameRegion();
+  context.scope_stack().PushForSameRegion(ScopeStack::CleanupScopeKind::Owned);
   context.node_stack().Push(node_id, StartLoopHeader(context, node_id));
   return true;
 }
@@ -121,10 +121,10 @@ auto HandleParseNode(Context& context, Parse::WhileStatementId node_id)
 auto HandleParseNode(Context& context, Parse::ForHeaderStartId node_id)
     -> bool {
   // Create a scope for the range and cursor of the for loop.
-  context.scope_stack().PushForSameRegion();
+  context.scope_stack().PushForSameRegion(ScopeStack::CleanupScopeKind::Owned);
 
   // Create a scope for any variables introduced in the pattern.
-  context.scope_stack().PushForSameRegion();
+  context.scope_stack().PushForSameRegion(ScopeStack::CleanupScopeKind::Owned);
 
   // Begin an implicit let declaration context for the pattern.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Let>();
@@ -147,7 +147,7 @@ auto HandleParseNode(Context& context, Parse::ForInId node_id) -> bool {
   // Create a temporary scope to hold the range expression and the cursor. This
   // comes before the pattern in control flow order, but we'll reorder temporary
   // destruction later.
-  context.scope_stack().PushForSameRegion();
+  context.scope_stack().PushForSameRegion(ScopeStack::CleanupScopeKind::Owned);
   return true;
 }
 
