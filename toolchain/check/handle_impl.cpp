@@ -283,13 +283,14 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
     if (is_final && context.match_first_context()) {
       CARBON_DIAGNOSTIC(FinalImplInMatchFirst, Error,
                         "`final impl` in `match_first` block");
-      auto builder = context.emitter().Build(node_id, FinalImplInMatchFirst);
       CARBON_DIAGNOSTIC(
           FinalImplInMatchFirstNote, Note,
           "the `match_first` block can be modified as `final` instead");
-      builder.Note(context.match_first_context()->decl_id,
-                   FinalImplInMatchFirstNote);
-      builder.Emit();
+      context.emitter()
+          .Build(node_id, FinalImplInMatchFirst)
+          .Note(context.match_first_context()->decl_id,
+                FinalImplInMatchFirstNote)
+          .Emit();
       impl_had_error = true;
     }
 
@@ -311,12 +312,12 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
               CARBON_DIAGNOSTIC(
                   ImplInTwoMatchFirst, Error,
                   "impl declared in `match_first` more than once");
-              auto builder =
-                  context.emitter().Build(node_id, ImplInTwoMatchFirst);
               CARBON_DIAGNOSTIC(ImplInTwoMatchFirstNote, Note,
                                 "previous declaration here");
-              builder.Note(prev_impl.latest_decl_id(), ImplInTwoMatchFirstNote);
-              builder.Emit();
+              context.emitter()
+                  .Build(node_id, ImplInTwoMatchFirst)
+                  .Note(prev_impl.latest_decl_id(), ImplInTwoMatchFirstNote)
+                  .Emit();
             }
             impl_had_error = true;
           }
