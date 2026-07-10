@@ -41,16 +41,11 @@ fn G(generic _: I(.Self) where .I1 = ()) {}
 // --- fail_period_self_as_type.carbon
 library "[[@TEST_NAME]]";
 
-// TODO: We should diagnose this use of `.Self` directly rather than later when
-// it is converted to `type`.
+// CHECK:STDERR: fail_period_self_as_type.carbon:[[@LINE+4]]:16: error: `.Self` used in a type that is not a facet type [PeriodSelfInNonFacetType]
+// CHECK:STDERR: interface I(T: .Self) {
+// CHECK:STDERR:                ^~~~~
+// CHECK:STDERR:
 interface I(T: .Self) {
-  // CHECK:STDERR: fail_period_self_as_type.carbon:[[@LINE+7]]:13: error: cannot implicitly convert non-type value of type `.Self` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   fn G() -> T;
-  // CHECK:STDERR:             ^
-  // CHECK:STDERR: fail_period_self_as_type.carbon:[[@LINE+4]]:13: note: type `.Self` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   fn G() -> T;
-  // CHECK:STDERR:             ^
-  // CHECK:STDERR:
   fn G() -> T;
 }
 
@@ -473,7 +468,7 @@ fn H(generic T: (L where .Self impls M) where C(.W) impls Z(.Self)) {
   C(()) as Z(T);
 }
 
-// --- fail_todo_concrete_access_witness_m_in_earlier_constraint.carbon
+// --- concrete_access_witness_m_in_earlier_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface L { let W: type; }
@@ -489,14 +484,7 @@ class C(C1: type);
 // Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
 // (since the type of `.Self` contains `M`) and the `final impl`. So we can get
 // a witness for `C(())` from `T`.
-//
-// TODO: How come we don't get `.W` evaluating to `()` when `M` comes from an
-// earlier constraint? Is the `where_stack` not working with `.Self`?
 fn G(generic T: L where .Self impls M and C(.W) impls Z(.Self)) {
-  // CHECK:STDERR: fail_todo_concrete_access_witness_m_in_earlier_constraint.carbon:[[@LINE+4]]:3: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   C(()) as Z(T);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   C(()) as Z(T);
 }
 
@@ -527,6 +515,44 @@ fn F(generic T: L where C(.W) impls Z(.Self) and .Self impls M) {
   // CHECK:STDERR:
   C(()) as Z(T);
 }
+
+// --- fail_period_self_in_class_argument.carbon
+library "[[@TEST_NAME]]";
+
+class C(T: type);
+
+// CHECK:STDERR: fail_period_self_in_class_argument.carbon:[[@LINE+4]]:17: error: `.Self` used in a type that is not a facet type [PeriodSelfInNonFacetType]
+// CHECK:STDERR: fn F(generic _: C(.Self)) {}
+// CHECK:STDERR:                 ^~~~~~~~
+// CHECK:STDERR:
+fn F(generic _: C(.Self)) {}
+
+// --- fail_period_self_in_class_argument_in_where.carbon
+library "[[@TEST_NAME]]";
+
+class C(T: type);
+
+// CHECK:STDERR: fail_period_self_in_class_argument_in_where.carbon:[[@LINE+8]]:17: error: left argument of `where` operator must be a facet type [WhereOnNonFacetType]
+// CHECK:STDERR: fn F(generic _: C(.Self) where type == type) {}
+// CHECK:STDERR:                 ^~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_period_self_in_class_argument_in_where.carbon:[[@LINE+4]]:32: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(generic _: C(.Self) where type == type) {}
+// CHECK:STDERR:                                ^~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(generic _: C(.Self) where type == type) {}
+
+// --- fail_period_self_in_interface_argument_in_class_argument.carbon
+library "[[@TEST_NAME]]";
+
+class C(T: type);
+interface Z(T: type);
+
+// CHECK:STDERR: fail_period_self_in_interface_argument_in_class_argument.carbon:[[@LINE+4]]:17: error: `.Self` used in a type that is not a facet type [PeriodSelfInNonFacetType]
+// CHECK:STDERR: fn F(generic _: C(Z(.Self))) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~
+// CHECK:STDERR:
+fn F(generic _: C(Z(.Self))) {}
 
 // CHECK:STDOUT: --- period_self_param.carbon
 // CHECK:STDOUT:

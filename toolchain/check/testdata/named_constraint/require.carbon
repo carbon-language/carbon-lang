@@ -739,6 +739,22 @@ constraint N {
   require C.(Z(Self).Z1) impls Y;
 }
 
+// --- fail_rewrite_cycle.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1: type;
+  let Z2: type;
+}
+
+constraint N {
+  // CHECK:STDERR: fail_rewrite_cycle.carbon:[[@LINE+4]]:17: error: found cycle in facet type constraint for `.(Z.Z2)` [FacetTypeConstraintCycle]
+  // CHECK:STDERR:   require impls Z where .Z1 = .Z2 and .Z2 = .Z1;
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  require impls Z where .Z1 = .Z2 and .Z2 = .Z1;
+}
+
 // CHECK:STDOUT: --- extend.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

@@ -129,6 +129,8 @@ static constexpr auto DeclIntroducers = [] {
       StateKind::ImplAfterIntroducer);
   set(Lex::TokenKind::Interface, NodeKind::InterfaceIntroducer,
       StateKind::TypeAfterIntroducerAsInterface);
+  set(Lex::TokenKind::MatchFirst, NodeKind::MatchFirstIntroducer,
+      StateKind::MatchFirst);
   set(Lex::TokenKind::Namespace, NodeKind::NamespaceStart,
       StateKind::Namespace);
   set(Lex::TokenKind::Observe, NodeKind::ObserveIntroducer,

@@ -647,9 +647,10 @@ auto DeduceGenericCallArguments(
 }
 
 auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
-                         const SemIR::Impl& impl, SemIR::ConstantId self_id,
+                         SemIR::ImplId impl_id, SemIR::ConstantId self_id,
                          SemIR::SpecificId constraint_specific_id)
     -> SemIR::SpecificId {
+  const auto& impl = context.impls().Get(impl_id);
   DeductionContext deduction(&context, loc_id, impl.generic_id,
                              /*enclosing_specific_id=*/SemIR::SpecificId::None,
                              /*diagnose=*/false);

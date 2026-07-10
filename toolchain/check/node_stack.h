@@ -522,6 +522,8 @@ class NodeStack {
       case Parse::NodeKind::MatchConditionStart:
       case Parse::NodeKind::MatchDefault:
       case Parse::NodeKind::MatchDefaultIntroducer:
+      case Parse::NodeKind::MatchFirstIntroducer:
+      case Parse::NodeKind::MatchFirstDefinitionStart:
       case Parse::NodeKind::MatchHandlerStart:
       case Parse::NodeKind::MatchHandler:
       case Parse::NodeKind::MatchIntroducer:
