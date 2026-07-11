@@ -189,6 +189,14 @@ class Context {
   // Consumes the current token. Does not return it.
   auto ConsumeAndDiscard() -> void { ++position_; }
 
+  // Parses an open curly brace token, possibly diagnosing if necessary. Creates
+  // a leaf parse node of the specified start kind. The default_token is used
+  // when there's no open curly brace. Returns the open curly brace token if it
+  // was found.
+  auto ConsumeAndAddOpenCurlyBrace(Lex::TokenIndex default_token,
+                                   NodeKind start_kind)
+      -> std::optional<Lex::TokenIndex>;
+
   // Parses an open paren token, possibly diagnosing if necessary. Creates a
   // leaf parse node of the specified start kind. The default_token is used when
   // there's no open paren. Returns the open paren token if it was found.
