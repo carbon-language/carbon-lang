@@ -468,7 +468,7 @@ fn CallsDrawChecked(c: Cowboy) {
 
 If the value or type depends on any template bindings, the lookup is redone from
 a context where the values of those bindings are known, but where the values of
-any symbolic bindings are still unknown. The lookup results from these two
+any checked bindings are still unknown. The lookup results from these two
 contexts are [combined](#lookup-ambiguity).
 
 ```carbon
@@ -525,9 +525,9 @@ fn CallH(a: DerivingWrapper(HasField),
 }
 ```
 
-**Note:** All lookups are done from a context where the values of any symbolic
+**Note:** All lookups are done from a context where the values of any checked
 bindings that are in scope are unknown. Unlike for a template binding, the
-actual value of a symbolic binding never affects the result of member
+actual value of a checked binding never affects the result of member
 resolution.
 
 #### Lookup ambiguity
@@ -628,7 +628,7 @@ For a simple member access `a.b` where `b` names a member of an interface `I`:
 -   Otherwise, `impl` lookup is not performed.
 
 The appropriate `impl T as I` implementation is located. The program is invalid
-if no such `impl` exists. When `T` or `I` depends on a symbolic binding, a
+if no such `impl` exists. When `T` or `I` depends on a checked binding, a
 suitable constraint must be specified to ensure that such an `impl` will exist.
 When `T` or `I` depends on a template binding, this check is deferred until the
 value for the template binding is known.
