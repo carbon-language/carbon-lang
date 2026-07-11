@@ -122,10 +122,10 @@ the compiler. Types requiring control over how subobjects are destroyed must use
 a raw storage type for subobjects. `Destroy` behaves uniformly for all
 destroyable types:
 
-1. Remove qualifiers from the `Self` type.
-2. Call `self.(Core.Destructor.Op)()`, if `Self.Destructor` is implemented.
-3. Call `Destroy.Op()` on each subobject. The `.base` subobject has a `partial`
-   type during this step.
+1.  Remove qualifiers from the `Self` type.
+2.  Call `self.(Core.Destructor.Op)()`, if `Self.Destructor` is implemented.
+3.  Call `Destroy.Op()` on each subobject. The `.base` subobject has a `partial`
+    type during this step.
 
 > [!WARNING] `Core.Destroy.Op` is unsafe.
 
