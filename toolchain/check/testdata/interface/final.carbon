@@ -179,7 +179,7 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @T.as_type.as.I.impl(%T.loc7_21.2: %J.type) {
+// CHECK:STDOUT: generic final impl @T.as_type.as.I.impl(%T.loc7_21.2: %J.type) {
 // CHECK:STDOUT:   %T.patt.loc7_21.2: %pattern_type.2c5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_21.2 (constants.%T.patt.ac1)]
 // CHECK:STDOUT:   %T.loc7_21.1: %J.type = symbolic_binding T, 0 [symbolic = %T.loc7_21.1 (constants.%T.e40)]
 // CHECK:STDOUT:   %T.as_type.loc7_26.1: type = facet_access_type %T.loc7_21.1 [symbolic = %T.as_type.loc7_26.1 (constants.%T.as_type.d90)]
@@ -189,7 +189,7 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.type: type = fn_type @T.as_type.as.I.impl.F, @T.as_type.as.I.impl(%T.loc7_21.1) [symbolic = %T.as_type.as.I.impl.F.type (constants.%T.as_type.as.I.impl.F.type.f53)]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F: @T.as_type.as.I.impl.%T.as_type.as.I.impl.F.type (%T.as_type.as.I.impl.F.type.f53) = struct_value () [symbolic = %T.as_type.as.I.impl.F (constants.%T.as_type.as.I.impl.F.305)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %.loc7_26 as %I.ref {
+// CHECK:STDOUT:   final impl: %.loc7_26 as %I.ref {
 // CHECK:STDOUT:     %T.as_type.as.I.impl.F.decl: @T.as_type.as.I.impl.%T.as_type.as.I.impl.F.type (%T.as_type.as.I.impl.F.type.f53) = fn_decl @T.as_type.as.I.impl.F [symbolic = @T.as_type.as.I.impl.%T.as_type.as.I.impl.F (constants.%T.as_type.as.I.impl.F.305)] {} {}
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (%T.as_type.as.I.impl.F.decl), @T.as_type.as.I.impl [concrete]
 // CHECK:STDOUT:     %I.impl_witness.loc7_33.1: <witness> = impl_witness %I.impl_witness_table, @T.as_type.as.I.impl(constants.%T.e40) [symbolic = %I.impl_witness.loc7_33.2 (constants.%I.impl_witness.333)]
