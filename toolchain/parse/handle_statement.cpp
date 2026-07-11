@@ -64,6 +64,7 @@ auto HandleStatement(Context& context) -> void {
     case Lex::TokenKind::Interface:
     case Lex::TokenKind::Let:
     case Lex::TokenKind::Library:
+    case Lex::TokenKind::MatchFirst:
     case Lex::TokenKind::Namespace:
     case Lex::TokenKind::Observe:
     // We intentionally don't handle Package here, because `package.` can be

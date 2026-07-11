@@ -66,7 +66,6 @@ interface Z {}
 match_first {
   impl () as Z;
 }
-
 impl () as Z {}
 
 // --- definition.carbon
@@ -84,7 +83,6 @@ library "[[@TEST_NAME]]";
 interface Z {}
 
 impl () as Z;
-
 match_first {
   impl () as Z {}
 }
@@ -100,14 +98,66 @@ class C {
   }
 }
 
-// --- todo_fail_inside_match_first.carbon
+// --- inside_function.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+fn F() {
+  match_first {
+    impl () as Z {}
+  }
+}
+
+// --- fail_inside_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+interface Y {
+  // CHECK:STDERR: fail_inside_interface.carbon:[[@LINE+7]]:3: error: found `match_first` in invalid scope; expected namespace or class [MatchFirstInWrongScope]
+  // CHECK:STDERR:   match_first {
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_inside_interface.carbon:[[@LINE-4]]:1: note: in enclosing scope here [MatchFirstInWrongScopeNote]
+  // CHECK:STDERR: interface Y {
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  match_first {
+    impl Self as Z {}
+  }
+}
+
+// --- fail_inside_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+constraint N {
+  // CHECK:STDERR: fail_inside_constraint.carbon:[[@LINE+7]]:3: error: found `match_first` in invalid scope; expected namespace or class [MatchFirstInWrongScope]
+  // CHECK:STDERR:   match_first {
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_inside_constraint.carbon:[[@LINE-4]]:1: note: in enclosing scope here [MatchFirstInWrongScopeNote]
+  // CHECK:STDERR: constraint N {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  match_first {
+    impl Self as Z {}
+  }
+}
+
+// --- fail_inside_match_first.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
 
 match_first {
-  // TODO: Can't write match_first in another match_first, that puts the same
-  // impl in two match_first blocks.
+  // CHECK:STDERR: fail_inside_match_first.carbon:[[@LINE+7]]:3: error: found `match_first` in invalid scope; expected namespace or class [MatchFirstInWrongScope]
+  // CHECK:STDERR:   match_first {
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_inside_match_first.carbon:[[@LINE-4]]:1: note: in enclosing scope here [MatchFirstInWrongScopeNote]
+  // CHECK:STDERR: match_first {
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
   match_first {
     impl () as Z {}
   }

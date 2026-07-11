@@ -417,6 +417,7 @@ class NodeStack {
     switch (node_kind) {
       case Parse::NodeKind::CallExprStart:
       case Parse::NodeKind::IfExprThen:
+      case Parse::NodeKind::MatchFirstDefinitionStart:
       case Parse::NodeKind::ObserveIntroducer:
       case Parse::NodeKind::RequireIntroducer:
       case Parse::NodeKind::ShortCircuitOperandAnd:
@@ -523,7 +524,6 @@ class NodeStack {
       case Parse::NodeKind::MatchDefault:
       case Parse::NodeKind::MatchDefaultIntroducer:
       case Parse::NodeKind::MatchFirstIntroducer:
-      case Parse::NodeKind::MatchFirstDefinitionStart:
       case Parse::NodeKind::MatchHandlerStart:
       case Parse::NodeKind::MatchHandler:
       case Parse::NodeKind::MatchIntroducer:
