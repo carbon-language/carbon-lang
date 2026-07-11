@@ -22,7 +22,7 @@ fn IndirectDeclared();
 
 fn IndirectDefined() {}
 
-fn IndirectGeneric(T:! type, x: T*) -> T* {
+fn IndirectGeneric(generic T: type, x: T*) -> T* {
   IndirectDeclared();
   IndirectDefined();
   return x;
@@ -38,7 +38,7 @@ fn DirectDeclared();
 
 fn DirectDefined() {}
 
-fn DirectGeneric(T:! type, y: T*) -> T* {
+fn DirectGeneric(generic T: type, y: T*) -> T* {
   DirectDeclared();
   DirectDefined();
   return IndirectGeneric(T, y);

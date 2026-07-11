@@ -18,7 +18,7 @@ class C {}
 
 impl C as Empty {}
 
-fn F(T:! Empty) {
+fn F(generic T: Empty) {
   var unused x: T*;
 }
 
@@ -90,13 +90,13 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc21_7.1: %pattern_type.894 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_7.2 (constants.%T.patt.1d7)]
+// CHECK:STDOUT:     %T.patt.loc21_15.1: %pattern_type.894 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_15.2 (constants.%T.patt.1d7)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc21: type = splice_block %Empty.ref [concrete = constants.%Empty.type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Empty.ref: type = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc21_7.2: %Empty.type = symbolic_binding T, 0 [symbolic = %T.loc21_7.1 (constants.%T.4e8)]
+// CHECK:STDOUT:     %T.loc21_15.2: %Empty.type = symbolic_binding T, 0 [symbolic = %T.loc21_15.1 (constants.%T.4e8)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -130,12 +130,12 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc21_7.2: %Empty.type) {
-// CHECK:STDOUT:   %T.patt.loc21_7.2: %pattern_type.894 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_7.2 (constants.%T.patt.1d7)]
-// CHECK:STDOUT:   %T.loc21_7.1: %Empty.type = symbolic_binding T, 0 [symbolic = %T.loc21_7.1 (constants.%T.4e8)]
+// CHECK:STDOUT: generic fn @F(%T.loc21_15.2: %Empty.type) {
+// CHECK:STDOUT:   %T.patt.loc21_15.2: %pattern_type.894 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_15.2 (constants.%T.patt.1d7)]
+// CHECK:STDOUT:   %T.loc21_15.1: %Empty.type = symbolic_binding T, 0 [symbolic = %T.loc21_15.1 (constants.%T.4e8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc22_18.2: type = facet_access_type %T.loc21_7.1 [symbolic = %T.as_type.loc22_18.2 (constants.%T.as_type.22c)]
+// CHECK:STDOUT:   %T.as_type.loc22_18.2: type = facet_access_type %T.loc21_15.1 [symbolic = %T.as_type.loc22_18.2 (constants.%T.as_type.22c)]
 // CHECK:STDOUT:   %ptr.loc22_18.2: type = ptr_type %T.as_type.loc22_18.2 [symbolic = %ptr.loc22_18.2 (constants.%ptr)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc22_18.2 [symbolic = %require_complete (constants.%require_complete.ee8)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc22_18.2 [symbolic = %pattern_type (constants.%pattern_type.777)]
@@ -167,7 +167,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:     %DefaultOrUnformed.WithSelf.Op.call: init @F.%ptr.loc22_18.2 (%ptr) = call %specific_impl_fn.loc22_19.1()
 // CHECK:STDOUT:     assign %x.var, %DefaultOrUnformed.WithSelf.Op.call
 // CHECK:STDOUT:     %.loc22_18.1: type = splice_block %ptr.loc22_18.1 [symbolic = %ptr.loc22_18.2 (constants.%ptr)] {
-// CHECK:STDOUT:       %T.ref: %Empty.type = name_ref T, %T.loc21_7.2 [symbolic = %T.loc21_7.1 (constants.%T.4e8)]
+// CHECK:STDOUT:       %T.ref: %Empty.type = name_ref T, %T.loc21_15.2 [symbolic = %T.loc21_15.1 (constants.%T.4e8)]
 // CHECK:STDOUT:       %T.as_type.loc22_18.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc22_18.2 (constants.%T.as_type.22c)]
 // CHECK:STDOUT:       %.loc22_18.2: type = converted %T.ref, %T.as_type.loc22_18.1 [symbolic = %T.as_type.loc22_18.2 (constants.%T.as_type.22c)]
 // CHECK:STDOUT:       %ptr.loc22_18.1: type = ptr_type %.loc22_18.2 [symbolic = %ptr.loc22_18.2 (constants.%ptr)]
@@ -201,7 +201,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.4e8) {
-// CHECK:STDOUT:   %T.patt.loc21_7.2 => constants.%T.patt.1d7
-// CHECK:STDOUT:   %T.loc21_7.1 => constants.%T.4e8
+// CHECK:STDOUT:   %T.patt.loc21_15.2 => constants.%T.patt.1d7
+// CHECK:STDOUT:   %T.loc21_15.1 => constants.%T.4e8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -67,7 +67,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-class D(template T:! type) {}
+class D(template T: type) {}
 
 //@dump-sem-ir-begin
 fn F() {
@@ -78,10 +78,10 @@ fn F() {
 // --- generic_use_inside_generic.carbon
 library "[[@TEST_NAME]]";
 
-class C(template T:! type) {}
+class C(template T: type) {}
 
 //@dump-sem-ir-begin
-fn F(template T:! type) {
+fn F(template T: type) {
   var unused v: C(T) = {};
 }
 //@dump-sem-ir-end
@@ -487,9 +487,9 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc6_16.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc6_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc6_19.1: type = splice_block %.loc6_19.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc6_18.1: type = splice_block %.loc6_18.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc6_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc6_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_16.2: type = symbolic_binding T, 0, template [template = %T.loc6_16.1 (constants.%T)]
 // CHECK:STDOUT:   }

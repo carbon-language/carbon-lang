@@ -13,9 +13,9 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
-  final let I:! i32;
-  default let D:! bool;
+  let T: type;
+  final let I: i32;
+  default let D: bool;
 }
 
 // --- initializer.carbon
@@ -23,9 +23,9 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type = (i32, i32);
-  final let I:! i32 = 42;
-  default let D:! bool = false;
+  let T: type = (i32, i32);
+  final let I: i32 = 42;
+  default let D: bool = false;
 }
 
 // CHECK:STDOUT: - filename: associated_constants.carbon
@@ -40,19 +40,19 @@ interface I {
 // CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
 // CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
 // CHECK:STDOUT:         {kind: 'FinalModifier', text: 'final'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
 // CHECK:STDOUT:         {kind: 'DefaultModifier', text: 'default'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'D'},
 // CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 21},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
@@ -69,7 +69,7 @@ interface I {
 // CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
 // CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'AssociatedConstantInitializer', text: '='},
 // CHECK:STDOUT:           {kind: 'TupleLiteralStart', text: '('},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
@@ -81,7 +81,7 @@ interface I {
 // CHECK:STDOUT:         {kind: 'FinalModifier', text: 'final'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'AssociatedConstantInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '42'},
 // CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 8},
@@ -89,7 +89,7 @@ interface I {
 // CHECK:STDOUT:         {kind: 'DefaultModifier', text: 'default'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'D'},
 // CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'AssociatedConstantInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'BoolLiteralFalse', text: 'false'},
 // CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 8},

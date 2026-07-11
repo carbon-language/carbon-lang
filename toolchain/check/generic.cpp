@@ -305,11 +305,11 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
   // unattached. This happens for out-of-line redeclarations of members of
   // dependent scopes:
   //
-  //   class A(T:! type) {
+  //   class A(T: type) {
   //     fn F();
   //   }
   //   // Has generic type and constant value, but no generic region.
-  //   fn A(T:! type).F() {}
+  //   fn A(T: type).F() {}
   //
   // TODO: Copy the attached type and constant value from the previous
   // declaration in this case instead of attempting to attach the new
@@ -407,7 +407,7 @@ auto StartGenericDefinition(Context& context, SemIR::GenericId generic_id)
   // have locally-introduced generic parameters to track:
   //
   // fn F() {
-  //   let T:! type = i32;
+  //   let generic T: type = i32;
   //   var x: T;
   // }
   context.generic_region_stack().Push(

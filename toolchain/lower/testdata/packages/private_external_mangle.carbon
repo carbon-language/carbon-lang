@@ -26,7 +26,7 @@ private class C {
   }
 }
 
-fn CallInA(unused T:! type) {
+fn CallInA(unused generic T: type) {
   Call();
   C.Call();
 }
@@ -47,7 +47,7 @@ private class C {
   }
 }
 
-fn CallInB(unused T:! type) {
+fn CallInB(unused generic T: type) {
   Call();
   C.Call();
 }

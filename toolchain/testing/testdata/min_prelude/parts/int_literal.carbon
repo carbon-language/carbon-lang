@@ -12,7 +12,7 @@ alias IntLiteral = MakeIntLiteral();
 // Negate.
 
 interface Negate {
-  let Result:! type;
+  let Result: type;
   fn Op(self) -> Result;
 }
 

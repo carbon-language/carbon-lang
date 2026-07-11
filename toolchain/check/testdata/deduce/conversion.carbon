@@ -17,7 +17,7 @@ library "[[@TEST_NAME]]";
 class A {}
 class B {}
 
-fn F(unused T:! type) {}
+fn F(unused generic T: type) {}
 
 // Requires a conversion from (type, type) -> type.
 fn G() {
@@ -36,7 +36,7 @@ impl A as Core.ImplicitAs(type) {
   eval fn Convert(unused self) -> type { return B; }
 }
 
-fn F(unused T:! type) {}
+fn F(unused generic T: type) {}
 
 // Requires a conversion from A -> type.
 fn G() {
@@ -56,7 +56,7 @@ impl A as Core.ImplicitAs(B) {
   fn Convert(self) -> B;
 }
 
-fn F(unused T:! type, unused b: B) {}
+fn F(unused generic T: type, unused b: B) {}
 
 fn G(a: A) {
   // This should only call the implicit conversion function from A to B once,

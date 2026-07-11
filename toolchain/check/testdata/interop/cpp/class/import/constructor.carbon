@@ -49,7 +49,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-fn G(T:! Core.Default & Core.Destroy) {
+fn G(generic T: Core.Default & Core.Destroy) {
   var unused x: T;
 }
 
@@ -75,7 +75,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "default.h";
 
-fn G(T:! Core.Default & Core.Destroy) {
+fn G(generic T: Core.Default & Core.Destroy) {
   var unused x: T;
 }
 
@@ -83,9 +83,9 @@ fn CallG() {
   // CHECK:STDERR: fail_no_default.carbon:[[@LINE+7]]:3: error: cannot convert type `NoDefault` into type implementing `Core.Default & Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   G(Cpp.NoDefault);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_no_default.carbon:[[@LINE-8]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn G(T:! Core.Default & Core.Destroy) {
-  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_no_default.carbon:[[@LINE-8]]:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn G(generic T: Core.Default & Core.Destroy) {
+  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   G(Cpp.NoDefault);
 }

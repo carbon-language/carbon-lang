@@ -142,7 +142,7 @@ fn Use() {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self) { }
 }
 
@@ -150,7 +150,7 @@ base class Base(T:! type) {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! Core.Destroy) {
+base class Base(T: Core.Destroy) {
   virtual fn F(unused self) {
     var _: T;
   }
@@ -170,7 +170,7 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self) { }
 }
 

@@ -13,7 +13,7 @@
 import Core library "io";
 
 interface I {
-  let T:! Core.Destroy;
+  let T: Core.Destroy;
   fn F() -> T;
 }
 class X {}
@@ -33,7 +33,7 @@ impl Y as I where .T = i32 {
 
 // Cannot coalesce the lowering for G specifics, as they call different functions.
 // Check different functions are still emitted when trying to deduplicate emitted definitons.
-fn G(U:! I) {
+fn G(generic U: I) {
   let _: U.T = U.F();
 }
 

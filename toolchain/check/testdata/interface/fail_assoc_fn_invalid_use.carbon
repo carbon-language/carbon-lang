@@ -20,7 +20,7 @@ interface I {
   fn F(self);
 }
 
-fn Use(T:! I) {
+fn Use(generic T: I) {
   // CHECK:STDERR: fail_member_access.carbon:[[@LINE+4]]:3: error: type `<type of F in T>` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   T.F.member;
   // CHECK:STDERR:   ^~~~~~~~~~
@@ -65,13 +65,13 @@ fn Use(T:! I) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
-// CHECK:STDOUT:     %T.patt.loc8_9.1: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc8_17.1: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8: type = splice_block %I.ref [concrete = constants.%I.type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc8_9.2: %I.type = symbolic_binding T, 0 [symbolic = %T.loc8_9.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_17.2: %I.type = symbolic_binding T, 0 [symbolic = %T.loc8_17.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -114,21 +114,21 @@ fn Use(T:! I) {
 // CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.as_type.loc5_8.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Use(%T.loc8_9.2: %I.type) {
-// CHECK:STDOUT:   %T.patt.loc8_9.2: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_9.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc8_9.1: %I.type = symbolic_binding T, 0 [symbolic = %T.loc8_9.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @Use(%T.loc8_17.2: %I.type) {
+// CHECK:STDOUT:   %T.patt.loc8_17.2: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_17.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc8_17.1: %I.type = symbolic_binding T, 0 [symbolic = %T.loc8_17.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc13_4.2: type = facet_access_type %T.loc8_9.1 [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%T.loc8_9.1) [symbolic = %I.WithSelf.F.type (constants.%I.WithSelf.F.type.418)]
-// CHECK:STDOUT:   %.loc13_4.2: type = fn_type_with_self_type %I.WithSelf.F.type, %T.loc8_9.1 [symbolic = %.loc13_4.2 (constants.%.81d)]
-// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc8_9.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
+// CHECK:STDOUT:   %T.as_type.loc13_4.2: type = facet_access_type %T.loc8_17.1 [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%T.loc8_17.1) [symbolic = %I.WithSelf.F.type (constants.%I.WithSelf.F.type.418)]
+// CHECK:STDOUT:   %.loc13_4.2: type = fn_type_with_self_type %I.WithSelf.F.type, %T.loc8_17.1 [symbolic = %.loc13_4.2 (constants.%.81d)]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc8_17.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
 // CHECK:STDOUT:   %impl.elem0.loc13_4.2: @Use.%.loc13_4.2 (%.81d) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.loc13_4.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref: %I.type = name_ref T, %T.loc8_9.2 [symbolic = %T.loc8_9.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: %I.type = name_ref T, %T.loc8_17.2 [symbolic = %T.loc8_17.1 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc13_4.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc13_4.1: type = converted %T.ref, %T.as_type.loc13_4.1 [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
@@ -155,8 +155,8 @@ fn Use(T:! I) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Use(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc8_9.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_17.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc8_17.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%T) {

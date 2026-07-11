@@ -14,13 +14,13 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let U:! type;
+  let U: type;
   fn F() -> U;
 }
 
 class C { adapt {}; }
 
-impl forall [T:! type] T as I where .U = C {
+impl forall [T: type] T as I where .U = C {
   // We perform name lookup into `I` and resolve `U` to `T.(I.U)`.
   //@dump-sem-ir-begin
   fn F() -> U { return {} as C; }
@@ -55,7 +55,7 @@ impl forall [T:! type] T as I where .U = C {
 // CHECK:STDOUT:   %T.as.I.impl.F.type: type = fn_type @T.as.I.impl.F, @T.as.I.impl(%T.loc10_15.1) [symbolic = %T.as.I.impl.F.type (constants.%T.as.I.impl.F.type)]
 // CHECK:STDOUT:   %T.as.I.impl.F: @T.as.I.impl.%T.as.I.impl.F.type (%T.as.I.impl.F.type) = struct_value () [symbolic = %T.as.I.impl.F (constants.%T.as.I.impl.F)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T.ref as %.loc10_31 {
+// CHECK:STDOUT:   impl: %T.ref as %.loc10_30 {
 // CHECK:STDOUT:     %T.as.I.impl.F.decl: @T.as.I.impl.%T.as.I.impl.F.type (%T.as.I.impl.F.type) = fn_decl @T.as.I.impl.F [symbolic = @T.as.I.impl.%T.as.I.impl.F (constants.%T.as.I.impl.F)] {
 // CHECK:STDOUT:       %return.param_patt: %pattern_type.98b = out_param_pattern [concrete = constants.%return.param_patt.89a]
 // CHECK:STDOUT:       %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %U.ref [concrete = constants.%return.patt.e4a]
@@ -74,8 +74,8 @@ impl forall [T:! type] T as I where .U = C {
 // CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:     .F = %T.as.I.impl.F.decl
 // CHECK:STDOUT:     .C = <poisoned>
-// CHECK:STDOUT:     extend %.loc10_31
-// CHECK:STDOUT:     witness = %I.impl_witness.loc10_44.1
+// CHECK:STDOUT:     extend %.loc10_30
+// CHECK:STDOUT:     witness = %I.impl_witness.loc10_43.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,7 +106,7 @@ impl forall [T:! type] T as I where .U = C {
 // CHECK:STDOUT: specific @T.as.I.impl(constants.%T) {
 // CHECK:STDOUT:   %T.patt.loc10_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc10_15.1 => constants.%T
-// CHECK:STDOUT:   %I.impl_witness.loc10_44.2 => constants.%I.impl_witness
+// CHECK:STDOUT:   %I.impl_witness.loc10_43.2 => constants.%I.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as.I.impl.F.type => constants.%T.as.I.impl.F.type

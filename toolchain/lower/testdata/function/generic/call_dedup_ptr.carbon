@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_dedup_ptr.carbon
 
-fn F[T:! Core.Copy](x: T) -> T {
+fn F[T: Core.Copy](x: T) -> T {
   return x;
 }
 

@@ -13,8 +13,8 @@ import library "prelude/parts/copy";
 import library "prelude/parts/optional";
 
 interface Iterate {
-  let ElementType:! Copy;
-  let CursorType:! type;
+  let ElementType: Copy;
+  let CursorType: type;
   fn NewCursor(self) -> CursorType;
   fn Next(self, cursor: CursorType*) -> Optional(ElementType);
 }

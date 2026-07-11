@@ -10,7 +10,10 @@ auto HandleChoiceIntroducer(Context& context) -> void {
   auto state = context.PopState();
 
   context.PushState(state, StateKind::ChoiceDefinitionStart);
-  context.PushState(StateKind::DeclNameAndParams, state.token);
+  // Choice alternative parameters, parsed separately below, are runtime by
+  // default, unlike the choice type parameters handled here.
+  context.PushState(StateKind::DeclNameAndParams, state.token,
+                    BindingContext::CompileTimeEntityParam);
 }
 
 auto HandleChoiceDefinitionStart(Context& context) -> void {

@@ -46,8 +46,8 @@ library "[[@TEST_NAME]]";
 
 fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
 
-class Expect(B:! bool) {}
-fn Test(B:! bool) -> Expect(B) { return {}; }
+class Expect(B: bool) {}
+fn Test(generic B: bool) -> Expect(B) { return {}; }
 
 fn F() {
   Test(Eq(5, 5)) as Expect(true);
@@ -62,8 +62,8 @@ library "[[@TEST_NAME]]";
 
 fn Eq(a: Core.IntLiteral, b: i32) -> bool = "int.eq";
 
-class Expect(B:! bool) {}
-fn Test(B:! bool) -> Expect(B) { return {}; }
+class Expect(B: bool) {}
+fn Test(generic B: bool) -> Expect(B) { return {}; }
 
 fn F() {
   Test(Eq(5, 5)) as Expect(true);

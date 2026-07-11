@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_impl_function.carbon
 
 
-interface SomeInterface(T:! type) {
+interface SomeInterface(T: type) {
   fn F(x: T) -> T;
 }
 
@@ -32,7 +32,7 @@ impl ImplsSomeInterface as SomeInterface(i32) {
 // }
 
 
-fn CallGenericMethod(T:! type, U:! SomeInterface(T), x: T) -> T {
+fn CallGenericMethod(generic T: type, generic U: SomeInterface(T), x: T) -> T {
   return U.F(x);
 }
 

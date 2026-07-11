@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-choice SomeChoice(T:! type) {
+choice SomeChoice(T: type) {
     Val1,
     Val2(a: i32, b: array(T, 5), t: T),
     Val3
