@@ -143,10 +143,14 @@ static auto HasWitnessForOneField(
 // Returns true if `class_type` should impl `Destroy`.
 static auto CanDestroyClass(
     Context& context, SemIR::LocId loc_id, SemIR::ClassType class_type,
-    SemIR::SpecificInterfaceId query_specific_interface_id)
+    SemIR::SpecificInterfaceId query_specific_interface_id, bool is_partial)
     -> DestroyFormat {
-
   auto class_info = context.classes().Get(class_type.class_id);
+
+  if (!is_partial && class_info.inheritance_kind ==
+                         SemIR::Class::InheritanceKind::Abstract) {
+    return DestroyFormat::NoDestroy;
+  }
 
   // `LookupCppImpl` handles C++ types.
   if (context.name_scopes().Get(class_info.scope_id).is_cpp_scope()) {
@@ -227,7 +231,7 @@ static auto CanDestroyType(
 
     case CARBON_KIND(SemIR::ClassType class_type): {
       return CanDestroyClass(context, loc_id, class_type,
-                             query_specific_interface_id);
+                             query_specific_interface_id, /*is_partial=*/false);
     }
 
     case CARBON_KIND(SemIR::ConstType const_type): {
@@ -247,7 +251,7 @@ static auto CanDestroyType(
       auto class_type =
           context.insts().GetAs<SemIR::ClassType>(partial_type.inner_id);
       return CanDestroyClass(context, loc_id, class_type,
-                             query_specific_interface_id);
+                             query_specific_interface_id, /*is_partial=*/true);
     }
 
     case CARBON_KIND(SemIR::StructType struct_type): {
@@ -259,10 +263,21 @@ static auto CanDestroyType(
           PrepareForHasWitness(context, loc_id, query_specific_interface_id);
       bool has_witness = true;
       for (const auto& field : fields) {
-        if (!HasWitnessForRepeatedField(context, loc_id, field.type_inst_id,
-                                        query_facet_type_const_id)) {
-          has_witness = false;
-          break;
+        if (field.name_id == SemIR::NameId::Base) {
+          auto base_class_type =
+              context.insts().GetAs<SemIR::ClassType>(field.type_inst_id);
+          if (CanDestroyClass(context, loc_id, base_class_type,
+                              query_specific_interface_id,
+                              /*is_partial=*/true) == DestroyFormat::NoDestroy) {
+            has_witness = false;
+            break;
+          }
+        } else {
+          if (!HasWitnessForRepeatedField(context, loc_id, field.type_inst_id,
+                                          query_facet_type_const_id)) {
+            has_witness = false;
+            break;
+          }
         }
       }
       CleanupAfterHasWitness(context);
