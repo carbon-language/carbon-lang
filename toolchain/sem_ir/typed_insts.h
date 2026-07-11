@@ -942,6 +942,16 @@ struct GenericNamedConstraintType {
   SpecificId enclosing_specific_id;
 };
 
+// A `match_first` declaration.
+struct MatchFirstDecl {
+  static constexpr auto Kind =
+      InstKind::MatchFirstDecl.Define<Parse::MatchFirstDefinitionStartId>(
+          {.ir_name = "match_first",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+  SemIR::InstId enclosing_scope_inst_id;
+};
+
 // An `impl` declaration.
 struct ImplDecl {
   static constexpr auto Kind = InstKind::ImplDecl.Define<Parse::AnyImplDeclId>(
