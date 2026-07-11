@@ -215,7 +215,7 @@ struct Assign {
   InstId rhs_id;
 };
 
-// An associated constant declaration in an interface, such as `let T:! type;`.
+// An associated constant declaration in an interface, such as `let T: type;`.
 struct AssociatedConstantDecl {
   static constexpr auto Kind =
       InstKind::AssociatedConstantDecl
@@ -1996,7 +1996,7 @@ struct StructValue {
   InstBlockId elements_id;
 };
 
-// Binds a symbolic name, such as `x` in `let x:! i32 = 7;`. See AnyBinding for
+// Binds a symbolic name, such as `x` in `let x: i32 = 7;`. See AnyBinding for
 // member documentation.
 struct SymbolicBinding {
   static constexpr auto Kind = InstKind::SymbolicBinding.Define<Parse::NodeId>(

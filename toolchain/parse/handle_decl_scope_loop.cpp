@@ -308,6 +308,11 @@ static auto HandleDecl(Context& context, DeclContextKind decl_context_kind)
     saw_modifier = true;
   }
   if (!TryHandleAsDecl(context, state, saw_modifier, decl_context_kind)) {
+    // TODO: A phase keyword written before the introducer, such as `generic
+    // let` or `template let` where `let` must come first, lands here as an
+    // unrecognized declaration. Detect a phase keyword followed by an
+    // introducer and diagnose the ordering specifically, recovering as if the
+    // introducer came first.
     HandleUnrecognizedDecl(context, state.subtree_start);
   }
 }

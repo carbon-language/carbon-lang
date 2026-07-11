@@ -14,7 +14,7 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
 interface J {
@@ -30,12 +30,12 @@ interface J {
 library "[[@TEST_NAME]]";
 
 interface I2 {
-  let T2:! type;
+  let T2: type;
 }
 
 interface J2;
 
-impl forall [V:! J2] V as I2 where .T2 = () {}
+impl forall [V: J2] V as I2 where .T2 = () {}
 
 //@dump-sem-ir-begin
 interface J2 {

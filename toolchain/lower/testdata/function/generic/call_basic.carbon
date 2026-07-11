@@ -16,16 +16,16 @@ class C {
   }
 }
 
-fn F[T:! type](_: T) {
+fn F[T: type](_: T) {
 }
 
-fn H[T:! Core.Copy](x: T) -> T {
+fn H[T: Core.Copy](x: T) -> T {
   return x;
 }
 
 // Simple stress test for single depth of calls with change in types.
 // Check definitions are emitted for each specific.
-fn G[T:! Core.Copy & Core.Destroy](x: T) -> T {
+fn G[T: Core.Copy & Core.Destroy](x: T) -> T {
   H(x);
   H(i32);
   H(G(x));

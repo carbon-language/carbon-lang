@@ -18,7 +18,7 @@ class C {
 
 // The two specifics for recursive function F, when T is a pointer, could be
 // deduplicated.
-fn F[T:! Core.Copy](x: T, count: i32) -> T {
+fn F[T: Core.Copy](x: T, count: i32) -> T {
   if (count > 0) {
     return x;
   }

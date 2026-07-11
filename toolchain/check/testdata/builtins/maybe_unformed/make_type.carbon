@@ -48,10 +48,10 @@ library "[[@TEST_NAME]]";
 fn NoParam() -> type = "maybe_unformed.make_type";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "maybe_unformed.make_type" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
+fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:

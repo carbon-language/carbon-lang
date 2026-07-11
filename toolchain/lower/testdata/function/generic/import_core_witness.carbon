@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-fn F(x:! i32) {
+fn F(generic x: i32) {
   // This generates a witness for the destructor of `y` which is reused by the
   // instantiation for the call in `main.carbon`.
   var unused y: i32 = x;

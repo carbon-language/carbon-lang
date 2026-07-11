@@ -16,8 +16,8 @@
 
 library "[[@TEST_NAME]]";
 
-interface I(T:! type) { fn F(self); }
-class C(T:! type) {}
+interface I(T: type) { fn F(self); }
+class C(T: type) {}
 
 class X {}
 
@@ -93,18 +93,18 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %I.decl: %I.type.335 = interface_decl @I [concrete = constants.%I.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_14.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc4_16.1: type = splice_block %.loc4_16.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc4_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc4_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc5_10.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc5_13.1: type = splice_block %.loc5_13.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc5_12.1: type = splice_block %.loc5_12.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc5_13.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc5_12.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc5_10.1 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -117,31 +117,31 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc4_14.1)> [symbolic = %I.type (constants.%I.type.3fe)]
-// CHECK:STDOUT:   %Self.loc4_23.2: @I.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self)]
+// CHECK:STDOUT:   %Self.loc4_22.2: @I.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self.loc4_22.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc4_23.1: @I.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc4_22.1: @I.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self.loc4_22.2 (constants.%Self)]
 // CHECK:STDOUT:     %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F)] {
-// CHECK:STDOUT:       %self.param_patt.loc4_30.1: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = value_param_pattern [symbolic = %self.param_patt.loc4_30.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:       %self.patt.loc4_30.1: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = at_binding_pattern self, %self.param_patt.loc4_30.1 [symbolic = %self.patt.loc4_30.2 (constants.%self.patt)]
+// CHECK:STDOUT:       %self.param_patt.loc4_29.1: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = value_param_pattern [symbolic = %self.param_patt.loc4_29.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:       %self.patt.loc4_29.1: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = at_binding_pattern self, %self.param_patt.loc4_29.1 [symbolic = %self.patt.loc4_29.2 (constants.%self.patt)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %self.param: @I.WithSelf.F.%Self.as_type.loc4_30.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:       %.loc4_30.1: type = splice_block %.loc4_30.3 [symbolic = %Self.as_type.loc4_30.1 (constants.%Self.as_type)] {
-// CHECK:STDOUT:         %.loc4_30.2: @I.WithSelf.F.%I.type (%I.type.3fe) = specific_constant @I.%Self.loc4_23.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:         %Self.ref: @I.WithSelf.F.%I.type (%I.type.3fe) = name_ref Self, %.loc4_30.2 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:         %Self.as_type.loc4_30.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_30.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:         %.loc4_30.3: type = converted %Self.ref, %Self.as_type.loc4_30.2 [symbolic = %Self.as_type.loc4_30.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %self.param: @I.WithSelf.F.%Self.as_type.loc4_29.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:       %.loc4_29.1: type = splice_block %.loc4_29.3 [symbolic = %Self.as_type.loc4_29.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:         %.loc4_29.2: @I.WithSelf.F.%I.type (%I.type.3fe) = specific_constant @I.%Self.loc4_22.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.ref: @I.WithSelf.F.%I.type (%I.type.3fe) = name_ref Self, %.loc4_29.2 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.as_type.loc4_29.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc4_29.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:         %.loc4_29.3: type = converted %Self.ref, %Self.as_type.loc4_29.2 [symbolic = %Self.as_type.loc4_29.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @I.WithSelf.F.%Self.as_type.loc4_30.1 (%Self.as_type) = wrapper_binding self, %self.param
+// CHECK:STDOUT:       %self: @I.WithSelf.F.%Self.as_type.loc4_29.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %assoc0.loc4_35.1: @I.WithSelf.%I.assoc_type (%I.assoc_type) = assoc_entity element0, %I.WithSelf.F.decl [symbolic = %assoc0.loc4_35.2 (constants.%assoc0)]
+// CHECK:STDOUT:     %assoc0.loc4_34.1: @I.WithSelf.%I.assoc_type (%I.assoc_type) = assoc_entity element0, %I.WithSelf.F.decl [symbolic = %assoc0.loc4_34.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc4_23.1
-// CHECK:STDOUT:     .F = @I.WithSelf.%assoc0.loc4_35.1
+// CHECK:STDOUT:     .Self = %Self.loc4_22.1
+// CHECK:STDOUT:     .F = @I.WithSelf.%assoc0.loc4_34.1
 // CHECK:STDOUT:     witness = (@I.WithSelf.%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -173,16 +173,16 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%T.loc4_14.2: type, @I.%Self.loc4_23.1: @I.%I.type (%I.type.3fe)) {
+// CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%T.loc4_14.2: type, @I.%Self.loc4_22.1: @I.%I.type (%I.type.3fe)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.3fe)]
 // CHECK:STDOUT:   %Self: @I.WithSelf.F.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc4_30.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_30.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc4_30.1 [symbolic = %pattern_type (constants.%pattern_type.b82)]
-// CHECK:STDOUT:   %self.param_patt.loc4_30.2: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = value_param_pattern [symbolic = %self.param_patt.loc4_30.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:   %self.patt.loc4_30.2: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = at_binding_pattern self, %self.param_patt.loc4_30.2 [symbolic = %self.patt.loc4_30.2 (constants.%self.patt)]
+// CHECK:STDOUT:   %Self.as_type.loc4_29.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_29.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc4_29.1 [symbolic = %pattern_type (constants.%pattern_type.b82)]
+// CHECK:STDOUT:   %self.param_patt.loc4_29.2: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = value_param_pattern [symbolic = %self.param_patt.loc4_29.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt.loc4_29.2: @I.WithSelf.F.%pattern_type (%pattern_type.b82) = at_binding_pattern self, %self.param_patt.loc4_29.2 [symbolic = %self.patt.loc4_29.2 (constants.%self.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.as_type.loc4_30.1 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.as_type.loc4_29.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
@@ -196,10 +196,10 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %I.type => constants.%I.type.3fe
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc4_30.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc4_29.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b82
-// CHECK:STDOUT:   %self.param_patt.loc4_30.2 => constants.%self.param_patt
-// CHECK:STDOUT:   %self.patt.loc4_30.2 => constants.%self.patt
+// CHECK:STDOUT:   %self.param_patt.loc4_29.2 => constants.%self.param_patt
+// CHECK:STDOUT:   %self.patt.loc4_29.2 => constants.%self.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
@@ -250,12 +250,12 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.X: type = import_ref Main//types, X, loaded [concrete = constants.%X]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//types, loc7_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.9c8 = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.5f6 = import_ref Main//types, loc4_35, unloaded
+// CHECK:STDOUT:   %Main.import_ref.5f6 = import_ref Main//types, loc4_34, unloaded
 // CHECK:STDOUT:   %Main.F: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.0fc) = import_ref Main//types, F, loaded [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.a92)]
-// CHECK:STDOUT:   %Main.import_ref.35c = import_ref Main//types, loc4_35, unloaded
+// CHECK:STDOUT:   %Main.import_ref.35c = import_ref Main//types, loc4_34, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//types, loc4_14, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.d08dda.2: @I.%I.type (%I.type.3fe) = import_ref Main//types, loc4_23, loaded [symbolic = @I.%Self (constants.%Self.a67)]
-// CHECK:STDOUT:   %Main.import_ref.a43 = import_ref Main//types, loc4_23, unloaded
+// CHECK:STDOUT:   %Main.import_ref.d08dda.2: @I.%I.type (%I.type.3fe) = import_ref Main//types, loc4_22, loaded [symbolic = @I.%Self (constants.%Self.a67)]
+// CHECK:STDOUT:   %Main.import_ref.a43 = import_ref Main//types, loc4_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//types, loc4_14, loaded [symbolic = @I.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -456,16 +456,16 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.InInterfaceArgs: type = import_ref Main//impl_in_interface_args, InInterfaceArgs, loaded [concrete = constants.%InInterfaceArgs]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc7_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.9c8 = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.c60: @I.WithSelf.%I.assoc_type (%I.assoc_type.b71) = import_ref Main//types, loc4_35, loaded [symbolic = @I.WithSelf.%assoc0 (constants.%assoc0.341)]
+// CHECK:STDOUT:   %Main.import_ref.c60: @I.WithSelf.%I.assoc_type (%I.assoc_type.b71) = import_ref Main//types, loc4_34, loaded [symbolic = @I.WithSelf.%assoc0 (constants.%assoc0.341)]
 // CHECK:STDOUT:   %Main.F = import_ref Main//types, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.620: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.0fc) = import_ref Main//types, loc4_35, loaded [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.a92)]
+// CHECK:STDOUT:   %Main.import_ref.620: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.0fc) = import_ref Main//types, loc4_34, loaded [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.a92)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//types, loc4_14, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.d08dda.2: @I.%I.type (%I.type.3fe) = import_ref Main//types, loc4_23, loaded [symbolic = @I.%Self (constants.%Self.a67)]
-// CHECK:STDOUT:   %Main.import_ref.a43 = import_ref Main//types, loc4_23, unloaded
+// CHECK:STDOUT:   %Main.import_ref.d08dda.2: @I.%I.type (%I.type.3fe) = import_ref Main//types, loc4_22, loaded [symbolic = @I.%Self (constants.%Self.a67)]
+// CHECK:STDOUT:   %Main.import_ref.a43 = import_ref Main//types, loc4_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//types, loc4_14, loaded [symbolic = @I.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//impl_in_interface_args, loc5_24, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.9ad = import_ref Main//impl_in_interface_args, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.35c = import_ref Main//types, loc4_35, unloaded
+// CHECK:STDOUT:   %Main.import_ref.35c = import_ref Main//types, loc4_34, unloaded
 // CHECK:STDOUT:   %Main.import_ref.743: <witness> = import_ref Main//impl_in_interface_args, loc7_30, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.57b: type = import_ref Main//impl_in_interface_args, loc7_6, loaded [concrete = constants.%X]
 // CHECK:STDOUT:   %Main.import_ref.555: type = import_ref Main//impl_in_interface_args, loc7_28, loaded [concrete = constants.%I.type.ec4]
@@ -653,15 +653,15 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.I: %I.type.335 = import_ref Main//types, I, loaded [concrete = constants.%I.generic]
 // CHECK:STDOUT:   %Main.C: %C.type = import_ref Main//types, C, loaded [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %Main.X: type = import_ref Main//types, X, loaded [concrete = constants.%X]
-// CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc5_20, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc5_19, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.189 = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//types, loc5_10, loaded [symbolic = @C.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.5f6 = import_ref Main//types, loc4_35, unloaded
+// CHECK:STDOUT:   %Main.import_ref.5f6 = import_ref Main//types, loc4_34, unloaded
 // CHECK:STDOUT:   %Main.F: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.0fc) = import_ref Main//types, F, loaded [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.a92)]
-// CHECK:STDOUT:   %Main.import_ref.35c = import_ref Main//types, loc4_35, unloaded
+// CHECK:STDOUT:   %Main.import_ref.35c = import_ref Main//types, loc4_34, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//types, loc4_14, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.d08dda.2: @I.%I.type (%I.type.3fe) = import_ref Main//types, loc4_23, loaded [symbolic = @I.%Self (constants.%Self.a67)]
-// CHECK:STDOUT:   %Main.import_ref.a43 = import_ref Main//types, loc4_23, unloaded
+// CHECK:STDOUT:   %Main.import_ref.d08dda.2: @I.%I.type (%I.type.3fe) = import_ref Main//types, loc4_22, loaded [symbolic = @I.%Self (constants.%Self.a67)]
+// CHECK:STDOUT:   %Main.import_ref.a43 = import_ref Main//types, loc4_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.4: type = import_ref Main//types, loc4_14, loaded [symbolic = @I.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc7_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.9c8 = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
@@ -893,21 +893,21 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.C: %C.type = import_ref Main//types, C, loaded [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %Main.X: type = import_ref Main//types, X, loaded [concrete = constants.%X]
 // CHECK:STDOUT:   %Main.InClassArgs: type = import_ref Main//impl_in_class_args, InClassArgs, loaded [concrete = constants.%InClassArgs]
-// CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc5_20, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc5_19, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.189 = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//types, loc5_10, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//impl_in_class_args, loc5_20, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.195 = import_ref Main//impl_in_class_args, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.c60: @I.WithSelf.%I.assoc_type (%I.assoc_type.b71) = import_ref Main//types, loc4_35, loaded [symbolic = @I.WithSelf.%assoc0 (constants.%assoc0.341)]
+// CHECK:STDOUT:   %Main.import_ref.c60: @I.WithSelf.%I.assoc_type (%I.assoc_type.b71) = import_ref Main//types, loc4_34, loaded [symbolic = @I.WithSelf.%assoc0 (constants.%assoc0.341)]
 // CHECK:STDOUT:   %Main.F = import_ref Main//types, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.620: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.0fc) = import_ref Main//types, loc4_35, loaded [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.a92)]
+// CHECK:STDOUT:   %Main.import_ref.620: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.0fc) = import_ref Main//types, loc4_34, loaded [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.a92)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//types, loc4_14, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.d08dda.2: @I.%I.type (%I.type.3fe) = import_ref Main//types, loc4_23, loaded [symbolic = @I.%Self (constants.%Self.a67)]
-// CHECK:STDOUT:   %Main.import_ref.a43 = import_ref Main//types, loc4_23, unloaded
+// CHECK:STDOUT:   %Main.import_ref.d08dda.2: @I.%I.type (%I.type.3fe) = import_ref Main//types, loc4_22, loaded [symbolic = @I.%Self (constants.%Self.a67)]
+// CHECK:STDOUT:   %Main.import_ref.a43 = import_ref Main//types, loc4_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.4: type = import_ref Main//types, loc4_14, loaded [symbolic = @I.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//types, loc7_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.9c8 = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.35c = import_ref Main//types, loc4_35, unloaded
+// CHECK:STDOUT:   %Main.import_ref.35c = import_ref Main//types, loc4_34, unloaded
 // CHECK:STDOUT:   %Main.import_ref.d12: <witness> = import_ref Main//impl_in_class_args, loc7_29, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.312: type = import_ref Main//impl_in_class_args, loc7_19, loaded [concrete = constants.%C.165]
 // CHECK:STDOUT:   %Main.import_ref.ae9: type = import_ref Main//impl_in_class_args, loc7_27, loaded [concrete = constants.%I.type.d91]

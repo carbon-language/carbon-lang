@@ -27,6 +27,6 @@ class String {
 
 impl String as UnformedInit {}
 
-impl forall [T:! ImplicitAs(i64)] String as IndexWith(T) where .ElementType = Char {
+impl forall [T: ImplicitAs(i64)] String as IndexWith(T) where .ElementType = Char {
   fn At(self, subscript: T) -> Char = "string.at";
 }

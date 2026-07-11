@@ -52,8 +52,8 @@ library "[[@TEST_NAME]]";
 
 fn Div(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.sdiv";
 
-class Expect(N:! Core.IntLiteral) {}
-fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
+class Expect(N: Core.IntLiteral) {}
+fn Test(generic N: Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Div(-0x8000_0000, -1)) as Expect(0x8000_0000);

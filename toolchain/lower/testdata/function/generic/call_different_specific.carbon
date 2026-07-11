@@ -22,19 +22,19 @@
 // specifics, where the pointer values are different, and the calls to the
 // two D specifics are to functions with different function types.
 
-fn A[U:! Core.Copy](x: U) -> U {
+fn A[U: Core.Copy](x: U) -> U {
   return x;
 }
 
-fn D[U:! Core.Copy](x: U) -> U {
+fn D[U: Core.Copy](x: U) -> U {
   return x;
 }
 
-fn B[U:! Core.Copy & Core.Destroy](x: U*) {
+fn B[U: Core.Copy & Core.Destroy](x: U*) {
   D(*x);
 }
 
-fn F[T:! Core.Copy & Core.Destroy](x: T*) {
+fn F[T: Core.Copy & Core.Destroy](x: T*) {
   A(i32);
   B(x);
 }

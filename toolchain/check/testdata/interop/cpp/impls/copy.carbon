@@ -174,7 +174,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "types.h";
 
-fn Copy[T:! Core.Copy](c: T) -> T {
+fn Copy[T: Core.Copy](c: T) -> T {
   return c;
 }
 
@@ -184,7 +184,7 @@ fn DoCopy(c: Cpp.Copyable) -> Cpp.Copyable {
   //@dump-sem-ir-end
 }
 
-class Wrap(T:! Core.Copy) {}
+class Wrap(T: Core.Copy) {}
 
 fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
   //@dump-sem-ir-begin

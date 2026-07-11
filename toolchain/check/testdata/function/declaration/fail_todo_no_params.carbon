@@ -67,15 +67,15 @@ fn A => 0;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+8]]:5: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: var x:! () = ();
-// CHECK:STDERR:     ^~~~~~
+// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+8]]:13: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: var generic x: () = ();
+// CHECK:STDERR:             ^~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+4]]:12: error: found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
-// CHECK:STDERR: var x:! () = ();
-// CHECK:STDERR:            ^
+// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+4]]:19: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
+// CHECK:STDERR: var generic x: () = ();
+// CHECK:STDERR:                   ^
 // CHECK:STDERR:
-var x:! () = ();
+var generic x: () = ();
 
 fn A {
   A();

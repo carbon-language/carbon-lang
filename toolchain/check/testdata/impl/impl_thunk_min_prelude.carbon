@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-interface X(T:! type, U:! type) {
+interface X(T: type, U: type) {
   fn F(t: T) -> U;
 }
 
@@ -44,13 +44,13 @@ class A {
 
 library "[[@TEST_NAME]]";
 
-class Wrap(T:! type) {}
+class Wrap(T: type) {}
 
-interface OpWith(U:! type) {
+interface OpWith(U: type) {
   fn Op(self, u: U);
 }
 
-impl forall [T:! type, U:! Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U) {
+impl forall [T: type, U: Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U) {
   // CHECK:STDERR: fail_todo_out_of_line_thunk.carbon:[[@LINE+7]]:3: error: use of undefined generic function [MissingGenericFunctionDefinition]
   // CHECK:STDERR:   fn Op(self, other: Self);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,19 +63,19 @@ impl forall [T:! type, U:! Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U) {
 
 // TODO: Once we support the syntax for defining impl members out of line,
 // define the above function here.
-// fn (forall [T:! type, U:! Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U)).Op(self, other: Self) {}
+// fn (forall [T: type, U: Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U)).Op(self, other: Self) {}
 
 // --- builtin_thunk.carbon
 
 library "[[@TEST_NAME]]";
 
-class Wrap(T:! type) {}
+class Wrap(T: type) {}
 
-interface OpWith(U:! type) {
+interface OpWith(U: type) {
   fn Op(self, u: U);
 }
 
-impl forall [T:! type, U:! Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U) {
+impl forall [T: type, U: Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U) {
   fn Op(self, other: Self) = "no_op";
 }
 
@@ -83,10 +83,10 @@ impl forall [T:! type, U:! Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U) {
 
 library "[[@TEST_NAME]]";
 
-interface Add(T:! type) {
+interface Add(T: type) {
   fn Op(a: Self, b: T) -> Self;
 }
-impl forall [T:! Core.ImplicitAs(i32)] i32 as Add(T) {
+impl forall [T: Core.ImplicitAs(i32)] i32 as Add(T) {
   fn Op(a: Self, b: Self) -> Self = "int.sadd";
 }
 

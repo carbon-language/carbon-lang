@@ -15,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! bool;
+  let value: bool;
 }
 
 class C {
@@ -38,7 +38,7 @@ fn F() -> bool {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! Core.Char;
+  let value: Core.Char;
 }
 
 class C {}
@@ -61,7 +61,7 @@ fn F() -> Core.Char {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! Core.CharLiteral;
+  let value: Core.CharLiteral;
 }
 
 class C {}
@@ -84,7 +84,7 @@ fn F() -> Core.CharLiteral {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! f64;
+  let value: f64;
 }
 
 class C {}
@@ -107,7 +107,7 @@ fn F() -> f64 {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! Core.FloatLiteral;
+  let value: Core.FloatLiteral;
 }
 
 class C {}
@@ -130,7 +130,7 @@ fn F() -> Core.FloatLiteral {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! i32;
+  let value: i32;
 }
 
 class C {}
@@ -153,7 +153,7 @@ fn F() -> i32 {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! Core.IntLiteral;
+  let value: Core.IntLiteral;
 }
 
 class C {}
@@ -176,7 +176,7 @@ fn F() -> Core.IntLiteral {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! u32;
+  let value: u32;
 }
 
 class C {}

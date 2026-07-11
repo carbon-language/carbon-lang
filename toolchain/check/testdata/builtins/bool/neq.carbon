@@ -16,7 +16,7 @@ library "[[@TEST_NAME]]";
 
 fn Neq(a: bool, b: bool) -> bool = "bool.neq";
 
-class C(B:! bool) {}
+class C(B: bool) {}
 
 fn True() -> C(true);
 fn False() -> C(false);
@@ -32,7 +32,7 @@ var d: C(Neq(false, false)) = False();
 
 library "[[@TEST_NAME]]";
 
-class C(B:! bool) {}
+class C(B: bool) {}
 
 fn True() -> C(true);
 fn False() -> C(false);

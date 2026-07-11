@@ -11,14 +11,14 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_recursive_diamond.carbon
 
 import Core library "io";
-fn A[T:! Core.Copy](x: T, count: i32) -> T;
-fn B[T:! Core.Copy](x: T, count: i32) -> T;
-fn C[T:! Core.Copy](x: T, count: i32) -> T;
-fn D[T:! Core.Copy](x: T, count: i32) -> T;
+fn A[T: Core.Copy](x: T, count: i32) -> T;
+fn B[T: Core.Copy](x: T, count: i32) -> T;
+fn C[T: Core.Copy](x: T, count: i32) -> T;
+fn D[T: Core.Copy](x: T, count: i32) -> T;
 
 // Builds on `call_recursive_mutual.carbon`. The two specifics for each of:
 // A, B, C, D with a pointer type could be deduplicated.
-fn A[T:! Core.Copy](x: T, count: i32) -> T {
+fn A[T: Core.Copy](x: T, count: i32) -> T {
   if (count > 4) {
     return x;
   }
@@ -30,17 +30,17 @@ fn A[T:! Core.Copy](x: T, count: i32) -> T {
 }
 
 // B and C are not equivalent in the diamond: different generics and different function bodies.
-fn B[T:! Core.Copy](x: T, count: i32) -> T {
+fn B[T: Core.Copy](x: T, count: i32) -> T {
   Core.Print(1);
   return D(x, count);
 }
 
-fn C[T:! Core.Copy](x: T, count: i32) -> T {
+fn C[T: Core.Copy](x: T, count: i32) -> T {
   Core.Print(2);
   return D(x, count);
 }
 
-fn D[T:! Core.Copy](x: T, count: i32) -> T {
+fn D[T: Core.Copy](x: T, count: i32) -> T {
   return A(x, count + 1);
 }
 

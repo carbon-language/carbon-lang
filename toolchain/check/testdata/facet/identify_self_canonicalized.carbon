@@ -28,4 +28,4 @@ interface Y {}
 // identified facet type. Instead we should only get a single interface with the
 // canonical `T` facet value as the self value.
 
-impl forall [T:! Y] T as W & Z {}
+impl forall [T: Y] T as W & Z {}

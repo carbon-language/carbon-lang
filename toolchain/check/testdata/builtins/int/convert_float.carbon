@@ -20,8 +20,8 @@ fn ConvertIntLiteralToFloatLiteral(a: Core.IntLiteral) -> Core.FloatLiteral = "i
 
 fn Negate(a: f64) -> f64 = "float.negate";
 
-class Expect[T:! type](N:! T) {}
-fn Test[T:! type](N:! T) -> Expect(N) { return {}; }
+class Expect[T: type](N: T) {}
+fn Test[T: type](generic N: T) -> Expect(N) { return {}; }
 
 // --- identity.carbon
 library "[[@TEST_NAME]]";

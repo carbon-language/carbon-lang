@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-interface AddWith(T:! type) {
+interface AddWith(T: type) {
   fn F();
 }
 
@@ -56,9 +56,9 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type.097 = interface_decl @AddWith [concrete = constants.%AddWith.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_20.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_20.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_23.1: type = splice_block %.loc4_23.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc4_22.1: type = splice_block %.loc4_22.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc4_23.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc4_22.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_20.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_20.1 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -70,10 +70,10 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %AddWith.type: type = facet_type <@AddWith, @AddWith(%T.loc4_20.1)> [symbolic = %AddWith.type (constants.%AddWith.type.e7b)]
-// CHECK:STDOUT:   %Self.loc4_29.2: @AddWith.%AddWith.type (%AddWith.type.e7b) = symbolic_binding Self, 1 [symbolic = %Self.loc4_29.2 (constants.%Self)]
+// CHECK:STDOUT:   %Self.loc4_28.2: @AddWith.%AddWith.type (%AddWith.type.e7b) = symbolic_binding Self, 1 [symbolic = %Self.loc4_28.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc4_29.1: @AddWith.%AddWith.type (%AddWith.type.e7b) = symbolic_binding Self, 1 [symbolic = %Self.loc4_29.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc4_28.1: @AddWith.%AddWith.type (%AddWith.type.e7b) = symbolic_binding Self, 1 [symbolic = %Self.loc4_28.2 (constants.%Self)]
 // CHECK:STDOUT:     %AddWith.WithSelf.decl = interface_with_self_decl @AddWith [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
@@ -81,7 +81,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     %assoc0.loc5_9.1: @AddWith.WithSelf.%AddWith.assoc_type (%AddWith.assoc_type) = assoc_entity element0, %AddWith.WithSelf.F.decl [symbolic = %assoc0.loc5_9.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc4_29.1
+// CHECK:STDOUT:     .Self = %Self.loc4_28.1
 // CHECK:STDOUT:     .F = @AddWith.WithSelf.%assoc0.loc5_9.1
 // CHECK:STDOUT:     witness = (@AddWith.WithSelf.%AddWith.WithSelf.F.decl)
 // CHECK:STDOUT:
@@ -91,7 +91,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @AddWith.WithSelf.F(@AddWith.%T.loc4_20.2: type, @AddWith.%Self.loc4_29.1: @AddWith.%AddWith.type (%AddWith.type.e7b)) {
+// CHECK:STDOUT: generic fn @AddWith.WithSelf.F(@AddWith.%T.loc4_20.2: type, @AddWith.%Self.loc4_28.1: @AddWith.%AddWith.type (%AddWith.type.e7b)) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,8 +139,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %Main.F: @AddWith.WithSelf.%AddWith.WithSelf.F.type (%AddWith.WithSelf.F.type.ada) = import_ref Main//a, F, loaded [symbolic = @AddWith.WithSelf.%AddWith.WithSelf.F (constants.%AddWith.WithSelf.F.2ed)]
 // CHECK:STDOUT:   %Main.import_ref.b87 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//a, loc4_20, loaded [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.08ad54.2: @AddWith.%AddWith.type (%AddWith.type.e7b) = import_ref Main//a, loc4_29, loaded [symbolic = @AddWith.%Self (constants.%Self.403)]
-// CHECK:STDOUT:   %Main.import_ref.a0a = import_ref Main//a, loc4_29, unloaded
+// CHECK:STDOUT:   %Main.import_ref.08ad54.2: @AddWith.%AddWith.type (%AddWith.type.e7b) = import_ref Main//a, loc4_28, loaded [symbolic = @AddWith.%Self (constants.%Self.403)]
+// CHECK:STDOUT:   %Main.import_ref.a0a = import_ref Main//a, loc4_28, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.3: type = import_ref Main//a, loc4_20, loaded [symbolic = @AddWith.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

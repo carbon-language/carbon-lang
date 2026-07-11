@@ -66,23 +66,23 @@ impl forall [invalid] i8;
 // CHECK:STDERR:
 impl forall f16 as Quux;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:27: error: expected `as` in `impl` declaration [ImplExpectedAs]
-// CHECK:STDERR: impl forall [T:! type] str;
-// CHECK:STDERR:                           ^
-// CHECK:STDERR:
-impl forall [T:! type] str;
-
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:26: error: expected `as` in `impl` declaration [ImplExpectedAs]
-// CHECK:STDERR: impl forall [T:! type] T missing_as;
-// CHECK:STDERR:                          ^~~~~~~~~~
+// CHECK:STDERR: impl forall [T: type] str;
+// CHECK:STDERR:                          ^
 // CHECK:STDERR:
-impl forall [T:! type] T missing_as;
+impl forall [T: type] str;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:39: error: `impl` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
-// CHECK:STDERR: impl forall [T:! type] T as Interface extra;
-// CHECK:STDERR:                                       ^~~~~
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:25: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: impl forall [T: type] T missing_as;
+// CHECK:STDERR:                         ^~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] T as Interface extra;
+impl forall [T: type] T missing_as;
+
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:38: error: `impl` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR: impl forall [T: type] T as Interface extra;
+// CHECK:STDERR:                                      ^~~~~
+// CHECK:STDERR:
+impl forall [T: type] T as Interface extra;
 
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:5: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: impl;
@@ -147,9 +147,9 @@ impl
 // CHECK:STDOUT:       {kind: 'Forall', text: 'forall'},
 // CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'StringTypeLiteral', text: 'str'},
 // CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', has_error: yes, subtree_size: 10},
@@ -157,9 +157,9 @@ impl
 // CHECK:STDOUT:       {kind: 'Forall', text: 'forall'},
 // CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'T'},
 // CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', has_error: yes, subtree_size: 10},
@@ -167,9 +167,9 @@ impl
 // CHECK:STDOUT:       {kind: 'Forall', text: 'forall'},
 // CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'T'},
 // CHECK:STDOUT:       {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},

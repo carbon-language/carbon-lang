@@ -43,7 +43,7 @@ fn H() {
 
 library "[[@TEST_NAME]]";
 
-fn F(_:! type) {};
+fn F(generic _: type) {};
 
 fn G() {
   F({});
@@ -53,15 +53,15 @@ fn G() {
 
 library "[[@TEST_NAME]]";
 
-fn F(_:! type);
+fn F(generic _: type);
 
 fn G() {
   // CHECK:STDERR: fail_function_generic_undefined.carbon:[[@LINE+7]]:3: error: use of undefined generic function [MissingGenericFunctionDefinition]
   // CHECK:STDERR:   F({});
   // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_function_generic_undefined.carbon:[[@LINE-6]]:1: note: generic function declared here [MissingGenericFunctionDefinitionHere]
-  // CHECK:STDERR: fn F(_:! type);
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn F(generic _: type);
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F({});
 }
@@ -70,9 +70,9 @@ fn G() {
 
 library "[[@TEST_NAME]]";
 
-fn F[_:! type]();
+fn F[_: type]();
 
-fn G[_:! type]() {}
+fn G[_: type]() {}
 
 // --- fail_class.carbon
 
@@ -322,20 +322,20 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %_.patt.loc4_7.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_7.2 (constants.%_.patt)]
+// CHECK:STDOUT:     %_.patt.loc4_15.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_15.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc4_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc4_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_.loc4_7.2: type = symbolic_binding _, 0 [symbolic = %_.loc4_7.1 (constants.%_)]
+// CHECK:STDOUT:     %_.loc4_15.2: type = symbolic_binding _, 0 [symbolic = %_.loc4_15.1 (constants.%_)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%_.loc4_7.2: type) {
-// CHECK:STDOUT:   %_.patt.loc4_7.2: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_7.2 (constants.%_.patt)]
-// CHECK:STDOUT:   %_.loc4_7.1: type = symbolic_binding _, 0 [symbolic = %_.loc4_7.1 (constants.%_)]
+// CHECK:STDOUT: generic fn @F(%_.loc4_15.2: type) {
+// CHECK:STDOUT:   %_.patt.loc4_15.2: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_15.2 (constants.%_.patt)]
+// CHECK:STDOUT:   %_.loc4_15.1: type = symbolic_binding _, 0 [symbolic = %_.loc4_15.1 (constants.%_)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -360,13 +360,13 @@ fn F() -> {} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {
-// CHECK:STDOUT:   %_.patt.loc4_7.2 => constants.%_.patt
-// CHECK:STDOUT:   %_.loc4_7.1 => constants.%_
+// CHECK:STDOUT:   %_.patt.loc4_15.2 => constants.%_.patt
+// CHECK:STDOUT:   %_.loc4_15.1 => constants.%_
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %_.patt.loc4_7.2 => constants.%_.patt
-// CHECK:STDOUT:   %_.loc4_7.1 => constants.%empty_struct_type
+// CHECK:STDOUT:   %_.patt.loc4_15.2 => constants.%_.patt
+// CHECK:STDOUT:   %_.loc4_15.1 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -404,20 +404,20 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %_.patt.loc4_7.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_7.2 (constants.%_.patt)]
+// CHECK:STDOUT:     %_.patt.loc4_15.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_15.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc4_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc4_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_.loc4_7.2: type = symbolic_binding _, 0 [symbolic = %_.loc4_7.1 (constants.%_)]
+// CHECK:STDOUT:     %_.loc4_15.2: type = symbolic_binding _, 0 [symbolic = %_.loc4_15.1 (constants.%_)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%_.loc4_7.2: type) {
-// CHECK:STDOUT:   %_.patt.loc4_7.2: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_7.2 (constants.%_.patt)]
-// CHECK:STDOUT:   %_.loc4_7.1: type = symbolic_binding _, 0 [symbolic = %_.loc4_7.1 (constants.%_)]
+// CHECK:STDOUT: generic fn @F(%_.loc4_15.2: type) {
+// CHECK:STDOUT:   %_.patt.loc4_15.2: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_15.2 (constants.%_.patt)]
+// CHECK:STDOUT:   %_.loc4_15.1: type = symbolic_binding _, 0 [symbolic = %_.loc4_15.1 (constants.%_)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -435,13 +435,13 @@ fn F() -> {} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {
-// CHECK:STDOUT:   %_.patt.loc4_7.2 => constants.%_.patt
-// CHECK:STDOUT:   %_.loc4_7.1 => constants.%_
+// CHECK:STDOUT:   %_.patt.loc4_15.2 => constants.%_.patt
+// CHECK:STDOUT:   %_.loc4_15.1 => constants.%_
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %_.patt.loc4_7.2 => constants.%_.patt
-// CHECK:STDOUT:   %_.loc4_7.1 => constants.%empty_struct_type
+// CHECK:STDOUT:   %_.patt.loc4_15.2 => constants.%_.patt
+// CHECK:STDOUT:   %_.loc4_15.1 => constants.%empty_struct_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- function_implict.carbon
@@ -475,18 +475,18 @@ fn F() -> {} {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %_.patt.loc4_7.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_7.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc4_9.1: type = splice_block %.loc4_9.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc4_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc4_9.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %_.loc4_7.2: type = symbolic_binding _, 0 [symbolic = %_.loc4_7.1 (constants.%_)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %_.patt.loc6_7.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc6_7.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc6_10.1: type = splice_block %.loc6_10.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc6_9.1: type = splice_block %.loc6_9.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc6_10.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc6_9.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %_.loc6_7.2: type = symbolic_binding _, 0 [symbolic = %_.loc6_7.1 (constants.%_)]
 // CHECK:STDOUT:   }

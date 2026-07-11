@@ -14,11 +14,11 @@
 
 library "[[@TEST_NAME]]";
 
-private fn F[T:! Core.Copy](a: T, _: T) -> T {
+private fn F[T: Core.Copy](a: T, _: T) -> T {
   return a;
 }
 
-fn Lib1CallF[T:! Core.Copy](a: T, b: T) -> T {
+fn Lib1CallF[T: Core.Copy](a: T, b: T) -> T {
   return F(a, b);
 }
 
@@ -29,11 +29,11 @@ library "[[@TEST_NAME]]";
 // Duplicate function name in different files. Shouldn't be a name conflict
 // because of `private`. However, we currently use the same mangling for both
 // functions.
-private fn F[T:! Core.Copy](_: T, b: T) -> T {
+private fn F[T: Core.Copy](_: T, b: T) -> T {
   return b;
 }
 
-fn Lib2CallF[T:! Core.Copy](a: T, b: T) -> T {
+fn Lib2CallF[T: Core.Copy](a: T, b: T) -> T {
   return F(a, b);
 }
 

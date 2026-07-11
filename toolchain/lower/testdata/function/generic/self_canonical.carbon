@@ -24,15 +24,15 @@ class class_name4 {}
 class class_name5 {}
 class class_name6 {}
 
-fn third_function[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V);
+fn third_function[T: type, U: type, V: type](arg1: T, arg2: U, arg3: V);
 
-fn fourth_function[T:! type](arg: T);
+fn fourth_function[T: type](arg: T);
 
-fn first_function[T:! type](arg: T);
+fn first_function[T: type](arg: T);
 
-fn second_function[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V);
+fn second_function[T: type, U: type, V: type](arg1: T, arg2: U, arg3: V);
 
-fn third_function[T:! type, U:! type, V:! type](arg1: T, arg2: U, unused arg3: V) {
+fn third_function[T: type, U: type, V: type](arg1: T, arg2: U, unused arg3: V) {
   var local1: class_name2*;
   var local2: class_name2*;
 
@@ -40,13 +40,13 @@ fn third_function[T:! type, U:! type, V:! type](arg1: T, arg2: U, unused arg3: V
   fourth_function(local1);
 }
 
-fn unused_1[T:! type, U:! type, V:! type](arg1: T, unused arg2: U, arg3: V) {
+fn unused_1[T: type, U: type, V: type](arg1: T, unused arg2: U, arg3: V) {
   var local1: class_name6*;
 
   third_function(arg1, arg3, local1);
 }
 
-fn fourth_function[T:! type](unused arg: T) {
+fn fourth_function[T: type](unused arg: T) {
   var local1: class_name5**;
   var local2: class_name6*;
 
@@ -54,20 +54,20 @@ fn fourth_function[T:! type](unused arg: T) {
   first_function(local2);
 }
 
-fn first_function[T:! type](arg: T) {
+fn first_function[T: type](arg: T) {
   var local1: class_name4*;
   var local2: class_name3*;
 
   second_function(local2, local1, arg);
 }
 
-fn unused_2[T:! type, U:! type](arg1: T, arg2: U) {
+fn unused_2[T: type, U: type](arg1: T, arg2: U) {
   var local1: class_name6*;
 
   second_function(arg1, arg2, local1);
 }
 
-fn second_function[T:! type, U:! type, V:! type](arg1: T, unused arg2: U, arg3: V) {
+fn second_function[T: type, U: type, V: type](arg1: T, unused arg2: U, arg3: V) {
   var local1: class_name3*;
   var local2: class_name4*;
   var local3: class_name2*;

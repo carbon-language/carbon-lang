@@ -105,7 +105,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-interface J { let T:! type; }
+interface J { let T: type; }
 interface Incomplete;
 
 impl C as J where .Self impls Incomplete and .T = ();
@@ -156,14 +156,14 @@ constraint Y {
   require impls Z;
 }
 interface X {
-  let X1:! type;
+  let X1: type;
 
   // Not extend, so only required to be identified.
   require impls Y;
 }
 
 // Requires `X` to be complete, doesn't require Z to be complete.
-fn F(unused T:! X where .X1 = {}) {}
+fn F(unused generic T: X where .X1 = {}) {}
 
 // --- fail_incomplete_constraint.carbon
 library "[[@TEST_NAME]]";
@@ -798,29 +798,29 @@ interface B {
 // CHECK:STDOUT:   %Y.decl: type = constraint_decl @Y [concrete = constants.%Y.type] {} {}
 // CHECK:STDOUT:   %X.decl: type = interface_decl @X [concrete = constants.%X.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc16_14.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc16_22.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc16_19.1: type = splice_block %.loc16_19.2 [concrete = constants.%X_where.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc16_14: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:     %.loc16_26.1: type = splice_block %.loc16_26.2 [concrete = constants.%X_where.type] {
+// CHECK:STDOUT:       %.Self.frozen.loc16_22: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
 // CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X.type]
-// CHECK:STDOUT:       %.Self.frozen.loc16_19: %X.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.5e5]
+// CHECK:STDOUT:       %.Self.frozen.loc16_26: %X.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.5e5]
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %X.ref [concrete]
-// CHECK:STDOUT:       %.Self.ref: %X.type = name_ref .Self, %.Self.frozen.loc16_19 [symbolic_self = constants.%.Self.frozen.5e5]
+// CHECK:STDOUT:       %.Self.ref: %X.type = name_ref .Self, %.Self.frozen.loc16_26 [symbolic_self = constants.%.Self.frozen.5e5]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:       %.loc16_25: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.loc16_32: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type]
 // CHECK:STDOUT:       %X1.ref: %X.assoc_type = name_ref X1, @X1.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:       %impl.elem0.loc16_25.1: type = impl_witness_access constants.%X.lookup_impl_witness.de0, element0 [symbolic_self = constants.%impl.elem0.2f1]
-// CHECK:STDOUT:       %.loc16_32.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc16_32.2: type = converted %.loc16_32.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %rewrite.loc16_29.1 = requirement_rewrite %impl.elem0.loc16_25.1, %.loc16_32.2 [concrete]
-// CHECK:STDOUT:       %impl.elem0.loc16_25.2: type = impl_witness_access constants.%X.lookup_impl_witness.f28, element0 [symbolic_self = constants.%impl.elem0.061]
-// CHECK:STDOUT:       %rewrite.loc16_29.2 = requirement_rewrite %impl.elem0.loc16_25.2, %.loc16_32.2 [concrete]
-// CHECK:STDOUT:       %.loc16_19.2: type = where_expr [concrete = constants.%X_where.type] {
+// CHECK:STDOUT:       %impl.elem0.loc16_32.1: type = impl_witness_access constants.%X.lookup_impl_witness.de0, element0 [symbolic_self = constants.%impl.elem0.2f1]
+// CHECK:STDOUT:       %.loc16_39.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc16_39.2: type = converted %.loc16_39.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:       %rewrite.loc16_36.1 = requirement_rewrite %impl.elem0.loc16_32.1, %.loc16_39.2 [concrete]
+// CHECK:STDOUT:       %impl.elem0.loc16_32.2: type = impl_witness_access constants.%X.lookup_impl_witness.f28, element0 [symbolic_self = constants.%impl.elem0.061]
+// CHECK:STDOUT:       %rewrite.loc16_36.2 = requirement_rewrite %impl.elem0.loc16_32.2, %.loc16_39.2 [concrete]
+// CHECK:STDOUT:       %.loc16_26.2: type = where_expr [concrete = constants.%X_where.type] {
 // CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %X.ref [concrete]
-// CHECK:STDOUT:         %rewrite.loc16_29.2 = requirement_rewrite %impl.elem0.loc16_25.2, %.loc16_32.2 [concrete]
+// CHECK:STDOUT:         %rewrite.loc16_36.2 = requirement_rewrite %impl.elem0.loc16_32.2, %.loc16_39.2 [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc16_14.2: %X_where.type = symbolic_binding T, 0 [symbolic = %T.loc16_14.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc16_22.2: %X_where.type = symbolic_binding T, 0 [symbolic = %T.loc16_22.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -889,9 +889,9 @@ interface B {
 // CHECK:STDOUT:   %Self.as_type.loc12_11.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_11.2 (constants.%Self.as_type.ace)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc16_14.2: %X_where.type) {
-// CHECK:STDOUT:   %T.patt.loc16_14.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc16_14.1: %X_where.type = symbolic_binding T, 0 [symbolic = %T.loc16_14.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc16_22.2: %X_where.type) {
+// CHECK:STDOUT:   %T.patt.loc16_22.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_22.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc16_22.1: %X_where.type = symbolic_binding T, 0 [symbolic = %T.loc16_22.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -933,8 +933,8 @@ interface B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc16_14.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc16_14.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc16_22.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc16_22.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_constraint.carbon

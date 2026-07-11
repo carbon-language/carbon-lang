@@ -123,7 +123,7 @@ fn J() {
 
 package PackageHasParam;
 
-class AnyParam[T:! type](X:! T) {}
+class AnyParam[T: type](X: T) {}
 
 interface Y {
   fn K(unused self) {}
@@ -135,7 +135,7 @@ package PackageGenericInterface;
 
 import PackageHasParam;
 
-interface GenericInterface(U:! type) {}
+interface GenericInterface(U: type) {}
 
 impl PackageHasParam.AnyParam(GenericInterface) as PackageHasParam.Y {
   fn K(unused self) {}
@@ -165,7 +165,7 @@ package PackageGenericClass;
 
 import PackageHasParam;
 
-class GenericClass(U:! type) {}
+class GenericClass(U: type) {}
 
 impl PackageHasParam.AnyParam(GenericClass) as PackageHasParam.Y {
   fn K(unused self) {}
@@ -201,7 +201,7 @@ interface Extra6 {}
 interface Extra7 {}
 interface Extra8 {}
 
-class C(T:! type) {}
+class C(T: type) {}
 interface I { fn F(self); }
 
 impl C((Extra1, Extra2, Extra3, Extra4, Extra5, Extra6, Extra7, Extra8)) as I {
@@ -1670,18 +1670,18 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %AnyParam.decl: %AnyParam.type = class_decl @AnyParam [concrete = constants.%AnyParam.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_17.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_17.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %X.patt.loc4_27.1: @AnyParam.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern X, 1 [symbolic = %X.patt.loc4_27.2 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.patt.loc4_26.1: @AnyParam.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern X, 1 [symbolic = %X.patt.loc4_26.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_20.1: type = splice_block %.loc4_20.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc4_19.1: type = splice_block %.loc4_19.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen.loc4_17: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc4_20.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc4_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_17.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_17.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc4_30: type = splice_block %T.ref [symbolic = %T.loc4_17.1 (constants.%T)] {
-// CHECK:STDOUT:       %.Self.frozen.loc4_27: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc4_28: type = splice_block %T.ref [symbolic = %T.loc4_17.1 (constants.%T)] {
+// CHECK:STDOUT:       %.Self.frozen.loc4_26: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc4_17.2 [symbolic = %T.loc4_17.1 (constants.%T)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %X.loc4_27.2: @AnyParam.%T.loc4_17.1 (%T) = symbolic_binding X, 1 [symbolic = %X.loc4_27.1 (constants.%X)]
+// CHECK:STDOUT:     %X.loc4_26.2: @AnyParam.%T.loc4_17.1 (%T) = symbolic_binding X, 1 [symbolic = %X.loc4_26.1 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Y.decl: type = interface_decl @Y [concrete = constants.%Y.type] {} {}
 // CHECK:STDOUT: }
@@ -1715,12 +1715,12 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @AnyParam(%T.loc4_17.2: type, %X.loc4_27.2: @AnyParam.%T.loc4_17.1 (%T)) {
+// CHECK:STDOUT: generic class @AnyParam(%T.loc4_17.2: type, %X.loc4_26.2: @AnyParam.%T.loc4_17.1 (%T)) {
 // CHECK:STDOUT:   %T.patt.loc4_17.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc4_17.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_17.1 (constants.%T)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc4_17.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %X.patt.loc4_27.2: @AnyParam.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern X, 1 [symbolic = %X.patt.loc4_27.2 (constants.%X.patt)]
-// CHECK:STDOUT:   %X.loc4_27.1: @AnyParam.%T.loc4_17.1 (%T) = symbolic_binding X, 1 [symbolic = %X.loc4_27.1 (constants.%X)]
+// CHECK:STDOUT:   %X.patt.loc4_26.2: @AnyParam.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern X, 1 [symbolic = %X.patt.loc4_26.2 (constants.%X.patt)]
+// CHECK:STDOUT:   %X.loc4_26.1: @AnyParam.%T.loc4_17.1 (%T) = symbolic_binding X, 1 [symbolic = %X.loc4_26.1 (constants.%X)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -1755,8 +1755,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %T.patt.loc4_17.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc4_17.1 => constants.%T
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
-// CHECK:STDOUT:   %X.patt.loc4_27.2 => constants.%X.patt
-// CHECK:STDOUT:   %X.loc4_27.1 => constants.%X
+// CHECK:STDOUT:   %X.patt.loc4_26.2 => constants.%X.patt
+// CHECK:STDOUT:   %X.loc4_26.1 => constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf(constants.%Self) {
@@ -1843,10 +1843,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     import PackageHasParam//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PackageHasParam.AnyParam: %AnyParam.type = import_ref PackageHasParam//default, AnyParam, loaded [concrete = constants.%AnyParam.generic]
-// CHECK:STDOUT:   %PackageHasParam.import_ref.8f2: <witness> = import_ref PackageHasParam//default, loc4_34, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.8f2: <witness> = import_ref PackageHasParam//default, loc4_32, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %PackageHasParam.import_ref.527 = import_ref PackageHasParam//default, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %PackageHasParam.import_ref.b3b: type = import_ref PackageHasParam//default, loc4_17, loaded [symbolic = @AnyParam.%T (constants.%T)]
-// CHECK:STDOUT:   %PackageHasParam.import_ref.b42: @AnyParam.%T (%T) = import_ref PackageHasParam//default, loc4_27, loaded [symbolic = @AnyParam.%X (constants.%X)]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.b42: @AnyParam.%T (%T) = import_ref PackageHasParam//default, loc4_26, loaded [symbolic = @AnyParam.%X (constants.%X)]
 // CHECK:STDOUT:   %PackageHasParam.Y: type = import_ref PackageHasParam//default, Y, loaded [concrete = constants.%Y.type]
 // CHECK:STDOUT:   %PackageHasParam.import_ref.03c: %Y.assoc_type = import_ref PackageHasParam//default, loc7_21, loaded [concrete = constants.%assoc0.970]
 // CHECK:STDOUT:   %PackageHasParam.K: @Y.WithSelf.%Y.WithSelf.K.type (%Y.WithSelf.K.type.977) = import_ref PackageHasParam//default, K, loaded [symbolic = @Y.WithSelf.%Y.WithSelf.K (constants.%Y.WithSelf.K.d2d)]
@@ -1868,9 +1868,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %GenericInterface.decl: %GenericInterface.type.cd1 = interface_decl @GenericInterface [concrete = constants.%GenericInterface.generic] {
 // CHECK:STDOUT:     %U.patt.loc6_29.1: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc6_29.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc6_32.1: type = splice_block %.loc6_32.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc6_31.1: type = splice_block %.loc6_31.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc6_32.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc6_31.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc6_29.2: type = symbolic_binding U, 0 [symbolic = %U.loc6_29.1 (constants.%U)]
 // CHECK:STDOUT:   }
@@ -1891,14 +1891,14 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericInterface.type: type = facet_type <@GenericInterface, @GenericInterface(%U.loc6_29.1)> [symbolic = %GenericInterface.type (constants.%GenericInterface.type.48f)]
-// CHECK:STDOUT:   %Self.loc6_38.2: @GenericInterface.%GenericInterface.type (%GenericInterface.type.48f) = symbolic_binding Self, 1 [symbolic = %Self.loc6_38.2 (constants.%Self.19b)]
+// CHECK:STDOUT:   %Self.loc6_37.2: @GenericInterface.%GenericInterface.type (%GenericInterface.type.48f) = symbolic_binding Self, 1 [symbolic = %Self.loc6_37.2 (constants.%Self.19b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc6_38.1: @GenericInterface.%GenericInterface.type (%GenericInterface.type.48f) = symbolic_binding Self, 1 [symbolic = %Self.loc6_38.2 (constants.%Self.19b)]
+// CHECK:STDOUT:     %Self.loc6_37.1: @GenericInterface.%GenericInterface.type (%GenericInterface.type.48f) = symbolic_binding Self, 1 [symbolic = %Self.loc6_37.2 (constants.%Self.19b)]
 // CHECK:STDOUT:     %GenericInterface.WithSelf.decl = interface_with_self_decl @GenericInterface [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc6_38.1
+// CHECK:STDOUT:     .Self = %Self.loc6_37.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -2139,12 +2139,12 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     import PackageGenericInterface//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PackageHasParam.AnyParam: %AnyParam.type = import_ref PackageHasParam//default, AnyParam, loaded [concrete = constants.%AnyParam.generic]
-// CHECK:STDOUT:   %PackageHasParam.import_ref.8f2: <witness> = import_ref PackageHasParam//default, loc4_34, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.8f2: <witness> = import_ref PackageHasParam//default, loc4_32, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %PackageHasParam.import_ref.527 = import_ref PackageHasParam//default, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %PackageHasParam.import_ref.b3b: type = import_ref PackageHasParam//default, loc4_17, loaded [symbolic = @AnyParam.%T (constants.%T)]
-// CHECK:STDOUT:   %PackageHasParam.import_ref.b42: @AnyParam.%T (%T) = import_ref PackageHasParam//default, loc4_27, loaded [symbolic = @AnyParam.%X (constants.%X)]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.b42: @AnyParam.%T (%T) = import_ref PackageHasParam//default, loc4_26, loaded [symbolic = @AnyParam.%X (constants.%X)]
 // CHECK:STDOUT:   %PackageGenericInterface.GenericInterface: %GenericInterface.type.cd1 = import_ref PackageGenericInterface//default, GenericInterface, loaded [concrete = constants.%GenericInterface.generic]
-// CHECK:STDOUT:   %PackageGenericInterface.import_ref.b00 = import_ref PackageGenericInterface//default, loc6_38, unloaded
+// CHECK:STDOUT:   %PackageGenericInterface.import_ref.b00 = import_ref PackageGenericInterface//default, loc6_37, unloaded
 // CHECK:STDOUT:   %PackageGenericInterface.import_ref.b3bc94.2: type = import_ref PackageGenericInterface//default, loc6_29, loaded [symbolic = @GenericInterface.%U (constants.%U)]
 // CHECK:STDOUT:   %PackageHasParam.Y: type = import_ref PackageHasParam//default, Y, loaded [concrete = constants.%Y.type]
 // CHECK:STDOUT:   %PackageHasParam.import_ref.03c: %Y.assoc_type = import_ref PackageHasParam//default, loc7_21, loaded [concrete = constants.%assoc0.970]
@@ -2398,10 +2398,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     import PackageHasParam//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PackageHasParam.AnyParam: %AnyParam.type = import_ref PackageHasParam//default, AnyParam, loaded [concrete = constants.%AnyParam.generic]
-// CHECK:STDOUT:   %PackageHasParam.import_ref.8f2: <witness> = import_ref PackageHasParam//default, loc4_34, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.8f2: <witness> = import_ref PackageHasParam//default, loc4_32, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %PackageHasParam.import_ref.527 = import_ref PackageHasParam//default, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %PackageHasParam.import_ref.b3b: type = import_ref PackageHasParam//default, loc4_17, loaded [symbolic = @AnyParam.%T (constants.%T)]
-// CHECK:STDOUT:   %PackageHasParam.import_ref.b42: @AnyParam.%T (%T) = import_ref PackageHasParam//default, loc4_27, loaded [symbolic = @AnyParam.%X (constants.%X)]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.b42: @AnyParam.%T (%T) = import_ref PackageHasParam//default, loc4_26, loaded [symbolic = @AnyParam.%X (constants.%X)]
 // CHECK:STDOUT:   %PackageHasParam.Y: type = import_ref PackageHasParam//default, Y, loaded [concrete = constants.%Y.type]
 // CHECK:STDOUT:   %PackageHasParam.import_ref.03c: %Y.assoc_type = import_ref PackageHasParam//default, loc7_21, loaded [concrete = constants.%assoc0.970]
 // CHECK:STDOUT:   %PackageHasParam.K: @Y.WithSelf.%Y.WithSelf.K.type (%Y.WithSelf.K.type.977) = import_ref PackageHasParam//default, K, loaded [symbolic = @Y.WithSelf.%Y.WithSelf.K (constants.%Y.WithSelf.K.d2d)]
@@ -2423,9 +2423,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %GenericClass.decl: %GenericClass.type = class_decl @GenericClass [concrete = constants.%GenericClass.generic] {
 // CHECK:STDOUT:     %U.patt.loc6_21.1: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc6_21.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc6_24.1: type = splice_block %.loc6_24.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc6_23.1: type = splice_block %.loc6_23.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc6_24.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc6_23.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc6_21.2: type = symbolic_binding U, 0 [symbolic = %U.loc6_21.1 (constants.%U)]
 // CHECK:STDOUT:   }
@@ -2683,12 +2683,12 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     import PackageGenericClass//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PackageHasParam.AnyParam: %AnyParam.type = import_ref PackageHasParam//default, AnyParam, loaded [concrete = constants.%AnyParam.generic]
-// CHECK:STDOUT:   %PackageHasParam.import_ref.8f2: <witness> = import_ref PackageHasParam//default, loc4_34, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.8f2: <witness> = import_ref PackageHasParam//default, loc4_32, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %PackageHasParam.import_ref.527 = import_ref PackageHasParam//default, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %PackageHasParam.import_ref.b3b: type = import_ref PackageHasParam//default, loc4_17, loaded [symbolic = @AnyParam.%T (constants.%T)]
-// CHECK:STDOUT:   %PackageHasParam.import_ref.b42: @AnyParam.%T (%T) = import_ref PackageHasParam//default, loc4_27, loaded [symbolic = @AnyParam.%X (constants.%X)]
+// CHECK:STDOUT:   %PackageHasParam.import_ref.b42: @AnyParam.%T (%T) = import_ref PackageHasParam//default, loc4_26, loaded [symbolic = @AnyParam.%X (constants.%X)]
 // CHECK:STDOUT:   %PackageGenericClass.GenericClass: %GenericClass.type = import_ref PackageGenericClass//default, GenericClass, loaded [concrete = constants.%GenericClass.generic]
-// CHECK:STDOUT:   %PackageGenericClass.import_ref.8f2: <witness> = import_ref PackageGenericClass//default, loc6_31, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %PackageGenericClass.import_ref.8f2: <witness> = import_ref PackageGenericClass//default, loc6_30, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %PackageGenericClass.import_ref.772 = import_ref PackageGenericClass//default, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %PackageGenericClass.import_ref.b3b: type = import_ref PackageGenericClass//default, loc6_21, loaded [symbolic = @GenericClass.%U (constants.%U)]
 // CHECK:STDOUT:   %PackageHasParam.Y: type = import_ref PackageHasParam//default, Y, loaded [concrete = constants.%Y.type]
@@ -2955,9 +2955,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc13_10.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_13.1: type = splice_block %.loc13_13.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc13_12.1: type = splice_block %.loc13_12.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc13_13.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc13_12.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc13_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc13_10.1 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -3277,7 +3277,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     import HasExtraInterfaces//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasExtraInterfaces.C: %C.type = import_ref HasExtraInterfaces//default, C, loaded [concrete = constants.%C.generic]
-// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.8f2: <witness> = import_ref HasExtraInterfaces//default, loc13_20, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.8f2: <witness> = import_ref HasExtraInterfaces//default, loc13_19, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %HasExtraInterfaces.import_ref.0f9 = import_ref HasExtraInterfaces//default, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %HasExtraInterfaces.import_ref.b3b: type = import_ref HasExtraInterfaces//default, loc13_10, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %HasExtraInterfaces.I: type = import_ref HasExtraInterfaces//default, I, loaded [concrete = constants.%I.type]

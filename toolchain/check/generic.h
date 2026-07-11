@@ -103,7 +103,7 @@ auto MakeSpecific(Context& context, SemIR::LocId loc_id,
     -> SemIR::SpecificId;
 
 // Builds the specific that describes how the generic should refer to itself.
-// For example, for a generic `G(T:! type)`, this is the specific `G(T)`. If
+// For example, for a generic `G(T: type)`, this is the specific `G(T)`. If
 // `generic_id` is `None`, returns `None`.
 auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
                       SemIR::GenericId generic_id) -> SemIR::SpecificId;
