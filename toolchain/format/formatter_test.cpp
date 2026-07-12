@@ -39,6 +39,18 @@ constexpr llvm::StringLiteral Inputs[] = {
     // An operator chain long enough to wrap, exercising operand alignment.
     "fn F() {\n  return aaaaaaaaaa * bbbbbbbbbb + cccccccccc * dddddddddd +"
     " eeeeeeeeee * ffffffffff;\n}",
+    // Overflowing declarations that must break before `->` or after a binding
+    // colon rather than splitting at a keyword.
+    "class C { private fn Configure() -> "
+    "ValidationResultStatusNameGoesHereAndOverflowsXyzzy; }",
+    "fn T() {\n  var accumulated_statistics_record_value: "
+    "ProcessingStatisticsRecordContainerXXXXX;\n}",
+    // Overflowing lines whose only column-saving break would put whitespace
+    // inside a unary operator; they must stay overlong instead.
+    "fn U() {\n  TakeTheAddress("
+    "&some_rather_long_variable_name_that_makes_this_overflow_xyzzy);\n}",
+    "fn R() {\n  TakePointerType("
+    "SomeExtremelyLongParameterTypeNameGoesHereForPointerOverflow*);\n}",
 };
 
 // Formats `text` and returns the result.
@@ -68,6 +80,23 @@ TEST(FormatterTest, Idempotent) {
     std::string once = FormatText(helper, input);
     std::string twice = FormatText(helper, once);
     EXPECT_EQ(once, twice) << "not idempotent for input:\n" << input;
+  }
+}
+
+// Error-free input formats to error-free output: no layout decision may
+// introduce an error, such as a break that puts whitespace inside a unary
+// operator, which the parser's fixity rules reject.
+TEST(FormatterTest, OutputStaysErrorFree) {
+  Testing::CompileHelper helper;
+  for (llvm::StringRef input : Inputs) {
+    if (helper.GetTree(input).has_errors()) {
+      continue;
+    }
+    std::string formatted = FormatText(helper, input);
+    EXPECT_FALSE(helper.GetTree(formatted).has_errors())
+        << "formatting introduced errors for input:\n"
+        << input << "\noutput:\n"
+        << formatted;
   }
 }
 

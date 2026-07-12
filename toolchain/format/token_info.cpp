@@ -172,7 +172,7 @@ auto SpacesBefore(const Lex::TokenizedBuffer& tokens,
 }
 
 auto CanBreakBefore(const Lex::TokenizedBuffer& tokens,
-                    const TokenInfoStore& token_infos, Lex::TokenIndex /*left*/,
+                    const TokenInfoStore& token_infos, Lex::TokenIndex left,
                     Lex::TokenIndex right) -> bool {
   // Separators and closing brackets hug the preceding token, so a break before
   // them is never allowed.
@@ -189,6 +189,22 @@ auto CanBreakBefore(const Lex::TokenizedBuffer& tokens,
   // Never break before `=`: assignments and initializers keep the `=` on the
   // left and break after it.
   if (tokens.GetKind(right) == Lex::TokenKind::Equal) {
+    return false;
+  }
+  // Never break before a binding colon: the colon hugs its name, and a break
+  // goes after it instead.
+  if (tokens.GetKind(right) == Lex::TokenKind::Colon) {
+    return false;
+  }
+  // Never separate a symbolic unary operator from its operand: the lexer's
+  // fixity rules forbid whitespace on the operand side, so a break after a
+  // symbolic prefix operator or before a postfix operator would turn valid
+  // code into invalid code.
+  if (token_infos.Get(left).role == TokenRole::PrefixOperator &&
+      tokens.GetKind(left).is_symbol()) {
+    return false;
+  }
+  if (token_infos.Get(right).role == TokenRole::PostfixOperator) {
     return false;
   }
   // Never break before an infix operator. With break-after-operator style the
@@ -228,9 +244,33 @@ auto SplitPenalty(const Lex::TokenizedBuffer& tokens,
     return 19;
   }
   // Expensive, discouraged breaks.
+  if (token_infos.Get(left).role == TokenRole::PrefixOperator) {
+    // After a word prefix operator such as `not`, before its operand
+    // (clang-format's unary-operator penalty). A symbolic prefix operator
+    // never reaches here: `CanBreakBefore` forbids that break outright.
+    return 60;
+  }
+  if (left_kind == Lex::TokenKind::Colon) {
+    // After a binding colon, moving the type off the line that names it. A
+    // near-last resort, but cheaper than splitting at a keyword, so a
+    // declaration nothing else can save wraps here.
+    return 100;
+  }
   if (tokens.GetKind(right) == Lex::TokenKind::Period) {
     // Before a member access in a chain.
     return 150;
+  }
+  if (left_kind.is_keyword()) {
+    // After any other keyword. A keyword binds to the construct it introduces
+    // or modifies (`private` and `fn` to their declaration, `return` to its
+    // operand, `while` to its condition), and a break there moves the
+    // construct to the continuation indent, left of where it started, which
+    // reads as a new statement. This is the costliest legal break, the analog
+    // of clang-format's penalty against separating a declaration's specifiers
+    // from its name (`TT_StartOfName`). Word operators are already classified
+    // above: infix ones break by precedence, and prefix ones cost the
+    // unary-operator penalty.
+    return 200;
   }
   // Default.
   return 3;

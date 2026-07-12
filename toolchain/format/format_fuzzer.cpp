@@ -127,6 +127,12 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
   // output lexes to the same token kinds as the input.
   CARBON_CHECK(second->token_kinds == first->token_kinds,
                "formatting changed the token sequence");
+
+  // Validity preservation: error-free input formats to error-free output. The
+  // token kinds alone cannot catch a layout decision that changes meaning
+  // through whitespace, such as splitting a unary operator from its operand,
+  // which the parser's fixity rules reject.
+  CARBON_CHECK(second->clean, "formatting error-free input introduced errors");
   return 0;
 }
 

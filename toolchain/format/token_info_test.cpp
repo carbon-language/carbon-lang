@@ -224,6 +224,44 @@ TEST(CanBreakBeforeTest, NeverBeforeEqualOrInfixOperator) {
   EXPECT_FALSE(t.CanBreak(2, 3));
 }
 
+TEST(CanBreakBeforeTest, NeverBeforeBindingColon) {
+  // The colon hugs its binding name; a break may go after the colon (at a
+  // steep penalty), never before it.
+  TokenTester t("name: Type");
+  EXPECT_FALSE(t.CanBreak(0, 1));
+  EXPECT_TRUE(t.CanBreak(1, 2));
+}
+
+TEST(CanBreakBeforeTest, NeverSplittingSymbolicUnaryOperators) {
+  // Whitespace between a symbolic unary operator and its operand is invalid
+  // Carbon (the lexer's fixity rules reject it), so a break after a symbolic
+  // prefix operator or before a postfix operator would corrupt the code.
+  TokenTester t("F(&a) p*");
+  t.SetRole(2, TokenRole::PrefixOperator);
+  EXPECT_FALSE(t.CanBreak(2, 3));
+  t.SetRole(6, TokenRole::PostfixOperator);
+  EXPECT_FALSE(t.CanBreak(5, 6));
+}
+
+TEST(SplitPenaltyTest, WordPrefixOperator) {
+  // A word prefix operator keeps its operand-side space, so a break there is
+  // legal but priced like clang-format's unary-operator penalty.
+  TokenTester t("not flag");
+  t.SetRole(0, TokenRole::PrefixOperator);
+  EXPECT_TRUE(t.CanBreak(0, 1));
+  EXPECT_EQ(t.Penalty(0, 1), 60);
+}
+
+TEST(SplitPenaltyTest, BindingColonAndDeclKeywords) {
+  TokenTester t("private fn F(name: Type) -> R");
+  // After a binding colon: a near-last resort, above the return-type break.
+  EXPECT_EQ(t.Penalty(5, 6), 100);
+  // After a keyword: keywords bind to the construct they introduce or modify,
+  // so splitting one from what follows is the costliest legal break.
+  EXPECT_EQ(t.Penalty(0, 1), 200);
+  EXPECT_EQ(t.Penalty(1, 2), 200);
+}
+
 TEST(OperatorInfoTest, BinaryOperators) {
   // Tighter-binding operators get a larger break penalty, so the loosest breaks
   // first. Non-assignment operators align their operands; assignments do not.
