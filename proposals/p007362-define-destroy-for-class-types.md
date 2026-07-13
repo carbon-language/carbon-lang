@@ -64,19 +64,19 @@ interface Destructor {
 
 ```carbon
 interface Destroy {
-  private fn Op(ref self);
+  final fn Op(ref self) = <some builtin>;
 }
 ```
 
 ```carbon
 interface TrivialDestroy {
-  private fn Op(ref self);
+  final fn Op(ref self) = <some builtin>;
 }
 ```
 
 ```carbon
 interface DynamicDestroy {
-  private fn Op(ref self);
+  final fn Op(ref self) = <some builtin>;
 }
 ```
 
