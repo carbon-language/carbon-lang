@@ -162,8 +162,6 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
@@ -175,8 +173,6 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic final impl @T.as_type.as.I.impl(%T.loc7_21.2: %J.type) {
@@ -228,8 +224,6 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -255,8 +249,6 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:     %specific_impl_fn.loc11_26.1: <specific function> = specific_impl_function %impl.elem0.loc11_26.1, @I.WithSelf.F(constants.%T.dda) [symbolic = %specific_impl_fn.loc11_26.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %I.WithSelf.F.call: init %empty_tuple.type = call %specific_impl_fn.loc11_26.1()
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -281,8 +273,6 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:     %UseI.specific_fn.loc12_25.1: <specific function> = specific_function %UseI.ref, @UseI(constants.%I.facet.39f) [symbolic = %UseI.specific_fn.loc12_25.2 (constants.%UseI.specific_fn.081)]
 // CHECK:STDOUT:     %UseI.call: init %empty_tuple.type = call %UseI.specific_fn.loc12_25.1()
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -295,8 +285,6 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:   %UseJ.specific_fn: <specific function> = specific_function %UseJ.ref, @UseJ(constants.%J.facet) [concrete = constants.%UseJ.specific_fn]
 // CHECK:STDOUT:   %UseJ.call: init %empty_tuple.type = call %UseJ.specific_fn()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self.37e) {

@@ -80,8 +80,6 @@ fn G(c: C) {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %Self.ref as %I.ref {
@@ -116,8 +114,6 @@ fn G(c: C) {
 // CHECK:STDOUT: fn @C.as.I.impl.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
@@ -211,8 +207,6 @@ fn G(c: C) {
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: imports.%Main.import_ref.5dc as imports.%Main.import_ref.c3f793.2 [from "extend_impl_library.carbon"] {
@@ -240,8 +234,6 @@ fn G(c: C) {
 // CHECK:STDOUT:   %impl.elem0.loc8: %.92e = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
 // CHECK:STDOUT:   %C.as.I.impl.F.call.loc8: init %empty_tuple.type = call %impl.elem0.loc8()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(imports.%Main.import_ref.e59c42.2: %I.type) [from "extend_impl_library.carbon"] {

@@ -158,8 +158,6 @@ class Class(T: type) {
 // CHECK:STDOUT:     %.loc18_35.2: init @Class.MakeSelf.%Class (%Class) to %return.param = class_init () [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:     %.loc18_36: init @Class.MakeSelf.%Class (%Class) = converted %.loc18_35.1, %.loc18_35.2 [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:     return %.loc18_36 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -181,8 +179,6 @@ class Class(T: type) {
 // CHECK:STDOUT:     %.loc19_40.2: init @Class.MakeClass.%Class.loc19_28.1 (%Class) to %return.param = class_init () [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:     %.loc19_41: init @Class.MakeClass.%Class.loc19_28.1 (%Class) = converted %.loc19_40.1, %.loc19_40.2 [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:     return %.loc19_41 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -263,8 +259,6 @@ class Class(T: type) {
 // CHECK:STDOUT:     %bound_method.loc21_5.2: <bound method> = bound_method %c.var, %specific_impl_fn.loc21
 // CHECK:STDOUT:     %Destroy.WithSelf.Op.call.loc21: init %empty_tuple.type = call %bound_method.loc21_5.2(%c.var)
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -170,7 +170,5 @@ let g: u8 = ConvertToU8('\u{100}');
 // CHECK:STDOUT:   %.loc20: Core.CharLiteral = char_value U+00FF [concrete = constants.%.ad8]
 // CHECK:STDOUT:   %ConvertToU8.call.loc20: init %u8 = call %ConvertToU8.ref.loc20(%.loc20) [concrete = constants.%int_255]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

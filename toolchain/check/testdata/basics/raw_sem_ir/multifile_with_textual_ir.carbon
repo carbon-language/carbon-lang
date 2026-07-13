@@ -144,8 +144,6 @@ fn B() {
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ---
@@ -312,8 +310,6 @@ fn B() {
 // CHECK:STDOUT:   %A.ref.loc6_4: %A.type = name_ref A, imports.%A.A [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref.loc6_4()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A [from "a.carbon"];

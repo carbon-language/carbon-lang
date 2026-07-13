@@ -369,8 +369,6 @@ fn F() {
 // CHECK:STDOUT:   %initializer_list.cpp_destructor.call.loc8: init %empty_tuple.type = call %initializer_list.cpp_destructor.bound.loc8(%.loc8_50.18)
 // CHECK:STDOUT:   %Destroy.Op.call.loc8: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.981)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @initializer_list.initializer_list.loc8(%_.param: %array_type) -> out %return.param: %initializer_list = "cpp.std.initializer_list.make";
@@ -384,14 +382,10 @@ fn F() {
 // CHECK:STDOUT: fn @Destroy.Op.loc12_44.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc12_44.3(%self.param: ref %array_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

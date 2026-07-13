@@ -122,8 +122,6 @@ fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
@@ -135,8 +133,6 @@ fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Feed(%T.loc18_10.2: %Eats.type) {
@@ -153,8 +149,6 @@ fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   fn(%e.param: @Feed.%T.as_type.loc18_28.1 (%T.as_type.422)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -174,8 +168,6 @@ fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:     %Feed.ref: %Feed.type = name_ref Feed, file.%Feed.decl [concrete = constants.%Feed]
 // CHECK:STDOUT:     %a.ref: @HandleAnimal.%T.as_type.loc27_31.1 (%T.as_type.01d) = name_ref a, %a
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

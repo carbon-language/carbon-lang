@@ -275,8 +275,6 @@ class Outer(T: type) {
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc9: init %Class.958 to %.loc9_1 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
 // CHECK:STDOUT:   assign file.%b.var, %T.as.DefaultOrUnformed.impl.Op.call.loc9
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T.67d, constants.%N.ce9) {
@@ -392,8 +390,6 @@ class Outer(T: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N.ce9) {
@@ -495,8 +491,6 @@ class Outer(T: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N.ce9) {
@@ -601,8 +595,6 @@ class Outer(T: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N.ce9) {
@@ -826,8 +818,6 @@ class Outer(T: type) {
 // CHECK:STDOUT:     %.loc5_15.2: init @Inner.A.%Outer.loc4_22.1 (%Outer.dee) to %return.param = class_init () [symbolic = %Outer.val (constants.%Outer.val.1e6)]
 // CHECK:STDOUT:     %.loc5_16: init @Inner.A.%Outer.loc4_22.1 (%Outer.dee) = converted %.loc5_15.1, %.loc5_15.2 [symbolic = %Outer.val (constants.%Outer.val.1e6)]
 // CHECK:STDOUT:     return %.loc5_16 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -849,8 +839,6 @@ class Outer(T: type) {
 // CHECK:STDOUT:     %.loc8_15.2: init @Inner.B.%Outer.loc7_22.1 (%Outer.20b) to %return.param = class_init () [symbolic = %Outer.val (constants.%Outer.val.8e5)]
 // CHECK:STDOUT:     %.loc8_16: init @Inner.B.%Outer.loc7_22.1 (%Outer.20b) = converted %.loc8_15.1, %.loc8_15.2 [symbolic = %Outer.val (constants.%Outer.val.8e5)]
 // CHECK:STDOUT:     return %.loc8_16 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -874,8 +862,6 @@ class Outer(T: type) {
 // CHECK:STDOUT:     %.loc11_15.2: init @Inner.C.%Inner.loc10_22.1 (%Inner.61d) to %return.param = class_init () [symbolic = %Inner.val (constants.%Inner.val.284)]
 // CHECK:STDOUT:     %.loc11_16: init @Inner.C.%Inner.loc10_22.1 (%Inner.61d) = converted %.loc11_15.1, %.loc11_15.2 [symbolic = %Inner.val (constants.%Inner.val.284)]
 // CHECK:STDOUT:     return %.loc11_16 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -900,8 +886,6 @@ class Outer(T: type) {
 // CHECK:STDOUT:     %.loc14_15.2: init @Inner.D.%Inner.loc13_22.1 (%Inner.34b) to %return.param = class_init () [symbolic = %Inner.val (constants.%Inner.val.9fd)]
 // CHECK:STDOUT:     %.loc14_16: init @Inner.D.%Inner.loc13_22.1 (%Inner.34b) = converted %.loc14_15.1, %.loc14_15.2 [symbolic = %Inner.val (constants.%Inner.val.9fd)]
 // CHECK:STDOUT:     return %.loc14_16 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

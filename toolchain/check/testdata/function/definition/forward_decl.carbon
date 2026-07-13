@@ -34,7 +34,5 @@ fn Foo() {}
 // CHECK:STDOUT: fn @Foo() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

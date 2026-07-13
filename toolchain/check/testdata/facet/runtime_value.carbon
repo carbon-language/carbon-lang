@@ -151,8 +151,6 @@ fn F(T: Z) {
 // CHECK:STDOUT:     %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_facet_copy_narrowing_from_reference.carbon
@@ -178,7 +176,5 @@ fn F(T: Z) {
 // CHECK:STDOUT:     %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

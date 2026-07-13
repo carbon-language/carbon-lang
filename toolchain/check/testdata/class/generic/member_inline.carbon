@@ -208,8 +208,6 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:     %.loc6_17.1: ref @Class.F.%T.as_type.loc6_11.1 (%T.as_type) = splice_block %return.param {}
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @Class.F.%T.as_type.loc6_11.1 (%T.as_type) to %.loc6_17.1 = call %bound_method.loc7_12.2(%n.ref)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -250,8 +248,6 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:     %.loc10_17.1: ref @Class.G.%T.as_type.loc10_17.1 (%T.as_type) = splice_block %return.param {}
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @Class.G.%T.as_type.loc10_17.1 (%T.as_type) to %.loc10_17.1 = call %bound_method.loc11_16.2(%.loc11_16.2)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -373,8 +369,6 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %data.ref: @C.F.%C.elem (%C.elem) = name_ref data, @C.%.loc13 [concrete = @C.%.loc13]
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -98,8 +98,6 @@ fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT: fn @F(%b.param: %.2ba) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- runtime_call.carbon
@@ -141,7 +139,5 @@ fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:   %t.ref: type = name_ref t, file.%t
 // CHECK:STDOUT:   %Make.call: init type = call %Make.ref(%t.ref)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

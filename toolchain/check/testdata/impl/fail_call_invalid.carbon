@@ -123,8 +123,6 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   witness = (@Simple.WithSelf.%Simple.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @i32.as.Simple.impl: %i32 as %Simple.ref {
@@ -171,8 +169,6 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.bound: <bound method> = bound_method %self.param, %G.ref
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.call: init %empty_tuple.type = call %i32.as.Simple.impl.G.bound(<error>)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InstanceCall(%n.param: %i32) {
@@ -186,8 +182,6 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.bound: <bound method> = bound_method %n.ref, %G.ref.loc28_16
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.call: init %empty_tuple.type = call %i32.as.Simple.impl.G.bound(<error>)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple.WithSelf(constants.%Self) {

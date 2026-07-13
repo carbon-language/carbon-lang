@@ -80,8 +80,6 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:   %NoOp.ref: %NoOp.type = name_ref NoOp, file.%NoOp.decl [concrete = constants.%NoOp]
 // CHECK:STDOUT:   %NoOp.call: init %empty_tuple.type = call %NoOp.ref() [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- explicit_return.carbon
@@ -98,8 +96,6 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:   %NoOp.ref: %NoOp.type = name_ref NoOp, file.%NoOp.decl [concrete = constants.%NoOp]
 // CHECK:STDOUT:   %NoOp.call: init %empty_tuple.type = call %NoOp.ref() [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- ignore_args.carbon
@@ -119,8 +115,6 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:   %.loc8_9.2: %empty_tuple.type = converted %.loc8_9.1, %empty_tuple [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %NoOp.call: init %empty_tuple.type = call %NoOp.ref(%.loc8_9.2) [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- assign.carbon
@@ -154,7 +148,5 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:   %NoOp.call: init %empty_tuple.type = call %NoOp.ref() [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%x.var, %NoOp.call
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

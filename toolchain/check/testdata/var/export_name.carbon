@@ -100,8 +100,6 @@ var w: () = v;
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %empty_tuple.type = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign file.%v.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export.carbon
@@ -180,7 +178,5 @@ var w: () = v;
 // CHECK:STDOUT:   %.loc6_1: init %empty_tuple.type = converted %v.ref, %.loc6_13 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%w.var, %.loc6_1
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

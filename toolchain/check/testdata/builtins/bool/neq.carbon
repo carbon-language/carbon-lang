@@ -87,8 +87,6 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %False.call.loc12: init %C.4b2 to %.loc12 = call %False.ref.loc12()
 // CHECK:STDOUT:   assign file.%a.var, %False.call.loc12
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- prelude.carbon
@@ -147,7 +145,5 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %False.call.loc10: init %C.4b2 to %.loc10 = call %False.ref.loc10()
 // CHECK:STDOUT:   assign file.%a.var, %False.call.loc10
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

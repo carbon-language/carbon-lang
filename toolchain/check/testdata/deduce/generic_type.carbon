@@ -226,8 +226,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %.loc7_27.1: ref @F.%T.loc7_7.1 (%T) = splice_block %return.param {}
 // CHECK:STDOUT:     %F.call: init @F.%T.loc7_7.1 (%T) to %.loc7_27.1 = call %F.specific_fn.loc7_38.1(%p.ref)
 // CHECK:STDOUT:     return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -239,8 +237,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_18.1: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %F.call: init %D to %.loc9_18.1 = call %F.specific_fn(%p.ref)
 // CHECK:STDOUT:   return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
@@ -440,8 +436,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %.loc7_27.1: ref %C = splice_block %return.param {}
 // CHECK:STDOUT:     %F.call: init %C to %.loc7_27.1 = call %F.specific_fn.loc7_38.1(%p.ref)
 // CHECK:STDOUT:     return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -453,8 +447,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_18.1: ref %C = splice_block %return.param {}
 // CHECK:STDOUT:   %F.call: init %C to %.loc9_18.1 = call %F.specific_fn(%p.ref)
 // CHECK:STDOUT:   return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
@@ -735,8 +727,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %.loc13_54.1: ref @F.%tuple.type (%tuple.type.a5e) = splice_block %return.param {}
 // CHECK:STDOUT:     %F.call: init @F.%tuple.type (%tuple.type.a5e) to %.loc13_54.1 = call %F.specific_fn.loc13_65.1(%p.ref)
 // CHECK:STDOUT:     return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -748,8 +738,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc15_36.1: ref %tuple.type.af1 = splice_block %return.param {}
 // CHECK:STDOUT:   %F.call: init %tuple.type.af1 to %.loc15_36.1 = call %F.specific_fn(%p.ref)
 // CHECK:STDOUT:   return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%T) {
@@ -1019,8 +1007,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %bound_method.loc6_56.2: <bound method> = bound_method %N.ref.loc6_56, %specific_fn [symbolic = %bound_method.loc6_56.3 (constants.%bound_method.d86)]
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_56.2(%N.ref.loc6_56) [symbolic = %N.loc6_7.1 (constants.%N.37f)]
 // CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1047,8 +1033,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%.loc9_15.3)
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.0e2)
 // CHECK:STDOUT:   return %F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc9_15.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -1056,8 +1040,6 @@ fn G() -> i32 {
 // CHECK:STDOUT: fn @Destroy.Op.loc9_15.2(%self.param: ref %WithNontype.888) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithNontype(constants.%N.37f) {

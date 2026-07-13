@@ -293,8 +293,6 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %n.ref, %specific_fn
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_10.2(%n.ref)
 // CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -305,8 +303,6 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%i32) [concrete = constants.%F.specific_fn.6c3]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%n.ref)
 // CHECK:STDOUT:   return %F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert(%self.param: %C) -> out %return.param: %i32 {
@@ -321,8 +317,6 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %bound_method.loc16_42.2: <bound method> = bound_method %.loc16_42.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc16_42.2(%.loc16_42.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test2(%c.param: %C) -> out %return.param: %i32 {
@@ -332,8 +326,6 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.e0d]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%c.ref)
 // CHECK:STDOUT:   return %F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67db0b.1) {
@@ -524,8 +516,6 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %n.ref, %specific_fn
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_10.2(%n.ref)
 // CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -536,8 +526,6 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%D) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%d.ref)
 // CHECK:STDOUT:   return %F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67db0b.1) {

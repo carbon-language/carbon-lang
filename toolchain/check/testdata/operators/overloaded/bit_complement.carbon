@@ -51,7 +51,5 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.BitComplement.impl.Op.call: init %C to %.loc27_20.1 = call %bound_method(%a.ref)
 // CHECK:STDOUT:   return %C.as.BitComplement.impl.Op.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

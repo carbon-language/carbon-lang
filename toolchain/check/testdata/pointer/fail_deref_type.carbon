@@ -79,7 +79,5 @@ var p2: i32->foo;
 // CHECK:STDOUT:   assign file.%p.var, <error>
 // CHECK:STDOUT:   assign file.%p2.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

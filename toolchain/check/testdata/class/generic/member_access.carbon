@@ -215,8 +215,6 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @Class.Get.%T.as_type.loc7_19.1 (%T.as_type) to %.loc7_19.1 = call %bound_method.loc9_16.2(%.loc9_16.2)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -250,8 +248,6 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:     %bound_method.loc15_12.2: <bound method> = bound_method %addr, %specific_impl_fn.loc15_12.1
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @Class.GetAddr.%ptr.loc13_28.1 (%ptr.215) = call %bound_method.loc15_12.2(%addr)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -267,8 +263,6 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:   %bound_method.loc22_11.2: <bound method> = bound_method %.loc22_11.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc22_11.2(%.loc22_11.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MethodCall(%x.param: %Class.ce6) -> out %return.param: %i32 {
@@ -281,8 +275,6 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %Class.Get.specific_fn
 // CHECK:STDOUT:   %Class.Get.call: init %i32 = call %bound_method(%x.ref)
 // CHECK:STDOUT:   return %Class.Get.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddrMethodCall(%p.param: %ptr.57b) -> out %return.param: %i32 {
@@ -305,8 +297,6 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:   %bound_method.loc34_10.2: <bound method> = bound_method %.loc34_10.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc34_10.2(%.loc34_10.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T.f84) {
@@ -462,8 +452,6 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %Class.Make.call: init @StaticMemberFunctionCall.%Class.loc8_56.1 (%Class) to %.loc8_56.1 = call %Class.Make.specific_fn.loc10_18.1()
 // CHECK:STDOUT:     return %Class.Make.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

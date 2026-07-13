@@ -154,8 +154,6 @@ fn Interface.C.F(unused self, generic U: type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   witness = (@Interface.WithSelf.%Interface.WithSelf.F.decl, @Interface.WithSelf.%Interface.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Interface.WithSelf.F(@Interface.%Self: %Interface.type) {
@@ -164,8 +162,6 @@ fn Interface.C.F(unused self, generic U: type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -281,8 +277,6 @@ fn Interface.C.F(unused self, generic U: type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(@Interface.%Self: %Interface.type) {
@@ -373,8 +367,6 @@ fn Interface.C.F(unused self, generic U: type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:     %bound_method.loc20_70.2: <bound method> = bound_method %u.ref, %specific_impl_fn.loc20_70.1
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @C.F.%ptr.loc14_37.1 (%ptr.18e) = call %bound_method.loc20_70.2(%u.ref)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

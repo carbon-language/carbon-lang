@@ -487,8 +487,6 @@ fn F() {
 // CHECK:STDOUT:   %addr: %ptr.2fe = addr_of %.loc8
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_single_data_member_value_param_type.carbon
@@ -527,8 +525,6 @@ fn F() {
 // CHECK:STDOUT:   %addr: %ptr.2fe = addr_of %.loc8
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_multiple_data_members_value_param_type.carbon
@@ -567,8 +563,6 @@ fn F() {
 // CHECK:STDOUT:   %addr: %ptr.2fe = addr_of %.loc8
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_in_namespace_value_param_type.carbon
@@ -650,8 +644,6 @@ fn F() {
 // CHECK:STDOUT:   %U.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%U.cpp_destructor
 // CHECK:STDOUT:   %U.cpp_destructor.call: init %empty_tuple.type = call %U.cpp_destructor.bound(%x.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_in_relative_namespace_value_param_type.carbon
@@ -699,8 +691,6 @@ fn F() {
 // CHECK:STDOUT:   %addr: %ptr.6d9 = addr_of %.loc8
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_in_outer_definition.carbon
@@ -778,8 +768,6 @@ fn F() {
 // CHECK:STDOUT:   %O.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%O.cpp_destructor
 // CHECK:STDOUT:   %O.cpp_destructor.call: init %empty_tuple.type = call %O.cpp_destructor.bound(%x.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_and_static_method_call_before.carbon
@@ -828,8 +816,6 @@ fn F() {
 // CHECK:STDOUT:   %addr: %ptr.2fe = addr_of %.loc9
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_and_static_method_call_after.carbon
@@ -878,8 +864,6 @@ fn F() {
 // CHECK:STDOUT:   %bar.ref: %U.bar.cpp_overload_set.type = name_ref bar, imports.%U.bar.cpp_overload_set.value [concrete = constants.%U.bar.cpp_overload_set.value]
 // CHECK:STDOUT:   %U.bar.call: init %empty_tuple.type = call imports.%U.bar.decl()
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_decl_pointer_param_type.carbon
@@ -916,8 +900,6 @@ fn F() {
 // CHECK:STDOUT:   %u.ref: %ptr = name_ref u, %u
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%u.ref)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_pointer_param_type.carbon
@@ -954,8 +936,6 @@ fn F() {
 // CHECK:STDOUT:   %u.ref: %ptr = name_ref u, %u
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%u.ref)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_value_return_type.carbon
@@ -997,8 +977,6 @@ fn F() {
 // CHECK:STDOUT:   %U.cpp_destructor.bound: <bound method> = bound_method %.loc8_11.3, constants.%U.cpp_destructor
 // CHECK:STDOUT:   %U.cpp_destructor.call: init %empty_tuple.type = call %U.cpp_destructor.bound(%.loc8_11.3)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_decl_pointer_return_type.carbon
@@ -1031,8 +1009,6 @@ fn F() {
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.call: init %ptr = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_pointer_return_type.carbon
@@ -1065,7 +1041,5 @@ fn F() {
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.call: init %ptr = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

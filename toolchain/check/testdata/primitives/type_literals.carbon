@@ -393,8 +393,6 @@ var test_str: str = ();
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc7: init %i64 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.4()
 // CHECK:STDOUT:   assign file.%test_i64.var, %T.as.DefaultOrUnformed.impl.Op.call.loc7
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- uN.carbon
@@ -501,8 +499,6 @@ var test_str: str = ();
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc7: init %u64 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.4()
 // CHECK:STDOUT:   assign file.%test_u64.var, %T.as.DefaultOrUnformed.impl.Op.call.loc7
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fN.carbon
@@ -609,8 +605,6 @@ var test_str: str = ();
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc7: init %f128.e39 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.4()
 // CHECK:STDOUT:   assign file.%test_f128.var, %T.as.DefaultOrUnformed.impl.Op.call.loc7
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- char.carbon
@@ -653,8 +647,6 @@ var test_str: str = ();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc5: Core.CharLiteral = char_value U+0063 [concrete = constants.%.b9b]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- string.carbon
@@ -687,8 +679,6 @@ var test_str: str = ();
 // CHECK:STDOUT:   %int_4: %u64 = int_value 4 [concrete = constants.%int_4]
 // CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str, %int_4) [concrete = constants.%String.val]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- type.carbon
@@ -732,7 +722,5 @@ var test_str: str = ();
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%i32) [concrete = constants.%i32]
 // CHECK:STDOUT:   assign file.%test_type.var, %type.as.Copy.impl.Op.call
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

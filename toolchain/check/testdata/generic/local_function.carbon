@@ -74,8 +74,6 @@ fn Test[unused T: type]() {
 // CHECK:STDOUT:     %Local.specific_fn.loc18_3.1: <specific function> = specific_function %Local.ref, @Local(constants.%T) [symbolic = %Local.specific_fn.loc18_3.2 (constants.%Local.specific_fn)]
 // CHECK:STDOUT:     %Local.call: init %empty_tuple.type = call %Local.specific_fn.loc18_3.1()
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -85,8 +83,6 @@ fn Test[unused T: type]() {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

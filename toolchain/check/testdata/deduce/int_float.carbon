@@ -164,8 +164,6 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %N.ref.loc5, %impl.elem0 [symbolic = %Core.IntLiteral.as.Copy.impl.Op.bound (constants.%Core.IntLiteral.as.Copy.impl.Op.bound.3c6)]
 // CHECK:STDOUT:     %Core.IntLiteral.as.Copy.impl.Op.call: init Core.IntLiteral = call %bound_method(%N.ref.loc5) [symbolic = %N.loc4_7.1 (constants.%N)]
 // CHECK:STDOUT:     return %Core.IntLiteral.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -176,8 +174,6 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_64) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init Core.IntLiteral = call %F.specific_fn(%a.ref)
 // CHECK:STDOUT:   return %F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
@@ -330,8 +326,6 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %N.ref.loc5, %impl.elem0 [symbolic = %Core.IntLiteral.as.Copy.impl.Op.bound (constants.%Core.IntLiteral.as.Copy.impl.Op.bound.3c6)]
 // CHECK:STDOUT:     %Core.IntLiteral.as.Copy.impl.Op.call: init Core.IntLiteral = call %bound_method(%N.ref.loc5) [symbolic = %N.loc4_7.1 (constants.%N)]
 // CHECK:STDOUT:     return %Core.IntLiteral.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -342,8 +336,6 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_64) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init Core.IntLiteral = call %F.specific_fn(%a.ref)
 // CHECK:STDOUT:   return %F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {

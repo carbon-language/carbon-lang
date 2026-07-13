@@ -1418,8 +1418,6 @@ fn G(generic T: N) {
 // CHECK:STDOUT:     %F.specific_fn.loc14_3.1: <specific function> = specific_function %F.ref, @F(constants.%facet_value) [symbolic = %F.specific_fn.loc14_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc14_3.1()
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -130,8 +130,6 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc19_28.2(%int_0) [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   %.loc19_28: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   return %.loc19_28
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> out %return.param: %i32 {
@@ -140,8 +138,6 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init %i32 = call %A.ref()
 // CHECK:STDOUT:   return %A.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() -> out %return.param: %i32 {
@@ -149,7 +145,5 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   %C.ref: %A.type = name_ref C, file.%C [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init %i32 = call %C.ref()
 // CHECK:STDOUT:   return %A.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

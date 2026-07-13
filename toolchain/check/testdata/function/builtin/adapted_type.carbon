@@ -257,8 +257,6 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   %MyAdd.call: init %MyInt32 = call %MyAdd.ref(%.loc23_54.2, %.loc23_87.2) [concrete = constants.%int_3]
 // CHECK:STDOUT:   assign file.%v.var, %MyAdd.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_adapt.carbon

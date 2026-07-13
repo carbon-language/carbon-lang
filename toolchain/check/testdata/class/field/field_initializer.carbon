@@ -157,7 +157,5 @@ var C: Class = {};
 // CHECK:STDOUT:   %.loc8_1: init %Class = converted %.loc8_17.1, %.loc8_17.2 [concrete = constants.%Class.val]
 // CHECK:STDOUT:   assign file.%C.var, %.loc8_1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

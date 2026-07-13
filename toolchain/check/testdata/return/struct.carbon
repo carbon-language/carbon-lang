@@ -96,7 +96,5 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %.loc16_17.3: init %struct_type.a.a92 = struct_init (%.loc16_17.2) [concrete = constants.%struct.159]
 // CHECK:STDOUT:   %.loc16_18: init %struct_type.a.a92 = converted %.loc16_17.1, %.loc16_17.3 [concrete = constants.%struct.159]
 // CHECK:STDOUT:   return %.loc16_18
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

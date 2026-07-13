@@ -94,8 +94,6 @@ var y: ((), ()) = x;
 // CHECK:STDOUT:   %.loc5_1: init %empty_tuple.type = converted %x.ref, %.loc5_13 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%y.var, %.loc5_1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested_tuple.carbon
@@ -163,8 +161,6 @@ var y: ((), ()) = x;
 // CHECK:STDOUT:   %.loc4_1: init %tuple.type.6e8 = converted %.loc4_38.1, %.loc4_38.5 [concrete = constants.%tuple.0ca]
 // CHECK:STDOUT:   assign file.%x.var, %.loc4_1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- one_element.carbon
@@ -229,8 +225,6 @@ var y: ((), ()) = x;
 // CHECK:STDOUT:   %.loc5_1: init %tuple.type = converted %x.ref, %.loc5_16.3 [concrete = constants.%tuple]
 // CHECK:STDOUT:   assign file.%y.var, %.loc5_1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_elements.carbon
@@ -349,7 +343,5 @@ var y: ((), ()) = x;
 // CHECK:STDOUT:   %.loc8_1: init %tuple.type = converted %x.ref, %.loc8_19.7 [concrete = constants.%tuple]
 // CHECK:STDOUT:   assign file.%y.var, %.loc8_1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

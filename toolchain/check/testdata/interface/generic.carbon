@@ -225,8 +225,6 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -262,8 +260,6 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:     witness = (@WithAssocFn.WithSelf.%WithAssocFn.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -348,8 +344,6 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   %.loc17_15.2: init %X to %return.param = class_init () [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc17_16: init %X = converted %.loc17_15.1, %.loc17_15.2 [concrete = constants.%X.val]
 // CHECK:STDOUT:   return %.loc17_16 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Receive(%T.loc24_28.3: %Simple.type.d50) {
@@ -362,8 +356,6 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -381,8 +373,6 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:     %Receive.specific_fn.loc26_3.1: <specific function> = specific_function %Receive.ref, @Receive(constants.%T.16788c.1) [symbolic = %Receive.specific_fn.loc26_3.2 (constants.%Receive.specific_fn)]
 // CHECK:STDOUT:     %Receive.call: init %empty_tuple.type = call %Receive.specific_fn.loc26_3.1()
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -571,8 +561,6 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -612,8 +600,6 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:     %T.ref: %Generic.type.57d = name_ref T, %T.loc10_15.2 [symbolic = %T.loc10_15.1 (constants.%T.f18)]
 // CHECK:STDOUT:     %T.as_type.loc18_6.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc18_6.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -714,8 +700,6 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -725,8 +709,6 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

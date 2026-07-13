@@ -167,8 +167,6 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %.loc22_10: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   assign %.loc22_7, %.loc22_10
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%p.param: %ptr.64c) {
@@ -182,7 +180,5 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %.loc30_4.4: ref %Base = converted %.loc30_4.1, %.loc30_4.3
 // CHECK:STDOUT:   %Base.F.call: init %empty_tuple.type = call %Base.F.bound(%.loc30_4.4)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

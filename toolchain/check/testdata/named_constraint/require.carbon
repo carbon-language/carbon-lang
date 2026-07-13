@@ -851,8 +851,6 @@ constraint N {
 // CHECK:STDOUT:     %specific_impl_fn.loc18: <specific function> = specific_impl_function %impl.elem0.loc18, @Y.WithSelf.YY(constants.%Y.facet) [symbolic = %specific_impl_fn.loc15_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %Y.WithSelf.YY.call.loc18: init %empty_tuple.type = call %specific_impl_fn.loc18()
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1003,8 +1001,6 @@ constraint N {
 // CHECK:STDOUT:     %specific_impl_fn.loc18: <specific function> = specific_impl_function %impl.elem0.loc18, @Y.WithSelf.YY(constants.%T.as_type, constants.%Y.facet) [symbolic = %specific_impl_fn.loc15_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %Y.WithSelf.YY.call.loc18: init %empty_tuple.type = call %specific_impl_fn.loc18()
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

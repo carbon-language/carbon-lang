@@ -48,7 +48,5 @@ fn A() {
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

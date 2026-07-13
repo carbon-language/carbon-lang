@@ -77,7 +77,5 @@ let c: bool = LessEq('b', 'a');
 // CHECK:STDOUT:   %.loc23_27: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %LessEq.call.loc23: init bool = call %LessEq.ref.loc23(%.loc23_22, %.loc23_27) [concrete = constants.%false]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

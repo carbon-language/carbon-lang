@@ -1510,11 +1510,12 @@ auto Formatter::FormatRequireImplsBlock(RequireImplsBlockId block_id) -> void {
 }
 
 auto Formatter::FormatObserveBlock(ObserveBlockId block_id) -> void {
-  IndentLabel();
-  out() << "!observes:\n";
-  if (!block_id.has_value()) {
+  if (!block_id.has_value() || block_id == ObserveBlockId::Empty) {
     return;
   }
+
+  IndentLabel();
+  out() << "!observes:\n";
   for (auto observe_id : sem_ir_->observe_blocks().Get(block_id)) {
     Indent();
     FormatArg(observe_id);

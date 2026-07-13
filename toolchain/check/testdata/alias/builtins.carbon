@@ -77,7 +77,5 @@ let a_test: bool = a;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: bool = name_ref a, file.%a [concrete = constants.%false]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -124,8 +124,6 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.I.impl(%T.loc10_15.2: type) {
@@ -175,8 +173,6 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -333,8 +329,6 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.I.impl(imports.%Main.import_ref.b3bc94.3: type) [from "import_generic.carbon"] {
@@ -373,8 +367,6 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @C.as.I.impl.F(imports.%Main.import_ref.b3bc94.2: type) [from "import_generic.carbon"] {
@@ -385,8 +377,6 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -396,8 +386,6 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %.loc6_1: init %C.d8e = converted %.loc6_17.1, %.loc6_17.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {

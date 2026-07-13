@@ -222,8 +222,6 @@ fn D() {}
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%b.param: %i32) -> out %return.param: %i32 {
@@ -235,8 +233,6 @@ fn D() {}
 // CHECK:STDOUT:   %bound_method.loc5_30.2: <bound method> = bound_method %b.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc5_30.2(%b.ref)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C(%c.param: %tuple.type.a8a) -> out %return.param: %struct_type.c {
@@ -253,8 +249,6 @@ fn D() {}
 // CHECK:STDOUT:   %.loc6_48.2: init %struct_type.c = struct_init (%Int.as.Copy.impl.Op.call)
 // CHECK:STDOUT:   %.loc6_49: init %struct_type.c = converted %.loc6_48.1, %.loc6_48.2
 // CHECK:STDOUT:   return %.loc6_49
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D();
@@ -428,8 +422,6 @@ fn D() {}
 // CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc8_25.4)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_def_ownership.carbon
@@ -487,8 +479,6 @@ fn D() {}
 // CHECK:STDOUT: fn @A.loc14() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B [from "fns.carbon"];
@@ -521,8 +511,6 @@ fn D() {}
 // CHECK:STDOUT: extern fn @A() [from "extern.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mix_extern_decl.carbon
@@ -559,7 +547,5 @@ fn D() {}
 // CHECK:STDOUT: fn @D() [from "fns.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

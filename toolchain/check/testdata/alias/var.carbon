@@ -54,15 +54,11 @@ fn F() -> () {
 // CHECK:STDOUT:   %a.ref: ref %empty_tuple.type = name_ref a, file.%a [concrete = file.%a.var]
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = alias_binding b, %a.ref [concrete = file.%a.var]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local.carbon
@@ -77,7 +73,5 @@ fn F() -> () {
 // CHECK:STDOUT:   %a.ref: ref %empty_tuple.type = name_ref a, %a
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = alias_binding b, %a.ref
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

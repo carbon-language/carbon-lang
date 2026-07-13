@@ -122,7 +122,5 @@ let b: CharLiteral = SubCharInt('\u{10FFFF}', Negate(1));
 // CHECK:STDOUT:   %.loc17_51.2: Core.IntLiteral = converted %Negate.call.loc17, %.loc17_51.1 [concrete = constants.%int_-1]
 // CHECK:STDOUT:   %SubCharInt.call.loc17: init Core.CharLiteral = call %SubCharInt.ref.loc17(%.loc17_33, %.loc17_51.2) [concrete = constants.%.a8b]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

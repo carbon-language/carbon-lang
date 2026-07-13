@@ -214,8 +214,6 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT: fn @F.loc23(%x.param: %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G.loc25(%x.param: %empty_tuple.type);
@@ -223,8 +221,6 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT: fn @G.loc33() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H.loc35(%x.param: %empty_tuple.type);
@@ -232,8 +228,6 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT: fn @H.loc40(%x.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @I.loc42();
@@ -244,8 +238,6 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   %.loc50_24.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc50_25: init %empty_tuple.type = converted %.loc50_24.1, %.loc50_24.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return %.loc50_25
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @J.loc52() -> out %return.param: %empty_tuple.type;
@@ -253,8 +245,6 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT: fn @J.loc60() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @K.loc62() -> out %return.param: %empty_tuple.type;
@@ -265,7 +255,5 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   %.loc70_24.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc70_25: init %empty_struct_type = converted %.loc70_24.1, %.loc70_24.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return %.loc70_25
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

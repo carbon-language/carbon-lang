@@ -282,8 +282,6 @@ fn G() {
 // CHECK:STDOUT:     %.loc6_34.1: ref @F.%T.loc6_7.1 (%T) = splice_block %return.param {}
 // CHECK:STDOUT:     %F.call: init @F.%T.loc6_7.1 (%T) to %.loc6_34.1 = call %F.specific_fn.loc6_45.1(%a.ref)
 // CHECK:STDOUT:     return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -328,8 +326,6 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -337,15 +333,11 @@ fn G() {
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.3(%self.param: ref %array_type.9a3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -546,8 +538,6 @@ fn G() {
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_66.1: init %i32 = call %bound_method.loc6_66.2(%N.ref.loc6_65) [symbolic = %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_66.2 (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:     %.loc6_66: init %i32 = converted %N.ref.loc6_65, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_66.1 [symbolic = %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_66.2 (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:     return %.loc6_66
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -591,8 +581,6 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   return %F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -600,15 +588,11 @@ fn G() {
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.3(%self.param: ref %array_type.9a3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
@@ -753,8 +737,6 @@ fn G() {
 // CHECK:STDOUT:   fn(%a.param: @F.%array_type.loc6_55.1 (%array_type.6d2)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -798,8 +780,6 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -807,15 +787,11 @@ fn G() {
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.3(%self.param: ref %array_type.9a3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%N) {
@@ -986,8 +962,6 @@ fn G() {
 // CHECK:STDOUT:     %.loc6_34.1: ref @F.%T.loc6_7.1 (%T) = splice_block %return.param {}
 // CHECK:STDOUT:     %F.call: init @F.%T.loc6_7.1 (%T) to %.loc6_34.1 = call %F.specific_fn.loc6_45.1(%a.ref)
 // CHECK:STDOUT:     return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1032,8 +1006,6 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   return %F.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -1041,15 +1013,11 @@ fn G() {
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.3(%self.param: ref %array_type.9a3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -1263,8 +1231,6 @@ fn G() {
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc7_66.1: init %i32 = call %bound_method.loc7_66.2(%N.ref.loc7_65) [symbolic = %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc7_66.2 (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:     %.loc7_66: init %i32 = converted %N.ref.loc7_65, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc7_66.1 [symbolic = %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc7_66.2 (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:     return %.loc7_66
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1308,8 +1274,6 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   return %F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc11_3.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -1317,15 +1281,11 @@ fn G() {
 // CHECK:STDOUT: fn @Destroy.Op.loc11_3.2(%self.param: ref %D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc11_3.3(%self.param: ref %array_type.cec) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
@@ -1530,8 +1490,6 @@ fn G() {
 // CHECK:STDOUT:     %bound_method.loc6_53.2: <bound method> = bound_method %N.ref.loc6_53, %specific_fn.loc6_53 [symbolic = %bound_method.loc6_53.3 (constants.%bound_method.d86)]
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_53.2(%N.ref.loc6_53) [symbolic = %N.loc6_7.1 (constants.%N.37f)]
 // CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1572,8 +1530,6 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -1581,15 +1537,11 @@ fn G() {
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc9_3.3(%self.param: ref %array_type.9a3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.37f) {
@@ -1724,8 +1676,6 @@ fn G() {
 // CHECK:STDOUT:   fn(%a.param: @F.%array_type.loc5_34.1 (%array_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1737,8 +1687,6 @@ fn G() {
 // CHECK:STDOUT:   %.loc17_15: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc17_16: %tuple.type = tuple_literal (%.loc17_7, %.loc17_11, %.loc17_15) [concrete = constants.%tuple]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.37f) {

@@ -298,8 +298,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (@HasF.WithSelf.%HasF.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasF.impl: %C.ref as %HasF.ref {
@@ -341,8 +339,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @C.as.HasF.impl.F(%self.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%Self) {
@@ -498,8 +494,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (@HasG.WithSelf.%HasG.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF [from "package_a.carbon"] {
@@ -509,8 +503,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (imports.%PackageA.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasG.impl: %C.ref as %HasG.ref {
@@ -595,8 +587,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @C.as.HasG.impl.G(%self.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasF.WithSelf.F(imports.%PackageA.import_ref.b7072f.2: %HasF.type) [from "package_a.carbon"] {
@@ -612,15 +602,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @D.as.HasF.impl.F(%self.param: %D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D.as.HasG.impl.G(%self.param: %D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasG.WithSelf(constants.%Self.150) {
@@ -783,8 +769,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (imports.%PackageA.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasF.impl: imports.%PackageA.import_ref.364 as imports.%PackageA.import_ref.e71 [from "package_a.carbon"] {
@@ -809,8 +793,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.HasF.impl.F.call: init %empty_tuple.type = call %bound_method(%c.ref)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasF.WithSelf.F(imports.%PackageA.import_ref.b7072f.2: %HasF.type) [from "package_a.carbon"] {
@@ -943,8 +925,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (imports.%PackageA.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasF.impl: imports.%PackageA.import_ref.364 as imports.%PackageA.import_ref.e71 [from "package_a.carbon"] {
@@ -981,8 +961,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.ref, %impl.elem0
 // CHECK:STDOUT:   %D.as.HasF.impl.F.call: init %empty_tuple.type = call %bound_method(%d.ref)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasF.WithSelf.F(imports.%PackageA.import_ref.b7072f.2: %HasF.type) [from "package_a.carbon"] {
@@ -1115,8 +1093,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (imports.%PackageB.G)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasG.impl: imports.%PackageB.import_ref.473 as imports.%PackageB.import_ref.e35e93.1 [from "package_b.carbon"] {
@@ -1153,8 +1129,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.HasG.impl.G.call: init %empty_tuple.type = call %bound_method(%c.ref)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasG.WithSelf.G(imports.%PackageB.import_ref.10cb76.2: %HasG.type) [from "package_b.carbon"] {
@@ -1282,8 +1256,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (imports.%PackageB.G)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasG.impl: imports.%PackageB.import_ref.473 as imports.%PackageB.import_ref.e35e93.1 [from "package_b.carbon"] {
@@ -1320,8 +1292,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.ref, %impl.elem0
 // CHECK:STDOUT:   %D.as.HasG.impl.G.call: init %empty_tuple.type = call %bound_method(%d.ref)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HasG.WithSelf.G(imports.%PackageB.import_ref.10cb76.2: %HasG.type) [from "package_b.carbon"] {
@@ -1430,8 +1400,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (@Z.WithSelf.%Z.WithSelf.H.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.Z.impl: %.loc8_7.2 as %Z.ref {
@@ -1465,8 +1433,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @empty_tuple.type.as.Z.impl.H(%self.param: %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self) {
@@ -1566,8 +1532,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (imports.%PackageAssociatedInterface.H)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.Z.impl: imports.%PackageAssociatedInterface.import_ref.e5c as imports.%PackageAssociatedInterface.import_ref.72a [from "associated_interface.carbon"] {
@@ -1587,8 +1551,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %.loc7_4.2: %empty_tuple.type = converted %.loc7_4.1, %empty_tuple [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple.type.as.Z.impl.H.call: init %empty_tuple.type = call %bound_method(%.loc7_4.2)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Z.WithSelf.H(imports.%PackageAssociatedInterface.import_ref.f4f417.2: %Z.type) [from "associated_interface.carbon"] {
@@ -1711,8 +1673,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (@Y.WithSelf.%Y.WithSelf.K.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @AnyParam(%T.loc4_17.2: type, %X.loc4_26.2: @AnyParam.%T.loc4_17.1 (%T)) {
@@ -1746,8 +1706,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   fn(%self.param: @Y.WithSelf.K.%Self.as_type.loc7_15.1 (%Self.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1902,8 +1860,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1914,8 +1870,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (imports.%PackageHasParam.K)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @AnyParam.as.Y.impl: %AnyParam as %Y.ref {
@@ -1969,8 +1923,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @AnyParam.as.Y.impl.K(%self.param: %AnyParam.591) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @L() {
@@ -2002,8 +1954,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %obj.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%obj.var)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -2011,8 +1961,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @Destroy.Op.loc13_3.2(%self.param: ref %AnyParam.591) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericInterface(constants.%U) {
@@ -2187,8 +2135,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2199,8 +2145,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (imports.%PackageHasParam.K)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @AnyParam.as.Y.impl: imports.%PackageGenericInterface.import_ref.82e as imports.%PackageGenericInterface.import_ref.482 [from "has_generic_interface.carbon"] {
@@ -2255,8 +2199,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %obj.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%obj.var)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Y.WithSelf.K(imports.%PackageHasParam.import_ref.fa191b.2: %Y.type) [from "has_param.carbon"] {
@@ -2279,8 +2221,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %AnyParam.591) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X) {
@@ -2447,8 +2387,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (imports.%PackageHasParam.K)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @AnyParam.as.Y.impl: %AnyParam as %Y.ref {
@@ -2517,8 +2455,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @AnyParam.as.Y.impl.K(%self.param: %AnyParam.21c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @L() {
@@ -2550,8 +2486,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %obj.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%obj.var)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc13_3.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -2559,8 +2493,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @Destroy.Op.loc13_3.2(%self.param: ref %AnyParam.21c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericClass(constants.%U) {
@@ -2725,8 +2657,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (imports.%PackageHasParam.K)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @AnyParam.as.Y.impl: imports.%PackageGenericClass.import_ref.c77 as imports.%PackageGenericClass.import_ref.482 [from "has_generic_class.carbon"] {
@@ -2795,8 +2725,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %obj.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%obj.var)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Y.WithSelf.K(imports.%PackageHasParam.import_ref.fa191b.2: %Y.type) [from "has_param.carbon"] {
@@ -2819,8 +2747,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %AnyParam.21c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X) {
@@ -2988,8 +2914,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra2 {
@@ -3001,8 +2925,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra3 {
@@ -3014,8 +2936,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra4 {
@@ -3027,8 +2947,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra5 {
@@ -3040,8 +2958,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra6 {
@@ -3053,8 +2969,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra7 {
@@ -3066,8 +2980,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra8 {
@@ -3079,8 +2991,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -3108,8 +3018,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C as %I.ref {
@@ -3158,8 +3066,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @C.as.I.impl.F(%self.param: %C.279) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Extra1.WithSelf(constants.%Self.f48) {}
@@ -3329,8 +3235,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = (imports.%HasExtraInterfaces.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra8 [from "has_extra_interfaces.carbon"] {
@@ -3339,8 +3243,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra7 [from "has_extra_interfaces.carbon"] {
@@ -3349,8 +3251,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra6 [from "has_extra_interfaces.carbon"] {
@@ -3359,8 +3259,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra5 [from "has_extra_interfaces.carbon"] {
@@ -3369,8 +3267,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra4 [from "has_extra_interfaces.carbon"] {
@@ -3379,8 +3275,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra3 [from "has_extra_interfaces.carbon"] {
@@ -3389,8 +3283,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra2 [from "has_extra_interfaces.carbon"] {
@@ -3399,8 +3291,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra1 [from "has_extra_interfaces.carbon"] {
@@ -3409,8 +3299,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: imports.%HasExtraInterfaces.import_ref.f05 as imports.%HasExtraInterfaces.import_ref.d6f [from "has_extra_interfaces.carbon"] {
@@ -3439,8 +3327,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%HasExtraInterfaces.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%HasExtraInterfaces.import_ref.8f6 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(imports.%HasExtraInterfaces.import_ref.51a236.2: %I.type) [from "has_extra_interfaces.carbon"] {

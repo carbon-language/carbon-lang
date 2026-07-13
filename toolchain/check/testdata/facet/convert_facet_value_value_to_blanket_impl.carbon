@@ -143,8 +143,6 @@ fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
@@ -156,8 +154,6 @@ fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @A.as_type.as.Eats.impl(%A.loc18_15.1: %Animal.type) {
@@ -192,8 +188,6 @@ fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   fn(%e.param: @Feed.%T.as_type.loc20_28.1 (%T.as_type.422)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -223,8 +217,6 @@ fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:     %Feed.specific_fn.loc22_36.1: <specific function> = specific_function %Feed.ref, @Feed(constants.%Eats.facet.934) [symbolic = %Feed.specific_fn.loc22_36.2 (constants.%Feed.specific_fn)]
 // CHECK:STDOUT:     %Feed.call: init %empty_tuple.type = call %Feed.specific_fn.loc22_36.1(%a.ref)
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

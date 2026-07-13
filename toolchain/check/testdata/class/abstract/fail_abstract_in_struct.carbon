@@ -191,8 +191,6 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%v.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- abstract_let.carbon
@@ -250,8 +248,6 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     %l.patt: %pattern_type.2be = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_twice.carbon
@@ -305,8 +301,6 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%v2.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_first.carbon
@@ -352,8 +346,6 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%v3.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_second.carbon
@@ -399,8 +391,6 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%v4.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- lib.carbon
@@ -470,7 +460,5 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%v5.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -111,8 +111,6 @@ fn F() {
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc11, %impl.elem0 [symbolic = %type.as.Copy.impl.Op.bound (constants.%type.as.Copy.impl.Op.bound.05d)]
 // CHECK:STDOUT:     %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc11) [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
 // CHECK:STDOUT:     return %type.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

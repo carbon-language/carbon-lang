@@ -82,8 +82,6 @@ fn F(generic T: type, n: T*) -> T* {
 // CHECK:STDOUT:     %bound_method.loc7_10.2: <bound method> = bound_method %m.ref, %specific_impl_fn.loc7_10.1
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @F.%ptr.loc4_27.1 (%ptr) = call %bound_method.loc7_10.2(%m.ref)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

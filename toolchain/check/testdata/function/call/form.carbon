@@ -327,8 +327,6 @@ fn G() {
 // CHECK:STDOUT:   %.loc10: %i32 = ref_tag %y.ref
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%y.ref)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_form_param.carbon
@@ -403,8 +401,6 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%x.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc4_7.1(%self.param: ref %i32.builtin) = "no_op";
@@ -412,8 +408,6 @@ fn G() {
 // CHECK:STDOUT: fn @Destroy.Op.loc4_7.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- val_form_param.carbon
@@ -480,8 +474,6 @@ fn G() {
 // CHECK:STDOUT:   %.loc9_5.2: %i32 = converted %int_0, %.loc9_5.1 [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc9_5.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- type_component_needs_conversion.carbon
@@ -554,8 +546,6 @@ fn G() {
 // CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = ref_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_return_form.carbon
@@ -607,8 +597,6 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %_.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%_.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc9_7.1(%self.param: ref %i32.builtin) = "no_op";
@@ -616,8 +604,6 @@ fn G() {
 // CHECK:STDOUT: fn @Destroy.Op.loc9_7.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- val_return_form.carbon
@@ -659,8 +645,6 @@ fn G() {
 // CHECK:STDOUT:     %_.patt: %pattern_type.6b6 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- form_generic_return.carbon
@@ -863,8 +847,6 @@ fn G() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %v.ref: @F.%.loc4_33.1 (%.42f) = name_ref v, %v
 // CHECK:STDOUT:     return %v.ref
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -940,8 +922,6 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc11: <bound method> = bound_method %v.var.loc11, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call.loc11: init %empty_tuple.type = call %Destroy.Op.bound.loc11(%v.var.loc11)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.1(%self.param: ref %i32.builtin) = "no_op";
@@ -949,8 +929,6 @@ fn G() {
 // CHECK:STDOUT: fn @Destroy.Op.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Fm) {

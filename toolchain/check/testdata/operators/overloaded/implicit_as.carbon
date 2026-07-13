@@ -269,8 +269,6 @@ fn Test() {
 // CHECK:STDOUT:   %.loc20_49.4: init %X to %return.param = class_init (%.loc20_49.3)
 // CHECK:STDOUT:   %.loc20_50: init %X = converted %.loc20_49.1, %.loc20_49.4
 // CHECK:STDOUT:   return %.loc20_50 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @X.as.ImplicitAs.impl.Convert(%self.param: %X) -> out %return.param: %i32 {
@@ -285,8 +283,6 @@ fn Test() {
 // CHECK:STDOUT:   %bound_method.loc24_43.2: <bound method> = bound_method %.loc24_43.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc24_43.2(%.loc24_43.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Sink_i32(%n.param: %i32);
@@ -313,8 +309,6 @@ fn Test() {
 // CHECK:STDOUT:     %.loc31_31.1: ref @Source.%T.loc31_20.1 (%T.67d) = splice_block %return.param {}
 // CHECK:STDOUT:     %Source.call: init @Source.%T.loc31_20.1 (%T.67d) to %.loc31_31.1 = call %Source.specific_fn.loc31_42.1()
 // CHECK:STDOUT:     return %Source.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -354,8 +348,6 @@ fn Test() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc34: <bound method> = bound_method %.loc34_20.2, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc34: init %empty_tuple.type = call %Destroy.Op.bound.loc34(%.loc34_20.2)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc35_20.1(%self.param: ref %i32.builtin) = "no_op";
@@ -363,22 +355,16 @@ fn Test() {
 // CHECK:STDOUT: fn @Destroy.Op.loc35_20.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc35_20.3(%self.param: ref %struct_type.n) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc35_20.4(%self.param: ref %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%T.67d) {

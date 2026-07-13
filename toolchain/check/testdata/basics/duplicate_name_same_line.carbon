@@ -78,8 +78,6 @@ fn A() {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc18_5: <bound method> = bound_method %n.var.loc18_5, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc18_5: init %empty_tuple.type = call %Destroy.Op.bound.loc18_5(%n.var.loc18_5)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_tuple.type) = "no_op";

@@ -110,8 +110,6 @@ fn G(generic T: Z, generic U: type, generic V: Empty) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -163,8 +161,6 @@ fn G(generic T: Z, generic U: type, generic V: Empty) {
 // CHECK:STDOUT:     %F.specific_fn.loc30_3.1: <specific function> = specific_function %F.ref.loc30, @F(constants.%V) [symbolic = %F.specific_fn.loc30_3.2 (constants.%F.specific_fn.b7e)]
 // CHECK:STDOUT:     %F.call.loc30: init %empty_tuple.type = call %F.specific_fn.loc30_3.1()
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

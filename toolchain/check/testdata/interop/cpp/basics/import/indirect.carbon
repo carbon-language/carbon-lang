@@ -191,8 +191,6 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %.loc9_12.2, constants.%X.cpp_destructor
 // CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%.loc9_12.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Function() -> out %return.param: %i32 {
@@ -208,8 +206,6 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %.loc15_12.2, constants.%X.cpp_destructor
 // CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%.loc15_12.2)
 // CHECK:STDOUT:   return %X.g.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- indirect_import_via_alias.carbon
@@ -326,8 +322,6 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %ax.var, constants.%X.cpp_destructor
 // CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%ax.var)
 // CHECK:STDOUT:   return %.loc10_24 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_template.carbon
@@ -409,8 +403,6 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %Y.cpp_destructor.bound: <bound method> = bound_method %.loc9_12.2, constants.%Y.cpp_destructor.be1864.1
 // CHECK:STDOUT:   %Y.cpp_destructor.call: init %empty_tuple.type = call %Y.cpp_destructor.bound(%.loc9_12.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseZ() -> out %return.param: %Z {
@@ -438,7 +430,5 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %Y.cpp_destructor.bound: <bound method> = bound_method %.loc15_12.2, constants.%Y.cpp_destructor.be1864.2
 // CHECK:STDOUT:   %Y.cpp_destructor.call: init %empty_tuple.type = call %Y.cpp_destructor.bound(%.loc15_12.2)
 // CHECK:STDOUT:   return %.loc15_13.7 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
