@@ -31,6 +31,7 @@ struct ImplInfo {
   SemIR::TypeInstId self_id;
   SemIR::InstId latest_decl_id;
   SemIR::SpecificInterface interface;
+  SemIR::InstId match_first_id;
   // Whether the `impl` decl was imported or from the local file.
   bool is_local;
   // If imported, the IR from which the `impl` decl was imported.
@@ -90,6 +91,7 @@ static auto GetImplInfo(Context& context, SemIR::ImplId impl_id) -> ImplInfo {
           .self_id = impl.self_id,
           .latest_decl_id = impl.latest_decl_id(),
           .interface = impl.interface,
+          .match_first_id = impl.match_first_id,
           .is_local = !ir_id.has_value(),
           .ir_id = ir_id,
           .library_id = library_id,
@@ -236,14 +238,16 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
 }
 
 // The type structure each non-final `impl` must differ from all other non-final
-// `impl` for the same interface visible from the file.
+// `impl` for the same interface visible from the file. However, if the `impl`s
+// are associated with the same match_first block, then they are allowed to have
+// the same type structure.
 //
 // Returns true if an error was diagnosed.
-static auto DiagnoseNonFinalImplsWithSameTypeStructure(Context& context,
-                                                       const ImplInfo& impl_a,
-                                                       const ImplInfo& impl_b)
-    -> bool {
-  if (impl_a.type_structure == impl_b.type_structure) {
+static auto DiagnoseNonFinalImplsWithSameTypeStructureOutsideMatchFirst(
+    Context& context, const ImplInfo& impl_a, const ImplInfo& impl_b) -> bool {
+  if (impl_a.type_structure == impl_b.type_structure &&
+      !(impl_a.match_first_id.has_value() &&
+        impl_a.match_first_id == impl_b.match_first_id)) {
     CARBON_DIAGNOSTIC(ImplNonFinalSameTypeStructure, Error,
                       "found non-final `impl` with the same type "
                       "structure as another non-final `impl`");
@@ -330,15 +334,14 @@ static auto DiagnoseFinalImplsOverlapInDifferentFiles(Context& context,
 // Two final impls in the same file can not overlap in their type
 // structure if they are not in the same match_first block.
 //
-// TODO: Support for match_first needed here when they exist in the
-// toolchain.
-//
 // Returns true if an error was diagnosed.
 static auto DiagnoseFinalImplsOverlapOutsideMatchFirst(Context& context,
                                                        const ImplInfo& impl_a,
                                                        const ImplInfo& impl_b)
     -> bool {
-  if (impl_a.is_local && impl_b.is_local) {
+  if (impl_a.is_local && impl_b.is_local &&
+      !(impl_a.match_first_id.has_value() &&
+        impl_a.match_first_id == impl_b.match_first_id)) {
     CARBON_DIAGNOSTIC(FinalImplOverlapsSameFile, Error,
                       "`final impl` overlaps with `final impl` from same file "
                       "outside a `match_first` block");
@@ -417,8 +420,8 @@ static auto ValidateImplsForInterface(Context& context,
           // but possibly different files, if one is in the api and one in the
           // impl file.
           if (impl_a.library_id == impl_b.library_id) {
-            if (DiagnoseNonFinalImplsWithSameTypeStructure(context, impl_a,
-                                                           impl_b)) {
+            if (DiagnoseNonFinalImplsWithSameTypeStructureOutsideMatchFirst(
+                    context, impl_a, impl_b)) {
               // The same final `impl_a` may overlap with multiple `impl_b`s,
               // and we want to diagnose each `impl_b`.
               did_diagnose_non_final_impls_with_same_type_structure = true;
