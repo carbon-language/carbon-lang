@@ -99,6 +99,11 @@ checked generic, and template generic parameters.
 
 Keywords matching the contextual default are disallowed to ensure consistency.
 
+[Associated constants](#interface-parameters-and-associated-constants) are
+always checked generic bindings. This is not a contextual default: no other
+phase is possible for an associated constant, and so no phase keyword is allowed
+there.
+
 The syntax for checked and template parameters was decided in
 [leads issue #6932](https://github.com/carbon-language/carbon-lang/issues/6932).
 
@@ -278,7 +283,7 @@ that don’t instantiate the implementation (for example,
 
 Early type checking is where expressions and statements are type checked when
 the definition of the function body is compiled, as part of definition checking.
-This occurs for regular and checked-generic values.
+This occurs for runtime values and symbolic constants.
 
 Late type checking is where expressions and statements may only be fully
 typechecked once calling information is known. Late type checking delays
@@ -296,22 +301,28 @@ corresponding to
 
 -   A _runtime binding pattern_ binds to a dynamic value at runtime. It is the
     default for explicit function parameters.
--   A _symbolic binding pattern_ (or generic binding) binds to a compile-time
-    value that is not known when type checking. It is the default for deduced
-    function parameters and parameters to compile-time entities.
--   A _template binding pattern_ binds to a compile-time value that is known
-    when type checking. It is indicated by the `template` keyword.
+-   A _checked generic binding pattern_ binds to a _symbolic constant_: a
+    compile-time value that is not known when type checking. It is the default
+    for deduced function parameters and parameters to compile-time entities, and
+    the only kind allowed for [associated constants](#associated-entity).
+-   A _template generic binding pattern_ binds to a _template constant_: a
+    compile-time value that is known when type checking. It is indicated by the
+    `template` keyword. Expressions using such a binding are
+    [dependent](#dependent-names) and are
+    [late type checked](#early-versus-late-type-checking) once an instantiation
+    provides the binding's value.
 
 These patterns use the keywords `runtime`, `generic`, and `template` to override
 the contextual defaults when necessary.
 
 The name being declared, which is the identifier to the left of the `:` is
 called a _binding_, or more specifically a _runtime binding_, _compile-time
-binding_, _symbolic binding_, or _template binding_. The expression to the right
-defining the type of the binding pattern is called the _binding type
-expression_, a kind of [type expression](#type-expression). For example, in a
-generic binding pattern `T: Hashable`, `T` is the binding (a symbolic binding in
-this case), and `Hashable` is the binding type expression.
+binding_, _checked generic binding_, or _template generic binding_. The
+expression to the right defining the type of the binding pattern is called the
+_binding type expression_, a kind of [type expression](#type-expression). For
+example, in a checked generic binding pattern `T: Hashable`, `T` is the binding
+(a checked generic binding in this case), and `Hashable` is the binding type
+expression.
 
 ## Types and `type`
 
@@ -367,7 +378,7 @@ cases, we are concerned with the type value after the implicit conversion.
 We use the term _facet binding_ to refer to the name introduced by a
 [compile-time binding pattern](#bindings) (indicated by context or keywords like
 `generic` or `template`) where the declared type is a [facet type](#facet-type).
-In a generic binding pattern `T: Hashable`, `T` is a facet binding, and the
+In a checked binding pattern `T: Hashable`, `T` is a facet binding, and the
 value of `T` is a [facet](#facet).
 
 ## Deduced parameter

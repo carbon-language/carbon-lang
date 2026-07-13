@@ -784,7 +784,7 @@ segment, and let `Ys` be a sequence of tuple segments.
 ### Equivalence, equality, and convertibility
 
 _Pack renaming:_ Let `Ns` be a sequence of names, let `⟬Ns⟭: «T; N»` be a name
-binding pattern (which may be a symbolic or template binding as well as a
+binding pattern (which may be a checked or template binding as well as a
 runtime binding), and let `__A` be an identifier that does not collide with any
 name that's visible where `⟬Ns⟭` is visible. We can rewrite all occurrences of
 `⟬Ns⟭` to `each __A` in the scope of the binding pattern (including the pattern
