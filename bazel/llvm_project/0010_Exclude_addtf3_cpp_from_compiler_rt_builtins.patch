@@ -1,18 +1,20 @@
-From 1234567890abcdef1234567890abcdef12345678 Mon Sep 17 00:00:00 2001
-From: Carbon Toolchain <carbon-toolchain@google.com>
-Date: Fri, 10 Jul 2026 23:42:00 +0000
+From 71c318f73cdc3f2c5acd0383dbe057426fc3e5ab Mon Sep 17 00:00:00 2001
+From: Richard Smith <richard@metafoo.co.uk>
+Date: Sat, 11 Jul 2026 00:07:36 +0000
 Subject: [PATCH] Exclude libc math C++ builtins from compiler-rt Bazel overlay
 
 In CMake, addtf3.cpp is only compiled when COMPILER_RT_USE_LIBC_MATH is ON,
 replacing addtf3.c. In the Bazel overlay, builtins_generic_srcs globbed
 all lib/builtins/*.cpp without excluding addtf3.cpp, causing compile failures
 when not using libc math.
+
+Assisted-by: Gemini via Antigravity
 ---
  utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel | 9 +++++++--
  1 file changed, 7 insertions(+), 2 deletions(-)
 
 diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
-index ae4a99d6885c..1234567890ab 100644
+index ae4a99d6885c..afa726a14a5b 100644
 --- a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
 +++ b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
 @@ -293,6 +293,11 @@ filegroup(
@@ -38,4 +40,5 @@ index ae4a99d6885c..1234567890ab 100644
      ),
  )
 -- 
-2.45.2
+2.55.0.795.g602f6c329a-goog
+
