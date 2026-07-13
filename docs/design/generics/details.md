@@ -4786,7 +4786,8 @@ difference.
 #### Prioritization rule
 
 > **TODO:** Document the changes to prioritization adopted in
-> [#5337: Interface extension and `final impl` update](/proposals/p005337-interface-extension-and-final-impl-update.md).
+> [#5337: Interface extension and `final impl` update](/proposals/p005337-interface-extension-and-final-impl-update.md) and
+> [#7493: Disallow impl in match_first twice](/proposals/p007493-disallow-impl-in-match-first-twice.md).
 
 Since at most one library can contain `impl` definitions with a given type
 structure, all `impl` definitions with a given type structure must be in the
