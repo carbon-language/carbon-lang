@@ -186,7 +186,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "types.h";
 
-fn Destroy[T:! Core.Copy & Core.Destroy](c: T) {
+fn Destroy[T: Core.Copy & Core.Destroy](c: T) {
   var unused d: T = c;
 }
 
@@ -194,7 +194,7 @@ fn DoDestroy() {
   Destroy({} as Cpp.PublicDestructor);
 }
 
-class Wrap(T:! Core.Destroy) {}
+class Wrap(T: Core.Destroy) {}
 
 fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)* {
   return p;

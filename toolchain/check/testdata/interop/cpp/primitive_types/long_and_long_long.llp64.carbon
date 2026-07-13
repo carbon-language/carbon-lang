@@ -256,7 +256,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn AssertSameType[T:! type](unused a: T, unused b: T) {}
+fn AssertSameType[T: type](unused a: T, unused b: T) {}
 
 fn ArithmeticHeterogeneousLongLeftSide() {
   let b: i32 = 1;
@@ -281,7 +281,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn AssertSameType[T:! type](unused a: T, unused b: T) {}
+fn AssertSameType[T: type](unused a: T, unused b: T) {}
 
 fn ArithmeticHeterogeneousLongRightSide() {
   let b: i32 = 1;
@@ -305,7 +305,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn AssertSameType[T:! type](unused a: T, unused b: T) {}
+fn AssertSameType[T: type](unused a: T, unused b: T) {}
 
 fn ArithmeticHeterogeneousLongAndI64() {
   let x: Cpp.long = 1;
@@ -320,7 +320,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn AssertSameType[T:! type](unused a: T, unused b: T) {}
+fn AssertSameType[T: type](unused a: T, unused b: T) {}
 
 fn ArithmeticHeterogeneousLongAndI16() {
   let x: Cpp.long = 1;
@@ -344,7 +344,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn AssertSameType[T:! type](unused a: T, unused b: T) {}
+fn AssertSameType[T: type](unused a: T, unused b: T) {}
 
 fn ArithmeticHeterogeneousLongAndI128() {
   let x: Cpp.long = 1;
@@ -368,7 +368,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn AssertSameType[T:! type](unused a: T, unused b: T) {}
+fn AssertSameType[T: type](unused a: T, unused b: T) {}
 
 fn BitWiseHomogeneousLong() {
   let a: Cpp.long = 1;
@@ -389,7 +389,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn AssertSameType[T:! type](unused a: T, unused b: T) {}
+fn AssertSameType[T: type](unused a: T, unused b: T) {}
 
 fn BitWiseHeterogeneousLongLeftSide() {
   let b: i32 = 1;
@@ -414,7 +414,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn AssertSameType[T:! type](unused a: T, unused b: T) {}
+fn AssertSameType[T: type](unused a: T, unused b: T) {}
 
 fn BitWiseHeterogeneousLongRightSide() {
   let b: i32 = 1;
@@ -439,7 +439,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn AssertSameType[T:! type](unused a: T, unused b: T) {}
+fn AssertSameType[T: type](unused a: T, unused b: T) {}
 
 fn BitWiseHeterogeneousLongAndI64() {
   let a: Cpp.long = 1;
@@ -455,7 +455,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn AssertSameType[T:! type](unused a: T, unused b: T) {}
+fn AssertSameType[T: type](unused a: T, unused b: T) {}
 
 fn BitWiseHeterogeneousLongAndI16() {
   let a: Cpp.long = 1;
@@ -479,7 +479,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn AssertSameType[T:! type](unused a: T, unused b: T) {}
+fn AssertSameType[T: type](unused a: T, unused b: T) {}
 
 fn BitWiseHeterogeneousLongAndI128() {
   let a: Cpp.long = 1;

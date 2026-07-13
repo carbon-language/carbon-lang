@@ -11,13 +11,13 @@
 fn Foo(T: type where .Self == i32);
 
 interface I {
-  let T:! type where .Foo impls Bar;
+  let T: type where .Foo impls Bar;
 }
 
-let T:! type where .U = .V;
+let generic T: type where .U = .V;
 
 fn F() {
-  let U:! type where .W == .X;
+  let generic U: type where .W == .X;
 }
 
 // CHECK:STDOUT: - filename: basic.carbon
@@ -49,12 +49,12 @@ fn F() {
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'Bar'},
 // CHECK:STDOUT:             {kind: 'RequirementImpls', text: 'impls', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':', subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 15},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
 // CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'U'},
@@ -63,7 +63,7 @@ fn F() {
 // CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'RequirementEqual', text: '=', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 11},
+// CHECK:STDOUT:       {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 13},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
@@ -72,7 +72,7 @@ fn F() {
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'U'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
 // CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'W'},
@@ -81,7 +81,7 @@ fn F() {
 // CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'RequirementEqualEqual', text: '==', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 11},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 11},
 // CHECK:STDOUT:       {kind: 'LetDecl', text: ';', subtree_size: 13},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 19},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

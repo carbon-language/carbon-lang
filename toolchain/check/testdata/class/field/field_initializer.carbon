@@ -32,12 +32,12 @@ var C2: Class = {};
 library "[[@TEST_NAME]]";
 
 interface I {
-  let Default:! Self;
+  let Default: Self;
 }
 
 impl i32 as I where .Default = 123 {}
 
-class Class(T:! I) {
+class Class(T: I) {
   var x: T = T.Default;
 }
 

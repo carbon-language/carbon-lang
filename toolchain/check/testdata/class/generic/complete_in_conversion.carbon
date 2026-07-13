@@ -18,7 +18,7 @@ fn Int(N: Core.IntLiteral) -> type = "int.make_type_signed";
 
 base class B {}
 
-class A(N:! i32) {
+class A(N: i32) {
   extend base: B;
 
   var n: Int(N);

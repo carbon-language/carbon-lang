@@ -777,15 +777,15 @@ import Cpp inline '''
 
 interface I {}
 
-fn EchoValue[ValueT:! I](unused value:! ValueT) {}
+fn EchoValue[ValueT: I](unused generic value: ValueT) {}
 
 fn F() {
   // CHECK:STDERR: fail_missing_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `<type of Cpp.foo>` into type implementing `I` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   EchoValue(Cpp.foo);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_missing_impl.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn EchoValue[ValueT:! I](unused value:! ValueT) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn EchoValue[ValueT: I](unused generic value: ValueT) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   EchoValue(Cpp.foo);
 }
@@ -4016,20 +4016,20 @@ fn F() {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %EchoValue.decl: %EchoValue.type = fn_decl @EchoValue [concrete = constants.%EchoValue] {
 // CHECK:STDOUT:     %ValueT.patt.loc10_20.1: %pattern_type.6cb = symbolic_binding_pattern ValueT, 0 [symbolic = %ValueT.patt.loc10_20.2 (constants.%ValueT.patt)]
-// CHECK:STDOUT:     %value.patt.loc10_38.1: @EchoValue.%pattern_type (%pattern_type.b3a) = symbolic_binding_pattern value, 1 [symbolic = %value.patt.loc10_38.2 (constants.%value.patt)]
+// CHECK:STDOUT:     %value.patt.loc10_45.1: @EchoValue.%pattern_type (%pattern_type.b3a) = symbolic_binding_pattern value, 1 [symbolic = %value.patt.loc10_45.2 (constants.%value.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc10_23: type = splice_block %I.ref [concrete = constants.%I.type] {
+// CHECK:STDOUT:     %.loc10_22: type = splice_block %I.ref [concrete = constants.%I.type] {
 // CHECK:STDOUT:       %.Self.frozen.loc10_20: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %ValueT.loc10_20.2: %I.type = symbolic_binding ValueT, 0 [symbolic = %ValueT.loc10_20.1 (constants.%ValueT)]
-// CHECK:STDOUT:     %.loc10_41.1: type = splice_block %.loc10_41.2 [symbolic = %ValueT.as_type.loc10_41.1 (constants.%ValueT.as_type)] {
-// CHECK:STDOUT:       %.Self.frozen.loc10_38: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc10_47.1: type = splice_block %.loc10_47.2 [symbolic = %ValueT.as_type.loc10_47.1 (constants.%ValueT.as_type)] {
+// CHECK:STDOUT:       %.Self.frozen.loc10_45: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %ValueT.ref: %I.type = name_ref ValueT, %ValueT.loc10_20.2 [symbolic = %ValueT.loc10_20.1 (constants.%ValueT)]
-// CHECK:STDOUT:       %ValueT.as_type.loc10_41.2: type = facet_access_type %ValueT.ref [symbolic = %ValueT.as_type.loc10_41.1 (constants.%ValueT.as_type)]
-// CHECK:STDOUT:       %.loc10_41.2: type = converted %ValueT.ref, %ValueT.as_type.loc10_41.2 [symbolic = %ValueT.as_type.loc10_41.1 (constants.%ValueT.as_type)]
+// CHECK:STDOUT:       %ValueT.as_type.loc10_47.2: type = facet_access_type %ValueT.ref [symbolic = %ValueT.as_type.loc10_47.1 (constants.%ValueT.as_type)]
+// CHECK:STDOUT:       %.loc10_47.2: type = converted %ValueT.ref, %ValueT.as_type.loc10_47.2 [symbolic = %ValueT.as_type.loc10_47.1 (constants.%ValueT.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %value.loc10_38.2: @EchoValue.%ValueT.as_type.loc10_41.1 (%ValueT.as_type) = symbolic_binding value, 1 [symbolic = %value.loc10_38.1 (constants.%value)]
+// CHECK:STDOUT:     %value.loc10_45.2: @EchoValue.%ValueT.as_type.loc10_47.1 (%ValueT.as_type) = symbolic_binding value, 1 [symbolic = %value.loc10_45.1 (constants.%value)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -4045,13 +4045,13 @@ fn F() {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @EchoValue(%ValueT.loc10_20.2: %I.type, %value.loc10_38.2: @EchoValue.%ValueT.as_type.loc10_41.1 (%ValueT.as_type)) {
+// CHECK:STDOUT: generic fn @EchoValue(%ValueT.loc10_20.2: %I.type, %value.loc10_45.2: @EchoValue.%ValueT.as_type.loc10_47.1 (%ValueT.as_type)) {
 // CHECK:STDOUT:   %ValueT.patt.loc10_20.2: %pattern_type.6cb = symbolic_binding_pattern ValueT, 0 [symbolic = %ValueT.patt.loc10_20.2 (constants.%ValueT.patt)]
 // CHECK:STDOUT:   %ValueT.loc10_20.1: %I.type = symbolic_binding ValueT, 0 [symbolic = %ValueT.loc10_20.1 (constants.%ValueT)]
-// CHECK:STDOUT:   %ValueT.as_type.loc10_41.1: type = facet_access_type %ValueT.loc10_20.1 [symbolic = %ValueT.as_type.loc10_41.1 (constants.%ValueT.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ValueT.as_type.loc10_41.1 [symbolic = %pattern_type (constants.%pattern_type.b3a)]
-// CHECK:STDOUT:   %value.patt.loc10_38.2: @EchoValue.%pattern_type (%pattern_type.b3a) = symbolic_binding_pattern value, 1 [symbolic = %value.patt.loc10_38.2 (constants.%value.patt)]
-// CHECK:STDOUT:   %value.loc10_38.1: @EchoValue.%ValueT.as_type.loc10_41.1 (%ValueT.as_type) = symbolic_binding value, 1 [symbolic = %value.loc10_38.1 (constants.%value)]
+// CHECK:STDOUT:   %ValueT.as_type.loc10_47.1: type = facet_access_type %ValueT.loc10_20.1 [symbolic = %ValueT.as_type.loc10_47.1 (constants.%ValueT.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ValueT.as_type.loc10_47.1 [symbolic = %pattern_type (constants.%pattern_type.b3a)]
+// CHECK:STDOUT:   %value.patt.loc10_45.2: @EchoValue.%pattern_type (%pattern_type.b3a) = symbolic_binding_pattern value, 1 [symbolic = %value.patt.loc10_45.2 (constants.%value.patt)]
+// CHECK:STDOUT:   %value.loc10_45.1: @EchoValue.%ValueT.as_type.loc10_47.1 (%ValueT.as_type) = symbolic_binding value, 1 [symbolic = %value.loc10_45.1 (constants.%value)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -4076,9 +4076,9 @@ fn F() {
 // CHECK:STDOUT: specific @EchoValue(constants.%ValueT, constants.%value) {
 // CHECK:STDOUT:   %ValueT.patt.loc10_20.2 => constants.%ValueT.patt
 // CHECK:STDOUT:   %ValueT.loc10_20.1 => constants.%ValueT
-// CHECK:STDOUT:   %ValueT.as_type.loc10_41.1 => constants.%ValueT.as_type
+// CHECK:STDOUT:   %ValueT.as_type.loc10_47.1 => constants.%ValueT.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b3a
-// CHECK:STDOUT:   %value.patt.loc10_38.2 => constants.%value.patt
-// CHECK:STDOUT:   %value.loc10_38.1 => constants.%value
+// CHECK:STDOUT:   %value.patt.loc10_45.2 => constants.%value.patt
+// CHECK:STDOUT:   %value.loc10_45.1 => constants.%value
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

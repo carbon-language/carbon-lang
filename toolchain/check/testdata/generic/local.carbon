@@ -17,7 +17,7 @@
 library "[[@TEST_NAME]]";
 
 fn F() {
-  class C(T:! type) {
+  class C(T: type) {
     var x: T;
   }
   var unused v: C(i32) = {.x = 1};
@@ -30,13 +30,13 @@ library "[[@TEST_NAME]]";
 fn F() {
   // TODO: Decide on what behavior we want here. We don't reject the corresponding case outside of a function.
   // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+7]]:9: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-  // CHECK:STDERR:   class C(C:! type) {
+  // CHECK:STDERR:   class C(C: type) {
   // CHECK:STDERR:         ^
   // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+4]]:11: note: name is previously declared here [NameDeclPrevious]
-  // CHECK:STDERR:   class C(C:! type) {
-  // CHECK:STDERR:           ^~~~~~~~
+  // CHECK:STDERR:   class C(C: type) {
+  // CHECK:STDERR:           ^~~~~~~
   // CHECK:STDERR:
-  class C(C:! type) {
+  class C(C: type) {
   }
 }
 
@@ -44,7 +44,7 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-class C(C:! type) {
+class C(C: type) {
 }
 
 // CHECK:STDOUT: --- class.carbon
@@ -161,9 +161,9 @@ class C(C:! type) {
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc5_12.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc5_15.1: type = splice_block %.loc5_15.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc5_15.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc5_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_12.2: type = symbolic_binding T, 0 [symbolic = %T.loc5_12.1 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -285,9 +285,9 @@ class C(C:! type) {
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %C.patt.loc13_12.1: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc13_12.2 (constants.%C.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_15.1: type = splice_block %.loc13_15.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc13_14.1: type = splice_block %.loc13_14.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc13_15.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc13_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %C.loc13_12.2: type = symbolic_binding C, 0 [symbolic = %C.loc13_12.1 (constants.%C.67d)]
 // CHECK:STDOUT:   }
@@ -330,9 +330,9 @@ class C(C:! type) {
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %C.patt.loc4_10.1: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc4_10.2 (constants.%C.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_13.1: type = splice_block %.loc4_13.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc4_12.1: type = splice_block %.loc4_12.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc4_13.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc4_12.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %C.loc4_10.2: type = symbolic_binding C, 0 [symbolic = %C.loc4_10.1 (constants.%C.67d)]
 // CHECK:STDOUT:   }

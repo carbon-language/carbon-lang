@@ -15,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-class Class(T:! Core.Copy) {
+class Class(T: Core.Copy) {
   fn F(n: T) -> T {
     return n;
   }
@@ -33,7 +33,7 @@ class Class(T:! Core.Copy) {
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-class C(T:! Core.Copy) {
+class C(T: Core.Copy) {
   fn F() {
     // CHECK:STDERR: fail_member_inline_missing_self_dot.carbon:[[@LINE+4]]:5: error: expression cannot be used as a value [UseOfNonExprAsValue]
     // CHECK:STDERR:     data;

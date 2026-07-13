@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/where_expr/non_generic.carbon
 
-interface I { let T:! type; }
+interface I { let T: type; }
 
 // Ensure that we don't crash when checking this `where` in a non-generic context.
 //@dump-sem-ir-begin

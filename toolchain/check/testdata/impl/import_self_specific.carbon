@@ -16,18 +16,18 @@ library "[[@TEST_NAME]]";
 
 // The I.Assoc will be a facet of type Y.
 interface Y {}
-impl forall [T:! type] T as Y {}
+impl forall [T: type] T as Y {}
 
 // C takes a facet of type Z.
 interface Z {}
-impl forall [U:! type] U as Z {}
+impl forall [U: type] U as Z {}
 
-class C(V:! Z) {
+class C(V: Z) {
   adapt ();
 }
 
 interface I {
-  let Assoc:! Y;
+  let Assoc: Y;
 
   // This is a generic function with a specific that contains a reference `Self`
   // in it (in the ImplWitnessAccess for `Self.Assoc`). The `Self.Assoc` is
@@ -45,7 +45,7 @@ import library "impl_def";
 
 class E {}
 
-class D(N:! E) {}
+class D(N: E) {}
 
 // The eval block for this generic `impl` must not include any instructions
 // derived from the import of `I.F`.
@@ -58,7 +58,7 @@ class D(N:! E) {}
 // that evaluation (such as inside impl lookup deduction against the U in the
 // impl for Z) should not be inappropriately added to this impl's generic eval
 // block.
-impl forall [N:! E] D(N) as I where .Assoc = () {
+impl forall [N: E] D(N) as I where .Assoc = () {
   fn F(unused c: C(())) {}
 }
 
@@ -122,9 +122,9 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc5_15.1 [symbolic = %T.loc5_15.2 (constants.%T)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
-// CHECK:STDOUT:     %.loc5_18.1: type = splice_block %.loc5_18.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc5_17.1: type = splice_block %.loc5_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc5_18.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc5_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc5_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -134,9 +134,9 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc9_15.1 [symbolic = %U.loc9_15.2 (constants.%U)]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
-// CHECK:STDOUT:     %.loc9_18.1: type = splice_block %.loc9_18.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc9_17.1: type = splice_block %.loc9_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc9_18.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc9_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc9_15.1: type = symbolic_binding U, 0 [symbolic = %U.loc9_15.2 (constants.%U)]
 // CHECK:STDOUT:   }
@@ -216,34 +216,34 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT: generic impl @T.as.Y.impl(%T.loc5_15.1: type) {
 // CHECK:STDOUT:   %T.patt.loc5_15.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc5_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc5_15.2 (constants.%T)]
-// CHECK:STDOUT:   %Y.impl_witness.loc5_31.2: <witness> = impl_witness %Y.impl_witness_table, @T.as.Y.impl(%T.loc5_15.2) [symbolic = %Y.impl_witness.loc5_31.2 (constants.%Y.impl_witness)]
+// CHECK:STDOUT:   %Y.impl_witness.loc5_30.2: <witness> = impl_witness %Y.impl_witness_table, @T.as.Y.impl(%T.loc5_15.2) [symbolic = %Y.impl_witness.loc5_30.2 (constants.%Y.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %Y.ref {
 // CHECK:STDOUT:     %Y.impl_witness_table = impl_witness_table (), @T.as.Y.impl [concrete]
-// CHECK:STDOUT:     %Y.impl_witness.loc5_31.1: <witness> = impl_witness %Y.impl_witness_table, @T.as.Y.impl(constants.%T) [symbolic = %Y.impl_witness.loc5_31.2 (constants.%Y.impl_witness)]
+// CHECK:STDOUT:     %Y.impl_witness.loc5_30.1: <witness> = impl_witness %Y.impl_witness_table, @T.as.Y.impl(constants.%T) [symbolic = %Y.impl_witness.loc5_30.2 (constants.%Y.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     extend %Y.ref
-// CHECK:STDOUT:     witness = %Y.impl_witness.loc5_31.1
+// CHECK:STDOUT:     witness = %Y.impl_witness.loc5_30.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @U.as.Z.impl(%U.loc9_15.1: type) {
 // CHECK:STDOUT:   %U.patt.loc9_15.2: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc9_15.2 (constants.%U.patt)]
 // CHECK:STDOUT:   %U.loc9_15.2: type = symbolic_binding U, 0 [symbolic = %U.loc9_15.2 (constants.%U)]
-// CHECK:STDOUT:   %Z.impl_witness.loc9_31.2: <witness> = impl_witness %Z.impl_witness_table, @U.as.Z.impl(%U.loc9_15.2) [symbolic = %Z.impl_witness.loc9_31.2 (constants.%Z.impl_witness.4e2)]
+// CHECK:STDOUT:   %Z.impl_witness.loc9_30.2: <witness> = impl_witness %Z.impl_witness_table, @U.as.Z.impl(%U.loc9_15.2) [symbolic = %Z.impl_witness.loc9_30.2 (constants.%Z.impl_witness.4e2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %U.ref as %Z.ref {
 // CHECK:STDOUT:     %Z.impl_witness_table = impl_witness_table (), @U.as.Z.impl [concrete]
-// CHECK:STDOUT:     %Z.impl_witness.loc9_31.1: <witness> = impl_witness %Z.impl_witness_table, @U.as.Z.impl(constants.%U) [symbolic = %Z.impl_witness.loc9_31.2 (constants.%Z.impl_witness.4e2)]
+// CHECK:STDOUT:     %Z.impl_witness.loc9_30.1: <witness> = impl_witness %Z.impl_witness_table, @U.as.Z.impl(constants.%U) [symbolic = %Z.impl_witness.loc9_30.2 (constants.%Z.impl_witness.4e2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     extend %Z.ref
-// CHECK:STDOUT:     witness = %Z.impl_witness.loc9_31.1
+// CHECK:STDOUT:     witness = %Z.impl_witness.loc9_30.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -288,7 +288,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT: specific @T.as.Y.impl(constants.%T) {
 // CHECK:STDOUT:   %T.patt.loc5_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc5_15.2 => constants.%T
-// CHECK:STDOUT:   %Y.impl_witness.loc5_31.2 => constants.%Y.impl_witness
+// CHECK:STDOUT:   %Y.impl_witness.loc5_30.2 => constants.%Y.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.WithSelf(constants.%Y.facet) {
@@ -302,7 +302,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT: specific @U.as.Z.impl(constants.%U) {
 // CHECK:STDOUT:   %U.patt.loc9_15.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc9_15.2 => constants.%U
-// CHECK:STDOUT:   %Z.impl_witness.loc9_31.2 => constants.%Z.impl_witness.4e2
+// CHECK:STDOUT:   %Z.impl_witness.loc9_30.2 => constants.%Z.impl_witness.4e2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Z.facet.156) {
@@ -319,7 +319,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT: specific @U.as.Z.impl(constants.%as_type) {
 // CHECK:STDOUT:   %U.patt.loc9_15.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc9_15.2 => constants.%as_type
-// CHECK:STDOUT:   %Z.impl_witness.loc9_31.2 => constants.%Z.impl_witness.5d1
+// CHECK:STDOUT:   %Z.impl_witness.loc9_30.2 => constants.%Z.impl_witness.5d1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -434,19 +434,19 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %Main.import_ref.3fc: <witness> = import_ref Main//impl_def, loc13_1, loaded [concrete = constants.%complete_type.782]
 // CHECK:STDOUT:   %Main.import_ref.b5a = import_ref Main//impl_def, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.65b: %Z.type = import_ref Main//impl_def, loc11_10, loaded [symbolic = @C.%V (constants.%V)]
-// CHECK:STDOUT:   %Main.import_ref.f68: <witness> = import_ref Main//impl_def, loc9_31, loaded [symbolic = @U.as.Z.impl.%Z.impl_witness (constants.%Z.impl_witness.824)]
+// CHECK:STDOUT:   %Main.import_ref.f68: <witness> = import_ref Main//impl_def, loc9_30, loaded [symbolic = @U.as.Z.impl.%Z.impl_witness (constants.%Z.impl_witness.824)]
 // CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (), @U.as.Z.impl [concrete]
-// CHECK:STDOUT:   %Main.import_ref.b7a: type = import_ref Main//impl_def, loc9_24, loaded [symbolic = @U.as.Z.impl.%U (constants.%U)]
-// CHECK:STDOUT:   %Main.import_ref.fbe: type = import_ref Main//impl_def, loc9_29, loaded [concrete = constants.%Z.type]
+// CHECK:STDOUT:   %Main.import_ref.b7a: type = import_ref Main//impl_def, loc9_23, loaded [symbolic = @U.as.Z.impl.%U (constants.%U)]
+// CHECK:STDOUT:   %Main.import_ref.fbe: type = import_ref Main//impl_def, loc9_28, loaded [concrete = constants.%Z.type]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//impl_def, loc9_15, loaded [symbolic = @U.as.Z.impl.%U (constants.%U)]
 // CHECK:STDOUT:   %Main.import_ref.e59c42.2: %I.type = import_ref Main//impl_def, loc15_13, loaded [symbolic = constants.%Self.dda]
 // CHECK:STDOUT:   %Main.import_ref.223 = import_ref Main//impl_def, loc15_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.d73: %Y.type = import_ref Main//impl_def, loc16_12, loaded [concrete = %Assoc]
 // CHECK:STDOUT:   %Assoc: %Y.type = assoc_const_decl @Assoc [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.201: <witness> = import_ref Main//impl_def, loc5_31, loaded [symbolic = @T.as.Y.impl.%Y.impl_witness (constants.%Y.impl_witness.3d4)]
+// CHECK:STDOUT:   %Main.import_ref.201: <witness> = import_ref Main//impl_def, loc5_30, loaded [symbolic = @T.as.Y.impl.%Y.impl_witness (constants.%Y.impl_witness.3d4)]
 // CHECK:STDOUT:   %Y.impl_witness_table = impl_witness_table (), @T.as.Y.impl [concrete]
-// CHECK:STDOUT:   %Main.import_ref.68d: type = import_ref Main//impl_def, loc5_24, loaded [symbolic = @T.as.Y.impl.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.81e: type = import_ref Main//impl_def, loc5_29, loaded [concrete = constants.%Y.type]
+// CHECK:STDOUT:   %Main.import_ref.68d: type = import_ref Main//impl_def, loc5_23, loaded [symbolic = @T.as.Y.impl.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.81e: type = import_ref Main//impl_def, loc5_28, loaded [concrete = constants.%Y.type]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//impl_def, loc5_15, loaded [symbolic = @T.as.Y.impl.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -475,26 +475,26 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: %D.type = name_ref D, file.%D.decl [concrete = constants.%D.generic]
 // CHECK:STDOUT:     %N.ref: %E = name_ref N, %N.loc20_15.2 [symbolic = %N.loc20_15.1 (constants.%N)]
-// CHECK:STDOUT:     %D.loc20_24.2: type = class_type @D, @D(constants.%N) [symbolic = %D.loc20_24.1 (constants.%D)]
+// CHECK:STDOUT:     %D.loc20_23.2: type = class_type @D, @D(constants.%N) [symbolic = %D.loc20_23.1 (constants.%D)]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
-// CHECK:STDOUT:     %.Self.frozen.loc20_31: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.3a0]
+// CHECK:STDOUT:     %.Self.frozen.loc20_30: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.3a0]
 // CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self.frozen.loc20_31 [symbolic_self = constants.%.Self.frozen.3a0]
+// CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self.frozen.loc20_30 [symbolic_self = constants.%.Self.frozen.3a0]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:     %.loc20_37: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:     %.loc20_36: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type]
 // CHECK:STDOUT:     %Assoc.ref: %I.assoc_type = name_ref Assoc, imports.%Main.import_ref.f32 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc20_37.1: %Y.type = impl_witness_access constants.%I.lookup_impl_witness.ced, element0 [symbolic_self = constants.%impl.elem0.f7a]
-// CHECK:STDOUT:     %.loc20_47.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %impl.elem0.loc20_36.1: %Y.type = impl_witness_access constants.%I.lookup_impl_witness.ced, element0 [symbolic_self = constants.%impl.elem0.f7a]
+// CHECK:STDOUT:     %.loc20_46.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %Y.facet: %Y.type = facet_value constants.%empty_tuple.type, (constants.%Y.impl_witness.2e8) [concrete = constants.%Y.facet]
-// CHECK:STDOUT:     %.loc20_47.2: %Y.type = converted %.loc20_47.1, %Y.facet [concrete = constants.%Y.facet]
-// CHECK:STDOUT:     %rewrite.loc20_44.1 = requirement_rewrite %impl.elem0.loc20_37.1, %.loc20_47.2 [concrete]
-// CHECK:STDOUT:     %impl.elem0.loc20_37.2: %Y.type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.aef]
-// CHECK:STDOUT:     %rewrite.loc20_44.2 = requirement_rewrite %impl.elem0.loc20_37.2, %.loc20_47.2 [concrete]
-// CHECK:STDOUT:     %.loc20_31: type = where_expr [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:     %.loc20_46.2: %Y.type = converted %.loc20_46.1, %Y.facet [concrete = constants.%Y.facet]
+// CHECK:STDOUT:     %rewrite.loc20_43.1 = requirement_rewrite %impl.elem0.loc20_36.1, %.loc20_46.2 [concrete]
+// CHECK:STDOUT:     %impl.elem0.loc20_36.2: %Y.type = impl_witness_access constants.%I.lookup_impl_witness.78b, element0 [symbolic_self = constants.%impl.elem0.aef]
+// CHECK:STDOUT:     %rewrite.loc20_43.2 = requirement_rewrite %impl.elem0.loc20_36.2, %.loc20_46.2 [concrete]
+// CHECK:STDOUT:     %.loc20_30: type = where_expr [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:       %rewrite.loc20_44.2 = requirement_rewrite %impl.elem0.loc20_37.2, %.loc20_47.2 [concrete]
+// CHECK:STDOUT:       %rewrite.loc20_43.2 = requirement_rewrite %impl.elem0.loc20_36.2, %.loc20_46.2 [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc20_18: type = splice_block %E.ref [concrete = constants.%E] {
+// CHECK:STDOUT:     %.loc20_17: type = splice_block %E.ref [concrete = constants.%E] {
 // CHECK:STDOUT:       %.Self.frozen.loc20_15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
 // CHECK:STDOUT:       %E.ref: type = name_ref E, file.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:     }
@@ -558,14 +558,14 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT: generic impl @D.as.I.impl(%N.loc20_15.2: %E) {
 // CHECK:STDOUT:   %N.patt.loc20_15.2: %pattern_type.849 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc20_15.2 (constants.%N.patt)]
 // CHECK:STDOUT:   %N.loc20_15.1: %E = symbolic_binding N, 0 [symbolic = %N.loc20_15.1 (constants.%N)]
-// CHECK:STDOUT:   %D.loc20_24.1: type = class_type @D, @D(%N.loc20_15.1) [symbolic = %D.loc20_24.1 (constants.%D)]
-// CHECK:STDOUT:   %I.impl_witness.loc20_49.2: <witness> = impl_witness %I.impl_witness_table, @D.as.I.impl(%N.loc20_15.1) [symbolic = %I.impl_witness.loc20_49.2 (constants.%I.impl_witness)]
+// CHECK:STDOUT:   %D.loc20_23.1: type = class_type @D, @D(%N.loc20_15.1) [symbolic = %D.loc20_23.1 (constants.%D)]
+// CHECK:STDOUT:   %I.impl_witness.loc20_48.2: <witness> = impl_witness %I.impl_witness_table, @D.as.I.impl(%N.loc20_15.1) [symbolic = %I.impl_witness.loc20_48.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %D.as.I.impl.F.type: type = fn_type @D.as.I.impl.F, @D.as.I.impl(%N.loc20_15.1) [symbolic = %D.as.I.impl.F.type (constants.%D.as.I.impl.F.type)]
 // CHECK:STDOUT:   %D.as.I.impl.F: @D.as.I.impl.%D.as.I.impl.F.type (%D.as.I.impl.F.type) = struct_value () [symbolic = %D.as.I.impl.F (constants.%D.as.I.impl.F)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %D.loc20_24.2 as %.loc20_31 {
+// CHECK:STDOUT:   impl: %D.loc20_23.2 as %.loc20_30 {
 // CHECK:STDOUT:     %D.as.I.impl.F.decl: @D.as.I.impl.%D.as.I.impl.F.type (%D.as.I.impl.F.type) = fn_decl @D.as.I.impl.F [symbolic = @D.as.I.impl.%D.as.I.impl.F (constants.%D.as.I.impl.F)] {
 // CHECK:STDOUT:       %c.param_patt: %pattern_type.78f = value_param_pattern [concrete = constants.%c.param_patt.d23]
 // CHECK:STDOUT:       %c.patt: %pattern_type.78f = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.152]
@@ -581,14 +581,14 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:       %c: %C.00e = wrapper_binding c, %c.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant, %D.as.I.impl.F.decl), @D.as.I.impl [concrete]
-// CHECK:STDOUT:     %I.impl_witness.loc20_49.1: <witness> = impl_witness %I.impl_witness_table, @D.as.I.impl(constants.%N) [symbolic = %I.impl_witness.loc20_49.2 (constants.%I.impl_witness)]
+// CHECK:STDOUT:     %I.impl_witness.loc20_48.1: <witness> = impl_witness %I.impl_witness_table, @D.as.I.impl(constants.%N) [symbolic = %I.impl_witness.loc20_48.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:     %impl_witness_assoc_constant: %Y.type = impl_witness_assoc_constant constants.%Y.facet [concrete = constants.%Y.facet]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .F = %D.as.I.impl.F.decl
-// CHECK:STDOUT:     extend %.loc20_31
-// CHECK:STDOUT:     witness = %I.impl_witness.loc20_49.1
+// CHECK:STDOUT:     extend %.loc20_30
+// CHECK:STDOUT:     witness = %I.impl_witness.loc20_48.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -736,8 +736,8 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT: specific @D.as.I.impl(constants.%N) {
 // CHECK:STDOUT:   %N.patt.loc20_15.2 => constants.%N.patt
 // CHECK:STDOUT:   %N.loc20_15.1 => constants.%N
-// CHECK:STDOUT:   %D.loc20_24.1 => constants.%D
-// CHECK:STDOUT:   %I.impl_witness.loc20_49.2 => constants.%I.impl_witness
+// CHECK:STDOUT:   %D.loc20_23.1 => constants.%D
+// CHECK:STDOUT:   %I.impl_witness.loc20_48.2 => constants.%I.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %D.as.I.impl.F.type => constants.%D.as.I.impl.F.type

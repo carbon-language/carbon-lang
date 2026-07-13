@@ -12,7 +12,7 @@
 
 // --- a.carbon
 library "[[@TEST_NAME]]";
-fn F(unused T:! type) {
+fn F(unused generic T: type) {
   // Explicit no-argument `return` in a generic function.
   return;
 }

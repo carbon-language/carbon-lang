@@ -13,15 +13,15 @@
 // Builds on `call_basic.carbon`. Checks definitions are emitted with deeper
 // call stack, i.e., when functions can be type checked without looking at the
 // specific calling context.
-fn F[T:! type](_: T) {
+fn F[T: type](_: T) {
 }
 
-fn H[T:! Core.Copy](x: T) -> T {
+fn H[T: Core.Copy](x: T) -> T {
   F(x);
   return x;
 }
 
-fn G[T:! Core.Copy & Core.Destroy](x: T) -> T {
+fn G[T: Core.Copy & Core.Destroy](x: T) -> T {
   H(x);
   F(x);
   return x;

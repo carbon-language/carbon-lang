@@ -15,7 +15,7 @@ fn F() {
 }
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
 // CHECK:STDOUT: - filename: missing_value.carbon
@@ -43,7 +43,7 @@ interface I {
 // CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
 // CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

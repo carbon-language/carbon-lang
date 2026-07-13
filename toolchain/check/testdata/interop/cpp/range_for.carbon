@@ -42,7 +42,7 @@ public:
 };
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = i32](r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = i32](r: R) {
   var sum: i32 = 0;
 
   //@dump-sem-ir-begin
@@ -113,7 +113,7 @@ public:
 };
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.ValueType](var r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = Cpp.ValueType](var r: R) {
   var sum: Cpp.ValueType = Cpp.ValueType.ValueType();
 
   //@dump-sem-ir-begin
@@ -162,7 +162,7 @@ public:
 } // namespace N
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = f64](r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = f64](r: R) {
   var sum: f64 = 0.0;
 
   //@dump-sem-ir-begin
@@ -208,7 +208,7 @@ public:
 } // namespace N
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = f64](r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = f64](r: R) {
   var sum: f64 = 0.0;
 
   //@dump-sem-ir-begin
@@ -230,8 +230,8 @@ fn TestIterateDriver(var m: Cpp.N.MutableRange) {
   // CHECK:STDERR:   fn Begin(self) -> Iterator;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R:! Core.Iterate where .ElementType = f64](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = f64](r: R) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+14]]:3: error: facet type `Core.CppRangeForIterate where .(Core.CppRangeForIterate.Iterator) impls Core.Destroy and .(Core.CppRangeForIterate.Iterator) impls Core.Copy and .(Core.CppRangeForIterate.Iterator) impls Core.CppUnsafeDeref and .(Core.CppRangeForIterate.Iterator) impls Core.EqWith(.(Core.CppRangeForIterate.Sentinel)) and .(Core.CppRangeForIterate.Iterator) impls Core.Inc and .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Destroy and .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy and .(Core.CppRangeForIterate.Sentinel) impls Core.Destroy and .(Core.CppRangeForIterate.Sentinel) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   TestIterate(m);
@@ -244,8 +244,8 @@ fn TestIterateDriver(var m: Cpp.N.MutableRange) {
   // CHECK:STDERR:   fn End(self) -> Sentinel;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R:! Core.Iterate where .ElementType = f64](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = f64](r: R) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   TestIterate(m);
 }
@@ -287,7 +287,7 @@ public:
 } // namespace N
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
   var sum: Cpp.N.ValueType = Cpp.N.ValueType.ValueType();
 
   //@dump-sem-ir-begin
@@ -338,7 +338,7 @@ public:
 }
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
   var sum: Cpp.N.ValueType = Cpp.N.ValueType.ValueType();
 
   //@dump-sem-ir-begin
@@ -360,8 +360,8 @@ fn TestIterateDriver(var m: Cpp.N.MutableRange) {
   // CHECK:STDERR:   fn Begin(self) -> Iterator;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+28]]:3: error: facet type `Core.CppRangeForIterate where .(Core.CppRangeForIterate.Iterator) impls Core.Destroy and .(Core.CppRangeForIterate.Iterator) impls Core.Copy and .(Core.CppRangeForIterate.Iterator) impls Core.CppUnsafeDeref and .(Core.CppRangeForIterate.Iterator) impls Core.EqWith(.(Core.CppRangeForIterate.Sentinel)) and .(Core.CppRangeForIterate.Iterator) impls Core.Inc and .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Destroy and .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy and .(Core.CppRangeForIterate.Sentinel) impls Core.Destroy and .(Core.CppRangeForIterate.Sentinel) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   TestIterate(m);
@@ -374,22 +374,22 @@ fn TestIterateDriver(var m: Cpp.N.MutableRange) {
   // CHECK:STDERR:   fn End(self) -> Sentinel;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+14]]:3: error: semantics TODO: `Rewriting operator== using operator== is not supported` [SemanticsTodo]
   // CHECK:STDERR:   TestIterate(m);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-42]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.N.MutableRange` into type implementing `Core.Iterate where .(Core.Iterate.ElementType) = Cpp.N.ValueType as Core.Destroy & Core.Copy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   TestIterate(m);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-49]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   TestIterate(m);
 }
@@ -446,7 +446,7 @@ class MutableAndConstRange {
 }
 ''';
 
-fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
+fn TestIterate[R: Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
   var sum: Cpp.N.ValueType = Cpp.N.ValueType.ValueType();
 
   //@dump-sem-ir-begin
@@ -468,8 +468,8 @@ fn TestIterateDriver(var mc: Cpp.N.MutableAndConstRange) {
   // CHECK:STDERR:   fn Begin(self) -> Iterator;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE+14]]:3: error: facet type `Core.CppRangeForIterate where .(Core.CppRangeForIterate.Iterator) impls Core.Destroy and .(Core.CppRangeForIterate.Iterator) impls Core.Copy and .(Core.CppRangeForIterate.Iterator) impls Core.CppUnsafeDeref and .(Core.CppRangeForIterate.Iterator) impls Core.EqWith(.(Core.CppRangeForIterate.Sentinel)) and .(Core.CppRangeForIterate.Iterator) impls Core.Inc and .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Destroy and .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy and .(Core.CppRangeForIterate.Sentinel) impls Core.Destroy and .(Core.CppRangeForIterate.Sentinel) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   TestIterate(mc);
@@ -482,8 +482,8 @@ fn TestIterateDriver(var mc: Cpp.N.MutableAndConstRange) {
   // CHECK:STDERR:   fn End(self) -> Sentinel;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R:! Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = Cpp.N.ValueType](r: R) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   TestIterate(mc);
 }
@@ -564,7 +564,7 @@ struct EndFunctionDeleted {
 
 // We deliberately use `Core.CppRangeForIterate` here, since we want to confirm
 // that types don't implement this interface.
-fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
+fn Test[R: Core.CppRangeForIterate](unused r: R) {}
 
 fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
               var no_begin_method: Cpp.NoBeginMethod,
@@ -584,8 +584,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:   Test(no_begin_end);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-19]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Test[R: Core.CppRangeForIterate](unused r: R) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(no_begin_end);
 
@@ -593,8 +593,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:   Test(no_begin_method);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-28]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Test[R: Core.CppRangeForIterate](unused r: R) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(no_begin_method);
 
@@ -602,8 +602,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:   Test(no_end_method);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-37]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Test[R: Core.CppRangeForIterate](unused r: R) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(no_end_method);
 
@@ -611,8 +611,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:   Test(no_begin_adl);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-46]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Test[R: Core.CppRangeForIterate](unused r: R) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(no_begin_adl);
 
@@ -620,8 +620,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:   Test(no_end_adl);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-55]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Test[R: Core.CppRangeForIterate](unused r: R) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(no_end_adl);
 
@@ -629,8 +629,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:   Test(begin_method_end_adl);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-64]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Test[R: Core.CppRangeForIterate](unused r: R) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(begin_method_end_adl);
 
@@ -638,8 +638,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:   Test(begin_adl_end_method);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-73]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Test[R: Core.CppRangeForIterate](unused r: R) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(begin_adl_end_method);
 
@@ -647,8 +647,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:   Test(begin_field_end_method);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-82]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Test[R: Core.CppRangeForIterate](unused r: R) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(begin_field_end_method);
 
@@ -656,8 +656,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:   Test(begin_method_end_field);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-91]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Test[R: Core.CppRangeForIterate](unused r: R) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(begin_method_end_field);
 
@@ -668,8 +668,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:    44 |   auto begin() = delete;
   // CHECK:STDERR:       |        ^
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-103]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Test[R: Core.CppRangeForIterate](unused r: R) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(begin_method_deleted);
 
@@ -680,8 +680,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:    50 |   auto end() = delete;
   // CHECK:STDERR:       |        ^
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-115]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Test[R: Core.CppRangeForIterate](unused r: R) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(end_method_deleted);
 
@@ -692,8 +692,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:    54 |   friend auto begin(const BeginFunctionDeleted&) = delete;
   // CHECK:STDERR:       |               ^
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-127]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Test[R: Core.CppRangeForIterate](unused r: R) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(begin_function_deleted);
 
@@ -704,8 +704,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:    60 |   friend auto end(const EndFunctionDeleted&) = delete;
   // CHECK:STDERR:       |               ^
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-139]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R:! Core.CppRangeForIterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Test[R: Core.CppRangeForIterate](unused r: R) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Test(end_function_deleted);
 }
@@ -769,7 +769,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.Next.49a: %R.as_type.as.Iterate.impl.Next.type.c6a = struct_value () [symbolic]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.NewCursor.type.2e2: type = fn_type @R.as_type.as.Iterate.impl.NewCursor, @R.as_type.as.Iterate.impl(%R.39b) [symbolic]
 // CHECK:STDOUT:   %R.as_type.as.Iterate.impl.NewCursor.71b: %R.as_type.as.Iterate.impl.NewCursor.type.2e2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc30_54.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc30_53.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.df9cc1.3: <witness> = custom_witness (%Destroy.Op.1a2547.3), @Destroy [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N.fe9) [symbolic]
@@ -985,7 +985,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc30_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.18b)]
-// CHECK:STDOUT:   %Iterate.facet.loc34_19.5: %Iterate.type = facet_value %R.as_type.loc30_62.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc34_19.5 (constants.%Iterate.facet.353)]
+// CHECK:STDOUT:   %Iterate.facet.loc34_19.5: %Iterate.type = facet_value %R.as_type.loc30_61.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc34_19.5 (constants.%Iterate.facet.353)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc34_19.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.8fb)]
 // CHECK:STDOUT:   %.loc34_19.19: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc34_19.5 [symbolic = %.loc34_19.19 (constants.%.985)]
 // CHECK:STDOUT:   %impl.elem2.loc34_19.2: @TestIterate.%.loc34_19.19 (%.985) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc34_19.2 (constants.%impl.elem2.8ec)]
@@ -1002,13 +1002,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem0.loc34_19.2: @TestIterate.%.loc34_19.21 (%.fa0) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc34_19.2 (constants.%impl.elem0.544)]
 // CHECK:STDOUT:   %specific_impl_fn.loc34_19.6: <specific function> = specific_impl_function %impl.elem0.loc34_19.2, @Destroy.WithSelf.Op(%impl.elem1) [symbolic = %specific_impl_fn.loc34_19.6 (constants.%specific_impl_fn.fa9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%r.param: @TestIterate.%R.as_type.loc30_62.1 (%R.as_type.a02)) {
+// CHECK:STDOUT:   fn(%r.param: @TestIterate.%R.as_type.loc30_61.1 (%R.as_type.a02)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %i.patt: %pattern_type.6b6 = value_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %r.ref: @TestIterate.%R.as_type.loc30_62.1 (%R.as_type.a02) = name_ref r, %r
+// CHECK:STDOUT:     %r.ref: @TestIterate.%R.as_type.loc30_61.1 (%R.as_type.a02) = name_ref r, %r
 // CHECK:STDOUT:     %impl.elem2.loc34_19.1: @TestIterate.%.loc34_19.19 (%.985) = impl_witness_access constants.%Iterate.lookup_impl_witness.18b, element2 [symbolic = %impl.elem2.loc34_19.2 (constants.%impl.elem2.8ec)]
 // CHECK:STDOUT:     %bound_method.loc34_19.1: <bound method> = bound_method %r.ref, %impl.elem2.loc34_19.1
 // CHECK:STDOUT:     %Iterate.facet.loc34_19.1: %Iterate.type = facet_value constants.%R.as_type.a02, (constants.%Iterate.lookup_impl_witness.18b) [symbolic = %Iterate.facet.loc34_19.5 (constants.%Iterate.facet.353)]
@@ -1270,19 +1270,19 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: specific @TestIterate(constants.%R.869) {
 // CHECK:STDOUT:   %R.patt.loc30_17.2 => constants.%R.patt.bbc
 // CHECK:STDOUT:   %R.loc30_17.1 => constants.%R.869
-// CHECK:STDOUT:   %R.as_type.loc30_62.1 => constants.%R.as_type.a02
+// CHECK:STDOUT:   %R.as_type.loc30_61.1 => constants.%R.as_type.a02
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b2da
-// CHECK:STDOUT:   %r.param_patt.loc30_60.2 => constants.%r.param_patt.774
-// CHECK:STDOUT:   %r.patt.loc30_60.2 => constants.%r.patt.54b
+// CHECK:STDOUT:   %r.param_patt.loc30_59.2 => constants.%r.param_patt.774
+// CHECK:STDOUT:   %r.patt.loc30_59.2 => constants.%r.patt.54b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestIterate(constants.%facet_value.04f) {
 // CHECK:STDOUT:   %R.patt.loc30_17.2 => constants.%R.patt.bbc
 // CHECK:STDOUT:   %R.loc30_17.1 => constants.%facet_value.04f
-// CHECK:STDOUT:   %R.as_type.loc30_62.1 => constants.%MutableRange
+// CHECK:STDOUT:   %R.as_type.loc30_61.1 => constants.%MutableRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e635
-// CHECK:STDOUT:   %r.param_patt.loc30_60.2 => constants.%r.param_patt.c79
-// CHECK:STDOUT:   %r.patt.loc30_60.2 => constants.%r.patt.16f
+// CHECK:STDOUT:   %r.param_patt.loc30_59.2 => constants.%r.param_patt.c79
+// CHECK:STDOUT:   %r.patt.loc30_59.2 => constants.%r.patt.16f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc30 => constants.%complete_type.357
@@ -1310,10 +1310,10 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: specific @TestIterate(constants.%facet_value.f37) {
 // CHECK:STDOUT:   %R.patt.loc30_17.2 => constants.%R.patt.bbc
 // CHECK:STDOUT:   %R.loc30_17.1 => constants.%facet_value.f37
-// CHECK:STDOUT:   %R.as_type.loc30_62.1 => constants.%ConstRange
+// CHECK:STDOUT:   %R.as_type.loc30_61.1 => constants.%ConstRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.0ba
-// CHECK:STDOUT:   %r.param_patt.loc30_60.2 => constants.%r.param_patt.83e
-// CHECK:STDOUT:   %r.patt.loc30_60.2 => constants.%r.patt.116
+// CHECK:STDOUT:   %r.param_patt.loc30_59.2 => constants.%r.param_patt.83e
+// CHECK:STDOUT:   %r.patt.loc30_59.2 => constants.%r.patt.116
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc30 => constants.%complete_type.357
@@ -1607,7 +1607,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc40_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.06b)]
-// CHECK:STDOUT:   %Iterate.facet.loc44_29.5: %Iterate.type = facet_value %R.as_type.loc40_76.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc44_29.5 (constants.%Iterate.facet.dbf)]
+// CHECK:STDOUT:   %Iterate.facet.loc44_29.5: %Iterate.type = facet_value %R.as_type.loc40_75.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc44_29.5 (constants.%Iterate.facet.dbf)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc44_29.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.1b1)]
 // CHECK:STDOUT:   %.loc44_29.20: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc44_29.5 [symbolic = %.loc44_29.20 (constants.%.1c2)]
 // CHECK:STDOUT:   %impl.elem2.loc44_29.2: @TestIterate.%.loc44_29.20 (%.1c2) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc44_29.2 (constants.%impl.elem2.49b)]
@@ -1624,13 +1624,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem0.loc44_29.2: @TestIterate.%.loc44_29.22 (%.98a) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc44_29.2 (constants.%impl.elem0.81b)]
 // CHECK:STDOUT:   %specific_impl_fn.loc44_29.6: <specific function> = specific_impl_function %impl.elem0.loc44_29.2, @Destroy.WithSelf.Op(%impl.elem1) [symbolic = %specific_impl_fn.loc44_29.6 (constants.%specific_impl_fn.bf3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%r.param: ref @TestIterate.%R.as_type.loc40_76.1 (%R.as_type.f55)) {
+// CHECK:STDOUT:   fn(%r.param: ref @TestIterate.%R.as_type.loc40_75.1 (%R.as_type.f55)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %i.patt: %pattern_type.e9f = value_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %r.ref: ref @TestIterate.%R.as_type.loc40_76.1 (%R.as_type.f55) = name_ref r, %r
+// CHECK:STDOUT:     %r.ref: ref @TestIterate.%R.as_type.loc40_75.1 (%R.as_type.f55) = name_ref r, %r
 // CHECK:STDOUT:     %impl.elem2.loc44_29.1: @TestIterate.%.loc44_29.20 (%.1c2) = impl_witness_access constants.%Iterate.lookup_impl_witness.06b, element2 [symbolic = %impl.elem2.loc44_29.2 (constants.%impl.elem2.49b)]
 // CHECK:STDOUT:     %bound_method.loc44_29.1: <bound method> = bound_method %r.ref, %impl.elem2.loc44_29.1
 // CHECK:STDOUT:     %Iterate.facet.loc44_29.1: %Iterate.type = facet_value constants.%R.as_type.f55, (constants.%Iterate.lookup_impl_witness.06b) [symbolic = %Iterate.facet.loc44_29.5 (constants.%Iterate.facet.dbf)]
@@ -1640,7 +1640,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %specific_impl_fn.loc44_29.1: <specific function> = specific_impl_function %impl.elem2.loc44_29.1, @Iterate.WithSelf.NewCursor(constants.%Iterate.facet.dbf) [symbolic = %specific_impl_fn.loc44_29.4 (constants.%specific_impl_fn.6f3)]
 // CHECK:STDOUT:     %bound_method.loc44_29.2: <bound method> = bound_method %r.ref, %specific_impl_fn.loc44_29.1
 // CHECK:STDOUT:     %var: ref @TestIterate.%as_type (%as_type.dbb) = var_storage invalid
-// CHECK:STDOUT:     %.loc44_28.1: @TestIterate.%R.as_type.loc40_76.1 (%R.as_type.f55) = acquire_value %r.ref
+// CHECK:STDOUT:     %.loc44_28.1: @TestIterate.%R.as_type.loc40_75.1 (%R.as_type.f55) = acquire_value %r.ref
 // CHECK:STDOUT:     %Iterate.WithSelf.NewCursor.call: init @TestIterate.%as_type (%as_type.dbb) to %var = call %bound_method.loc44_29.2(%.loc44_28.1)
 // CHECK:STDOUT:     assign %var, %Iterate.WithSelf.NewCursor.call
 // CHECK:STDOUT:     br !for.next
@@ -1658,7 +1658,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:     %specific_impl_fn.loc44_29.2: <specific function> = specific_impl_function %impl.elem3.loc44_29.1, @Iterate.WithSelf.Next(constants.%Iterate.facet.dbf) [symbolic = %specific_impl_fn.loc44_29.5 (constants.%specific_impl_fn.fca)]
 // CHECK:STDOUT:     %bound_method.loc44_29.4: <bound method> = bound_method %r.ref, %specific_impl_fn.loc44_29.2
 // CHECK:STDOUT:     %.loc44_29.7: ref %Optional.f2f = temporary_storage
-// CHECK:STDOUT:     %.loc44_28.2: @TestIterate.%R.as_type.loc40_76.1 (%R.as_type.f55) = acquire_value %r.ref
+// CHECK:STDOUT:     %.loc44_28.2: @TestIterate.%R.as_type.loc40_75.1 (%R.as_type.f55) = acquire_value %r.ref
 // CHECK:STDOUT:     %Iterate.WithSelf.Next.call: init %Optional.f2f to %.loc44_29.7 = call %bound_method.loc44_29.4(%.loc44_28.2, %addr.loc44)
 // CHECK:STDOUT:     %.loc44_29.8: ref %Optional.f2f = temporary %.loc44_29.7, %Iterate.WithSelf.Next.call
 // CHECK:STDOUT:     %.loc44_29.9: %Optional.HasValue.type.436 = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.ada) [concrete = constants.%Optional.HasValue.fbf]
@@ -1903,19 +1903,19 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: specific @TestIterate(constants.%R.0bd) {
 // CHECK:STDOUT:   %R.patt.loc40_17.2 => constants.%R.patt.35d
 // CHECK:STDOUT:   %R.loc40_17.1 => constants.%R.0bd
-// CHECK:STDOUT:   %R.as_type.loc40_76.1 => constants.%R.as_type.f55
+// CHECK:STDOUT:   %R.as_type.loc40_75.1 => constants.%R.as_type.f55
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d2d
-// CHECK:STDOUT:   %r.patt.loc40_74.2 => constants.%r.patt.d27
-// CHECK:STDOUT:   %r.param_patt.loc40_69.2 => constants.%r.param_patt.a41
+// CHECK:STDOUT:   %r.patt.loc40_73.2 => constants.%r.patt.d27
+// CHECK:STDOUT:   %r.param_patt.loc40_68.2 => constants.%r.param_patt.a41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestIterate(constants.%facet_value.82d) {
 // CHECK:STDOUT:   %R.patt.loc40_17.2 => constants.%R.patt.35d
 // CHECK:STDOUT:   %R.loc40_17.1 => constants.%facet_value.82d
-// CHECK:STDOUT:   %R.as_type.loc40_76.1 => constants.%MutableRange
+// CHECK:STDOUT:   %R.as_type.loc40_75.1 => constants.%MutableRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e635
-// CHECK:STDOUT:   %r.patt.loc40_74.2 => constants.%r.patt.f69
-// CHECK:STDOUT:   %r.param_patt.loc40_69.2 => constants.%r.param_patt.91e
+// CHECK:STDOUT:   %r.patt.loc40_73.2 => constants.%r.patt.f69
+// CHECK:STDOUT:   %r.param_patt.loc40_68.2 => constants.%r.param_patt.91e
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc40 => constants.%complete_type.357
@@ -1943,10 +1943,10 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: specific @TestIterate(constants.%facet_value.915) {
 // CHECK:STDOUT:   %R.patt.loc40_17.2 => constants.%R.patt.35d
 // CHECK:STDOUT:   %R.loc40_17.1 => constants.%facet_value.915
-// CHECK:STDOUT:   %R.as_type.loc40_76.1 => constants.%ConstRange
+// CHECK:STDOUT:   %R.as_type.loc40_75.1 => constants.%ConstRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.0ba
-// CHECK:STDOUT:   %r.patt.loc40_74.2 => constants.%r.patt.36a
-// CHECK:STDOUT:   %r.param_patt.loc40_69.2 => constants.%r.param_patt.501
+// CHECK:STDOUT:   %r.patt.loc40_73.2 => constants.%r.patt.36a
+// CHECK:STDOUT:   %r.param_patt.loc40_68.2 => constants.%r.param_patt.501
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc40 => constants.%complete_type.357
@@ -2025,7 +2025,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.fb7: type = pattern_type %f64.dc1 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc20_54.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc20_53.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.df9cc1.3: <witness> = custom_witness (%Destroy.Op.1a2547.3), @Destroy [concrete]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.type.ff3: type = fn_type @Float.as.Copy.impl.Op, @Float.as.Copy.impl(%N.fe9) [symbolic]
@@ -2166,7 +2166,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc20_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.93c)]
-// CHECK:STDOUT:   %Iterate.facet.loc24_19.5: %Iterate.type = facet_value %R.as_type.loc20_62.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc24_19.5 (constants.%Iterate.facet.94d)]
+// CHECK:STDOUT:   %Iterate.facet.loc24_19.5: %Iterate.type = facet_value %R.as_type.loc20_61.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc24_19.5 (constants.%Iterate.facet.94d)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc24_19.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.4c7)]
 // CHECK:STDOUT:   %.loc24_19.19: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc24_19.5 [symbolic = %.loc24_19.19 (constants.%.a62)]
 // CHECK:STDOUT:   %impl.elem2.loc24_19.2: @TestIterate.%.loc24_19.19 (%.a62) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc24_19.2 (constants.%impl.elem2.c7b)]
@@ -2183,13 +2183,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem0.loc24_19.2: @TestIterate.%.loc24_19.21 (%.148) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc24_19.2 (constants.%impl.elem0.461)]
 // CHECK:STDOUT:   %specific_impl_fn.loc24_19.6: <specific function> = specific_impl_function %impl.elem0.loc24_19.2, @Destroy.WithSelf.Op(%impl.elem1) [symbolic = %specific_impl_fn.loc24_19.6 (constants.%specific_impl_fn.095)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%r.param: @TestIterate.%R.as_type.loc20_62.1 (%R.as_type.087)) {
+// CHECK:STDOUT:   fn(%r.param: @TestIterate.%R.as_type.loc20_61.1 (%R.as_type.087)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %i.patt: %pattern_type.fb7 = value_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %r.ref: @TestIterate.%R.as_type.loc20_62.1 (%R.as_type.087) = name_ref r, %r
+// CHECK:STDOUT:     %r.ref: @TestIterate.%R.as_type.loc20_61.1 (%R.as_type.087) = name_ref r, %r
 // CHECK:STDOUT:     %impl.elem2.loc24_19.1: @TestIterate.%.loc24_19.19 (%.a62) = impl_witness_access constants.%Iterate.lookup_impl_witness.93c, element2 [symbolic = %impl.elem2.loc24_19.2 (constants.%impl.elem2.c7b)]
 // CHECK:STDOUT:     %bound_method.loc24_19.1: <bound method> = bound_method %r.ref, %impl.elem2.loc24_19.1
 // CHECK:STDOUT:     %Iterate.facet.loc24_19.1: %Iterate.type = facet_value constants.%R.as_type.087, (constants.%Iterate.lookup_impl_witness.93c) [symbolic = %Iterate.facet.loc24_19.5 (constants.%Iterate.facet.94d)]
@@ -2367,19 +2367,19 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: specific @TestIterate(constants.%R.c6e) {
 // CHECK:STDOUT:   %R.patt.loc20_17.2 => constants.%R.patt.ae1
 // CHECK:STDOUT:   %R.loc20_17.1 => constants.%R.c6e
-// CHECK:STDOUT:   %R.as_type.loc20_62.1 => constants.%R.as_type.087
+// CHECK:STDOUT:   %R.as_type.loc20_61.1 => constants.%R.as_type.087
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.3d7
-// CHECK:STDOUT:   %r.param_patt.loc20_60.2 => constants.%r.param_patt.03a
-// CHECK:STDOUT:   %r.patt.loc20_60.2 => constants.%r.patt.b86
+// CHECK:STDOUT:   %r.param_patt.loc20_59.2 => constants.%r.param_patt.03a
+// CHECK:STDOUT:   %r.patt.loc20_59.2 => constants.%r.patt.b86
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestIterate(constants.%facet_value.098) {
 // CHECK:STDOUT:   %R.patt.loc20_17.2 => constants.%R.patt.ae1
 // CHECK:STDOUT:   %R.loc20_17.1 => constants.%facet_value.098
-// CHECK:STDOUT:   %R.as_type.loc20_62.1 => constants.%ConstRange
+// CHECK:STDOUT:   %R.as_type.loc20_61.1 => constants.%ConstRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.025
-// CHECK:STDOUT:   %r.param_patt.loc20_60.2 => constants.%r.param_patt.a73
-// CHECK:STDOUT:   %r.patt.loc20_60.2 => constants.%r.patt.0e2
+// CHECK:STDOUT:   %r.param_patt.loc20_59.2 => constants.%r.param_patt.a73
+// CHECK:STDOUT:   %r.patt.loc20_59.2 => constants.%r.patt.0e2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc20 => constants.%complete_type.357
@@ -2458,7 +2458,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.fb7: type = pattern_type %f64.dc1 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc22_54.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc22_53.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.df9cc1.3: <witness> = custom_witness (%Destroy.Op.1a2547.3), @Destroy [concrete]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.type.ff3: type = fn_type @Float.as.Copy.impl.Op, @Float.as.Copy.impl(%N.fe9) [symbolic]
@@ -2599,7 +2599,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc22_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.93c)]
-// CHECK:STDOUT:   %Iterate.facet.loc26_19.5: %Iterate.type = facet_value %R.as_type.loc22_62.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc26_19.5 (constants.%Iterate.facet.94d)]
+// CHECK:STDOUT:   %Iterate.facet.loc26_19.5: %Iterate.type = facet_value %R.as_type.loc22_61.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc26_19.5 (constants.%Iterate.facet.94d)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc26_19.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.4c7)]
 // CHECK:STDOUT:   %.loc26_19.19: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc26_19.5 [symbolic = %.loc26_19.19 (constants.%.a62)]
 // CHECK:STDOUT:   %impl.elem2.loc26_19.2: @TestIterate.%.loc26_19.19 (%.a62) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc26_19.2 (constants.%impl.elem2.c7b)]
@@ -2616,13 +2616,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem0.loc26_19.2: @TestIterate.%.loc26_19.21 (%.148) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc26_19.2 (constants.%impl.elem0.461)]
 // CHECK:STDOUT:   %specific_impl_fn.loc26_19.6: <specific function> = specific_impl_function %impl.elem0.loc26_19.2, @Destroy.WithSelf.Op(%impl.elem1) [symbolic = %specific_impl_fn.loc26_19.6 (constants.%specific_impl_fn.095)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%r.param: @TestIterate.%R.as_type.loc22_62.1 (%R.as_type.087)) {
+// CHECK:STDOUT:   fn(%r.param: @TestIterate.%R.as_type.loc22_61.1 (%R.as_type.087)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %i.patt: %pattern_type.fb7 = value_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %r.ref: @TestIterate.%R.as_type.loc22_62.1 (%R.as_type.087) = name_ref r, %r
+// CHECK:STDOUT:     %r.ref: @TestIterate.%R.as_type.loc22_61.1 (%R.as_type.087) = name_ref r, %r
 // CHECK:STDOUT:     %impl.elem2.loc26_19.1: @TestIterate.%.loc26_19.19 (%.a62) = impl_witness_access constants.%Iterate.lookup_impl_witness.93c, element2 [symbolic = %impl.elem2.loc26_19.2 (constants.%impl.elem2.c7b)]
 // CHECK:STDOUT:     %bound_method.loc26_19.1: <bound method> = bound_method %r.ref, %impl.elem2.loc26_19.1
 // CHECK:STDOUT:     %Iterate.facet.loc26_19.1: %Iterate.type = facet_value constants.%R.as_type.087, (constants.%Iterate.lookup_impl_witness.93c) [symbolic = %Iterate.facet.loc26_19.5 (constants.%Iterate.facet.94d)]
@@ -2802,19 +2802,19 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: specific @TestIterate(constants.%R.c6e) {
 // CHECK:STDOUT:   %R.patt.loc22_17.2 => constants.%R.patt.ae1
 // CHECK:STDOUT:   %R.loc22_17.1 => constants.%R.c6e
-// CHECK:STDOUT:   %R.as_type.loc22_62.1 => constants.%R.as_type.087
+// CHECK:STDOUT:   %R.as_type.loc22_61.1 => constants.%R.as_type.087
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.3d7
-// CHECK:STDOUT:   %r.param_patt.loc22_60.2 => constants.%r.param_patt.03a
-// CHECK:STDOUT:   %r.patt.loc22_60.2 => constants.%r.patt.b86
+// CHECK:STDOUT:   %r.param_patt.loc22_59.2 => constants.%r.param_patt.03a
+// CHECK:STDOUT:   %r.patt.loc22_59.2 => constants.%r.patt.b86
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestIterate(constants.%facet_value.a73) {
 // CHECK:STDOUT:   %R.patt.loc22_17.2 => constants.%R.patt.ae1
 // CHECK:STDOUT:   %R.loc22_17.1 => constants.%facet_value.a73
-// CHECK:STDOUT:   %R.as_type.loc22_62.1 => constants.%MutableRange
+// CHECK:STDOUT:   %R.as_type.loc22_61.1 => constants.%MutableRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.992
-// CHECK:STDOUT:   %r.param_patt.loc22_60.2 => constants.%r.param_patt.aeb
-// CHECK:STDOUT:   %r.patt.loc22_60.2 => constants.%r.patt.fe7
+// CHECK:STDOUT:   %r.param_patt.loc22_59.2 => constants.%r.param_patt.aeb
+// CHECK:STDOUT:   %r.patt.loc22_59.2 => constants.%r.patt.fe7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc22 => constants.%complete_type.357
@@ -3053,7 +3053,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc27_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.173)]
-// CHECK:STDOUT:   %Iterate.facet.loc31_31.5: %Iterate.type = facet_value %R.as_type.loc27_74.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet.b38)]
+// CHECK:STDOUT:   %Iterate.facet.loc31_31.5: %Iterate.type = facet_value %R.as_type.loc27_73.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet.b38)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc31_31.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.5cd)]
 // CHECK:STDOUT:   %.loc31_31.20: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc31_31.5 [symbolic = %.loc31_31.20 (constants.%.592)]
 // CHECK:STDOUT:   %impl.elem2.loc31_31.2: @TestIterate.%.loc31_31.20 (%.592) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc31_31.2 (constants.%impl.elem2.ae2)]
@@ -3070,13 +3070,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem0.loc31_31.2: @TestIterate.%.loc31_31.22 (%.57c) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc31_31.2 (constants.%impl.elem0.152)]
 // CHECK:STDOUT:   %specific_impl_fn.loc31_31.6: <specific function> = specific_impl_function %impl.elem0.loc31_31.2, @Destroy.WithSelf.Op(%impl.elem1) [symbolic = %specific_impl_fn.loc31_31.6 (constants.%specific_impl_fn.9fb)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%r.param: @TestIterate.%R.as_type.loc27_74.1 (%R.as_type.c37)) {
+// CHECK:STDOUT:   fn(%r.param: @TestIterate.%R.as_type.loc27_73.1 (%R.as_type.c37)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %i.patt: %pattern_type.e41 = value_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %r.ref: @TestIterate.%R.as_type.loc27_74.1 (%R.as_type.c37) = name_ref r, %r
+// CHECK:STDOUT:     %r.ref: @TestIterate.%R.as_type.loc27_73.1 (%R.as_type.c37) = name_ref r, %r
 // CHECK:STDOUT:     %impl.elem2.loc31_31.1: @TestIterate.%.loc31_31.20 (%.592) = impl_witness_access constants.%Iterate.lookup_impl_witness.173, element2 [symbolic = %impl.elem2.loc31_31.2 (constants.%impl.elem2.ae2)]
 // CHECK:STDOUT:     %bound_method.loc31_31.1: <bound method> = bound_method %r.ref, %impl.elem2.loc31_31.1
 // CHECK:STDOUT:     %Iterate.facet.loc31_31.1: %Iterate.type = facet_value constants.%R.as_type.c37, (constants.%Iterate.lookup_impl_witness.173) [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet.b38)]
@@ -3272,19 +3272,19 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: specific @TestIterate(constants.%R.db4) {
 // CHECK:STDOUT:   %R.patt.loc27_17.2 => constants.%R.patt.81e
 // CHECK:STDOUT:   %R.loc27_17.1 => constants.%R.db4
-// CHECK:STDOUT:   %R.as_type.loc27_74.1 => constants.%R.as_type.c37
+// CHECK:STDOUT:   %R.as_type.loc27_73.1 => constants.%R.as_type.c37
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.17d
-// CHECK:STDOUT:   %r.param_patt.loc27_72.2 => constants.%r.param_patt.90c
-// CHECK:STDOUT:   %r.patt.loc27_72.2 => constants.%r.patt.d6c
+// CHECK:STDOUT:   %r.param_patt.loc27_71.2 => constants.%r.param_patt.90c
+// CHECK:STDOUT:   %r.patt.loc27_71.2 => constants.%r.patt.d6c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestIterate(constants.%facet_value.19f) {
 // CHECK:STDOUT:   %R.patt.loc27_17.2 => constants.%R.patt.81e
 // CHECK:STDOUT:   %R.loc27_17.1 => constants.%facet_value.19f
-// CHECK:STDOUT:   %R.as_type.loc27_74.1 => constants.%ConstRange
+// CHECK:STDOUT:   %R.as_type.loc27_73.1 => constants.%ConstRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.025
-// CHECK:STDOUT:   %r.param_patt.loc27_72.2 => constants.%r.param_patt.a73
-// CHECK:STDOUT:   %r.patt.loc27_72.2 => constants.%r.patt.0e2
+// CHECK:STDOUT:   %r.param_patt.loc27_71.2 => constants.%r.param_patt.a73
+// CHECK:STDOUT:   %r.patt.loc27_71.2 => constants.%r.patt.0e2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc27 => constants.%complete_type.357
@@ -3432,7 +3432,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc27_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.173)]
-// CHECK:STDOUT:   %Iterate.facet.loc31_31.5: %Iterate.type = facet_value %R.as_type.loc27_74.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet)]
+// CHECK:STDOUT:   %Iterate.facet.loc31_31.5: %Iterate.type = facet_value %R.as_type.loc27_73.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc31_31.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.5cd)]
 // CHECK:STDOUT:   %.loc31_31.20: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc31_31.5 [symbolic = %.loc31_31.20 (constants.%.592)]
 // CHECK:STDOUT:   %impl.elem2.loc31_31.2: @TestIterate.%.loc31_31.20 (%.592) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc31_31.2 (constants.%impl.elem2.ae2)]
@@ -3449,13 +3449,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem0.loc31_31.2: @TestIterate.%.loc31_31.22 (%.57c) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc31_31.2 (constants.%impl.elem0.152)]
 // CHECK:STDOUT:   %specific_impl_fn.loc31_31.6: <specific function> = specific_impl_function %impl.elem0.loc31_31.2, @Destroy.WithSelf.Op(%impl.elem1) [symbolic = %specific_impl_fn.loc31_31.6 (constants.%specific_impl_fn.9fb)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%r.param: @TestIterate.%R.as_type.loc27_74.1 (%R.as_type.c37)) {
+// CHECK:STDOUT:   fn(%r.param: @TestIterate.%R.as_type.loc27_73.1 (%R.as_type.c37)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %i.patt: %pattern_type.e41 = value_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %r.ref: @TestIterate.%R.as_type.loc27_74.1 (%R.as_type.c37) = name_ref r, %r
+// CHECK:STDOUT:     %r.ref: @TestIterate.%R.as_type.loc27_73.1 (%R.as_type.c37) = name_ref r, %r
 // CHECK:STDOUT:     %impl.elem2.loc31_31.1: @TestIterate.%.loc31_31.20 (%.592) = impl_witness_access constants.%Iterate.lookup_impl_witness.173, element2 [symbolic = %impl.elem2.loc31_31.2 (constants.%impl.elem2.ae2)]
 // CHECK:STDOUT:     %bound_method.loc31_31.1: <bound method> = bound_method %r.ref, %impl.elem2.loc31_31.1
 // CHECK:STDOUT:     %Iterate.facet.loc31_31.1: %Iterate.type = facet_value constants.%R.as_type.c37, (constants.%Iterate.lookup_impl_witness.173) [symbolic = %Iterate.facet.loc31_31.5 (constants.%Iterate.facet)]
@@ -3601,10 +3601,10 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: specific @TestIterate(constants.%R.db4) {
 // CHECK:STDOUT:   %R.patt.loc27_17.2 => constants.%R.patt.81e
 // CHECK:STDOUT:   %R.loc27_17.1 => constants.%R.db4
-// CHECK:STDOUT:   %R.as_type.loc27_74.1 => constants.%R.as_type.c37
+// CHECK:STDOUT:   %R.as_type.loc27_73.1 => constants.%R.as_type.c37
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.17d
-// CHECK:STDOUT:   %r.param_patt.loc27_72.2 => constants.%r.param_patt
-// CHECK:STDOUT:   %r.patt.loc27_72.2 => constants.%r.patt
+// CHECK:STDOUT:   %r.param_patt.loc27_71.2 => constants.%r.param_patt
+// CHECK:STDOUT:   %r.patt.loc27_71.2 => constants.%r.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_adl_overloads.carbon
@@ -3814,7 +3814,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc34_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.173)]
-// CHECK:STDOUT:   %Iterate.facet.loc38_31.5: %Iterate.type = facet_value %R.as_type.loc34_74.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc38_31.5 (constants.%Iterate.facet.b38)]
+// CHECK:STDOUT:   %Iterate.facet.loc38_31.5: %Iterate.type = facet_value %R.as_type.loc34_73.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc38_31.5 (constants.%Iterate.facet.b38)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc38_31.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.5cd)]
 // CHECK:STDOUT:   %.loc38_31.20: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc38_31.5 [symbolic = %.loc38_31.20 (constants.%.592)]
 // CHECK:STDOUT:   %impl.elem2.loc38_31.2: @TestIterate.%.loc38_31.20 (%.592) = impl_witness_access %Iterate.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc38_31.2 (constants.%impl.elem2.ae2)]
@@ -3831,13 +3831,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %impl.elem0.loc38_31.2: @TestIterate.%.loc38_31.22 (%.57c) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc38_31.2 (constants.%impl.elem0.152)]
 // CHECK:STDOUT:   %specific_impl_fn.loc38_31.6: <specific function> = specific_impl_function %impl.elem0.loc38_31.2, @Destroy.WithSelf.Op(%impl.elem1) [symbolic = %specific_impl_fn.loc38_31.6 (constants.%specific_impl_fn.9fb)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%r.param: @TestIterate.%R.as_type.loc34_74.1 (%R.as_type.c37)) {
+// CHECK:STDOUT:   fn(%r.param: @TestIterate.%R.as_type.loc34_73.1 (%R.as_type.c37)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %i.patt: %pattern_type.e41 = value_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %r.ref: @TestIterate.%R.as_type.loc34_74.1 (%R.as_type.c37) = name_ref r, %r
+// CHECK:STDOUT:     %r.ref: @TestIterate.%R.as_type.loc34_73.1 (%R.as_type.c37) = name_ref r, %r
 // CHECK:STDOUT:     %impl.elem2.loc38_31.1: @TestIterate.%.loc38_31.20 (%.592) = impl_witness_access constants.%Iterate.lookup_impl_witness.173, element2 [symbolic = %impl.elem2.loc38_31.2 (constants.%impl.elem2.ae2)]
 // CHECK:STDOUT:     %bound_method.loc38_31.1: <bound method> = bound_method %r.ref, %impl.elem2.loc38_31.1
 // CHECK:STDOUT:     %Iterate.facet.loc38_31.1: %Iterate.type = facet_value constants.%R.as_type.c37, (constants.%Iterate.lookup_impl_witness.173) [symbolic = %Iterate.facet.loc38_31.5 (constants.%Iterate.facet.b38)]
@@ -4035,19 +4035,19 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: specific @TestIterate(constants.%R.db4) {
 // CHECK:STDOUT:   %R.patt.loc34_17.2 => constants.%R.patt.81e
 // CHECK:STDOUT:   %R.loc34_17.1 => constants.%R.db4
-// CHECK:STDOUT:   %R.as_type.loc34_74.1 => constants.%R.as_type.c37
+// CHECK:STDOUT:   %R.as_type.loc34_73.1 => constants.%R.as_type.c37
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.17d
-// CHECK:STDOUT:   %r.param_patt.loc34_72.2 => constants.%r.param_patt.90c
-// CHECK:STDOUT:   %r.patt.loc34_72.2 => constants.%r.patt.d6c
+// CHECK:STDOUT:   %r.param_patt.loc34_71.2 => constants.%r.param_patt.90c
+// CHECK:STDOUT:   %r.patt.loc34_71.2 => constants.%r.patt.d6c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestIterate(constants.%facet_value.fb9) {
 // CHECK:STDOUT:   %R.patt.loc34_17.2 => constants.%R.patt.81e
 // CHECK:STDOUT:   %R.loc34_17.1 => constants.%facet_value.fb9
-// CHECK:STDOUT:   %R.as_type.loc34_74.1 => constants.%MutableAndConstRange
+// CHECK:STDOUT:   %R.as_type.loc34_73.1 => constants.%MutableAndConstRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.394
-// CHECK:STDOUT:   %r.param_patt.loc34_72.2 => constants.%r.param_patt.8bb
-// CHECK:STDOUT:   %r.patt.loc34_72.2 => constants.%r.patt.ac4
+// CHECK:STDOUT:   %r.param_patt.loc34_71.2 => constants.%r.param_patt.8bb
+// CHECK:STDOUT:   %r.patt.loc34_71.2 => constants.%r.patt.ac4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc34 => constants.%complete_type.357

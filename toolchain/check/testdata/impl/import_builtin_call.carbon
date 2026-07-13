@@ -29,15 +29,15 @@ interface Add {
 
 fn Int(n: IntLiteral) -> type = "int.make_type_signed";
 
-class MyInt(N:! IntLiteral) {
+class MyInt(N: IntLiteral) {
   adapt Int(N);
 }
 
-impl forall [N:! IntLiteral] MyInt(N) as Add {
+impl forall [N: IntLiteral] MyInt(N) as Add {
   fn Op(self, other: Self) -> Self = "int.sadd";
 }
 
-fn Double[N:! IntLiteral](x: MyInt(N)) -> MyInt(N) {
+fn Double[N: IntLiteral](x: MyInt(N)) -> MyInt(N) {
   return x.(Add.Op)(x);
 }
 
@@ -63,7 +63,7 @@ fn Int(n: IntLiteral) -> type = "int.make_type_signed";
 fn ToLiteral(n: Int(32)) -> IntLiteral = "int.convert_checked";
 fn FromLiteral(n: IntLiteral) -> Int(32) = "int.convert_checked";
 
-fn Make(N:! Int(32)) -> Int(ToLiteral(N)) { return Make(N); }
+fn Make(generic N: Int(32)) -> Int(ToLiteral(N)) { return Make(N); }
 
 class OtherInt {
   adapt Int(32);
@@ -72,7 +72,7 @@ class OtherInt {
 
 fn OtherInt.ToLiteral(self) -> IntLiteral = "int.convert_checked";
 
-fn MakeFromClass(N:! OtherInt) -> Int(N.ToLiteral()) { return MakeFromClass(N); }
+fn MakeFromClass(generic N: OtherInt) -> Int(N.ToLiteral()) { return MakeFromClass(N); }
 
 // --- use_convert_symbolic.carbon
 

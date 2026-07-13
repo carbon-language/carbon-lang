@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-class EmptyRange(T:! Core.Copy) {
+class EmptyRange(T: Core.Copy) {
   fn Make() -> Self { return {}; }
 
   impl as Core.Iterate where .CursorType = {} and .ElementType = T {

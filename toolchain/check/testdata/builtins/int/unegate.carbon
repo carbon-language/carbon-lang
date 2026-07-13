@@ -108,8 +108,8 @@ library "[[@TEST_NAME]]";
 
 fn Negate(a: u32) -> u32 = "int.unegate";
 
-class Expect(N:! u32) {}
-fn Test(N:! u32) -> Expect(N) { return {}; }
+class Expect(N: u32) {}
+fn Test(generic N: u32) -> Expect(N) { return {}; }
 
 fn F() {
   // -(-INT_MAX) is INT_MAX.

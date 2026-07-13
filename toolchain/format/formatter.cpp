@@ -61,9 +61,9 @@ auto Formatter::Run() -> bool {
         break;
 
       default:
-        if (token_kind.IsOneOf(
-                {Lex::TokenKind::CloseParen, Lex::TokenKind::Colon,
-                 Lex::TokenKind::ColonExclaim, Lex::TokenKind::Comma})) {
+        if (token_kind.IsOneOf({Lex::TokenKind::CloseParen,
+                                Lex::TokenKind::Colon,
+                                Lex::TokenKind::Comma})) {
           PrepareForPackedContent();
         } else {
           PrepareForSpacedContent();

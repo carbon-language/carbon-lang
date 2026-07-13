@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn Copy[N:! IntLiteral](x: Int(N)) -> Int(N) = "primitive_copy";
+fn Copy[N: IntLiteral](x: Int(N)) -> Int(N) = "primitive_copy";
 
 fn F(n: Int(64)) ->
     //@dump-sem-ir-begin
@@ -42,7 +42,7 @@ fn G(n: Int(13)) ->
   return Copy(n);
 }
 
-fn Symbolic(N:! IntLiteral, x: Int(N)) -> Int(N) {
+fn Symbolic(generic N: IntLiteral, x: Int(N)) -> Int(N) {
   return Copy(x);
 }
 

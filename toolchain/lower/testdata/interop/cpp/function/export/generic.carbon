@@ -29,7 +29,7 @@ class B {
   }
 }
 
-fn F[T:! I](t: T) {
+fn F[T: I](t: T) {
   t.Doit();
 }
 

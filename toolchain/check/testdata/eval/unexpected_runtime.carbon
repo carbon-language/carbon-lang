@@ -16,7 +16,7 @@ library "[[@TEST_NAME]]";
 var x: type;
 
 interface Z {
-  let T:! type;
+  let T: type;
 }
 
 class D {
@@ -33,7 +33,7 @@ library "[[@TEST_NAME]]";
 var x: type;
 
 interface Z {
-  let T:! type;
+  let T: type;
 }
 
 class D {
@@ -54,7 +54,7 @@ library "[[@TEST_NAME]]";
 var x: type;
 
 interface Z {
-  let T:! type;
+  let T: type;
 }
 
 class D {
@@ -70,7 +70,7 @@ library "[[@TEST_NAME]]";
 
 var x: type;
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
 class D {
   // CHECK:STDERR: fail_unexpected_runtime_impls_lhs.carbon:[[@LINE+4]]:29: error: cannot evaluate type expression [TypeExprEvaluationFailure]

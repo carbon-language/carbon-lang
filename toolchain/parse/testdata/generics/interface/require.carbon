@@ -26,7 +26,7 @@ interface Z {
 
 // --- impls_where.carbon
 
-interface Y { let Y1:! type; }
+interface Y { let Y1: type; }
 
 interface Z {
   require impls Y where .Y1 = ();
@@ -36,7 +36,7 @@ interface Z {
 
 interface Y {}
 
-interface Z(T:! type) {
+interface Z(T: type) {
   require T impls Y;
 }
 
@@ -136,7 +136,7 @@ interface Z {
 // CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'Y1'},
 // CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
@@ -167,9 +167,9 @@ interface Z {
 // CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Z'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 9},
 // CHECK:STDOUT:         {kind: 'RequireIntroducer', text: 'require'},

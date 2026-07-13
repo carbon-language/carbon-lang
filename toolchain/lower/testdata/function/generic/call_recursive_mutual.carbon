@@ -13,16 +13,16 @@
 // Builds on `call_recursive_basic.carbon`.
 // The two specifics for mutual recursive functions F and G,
 // when T is a pointer, could be deduplicated.
-fn G[T:! Core.Copy](x: T, count: i32) -> T;
+fn G[T: Core.Copy](x: T, count: i32) -> T;
 
-fn F[T:! Core.Copy](x: T, count: i32) -> T {
+fn F[T: Core.Copy](x: T, count: i32) -> T {
   if (count > 3) {
     return x;
   }
   return G(x, count + 1);
 }
 
-fn G[T:! Core.Copy](x: T, count: i32) -> T {
+fn G[T: Core.Copy](x: T, count: i32) -> T {
   if (count > 4) {
     return x;
   }

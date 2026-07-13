@@ -10,11 +10,11 @@
 
 final match_first {
 
-impl forall [T:! I] T as Interface {
+impl forall [T: I] T as Interface {
   fn Add(self, b: Self) -> Self;
 }
 
-impl forall [T:! J] T as Interface {
+impl forall [T: J] T as Interface {
   fn Add(self, b: Self) -> Self;
 }
 
@@ -30,9 +30,9 @@ impl forall [T:! J] T as Interface {
 // CHECK:STDOUT:           {kind: 'Forall', text: 'forall'},
 // CHECK:STDOUT:             {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'I'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'T'},
 // CHECK:STDOUT:           {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
@@ -56,9 +56,9 @@ impl forall [T:! J] T as Interface {
 // CHECK:STDOUT:           {kind: 'Forall', text: 'forall'},
 // CHECK:STDOUT:             {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'J'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'T'},
 // CHECK:STDOUT:           {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},

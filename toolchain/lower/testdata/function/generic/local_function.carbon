@@ -14,7 +14,7 @@
 // This previously crashed due to the local function not having a parent name
 // scope.
 
-fn F(T:! Core.Copy, y: T) -> T {
+fn F(generic T: Core.Copy, y: T) -> T {
   fn G(x: T) -> T { return x; }
   return G(y);
 }

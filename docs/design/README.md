@@ -739,7 +739,7 @@ Value expressions are further broken down into three _expression phases_:
     [monomorphization](https://en.wikipedia.org/wiki/Monomorphization) happens,
     but is not known during type checking. This includes
     [checked-generic parameters](#checked-and-template-parameters), and type
-    expressions with checked-generic arguments, like `Optional(T*)`.
+    expressions with symbolic constant arguments, like `Optional(T*)`.
 -   A _runtime value_ has a dynamic value only known at runtime.
 
 Template constants and symbolic constants are collectively called _compile-time
@@ -1059,19 +1059,23 @@ Every binding pattern has a _phase_ (either compile-time or runtime). A
 [compile-time constants](#expression-phases), not run-time values.
 
 To minimize keyword noise, Carbon uses contextual defaults to determine the
-phase (compile-time vs runtime) of a binding in parameter lists:
+phase (compile-time vs runtime) of a binding:
 
 -   Parameters to compile-time entities (such as `interface`, `impl`, and
     `class`) are checked generics by default.
 -   Deduced function parameters (declared in `[]`) are checked generics by
     default.
--   Explicit function parameters and local bindings (declared in `()`) are
+-   Explicit function parameters (declared in `()`) and local bindings are
     runtime by default.
 
 These defaults can be overridden by using the `template`, `generic`, or
 `runtime` keywords. However, using a keyword that matches the contextual default
 is disallowed to maintain consistency. A `template` keyword before the binding
-selects a template binding instead of a symbolic binding.
+selects a template binding instead of a checked binding.
+
+[Associated constants](#associated-constants) are always checked generic
+bindings. This is not a contextual default: no other phase is possible for an
+associated constant, and so no phase keyword is allowed there.
 
 Binding patterns default to _`let` bindings_. The `var` keyword is used to make
 it a _`var` binding_.
@@ -2806,7 +2810,7 @@ The [expression phase](#expression-phases) of a checked parameter is a symbolic
 constant whereas the expression phase of a template parameter is template
 constant. A binding pattern for a compile-time parameter is a _compile-time
 binding pattern_; more specifically a _template binding pattern_ if it uses
-`template`, and a _symbolic binding pattern_ if it uses `generic` or defaults to
+`template`, and a _checked binding pattern_ if it uses `generic` or defaults to
 it.
 
 Although checked generics are generally preferred, templates enable translation
@@ -3028,13 +3032,15 @@ to a checked parameter.
 
 An associated constant is a member of an interface whose value is determined by
 the implementation of that interface for a specific type. These values are set
-to compile-time values in implementations, and so are defined using a
-[`let` declaration](#constant-let-declarations) without an initializer, which
-defines an associated constant in this context. This allows types in the
-signatures of functions in the interface to vary. For example, an interface
-describing a [stack](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>)
-might use an associated constant to represent the type of elements stored in the
-stack.
+to compile-time values in implementations, which allows types in the signatures
+of functions in the interface to vary. An associated constant is defined using a
+[`let` declaration](#constant-let-declarations) without an initializer. Since an
+interface is a compile-time entity, the binding is a
+[checked generic binding](#checked-and-template-parameters) by context; no phase
+keyword is allowed, so an associated constant cannot be made `template`. For
+example, an interface describing a
+[stack](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>) might use an
+associated constant to represent the type of elements stored in the stack.
 
 ```
 interface StackInterface {

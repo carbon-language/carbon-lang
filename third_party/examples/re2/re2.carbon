@@ -353,7 +353,7 @@ class RE2 {
   fn FindAndConsumeN(input: StringPiece*, re: RE2,
                      args: Array(const Arg*), n: i32) -> bool;
 
-  private fn Apply[template F:! type, SP:! type](f: F, sp: SP, re: Self) {
+  private fn Apply[template F: type, SP: type](f: F, sp: SP, re: Self) {
     return f(sp, re, nullptr, 0);
   }
 
@@ -671,7 +671,7 @@ class RE2 {
 
     // For now, make the default budget something close to Code Search.
     // TODO: How to define a class-scope constant?
-    let kDefaultMaxMem:! i32 = 8 << 20;
+    let generic kDefaultMaxMem: i32 = 8 << 20;
 
     enum Encoding {
       EncodingUTF8 = 1,
@@ -762,9 +762,9 @@ class RE2 {
   // Argument converters; see below.
   // TODO: Should these be package members not class members in Carbon
   // so you use `RE2.Hex` not `RE2.RE2.Hex`?
-  fn CRadix[T:! Parse4ary](ptr: T*) -> Self.Arg;
-  fn Hex[T:! Parse4ary](ptr: T*) -> Self.Arg;
-  fn Octal[T:! Parse4ary](ptr: T*) -> Self.Arg;
+  fn CRadix[T: Parse4ary](ptr: T*) -> Self.Arg;
+  fn Hex[T: Parse4ary](ptr: T*) -> Self.Arg;
+  fn Octal[T: Parse4ary](ptr: T*) -> Self.Arg;
 
   private fn Init(addr self: Self, pattern: StringPiece, options: Options);
 
@@ -856,17 +856,17 @@ class RE2.Arg {
     fn Parse(ref self, str: StringView, n: i64) -> bool;
   }
   match_first {
-    impl [T:! Parse3ary] T as Parseable {
+    impl [T: Parse3ary] T as Parseable {
       fn Parse(ref self, str: StringView, n: i64) -> bool {
         return T.Parse(str, n, self);
       }
     }
-    impl [T:! Parse4ary] T as Parseable {
+    impl [T: Parse4ary] T as Parseable {
       fn Parse(ref self, str: StringView, n: i64) -> bool {
         return T.Parse(str, n, self, 10);
       }
     }
-    impl [T:! ParseFrom] T as Parseable {
+    impl [T: ParseFrom] T as Parseable {
       fn Parse(ref self, str: StringView, n: i64) -> bool {
         if (self == nullptr) { return true; }
         return T.Parse(str, n, self);
@@ -881,7 +881,7 @@ class RE2.Arg {
     }
   }
 
-  fn Make[T:! Parseable](ptr: T*) {
+  fn Make[T: Parseable](ptr: T*) {
     return {.type_ = T, .arg_ = ptr};
   }
 
@@ -894,7 +894,7 @@ class RE2.Arg {
   private var arg_: Nullable(type_*);
 }
 
-private adapter ParseAsBase(T:! Parse4ary, base: i32) for T {
+private adapter ParseAsBase(T: Parse4ary, base: i32) for T {
   impl as Self.Arg.Parseable {
     fn Parse(ref self, str: StringView, n: i64) -> bool {
       return T.Parse(str, n, self, base);
@@ -902,15 +902,15 @@ private adapter ParseAsBase(T:! Parse4ary, base: i32) for T {
   }
 }
 
-fn RE2.CRadix[T:! Parse4ary](ptr: T*) -> Self.Arg {
+fn RE2.CRadix[T: Parse4ary](ptr: T*) -> Self.Arg {
   return Self.Arg.Make(ptr as ParseAsBase(T, 0)*);
 }
 
-fn RE2.Hex[T:! Parse4ary](ptr: T*) -> Self.Arg {
+fn RE2.Hex[T: Parse4ary](ptr: T*) -> Self.Arg {
   return Self.Arg.Make(ptr as ParseAsBase(T, 16)*);
 }
 
-fn RE2.Octal[T:! Parse4ary](ptr: T*) -> Self.Arg {
+fn RE2.Octal[T: Parse4ary](ptr: T*) -> Self.Arg {
   return Self.Arg.Make(ptr as ParseAsBase(T, 8)*);
 }
 

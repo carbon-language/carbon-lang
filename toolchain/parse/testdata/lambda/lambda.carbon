@@ -10,7 +10,7 @@
 
 // --- basic.carbon
 
-var a: auto = fn [T:! type] (x: T) -> T { return x; };
+var a: auto = fn [T: type] (x: T) -> T { return x; };
 var b: auto = fn (x: i32) => x;
 var c: auto = fn { };
 
@@ -76,11 +76,10 @@ fn G() {
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'LambdaIntroducer', text: 'fn'},
 // CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
 // CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
+// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'T'},
@@ -93,8 +92,8 @@ fn G() {
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'x'},
 // CHECK:STDOUT:           {kind: 'ReturnStatement', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'Lambda', text: 'fn', subtree_size: 20},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 27},
+// CHECK:STDOUT:       {kind: 'Lambda', text: 'fn', subtree_size: 19},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 26},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
 // CHECK:STDOUT:           {kind: 'AutoTypeLiteral', text: 'auto'},

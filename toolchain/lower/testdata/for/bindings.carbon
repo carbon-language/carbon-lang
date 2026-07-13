@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/for/bindings.carbon
 
-class EmptyRange(T:! Core.Copy & Core.Destroy) {
+class EmptyRange(T: Core.Copy & Core.Destroy) {
   impl as Core.Iterate where .CursorType = {} and .ElementType = T {
     fn NewCursor(unused self) -> {} {
       return {};

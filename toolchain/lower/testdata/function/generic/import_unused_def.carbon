@@ -27,7 +27,7 @@ impl Foo as Core.Copy {
   }
 }
 
-fn GenericF[T:! type](unused x: T) -> Foo {
+fn GenericF[T: type](unused x: T) -> Foo {
   var f: Foo = (0 as i32) as Foo;
   return f;
 }

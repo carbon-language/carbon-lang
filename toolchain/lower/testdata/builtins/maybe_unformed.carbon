@@ -35,7 +35,7 @@ fn ConvertBoolToUnformedBool(var b: bool) {
 // Also test that an adapter wrapped around the builtin is passed appropriately,
 // using the same calling convention as the adapted type.
 
-class MaybeUnformedAdapter(T:! type) {
+class MaybeUnformedAdapter(T: type) {
   adapt MaybeUnformedBuiltin(T);
 }
 

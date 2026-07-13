@@ -227,6 +227,17 @@ class Context {
 
   auto region_stack() -> RegionStack& { return region_stack_; }
 
+  // The `MatchFirstDecl` and state of the `match_first` block that we are
+  // currently checking.
+  struct MatchFirstContext {
+    SemIR::InstId decl_id;
+    bool is_final;
+    int block_size = 0;
+  };
+  auto match_first_context() -> std::optional<MatchFirstContext>& {
+    return match_first_context_;
+  }
+
   // An ongoing impl lookup, used to ensure termination.
   struct ImplLookupStackEntry {
     SemIR::ConstantId query_self_const_id;
@@ -558,6 +569,9 @@ class Context {
 
   // Stack of single-entry regions being built.
   RegionStack region_stack_;
+
+  // The statte of the `match_first` block that we are currently checking.
+  std::optional<MatchFirstContext> match_first_context_;
 
   // Tracks all ongoing impl lookups in order to ensure that lookup terminates
   // via the acyclic rule and the termination rule.
