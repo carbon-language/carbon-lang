@@ -170,6 +170,14 @@ auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
 
 auto DiagnoseImplsOnNonFacetType(Context& context, SemIR::LocId loc_id) -> void;
 
+// Returns the substituted scrutinee type of `pattern_id` in `specific_id`. As
+// with `GetTypeOfInstInSpecific`, this does not perform substitution, and it
+// accepts `SpecificId::None`, treating it as a request for the value to use
+// within the generic itself.
+auto GetScrutineeTypeInSpecific(const Context& context,
+                                SemIR::InstId pattern_id,
+                                SemIR::SpecificId specific_id) -> SemIR::TypeId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_GENERIC_H_

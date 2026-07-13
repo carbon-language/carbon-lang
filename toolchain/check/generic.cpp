@@ -912,4 +912,13 @@ auto DiagnoseImplsOnNonFacetType(Context& context, SemIR::LocId loc_id)
   context.emitter().Emit(loc_id, ImplsOnNonFacetType);
 }
 
+auto GetScrutineeTypeInSpecific(const Context& context,
+                                SemIR::InstId pattern_id,
+                                SemIR::SpecificId specific_id)
+    -> SemIR::TypeId {
+  const auto& sem_ir = context.sem_ir();
+  return ExtractScrutineeType(
+      sem_ir, SemIR::GetTypeOfInstInSpecific(sem_ir, specific_id, pattern_id));
+}
+
 }  // namespace Carbon::Check
