@@ -147,6 +147,7 @@ auto MaybeAddCleanupForInst(Context& context, SemIR::InstId inst_id) -> void {
   context.scope_stack().destroy_id_stack().AppendToTop(inst_id);
 }
 
+// Adds cleanups for variables added after `depth`.
 static auto AddCleanups(Context& context, ScopeStack::CleanupScopeDepth depth)
     -> void {
   for (auto destroy_id :
