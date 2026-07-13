@@ -215,6 +215,21 @@ struct Function : public EntityWithParamsBase,
     if (return_pattern_id.has_value()) {
       out << ", return_pattern_id: " << return_pattern_id;
     }
+    if (auto builtin_kind = builtin_function_kind();
+        builtin_kind != BuiltinFunctionKind::None) {
+      out << ", builtin: " << builtin_kind;
+    }
+    if (auto thunk_id_val = thunk_id(); thunk_id_val.has_value()) {
+      out << ", thunk: " << thunk_id_val;
+    }
+    if (auto cpp_thunk_decl_id_val = cpp_thunk_decl_id();
+        cpp_thunk_decl_id_val.has_value()) {
+      out << ", cpp_thunk_decl: " << cpp_thunk_decl_id_val;
+    }
+    if (auto cpp_thunk_callee_val = cpp_thunk_callee();
+        cpp_thunk_callee_val.has_value()) {
+      out << ", cpp_thunk_callee: " << cpp_thunk_callee_val;
+    }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(
           ", body: [{0}]",

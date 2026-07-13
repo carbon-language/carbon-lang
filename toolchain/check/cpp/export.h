@@ -51,9 +51,21 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void;
 auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
                       SemIR::FieldDecl field_decl) -> clang::FieldDecl*;
 
+// Get a `clang::FunctionDecl` declaration that can be used to call a Carbon
+// function.
+auto ExportFunctionDeclToCpp(Context& context, SemIR::LocId loc_id,
+                             SemIR::FunctionId callee_function_id)
+    -> clang::FunctionDecl*;
+
+// Define the C++ thunk for calling a Carbon function.
+auto DefineCppThunk(Context& context, SemIR::LocId loc_id,
+                    SemIR::FunctionId callee_function_id,
+                    clang::FunctionDecl* thunk_function_decl) -> void;
+
 // Get a `clang::FunctionDecl` that can be used to call a Carbon function.
 auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                         SemIR::FunctionId function_id) -> clang::FunctionDecl*;
+                         SemIR::FunctionId callee_function_id)
+    -> clang::FunctionDecl*;
 
 // Export a Carbon destructor into C++.
 //

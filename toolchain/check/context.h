@@ -339,6 +339,7 @@ class Context {
     return sem_ir().cpp_overload_sets();
   }
   auto functions() -> SemIR::FunctionStore& { return sem_ir().functions(); }
+  auto thunks() -> SemIR::ThunkStore& { return sem_ir().thunks(); }
   auto classes() -> SemIR::ClassStore& { return sem_ir().classes(); }
   auto fields() -> SemIR::FieldStore& { return sem_ir().fields(); }
   auto vtables() -> SemIR::VtableStore& { return sem_ir().vtables(); }
