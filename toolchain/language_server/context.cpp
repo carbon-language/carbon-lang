@@ -190,12 +190,14 @@ class VirtualFileSystem : public llvm::vfs::FileSystem {
 Context::Context(const InstallPaths* installation,
                  llvm::raw_ostream* vlog_stream,
                  Diagnostics::Consumer* consumer,
-                 clang::clangd::LSPBinder::RawOutgoing* outgoing)
+                 clang::clangd::LSPBinder::RawOutgoing* outgoing,
+                 bool prelude_import)
     : installation_(installation),
       vlog_stream_(vlog_stream),
       file_emitter_(consumer),
       no_loc_emitter_(consumer),
-      outgoing_(outgoing) {
+      outgoing_(outgoing),
+      prelude_import_(prelude_import) {
   auto ls_fs = llvm::makeIntrusiveRefCnt<VirtualFileSystem>(this);
   auto vfs = llvm::makeIntrusiveRefCnt<llvm::vfs::OverlayFileSystem>(
       llvm::vfs::getRealFileSystem());
@@ -229,8 +231,8 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   options_ = CompileOptions();
   options_.codegen_options->target = options_.codegen_options->host;
   options_.phase = CompileOptions::Phase::Check;
+  options_.prelude_import = context.prelude_import();
   options_.input_filenames.push_back(filename());
-  options_.prelude_import = true;
 
   compile_driver_ = std::make_unique<CompileDriver>(&options_);
   auto map_input = [](llvm::StringRef) -> std::string { return ""; };

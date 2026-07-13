@@ -244,7 +244,7 @@ auto ToolchainFileTest::GetDefaultArgs() const
     args.insert(args.end(), {"format", "%s"});
     return args;
   } else if (component_ == "language_server") {
-    args.insert(args.end(), {"language-server"});
+    args.insert(args.end(), {"language-server", "--no-prelude-import"});
     return args;
   }
 
