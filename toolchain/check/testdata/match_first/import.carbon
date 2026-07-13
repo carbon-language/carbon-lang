@@ -14,7 +14,7 @@
 // --- for_import.carbon
 library "[[@TEST_NAME]]";
 
-interface Z { let Z1:! type; }
+interface Z { let Z1: type; }
 
 final match_first {
   impl () as Z where .Z1 = () {}

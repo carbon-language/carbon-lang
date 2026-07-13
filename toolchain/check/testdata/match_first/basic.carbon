@@ -529,7 +529,7 @@ final match_first {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.Z.impl: %.loc5_7.2 as %Z.ref.loc5 {
+// CHECK:STDOUT: final impl @empty_tuple.type.as.Z.impl: %.loc5_7.2 as %Z.ref.loc5 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -553,7 +553,7 @@ final match_first {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.Z.impl: %.loc6_9.2 as %Z.ref.loc6 {
+// CHECK:STDOUT: final impl @empty_tuple.type.as.Z.impl: %.loc6_9.2 as %Z.ref.loc6 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -577,7 +577,7 @@ final match_first {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.Z.impl: %.loc5_7.2 as %Z.ref.loc5 {
+// CHECK:STDOUT: final impl @empty_tuple.type.as.Z.impl: %.loc5_7.2 as %Z.ref.loc5 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
