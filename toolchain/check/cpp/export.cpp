@@ -864,8 +864,11 @@ auto ExportFunctionSpecializationToCpp(
   auto* template_arg_list = clang::TemplateArgumentList::CreateCopy(
       context.ast_context(), template_args);
   function_decl->setFunctionTemplateSpecialization(
-      function_template_decl, template_arg_list,
-      /*InsertPos=*/nullptr, clang::TSK_ExplicitSpecialization);
+      context.ast_context(), function_template_decl, template_arg_list,
+      /*InsertPos=*/nullptr, clang::TSK_ExplicitSpecialization,
+      /*TemplateParams=*/nullptr, /*TemplateArgsAsWritten=*/nullptr,
+      /*PointOfInstantiation=*/clang::SourceLocation(),
+      /*AddSpecialization=*/true);
 
   return true;
 }
