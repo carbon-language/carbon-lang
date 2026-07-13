@@ -204,6 +204,62 @@ auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
   return record_decl;
 }
 
+// Export the bindings in a generic as a `clang::TemplateParameterList`.
+static auto ExportGenericBindings(Context& context, SemIR::LocId loc_id,
+                                  SemIR::GenericId generic_id,
+                                  clang::DeclContext* decl_context)
+    -> clang::TemplateParameterList* {
+  auto clang_loc = GetCppLocation(context, loc_id);
+
+  const auto& generic = context.generics().Get(generic_id);
+  auto bindings = context.inst_blocks().Get(generic.bindings_id);
+  llvm::SmallVector<clang::NamedDecl*> template_param_decls;
+
+  // Create `clang::TemplateTypeParmDecl`s for each of the generic's bindings.
+  //
+  // TODO: handle the case where the generic is within an enclosing generic,
+  // and only include the bindings introduced in the inner generic here. See
+  // `fail_todo_enclosing_generic.carbon`.
+  for (auto binding_inst_id : bindings) {
+    binding_inst_id =
+        context.constant_values().GetConstantInstId(binding_inst_id);
+    auto symbolic_binding =
+        context.insts().GetAs<SemIR::SymbolicBinding>(binding_inst_id);
+
+    const auto& entity_name =
+        context.entity_names().Get(symbolic_binding.entity_name_id);
+
+    auto* param_ident = GetClangIdentifierInfo(context, entity_name.name_id);
+    CARBON_CHECK(param_ident, "non-identifier param name {0}",
+                 entity_name.name_id);
+
+    if (symbolic_binding.type_id != SemIR::TypeType::TypeId &&
+        !context.types().Is<SemIR::FacetType>(symbolic_binding.type_id)) {
+      context.TODO(loc_id, "binding maps to a non-type template parameter");
+      return nullptr;
+    }
+
+    auto* param_decl = clang::TemplateTypeParmDecl::Create(
+        context.ast_context(), decl_context, /*KeyLoc=*/clang_loc,
+        /*NameLoc=*/clang_loc,
+        /*D=*/0, /*P=*/0, param_ident, /*Typename=*/true,
+        /*ParameterPack=*/false);
+    template_param_decls.push_back(param_decl);
+
+    // Store a mapping between the generic parameter's `TypeInstId` and
+    // the `clang::TemplateTypeParmDecl`.
+    auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(param_decl);
+    context.clang_decls().Add({.key = key, .inst_id = binding_inst_id});
+  }
+
+  return clang::TemplateParameterList::Create(context.ast_context(),
+                                              /*TemplateLoc=*/clang_loc,
+                                              /*LAngleLoc=*/clang_loc,
+                                              template_param_decls,
+                                              /*RAngleLoc=*/clang_loc,
+                                              /*RequiresClause=*/nullptr);
+}
+
 static auto SetCppClassMemberAccess(const SemIR::NameScope& class_scope,
                                     SemIR::NameId member_name_id,
                                     clang::Decl* member) -> void {
@@ -1208,54 +1264,11 @@ static auto ExportGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
     -> clang::FunctionTemplateDecl* {
   auto clang_loc = GetCppLocation(context, loc_id);
 
-  const auto& generic = context.generics().Get(callee.function.generic_id);
-  auto bindings = context.inst_blocks().Get(generic.bindings_id);
-  llvm::SmallVector<clang::NamedDecl*> template_param_decls;
-
-  // Create `clang::TemplateTypeParmDecl`s for each of the function's
-  // symbolic parameters.
-  //
-  // TODO: handle the case where the function is within an enclosing generic,
-  // and only include the bindings introduced in the inner function here. See
-  // `fail_todo_enclosing_generic.carbon`.
-  for (auto binding_inst_id : bindings) {
-    binding_inst_id =
-        context.constant_values().GetConstantInstId(binding_inst_id);
-    auto symbolic_binding =
-        context.insts().GetAs<SemIR::SymbolicBinding>(binding_inst_id);
-
-    const auto& entity_name =
-        context.entity_names().Get(symbolic_binding.entity_name_id);
-
-    auto* param_ident = GetClangIdentifierInfo(context, entity_name.name_id);
-    CARBON_CHECK(param_ident, "non-identifier param name {0}",
-                 entity_name.name_id);
-
-    if (symbolic_binding.type_id != SemIR::TypeType::TypeId &&
-        !context.types().Is<SemIR::FacetType>(symbolic_binding.type_id)) {
-      context.TODO(loc_id, "binding maps to a non-type template parameter");
-      return nullptr;
-    }
-
-    auto* param_decl = clang::TemplateTypeParmDecl::Create(
-        context.ast_context(), callee.decl_context, /*KeyLoc=*/clang_loc,
-        /*NameLoc=*/clang_loc,
-        /*D=*/0, /*P=*/0, param_ident, /*Typename=*/true,
-        /*ParameterPack=*/false);
-    template_param_decls.push_back(param_decl);
-
-    // Store a mapping between the generic parameter's `TypeInstId` and
-    // the `clang::TemplateTypeParmDecl`.
-    auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(param_decl);
-    context.clang_decls().Add({.key = key, .inst_id = binding_inst_id});
+  auto* template_param_list = ExportGenericBindings(
+      context, loc_id, callee.function.generic_id, callee.decl_context);
+  if (!template_param_list) {
+    return nullptr;
   }
-
-  auto* template_param_list = clang::TemplateParameterList::Create(
-      context.ast_context(),
-      /*TemplateLoc=*/clang_loc,
-      /*LAngleLoc=*/clang_loc, template_param_decls,
-      /*RAngleLoc=*/clang_loc,
-      /*RequiresClause=*/nullptr);
 
   auto* function_decl =
       BuildCppFunctionDeclForGenericCarbonFn(context, loc_id, callee);
