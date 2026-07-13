@@ -425,6 +425,11 @@ class FreezeAndThawCallbacks : public SubstInstCallbacks {
         auto subst_id = Rebuild(inst_id, bind);
         cache_.Insert(inst_id, subst_id);
         inst_id = subst_id;
+        // The type of `.Self` may contain another `.Self` as in `Z(.Self) where
+        // .Self ...` so we would need to SubstOperands still to get to them.
+        // But we just leave them as frozen. When identifying a facet type and
+        // substituting in, we will replace the `.Self` value here, which means
+        // its frozen type is never used.
         return FullySubstituted;
       }
     }
