@@ -839,16 +839,9 @@ auto ExportFunctionSpecializationToCpp(
     auto binding_const_inst_id =
         context.constant_values().GetConstantInstId(binding_inst_id);
 
-    if (context.types().Is<SemIR::FacetType>(
-            context.insts().Get(binding_const_inst_id).type_id())) {
-      auto const_id = GetConstantFacetValueForType(
-          context, context.types().GetTypeInstId(type_expr.type_id));
-
-      specific_arg_ids.push_back(context.constant_values().GetInstId(const_id));
-    } else {
-      specific_arg_ids.push_back(
-          context.types().GetTypeInstId(type_expr.type_id));
-    }
+    specific_arg_ids.push_back(ConvertToValueOfType(
+        context, loc_id, type_expr.inst_id,
+        context.insts().Get(binding_const_inst_id).type_id()));
   }
 
   // Create a specific, and use that to convert from parameters with
