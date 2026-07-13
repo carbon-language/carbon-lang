@@ -972,19 +972,28 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     // The `//@...` directives are tooling markers that are only meaningful as
     // full-line comments, so we only recognize them when not trailing.
     if (!is_trailing) {
+      // A directive is also recorded as a comment: the tokens and comments
+      // together reconstruct the source, so tooling such as the formatter
+      // would otherwise silently drop the directive line.
+      auto add_directive_comment_line = [&] {
+        buffer_.AddComment(line_info.indent, comment_start,
+                           buffer_.line_infos_.Get(next_line()).start,
+                           /*is_trailing=*/false);
+        AdvanceToLine(source_text, position, next_line());
+      };
       if (comment_text.starts_with("//@include-in-dumps\n")) {
         buffer_.has_include_in_dumps_ = true;
-        AdvanceToLine(source_text, position, next_line());
+        add_directive_comment_line();
         return;
       }
       if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
         BeginDumpSemIRRange(comment_text.begin());
-        AdvanceToLine(source_text, position, next_line());
+        add_directive_comment_line();
         return;
       }
       if (comment_text.starts_with("//@dump-sem-ir-end\n")) {
         EndDumpSemIRRange(comment_text.begin());
-        AdvanceToLine(source_text, position, next_line());
+        add_directive_comment_line();
         return;
       }
     }
@@ -1017,13 +1026,16 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   }
 
   // A very common pattern is a long block of comment lines all with the same
-  // indent and comment start. We skip these comment blocks in bulk both for
-  // speed and to reduce redundant diagnostics if each line has the same
-  // erroneous comment start like `//!`.
+  // indent and comment start. We skip these comment blocks in bulk for speed,
+  // and with SIMD support short indents can be scanned extremely quickly; we
+  // expect these to be the dominant cases.
   //
-  // When we have SIMD support this is even more important for speed, as short
-  // indents can be scanned extremely quickly with SIMD and we expect these to
-  // be the dominant cases.
+  // An invalid comment start was already diagnosed above, so its block is
+  // instead skipped line by line below: a run of invalid comment lines lumps
+  // into one block regardless of which invalid byte follows each `//`, keeping
+  // the diagnostic noise to one per run, while a line whose introducer is
+  // valid (whitespace, or a `//@...` directive) ends the run and is lexed on
+  // its own.
   //
   // TODO: We should extend this to 32-byte SIMD on platforms with support.
   constexpr int MaxIndent = 13;
@@ -1038,7 +1050,7 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     next_line_info.indent = indent;
     position = next_line_info.start;
   };
-  if (CARBON_USE_SIMD &&
+  if (CARBON_USE_SIMD && is_valid_after_slashes &&
       position + 16 < static_cast<ssize_t>(source_text.size()) &&
       indent <= MaxIndent) {
     // Load a mask based on the amount of text we want to compare.
@@ -1085,15 +1097,22 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
 #else
 #error "Unsupported SIMD architecture!"
 #endif
-    // TODO: If we finish the loop due to the position approaching the end of
-    // the buffer we may fail to skip the last line in a comment block that
-    // has an invalid initial sequence and thus emit extra diagnostics. We
-    // should really fall through to the generic skipping logic, but the code
-    // organization will need to change significantly to allow that.
   } else {
+    // For an invalid comment start, the prefix covers only `//`; a following
+    // line continues the block only when its own introducer is also invalid,
+    // so a valid comment or a `//@...` directive ends the run and is lexed
+    // (and its directive side effects recognized) on its own.
+    auto continues_block = [&](ssize_t line_start) -> bool {
+      if (is_valid_after_slashes) {
+        return true;
+      }
+      char after_slashes = source_text[line_start + indent + 2];
+      return !IsSpace(after_slashes) && after_slashes != '@';
+    };
     while (position + prefix_size < static_cast<ssize_t>(source_text.size()) &&
            memcmp(source_text.data() + first_line_start,
-                  source_text.data() + position, prefix_size) == 0) {
+                  source_text.data() + position, prefix_size) == 0 &&
+           continues_block(position)) {
       skip_to_next_line();
     }
   }
