@@ -169,8 +169,8 @@ using UnderscoreName =
     LeafNode<NodeKind::UnderscoreName, Lex::UnderscoreTokenIndex,
              NodeCategory::NonExprName>;
 
-// A name qualifier with parameters, such as `A(T:! type).` or `A[T:! type](N:!
-// T).`.
+// A name qualifier with parameters, such as `A(T: type).` or
+// `A[T: type](N: T).`.
 struct IdentifierNameQualifierWithParams {
   static constexpr auto Kind =
       NodeKind::IdentifierNameQualifierWithParams.Define(
@@ -192,7 +192,7 @@ struct IdentifierNameQualifierWithoutParams {
   Lex::PeriodTokenIndex token;
 };
 
-// A complete name in a declaration: `A.C(T:! type).F(n: i32)`.
+// A complete name in a declaration: `A.C(T: type).F(n: i32)`.
 // Note that this includes the parameters of the entity itself.
 struct DeclName {
   llvm::SmallVector<NodeIdOneOf<IdentifierNameQualifierWithParams,
@@ -382,6 +382,20 @@ struct RefBindingName {
   AnyRuntimeBindingPatternName name;
 };
 
+// An explicit `runtime` keyword on a runtime binding: `runtime name`. The
+// keyword is preserved so its token is accounted for and the check phase can
+// see that the binding's phase was written explicitly. It is only meaningful
+// where it overrides a generic contextual default; where it is redundant or
+// invalid it is diagnosed (by the parser or by the check phase), but the
+// binding remains well-formed.
+struct RuntimeBindingName {
+  static constexpr auto Kind =
+      NodeKind::RuntimeBindingName.Define({.child_count = 1});
+
+  Lex::RuntimeTokenIndex token;
+  AnyRuntimeBindingPatternName name;
+};
+
 // A binding pattern, such as `name: Type`, that isn't inside a `var` pattern.
 struct LetBindingPattern {
   static constexpr auto Kind = NodeKind::LetBindingPattern.Define(
@@ -389,7 +403,7 @@ struct LetBindingPattern {
 
   // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
   NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
-              RefBindingName>
+              RefBindingName, RuntimeBindingName>
       name;
   Lex::ColonTokenIndex token;
   AnyExprId type;
@@ -443,18 +457,20 @@ struct CompileTimeBindingPatternStart {
   NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
               TemplateBindingName>
       name;
-  // This is a virtual token. The `:!` token is owned by the
+  // This is a virtual token. The `:` token is owned by the
   // CompileTimeBindingPattern node.
-  Lex::ColonExclaimTokenIndex token;
+  Lex::ColonTokenIndex token;
 };
 
-// `name:! Type`
+// `name: Type` in a context where the binding is a checked or template generic
+// (for example, a deduced `[]` parameter, a parameter of a compile-time entity,
+// or an explicit parameter marked `generic`/`template`).
 struct CompileTimeBindingPattern {
   static constexpr auto Kind = NodeKind::CompileTimeBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
   CompileTimeBindingPatternStartId introducer;
-  Lex::ColonExclaimTokenIndex token;
+  Lex::ColonTokenIndex token;
   AnyExprId type;
 };
 
@@ -502,7 +518,7 @@ struct ExplicitParamList {
 using ImplicitParamListStart = LeafNode<NodeKind::ImplicitParamListStart,
                                         Lex::OpenSquareBracketTokenIndex>;
 
-// An implicit parameter list: `[T:! type, self: Self]`.
+// An implicit parameter list: `[T: type]`.
 struct ImplicitParamList {
   static constexpr auto Kind = NodeKind::ImplicitParamList.Define(
       {.bracketed_by = ImplicitParamListStart::Kind});
@@ -656,11 +672,11 @@ struct AssociatedConstantNameAndType {
       {.category = NodeCategory::Pattern, .child_count = 2});
 
   AnyRuntimeBindingPatternName name;
-  Lex::ColonExclaimTokenIndex token;
+  Lex::ColonTokenIndex token;
   AnyExprId type;
 };
 
-// An associated constant declaration: `let a:! i32;`.
+// An associated constant declaration: `let a: i32;`.
 struct AssociatedConstantDecl {
   static constexpr auto Kind = NodeKind::AssociatedConstantDecl.Define(
       {.category = NodeCategory::Decl,

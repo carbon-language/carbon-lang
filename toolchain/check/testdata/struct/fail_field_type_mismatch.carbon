@@ -67,7 +67,5 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:   %.loc19: %struct_type.b = struct_literal (%float) [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

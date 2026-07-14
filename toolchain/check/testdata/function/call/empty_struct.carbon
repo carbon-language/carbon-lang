@@ -69,8 +69,6 @@ fn Main() {
 // CHECK:STDOUT:   %.loc16_10: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc16_11: init %empty_struct_type = converted %a.ref, %.loc16_10 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return %.loc16_11
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -81,7 +79,5 @@ fn Main() {
 // CHECK:STDOUT:   %.loc20_9.2: %empty_struct_type = converted %.loc20_9.1, %empty_struct [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Echo.call: init %empty_struct_type = call %Echo.ref(%.loc20_9.2)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

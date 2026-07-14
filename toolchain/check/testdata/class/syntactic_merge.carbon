@@ -19,11 +19,11 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-class Foo(a:! C);
-class Foo(a:! C) {}
+class Foo(a: C);
+class Foo(a: C) {}
 
-class Bar(a:! D);
-class Bar(a:! D) {}
+class Bar(a: D);
+class Bar(a: D) {}
 
 // --- spacing.carbon
 
@@ -31,8 +31,8 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-class Foo [ ] ( a :! C );
-class Foo[](a:! C) {}
+class Foo [ ] ( a : C );
+class Foo[](a: C) {}
 
 // --- fail_parens.carbon
 
@@ -40,15 +40,15 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-class Foo(a:! C);
-// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:15: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: class Foo(a:! (C)) {}
-// CHECK:STDERR:               ^
-// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:15: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: class Foo(a:! C);
-// CHECK:STDERR:               ^
+class Foo(a: C);
+// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:14: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: class Foo(a: (C)) {}
+// CHECK:STDERR:              ^
+// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:14: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR: class Foo(a: C);
+// CHECK:STDERR:              ^
 // CHECK:STDERR:
-class Foo(a:! (C)) {}
+class Foo(a: (C)) {}
 
 // --- fail_raw_identifier.carbon
 
@@ -56,15 +56,15 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-class Foo(a:! C);
-// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+7]]:15: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: class Foo(a:! r#C) {}
-// CHECK:STDERR:               ^~~
-// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE-4]]:15: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: class Foo(a:! C);
-// CHECK:STDERR:               ^
+class Foo(a: C);
+// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+7]]:14: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: class Foo(a: r#C) {}
+// CHECK:STDERR:              ^~~
+// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE-4]]:14: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR: class Foo(a: C);
+// CHECK:STDERR:              ^
 // CHECK:STDERR:
-class Foo(a:! r#C) {}
+class Foo(a: r#C) {}
 
 // --- two_file.carbon
 
@@ -73,15 +73,15 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-class Foo(a:! C);
-class Bar(a:! D);
+class Foo(a: C);
+class Bar(a: D);
 
 // --- two_file.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
-class Foo(a:! C) {}
-class Bar(a:! D) {}
+class Foo(a: C) {}
+class Bar(a: D) {}
 
 // --- fail_name_mismatch.carbon
 
@@ -90,15 +90,15 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-class Foo(a:! C);
+class Foo(a: C);
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:11: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
-// CHECK:STDERR: class Foo(b:! D) {}
-// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR: class Foo(b: D) {}
+// CHECK:STDERR:           ^~~~
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:11: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-// CHECK:STDERR: class Foo(a:! C);
-// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR: class Foo(a: C);
+// CHECK:STDERR:           ^~~~
 // CHECK:STDERR:
-class Foo(b:! D) {}
+class Foo(b: D) {}
 
 // --- fail_alias.carbon
 
@@ -107,15 +107,15 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-class Foo(a:! C);
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:15: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: class Foo(a:! D) {}
-// CHECK:STDERR:               ^
-// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:15: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: class Foo(a:! C);
-// CHECK:STDERR:               ^
+class Foo(a: C);
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:14: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: class Foo(a: D) {}
+// CHECK:STDERR:              ^
+// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:14: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR: class Foo(a: C);
+// CHECK:STDERR:              ^
 // CHECK:STDERR:
-class Foo(a:! D) {}
+class Foo(a: D) {}
 
 // --- fail_deduced_alias.carbon
 
@@ -124,15 +124,15 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-class Foo[a:! C]();
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:15: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: class Foo[a:! D]() {}
-// CHECK:STDERR:               ^
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:15: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: class Foo[a:! C]();
-// CHECK:STDERR:               ^
+class Foo[a: C]();
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:14: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: class Foo[a: D]() {}
+// CHECK:STDERR:              ^
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:14: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR: class Foo[a: C]();
+// CHECK:STDERR:              ^
 // CHECK:STDERR:
-class Foo[a:! D]() {}
+class Foo[a: D]() {}
 
 // --- alias_two_file.carbon
 
@@ -140,7 +140,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-class Foo(a:! C);
+class Foo(a: C);
 
 // --- todo_fail_alias_two_file.impl.carbon
 
@@ -148,7 +148,7 @@ impl library "[[@TEST_NAME]]";
 
 alias D = C;
 
-class Foo(a:! D) {}
+class Foo(a: D) {}
 
 // --- fail_repeat_const.carbon
 
@@ -156,19 +156,19 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-class Foo(a:! const C);
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:15: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
-// CHECK:STDERR: class Foo(a:! const (const C)) {}
-// CHECK:STDERR:               ^~~~~~~~~~~~~~~
+class Foo(a: const C);
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:14: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
+// CHECK:STDERR: class Foo(a: const (const C)) {}
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+7]]:21: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: class Foo(a:! const (const C)) {}
-// CHECK:STDERR:                     ^
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:21: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: class Foo(a:! const C);
-// CHECK:STDERR:                     ^
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+7]]:20: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: class Foo(a: const (const C)) {}
+// CHECK:STDERR:                    ^
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:20: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR: class Foo(a: const C);
+// CHECK:STDERR:                    ^
 // CHECK:STDERR:
-class Foo(a:! const (const C)) {}
+class Foo(a: const (const C)) {}
 
 // --- fail_self_type.carbon
 
@@ -1151,11 +1151,11 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %Foo.decl.loc18: %Foo.type.3e04c8.2 = class_decl @Foo.loc18 [concrete = constants.%Foo.generic.04949d.2] {
 // CHECK:STDOUT:     %a.patt.loc18_12.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_12.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_15 [concrete = constants.%const] {
+// CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_14 [concrete = constants.%const] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %const.loc18_22: type = const_type %C.ref [concrete = constants.%const]
-// CHECK:STDOUT:       %const.loc18_15: type = const_type %const.loc18_22 [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc18_21: type = const_type %C.ref [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc18_14: type = const_type %const.loc18_21 [concrete = constants.%const]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc18_12.2: %const = symbolic_binding a, 0 [symbolic = %a.loc18_12.1 (constants.%a)]
 // CHECK:STDOUT:   }
@@ -1266,7 +1266,5 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %.loc18_10: init %empty_tuple.type = converted %.loc18_13.1, %.loc18_13.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %.loc18_7, %.loc18_10
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

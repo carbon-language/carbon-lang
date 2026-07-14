@@ -13,7 +13,7 @@
 // --- a.carbon
 
 library "X";
-base class D[T:! type](X:! T) {
+base class D[T: type](X: T) {
 }
 class C {
   fn F();

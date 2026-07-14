@@ -35,7 +35,7 @@ fn TestC(c: MakeUnformed(C*)) -> bool {
 library "[[@TEST_NAME]]";
 
 fn MakeUnformed(t: type) -> type = "maybe_unformed.make_type";
-fn IsNull[T:! type](p: MakeUnformed(T*)) -> bool = "pointer.is_null";
+fn IsNull[T: type](p: MakeUnformed(T*)) -> bool = "pointer.is_null";
 
 class C {}
 
@@ -169,8 +169,6 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %s.ref: %.b2d = name_ref s, %s
 // CHECK:STDOUT:   %IsNullEmptyStruct.call: init bool = call %IsNullEmptyStruct.ref(%s.ref)
 // CHECK:STDOUT:   return %IsNullEmptyStruct.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestC(%c.param: %.9e8) -> out %return.param: bool {
@@ -179,8 +177,6 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %c.ref: %.9e8 = name_ref c, %c
 // CHECK:STDOUT:   %IsNullC.call: init bool = call %IsNullC.ref(%c.ref)
 // CHECK:STDOUT:   return %IsNullC.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_generic.carbon
@@ -268,8 +264,6 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%empty_struct_type) [concrete = constants.%IsNull.specific_fn.add]
 // CHECK:STDOUT:   %IsNull.call: init bool = call %IsNull.specific_fn(%s.ref)
 // CHECK:STDOUT:   return %IsNull.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestC(%c.param: %.9e8) -> out %return.param: bool {
@@ -279,7 +273,5 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%C) [concrete = constants.%IsNull.specific_fn.5e3]
 // CHECK:STDOUT:   %IsNull.call: init bool = call %IsNull.specific_fn(%c.ref)
 // CHECK:STDOUT:   return %IsNull.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

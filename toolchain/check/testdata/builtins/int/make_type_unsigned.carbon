@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn Copy[N:! IntLiteral](x: UInt(N)) -> UInt(N) = "primitive_copy";
+fn Copy[N: IntLiteral](x: UInt(N)) -> UInt(N) = "primitive_copy";
 
 fn F(n: UInt(64)) ->
     //@dump-sem-ir-begin
@@ -42,7 +42,7 @@ fn G(n: UInt(13)) ->
   return Copy(n);
 }
 
-fn Symbolic(N:! IntLiteral, x: UInt(N)) -> UInt(N)
+fn Symbolic(generic N: IntLiteral, x: UInt(N)) -> UInt(N)
     {
   return Copy(x);
 }
@@ -97,14 +97,10 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: fn @F(%n.param: %u64.builtin) -> out %return.param: %u64.builtin {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%n.param: %u13.builtin) -> out %return.param: %u13.builtin {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-fn F[template T:! type](x: T) -> i32 {
+fn F[template T: type](x: T) -> i32 {
   let n: i32 = x;
   return n;
 }
@@ -40,7 +40,7 @@ fn Test2(c: C) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-fn F[template T:! type](x: T) -> i32 {
+fn F[template T: type](x: T) -> i32 {
   let n: i32 = x;
   return n;
 }
@@ -174,16 +174,16 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc4_16.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_16.2 (constants.%T.patt.d47011.1)]
-// CHECK:STDOUT:     %x.param_patt.loc4_26.1: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc4_26.2 (constants.%x.param_patt.91d)]
-// CHECK:STDOUT:     %x.patt.loc4_26.1: @F.%pattern_type (%pattern_type.51d1c4.1) = at_binding_pattern x, %x.param_patt.loc4_26.1 [template = %x.patt.loc4_26.2 (constants.%x.patt.800)]
+// CHECK:STDOUT:     %x.param_patt.loc4_25.1: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc4_25.2 (constants.%x.param_patt.91d)]
+// CHECK:STDOUT:     %x.patt.loc4_25.1: @F.%pattern_type (%pattern_type.51d1c4.1) = at_binding_pattern x, %x.param_patt.loc4_25.1 [template = %x.patt.loc4_25.2 (constants.%x.patt.800)]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc4 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc4: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc4_34: Core.Form = init_form %i32.loc4 [concrete = constants.%.795]
-// CHECK:STDOUT:     %.loc4_19.1: type = splice_block %.loc4_19.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc4_33: Core.Form = init_form %i32.loc4 [concrete = constants.%.795]
+// CHECK:STDOUT:     %.loc4_18.1: type = splice_block %.loc4_18.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc4_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc4_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_16.2: type = symbolic_binding T, 0, template [template = %T.loc4_16.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:     %x.param: @F.%T.loc4_16.1 (%T.67db0b.1) = value_param call_param0
@@ -268,8 +268,8 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_16.2: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_16.2 (constants.%T.patt.d47011.1)]
 // CHECK:STDOUT:   %T.loc4_16.1: type = symbolic_binding T, 0, template [template = %T.loc4_16.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc4_16.1 [template = %pattern_type (constants.%pattern_type.51d1c4.1)]
-// CHECK:STDOUT:   %x.param_patt.loc4_26.2: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc4_26.2 (constants.%x.param_patt.91d)]
-// CHECK:STDOUT:   %x.patt.loc4_26.2: @F.%pattern_type (%pattern_type.51d1c4.1) = at_binding_pattern x, %x.param_patt.loc4_26.2 [template = %x.patt.loc4_26.2 (constants.%x.patt.800)]
+// CHECK:STDOUT:   %x.param_patt.loc4_25.2: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc4_25.2 (constants.%x.param_patt.91d)]
+// CHECK:STDOUT:   %x.patt.loc4_25.2: @F.%pattern_type (%pattern_type.51d1c4.1) = at_binding_pattern x, %x.param_patt.loc4_25.2 [template = %x.patt.loc4_25.2 (constants.%x.patt.800)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_16.1 [template = %require_complete (constants.%require_complete.944)]
@@ -293,8 +293,6 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %n.ref, %specific_fn
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_10.2(%n.ref)
 // CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -305,8 +303,6 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%i32) [concrete = constants.%F.specific_fn.6c3]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%n.ref)
 // CHECK:STDOUT:   return %F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert(%self.param: %C) -> out %return.param: %i32 {
@@ -321,8 +317,6 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %bound_method.loc16_42.2: <bound method> = bound_method %.loc16_42.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc16_42.2(%.loc16_42.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test2(%c.param: %C) -> out %return.param: %i32 {
@@ -332,24 +326,22 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.e0d]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%c.ref)
 // CHECK:STDOUT:   return %F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67db0b.1) {
 // CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T.patt.d47011.1
 // CHECK:STDOUT:   %T.loc4_16.1 => constants.%T.67db0b.1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d1c4.1
-// CHECK:STDOUT:   %x.param_patt.loc4_26.2 => constants.%x.param_patt.91d
-// CHECK:STDOUT:   %x.patt.loc4_26.2 => constants.%x.patt.800
+// CHECK:STDOUT:   %x.param_patt.loc4_25.2 => constants.%x.param_patt.91d
+// CHECK:STDOUT:   %x.patt.loc4_25.2 => constants.%x.patt.800
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%i32) {
 // CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T.patt.d47011.1
 // CHECK:STDOUT:   %T.loc4_16.1 => constants.%i32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
-// CHECK:STDOUT:   %x.param_patt.loc4_26.2 => constants.%x.param_patt.cee
-// CHECK:STDOUT:   %x.patt.loc4_26.2 => constants.%x.patt.fbe
+// CHECK:STDOUT:   %x.param_patt.loc4_25.2 => constants.%x.param_patt.cee
+// CHECK:STDOUT:   %x.patt.loc4_25.2 => constants.%x.patt.fbe
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -361,8 +353,8 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T.patt.d47011.1
 // CHECK:STDOUT:   %T.loc4_16.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.98b
-// CHECK:STDOUT:   %x.param_patt.loc4_26.2 => constants.%x.param_patt.0f9
-// CHECK:STDOUT:   %x.patt.loc4_26.2 => constants.%x.patt.2cc
+// CHECK:STDOUT:   %x.param_patt.loc4_25.2 => constants.%x.param_patt.0f9
+// CHECK:STDOUT:   %x.patt.loc4_25.2 => constants.%x.patt.2cc
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.cdf
@@ -452,16 +444,16 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc4_16.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_16.2 (constants.%T.patt.d47011.1)]
-// CHECK:STDOUT:     %x.param_patt.loc4_26.1: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc4_26.2 (constants.%x.param_patt.91d)]
-// CHECK:STDOUT:     %x.patt.loc4_26.1: @F.%pattern_type (%pattern_type.51d1c4.1) = at_binding_pattern x, %x.param_patt.loc4_26.1 [template = %x.patt.loc4_26.2 (constants.%x.patt.800)]
+// CHECK:STDOUT:     %x.param_patt.loc4_25.1: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc4_25.2 (constants.%x.param_patt.91d)]
+// CHECK:STDOUT:     %x.patt.loc4_25.1: @F.%pattern_type (%pattern_type.51d1c4.1) = at_binding_pattern x, %x.param_patt.loc4_25.1 [template = %x.patt.loc4_25.2 (constants.%x.patt.800)]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc4 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc4: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc4_34: Core.Form = init_form %i32.loc4 [concrete = constants.%.795]
-// CHECK:STDOUT:     %.loc4_19.1: type = splice_block %.loc4_19.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc4_33: Core.Form = init_form %i32.loc4 [concrete = constants.%.795]
+// CHECK:STDOUT:     %.loc4_18.1: type = splice_block %.loc4_18.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc4_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc4_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_16.2: type = symbolic_binding T, 0, template [template = %T.loc4_16.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:     %x.param: @F.%T.loc4_16.1 (%T.67db0b.1) = value_param call_param0
@@ -499,8 +491,8 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_16.2: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_16.2 (constants.%T.patt.d47011.1)]
 // CHECK:STDOUT:   %T.loc4_16.1: type = symbolic_binding T, 0, template [template = %T.loc4_16.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc4_16.1 [template = %pattern_type (constants.%pattern_type.51d1c4.1)]
-// CHECK:STDOUT:   %x.param_patt.loc4_26.2: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc4_26.2 (constants.%x.param_patt.91d)]
-// CHECK:STDOUT:   %x.patt.loc4_26.2: @F.%pattern_type (%pattern_type.51d1c4.1) = at_binding_pattern x, %x.param_patt.loc4_26.2 [template = %x.patt.loc4_26.2 (constants.%x.patt.800)]
+// CHECK:STDOUT:   %x.param_patt.loc4_25.2: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc4_25.2 (constants.%x.param_patt.91d)]
+// CHECK:STDOUT:   %x.patt.loc4_25.2: @F.%pattern_type (%pattern_type.51d1c4.1) = at_binding_pattern x, %x.param_patt.loc4_25.2 [template = %x.patt.loc4_25.2 (constants.%x.patt.800)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_16.1 [template = %require_complete (constants.%require_complete.944)]
@@ -524,8 +516,6 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %n.ref, %specific_fn
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_10.2(%n.ref)
 // CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -536,24 +526,22 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%D) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%d.ref)
 // CHECK:STDOUT:   return %F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67db0b.1) {
 // CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T.patt.d47011.1
 // CHECK:STDOUT:   %T.loc4_16.1 => constants.%T.67db0b.1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d1c4.1
-// CHECK:STDOUT:   %x.param_patt.loc4_26.2 => constants.%x.param_patt.91d
-// CHECK:STDOUT:   %x.patt.loc4_26.2 => constants.%x.patt.800
+// CHECK:STDOUT:   %x.param_patt.loc4_25.2 => constants.%x.param_patt.91d
+// CHECK:STDOUT:   %x.patt.loc4_25.2 => constants.%x.patt.800
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%D) {
 // CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T.patt.d47011.1
 // CHECK:STDOUT:   %T.loc4_16.1 => constants.%D
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d8d
-// CHECK:STDOUT:   %x.param_patt.loc4_26.2 => constants.%x.param_patt.23b
-// CHECK:STDOUT:   %x.patt.loc4_26.2 => constants.%x.patt.75f
+// CHECK:STDOUT:   %x.param_patt.loc4_25.2 => constants.%x.param_patt.23b
+// CHECK:STDOUT:   %x.patt.loc4_25.2 => constants.%x.patt.75f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.357

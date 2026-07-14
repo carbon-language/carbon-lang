@@ -14,8 +14,8 @@
 
 library "[[@TEST_NAME]]";
 
-class Expect(N:! i32) {}
-fn Test(N:! i32) -> Expect(N) { return {}; }
+class Expect(N: i32) {}
+fn Test(generic N: i32) -> Expect(N) { return {}; }
 
 fn RightShift(a: i32, b: i32) -> i32 = "int.right_shift";
 
@@ -40,8 +40,8 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-class Expect(N:! u32) {}
-fn Test(N:! u32) -> Expect(N) { return {}; }
+class Expect(N: u32) {}
+fn Test(generic N: u32) -> Expect(N) { return {}; }
 
 fn RightShift(a: u32, b: i32) -> u32 = "int.right_shift";
 
@@ -67,8 +67,8 @@ library "[[@TEST_NAME]]";
 
 fn RightShift(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.right_shift";
 
-class Expect(N:! Core.IntLiteral) {}
-fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
+class Expect(N: Core.IntLiteral) {}
+fn Test(generic N: Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(RightShift(0, 31)) as Expect(0);
@@ -148,8 +148,6 @@ let negative_lit_zero: Core.IntLiteral = RightShiftLit(0, -1);
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %RightShift.call: init %i32 = call %RightShift.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %RightShift.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- u32.carbon
@@ -169,7 +167,5 @@ let negative_lit_zero: Core.IntLiteral = RightShiftLit(0, -1);
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %RightShift.call: init %u32 = call %RightShift.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %RightShift.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

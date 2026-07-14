@@ -109,7 +109,5 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:   %.loc7_49: init %A to %.loc7_1 = mark_in_place_init %f__carbon_thunk.call
 // CHECK:STDOUT:   assign file.%a.var, %.loc7_49
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

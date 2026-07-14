@@ -495,7 +495,7 @@ auto Formatter::FormatImpl(ImplId id, const Impl& impl_info) -> void {
   }
 
   PrepareToFormatDecl(impl_info.first_owning_decl_id);
-  FormatEntityStart("impl", impl_info, id);
+  FormatEntityStart(impl_info.is_final ? "final impl" : "impl", impl_info, id);
 
   llvm::SaveAndRestore impl_scope(scope_, inst_namer_.GetScopeFor(id));
 
@@ -1510,11 +1510,12 @@ auto Formatter::FormatRequireImplsBlock(RequireImplsBlockId block_id) -> void {
 }
 
 auto Formatter::FormatObserveBlock(ObserveBlockId block_id) -> void {
-  IndentLabel();
-  out() << "!observes:\n";
-  if (!block_id.has_value()) {
+  if (!block_id.has_value() || block_id == ObserveBlockId::Empty) {
     return;
   }
+
+  IndentLabel();
+  out() << "!observes:\n";
   for (auto observe_id : sem_ir_->observe_blocks().Get(block_id)) {
     Indent();
     FormatArg(observe_id);

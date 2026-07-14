@@ -234,8 +234,6 @@ class Derived {
 // CHECK:STDOUT:   %.loc14_35.8: init %Derived to %return.param = class_init (%.loc14_35.4, %.loc14_35.7) [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   %.loc14_36: init %Derived = converted %.loc14_35.1, %.loc14_35.8 [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   return %.loc14_36 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d.param: %Derived) -> out %return.param: %tuple.type.e55 {
@@ -269,8 +267,6 @@ class Derived {
 // CHECK:STDOUT:   %.loc18_24.4: init %tuple.type.e55 to %return.param = tuple_init (%.loc18_24.2, %.loc18_24.3)
 // CHECK:STDOUT:   %.loc18_25: init %tuple.type.e55 = converted %.loc18_24.1, %.loc18_24.4
 // CHECK:STDOUT:   return %.loc18_25 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_base_after_field.carbon

@@ -96,7 +96,5 @@ fn Main() {
 // CHECK:STDOUT:   %.loc20_14.2: %i32 = converted %int_2, %.loc20_14.1 [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   %Print.call.loc20: init %empty_tuple.type = call %Print.ref.loc20(%.loc20_14.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

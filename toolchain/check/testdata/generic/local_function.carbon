@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/generic/local_function.carbon
 
-fn Test[unused T:! type]() {
+fn Test[unused T: type]() {
   fn Local() {
   }
   Local();
@@ -50,9 +50,9 @@ fn Test[unused T:! type]() {
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [concrete = constants.%Test] {
 // CHECK:STDOUT:     %T.patt.loc15_17.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15_20.1: type = splice_block %.loc15_20.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc15_19.1: type = splice_block %.loc15_19.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc15_20.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc15_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc15_17.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_17.1 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -74,8 +74,6 @@ fn Test[unused T:! type]() {
 // CHECK:STDOUT:     %Local.specific_fn.loc18_3.1: <specific function> = specific_function %Local.ref, @Local(constants.%T) [symbolic = %Local.specific_fn.loc18_3.2 (constants.%Local.specific_fn)]
 // CHECK:STDOUT:     %Local.call: init %empty_tuple.type = call %Local.specific_fn.loc18_3.1()
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -85,8 +83,6 @@ fn Test[unused T:! type]() {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

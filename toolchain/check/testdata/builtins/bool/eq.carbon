@@ -16,7 +16,7 @@ library "[[@TEST_NAME]]";
 
 fn Eq(a: bool, b: bool) -> bool = "bool.eq";
 
-class C(B:! bool) {}
+class C(B: bool) {}
 
 fn True() -> C(true);
 fn False() -> C(false);
@@ -32,7 +32,7 @@ var d: C(Eq(false, false)) = True();
 
 library "[[@TEST_NAME]]";
 
-class C(B:! bool) {}
+class C(B: bool) {}
 
 fn True() -> C(true);
 fn False() -> C(false);
@@ -86,8 +86,6 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %True.call.loc12: init %C.ac4 to %.loc12 = call %True.ref.loc12()
 // CHECK:STDOUT:   assign file.%a.var, %True.call.loc12
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- prelude.carbon
@@ -145,7 +143,5 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %True.call.loc10: init %C.ac4 to %.loc10 = call %True.ref.loc10()
 // CHECK:STDOUT:   assign file.%a.var, %True.call.loc10
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

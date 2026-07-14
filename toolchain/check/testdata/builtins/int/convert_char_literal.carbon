@@ -166,7 +166,5 @@ let c: CharLiteral = ConvertFromIntLiteral(0x110000);
 // CHECK:STDOUT:   %.loc16_37.2: %u32 = converted %int_99, %.loc16_37.1 [concrete = constants.%int_99.d4e]
 // CHECK:STDOUT:   %ConvertFromU32.call: init Core.CharLiteral = call %ConvertFromU32.ref(%.loc16_37.2) [concrete = constants.%.b9b]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

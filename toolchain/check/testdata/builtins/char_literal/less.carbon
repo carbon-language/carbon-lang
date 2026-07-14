@@ -64,7 +64,5 @@ let b: bool = Less('b', 'a');
 // CHECK:STDOUT:   %.loc22_25: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %Less.call.loc22: init bool = call %Less.ref.loc22(%.loc22_20, %.loc22_25) [concrete = constants.%false]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

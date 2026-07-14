@@ -328,7 +328,5 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   %.loc17_16.6: init %tuple.type to %return.param = tuple_init (%.loc17_16.3, %.loc17_16.5) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %.loc17_17: init %tuple.type = converted %.loc17_16.1, %.loc17_16.6 [concrete = constants.%tuple]
 // CHECK:STDOUT:   return %.loc17_17 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

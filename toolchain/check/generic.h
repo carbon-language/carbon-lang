@@ -103,7 +103,7 @@ auto MakeSpecific(Context& context, SemIR::LocId loc_id,
     -> SemIR::SpecificId;
 
 // Builds the specific that describes how the generic should refer to itself.
-// For example, for a generic `G(T:! type)`, this is the specific `G(T)`. If
+// For example, for a generic `G(T: type)`, this is the specific `G(T)`. If
 // `generic_id` is `None`, returns `None`.
 auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
                       SemIR::GenericId generic_id) -> SemIR::SpecificId;
@@ -169,6 +169,14 @@ auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
     -> SemIR::SpecificId;
 
 auto DiagnoseImplsOnNonFacetType(Context& context, SemIR::LocId loc_id) -> void;
+
+// Returns the substituted scrutinee type of `pattern_id` in `specific_id`. As
+// with `GetTypeOfInstInSpecific`, this does not perform substitution, and it
+// accepts `SpecificId::None`, treating it as a request for the value to use
+// within the generic itself.
+auto GetScrutineeTypeInSpecific(const Context& context,
+                                SemIR::InstId pattern_id,
+                                SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
 }  // namespace Carbon::Check
 

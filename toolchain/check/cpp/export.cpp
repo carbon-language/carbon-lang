@@ -15,7 +15,9 @@
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
@@ -288,9 +290,13 @@ namespace {
 struct FunctionInfo {
   struct Param {
     Param(Context& context, SemIR::InstId param_inst_id)
-        : type_id(ExtractScrutineeType(
+        : pattern_inst_id(param_inst_id),
+          type_id(ExtractScrutineeType(
               context.sem_ir(), context.insts().Get(param_inst_id).type_id())),
           kind(GetParamPatternKind(context, param_inst_id)) {}
+
+    // The parameter's pattern type.
+    SemIR::InstId pattern_inst_id;
 
     // Type of the parameter's scrutinee.
     SemIR::TypeId type_id;
@@ -810,9 +816,11 @@ auto ExportFunctionSpecializationToCpp(
   // between specializations.
   std::string extra_name;
 
-  // Create a mapping from Carbon generic parameters to the
-  // corresponding C++ type in `template_args`.
-  Map<SemIR::InstId, SemIR::TypeId> symbolic_to_actual;
+  // Map the `clang::TemplateArgument`s into Carbon types suitable for
+  // passing into `MakeSpecific`.
+  //
+  // Also initialize `extra_name`.
+  llvm::SmallVector<SemIR::InstId> specific_arg_ids;
   for (auto [binding_inst_id, clang_template_arg] :
        llvm::zip(bindings, template_args)) {
     auto type_expr =
@@ -825,37 +833,24 @@ auto ExportFunctionSpecializationToCpp(
       return false;
     }
 
-    auto binding_const_inst_id =
-        context.constant_values().GetConstantInstId(binding_inst_id);
-    symbolic_to_actual.Insert(binding_const_inst_id, type_expr.type_id);
-
     // TODO: this generates a pretty ugly name.
     extra_name += std::string(llvm::formatv("{}", type_expr.inst_id));
+
+    auto binding_const_inst_id =
+        context.constant_values().GetConstantInstId(binding_inst_id);
+
+    specific_arg_ids.push_back(ConvertToValueOfType(
+        context, loc_id, type_expr.inst_id,
+        context.insts().Get(binding_const_inst_id).type_id()));
   }
 
-  // Replace symbolic explicit parameters with a concrete Carbon type.
-  //
-  // This will only handle simple cases like `x: T`, and not things like
-  // `x: T*`. Ultimately what we should be doing here is producing a Specific
-  // for the generic function. See `fail_todo_generic_pointer.carbon`.
+  // Create a specific, and use that to convert from parameters with
+  // symbolic types to concrete types.
+  auto specific_id = MakeSpecific(context, loc_id, target.function.generic_id,
+                                  specific_arg_ids);
   for (auto& param : target.explicit_params) {
-    auto param_type_inst_id = context.types().GetTypeInstId(param.type_id);
-    SemIR::InstId symbolic_inst_id = SemIR::InstId::None;
-    if (auto symbolic_binding =
-            context.insts().TryGetAs<SemIR::SymbolicBinding>(
-                param_type_inst_id)) {
-      symbolic_inst_id = param_type_inst_id;
-    } else if (auto facet_access_type =
-                   context.insts().TryGetAs<SemIR::FacetAccessType>(
-                       param_type_inst_id)) {
-      symbolic_inst_id = facet_access_type->facet_value_inst_id;
-    }
-
-    if (symbolic_inst_id.has_value()) {
-      if (auto lookup = symbolic_to_actual.Lookup(symbolic_inst_id)) {
-        param.type_id = lookup.value();
-      }
-    }
+    param.type_id =
+        GetScrutineeTypeInSpecific(context, param.pattern_inst_id, specific_id);
   }
 
   // TODO: handle generic return type.

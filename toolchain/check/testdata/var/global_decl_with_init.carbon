@@ -71,8 +71,6 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:   %.loc4_1: init %struct_type.v = converted %.loc4_27.1, %.loc4_27.4 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc4_1
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_in_tuple.carbon
@@ -125,8 +123,6 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:   %.loc4_13: init %empty_tuple.type = converted %.loc4_32.1, %.loc4_32.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%y.var, %.loc4_13
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple_in_var.carbon
@@ -189,7 +185,5 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:   %.loc4_1: init %tuple.type = converted %.loc4_29.1, %.loc4_29.6 [concrete = constants.%tuple]
 // CHECK:STDOUT:   assign file.%.var, %.loc4_1
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

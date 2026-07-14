@@ -16,7 +16,7 @@ import library "prelude/parts/copy";
 import library "prelude/parts/default";
 import library "prelude/parts/destroy";
 
-class Optional(T:! Copy) {
+class Optional(T: Copy) {
   fn None() -> Self {
     returned var me: Self;
     me.has_value = false;

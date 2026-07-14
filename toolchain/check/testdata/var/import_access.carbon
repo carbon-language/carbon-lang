@@ -89,8 +89,6 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   %.loc4_9: init %empty_tuple.type = converted %.loc4_22.1, %.loc4_22.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%v.var, %.loc4_9
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- def.impl.carbon
@@ -136,8 +134,6 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   %.loc4_1: init %empty_tuple.type = converted %v.ref, %.loc4_14 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%v2.var, %.loc4_1
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_local_def.carbon
@@ -173,8 +169,6 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   %v.ref: <error> = name_ref v, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%v2.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_other_def.carbon
@@ -218,7 +212,5 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   %v.ref: <error> = name_ref v, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%v2.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

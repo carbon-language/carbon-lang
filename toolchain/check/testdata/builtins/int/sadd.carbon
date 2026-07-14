@@ -16,8 +16,8 @@ library "[[@TEST_NAME]]";
 
 fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 
-class Expect(N:! i32) {}
-fn Test(N:! i32) -> Expect(N) { return {}; }
+class Expect(N: i32) {}
+fn Test(generic N: i32) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Add(0, 0)) as Expect(0);
@@ -37,8 +37,8 @@ library "[[@TEST_NAME]]";
 
 fn Add(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.sadd";
 
-class Expect(N:! Core.IntLiteral) {}
-fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
+class Expect(N: Core.IntLiteral) {}
+fn Test(generic N: Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Add(0, 0)) as Expect(0);
@@ -177,7 +177,5 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Add.call: init %i32 = call %Add.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Add.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

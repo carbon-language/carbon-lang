@@ -17,14 +17,14 @@ interface Animal {}
 class Goat {}
 impl Goat as Animal {}
 
-fn WalkAnimal(unused a:! Animal) {}
+fn WalkAnimal(unused generic a: Animal) {}
 
 fn F() {
-  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let x:! type = Goat;
-  // CHECK:STDERR:       ^~~~~~~~
+  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
+  // CHECK:STDERR:   let generic x: type = Goat;
+  // CHECK:STDERR:               ^~~~~~~
   // CHECK:STDERR:
-  let x:! type = Goat;
+  let generic x: type = Goat;
   WalkAnimal(x);
 }
 
@@ -52,8 +52,6 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @<null name>: <unexpected>.inst{{[0-9A-F]+}}.loc18_6 as <unexpected>.inst{{[0-9A-F]+}}.loc18_14 {
@@ -73,8 +71,8 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%Goat
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @WalkAnimal(<unexpected>.inst{{[0-9A-F]+}}.loc20_23: %Animal.type) {
-// CHECK:STDOUT:   %a.patt.loc20_23.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc20_23.2 (constants.%a.patt)]
+// CHECK:STDOUT: generic fn @WalkAnimal(<unexpected>.inst{{[0-9A-F]+}}.loc20_31: %Animal.type) {
+// CHECK:STDOUT:   %a.patt.loc20_31.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc20_31.2 (constants.%a.patt)]
 // CHECK:STDOUT:   %a: %Animal.type = symbolic_binding a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -82,8 +80,6 @@ fn F() {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -98,7 +94,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%a) {
-// CHECK:STDOUT:   %a.patt.loc20_23.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.patt.loc20_31.2 => constants.%a.patt
 // CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

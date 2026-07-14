@@ -23,7 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Qualified member names and compound member access](#qualified-member-names-and-compound-member-access)
     -   [Access](#access)
 -   [Checked-generic functions](#checked-generic-functions)
-    -   [Symbolic facet bindings](#symbolic-facet-bindings)
+    -   [Checked facet bindings](#checked-facet-bindings)
     -   [Return type](#return-type)
 -   [Interfaces recap](#interfaces-recap)
 -   [Facet types](#facet-types)
@@ -685,13 +685,13 @@ fn AddAndScaleGeneric[T: Vector](a: T, b: T, s: f64) -> T {
 var v: Point_Extend = AddAndScaleGeneric(a, w, 2.5);
 ```
 
-Here `T` is a facet whose type is `Vector`. It declares a _symbolic binding_
+Here `T` is a facet whose type is `Vector`. It declares a _checked binding_
 since it did not use the `template` keyword to mark it as a _template binding_.
 
 > **References:** The syntax for compile-time bindings was decided in
 > [proposal #7254](https://github.com/carbon-language/carbon-lang/pull/7254).
 
-Since this symbolic binding pattern is in a function declaration, it marks a
+Since this checked binding pattern is in a function declaration, it marks a
 _[checked](terminology.md#checked-versus-template-parameters)
 [generic parameter](terminology.md#generic-means-compile-time-parameterized)_.
 That means its value must be known to the caller at compile-time, but we will
@@ -701,11 +701,11 @@ the body of `AddAndScaleGeneric`'s definition.
 Note that types may also be given compile-time parameters, see the
 ["parameterized types" section](#parameterized-types).
 
-### Symbolic facet bindings
+### Checked facet bindings
 
 In our example, `T` is a facet which may be used in type position in the rest of
 the function. Furthermore, since it omits the keyword `template` prefix, this is
-a symbolic binding. so we need to be able to typecheck the body of the function
+a checked binding, so we need to be able to typecheck the body of the function
 without knowing the specific value `T` from the caller.
 
 This typechecking is done by looking at the constraint on `T`. In the example,
@@ -863,7 +863,7 @@ An interface's name may be used in a few different contexts:
 -   as a namespace name in
     [a qualified name](#qualified-member-names-and-compound-member-access), and
 -   as a [facet type](terminology.md#facet-type) for
-    [a facet binding](#symbolic-facet-bindings).
+    [a facet binding](#checked-facet-bindings).
 
 While interfaces are examples of facet types, facet types are a more general
 concept, for which interfaces are a building block.
@@ -893,8 +893,8 @@ This recovers the original type for the facet, so
 `(Point_Inline as Vector) as type` is `Point_Inline` again.
 
 However, when a facet type like `Vector` is used as the binding type of a
-symbolic binding, the
-[symbolic facet binding](#symbolic-facet-bindings) `T` is disassociated with
+checked binding, the
+[checked facet binding](#checked-facet-bindings) `T` is disassociated with
 whatever facet value `T` is eventually bound to. Instead, `T` is treated as an
 [archetype](terminology.md#archetype), with the members and
 [member access](/docs/design/expressions/member_access.md) determined by the
@@ -1022,7 +1022,7 @@ whenever an interface may be. This includes all of these
     [a qualified name](#qualified-member-names-and-compound-member-access). For
     example, `VectorLegoFish.VAdd` refers to the same name as `Vector.Add`.
 -   A named constraint may be used as a [facet type](terminology.md#facet-type)
-    for [a facet binding](#symbolic-facet-bindings).
+    for [a facet binding](#checked-facet-bindings).
 
 We don't expect developers to directly define many named constraints, but other
 constructs we do expect them to use will be defined in terms of them. For
@@ -1115,7 +1115,7 @@ class ImplementsS {
 There is a subtyping relationship between facet types that allows calls of one
 generic function from another as long as it has a subset of the requirements.
 
-Given a symbolic facet binding `T` with facet type `I1`, it satisfies a facet
+Given a checked facet binding `T` with facet type `I1`, it satisfies a facet
 type `I2` as long as the requirements of `I1` are a superset of the requirements
 of `I2`. This means a value `x: T` may be passed to functions requiring types to
 satisfy `I2`, as in this example:
@@ -1844,7 +1844,7 @@ var thriller_count: Optional(i32) =
     play_count.Find(Song("Thriller"));
 ```
 
-Since the `KeyT` and `ValueT` are symbolic parameters, the `Find` function is a
+Since the `KeyT` and `ValueT` are checked parameters, the `Find` function is a
 checked generic, and it can only use the capabilities of `KeyT` and `ValueT`
 specified as requirements. This allows us to evaluate when we can convert
 between two different arguments to a parameterized type. Consider two adapters
@@ -2383,7 +2383,7 @@ fn PeekAtTopOfStack[StackType: StackAssociatedFacet](s: StackType*)
 Inside the checked-generic function `PeekAtTopOfStack`, the `ElementType`
 associated facet member of `StackType` is an
 [archetype](terminology.md#archetype), like other
-[symbolic facet bindings](#symbolic-facet-bindings). This means
+[checked facet bindings](#checked-facet-bindings). This means
 `StackType.ElementType` has the API dictated by the declaration of `ElementType`
 in the interface `StackAssociatedFacet`.
 
@@ -2557,8 +2557,8 @@ class Complex {
 All interface parameters are checked by default. This reflects these two
 properties of these parameters:
 
--   They must be resolved at compile-time, and so can't be passed regular
-    dynamic values.
+-   They must be resolved at compile-time, and so can't be passed runtime
+    values.
 -   We allow either symbolic or template values to be passed in.
 
 **Future work:** We might also allow `template` bindings for interface
@@ -2628,7 +2628,7 @@ support parameters. Those parameters work the same way as for interfaces.
 
 ## Where constraints
 
-So far, we have restricted a [symbolic facet binding](#symbolic-facet-bindings)
+So far, we have restricted a [checked facet binding](#checked-facet-bindings)
 by saying it has to implement an interface or a set of interfaces. There are a
 variety of other constraints we would like to be able to express, such as
 applying restrictions to associated constants. This is done using the `where`
@@ -2858,7 +2858,7 @@ constraint ContainerIsSlice {
 
 The `.Self` construct follows these rules:
 
--   A generic binding `X` introduces a checked generic binding `.Self: type`, where
+-   A checked binding `X` introduces a checked generic binding `.Self: type`, where
 
     references to `.Self` are resolved to `X`. This allows you to use `.Self` as
     an interface parameter as in `X: I(.Self)`.
@@ -2874,7 +2874,7 @@ The `.Self` construct follows these rules:
     to the same facet binding.
 -   `.Self` may not be on the left side of the `=` in a rewrite constraint.
 
-So in `X: A where ...` (where `X` is a generic binding), `.Self` is
+So in `X: A where ...` (where `X` is a checked binding), `.Self` is
 
 introduced twice, after the `:` and the `where`. This is allowed since both
 times it means `X`. After the `:`, `.Self` has the type `type`, which gets
@@ -3387,7 +3387,7 @@ there is a `where` clause modifying it.
 An implements constraint can be applied to [`.Self`](#recursive-constraints), as
 in `I where .Self impls C`. This has the same requirements as `I & C`, but that
 `where` clause does not affect the API. This means that a
-[symbolic facet binding](#symbolic-facet-bindings) with that facet type, so `T`
+[checked facet binding](#checked-facet-bindings) with that facet type, so `T`
 in `T: I where .Self impls C`, is represented by an
 [archetype](terminology.md#archetype) that implements both `I` and `C`, but only
 [extends](terminology.md#extending-an-impl) `I`.
@@ -3433,7 +3433,7 @@ fn PrintValueOrDefault[
 ```
 
 In this case, Carbon will accept the definition and infer the needed constraints
-on the symbolic facet parameter. This is both more concise for the author of the
+on the checked facet parameter. This is both more concise for the author of the
 code and follows the
 ["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
 This redundancy is undesirable since it means if the needed constraints for
@@ -3445,7 +3445,7 @@ will have already satisfied these constraints.
 This implied constraint is equivalent to the explicit constraint that each
 parameter and return type [is legal](#must-be-legal-type-argument-constraints).
 
-> **Note:** These implied constraints affect the _requirements_ of a symbolic
+> **Note:** These implied constraints affect the _requirements_ of a checked
 > facet parameter, but not its _member names_. This way you can always look at
 > the declaration to see how name resolution works, without having to look up
 > the definitions of everything it is used as an argument to.
@@ -3758,7 +3758,7 @@ interface Graph {
 #### Parameterized type implements interface
 
 There are times when a function will pass a
-[symbolic facet parameter](#symbolic-facet-bindings) of the function as an
+[checked facet parameter](#checked-facet-bindings) of the function as an
 argument to a [parameterized type](#parameterized-types), and the function needs
 the result to implement a specific interface.
 
@@ -3796,7 +3796,7 @@ PrintThree(i, i, i);
 #### Another type implements parameterized interface
 
 In this case, we need some other type to implement an interface parameterized by
-a [symbolic facet parameter](#symbolic-facet-bindings). The syntax for this case
+a [checked facet parameter](#checked-facet-bindings). The syntax for this case
 follows the previous case, except now the `.Self` parameter is on the interface
 to the right of the `impls`. For example, we might need a type parameter `T` to
 support explicit conversion from an `i32`:
@@ -3813,7 +3813,7 @@ fn Double[T: Mul where i32 impls As(.Self)](x: T) -> T {
 
 #### Must be legal type argument constraints
 
-Now consider the case that the symbolic facet parameter is going to be used as
+Now consider the case that the checked facet parameter is going to be used as
 an argument to a [parameterized type](#parameterized-types) in a function body,
 but not in the signature. If the parameterized type was explicitly mentioned in
 the signature, the [implied constraint](#implied-constraints) feature would
@@ -4229,8 +4229,8 @@ extend `C`, as an alternative to
 [using an adapter](#use-case-accessing-interface-names), or to simplify inlining
 of a generic function while preserving semantics.
 
-To get a template binding instead of symbolic binding, add the `template`
-keyword before the binding pattern, as in:
+To get a template generic binding instead of a checked generic binding, use
+`let template`, as in:
 
 ```carbon
 fn TemplateLet(...) {
@@ -4242,8 +4242,8 @@ fn TemplateLet(...) {
 }
 ```
 
-which introduces a template constant `T` with type `C` and value `U`. This is
-roughly equivalent to:
+which introduces a template generic binding `T: C`, bound to the value `U`.
+Uses of `T` are then template constants. This is roughly equivalent to:
 
 ```carbon
 fn TemplateLet(...) {
@@ -4786,7 +4786,8 @@ difference.
 #### Prioritization rule
 
 > **TODO:** Document the changes to prioritization adopted in
-> [#5337: Interface extension and `final impl` update](/proposals/p005337-interface-extension-and-final-impl-update.md).
+> [#5337: Interface extension and `final impl` update](/proposals/p005337-interface-extension-and-final-impl-update.md) and
+> [#7493: Disallow impl in match_first twice](/proposals/p007493-disallow-impl-in-match-first-twice.md).
 
 Since at most one library can contain `impl` definitions with a given type
 structure, all `impl` definitions with a given type structure must be in the

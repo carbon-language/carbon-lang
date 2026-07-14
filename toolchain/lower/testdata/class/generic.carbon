@@ -14,16 +14,16 @@
 
 package Classes;
 
-base class Base(T:! type) {
+base class Base(T: type) {
   var b: T;
 }
 
-class Derived(T:! type) {
+class Derived(T: type) {
   extend base: Base(T);
   var d: T;
 }
 
-class Adapter(T:! type) {
+class Adapter(T: type) {
   extend adapt Derived(T);
 }
 
@@ -45,12 +45,12 @@ fn CreateAdapter() -> Classes.Adapter(i32) {
 
 library "[[@TEST_NAME]]";
 
-class A(T:! type) {
+class A(T: type) {
   var x: T;
   var y: T;
 }
 
-fn Make[T:! Core.Copy](x: T, y: T) -> A(T) {
+fn Make[T: Core.Copy](x: T, y: T) -> A(T) {
   return {.x = x, .y = y};
 }
 
@@ -71,7 +71,7 @@ fn Tuples() -> A((i32, i32)) {
 
 library "[[@TEST_NAME]]";
 
-class C(T:! Core.Copy) {
+class C(T: Core.Copy) {
   fn GetBool(self) -> bool {
     return self.v;
   }

@@ -39,17 +39,17 @@ interface SimpleOp {
   fn Op(self);
 }
 
-impl forall [T:! type] T as SimpleOp {
+impl forall [T: type] T as SimpleOp {
   fn Op(unused self) {}
 }
 
 // An empty interface with blanket impl for pointers.
 interface Empty {}
-impl forall [T:! type] T as Empty {}
+impl forall [T: type] T as Empty {}
 
 // Class with a use of `SimpleOp.Op`.
-class InterfaceWrap(T:! SimpleOp & Empty) {
-  fn UseSimpleOp(unused self, value:! T) {
+class InterfaceWrap(T: SimpleOp & Empty) {
+  fn UseSimpleOp(unused self, generic value: T) {
     value.(SimpleOp.Op)();
   }
 }
@@ -57,12 +57,12 @@ class InterfaceWrap(T:! SimpleOp & Empty) {
 // Interface combining the above for an indirect `SimpleOp` use through `C`,
 // particularly use an associated constant.
 interface CombinedFacet {
-  let T:! SimpleOp & Empty;
+  let T: SimpleOp & Empty;
   fn GetInterfaceWrap(self) -> InterfaceWrap(T);
 }
 
 // A wrapper providing `CombinedFacet`.
-class TypeWrap(T:! type) {
+class TypeWrap(T: type) {
   impl as CombinedFacet where .T = T {
     fn GetInterfaceWrap(unused self) -> InterfaceWrap(T) {
       return {};
@@ -77,6 +77,6 @@ import library "interfaces";
 
 class C {}
 
-fn F(t: TypeWrap(C), c:! C) {
+fn F(t: TypeWrap(C), generic c: C) {
   t.(CombinedFacet.GetInterfaceWrap)().UseSimpleOp(c);
 }

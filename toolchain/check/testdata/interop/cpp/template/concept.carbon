@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "concept.h";
 
-class X(B:! bool) {
+class X(B: bool) {
   fn Make() -> Self { return {}; }
 }
 
@@ -126,7 +126,5 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:   %X.Make.call.loc12: init %X.7b4 to %.loc12_1 = call %X.Make.specific_fn.loc12()
 // CHECK:STDOUT:   assign file.%x2.var, %X.Make.call.loc12
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

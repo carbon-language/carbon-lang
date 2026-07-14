@@ -108,8 +108,8 @@ library "[[@TEST_NAME]]";
 
 fn Negate(a: u32) -> u32 = "int.unegate";
 
-class Expect(N:! u32) {}
-fn Test(N:! u32) -> Expect(N) { return {}; }
+class Expect(N: u32) {}
+fn Test(generic N: u32) -> Expect(N) { return {}; }
 
 fn F() {
   // -(-INT_MAX) is INT_MAX.
@@ -135,14 +135,10 @@ fn F() {
 // CHECK:STDOUT:   %a.ref: %u32 = name_ref a, %a
 // CHECK:STDOUT:   %Negate.call: init %u32 = call %Negate.ref(%a.ref)
 // CHECK:STDOUT:   return %Negate.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

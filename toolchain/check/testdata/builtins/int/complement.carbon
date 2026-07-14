@@ -32,8 +32,8 @@ library "[[@TEST_NAME]]";
 
 fn Complement(a: Core.IntLiteral) -> Core.IntLiteral = "int.complement";
 
-class Expect(N:! Core.IntLiteral) {}
-fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
+class Expect(N: Core.IntLiteral) {}
+fn Test(generic N: Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Complement(0)) as Expect(-1);
@@ -77,14 +77,10 @@ fn F(a: Core.IntLiteral) -> Core.IntLiteral {
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %Complement.call: init %i32 = call %Complement.ref(%a.ref)
 // CHECK:STDOUT:   return %Complement.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

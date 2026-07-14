@@ -166,8 +166,6 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_despite_known_result.carbon
@@ -288,7 +286,5 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %d.var_patt: <error> = var_pattern %d.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

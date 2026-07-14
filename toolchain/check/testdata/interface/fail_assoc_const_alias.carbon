@@ -14,7 +14,7 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
 interface J {
@@ -30,12 +30,12 @@ interface J {
 library "[[@TEST_NAME]]";
 
 interface I2 {
-  let T2:! type;
+  let T2: type;
 }
 
 interface J2;
 
-impl forall [V:! J2] V as I2 where .T2 = () {}
+impl forall [V: J2] V as I2 where .T2 = () {}
 
 //@dump-sem-ir-begin
 interface J2 {
@@ -133,8 +133,6 @@ interface C {
 // CHECK:STDOUT:   witness = (@J2.WithSelf.%J2.WithSelf.F2.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @J2.WithSelf.F2(@J2.%Self: %J2.type) {
@@ -202,8 +200,6 @@ interface C {
 // CHECK:STDOUT:   witness = (@C.WithSelf.%C.WithSelf.F.decl, @C.WithSelf.%C.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @C.WithSelf.G(@C.%Self: %C.type) {
@@ -238,8 +234,6 @@ interface C {
 // CHECK:STDOUT:     %bound_method.loc9_14: <bound method> = bound_method %self.ref.loc9, %specific_impl_fn.loc9
 // CHECK:STDOUT:     %C.WithSelf.F.call.loc9: init %empty_tuple.type = call %bound_method.loc9_14(%self.ref.loc9)
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -187,8 +187,6 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc22_12.2(%self.ref.loc22_12)
 // CHECK:STDOUT:   assign %.loc22, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.G(%self.param.loc25_12: %Class, %self.param.loc25_24: %i32) -> out %return.param.loc25: %tuple.type.e55 {
@@ -216,7 +214,5 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc26_25.4: init %tuple.type.e55 to %return.param.loc25 = tuple_init (%.loc26_25.2, %.loc26_25.3)
 // CHECK:STDOUT:   %.loc26_26: init %tuple.type.e55 = converted %.loc26_25.1, %.loc26_25.4
 // CHECK:STDOUT:   return %.loc26_26 to %return.param.loc25
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -14,12 +14,12 @@
 // Check different functions are still emitted when trying to deduplicate emitted definitons.
 
 interface I {
-  let T:! type;
+  let T: type;
   // TODO: An interface with multiple associated entities is not yet
   // implemented in mangling.
 }
 
-fn G(U:! I) {
+fn G(generic U: I) {
   var _: U.T*;
 }
 

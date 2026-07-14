@@ -93,8 +93,6 @@ class A {
 // CHECK:STDOUT:   witness = (@DefaultConstructible.WithSelf.%DefaultConstructible.WithSelf.Make.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.DefaultConstructible.impl: %C.ref as %DefaultConstructible.ref {
@@ -155,8 +153,6 @@ class A {
 // CHECK:STDOUT:   %.loc25_33.2: init %C to %return.param = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc25_34: init %C = converted %.loc25_33.1, %.loc25_33.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc25_34 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DefaultConstructible.WithSelf(constants.%Self) {

@@ -29,15 +29,15 @@ interface Add {
 
 fn Int(n: IntLiteral) -> type = "int.make_type_signed";
 
-class MyInt(N:! IntLiteral) {
+class MyInt(N: IntLiteral) {
   adapt Int(N);
 }
 
-impl forall [N:! IntLiteral] MyInt(N) as Add {
+impl forall [N: IntLiteral] MyInt(N) as Add {
   fn Op(self, other: Self) -> Self = "int.sadd";
 }
 
-fn Double[N:! IntLiteral](x: MyInt(N)) -> MyInt(N) {
+fn Double[N: IntLiteral](x: MyInt(N)) -> MyInt(N) {
   return x.(Add.Op)(x);
 }
 
@@ -63,7 +63,7 @@ fn Int(n: IntLiteral) -> type = "int.make_type_signed";
 fn ToLiteral(n: Int(32)) -> IntLiteral = "int.convert_checked";
 fn FromLiteral(n: IntLiteral) -> Int(32) = "int.convert_checked";
 
-fn Make(N:! Int(32)) -> Int(ToLiteral(N)) { return Make(N); }
+fn Make(generic N: Int(32)) -> Int(ToLiteral(N)) { return Make(N); }
 
 class OtherInt {
   adapt Int(32);
@@ -72,7 +72,7 @@ class OtherInt {
 
 fn OtherInt.ToLiteral(self) -> IntLiteral = "int.convert_checked";
 
-fn MakeFromClass(N:! OtherInt) -> Int(N.ToLiteral()) { return MakeFromClass(N); }
+fn MakeFromClass(generic N: OtherInt) -> Int(N.ToLiteral()) { return MakeFromClass(N); }
 
 // --- use_convert_symbolic.carbon
 
@@ -107,8 +107,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Double.specific_fn: <specific function> = specific_function %Double.ref, @Double(constants.%int_64) [concrete = constants.%Double.specific_fn]
 // CHECK:STDOUT:   %Double.call: init %MyInt.9fc = call %Double.specific_fn(%n.ref)
 // CHECK:STDOUT:   return %Double.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_convert_symbolic.carbon
@@ -199,7 +197,5 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %MakeFromClass.call: init %i64.builtin = call %MakeFromClass.specific_fn()
 // CHECK:STDOUT:   assign file.%n.var, %MakeFromClass.call
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

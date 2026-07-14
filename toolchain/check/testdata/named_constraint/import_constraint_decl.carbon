@@ -31,7 +31,7 @@ constraint B {
 //@include-in-dumps
 impl library "[[@TEST_NAME]]";
 
-fn F(unused T:! B) {}
+fn F(unused generic T: B) {}
 
 // --- fail_import_not_identified.carbon
 library "[[@TEST_NAME]]";
@@ -113,13 +113,13 @@ impl C as B {}
 // CHECK:STDOUT:   %default.import.loc2_17.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_17.2 = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc4_14.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc4_22.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4: type = splice_block %B.ref [concrete = constants.%B.type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %B.ref: type = name_ref B, imports.%Main.B [concrete = constants.%B.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_14.2: %B.type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_22.2: %B.type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,8 +129,6 @@ impl C as B {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @B [from "b.carbon"] {
@@ -149,17 +147,15 @@ impl C as B {}
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc4_14.2: %B.type) {
-// CHECK:STDOUT:   %T.patt.loc4_14.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc4_14.1: %B.type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc4_22.2: %B.type) {
+// CHECK:STDOUT:   %T.patt.loc4_22.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc4_22.1: %B.type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -175,7 +171,7 @@ impl C as B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc4_14.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc4_22.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

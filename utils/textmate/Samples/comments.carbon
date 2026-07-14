@@ -4,7 +4,7 @@
 
 // This is a comment.
     //    Comment with whitespace.
-// class C; fn F[T:! A](a: T) -> i32 { return 86; }
+// class C; fn F[T: A](a: T) -> i32 { return 86; }
 //@dump-sem-ir-begin
 //@dump-sem-ir-end
 //@dump-sem-ir-

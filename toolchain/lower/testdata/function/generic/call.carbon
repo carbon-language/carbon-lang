@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call.carbon
 
-fn F[T:! type](_: T) {
+fn F[T: type](_: T) {
 }
 
 class C {}

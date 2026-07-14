@@ -55,7 +55,5 @@ let f: Form = form(var ());
 // CHECK:STDOUT:   %.loc7_25.2: type = converted %.loc7_25.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc7_20: Core.Form = init_form %.loc7_25.2 [concrete = constants.%.262]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

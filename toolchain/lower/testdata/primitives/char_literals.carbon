@@ -16,7 +16,7 @@ class CharLike {
   }
 }
 
-fn Discard[T:! type](unused x: T) {}
+fn Discard[T: type](unused x: T) {}
 
 fn Convert() {
   Discard('x' as u8);

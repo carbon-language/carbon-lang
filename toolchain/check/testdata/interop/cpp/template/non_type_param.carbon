@@ -206,8 +206,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc7_1: init %TwoNonType = converted %.loc7_32.1, %.loc7_32.2 [concrete = constants.%TwoNonType.val]
 // CHECK:STDOUT:   assign file.%x.var, %.loc7_1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- dependent.carbon
@@ -287,7 +285,5 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc8_1: init %DependentNonType.d43 = converted %.loc8_54.1, %.loc8_54.2 [concrete = constants.%DependentNonType.val]
 // CHECK:STDOUT:   assign file.%y.var, %.loc8_1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

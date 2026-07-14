@@ -486,8 +486,6 @@ private export C;
 // CHECK:STDOUT:   %.loc7_1: init %NSC = converted %.loc7_27.1, %.loc7_27.5 [concrete = constants.%NSC.val]
 // CHECK:STDOUT:   assign file.%nsc.var, %.loc7_1
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_export.impl.carbon
@@ -595,8 +593,6 @@ private export C;
 // CHECK:STDOUT:   %.loc5_1: init %NSC = converted %.loc5_27.1, %.loc5_27.5 [concrete = constants.%NSC.val]
 // CHECK:STDOUT:   assign file.%nsc.var, %.loc5_1
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_export.carbon
@@ -703,8 +699,6 @@ private export C;
 // CHECK:STDOUT:   %.loc7_1: init %NSC = converted %.loc7_27.1, %.loc7_27.5 [concrete = constants.%NSC.val]
 // CHECK:STDOUT:   assign file.%nsc.var, %.loc7_1
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_export_ns.carbon
@@ -890,8 +884,6 @@ private export C;
 // CHECK:STDOUT:   %.loc8_1: init %NSC = converted %.loc8_27.1, %.loc8_27.5 [concrete = constants.%NSC.val]
 // CHECK:STDOUT:   assign file.%nsc.var, %.loc8_1
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_both_reversed.carbon
@@ -998,8 +990,6 @@ private export C;
 // CHECK:STDOUT:   %.loc8_1: init %NSC = converted %.loc8_27.1, %.loc8_27.5 [concrete = constants.%NSC.val]
 // CHECK:STDOUT:   assign file.%nsc.var, %.loc8_1
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_not_reexporting.carbon
@@ -1115,8 +1105,6 @@ private export C;
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_20.1, %.loc6_20.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_modifiers.carbon

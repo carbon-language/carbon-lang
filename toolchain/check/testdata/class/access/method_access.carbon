@@ -88,7 +88,5 @@ fn G(x: X) {
 // CHECK:STDOUT:   %X.F.bound: <bound method> = bound_method %x.ref.loc12_6, %F.ref
 // CHECK:STDOUT:   %X.F.call: init %empty_tuple.type = call %X.F.bound(%x.ref.loc12_6)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

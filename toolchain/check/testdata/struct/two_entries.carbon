@@ -209,7 +209,5 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc19_1: init %struct_type.a.b.b4c = converted %x.ref, %.loc19_29.9
 // CHECK:STDOUT:   assign file.%y.var, %.loc19_1
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

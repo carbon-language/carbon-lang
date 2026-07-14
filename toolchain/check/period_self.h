@@ -15,7 +15,7 @@ namespace Carbon::Check {
 // the `SymbolicBinding` instruction.
 //
 // The type of `.Self` must be a `FacetType`, so that it gets wrapped in
-// `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
+// `FacetAccessType` when used in a type position, such as in `U: I(.Self)`.
 // This allows substitution with other facet values without requiring an
 // additional `FacetAccessType` to be inserted.
 auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,

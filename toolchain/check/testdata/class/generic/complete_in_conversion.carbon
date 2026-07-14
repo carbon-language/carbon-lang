@@ -18,7 +18,7 @@ fn Int(N: Core.IntLiteral) -> type = "int.make_type_signed";
 
 base class B {}
 
-class A(N:! i32) {
+class A(N: i32) {
   extend base: B;
 
   var n: Int(N);
@@ -245,8 +245,6 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %b.patt: %pattern_type.3c8 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%N.37f) {

@@ -50,7 +50,5 @@ fn F() -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

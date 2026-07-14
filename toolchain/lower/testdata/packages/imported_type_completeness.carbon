@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {
+class C(T: type) {
   // Core.Int(123) is required to be complete here.
   fn F() -> Core.Int(123) {
     return 123;
@@ -26,7 +26,7 @@ class C(T:! type) {
   }
 }
 
-fn G(T:! type, t: T) {
+fn G(generic T: type, t: T) {
   // Core.Int(123) is also required to be complete here. But because it's not
   // dependent, we don't require it to be complete when forming a specific for G.
   ({} as C(T)).F();
@@ -51,7 +51,7 @@ fn I() {
 
 library "[[@TEST_NAME]]";
 
-base class C(T:! type) {
+base class C(T: type) {
   // Require Core.Int(11) and Core.Int(12) to be complete.
   virtual fn F(unused self) -> Core.Int(11) { return 11; }
   virtual fn G(unused self, unused t: T) -> Core.Int(12) { return 12; }
@@ -74,7 +74,7 @@ library "[[@TEST_NAME]]";
 
 import library "require_completion_in_vtable";
 
-fn F(T:! type, t: T) {
+fn F(generic T: type, t: T) {
   var c: C(T) = {};
   c.F();
   c.G(t);

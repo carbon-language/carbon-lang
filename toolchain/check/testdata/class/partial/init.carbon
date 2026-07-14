@@ -63,7 +63,5 @@ class Derived {
 // CHECK:STDOUT:   %.loc14_32.4: init %Derived to %return.param = class_init (%.loc14_32.3)
 // CHECK:STDOUT:   %.loc14_33: init %Derived = converted %.loc14_32.2, %.loc14_32.4
 // CHECK:STDOUT:   return %.loc14_33 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

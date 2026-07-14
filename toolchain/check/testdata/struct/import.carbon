@@ -18,7 +18,7 @@ var a_ref: {.a: i32} = {.a = 0};
 var b_ref: {.a: {.b: i32, .c: (i32,)}, .d: i32} =
     {.a = {.b = 0, .c = (0,)}, .d = 0};
 
-class C(S:! {.a: i32, .b: i32}) {}
+class C(S: {.a: i32, .b: i32}) {}
 fn F() -> C({.a = 1, .b = 2});
 
 // --- implicit.impl.carbon
@@ -39,8 +39,8 @@ impl package Implicit;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-4]]:1: in import [InImport]
 // CHECK:STDERR: implicit.carbon:8:9: note: initializing generic parameter `S` declared here [InitializingGenericParam]
-// CHECK:STDERR: class C(S:! {.a: i32, .b: i32}) {}
-// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: class C(S: {.a: i32, .b: i32}) {}
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var c_bad: C({.c = 1, .d = 2}) = F();
 
@@ -61,7 +61,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! {.x: i32};
+  let value: {.x: i32};
 }
 
 class C {}
@@ -280,8 +280,6 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %F.call: init %C.8d3 to %.loc7 = call %F.ref()
 // CHECK:STDOUT:   assign file.%c.var, %F.call
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_symbolic_decl.carbon
@@ -344,7 +342,5 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %.loc7_18.3: init %struct_type.x = struct_init (%Int.as.Copy.impl.Op.call) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc7_24: init %struct_type.x = converted %impl.elem0.loc7_18.1, %.loc7_18.3 [concrete = constants.%struct]
 // CHECK:STDOUT:   return %.loc7_24
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

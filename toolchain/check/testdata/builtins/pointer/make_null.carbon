@@ -30,7 +30,7 @@ let c: MakeUnformed(C*) = MakeNullC();
 library "[[@TEST_NAME]]";
 
 fn MakeUnformed(t: type) -> type = "maybe_unformed.make_type";
-fn MakeNull(T:! type) -> MakeUnformed(T*) = "pointer.make_null";
+fn MakeNull(generic T: type) -> MakeUnformed(T*) = "pointer.make_null";
 
 class C {}
 
@@ -124,8 +124,6 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   %MakeNullC.ref: %MakeNullC.type = name_ref MakeNullC, file.%MakeNullC.decl [concrete = constants.%MakeNullC]
 // CHECK:STDOUT:   %MakeNullC.call: init %.9e8 = call %MakeNullC.ref()
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_generic.carbon
@@ -194,7 +192,5 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   %MakeNull.specific_fn.loc11: <specific function> = specific_function %MakeNull.ref.loc11, @MakeNull(constants.%C) [concrete = constants.%MakeNull.specific_fn.75f]
 // CHECK:STDOUT:   %MakeNull.call.loc11: init %.9e8 = call %MakeNull.specific_fn.loc11()
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

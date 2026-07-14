@@ -148,8 +148,6 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %addr: %ptr.e6f = addr_of %.loc8
 // CHECK:STDOUT:   %Consume__carbon_thunk.call: init %empty_tuple.type = call imports.%Consume__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> out %return.param: %str.3d4 {
@@ -161,8 +159,6 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %Produce__carbon_thunk.call: init %empty_tuple.type = call imports.%Produce__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc14: init %str.3d4 to %.loc13_11.1 = mark_in_place_init %Produce__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc14 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_base_method.carbon
@@ -241,7 +237,5 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %starts_with__carbon_thunk.call: init %empty_tuple.type = call imports.%starts_with__carbon_thunk.decl(%a.ref, %addr.loc8_53.1, %addr.loc8_53.2)
 // CHECK:STDOUT:   %.loc8_53.2: init bool to %.loc8_53.1 = mark_in_place_init %starts_with__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc8_53.2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -8,19 +8,49 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/impl/match_first.carbon
 
+// --- empty.carbon
+
+match_first {}
+
+// --- fail_missing_braces.carbon
+
+// CHECK:STDERR: fail_missing_braces.carbon:[[@LINE+4]]:12: error: expected `{` after `match_first` [ExpectedCurlyBraceAfter]
+// CHECK:STDERR: match_first;
+// CHECK:STDERR:            ^
+// CHECK:STDERR:
+match_first;
+
+// --- with_impls.carbon
+
 match_first {
 
-impl forall [T:! I] T as Interface {
+impl forall [T: I] T as Interface {
   fn Add(self, b: Self) -> Self;
 }
 
-impl forall [T:! J] T as Interface {
+impl forall [T: J] T as Interface {
   fn Add(self, b: Self) -> Self;
 }
 
 }
 
-// CHECK:STDOUT: - filename: match_first.carbon
+// CHECK:STDOUT: - filename: empty.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:         {kind: 'MatchFirstIntroducer', text: 'match_first'},
+// CHECK:STDOUT:       {kind: 'MatchFirstDefinitionStart', text: '{', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'MatchFirst', text: '}', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_missing_braces.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:         {kind: 'MatchFirstIntroducer', text: 'match_first'},
+// CHECK:STDOUT:       {kind: 'MatchFirstDefinitionStart', text: 'match_first', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'MatchFirst', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: with_impls.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'MatchFirstIntroducer', text: 'match_first'},
@@ -29,9 +59,9 @@ impl forall [T:! J] T as Interface {
 // CHECK:STDOUT:           {kind: 'Forall', text: 'forall'},
 // CHECK:STDOUT:             {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'I'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'T'},
 // CHECK:STDOUT:           {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
@@ -55,9 +85,9 @@ impl forall [T:! J] T as Interface {
 // CHECK:STDOUT:           {kind: 'Forall', text: 'forall'},
 // CHECK:STDOUT:             {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'J'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'T'},
 // CHECK:STDOUT:           {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},

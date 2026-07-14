@@ -61,7 +61,5 @@ fn Test() {
 // CHECK:STDOUT:   %addr.loc29_5: <error> = addr_of %undeclared.ref.loc29 [concrete = <error>]
 // CHECK:STDOUT:   %addr.loc29_3: <error> = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

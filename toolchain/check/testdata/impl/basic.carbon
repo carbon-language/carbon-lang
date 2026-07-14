@@ -66,7 +66,7 @@ library "[[@TEST_NAME]]";
 
 interface I {}
 
-class C(T:! type) {}
+class C(T: type) {}
 
 // CHECK:STDERR: fail_conflicting_bad_impls.carbon:[[@LINE+4]]:12: error: name `invalid` not found [NameNotFound]
 // CHECK:STDERR: final impl invalid as I {}
@@ -141,7 +141,5 @@ final impl C(invalid) as I {}
 // CHECK:STDOUT: fn @C.as.Simple.impl.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
