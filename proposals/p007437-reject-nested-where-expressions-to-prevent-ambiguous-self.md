@@ -162,8 +162,7 @@ without ambiguity internally, and the outer `.Self` can be passed in as a
 generic argument.
 
 For each rejected case above, we can demonstrate moving the nested `where` to a
-named constraint to make it valid:musteval fn GetYWithRewrite() -> type { return
-Y where .Y1 = {}; } fn F(generic T: Z where .Self impls GetYWithRewrite());
+named constraint to make it valid:
 
 ```carbon
 // Now accepted, the `where` in `N` is no longer nested inside another `where`.
