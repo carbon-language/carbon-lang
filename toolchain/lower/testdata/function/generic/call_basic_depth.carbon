@@ -82,8 +82,8 @@ fn M() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_6.3.temp), !dbg !32
 // CHECK:STDOUT:   %H.call = call i32 @_CH.Main.5bd8d5767580997a(i32 %x), !dbg !32
 // CHECK:STDOUT:   store i32 %H.call, ptr %.loc25_6.3.temp, align 4, !dbg !32
-// CHECK:STDOUT:   call void @_CF.Main.84588f41d61dafba(i32 %x), !dbg !33
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %.loc25_6.3.temp), !dbg !32
+// CHECK:STDOUT:   call void @_CF.Main.84588f41d61dafba(i32 %x), !dbg !33
 // CHECK:STDOUT:   ret i32 %x, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

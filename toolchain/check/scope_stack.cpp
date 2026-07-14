@@ -210,8 +210,9 @@ auto ScopeStack::MergeTopScopeIntoGrandparentAndPop() -> void {
       std::rotate(destroy_id_stack_.begin() + parent.cleanup_scope_depth.index,
                   destroy_id_stack_.begin() + current.cleanup_scope_depth.index,
                   destroy_id_stack_.end());
-  parent.cleanup_scope_depth.index = new_mid - destroy_id_stack_.begin();
-  current.cleanup_scope_depth.index = destroy_id_stack_.size();
+  parent.cleanup_scope_depth =
+      CleanupScopeDepth(new_mid - destroy_id_stack_.begin());
+  current.cleanup_scope_depth = CleanupScopeDepth(destroy_id_stack_.size());
 
   Pop();
 }

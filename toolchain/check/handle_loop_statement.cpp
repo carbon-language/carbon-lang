@@ -43,8 +43,12 @@ static auto StartLoopHeader(Context& context, Parse::NodeId node_id)
 // the loop exit if it is `false`.
 static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
                                    SemIR::InstBlockId loop_header_id,
+                                   ScopeStack::CleanupScopeDepth continue_depth,
                                    SemIR::InstId cond_value_id) -> void {
   cond_value_id = ConvertToBoolValue(context, node_id, cond_value_id);
+
+  // Destroy any temporaries created computing the loop condition.
+  AddAndDiscardTemporaryCleanups(context);
 
   // Branch to either the loop body or the loop exit block.
   auto loop_body_id =
@@ -63,8 +67,7 @@ static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
       {.break_target = loop_exit_id,
        .break_depth = context.scope_stack().cleanup_scope_depth(),
        .continue_target = loop_header_id,
-       .continue_depth =
-           context.scope_stack().enclosing_cleanup_scope_depth()});
+       .continue_depth = continue_depth});
 }
 
 // Finishes emitting the body for a `while`-like loop. Adds a back-edge to the
@@ -83,7 +86,7 @@ static auto FinishLoopBody(Context& context, Parse::NodeId node_id) -> void {
   context.region_stack().AddToRegion(blocks.break_target, node_id);
 
   // Clean up anything created in the loop header and pop the loop scope.
-  AddAndDiscardCleanups(context);
+  AddAndDiscardScopeCleanups(context);
   context.scope_stack().Pop(/*check_unused=*/true);
 }
 
@@ -105,7 +108,9 @@ auto HandleParseNode(Context& context, Parse::WhileConditionId node_id)
 
   // Branch to either the loop body or the loop exit block, and start emitting
   // the loop body.
-  BranchAndStartLoopBody(context, node_id, loop_header_id, cond_value_id);
+  BranchAndStartLoopBody(context, node_id, loop_header_id,
+                         context.scope_stack().enclosing_cleanup_scope_depth(),
+                         cond_value_id);
   return true;
 }
 
@@ -211,6 +216,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
 
   // Start emitting the loop header block.
   auto loop_header_id = StartLoopHeader(context, start_node_id);
+  auto continue_depth = context.scope_stack().ambient_cleanup_scope_depth();
 
   // Call `<range>.(Iterate.Next)(&cursor)`.
   auto cursor_type_inst_id = context.types().GetTypeInstId(cursor_type_id);
@@ -229,10 +235,15 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   // that.
   element_id = ConvertToValueOrRefExpr(context, element_id);
 
+  // Temporaries in the optional and loop variables live for the duration of the
+  // loop body.
+  context.scope_stack().DeferCleanups();
+
   // Branch to the loop body if the optional element has a value.
   auto cond_value_id = CallOptionalAccessor(context, node_id, element_id,
                                             CoreIdentifier::HasValue);
-  BranchAndStartLoopBody(context, node_id, loop_header_id, cond_value_id);
+  BranchAndStartLoopBody(context, node_id, loop_header_id, continue_depth,
+                         cond_value_id);
 
   // The loop pattern's initializer is now complete, and any bindings in it
   // should be in scope.
@@ -250,7 +261,7 @@ auto HandleParseNode(Context& context, Parse::ForStatementId node_id) -> bool {
   FinishLoopBody(context, node_id);
 
   // Pop the scope that the range and cursor live in.
-  AddAndDiscardCleanups(context);
+  AddAndDiscardScopeCleanups(context);
   context.scope_stack().Pop(/*check_unused=*/true);
   return true;
 }

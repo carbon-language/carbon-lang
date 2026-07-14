@@ -342,6 +342,10 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   if (!InNonStaticFieldDecl(context)) {
     AddInst<SemIR::NameBindingDecl>(context, node_id,
                                     {.pattern_block_id = pattern_block_id});
+
+    // Objects created in a name binding declaration live until the end of the
+    // scope.
+    context.scope_stack().DeferCleanups();
   }
 
   context.full_pattern_stack().PopFullPattern();
@@ -419,11 +423,14 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
   if (!InNonStaticFieldDecl(context)) {
     AddInst<SemIR::NameBindingDecl>(context, node_id,
                                     {.pattern_block_id = pattern_block_id});
+
+    // Objects created in a name binding declaration live until the end of the
+    // scope.
+    context.scope_stack().DeferCleanups();
   }
 
   context.full_pattern_stack().PopFullPattern();
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
-
   return true;
 }
 
