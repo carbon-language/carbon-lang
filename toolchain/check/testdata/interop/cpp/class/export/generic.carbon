@@ -20,13 +20,6 @@ class C(T: type) {
 
 inline Cpp '''
 void F() {
-  // CHECK:STDERR: generic_class.carbon:[[@LINE+7]]:18: error: implicit instantiation of undefined template 'Carbon::C<int>' [CppInteropParseError]
-  // CHECK:STDERR:    17 |   Carbon::C<int> c;
-  // CHECK:STDERR:       |                  ^
-  // CHECK:STDERR: generic_class.carbon:[[@LINE-9]]:18: note: template is declared here [CppInteropParseNote]
-  // CHECK:STDERR:     4 | class C(T: type) {
-  // CHECK:STDERR:       |                  ^
-  // CHECK:STDERR:
   Carbon::C<int> c;
   c.t = 123;
 }
@@ -69,19 +62,20 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class C(T: type) {
+  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+4]]:3: error: semantics TODO: `non-class non-namespace name scope` [SemanticsTodo]
+  // CHECK:STDERR:   fn M(unused ref self) {}
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   fn M(unused ref self) {}
 }
 
 inline Cpp '''
 void F() {
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+7]]:18: error: implicit instantiation of undefined template 'Carbon::C<int>' [CppInteropParseError]
-  // CHECK:STDERR:    17 |   Carbon::C<int> c;
-  // CHECK:STDERR:       |                  ^
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE-9]]:18: note: template is declared here [CppInteropParseNote]
-  // CHECK:STDERR:     4 | class C(T: type) {
-  // CHECK:STDERR:       |                  ^
-  // CHECK:STDERR:
   Carbon::C<int> c;
+  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+4]]:5: error: no member named 'M' in 'Carbon::C<int>' [CppInteropParseError]
+  // CHECK:STDERR:    19 |   c.M();
+  // CHECK:STDERR:       |   ~ ^
+  // CHECK:STDERR:
   c.M();
 }
 ''';

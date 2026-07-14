@@ -149,6 +149,10 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class GenericClass(T: type) {
+  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE+4]]:3: error: semantics TODO: `non-class non-namespace name scope` [SemanticsTodo]
+  // CHECK:STDERR:   fn GenericClass(_: T) -> Self {
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   fn GenericClass(_: T) -> Self {
     return {};
   }
@@ -156,12 +160,12 @@ class GenericClass(T: type) {
 
 inline Cpp '''
 void f() {
-  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE+7]]:29: error: implicit instantiation of undefined template 'Carbon::GenericClass<int>' [CppInteropParseError]
-  // CHECK:STDERR:    20 |   Carbon::GenericClass<int> c(0);
-  // CHECK:STDERR:       |                             ^
-  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE-11]]:29: note: template is declared here [CppInteropParseNote]
-  // CHECK:STDERR:     5 | class GenericClass(T: type) {
-  // CHECK:STDERR:       |                             ^
+  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE+7]]:29: error: no matching constructor for initialization of 'Carbon::GenericClass<int>' [CppInteropParseError]
+  // CHECK:STDERR:    24 |   Carbon::GenericClass<int> c(0);
+  // CHECK:STDERR:       |                             ^ ~
+  // CHECK:STDERR: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const GenericClass<int>' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'GenericClass<int>' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR: note: candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
   // CHECK:STDERR:
   Carbon::GenericClass<int> c(0);
 }
