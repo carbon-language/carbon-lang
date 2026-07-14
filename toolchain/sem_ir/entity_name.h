@@ -142,4 +142,9 @@ inline auto EntityNameStore::MakeCanonical(EntityNameId id) -> EntityNameId {
 
 }  // namespace Carbon::SemIR
 
+namespace Carbon {
+extern template class ValueStore<SemIR::EntityNameId, SemIR::EntityName,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_SEM_IR_ENTITY_NAME_H_
