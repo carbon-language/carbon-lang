@@ -748,7 +748,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
       context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
                              MissingReturnStatement);
     } else {
-      AddReturnCleanupBlock(context, node_id);
+      AddReturnInstWithCleanups(context, node_id);
     }
   }
 

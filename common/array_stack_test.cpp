@@ -103,5 +103,123 @@ TEST(ArrayStack, PeekArrayAt) {
   EXPECT_THAT(stack.PeekArrayAt(2), ElementsAre(3));
 }
 
+TEST(ArrayStack, MergeTopArrayIntoGrandparent) {
+  ArrayStack<int> stack;
+
+  // Basic case with 3 arrays.
+  stack.PushArray();
+  stack.AppendToTop(1);
+  stack.AppendToTop(2);
+
+  stack.PushArray();
+  stack.AppendToTop(3);
+  stack.AppendToTop(4);
+  stack.AppendToTop(5);
+
+  stack.PushArray();
+  stack.AppendToTop(6);
+  stack.AppendToTop(7);
+
+  stack.MergeTopArrayIntoGrandparent();
+
+  EXPECT_THAT(stack.PeekArrayAt(0), ElementsAre(1, 2, 6, 7));
+  EXPECT_THAT(stack.PeekArrayAt(1), ElementsAre(3, 4, 5));
+  EXPECT_THAT(stack.PeekArrayAt(2), IsEmpty());
+  EXPECT_THAT(stack.PeekArray(), IsEmpty());
+  EXPECT_THAT(stack.PeekAllValues(), ElementsAre(1, 2, 6, 7, 3, 4, 5));
+
+  // Appending to the now-empty top array and popping works as expected.
+  stack.AppendToTop(8);
+  EXPECT_THAT(stack.PeekArray(), ElementsAre(8));
+  EXPECT_THAT(stack.PeekAllValues(), ElementsAre(1, 2, 6, 7, 3, 4, 5, 8));
+
+  stack.PopArray();
+  EXPECT_THAT(stack.PeekArray(), ElementsAre(3, 4, 5));
+  EXPECT_THAT(stack.PeekAllValues(), ElementsAre(1, 2, 6, 7, 3, 4, 5));
+
+  stack.PopArray();
+  EXPECT_THAT(stack.PeekArray(), ElementsAre(1, 2, 6, 7));
+  EXPECT_THAT(stack.PeekAllValues(), ElementsAre(1, 2, 6, 7));
+}
+
+TEST(ArrayStack, MergeTopArrayIntoGrandparentDeeperStack) {
+  ArrayStack<int> stack;
+
+  // Verify behavior when there are more than 3 arrays on the stack.
+  stack.PushArray();
+  stack.AppendToTop(10);
+
+  stack.PushArray();
+  stack.AppendToTop(20);
+
+  stack.PushArray();
+  stack.AppendToTop(30);
+
+  stack.PushArray();
+  stack.AppendToTop(40);
+  stack.AppendToTop(50);
+
+  stack.MergeTopArrayIntoGrandparent();
+
+  EXPECT_THAT(stack.PeekArrayAt(0), ElementsAre(10));
+  EXPECT_THAT(stack.PeekArrayAt(1), ElementsAre(20, 40, 50));
+  EXPECT_THAT(stack.PeekArrayAt(2), ElementsAre(30));
+  EXPECT_THAT(stack.PeekArrayAt(3), IsEmpty());
+  EXPECT_THAT(stack.PeekAllValues(), ElementsAre(10, 20, 40, 50, 30));
+}
+
+TEST(ArrayStack, MergeTopArrayIntoGrandparentEmptyArrays) {
+  // Test when the parent array is initially empty.
+  {
+    ArrayStack<int> stack;
+    stack.PushArray();
+    stack.AppendToTop(1);
+    stack.PushArray();
+    stack.PushArray();
+    stack.AppendToTop(2);
+    stack.AppendToTop(3);
+
+    stack.MergeTopArrayIntoGrandparent();
+    EXPECT_THAT(stack.PeekArrayAt(0), ElementsAre(1, 2, 3));
+    EXPECT_THAT(stack.PeekArrayAt(1), IsEmpty());
+    EXPECT_THAT(stack.PeekArrayAt(2), IsEmpty());
+    EXPECT_THAT(stack.PeekAllValues(), ElementsAre(1, 2, 3));
+  }
+
+  // Test when the top array is initially empty.
+  {
+    ArrayStack<int> stack;
+    stack.PushArray();
+    stack.AppendToTop(1);
+    stack.PushArray();
+    stack.AppendToTop(2);
+    stack.PushArray();
+
+    stack.MergeTopArrayIntoGrandparent();
+    EXPECT_THAT(stack.PeekArrayAt(0), ElementsAre(1));
+    EXPECT_THAT(stack.PeekArrayAt(1), ElementsAre(2));
+    EXPECT_THAT(stack.PeekArrayAt(2), IsEmpty());
+    EXPECT_THAT(stack.PeekAllValues(), ElementsAre(1, 2));
+  }
+
+  // Test when the grandparent array is initially empty.
+  {
+    ArrayStack<int> stack;
+    stack.PushArray();
+    stack.PushArray();
+    stack.AppendToTop(1);
+    stack.AppendToTop(2);
+    stack.PushArray();
+    stack.AppendToTop(3);
+    stack.AppendToTop(4);
+
+    stack.MergeTopArrayIntoGrandparent();
+    EXPECT_THAT(stack.PeekArrayAt(0), ElementsAre(3, 4));
+    EXPECT_THAT(stack.PeekArrayAt(1), ElementsAre(1, 2));
+    EXPECT_THAT(stack.PeekArrayAt(2), IsEmpty());
+    EXPECT_THAT(stack.PeekAllValues(), ElementsAre(3, 4, 1, 2));
+  }
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
