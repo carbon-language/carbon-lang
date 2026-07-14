@@ -702,6 +702,12 @@ static auto CollectCandidateImplsForQuery(
     }
   }
 
+  // For each `match_first` block, track the position of the first impl that is
+  // more specific than the query, and could thus match the query once it is
+  // made more specific. Any impls with a later position in the same
+  // `match_first` block cannot be treated as final.
+  Map<SemIR::InstId, int, 16> first_more_specific_impl_in_match_first;
+
   for (auto [id, impl] : context.impls().enumerate()) {
     CARBON_CHECK(impl.witness_id.has_value());
 
@@ -712,13 +718,7 @@ static auto CollectCandidateImplsForQuery(
     }
 
     if (final_only) {
-      if (!TreatImplAsFinal(context, impl) &&
-          // TODO: For `match_first_is_final`, the impl can only be treated as
-          // final if there's no `impl` above it in the match_first block that
-          // overlaps with the query (such that a more specific query might
-          // choose it). See
-          // https://github.com/carbon-language/carbon-lang/blob/de8b03faa3178ae683d8e7124fbcba81eb88e00c/proposals/p005337-interface-extension-and-final-impl-update.md#using-associated-constants-from-impls-in-a-final-match_first
-          !impl.match_first_is_final) {
+      if (!TreatImplAsFinal(context, impl) && !impl.match_first_is_final) {
         continue;
       }
     }
@@ -747,18 +747,55 @@ static auto CollectCandidateImplsForQuery(
     if (!type_structure) {
       continue;
     }
+
     // TODO: We can skip the comparison here if the `impl_interface_const_id` is
     // not symbolic, since when the interface and specific ids match, and they
     // aren't symbolic, the structure will be identical.
     if (!query_type_structure.CompareStructure(
             TypeStructure::CompareTest::IsEqualToOrMoreSpecificThan,
             *type_structure)) {
+      // If the query does not match this impl, but the impl is part of a final
+      // `match_first` block, then we also check to see if the impl is _more
+      // specific_ than the query. Meaning that the query, once specialized,
+      // could match the impl. In that case, impls that come after can not be
+      // treated as final.
+      if (final_only && impl.match_first_is_final) {
+        if (type_structure->CompareStructure(
+                TypeStructure::CompareTest::IsEqualToOrMoreSpecificThan,
+                query_type_structure)) {
+          auto result = first_more_specific_impl_in_match_first.Insert(
+              impl.match_first_id, impl.match_first_position);
+          if (!result.is_inserted()) {
+            result.value() =
+                std::min(result.value(), impl.match_first_position);
+          }
+        }
+      }
       continue;
     }
 
     candidates.impls.push_back({id, &impl, std::move(*type_structure),
                                 impl.match_first_id,
                                 impl.match_first_position});
+  }
+
+  if (final_only) {
+    // When searching for `final_only`: Remove candidates if they are in a final
+    // `match_first` block, and there is a more specific impl in an earlier
+    // position in that block. That prevents the later impl from being
+    // considered final.
+    llvm::erase_if(candidates.impls, [&](auto& candidate) {
+      if (!candidate.match_first_block.has_value()) {
+        return false;
+      }
+      auto result = first_more_specific_impl_in_match_first.Lookup(
+          candidate.match_first_block);
+      if (!result) {
+        return false;
+      }
+      int first_more_specific_position = result.value();
+      return candidate.match_first_position > first_more_specific_position;
+    });
   }
 
   auto compare = [](auto& lhs, auto& rhs) -> bool {
