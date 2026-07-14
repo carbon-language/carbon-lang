@@ -176,7 +176,6 @@ common --incompatible_disallow_empty_glob
 common --incompatible_disallow_legacy_py_provider
 common --incompatible_disallow_sdk_frameworks_attributes
 common --incompatible_disallow_struct_provider_syntax
-common --incompatible_do_not_split_linking_cmdline
 common --incompatible_dont_enable_host_nonhost_crosstool_features
 common --incompatible_dont_use_javasourceinfoprovider
 common --incompatible_enable_apple_toolchain_resolution
