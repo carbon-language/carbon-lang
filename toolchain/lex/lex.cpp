@@ -964,7 +964,7 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   // byte.
   const bool is_trailing = position != line_info.start + line_info.indent;
 
-  // The introducer '//' must be followed by whitespace or EOF.
+  // Check whether the `//` introducer is followed by something valid.
   bool is_valid_after_slashes = true;
   if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
       LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
@@ -1098,21 +1098,40 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
 #error "Unsupported SIMD architecture!"
 #endif
   } else {
-    // For an invalid comment start, the prefix covers only `//`; a following
-    // line continues the block only when its own introducer is also invalid,
-    // so a valid comment or a `//@...` directive ends the run and is lexed
-    // (and its directive side effects recognized) on its own.
-    auto continues_block = [&](ssize_t line_start) -> bool {
-      if (is_valid_after_slashes) {
+    auto continues_block = [&](ssize_t position) -> bool {
+      // Make sure the source text extends far enough for us to continue the
+      // block.
+      if (position + prefix_size > static_cast<ssize_t>(source_text.size())) {
+        return false;
+      }
+
+      // Check that the prefix matches. Otherwise, the block is done.
+      if (memcmp(source_text.data() + first_line_start,
+                 source_text.data() + position, prefix_size) != 0) {
+        return false;
+      }
+
+      // For something valid after `//`, we're done as we've ensured it was the
+      // _same_ valid suffix in the `memcmp`.
+      if (LLVM_LIKELY(is_valid_after_slashes)) {
         return true;
       }
-      char after_slashes = source_text[line_start + indent + 2];
+
+      // Check for the edge case of source that ends with (indented) "//". That
+      // is a valid comment and so we shouldn't continue with we aren't in the
+      // invalid state.
+      if (position + prefix_size == static_cast<ssize_t>(source_text.size())) {
+        return false;
+      }
+
+      // Otherwise, check what follows the comment introducer and stop
+      // continuing if it could be valid.
+      char after_slashes = source_text[position + prefix_size];
       return !IsSpace(after_slashes) && after_slashes != '@';
     };
-    while (position + prefix_size < static_cast<ssize_t>(source_text.size()) &&
-           memcmp(source_text.data() + first_line_start,
-                  source_text.data() + position, prefix_size) == 0 &&
-           continues_block(position)) {
+
+    // Skip lines that are combined into a comment block.
+    while (continues_block(position)) {
       skip_to_next_line();
     }
   }
