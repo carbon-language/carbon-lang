@@ -127,9 +127,9 @@ class ValueStoreEnumerateIterator
  public:
   using IdType = typename ValueStoreT::IdType;
   using ConstRefType = typename ValueStoreT::ConstRefType;
-  using value_type = std::pair<IdType, ConstRefType>;
+  using ValueType = std::pair<IdType, ConstRefType>;
 
-  auto operator*() const -> value_type {
+  auto operator*() const -> ValueType {
     IdType id = store_->tag_.Apply(index_);
     return {id, store_->Get(id)};
   }
