@@ -442,13 +442,150 @@ fn I(generic T: (L & M) where C(.W) impls Z(.Self)) {
   C(()) as Z(T);
 }
 
-// --- fail_todo_concrete_access_witness_m_in_impls_constraint.carbon
+// --- concrete_access_witness_m_in_extend_constraint_compound_access.carbon
 library "[[@TEST_NAME]]";
 
 interface L { let W: type; }
 
 interface M {}
 final impl forall [T: M] T as L where .W = () {}
+
+interface Z(Z1: type) {}
+
+class C(C1: type);
+
+// Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
+// (since the type of `.Self` contains `M`) and the `final impl`. So we can get
+// a witness for `C(())` from `T`.
+fn I(generic T: (L & M) where C(.Self.(L.W)) impls Z(.Self)) {
+  C(()) as Z(T);
+}
+
+// --- concrete_access_witness_m_in_impls_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W: type; }
+
+interface M {}
+final impl forall [T: M] T as L where .W = () {}
+
+interface Z(Z1: type) {}
+
+class C(C1: type);
+
+// Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
+// (since the type of `.Self` contains `M`) and the `final impl`. So we can get
+// a witness for `C(())` from `T`.
+fn H(generic T: (L where .Self impls M) where C(.W) impls Z(.Self)) {
+  C(()) as Z(T);
+}
+
+// --- concrete_access_witness_m_in_impls_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W: type; }
+
+interface M {}
+constraint GivesM { require impls M; }
+final impl forall [T: M] T as L where .W = () {}
+
+interface Z(Z1: type) {}
+
+class C(C1: type);
+
+// Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
+// (since the type of `.Self` contains `M`) and the `final impl`. So we can get
+// a witness for `C(())` from `T`.
+fn H(generic T: (L where .Self impls GivesM) where C(.W) impls Z(.Self)) {
+  C(()) as Z(T);
+}
+
+// --- concrete_access_witness_m_in_type_impls_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W: type; }
+
+interface M {}
+final impl forall [T: M] T as L where .W = () {}
+
+interface Z(Z1: type) {}
+
+class C(C1: type);
+class D(D1: type);
+
+// Should pass. `.(L.W)` can resolve to `()` immediately through the type of
+// `D(.Self)` (since we know `D(.Self)` impls `M`) and the `final impl` as `L`.
+// So we can get a witness for `C(())` from `T`.
+fn H(generic T: (type where D(.Self) impls M) where C(D(.Self).(L.W)) impls Z(.Self)) {
+  C(()) as Z(T);
+}
+
+// --- concrete_access_witness_m_in_type_impls_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W: type; }
+
+interface M {}
+constraint GivesM { require impls M; }
+final impl forall [T: M] T as L where .W = () {}
+
+interface Z(Z1: type) {}
+
+class C(C1: type);
+class D(D1: type);
+
+// Should pass. `.(L.W)` can resolve to `()` immediately through the type of
+// `D(.Self)` (since we know `D(.Self)` impls `M`) and the `final impl` as `L`.
+// So we can get a witness for `C(())` from `T`.
+fn H(generic T: (type where D(.Self) impls GivesM) where C(D(.Self).(L.W)) impls Z(.Self)) {
+  C(()) as Z(T);
+}
+
+// --- concrete_access_witness_m_in_earlier_requirement.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W: type; }
+
+interface M {}
+final impl forall [T: M] T as L where .W = () {}
+
+interface Z(Z1: type) {}
+
+class C(C1: type);
+
+// Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
+// (since the type of `.Self` contains `M`) and the `final impl`. So we can get
+// a witness for `C(())` from `T`.
+fn G(generic T: L where .Self impls M and C(.W) impls Z(.Self)) {
+  C(()) as Z(T);
+}
+
+// --- concrete_access_witness_generic_m_in_extend_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface L(L1: type) { let W: type; }
+
+interface M(M1: type) {}
+final impl forall [U: type, T: M(U)] T as L(U) where .W = () {}
+
+interface Z(Z1: type) {}
+
+class C(C1: type);
+
+// Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
+// (since the type of `.Self` contains `M`) and the `final impl`. So we can get
+// a witness for `C(())` from `T`.
+fn H(generic T: (L(.Self) & M(.Self)) where C(.W) impls Z(.Self)) {
+  C(()) as Z(T);
+}
+
+// --- fail_todo_concrete_access_witness_generic_m_in_extend_constraint_compound_access.carbon
+library "[[@TEST_NAME]]";
+
+interface L(L1: type) { let W: type; }
+
+interface M(M1: type) {}
+final impl forall [U: type, T: M(U)] T as L(U) where .W = () {}
 
 interface Z(Z1: type) {}
 
@@ -458,33 +595,142 @@ class C(C1: type);
 // (since the type of `.Self` contains `M`) and the `final impl`. So we can get
 // a witness for `C(())` from `T`.
 //
-// TODO: How come we don't get `.W` evaluating to `()` when `M` comes from a
-// non-extend constraint?
-fn H(generic T: (L where .Self impls M) where C(.W) impls Z(.Self)) {
-  // CHECK:STDERR: fail_todo_concrete_access_witness_m_in_impls_constraint.carbon:[[@LINE+4]]:3: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
+// TODO: We have a witness for `L(.Self: type)` but we need a witness for
+// `L(.Self: (L(.Self: type) & M(.Self: type)))`, so this fails to convert.
+// CHECK:STDERR: fail_todo_concrete_access_witness_generic_m_in_extend_constraint_compound_access.carbon:[[@LINE+4]]:47: error: cannot convert type `.Self` that implements `L(.Self) & M(.Self)` into type implementing `L(.Self)` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: fn H(generic T: (L(.Self) & M(.Self)) where C(.Self.(L(.Self).W)) impls Z(.Self)) {
+// CHECK:STDERR:                                               ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn H(generic T: (L(.Self) & M(.Self)) where C(.Self.(L(.Self).W)) impls Z(.Self)) {
+  C(()) as Z(T);
+}
+
+// --- fail_todo_concrete_access_witness_generic_m_in_impls_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface L(L1: type) { let W: type; }
+
+interface M(M1: type) {}
+final impl forall [U: type, T: M(U)] T as L(U) where .W = () {}
+
+interface Z(Z1: type) {}
+
+class C(C1: type);
+
+// Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
+// (since the type of `.Self` contains `M`) and the `final impl`. So we can get
+// a witness for `C(())` from `T`.
+//
+// TODO: The `.W` contains `.Self: L(.Self: type)`. Notably the `.Self` in the
+// specific of `L` has type `type`. When we find the `final impl` we deduce `U`
+// as `.Self: type` and need a witness for `M(.Self: type)`. But we have a
+// witness for `M(.Self: L(.Self: type))` instead, so we don't use the impl.
+// The test passes if we write `.W` as `.Self.(L(.Self).W)` instead.
+fn H(generic T: (L(.Self) where .Self impls M(.Self)) where C(.W) impls Z(.Self)) {
+  // CHECK:STDERR: fail_todo_concrete_access_witness_generic_m_in_impls_interface.carbon:[[@LINE+4]]:3: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C(()) as Z(T);
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR:
   C(()) as Z(T);
 }
 
-// --- concrete_access_witness_m_in_earlier_constraint.carbon
+// --- fail_todo_concrete_access_witness_generic_m_in_impls_constraint.carbon
 library "[[@TEST_NAME]]";
 
-interface L { let W: type; }
+interface L(L1: type) { let W: type; }
 
-interface M {}
-final impl forall [T: M] T as L where .W = () {}
+interface M(M1: type) {}
+constraint GivesM(M1: type) { require impls M(M1); }
+final impl forall [U: type, T: M(U)] T as L(U) where .W = () {}
 
 interface Z(Z1: type) {}
 
 class C(C1: type);
 
+// Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
+// (since the type of `.Self` contains `M`) and the `final impl`. So we can get
+// a witness for `C(())` from `T`.
+//
+// TODO: The `.W` contains `.Self: L(.Self: type)`. Notably the `.Self` in the
+// specific of `L` has type `type`. When we find the `final impl` we deduce `U`
+// as `.Self: type` and need a witness for `M(.Self: type)`. But we have a
+// witness for `M(.Self: L(.Self: type))` instead, so we don't use the impl.
+// The test passes if we write `.W` as `.Self.(L(.Self).W)` instead.
+fn H(generic T: (L(.Self) where .Self impls GivesM(.Self)) where C(.W) impls Z(.Self)) {
+  // CHECK:STDERR: fail_todo_concrete_access_witness_generic_m_in_impls_constraint.carbon:[[@LINE+4]]:3: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   C(()) as Z(T);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  C(()) as Z(T);
+}
+
+// --- concrete_access_witness_generic_m_in_type_impls_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface L(L1: type) { let W: type; }
+
+interface M(M1: type) {}
+final impl forall [U: type, T: M(U)] T as L(U) where .W = () {}
+
+interface Z(Z1: type) {}
+
+class C(C1: type);
+class D(D1: type);
 
 // Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
 // (since the type of `.Self` contains `M`) and the `final impl`. So we can get
 // a witness for `C(())` from `T`.
-fn G(generic T: L where .Self impls M and C(.W) impls Z(.Self)) {
+fn H(generic T: (L(.Self) where D(.Self) impls M(.Self)) where C(D(.Self).(L(.Self).W)) impls Z(.Self)) {
+  C(()) as Z(T);
+}
+
+// --- concrete_access_witness_generic_m_in_type_impls_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface L(L1: type) { let W: type; }
+
+interface M(M1: type) {}
+constraint GivesM(M1: type) { require impls M(M1); }
+final impl forall [U: type, T: M(U)] T as L(U) where .W = () {}
+
+interface Z(Z1: type) {}
+
+class C(C1: type);
+class D(D1: type);
+
+// Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
+// (since the type of `.Self` contains `M`) and the `final impl`. So we can get
+// a witness for `C(())` from `T`.
+fn H(generic T: (L(.Self) where D(.Self) impls GivesM(.Self)) where C(D(.Self).(L(.Self).W)) impls Z(.Self)) {
+  C(()) as Z(T);
+}
+
+// --- fail_todo_concrete_access_witness_generic_m_in_earlier_requirement.carbon
+library "[[@TEST_NAME]]";
+
+interface L(L1: type) { let W: type; }
+
+interface M(M1: type) {}
+final impl forall [U: type, T: M(U)] T as L(U) where .W = () {}
+
+interface Z(Z1: type) {}
+
+class C(C1: type);
+
+// Should pass. `.W` can resolve to `()` immediately through the type of `.Self`
+// (since the type of `.Self` contains `M`) and the `final impl`. So we can get
+// a witness for `C(())` from `T`.
+//
+// TODO: The `.W` contains `.Self: L(.Self: type)`. Notably the `.Self` in the
+// specific of `L` has type `type`. When we find the `final impl` we deduce `U`
+// as `.Self: type` and need a witness for `M(.Self: type)`. But we have a
+// witness for `M(.Self: L(.Self: type))` instead, so we don't use the impl.
+// The test passes if we write `.W` as `.Self.(L(.Self).W)` instead.
+fn H(generic T: L(.Self) where .Self impls M(.Self) and C(.W) impls Z(.Self)) {
+  // CHECK:STDERR: fail_todo_concrete_access_witness_generic_m_in_earlier_requirement.carbon:[[@LINE+4]]:3: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   C(()) as Z(T);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:
   C(()) as Z(T);
 }
 

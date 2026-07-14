@@ -92,6 +92,36 @@ interface Z {
 // CHECK:STDERR:
 fn F(unused generic FF: (Z where .T = .U) where .T = {}) {}
 
+// --- fail_nested_facet_types_different_with_impls_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T: type;
+  let U: type;
+}
+interface Y {}
+
+// CHECK:STDERR: fail_nested_facet_types_different_with_impls_interface.carbon:[[@LINE+4]]:25: error: associated constant `.(Z.T)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused generic FF: (Z where .Self impls Y and .T = ()) where .T = {}) {}
+// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(unused generic FF: (Z where .Self impls Y and .T = ()) where .T = {}) {}
+
+// --- fail_nested_facet_types_different_with_impls_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T: type;
+  let U: type;
+}
+constraint Y {}
+
+// CHECK:STDERR: fail_nested_facet_types_different_with_impls_constraint.carbon:[[@LINE+4]]:25: error: associated constant `.(Z.T)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(unused generic FF: (Z where .Self impls Y and .T = ()) where .T = {}) {}
+// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(unused generic FF: (Z where .Self impls Y and .T = ()) where .T = {}) {}
+
 // --- fail_nested_facet_types_different_with_associated_in_generic_parameter.carbon
 library "[[@TEST_NAME]]";
 

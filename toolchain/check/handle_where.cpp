@@ -34,7 +34,10 @@ static auto GetPeriodSelfType(Context& context,
     -> SemIR::TypeId {
   if (auto facet_type =
           context.types().TryGetAs<SemIR::FacetType>(facet_type_type_id)) {
-    return GetExtendedOnlyFacetType(context, *facet_type);
+    auto extended_id = GetExtendedOnlyFacetType(context, *facet_type);
+    auto frozen_const_id =
+        FreezePeriodSelf(context, extended_id.AsConstantId());
+    return context.types().GetTypeIdForTypeConstantId(frozen_const_id);
   } else if (facet_type_type_id == SemIR::TypeType::TypeId) {
     // The self may be `TypeType` in `type where X impls Y`, so we use an empty
     // facet type.
@@ -82,7 +85,8 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   context.scope_stack().PushForSameRegion();
   // Introduce `.Self` as a symbolic binding. Its type is the value of the
   // expression to the left of `where`, so `MyInterface` in the example above.
-  MakePeriodSelfFacetValue(context, node_id, period_self_type_id);
+  auto period_self =
+      MakePeriodSelfFacetValue(context, node_id, period_self_type_id);
 
   // Going to put each requirement on `args_type_info_stack`, so we can have an
   // inst block with the varying number of requirements but keeping other
@@ -100,16 +104,16 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // later constraints to read from them eagerly.
   context.where_stack().push_back({.loc_id = node_id});
 
-  // Make rewrite constraints from the self facet type available immediately to
-  // expressions in rewrite constraints for this `where` expression.
-  //
-  // Note that the where_stack rewrites need to be frozen. The rewrites in
-  // the base facet type will be thawed since their `WhereExpr` would have
-  // already been handled, so we need to freeze them again here.
   if (auto self_facet_type = context.types().TryGetAs<SemIR::FacetType>(
           self_with_constraints_type_id)) {
     const auto& base_facet_type_info =
         context.facet_types().Get(self_facet_type->facet_type_id);
+    // Make rewrite constraints from the self facet type available immediately
+    // to expressions in rewrite constraints for this `where` expression.
+    //
+    // Note that the where_stack rewrites need to be frozen. The rewrites in
+    // the base facet type will be thawed since their `WhereExpr` would have
+    // already been handled, so we need to freeze them again here.
     for (const auto& rewrite : base_facet_type_info.rewrite_constraints) {
       if (rewrite.lhs_id != SemIR::ErrorInst::InstId) {
         auto const_id = context.constant_values().Get(
@@ -118,6 +122,63 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
         context.where_stack().back().rewrites.Insert(frozen_const_id,
                                                      rewrite.rhs_id);
       }
+    }
+
+    // Make impls (non-extend) constraints from the self facet type available
+    // immediately for this `where` expression, since only extend constraints
+    // are preserved in the facet type of `.Self`.
+    //
+    // Note that the where_stack rewrites need to be frozen. The rewrites in the
+    // base facet type will be thawed since their `WhereExpr` would have already
+    // been handled, so we need to freeze them again here. Note that
+    // `period_self` is already frozen since it is created in that state.
+    for (const auto& impls : base_facet_type_info.self_impls_constraints) {
+      auto self_frozen_const_id = context.constant_values().Get(period_self);
+      auto type_const_id =
+          GetInterfaceType(context, impls.interface_id, impls.specific_id)
+              .AsConstantId();
+      auto type_frozen_const_id = FreezePeriodSelf(context, type_const_id);
+      context.where_stack().back().impls.push_back(
+          {.self_const_id = self_frozen_const_id,
+           .facet_type_const_id = type_frozen_const_id});
+    }
+    for (const auto& impls :
+         base_facet_type_info.self_impls_named_constraints) {
+      auto self_frozen_const_id = context.constant_values().Get(period_self);
+      auto type_const_id =
+          GetNamedConstraintType(context, impls.named_constraint_id,
+                                 impls.specific_id)
+              .AsConstantId();
+      auto type_frozen_const_id = FreezePeriodSelf(context, type_const_id);
+      context.where_stack().back().impls.push_back(
+          {.self_const_id = self_frozen_const_id,
+           .facet_type_const_id = type_frozen_const_id});
+    }
+    for (const auto& type_impls : base_facet_type_info.type_impls_interfaces) {
+      auto self_const_id = context.constant_values().Get(type_impls.self_type);
+      auto self_frozen_const_id = FreezePeriodSelf(context, self_const_id);
+      auto type_const_id =
+          GetInterfaceType(context, type_impls.specific_interface.interface_id,
+                           type_impls.specific_interface.specific_id)
+              .AsConstantId();
+      auto type_frozen_const_id = FreezePeriodSelf(context, type_const_id);
+      context.where_stack().back().impls.push_back(
+          {.self_const_id = self_frozen_const_id,
+           .facet_type_const_id = type_frozen_const_id});
+    }
+    for (const auto& type_impls :
+         base_facet_type_info.type_impls_named_constraints) {
+      auto self_const_id = context.constant_values().Get(type_impls.self_type);
+      auto self_frozen_const_id = FreezePeriodSelf(context, self_const_id);
+      auto type_const_id =
+          GetNamedConstraintType(
+              context, type_impls.specific_named_constraint.named_constraint_id,
+              type_impls.specific_named_constraint.specific_id)
+              .AsConstantId();
+      auto type_frozen_const_id = FreezePeriodSelf(context, type_const_id);
+      context.where_stack().back().impls.push_back(
+          {.self_const_id = self_frozen_const_id,
+           .facet_type_const_id = type_frozen_const_id});
     }
   }
 
