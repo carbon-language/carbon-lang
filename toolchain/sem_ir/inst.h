@@ -718,6 +718,8 @@ extern template class ValueStore<SemIR::InstBlockId,
                                  Tag<SemIR::CheckIRId>>;
 extern template class BlockValueStore<SemIR::InstBlockId, SemIR::InstId,
                                       Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::InstId, SemIR::Inst,
+                                 Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_INST_H_
