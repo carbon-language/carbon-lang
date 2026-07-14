@@ -66,13 +66,13 @@ fn For() {
 // CHECK:STDOUT:   %G.call = call i1 @_CG.Main(), !dbg !12
 // CHECK:STDOUT:   br i1 %G.call, label %if.then.loc23, label %if.else.loc23, !dbg !13
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.then.loc22:                                    ; preds = %if.else.loc21
-// CHECK:STDOUT:   call void @"_COp.f9d363db90f1ff8b:core.Destroy.Core"(ptr %.loc20_33.1.temp), !dbg !8
+// CHECK:STDOUT: if.then.loc23:                                    ; preds = %if.else.loc22
+// CHECK:STDOUT:   call void @"_COp.f9d363db90f1ff8b:core.Destroy.Core"(ptr %.loc21_33.1.temp), !dbg !8
 // CHECK:STDOUT:   br label %for.next, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else.loc23:                                    ; preds = %if.else.loc22
 // CHECK:STDOUT:   call void @_CH.Main(), !dbg !15
-// CHECK:STDOUT:   call void @"_COp.f9d363db90f1ff8b:core.Destroy.Core"(ptr %.loc20_33.1.temp), !dbg !8
+// CHECK:STDOUT:   call void @"_COp.f9d363db90f1ff8b:core.Destroy.Core"(ptr %.loc21_33.1.temp), !dbg !8
 // CHECK:STDOUT:   br label %for.next, !dbg !16
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.done:                                         ; preds = %if.then.loc22, %for.next

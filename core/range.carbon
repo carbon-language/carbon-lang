@@ -7,7 +7,7 @@
 
 package Core library "range";
 
-class IntRange(N:! IntLiteral) {
+class IntRange(N: IntLiteral) {
   fn Make(start: Int(N), end: Int(N)) -> Self {
     return {.start = start, .end = end};
   }

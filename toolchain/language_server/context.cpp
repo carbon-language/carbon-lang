@@ -232,6 +232,8 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   options_.codegen_options->target = options_.codegen_options->host;
   options_.phase = CompileOptions::Phase::Check;
   options_.prelude_import = context.prelude_import();
+  // For now we always include the rest of the core if the prelude is included.
+  options_.include_carbon_core = options_.prelude_import;
   options_.input_filenames.push_back(filename());
 
   compile_driver_ = std::make_unique<CompileDriver>(&options_);

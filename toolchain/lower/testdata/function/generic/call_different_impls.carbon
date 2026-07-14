@@ -106,9 +106,9 @@ fn Run() {
 // CHECK:STDOUT: !17 = !DILocation(line: 34, column: 3, scope: !12)
 // CHECK:STDOUT: !18 = !DILocation(line: 32, column: 1, scope: !12)
 // CHECK:STDOUT: !19 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.c81631f865470482", scope: null, file: !1, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !20 = !DILocation(line: 30, column: 15, scope: !19)
+// CHECK:STDOUT: !20 = !DILocation(line: 30, column: 22, scope: !19)
 // CHECK:STDOUT: !21 = !DILocation(line: 30, column: 1, scope: !19)
 // CHECK:STDOUT: !22 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.0b241ec84a68877b", scope: null, file: !1, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !23 = !DILocation(line: 30, column: 15, scope: !22)
+// CHECK:STDOUT: !23 = !DILocation(line: 30, column: 22, scope: !22)
 // CHECK:STDOUT: !24 = !DILocation(line: 30, column: 1, scope: !22)
 // CHECK:STDOUT:
