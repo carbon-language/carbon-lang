@@ -29,8 +29,7 @@ auto ScopeStack::VerifyOnFinish() const -> void {
   CARBON_CHECK(break_continue_stack_.empty(), "{0}",
                break_continue_stack_.size());
   CARBON_CHECK(scope_stack_.empty(), "{0}", scope_stack_.size());
-  CARBON_CHECK(destroy_id_stack_.empty(), "{0}",
-               destroy_id_stack_.all_values_size());
+  CARBON_CHECK(destroy_id_stack_.empty(), "{0}", destroy_id_stack_.size());
   CARBON_CHECK(non_lexical_scope_stack_.empty(), "{0}",
                non_lexical_scope_stack_.size());
   CARBON_CHECK(compile_time_binding_stack_.empty(), "{0}",
@@ -71,7 +70,8 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
            compile_time_binding_stack_.all_values_size()),
        .lexical_lookup_has_load_error =
            LexicalLookupHasLoadError() || lexical_lookup_has_load_error,
-       .cleanup_scope_kind = cleanup_scope_kind});
+       .cleanup_scope_kind = cleanup_scope_kind,
+       .cleanup_scope_depth = CleanupScopeDepth(destroy_id_stack_.size())});
   if (scope_stack_.back().is_lexical_scope()) {
     // For lexical lookups, unqualified lookup doesn't know how to find the
     // associated specific, so if we start adding lexical scopes associated with
@@ -96,10 +96,6 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
   ++next_scope_index_.index;
 
   VerifyNextCompileTimeBindIndex("Push", scope_stack_.back());
-
-  if (cleanup_scope_kind == CleanupScopeKind::Owned) {
-    destroy_id_stack_.PushArray();
-  }
 }
 
 auto ScopeStack::PushForDeclName() -> void {
@@ -162,11 +158,11 @@ auto ScopeStack::Pop(bool check_unused) -> void {
     non_lexical_scope_stack_.pop_back();
   }
 
-  if (scope.cleanup_scope_kind == CleanupScopeKind::Owned) {
-    CARBON_CHECK(destroy_id_stack_.PeekArray().empty(),
-                 "Popping scope with cleanups");
-    destroy_id_stack_.PopArray();
-  }
+  CARBON_CHECK(scope.cleanup_scope_kind == CleanupScopeKind::Inherited ||
+                   static_cast<size_t>(scope.cleanup_scope_depth.index) ==
+                       destroy_id_stack_.size(),
+               "Popping scope with cleanups: have {0} but expected {1}",
+               destroy_id_stack_.size(), scope.cleanup_scope_depth.index);
 
   if (!return_scope_stack_.empty()) {
     if (scope.has_returned_var) {
@@ -208,7 +204,14 @@ auto ScopeStack::MergeTopScopeIntoGrandparentAndPop() -> void {
   CARBON_CHECK(grandparent.cleanup_scope_kind != CleanupScopeKind::None &&
                parent.cleanup_scope_kind == CleanupScopeKind::Owned &&
                current.cleanup_scope_kind == CleanupScopeKind::Owned);
-  destroy_id_stack_.MergeTopArrayIntoGrandparent();
+
+  // NOLINTNEXTLINE(readability-qualified-auto)
+  auto new_mid =
+      std::rotate(destroy_id_stack_.begin() + parent.cleanup_scope_depth.index,
+                  destroy_id_stack_.begin() + current.cleanup_scope_depth.index,
+                  destroy_id_stack_.end());
+  parent.cleanup_scope_depth.index = new_mid - destroy_id_stack_.begin();
+  current.cleanup_scope_depth.index = destroy_id_stack_.size();
 
   Pop();
 }
