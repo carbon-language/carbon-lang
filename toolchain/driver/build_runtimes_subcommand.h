@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_DRIVER_BUILD_RUNTIMES_SUBCOMMAND_H_
 #define CARBON_TOOLCHAIN_DRIVER_BUILD_RUNTIMES_SUBCOMMAND_H_
 
-#include <memory>
-
 #include "common/command_line.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -22,7 +20,7 @@ namespace Carbon {
 struct BuildRuntimesOptions {
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
-  std::shared_ptr<CodegenOptions> codegen_options;
+  CodegenOptions codegen_options;
   llvm::StringRef directory;
   bool force;
 };

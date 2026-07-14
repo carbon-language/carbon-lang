@@ -32,10 +32,7 @@ struct CompileOptions;
 // TODO: Build all parts of the Core, not just the prelude.
 class CarbonRuntimesBuilderBase {
  protected:
-  // `installation` contains the path to the runtimes cache
-  // `target` is the target triple string, used to make our
-  CarbonRuntimesBuilderBase(DriverEnv* driver_env,
-                            std::shared_ptr<CodegenOptions> codegen_options);
+  CarbonRuntimesBuilderBase(DriverEnv* driver_env, const CodegenOptions* codegen_options);
 
   // We use protected members as this base is just factoring out common
   // implementation details of other runners.
@@ -57,9 +54,8 @@ class CarbonRuntimesBuilderBase {
 
 class CarbonPreludeBuilder : public CarbonRuntimesBuilderBase {
  public:
-  CarbonPreludeBuilder(DriverEnv* driver_env,
-                       std::shared_ptr<CodegenOptions> codegen_options,
-                       Runtimes* runtimes);
+  CarbonPreludeBuilder(DriverEnv* driver_env, Runtimes* runtimes,
+                       const CodegenOptions* codegen_options);
   auto Build() && -> ErrorOr<std::filesystem::path>;
 };
 

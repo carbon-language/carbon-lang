@@ -117,8 +117,8 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
       CARBON_CHECK(runtimes_or_error.ok(), "Runtimes cache lookup failed: {}",
                    runtimes_or_error.error().message());
       auto runtimes = std::move(*runtimes_or_error);
-      CarbonPreludeBuilder prelude_builder(
-          &driver_env, options_->codegen_options, &runtimes);
+      CarbonPreludeBuilder prelude_builder(&driver_env, &runtimes,
+                                           options_->codegen_options);
       auto path_or_error = std::move(prelude_builder).Build();
       if (!path_or_error.ok()) {
         CARBON_DIAGNOSTIC(LinkCarbonPreludeBuildFailed, Error,

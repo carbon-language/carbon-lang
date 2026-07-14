@@ -15,7 +15,9 @@
 #include "toolchain/diagnostics/consumer.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/file_diagnostics.h"
+#include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/compile_driver.h"
+#include "toolchain/driver/compile_options.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
@@ -29,7 +31,9 @@ class Context {
   class File {
    public:
     explicit File(clang::clangd::URIForFile uri)
-        : uri_(std::move(uri)), filename_(uri_.file().str()) {}
+        : uri_(std::move(uri)),
+          filename_(uri_.file().str()),
+          options_(&codegen_options_) {}
 
     // Changes the file's text, updating dependent state.
     auto SetText(Context& context, std::optional<int64_t> version,
@@ -51,6 +55,8 @@ class Context {
 
     // Current file content, and derived values.
     std::string text_;
+
+    CodegenOptions codegen_options_;
     CompileOptions options_;
     std::unique_ptr<CompileDriver> compile_driver_;
   };

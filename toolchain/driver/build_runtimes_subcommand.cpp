@@ -34,8 +34,7 @@ This will **remove** the provided output path and re-create it from scratch.
       },
       [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&force); });
 
-  codegen_options = std::make_shared<CodegenOptions>();
-  codegen_options->Build(b);
+  codegen_options.Build(b);
 }
 
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
@@ -84,7 +83,7 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
                      driver_env.vlog_stream);
 
   Runtimes::Cache::Features features = {
-      .target = options_.codegen_options->target.str()};
+      .target = options_.codegen_options.target.str()};
 
   bool is_cache = options_.directory.empty();
   std::filesystem::path output_path = options_.directory.str();
@@ -111,8 +110,8 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
   ClangArchiveRuntimesBuilder<Runtimes::Libcxx> libcxx_builder(
       &runner, driver_env.thread_pool, llvm::Triple(features.target),
       &runtimes);
-  CarbonPreludeBuilder prelude_builder(&driver_env, options_.codegen_options,
-                                       &runtimes);
+  CarbonPreludeBuilder prelude_builder(&driver_env, &runtimes,
+                                       &options_.codegen_options);
 
   CARBON_RETURN_IF_ERROR(std::move(resource_dir_builder).Wait());
   CARBON_RETURN_IF_ERROR(std::move(lib_unwind_builder).Wait());

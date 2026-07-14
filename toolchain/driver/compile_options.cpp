@@ -14,8 +14,8 @@ namespace {
 
 // Provides command-line options common to both `compile` and `link`
 // subcommands.
-auto BuildSharedOptions(CommandLine::CommandBuilder& b, CompileOptions* options)
-    -> void {
+auto BuildSharedOptions(CommandLine::CommandBuilder& b, CompileOptions* options,
+                        CodegenOptions* cg_options) -> void {
   b.AddStringPositionalArg(
       {
           .name = "FILE",
@@ -82,7 +82,8 @@ Selects the amount of optimization to perform.
   // Include the common code generation options at this point to render it
   // after the more common options above, but before the more unusual options
   // below.
-  options->codegen_options->Build(b);
+  cg_options->Build(b);
+  options->codegen_options = cg_options;
 
   b.AddFlag(
       {
@@ -121,9 +122,10 @@ Whether to use the implicit prelude import. Enabled by default.
 
 }  // namespace
 
-auto CompileOptions::BuildForCompileSubcommand(CommandLine::CommandBuilder& b)
+auto CompileOptions::BuildForCompileSubcommand(CommandLine::CommandBuilder& b,
+                                               CodegenOptions* cg_options)
     -> void {
-  BuildSharedOptions(b, this);
+  BuildSharedOptions(b, this, cg_options);
 
   b.AddOneOfOption(
       {
@@ -402,10 +404,11 @@ inclusion of which is currently controlled by the `prelude_import` flag.
       });
 }
 
-auto CompileOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b)
+auto CompileOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b,
+                                             CodegenOptions* cg_options)
     -> void {
   include_carbon_core = true;
-  BuildSharedOptions(b, this);
+  BuildSharedOptions(b, this, cg_options);
 }
 
 auto CompileOptions::ValidatePhase(Diagnostics::NoLocEmitter& emitter) const

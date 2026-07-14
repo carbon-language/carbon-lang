@@ -15,8 +15,8 @@
 namespace Carbon {
 
 auto BuildSubcommandOptions::Build(CommandLine::CommandBuilder& b) -> void {
-  compile_options.BuildForBuildSubcommand(b);
-  link_options.BuildForBuildSubcommand(b);
+  compile_options.BuildForBuildSubcommand(b, &codegen_options);
+  link_options.BuildForBuildSubcommand(b, &codegen_options);
 
   b.AddFlag(
       {
@@ -72,7 +72,7 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     }
   }
 
-  auto on_exit = llvm::scope_exit([&]() {
+  auto on_exit = llvm::scope_exit([&] {
     // Clean up the temporary directory created for compile results.
     if (temp_dir) {
       auto remove_result = std::move(*temp_dir).Remove();

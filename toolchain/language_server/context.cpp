@@ -228,8 +228,9 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   driver_env.vlog_stream =
       static_cast<llvm::raw_pwrite_stream*>(context.vlog_stream());
 
-  options_ = CompileOptions();
-  options_.codegen_options->target = options_.codegen_options->host;
+  codegen_options_ = CodegenOptions();
+  options_ = CompileOptions(&codegen_options_);
+  codegen_options_.target = codegen_options_.host;
   options_.phase = CompileOptions::Phase::Check;
   options_.prelude_import = context.prelude_import();
   // For now we always include the rest of the core if the prelude is included.

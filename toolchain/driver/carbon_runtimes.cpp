@@ -10,13 +10,12 @@
 namespace Carbon {
 
 CarbonRuntimesBuilderBase::CarbonRuntimesBuilderBase(
-    DriverEnv* driver_env, std::shared_ptr<CodegenOptions> codegen_options)
-    : compile_options_(),
+    DriverEnv* driver_env, const CodegenOptions* codegen_options)
+    : compile_options_(codegen_options),
       compile_driver_(&compile_options_),
       driver_env_(driver_env),
       install_root_(driver_env->installation->root()),
       result_(Error("Did not finish building the Carbon runtimes!")) {
-  compile_options_.codegen_options = codegen_options;
   // Each prelude file explicitly imports the other parts of the prelude it
   // needs.
   compile_options_.prelude_import = false;
@@ -24,9 +23,9 @@ CarbonRuntimesBuilderBase::CarbonRuntimesBuilderBase(
   compile_options_.include_carbon_core = false;
 }
 
-CarbonPreludeBuilder::CarbonPreludeBuilder(
-    DriverEnv* driver_env, std::shared_ptr<CodegenOptions> codegen_options,
-    Runtimes* runtimes)
+CarbonPreludeBuilder::CarbonPreludeBuilder(DriverEnv* driver_env,
+                                           Runtimes* runtimes,
+                                           const CodegenOptions* codegen_options)
     : CarbonRuntimesBuilderBase(driver_env, codegen_options) {
   auto build_dir_or_error = runtimes->Build(Runtimes::CarbonCore);
   if (!build_dir_or_error.ok()) {

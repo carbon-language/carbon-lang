@@ -27,8 +27,8 @@ system mixes object files and linker flags.
 
 }  // namespace
 
-auto LinkOptions::BuildForLinkSubcommand(CommandLine::CommandBuilder& b)
-    -> void {
+auto LinkOptions::BuildForLinkSubcommand(CommandLine::CommandBuilder& b,
+                                         CodegenOptions* cg_options) -> void {
   b.AddStringPositionalArg(
       {
           .name = "OBJECT_FILE",
@@ -69,13 +69,14 @@ Automatically include the Carbon prelude files in the link.
       });
 
   BuildSharedOptions(b, this);
-
-  codegen_options = std::make_shared<CodegenOptions>();
-  codegen_options->Build(b);
+  cg_options->Build(b);
+  codegen_options = cg_options;
 }
 
-auto LinkOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b)
-    -> void {
+auto LinkOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b,
+                                          CodegenOptions* cg_options) -> void {
+  codegen_options = cg_options;
+
   b.AddStringOption(
       {
           .name = "output",
@@ -89,6 +90,8 @@ name of the first provided input file.
       [&](auto& arg_b) { arg_b.Set(&output_filename); });
 
   BuildSharedOptions(b, this);
+  // The prelude files have already been built and are part of the input binary
+  // set, so will already be linked through that path.
   link_prelude_files = false;
 }
 
