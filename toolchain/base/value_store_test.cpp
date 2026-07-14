@@ -9,6 +9,7 @@
 
 #include <string>
 
+#include "llvm/ADT/StringRef.h"
 #include "toolchain/base/value_ids.h"
 
 namespace Carbon::Testing {
@@ -42,6 +43,28 @@ TEST(ValueStore, Real) {
   EXPECT_THAT(real2.mantissa, Eq(real2_copy.mantissa));
   EXPECT_THAT(real2.exponent, Eq(real2_copy.exponent));
   EXPECT_THAT(real2.is_decimal, Eq(real2_copy.is_decimal));
+}
+
+TEST(ValueStore, StringRefIteratorArrow) {
+  ValueStore<IdentifierId, llvm::StringRef> store;
+  store.Add("hello");
+
+  // Non-const values() returns MutableRange which uses Iterator
+  auto mutable_range = store.values();
+  auto it = mutable_range.begin();
+  // This calls Iterator::operator->
+  EXPECT_EQ(it->size(), 5);
+}
+
+TEST(ValueStore, IteratorConversion) {
+  ValueStore<IdentifierId, llvm::StringRef> store;
+  store.Add("hello");
+
+  auto mutable_range = store.values();
+  ValueStore<IdentifierId, llvm::StringRef>::Iterator it =
+      mutable_range.begin();
+  ValueStore<IdentifierId, llvm::StringRef>::ConstIterator cit = it;
+  EXPECT_EQ(*cit, "hello");
 }
 
 }  // namespace
