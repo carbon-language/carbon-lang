@@ -310,7 +310,7 @@ static auto BuildTemplateId(Context& context, SemIR::LocId loc_id,
           dyn_cast<clang::VarTemplateDecl>(template_decl)) {
     auto decl_result = context.clang_sema().CheckVarTemplateId(
         var_template_decl, /*TemplateLoc=*/clang::SourceLocation(), loc,
-        arg_list);
+        arg_list, /*SetWrittenArgs=*/true);
     return decl_result.isInvalid()
                ? SemIR::ErrorInst::InstId
                : ImportCppDecl(context, loc_id,
