@@ -22,11 +22,13 @@ struct ImplFields {
   // Note that this is None for an imported impl.
   InstId parent_scope_inst_id;
 
+  // Whether the impl declaration is marked `final`. This is false for impls in
+  // a `final match_first`. The `match_first_is_final` flag is used instead for
+  // that case.
+  bool is_final;
+
   // The following members are set at the start of the impl declaration, and may
   // be modified at the start of redeclarations.
-
-  // Whether the impl declaration is marked `final`.
-  bool is_final;
 
   // The `MatchFirstDecl` of the `match_first` block that the impl is associated
   // with.
@@ -34,9 +36,10 @@ struct ImplFields {
   // The location of the `ImplDecl` that was associated with the
   // `match_first_id`. Used for diagnostics, and not imported.
   LocId decl_loc_in_match_first = SemIR::LocId::None;
-
   // The position of the impl in its associated `match_first` block.
   int match_first_position = 0;
+  // Whether the `match_first` block was modified as `final`.
+  bool match_first_is_final = false;
 
   // The following members always have values and do not change.
 

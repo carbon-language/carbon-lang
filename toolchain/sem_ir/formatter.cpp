@@ -518,6 +518,15 @@ auto Formatter::FormatImpl(ImplId id, const Impl& impl_info) -> void {
       FormatNameScope(impl_info.scope_id);
     }
 
+    if (impl_info.match_first_id.has_value()) {
+      Indent();
+      out() << "match_first = position " << impl_info.match_first_position;
+      if (impl_info.match_first_is_final) {
+        out() << ", final";
+      }
+      out() << "\n";
+    }
+
     Indent();
     out() << "witness = ";
     FormatArg(impl_info.witness_id);

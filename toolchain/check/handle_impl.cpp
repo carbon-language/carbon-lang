@@ -333,10 +333,10 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
           }
 
           if (!impl_had_error) {
-            prev_impl.is_final = match_first->is_final;
             prev_impl.match_first_id = match_first->decl_id;
             prev_impl.decl_loc_in_match_first = SemIR::LocId(impl_decl_id);
             prev_impl.match_first_position = match_first->block_size;
+            prev_impl.match_first_is_final = match_first->is_final;
             match_first->block_size += 1;
           }
         }
@@ -373,13 +373,10 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
           impl.witness_block_id = context.inst_block_stack().Pop();
 
           if (auto match_first = context.match_first_context()) {
-            // This should have been diagnosed above.
-            CARBON_CHECK(!impl.is_final);
-
-            impl.is_final = match_first->is_final;
             impl.match_first_id = match_first->decl_id;
             impl.decl_loc_in_match_first = SemIR::LocId(impl_decl_id);
             impl.match_first_position = match_first->block_size;
+            impl.match_first_is_final = match_first->is_final;
             match_first->block_size += 1;
           }
         }

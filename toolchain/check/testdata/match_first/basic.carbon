@@ -471,6 +471,7 @@ final match_first {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend %Z.ref.loc6
+// CHECK:STDOUT:   match_first = position 0
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -497,6 +498,7 @@ final match_first {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend %Z.ref
+// CHECK:STDOUT:   match_first = position 0
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -521,6 +523,7 @@ final match_first {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend %Z.ref.loc5
+// CHECK:STDOUT:   match_first = position 0
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -540,11 +543,12 @@ final match_first {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: final impl @empty_tuple.type.as.Z.impl: %.loc5_7.2 as %Z.ref.loc5 {
+// CHECK:STDOUT: impl @empty_tuple.type.as.Z.impl: %.loc5_7.2 as %Z.ref.loc5 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend %Z.ref.loc5
+// CHECK:STDOUT:   match_first = position 0, final
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -564,11 +568,12 @@ final match_first {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: final impl @empty_tuple.type.as.Z.impl: %.loc6_9.2 as %Z.ref.loc6 {
+// CHECK:STDOUT: impl @empty_tuple.type.as.Z.impl: %.loc6_9.2 as %Z.ref.loc6 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend %Z.ref.loc6
+// CHECK:STDOUT:   match_first = position 0, final
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -588,11 +593,12 @@ final match_first {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: final impl @empty_tuple.type.as.Z.impl: %.loc5_7.2 as %Z.ref.loc5 {
+// CHECK:STDOUT: impl @empty_tuple.type.as.Z.impl: %.loc5_7.2 as %Z.ref.loc5 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend %Z.ref.loc5
+// CHECK:STDOUT:   match_first = position 0, final
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
