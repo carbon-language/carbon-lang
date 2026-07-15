@@ -12,14 +12,14 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_impl_bad_assoc_const.carbon
 
-interface I { let T:! type; }
+interface I { let T: type; }
 
 // CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+7]]:1: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR: impl () as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE-5]]:19: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR: interface I { let T:! type; }
-// CHECK:STDERR:                   ^~~~~~~~
+// CHECK:STDERR: interface I { let T: type; }
+// CHECK:STDERR:                   ^~~~~~~
 // CHECK:STDERR:
 impl () as I {}
 
@@ -63,8 +63,6 @@ impl () as I {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.I.impl: %.loc24_7.2 as %I.ref {

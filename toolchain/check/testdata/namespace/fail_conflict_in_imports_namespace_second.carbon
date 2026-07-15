@@ -69,8 +69,6 @@ fn NS.Bar() {}
 // CHECK:STDOUT: fn @NS() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- namespace.carbon
@@ -102,8 +100,6 @@ fn NS.Bar() {}
 // CHECK:STDOUT: fn @Foo() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon
@@ -139,7 +135,5 @@ fn NS.Bar() {}
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

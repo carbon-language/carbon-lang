@@ -13,59 +13,59 @@
 
 // --- fail_not_designator.carbon
 
-// CHECK:STDERR: fail_not_designator.carbon:[[@LINE+4]]:37: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
-// CHECK:STDERR: fn NotDesignator(T:! type where i32 = .U);
-// CHECK:STDERR:                                     ^
+// CHECK:STDERR: fail_not_designator.carbon:[[@LINE+4]]:44: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
+// CHECK:STDERR: fn NotDesignator(generic T: type where i32 = .U);
+// CHECK:STDERR:                                            ^
 // CHECK:STDERR:
-fn NotDesignator(T:! type where i32 = .U);
+fn NotDesignator(generic T: type where i32 = .U);
 
 // --- fail_designator_in_parens.carbon
 
-// CHECK:STDERR: fail_designator_in_parens.carbon:[[@LINE+4]]:40: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
-// CHECK:STDERR: fn DesignatorInParens(V:! I where (.J) = bool);
-// CHECK:STDERR:                                        ^
+// CHECK:STDERR: fail_designator_in_parens.carbon:[[@LINE+4]]:47: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
+// CHECK:STDERR: fn DesignatorInParens(generic V: I where (.J) = bool);
+// CHECK:STDERR:                                               ^
 // CHECK:STDERR:
-fn DesignatorInParens(V:! I where (.J) = bool);
+fn DesignatorInParens(generic V: I where (.J) = bool);
 
 // --- fail_dot_self.carbon
 
-// CHECK:STDERR: fail_dot_self.carbon:[[@LINE+4]]:30: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
-// CHECK:STDERR: fn DotSelf(W:! K where .Self = f32);
-// CHECK:STDERR:                              ^
+// CHECK:STDERR: fail_dot_self.carbon:[[@LINE+4]]:37: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
+// CHECK:STDERR: fn DotSelf(generic W: K where .Self = f32);
+// CHECK:STDERR:                                     ^
 // CHECK:STDERR:
-fn DotSelf(W:! K where .Self = f32);
+fn DotSelf(generic W: K where .Self = f32);
 
 // --- fail_dot_keyword.carbon
 
-// CHECK:STDERR: fail_dot_keyword.carbon:[[@LINE+4]]:28: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
-// CHECK:STDERR: fn DotKeyword(W:! K where .and = u8);
-// CHECK:STDERR:                            ^~~
+// CHECK:STDERR: fail_dot_keyword.carbon:[[@LINE+4]]:35: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fn DotKeyword(generic W: K where .and = u8);
+// CHECK:STDERR:                                   ^~~
 // CHECK:STDERR:
-fn DotKeyword(W:! K where .and = u8);
+fn DotKeyword(generic W: K where .and = u8);
 
 // --- fail_postfix_after_designator.carbon
 
-// CHECK:STDERR: fail_postfix_after_designator.carbon:[[@LINE+4]]:43: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
-// CHECK:STDERR: fn PostfixAfterDesignator(X:! L where .M* = u64*);
-// CHECK:STDERR:                                           ^
+// CHECK:STDERR: fail_postfix_after_designator.carbon:[[@LINE+4]]:50: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
+// CHECK:STDERR: fn PostfixAfterDesignator(generic X: L where .M* = u64*);
+// CHECK:STDERR:                                                  ^
 // CHECK:STDERR:
-fn PostfixAfterDesignator(X:! L where .M* = u64*);
+fn PostfixAfterDesignator(generic X: L where .M* = u64*);
 
 // --- fail_binary_op_after_designator.carbon
 
-// CHECK:STDERR: fail_binary_op_after_designator.carbon:[[@LINE+4]]:48: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
-// CHECK:STDERR: fn BinaryOpAfterDesignator(Y:! N where .O + .P = {});
-// CHECK:STDERR:                                                ^
+// CHECK:STDERR: fail_binary_op_after_designator.carbon:[[@LINE+4]]:55: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
+// CHECK:STDERR: fn BinaryOpAfterDesignator(generic Y: N where .O + .P = {});
+// CHECK:STDERR:                                                       ^
 // CHECK:STDERR:
-fn BinaryOpAfterDesignator(Y:! N where .O + .P = {});
+fn BinaryOpAfterDesignator(generic Y: N where .O + .P = {});
 
 // --- fail_after_and.carbon
 
-// CHECK:STDERR: fail_after_and.carbon:[[@LINE+4]]:43: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
-// CHECK:STDERR: fn AfterAnd(Z:! Q where .R impls S and () = .A);
-// CHECK:STDERR:                                           ^
+// CHECK:STDERR: fail_after_and.carbon:[[@LINE+4]]:50: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
+// CHECK:STDERR: fn AfterAnd(generic Z: Q where .R impls S and () = .A);
+// CHECK:STDERR:                                                  ^
 // CHECK:STDERR:
-fn AfterAnd(Z:! Q where .R impls S and () = .A);
+fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 
 // CHECK:STDOUT: - filename: fail_not_designator.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -74,12 +74,12 @@ fn AfterAnd(Z:! Q where .R impls S and () = .A);
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'NotDesignator'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
 // CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', has_error: yes, subtree_size: 7},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 12},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
@@ -91,7 +91,7 @@ fn AfterAnd(Z:! Q where .R impls S and () = .A);
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'DesignatorInParens'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'V'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'I'},
 // CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'ParenExprStart', text: '('},
@@ -99,7 +99,7 @@ fn AfterAnd(Z:! Q where .R impls S and () = .A);
 // CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'ParenExpr', text: ')', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', has_error: yes, subtree_size: 10},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 10},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 12},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 15},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
@@ -111,13 +111,13 @@ fn AfterAnd(Z:! Q where .R impls S and () = .A);
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'DotSelf'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'W'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'K'},
 // CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'SelfTypeName', text: 'Self'},
 // CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', has_error: yes, subtree_size: 8},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 8},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 13},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
@@ -129,13 +129,13 @@ fn AfterAnd(Z:! Q where .R impls S and () = .A);
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'DotKeyword'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'W'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'K'},
 // CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'and', has_error: yes},
 // CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', has_error: yes, subtree_size: 8},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 8},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 13},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
@@ -147,14 +147,14 @@ fn AfterAnd(Z:! Q where .R impls S and () = .A);
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'PostfixAfterDesignator'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'X'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'L'},
 // CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'M'},
 // CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', has_error: yes, subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 14},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
@@ -166,7 +166,7 @@ fn AfterAnd(Z:! Q where .R impls S and () = .A);
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'BinaryOpAfterDesignator'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'N'},
 // CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'O'},
@@ -175,7 +175,7 @@ fn AfterAnd(Z:! Q where .R impls S and () = .A);
 // CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'InfixOperatorPlus', text: '+', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', has_error: yes, subtree_size: 11},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 11},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 13},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 16},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
@@ -187,7 +187,7 @@ fn AfterAnd(Z:! Q where .R impls S and () = .A);
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'AfterAnd'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'Z'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'Q'},
 // CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'R'},
@@ -198,7 +198,7 @@ fn AfterAnd(Z:! Q where .R impls S and () = .A);
 // CHECK:STDOUT:               {kind: 'TupleLiteralStart', text: '('},
 // CHECK:STDOUT:             {kind: 'TupleLiteral', text: ')', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 10},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', has_error: yes, subtree_size: 13},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 13},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 15},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 18},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

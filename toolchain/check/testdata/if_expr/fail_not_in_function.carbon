@@ -66,7 +66,7 @@ class C {
 
 library "[[@TEST_NAME]]";
 
-base class C(T:! type) {}
+base class C(T: type) {}
 
 fn F() {
   class B {
@@ -128,7 +128,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst{{[0-9A-F]+}}.loc4_24 [concrete = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst{{[0-9A-F]+}}.loc4_23 [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:   complete_type_witness = invalid

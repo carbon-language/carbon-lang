@@ -13,7 +13,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/raw_sem_ir/one_file.carbon
 
-fn Foo[T:! type](p: T*) -> (T*, ()) {
+fn Foo[T: type](p: T*) -> (T*, ()) {
   return (p, ());
 }
 
@@ -415,7 +415,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     function78000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block78000010, call_params_id: inst_block78000011, return_type_inst_id: inst78000036, return_form_inst_id: inst78000038, return_pattern_id: inst78000040, body: [inst_block78000018]}
 // CHECK:STDOUT:     function78000001: {name: name4, parent_scope: name_scope78000003, call_param_patterns_id: inst_block7800001E, return_type_inst_id: inst78000072, return_form_inst_id: inst78000073, return_pattern_id: inst78000074}
 // CHECK:STDOUT:     function78000002: {name: name4, parent_scope: name_scope78000004, call_param_patterns_id: inst_block78000029, return_type_inst_id: inst780000A3, return_form_inst_id: inst780000A4, return_pattern_id: inst780000A5}
-// CHECK:STDOUT:     function78000003: {name: name4, parent_scope: name_scope78000009, call_param_patterns_id: inst_block7800003F, return_type_inst_id: inst78000101, return_form_inst_id: inst78000102, return_pattern_id: inst78000103}
+// CHECK:STDOUT:     function78000003: {name: name4, parent_scope: name_scope78000009, call_param_patterns_id: inst_block7800003F, return_type_inst_id: inst78000101, return_form_inst_id: inst78000102, return_pattern_id: inst78000103, builtin: primitive_copy}
 // CHECK:STDOUT:     function78000004: {name: name4, parent_scope: name_scope7800000C, call_param_patterns_id: inst_block7800004C, return_type_inst_id: inst78000136, return_form_inst_id: inst78000137, return_pattern_id: inst78000138}
 // CHECK:STDOUT:     function78000005: {name: name4, parent_scope: name_scope7800000D, call_param_patterns_id: inst_block78000068, return_type_inst_id: inst78000192, return_form_inst_id: inst78000193, return_pattern_id: inst78000194}
 // CHECK:STDOUT:   classes:         {}

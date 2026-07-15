@@ -14,13 +14,13 @@
 
 interface I {
   // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   let T:! type = 42;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   let T: type = 42;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   let T:! type = 42;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   let T: type = 42;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let T:! type = 42;
+  let T: type = 42;
 }
 
 // CHECK:STDOUT: --- fail_assoc_const_bad_default.carbon
@@ -70,8 +70,6 @@ interface I {
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self.37e) {}

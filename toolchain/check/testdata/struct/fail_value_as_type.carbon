@@ -63,7 +63,5 @@ var x: {.a = 1};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

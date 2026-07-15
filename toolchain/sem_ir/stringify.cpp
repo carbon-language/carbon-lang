@@ -370,7 +370,7 @@ class Stringifier {
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetAccessType inst) -> void {
-    // Given `T:! I`, print `T as type` as simply `T`.
+    // Given `T: I`, print `T as type` as simply `T`.
     step_stack_->PushInstId(inst.facet_value_inst_id);
   }
 

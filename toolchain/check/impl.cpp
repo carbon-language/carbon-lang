@@ -183,7 +183,7 @@ static auto VerifyImplRedecl(Context& context, const SemIR::Impl& new_impl,
     return ImplRedeclType::DiagnosedInvalidRedecl;
   }
 
-  if (prev_impl.has_definition_started()) {
+  if (new_impl.has_definition_started() && prev_impl.has_definition_started()) {
     // Impls aren't merged in order to avoid generic region lookup into a
     // mismatching table.
     CARBON_DIAGNOSTIC(ImplRedefinition, Error,

@@ -55,7 +55,5 @@ fn G() -> {.v: ()} {
 // CHECK:STDOUT:   %.loc8_10.4: init %struct_type.v = struct_init (%.loc8_10.3) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc8_11: init %struct_type.v = converted %x.ref, %.loc8_10.4 [concrete = constants.%struct]
 // CHECK:STDOUT:   return %.loc8_11
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -110,7 +110,5 @@ fn F() {
 // CHECK:STDOUT:     %a.patt.loc24: %pattern_type.6b6 = value_binding_pattern a [concrete = constants.%a.patt.bb2e5b.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

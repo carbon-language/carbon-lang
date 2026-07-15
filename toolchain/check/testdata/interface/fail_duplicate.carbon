@@ -105,8 +105,6 @@ interface Class { }
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface.loc13 {
@@ -123,8 +121,6 @@ interface Class { }
 // CHECK:STDOUT:   witness = (@Interface.WithSelf.loc13.%Interface.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Interface.WithSelf.F(@Interface.loc13.%Self: %Interface.type.283524.2) {
@@ -171,8 +167,6 @@ interface Class { }
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface.loc13 {
@@ -200,8 +194,6 @@ interface Class { }
 // CHECK:STDOUT:   witness = (@Interface.WithSelf.loc13.%Interface.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Interface.WithSelf.F(@Interface.loc13.%Self: %Interface.type.283524.2) {
@@ -271,8 +263,6 @@ interface Class { }
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class.loc2;

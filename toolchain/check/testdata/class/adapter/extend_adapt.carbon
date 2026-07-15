@@ -257,8 +257,6 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %StaticMemberFunction.ref: %SomeClass.StaticMemberFunction.type = name_ref StaticMemberFunction, @SomeClass.%SomeClass.StaticMemberFunction.decl [concrete = constants.%SomeClass.StaticMemberFunction]
 // CHECK:STDOUT:   %SomeClass.StaticMemberFunction.call: init %empty_tuple.type = call %StaticMemberFunction.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAdapterMethod(%a.param: %SomeClassAdapter) {
@@ -268,8 +266,6 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %SomeClass.AdapterMethod.bound: <bound method> = bound_method %a.ref, %AdapterMethod.ref
 // CHECK:STDOUT:   %SomeClass.AdapterMethod.call: init %empty_tuple.type = call %SomeClass.AdapterMethod.bound(%a.ref)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_method_access.carbon
@@ -363,8 +359,6 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %.loc23: %SomeClass = converted %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %SomeClass.F.call: init %empty_tuple.type = call %SomeClass.F.bound(<error>)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_field_access.carbon
@@ -461,8 +455,6 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %.loc21_11.1: %SomeClass = converted %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc21_11.2: %i32 = class_element_access <error>, element1 [concrete = <error>]
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_adapt_struct.carbon
@@ -538,8 +530,6 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %a.ref: %StructAdapter = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: <error> = name_ref b, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_adapt_tuple.carbon
@@ -618,8 +608,6 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %a.ref: %TupleAdapter = name_ref a, %a
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_adapt_builtin.carbon
@@ -729,7 +717,5 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %a.ref: %IntAdapter = name_ref a, %a
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

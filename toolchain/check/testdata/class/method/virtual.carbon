@@ -248,9 +248,9 @@ fn Derived.F(unused self) -> T2 {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_generic_virtual_decl.carbon:[[@LINE+3]]:1: error: use of undefined generic function [MissingGenericFunctionDefinition]
-// CHECK:STDERR: base class Base(T:! type) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-base class Base(T:! type) {
+// CHECK:STDERR: base class Base(T: type) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+base class Base(T: type) {
   // CHECK:STDERR: fail_generic_virtual_decl.carbon:[[@LINE+4]]:3: note: generic function declared here [MissingGenericFunctionDefinitionHere]
   // CHECK:STDERR:   virtual fn F(self);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
@@ -266,7 +266,7 @@ library "[[@TEST_NAME]]";
 class T1 {
 }
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self, unused t: T) { }
 }
 
@@ -330,29 +330,29 @@ library "[[@TEST_NAME]]";
 
 base class T1 {
   // CHECK:STDERR: fail_generic_virtual.carbon:[[@LINE+4]]:3: error: generic virtual function [GenericVirtual]
-  // CHECK:STDERR:   virtual fn F[T:! type](self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F[T: type](self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  virtual fn F[T:! type](self);
+  virtual fn F[T: type](self);
 }
 
 // --- fail_generic_virtual_in_generic_class.carbon
 
 library "[[@TEST_NAME]]";
 
-base class T1(T:! type) {
+base class T1(T: type) {
   // CHECK:STDERR: fail_generic_virtual_in_generic_class.carbon:[[@LINE+4]]:3: error: generic virtual function [GenericVirtual]
-  // CHECK:STDERR:   virtual fn F[T:! type](self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   virtual fn F[T: type](self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  virtual fn F[T:! type](self);
+  virtual fn F[T: type](self);
 }
 
 // --- generic_with_virtual.carbon
 
 library "[[@TEST_NAME]]";
 
-base class T1(T:! type) {
+base class T1(T: type) {
   //@dump-sem-ir-begin
   virtual fn F(unused self) { }
   //@dump-sem-ir-end
@@ -362,7 +362,7 @@ base class T1(T:! type) {
 
 library "[[@TEST_NAME]]";
 
-base class T1(T:! type) {
+base class T1(T: type) {
   //@dump-sem-ir-begin
   virtual fn F(unused self, unused t: T) { }
   //@dump-sem-ir-end
@@ -385,7 +385,7 @@ base class NonGenericBase {
   virtual fn F2(unused self) { }
 }
 
-base class GenericDerived(T:! type) {
+base class GenericDerived(T: type) {
   extend base: NonGenericBase;
   override fn F2(unused self) { }
   virtual fn F3(unused self) { }
@@ -395,7 +395,7 @@ base class GenericDerived(T:! type) {
 
 library "[[@TEST_NAME]]";
 
-base class GenericBase(T:! type) {
+base class GenericBase(T: type) {
   virtual fn F1(unused self) { }
   virtual fn F2(unused self) { }
 }
@@ -412,7 +412,7 @@ base class NonGenericDerived {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self, unused t: Base(T)*) { }
 }
 class T1;
@@ -432,7 +432,7 @@ library "[[@TEST_NAME]]";
 class T1;
 class T2;
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self, unused t: T1*) { }
 }
 
@@ -454,10 +454,10 @@ class D1 {
 
 library "[[@TEST_NAME]]";
 
-abstract class Base(T:! type) {
+abstract class Base(T: type) {
   virtual fn F(unused self, unused t: T*) { }
 }
-class Derived(T:! type) {
+class Derived(T: type) {
   extend base: Base(T);
   // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+7]]:37: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   override fn F(unused self, unused t: T) { }
@@ -473,10 +473,10 @@ class Derived(T:! type) {
 
 library "[[@TEST_NAME]]";
 
-abstract class Base(T:! type) {
+abstract class Base(T: type) {
   virtual fn F(unused self, unused t: T) { }
 }
-class Derived(T:! type) {
+class Derived(T: type) {
   extend base: Base(T*);
   //@dump-sem-ir-begin
   override fn F(unused self, unused t: T*) { }
@@ -487,7 +487,7 @@ class Derived(T:! type) {
 
 library "[[@TEST_NAME]]";
 
-abstract class Base(T:! type) {
+abstract class Base(T: type) {
   abstract fn F(self);
 }
 
@@ -502,7 +502,7 @@ class Derived {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self) { }
 }
 
@@ -519,11 +519,11 @@ var v: Base(T1) = {};
 
 library "[[@TEST_NAME]]";
 
-base class T1(G1:! type) {
+base class T1(G1: type) {
   virtual fn F(unused self) { }
 }
 
-class T2(G2:! type) {
+class T2(G2: type) {
   extend base: T1(G2);
 }
 
@@ -531,11 +531,11 @@ class T2(G2:! type) {
 
 library "[[@TEST_NAME]]";
 
-base class T1(G1:! type) {
+base class T1(G1: type) {
   virtual fn F(unused self) { }
 }
 
-class T2(G2:! type) {
+class T2(G2: type) {
   class T3 {
     extend base: T1(G2);
   }
@@ -732,8 +732,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.H.bound: <bound method> = bound_method %.loc9_22.2, %H.ref
 // CHECK:STDOUT:   %Derived.H.call: init %empty_tuple.type = call %Derived.H.bound(%.loc9_22.2)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
@@ -765,8 +763,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %d.var, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%d.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.1(%self.param: ref %ptr.454) = "no_op";
@@ -774,29 +770,21 @@ class T2(G2:! type) {
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.2(%self.param: ref %struct_type.vptr) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.3(%self.param: ref %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.4(%self.param: ref %struct_type.base.507) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.5(%self.param: ref %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init.carbon
@@ -853,8 +841,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref %ptr.454) = "no_op";
@@ -862,15 +848,11 @@ class T2(G2:! type) {
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %struct_type.vptr) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc8_3.3(%self.param: ref %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init_members.carbon
@@ -1011,8 +993,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Destroy.Op.bound.loc14: <bound method> = bound_method %b1.var, constants.%Destroy.Op.1a2547.5
 // CHECK:STDOUT:   %Destroy.Op.call.loc14: init %empty_tuple.type = call %Destroy.Op.bound.loc14(%b1.var)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.1(%self.param: ref %ptr.454) = "no_op";
@@ -1022,22 +1002,16 @@ class T2(G2:! type) {
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.3(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.4(%self.param: ref %struct_type.vptr.m1.m2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc15_3.5(%self.param: ref %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- abstract_impl.carbon
@@ -1109,8 +1083,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %.loc15_22.3, %F.ref
 // CHECK:STDOUT:   %Derived.F.call: init %empty_tuple.type = call %Derived.F.bound(%.loc15_22.3)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- virtual_impl.carbon
@@ -1182,8 +1154,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.F.bound: <bound method> = bound_method %.loc15_22.3, %F.ref
 // CHECK:STDOUT:   %Derived.F.call: init %empty_tuple.type = call %Derived.F.bound(%.loc15_22.3)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- impl_conversion.carbon
@@ -1270,8 +1240,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc23_28.4, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc23_28.4)
 // CHECK:STDOUT:   return %.loc23_28.6 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc23_28.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -1279,8 +1247,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT: fn @Destroy.Op.loc23_28.2(%self.param: ref %T2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_with_virtual.carbon
@@ -1346,8 +1312,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   virtual fn(%self.param: @T1.F.%T1 (%T1)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1449,8 +1413,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   virtual fn(%self.param: @T1.F.%T1 (%T1), %t.param: @T1.F.%T (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1550,8 +1512,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT: override fn @D1.F.loc11_51.1(%self.param: %D1, %t.param: %ptr.2ee) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: override fn @D1.F.loc11_51.2(%self.param: %Base.5b2, %t.param: %ptr.2ee) [thunk @D1.%D1.F.decl.loc11_51.1 for @Base.%Base.F.decl, @Base.F(constants.%T1)] {
@@ -1563,8 +1523,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %D1.F.bound: <bound method> = bound_method %.loc11_51.2, %F.ref
 // CHECK:STDOUT:   %D1.F.call: init %empty_tuple.type = call %D1.F.bound(%.loc11_51.2, %t.param)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- impl_generic_generic.carbon
@@ -1679,8 +1637,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   override fn(%self.param: @Derived.F.loc10_44.1.%Derived (%Derived), %t.param: @Derived.F.loc10_44.1.%ptr.loc10_41.1 (%ptr.e8f)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1706,8 +1662,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc10_44.3, %Derived.F.specific_fn.loc10_44.1
 // CHECK:STDOUT:     %Derived.F.call: init %empty_tuple.type = call %bound_method(%.loc10_44.3, %t.param)
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -17,7 +17,7 @@ package Implicit;
 var a_ref: (i32,) = (0,);
 var b_ref: (((i32,), i32), (i32, i32)) = (((0,), 1), (2, 3));
 
-class C(X:! (i32, i32)) {}
+class C(X: (i32, i32)) {}
 
 fn F() -> C((1, 2));
 
@@ -40,8 +40,8 @@ impl package Implicit;
 // CHECK:STDERR:              ^~~~~~~~~
 // CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: implicit.carbon:7:9: note: initializing generic parameter `X` declared here [InitializingGenericParam]
-// CHECK:STDERR: class C(X:! (i32, i32)) {}
-// CHECK:STDERR:         ^~~~~~~~~~~~~~
+// CHECK:STDERR: class C(X: (i32, i32)) {}
+// CHECK:STDERR:         ^~~~~~~~~~~~~
 // CHECK:STDERR:
 var c_bad: C((1, 2, 3)) = F();
 
@@ -63,7 +63,7 @@ var c_bad: C((3, 4)) = F();
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! (i32,);
+  let value: (i32,);
 }
 
 class C {}
@@ -310,8 +310,6 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %F.call: init %C.372 to %.loc7 = call %F.ref()
 // CHECK:STDOUT:   assign file.%c.var, %F.call
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_symbolic_decl.carbon
@@ -374,7 +372,5 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %.loc7_18.2: init %tuple.type.a8a = tuple_init (%Int.as.Copy.impl.Op.call) [concrete = constants.%tuple.a1e]
 // CHECK:STDOUT:   %.loc7_24: init %tuple.type.a8a = converted %impl.elem0.loc7_18.1, %.loc7_18.2 [concrete = constants.%tuple.a1e]
 // CHECK:STDOUT:   return %.loc7_24
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

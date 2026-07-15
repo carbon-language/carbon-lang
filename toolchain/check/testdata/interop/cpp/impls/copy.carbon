@@ -174,7 +174,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "types.h";
 
-fn Copy[T:! Core.Copy](c: T) -> T {
+fn Copy[T: Core.Copy](c: T) -> T {
   return c;
 }
 
@@ -184,7 +184,7 @@ fn DoCopy(c: Cpp.Copyable) -> Cpp.Copyable {
   //@dump-sem-ir-end
 }
 
-class Wrap(T:! Core.Copy) {}
+class Wrap(T: Core.Copy) {}
 
 fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
   //@dump-sem-ir-begin
@@ -267,8 +267,6 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %Copyable__carbon_thunk.call: init %empty_tuple.type = call imports.%Copyable__carbon_thunk.decl(%.loc8_10.4, %addr.loc8_10.2)
 // CHECK:STDOUT:   %.loc8_10.5: init %Copyable to %.loc6_40.1 = mark_in_place_init %Copyable__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc8_10.5 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CopyExplicitCopy(%c.param: %ExplicitCopy) -> out %return.param: %ExplicitCopy {
@@ -288,8 +286,6 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %ExplicitCopy__carbon_thunk.call: init %empty_tuple.type = call imports.%ExplicitCopy__carbon_thunk.decl(%.loc14_10.4, %addr.loc14_10.2)
 // CHECK:STDOUT:   %.loc14_10.5: init %ExplicitCopy to %.loc12_48.1 = mark_in_place_init %ExplicitCopy__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc14_10.5 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- copy_generically.carbon
@@ -336,8 +332,6 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Copy.call: init %Copyable to %.loc10_34.1 = call %Copy.specific_fn(%c.ref)
 // CHECK:STDOUT:   return %Copy.call to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @EqualWitnesses(%p.param: %ptr.fa1) -> out %return.param: %ptr.fa1 {
@@ -349,7 +343,5 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %bound_method.loc20_10.2: <bound method> = bound_method %p.ref, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.fa1 = call %bound_method.loc20_10.2(%p.ref)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

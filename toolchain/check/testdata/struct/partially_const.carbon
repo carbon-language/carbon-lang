@@ -138,7 +138,5 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:   %.loc16_33.10: init %struct_type.a.b.c.fde to %return.param = struct_init (%.loc16_33.4, %.loc16_33.6, %.loc16_33.9)
 // CHECK:STDOUT:   %.loc16_34: init %struct_type.a.b.c.fde = converted %.loc16_33.1, %.loc16_33.10
 // CHECK:STDOUT:   return %.loc16_34 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

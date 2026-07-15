@@ -16,21 +16,21 @@
 // --- non_core.carbon
 package NonCore;
 interface Destroy {
-  let T1:! type;
-  let T2:! type;
+  let T1: type;
+  let T2: type;
 }
 
 // --- main.carbon
 import NonCore;
 
 interface Copy {
-  let T1:! type;
-  let T2:! type;
+  let T1: type;
+  let T2: type;
 }
 
 //@dump-sem-ir-begin
-fn UseNonCoreDestroy[T:! NonCore.Destroy](_: T.T1, _: T.T2) {}
-fn UseLocalCopy[T:! Copy](_: T.T1, _: T.T2) {}
+fn UseNonCoreDestroy[T: NonCore.Destroy](_: T.T1, _: T.T2) {}
+fn UseLocalCopy[T: Copy](_: T.T1, _: T.T2) {}
 //@dump-sem-ir-end
 
 // CHECK:STDOUT: ---

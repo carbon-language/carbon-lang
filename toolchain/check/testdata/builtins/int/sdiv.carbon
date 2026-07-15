@@ -52,8 +52,8 @@ library "[[@TEST_NAME]]";
 
 fn Div(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.sdiv";
 
-class Expect(N:! Core.IntLiteral) {}
-fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
+class Expect(N: Core.IntLiteral) {}
+fn Test(generic N: Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Div(-0x8000_0000, -1)) as Expect(0x8000_0000);
@@ -108,14 +108,10 @@ let d: Core.IntLiteral = DivLit(0, 0);
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Div.call: init %i32 = call %Div.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Div.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

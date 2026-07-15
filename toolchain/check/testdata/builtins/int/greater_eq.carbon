@@ -40,8 +40,8 @@ library "[[@TEST_NAME]]";
 
 fn GreaterEq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.greater_eq";
 
-class Expect(B:! bool) {}
-fn Test(B:! bool) -> Expect(B) { return {}; }
+class Expect(B: bool) {}
+fn Test(generic B: bool) -> Expect(B) { return {}; }
 
 fn F() {
   Test(GreaterEq(5, 5)) as Expect(true);
@@ -58,8 +58,8 @@ library "[[@TEST_NAME]]";
 
 fn GreaterEq(a: Core.IntLiteral, b: i32) -> bool = "int.greater_eq";
 
-class Expect(B:! bool) {}
-fn Test(B:! bool) -> Expect(B) { return {}; }
+class Expect(B: bool) {}
+fn Test(generic B: bool) -> Expect(B) { return {}; }
 
 fn F() {
   Test(GreaterEq(5, 5)) as Expect(true);
@@ -86,7 +86,5 @@ fn F() {
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %GreaterEq.call: init bool = call %GreaterEq.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %GreaterEq.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

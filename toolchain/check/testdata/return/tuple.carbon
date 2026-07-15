@@ -116,7 +116,5 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %.loc17_17.6: init %tuple.type.e55 to %return.param = tuple_init (%.loc17_17.3, %.loc17_17.5) [concrete = constants.%tuple.4fd]
 // CHECK:STDOUT:   %.loc17_18: init %tuple.type.e55 = converted %.loc17_17.1, %.loc17_17.6 [concrete = constants.%tuple.4fd]
 // CHECK:STDOUT:   return %.loc17_18 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

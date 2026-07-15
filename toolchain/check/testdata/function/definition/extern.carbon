@@ -132,8 +132,6 @@ extern fn F() {}
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- def_for_extern_decl.carbon
@@ -154,8 +152,6 @@ extern fn F() {}
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- split_library.carbon
@@ -193,8 +189,6 @@ extern fn F() {}
 // CHECK:STDOUT: extern fn @F() [from "split_library.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_def_extern_mismatch.carbon
@@ -215,8 +209,6 @@ extern fn F() {}
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_def_extern_mismatch_reverse.carbon
@@ -237,8 +229,6 @@ extern fn F() {}
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_diag_suppressed.carbon
@@ -260,8 +250,6 @@ extern fn F() {}
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_decl_after_def.carbon
@@ -282,8 +270,6 @@ extern fn F() {}
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- in_impl.carbon
@@ -311,7 +297,5 @@ extern fn F() {}
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

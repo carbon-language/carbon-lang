@@ -16,8 +16,8 @@ library "[[@TEST_NAME]]";
 
 fn Mul(a: i32, b: i32) -> i32 = "int.smul";
 
-class Expect(N:! i32) {}
-fn Test(N:! i32) -> Expect(N) { return {}; }
+class Expect(N: i32) {}
+fn Test(generic N: i32) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Mul(0, 0)) as Expect(0);
@@ -40,8 +40,8 @@ library "[[@TEST_NAME]]";
 
 fn Mul(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.smul";
 
-class Expect(N:! Core.IntLiteral) {}
-fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
+class Expect(N: Core.IntLiteral) {}
+fn Test(generic N: Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Mul(0, 0)) as Expect(0);
@@ -90,7 +90,5 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Mul.call: init %i32 = call %Mul.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Mul.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

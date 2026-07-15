@@ -84,7 +84,5 @@ fn F() {
 // CHECK:STDOUT:     %.loc8_44: %pattern_type.394 = tuple_pattern (%d.patt, %e.patt) [concrete = constants.%.dd8]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

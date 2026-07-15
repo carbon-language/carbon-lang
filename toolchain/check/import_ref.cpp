@@ -2758,13 +2758,16 @@ static auto ImportImplDecl(ImportContext& context,
   impl_decl.impl_id = context.local_impls().Add(
       {GetIncompleteLocalEntityBase(context, impl_decl_id, import_impl),
        {.parent_scope_inst_id = SemIR::InstId::None,
+        .is_final = import_impl.is_final,
+        .match_first_id = SemIR::InstId::None,
+        .decl_loc_in_match_first = SemIR::LocId::None,
+        .match_first_position = import_impl.match_first_position,
         .self_id = SemIR::TypeInstId::None,
         .constraint_id = SemIR::TypeInstId::None,
         .interface = SemIR::SpecificInterface::None,
         .witness_id = witness_id,
         .scope_id = import_impl.is_complete() ? AddPlaceholderNameScope(context)
-                                              : SemIR::NameScopeId::None,
-        .is_final = import_impl.is_final}});
+                                              : SemIR::NameScopeId::None}});
 
   // Write the impl ID into the ImplDecl.
   auto impl_const_id =
@@ -2841,6 +2844,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto self_const_id = GetLocalConstantId(resolver, import_impl.self_id);
   auto constraint_const_id =
       GetLocalConstantId(resolver, import_impl.constraint_id);
+  auto match_first_inst_id =
+      GetLocalConstantInstId(resolver, import_impl.match_first_id);
   auto& new_impl = resolver.local_impls().Get(impl_id);
   // Go directly to the simpler GetLocalConstantInstId to get an inst of the
   // same type locally. This does not handle symbolic values in a way that they
@@ -2864,6 +2869,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_impl.constraint_id, constraint_const_id);
   new_impl.interface = GetLocalSpecificInterface(
       resolver, import_impl.interface, specific_interface_data);
+  // The MatchFirstDecl can't be symbolic, so we don't need to make a
+  // LoadedImportRef instruction for it.
+  new_impl.match_first_id = match_first_inst_id;
   if (import_impl.is_complete()) {
     ImportImplDefinition(resolver, import_impl, new_impl);
   }
@@ -3901,6 +3909,22 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::MatchFirstDecl inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  auto scope_inst_id =
+      GetLocalConstantInstId(resolver, inst.enclosing_scope_inst_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  SemIR::MatchFirstDecl decl = {.enclosing_scope_inst_id = scope_inst_id};
+  auto decl_id = AddPlaceholderImportedInst(resolver, import_inst_id, decl);
+  ;
+  return ResolveResult::Done(
+      SetConstantValue(resolver.local_context(), decl_id, decl), decl_id);
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::Namespace inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   const auto& name_scope =
@@ -4451,9 +4475,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::GenericNamedConstraintType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
-    case CARBON_KIND(SemIR::LookupImplWitness inst): {
-      return TryResolveTypedInst(resolver, inst);
-    }
     case CARBON_KIND(SemIR::ImplWitness inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -4474,6 +4495,12 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::IntType inst): {
       return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::LookupImplWitness inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::MatchFirstDecl inst): {
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::MaybeUnformedType inst): {
       return TryResolveTypedInst(resolver, inst);

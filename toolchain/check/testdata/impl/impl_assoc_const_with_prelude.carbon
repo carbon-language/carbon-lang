@@ -16,7 +16,7 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! {.a: bool, .b: (i32, i32)};
+  let X: {.a: bool, .b: (i32, i32)};
 }
 impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = not false, .b = (3 - 2, 4 / 2)} {}
 
@@ -24,7 +24,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = not false, .b = 
 library "[[@TEST_NAME]]";
 
 interface I {
-  let X:! {.a: bool, .b: (i32, i32)};
+  let X: {.a: bool, .b: (i32, i32)};
 }
 // CHECK:STDERR: fail_two_different_non_type.carbon:[[@LINE+4]]:12: error: associated constant `.(I.X)` given two different values `{.a = true, .b = (1, 2)}` and `{.a = false, .b = (3, 4)}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 4)} {}
@@ -248,8 +248,6 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   witness = (@I.WithSelf.%X)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.I.impl: %.loc6_7.2 as %.loc6_14 {
@@ -454,8 +452,6 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   witness = (@I.WithSelf.%X)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.<error>.impl: %.loc10_7.2 as <error> {

@@ -11,13 +11,13 @@ export import library "prelude/operators";
 
 interface Iterate {
   // TODO: Support iterating ranges of non-copyable values.
-  let ElementType:! Copy & Destroy;
-  let CursorType:! Destroy;
+  let ElementType: Copy & Destroy;
+  let CursorType: Destroy;
   fn NewCursor(self) -> CursorType;
   fn Next(self, cursor: CursorType*) -> Optional(ElementType);
 }
 
-impl forall [T:! Copy & Destroy, N:! IntLiteral]
+impl forall [T: Copy & Destroy, N: IntLiteral]
     array(T, N) as Iterate
     where .ElementType = T and .CursorType = i32 {
   fn NewCursor(unused self) -> i32 { return 0; }
@@ -32,8 +32,8 @@ impl forall [T:! Copy & Destroy, N:! IntLiteral]
 }
 
 interface CppRangeForIterate {
-  let Iterator:! type;
-  let Sentinel:! type;
+  let Iterator: type;
+  let Sentinel: type;
 
   // TODO: self must be ref-qualified
   fn Begin(self) -> Iterator;
@@ -41,7 +41,7 @@ interface CppRangeForIterate {
 }
 
 impl forall [
-  R:! CppRangeForIterate where
+  R: CppRangeForIterate where
     .Iterator impls Copy & Destroy & CppUnsafeDeref & Inc & EqWith(.Sentinel) and
     .Iterator.(CppUnsafeDeref.Result) impls Copy & Destroy and
     .Sentinel impls Copy & Destroy

@@ -100,8 +100,6 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT:   %.loc5_28: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_29: %tuple.type = tuple_literal (%.loc5_24, %.loc5_28) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init_expr.carbon
@@ -150,8 +148,6 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT:   %.loc7: ref %tuple.type = temporary_storage
 // CHECK:STDOUT:   %F.call: init %tuple.type to %.loc7 = call %F.ref()
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- ref_expr.carbon
@@ -198,8 +194,6 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %t.ref: ref %tuple.type = name_ref t, file.%t [concrete = file.%t.var]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- grouping_parens.carbon
@@ -240,8 +234,6 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT:   %.loc5: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- one_tuple.carbon
@@ -291,7 +283,5 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT:   %.loc6_22: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_24: %tuple.type = tuple_literal (%.loc6_22) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

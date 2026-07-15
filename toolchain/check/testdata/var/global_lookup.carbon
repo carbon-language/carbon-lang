@@ -79,7 +79,5 @@ var y: {.v: ()} = x;
 // CHECK:STDOUT:   %.loc16_1: init %struct_type.v = converted %x.ref, %.loc16_19.5 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%y.var, %.loc16_1
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

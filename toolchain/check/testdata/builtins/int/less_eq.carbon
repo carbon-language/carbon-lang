@@ -40,8 +40,8 @@ library "[[@TEST_NAME]]";
 
 fn LessEq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.less_eq";
 
-class Expect(B:! bool) {}
-fn Test(B:! bool) -> Expect(B) { return {}; }
+class Expect(B: bool) {}
+fn Test(generic B: bool) -> Expect(B) { return {}; }
 
 fn F() {
   Test(LessEq(5, 5)) as Expect(true);
@@ -58,8 +58,8 @@ library "[[@TEST_NAME]]";
 
 fn LessEq(a: Core.IntLiteral, b: i32) -> bool = "int.less_eq";
 
-class Expect(B:! bool) {}
-fn Test(B:! bool) -> Expect(B) { return {}; }
+class Expect(B: bool) {}
+fn Test(generic B: bool) -> Expect(B) { return {}; }
 
 fn F() {
   Test(LessEq(5, 5)) as Expect(true);
@@ -121,7 +121,5 @@ fn Test(n: Core.IntLiteral) {
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %LessEq.call: init bool = call %LessEq.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %LessEq.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

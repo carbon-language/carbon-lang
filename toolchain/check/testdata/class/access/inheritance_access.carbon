@@ -427,8 +427,6 @@ class B {
 // CHECK:STDOUT:   %.loc13_27.4: init %tuple.type.e55 to %return.param = tuple_init (%.loc13_27.2, %.loc13_27.3)
 // CHECK:STDOUT:   %.loc13_28: init %tuple.type.e55 = converted %.loc13_27.1, %.loc13_27.4
 // CHECK:STDOUT:   return %.loc13_28 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- shadowing_access.carbon
@@ -565,8 +563,6 @@ class B {
 // CHECK:STDOUT:   %F.ref: %A.F.type = name_ref F, @A.%A.F.decl [concrete = constants.%A.F]
 // CHECK:STDOUT:   %A.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return %A.F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inherited_member_access.carbon
@@ -728,8 +724,6 @@ class B {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc7_13.2(%int_5) [concrete = constants.%int_5.eef]
 // CHECK:STDOUT:   %.loc7: init %i32 = converted %int_5, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_5.eef]
 // CHECK:STDOUT:   return %.loc7
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.G() -> out %return.param: %i32 {
@@ -742,8 +736,6 @@ class B {
 // CHECK:STDOUT:   %bound_method.loc15_13.2: <bound method> = bound_method %SOME_CONSTANT.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc15_13.2(%SOME_CONSTANT.ref)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.H() -> out %return.param: %i32 {
@@ -752,8 +744,6 @@ class B {
 // CHECK:STDOUT:   %SomeProtectedFunction.ref: %A.SomeProtectedFunction.type = name_ref SomeProtectedFunction, @A.%A.SomeProtectedFunction.decl [concrete = constants.%A.SomeProtectedFunction]
 // CHECK:STDOUT:   %A.SomeProtectedFunction.call: init %i32 = call %SomeProtectedFunction.ref()
 // CHECK:STDOUT:   return %A.SomeProtectedFunction.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_inherited_private_field_access.carbon
@@ -846,8 +836,6 @@ class B {
 // CHECK:STDOUT:   %self.ref: %Square = name_ref self, %self
 // CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- noninstance_private_on_self.carbon
@@ -894,8 +882,6 @@ class B {
 // CHECK:STDOUT: fn @C.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.G() {
@@ -906,8 +892,6 @@ class B {
 // CHECK:STDOUT:   %F.ref.loc8: %C.F.type = name_ref F, @C.%C.F.decl [concrete = constants.%C.F]
 // CHECK:STDOUT:   %C.F.call.loc8: init %empty_tuple.type = call %F.ref.loc8()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- noninstance_protected_on_self.carbon
@@ -954,8 +938,6 @@ class B {
 // CHECK:STDOUT: fn @C.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.G() {
@@ -966,8 +948,6 @@ class B {
 // CHECK:STDOUT:   %F.ref.loc8: %C.F.type = name_ref F, @C.%C.F.decl [concrete = constants.%C.F]
 // CHECK:STDOUT:   %C.F.call.loc8: init %empty_tuple.type = call %F.ref.loc8()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_noninstance_private_on_parent_qualified.carbon
@@ -1033,8 +1013,6 @@ class B {
 // CHECK:STDOUT: fn @B.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.G() {
@@ -1042,8 +1020,6 @@ class B {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_noninstance_private_on_parent_unqualified.carbon
@@ -1199,39 +1175,29 @@ class B {
 // CHECK:STDOUT: fn @A.Fa() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.Fb() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.G1() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT.ref: <error> = name_ref SOME_PRIVATE_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.G2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Fa.ref: <error> = name_ref Fa, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.G3() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Fb.ref: <error> = name_ref Fb, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- noninstance_protected_on_parent.carbon
@@ -1298,8 +1264,6 @@ class B {
 // CHECK:STDOUT: fn @B.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.G() {
@@ -1308,8 +1272,6 @@ class B {
 // CHECK:STDOUT:   %F.ref: %B.F.type = name_ref F, @B.%B.F.decl [concrete = constants.%B.F]
 // CHECK:STDOUT:   %B.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_inherited_access.carbon
@@ -1488,8 +1450,6 @@ class B {
 // CHECK:STDOUT:   %A.ref.loc33: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %SOME_PROTECTED_CONSTANT.ref: <error> = name_ref SOME_PROTECTED_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.SomeFunc(%self.param: %B) -> out %return.param: %i32 {
@@ -1500,8 +1460,6 @@ class B {
 // CHECK:STDOUT:   %.loc44_16.2: %Internal = acquire_value %.loc44_16.1
 // CHECK:STDOUT:   %INTERNAL_CONSTANT.ref: <error> = name_ref INTERNAL_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_compound_member_access.carbon
@@ -1585,8 +1543,6 @@ class B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inherited_compound_member_access.carbon
@@ -1674,7 +1630,5 @@ class B {
 // CHECK:STDOUT:   %.loc12_9.3: ref %A = converted %self.ref, %.loc12_9.2
 // CHECK:STDOUT:   %.loc12_9.4: ref %i32 = class_element_access %.loc12_9.3, element0
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

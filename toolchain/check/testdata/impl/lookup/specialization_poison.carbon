@@ -14,18 +14,18 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
   fn F(self) -> T;
 }
 
-impl forall [U:! type] U as I where .T = () {
+impl forall [U: type] U as I where .T = () {
   fn F(unused self) -> () { return (); }
 }
 
-// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+3]]:25: error: found `impl` that would change the result of an earlier use of `C* as I` [PoisonedImplLookupConcreteResult]
-// CHECK:STDERR: fn H[W:! type](v: W) -> W.(I.T) {
-// CHECK:STDERR:                         ^~~~~~~
-fn H[W:! type](v: W) -> W.(I.T) {
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+3]]:24: error: found `impl` that would change the result of an earlier use of `C* as I` [PoisonedImplLookupConcreteResult]
+// CHECK:STDERR: fn H[W: type](v: W) -> W.(I.T) {
+// CHECK:STDERR:                        ^~~~~~~
+fn H[W: type](v: W) -> W.(I.T) {
   return v.(I.F)();
 }
 
@@ -40,8 +40,8 @@ fn G(p: C*) -> () {
 // CHECK:STDERR: impl C* as I where .T = C {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE-21]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
-// CHECK:STDERR: impl forall [U:! type] U as I where .T = () {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl forall [U: type] U as I where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C* as I where .T = C {
   fn F(self) -> C { return *self; }
@@ -51,14 +51,14 @@ impl C* as I where .T = C {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
-impl forall [U:! type] U as I where .T = () {}
+impl forall [U: type] U as I where .T = () {}
 
 class C {}
 
-fn H[W:! type](unused v: W) {
+fn H[W: type](unused v: W) {
   // This concrete impl lookup query poisons any further specializations.
   // CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+3]]:17: error: found `impl` that would change the result of an earlier use of `C as I` [PoisonedImplLookupConcreteResult]
   // CHECK:STDERR:   let unused a: C.(I.T) = ();
@@ -70,8 +70,8 @@ fn H[W:! type](unused v: W) {
 // CHECK:STDERR: impl C as I where .T = C {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE-15]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
-// CHECK:STDERR: impl forall [U:! type] U as I where .T = () {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl forall [U: type] U as I where .T = () {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C as I where .T = C {}
 
@@ -79,13 +79,13 @@ impl C as I where .T = C {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
   fn F(self) -> T;
 }
 
-class C(U:! type) {}
+class C(U: type) {}
 
-impl forall [U:! type] C(U) as I where .T = () {
+impl forall [U: type] C(U) as I where .T = () {
   fn F(unused self) -> () { return (); }
 }
 
@@ -101,8 +101,8 @@ fn G(c: C(())) -> () {
 // CHECK:STDERR: impl C(()) as I where .T = {} {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE-15]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
-// CHECK:STDERR: impl forall [U:! type] C(U) as I where .T = () {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl forall [U: type] C(U) as I where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C(()) as I where .T = {} {
   fn F(unused self) -> {} { return {}; }
@@ -111,12 +111,12 @@ impl C(()) as I where .T = {} {
 // --- fail_final_poisoned_concrete_query_nested_type_in_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface I(U:! type) {
-  let T:! type;
+interface I(U: type) {
+  let T: type;
   fn F(self) -> T;
 }
 
-impl forall [U:! type] U as I(U) where .T = () {
+impl forall [U: type] U as I(U) where .T = () {
   fn F(unused self) -> () { return (); }
 }
 
@@ -134,8 +134,8 @@ fn G(c: C) -> () {
 // CHECK:STDERR: impl C as I(C) where .T = {} {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE-17]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
-// CHECK:STDERR: impl forall [U:! type] U as I(U) where .T = () {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl forall [U: type] U as I(U) where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C as I(C) where .T = {} {
   fn F(unused self) -> {} { return {}; }
@@ -145,27 +145,27 @@ impl C as I(C) where .T = {} {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
   fn F(self) -> T;
 }
 
-impl forall [U:! type] U as I where .T = () {
+impl forall [U: type] U as I where .T = () {
   fn F(unused self) -> () { return (); }
 }
 
-fn H[W:! type](v: W) -> W.(I.T) {
+fn H[W: type](v: W) -> W.(I.T) {
   return v.(I.F)();
 }
 
 // This function could return a concrete `X` if it saw the `final` impl below.
-fn G[X:! type](p: X*) -> (X*).(I.T) {
+fn G[X: type](p: X*) -> (X*).(I.T) {
   return H(p);
 }
 
 // TODO: This should be diagnosed as poisoned, as H() uses an associated
 // constant from the `impl` which was treated as a symbolic, but this would
 // change it to be a concrete type.
-final impl forall [V:! Core.Copy] V* as I where .T = V {
+final impl forall [V: Core.Copy] V* as I where .T = V {
   fn F(self) -> V { return *self; }
 }
 
@@ -180,8 +180,8 @@ fn F() {
   // CHECK:STDERR:                      ^~~~
   // CHECK:STDERR:
   musteval fn G() -> auto {
-    class C(T:! type) {}
-    impl forall [T:! type] C(T) as Z {}
+    class C(T: type) {}
+    impl forall [T: type] C(T) as Z {}
     C(D) as Z;
     return C(D);
   }

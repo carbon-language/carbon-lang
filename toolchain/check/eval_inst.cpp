@@ -348,13 +348,13 @@ static auto TryFindValueInRewriteConstraints(
 
     // The LHS of a rewrite can be an arbitrary type. For example:
     // ```
-    //   T:! Z where C impls (Y(.Self) where .Y1 = {})
+    //   T: Z where C impls (Y(.Self) where .Y1 = {})
     // ```
     // The rewrite in the facet type will be `(C as Y(T)).Y1 = {}`.
     //
     // It can also be another ImplWitnessAccess. For example:
     // ```
-    //   T:! Z where .Z1 impls (Y where .Y1 = {})
+    //   T: Z where .Z1 impls (Y where .Y1 = {})
     // ```
     // The rewrite in the facet type will be `((T as Z).Z1 as Y).Y1 = {}`.
     //
@@ -371,7 +371,7 @@ static auto TryFindValueInRewriteConstraints(
     // TODO: Requiring the rewrite to be against `.Self` is actually
     // insufficient. For a facet like
     // ```
-    // T:! type where C impls (Z(.Self) where .Z1 = ())
+    // T: type where C impls (Z(.Self) where .Z1 = ())
     // ```
     // and an access like `C.(Z(T).Z1)`, the root of the access is `C`. If we
     // search `T` for a witness, we'd need the inner-most self facet to be `C`

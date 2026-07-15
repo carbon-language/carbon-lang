@@ -57,23 +57,23 @@ library "[[@TEST_NAME]]";
 class C {}
 
 // CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
-// CHECK:STDERR: fn Foo[a: C];
-// CHECK:STDERR:        ^~~~
+// CHECK:STDERR: fn Foo[runtime a: C];
+// CHECK:STDERR:        ^~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn Foo[a: C];
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fn Foo[runtime a: C];
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Foo[a: C];
+fn Foo[runtime a: C];
 // CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
-// CHECK:STDERR: fn Foo[a: (C)] {}
-// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR: fn Foo[runtime a: (C)] {}
+// CHECK:STDERR:        ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn Foo[a: (C)] {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn Foo[runtime a: (C)] {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Foo[a: (C)] {}
+fn Foo[runtime a: (C)] {}
 
 // --- fail_raw_identifier.carbon
 
@@ -149,15 +149,15 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-fn Foo[a:! C]();
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Foo[unused a:! D]() {}
-// CHECK:STDERR:                   ^
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:12: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: fn Foo[a:! C]();
-// CHECK:STDERR:            ^
+fn Foo[a: C]();
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fn Foo[unused a: D]() {}
+// CHECK:STDERR:                  ^
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR: fn Foo[a: C]();
+// CHECK:STDERR:           ^
 // CHECK:STDERR:
-fn Foo[unused a:! D]() {}
+fn Foo[unused a: D]() {}
 
 // --- todo_fail_alias_in_return.carbon
 
@@ -275,15 +275,11 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo(%a.param.loc8: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar(%a.param.loc11: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- spacing.carbon
@@ -334,8 +330,6 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo(%a.param.loc7: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_parens.carbon
@@ -390,8 +384,6 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo.loc14(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_only_implicit_params.carbon
@@ -429,8 +421,6 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo.loc23() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_raw_identifier.carbon
@@ -485,8 +475,6 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo.loc14(%_.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.carbon
@@ -604,15 +592,11 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo(%a.param: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar(%a.param: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_name_mismatch.carbon
@@ -672,8 +656,6 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo.loc15(%b.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_alias.carbon
@@ -731,8 +713,6 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo.loc15(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduced_alias.carbon
@@ -807,8 +787,6 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -882,8 +860,6 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %.loc8_25.2: init %C to %return.param.loc8 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc8_26: init %C = converted %.loc8_25.1, %.loc8_25.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc8_26 to %return.param.loc8
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- alias_two_file.carbon
@@ -974,8 +950,6 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo(%a.param: %C) [from "alias_two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_repeat_const.carbon
@@ -1038,7 +1012,5 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo.loc18(%a.param: %const) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -15,13 +15,13 @@ import library "prelude/types/int_literal";
 //   }
 
 // Equality comparison: `a == b` and `a != b`.
-interface EqWith(Other:! type) {
+interface EqWith(Other: type) {
   fn Equal(self, other: Other) -> bool;
   fn NotEqual(self, other: Other) -> bool;
 }
 
 // Relational comparison: `a < b`, `a <= b`, `a > b`, `a >= b`.
-interface OrderedWith(Other:! type) {
+interface OrderedWith(Other: type) {
   // TODO: fn Compare
   fn Less(self, other: Other) -> bool;
   fn LessOrEquivalent(self, other: Other) -> bool;

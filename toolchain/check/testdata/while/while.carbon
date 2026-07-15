@@ -162,8 +162,6 @@ fn While() {
 // CHECK:STDOUT:   %H.ref: %H.type = name_ref H, file.%H.decl [concrete = constants.%H]
 // CHECK:STDOUT:   %H.call: init %empty_tuple.type = call %H.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unreachable_end.carbon
@@ -208,8 +206,6 @@ fn While() {
 // CHECK:STDOUT:   %H.ref: %H.type = name_ref H, file.%H.decl [concrete = constants.%H]
 // CHECK:STDOUT:   %H.call: init %empty_tuple.type = call %H.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- break_continue.carbon
@@ -328,7 +324,5 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.done.loc14:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

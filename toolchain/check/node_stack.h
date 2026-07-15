@@ -10,7 +10,6 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -417,6 +416,7 @@ class NodeStack {
     switch (node_kind) {
       case Parse::NodeKind::CallExprStart:
       case Parse::NodeKind::IfExprThen:
+      case Parse::NodeKind::MatchFirstDefinitionStart:
       case Parse::NodeKind::ObserveIntroducer:
       case Parse::NodeKind::RequireIntroducer:
       case Parse::NodeKind::ShortCircuitOperandAnd:
@@ -466,6 +466,7 @@ class NodeStack {
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::NamedConstraintIntroducer:
       case Parse::NodeKind::RefBindingName:
+      case Parse::NodeKind::RuntimeBindingName:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::StructLiteralStart:
       case Parse::NodeKind::StructTypeLiteralField:
@@ -522,7 +523,6 @@ class NodeStack {
       case Parse::NodeKind::MatchDefault:
       case Parse::NodeKind::MatchDefaultIntroducer:
       case Parse::NodeKind::MatchFirstIntroducer:
-      case Parse::NodeKind::MatchFirstDefinitionStart:
       case Parse::NodeKind::MatchHandlerStart:
       case Parse::NodeKind::MatchHandler:
       case Parse::NodeKind::MatchIntroducer:

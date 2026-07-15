@@ -102,33 +102,33 @@ fn Call3() {
 // CHECK:STDOUT: $_Z8identityI5ClassET_S1_ = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CPassI32.Main(i32 %a) #0 !dbg !11 {
+// CHECK:STDOUT: define i32 @_CPassI32.Main(i32 %a) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %identity.call = call i32 @_Z8identityIiET_S0_(i32 %a), !dbg !17
-// CHECK:STDOUT:   ret i32 %identity.call, !dbg !18
+// CHECK:STDOUT:   %identity.call = call i32 @_Z8identityIiET_S0_(i32 %a), !dbg !18
+// CHECK:STDOUT:   ret i32 %identity.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local noundef i32 @_Z8identityIiET_S0_(i32 noundef %x) #1 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.addr = alloca i32, align 4
-// CHECK:STDOUT:   store i32 %x, ptr %x.addr, align 4, !tbaa !7
-// CHECK:STDOUT:   %0 = load i32, ptr %x.addr, align 4, !tbaa !7
+// CHECK:STDOUT:   store i32 %x, ptr %x.addr, align 4, !tbaa !20
+// CHECK:STDOUT:   %0 = load i32, ptr %x.addr, align 4, !tbaa !20
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CPassI32Explicitly.Main(i32 %a) #0 !dbg !19 {
+// CHECK:STDOUT: define i32 @_CPassI32Explicitly.Main(i32 %a) #0 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %identity.call = call i32 @_Z8identityIiET_S0_(i32 %a), !dbg !22
-// CHECK:STDOUT:   ret i32 %identity.call, !dbg !23
+// CHECK:STDOUT:   %identity.call = call i32 @_Z8identityIiET_S0_(i32 %a), !dbg !24
+// CHECK:STDOUT:   ret i32 %identity.call, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassClass.Main(ptr sret({}) %return, ptr %a) #0 !dbg !24 {
+// CHECK:STDOUT: define void @_CPassClass.Main(ptr sret({}) %return, ptr %a) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_.carbon_thunk._(ptr %a, ptr %return), !dbg !30
-// CHECK:STDOUT:   ret void, !dbg !31
+// CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_.carbon_thunk._(ptr %a, ptr %return), !dbg !32
+// CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -138,10 +138,10 @@ fn Call3() {
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %class.Class, align 1
 // CHECK:STDOUT:   %undef.agg.tmp = alloca %class.Class, align 1
-// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !32
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !32
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !32
-// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !32
+// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !34
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !34
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !34
+// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !34
 // CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -168,34 +168,36 @@ fn Call3() {
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
-// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "PassI32", linkageName: "_CPassI32.Main", scope: null, file: !1, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
-// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
-// CHECK:STDOUT: !13 = !{!14, !14}
-// CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !15 = !{!16}
-// CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
-// CHECK:STDOUT: !17 = !DILocation(line: 7, column: 10, scope: !11)
-// CHECK:STDOUT: !18 = !DILocation(line: 7, column: 3, scope: !11)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "PassI32Explicitly", linkageName: "_CPassI32Explicitly.Main", scope: null, file: !1, line: 10, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !20)
-// CHECK:STDOUT: !20 = !{!21}
-// CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !19, type: !14)
-// CHECK:STDOUT: !22 = !DILocation(line: 11, column: 10, scope: !19)
-// CHECK:STDOUT: !23 = !DILocation(line: 11, column: 3, scope: !19)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "PassClass", linkageName: "_CPassClass.Main", scope: null, file: !1, line: 14, type: !25, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !28)
-// CHECK:STDOUT: !25 = !DISubroutineType(types: !26)
-// CHECK:STDOUT: !26 = !{!27, !27}
-// CHECK:STDOUT: !27 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !28 = !{!29}
-// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !24, type: !27)
-// CHECK:STDOUT: !30 = !DILocation(line: 15, column: 10, scope: !24)
-// CHECK:STDOUT: !31 = !DILocation(line: 15, column: 3, scope: !24)
-// CHECK:STDOUT: !32 = !{!33, !33, i64 0}
-// CHECK:STDOUT: !33 = !{!"p1 _ZTS5Class", !34, i64 0}
-// CHECK:STDOUT: !34 = !{!"any pointer", !9, i64 0}
+// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
+// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "PassI32", linkageName: "_CPassI32.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !16)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{!15, !15}
+// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !16 = !{!17}
+// CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !12, type: !15)
+// CHECK:STDOUT: !18 = !DILocation(line: 7, column: 10, scope: !12)
+// CHECK:STDOUT: !19 = !DILocation(line: 7, column: 3, scope: !12)
+// CHECK:STDOUT: !20 = !{!9, !9, i64 0}
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "PassI32Explicitly", linkageName: "_CPassI32Explicitly.Main", scope: null, file: !1, line: 10, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !22)
+// CHECK:STDOUT: !22 = !{!23}
+// CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !21, type: !15)
+// CHECK:STDOUT: !24 = !DILocation(line: 11, column: 10, scope: !21)
+// CHECK:STDOUT: !25 = !DILocation(line: 11, column: 3, scope: !21)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "PassClass", linkageName: "_CPassClass.Main", scope: null, file: !1, line: 14, type: !27, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !30)
+// CHECK:STDOUT: !27 = !DISubroutineType(types: !28)
+// CHECK:STDOUT: !28 = !{!29, !29}
+// CHECK:STDOUT: !29 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !30 = !{!31}
+// CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !26, type: !29)
+// CHECK:STDOUT: !32 = !DILocation(line: 15, column: 10, scope: !26)
+// CHECK:STDOUT: !33 = !DILocation(line: 15, column: 3, scope: !26)
+// CHECK:STDOUT: !34 = !{!35, !35, i64 0}
+// CHECK:STDOUT: !35 = !{!"p1 _ZTS5Class", !36, i64 0}
+// CHECK:STDOUT: !36 = !{!"any pointer", !10, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'variadic.carbon'
@@ -204,28 +206,28 @@ fn Call3() {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall1.Main() #0 !dbg !11 {
+// CHECK:STDOUT: define void @_CCall1.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z3fooIJEEviDpT_(i32 1), !dbg !14
-// CHECK:STDOUT:   ret void, !dbg !15
+// CHECK:STDOUT:   call void @_Z3fooIJEEviDpT_(i32 1), !dbg !15
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z3fooIJEEviDpT_(i32 noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall2.Main() #0 !dbg !16 {
+// CHECK:STDOUT: define void @_CCall2.Main() #0 !dbg !17 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z3fooIJiEEviDpT_(i32 1, i32 2), !dbg !17
-// CHECK:STDOUT:   ret void, !dbg !18
+// CHECK:STDOUT:   call void @_Z3fooIJiEEviDpT_(i32 1, i32 2), !dbg !18
+// CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z3fooIJiEEviDpT_(i32 noundef, i32 noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall3.Main() #0 !dbg !19 {
+// CHECK:STDOUT: define void @_CCall3.Main() #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z3fooIJiiEEviDpT_(i32 1, i32 2, i32 3), !dbg !20
-// CHECK:STDOUT:   ret void, !dbg !21
+// CHECK:STDOUT:   call void @_Z3fooIJiiEEviDpT_(i32 1, i32 2, i32 3), !dbg !21
+// CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z3fooIJiiEEviDpT_(i32 noundef, i32 noundef, i32 noundef) #1
@@ -244,21 +246,22 @@ fn Call3() {
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
-// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Call1", linkageName: "_CCall1.Main", scope: null, file: !1, line: 9, type: !12, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
-// CHECK:STDOUT: !13 = !{null}
-// CHECK:STDOUT: !14 = !DILocation(line: 11, column: 3, scope: !11)
-// CHECK:STDOUT: !15 = !DILocation(line: 9, column: 1, scope: !11)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "Call2", linkageName: "_CCall2.Main", scope: null, file: !1, line: 15, type: !12, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !17 = !DILocation(line: 17, column: 3, scope: !16)
-// CHECK:STDOUT: !18 = !DILocation(line: 15, column: 1, scope: !16)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Call3", linkageName: "_CCall3.Main", scope: null, file: !1, line: 21, type: !12, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !20 = !DILocation(line: 23, column: 3, scope: !19)
-// CHECK:STDOUT: !21 = !DILocation(line: 21, column: 1, scope: !19)
+// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
+// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Call1", linkageName: "_CCall1.Main", scope: null, file: !1, line: 9, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{null}
+// CHECK:STDOUT: !15 = !DILocation(line: 11, column: 3, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 9, column: 1, scope: !12)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "Call2", linkageName: "_CCall2.Main", scope: null, file: !1, line: 15, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !18 = !DILocation(line: 17, column: 3, scope: !17)
+// CHECK:STDOUT: !19 = !DILocation(line: 15, column: 1, scope: !17)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Call3", linkageName: "_CCall3.Main", scope: null, file: !1, line: 21, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !21 = !DILocation(line: 23, column: 3, scope: !20)
+// CHECK:STDOUT: !22 = !DILocation(line: 21, column: 1, scope: !20)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'variadic_thunk.carbon'
@@ -272,12 +275,12 @@ fn Call3() {
 // CHECK:STDOUT: @X.val.loc12_14.3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall1.Main() #0 !dbg !11 {
+// CHECK:STDOUT: define void @_CCall1.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_12.2.temp = alloca {}, align 1, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_12.2.temp), !dbg !14
-// CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk._(ptr @X.val.loc12_14.3), !dbg !15
-// CHECK:STDOUT:   ret void, !dbg !16
+// CHECK:STDOUT:   %.loc12_12.2.temp = alloca {}, align 1, !dbg !15
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_12.2.temp), !dbg !15
+// CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk._(ptr @X.val.loc12_14.3), !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -285,19 +288,19 @@ fn Call3() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %class.X, align 1
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !17
-// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !17
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !18
+// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !18
 // CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall2.Main() #0 !dbg !20 {
+// CHECK:STDOUT: define void @_CCall2.Main() #0 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_12.2.temp = alloca {}, align 1, !dbg !21
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.2.temp), !dbg !21
-// CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk.__(ptr @X.val.loc12_14.3, i32 2), !dbg !22
-// CHECK:STDOUT:   ret void, !dbg !23
+// CHECK:STDOUT:   %.loc18_12.2.temp = alloca {}, align 1, !dbg !22
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.2.temp), !dbg !22
+// CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk.__(ptr @X.val.loc12_14.3, i32 2), !dbg !23
+// CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -306,21 +309,21 @@ fn Call3() {
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
 // CHECK:STDOUT:   %agg.tmp = alloca %class.X, align 1
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !17
-// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !7
-// CHECK:STDOUT:   %2 = load ptr, ptr %.addr, align 8, !tbaa !17
-// CHECK:STDOUT:   %3 = load i32, ptr %.addr1, align 4, !tbaa !7
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !18
+// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !25
+// CHECK:STDOUT:   %2 = load ptr, ptr %.addr, align 8, !tbaa !18
+// CHECK:STDOUT:   %3 = load i32, ptr %.addr1, align 4, !tbaa !25
 // CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_(i32 noundef %3)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall3.Main() #0 !dbg !24 {
+// CHECK:STDOUT: define void @_CCall3.Main() #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc24_12.2.temp = alloca {}, align 1, !dbg !25
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_12.2.temp), !dbg !25
-// CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk.___(ptr @X.val.loc12_14.3, i32 2, i32 3), !dbg !26
-// CHECK:STDOUT:   ret void, !dbg !27
+// CHECK:STDOUT:   %.loc24_12.2.temp = alloca {}, align 1, !dbg !27
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_12.2.temp), !dbg !27
+// CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk.___(ptr @X.val.loc12_14.3, i32 2, i32 3), !dbg !28
+// CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -330,12 +333,12 @@ fn Call3() {
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
 // CHECK:STDOUT:   %.addr2 = alloca i32, align 4
 // CHECK:STDOUT:   %agg.tmp = alloca %class.X, align 1
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !17
-// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !7
-// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !7
-// CHECK:STDOUT:   %3 = load ptr, ptr %.addr, align 8, !tbaa !17
-// CHECK:STDOUT:   %4 = load i32, ptr %.addr1, align 4, !tbaa !7
-// CHECK:STDOUT:   %5 = load i32, ptr %.addr2, align 4, !tbaa !7
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !18
+// CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !25
+// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !25
+// CHECK:STDOUT:   %3 = load ptr, ptr %.addr, align 8, !tbaa !18
+// CHECK:STDOUT:   %4 = load i32, ptr %.addr1, align 4, !tbaa !25
+// CHECK:STDOUT:   %5 = load i32, ptr %.addr2, align 4, !tbaa !25
 // CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_(i32 noundef %4, i32 noundef %5)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -368,25 +371,27 @@ fn Call3() {
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
-// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Call1", linkageName: "_CCall1.Main", scope: null, file: !1, line: 10, type: !12, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
-// CHECK:STDOUT: !13 = !{null}
-// CHECK:STDOUT: !14 = !DILocation(line: 12, column: 11, scope: !11)
-// CHECK:STDOUT: !15 = !DILocation(line: 12, column: 3, scope: !11)
-// CHECK:STDOUT: !16 = !DILocation(line: 10, column: 1, scope: !11)
-// CHECK:STDOUT: !17 = !{!18, !18, i64 0}
-// CHECK:STDOUT: !18 = !{!"p1 _ZTS1X", !19, i64 0}
-// CHECK:STDOUT: !19 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Call2", linkageName: "_CCall2.Main", scope: null, file: !1, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !21 = !DILocation(line: 18, column: 11, scope: !20)
-// CHECK:STDOUT: !22 = !DILocation(line: 18, column: 3, scope: !20)
-// CHECK:STDOUT: !23 = !DILocation(line: 16, column: 1, scope: !20)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Call3", linkageName: "_CCall3.Main", scope: null, file: !1, line: 22, type: !12, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !25 = !DILocation(line: 24, column: 11, scope: !24)
-// CHECK:STDOUT: !26 = !DILocation(line: 24, column: 3, scope: !24)
-// CHECK:STDOUT: !27 = !DILocation(line: 22, column: 1, scope: !24)
+// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
+// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Call1", linkageName: "_CCall1.Main", scope: null, file: !1, line: 10, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{null}
+// CHECK:STDOUT: !15 = !DILocation(line: 12, column: 11, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 12, column: 3, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 10, column: 1, scope: !12)
+// CHECK:STDOUT: !18 = !{!19, !19, i64 0}
+// CHECK:STDOUT: !19 = !{!"p1 _ZTS1X", !20, i64 0}
+// CHECK:STDOUT: !20 = !{!"any pointer", !10, i64 0}
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Call2", linkageName: "_CCall2.Main", scope: null, file: !1, line: 16, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !22 = !DILocation(line: 18, column: 11, scope: !21)
+// CHECK:STDOUT: !23 = !DILocation(line: 18, column: 3, scope: !21)
+// CHECK:STDOUT: !24 = !DILocation(line: 16, column: 1, scope: !21)
+// CHECK:STDOUT: !25 = !{!9, !9, i64 0}
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Call3", linkageName: "_CCall3.Main", scope: null, file: !1, line: 22, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !27 = !DILocation(line: 24, column: 11, scope: !26)
+// CHECK:STDOUT: !28 = !DILocation(line: 24, column: 3, scope: !26)
+// CHECK:STDOUT: !29 = !DILocation(line: 22, column: 1, scope: !26)
 // CHECK:STDOUT:

@@ -186,8 +186,6 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float]
 // CHECK:STDOUT:   %FloatLiteralToFloatLiteral.call: init Core.FloatLiteral = call %FloatLiteralToFloatLiteral.ref(%float) [concrete = constants.%float]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- literal_f64.carbon
@@ -249,8 +247,6 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %float.loc8: Core.FloatLiteral = float_literal_value 10e307 [concrete = constants.%float.12a]
 // CHECK:STDOUT:   %FloatLiteralToFloat64.call.loc8: init %f64.dc1 = call %FloatLiteralToFloat64.ref.loc8(%float.loc8) [concrete = constants.%float.672]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- literal_f32.carbon
@@ -312,8 +308,6 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %float.loc8: Core.FloatLiteral = float_literal_value 10e37 [concrete = constants.%float.8d2]
 // CHECK:STDOUT:   %FloatLiteralToFloat32.call.loc8: init %f32.c73 = call %FloatLiteralToFloat32.ref.loc8(%float.loc8) [concrete = constants.%float.c47]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- identity_f64.carbon
@@ -415,8 +409,6 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %.loc8_31.2: %f64.dc1 = converted %float.loc8, %.loc8_31.1 [concrete = constants.%float.672]
 // CHECK:STDOUT:   %Float64ToFloat64.call.loc8: init %f64.dc1 = call %Float64ToFloat64.ref.loc8(%.loc8_31.2) [concrete = constants.%float.672]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- identity_f32.carbon
@@ -518,8 +510,6 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %.loc8_31.2: %f32.c73 = converted %float.loc8, %.loc8_31.1 [concrete = constants.%float.c47]
 // CHECK:STDOUT:   %Float32ToFloat32.call.loc8: init %f32.c73 = call %Float32ToFloat32.ref.loc8(%.loc8_31.2) [concrete = constants.%float.c47]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- truncate.carbon
@@ -580,8 +570,6 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %.loc6_31.2: %f64.dc1 = converted %float, %.loc6_31.1 [concrete = constants.%float.3b9]
 // CHECK:STDOUT:   %Float64ToFloat32.call: init %f32.c73 = call %Float64ToFloat32.ref(%.loc6_31.2) [concrete = constants.%float.943]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_truncate_overflow.carbon
@@ -672,8 +660,6 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %float.loc21: Core.FloatLiteral = float_literal_value 10e308 [concrete = constants.%float.82f]
 // CHECK:STDOUT:   %FloatLiteralToFloat64.call: init %f64.dc1 = call %FloatLiteralToFloat64.ref(%float.loc21) [concrete = <error>]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- extend.carbon
@@ -757,8 +743,6 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %.loc7_31.2: %f32.c73 = converted %float.loc7, %.loc7_31.1 [concrete = constants.%float.518]
 // CHECK:STDOUT:   %Float32ToFloat64.call.loc7: init %f64.dc1 = call %Float32ToFloat64.ref.loc7(%.loc7_31.2) [concrete = constants.%float.84e]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_not_constant.carbon
@@ -823,7 +807,5 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %not_constant_64.ref: %f64.dc1 = name_ref not_constant_64, file.%not_constant_64
 // CHECK:STDOUT:   %Float64ToFloat64.call: init %f64.dc1 = call %Float64ToFloat64.ref(%not_constant_64.ref)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

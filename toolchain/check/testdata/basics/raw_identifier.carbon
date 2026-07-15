@@ -112,8 +112,6 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:   %.loc15_10: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_13: init %empty_tuple.type = converted %n.ref, %.loc15_10 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return %.loc15_13
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%n.param: %empty_tuple.type) -> out %return.param: %empty_tuple.type {
@@ -122,8 +120,6 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:   %.loc19_10: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc19_11: init %empty_tuple.type = converted %n.ref, %.loc19_10 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return %.loc19_11
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C(%if.param: %empty_tuple.type) -> out %return.param: %empty_tuple.type {
@@ -132,7 +128,5 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:   %.loc23_10: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc23_14: init %empty_tuple.type = converted %if.ref, %.loc23_10 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return %.loc23_14
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

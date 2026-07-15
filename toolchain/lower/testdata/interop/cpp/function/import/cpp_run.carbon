@@ -35,10 +35,10 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @main() #1 !dbg !11 {
+// CHECK:STDOUT: define i32 @main() #1 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN1N3RunEv(), !dbg !15
-// CHECK:STDOUT:   ret i32 0, !dbg !16
+// CHECK:STDOUT:   call void @_ZN1N3RunEv(), !dbg !16
+// CHECK:STDOUT:   ret i32 0, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -55,14 +55,15 @@ fn Run() {
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
-// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !1, line: 8, type: !12, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
-// CHECK:STDOUT: !13 = !{!14}
-// CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !15 = !DILocation(line: 9, column: 3, scope: !11)
-// CHECK:STDOUT: !16 = !DILocation(line: 8, column: 1, scope: !11)
+// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
+// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !1, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{!15}
+// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !16 = !DILocation(line: 9, column: 3, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 8, column: 1, scope: !12)
 // CHECK:STDOUT:

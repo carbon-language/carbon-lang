@@ -47,7 +47,7 @@ impl {} as I & I {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 impl {} as I where .T = ();
 
@@ -57,7 +57,7 @@ impl {} as I where .T = () {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 class C {}
 impl C as I where .T = ();
@@ -70,7 +70,7 @@ impl C as I where .T = () {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 class C {}
 impl C as I where .T = ();
@@ -83,7 +83,7 @@ impl C as I where .T = () {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 class C {}
 impl C as I;
@@ -98,8 +98,8 @@ let x: (C as I).T = ();
 // CHECK:STDERR: impl C as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_unset_associated_const.carbon:[[@LINE-14]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let T:! type;
-// CHECK:STDERR:       ^~~~~~~~
+// CHECK:STDERR:   let T: type;
+// CHECK:STDERR:       ^~~~~~~
 // CHECK:STDERR:
 impl C as I {}
 
@@ -129,8 +129,8 @@ impl D as I where .T = C {}
 // --- associated_const_of_parameterized.carbon
 library "[[@TEST_NAME]]";
 
-interface I(U:! type) {
-  let T:! type;
+interface I(U: type) {
+  let T: type;
 }
 class C;
 class D {}
@@ -145,13 +145,13 @@ library "[[@TEST_NAME]]";
 interface I;
 class D {}
 impl D as I;
-class C(T:! I);
+class C(T: I);
 
 fn F(x: C(D));
 
 interface I {}
 impl D as I {}
-class C(T:! I) {}
+class C(T: I) {}
 
 fn F(unused x: C(D)) {}
 
@@ -174,8 +174,8 @@ interface J {}
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
-  let U:! type;
+  let T: type;
+  let U: type;
 }
 class C {}
 
@@ -185,8 +185,8 @@ impl C as I where .T = ();
 // CHECK:STDERR: impl C as I where .T = () {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_never_assigned_associated_const.carbon:[[@LINE-9]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let U:! type;
-// CHECK:STDERR:       ^~~~~~~~
+// CHECK:STDERR:   let U: type;
+// CHECK:STDERR:       ^~~~~~~
 // CHECK:STDERR:
 impl C as I where .T = () {}
 
@@ -196,8 +196,8 @@ library "[[@TEST_NAME]]";
 interface X;
 
 // Allowed to use incomplete interfaces in function declarations.
-fn F(_:! X);
-fn G[U:! X](u: U);
+fn F(generic _: X);
+fn G[U: X](u: U);
 
 class C;
 
@@ -224,8 +224,8 @@ fn H(c: C) {
 // The above declarations require that `interface Y`, `fn F` (since it is
 // generic), and `impl C as X` are defined in the same file.
 interface Y {}
-fn F(_:! X) {}
-fn G[U:! X](unused u: U) {}
+fn F(generic _: X) {}
+fn G[U: X](unused u: U) {}
 impl C as Y;
 impl C as X {}
 impl C as Y {}
@@ -277,8 +277,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.I.impl: %.loc4_7.2 as %I.ref.loc4 {
@@ -358,8 +356,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%I.WithSelf.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.I.impl: %.loc4_7.2 as %I.ref.loc4 {
@@ -380,8 +376,6 @@ impl C as Y {}
 // CHECK:STDOUT: fn @empty_struct_type.as.I.impl.G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
@@ -475,8 +469,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.I.impl: %.loc4_7.2 as file.%.loc4_14.2 {
@@ -592,8 +584,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.I.impl: %.loc6_7.2 as %.loc6_14 {
@@ -732,8 +722,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref.loc7 as %.loc7_13 {
@@ -758,8 +746,6 @@ impl C as Y {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
@@ -890,8 +876,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref.loc7 as %.loc7_13 {
@@ -916,8 +900,6 @@ impl C as Y {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
@@ -1004,8 +986,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref.loc7 as %I.ref.loc7 {
@@ -1029,8 +1009,6 @@ impl C as Y {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc13: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
@@ -1118,8 +1096,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @D.as.<error>.impl: %D.ref.loc13 as <error> {
@@ -1204,9 +1180,9 @@ impl C as Y {}
 // CHECK:STDOUT:   %I.decl: %I.type.335 = interface_decl @I [concrete = constants.%I.generic] {
 // CHECK:STDOUT:     %U.patt.loc3_14.1: %pattern_type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc3_14.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc3_17.1: type = splice_block %.loc3_17.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc3_16.1: type = splice_block %.loc3_16.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
-// CHECK:STDOUT:       %.loc3_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc3_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc3_14.2: type = symbolic_binding U, 0 [symbolic = %U.loc3_14.1 (constants.%U)]
 // CHECK:STDOUT:   }
@@ -1265,10 +1241,10 @@ impl C as Y {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%U.loc3_14.1)> [symbolic = %I.type (constants.%I.type.3fe)]
-// CHECK:STDOUT:   %Self.loc3_23.2: @I.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self.191)]
+// CHECK:STDOUT:   %Self.loc3_22.2: @I.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self.loc3_22.2 (constants.%Self.191)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc3_23.1: @I.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self.191)]
+// CHECK:STDOUT:     %Self.loc3_22.1: @I.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self.loc3_22.2 (constants.%Self.191)]
 // CHECK:STDOUT:     %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
@@ -1277,13 +1253,11 @@ impl C as Y {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc3_23.1
+// CHECK:STDOUT:     .Self = %Self.loc3_22.1
 // CHECK:STDOUT:     .T = @T.%assoc0
 // CHECK:STDOUT:     witness = (@I.WithSelf.%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1326,7 +1300,7 @@ impl C as Y {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.c9e
-// CHECK:STDOUT:   %Self.loc3_23.2 => constants.%Self.29c
+// CHECK:STDOUT:   %Self.loc3_22.2 => constants.%Self.29c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%C, constants.%Self.191) {
@@ -1460,8 +1434,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @D.as.I.impl: %D.ref.loc5 as %I.ref.loc5 {
@@ -1499,8 +1471,6 @@ impl C as Y {}
 // CHECK:STDOUT: fn @F(%x.param.loc14: %C.fd5) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
@@ -1589,8 +1559,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
@@ -1602,8 +1570,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_struct_type.as.<error>.impl: %.loc10_7.2 as <error>;
@@ -1714,8 +1680,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = (@I.WithSelf.%T, @I.WithSelf.%U)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref.loc9 as %.loc9_13 {
@@ -1816,25 +1780,25 @@ impl C as Y {}
 // CHECK:STDOUT:       %.Self.frozen.loc6: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %X.ref.loc6: type = name_ref X, file.%X.decl.loc3 [concrete = constants.%X.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_.loc6_7.2: %X.type = symbolic_binding _, 0 [symbolic = %_.loc6_7.1 (constants.%_)]
+// CHECK:STDOUT:     %_.loc6_15.2: %X.type = symbolic_binding _, 0 [symbolic = %_.loc6_15.1 (constants.%_)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl.loc7: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %U.patt.loc35: %pattern_type.ffc = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc7 (constants.%U.patt)]
 // CHECK:STDOUT:     %u.param_patt.loc35: @G.%pattern_type (%pattern_type.fa2) = value_param_pattern [symbolic = %u.param_patt.loc7 (constants.%u.param_patt.796)]
 // CHECK:STDOUT:     %u.patt.loc35: @G.%pattern_type (%pattern_type.fa2) = at_binding_pattern u, %u.param_patt.loc35 [symbolic = %u.patt.loc7 (constants.%u.patt.dae)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc7_10: type = splice_block %X.ref.loc7 [concrete = constants.%X.type] {
+// CHECK:STDOUT:     %.loc7_9: type = splice_block %X.ref.loc7 [concrete = constants.%X.type] {
 // CHECK:STDOUT:       %.Self.frozen.loc7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %X.ref.loc7: type = name_ref X, file.%X.decl.loc3 [concrete = constants.%X.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc7_7.2: %X.type = symbolic_binding U, 0 [symbolic = %U.loc7_7.1 (constants.%U)]
-// CHECK:STDOUT:     %u.param.loc7: @G.%U.as_type.loc7_16.1 (%U.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc7_16.1: type = splice_block %.loc7_16.2 [symbolic = %U.as_type.loc7_16.1 (constants.%U.as_type)] {
+// CHECK:STDOUT:     %u.param.loc7: @G.%U.as_type.loc7_15.1 (%U.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc7_15.1: type = splice_block %.loc7_15.2 [symbolic = %U.as_type.loc7_15.1 (constants.%U.as_type)] {
 // CHECK:STDOUT:       %U.ref.loc7: %X.type = name_ref U, %U.loc7_7.2 [symbolic = %U.loc7_7.1 (constants.%U)]
-// CHECK:STDOUT:       %U.as_type.loc7_16.2: type = facet_access_type %U.ref.loc7 [symbolic = %U.as_type.loc7_16.1 (constants.%U.as_type)]
-// CHECK:STDOUT:       %.loc7_16.2: type = converted %U.ref.loc7, %U.as_type.loc7_16.2 [symbolic = %U.as_type.loc7_16.1 (constants.%U.as_type)]
+// CHECK:STDOUT:       %U.as_type.loc7_15.2: type = facet_access_type %U.ref.loc7 [symbolic = %U.as_type.loc7_15.1 (constants.%U.as_type)]
+// CHECK:STDOUT:       %.loc7_15.2: type = converted %U.ref.loc7, %U.as_type.loc7_15.2 [symbolic = %U.as_type.loc7_15.1 (constants.%U.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %u.loc7: @G.%U.as_type.loc7_16.1 (%U.as_type) = wrapper_binding u, %u.param.loc7
+// CHECK:STDOUT:     %u.loc7: @G.%U.as_type.loc7_15.1 (%U.as_type) = wrapper_binding u, %u.param.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc9: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @C.as.X.impl [concrete] {} {
@@ -1860,25 +1824,25 @@ impl C as Y {}
 // CHECK:STDOUT:       %.Self.frozen.loc34: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %X.ref.loc34: type = name_ref X, file.%X.decl.loc3 [concrete = constants.%X.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_.loc34: %X.type = symbolic_binding _, 0 [symbolic = %_.loc6_7.1 (constants.%_)]
+// CHECK:STDOUT:     %_.loc34: %X.type = symbolic_binding _, 0 [symbolic = %_.loc6_15.1 (constants.%_)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl.loc35: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %U.patt.loc35: %pattern_type.ffc = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc7 (constants.%U.patt)]
 // CHECK:STDOUT:     %u.param_patt.loc35: @G.%pattern_type (%pattern_type.fa2) = value_param_pattern [symbolic = %u.param_patt.loc7 (constants.%u.param_patt.796)]
 // CHECK:STDOUT:     %u.patt.loc35: @G.%pattern_type (%pattern_type.fa2) = at_binding_pattern u, %u.param_patt.loc35 [symbolic = %u.patt.loc7 (constants.%u.patt.dae)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc35_10: type = splice_block %X.ref.loc35 [concrete = constants.%X.type] {
+// CHECK:STDOUT:     %.loc35_9: type = splice_block %X.ref.loc35 [concrete = constants.%X.type] {
 // CHECK:STDOUT:       %.Self.frozen.loc35: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %X.ref.loc35: type = name_ref X, file.%X.decl.loc3 [concrete = constants.%X.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc35: %X.type = symbolic_binding U, 0 [symbolic = %U.loc7_7.1 (constants.%U)]
-// CHECK:STDOUT:     %u.param.loc35: @G.%U.as_type.loc7_16.1 (%U.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc35_23.1: type = splice_block %.loc35_23.2 [symbolic = %U.as_type.loc7_16.1 (constants.%U.as_type)] {
+// CHECK:STDOUT:     %u.param.loc35: @G.%U.as_type.loc7_15.1 (%U.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc35_22.1: type = splice_block %.loc35_22.2 [symbolic = %U.as_type.loc7_15.1 (constants.%U.as_type)] {
 // CHECK:STDOUT:       %U.ref.loc35: %X.type = name_ref U, %U.loc35 [symbolic = %U.loc7_7.1 (constants.%U)]
-// CHECK:STDOUT:       %U.as_type.loc35: type = facet_access_type %U.ref.loc35 [symbolic = %U.as_type.loc7_16.1 (constants.%U.as_type)]
-// CHECK:STDOUT:       %.loc35_23.2: type = converted %U.ref.loc35, %U.as_type.loc35 [symbolic = %U.as_type.loc7_16.1 (constants.%U.as_type)]
+// CHECK:STDOUT:       %U.as_type.loc35: type = facet_access_type %U.ref.loc35 [symbolic = %U.as_type.loc7_15.1 (constants.%U.as_type)]
+// CHECK:STDOUT:       %.loc35_22.2: type = converted %U.ref.loc35, %U.as_type.loc35 [symbolic = %U.as_type.loc7_15.1 (constants.%U.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %u.loc35: @G.%U.as_type.loc7_16.1 (%U.as_type) = wrapper_binding u, %u.param.loc35
+// CHECK:STDOUT:     %u.loc35: @G.%U.as_type.loc7_15.1 (%U.as_type) = wrapper_binding u, %u.param.loc35
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @C.as.Y.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc36: type = name_ref C, file.%C.decl.loc9 [concrete = constants.%C]
@@ -1903,8 +1867,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Y {
@@ -1916,8 +1878,6 @@ impl C as Y {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.X.impl: %C.ref.loc12 as %X.ref.loc12 {
@@ -1946,36 +1906,32 @@ impl C as Y {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%_.loc6_7.2: %X.type) {
+// CHECK:STDOUT: generic fn @F(%_.loc6_15.2: %X.type) {
 // CHECK:STDOUT:   %_.patt.loc6: %pattern_type.ffc = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc6 (constants.%_.patt)]
-// CHECK:STDOUT:   %_.loc6_7.1: %X.type = symbolic_binding _, 0 [symbolic = %_.loc6_7.1 (constants.%_)]
+// CHECK:STDOUT:   %_.loc6_15.1: %X.type = symbolic_binding _, 0 [symbolic = %_.loc6_15.1 (constants.%_)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%U.loc7_7.2: %X.type) {
 // CHECK:STDOUT:   %U.patt.loc7: %pattern_type.ffc = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc7 (constants.%U.patt)]
 // CHECK:STDOUT:   %U.loc7_7.1: %X.type = symbolic_binding U, 0 [symbolic = %U.loc7_7.1 (constants.%U)]
-// CHECK:STDOUT:   %U.as_type.loc7_16.1: type = facet_access_type %U.loc7_7.1 [symbolic = %U.as_type.loc7_16.1 (constants.%U.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %U.as_type.loc7_16.1 [symbolic = %pattern_type (constants.%pattern_type.fa2)]
+// CHECK:STDOUT:   %U.as_type.loc7_15.1: type = facet_access_type %U.loc7_7.1 [symbolic = %U.as_type.loc7_15.1 (constants.%U.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %U.as_type.loc7_15.1 [symbolic = %pattern_type (constants.%pattern_type.fa2)]
 // CHECK:STDOUT:   %u.param_patt.loc7: @G.%pattern_type (%pattern_type.fa2) = value_param_pattern [symbolic = %u.param_patt.loc7 (constants.%u.param_patt.796)]
 // CHECK:STDOUT:   %u.patt.loc7: @G.%pattern_type (%pattern_type.fa2) = at_binding_pattern u, %u.param_patt.loc7 [symbolic = %u.patt.loc7 (constants.%u.patt.dae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.as_type.loc7_16.1 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.as_type.loc7_15.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%u.param.loc35: @G.%U.as_type.loc7_16.1 (%U.as_type)) {
+// CHECK:STDOUT:   fn(%u.param.loc35: @G.%U.as_type.loc7_15.1 (%U.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1996,19 +1952,17 @@ impl C as Y {}
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%X.facet) [concrete = constants.%G.specific_fn]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn(%c.ref)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {
 // CHECK:STDOUT:   %_.patt.loc6 => constants.%_.patt
-// CHECK:STDOUT:   %_.loc6_7.1 => constants.%_
+// CHECK:STDOUT:   %_.loc6_15.1 => constants.%_
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {
 // CHECK:STDOUT:   %U.patt.loc7 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc7_7.1 => constants.%U
-// CHECK:STDOUT:   %U.as_type.loc7_16.1 => constants.%U.as_type
+// CHECK:STDOUT:   %U.as_type.loc7_15.1 => constants.%U.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.fa2
 // CHECK:STDOUT:   %u.param_patt.loc7 => constants.%u.param_patt.796
 // CHECK:STDOUT:   %u.patt.loc7 => constants.%u.patt.dae
@@ -2020,7 +1974,7 @@ impl C as Y {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%X.facet) {
 // CHECK:STDOUT:   %_.patt.loc6 => constants.%_.patt
-// CHECK:STDOUT:   %_.loc6_7.1 => constants.%X.facet
+// CHECK:STDOUT:   %_.loc6_15.1 => constants.%X.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -2028,7 +1982,7 @@ impl C as Y {}
 // CHECK:STDOUT: specific @G(constants.%X.facet) {
 // CHECK:STDOUT:   %U.patt.loc7 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc7_7.1 => constants.%X.facet
-// CHECK:STDOUT:   %U.as_type.loc7_16.1 => constants.%C
+// CHECK:STDOUT:   %U.as_type.loc7_15.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.98b
 // CHECK:STDOUT:   %u.param_patt.loc7 => constants.%u.param_patt.162
 // CHECK:STDOUT:   %u.patt.loc7 => constants.%u.patt.0e4

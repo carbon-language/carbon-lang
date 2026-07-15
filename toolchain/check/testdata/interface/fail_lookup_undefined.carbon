@@ -105,8 +105,6 @@ interface BeingDefined {
 // CHECK:STDOUT:   witness = (@BeingDefined.WithSelf.%BeingDefined.WithSelf.H.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -116,8 +114,6 @@ interface BeingDefined {
 // CHECK:STDOUT:   %Undefined.ref: type = name_ref Undefined, file.%Undefined.decl [concrete = constants.%Undefined.type]
 // CHECK:STDOUT:   %G.ref: <error> = name_ref G, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @BeingDefined.WithSelf.H(@BeingDefined.%Self: %BeingDefined.type) {

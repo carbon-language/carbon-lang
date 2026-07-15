@@ -14,14 +14,14 @@
 library "[[@TEST_NAME]]";
 
 class ImportedC {}
-class ImportedD(T:! type) {}
+class ImportedD(T: type) {}
 
 interface ImportedY {}
-interface ImportedZ(T:! type) {}
+interface ImportedZ(T: type) {}
 
-constraint ImportedN(T:! type) {}
+constraint ImportedN(T: type) {}
 
-class ImportedAnyParam[T:! type](X:! T) {}
+class ImportedAnyParam[T: type](X: T) {}
 
 // --- fail_todo_class_definition_missing.carbon
 library "[[@TEST_NAME]]";
@@ -177,7 +177,7 @@ library "[[@TEST_NAME]]";
 
 import library "imports";
 
-class D(T:! type) {}
+class D(T: type) {}
 
 impl ImportedAnyParam(D) as ImportedY {}
 
@@ -197,7 +197,7 @@ library "[[@TEST_NAME]]";
 
 import library "imports";
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
 impl ImportedAnyParam(Z) as ImportedY {}
 
@@ -217,7 +217,7 @@ library "[[@TEST_NAME]]";
 
 import library "imports";
 
-constraint N(T:! type) {}
+constraint N(T: type) {}
 
 impl ImportedAnyParam(N) as ImportedY {}
 
@@ -256,7 +256,7 @@ library "[[@TEST_NAME]]";
 
 interface Z {}
 
-fn F(unused T:! type) {
+fn F(unused generic T: type) {
   class C {}
   impl C as Z {}
 }
@@ -267,7 +267,7 @@ library "[[@TEST_NAME]]";
 interface Z {}
 
 // Neither {} nor Z are defined within or by the scope of `F`.
-fn F(unused T:! type) {
+fn F(unused generic T: type) {
   // TODO: The error should be about being an orphan, not an unused binding.
   // CHECK:STDERR: fail_todo_orphan_in_generic_fn_scope.carbon:[[@LINE+4]]:3: error: `impl` with unused generic binding [ImplUnusedBinding]
   // CHECK:STDERR:   impl {} as Z {}

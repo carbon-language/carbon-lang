@@ -34,8 +34,8 @@ library "[[@TEST_NAME]]";
 fn Negate(a: Core.IntLiteral) -> Core.IntLiteral = "int.snegate";
 fn Sub(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.ssub";
 
-class Expect(N:! Core.IntLiteral) {}
-fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
+class Expect(N: Core.IntLiteral) {}
+fn Test(generic N: Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Negate(0)) as Expect(0);
@@ -150,14 +150,10 @@ let b: i32 = Negate(-0x8000_0000);
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %Negate.call: init %i32 = call %Negate.ref(%a.ref)
 // CHECK:STDOUT:   return %Negate.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

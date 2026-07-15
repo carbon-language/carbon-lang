@@ -70,7 +70,7 @@ auto LookupNameInDecl(Context& context, SemIR::LocId loc_id,
     //  - The name is redeclared by a parameter of the same entity:
     //
     //    fn F() {
-    //      class C(C:! type);
+    //      class C(C: type);
     //    }
     //
     // In this case, the class C is not a redeclaration of its parameter, but

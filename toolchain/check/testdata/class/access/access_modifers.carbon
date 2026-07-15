@@ -289,8 +289,6 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc9_13.2(%int_0) [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   %.loc9: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   return %.loc9
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Circle.Make() -> out %return.param: %Circle {
@@ -308,8 +306,6 @@ class A {
 // CHECK:STDOUT:   %.loc13_24.5: init %Circle to %return.param = class_init (%.loc13_24.4) [concrete = constants.%Circle.val]
 // CHECK:STDOUT:   %.loc13_25: init %Circle = converted %.loc13_24.1, %.loc13_24.5 [concrete = constants.%Circle.val]
 // CHECK:STDOUT:   return %.loc13_25 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -343,8 +339,6 @@ class A {
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc18_36.2, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc18_36.2)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_36.1(%self.param: ref %i32.builtin) = "no_op";
@@ -352,22 +346,16 @@ class A {
 // CHECK:STDOUT: fn @Destroy.Op.loc18_36.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_36.3(%self.param: ref %struct_type.radius.c2c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_36.4(%self.param: ref %Circle) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_protected_field_access.carbon
@@ -427,8 +415,6 @@ class A {
 // CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = value_binding_pattern x [concrete = constants.%x.patt.939]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- instance_private_field_access_on_self.carbon
@@ -573,8 +559,6 @@ class A {
 // CHECK:STDOUT:   %bound_method.loc8_16.2: <bound method> = bound_method %.loc8_16.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc8_16.2(%.loc8_16.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Circle.SomeInternalFunction() -> out %return.param: %i32 {
@@ -587,8 +571,6 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc12_13.2(%int_0) [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   %.loc12: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   return %.loc12
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Circle.Compute(%self.param: %Circle) -> out %return.param: %i32 {
@@ -597,8 +579,6 @@ class A {
 // CHECK:STDOUT:   %SomeInternalFunction.ref: %Circle.SomeInternalFunction.type = name_ref SomeInternalFunction, @Circle.%Circle.SomeInternalFunction.decl [concrete = constants.%Circle.SomeInternalFunction]
 // CHECK:STDOUT:   %Circle.SomeInternalFunction.call: init %i32 = call %SomeInternalFunction.ref()
 // CHECK:STDOUT:   return %Circle.SomeInternalFunction.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- public_global_access.carbon
@@ -688,8 +668,6 @@ class A {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, @A.%x
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_global_access.carbon
@@ -803,8 +781,6 @@ class A {
 // CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- self_access.carbon
@@ -851,8 +827,6 @@ class A {
 // CHECK:STDOUT: fn @A.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.G() {
@@ -861,7 +835,5 @@ class A {
 // CHECK:STDOUT:   %F.ref: %A.F.type = name_ref F, @A.%A.F.decl [concrete = constants.%A.F]
 // CHECK:STDOUT:   %A.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -20,6 +20,10 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
+namespace clang {
+class CodeGenerator;
+}
+
 namespace Carbon::Lower {
 
 class FileContext;

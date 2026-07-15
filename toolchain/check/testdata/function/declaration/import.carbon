@@ -663,8 +663,6 @@ import library "extern_api";
 // CHECK:STDOUT:   %E.call: init %empty_tuple.type = call %E.ref()
 // CHECK:STDOUT:   assign file.%e.var, %E.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redecl_api.carbon
@@ -883,8 +881,6 @@ import library "extern_api";
 // CHECK:STDOUT:   %E.call: init %empty_tuple.type = call %E.ref()
 // CHECK:STDOUT:   assign file.%e.var, %E.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- redecl_extern_api.carbon
@@ -1103,8 +1099,6 @@ import library "extern_api";
 // CHECK:STDOUT:   %E.call: init %empty_tuple.type = call %E.ref()
 // CHECK:STDOUT:   assign file.%e.var, %E.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_merge.carbon
@@ -1298,8 +1292,6 @@ import library "extern_api";
 // CHECK:STDOUT:   %E.call: init %empty_tuple.type = call %E.ref()
 // CHECK:STDOUT:   assign file.%e.var, %E.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_merge_reverse.carbon
@@ -1493,8 +1485,6 @@ import library "extern_api";
 // CHECK:STDOUT:   %E.call: init %empty_tuple.type = call %E.ref()
 // CHECK:STDOUT:   assign file.%e.var, %E.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unloaded.carbon

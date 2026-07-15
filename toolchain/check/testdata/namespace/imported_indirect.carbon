@@ -237,8 +237,6 @@ fn G() { Same.F(); }
 // CHECK:STDOUT: fn @D() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- e.carbon
@@ -304,8 +302,6 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()
 // CHECK:STDOUT:   assign file.%e.var, %D.call
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_named_indirectly_same_package.carbon
@@ -350,8 +346,6 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Same.F [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init <error> = call %F.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "b.carbon"];
@@ -396,8 +390,6 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Same.F [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init <error> = call %F.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "b.carbon"];

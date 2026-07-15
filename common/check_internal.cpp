@@ -24,7 +24,7 @@ namespace {
 // our own type-erased version of `format` here.
 auto FormatvInto(
     llvm::raw_ostream& out, llvm::StringRef format_str,
-    llvm::ArrayRef<llvm::support::detail::format_adapter*> adapters) -> void {
+    llvm::ArrayRef<llvm::support::detail::FormatFunctorRef> adapters) -> void {
   for (const llvm::ReplacementItem& replacement :
        llvm::formatv_object_base::parseFormatString(format_str, adapters.size(),
                                                     /*Validate=*/true)) {
@@ -33,7 +33,7 @@ auto FormatvInto(
       out << replacement.Spec;
       continue;
     }
-    llvm::FmtAlign(*adapters[replacement.Index], replacement.Where,
+    llvm::FmtAlign(adapters[replacement.Index], replacement.Where,
                    replacement.Width, replacement.Pad)
         .format(out, replacement.Options);
   }
@@ -43,7 +43,7 @@ auto FormatvInto(
 auto CheckFailImpl(
     const char* kind, const char* file, int line, const char* condition_str,
     const char* extra_format,
-    llvm::ArrayRef<llvm::support::detail::format_adapter*> extra_adapters)
+    llvm::ArrayRef<llvm::support::detail::FormatFunctorRef> extra_adapters)
     -> void {
   // Render the final check string directly into one stream. The extra message
   // is rendered in place from its format string and type-erased adapters, so

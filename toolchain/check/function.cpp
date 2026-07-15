@@ -469,6 +469,9 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
 auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
     -> void {
   context.inst_block_stack().Pop();
+  // Any cleanups for a function will have been handled when emitting `return`s.
+  context.scope_stack().DiscardCleanupsSince(
+      context.scope_stack().function_cleanup_scope_depth());
   context.scope_stack().Pop(/*check_unused=*/true);
 
   auto observe_block_id =

@@ -27,7 +27,7 @@ impl Y as I {
 // Builds on "call_different_impls.carbon", cannot lower a single G due to
 // different calls to F. Additionally, add recursion so the function
 // fingerprint is dependent on itself.
-fn G(T:! I, count: i32) -> i32 {
+fn G(generic T: I, count: i32) -> i32 {
   T.F();
 
   if (count > 0) {

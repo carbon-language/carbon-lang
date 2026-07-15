@@ -92,6 +92,7 @@ cc_library(
         "cpp_file.cpp",
         "cpp_initializer_list.cpp",
         "cpp_overload_set.cpp",
+        "entity_name.cpp",
         "facet_type_info.cpp",
         "field.cpp",
         "file.cpp",

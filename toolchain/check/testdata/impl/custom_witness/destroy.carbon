@@ -48,7 +48,7 @@ fn F() {
 // --- destroy_symbolic_int_type.carbon
 library "[[@TEST_NAME]]";
 
-fn F(N:! Core.IntLiteral) {
+fn F(generic N: Core.IntLiteral) {
   // This looks for a Destroy witness for a class type that adapts IntType with a
   // symbolic type.
   Core.Int(N) as Core.Destroy;
@@ -57,7 +57,7 @@ fn F(N:! Core.IntLiteral) {
 // --- destroy_class_type.carbon
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {}
+class C(T: type) {}
 
 fn F() {
   // This looks for a Destroy witness for a class type.
@@ -67,7 +67,7 @@ fn F() {
 // --- fail_destroy_incomplete_class.carbon
 library "[[@TEST_NAME]]";
 
-class C(T:! type);
+class C(T: type);
 
 fn F() {
   // This looks for a Destroy witness for an incomplete class type.

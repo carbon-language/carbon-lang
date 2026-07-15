@@ -15,50 +15,41 @@ namespace Carbon::Check {
 // the `SymbolicBinding` instruction.
 //
 // The type of `.Self` must be a `FacetType`, so that it gets wrapped in
-// `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
+// `FacetAccessType` when used in a type position, such as in `U: I(.Self)`.
 // This allows substitution with other facet values without requiring an
 // additional `FacetAccessType` to be inserted.
 auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,
                               SemIR::TypeId self_type_id) -> SemIR::InstId;
-
-enum class SubstPeriodSelfBehaviour {
-  ImplicitOnly,
-  All,
-};
 
 using SubstPeriodSelfRebuildInst =
     llvm::function_ref<auto(SemIR::Inst)->SemIR::InstId>;
 
 // Replace `.Self` references in `const_id` with `period_self_replacement_id`.
 //
-// The `behaviour` specifies if all `.Self` are replaced or just implicit use in
-// designators. The `rebuild` callback can optionally be specified to override
-// how an instruction is re-constructed to form an InstId after replacement. It
-// can return None to fall back to the default of evaluating the inst.
-auto SubstPeriodSelf(
-    Context& context, SemIR::LocId loc_id, SemIR::ConstantId const_id,
-    SemIR::ConstantId period_self_replacement_id,
-    SubstPeriodSelfBehaviour behaviour = SubstPeriodSelfBehaviour::All,
-    SubstPeriodSelfRebuildInst rebuild = nullptr) -> SemIR::ConstantId;
+// The `rebuild` callback can optionally be specified to override how an
+// instruction is re-constructed to form an InstId after replacement. It can
+// return None to fall back to the default of evaluating the inst.
+auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
+                     SemIR::ConstantId const_id,
+                     SemIR::ConstantId period_self_replacement_id,
+                     SubstPeriodSelfRebuildInst rebuild = nullptr)
+    -> SemIR::ConstantId;
 
 // Replace `.Self` references in the specific of the interface or named
 // constraint with `period_self_replacement_id`.
 //
-// The `behaviour` specifies if all `.Self` are replaced or just implicit use in
-// designators. The `rebuild` callback can optionally be specified to override
-// how an instruction is re-constructed to form an InstId after replacement. It
-// can return None to fall back to the default of evaluating the inst.
-auto SubstPeriodSelf(
-    Context& context, SemIR::LocId loc_id, SemIR::SpecificInterface interface,
-    SemIR::ConstantId period_self_replacement_id,
-    SubstPeriodSelfBehaviour behaviour = SubstPeriodSelfBehaviour::All,
-    SubstPeriodSelfRebuildInst rebuild = nullptr) -> SemIR::SpecificInterface;
-auto SubstPeriodSelf(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::SpecificNamedConstraint constraint,
-    SemIR::ConstantId period_self_replacement_id,
-    SubstPeriodSelfBehaviour behaviour = SubstPeriodSelfBehaviour::All,
-    SubstPeriodSelfRebuildInst rebuild = nullptr)
+// The `rebuild` callback can optionally be specified to override how an
+// instruction is re-constructed to form an InstId after replacement. It can
+// return None to fall back to the default of evaluating the inst.
+auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
+                     SemIR::SpecificInterface interface,
+                     SemIR::ConstantId period_self_replacement_id,
+                     SubstPeriodSelfRebuildInst rebuild = nullptr)
+    -> SemIR::SpecificInterface;
+auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
+                     SemIR::SpecificNamedConstraint constraint,
+                     SemIR::ConstantId period_self_replacement_id,
+                     SubstPeriodSelfRebuildInst rebuild = nullptr)
     -> SemIR::SpecificNamedConstraint;
 
 // Replace `.Self` references with the self-type. The `facet_type_inst_id` must

@@ -66,10 +66,12 @@ fn For() {
 // CHECK:STDOUT:   br i1 %G.call, label %if.then.loc22, label %if.else.loc22, !dbg !13
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then.loc22:                                    ; preds = %if.else.loc21
+// CHECK:STDOUT:   call void @"_COp.f9d363db90f1ff8b:core.Destroy.Core"(ptr %.loc20_33.1.temp), !dbg !8
 // CHECK:STDOUT:   br label %for.next, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else.loc22:                                    ; preds = %if.else.loc21
 // CHECK:STDOUT:   call void @_CH.Main(), !dbg !15
+// CHECK:STDOUT:   call void @"_COp.f9d363db90f1ff8b:core.Destroy.Core"(ptr %.loc20_33.1.temp), !dbg !8
 // CHECK:STDOUT:   br label %for.next, !dbg !16
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.done:                                         ; preds = %if.then.loc21, %for.next
@@ -252,6 +254,7 @@ fn For() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @"_COp.f9d363db90f1ff8b:core.Destroy.Core", { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 3, 2, 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

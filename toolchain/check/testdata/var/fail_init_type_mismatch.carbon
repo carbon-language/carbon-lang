@@ -68,7 +68,5 @@ var x: {} = ();
 // CHECK:STDOUT:   %.loc22_1: %empty_struct_type = converted %.loc22_14, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

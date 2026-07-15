@@ -180,21 +180,21 @@ fn Run() {
 // CHECK:STDOUT:   %_: %empty_tuple.type = wrapper_binding _, %.loc18_35.11
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref()
-// CHECK:STDOUT:   br !for.next
-// CHECK:STDOUT:
-// CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   %AfterLoop.ref: %AfterLoop.type = name_ref AfterLoop, file.%AfterLoop.decl [concrete = constants.%AfterLoop]
-// CHECK:STDOUT:   %AfterLoop.call: init %empty_tuple.type = call %AfterLoop.ref()
 // CHECK:STDOUT:   %Destroy.Op.bound.loc18_35.1: <bound method> = bound_method %.loc18_35.10, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc18_35.1: init %empty_tuple.type = call %Destroy.Op.bound.loc18_35.1(%.loc18_35.10)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc18_35.2: <bound method> = bound_method %.loc18_35.2, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc18_35.2: init %empty_tuple.type = call %Destroy.Op.bound.loc18_35.2(%.loc18_35.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc18_35.3: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.1
-// CHECK:STDOUT:   %Destroy.Op.call.loc18_35.3: init %empty_tuple.type = call %Destroy.Op.bound.loc18_35.3(%var)
-// CHECK:STDOUT:   %Destroy.Op.call.loc18_20: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.50e)
-// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
+// CHECK:STDOUT: !for.done:
+// CHECK:STDOUT:   %Destroy.Op.bound.loc18_35.3: <bound method> = bound_method %.loc18_35.2, constants.%Destroy.Op.1a2547.4
+// CHECK:STDOUT:   %Destroy.Op.call.loc18_35.3: init %empty_tuple.type = call %Destroy.Op.bound.loc18_35.3(%.loc18_35.2)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc18_35.4: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.1
+// CHECK:STDOUT:   %Destroy.Op.call.loc18_35.4: init %empty_tuple.type = call %Destroy.Op.bound.loc18_35.4(%var)
+// CHECK:STDOUT:   %Destroy.Op.call.loc18_20: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.50e)
+// CHECK:STDOUT:   %AfterLoop.ref: %AfterLoop.type = name_ref AfterLoop, file.%AfterLoop.decl [concrete = constants.%AfterLoop]
+// CHECK:STDOUT:   %AfterLoop.call: init %empty_tuple.type = call %AfterLoop.ref()
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_35.1(%self.param: ref %empty_tuple.type) = "no_op";
@@ -204,15 +204,11 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc18_35.3(%self.param: ref %struct_type.has_value.value.da2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_35.4(%self.param: ref %Optional.21a) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc18_20.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -220,7 +216,5 @@ fn Run() {
 // CHECK:STDOUT: fn @Destroy.Op.loc18_20.2(%self.param: ref %TrivialRange) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

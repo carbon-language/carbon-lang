@@ -197,7 +197,7 @@ When a facet type is used as the declared type of a facet `T`, the constraints
 that were specified within that facet type are _resolved_ to determine the
 constraints that apply to `T`. This happens:
 
--   When the constraint is used explicitly when declaring a symbolic binding,
+-   When the constraint is used explicitly when declaring a checked binding,
     like a generic parameter or associated constant, of the form
     `T: Constraint`.
 -   When declaring that a type implements a constraint with an `impl`

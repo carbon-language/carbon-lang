@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-class Adapter(T:! type) {
+class Adapter(T: type) {
   extend adapt T*;
 }
 
@@ -31,7 +31,7 @@ fn F(p: Adapter(X)*) {
 
 library "[[@TEST_NAME]]";
 
-class Adapter(T:! type) {
+class Adapter(T: type) {
   extend adapt T*;
 }
 
@@ -47,7 +47,7 @@ fn F(p: Adapter(X)*) {
 
 library "[[@TEST_NAME]]";
 
-class Adapter(T:! type);
+class Adapter(T: type);
 
 class X {}
 

@@ -193,7 +193,5 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.loc21_10.7: init %struct_type.a.b to %return.param = struct_init (%.loc21_10.3, %.loc21_10.6)
 // CHECK:STDOUT:   %.loc21_11: init %struct_type.a.b = converted %y.ref, %.loc21_10.7
 // CHECK:STDOUT:   return %.loc21_11 to %return.param
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

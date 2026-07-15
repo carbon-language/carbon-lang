@@ -14,7 +14,7 @@
 library "[[@TEST_NAME]]";
 
 interface J {
-  let U:! type;
+  let U: type;
   //@dump-sem-ir-begin
   fn F(self, u: U) -> U;
   //@dump-sem-ir-end
@@ -47,7 +47,7 @@ impl C as J where .U = C {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let U:! type;
+  let U: type;
   fn F(u: U) -> U;
 }
 
@@ -65,7 +65,7 @@ fn CallFunction() -> i32 {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let U:! type;
+  let U: type;
   fn F(u: U) -> U;
   fn G(self, v: U) -> U;
 }
@@ -91,7 +91,7 @@ fn CallBoth(e: E) {
   //@dump-sem-ir-end
 }
 
-fn GenericCallF[T:! J](t: T, u: T.U) -> T.U {
+fn GenericCallF[T: J](t: T, u: T.U) -> T.U {
   return t.F(u);
 }
 
@@ -107,11 +107,11 @@ interface I {
 }
 
 interface J {
-  let U:! I & Core.Destroy;
+  let U: I & Core.Destroy;
   fn F(u: U) -> U;
 }
 
-fn GenericResult[T:! J](t: T, u: T.U) -> T.U {
+fn GenericResult[T: J](t: T, u: T.U) -> T.U {
   return t.F(u).(I.Op)(T.F(u));
 }
 
@@ -119,11 +119,11 @@ fn GenericResult[T:! J](t: T, u: T.U) -> T.U {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let U:! type;
+  let U: type;
   fn G(self, v: U) -> U;
 }
 
-fn GenericCallInterfaceQualified[T:! J](t: T, u: T.U) -> T.U {
+fn GenericCallInterfaceQualified[T: J](t: T, u: T.U) -> T.U {
   return t.(J.G)(u);
 }
 
@@ -131,11 +131,11 @@ fn GenericCallInterfaceQualified[T:! J](t: T, u: T.U) -> T.U {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let U:! type;
+  let U: type;
   fn F(u: U) -> U;
 }
 
-fn GenericCallFI32[T:! J where .U = i32](t: T) -> i32 {
+fn GenericCallFI32[T: J where .U = i32](t: T) -> i32 {
   return t.F(2);
 }
 
@@ -160,7 +160,7 @@ impl E as J {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let U:! type;
+  let U: type;
   fn F(u: U) -> U;
 }
 
@@ -212,7 +212,7 @@ class E {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let X:! type;
+  let X: type;
 }
 
 class E {
@@ -227,13 +227,13 @@ class E {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let T:! type;
+  let T: type;
   fn F() -> T;
 }
 
 class A {}
 
-class E(T:! type) {
+class E(T: type) {
   extend impl as J where .T = A {
     // This `T` names the interface's `T` (extended by the `impl`), not the
     // class's `T` parameter.
@@ -243,7 +243,7 @@ class E(T:! type) {
   }
 }
 
-impl forall [T:! type] T as J where .T = () {
+impl forall [T: type] T as J where .T = () {
   // This `T` names the interface's `T` (extended by the `impl`), not the
   // class's `T` parameter.
   //
@@ -260,8 +260,8 @@ impl forall [T:! type] T as J where .T = () {
 library "[[@TEST_NAME]]";
 
 interface J {
-  let T:! type;
-  let U:! type;
+  let T: type;
+  let U: type;
 }
 
 class A {}
@@ -272,15 +272,15 @@ class A {}
 // CHECK:STDERR: impl A as J {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let T:! type;
-// CHECK:STDERR:       ^~~~~~~~
+// CHECK:STDERR:   let T: type;
+// CHECK:STDERR:       ^~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+7]]:1: error: associated constant U not given a value in impl of interface J [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR: impl A as J {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE-17]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let U:! type;
-// CHECK:STDERR:       ^~~~~~~~
+// CHECK:STDERR:   let U: type;
+// CHECK:STDERR:       ^~~~~~~
 // CHECK:STDERR:
 impl A as J {
   // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+8]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
@@ -362,7 +362,7 @@ impl A as J {
 library "[[@TEST_NAME]]";
 
 interface J2 {
-  let U2:! type;
+  let U2: type;
   // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE+14]]:17: error: member access into facet of incomplete type `J2` [IncompleteTypeInMemberAccessOfFacet]
   // CHECK:STDERR:   fn F(self, z: Self.U2) -> Self.U2;
   // CHECK:STDERR:                 ^~~~
@@ -398,7 +398,7 @@ impl C2 as J2 where .U2 = C2 {
 library "[[@TEST_NAME]]";
 
 interface K {
-  let V:! type;
+  let V: type;
   fn F(self, v: V) -> V;
 }
 
@@ -424,7 +424,7 @@ impl () as K where .V = {.a: ()} {
 library "[[@TEST_NAME]]";
 
 interface M {
-  let Z:! {.b: {}};
+  let Z: {.b: {}};
   fn G() -> {};
 }
 
@@ -439,10 +439,10 @@ impl () as M where .Z = {.b = {}} {
 // --- self_as_uses_correct_rewrite_constraint.carbon
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {}
+class C(T: type) {}
 
 interface M {
-  let Z:! {.b: type};
+  let Z: {.b: type};
   fn G() -> type;
 }
 
@@ -462,7 +462,7 @@ impl C(()) as M where .Z = {.b = ()} {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let N:! i32;
+  let N: i32;
   fn F(self) -> array(bool, N);
 }
 
@@ -474,13 +474,13 @@ impl () as I where .N = 2 {
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
-class C(T:! type) {}
+class C(T: type) {}
 class D {}
 
-impl forall [T:! type] T as Z where .X = C(T) {}
+impl forall [T: type] T as Z where .X = C(T) {}
 
 fn F() {
   let unused a: D.(Z.X) = {} as C(D);
@@ -626,8 +626,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (@J.WithSelf.%U, @J.WithSelf.%J.WithSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.J.impl: %.loc10_7.2 as %.loc10_14 {
@@ -714,8 +712,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc12_45.2: <bound method> = bound_method %u.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Negate.impl.Op.call: init %i32 = call %bound_method.loc12_45.2(%u.ref)
 // CHECK:STDOUT:   return %Int.as.Negate.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallMethod(%x.param: %empty_tuple.type) -> out %return.param: %i32 {
@@ -735,8 +731,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc18_18.2: %i32 = converted %int_40, %.loc18_18.1 [concrete = constants.%int_40.e3d]
 // CHECK:STDOUT:   %empty_tuple.type.as.J.impl.F.call: init %i32 = call %bound_method.loc18_11(%x.ref, %.loc18_18.2)
 // CHECK:STDOUT:   return %empty_tuple.type.as.J.impl.F.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.J.impl.F(%self.param: %C, %u.param: %C) -> out %return.param: %C {
@@ -747,8 +741,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc29_45.3: init %C = as_compatible %.loc29_45.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc29_45.4: init %C = converted %self.ref, %.loc29_45.3 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc29_45.4
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.WithSelf(constants.%Self.653) {
@@ -994,8 +986,6 @@ fn F() {
 // CHECK:STDOUT:     %e5.patt: %pattern_type.6b6 = value_binding_pattern e5 [concrete = constants.%e5.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_associated_fn_in_impl.carbon
@@ -1025,8 +1015,6 @@ fn F() {
 // CHECK:STDOUT:   %F.ref: %E.as.J.impl.F.type = name_ref F, @E.as.J.impl.%E.as.J.impl.F.decl [concrete = constants.%E.as.J.impl.F]
 // CHECK:STDOUT:   %E.as.J.impl.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_associated_constant_in_impl.carbon
@@ -1115,8 +1103,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc12_14.2: <bound method> = bound_method %u.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc12_14.2(%u.ref)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_extend_fn.carbon
@@ -1153,8 +1139,6 @@ fn F() {
 // CHECK:STDOUT:   %F.ref: %.b5e = name_ref F, %impl.elem0 [concrete = constants.%E.as.J.impl.F]
 // CHECK:STDOUT:   %E.as.J.impl.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_extend_constant.carbon
@@ -1205,8 +1189,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_25.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_26: init %empty_tuple.type = converted %.loc11_25.1, %.loc11_25.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return %.loc11_26
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- associated_fn_use_in_def_before_decl.carbon
@@ -1236,8 +1218,6 @@ fn F() {
 // CHECK:STDOUT:   %G.ref: %A.as.J.impl.G.type = name_ref G, @A.as.J.impl.%A.as.J.impl.G.decl [concrete = constants.%A.as.J.impl.G]
 // CHECK:STDOUT:   %A.as.J.impl.G.call: init %empty_tuple.type = call %G.ref()
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_non-type_in_function.carbon
@@ -1280,7 +1260,5 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_25.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc11_27: init %empty_struct_type = converted %.loc11_25.1, %.loc11_25.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return %.loc11_27
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -22,7 +22,7 @@ constraint W {
 }
 
 //@dump-sem-ir-begin
-fn F(T:! W) {
+fn F(generic T: W) {
   // Extends Z.
   T.ZF();
   // Does not extend Y.
@@ -39,7 +39,7 @@ constraint W {
   require impls Z;
 }
 
-fn F(T:! W) {
+fn F(generic T: W) {
   // Does not extend Z.
 interface Y { fn YF(); }
   // CHECK:STDERR: fail_name_lookup_in_constraint_does_not_extend.carbon:[[@LINE+4]]:3: error: member name `ZF` not found in `W` [MemberNameNotFoundInSpecificScope]
@@ -61,7 +61,7 @@ constraint W {
 }
 
 //@dump-sem-ir-begin
-fn F(T:! type where .Self impls W) {
+fn F(generic T: type where .Self impls W) {
   // T does not extend Z.
   T.(Z.ZF)();
   // T does not extend Y.
@@ -80,7 +80,7 @@ constraint W {
   require impls Y;
 }
 
-fn F(T:! type where .Self impls W) {
+fn F(generic T: type where .Self impls W) {
   // T does not extend Z.
   // CHECK:STDERR: fail_name_lookup_in_facet_type_does_not_extend.carbon:[[@LINE+4]]:3: error: member name `ZF` not found [MemberNameNotFound]
   // CHECK:STDERR:   T.ZF();
@@ -130,29 +130,29 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc12_7.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_7.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc12_15.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12: type = splice_block %W.ref [concrete = constants.%W.type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %W.ref: type = name_ref W, file.%W.decl [concrete = constants.%W.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc12_7.2: %W.type = symbolic_binding T, 0 [symbolic = %T.loc12_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc12_15.2: %W.type = symbolic_binding T, 0 [symbolic = %T.loc12_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc12_7.2: %W.type) {
-// CHECK:STDOUT:   %T.patt.loc12_7.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_7.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc12_7.1: %W.type = symbolic_binding T, 0 [symbolic = %T.loc12_7.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc12_15.2: %W.type) {
+// CHECK:STDOUT:   %T.patt.loc12_15.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc12_15.1: %W.type = symbolic_binding T, 0 [symbolic = %T.loc12_15.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc14_4.2: type = facet_access_type %T.loc12_7.1 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc12_7.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
+// CHECK:STDOUT:   %T.as_type.loc14_4.2: type = facet_access_type %T.loc12_15.1 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc12_15.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %T.as_type.loc14_4.2, (%Z.lookup_impl_witness) [symbolic = %Z.facet (constants.%Z.facet)]
 // CHECK:STDOUT:   %Z.WithSelf.ZF.type: type = fn_type @Z.WithSelf.ZF, @Z.WithSelf(%Z.facet) [symbolic = %Z.WithSelf.ZF.type (constants.%Z.WithSelf.ZF.type.560)]
 // CHECK:STDOUT:   %.loc14_4.2: type = fn_type_with_self_type %Z.WithSelf.ZF.type, %Z.facet [symbolic = %.loc14_4.2 (constants.%.891)]
 // CHECK:STDOUT:   %impl.elem0.loc14_4.2: @F.%.loc14_4.2 (%.891) = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.39f)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_4.2: <specific function> = specific_impl_function %impl.elem0.loc14_4.2, @Z.WithSelf.ZF(%Z.facet) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.301)]
-// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc12_7.1, @Y [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness)]
+// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc12_15.1, @Y [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness)]
 // CHECK:STDOUT:   %Y.facet.loc16_4.2: %Y.type = facet_value %T.as_type.loc14_4.2, (%Y.lookup_impl_witness) [symbolic = %Y.facet.loc16_4.2 (constants.%Y.facet)]
 // CHECK:STDOUT:   %Y.WithSelf.YF.type: type = fn_type @Y.WithSelf.YF, @Y.WithSelf(%Y.facet.loc16_4.2) [symbolic = %Y.WithSelf.YF.type (constants.%Y.WithSelf.YF.type.c42)]
 // CHECK:STDOUT:   %.loc16_4.2: type = fn_type_with_self_type %Y.WithSelf.YF.type, %Y.facet.loc16_4.2 [symbolic = %.loc16_4.2 (constants.%.74b)]
@@ -161,14 +161,14 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref.loc14: %W.type = name_ref T, %T.loc12_7.2 [symbolic = %T.loc12_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc14: %W.type = name_ref T, %T.loc12_15.2 [symbolic = %T.loc12_15.1 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc14_4.1: type = facet_access_type %T.ref.loc14 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc14_4.1: type = converted %T.ref.loc14, %T.as_type.loc14_4.1 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %ZF.ref: %Z.assoc_type = name_ref ZF, @Z.WithSelf.%assoc0 [concrete = constants.%assoc0.9c1]
 // CHECK:STDOUT:     %impl.elem0.loc14_4.1: @F.%.loc14_4.2 (%.891) = impl_witness_access constants.%Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.39f)]
 // CHECK:STDOUT:     %specific_impl_fn.loc14_4.1: <specific function> = specific_impl_function %impl.elem0.loc14_4.1, @Z.WithSelf.ZF(constants.%Z.facet) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.301)]
 // CHECK:STDOUT:     %Z.WithSelf.ZF.call: init %empty_tuple.type = call %specific_impl_fn.loc14_4.1()
-// CHECK:STDOUT:     %T.ref.loc16: %W.type = name_ref T, %T.loc12_7.2 [symbolic = %T.loc12_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc16: %W.type = name_ref T, %T.loc12_15.2 [symbolic = %T.loc12_15.1 (constants.%T)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:     %YF.ref: %Y.assoc_type = name_ref YF, @Y.WithSelf.%assoc0 [concrete = constants.%assoc0.359]
 // CHECK:STDOUT:     %T.as_type.loc16: type = facet_access_type %T.ref.loc16 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
@@ -178,14 +178,12 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:     %specific_impl_fn.loc16_4.1: <specific function> = specific_impl_function %impl.elem0.loc16_4.1, @Y.WithSelf.YF(constants.%Y.facet) [symbolic = %specific_impl_fn.loc16_4.2 (constants.%specific_impl_fn.aad)]
 // CHECK:STDOUT:     %Y.WithSelf.YF.call: init %empty_tuple.type = call %specific_impl_fn.loc16_4.1()
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc12_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc12_7.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc12_15.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc12_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- facet_type_does_not_extend_and_constraint_extends.carbon
@@ -227,45 +225,45 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc12_7.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_7.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc12_15.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_15.1: type = splice_block %.loc12_15.2 [concrete = constants.%type_where] {
-// CHECK:STDOUT:       %.Self.frozen.loc12_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc12_10: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc12_22.1: type = splice_block %.loc12_22.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:       %.Self.frozen.loc12_15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc12_10 [concrete]
-// CHECK:STDOUT:       %.Self.ref.loc12_21.1: %type = name_ref .Self, %.Self.frozen.loc12_15 [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc12_17: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.Self.frozen.loc12_22: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc12_17 [concrete]
+// CHECK:STDOUT:       %.Self.ref.loc12_28.1: %type = name_ref .Self, %.Self.frozen.loc12_22 [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %W.ref: type = name_ref W, file.%W.decl [concrete = constants.%W.type]
-// CHECK:STDOUT:       %.Self.as_type.loc12_21.1: type = facet_access_type %.Self.ref.loc12_21.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:       %.loc12_21.1: type = converted %.Self.ref.loc12_21.1, %.Self.as_type.loc12_21.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:       %impls.loc12_27.1 = requirement_impls %.loc12_21.1, %W.ref [concrete]
+// CHECK:STDOUT:       %.Self.as_type.loc12_28.1: type = facet_access_type %.Self.ref.loc12_28.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.loc12_28.1: type = converted %.Self.ref.loc12_28.1, %.Self.as_type.loc12_28.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %impls.loc12_34.1 = requirement_impls %.loc12_28.1, %W.ref [concrete]
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.Self.ref.loc12_21.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.Self.as_type.loc12_21.2: type = facet_access_type %.Self.ref.loc12_21.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %.loc12_21.2: type = converted %.Self.ref.loc12_21.1, %.Self.as_type.loc12_21.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %impls.loc12_27.2 = requirement_impls %.loc12_21.2, %W.ref [concrete]
-// CHECK:STDOUT:       %.loc12_15.2: type = where_expr [concrete = constants.%type_where] {
-// CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %.loc12_10 [concrete]
-// CHECK:STDOUT:         %impls.loc12_27.2 = requirement_impls %.loc12_21.2, %W.ref [concrete]
+// CHECK:STDOUT:       %.Self.ref.loc12_28.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.as_type.loc12_28.2: type = facet_access_type %.Self.ref.loc12_28.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %.loc12_28.2: type = converted %.Self.ref.loc12_28.1, %.Self.as_type.loc12_28.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %impls.loc12_34.2 = requirement_impls %.loc12_28.2, %W.ref [concrete]
+// CHECK:STDOUT:       %.loc12_22.2: type = where_expr [concrete = constants.%type_where] {
+// CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %.loc12_17 [concrete]
+// CHECK:STDOUT:         %impls.loc12_34.2 = requirement_impls %.loc12_28.2, %W.ref [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc12_7.2: %type_where = symbolic_binding T, 0 [symbolic = %T.loc12_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc12_15.2: %type_where = symbolic_binding T, 0 [symbolic = %T.loc12_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc12_7.2: %type_where) {
-// CHECK:STDOUT:   %T.patt.loc12_7.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_7.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc12_7.1: %type_where = symbolic_binding T, 0 [symbolic = %T.loc12_7.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc12_15.2: %type_where) {
+// CHECK:STDOUT:   %T.patt.loc12_15.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc12_15.1: %type_where = symbolic_binding T, 0 [symbolic = %T.loc12_15.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc14_4.2: type = facet_access_type %T.loc12_7.1 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc12_7.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
+// CHECK:STDOUT:   %T.as_type.loc14_4.2: type = facet_access_type %T.loc12_15.1 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc12_15.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
 // CHECK:STDOUT:   %Z.facet.loc14_4.2: %Z.type = facet_value %T.as_type.loc14_4.2, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc14_4.2 (constants.%Z.facet)]
 // CHECK:STDOUT:   %Z.WithSelf.ZF.type: type = fn_type @Z.WithSelf.ZF, @Z.WithSelf(%Z.facet.loc14_4.2) [symbolic = %Z.WithSelf.ZF.type (constants.%Z.WithSelf.ZF.type.560)]
 // CHECK:STDOUT:   %.loc14_4.2: type = fn_type_with_self_type %Z.WithSelf.ZF.type, %Z.facet.loc14_4.2 [symbolic = %.loc14_4.2 (constants.%.891)]
 // CHECK:STDOUT:   %impl.elem0.loc14_4.2: @F.%.loc14_4.2 (%.891) = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.39f)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_4.2: <specific function> = specific_impl_function %impl.elem0.loc14_4.2, @Z.WithSelf.ZF(%Z.facet.loc14_4.2) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.301)]
-// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc12_7.1, @Y [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness)]
+// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc12_15.1, @Y [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness)]
 // CHECK:STDOUT:   %Y.facet.loc16_4.2: %Y.type = facet_value %T.as_type.loc14_4.2, (%Y.lookup_impl_witness) [symbolic = %Y.facet.loc16_4.2 (constants.%Y.facet)]
 // CHECK:STDOUT:   %Y.WithSelf.YF.type: type = fn_type @Y.WithSelf.YF, @Y.WithSelf(%Y.facet.loc16_4.2) [symbolic = %Y.WithSelf.YF.type (constants.%Y.WithSelf.YF.type.c42)]
 // CHECK:STDOUT:   %.loc16_4.2: type = fn_type_with_self_type %Y.WithSelf.YF.type, %Y.facet.loc16_4.2 [symbolic = %.loc16_4.2 (constants.%.74b)]
@@ -274,7 +272,7 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref.loc14: %type_where = name_ref T, %T.loc12_7.2 [symbolic = %T.loc12_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc14: %type_where = name_ref T, %T.loc12_15.2 [symbolic = %T.loc12_15.1 (constants.%T)]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:     %ZF.ref: %Z.assoc_type = name_ref ZF, @Z.WithSelf.%assoc0 [concrete = constants.%assoc0.9c1]
 // CHECK:STDOUT:     %T.as_type.loc14_4.1: type = facet_access_type %T.ref.loc14 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
@@ -283,7 +281,7 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:     %impl.elem0.loc14_4.1: @F.%.loc14_4.2 (%.891) = impl_witness_access constants.%Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.39f)]
 // CHECK:STDOUT:     %specific_impl_fn.loc14_4.1: <specific function> = specific_impl_function %impl.elem0.loc14_4.1, @Z.WithSelf.ZF(constants.%Z.facet) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.301)]
 // CHECK:STDOUT:     %Z.WithSelf.ZF.call: init %empty_tuple.type = call %specific_impl_fn.loc14_4.1()
-// CHECK:STDOUT:     %T.ref.loc16: %type_where = name_ref T, %T.loc12_7.2 [symbolic = %T.loc12_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc16: %type_where = name_ref T, %T.loc12_15.2 [symbolic = %T.loc12_15.1 (constants.%T)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:     %YF.ref: %Y.assoc_type = name_ref YF, @Y.WithSelf.%assoc0 [concrete = constants.%assoc0.359]
 // CHECK:STDOUT:     %T.as_type.loc16: type = facet_access_type %T.ref.loc16 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
@@ -293,13 +291,11 @@ fn F(T:! type where .Self impls W) {
 // CHECK:STDOUT:     %specific_impl_fn.loc16_4.1: <specific function> = specific_impl_function %impl.elem0.loc16_4.1, @Y.WithSelf.YF(constants.%Y.facet) [symbolic = %specific_impl_fn.loc16_4.2 (constants.%specific_impl_fn.aad)]
 // CHECK:STDOUT:     %Y.WithSelf.YF.call: init %empty_tuple.type = call %specific_impl_fn.loc16_4.1()
 // CHECK:STDOUT:     return
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc12_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc12_7.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc12_15.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc12_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

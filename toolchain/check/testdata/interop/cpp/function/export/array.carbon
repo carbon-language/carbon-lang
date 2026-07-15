@@ -43,16 +43,6 @@ import Cpp;
 // HLSL extension, or by mapping to a `std::array` parameter.
 
 // TODO: These diagnostics are very bad.
-// CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE+18]]:1: error: cannot copy value of type `array(i32, 5)` [CopyOfUncopyableType]
-// CHECK:STDERR: fn F(var a: array(i32, 5)) -> i32 { return a[2]; }
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE+15]]:1: note: type `array(i32, 5)` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: fn F(var a: array(i32, 5)) -> i32 { return a[2]; }
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE+12]]:6: note: initializing function parameter [InCallToFunctionParam]
-// CHECK:STDERR: fn F(var a: array(i32, 5)) -> i32 { return a[2]; }
-// CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE+8]]:1: error: semantics TODO: `by-var array parameter` [SemanticsTodo]
 // CHECK:STDERR: fn F(var a: array(i32, 5)) -> i32 { return a[2]; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,7 +57,7 @@ inline Cpp '''
 int G() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE+4]]:18: error: no member named 'F' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    38 |   return Carbon::F({1, 2, 3, 4, 5});
+  // CHECK:STDERR:    28 |   return Carbon::F({1, 2, 3, 4, 5});
   // CHECK:STDERR:       |                  ^
   // CHECK:STDERR:
   return Carbon::F({1, 2, 3, 4, 5});

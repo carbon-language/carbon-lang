@@ -75,7 +75,7 @@ var or_val: bool = true or true;
 
 library "[[@TEST_NAME]]";
 
-base class C(B:! bool) {}
+base class C(B: bool) {}
 
 fn F() {
   class B {
@@ -122,8 +122,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6, %impl.elem0
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_and_val.carbon
@@ -163,8 +161,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6, %impl.elem0
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_or_val.carbon
@@ -201,7 +197,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst{{[0-9A-F]+}}.loc4_24 [concrete = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst{{[0-9A-F]+}}.loc4_23 [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %true.loc12_20: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc12: bool = not %true.loc12_20 [concrete = constants.%false]
 // CHECK:STDOUT:   %true.loc12_25: bool = bool_literal true [concrete = constants.%true]

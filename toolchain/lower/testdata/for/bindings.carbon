@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/for/bindings.carbon
 
-class EmptyRange(T:! Core.Copy & Core.Destroy) {
+class EmptyRange(T: Core.Copy & Core.Destroy) {
   impl as Core.Iterate where .CursorType = {} and .ElementType = T {
     fn NewCursor(unused self) -> {} {
       return {};
@@ -71,10 +71,12 @@ fn For() {
 // CHECK:STDOUT:   %.loc29_33.12 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !9
 // CHECK:STDOUT:   store i32 %.loc29_33.12, ptr %n.var, align 4, !dbg !8
 // CHECK:STDOUT:   call void @_CF.Main(i32 %.loc29_33.11, ptr %n.var), !dbg !10
+// CHECK:STDOUT:   call void @"_COp.eff30dc40f4a53d2:core.Destroy.Core"(ptr %.loc29_33.8.temp), !dbg !9
+// CHECK:STDOUT:   call void @"_COp.a79511dff093d1a6:core.Destroy.Core"(ptr %.loc29_33.1.temp), !dbg !9
+// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %n.var), !dbg !8
 // CHECK:STDOUT:   br label %for.next, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.done:                                         ; preds = %for.next
-// CHECK:STDOUT:   call void @"_COp.eff30dc40f4a53d2:core.Destroy.Core"(ptr %.loc29_33.8.temp), !dbg !9
 // CHECK:STDOUT:   call void @"_COp.a79511dff093d1a6:core.Destroy.Core"(ptr %.loc29_33.1.temp), !dbg !9
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %n.var), !dbg !8
 // CHECK:STDOUT:   call void @"_COp.88c97397fb274b67:core.Destroy.Core"(ptr %r.var), !dbg !7
@@ -202,6 +204,8 @@ fn For() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @"_COp.5e27612b9dd31a14:core.Destroy.Core", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.a79511dff093d1a6:core.Destroy.Core", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

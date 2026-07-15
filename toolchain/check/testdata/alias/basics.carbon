@@ -39,7 +39,7 @@ let d: c = {};
 
 library "[[@TEST_NAME]]";
 
-class A(T:! type) {}
+class A(T: type) {}
 
 //@dump-sem-ir-begin
 alias a = A({});
@@ -105,10 +105,10 @@ alias c = *b;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:8: error: `alias` declaration cannot have parameters [UnexpectedDeclNameParams]
-// CHECK:STDERR: alias A(T:! type) = T*;
-// CHECK:STDERR:        ^~~~~~~~~~
+// CHECK:STDERR: alias A(T: type) = T*;
+// CHECK:STDERR:        ^~~~~~~~~
 // CHECK:STDERR:
-alias A(T:! type) = T*;
+alias A(T: type) = T*;
 
 // --- fail_modifiers.carbon
 
@@ -169,8 +169,6 @@ extern alias C = Class;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- alias_of_alias.carbon
@@ -208,8 +206,6 @@ extern alias C = Class;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- alias_to_generic.carbon
@@ -233,7 +229,5 @@ extern alias C = Class;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

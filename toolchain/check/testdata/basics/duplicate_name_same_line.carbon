@@ -28,10 +28,10 @@ fn A() {
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %n.patt.785a0d.1: %pattern_type.cb1 = ref_binding_pattern n [concrete]
 // CHECK:STDOUT:   %n.var_patt.961036.1: %pattern_type.cb1 = var_pattern %n.patt.785a0d.1 [concrete]
-// CHECK:STDOUT:   %n.patt.785a0d.2: %pattern_type.cb1 = ref_binding_pattern n [concrete]
-// CHECK:STDOUT:   %n.var_patt.961036.2: %pattern_type.cb1 = var_pattern %n.patt.785a0d.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %n.patt.785a0d.2: %pattern_type.cb1 = ref_binding_pattern n [concrete]
+// CHECK:STDOUT:   %n.var_patt.961036.2: %pattern_type.cb1 = var_pattern %n.patt.785a0d.2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -53,6 +53,8 @@ fn A() {
 // CHECK:STDOUT:     %n.patt.loc18_17: %pattern_type.cb1 = ref_binding_pattern n [concrete = constants.%n.patt.785a0d.1]
 // CHECK:STDOUT:     %n.var_patt.loc18_5: %pattern_type.cb1 = var_pattern %n.patt.loc18_17 [concrete = constants.%n.var_patt.961036.1]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Destroy.Op.bound.loc18_5: <bound method> = bound_method %n.var.loc18_5, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc18_5: init %empty_tuple.type = call %Destroy.Op.bound.loc18_5(%n.var.loc18_5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
@@ -70,16 +72,12 @@ fn A() {
 // CHECK:STDOUT:     %n.patt.loc18_49: %pattern_type.cb1 = ref_binding_pattern n [concrete = constants.%n.patt.785a0d.2]
 // CHECK:STDOUT:     %n.var_patt.loc18_37: %pattern_type.cb1 = var_pattern %n.patt.loc18_49 [concrete = constants.%n.var_patt.961036.2]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Destroy.Op.bound.loc18_37: <bound method> = bound_method %n.var.loc18_37, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc18_37: init %empty_tuple.type = call %Destroy.Op.bound.loc18_37(%n.var.loc18_37)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
-// CHECK:STDOUT:   %Destroy.Op.bound.loc18_37: <bound method> = bound_method %n.var.loc18_37, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc18_37: init %empty_tuple.type = call %Destroy.Op.bound.loc18_37(%n.var.loc18_37)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc18_5: <bound method> = bound_method %n.var.loc18_5, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc18_5: init %empty_tuple.type = call %Destroy.Op.bound.loc18_5(%n.var.loc18_5)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_tuple.type) = "no_op";

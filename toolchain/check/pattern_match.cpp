@@ -17,6 +17,7 @@
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -387,19 +388,6 @@ auto MatchContext::DoPreWork(State state,
     // the scrutinee.
     results_stack_.AppendToTop(scrutinee_id);
   }
-}
-
-// Returns the substituted scrutinee type of `pattern_id` in `specific_id`. As
-// with `GetTypeOfInstInSpecific`, this does not perform substitution, and it
-// accepts `SpecificId::None`, treating it as a request for the value to use
-// within the generic itself.
-static auto GetScrutineeTypeInSpecific(const Context& context,
-                                       SemIR::InstId pattern_id,
-                                       SemIR::SpecificId specific_id)
-    -> SemIR::TypeId {
-  const auto& sem_ir = context.sem_ir();
-  return ExtractScrutineeType(
-      sem_ir, SemIR::GetTypeOfInstInSpecific(sem_ir, specific_id, pattern_id));
 }
 
 auto MatchContext::DoPostWork(State state,

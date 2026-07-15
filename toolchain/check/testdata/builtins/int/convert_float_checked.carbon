@@ -16,8 +16,8 @@ library "[[@TEST_NAME]]";
 fn ConvertIntLiteralToFloatLiteral(a: Core.IntLiteral) -> Core.FloatLiteral = "int.convert_float_checked";
 fn ConvertIntLiteralToF32(a: Core.IntLiteral) -> f32 = "int.convert_float_checked";
 
-class Expect[T:! type](N:! T) {}
-fn Test[T:! type](N:! T) -> Expect(N) { return {}; }
+class Expect[T: type](N: T) {}
+fn Test[T: type](generic N: T) -> Expect(N) { return {}; }
 
 // --- identity.carbon
 library "[[@TEST_NAME]]";
@@ -75,7 +75,5 @@ let lossy: f32 = ConvertIntLiteralToF32(123456789);
 // CHECK:STDOUT:   %int_123456789: Core.IntLiteral = int_value 123456789 [concrete = constants.%int_123456789]
 // CHECK:STDOUT:   %ConvertIntLiteralToF32.call: init %f32.c73 = call %ConvertIntLiteralToF32.ref(%int_123456789) [concrete = <error>]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

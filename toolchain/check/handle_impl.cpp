@@ -193,8 +193,10 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 }
 
 // Build an ImplDecl describing the signature of an impl. This handles the
-// common logic shared by impl forward declarations and impl definitions.
-static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
+// common logic shared by impl forward declarations and impl definitions. It
+// also sets the `definition_id` on the Impl structure.
+static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
+                          bool has_definition)
     -> std::pair<SemIR::ImplId, SemIR::InstId> {
   auto [constraint_node, constraint_id] =
       context.node_stack().PopExprWithNodeId();
@@ -265,10 +267,13 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
                             name, impl_decl_id,
                             /*is_extern=*/false, SemIR::LibraryNameId::None),
                         {.parent_scope_inst_id = parent_scope_inst_id,
+                         .is_final = is_final,
                          .self_id = self_type_inst_id,
                          .constraint_id = constraint_type_inst_id,
-                         .interface = specific_interface,
-                         .is_final = is_final}};
+                         .interface = specific_interface}};
+    if (has_definition) {
+      impl.definition_id = impl_decl_id;
+    }
     // There's a bunch of places that may represent a diagnostic that occurred
     // in checking the impl up to this point, which we consolidate into this
     // bool. Due to lack of an instruction to set to `ErrorInst`, an
@@ -280,6 +285,20 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
         context.types().GetTypeIdForTypeInstId(impl.constraint_id) ==
             SemIR::ErrorInst::TypeId;
 
+    if (is_final && context.match_first_context()) {
+      CARBON_DIAGNOSTIC(FinalImplInMatchFirst, Error,
+                        "`final impl` in `match_first` block");
+      CARBON_DIAGNOSTIC(
+          FinalImplInMatchFirstNote, Note,
+          "the `match_first` block can be modified as `final` instead");
+      context.emitter()
+          .Build(node_id, FinalImplInMatchFirst)
+          .Note(context.match_first_context()->decl_id,
+                FinalImplInMatchFirstNote)
+          .Emit();
+      impl_had_error = true;
+    }
+
     CARBON_KIND_SWITCH(FindImplId(context, impl)) {
       case CARBON_KIND(RedeclaredImpl redeclared_impl): {
         // This is a redeclaration of another impl, now held in `impl_id`.
@@ -289,8 +308,39 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
         // was the instruction that came last in the first declaration's eval
         // block. And FinishGenericRedecl allows the redecl to have fewer
         // instructions to support this case.
-        const auto& prev_impl = context.impls().Get(impl_id);
+        auto& prev_impl = context.impls().Get(impl_id);
         FinishGenericRedecl(context, prev_impl.generic_id);
+
+        if (has_definition) {
+          prev_impl.definition_id = impl_decl_id;
+        }
+
+        if (auto match_first = context.match_first_context()) {
+          if (prev_impl.match_first_id.has_value()) {
+            if (!impl_had_error) {
+              CARBON_DIAGNOSTIC(
+                  ImplInTwoMatchFirst, Error,
+                  "impl declared in `match_first` more than once");
+              CARBON_DIAGNOSTIC(ImplInTwoMatchFirstNote, Note,
+                                "previous declaration here");
+              context.emitter()
+                  .Build(node_id, ImplInTwoMatchFirst)
+                  .Note(prev_impl.decl_loc_in_match_first,
+                        ImplInTwoMatchFirstNote)
+                  .Emit();
+            }
+            impl_had_error = true;
+          }
+
+          if (!impl_had_error) {
+            prev_impl.match_first_id = match_first->decl_id;
+            prev_impl.decl_loc_in_match_first = SemIR::LocId(impl_decl_id);
+            prev_impl.match_first_position = match_first->block_size;
+            prev_impl.match_first_is_final = match_first->is_final;
+            match_first->block_size += 1;
+          }
+        }
+
         break;
       }
       case CARBON_KIND(NewImpl new_impl): {
@@ -321,6 +371,14 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
               context, node_id, impl,
               context.generics().GetSelfSpecific(impl.generic_id));
           impl.witness_block_id = context.inst_block_stack().Pop();
+
+          if (auto match_first = context.match_first_context()) {
+            impl.match_first_id = match_first->decl_id;
+            impl.decl_loc_in_match_first = SemIR::LocId(impl_decl_id);
+            impl.match_first_position = match_first->block_size;
+            impl.match_first_is_final = match_first->is_final;
+            match_first->block_size += 1;
+          }
         }
 
         FinishGenericDecl(context, node_id, impl.generic_id);
@@ -343,7 +401,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {
-  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id);
+  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id, false);
   auto& impl = context.impls().Get(impl_id);
 
   context.decl_name_stack().PopScope();
@@ -360,13 +418,11 @@ auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
     -> bool {
-  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id);
+  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id, true);
   auto& impl = context.impls().Get(impl_id);
 
   CheckRequireDeclsSatisfied(context, node_id, impl);
 
-  CARBON_CHECK(!impl.has_definition_started());
-  impl.definition_id = impl_decl_id;
   impl.scope_id =
       context.name_scopes().Add(impl_decl_id, SemIR::NameId::None,
                                 context.decl_name_stack().PeekParentScopeId());

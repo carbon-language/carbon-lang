@@ -29,11 +29,11 @@ fn F(_: C) {}
 
 fn CallF() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_symbolic.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let c:! C = {};
-  // CHECK:STDERR:       ^~~~~
+  // CHECK:STDERR: fail_todo_symbolic.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
+  // CHECK:STDERR:   let generic c: C = {};
+  // CHECK:STDERR:               ^~~~
   // CHECK:STDERR:
-  let c:! C = {};
+  let generic c: C = {};
   F(c);
   //@dump-sem-ir-end
 }
@@ -78,8 +78,6 @@ fn CallF() {
 // CHECK:STDOUT:   %bound_method.loc6_10.2: <bound method> = bound_method %b.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_10.2(%b.ref)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_symbolic.carbon

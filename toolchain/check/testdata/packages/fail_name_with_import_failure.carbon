@@ -56,7 +56,5 @@ var a: () = A();
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

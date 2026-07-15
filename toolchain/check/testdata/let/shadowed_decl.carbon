@@ -125,7 +125,5 @@ fn F(unused a: i32) -> i32 {
 // CHECK:STDOUT:   %bound_method.loc18_10.2: <bound method> = bound_method %a.ref, %specific_fn.loc18
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc18_10.2(%a.ref)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

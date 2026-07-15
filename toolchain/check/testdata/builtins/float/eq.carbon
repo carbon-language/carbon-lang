@@ -64,7 +64,5 @@ fn Eq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.eq";
 // CHECK:STDOUT:   %b.ref: %f64.dc1 = name_ref b, %b
 // CHECK:STDOUT:   %Eq.call: init bool = call %Eq.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Eq.call
-// CHECK:STDOUT:
-// CHECK:STDOUT: !observes:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
