@@ -9,6 +9,7 @@
 #include <tuple>
 #include <utility>
 
+#include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Sema/Sema.h"
 #include "common/growing_range.h"
 #include "common/pretty_stack_trace_function.h"
