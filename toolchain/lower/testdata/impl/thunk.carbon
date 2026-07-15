@@ -48,13 +48,13 @@ class B {
   }
 }
 
-interface I(T:! type) {
+interface I(T: type) {
   fn F(self, x: B) -> A;
 }
 
-class C(U:! type) {}
+class C(U: type) {}
 
-impl forall [V:! type] C(V) as I(V) {
+impl forall [V: type] C(V) as I(V) {
   fn F(unused self, _: A) -> B { return {}; }
 }
 
@@ -62,7 +62,7 @@ fn Call(c: C(()), b: B) -> A {
   return c.(I(()).F)(b);
 }
 
-fn CallGeneric[T:! I(())](c: T, b: B) -> A {
+fn CallGeneric[T: I(())](c: T, b: B) -> A {
   return c.F(b);
 }
 
@@ -70,6 +70,7 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
   return CallGeneric(c, b);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'thunk.carbon'
 // CHECK:STDOUT: source_filename = "thunk.carbon"
 // CHECK:STDOUT:
@@ -220,6 +221,8 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: !50 = !DILocation(line: 24, column: 10, scope: !47)
 // CHECK:STDOUT: !51 = !DILocation(line: 24, column: 19, scope: !47)
 // CHECK:STDOUT: !52 = !DILocation(line: 24, column: 3, scope: !47)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic_thunk.carbon'
 // CHECK:STDOUT: source_filename = "generic_thunk.carbon"
 // CHECK:STDOUT:
@@ -367,3 +370,4 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: !50 = !DILocalVariable(arg: 2, scope: !47, type: !7)
 // CHECK:STDOUT: !51 = !DILocation(line: 18, column: 3, scope: !47)
 // CHECK:STDOUT: !52 = !DILocation(line: 0, scope: !47)
+// CHECK:STDOUT:

@@ -13,15 +13,15 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/fail_generic.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+8]]:7: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   var x:! () = ();
-  // CHECK:STDERR:       ^~~~~~
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+8]]:15: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   var generic x: () = ();
+  // CHECK:STDERR:               ^~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:14: error: found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
-  // CHECK:STDERR:   var x:! () = ();
-  // CHECK:STDERR:              ^
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:21: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
+  // CHECK:STDERR:   var generic x: () = ();
+  // CHECK:STDERR:                     ^
   // CHECK:STDERR:
-  var x:! () = ();
+  var generic x: () = ();
 }
 
 // CHECK:STDOUT: --- fail_generic.carbon

@@ -95,6 +95,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %true.loc16_56: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %true.loc16_62: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc16_66: %tuple.type = tuple_literal (%true.loc16_56, %true.loc16_62) [concrete = constants.%tuple]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %expr_patt.loc16_26: %pattern_type.831 = expr_pattern %.loc16_8 in [concrete] {
 // CHECK:STDOUT:       %true.loc16_11: bool = bool_literal true [concrete = constants.%true]
@@ -127,9 +130,6 @@ fn F() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc16_51: %pattern_type.860 = tuple_pattern (%expr_patt.loc16_26, %expr_patt.loc16_43) [concrete = constants.%.2f0]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %true.loc16_56: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %true.loc16_62: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc16_66: %tuple.type = tuple_literal (%true.loc16_56, %true.loc16_62) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

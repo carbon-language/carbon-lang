@@ -15,6 +15,7 @@ fn F() {
   &n;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'address_of_unused.carbon'
 // CHECK:STDOUT: source_filename = "address_of_unused.carbon"
 // CHECK:STDOUT:
@@ -59,3 +60,4 @@ fn F() {
 // CHECK:STDOUT: !13 = !{!14}
 // CHECK:STDOUT: !14 = !DILocalVariable(arg: 1, scope: !9, type: !12)
 // CHECK:STDOUT: !15 = !DILocation(line: 14, column: 3, scope: !9)
+// CHECK:STDOUT:

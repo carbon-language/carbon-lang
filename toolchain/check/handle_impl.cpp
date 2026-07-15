@@ -265,10 +265,10 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
                             name, impl_decl_id,
                             /*is_extern=*/false, SemIR::LibraryNameId::None),
                         {.parent_scope_inst_id = parent_scope_inst_id,
+                         .is_final = is_final,
                          .self_id = self_type_inst_id,
                          .constraint_id = constraint_type_inst_id,
-                         .interface = specific_interface,
-                         .is_final = is_final}};
+                         .interface = specific_interface}};
     // There's a bunch of places that may represent a diagnostic that occurred
     // in checking the impl up to this point, which we consolidate into this
     // bool. Due to lack of an instruction to set to `ErrorInst`, an
@@ -280,6 +280,20 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
         context.types().GetTypeIdForTypeInstId(impl.constraint_id) ==
             SemIR::ErrorInst::TypeId;
 
+    if (is_final && context.match_first_context()) {
+      CARBON_DIAGNOSTIC(FinalImplInMatchFirst, Error,
+                        "`final impl` in `match_first` block");
+      CARBON_DIAGNOSTIC(
+          FinalImplInMatchFirstNote, Note,
+          "the `match_first` block can be modified as `final` instead");
+      context.emitter()
+          .Build(node_id, FinalImplInMatchFirst)
+          .Note(context.match_first_context()->decl_id,
+                FinalImplInMatchFirstNote)
+          .Emit();
+      impl_had_error = true;
+    }
+
     CARBON_KIND_SWITCH(FindImplId(context, impl)) {
       case CARBON_KIND(RedeclaredImpl redeclared_impl): {
         // This is a redeclaration of another impl, now held in `impl_id`.
@@ -289,8 +303,33 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
         // was the instruction that came last in the first declaration's eval
         // block. And FinishGenericRedecl allows the redecl to have fewer
         // instructions to support this case.
-        const auto& prev_impl = context.impls().Get(impl_id);
+        auto& prev_impl = context.impls().Get(impl_id);
         FinishGenericRedecl(context, prev_impl.generic_id);
+
+        if (auto match_first = context.match_first_context()) {
+          if (prev_impl.match_first_id.has_value()) {
+            if (!impl_had_error) {
+              CARBON_DIAGNOSTIC(
+                  ImplInTwoMatchFirst, Error,
+                  "impl declared in `match_first` more than once");
+              CARBON_DIAGNOSTIC(ImplInTwoMatchFirstNote, Note,
+                                "previous declaration here");
+              context.emitter()
+                  .Build(node_id, ImplInTwoMatchFirst)
+                  .Note(prev_impl.latest_decl_id(), ImplInTwoMatchFirstNote)
+                  .Emit();
+            }
+            impl_had_error = true;
+          }
+
+          if (!impl_had_error) {
+            prev_impl.is_final = match_first->is_final;
+            prev_impl.match_first_id = match_first->decl_id;
+            prev_impl.match_first_position = match_first->block_size;
+            match_first->block_size += 1;
+          }
+        }
+
         break;
       }
       case CARBON_KIND(NewImpl new_impl): {
@@ -321,6 +360,16 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
               context, node_id, impl,
               context.generics().GetSelfSpecific(impl.generic_id));
           impl.witness_block_id = context.inst_block_stack().Pop();
+
+          if (auto match_first = context.match_first_context()) {
+            // This should have been diagnosed above.
+            CARBON_CHECK(!impl.is_final);
+
+            impl.is_final = match_first->is_final;
+            impl.match_first_id = match_first->decl_id;
+            impl.match_first_position = match_first->block_size;
+            match_first->block_size += 1;
+          }
         }
 
         FinishGenericDecl(context, node_id, impl.generic_id);

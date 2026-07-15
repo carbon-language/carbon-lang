@@ -16,18 +16,18 @@ library "[[@TEST_NAME]]";
 
 interface J {}
 
-class A(T:! type) {}
+class A(T: type) {}
 class B {}
 
-impl forall [T:! type] A(T) as J {}
+impl forall [T: type] A(T) as J {}
 
-impl forall [T:! type where A(.Self) impls J] A(T) as Core.As(T*) {
+impl forall [T: type where A(.Self) impls J] A(T) as Core.As(T*) {
   fn Convert(self) -> T* {
     return self as T*;
   }
 }
 
-fn F[T:! type](x: A(T)) {
+fn F[T: type](x: A(T)) {
   x as T*;
 }
 
@@ -41,6 +41,7 @@ fn G(a: A(B)) {
   F(a);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'library_with_period_self_in_impl.carbon'
 // CHECK:STDOUT: source_filename = "library_with_period_self_in_impl.carbon"
 // CHECK:STDOUT:
@@ -51,6 +52,8 @@ fn G(a: A(B)) {
 // CHECK:STDOUT: !1 = !DIFile(filename: "library_with_period_self_in_impl.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_period_self_in_impl.carbon'
 // CHECK:STDOUT: source_filename = "import_period_self_in_impl.carbon"
 // CHECK:STDOUT:
@@ -103,3 +106,4 @@ fn G(a: A(B)) {
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !18, type: !7)
 // CHECK:STDOUT: !23 = !DILocation(line: 13, column: 12, scope: !18)
 // CHECK:STDOUT: !24 = !DILocation(line: 13, column: 5, scope: !18)
+// CHECK:STDOUT:

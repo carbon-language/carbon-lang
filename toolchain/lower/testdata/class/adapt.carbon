@@ -57,6 +57,7 @@ fn DoStuff(a: Int) -> Int {
   return a;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'adapt_class.carbon'
 // CHECK:STDOUT: source_filename = "adapt_class.carbon"
 // CHECK:STDOUT:
@@ -181,6 +182,8 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !45 = !{!46}
 // CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !44, type: !7)
 // CHECK:STDOUT: !47 = !DILocation(line: 27, column: 3, scope: !44)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'adapt_int.carbon'
 // CHECK:STDOUT: source_filename = "adapt_int.carbon"
 // CHECK:STDOUT:
@@ -218,3 +221,4 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !11, type: !7)
 // CHECK:STDOUT: !14 = !DILocation(line: 13, column: 10, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 13, column: 3, scope: !11)
+// CHECK:STDOUT:

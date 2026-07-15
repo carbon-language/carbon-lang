@@ -79,10 +79,14 @@ inline auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
       SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature_id));
 }
 
-// Imports a function declaration from Clang to Carbon. If successful, returns
-// the new Carbon function declaration `InstId`. If the declaration was already
-// imported, returns the mapped instruction. All unimported dependencies are
-// imported first.
+// Imports a type from Clang to Carbon. Returns a `TypeExpr` which contains
+// both a `TypeId` and `TypeInstId`. All unimported dependencies are imported
+// first.
+//
+// If a failure is diagnosed, the `TypeId` will be `ErrorInst::TypeId` and
+// the `TypeInstId` will be `ErrorInst::InstId`. Types that are not yet
+// supported may instead return `TypeId::None` and `TypeInstId::None`.
+// Callers should handle both cases.
 auto ImportCppType(Context& context, SemIR::LocId loc_id, clang::QualType type)
     -> TypeExpr;
 
@@ -109,6 +113,13 @@ auto ImportClassDefinitionForClangDecl(Context& context,
                                        SemIR::ClassId class_id,
                                        SemIR::ClangDeclId clang_decl_id)
     -> bool;
+
+// Computes the signature to use for the given imported virtual function. Unlike
+// with regular imported functions, we can only use a single signature here, so
+// we pick one conservatively.
+auto MakeVirtualFunctionSignature(Context& context,
+                                  const clang::CXXMethodDecl* method_decl)
+    -> SemIR::ClangDeclSignatureId;
 
 // Gets the identifier info for a name. Returns `nullptr` if the name is not an
 // identifier name.

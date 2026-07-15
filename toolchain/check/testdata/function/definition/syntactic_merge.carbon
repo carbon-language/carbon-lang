@@ -57,23 +57,23 @@ library "[[@TEST_NAME]]";
 class C {}
 
 // CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
-// CHECK:STDERR: fn Foo[a: C];
-// CHECK:STDERR:        ^~~~
+// CHECK:STDERR: fn Foo[runtime a: C];
+// CHECK:STDERR:        ^~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn Foo[a: C];
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fn Foo[runtime a: C];
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Foo[a: C];
+fn Foo[runtime a: C];
 // CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
-// CHECK:STDERR: fn Foo[a: (C)] {}
-// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR: fn Foo[runtime a: (C)] {}
+// CHECK:STDERR:        ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn Foo[a: (C)] {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn Foo[runtime a: (C)] {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Foo[a: (C)] {}
+fn Foo[runtime a: (C)] {}
 
 // --- fail_raw_identifier.carbon
 
@@ -149,15 +149,15 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-fn Foo[a:! C]();
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Foo[unused a:! D]() {}
-// CHECK:STDERR:                   ^
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:12: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: fn Foo[a:! C]();
-// CHECK:STDERR:            ^
+fn Foo[a: C]();
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fn Foo[unused a: D]() {}
+// CHECK:STDERR:                  ^
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR: fn Foo[a: C]();
+// CHECK:STDERR:           ^
 // CHECK:STDERR:
-fn Foo[unused a:! D]() {}
+fn Foo[unused a: D]() {}
 
 // --- todo_fail_alias_in_return.carbon
 
@@ -722,7 +722,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a.1bf9e8.1: %C = symbolic_binding a, 0 [symbolic]
@@ -746,7 +746,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc7_9.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_9.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc7_9.2: %C = symbolic_binding a, 0 [symbolic = %a.loc7_9.1 (constants.%a.1bf9e8.1)]
@@ -755,7 +755,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc15_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15: type = splice_block %D.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc15_16.3: %C = symbolic_binding a, 0 [symbolic = %a.loc15_16.2 (constants.%a.1bf9e8.2)]

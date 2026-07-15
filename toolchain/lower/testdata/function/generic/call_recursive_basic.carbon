@@ -18,7 +18,7 @@ class C {
 
 // The two specifics for recursive function F, when T is a pointer, could be
 // deduplicated.
-fn F[T:! Core.Copy](x: T, count: i32) -> T {
+fn F[T: Core.Copy](x: T, count: i32) -> T {
   if (count > 0) {
     return x;
   }
@@ -40,6 +40,7 @@ fn M() {
   F(c, 0);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_basic.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_basic.carbon"
 // CHECK:STDOUT:
@@ -276,3 +277,4 @@ fn M() {
 // CHECK:STDOUT: !88 = !DILocation(line: 25, column: 15, scope: !80)
 // CHECK:STDOUT: !89 = !DILocation(line: 25, column: 10, scope: !80)
 // CHECK:STDOUT: !90 = !DILocation(line: 25, column: 3, scope: !80)
+// CHECK:STDOUT:

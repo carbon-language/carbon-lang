@@ -57,7 +57,7 @@ inline Cpp '''
 int G() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE+4]]:18: error: no member named 'F' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    38 |   return Carbon::F({1, 2, 3, 4, 5});
+  // CHECK:STDERR:    28 |   return Carbon::F({1, 2, 3, 4, 5});
   // CHECK:STDERR:       |                  ^
   // CHECK:STDERR:
   return Carbon::F({1, 2, 3, 4, 5});

@@ -37,6 +37,7 @@
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/observe.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -131,6 +132,10 @@ class Context {
     return require_impls_stack_;
   }
 
+  auto observe_stack() -> ArrayStack<SemIR::ObserveId>& {
+    return observe_stack_;
+  }
+
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
   auto decl_introducer_state_stack() -> DeclIntroducerStateStack& {
@@ -222,6 +227,17 @@ class Context {
 
   auto region_stack() -> RegionStack& { return region_stack_; }
 
+  // The `MatchFirstDecl` and state of the `match_first` block that we are
+  // currently checking.
+  struct MatchFirstContext {
+    SemIR::InstId decl_id;
+    bool is_final;
+    int block_size = 0;
+  };
+  auto match_first_context() -> std::optional<MatchFirstContext>& {
+    return match_first_context_;
+  }
+
   // An ongoing impl lookup, used to ensure termination.
   struct ImplLookupStackEntry {
     SemIR::ConstantId query_self_const_id;
@@ -241,6 +257,10 @@ class Context {
       std::pair<SemIR::ConstantId, SemIR::SpecificInterfaceId>;
   using ImplLookupCacheMap = Map<ImplLookupCacheKey, SemIR::ConstantId>;
   auto impl_lookup_cache() -> ImplLookupCacheMap& { return impl_lookup_cache_; }
+
+  auto impl_lookup_no_symbolic_final_lookups() -> int& {
+    return impl_lookup_no_symbolic_final_lookups_;
+  }
 
   // An impl lookup query that resulted in a concrete witness from finding an
   // `impl` declaration (not though a facet value), and its result. Used to look
@@ -280,6 +300,10 @@ class Context {
 
   auto where_stack() -> llvm::SmallVector<WhereStackEntry>& {
     return where_stack_;
+  }
+
+  auto forbidden_impls() -> llvm::SmallVector<SemIR::ImplId>& {
+    return forbidden_impls_;
   }
 
   // Data about a form expression.
@@ -352,6 +376,10 @@ class Context {
   }
   auto require_impls_blocks() -> SemIR::RequireImplsBlockStore& {
     return sem_ir().require_impls_blocks();
+  }
+  auto observes() -> SemIR::ObserveStore& { return sem_ir().observes(); }
+  auto observe_blocks() -> SemIR::ObserveBlockStore& {
+    return sem_ir().observe_blocks();
   }
   auto associated_constants() -> SemIR::AssociatedConstantStore& {
     return sem_ir().associated_constants();
@@ -461,6 +489,10 @@ class Context {
   // definitions.
   RequireImplsStack require_impls_stack_;
 
+  // The stack of Observe for in-progress Interface and Function
+  // definitions.
+  ArrayStack<SemIR::ObserveId> observe_stack_;
+
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
 
@@ -539,6 +571,9 @@ class Context {
   // Stack of single-entry regions being built.
   RegionStack region_stack_;
 
+  // The statte of the `match_first` block that we are currently checking.
+  std::optional<MatchFirstContext> match_first_context_;
+
   // Tracks all ongoing impl lookups in order to ensure that lookup terminates
   // via the acyclic rule and the termination rule.
   llvm::SmallVector<ImplLookupStackEntry> impl_lookup_stack_;
@@ -546,6 +581,12 @@ class Context {
   // Tracks a mapping from (self, interface) to witness, for queries that had
   // final results.
   ImplLookupCacheMap impl_lookup_cache_;
+
+  // While non-zero, symbolic lookups for final impls are prevented in order to
+  // prevent cycles. This is incremented while replacing `.Self` in a facet type
+  // from an impl lookup query that we are searching for a witness for the
+  // query.
+  int impl_lookup_no_symbolic_final_lookups_ = 0;
 
   // Tracks impl lookup queries that lead to concrete witness results, along
   // with those results. Used to verify that the same queries produce the same
@@ -556,6 +597,11 @@ class Context {
   // Tracks information about constraints in the current `where` expression
   // being checked so that they can be used by later constraints.
   llvm::SmallVector<WhereStackEntry> where_stack_;
+
+  // Impls that cannot be used in impl lookup. This prevents cycles where a
+  // `LookupImplWitness` instruction inside the impl decl should not be able to
+  // find the containing impl decl.
+  llvm::SmallVector<SemIR::ImplId> forbidden_impls_;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;

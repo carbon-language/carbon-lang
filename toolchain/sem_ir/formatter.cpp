@@ -418,6 +418,7 @@ auto Formatter::FormatInterface(InterfaceId id, const Interface& interface_info)
     out() << "\n";
 
     FormatRequireImplsBlock(interface_info.require_impls_block_id);
+    FormatObserveBlock(interface_info.observe_block_id);
 
     CloseBrace();
   } else {
@@ -494,7 +495,7 @@ auto Formatter::FormatImpl(ImplId id, const Impl& impl_info) -> void {
   }
 
   PrepareToFormatDecl(impl_info.first_owning_decl_id);
-  FormatEntityStart("impl", impl_info, id);
+  FormatEntityStart(impl_info.is_final ? "final impl" : "impl", impl_info, id);
 
   llvm::SaveAndRestore impl_scope(scope_, inst_namer_.GetScopeFor(id));
 
@@ -598,10 +599,13 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
       FormatCodeBlock(block_id);
     }
 
+    FormatObserveBlock(fn.observe_block_id);
+
     CloseBrace();
   } else {
     Semicolon();
   }
+
   out() << '\n';
 
   FormatEntityEnd(fn.generic_id);
@@ -1448,6 +1452,49 @@ auto Formatter::FormatRequireImpls(RequireImplsId id) -> void {
   CloseBrace();
 }
 
+auto Formatter::FormatObserve(ObserveId id) -> void {
+  out() << ' ';
+
+  const auto& observe = sem_ir_->observes().Get(id);
+  OpenBrace();
+  Indent();
+  out() << "observe ";
+  if (!observe.operations_id.has_value()) {
+    return;
+  }
+
+  auto first_operation = true;
+  for (auto operation_id :
+       sem_ir_->inst_blocks().GetOrEmpty(observe.operations_id)) {
+    CARBON_KIND_SWITCH(sem_ir_->insts().Get(operation_id)) {
+      case CARBON_KIND(ObserveEquivalent eq): {
+        if (first_operation) {
+          FormatArg(eq.lhs_id);
+          first_operation = false;
+        }
+        out() << " == ";
+        FormatArg(eq.rhs_id);
+        break;
+      }
+      case CARBON_KIND(ObserveImpls impls): {
+        if (first_operation) {
+          FormatArg(impls.lhs_id);
+          first_operation = false;
+        }
+        out() << " impls ";
+        FormatArg(impls.rhs_id);
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  }
+
+  out() << "\n";
+  CloseBrace();
+}
+
 auto Formatter::FormatRequireImplsBlock(RequireImplsBlockId block_id) -> void {
   IndentLabel();
   out() << "!requires:\n";
@@ -1458,6 +1505,21 @@ auto Formatter::FormatRequireImplsBlock(RequireImplsBlockId block_id) -> void {
     Indent();
     FormatArg(require_impls_id);
     FormatRequireImpls(require_impls_id);
+    out() << "\n";
+  }
+}
+
+auto Formatter::FormatObserveBlock(ObserveBlockId block_id) -> void {
+  if (!block_id.has_value() || block_id == ObserveBlockId::Empty) {
+    return;
+  }
+
+  IndentLabel();
+  out() << "!observes:\n";
+  for (auto observe_id : sem_ir_->observe_blocks().Get(block_id)) {
+    Indent();
+    FormatArg(observe_id);
+    FormatObserve(observe_id);
     out() << "\n";
   }
 }

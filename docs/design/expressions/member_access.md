@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Member resolution](#member-resolution)
     -   [Package and namespace members](#package-and-namespace-members)
-    -   [Types, forms, and facets](#types-forms-and-facets)
+    -   [Types, extended types, and facets](#types-extended-types-and-facets)
         -   [`extend`](#extend)
     -   [Tuple indexing](#tuple-indexing)
     -   [Values](#values)
@@ -133,17 +133,17 @@ A member access expression is processed using the following steps:
 The process of _member resolution_ determines which member `M` a member access
 expression is referring to.
 
-For a simple member access, if the first operand is a type, form, facet,
-package, or namespace, a search for the member name is performed in the first
-operand. Otherwise, a search for the member name is performed in the type of the
-first operand. In either case, the search must succeed. In the latter case, if
-the result is an instance member, then [instance binding](#instance-binding) is
-performed on the first operand.
+For a simple member access, if the first operand is a type, extended type,
+facet, package, or namespace, a search for the member name is performed in the
+first operand. Otherwise, a search for the member name is performed in the type
+of the first operand. In either case, the search must succeed. In the latter
+case, if the result is an instance member, then
+[instance binding](#instance-binding) is performed on the first operand.
 
-A search for a name within a form searches for the name in its
-[type component](/docs/design/values.md#expression-forms). Note that this means
-that the form of an expression never affects simple member access into that
-expression, except through its type component.
+A search for a name within an extended type searches for the name in its
+[type component](/docs/design/values.md#extended-types). Note that this means
+that the extended type of an expression never affects simple member access into
+that expression, except through its type component.
 
 For a compound member access, the second operand is evaluated as a compile-time
 constant to determine the member being accessed. The evaluation is required to
@@ -171,7 +171,7 @@ alias MyNS = MyNamespace;
 fn CallMyFunction() { MyNS.MyFunction(); }
 
 // ❌ Error: a namespace is not a value.
-let MyNS2:! auto = MyNamespace;
+let MyNS2: auto = MyNamespace;
 
 fn CallMyFunction2() {
   // ❌ Error: cannot perform compound member access into a namespace.
@@ -200,11 +200,11 @@ class Bar {
 }
 ```
 
-### Types, forms, and facets
+### Types, extended types, and facets
 
-If the first operand is a type, form, or facet, it must be a compile-time
-constant. This disallows member access into a type except during compile-time,
-see leads issue
+If the first operand is a type, extended type, or facet, it must be a
+compile-time constant. This disallows member access into a type except during
+compile-time, see leads issue
 [#1293](https://github.com/carbon-language/carbon-lang/issues/1293).
 
 Like the previous case, types (including
@@ -240,8 +240,8 @@ class Avatar {
 Simple member access `(Avatar as Cowboy).Draw` finds the `Cowboy.Draw`
 implementation for `Avatar`, ignoring `Renderable.Draw`.
 
-Similarly, a form has members, specifically the members of the form's type
-component.
+Similarly, an extended type has members, specifically the members of the
+extended type's type component.
 
 #### `extend`
 
@@ -274,7 +274,7 @@ interface I {
   fn F();
 }
 
-class C(T:! I) {
+class C(T: I) {
   extend base: T;
   // `F` names `T.F` here, found in `I`.
   fn G() { F(); }
@@ -295,14 +295,14 @@ completeness, as it requires `A(-1)` to be complete, which requires
 `B(array(i32, -1))` to be complete, and that contains an invalid type.
 
 ```carbon
-interface B(T:! type) {}
+interface B(T: type) {}
 
-interface A(N:! i32) {
+interface A(N: i32) {
   // Requires `B(N)` to be complete.
   extend require impls B(array(i32, N)) {}
 }
 
-class C(N! i32) {
+class C(N: i32) {
   // Requires `A(N)` to be complete, which requires `B(N)` to be complete.
   extend impl as A(N);
 }
@@ -357,7 +357,7 @@ positional element of the tuple.
 // ✅ `d == 43`.
 let d: i32 = (41, 42, 43).(1 + 1);
 // ✅ `e == 2`.
-let template e:! i32 = (1, 2, 3).(0x1);
+let template e: i32 = (1, 2, 3).(0x1);
 // ❌ Error: no tuple element with index 4.
 let f: i32 = (1, 2).(2 * 2);
 
@@ -367,9 +367,9 @@ let n: i32 = p->(e);
 
 ### Values
 
-If the first operand is not a type, form, package, namespace, or facet, it does
-not have member names, and a search is performed into the type of the first
-operand instead.
+If the first operand is not a type, extended type, facet, package, or namespace,
+it does not have member names, and a search is performed into the type of the
+first operand instead.
 
 ```carbon
 interface Printable {
@@ -404,7 +404,7 @@ fn PrintPointTwice() {
 
 ### Facet binding
 
-A search for members of a facet binding `T:! C` treats the facet binding as an
+A search for members of a facet binding `T: C` treats the facet binding as an
 [archetype](/docs/design/generics/terminology.md#archetype), and finds members
 of the facet `T` of facet type `C`.
 
@@ -415,7 +415,7 @@ interface Printable {
   fn Print(self);
 }
 
-fn GenericPrint[T:! Printable](a: T) {
+fn GenericPrint[T: Printable](a: T) {
   // ✅ OK, type of `a` is the facet binding `T`;
   // `Print` found in the facet `T as Printable`.
   a.Print();
@@ -438,10 +438,10 @@ Evaluation of an expression involving the binding may still succeed, but will
 result in a symbolic constant involving that binding.
 
 ```carbon
-class GenericWrapper(T:! type) {
+class GenericWrapper(T: type) {
   var field: T;
 }
-fn F[T:! type](x: GenericWrapper(T)) -> T {
+fn F[T: type](x: GenericWrapper(T)) -> T {
   // ✅ OK, finds `GenericWrapper(T).field`.
   return x.field;
 }
@@ -449,7 +449,7 @@ fn F[T:! type](x: GenericWrapper(T)) -> T {
 interface Renderable {
   fn Draw(self);
 }
-fn DrawChecked[T:! Renderable](c: T) {
+fn DrawChecked[T: Renderable](c: T) {
   // `Draw` resolves to `(T as Renderable).Draw` or
   // `T.(Renderable.Draw)`.
   c.Draw();
@@ -468,11 +468,11 @@ fn CallsDrawChecked(c: Cowboy) {
 
 If the value or type depends on any template bindings, the lookup is redone from
 a context where the values of those bindings are known, but where the values of
-any symbolic bindings are still unknown. The lookup results from these two
+any checked bindings are still unknown. The lookup results from these two
 contexts are [combined](#lookup-ambiguity).
 
 ```carbon
-fn DrawTemplate[template T:! type](c: T) {
+fn DrawTemplate[template T: type](c: T) {
   // `Draw` not found in `type`, looked up in the
   // actual deduced value of `T`.
   c.Draw();
@@ -492,10 +492,10 @@ the compiler can assume the body of a templated class will be the same for all
 argument values:
 
 ```carbon
-class TemplateWrapper(template T:! type) {
+class TemplateWrapper(template T: type) {
   var field: T;
 }
-fn G[template T:! type](x: TemplateWrapper(T)) -> T {
+fn G[template T: type](x: TemplateWrapper(T)) -> T {
   // ✅ Allowed, finds `TemplateWrapper(T).field`.
   return x.field;
 }
@@ -508,10 +508,10 @@ cases where the lookup only succeeds for specific values of `T`:
 class HasField {
   var field: i32;
 }
-class DerivingWrapper(template T:! type) {
+class DerivingWrapper(template T: type) {
   extend base: T;
 }
-fn H[template T:! type](x: DerivingWrapper(T)) -> i32 {
+fn H[template T: type](x: DerivingWrapper(T)) -> i32 {
   // ✅ Allowed, but no name `field` found in template
   // definition of `DerivingWrapper`.
   return x.field;
@@ -525,9 +525,9 @@ fn CallH(a: DerivingWrapper(HasField),
 }
 ```
 
-**Note:** All lookups are done from a context where the values of any symbolic
+**Note:** All lookups are done from a context where the values of any checked
 bindings that are in scope are unknown. Unlike for a template binding, the
-actual value of a symbolic binding never affects the result of member
+actual value of a checked binding never affects the result of member
 resolution.
 
 #### Lookup ambiguity
@@ -549,7 +549,7 @@ interface Renderable {
   fn Draw(self);
 }
 
-fn DrawTemplate2[template T:! Renderable](c: T) {
+fn DrawTemplate2[template T: Renderable](c: T) {
   // Member lookup finds `(T as Renderable).Draw` and the
   // `Draw` member of the actual deduced value of `T`, if any.
   c.Draw();
@@ -577,7 +577,7 @@ class SquareWidget {
   }
 }
 
-fn FlyTemplate[template T:! type](c: T) {
+fn FlyTemplate[template T: type](c: T) {
   c.Fly();
 }
 
@@ -628,7 +628,7 @@ For a simple member access `a.b` where `b` names a member of an interface `I`:
 -   Otherwise, `impl` lookup is not performed.
 
 The appropriate `impl T as I` implementation is located. The program is invalid
-if no such `impl` exists. When `T` or `I` depends on a symbolic binding, a
+if no such `impl` exists. When `T` or `I` depends on a checked binding, a
 suitable constraint must be specified to ensure that such an `impl` will exist.
 When `T` or `I` depends on a template binding, this check is deferred until the
 value for the template binding is known.
@@ -645,7 +645,7 @@ interface Addable {
   // #1
   fn Add(self, other: Self) -> Self;
   // #2
-  default fn Sum[Seq:! Iterable where .ValueType = Self](seq: Seq) -> Self {
+  default fn Sum[Seq: Iterable where .ValueType = Self](seq: Seq) -> Self {
     // ...
   }
   alias AliasForSum = Sum;
@@ -739,7 +739,7 @@ base class WidgetBase {
   // ✅ OK, even though `WidgetBase` does not implement `Renderable`.
   alias Draw = Renderable.Draw;
 
-  fn DrawAll[T:! Renderable](v: Vector(T)) {
+  fn DrawAll[T: Renderable](v: Vector(T)) {
     for (w: T in v) {
       // ✅ OK. Unqualified lookup for `Draw` finds alias `WidgetBase.Draw`
       // to `Renderable.Draw`, which does not perform `impl` lookup yet.
@@ -829,10 +829,11 @@ If instance binding is to be performed, the result of instance binding depends
 on what instance member `M` was found:
 
 -   For a field member of a struct type or tuple type, `x` is converted to a
-    struct or tuple form by
-    [form decomposition](/docs/design/values.md#category-conversions), and the
-    `.f` element of the result of that conversion becomes the result of `x.f`.
-    All other elements are [discarded](/docs/design/values.md#form-conversions).
+    struct or tuple extended type by
+    [extended type decomposition](/docs/design/values.md#extended-type-conversions),
+    and the `.f` element of the result of that conversion becomes the result of
+    `x.f`. All other elements are
+    [discarded](/docs/design/values.md#extended-type-conversions).
 -   For a field member in class `C`, `x` is required to be of type `C` or of a
     type derived from `C`. The result is the corresponding subobject within `x`.
     If `x` is an
@@ -944,11 +945,11 @@ fn CallStaticMethod(c: C) {
   // same as `c.field = 1;`
   c.(C.field) = 1;
 
-  // ✅ OK
-  let T:! type = C.Nested;
-  // ❌ Error: value of `:!` binding is not compile-time because it
+  // ✅ OK (also OK with `template`)
+  let generic G: type = C.Nested;
+  // ❌ Error: value of `generic` binding is not compile-time because it
   // refers to local variable `c`.
-  let U:! type = c.Nested;
+  let generic U: type = c.Nested;
 }
 ```
 

@@ -22,22 +22,23 @@ fn Call() -> i32 {
   return Cpp.f();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'debug_info.carbon'
 // CHECK:STDOUT: source_filename = "debug_info.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define dso_local noundef i32 @_Z1fv() #0 !dbg !13 {
+// CHECK:STDOUT: define dso_local noundef i32 @_Z1fv() #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 42, !dbg !17
+// CHECK:STDOUT:   ret i32 42, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CCall.Main() #1 !dbg !18 {
+// CHECK:STDOUT: define i32 @_CCall.Main() #1 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %f.call = call i32 @_Z1fv(), !dbg !19
-// CHECK:STDOUT:   ret i32 %f.call, !dbg !20
+// CHECK:STDOUT:   %f.call = call i32 @_Z1fv(), !dbg !20
+// CHECK:STDOUT:   ret i32 %f.call, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -56,15 +57,17 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !6 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !7 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !8 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !9 = !{!10, !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"int", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"omnipotent char", !12, i64 0}
-// CHECK:STDOUT: !12 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "f", linkageName: "_Z1fv", scope: !3, file: !3, line: 18, type: !14, scopeLine: 18, flags: DIFlagPrototyped | DIFlagAllCallsDescribed, spFlags: DISPFlagDefinition | DISPFlagOptimized, unit: !0, keyInstructions: true)
-// CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
-// CHECK:STDOUT: !15 = !{!16}
-// CHECK:STDOUT: !16 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !17 = !DILocation(line: 18, column: 11, scope: !13, atomGroup: 1, atomRank: 1)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !3, line: 21, type: !14, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 10, scope: !18)
-// CHECK:STDOUT: !20 = !DILocation(line: 22, column: 3, scope: !18)
+// CHECK:STDOUT: !9 = !{!10, !11, i64 0}
+// CHECK:STDOUT: !10 = !{!"__libc_errno", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"int", !12, i64 0}
+// CHECK:STDOUT: !12 = !{!"omnipotent char", !13, i64 0}
+// CHECK:STDOUT: !13 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "f", linkageName: "_Z1fv", scope: !3, file: !3, line: 18, type: !15, scopeLine: 18, flags: DIFlagPrototyped | DIFlagAllCallsDescribed, spFlags: DISPFlagDefinition | DISPFlagOptimized, unit: !0, keyInstructions: true)
+// CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
+// CHECK:STDOUT: !16 = !{!17}
+// CHECK:STDOUT: !17 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !18 = !DILocation(line: 18, column: 11, scope: !14, atomGroup: 1, atomRank: 1)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !3, line: 21, type: !15, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !20 = !DILocation(line: 22, column: 10, scope: !19)
+// CHECK:STDOUT: !21 = !DILocation(line: 22, column: 3, scope: !19)
+// CHECK:STDOUT:

@@ -18,6 +18,7 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/function.h"
@@ -138,6 +139,41 @@ static auto AddStructTypeFields(
   return fields_id;
 }
 
+// Result of comparing a virtual function in a base class with a potential
+// overrider in a derived class.
+enum class OverrideMatchResult : uint8_t {
+  // The functions match.
+  Match,
+  // The potential overrider is not marked `override`.
+  NotAnOverride,
+  // The names do not match.
+  NameMismatch,
+  // The arity (number of explicit parameters) does not match.
+  ArityMismatch,
+};
+
+// Compares a virtual function in a base class with a potential overrider in a
+// derived class.
+static auto CompareVirtualWithOverrider(const SemIR::Function& base_fn,
+                                        const SemIR::Function& derived_fn)
+    -> OverrideMatchResult {
+  if (derived_fn.virtual_modifier !=
+      SemIR::FunctionFields::VirtualModifier::Override) {
+    return OverrideMatchResult::NotAnOverride;
+  }
+  if (derived_fn.name_id != base_fn.name_id) {
+    return OverrideMatchResult::NameMismatch;
+  }
+  if (derived_fn.call_param_ranges.explicit_size() !=
+      base_fn.call_param_ranges.explicit_size()) {
+    return OverrideMatchResult::ArityMismatch;
+  }
+  // TODO: We should check more thoroughly for compatibility between the two
+  // functions here, so that we can determine which function is being overridden
+  // if the base function is in a C++ overload set.
+  return OverrideMatchResult::Match;
+}
+
 // Builds and returns a vtable for the current class. Assumes that the virtual
 // functions for the class are listed as the top element of the `vtable_stack`.
 static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
@@ -188,6 +224,9 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
   llvm::SmallVector<SemIR::InstId> vtable;
   Set<SemIR::FunctionId> implemented_impls;
   bool carbon_native_vtable = true;
+
+  // Add vtable entries from the base class, updating them to point to a derived
+  // class overrider if there is one.
   if (base_vtable_id.has_value()) {
     const auto& base_vtable = context.vtables().Get(base_vtable_id);
     carbon_native_vtable = base_vtable.carbon_native_vtable;
@@ -216,9 +255,8 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
                 context.insts()
                     .GetAs<SemIR::FunctionDecl>(override_fn_decl_id)
                     .function_id);
-            return override_fn.virtual_modifier ==
-                       SemIR::FunctionFields::VirtualModifier::Override &&
-                   override_fn.name_id == fn.name_id;
+            return CompareVirtualWithOverrider(fn, override_fn) ==
+                   OverrideMatchResult::Match;
           });
       if (i != vtable_contents.end()) {
         auto override_fn_id =
@@ -264,6 +302,8 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     }
   }
 
+  // Add any remaining virtual functions from the derived class to the vtable,
+  // and diagnose any `override fn`s that didn't override anything.
   for (auto inst_id : vtable_contents) {
     auto fn_decl = context.insts().GetAs<SemIR::FunctionDecl>(inst_id);
     auto& fn = context.functions().Get(fn_decl.function_id);
@@ -274,8 +314,47 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     } else if (!implemented_impls.Lookup(fn_decl.function_id)) {
       CARBON_DIAGNOSTIC(OverrideWithoutVirtualInBase, Error,
                         "override without compatible virtual in base class");
-      context.emitter().Emit(SemIR::LocId(inst_id),
-                             OverrideWithoutVirtualInBase);
+      CARBON_DIAGNOSTIC(OverrideCandidateArityMismatch, Note,
+                        "base class function has {2:more|fewer} parameters "
+                        "({0} vs {1} excluding `self`)",
+                        Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
+                        Diagnostics::BoolAsSelect);
+      auto builder = context.emitter().Build(SemIR::LocId(inst_id),
+                                             OverrideWithoutVirtualInBase);
+      if (base_vtable_id.has_value()) {
+        const auto& base_vtable = context.vtables().Get(base_vtable_id);
+        auto base_vtable_inst_block =
+            context.inst_blocks().Get(base_vtable.virtual_functions_id);
+        for (auto base_vtable_entry_id : base_vtable_inst_block) {
+          if (!base_vtable_entry_id.has_value()) {
+            continue;
+          }
+          auto [derived_vtable_entry_id, derived_vtable_entry_const_id, fn_id,
+                specific_id] =
+              DecomposeVirtualFunction(context.sem_ir(), base_vtable_entry_id,
+                                       base_class_specific_id);
+          const auto& base_fn = context.sem_ir().functions().Get(fn_id);
+          switch (CompareVirtualWithOverrider(base_fn, fn)) {
+            case OverrideMatchResult::ArityMismatch:
+              builder.Note(base_fn.first_owning_decl_id,
+                           OverrideCandidateArityMismatch,
+                           base_fn.call_param_ranges.explicit_size() - 1,
+                           fn.call_param_ranges.explicit_size() - 1,
+                           base_fn.call_param_ranges.explicit_size() >
+                               fn.call_param_ranges.explicit_size());
+              break;
+            case OverrideMatchResult::NameMismatch:
+              // TODO: If the name is similar enough and the overrider otherwise
+              // matches, emit a note about the potential misspelling.
+              break;
+            case OverrideMatchResult::Match:
+              CARBON_FATAL("Unexpectedly found a matching overrider");
+            case OverrideMatchResult::NotAnOverride:
+              CARBON_FATAL("Should only consider `override fn`s here");
+          }
+        }
+      }
+      builder.Emit();
     }
   }
 

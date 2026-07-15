@@ -60,7 +60,7 @@ fn Sum(x: i32, y: i32) -> i32 {
 A parenthesized template constant expression can also be used to index a tuple:
 
 ```
-fn Choose(template N:! i32) -> i32 {
+fn Choose(template N: i32) -> i32 {
   return (1, 2, 3).(N % 3);
 }
 ```

@@ -392,6 +392,8 @@ class NodeStack {
                           Id::KindFor<SemIR::InstId>());
     set_id_if_category_is(Parse::NodeCategory::Expr,
                           Id::KindFor<SemIR::InstId>());
+    set_id_if_category_is(Parse::NodeCategory::ObserveOperator,
+                          Id::KindFor<SemIR::InstId>());
     set_id_if_category_is(
         Parse::NodeCategory::MemberName | Parse::NodeCategory::NonExprName,
         Id::KindFor<SemIR::NameId>());
@@ -415,6 +417,8 @@ class NodeStack {
     switch (node_kind) {
       case Parse::NodeKind::CallExprStart:
       case Parse::NodeKind::IfExprThen:
+      case Parse::NodeKind::MatchFirstDefinitionStart:
+      case Parse::NodeKind::ObserveIntroducer:
       case Parse::NodeKind::RequireIntroducer:
       case Parse::NodeKind::ShortCircuitOperandAnd:
       case Parse::NodeKind::ShortCircuitOperandOr:
@@ -462,8 +466,8 @@ class NodeStack {
       case Parse::NodeKind::LetInitializer:
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::NamedConstraintIntroducer:
-      case Parse::NodeKind::ObserveIntroducer:
       case Parse::NodeKind::RefBindingName:
+      case Parse::NodeKind::RuntimeBindingName:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::StructLiteralStart:
       case Parse::NodeKind::StructTypeLiteralField:
@@ -519,13 +523,12 @@ class NodeStack {
       case Parse::NodeKind::MatchConditionStart:
       case Parse::NodeKind::MatchDefault:
       case Parse::NodeKind::MatchDefaultIntroducer:
+      case Parse::NodeKind::MatchFirstIntroducer:
       case Parse::NodeKind::MatchHandlerStart:
       case Parse::NodeKind::MatchHandler:
       case Parse::NodeKind::MatchIntroducer:
       case Parse::NodeKind::MatchStatementStart:
       case Parse::NodeKind::NamespaceStart:
-      case Parse::NodeKind::ObserveEqualEqual:
-      case Parse::NodeKind::ObserveImpls:
       case Parse::NodeKind::PackageIntroducer:
       case Parse::NodeKind::ParenExprStart:
       case Parse::NodeKind::PatternListComma:

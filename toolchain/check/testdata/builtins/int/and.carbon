@@ -31,8 +31,8 @@ library "[[@TEST_NAME]]";
 
 fn And(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
 
-class Expect(N:! Core.IntLiteral) {}
-fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
+class Expect(N: Core.IntLiteral) {}
+fn Test(generic N: Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(And(1, 2)) as Expect(0);

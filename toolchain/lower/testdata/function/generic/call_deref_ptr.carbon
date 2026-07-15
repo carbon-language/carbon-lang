@@ -15,19 +15,19 @@
 // conclude "equivalent" for all the call graph. This is to account for
 // switching to a work-queue from recursion.
 
-fn A[U:! Core.Copy](x: U) -> U {
+fn A[U: Core.Copy](x: U) -> U {
   return x;
 }
 
-fn D[U:! Core.Copy](x: U) -> U {
+fn D[U: Core.Copy](x: U) -> U {
   return x;
 }
 
-fn B[U:! Core.Copy & Core.Destroy](x: U*) {
+fn B[U: Core.Copy & Core.Destroy](x: U*) {
   D(*x);
 }
 
-fn F[T:! Core.Copy & Core.Destroy](x: T*) {
+fn F[T: Core.Copy & Core.Destroy](x: T*) {
   A(i32);
   B(x);
 }
@@ -40,6 +40,7 @@ fn M() {
   F(ptr_f64);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_deref_ptr.carbon'
 // CHECK:STDOUT: source_filename = "call_deref_ptr.carbon"
 // CHECK:STDOUT:
@@ -212,3 +213,4 @@ fn M() {
 // CHECK:STDOUT: !65 = !{!66}
 // CHECK:STDOUT: !66 = !DILocalVariable(arg: 1, scope: !64, type: !24)
 // CHECK:STDOUT: !67 = !DILocation(line: 23, column: 3, scope: !64)
+// CHECK:STDOUT:

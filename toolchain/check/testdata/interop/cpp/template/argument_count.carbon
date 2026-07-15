@@ -144,12 +144,12 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %x.var: ref %TwoTypes = var_storage %x.var_patt [concrete]
+// CHECK:STDOUT:   %x: ref %TwoTypes = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.83a = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.83a = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %TwoTypes = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %x: ref %TwoTypes = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -221,30 +221,30 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %a0.var: ref %TypePack.78f = var_storage %a0.var_patt [concrete]
+// CHECK:STDOUT:   %a0: ref %TypePack.78f = wrapper_binding a0, %a0.var [concrete = %a0.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a0.patt: %pattern_type.a64 = ref_binding_pattern a0 [concrete = constants.%a0.patt]
 // CHECK:STDOUT:     %a0.var_patt: %pattern_type.a64 = var_pattern %a0.patt [concrete = constants.%a0.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a0.var: ref %TypePack.78f = var %a0.var_patt [concrete]
-// CHECK:STDOUT:   %a0: ref %TypePack.78f = wrapper_binding a0, %a0.var [concrete = %a0.var]
+// CHECK:STDOUT:   %a1.var: ref %TypePack.0bc = var_storage %a1.var_patt [concrete]
+// CHECK:STDOUT:   %a1: ref %TypePack.0bc = wrapper_binding a1, %a1.var [concrete = %a1.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a1.patt: %pattern_type.20e = ref_binding_pattern a1 [concrete = constants.%a1.patt]
 // CHECK:STDOUT:     %a1.var_patt: %pattern_type.20e = var_pattern %a1.patt [concrete = constants.%a1.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a1.var: ref %TypePack.0bc = var %a1.var_patt [concrete]
-// CHECK:STDOUT:   %a1: ref %TypePack.0bc = wrapper_binding a1, %a1.var [concrete = %a1.var]
+// CHECK:STDOUT:   %a2.var: ref %TypePack.0ec = var_storage %a2.var_patt [concrete]
+// CHECK:STDOUT:   %a2: ref %TypePack.0ec = wrapper_binding a2, %a2.var [concrete = %a2.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a2.patt: %pattern_type.c25 = ref_binding_pattern a2 [concrete = constants.%a2.patt]
 // CHECK:STDOUT:     %a2.var_patt: %pattern_type.c25 = var_pattern %a2.patt [concrete = constants.%a2.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a2.var: ref %TypePack.0ec = var %a2.var_patt [concrete]
-// CHECK:STDOUT:   %a2: ref %TypePack.0ec = wrapper_binding a2, %a2.var [concrete = %a2.var]
+// CHECK:STDOUT:   %a3.var: ref %TypePack.186 = var_storage %a3.var_patt [concrete]
+// CHECK:STDOUT:   %a3: ref %TypePack.186 = wrapper_binding a3, %a3.var [concrete = %a3.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a3.patt: %pattern_type.678 = ref_binding_pattern a3 [concrete = constants.%a3.patt]
 // CHECK:STDOUT:     %a3.var_patt: %pattern_type.678 = var_pattern %a3.patt [concrete = constants.%a3.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a3.var: ref %TypePack.186 = var %a3.var_patt [concrete]
-// CHECK:STDOUT:   %a3: ref %TypePack.186 = wrapper_binding a3, %a3.var [concrete = %a3.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

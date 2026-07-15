@@ -22,6 +22,7 @@ fn Run() -> i32 {
   return n;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'copy_value_rep.carbon'
 // CHECK:STDOUT: source_filename = "copy_value_rep.carbon"
 // CHECK:STDOUT:
@@ -102,3 +103,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !27 = !{!28}
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !26, type: !22)
 // CHECK:STDOUT: !29 = !DILocation(line: 18, column: 3, scope: !26)
+// CHECK:STDOUT:

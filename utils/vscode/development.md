@@ -37,8 +37,8 @@ This installs `vsce` and `ovsx` to `/usr/local/bin`. Ensure that
     -   Using the UI:
 
         1.  `npm install && vsce package -o carbon.vsix && realpath carbon.vsix`
-             -   This installs dependencies, builds the VSIX file, and prints the
-                 path.
+            -   This installs dependencies, builds the VSIX file, and prints the
+                path.
         2.  Open the
             [command palette](https://code.visualstudio.com/docs/getstarted/userinterface#_command-palette)
             and select "Extensions: Install from VSIX...".
@@ -51,9 +51,9 @@ This installs `vsce` and `ovsx` to `/usr/local/bin`. Ensure that
          1.  `npm install && vsce package -o carbon.vsix && realpath carbon.vsix`
          2.  Go to
              https://marketplace.visualstudio.com/manage/publishers/carbon-lang
-              -   We use `infra-role@carbon-lang.dev` for publishing; the GitHub
-                  account `CarbonInfraBot` can also be used for login. Contact leads
-                  if you require access.
+             -   We use `infra-role@carbon-lang.dev` for publishing; the GitHub
+                 account `CarbonInfraBot` can also be used for login. Contact leads
+                 if you require access.
          3.  Next to the extension name, click the "..." and select "Update".
          4.  Select the `carbon.vsix` file.
     3.  Build and publish to the Open VSX Registry by following the

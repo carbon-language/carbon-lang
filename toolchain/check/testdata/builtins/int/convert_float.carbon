@@ -20,8 +20,8 @@ fn ConvertIntLiteralToFloatLiteral(a: Core.IntLiteral) -> Core.FloatLiteral = "i
 
 fn Negate(a: f64) -> f64 = "float.negate";
 
-class Expect[T:! type](N:! T) {}
-fn Test[T:! type](N:! T) -> Expect(N) { return {}; }
+class Expect[T: type](N: T) {}
+fn Test[T: type](generic N: T) -> Expect(N) { return {}; }
 
 // --- identity.carbon
 library "[[@TEST_NAME]]";
@@ -84,13 +84,13 @@ let invalid: f64 = ConvertIntLiteralToFloatLiteral(-1) as f64;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %overflow.patt: %pattern_type.fb7 = value_binding_pattern overflow [concrete = constants.%overflow.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_354.1: %f64.dc1 = value_of_initializer @__global_init.%ConvertIntLiteralToF64.call [concrete = <error>]
 // CHECK:STDOUT:   %.loc9_354.2: %f64.dc1 = converted @__global_init.%ConvertIntLiteralToF64.call, %.loc9_354.1 [concrete = <error>]
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %overflow: %f64.dc1 = wrapper_binding overflow, %.loc9_354.2 [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %overflow.patt: %pattern_type.fb7 = value_binding_pattern overflow [concrete = constants.%overflow.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -114,8 +114,8 @@ let invalid: f64 = ConvertIntLiteralToFloatLiteral(-1) as f64;
 // CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [concrete]
 // CHECK:STDOUT:   %Negate.impl_witness: <witness> = impl_witness imports.%Negate.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value Core.IntLiteral, (%Negate.impl_witness) [concrete]
-// CHECK:STDOUT:   %Negate.WithSelf.Op.type.802: type = fn_type @Negate.WithSelf.Op, @Negate.WithSelf(%Negate.facet) [concrete]
-// CHECK:STDOUT:   %.765: type = fn_type_with_self_type %Negate.WithSelf.Op.type.802, %Negate.facet [concrete]
+// CHECK:STDOUT:   %Negate.WithSelf.Op.type.f03: type = fn_type @Negate.WithSelf.Op, @Negate.WithSelf(%Negate.facet) [concrete]
+// CHECK:STDOUT:   %.02b: type = fn_type_with_self_type %Negate.WithSelf.Op.type.f03, %Negate.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Negate.impl.Op.type: type = fn_type @Core.IntLiteral.as.Negate.impl.Op [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Negate.impl.Op: %Core.IntLiteral.as.Negate.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Negate.impl.Op.bound: <bound method> = bound_method %int_1, %Core.IntLiteral.as.Negate.impl.Op [concrete]
@@ -143,18 +143,18 @@ let invalid: f64 = ConvertIntLiteralToFloatLiteral(-1) as f64;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
+// CHECK:STDOUT:   %invalid: %f64.dc1 = wrapper_binding invalid, @__global_init.%.loc9_56.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %invalid.patt: %pattern_type.fb7 = value_binding_pattern invalid [concrete = constants.%invalid.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %invalid: %f64.dc1 = wrapper_binding invalid, @__global_init.%.loc9_56.2 [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ConvertIntLiteralToFloatLiteral.ref: %ConvertIntLiteralToFloatLiteral.type = name_ref ConvertIntLiteralToFloatLiteral, imports.%Main.ConvertIntLiteralToFloatLiteral [concrete = constants.%ConvertIntLiteralToFloatLiteral]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem1: %.765 = impl_witness_access constants.%Negate.impl_witness, element1 [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op]
+// CHECK:STDOUT:   %impl.elem1: %.02b = impl_witness_access constants.%Negate.impl_witness, element1 [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc9_52: <bound method> = bound_method %int_1, %impl.elem1 [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op.bound]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Negate.impl.Op.call: init Core.IntLiteral = call %bound_method.loc9_52(%int_1) [concrete = constants.%int_-1]
 // CHECK:STDOUT:   %.loc9_52.1: Core.IntLiteral = value_of_initializer %Core.IntLiteral.as.Negate.impl.Op.call [concrete = constants.%int_-1]

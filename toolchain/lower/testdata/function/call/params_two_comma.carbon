@@ -17,6 +17,7 @@ fn Main() {
   Foo(1, 2,);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'params_two_comma.carbon'
 // CHECK:STDOUT: source_filename = "params_two_comma.carbon"
 // CHECK:STDOUT:
@@ -57,3 +58,4 @@ fn Main() {
 // CHECK:STDOUT: !15 = !DILocation(line: 16, column: 3, scope: !12)
 // CHECK:STDOUT: !16 = !DILocation(line: 17, column: 3, scope: !12)
 // CHECK:STDOUT: !17 = !DILocation(line: 15, column: 1, scope: !12)
+// CHECK:STDOUT:

@@ -279,6 +279,14 @@ auto RequireImplsBlockId::Print(llvm::raw_ostream& out) const -> void {
   }
 }
 
+auto ObserveBlockId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Empty) {
+    out << Label << "_empty";
+  } else {
+    IdBase::Print(out);
+  }
+}
+
 auto LocId::Print(llvm::raw_ostream& out) const -> void {
   switch (kind()) {
     case Kind::None:

@@ -55,11 +55,11 @@ class C {
   // CHECK:STDERR:
   var name name: C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:15: error: found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
-  // CHECK:STDERR:   var name:! C;
-  // CHECK:STDERR:               ^
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:22: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
+  // CHECK:STDERR:   var generic name: C;
+  // CHECK:STDERR:                      ^
   // CHECK:STDERR:
-  var name:! C;
+  var generic name: C;
 }
 
 // CHECK:STDOUT: - filename: fail_var_name.carbon
@@ -112,9 +112,9 @@ class C {
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'name'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'C'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':!', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 53},

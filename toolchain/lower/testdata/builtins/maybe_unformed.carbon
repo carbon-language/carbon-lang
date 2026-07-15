@@ -35,7 +35,7 @@ fn ConvertBoolToUnformedBool(var b: bool) {
 // Also test that an adapter wrapped around the builtin is passed appropriately,
 // using the same calling convention as the adapted type.
 
-class MaybeUnformedAdapter(T:! type) {
+class MaybeUnformedAdapter(T: type) {
   adapt MaybeUnformedBuiltin(T);
 }
 
@@ -55,6 +55,7 @@ fn PassAdapterBool() {
   TakeAdapterBool(MakeAdapterBool());
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'maybe_unformed.carbon'
 // CHECK:STDOUT: source_filename = "maybe_unformed.carbon"
 // CHECK:STDOUT:
@@ -251,3 +252,4 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: !66 = !{!67}
 // CHECK:STDOUT: !67 = !DILocalVariable(arg: 1, scope: !65, type: !14)
 // CHECK:STDOUT: !68 = !DILocation(line: 55, column: 19, scope: !65)
+// CHECK:STDOUT:

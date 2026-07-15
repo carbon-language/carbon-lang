@@ -18,6 +18,7 @@ fn Main() {
   var _: () = MakeImplicitEmptyTuple();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'return_implicit.carbon'
 // CHECK:STDOUT: source_filename = "return_implicit.carbon"
 // CHECK:STDOUT:
@@ -57,3 +58,4 @@ fn Main() {
 // CHECK:STDOUT: !9 = !DILocation(line: 18, column: 3, scope: !8)
 // CHECK:STDOUT: !10 = !DILocation(line: 18, column: 15, scope: !8)
 // CHECK:STDOUT: !11 = !DILocation(line: 17, column: 1, scope: !8)
+// CHECK:STDOUT:

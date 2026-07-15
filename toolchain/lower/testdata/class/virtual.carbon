@@ -142,7 +142,7 @@ fn Use() {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self) { }
 }
 
@@ -150,7 +150,7 @@ base class Base(T:! type) {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! Core.Destroy) {
+base class Base(T: Core.Destroy) {
   virtual fn F(unused self) {
     var _: T;
   }
@@ -170,7 +170,7 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self) { }
 }
 
@@ -212,6 +212,7 @@ fn Use() {
   p->F({});
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'classes.carbon'
 // CHECK:STDOUT: source_filename = "classes.carbon"
 // CHECK:STDOUT:
@@ -262,6 +263,8 @@ fn Use() {
 // CHECK:STDOUT: !16 = !{!17}
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !15, type: !7)
 // CHECK:STDOUT: !18 = !DILocation(line: 14, column: 3, scope: !15)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'create.carbon'
 // CHECK:STDOUT: source_filename = "create.carbon"
 // CHECK:STDOUT:
@@ -407,6 +410,8 @@ fn Use() {
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !38, type: !18)
 // CHECK:STDOUT: !41 = !DILocation(line: 16, column: 3, scope: !38)
 // CHECK:STDOUT: !42 = !DILocation(line: 15, column: 1, scope: !38)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'create_named_ctor.carbon'
 // CHECK:STDOUT: source_filename = "create_named_ctor.carbon"
 // CHECK:STDOUT:
@@ -509,6 +514,8 @@ fn Use() {
 // CHECK:STDOUT: !24 = !DILocation(line: 27, column: 10, scope: !23)
 // CHECK:STDOUT: !25 = !DILocation(line: 27, column: 19, scope: !23)
 // CHECK:STDOUT: !26 = !DILocation(line: 27, column: 3, scope: !23)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'member_init.carbon'
 // CHECK:STDOUT: source_filename = "member_init.carbon"
 // CHECK:STDOUT:
@@ -618,6 +625,8 @@ fn Use() {
 // CHECK:STDOUT: !34 = !{!35}
 // CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !33, type: !7)
 // CHECK:STDOUT: !36 = !DILocation(line: 13, column: 3, scope: !33)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'member_brace_init.carbon'
 // CHECK:STDOUT: source_filename = "member_brace_init.carbon"
 // CHECK:STDOUT:
@@ -708,6 +717,8 @@ fn Use() {
 // CHECK:STDOUT: !27 = !{!28}
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !26, type: !14)
 // CHECK:STDOUT: !29 = !DILocation(line: 13, column: 3, scope: !26)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call.carbon'
 // CHECK:STDOUT: source_filename = "call.carbon"
 // CHECK:STDOUT:
@@ -745,6 +756,8 @@ fn Use() {
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 9, column: 3, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 8, column: 1, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_impl.carbon'
 // CHECK:STDOUT: source_filename = "call_impl.carbon"
 // CHECK:STDOUT:
@@ -858,6 +871,8 @@ fn Use() {
 // CHECK:STDOUT: !32 = !{!33}
 // CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !31, type: !7)
 // CHECK:STDOUT: !34 = !DILocation(line: 14, column: 3, scope: !31)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic_noop.carbon'
 // CHECK:STDOUT: source_filename = "generic_noop.carbon"
 // CHECK:STDOUT:
@@ -868,6 +883,8 @@ fn Use() {
 // CHECK:STDOUT: !1 = !DIFile(filename: "generic_noop.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic_use.carbon'
 // CHECK:STDOUT: source_filename = "generic_use.carbon"
 // CHECK:STDOUT:
@@ -1011,6 +1028,8 @@ fn Use() {
 // CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !44, type: !15)
 // CHECK:STDOUT: !47 = !DILocation(line: 6, column: 5, scope: !44)
 // CHECK:STDOUT: !48 = !DILocation(line: 5, column: 3, scope: !44)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic_base.carbon'
 // CHECK:STDOUT: source_filename = "generic_base.carbon"
 // CHECK:STDOUT:
@@ -1096,6 +1115,8 @@ fn Use() {
 // CHECK:STDOUT: !29 = !{!30}
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !28, type: !12)
 // CHECK:STDOUT: !31 = !DILocation(line: 5, column: 3, scope: !28)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'thunk.carbon'
 // CHECK:STDOUT: source_filename = "thunk.carbon"
 // CHECK:STDOUT:
@@ -1267,3 +1288,4 @@ fn Use() {
 // CHECK:STDOUT: !51 = !{!52}
 // CHECK:STDOUT: !52 = !DILocalVariable(arg: 1, scope: !50, type: !7)
 // CHECK:STDOUT: !53 = !DILocation(line: 23, column: 3, scope: !50)
+// CHECK:STDOUT:

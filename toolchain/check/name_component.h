@@ -14,8 +14,8 @@ namespace Carbon::Check {
 
 class Context;
 
-// A component in a declaration name, such as `C[T:! type](N:! T)` in
-// `fn C[T:! type](N:! T).F() {}`.
+// A component in a declaration name, such as `C[T: type](N: T)` in
+// `fn C[T: type](N: T).F() {}`.
 struct NameComponent {
   // The name of the declaration.
   Parse::NodeId name_loc_id;

@@ -51,27 +51,27 @@ var p2: i32->foo;
 // CHECK:STDOUT:     .p2 = %p2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: <error> = ref_binding_pattern p [concrete = <error>]
-// CHECK:STDOUT:     %p.var_patt: <error> = var_pattern %p.patt [concrete = <error>]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref <error> = var %p.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %p.var: ref <error> = var_storage %p.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc22: ref <error> = deref %i32.loc22 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: <error> = wrapper_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p2.patt: <error> = ref_binding_pattern p2 [concrete = <error>]
-// CHECK:STDOUT:     %p2.var_patt: <error> = var_pattern %p2.patt [concrete = <error>]
+// CHECK:STDOUT:     %p.patt: <error> = ref_binding_pattern p [concrete = <error>]
+// CHECK:STDOUT:     %p.var_patt: <error> = var_pattern %p.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p2.var: ref <error> = var %p2.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %p2.var: ref <error> = var_storage %p2.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.2: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %i32.loc27: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc27: ref <error> = deref %i32.loc27 [concrete = <error>]
 // CHECK:STDOUT:     %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p2: <error> = wrapper_binding p2, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p2.patt: <error> = ref_binding_pattern p2 [concrete = <error>]
+// CHECK:STDOUT:     %p2.var_patt: <error> = var_pattern %p2.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

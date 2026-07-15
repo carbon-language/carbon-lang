@@ -11,12 +11,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_recursive_sccs_deep.carbon
 
 import Core library "io";
-fn A[T:! Core.Copy](x: T, count: i32) -> T;
-fn B[T:! Core.Copy](x: T, count: i32);
-fn C[T:! Core.Copy](x: T, count: i32);
-fn D[T:! Core.Copy](x: T, count: i32) -> T;
-fn E[T:! Core.Copy](x: T, count: i32) -> T;
-fn F[T:! Core.Copy](x: T, count: i32) -> T;
+fn A[T: Core.Copy](x: T, count: i32) -> T;
+fn B[T: Core.Copy](x: T, count: i32);
+fn C[T: Core.Copy](x: T, count: i32);
+fn D[T: Core.Copy](x: T, count: i32) -> T;
+fn E[T: Core.Copy](x: T, count: i32) -> T;
+fn F[T: Core.Copy](x: T, count: i32) -> T;
 
 // Builds on `call_recursive_mutual.carbon` and `call_recursive_diamond.carbon`
 // B-C form a mutually recursive SCC (strongly connected component), D-E-F-G
@@ -28,23 +28,23 @@ fn F[T:! Core.Copy](x: T, count: i32) -> T;
 // optimization here, if the function fingerprint may infer deduplication
 // when not including the two different generic_ids.
 
-fn A[T:! Core.Copy](x: T, count: i32) -> T {
+fn A[T: Core.Copy](x: T, count: i32) -> T {
   B(x, count);
   return D(x, count);
 }
 
-fn B[T:! Core.Copy](x: T, count: i32) {
+fn B[T: Core.Copy](x: T, count: i32) {
   C(x, count);
 }
 
-fn C[T:! Core.Copy](x: T, count: i32) {
+fn C[T: Core.Copy](x: T, count: i32) {
   if (count <= 2) {
     Core.Print(count);
     B(x, count + 1);
   }
 }
 
-fn D[T:! Core.Copy](x: T, count: i32) -> T {
+fn D[T: Core.Copy](x: T, count: i32) -> T {
   if (count > 4) {
     return x;
   }
@@ -55,17 +55,17 @@ fn D[T:! Core.Copy](x: T, count: i32) -> T {
   }
 }
 
-fn G[T:! Core.Copy](x: T, count: i32) -> T;
+fn G[T: Core.Copy](x: T, count: i32) -> T;
 
-fn E[T:! Core.Copy](x: T, count: i32) -> T {
+fn E[T: Core.Copy](x: T, count: i32) -> T {
   return G(x, count);
 }
 
-fn F[T:! Core.Copy](x: T, count: i32) -> T {
+fn F[T: Core.Copy](x: T, count: i32) -> T {
   return G(x, count);
 }
 
-fn G[T:! Core.Copy](x: T, count: i32) -> T {
+fn G[T: Core.Copy](x: T, count: i32) -> T {
   return D(x, count + 1);
 }
 
@@ -82,6 +82,7 @@ fn M() {
   A(ptr_f64, 0);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_sccs_deep.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_sccs_deep.carbon"
 // CHECK:STDOUT:
@@ -584,3 +585,4 @@ fn M() {
 // CHECK:STDOUT: !207 = !DILocation(line: 69, column: 15, scope: !203)
 // CHECK:STDOUT: !208 = !DILocation(line: 69, column: 10, scope: !203)
 // CHECK:STDOUT: !209 = !DILocation(line: 69, column: 3, scope: !203)
+// CHECK:STDOUT:

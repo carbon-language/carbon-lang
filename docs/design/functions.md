@@ -184,6 +184,9 @@ The return type of a function or lambda can be specified using a return clause
     -   Because the return type is deduced and not explicitly known, functions
         defined using `=>` cannot have a separate forward declaration.
 
+> **TODO:** Update this section to cover extended return types, as discussed
+> [here](values.md#function-calls-and-returns).
+
 #### Unused parameters
 
 When a parameter introduced in a function definition is not used in the function
@@ -233,8 +236,8 @@ When the return clause is provided, including when it is `-> ()`, the `return`
 statement must have an expression that is convertible to the return type, and a
 `return` statement must be used to end control flow of the function.
 
-> **TODO:** Update this section to cover the requirements on the form of the
-> expression.
+> **TODO:** Update this section to cover the requirements on the extended type
+> of the expression.
 
 ## Positional parameters
 
@@ -639,10 +642,10 @@ function type other than asking for the type of the function value.
 fn F(x: i32) -> i32 { return x; }
 
 // Compile-time function.
-musteval fn TypeOf[T:! type](x: T) -> type { return T; }
+musteval fn TypeOf[T: type](x: T) -> type { return T; }
 
 // `F` is a first-class value with a first-class type.
-let template FType:! type = TypeOf(F);
+let template FType: type = TypeOf(F);
 var my_f: FType = F;
 ```
 
@@ -752,15 +755,15 @@ parameters. This checking proceeds as follows:
             `ref`, and
         -   An argument to a `ref` parameter must be prefixed with `ref`, except
             in a generic context where the parameter's `ref` status may vary.
-    -   If the parameter is a `template :!` binding, the argument expression is
+    -   If the parameter is a `template` binding, the argument expression is
         converted to have the same type as the binding and template constant
         expression phase.
-    -   If the parameter is a symbolic `:!` binding, the argument expression is
+    -   If the parameter is a checked generic binding, the argument expression is
         converted to have the same type as the binding and symbolic constant
         expression phase.
     -   Otherwise, the parameter is pattern-matched against the argument.
 
-    If a parameter is a `:!` binding, its corresponding converted argument
+    If a parameter is a compile-time binding, its corresponding converted argument
     expression is evaluated, and its value is added to the list of deduced
     argument values before any later parameters are processed.
 
@@ -783,7 +786,7 @@ interface:
 
 ```carbon
 interface Call(... each Arg: type) {
-  let Result:! type;
+  let Result: type;
   fn Op(self, ... each arg: each Arg) -> Result;
 }
 ```
@@ -796,7 +799,7 @@ translated into an invocation of `Call(Arg1, Arg2,` ... `ArgN).Op`, where
 For example, given:
 
 ```carbon
-fn Sort[T:! type, F:! Call(T, T) where .Result = Ordering]
+fn Sort[T: type, F: Call(T, T) where .Result = Ordering]
        (ref v: Vector(T), cmp: F) {
   // ...
   auto ord: auto = cmp(v[i], v[j]);
@@ -820,7 +823,7 @@ deduced parameters. The intent is for the `impl` to support indirect calls in
 the same cases where the function supports direct calls, with the same meaning.
 
 ```carbon
-fn TakeI32Fn[F:! Call(i32)](f: F);
+fn TakeI32Fn[F: Call(i32)](f: F);
 fn I64Fn(n: i64);
 fn Run() {
   // ✅ `I64Fn` can be called with an `i32`, because
@@ -838,7 +841,7 @@ The `Call` interface can be implemented to overload the meaning of the function
 call operator for a type.
 
 ```carbon
-class Func(Arg:! type) {
+class Func(Arg: type) {
   impl as Call((Arg,)) where .Result = () {
     fn Op(self, arg: (Arg,)) { Print("hello, world"); }
   }
@@ -889,6 +892,13 @@ Other designs build upon basic function syntax to add advanced features:
 -   [Sigil for lambdas](/proposals/p003848-lambdas.md#alternative-considered-sigil)
 -   [Additional Positional Parameter Restriction](/proposals/p003848-lambdas.md#alternative-considered-additional-positional-parameter-restriction)
 -   [Recursive Self in lambdas](/proposals/p003848-lambdas.md#alternative-considered-recursive-self)
+-   [Keep the `:!` syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#keep-the--syntax)
+-   [Alternative keyword names](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#alternative-keyword-names)
+-   [Use `template generic` instead of just `template`](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#use-template-generic-instead-of-just-template)
+-   [Context-independent syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#context-independent-syntax)
+-   [Erased model for generics](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#erased-model-for-generics)
+-   [Context-sensitive defaults based on parameter type](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#context-sensitive-defaults-based-on-parameter-type)
+-   [Allow redundant phase keywords](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#allow-redundant-phase-keywords)
 
 ## References
 
@@ -908,3 +918,5 @@ Other designs build upon basic function syntax to add advanced features:
     [#3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
 -   Proposal
     [#5434: `ref` parameters, arguments, returns and `val` returns](https://github.com/carbon-language/carbon-lang/pull/5434)
+-   Proposal
+    [#7254: Replace `:!` and `:?` with keywords and contextual defaults](https://github.com/carbon-language/carbon-lang/pull/7254)

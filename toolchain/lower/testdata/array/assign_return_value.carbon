@@ -16,6 +16,7 @@ fn Run() {
   var _: array(i32, 2) = F();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'assign_return_value.carbon'
 // CHECK:STDOUT: source_filename = "assign_return_value.carbon"
 // CHECK:STDOUT:
@@ -117,3 +118,4 @@ fn Run() {
 // CHECK:STDOUT: !30 = !{!31}
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !29, type: !7)
 // CHECK:STDOUT: !32 = !DILocation(line: 16, column: 3, scope: !29)
+// CHECK:STDOUT:

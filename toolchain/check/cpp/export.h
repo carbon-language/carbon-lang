@@ -11,6 +11,7 @@
 
 namespace clang {
 class CXXDestructorDecl;
+class CXXMethodDecl;
 class CXXRecordDecl;
 }  // namespace clang
 
@@ -51,21 +52,32 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void;
 auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
                       SemIR::FieldDecl field_decl) -> clang::FieldDecl*;
 
-// Get a `clang::FunctionDecl` declaration that can be used to call a Carbon
-// function.
-auto ExportFunctionDeclToCpp(Context& context, SemIR::LocId loc_id,
-                             SemIR::FunctionId callee_function_id)
-    -> clang::FunctionDecl*;
-
-// Define the C++ thunk for calling a Carbon function.
-auto DefineCppThunk(Context& context, SemIR::LocId loc_id,
-                    SemIR::FunctionId callee_function_id,
-                    clang::FunctionDecl* thunk_function_decl) -> void;
-
 // Get a `clang::FunctionDecl` that can be used to call a Carbon function.
+// If the function is generic, a `clang::FunctionTemplateDecl` will be
+// created instead.
 auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                         SemIR::FunctionId callee_function_id)
-    -> clang::FunctionDecl*;
+                         SemIR::FunctionId function_id) -> clang::NamedDecl*;
+
+// Exports a Carbon virtual function as a C++ `clang::FunctionDecl` declaration.
+// Does not emit a definition.
+auto ExportVirtualFunctionDeclToCpp(Context& context, SemIR::LocId loc_id,
+                                    clang::CXXRecordDecl* parent,
+                                    SemIR::FunctionId callee_function_id)
+    -> clang::CXXMethodDecl*;
+
+// Defines an virtual function that was previously exported to C++ with
+// ExportVirtualFunctionDeclToCpp.
+auto DefineExportedVirtualFunction(Context& context, SemIR::LocId loc_id,
+                                   SemIR::FunctionId callee_function_id,
+                                   clang::CXXMethodDecl* method_decl) -> void;
+
+// Creates a C++ function template specialization for a generic Carbon
+// function.
+//
+// Returns true if a specialization was added, false otherwise.
+auto ExportFunctionSpecializationToCpp(
+    Context& context, clang::FunctionTemplateDecl* function_template_decl,
+    llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool;
 
 // Export a Carbon destructor into C++.
 //

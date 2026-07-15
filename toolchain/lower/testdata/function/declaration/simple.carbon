@@ -18,6 +18,7 @@ class A;
 fn H(n: A);
 fn I() -> A;
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'simple.carbon'
 // CHECK:STDOUT: source_filename = "simple.carbon"
 // CHECK:STDOUT:
@@ -51,3 +52,4 @@ fn I() -> A;
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 15, column: 16, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 15, column: 1, scope: !4)
+// CHECK:STDOUT:

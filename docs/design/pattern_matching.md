@@ -133,7 +133,8 @@ A name binding pattern is a pattern.
 
 -   _binding-pattern_ ::= `ref`? (_identifier_ `:` _expression_ | `self` (`:`
     _expression_)?)
--   _binding-pattern_ ::= `template`? _identifier_ `:!` _expression_
+-   _binding-pattern_ ::= (`generic` | `template`)? _identifier_ `:`
+    _expression_
 -   _pattern_ ::= _binding-pattern_
 
 A name binding pattern declares a _binding_ with a name specified by the
@@ -150,30 +151,50 @@ which is the immediate subpattern of its enclosing `var` pattern.
 > expected to be the only difference between variable binding patterns and other
 > reference binding patterns.
 
-If the pattern syntax uses `:` it is a _runtime binding pattern_. If it uses
-`:!`, it is a _compile-time binding pattern_, and it cannot appear inside a
-`var` pattern. A compile-time binding pattern is either a _symbolic binding
-pattern_ or a _template binding pattern_, depending on whether it is prefixed
-with `template`.
+A binding pattern has a phase, which is either runtime, symbolic compile-time,
+or template compile-time:
+
+-   A _runtime binding pattern_ binds to a dynamic value at runtime. It is the
+    default for explicit function parameters and local bindings.
+-   A _checked generic binding pattern_ binds to a symbolic constant: a
+    compile-time value that is not known when type checking. It is the default
+    for deduced function parameters and parameters to compile-time entities.
+    Explicit function parameters are only checked generic binding patterns if
+    they are declared using the `generic` keyword.
+    [Associated constants](generics/details.md#associated-constants) are always
+    checked generic binding patterns, and do not allow a phase keyword.
+-   A _template generic binding pattern_ binds to a template constant: a
+    compile-time value that is known when type checking. It is declared using
+    the `template` keyword. Expressions using such a binding are dependent and
+    are late type checked once the binding's value is known.
+
+> **Future work:** If Carbon supports deduced runtime parameters in the future,
+> the `runtime` keyword will be used to explicitly declare those runtime binding
+> patterns.
+
+A checked or template binding pattern is collectively called a _compile-time
+binding pattern_. A compile-time binding pattern cannot appear inside a `var`
+pattern.
 
 The binding declared by a binding pattern has a
-[primitive form](values.md#expression-forms) with the following components:
+[primitive extended type](values.md#extended-types) with the following
+components:
 
 -   The type is _expression_.
 -   The category is "value" if the pattern is a value binding pattern, "durable
     entire reference" if it's a variable binding pattern, or "durable non-entire
     reference" if it's a non-variable reference binding pattern.
 -   The phase is "runtime", "symbolic", or "template" depending on whether the
-    pattern is a runtime, symbolic, or template binding pattern.
+    pattern is a runtime, checked, or template binding pattern.
 
 During pattern matching, the scrutinee is implicitly converted as needed to have
-the same form, and the binding is _bound_ to (and consumes) the result of these
-conversions. This makes a runtime or template binding a kind of reusable alias
-for the converted scrutinee expression, with the same form and value. Symbolic
-bindings are more complex: the binding will have the same type, category, and
-phase as the converted scrutinee expression, but its constant value is an opaque
-symbol introduced by the binding, which the type system knows to be equal to the
-converted scrutinee expression.
+the same extended type, and the binding is _bound_ to (and consumes) the result
+of these conversions. This makes a runtime or template binding a kind of
+reusable alias for the converted scrutinee expression, with the same extended
+type and value. Checked bindings are more complex: the binding will have the
+same type, category, and phase as the converted scrutinee expression, but its
+constant value is an opaque symbol introduced by the binding, which the type
+system knows to be equal to the converted scrutinee expression.
 
 Note that there is no way to implicitly convert to a durable reference
 expression from any other category, so the scrutinee of a reference binding
@@ -212,7 +233,7 @@ patterns in the same scope), and in all other respects it behaves as if it were
 wrapped in an [`unused` pattern](#unused).
 
 -   _binding-pattern_ ::= `_` `:` _expression_
--   _binding-pattern_ ::= `template`? `_` `:!` _expression_
+-   _binding-pattern_ ::= (`generic` | `template`)? `_` `:` _expression_
 
 ```carbon
 fn F(n: i32) {
@@ -278,7 +299,7 @@ the type of the scrutinee and deduced values are substituted back into the type
 before pattern matching is performed.
 
 ```carbon
-fn G[T:! Type](p: T*);
+fn G[T: Type](p: T*);
 class X { impl as ImplicitAs(i32*); }
 // ✅ Deduces `T = i32` then implicitly and
 // trivially converts `p` to `i32*`.
@@ -301,13 +322,13 @@ scrutinee.
 
 -   _pattern_ ::= `var` _pattern_
 
-The scrutinee is expected to have the same type as the resolved type of the
-nested _pattern_, and it is expected to be a runtime-phase ephemeral entire
-reference expression, which therefore refers to a newly-allocated temporary
-object. The scrutinee expression is converted as needed to satisfy those
-expectations, and the `var` pattern takes ownership of the referenced object,
-promotes it to a _durable_ entire reference expression, and matches the nested
-_pattern_ with it.
+The scrutinee is expected to have the same type component as the resolved type
+component of the nested _pattern_, and it is expected to be a runtime-phase
+ephemeral entire reference expression, which therefore refers to a
+newly-allocated temporary object. The scrutinee expression is converted as
+needed to satisfy those expectations, and the `var` pattern takes ownership of
+the referenced object, promotes it to a _durable_ entire reference expression,
+and matches the nested _pattern_ with it.
 
 The lifetime of the allocated object extends to the end of scope of the `var`
 pattern (that is the scope that any bindings declared within it would have).
@@ -381,12 +402,13 @@ A tuple of patterns can be used as a pattern.
     `)`
 -   _pattern_ ::= _tuple-pattern_
 
-The scrutinee is required to be of tuple type, with the same arity as the number
-of nested _patterns_. It is converted to a tuple form by
-[form decomposition](values.md#form-conversions), and then each nested _pattern_
-is matched against the corresponding element of the converted scrutinee's
-[result](values.md#expression-forms). The tuple pattern matches if all of these
-sub-matches succeed.
+The scrutinee is required to have a type component that is a tuple type, with
+the same arity as the number of nested _patterns_. It is converted to a tuple
+extended type by
+[extended type decomposition](values.md#extended-type-conversions), and then
+each nested _pattern_ is matched against the corresponding element of the
+converted scrutinee's [result](values.md#extended-types). The tuple pattern
+matches if all of these sub-matches succeed.
 
 ### Struct patterns
 
@@ -410,15 +432,16 @@ match ({.a = 1, .b = 2}) {
 }
 ```
 
-The scrutinee is required to be of struct type, and every field name in the
-pattern must be a field name in the scrutinee. It is converted to a struct form
-by [form decomposition](values.md#form-conversions) and then each
+The scrutinee is required to have a type component that is a struct type, and
+every field name in the pattern must be a field name in the scrutinee. It is
+converted to a struct extended type by
+[extended type decomposition](values.md#extended-type-conversions) and then each
 _field-pattern_ is matched with the same-named element of the converted
-scrutinee's [result](values.md#expression-forms). If the scrutinee result has
-any field names not present in the pattern, those sub-results are
-[discarded](values.md#form-conversions) in lexical order if the pattern has a
-trailing `_` (as in `{.a = 1, _}`), or diagnosed as an error if it does not. The
-struct pattern matches if all of these sub-matches succeed.
+scrutinee's [result](values.md#extended-types). If the scrutinee result has any
+field names not present in the pattern, those sub-results are
+[discarded](values.md#extended-type-conversions) in lexical order if the pattern
+has a trailing `_` (as in `{.a = 1, _}`), or diagnosed as an error if it does
+not. The struct pattern matches if all of these sub-matches succeed.
 
 In the case where a field will be bound to an identifier with the same name, a
 shorthand syntax is available: `a: T` is synonymous with `.a = a: T`.
@@ -474,7 +497,7 @@ alternative, and the arguments of the alternative match the given tuple pattern
 (if any).
 
 ```carbon
-choice Optional(T:! Type) {
+choice Optional(T: Type) {
   None,
   Some(T)
 }
@@ -505,15 +528,15 @@ is compared using `==`.
 
 ### Templates
 
-Any checking of the type of the scrutinee against the type of the pattern that
-cannot be performed because the type of the scrutinee involves a template
-parameter is deferred until the template parameter's value is known. During
-instantiation, patterns that are not meaningful due to a type error are instead
-treated as not matching. This includes cases where an `==` fails because of a
-missing `EqWith` implementation.
+Any checking of the type component of the scrutinee against the type component
+of the pattern that cannot be performed because the type component of the
+scrutinee involves a template parameter is deferred until the template
+parameter's value is known. During instantiation, patterns that are not
+meaningful due to a type error are instead treated as not matching. This
+includes cases where an `==` fails because of a missing `EqWith` implementation.
 
 ```carbon
-fn TypeName[template T:! Type](x: T) -> String {
+fn TypeName[template T: Type](x: T) -> String {
   match (x) {
     // ✅ OK, the type of `x` is a template parameter.
     case _: i32 => { return "int"; }
@@ -528,7 +551,7 @@ Cases where the match is invalid for reasons not involving the template
 parameter are rejected when type-checking the template:
 
 ```carbon
-fn MeaninglessMatch[template T:! Type](x: T*) {
+fn MeaninglessMatch[template T: Type](x: T*) {
   match (*x) {
     // ✅ OK, `T` could be a tuple.
     case (_: auto, _: auto) => {}
@@ -607,7 +630,7 @@ We will diagnose the following situations:
     example:
 
     ```carbon
-    choice Optional(T:! Type) {
+    choice Optional(T: Type) {
       None,
       Some(T)
     }
@@ -743,9 +766,9 @@ In order to match a value, whatever is specified in the pattern must match.
 Using `auto` for a type will always match, making `_: auto` the wildcard
 pattern.
 
-If the scrutinee expression's [form](values.md#expression-forms) contains any
-primitive forms with category "initializing", they are converted to ephemeral
-non-entire reference expressions by
+If the scrutinee expression's [extended type](values.md#extended-types) contains
+any primitive extended types with category "initializing", they are converted to
+ephemeral non-entire reference expressions by
 [materialization](values.md#temporary-materialization) before pattern matching
 begins, so that the result can be reused by multiple `case`s. However, the
 objects created by `var` patterns are not reused by multiple `case`s:
@@ -949,6 +972,10 @@ pattern matching machinery, what (if any) restrictions are imposed, etc.
 
 -   [Type pattern matching](/proposals/p002188-pattern-matching-syntax-and-semantics.md#type-pattern-matching)
 -   [Allow guards on arbitrary patterns](/proposals/p002188-pattern-matching-syntax-and-semantics.md#allow-guards-on-arbitrary-patterns)
+-   [Keep the `:!` syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#keep-the--syntax)
+-   [Alternative keyword names](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#alternative-keyword-names)
+-   [Use `template generic` instead of just `template`](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#use-template-generic-instead-of-just-template)
+-   [Allow redundant phase keywords](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#allow-redundant-phase-keywords)
 
 ## References
 
@@ -956,3 +983,5 @@ pattern matching machinery, what (if any) restrictions are imposed, etc.
     [#2022: Unused Pattern Bindings (Unused Function Parameters)](https://github.com/carbon-language/carbon-lang/pull/2022)
 -   Proposal
     [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
+-   Proposal
+    [#7254: Replace `:!` and `:?` with keywords and contextual defaults](https://github.com/carbon-language/carbon-lang/pull/7254)

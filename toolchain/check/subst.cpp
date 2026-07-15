@@ -44,11 +44,13 @@ struct WorklistItem {
   bool is_expanded : 1;
   // Whether the instruction was subst'd and re-added to the worklist.
   bool is_repeated : 1;
+  // Whether the inst should skip being subst'd.
+  bool skip : 1;
   // The index of the worklist item to process after we finish updating this
   // one. For the final child of an instruction, this is the parent. For any
   // other child, this is the index of the next child of the parent. For the
   // root, this is -1.
-  int next_index : 31;
+  int next_index : 29;
 };
 
 // A list of instructions that we're currently in the process of substituting
@@ -59,6 +61,7 @@ class Worklist {
     worklist_.push_back({.inst_id = root_id,
                          .is_expanded = false,
                          .is_repeated = false,
+                         .skip = false,
                          .next_index = -1});
   }
 
@@ -66,11 +69,12 @@ class Worklist {
   auto size() -> int { return worklist_.size(); }
   auto back() -> WorklistItem& { return worklist_.back(); }
 
-  auto Push(SemIR::InstId inst_id) -> void {
+  auto Push(SemIR::InstId inst_id, bool skip = false) -> void {
     CARBON_CHECK(inst_id.has_value());
     worklist_.push_back({.inst_id = inst_id,
                          .is_expanded = false,
                          .is_repeated = false,
+                         .skip = skip,
                          .next_index = static_cast<int>(worklist_.size() + 1)});
     CARBON_CHECK(worklist_.back().next_index > 0, "Constant too large.");
   }
@@ -171,10 +175,10 @@ static auto PushOperand(Context& context, Worklist& worklist,
 // Converts the operands of this instruction into `InstId`s and pushes them onto
 // the worklist.
 static auto ExpandOperands(Context& context, Worklist& worklist,
-                           SemIR::InstId inst_id) -> void {
+                           SemIR::InstId inst_id, bool skip_type) -> void {
   auto inst = context.insts().Get(inst_id);
   if (inst.type_id().has_value()) {
-    worklist.Push(context.types().GetTypeInstId(inst.type_id()));
+    worklist.Push(context.types().GetTypeInstId(inst.type_id()), skip_type);
   }
   PushOperand(context, worklist, inst.arg0_and_kind());
   PushOperand(context, worklist, inst.arg1_and_kind());
@@ -411,7 +415,12 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
       continue;
     }
 
-    switch (callbacks.Subst(item.inst_id)) {
+    bool skip_type = false;
+    auto result = SubstInstCallbacks::SubstResult::FullySubstituted;
+    if (!item.skip) {
+      result = callbacks.Subst(item.inst_id);
+    }
+    switch (result) {
       case SubstInstCallbacks::SubstResult::FullySubstituted:
         index = item.next_index;
         continue;
@@ -426,6 +435,9 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
       }
       case SubstInstCallbacks::SubstResult::SubstOperands:
         break;
+      case SubstInstCallbacks::SubstResult::SubstOperandsSkipType:
+        skip_type = true;
+        break;
       case SubstInstCallbacks::SubstResult::SubstOperandsAndRetry:
         item.is_repeated = true;
         break;
@@ -437,7 +449,7 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
     item.is_expanded = true;
     int first_operand = worklist.size();
     int next_index = item.next_index;
-    ExpandOperands(context, worklist, item.inst_id);
+    ExpandOperands(context, worklist, item.inst_id, skip_type);
 
     // If there are any operands, go and update them before rebuilding this
     // item.

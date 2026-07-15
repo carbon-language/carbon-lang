@@ -22,6 +22,7 @@ fn G() -> I;
 
 fn H() -> I { return G(); }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -61,3 +62,4 @@ fn H() -> I { return G(); }
 // CHECK:STDOUT: !13 = !{!7}
 // CHECK:STDOUT: !14 = !DILocation(line: 23, column: 22, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 23, column: 15, scope: !11)
+// CHECK:STDOUT:

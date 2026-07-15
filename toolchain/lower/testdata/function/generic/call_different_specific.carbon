@@ -22,19 +22,19 @@
 // specifics, where the pointer values are different, and the calls to the
 // two D specifics are to functions with different function types.
 
-fn A[U:! Core.Copy](x: U) -> U {
+fn A[U: Core.Copy](x: U) -> U {
   return x;
 }
 
-fn D[U:! Core.Copy](x: U) -> U {
+fn D[U: Core.Copy](x: U) -> U {
   return x;
 }
 
-fn B[U:! Core.Copy & Core.Destroy](x: U*) {
+fn B[U: Core.Copy & Core.Destroy](x: U*) {
   D(*x);
 }
 
-fn F[T:! Core.Copy & Core.Destroy](x: T*) {
+fn F[T: Core.Copy & Core.Destroy](x: T*) {
   A(i32);
   B(x);
 }
@@ -44,6 +44,7 @@ fn M(ptr_i32: i32*, ptr_f64: f64*) {
   F(ptr_f64);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_different_specific.carbon'
 // CHECK:STDOUT: source_filename = "call_different_specific.carbon"
 // CHECK:STDOUT:
@@ -207,3 +208,4 @@ fn M(ptr_i32: i32*, ptr_f64: f64*) {
 // CHECK:STDOUT: !64 = !{!65}
 // CHECK:STDOUT: !65 = !DILocalVariable(arg: 1, scope: !63, type: !7)
 // CHECK:STDOUT: !66 = !DILocation(line: 30, column: 3, scope: !63)
+// CHECK:STDOUT:

@@ -12,7 +12,7 @@
 
 // --- a.carbon
 library "[[@TEST_NAME]]";
-fn F(unused T:! type) {
+fn F(unused generic T: type) {
   // Explicit no-argument `return` in a generic function.
   return;
 }
@@ -25,6 +25,7 @@ fn G() {
   F({});
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'a.carbon'
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
@@ -35,6 +36,8 @@ fn G() {
 // CHECK:STDOUT: !1 = !DIFile(filename: "a.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
@@ -67,3 +70,4 @@ fn G() {
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.6944efcfbb6a8360", scope: null, file: !10, line: 2, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !10 = !DIFile(filename: "a.carbon", directory: "")
 // CHECK:STDOUT: !11 = !DILocation(line: 4, column: 3, scope: !9)
+// CHECK:STDOUT:

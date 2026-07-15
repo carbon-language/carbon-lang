@@ -62,6 +62,7 @@ fn AccessD(d: Cpp.D) -> i32 {
   return d.d;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_diamond.carbon'
 // CHECK:STDOUT: source_filename = "use_diamond.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -121,30 +122,30 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: @_ZTT1B = linkonce_odr dso_local unnamed_addr constant [1 x ptr] [ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr] }, ptr @_ZTV1B, i32 0, i32 0, i32 3)], comdat, align 8
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMake.Main() #0 !dbg !11 {
+// CHECK:STDOUT: define void @_CMake.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca [40 x i8], align 8, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
-// CHECK:STDOUT:   call void @_ZN1DC1Ev.carbon_thunk.(ptr %_.var), !dbg !15
-// CHECK:STDOUT:   ret void, !dbg !16
+// CHECK:STDOUT:   %_.var = alloca [40 x i8], align 8, !dbg !15
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !15
+// CHECK:STDOUT:   call void @_ZN1DC1Ev.carbon_thunk.(ptr %_.var), !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal void @_ZN1DC1Ev.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !17
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !17
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !18
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !18
 // CHECK:STDOUT:   call void @_ZN1DC1Ev(ptr noundef nonnull align 8 dereferenceable(32) %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CAccessD.Main(ptr %d) #0 !dbg !20 {
+// CHECK:STDOUT: define i32 @_CAccessD.Main(ptr %d) #0 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_11.1.d = getelementptr inbounds nuw [40 x i8], ptr %d, i32 0, i32 28, !dbg !27
-// CHECK:STDOUT:   %.loc16_11.2 = load i32, ptr %.loc16_11.1.d, align 4, !dbg !27
-// CHECK:STDOUT:   ret i32 %.loc16_11.2, !dbg !28
+// CHECK:STDOUT:   %.loc16_11.1.d = getelementptr inbounds nuw [40 x i8], ptr %d, i32 0, i32 28, !dbg !28
+// CHECK:STDOUT:   %.loc16_11.2 = load i32, ptr %.loc16_11.1.d, align 4, !dbg !28
+// CHECK:STDOUT:   ret i32 %.loc16_11.2, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -154,16 +155,16 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1DC1Ev(ptr noundef nonnull align 8 dereferenceable(32) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !17
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !18
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   %0 = getelementptr inbounds i8, ptr %this1, i64 32
 // CHECK:STDOUT:   call void @_ZN1AC2Ev(ptr noundef nonnull align 4 dereferenceable(4) %0)
 // CHECK:STDOUT:   call void @_ZN1BC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %this1, ptr noundef getelementptr inbounds nuw (i8, ptr @_ZTT1D, i64 8))
 // CHECK:STDOUT:   %1 = getelementptr inbounds i8, ptr %this1, i64 16
 // CHECK:STDOUT:   call void @_ZN1CC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %1, ptr noundef getelementptr inbounds nuw (i8, ptr @_ZTT1D, i64 16))
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 0, i32 3), ptr %this1, align 8, !tbaa !29
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 0, i32 3), ptr %this1, align 8, !tbaa !30
 // CHECK:STDOUT:   %add.ptr = getelementptr inbounds i8, ptr %this1, i64 16
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 1, i32 3), ptr %add.ptr, align 8, !tbaa !29
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 1, i32 3), ptr %add.ptr, align 8, !tbaa !30
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -197,27 +198,29 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
 // CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
-// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main", scope: null, file: !1, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
-// CHECK:STDOUT: !13 = !{null}
-// CHECK:STDOUT: !14 = !DILocation(line: 11, column: 3, scope: !11)
-// CHECK:STDOUT: !15 = !DILocation(line: 11, column: 18, scope: !11)
-// CHECK:STDOUT: !16 = !DILocation(line: 6, column: 1, scope: !11)
-// CHECK:STDOUT: !17 = !{!18, !18, i64 0}
-// CHECK:STDOUT: !18 = !{!"p1 _ZTS1D", !19, i64 0}
-// CHECK:STDOUT: !19 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "AccessD", linkageName: "_CAccessD.Main", scope: null, file: !1, line: 14, type: !21, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !25)
-// CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
-// CHECK:STDOUT: !22 = !{!23, !24}
-// CHECK:STDOUT: !23 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !24 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !25 = !{!26}
-// CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !20, type: !24)
-// CHECK:STDOUT: !27 = !DILocation(line: 16, column: 10, scope: !20)
-// CHECK:STDOUT: !28 = !DILocation(line: 16, column: 3, scope: !20)
-// CHECK:STDOUT: !29 = !{!30, !30, i64 0}
-// CHECK:STDOUT: !30 = !{!"vtable pointer", !10, i64 0}
+// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
+// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{null}
+// CHECK:STDOUT: !15 = !DILocation(line: 11, column: 3, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 11, column: 18, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 6, column: 1, scope: !12)
+// CHECK:STDOUT: !18 = !{!19, !19, i64 0}
+// CHECK:STDOUT: !19 = !{!"p1 _ZTS1D", !20, i64 0}
+// CHECK:STDOUT: !20 = !{!"any pointer", !10, i64 0}
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "AccessD", linkageName: "_CAccessD.Main", scope: null, file: !1, line: 14, type: !22, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !26)
+// CHECK:STDOUT: !22 = !DISubroutineType(types: !23)
+// CHECK:STDOUT: !23 = !{!24, !25}
+// CHECK:STDOUT: !24 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !25 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !26 = !{!27}
+// CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !21, type: !25)
+// CHECK:STDOUT: !28 = !DILocation(line: 16, column: 10, scope: !21)
+// CHECK:STDOUT: !29 = !DILocation(line: 16, column: 3, scope: !21)
+// CHECK:STDOUT: !30 = !{!31, !31, i64 0}
+// CHECK:STDOUT: !31 = !{!"vtable pointer", !11, i64 0}
+// CHECK:STDOUT:

@@ -78,7 +78,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-class B(N:! i32) {
+class B(N: i32) {
   var a: array(i8, N);
 }
 

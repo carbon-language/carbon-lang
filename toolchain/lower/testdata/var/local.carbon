@@ -30,6 +30,7 @@ fn G() -> (i32, i32, i32) {
   return a;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'simple.carbon'
 // CHECK:STDOUT: source_filename = "simple.carbon"
 // CHECK:STDOUT:
@@ -76,6 +77,8 @@ fn G() -> (i32, i32, i32) {
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !11, type: !7)
 // CHECK:STDOUT: !16 = !DILocation(line: 5, column: 3, scope: !11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'eval_init_in_place.carbon'
 // CHECK:STDOUT: source_filename = "eval_init_in_place.carbon"
 // CHECK:STDOUT:
@@ -167,3 +170,4 @@ fn G() -> (i32, i32, i32) {
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !21, type: !7)
 // CHECK:STDOUT: !26 = !DILocation(line: 7, column: 3, scope: !21)
+// CHECK:STDOUT:

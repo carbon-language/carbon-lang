@@ -63,8 +63,11 @@ class MemUsage {
   // Adds memory usage for a `llvm::BumpPtrAllocator`.
   auto Collect(std::string label, const llvm::BumpPtrAllocator& allocator)
       -> void {
-    Add(std::move(label), allocator.getBytesAllocated(),
-        allocator.getTotalMemory());
+    // LLVM's BumpPtrAllocator no longer tracks the exact number of bytes
+    // allocated to avoid overhead on the hot path. We use the total memory
+    // (the capacity of the slabs) for both.
+    auto total_memory = allocator.getTotalMemory();
+    Add(std::move(label), total_memory, total_memory);
   }
 
   // Adds memory usage for a `Map`.

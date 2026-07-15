@@ -13,16 +13,16 @@
 // Builds on `call_recursive_basic.carbon`.
 // The two specifics for mutual recursive functions F and G,
 // when T is a pointer, could be deduplicated.
-fn G[T:! Core.Copy](x: T, count: i32) -> T;
+fn G[T: Core.Copy](x: T, count: i32) -> T;
 
-fn F[T:! Core.Copy](x: T, count: i32) -> T {
+fn F[T: Core.Copy](x: T, count: i32) -> T {
   if (count > 3) {
     return x;
   }
   return G(x, count + 1);
 }
 
-fn G[T:! Core.Copy](x: T, count: i32) -> T {
+fn G[T: Core.Copy](x: T, count: i32) -> T {
   if (count > 4) {
     return x;
   }
@@ -41,6 +41,7 @@ fn M() {
   F(ptr_f64, 0);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_mutual.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_mutual.carbon"
 // CHECK:STDOUT:
@@ -285,3 +286,4 @@ fn M() {
 // CHECK:STDOUT: !95 = !DILocation(line: 29, column: 15, scope: !88)
 // CHECK:STDOUT: !96 = !DILocation(line: 29, column: 10, scope: !88)
 // CHECK:STDOUT: !97 = !DILocation(line: 29, column: 3, scope: !88)
+// CHECK:STDOUT:

@@ -18,6 +18,7 @@ fn Run() {
     Foo.Run();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'namespace_run.carbon'
 // CHECK:STDOUT: source_filename = "namespace_run.carbon"
 // CHECK:STDOUT:
@@ -53,3 +54,4 @@ fn Run() {
 // CHECK:STDOUT: !11 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !12 = !DILocation(line: 18, column: 5, scope: !8)
 // CHECK:STDOUT: !13 = !DILocation(line: 17, column: 1, scope: !8)
+// CHECK:STDOUT:

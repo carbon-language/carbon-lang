@@ -338,6 +338,21 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
       const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
       const clang::DeclContext* original_decl_context) -> bool override;
 
+  auto LoadExternalSpecializations(
+      const clang::Decl* decl,
+      llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool override {
+    const auto* function_template_decl =
+        llvm::dyn_cast<clang::FunctionTemplateDecl>(decl);
+    if (!function_template_decl) {
+      return false;
+    }
+
+    return ExportFunctionSpecializationToCpp(
+        *context_,
+        const_cast<clang::FunctionTemplateDecl*>(function_template_decl),
+        template_args);
+  }
+
   auto CompleteType(clang::TagDecl* tag_decl) -> void override;
 
   auto layoutRecordType(
@@ -366,9 +381,8 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
       -> std::variant<clang::NamedDecl*, clang::QualType>;
 
   auto GetOrExportFunctionToCpp(SemIR::InstId target_inst_id,
-                                SemIR::FunctionId function_id,
-                                bool define_thunk = true)
-      -> clang::FunctionDecl*;
+                                SemIR::FunctionId function_id)
+      -> clang::NamedDecl*;
   // Get a current best-effort location for the current position within C++
   // processing.
   auto GetCurrentCppLocId() -> SemIR::LocId {
@@ -460,20 +474,29 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
 }
 
 auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
-    SemIR::InstId target_inst_id, SemIR::FunctionId function_id,
-    bool define_thunk) -> clang::FunctionDecl* {
+    SemIR::InstId target_inst_id, SemIR::FunctionId function_id)
+    -> clang::NamedDecl* {
   SemIR::Function& function = context_->functions().Get(function_id);
   if (const auto* clang_decl =
           context_->clang_decls().Lookup(function.first_decl_id())) {
-    return cast<clang::FunctionDecl>(clang_decl->decl());
+    return cast<clang::NamedDecl>(clang_decl->decl());
   }
 
-  auto* clang_function_decl = ExportFunctionDeclToCpp(
-      *context_, SemIR::LocId(target_inst_id), function_id);
-
-  if (!clang_function_decl) {
+  auto* named_decl =
+      ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id), function_id);
+  if (!named_decl) {
     return nullptr;
   }
+
+  if (auto* function_template_decl =
+          llvm::dyn_cast<clang::FunctionTemplateDecl>(named_decl)) {
+    context_->clang_decls().Add(
+        {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(function_template_decl),
+         .inst_id = function.first_decl_id()});
+    return function_template_decl;
+  }
+
+  auto* clang_function_decl = llvm::cast<clang::FunctionDecl>(named_decl);
 
   SemIR::ClangDeclSignature thunk_signature;
   thunk_signature.kind = SemIR::ClangDeclSignature::Normal;
@@ -487,12 +510,6 @@ auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
            clang_function_decl,
            context_->clang_decl_signatures().Add(std::move(thunk_signature))),
        .inst_id = function.first_decl_id()});
-
-  if (define_thunk) {
-    DefineCppThunk(*context_, SemIR::LocId(target_inst_id), function_id,
-                   clang_function_decl);
-  }
-
   return clang_function_decl;
 }
 
@@ -674,7 +691,7 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
   struct PendingVirtualFunction {
     SemIR::LocId loc_id;
     SemIR::FunctionId function_id;
-    clang::FunctionDecl* function_decl;
+    clang::CXXMethodDecl* method_decl;
   };
   llvm::SmallVector<PendingVirtualFunction> pending_virtual_functions;
 
@@ -699,22 +716,32 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
       if (function.parent_scope_id != class_info.scope_id) {
         continue;
       }
-      auto* method_decl = cast<clang::CXXMethodDecl>(
-          GetOrExportFunctionToCpp(vtable_entry_id, callee_function.function_id,
-                                   /*define_thunk=*/false));
+      auto* method_decl =
+          cast_or_null<clang::CXXMethodDecl>(ExportVirtualFunctionDeclToCpp(
+              *context_, SemIR::LocId(vtable_entry_id), class_decl,
+              callee_function.function_id));
+      if (!method_decl) {
+        continue;
+      }
       context_->clang_sema().AddOverriddenMethods(class_decl, method_decl);
+      context_->clang_decls().Add(
+          {.key = SemIR::ClangDeclKey::ForFunctionDecl(
+               method_decl,
+               MakeVirtualFunctionSignature(*context_, method_decl)),
+           .inst_id = function.first_decl_id()});
       pending_virtual_functions.push_back(
           {.loc_id = SemIR::LocId(vtable_entry_id),
            .function_id = callee_function.function_id,
-           .function_decl = method_decl});
+           .method_decl = method_decl});
     }
   }
   class_decl->completeDefinition();
 
   // Now the class is complete, we can define the virtual function thunks.
   for (auto virtual_fn : pending_virtual_functions) {
-    DefineCppThunk(*context_, virtual_fn.loc_id, virtual_fn.function_id,
-                   virtual_fn.function_decl);
+    DefineExportedVirtualFunction(*context_, virtual_fn.loc_id,
+                                  virtual_fn.function_id,
+                                  virtual_fn.method_decl);
   }
 }
 

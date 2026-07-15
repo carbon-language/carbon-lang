@@ -117,29 +117,23 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
   if (!args.self_type_id.has_value() && args.param_type_ids.empty()) {
     insts.param_patterns_id = SemIR::InstBlockId::Empty;
   } else {
-    context.inst_block_stack().Push();
+    llvm::SmallVector<SemIR::InstId> param_patterns;
     if (args.self_type_id.has_value()) {
-      BeginSubpattern(context);
-      auto self_type_region_id = ConsumeSubpatternExpr(
+      auto self_type_region_id = MakeEmptyRegion(
           context, context.types().GetTypeInstId(args.self_type_id));
-      EndEmptySubpattern(context);
-
       insts.self_param_id = AddParamPattern(
           context, loc_id, SemIR::NameId::SelfValue, self_type_region_id,
           args.self_type_id, args.self_kind);
-      context.inst_block_stack().AddInstId(insts.self_param_id);
+      param_patterns.push_back(insts.self_param_id);
     }
     for (auto param_type_id : args.param_type_ids) {
-      BeginSubpattern(context);
-      auto param_type_region_id = ConsumeSubpatternExpr(
+      auto param_type_region_id = MakeEmptyRegion(
           context, context.types().GetTypeInstId(param_type_id));
-      EndEmptySubpattern(context);
-
-      context.inst_block_stack().AddInstId(AddParamPattern(
+      param_patterns.push_back(AddParamPattern(
           context, loc_id, SemIR::NameId::Underscore, param_type_region_id,
           param_type_id, args.param_kind));
     }
-    insts.param_patterns_id = context.inst_block_stack().Pop();
+    insts.param_patterns_id = context.inst_blocks().Add(param_patterns);
   }
   context.full_pattern_stack().EndExplicitParamList();
 
@@ -464,6 +458,7 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
   // Create the function scope and the entry block.
   context.scope_stack().PushForFunctionBody(decl_id);
   context.inst_block_stack().Push();
+  context.observe_stack().PushArray();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
   StartGenericDefinition(context,
                          context.functions().Get(function_id).generic_id);
@@ -474,10 +469,18 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
 auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
     -> void {
   context.inst_block_stack().Pop();
+  // Any cleanups for a function will have been handled when emitting `return`s.
+  context.scope_stack().DiscardCleanupsSince(
+      context.scope_stack().function_cleanup_scope_depth());
   context.scope_stack().Pop(/*check_unused=*/true);
+
+  auto observe_block_id =
+      context.observe_blocks().Add(context.observe_stack().PeekArray());
+  context.observe_stack().PopArray();
 
   auto& function = context.functions().Get(function_id);
   function.body_block_ids = context.region_stack().PopRegion();
+  function.observe_block_id = observe_block_id;
 
   // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);

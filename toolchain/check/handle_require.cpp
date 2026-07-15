@@ -180,7 +180,7 @@ struct ValidateRequireResult {
 // not valid.
 static auto ValidateRequire(Context& context, SemIR::LocId full_require_loc_id,
                             SemIR::LocId constraint_loc_id,
-                            SemIR::InstId self_inst_id,
+                            SemIR::TypeInstId self_inst_id,
                             SemIR::InstId constraint_inst_id,
                             SemIR::InstId scope_inst_id)
     -> std::optional<ValidateRequireResult> {
@@ -244,7 +244,7 @@ static auto ValidateRequire(Context& context, SemIR::LocId full_require_loc_id,
 
   auto identified_facet_type_id = RequireIdentifiedFacetType(
       context, constraint_loc_id, self_type_id.AsConstantId(),
-      *constraint_facet_type, [&](auto& builder) {
+      context.types().GetTypeInstId(constraint_type_id), [&](auto& builder) {
         CARBON_DIAGNOSTIC(
             RequireImplsUnidentifiedFacetType, Context,
             "facet type {0} cannot be identified in `require` declaration",

@@ -12,32 +12,32 @@
 
 class C1 {}
 
-fn first[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V);
-fn second[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V);
-fn third[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V);
-fn fourth[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V);
+fn first[T: type, U: type, V: type](arg1: T, arg2: U, arg3: V);
+fn second[T: type, U: type, V: type](arg1: T, arg2: U, arg3: V);
+fn third[T: type, U: type, V: type](arg1: T, arg2: U, arg3: V);
+fn fourth[T: type, U: type, V: type](arg1: T, arg2: U, arg3: V);
 
-fn first[T:! type, U:! type, V:! type](unused arg1: T, arg2: U, unused arg3: V) {
+fn first[T: type, U: type, V: type](unused arg1: T, arg2: U, unused arg3: V) {
   var local_name: C1*;
 
   second(arg2, arg2, local_name);
 }
 
-fn second[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V) {
+fn second[T: type, U: type, V: type](arg1: T, arg2: U, arg3: V) {
   var local_name: C1*;
 
   first(arg3, arg3, arg1);
   third(arg2, arg2, local_name);
 }
 
-fn third[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V) {
+fn third[T: type, U: type, V: type](arg1: T, arg2: U, arg3: V) {
   var local_name: C1**;
 
   fourth(local_name, local_name, arg1);
   fourth(arg3, arg3, arg2);
 }
 
-fn fourth[T:! type, U:! type, V:! type](unused arg1: T, unused arg2: U, unused arg3: V) {
+fn fourth[T: type, U: type, V: type](unused arg1: T, unused arg2: U, unused arg3: V) {
 }
 
 fn Main() {
@@ -47,6 +47,7 @@ fn Main() {
   first(x, x, y);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'reverse_canonical.carbon'
 // CHECK:STDOUT: source_filename = "reverse_canonical.carbon"
 // CHECK:STDOUT:
@@ -275,3 +276,4 @@ fn Main() {
 // CHECK:STDOUT: !95 = !DILocalVariable(arg: 2, scope: !92, type: !17)
 // CHECK:STDOUT: !96 = !DILocalVariable(arg: 3, scope: !92, type: !17)
 // CHECK:STDOUT: !97 = !DILocation(line: 40, column: 1, scope: !92)
+// CHECK:STDOUT:

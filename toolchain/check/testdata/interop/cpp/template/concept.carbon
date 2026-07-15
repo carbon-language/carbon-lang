@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "concept.h";
 
-class X(B:! bool) {
+class X(B: bool) {
   fn Make() -> Self { return {}; }
 }
 
@@ -73,11 +73,7 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x1.patt: %pattern_type.26c = ref_binding_pattern x1 [concrete = constants.%x1.patt]
-// CHECK:STDOUT:     %x1.var_patt: %pattern_type.26c = var_pattern %x1.patt [concrete = constants.%x1.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x1.var: ref %X.541 = var %x1.var_patt [concrete]
+// CHECK:STDOUT:   %x1.var: ref %X.541 = var_storage %x1.var_patt [concrete]
 // CHECK:STDOUT:   %.loc11: type = splice_block %X.loc11 [concrete = constants.%X.541] {
 // CHECK:STDOUT:     %X.ref.loc11: %X.type = name_ref X, %X.decl [concrete = constants.%X.generic]
 // CHECK:STDOUT:     %Cpp.ref.loc11_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -89,10 +85,10 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x1: ref %X.541 = wrapper_binding x1, %x1.var [concrete = %x1.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x2.patt: %pattern_type.795 = ref_binding_pattern x2 [concrete = constants.%x2.patt]
-// CHECK:STDOUT:     %x2.var_patt: %pattern_type.795 = var_pattern %x2.patt [concrete = constants.%x2.var_patt]
+// CHECK:STDOUT:     %x1.patt: %pattern_type.26c = ref_binding_pattern x1 [concrete = constants.%x1.patt]
+// CHECK:STDOUT:     %x1.var_patt: %pattern_type.26c = var_pattern %x1.patt [concrete = constants.%x1.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x2.var: ref %X.7b4 = var %x2.var_patt [concrete]
+// CHECK:STDOUT:   %x2.var: ref %X.7b4 = var_storage %x2.var_patt [concrete]
 // CHECK:STDOUT:   %.loc12: type = splice_block %X.loc12 [concrete = constants.%X.7b4] {
 // CHECK:STDOUT:     %X.ref.loc12: %X.type = name_ref X, %X.decl [concrete = constants.%X.generic]
 // CHECK:STDOUT:     %Cpp.ref.loc12_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -103,6 +99,10 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:     %X.loc12: type = class_type @X, @X(constants.%true) [concrete = constants.%X.7b4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x2: ref %X.7b4 = wrapper_binding x2, %x2.var [concrete = %x2.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x2.patt: %pattern_type.795 = ref_binding_pattern x2 [concrete = constants.%x2.patt]
+// CHECK:STDOUT:     %x2.var_patt: %pattern_type.795 = var_pattern %x2.patt [concrete = constants.%x2.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

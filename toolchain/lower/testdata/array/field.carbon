@@ -25,6 +25,7 @@ class A {
   }
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'field.carbon'
 // CHECK:STDOUT: source_filename = "field.carbon"
 // CHECK:STDOUT:
@@ -95,3 +96,4 @@ class A {
 // CHECK:STDOUT: !22 = !DILocation(line: 23, column: 5, scope: !19)
 // CHECK:STDOUT: !23 = !DILocation(line: 24, column: 12, scope: !19)
 // CHECK:STDOUT: !24 = !DILocation(line: 24, column: 5, scope: !19)
+// CHECK:STDOUT:

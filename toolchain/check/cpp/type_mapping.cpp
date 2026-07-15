@@ -236,6 +236,18 @@ static auto TryMapClassType(Context& context, SemIR::TypeInstId class_inst_id,
   return ast_context.getCanonicalTagType(tag_decl);
 }
 
+// Maps a symbolic Carbon type to a C++ template parameter type.
+static auto TryMapSymbolicType(Context& context,
+                               SemIR::InstId symbolic_inst_id) {
+  const auto* clang_decl = context.clang_decls().Lookup(symbolic_inst_id);
+  if (!clang_decl) {
+    return clang::QualType();
+  }
+  return context.ast_context().getTemplateTypeParmType(
+      /*Depth=*/0, /*Index=*/0, /*ParameterPack=*/false,
+      llvm::cast<clang::TemplateTypeParmDecl>(clang_decl->decl()));
+}
+
 // Maps a Carbon type to a C++ type. Either returns the mapped type, a null type
 // as a placeholder indicating the type can't be mapped, or a `WrappedType`
 // representing a type that needs more work before it can be mapped.
@@ -298,6 +310,13 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
                 inner_type, context.ints().Get(int_id), /*SizeExpr=*/nullptr,
                 clang::ArraySizeModifier::Normal, /*IndexTypeQuals=*/0);
           }};
+    }
+    case SemIR::SymbolicBinding::Kind: {
+      auto type_inst_id = context.types().GetTypeInstId(type_id);
+      return TryMapSymbolicType(context, type_inst_id);
+    }
+    case CARBON_KIND(SemIR::FacetAccessType facet_access_type): {
+      return TryMapSymbolicType(context, facet_access_type.facet_value_inst_id);
     }
 
     default: {

@@ -26,7 +26,7 @@ private class C {
   }
 }
 
-fn CallInA(unused T:! type) {
+fn CallInA(unused generic T: type) {
   Call();
   C.Call();
 }
@@ -47,7 +47,7 @@ private class C {
   }
 }
 
-fn CallInB(unused T:! type) {
+fn CallInB(unused generic T: type) {
   Call();
   C.Call();
 }
@@ -65,6 +65,7 @@ fn F() {
   CallInB({});
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'private_call_a.carbon'
 // CHECK:STDOUT: source_filename = "private_call_a.carbon"
 // CHECK:STDOUT:
@@ -101,6 +102,8 @@ fn F() {
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.C.Main.df01d416cc5a0873", scope: null, file: !1, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !10 = !DILocation(line: 12, column: 5, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 11, column: 3, scope: !9)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'private_call_b.carbon'
 // CHECK:STDOUT: source_filename = "private_call_b.carbon"
 // CHECK:STDOUT:
@@ -137,6 +140,8 @@ fn F() {
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.C.Main.df01d416cc5a0873", scope: null, file: !1, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !10 = !DILocation(line: 12, column: 5, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 11, column: 3, scope: !9)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_a_and_b.carbon'
 // CHECK:STDOUT: source_filename = "use_a_and_b.carbon"
 // CHECK:STDOUT:
@@ -200,3 +205,4 @@ fn F() {
 // CHECK:STDOUT: !17 = !DILocation(line: 17, column: 3, scope: !15)
 // CHECK:STDOUT: !18 = !DILocation(line: 18, column: 3, scope: !15)
 // CHECK:STDOUT: !19 = !DILocation(line: 16, column: 1, scope: !15)
+// CHECK:STDOUT:

@@ -16,6 +16,7 @@ fn Run() -> i32 {
   return 0;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'two_entries.carbon'
 // CHECK:STDOUT: source_filename = "two_entries.carbon"
 // CHECK:STDOUT:
@@ -98,3 +99,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !23 = !{!24}
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !19, type: !22)
 // CHECK:STDOUT: !25 = !DILocation(line: 15, column: 3, scope: !19)
+// CHECK:STDOUT:

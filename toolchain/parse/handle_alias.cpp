@@ -15,7 +15,8 @@ auto HandleAlias(Context& context) -> void {
   auto state = context.PopState();
 
   context.PushState(state, StateKind::AliasAfterName);
-  context.PushState(StateKind::DeclNameAndParams, state.token);
+  context.PushState(StateKind::DeclNameAndParams, state.token,
+                    BindingContext::CompileTimeEntityParam);
 }
 
 auto HandleAliasAfterName(Context& context) -> void {

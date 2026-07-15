@@ -43,26 +43,26 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:     .p = %p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [concrete = constants.%Incomplete] {} {}
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: <error> = ref_binding_pattern s [concrete = <error>]
-// CHECK:STDOUT:     %s.var_patt: <error> = var_pattern %s.patt [concrete = <error>]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref <error> = var %s.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %s.var: ref <error> = var_storage %s.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc24: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
 // CHECK:STDOUT:     %Incomplete.ref.loc24: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %Incomplete} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: <error> = wrapper_binding s, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type = ref_binding_pattern p [concrete = constants.%p.patt]
-// CHECK:STDOUT:     %p.var_patt: %pattern_type = var_pattern %p.patt [concrete = constants.%p.var_patt]
+// CHECK:STDOUT:     %s.patt: <error> = ref_binding_pattern s [concrete = <error>]
+// CHECK:STDOUT:     %s.var_patt: <error> = var_pattern %s.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %ptr = var %p.var_patt [concrete]
+// CHECK:STDOUT:   %p.var: ref %ptr = var_storage %p.var_patt [concrete]
 // CHECK:STDOUT:   %.loc26: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %Incomplete.ref.loc26: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete.ref.loc26 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = wrapper_binding p, %p.var [concrete = %p.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %pattern_type = ref_binding_pattern p [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.var_patt: %pattern_type = var_pattern %p.patt [concrete = constants.%p.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

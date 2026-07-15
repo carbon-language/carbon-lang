@@ -47,7 +47,7 @@ class CppCompat.NullptrT {
 
   // TODO: impl as EqWith(Self)
 
-  impl forall [T:! type] as ImplicitAs(Optional(T*)) {
+  impl forall [T: type] as ImplicitAs(Optional(T*)) {
     fn Convert(unused self) -> Optional(T*) {
       return Optional(T*).None();
     }

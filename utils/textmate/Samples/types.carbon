@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 class C1;
-class C2(T1:! type, T2:! C1) {}
+class C2(T1: type, T2: C1) {}
 class C3 {
     extend base: C1;
 }
 class
         (C4(
-            (T1:! type),
-            T2:!
+            (T1: type),
+            T2:
                     (A.(B(E, F(G)).C)
                                         .D))) ;
 

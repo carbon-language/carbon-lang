@@ -413,16 +413,33 @@ auto TokenizedBuffer::GetCommentText(CommentIndex comment_index) const
   return source_->text().substr(comment_data.start, comment_data.length);
 }
 
-auto TokenizedBuffer::AddComment(int32_t indent, int32_t start, int32_t end)
-    -> void {
-  if (comments_.size() > 0) {
+auto TokenizedBuffer::IsTrailingComment(CommentIndex comment_index) const
+    -> bool {
+  return comments_.Get(comment_index).is_trailing;
+}
+
+auto TokenizedBuffer::AddComment(int32_t indent, int32_t start, int32_t end,
+                                 bool is_trailing) -> void {
+  // A comment runs forward from its start, and its length is stored in 31 bits
+  // (the high bit holds `is_trailing`). A non-negative byte offset always fits
+  // in 31 bits because the source size is bounded by `INT32_MAX`.
+  CARBON_DCHECK(start <= end);
+
+  // A block of identical full-line comments is coalesced into a single comment.
+  // A trailing comment is always standalone: it never extends a preceding
+  // comment, nor is it extended by a following one.
+  if (!is_trailing && comments_.size() > 0) {
     auto& comment = comments_.Get(CommentIndex(comments_.size() - 1));
-    if (comment.start + comment.length + indent == start) {
+    if (!comment.is_trailing &&
+        comment.start + comment.length + indent == start) {
+      CARBON_DCHECK(comment.start <= end);
       comment.length = end - comment.start;
       return;
     }
   }
-  comments_.Add({.start = start, .length = end - start});
+  comments_.Add({.start = start,
+                 .length = static_cast<uint32_t>(end - start),
+                 .is_trailing = is_trailing});
 }
 
 auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,

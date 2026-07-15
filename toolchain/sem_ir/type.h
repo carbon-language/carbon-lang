@@ -66,6 +66,20 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // value of type `TypeType`.
   auto TryGetTypeIdForTypeConstantId(ConstantId constant_id) const -> TypeId;
 
+  // Returns the TypeInstId for a constant that is a type value, i.e. it is a
+  // value of type `TypeType`.
+  //
+  // Facet values are of the same typishness as types, but are not themselves
+  // types, so they can not be passed here. They should be converted to a type
+  // through an `as type` conversion, that is, to a value of type `TypeType`.
+  auto GetTypeInstIdForTypeConstantId(ConstantId constant_id) const
+      -> TypeInstId;
+
+  // Like GetTypeIdForTypeConstantId() but returns None if the constant is not a
+  // value of type `TypeType`.
+  auto TryGetTypeInstIdForTypeConstantId(ConstantId constant_id) const
+      -> TypeInstId;
+
   // Returns the type ID for an instruction whose constant value is a type
   // value, i.e. it is a value of type `TypeType`.
   //
