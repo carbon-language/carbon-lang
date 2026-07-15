@@ -35,11 +35,11 @@ auto HandleParseNode(Context& /*context*/,
 auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
   auto [expr_node, expr_id] = context.node_stack().PopExprWithNodeId();
 
-  bool had_params = false;
+  bool diagnosed_params = false;
   auto name_context =
       context.decl_name_stack().FinishName(PopNameComponentWithoutParams(
-          context, Lex::TokenKind::Alias, &had_params));
-  if (had_params) {
+          context, Lex::TokenKind::Alias, &diagnosed_params));
+  if (diagnosed_params) {
     // If the alias had generic parameters, they could be SymbolicBindings which
     // then appear in the `expr_id`. Using those elsewhere is then invalid and
     // creates invalid states in the toolchain.

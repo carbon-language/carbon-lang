@@ -82,7 +82,7 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
 // Pop the name of a declaration from the node stack, and diagnose if it has
 // parameters.
 auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer,
-                                   bool* diagnosed) -> NameComponent {
+                                   bool* diagnosed_params) -> NameComponent {
   NameComponent name = PopNameComponent(context);
   if (name.call_params_id.has_value()) {
     CARBON_DIAGNOSTIC(UnexpectedDeclNameParams, Error,
@@ -95,8 +95,8 @@ auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer,
                            UnexpectedDeclNameParams, introducer);
 
     name.call_params_id = SemIR::InstBlockId::None;
-    if (diagnosed) {
-      *diagnosed = true;
+    if (diagnosed_params) {
+      *diagnosed_params = true;
     }
   }
   return name;
