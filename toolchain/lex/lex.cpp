@@ -1117,17 +1117,33 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
         return true;
       }
 
-      // Check for the edge case of source that ends with (indented) "//". That
-      // is a valid comment and so we shouldn't continue with we aren't in the
-      // invalid state.
+      // Past here, the block is a run of invalid comment lines and the
+      // matched prefix only covers this line's `//`, so examine what follows
+      // those slashes: only another invalid comment line continues the block,
+      // while a valid comment or directive ends it and is lexed on its own.
+
+      // A `//` that ends the source is a valid comment, so it doesn't
+      // continue the block.
       if (position + prefix_size == static_cast<ssize_t>(source_text.size())) {
         return false;
       }
 
-      // Otherwise, check what follows the comment introducer and stop
-      // continuing if it could be valid.
       char after_slashes = source_text[position + prefix_size];
-      return !IsSpace(after_slashes) && after_slashes != '@';
+
+      // Whitespace after the `//` makes this line a valid comment, so it
+      // doesn't continue the block.
+      if (IsSpace(after_slashes)) {
+        return false;
+      }
+
+      // An `@` makes this line a `//@...` directive that must be lexed on its
+      // own to recognize its side effects, so it doesn't continue the block.
+      if (after_slashes == '@') {
+        return false;
+      }
+
+      // Anything else is another invalid comment line continuing the block.
+      return true;
     };
 
     // Skip lines that are combined into a comment block.
