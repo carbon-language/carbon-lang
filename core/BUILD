@@ -63,9 +63,3 @@ carbon_library(
     impls = ["io.impl.carbon"],
     visibility = ["//visibility:public"],
 )
-
-carbon_library(
-    name = "range",
-    api = "range.carbon",
-    visibility = ["//visibility:public"],
-)

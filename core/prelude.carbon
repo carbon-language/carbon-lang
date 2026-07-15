@@ -11,4 +11,5 @@ export import library "prelude/default";
 export import library "prelude/destroy";
 export import library "prelude/iterate";
 export import library "prelude/operators";
+export import library "prelude/range";
 export import library "prelude/types";
