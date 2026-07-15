@@ -27,9 +27,9 @@ auto UnpackObserve(Context& context, const SemIR::Observe& observe)
     -> std::pair<llvm::SmallVector<SemIR::InstId>, SemIR::InstId> {
   llvm::SmallVector<SemIR::InstId> operand_ids;
   auto impls_constraint_id = SemIR::InstId::None;
-  for (auto operator_id :
+  for (auto operation_id :
        context.inst_blocks().GetOrEmpty(observe.operations_id)) {
-    CARBON_KIND_SWITCH(context.insts().Get(operator_id)) {
+    CARBON_KIND_SWITCH(context.insts().Get(operation_id)) {
       case CARBON_KIND(SemIR::ObserveEquivalent observe_equivalent): {
         if (operand_ids.empty()) {
           operand_ids.push_back(observe_equivalent.lhs_id);
@@ -45,6 +45,7 @@ auto UnpackObserve(Context& context, const SemIR::Observe& observe)
         break;
       }
       default: {
+        CARBON_FATAL("Unexpected inst kind: {0}", operation_id);
         break;
       }
     }
@@ -61,8 +62,10 @@ auto CheckObserveEquivalence(Context& context,
   for (auto operand_id : observe_operand_ids) {
     auto operand_type_id = context.insts().GetAttachedType(operand_id);
     lhs_found |= lhs_type_id == operand_type_id;
-    rhs_found = rhs_found || rhs_type_id == operand_type_id;
-    if (lhs_found && rhs_found) { return true; }
+    rhs_found |= rhs_type_id == operand_type_id;
+    if (lhs_found && rhs_found) {
+      return true;
+    }
   }
   return false;
 }
