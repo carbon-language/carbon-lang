@@ -9,6 +9,7 @@
 
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/lex/token_index.h"
+#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
 
