@@ -645,8 +645,22 @@ auto EvalConstantInst(Context& context, SemIR::RequireSpecificDefinition inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::SpecificConstant inst)
-    -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+                      SemIR::SpecificConstant inst) -> ConstantEvalResult {
+  // The SpecificConstant can refer to a constant in the definition region of
+  // the generic. This can happen during substitution. If it does, resolve the
+  // definition region now.
+  auto const_id = context.constant_values().GetAttached(inst.inst_id);
+  if (const_id.has_value() && const_id.is_symbolic()) {
+    auto symbolic_const =
+        context.constant_values().GetSymbolicConstant(const_id);
+    if (symbolic_const.index.has_value() &&
+        symbolic_const.index.region() == SemIR::GenericInstIndex::Definition) {
+      ResolveSpecificDefinition(context, SemIR::LocId(inst_id),
+                                inst.specific_id);
+    }
+  }
+
   // Pull the constant value out of the specific.
   return ConstantEvalResult::Existing(SemIR::GetConstantValueInSpecific(
       context.sem_ir(), inst.specific_id, inst.inst_id));

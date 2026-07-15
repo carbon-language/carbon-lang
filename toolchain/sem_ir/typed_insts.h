@@ -1833,6 +1833,7 @@ struct SpecificConstant {
   static constexpr auto Kind = InstKind::SpecificConstant.Define<Parse::NodeId>(
       {.ir_name = "specific_constant",
        .expr_category = ComputedExprCategory::SameAsFirstOperand,
+       .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
        .is_lowered = false});
 
   TypeId type_id;
