@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 
 #include <bit>
+#include <compare>
 #include <cstddef>
 #include <limits>
 #include <memory>
@@ -17,6 +18,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/Support/MemAlloc.h"
 #include "toolchain/base/id_tag.h"
 #include "toolchain/base/mem_usage.h"
@@ -25,11 +27,173 @@
 
 namespace Carbon {
 
+template <typename IdT, typename ValueT, typename TagIdT>
+class ValueStore;
+
 namespace Internal {
 
 // Used as a parent class for non-printable types. This is just for
 // std::conditional, not as an API.
 class ValueStoreNotPrintable {};
+
+// A random-access iterator over the values in a ValueStore.
+//
+// Supports both const and non-const iteration, and allows implicit
+// conversion from non-const to const iterators.
+template <typename ValueStoreT, typename ElementT, typename PointerT,
+          typename ReferenceT>
+class ValueStoreIterator
+    : public llvm::iterator_facade_base<
+          ValueStoreIterator<ValueStoreT, ElementT, PointerT, ReferenceT>,
+          std::random_access_iterator_tag, ElementT, int32_t, PointerT,
+          ReferenceT> {
+ public:
+  // Implicit conversion constructor from non-const to const iterator.
+  // Only enabled if the source iterator's ValueStore pointer is convertible
+  // to the target iterator's ValueStore pointer (i.e., ValueStore* to const
+  // ValueStore*).
+  template <typename OtherValueStoreT, typename OtherElementT,
+            typename OtherPointerT, typename OtherReferenceT>
+    requires(std::is_convertible_v<OtherValueStoreT*, ValueStoreT*>)
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  ValueStoreIterator(
+      const ValueStoreIterator<OtherValueStoreT, OtherElementT, OtherPointerT,
+                               OtherReferenceT>& other)
+      : store_(other.store_), index_(other.index_) {}
+
+  auto operator*() const -> ReferenceT {
+    return store_->Get(
+        typename ValueStoreT::IdType(store_->tag_.Apply(index_)));
+  }
+
+  friend auto operator==(const ValueStoreIterator& lhs,
+                         const ValueStoreIterator& rhs) -> bool {
+    CARBON_DCHECK(lhs.store_ == rhs.store_);
+    return lhs.index_ == rhs.index_;
+  }
+
+  friend auto operator<=>(const ValueStoreIterator& lhs,
+                          const ValueStoreIterator& rhs)
+      -> std::strong_ordering {
+    CARBON_DCHECK(lhs.store_ == rhs.store_);
+    return lhs.index_ <=> rhs.index_;
+  }
+
+  friend auto operator-(const ValueStoreIterator& lhs,
+                        const ValueStoreIterator& rhs) -> int32_t {
+    return lhs.index_ - rhs.index_;
+  }
+
+  auto operator+=(int32_t n) -> ValueStoreIterator& {
+    index_ += n;
+    return *this;
+  }
+
+  auto operator-=(int32_t n) -> ValueStoreIterator& { return *this += -n; }
+
+ private:
+  template <typename, typename, typename, typename>
+  friend class ValueStoreIterator;
+
+  template <typename, typename, typename>
+  friend class Carbon::ValueStore;
+
+  template <typename, typename>
+  friend class ValueStoreRange;
+
+  // Private constructor to prevent arbitrary construction.
+  // Iterators should only be obtained from Range begin()/end().
+  ValueStoreIterator(ValueStoreT* store, int32_t index)
+      : store_(store), index_(index) {}
+
+  ValueStoreT* store_;
+  int32_t index_;
+};
+
+// A random-access iterator for enumerating a ValueStore, yielding pairs of
+// (ID, Value).
+template <typename ValueStoreT>
+class ValueStoreEnumerateIterator
+    : public llvm::iterator_facade_base<
+          ValueStoreEnumerateIterator<ValueStoreT>,
+          std::random_access_iterator_tag,
+          std::pair<typename ValueStoreT::IdType,
+                    typename ValueStoreT::ConstRefType>,
+          int32_t,
+          const std::pair<typename ValueStoreT::IdType,
+                          typename ValueStoreT::ConstRefType>*,
+          std::pair<typename ValueStoreT::IdType,
+                    typename ValueStoreT::ConstRefType>> {
+ public:
+  using IdType = typename ValueStoreT::IdType;
+  using ConstRefType = typename ValueStoreT::ConstRefType;
+  using ValueType = std::pair<IdType, ConstRefType>;
+
+  auto operator*() const -> ValueType {
+    IdType id = store_->tag_.Apply(index_);
+    return {id, store_->Get(id)};
+  }
+
+  friend auto operator==(const ValueStoreEnumerateIterator& lhs,
+                         const ValueStoreEnumerateIterator& rhs) -> bool {
+    CARBON_DCHECK(lhs.store_ == rhs.store_);
+    return lhs.index_ == rhs.index_;
+  }
+
+  friend auto operator<=>(const ValueStoreEnumerateIterator& lhs,
+                          const ValueStoreEnumerateIterator& rhs)
+      -> std::strong_ordering {
+    CARBON_DCHECK(lhs.store_ == rhs.store_);
+    return lhs.index_ <=> rhs.index_;
+  }
+
+  friend auto operator-(const ValueStoreEnumerateIterator& lhs,
+                        const ValueStoreEnumerateIterator& rhs) -> int32_t {
+    return lhs.index_ - rhs.index_;
+  }
+
+  auto operator+=(int32_t n) -> ValueStoreEnumerateIterator& {
+    index_ += n;
+    return *this;
+  }
+
+  auto operator-=(int32_t n) -> ValueStoreEnumerateIterator& {
+    return *this += -n;
+  }
+
+ private:
+  template <typename, typename, typename>
+  friend class Carbon::ValueStore;
+
+  template <typename, typename>
+  friend class ValueStoreRange;
+
+  // Private constructor. Enumerate iterators should only be obtained from
+  // EnumerateRange.
+  ValueStoreEnumerateIterator(ValueStoreT* store, int32_t index)
+      : store_(store), index_(index) {}
+
+  ValueStoreT* store_;
+  int32_t index_;
+};
+
+// A range over a ValueStore, vending begin() and end() iterators.
+template <typename ValueStoreT, typename IteratorT>
+class ValueStoreRange {
+ public:
+  auto begin() const -> IteratorT { return IteratorT(store_, 0); }
+  auto end() const -> IteratorT { return IteratorT(store_, store_->size_); }
+
+ private:
+  template <typename, typename, typename>
+  friend class Carbon::ValueStore;
+
+  // Private constructor to ensure ranges are only created by ValueStore.
+  explicit ValueStoreRange(ValueStoreT& store [[clang::lifetimebound]])
+      : store_(&store) {}
+
+  ValueStoreT* store_;
+};
 
 }  // namespace Internal
 
@@ -57,34 +221,21 @@ class ValueStore
   using RefType = ValueStoreTypes<ValueT>::RefType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
-  // A range over references to the values in a ValueStore, returned from
-  // `ValueStore::values()`. Hides the complex type name of the iterator
-  // internally to provide a type name (`Range`) that can be
-  // referred to without auto and templates.
-  class Range {
-   public:
-    explicit Range(const ValueStore& store [[clang::lifetimebound]])
-        : flattened_range_(MakeFlattenedRange(store)) {}
+  using ConstIterator =
+      Internal::ValueStoreIterator<const ValueStore, const ValueT,
+                                   const ValueT*, ConstRefType>;
+  using Iterator = Internal::ValueStoreIterator<
+      ValueStore, ValueT,
+      std::conditional_t<std::is_reference_v<RefType>, ValueT*, const ValueT*>,
+      RefType>;
 
-    auto begin() const -> auto { return flattened_range_.begin(); }
-    auto end() const -> auto { return flattened_range_.end(); }
+  using Range = Internal::ValueStoreRange<const ValueStore, ConstIterator>;
+  using MutableRange = Internal::ValueStoreRange<ValueStore, Iterator>;
 
-   private:
-    // Flattens the range of `Chunk`s of `ValueType`s into a single
-    // range of `ValueType`s.
-    static auto MakeFlattenedRange(const ValueStore& store) -> auto {
-      // Because indices into `ValueStore` are all sequential values from 0, we
-      // can use llvm::seq to walk all indices in the store.
-      return llvm::map_range(llvm::seq(store.size_),
-                             [&](int32_t i) -> ConstRefType {
-                               return store.Get(IdType(store.tag_.Apply(i)));
-                             });
-    }
-
-    using FlattenedRangeType =
-        decltype(MakeFlattenedRange(std::declval<const ValueStore&>()));
-    FlattenedRangeType flattened_range_;
-  };
+  using EnumerateIterator =
+      Internal::ValueStoreEnumerateIterator<const ValueStore>;
+  using EnumerateRange =
+      Internal::ValueStoreRange<const ValueStore, EnumerateIterator>;
 
   ValueStore()
     requires(IdTagIsUntagged<IdTagType>);
@@ -180,10 +331,8 @@ class ValueStore
   }
 
   // Makes an iterable range over references to all values in the ValueStore.
-  auto values() [[clang::lifetimebound]] -> auto {
-    return llvm::map_range(llvm::seq(size_), [&](int32_t i) -> RefType {
-      return Get(tag_.Apply(i));
-    });
+  auto values() [[clang::lifetimebound]] -> MutableRange {
+    return MutableRange(*this);
   }
   auto values() const [[clang::lifetimebound]] -> Range { return Range(*this); }
 
@@ -196,17 +345,8 @@ class ValueStore
   // ```
   // for (auto [id, value] : store.enumerate()) { ... }
   // ```
-  auto enumerate() const [[clang::lifetimebound]] -> auto {
-    // For `it->val`, writing `const std::pair` is required; otherwise
-    // `mapped_iterator` incorrectly infers the pointer type for `PointerProxy`.
-    // NOLINTNEXTLINE(readability-const-return-type)
-    auto index_to_id = [&](int32_t i) -> const std::pair<IdType, ConstRefType> {
-      IdType id = tag_.Apply(i);
-      return std::pair<IdType, ConstRefType>(id, Get(id));
-    };
-    // Because indices into `ValueStore` are all sequential values from 0, we
-    // can use llvm::seq to walk all indices in the store.
-    return llvm::map_range(llvm::seq(size_), index_to_id);
+  auto enumerate() const [[clang::lifetimebound]] -> EnumerateRange {
+    return EnumerateRange(*this);
   }
 
   auto GetIdTag() const -> IdTagType { return tag_; }
@@ -234,6 +374,14 @@ class ValueStore
   }
 
  private:
+  template <typename, typename, typename, typename>
+  friend class Internal::ValueStoreIterator;
+
+  template <typename, typename>
+  friend class Internal::ValueStoreRange;
+
+  template <typename>
+  friend class Internal::ValueStoreEnumerateIterator;
   // A chunk of `ValueType`s which has a fixed capacity, but variable size.
   // Tracks the size internally for verifying bounds.
   struct Chunk {
