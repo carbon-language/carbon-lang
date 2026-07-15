@@ -717,10 +717,9 @@ static auto CollectCandidateImplsForQuery(
       continue;
     }
 
-    if (final_only) {
-      if (!TreatImplAsFinal(context, impl) && !impl.match_first_is_final) {
-        continue;
-      }
+    if (final_only && !TreatImplAsFinal(context, impl) &&
+        !impl.match_first_is_final) {
+      continue;
     }
 
     if (llvm::is_contained(context.forbidden_impls(), id)) {
