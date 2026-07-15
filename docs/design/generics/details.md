@@ -29,6 +29,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Facet types](#facet-types)
     -   [Identified facet types](#identified-facet-types)
 -   [Named constraints](#named-constraints)
+    -   [Rewrites and same-type constraints in a named constraint](#rewrites-and-same-type-constraints-in-a-named-constraint)
     -   [Subtyping between facet types](#subtyping-between-facet-types)
 -   [Combining interfaces by anding facet types](#combining-interfaces-by-anding-facet-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
@@ -1108,6 +1109,56 @@ class ImplementsS {
   Y { ... }
   Z { ... }
 }
+```
+
+### Rewrites and same-type constraints in a named constraint
+
+A `require` statement may include rewrite or same-type constraints. In the case
+of `extend require`, the rewrites are preserved as such. But otherwise, any
+rewrite constraint the identified facet type of the `require` is treated as a
+same-type constraint instead.
+
+When identifying a facet type, a rewrite or same-type constraint must depend on
+`.Self` in some way in order to be found in future impl lookups involving the
+facet being constrained. Thus, if there is no dependency on `.Self` the rewrite
+or same-type constraint must be shown to be satisfied immediately for the
+identify to complete successfully.
+
+For example, in `require impls Z where .Z1 = {}`, when identified and `Self` is
+not `.Self` from the top-level facet type, we require that
+`Self impls Z where .Z1 = {}` is already true in order to successfully identify.
+
+```carbon
+interface Z(V: type) {
+  let Z1: type;
+  let Z2: type;
+}
+
+constraint N(T2: type, U2: type) {
+  extend require impls Z(U2) where .Z1 = {} and .Z2 == ();
+}
+
+interface Y {
+  fn YY();
+}
+
+fn F(U: Y where C impls Z(.Self) where .Z1 = {} and .Z2 == (),
+     T: Y where C impls N(.Self, U)) {
+  // Member access into `T` causes its type to be identified, which succeeds.
+  // The identified facet type contains
+  // `C impls Z(U) where .Z1 = {} and .Z2 == ()` which is true from the facet
+  // type of `U`.
+  T.YY();
+}
+
+fn G(U: Y where C impls Z(.Self),
+     T: Y where C impls N(.Self, U));
+  // ❌ Error: The type of `T` can not be identified.
+  // Member access into `T` causes its type to be identified, which fails.
+  // The identified facet type contains
+  // `C impls Z(U) where .Z1 = {} and .Z2 == ()` which we don't know to be
+  // true here.
+  T.YY();
 ```
 
 ### Subtyping between facet types

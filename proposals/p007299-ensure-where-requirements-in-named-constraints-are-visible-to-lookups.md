@@ -77,16 +77,21 @@ Rewrite and same-type constraints that do not depend on `.Self` must be
 immediately satisfied by performing an impl lookup with that constraint as a
 condition. In the following example, the identified facet type of `T` contains a
 rewrite `C.(Z(U).Z1) = {}` and the same-type constraint `C.(Z(U).Z2) == ()`. So
-an impl lookup for `C as Z(U) where .Z1 = {} and .Z2 == ()` must be satisfied.
-In this example, the lookup succeeds by finding a witness with the required
-constraints in the facet type of `U`.
+an impl lookup for `C as Z(U) where .Z1 = {} and .Z2 == ()` must be satisfied to
+identify the type of `T`. In this example, the lookup succeeds by finding a
+witness with the required constraints in the facet type of `U`.
 
 ```carbon
+interface Z(V: type) {
+  let Z1: type;
+  let Z2: type;
+}
+
 constraint N(T2: type, U2: type) {
   extend require impls Z(U2) where .Z1 = {} and .Z2 == ();
 }
 
-fn F(U: Z(.Self) where .Z1 = {} and .Z2 == (),
+fn F(U: type where C impls Z(.Self) where .Z1 = {} and .Z2 == (),
      T: type where C impls N(.Self, U));
 ```
 
