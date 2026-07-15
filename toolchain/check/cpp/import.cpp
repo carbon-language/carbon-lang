@@ -903,11 +903,8 @@ static auto GetVirtualFunctionParamPassingMode(clang::QualType type)
   return SemIR::ClangDeclSignature::PassingMode::ByVar;
 }
 
-// Computes the signature to use for the given imported virtual function. Unlike
-// with regular imported functions, we can only use a single signature here, so
-// we pick one conservatively.
-static auto MakeVirtualFunctionSignature(
-    Context& context, const clang::CXXMethodDecl* method_decl)
+auto MakeVirtualFunctionSignature(Context& context,
+                                  const clang::CXXMethodDecl* method_decl)
     -> SemIR::ClangDeclSignatureId {
   SemIR::ClangDeclSignature signature = {
       .kind = SemIR::ClangDeclSignature::Normal,

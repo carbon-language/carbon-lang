@@ -20,11 +20,36 @@ struct FunctionFields {
   // Kinds of special functions. See `Function::Set*` for details on each; these
   // shouldn't be assigned directly (but are used for reads/switches).
   enum class SpecialFunctionKind : uint8_t {
+    // A regular function.
     None,
+    // A builtin function. `special_function_kind_data` is the corresponding
+    // `BuiltinFunctionKind`.
     Builtin,
+    // A synthesized function generated for a `Core` witness.
+    // `special_function_kind_data` is the corresponding `BuiltinFunctionKind`,
+    // or may be `BuiltinFunctionKind::None` if a function body is synthesized
+    // too. During name mangling, extra information is included for this
+    // function to avoid collisions.
     CoreWitness,
+    // A thunk that adapts a function with one signature to have another
+    // signature, by forwarding the arguments and return value, with implicit
+    // conversions applied as necessary. `special_function_kind_data` is the
+    // corresponding `ThunkId`. A call to this function can generally be
+    // rewritten as a call to its target function, after performing the
+    // intermediate parameter conversions.
     Thunk,
+    // A thunk for calling to or from C++, with an intentionally-simple ABI so
+    // that it can be called across the language barrier. `Context::clang_decls`
+    // can be used to find the corresponding C++ function, which will have the
+    // same mangled name.
+    //
+    // `special_function_kind_data` is the `InstId` of the wrapped function. If
+    // the wrapped function is in Carbon, the Carbon version of the thunk will
+    // be a definition. If the wrapped function is in C++, the C++ version of
+    // the thunk will be a definition.
     CppThunk,
+    // A function that was imported from C++, for which we generated a
+    // `CppThunk`. `special_function_kind_data` is the `InstId` of that thunk.
     HasCppThunk,
   };
 
@@ -192,6 +217,21 @@ struct Function : public EntityWithParamsBase,
     }
     if (return_pattern_id.has_value()) {
       out << ", return_pattern_id: " << return_pattern_id;
+    }
+    if (auto builtin_kind = builtin_function_kind();
+        builtin_kind != BuiltinFunctionKind::None) {
+      out << ", builtin: " << builtin_kind;
+    }
+    if (auto thunk_id_val = thunk_id(); thunk_id_val.has_value()) {
+      out << ", thunk: " << thunk_id_val;
+    }
+    if (auto cpp_thunk_decl_id_val = cpp_thunk_decl_id();
+        cpp_thunk_decl_id_val.has_value()) {
+      out << ", cpp_thunk_decl: " << cpp_thunk_decl_id_val;
+    }
+    if (auto cpp_thunk_callee_val = cpp_thunk_callee();
+        cpp_thunk_callee_val.has_value()) {
+      out << ", cpp_thunk_callee: " << cpp_thunk_callee_val;
     }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(

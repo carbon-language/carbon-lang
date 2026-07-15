@@ -114,6 +114,13 @@ auto ImportClassDefinitionForClangDecl(Context& context,
                                        SemIR::ClangDeclId clang_decl_id)
     -> bool;
 
+// Computes the signature to use for the given imported virtual function. Unlike
+// with regular imported functions, we can only use a single signature here, so
+// we pick one conservatively.
+auto MakeVirtualFunctionSignature(Context& context,
+                                  const clang::CXXMethodDecl* method_decl)
+    -> SemIR::ClangDeclSignatureId;
+
 // Gets the identifier info for a name. Returns `nullptr` if the name is not an
 // identifier name.
 auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
