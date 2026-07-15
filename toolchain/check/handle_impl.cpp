@@ -315,7 +315,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
           prev_impl.definition_id = impl_decl_id;
         }
 
-        if (auto match_first = context.match_first_context()) {
+        if (auto& match_first = context.match_first_context()) {
           if (prev_impl.match_first_id.has_value()) {
             if (!impl_had_error) {
               CARBON_DIAGNOSTIC(
@@ -372,7 +372,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
               context.generics().GetSelfSpecific(impl.generic_id));
           impl.witness_block_id = context.inst_block_stack().Pop();
 
-          if (auto match_first = context.match_first_context()) {
+          if (auto& match_first = context.match_first_context()) {
             impl.match_first_id = match_first->decl_id;
             impl.decl_loc_in_match_first = SemIR::LocId(impl_decl_id);
             impl.match_first_position = match_first->block_size;

@@ -662,6 +662,8 @@ struct CandidateImpl {
 
   // Used for sorting the candidates to find the most-specialized match.
   TypeStructure type_structure;
+  SemIR::InstId match_first_block;
+  int match_first_position;
 };
 
 struct CandidateImpls {
@@ -709,8 +711,16 @@ static auto CollectCandidateImplsForQuery(
       continue;
     }
 
-    if (final_only && !TreatImplAsFinal(context, impl)) {
-      continue;
+    if (final_only) {
+      if (!TreatImplAsFinal(context, impl) &&
+          // TODO: For `match_first_is_final`, the impl can only be treated as
+          // final if there's no `impl` above it in the match_first block that
+          // overlaps with the query (such that a more specific query might
+          // choose it). See
+          // https://github.com/carbon-language/carbon-lang/blob/de8b03faa3178ae683d8e7124fbcba81eb88e00c/proposals/p005337-interface-extension-and-final-impl-update.md#using-associated-constants-from-impls-in-a-final-match_first
+          !impl.match_first_is_final) {
+        continue;
+      }
     }
 
     if (llvm::is_contained(context.forbidden_impls(), id)) {
@@ -746,17 +756,24 @@ static auto CollectCandidateImplsForQuery(
       continue;
     }
 
-    candidates.impls.push_back({id, &impl, std::move(*type_structure)});
+    candidates.impls.push_back({id, &impl, std::move(*type_structure),
+                                impl.match_first_id,
+                                impl.match_first_position});
   }
 
   auto compare = [](auto& lhs, auto& rhs) -> bool {
+    // If they are in the same block, then order wins. Final impls will always
+    // be in the same block if they overlap, as will impls that have the same
+    // type structure.
+    if (lhs.match_first_block.has_value() &&
+        lhs.match_first_block == rhs.match_first_block) {
+      return lhs.match_first_position < rhs.match_first_position;
+    }
+    // Otherwise, specificity wins.
     return lhs.type_structure < rhs.type_structure;
   };
   // Stable sort is used so that impls that are seen first are preferred when
   // they have an equal priority ordering.
-  // TODO: Allow Carbon code to provide a priority ordering explicitly. For
-  // now they have all the same priority, so the priority is the order in
-  // which they are found in code.
   llvm::stable_sort(candidates.impls, compare);
 
   return candidates;
