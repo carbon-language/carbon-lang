@@ -244,10 +244,16 @@ class ScopeStack {
     return Peek().cleanup_scope_kind != CleanupScopeKind::None;
   }
 
+  // Registers a cleanup for `inst_id` within the current cleanup scope.
+  auto PushCleanupFor(SemIR::InstId inst_id) -> void {
+    CARBON_CHECK(IsCleanupScope());
+    destroy_id_stack_.push_back(inst_id);
+  }
+
   // Returns all values on `destroy_id_stack_` added since `depth`.
   auto GetCleanupsSince(CleanupScopeDepth depth) const
       -> llvm::ArrayRef<SemIR::InstId> {
-    return destroy_id_stack_.PeekAllValues().slice(depth.index);
+    return llvm::ArrayRef(destroy_id_stack_).slice(depth.index);
   }
 
   // Discards cleanups after the given depth, which must be within the current
@@ -255,20 +261,17 @@ class ScopeStack {
   auto DiscardCleanupsSince(CleanupScopeDepth depth) -> void {
     auto enclosing = enclosing_cleanup_scope_depth();
     CARBON_CHECK(depth >= enclosing);
-    // TODO: Consider switching `destroy_id_stack_` from `ArrayStack` to
-    // `SmallVector` - `ArrayStack` gives us nothing here.
-    destroy_id_stack_.TruncateTopArray(depth.index - enclosing.index);
+    destroy_id_stack_.truncate(depth.index);
   }
 
   // Returns the current depth of the cleanup stack.
   auto cleanup_scope_depth() const -> CleanupScopeDepth {
-    return CleanupScopeDepth(destroy_id_stack_.all_values_size());
+    return CleanupScopeDepth(destroy_id_stack_.size());
   }
 
   // Returns the depth of the cleanup stack enclosing the current scope.
   auto enclosing_cleanup_scope_depth() const -> CleanupScopeDepth {
-    return CleanupScopeDepth(destroy_id_stack_.all_values_size() -
-                             destroy_id_stack_.PeekArray().size());
+    return Peek().cleanup_scope_depth;
   }
 
   // Returns the depth of the cleanup stack enclosing this function scope.
@@ -278,10 +281,6 @@ class ScopeStack {
 
   auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
     return break_continue_stack_;
-  }
-
-  auto destroy_id_stack() -> ArrayStack<SemIR::InstId>& {
-    return destroy_id_stack_;
   }
 
   auto compile_time_binding_stack() -> ArrayStack<SemIR::InstId>& {
@@ -329,6 +328,9 @@ class ScopeStack {
 
     // The kind of cleanup scope that is associated with this scope.
     CleanupScopeKind cleanup_scope_kind = CleanupScopeKind::None;
+
+    // The cleanup scope depth on entry to this scope.
+    CleanupScopeDepth cleanup_scope_depth;
 
     // Whether there are any ids in the `names` set.
     int num_names = 0;
@@ -415,7 +417,7 @@ class ScopeStack {
 
   // A stack of instances to destroy. This only has entries inside of function
   // bodies, where destruction on scope exit is required.
-  ArrayStack<SemIR::InstId> destroy_id_stack_;
+  llvm::SmallVector<SemIR::InstId> destroy_id_stack_;
 
   // Information about non-lexical scopes. This is a subset of the entries and
   // the information in scope_stack_.

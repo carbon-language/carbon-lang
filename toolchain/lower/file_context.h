@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 
-#include "clang/CodeGen/ModuleBuilder.h"
-#include "clang/Lex/PreprocessorOptions.h"
 #include "toolchain/lower/context.h"
 #include "toolchain/lower/specific_coalescer.h"
 #include "toolchain/lower/type.h"
@@ -14,6 +12,11 @@
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
+
+namespace clang {
+class CodeGenerator;
+class FunctionDecl;
+}  // namespace clang
 
 namespace Carbon::Lower {
 

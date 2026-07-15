@@ -17,7 +17,6 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
-#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
 
