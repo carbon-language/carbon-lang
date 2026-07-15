@@ -360,4 +360,3 @@ class C;
 // CHECK:STDERR:                 ^~~~~~~
 // CHECK:STDERR:
 fn F(generic _: Z where C == (type where .Self impls type)) {}
-
