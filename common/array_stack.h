@@ -86,24 +86,6 @@ class ArrayStack {
     llvm::append_range(values_, values);
   }
 
-  // Truncates the top array on the stack to the given size.
-  auto TruncateTopArray(size_t size) -> void {
-    CARBON_CHECK(!array_offsets_.empty());
-    values_.truncate(array_offsets_.back() + size);
-  }
-
-  // Merges the top array into the the array two before it, leaving the top
-  // array empty.
-  auto MergeTopArrayIntoGrandparent() -> void {
-    CARBON_CHECK(array_offsets_.size() >= 3);
-    auto new_mid =
-        std::rotate(values_.begin() + array_offsets_[array_offsets_.size() - 2],
-                    values_.begin() + array_offsets_[array_offsets_.size() - 1],
-                    values_.end());
-    array_offsets_[array_offsets_.size() - 2] = new_mid - values_.begin();
-    array_offsets_[array_offsets_.size() - 1] = values_.size();
-  }
-
   // Returns the current number of values in all arrays.
   auto all_values_size() const -> size_t { return values_.size(); }
 
