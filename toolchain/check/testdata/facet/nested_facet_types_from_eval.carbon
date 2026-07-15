@@ -21,12 +21,9 @@ alias A = I where .Self == C;
 // The use of `A` introduces a `where` expression inside the `where` written
 // here, which is an error.
 //
-// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_lhs.carbon:[[@LINE+7]]:28: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_lhs.carbon:[[@LINE+4]]:28: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn F(generic _: type where C(A) impls type) {}
-// CHECK:STDERR:                            ^~~~
-// CHECK:STDERR: fail_where_nested_inside_where_through_alias_impls_lhs.carbon:[[@LINE+4]]:17: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
-// CHECK:STDERR: fn F(generic _: type where C(A) impls type) {}
-// CHECK:STDERR:                 ^~~~~~~~~~
+// CHECK:STDERR:                            ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(generic _: type where C(A) impls type) {}
 

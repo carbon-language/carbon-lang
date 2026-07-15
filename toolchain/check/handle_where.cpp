@@ -209,12 +209,15 @@ static auto FindDesignator(Context& context, SemIR::InstId inst_id) -> bool {
         return FullySubstituted;
       }
 
-      // The arguments to a function call do not constrain the self type. We
-      // could look at the evaluated result, but if `.Self` was in an argument,
-      // the function call is symbolic so is not evalauted in the facet type.
-      if (auto call = context().insts().TryGetAs<SemIR::Call>(inst_id)) {
+      // Arguments to a call do not count, since a call with `.Self` in it will
+      // not be evaluated inside the facet type.
+      if (context().insts().Is<SemIR::Call>(inst_id)) {
         return FullySubstituted;
       }
+
+      // TODO: When we support parameterized aliases, if an argument has
+      // `.Self`, we will need to evaluate the alias here and look for `.Self`
+      // in the constant value.
 
       // `.MemberName` is represented as an ImplWitnessAccess through `.Self` so
       // we only need to look for `.Self` here.
@@ -340,35 +343,56 @@ static auto IsPeriodSelfAccess(Context& context, SemIR::InstId inst_id)
   }
 }
 
+static auto FindDesignatorInSpecific(Context& context,
+                                     SemIR::SpecificId specific_id) -> bool {
+  for (auto inst_id : context.inst_blocks().Get(
+           context.specifics().GetArgsOrEmpty(specific_id))) {
+    if (FindDesignator(context, inst_id)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static auto FindDesignatorInEveryExtendConstraint(Context& context,
+                                                  SemIR::FacetType facet_type)
+    -> bool {
+  const auto& info = context.facet_types().Get(facet_type.facet_type_id);
+
+  for (const auto& extend : info.extend_constraints) {
+    if (!FindDesignatorInSpecific(context, extend.specific_id)) {
+      return false;
+    }
+  }
+  for (const auto& extend : info.extend_named_constraints) {
+    if (!FindDesignatorInSpecific(context, extend.specific_id)) {
+      return false;
+    }
+  }
+  return !info.extend_constraints.empty() ||
+         !info.extend_named_constraints.empty();
+}
+
 auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
     -> bool {
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
 
   if (!FindDesignator(context, lhs_id)) {
-    // The RHS of an `impls` may be another `where`. We require a designator to
-    // be present in each constraint created from the LHS of that `where`, which
-    // equates to requiring a designator in each extend constraint of the facet
-    // type.
-    auto extend_constraints = SemIR::InstId::None;
-    if (auto where = context.insts().TryGetAs<SemIR::WhereExpr>(rhs_id)) {
-      for (auto req_id : context.inst_blocks().Get(where->requirements_id)) {
-        if (context.insts().Is<SemIR::RequirementBaseFacetType>(req_id)) {
-          CARBON_CHECK(!extend_constraints.has_value(),
-                       "multiple bases in where?");
-          extend_constraints = req_id;
-          break;
-        }
-      }
-    } else {
-      extend_constraints = rhs_id;
+    bool found_designator = false;
+    auto const_rhs_id = context.constant_values().Get(rhs_id);
+    if (auto facet_type =
+            context.constant_values().TryGetInstAs<SemIR::FacetType>(
+                const_rhs_id)) {
+      found_designator =
+          FindDesignatorInEveryExtendConstraint(context, *facet_type);
     }
-
-    if (!FindDesignator(context, extend_constraints)) {
-      if (context.constant_values().Get(lhs_id) !=
-              SemIR::ErrorInst::ConstantId &&
-          context.constant_values().Get(rhs_id) !=
-              SemIR::ErrorInst::ConstantId) {
+    if (!found_designator) {
+      auto const_lhs_id = context.constant_values().Get(lhs_id);
+      if (const_lhs_id != SemIR::ErrorInst::ConstantId &&
+          const_rhs_id != SemIR::ErrorInst::ConstantId) {
+        // TODO: Can we diagnose the specific constraint that was missing the
+        // `.Self`?
         DiagnoseMissingDesignator(context, node_id);
       }
       lhs_id = rhs_id = SemIR::ErrorInst::InstId;
