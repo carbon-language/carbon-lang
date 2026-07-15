@@ -257,7 +257,8 @@ interface A {}
 interface B {}
 
 fn F[T:! A, U:! B]() {
-  // TODO: T and U are not equal by a single same-type where equality constraint.
+  // TODO: This should be diagnosed, since T and U are not equal by a
+  // single same-type where equality constraint.
   observe T == U;
 }
 

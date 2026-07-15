@@ -60,9 +60,10 @@ auto CheckObserveEquivalence(Context& context,
   auto rhs_found = false;
   for (auto operand_id : observe_operand_ids) {
     auto operand_type_id = context.insts().GetAttachedType(operand_id);
-    lhs_found = lhs_found || lhs_type_id == operand_type_id;
+    lhs_found |= lhs_type_id == operand_type_id;
     rhs_found = rhs_found || rhs_type_id == operand_type_id;
+    if (lhs_found && rhs_found) { return true; }
   }
-  return lhs_found && rhs_found;
+  return false;
 }
 }  // namespace Carbon::Check
