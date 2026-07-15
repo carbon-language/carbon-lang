@@ -32,7 +32,8 @@ struct CompileOptions;
 // TODO: Build all parts of the Core, not just the prelude.
 class CarbonRuntimesBuilderBase {
  protected:
-  CarbonRuntimesBuilderBase(DriverEnv* driver_env, const CodegenOptions* codegen_options);
+  CarbonRuntimesBuilderBase(DriverEnv* driver_env,
+                            const CodegenOptions* codegen_options);
 
   // We use protected members as this base is just factoring out common
   // implementation details of other runners.

@@ -50,6 +50,8 @@ auto BuildSubcommand::BuildOptions(CommandLine::CommandBuilder& b) -> void {
 }
 
 auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
+  options_.compile_options.FixupFlags();
+
   if (driver_env.fuzzing && !options_.compile_options.clang_args.empty()) {
     // Parsing specific Clang arguments can reach deep into
     // external libraries that aren't fuzz clean.

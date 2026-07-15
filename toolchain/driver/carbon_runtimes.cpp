@@ -23,9 +23,9 @@ CarbonRuntimesBuilderBase::CarbonRuntimesBuilderBase(
   compile_options_.include_carbon_core = false;
 }
 
-CarbonPreludeBuilder::CarbonPreludeBuilder(DriverEnv* driver_env,
-                                           Runtimes* runtimes,
-                                           const CodegenOptions* codegen_options)
+CarbonPreludeBuilder::CarbonPreludeBuilder(
+    DriverEnv* driver_env, Runtimes* runtimes,
+    const CodegenOptions* codegen_options)
     : CarbonRuntimesBuilderBase(driver_env, codegen_options) {
   auto build_dir_or_error = runtimes->Build(Runtimes::CarbonCore);
   if (!build_dir_or_error.ok()) {

@@ -26,6 +26,8 @@ can be written to standard output as these phases progress.
 CompileSubcommand::CompileSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
 auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
+  options_.compile_options.FixupFlags();
+
   if (driver_env.fuzzing && !options_.compile_options.clang_args.empty()) {
     // Parsing specific Clang arguments can reach deep into
     // external libraries that aren't fuzz clean.

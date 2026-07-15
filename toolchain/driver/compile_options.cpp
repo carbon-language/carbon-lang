@@ -411,6 +411,12 @@ auto CompileOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b,
   BuildSharedOptions(b, this, cg_options);
 }
 
+auto CompileOptions::FixupFlags() -> void {
+  if (!prelude_import) {
+    include_carbon_core = false;
+  }
+}
+
 auto CompileOptions::ValidatePhase(Diagnostics::NoLocEmitter& emitter) const
     -> bool {
   CARBON_DIAGNOSTIC(

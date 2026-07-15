@@ -233,9 +233,8 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   codegen_options_.target = codegen_options_.host;
   options_.phase = CompileOptions::Phase::Check;
   options_.prelude_import = context.prelude_import();
-  // For now we always include the rest of the core if the prelude is included.
-  options_.include_carbon_core = options_.prelude_import;
   options_.input_filenames.push_back(filename());
+  options_.FixupFlags();
 
   compile_driver_ = std::make_unique<CompileDriver>(&options_);
   auto map_input = [](llvm::StringRef) -> std::string { return ""; };

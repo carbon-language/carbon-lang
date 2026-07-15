@@ -18,8 +18,10 @@ namespace Carbon {
 //
 // See the implementation of `link` for documentation on members.
 struct LinkOptions {
-  auto BuildForLinkSubcommand(CommandLine::CommandBuilder& b, CodegenOptions* cg_options) -> void;
-  auto BuildForBuildSubcommand(CommandLine::CommandBuilder& b, CodegenOptions* cg_options) -> void;
+  auto BuildForLinkSubcommand(CommandLine::CommandBuilder& b,
+                              CodegenOptions* cg_options) -> void;
+  auto BuildForBuildSubcommand(CommandLine::CommandBuilder& b,
+                               CodegenOptions* cg_options) -> void;
 
   const CodegenOptions* codegen_options = nullptr;
   llvm::StringRef output_filename;
