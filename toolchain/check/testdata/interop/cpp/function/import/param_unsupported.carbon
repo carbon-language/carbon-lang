@@ -82,6 +82,8 @@ fn F(x: i512) {
 }
 
 // --- fail_very_large_int.carbon
+// CHECK:STDERR: fail_very_large_int.carbon: error: semantics TODO: `interop with specific class` [SemanticsTodo]
+// CHECK:STDERR:
 
 library "[[@TEST_NAME]]";
 

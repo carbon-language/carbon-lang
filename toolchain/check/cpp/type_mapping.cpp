@@ -222,11 +222,6 @@ static auto TryMapClassType(Context& context, SemIR::TypeInstId class_inst_id,
     }
   }
 
-  // TODO: We cannot yet map specific classes.
-  if (class_type.specific_id.has_value()) {
-    return clang::QualType();
-  }
-
   // Otherwise, find the existing C++ declaration or create a new one.
   auto* tag_decl =
       ExportClassToCpp(context, SemIR::LocId(class_inst_id), class_type);
