@@ -226,22 +226,7 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
   const auto& args = context.inst_blocks().Get(args_id);
 
   auto* function_decl = cast<clang::FunctionDecl>(clang_decl.decl());
-
-  // Create expr for the function declaration.
-  auto* decl_ref_expr = clang::DeclRefExpr::Create(
-      context.ast_context(), /*QualifierLoc=*/clang::NestedNameSpecifierLoc(),
-      /*TemplateKWLoc=*/clang::SourceLocation(), function_decl,
-      /*RefersToEnclosingVariableOrCapture=*/false,
-      /*NameLoc=*/GetCppLocation(context, loc_id), function_decl->getType(),
-      clang::VK_LValue);
-
-  // Cast to a function pointer type.
-  auto function_ptr_type =
-      context.ast_context().getPointerType(function_decl->getType());
-  auto* implicit_cast_expr = clang::ImplicitCastExpr::Create(
-      context.ast_context(), function_ptr_type,
-      clang::CK_FunctionToPointerDecay, decl_ref_expr, nullptr,
-      clang::VK_PRValue, clang::FPOptionsOverride());
+  auto loc = GetCppLocation(context, loc_id);
 
   // Convert the arguments to exprs.
   clang::SmallVector<clang::Expr*> arg_exprs;
@@ -256,11 +241,36 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
   }
 
   // Create an expr to call the function.
-  auto* call_expr = clang::CallExpr::Create(
-      context.ast_context(), implicit_cast_expr, arg_exprs,
-      function_decl->getCallResultType(), clang::VK_PRValue,
-      /*RParenLoc=*/GetCppLocation(context, loc_id),
-      clang::FPOptionsOverride());
+  clang::Expr* call_expr;
+  if (auto* ctor = dyn_cast<clang::CXXConstructorDecl>(function_decl)) {
+    // Constructor: generate a direct constructor call expression.
+    call_expr = clang::CXXConstructExpr::Create(
+        context.ast_context(), function_decl->getCallResultType(), loc, ctor,
+        /*Elidable=*/false, arg_exprs, /*HadMultipleCandidates=*/false,
+        /*ListInitialization=*/false, /*StdInitListInitialization=*/false,
+        /*ZeroInitialization=*/false, clang::CXXConstructionKind::Complete,
+        clang::SourceRange(loc));
+  } else {
+    // Create expr for the function declaration.
+    auto* decl_ref_expr = clang::DeclRefExpr::Create(
+        context.ast_context(), /*QualifierLoc=*/clang::NestedNameSpecifierLoc(),
+        /*TemplateKWLoc=*/clang::SourceLocation(), function_decl,
+        /*RefersToEnclosingVariableOrCapture=*/false,
+        /*NameLoc=*/loc, function_decl->getType(), clang::VK_LValue);
+
+    // Cast to a function pointer type.
+    // TODO: For a non-static member function, we should create a member access.
+    auto function_ptr_type =
+        context.ast_context().getPointerType(function_decl->getType());
+    auto* implicit_cast_expr = clang::ImplicitCastExpr::Create(
+        context.ast_context(), function_ptr_type,
+        clang::CK_FunctionToPointerDecay, decl_ref_expr, nullptr,
+        clang::VK_PRValue, clang::FPOptionsOverride());
+    call_expr = clang::CallExpr::Create(
+        context.ast_context(), implicit_cast_expr, arg_exprs,
+        function_decl->getCallResultType(), clang::VK_PRValue,
+        /*RParenLoc=*/loc, clang::FPOptionsOverride());
+  }
 
   // Evaluate the expr as a constant and map that to Carbon constant.
   clang::SmallVector<clang::PartialDiagnosticAt> notes;
