@@ -11,6 +11,7 @@ load(
     "flag_group",
     "flag_set",
     "tool",
+    "tool_path",
 )
 load(
     "@rules_cc//cc:defs.bzl",
@@ -162,6 +163,7 @@ def _carbon_cc_toolchain_config_impl(ctx):
         ctx.attr.target_cpu,
         ctx.attr.target_os,
     )
+
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
         features = clang_cc_toolchain_features(
@@ -197,7 +199,7 @@ def _carbon_cc_toolchain_config_impl(ctx):
 
         # Pass in our tool paths to expose Make variables like $(NM) and
         # $(OBJCOPY).
-        tool_paths = llvm_tool_paths(llvm_bindir, clang_bindir),
+        tool_paths = llvm_tool_paths(llvm_bindir, clang_bindir) + [tool_path(name = "carbon-busybox", path = "carbon-busybox")],
     )
 
 carbon_cc_toolchain_config = rule(

@@ -102,7 +102,9 @@ class PreludeCompileBenchmark {
     if (mem_usage) {
       driver.set_mem_usage(mem_usage);
     }
-    return driver.RunCommand({"compile", "--phase=check", InputFileName})
+    return driver
+        .RunCommand({"compile", "--phase=check", "--no-include-carbon-core",
+                     InputFileName})
         .success;
   }
 

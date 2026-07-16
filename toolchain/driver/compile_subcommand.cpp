@@ -26,19 +26,21 @@ can be written to standard output as these phases progress.
 CompileSubcommand::CompileSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
 auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
-  if (driver_env.fuzzing && !options_.clang_args.empty()) {
+  options_.compile_options.FixupFlags();
+
+  if (driver_env.fuzzing && !options_.compile_options.clang_args.empty()) {
     // Parsing specific Clang arguments can reach deep into
     // external libraries that aren't fuzz clean.
     TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "compile");
     return {.success = false};
   }
 
-  auto compile_driver = CompileDriver(&options_);
+  auto compile_driver = CompileDriver(&options_.compile_options);
 
-  if (!compile_driver.Initialize(driver_env,
-                                 [&](llvm::StringRef) -> std::string {
-                                   return options_.output_filename.str();
-                                 })) {
+  if (!compile_driver.Initialize(
+          driver_env, [&](llvm::StringRef) -> std::string {
+            return options_.compile_options.output_filename.str();
+          })) {
     return {.success = false};
   }
 
