@@ -330,3 +330,12 @@ class C;
 // CHECK:STDERR:          ^~~~~~~
 // CHECK:STDERR:
 fn F(_:! Z where C == (type where .Self impls type)) {}
+
+
+// --- todo_fail_where_nested_inside_binding.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) {}
+class C;
+
+fn F(_:! Z(type where .Self == C)) {}
