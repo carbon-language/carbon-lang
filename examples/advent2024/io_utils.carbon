@@ -5,7 +5,6 @@
 library "io_utils";
 
 import Core library "io";
-import Core library "range";
 
 class EOFType {}
 

@@ -6,8 +6,6 @@
 
 library "day1_common";
 
-import Core library "range";
-
 import library "io_utils";
 
 // Read a sequence of lines each containing a pair of numbers into two arrays.
