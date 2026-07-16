@@ -56,10 +56,10 @@ other non-local facet types.
 
 These `.Self` references must then be replaced to form a more specific type
 constant once the target facet they refer to is known. For an ambiguous `.Self`,
-we don't know when we're supposed to replace the `.Self` so we can replace it
-incorrectly. Doing so leads to incoherence as the internal representation no
-longer matches the meaning of the code as written. Or it leads to crashes in the
-toolchain implementation as inconsistency develops.
+we don't know when we're supposed to replace the `.Self`, which can cause us to
+replace it incorrectly. Doing so leads to incoherence as the internal
+representation no longer matches the meaning of the code as written. Or it leads
+to crashes in the toolchain implementation as inconsistency develops.
 
 In the following example, `.Self` in the argument to `Z` refers to `T` and must
 be replaced by `T` eventually. But there is a second `.Self` nested in the
