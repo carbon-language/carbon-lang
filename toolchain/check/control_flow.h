@@ -92,9 +92,13 @@ auto AddInstWithCleanupInNoBlock(Context& context, LocT loc, InstT inst)
   return inst_id;
 }
 
-// Adds any cleanups for variables and temporaries within the current statement
-// scope and discards them from cleanup tracking.
-auto AddAndDiscardCleanups(Context& context) -> void;
+// Adds any cleanups for temporaries within the current statement and discards
+// them from cleanup tracking.
+auto AddAndDiscardTemporaryCleanups(Context& context) -> void;
+
+// Adds any cleanups for variables and temporaries within the current scope and
+// discards them from cleanup tracking.
+auto AddAndDiscardScopeCleanups(Context& context) -> void;
 
 // Adds a branch to the given target block, which should be in the current scope
 // or an enclosing scope, along with cleanups for all variables and temporaries

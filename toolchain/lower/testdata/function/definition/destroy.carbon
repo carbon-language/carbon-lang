@@ -23,8 +23,6 @@ fn G();
 
 fn CallF() {
   F({});
-  // TODO: The `C` instance is destroyed after the call to `G()`, and
-  // should be destroyed before.
   G();
 }
 
@@ -41,8 +39,6 @@ fn G();
 
 fn CallF() {
   F({});
-  // TODO: The `C` instance is destroyed after the call to `G()`, and
-  // should be destroyed before.
   G();
 }
 
@@ -93,8 +89,8 @@ fn InitLet() {
 // CHECK:STDOUT:   %.loc12_6.2.temp = alloca {}, align 1, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_6.2.temp), !dbg !14
 // CHECK:STDOUT:   call void @_CF.Main(ptr @C.val.loc12_6.6), !dbg !15
-// CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr @C.val), !dbg !14
+// CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,7 +125,7 @@ fn InitLet() {
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 12, column: 5, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 12, column: 3, scope: !11)
-// CHECK:STDOUT: !16 = !DILocation(line: 15, column: 3, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 13, column: 3, scope: !11)
 // CHECK:STDOUT: !17 = !DILocation(line: 11, column: 1, scope: !11)
 // CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp.807eb4f2d3ed7e54:core.Destroy.Core", scope: null, file: !1, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !19)
 // CHECK:STDOUT: !19 = !{!20}
@@ -157,8 +153,8 @@ fn InitLet() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var, ptr align 1 @C.val.loc6, i64 0, i1 false), !dbg !14
 // CHECK:STDOUT:   call void @_CF.Main(ptr %_.var), !dbg !15
-// CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %_.var), !dbg !14
+// CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -196,7 +192,7 @@ fn InitLet() {
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 6, column: 6, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 12, column: 3, scope: !11)
-// CHECK:STDOUT: !16 = !DILocation(line: 15, column: 3, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 13, column: 3, scope: !11)
 // CHECK:STDOUT: !17 = !DILocation(line: 11, column: 1, scope: !11)
 // CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp.807eb4f2d3ed7e54:core.Destroy.Core", scope: null, file: !1, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !19)
 // CHECK:STDOUT: !19 = !{!20}

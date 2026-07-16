@@ -161,7 +161,13 @@ static auto AddCleanups(Context& context, ScopeStack::CleanupScopeDepth depth)
   }
 }
 
-auto AddAndDiscardCleanups(Context& context) -> void {
+auto AddAndDiscardTemporaryCleanups(Context& context) -> void {
+  auto depth = context.scope_stack().ambient_cleanup_scope_depth();
+  AddCleanups(context, depth);
+  context.scope_stack().DiscardCleanupsSince(depth);
+}
+
+auto AddAndDiscardScopeCleanups(Context& context) -> void {
   auto depth = context.scope_stack().enclosing_cleanup_scope_depth();
   AddCleanups(context, depth);
   context.scope_stack().DiscardCleanupsSince(depth);

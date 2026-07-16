@@ -256,12 +256,27 @@ class ScopeStack {
     return llvm::ArrayRef(destroy_id_stack_).slice(depth.index);
   }
 
+  // Add all cleanups created so far in this scope to the ambient state of the
+  // scope. This causes them to be deferred until the scope is exited.
+  auto DeferCleanups() -> void {
+    CARBON_CHECK(IsCleanupScope() ||
+                 static_cast<size_t>(Peek().cleanup_scope_depth.index) ==
+                     destroy_id_stack_.size());
+    scope_stack_.back().cleanup_scope_depth =
+        CleanupScopeDepth(destroy_id_stack_.size());
+  }
+
   // Discards cleanups after the given depth, which must be within the current
   // scope.
   auto DiscardCleanupsSince(CleanupScopeDepth depth) -> void {
     auto enclosing = enclosing_cleanup_scope_depth();
     CARBON_CHECK(depth >= enclosing);
     destroy_id_stack_.truncate(depth.index);
+    if (scope_stack_.back().cleanup_scope_depth.index > depth.index) {
+      // We have discarded ambient cleanups. Reduce the ambient cleanup depth to
+      // match. This happens when exiting the scope.
+      scope_stack_.back().cleanup_scope_depth = depth;
+    }
   }
 
   // Returns the current depth of the cleanup stack.
@@ -269,9 +284,15 @@ class ScopeStack {
     return CleanupScopeDepth(destroy_id_stack_.size());
   }
 
+  // Returns the ambient depth of the cleanup stack in the current scope.
+  auto ambient_cleanup_scope_depth() const -> CleanupScopeDepth {
+    return Peek().cleanup_scope_depth;
+  }
+
   // Returns the depth of the cleanup stack enclosing the current scope.
   auto enclosing_cleanup_scope_depth() const -> CleanupScopeDepth {
-    return Peek().cleanup_scope_depth;
+    return scope_stack_.size() < 2 ? CleanupScopeDepth(0)
+                                   : Peek(1).cleanup_scope_depth;
   }
 
   // Returns the depth of the cleanup stack enclosing this function scope.
@@ -329,7 +350,8 @@ class ScopeStack {
     // The kind of cleanup scope that is associated with this scope.
     CleanupScopeKind cleanup_scope_kind = CleanupScopeKind::None;
 
-    // The cleanup scope depth on entry to this scope.
+    // The ambient cleanup scope depth in this scope. This is the depth that we
+    // will return to at the end of a statement in this scope.
     CleanupScopeDepth cleanup_scope_depth;
 
     // Whether there are any ids in the `names` set.
