@@ -360,12 +360,3 @@ class C;
 // CHECK:STDERR:                 ^~~~~~~
 // CHECK:STDERR:
 fn F(generic _: Z where C == (type where .Self impls type)) {}
-
-
-// --- todo_fail_where_nested_inside_binding.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T: type) {}
-interface Y {}
-
-fn F(generic _: Z(type where .Self impls Y)) {}

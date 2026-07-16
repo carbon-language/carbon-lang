@@ -109,6 +109,11 @@ the use of `where` nested in the right-hand-side of another `where` expression,
 after evaluation. This rejects non-extend constraints in a facet type from
 appearing inside the non-extend constraints of another facet type.
 
+In addition, we generally disallow a `where` expression appearing in a generic
+argument. Given the above, this only needs to be enforced on the left-hand-side
+of a `where` expression, and `.Self` is only introduced before `where` in the
+type of a generic binding.
+
 ```carbon
 // Allowed, no nested `where`.
 fn F(generic T: Z(.Self));
@@ -142,6 +147,15 @@ musteval fn GetYWithRewrite() -> type {
   return Y where .Y1 = {};
 }
 fn F(generic T: Z where .Self impls GetYWithRewrite());
+
+// Accepted, `where` on the left-hand-side of another where.
+fn F(generic T: (Z where .Self impls Y) where .Self impls X);
+
+// Rejected, `where` appears in a generic argument.
+fn F(generic T: Z(Y where .Self impls X));
+
+// Rejected, `where` appears in a generic argument.
+fn F(generic T: Z(Y where .Self impls X) where .Self impls X);
 ```
 
 Prior to this proposal, ambiguous `.Self` was already disallowed, but we
@@ -188,6 +202,18 @@ constraint N {
   require impls GetYWithRewrite();
 }
 fn F(generic T: Z where .Self impls N);
+
+// Now accepted, the `where` in `N` is no longer in a generic argument.
+constraint N {
+    require impls Y where .Self impls X;
+}
+fn F(generic T: Z(N));
+
+// Now accepted, the `where` in `N` is no longer in a generic argument.
+constraint N {
+    require impls Y where .Self impls X;
+}
+fn F(generic T: Z(N) where .Self impls X);
 ```
 
 This leads to a recommended best practice: Only use `where` expressions in
@@ -202,11 +228,11 @@ The name `.Self` is introduced by either of:
 -   A compile-time binding, for its type: `T: Z(.Self)`.
 -   The `where` keyword, in a facet type: `type where .Self impls Z(.Self)`.
 
-Generally, if it is shadowing, the `.Self` introduced by the first `where`
-keyword in a facet type always refers to the same value as the the compile-time
-binding - to the binding itself. So it does not introduce an ambiguous `.Self`.
-Though it is possible for evaluation to nest that `where` into the
-right-hand-side of another `where` by composing facet types.
+A `where` in a compile-time binding type is typically used to constrain the
+binding itself. This introduces a shadowing `.Self` of a different type, but
+referring to the same value - to the compile-time binding. However, when written
+in a generic argument, a `where` expression introduces a new value for `.Self`
+that is unrelated to the compile-time binding.
 
 A `where` on the right-hand-side of another `where` expression can introduce a
 new value for its `.Self` in multiple ways when writing a facet type in a
