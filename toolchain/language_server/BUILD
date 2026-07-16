@@ -41,6 +41,7 @@ cc_library(
         "//toolchain/check",
         "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:file_diagnostics",
+        "//toolchain/driver:codegen_options",
         "//toolchain/driver:compile_driver",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",

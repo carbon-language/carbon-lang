@@ -43,3 +43,5 @@ libunwind_hdrs = [LIBUNWIND_HDRS]
 libunwind_srcs = [LIBUNWIND_SRCS]
 
 libunwind_copts = [LIBUNWIND_COPTS]
+
+carbon_core_srcs = [PRELUDE_FILES]

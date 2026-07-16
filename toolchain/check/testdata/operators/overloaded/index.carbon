@@ -84,10 +84,32 @@ fn F() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.UnsafeAs = import_ref Core//prelude/parts/as, UnsafeAs, unloaded
+// CHECK:STDOUT:   %Core.As = import_ref Core//prelude/parts/as, As, unloaded
+// CHECK:STDOUT:   %Core.ImplicitAs = import_ref Core//prelude/parts/as, ImplicitAs, unloaded
+// CHECK:STDOUT:   %Core.BitAndWith = import_ref Core//prelude/parts/as, BitAndWith, unloaded
+// CHECK:STDOUT:   %Core.Copy = import_ref Core//prelude/parts/copy, Copy, unloaded
+// CHECK:STDOUT:   %Core.DefaultOrUnformed = import_ref Core//prelude/parts/default, DefaultOrUnformed, unloaded
+// CHECK:STDOUT:   %Core.Default = import_ref Core//prelude/parts/default, Default, unloaded
+// CHECK:STDOUT:   %Core.Destroy = import_ref Core//prelude/parts/destroy, Destroy, unloaded
+// CHECK:STDOUT:   %Core.Form = import_ref Core//prelude/parts/form, Form, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .UnsafeAs = imports.%Core.UnsafeAs
+// CHECK:STDOUT:     .As = imports.%Core.As
+// CHECK:STDOUT:     .ImplicitAs = imports.%Core.ImplicitAs
+// CHECK:STDOUT:     .BitAndWith = imports.%Core.BitAndWith
+// CHECK:STDOUT:     .Copy = imports.%Core.Copy
+// CHECK:STDOUT:     .DefaultOrUnformed = imports.%Core.DefaultOrUnformed
+// CHECK:STDOUT:     .Default = imports.%Core.Default
+// CHECK:STDOUT:     .Destroy = imports.%Core.Destroy
+// CHECK:STDOUT:     .Form = imports.%Core.Form
 // CHECK:STDOUT:     .IndexWith = %IndexWith.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %IndexWith.decl: type = class_decl @IndexWith [concrete = constants.%IndexWith] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -210,10 +232,32 @@ fn F() {
 // CHECK:STDOUT:   %assoc0: %IndexWith.assoc_type = assoc_entity element0, @IndexWith.WithSelf.%IndexWith.WithSelf.At.decl [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.UnsafeAs = import_ref Core//prelude/parts/as, UnsafeAs, unloaded
+// CHECK:STDOUT:   %Core.As = import_ref Core//prelude/parts/as, As, unloaded
+// CHECK:STDOUT:   %Core.ImplicitAs = import_ref Core//prelude/parts/as, ImplicitAs, unloaded
+// CHECK:STDOUT:   %Core.BitAndWith = import_ref Core//prelude/parts/as, BitAndWith, unloaded
+// CHECK:STDOUT:   %Core.Copy = import_ref Core//prelude/parts/copy, Copy, unloaded
+// CHECK:STDOUT:   %Core.DefaultOrUnformed = import_ref Core//prelude/parts/default, DefaultOrUnformed, unloaded
+// CHECK:STDOUT:   %Core.Default = import_ref Core//prelude/parts/default, Default, unloaded
+// CHECK:STDOUT:   %Core.Destroy = import_ref Core//prelude/parts/destroy, Destroy, unloaded
+// CHECK:STDOUT:   %Core.Form = import_ref Core//prelude/parts/form, Form, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .UnsafeAs = imports.%Core.UnsafeAs
+// CHECK:STDOUT:     .As = imports.%Core.As
+// CHECK:STDOUT:     .ImplicitAs = imports.%Core.ImplicitAs
+// CHECK:STDOUT:     .BitAndWith = imports.%Core.BitAndWith
+// CHECK:STDOUT:     .Copy = imports.%Core.Copy
+// CHECK:STDOUT:     .DefaultOrUnformed = imports.%Core.DefaultOrUnformed
+// CHECK:STDOUT:     .Default = imports.%Core.Default
+// CHECK:STDOUT:     .Destroy = imports.%Core.Destroy
+// CHECK:STDOUT:     .Form = imports.%Core.Form
 // CHECK:STDOUT:     .IndexWith = %IndexWith.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %IndexWith.decl: %IndexWith.type.df6 = interface_decl @IndexWith [concrete = constants.%IndexWith.generic] {
 // CHECK:STDOUT:     %SubscriptType.patt.loc4_34.1: %pattern_type.98f = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt.loc4_34.2 (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:     %ElementType.patt.loc4_53.1: %pattern_type.98f = symbolic_binding_pattern ElementType, 1 [symbolic = %ElementType.patt.loc4_53.2 (constants.%ElementType.patt)]

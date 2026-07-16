@@ -5,17 +5,16 @@
 // TODO: This library is not part of the design. Either write a matching
 // proposal or remove this.
 
-package Core library "io";
+impl package Core library "io";
 
-// TODO: Support printing other types.
-// TODO: Consider rewriting using native support once library support exists.
-fn Print(x: i32) = "print.int";
-fn PrintChar(x: char) -> i32 = "print.char";
-
-fn PrintStr(msg: str);
-
-// TODO: Return an `Optional(char)` instead of `i32`.
-fn ReadChar() -> i32 = "read.char";
+fn PrintStr(msg: str) {
+  let size: i64 = msg.Size() as i64;
+  var i: i64 = 0;
+  while (i < size) {
+    PrintChar(msg[i]);
+    ++i;
+  }
+}
 
 // TODO: Change this to a global constant once they are fully supported.
-fn EOF() -> i32;
+fn EOF() -> i32 { return -1; }

@@ -12,19 +12,29 @@
 
 namespace Carbon {
 
+// Options for the compile subcommand.
+struct CompileSubcommandOptions {
+  auto Build(CommandLine::CommandBuilder& b) -> void {
+    compile_options.BuildForCompileSubcommand(b, &codegen_options);
+  }
+
+  CodegenOptions codegen_options;
+  CompileOptions compile_options;
+};
+
 // Implements the compile subcommand of the driver.
 class CompileSubcommand : public DriverSubcommand {
  public:
   explicit CompileSubcommand();
 
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
-    options_.BuildForCompileSubcommand(b);
+    options_.Build(b);
   }
 
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 
  private:
-  CompileOptions options_;
+  CompileSubcommandOptions options_;
 };
 
 }  // namespace Carbon

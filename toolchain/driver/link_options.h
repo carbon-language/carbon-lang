@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_DRIVER_LINK_OPTIONS_H_
 #define CARBON_TOOLCHAIN_DRIVER_LINK_OPTIONS_H_
 
-#include <memory>
-
 #include "common/command_line.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -20,11 +18,14 @@ namespace Carbon {
 //
 // See the implementation of `link` for documentation on members.
 struct LinkOptions {
-  auto BuildForLinkSubcommand(CommandLine::CommandBuilder& b) -> void;
-  auto BuildForBuildSubcommand(CommandLine::CommandBuilder& b) -> void;
+  auto BuildForLinkSubcommand(CommandLine::CommandBuilder& b,
+                              CodegenOptions* cg_options) -> void;
+  auto BuildForBuildSubcommand(CommandLine::CommandBuilder& b,
+                               CodegenOptions* cg_options) -> void;
 
-  std::shared_ptr<CodegenOptions> codegen_options;
+  const CodegenOptions* codegen_options = nullptr;
   llvm::StringRef output_filename;
+  bool link_prelude_files = true;
   llvm::SmallVector<llvm::StringRef> object_filenames;
 
   llvm::SmallVector<llvm::StringRef> extra_clang_args;

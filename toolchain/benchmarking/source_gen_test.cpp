@@ -242,7 +242,10 @@ auto TestCompile(llvm::StringRef source) -> bool {
 
   fs->addFile("test.carbon", /*ModificationTime=*/0,
               llvm::MemoryBuffer::getMemBuffer(source));
-  return driver.RunCommand({"compile", "--phase=check", "test.carbon"}).success;
+  return driver
+      .RunCommand({"compile", "--phase=check", "--no-include-carbon-core",
+                   "test.carbon"})
+      .success;
 }
 
 TEST(SourceGenTest, GenApiFileDenseDeclsTest) {
