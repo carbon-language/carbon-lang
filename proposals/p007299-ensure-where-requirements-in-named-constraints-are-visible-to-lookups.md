@@ -1,4 +1,4 @@
-# Ensure where requirements in named constraints are visible to lookups
+# Ensure `where` requirements in named constraints are visible to lookups
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM

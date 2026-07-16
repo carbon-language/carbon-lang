@@ -1114,9 +1114,15 @@ class ImplementsS {
 ### Rewrites and same-type constraints in a named constraint
 
 A `require` statement may include rewrite or same-type constraints. In the case
-of `extend require`, the rewrites are preserved as such. But otherwise, any
-rewrite constraint the identified facet type of the `require` is treated as a
-same-type constraint instead.
+of `extend require`, the rewrites are
+[preserved as such](/docs/design/generics/appendix-rewrite-constraints.md#combining-constraints-with-extend).
+But otherwise, any rewrite constraint the identified facet type of the `require` is
+[treated as a same-type constraint](/docs/design/generics/appendix-rewrite-constraints.md#combining-constraints-with-require-and-impls)
+instead.
+
+> **TODO:** Link to section explaining when identifying a facet type happens when
+> [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md)
+> is applied to these docs.
 
 When identifying a facet type, a rewrite or same-type constraint must depend on
 `.Self` in some way in order to be found in future impl lookups involving the
@@ -1124,9 +1130,17 @@ facet being constrained. Thus, if there is no dependency on `.Self` the rewrite
 or same-type constraint must be shown to be satisfied immediately for the
 identify to complete successfully.
 
-For example, in `require impls Z where .Z1 = {}`, when identified and `Self` is
-not `.Self` from the top-level facet type, we require that
-`Self impls Z where .Z1 = {}` is already true in order to successfully identify.
+```carbon
+constraint N(T: type) {
+  require impls Z where .Z1 = {};
+}
+```
+
+When the above named constraint is identified as part of a facet type as
+`C impls N(.Self)`, the resulting requirement `Z where .Z1 = {}` is only
+constraining `C`, and not `.Self` from the top-level top-level facet type. So we
+require that `C impls (Z where .Z1 = {})` is already true in order to successfully
+identify.
 
 ```carbon
 interface Z(V: type) {
@@ -1134,7 +1148,7 @@ interface Z(V: type) {
   let Z2: type;
 }
 
-constraint N(T2: type, U2: type) {
+constraint M(T2: type, U2: type) {
   extend require impls Z(U2) where .Z1 = {} and .Z2 == ();
 }
 
@@ -1142,20 +1156,22 @@ interface Y {
   fn YY();
 }
 
+class C;
+
 fn F(U: Y where C impls Z(.Self) where .Z1 = {} and .Z2 == (),
-     T: Y where C impls N(.Self, U)) {
+     T: Y where C impls M(.Self, U)) {
   // Member access into `T` causes its type to be identified, which succeeds.
-  // The identified facet type contains
+  // The identified facet type requires
   // `C impls Z(U) where .Z1 = {} and .Z2 == ()` which is true from the facet
   // type of `U`.
   T.YY();
 }
 
 fn G(U: Y where C impls Z(.Self),
-     T: Y where C impls N(.Self, U));
+     T: Y where C impls M(.Self, U));
   // ❌ Error: The type of `T` can not be identified.
   // Member access into `T` causes its type to be identified, which fails.
-  // The identified facet type contains
+  // The identified facet type requires
   // `C impls Z(U) where .Z1 = {} and .Z2 == ()` which we don't know to be
   // true here.
   T.YY();
