@@ -5,7 +5,7 @@
 // This test is validating that the delayed error flush doesn't break on string
 // lifetimes.
 //
-// ARGS: --include-diagnostic-kind compile --no-prelude-import --no-include-carbon-core %s
+// ARGS: --include-diagnostic-kind compile --no-prelude-import %s
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

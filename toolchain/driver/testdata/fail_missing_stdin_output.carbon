@@ -4,7 +4,7 @@
 //
 // This needs to disable the prelude because otherwise it tries opening prelude
 // output files in bazel runfiles, which may not be writable.
-// ARGS: --include-diagnostic-kind compile --no-prelude-import --no-include-carbon-core -
+// ARGS: --include-diagnostic-kind compile --no-prelude-import -
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

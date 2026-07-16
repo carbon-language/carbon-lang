@@ -234,7 +234,7 @@ def _carbon_prelude_impl(ctx):
             tools = depset(transitive = [cc_toolchain.all_files]),
             executable = carbon_busybox,
             arguments = ["compile", "--output=" + out.path, "--output-last-input-only"] +
-                        ["--no-prelude-import", "--no-include-carbon-core"] +
+                        ["--no-prelude-import"] +
                         [s.path for s in srcs_reordered] + ctx.attr.flags,
             mnemonic = "CarbonPrelude",
             progress_message = "Precompiling prelude file " + src.short_path,

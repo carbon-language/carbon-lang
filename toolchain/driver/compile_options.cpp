@@ -395,7 +395,8 @@ Use the string form of the fingerprint from mangling instead of the hash form.
 Automatically include the Core libraries files in the compilation.
 
 Note this refers to the Core libraries files other than the prelude, the
-inclusion of which is currently controlled by the `prelude_import` flag.
+inclusion of which is currently controlled by the `prelude_import` flag. If
+the `prelude_import` flag is set to false, this is also silently set to false.
 )""",
       },
       [&](auto& arg_b) {

@@ -152,7 +152,6 @@ TEST_F(DriverTest, CompileCommandErrors) {
   auto empty_file = MakeTestFile("");
   EXPECT_FALSE(driver_
                    .RunCommand({"compile", "--no-prelude-import",
-                                "--no-include-carbon-core",
                                 "--output=/dev/empty", empty_file})
                    .success);
   EXPECT_THAT(test_error_stream_.TakeStr(),
@@ -162,8 +161,7 @@ TEST_F(DriverTest, CompileCommandErrors) {
 TEST_F(DriverTest, DumpTokens) {
   auto file = MakeTestFile("Hello World");
   EXPECT_TRUE(driver_
-                  .RunCommand({"compile", "--no-prelude-import",
-                               "--no-include-carbon-core", "--phase=lex",
+                  .RunCommand({"compile", "--no-prelude-import", "--phase=lex",
                                "--dump-tokens", file})
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
@@ -176,8 +174,7 @@ TEST_F(DriverTest, DumpParseTree) {
   auto file = MakeTestFile("var v: () = ();");
   EXPECT_TRUE(driver_
                   .RunCommand({"compile", "--no-prelude-import",
-                               "--no-include-carbon-core", "--phase=parse",
-                               "--dump-parse-tree", file})
+                               "--phase=parse", "--dump-parse-tree", file})
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Verify there is output without examining it.
@@ -189,18 +186,16 @@ TEST_F(DriverTest, StdoutOutput) {
   // Use explicit filenames so we can look for those to validate output.
   MakeTestFile("fn Run() {}", "test.carbon");
 
-  EXPECT_TRUE(
-      driver_
-          .RunCommand({"compile", "--no-prelude-import",
-                       "--no-include-carbon-core", "--output=-", "test.carbon"})
-          .success);
+  EXPECT_TRUE(driver_
+                  .RunCommand({"compile", "--no-prelude-import", "--output=-",
+                               "test.carbon"})
+                  .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // The default is textual assembly.
   EXPECT_THAT(test_output_stream_.TakeStr(), ContainsRegex("main:"));
 
   EXPECT_TRUE(driver_
-                  .RunCommand({"compile", "--no-prelude-import",
-                               "--no-include-carbon-core", "--output=-",
+                  .RunCommand({"compile", "--no-prelude-import", "--output=-",
                                "--force-obj-output", "test.carbon"})
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
@@ -222,10 +217,9 @@ TEST_F(DriverTest, LinkFileOutput) {
 
   // Object output (the default) uses `.o`.
   // TODO: This should actually reflect the platform defaults.
-  EXPECT_TRUE(driver_
-                  .RunCommand({"compile", "--no-prelude-import",
-                               "--no-include-carbon-core", "test.carbon"})
-                  .success);
+  EXPECT_TRUE(
+      driver_.RunCommand({"compile", "--no-prelude-import", "test.carbon"})
+          .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Ensure we wrote an object file of some form with the correct name.
   auto result = llvm::object::createBinary("test.o");
@@ -237,8 +231,7 @@ TEST_F(DriverTest, LinkFileOutput) {
   // Assembly output uses `.s`.
   // TODO: This should actually reflect the platform defaults.
   EXPECT_TRUE(driver_
-                  .RunCommand({"compile", "--no-prelude-import",
-                               "--no-include-carbon-core", "--asm-output",
+                  .RunCommand({"compile", "--no-prelude-import", "--asm-output",
                                "test.carbon"})
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
@@ -251,10 +244,9 @@ TEST_F(DriverTest, Link) {
 
   // First compile a file to get a linkable object.
   MakeTestFile("fn Run() {}", "test.carbon");
-  ASSERT_TRUE(driver_
-                  .RunCommand({"compile", "--no-prelude-import",
-                               "--no-include-carbon-core", "test.carbon"})
-                  .success)
+  ASSERT_TRUE(
+      driver_.RunCommand({"compile", "--no-prelude-import", "test.carbon"})
+          .success)
       << test_error_stream_.TakeStr();
 
   // Now link this into a binary. Note that we suppress building runtimes on
@@ -282,10 +274,9 @@ TEST_F(DriverTest, LinkWithFlagLikeFiles) {
 
   // First compile a file to get a linkable object.
   MakeTestFile("fn Run() {}", "test.carbon");
-  ASSERT_TRUE(driver_
-                  .RunCommand({"compile", "--no-include-carbon-core",
-                               "--no-prelude-import", "test.carbon"})
-                  .success)
+  ASSERT_TRUE(
+      driver_.RunCommand({"compile", "--no-prelude-import", "test.carbon"})
+          .success)
       << test_error_stream_.TakeStr();
 
   // Rename it to a flag-like name.
