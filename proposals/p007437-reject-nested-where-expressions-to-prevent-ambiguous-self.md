@@ -37,7 +37,8 @@ When these `.Self` become part of the canonical facet type, they are not
 possible to differentiate, making it impossible to later replace `.Self`
 coherently. To avoid having to recover from this situation, we propose to
 prevent the ability to introduce an ambiguous `.Self` entirely, by disallowing
-nesting `where` on the right-hand-side of another `where` expression.
+nesting `where` on the right-hand-side of another `where` expression, or in a
+generic argument.
 
 ## Problem
 
