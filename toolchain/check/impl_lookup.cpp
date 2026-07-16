@@ -203,25 +203,15 @@ static auto FindAndDiagnoseImplLookupCycle(
   return false;
 }
 
-struct RequiredImplsFromConstraint {
-  llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls;
-  bool other_requirements;
-};
-
 // Gets the set of `SpecificInterface`s that are required by a facet type
 // (as a constant value), and any special requirements.
 static auto GetRequiredImplsFromConstraint(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::ConstantId query_facet_type_const_id, bool diagnose)
-    -> std::optional<RequiredImplsFromConstraint> {
+    -> std::optional<llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl>> {
   auto facet_type_inst_id =
       context.types().GetTypeInstIdForTypeConstantId(query_facet_type_const_id);
-  auto facet_type_inst =
-      context.insts().GetAs<SemIR::FacetType>(facet_type_inst_id);
-  const auto& facet_type_info =
-      context.facet_types().Get(facet_type_inst.facet_type_id);
-
   auto identified_id = RequireIdentifiedFacetType(
       context, loc_id, query_self_const_id, facet_type_inst_id,
       [&](auto& builder) {
@@ -234,10 +224,7 @@ static auto GetRequiredImplsFromConstraint(
   if (!identified_id.has_value()) {
     return std::nullopt;
   }
-  return {
-      {.req_impls =
-           context.identified_facet_types().Get(identified_id).required_impls(),
-       .other_requirements = facet_type_info.other_requirements}};
+  return context.identified_facet_types().Get(identified_id).required_impls();
 }
 
 static auto TreatImplAsFinal(Context& context, const SemIR::Impl& impl)
@@ -303,10 +290,6 @@ static auto TryGetSpecificWitnessIdForImpl(
       context.facet_types().Get(deduced_constraint_facet_type_id);
   CARBON_CHECK(deduced_constraint_facet_type_info.extend_constraints.size() ==
                1);
-
-  if (deduced_constraint_facet_type_info.other_requirements) {
-    return SemIR::ConstantId::None;
-  }
 
   // The specifics in the queried interface must match the deduced specifics in
   // the impl's constraint facet type.
@@ -558,6 +541,9 @@ static auto VerifyQueryFacetTypeConstraints(
 
   // TODO: Validate that the witnesses satisfy the other requirements in the
   // `facet_type_info`.
+  if (facet_type_info.other_requirements) {
+    return false;
+  }
 
   return true;
 }
@@ -1002,14 +988,10 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   auto req_impls_from_constraint =
       GetRequiredImplsFromConstraint(context, loc_id, query_self_const_id,
                                      query_facet_type_const_id, diagnose);
-  if (!req_impls_from_constraint) {
+  if (!req_impls_from_constraint.has_value()) {
     return SemIR::InstBlockIdOrError::MakeError();
   }
-  auto [req_impls, other_requirements] = *req_impls_from_constraint;
-  if (other_requirements) {
-    // TODO: Remove this when other requirements go away.
-    return SemIR::InstBlockId::None;
-  }
+  auto req_impls = *req_impls_from_constraint;
   if (req_impls.empty()) {
     return SemIR::InstBlockId::Empty;
   }
