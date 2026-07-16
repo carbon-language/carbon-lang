@@ -2005,8 +2005,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // Check visible `observe` declarations for an explicit equivalence between
-  // the source and target canonical types.
-  auto observe_ids = GetObserveIds(context);
+  // the source type and the target type.
   auto expr_type_id = context.insts().GetAttachedType(expr_id);
   auto expr_type_inst_id = expr_type_id != SemIR::TypeType::TypeId
                                ? context.types().GetTypeInstId(expr_type_id)
@@ -2027,11 +2026,11 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     auto target_canonical_type_id = context.insts().GetAttachedType(
         GetCanonicalFacetOrTypeValue(context, target_type_inst_id));
     if (target_canonical_type_id == SemIR::TypeType::TypeId) {
-      // Target was already in canonical form.
+      // Target is already in canonical form.
       target_canonical_type_id = target.type_id;
     }
 
-    for (auto observe_id : observe_ids) {
+    for (auto observe_id : GetObserveIds(context, expr_canonical_inst_id)) {
       const auto& observe = context.observes().Get(observe_id);
       auto [observe_operand_ids, _] = UnpackObserve(context, observe);
       if (CheckObserveEquivalence(context, observe_operand_ids,

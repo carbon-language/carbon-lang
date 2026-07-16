@@ -9,17 +9,30 @@
 #include "toolchain/check/type.h"
 
 namespace Carbon::Check {
-auto GetObserveIds(Context& context) -> llvm::SmallVector<SemIR::ObserveId> {
+auto GetObserveIds(Context& context, SemIR::InstId expr_id)
+    -> llvm::SmallVector<SemIR::ObserveId> {
   llvm::SmallVector<SemIR::ObserveId> ids;
   if (context.scope_stack().IsInFunctionScope()) {
     llvm::append_range(ids, context.observe_stack().PeekAllValues());
   }
-  for (auto interface : context.interfaces().values()) {
-    if (interface.observe_block_id.has_value()) {
-      llvm::append_range(
-          ids, context.observe_blocks().Get(interface.observe_block_id));
-    }
+
+  auto access = context.insts().Get(expr_id).TryAs<SemIR::ImplWitnessAccess>();
+  if (!access) {
+    return ids;
   }
+  auto witness =
+      context.insts().Get(access->witness_id).TryAs<SemIR::LookupImplWitness>();
+  if (!witness) {
+    return ids;
+  }
+  auto specific_interface =
+      context.specific_interfaces().Get(witness->query_specific_interface_id);
+  auto interface = context.interfaces().Get(specific_interface.interface_id);
+  if (interface.observe_block_id.has_value()) {
+    llvm::append_range(
+        ids, context.observe_blocks().Get(interface.observe_block_id));
+  }
+
   return ids;
 }
 

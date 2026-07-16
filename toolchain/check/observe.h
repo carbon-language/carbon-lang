@@ -13,13 +13,10 @@
 #include "toolchain/sem_ir/observe.h"
 
 namespace Carbon::Check {
-// Gets all `ObserveId`s visible in the current lexical scopes and globally
-// across all interfaces.
-//
-// Note: We must iterate over all interfaces since an `observe` declaration
-// within an interface can be defined for types completely unrelated to that
-// interface (e.g., `interface I1 { observe I2.A == I2.B; }`).
-auto GetObserveIds(Context& context) -> llvm::SmallVector<SemIR::ObserveId>;
+// Gets all `ObserveId`s visible in the current lexical scopes and the defining
+// interface, if the expression is access to an interface's associated constant.
+auto GetObserveIds(Context& context, SemIR::InstId expr_id)
+    -> llvm::SmallVector<SemIR::ObserveId>;
 
 // Extracts all equivalent types and the `impls` constraint of an `observe`.
 auto UnpackObserve(Context& context, const SemIR::Observe& observe)

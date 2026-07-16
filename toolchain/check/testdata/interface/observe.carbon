@@ -185,7 +185,7 @@ fn TakesA[T: A](unused x: T) {}
 fn F[T: A, U: B where .Self == T, V: C where .Self == U]() {
 
   fn InnerF(x: V) {
-      observe T == U == V;
+    observe T == U == V;
 
     TakesA(x);
   }
