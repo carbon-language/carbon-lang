@@ -120,9 +120,6 @@ let c: UInt(8) = ToChar('\u{1E15}');
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.456 = value_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_29.1: %u8.builtin = value_of_initializer @__global_init.%ToChar.call.loc6 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc6_29.2: %u8.builtin = converted @__global_init.%ToChar.call.loc6, %.loc6_29.1 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc6_14.1: type = splice_block %.loc6_14.3 [concrete = constants.%u8.builtin] {
@@ -132,9 +129,9 @@ let c: UInt(8) = ToChar('\u{1E15}');
 // CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %UInt.call.loc6 [concrete = constants.%u8.builtin]
 // CHECK:STDOUT:     %.loc6_14.3: type = converted %UInt.call.loc6, %.loc6_14.2 [concrete = constants.%u8.builtin]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %u8.builtin = value_binding a, %.loc6_29.2
+// CHECK:STDOUT:   %a: %u8.builtin = wrapper_binding a, %.loc6_29.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.456 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.456 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_28.1: %u8.builtin = value_of_initializer @__global_init.%ToChar.call.loc7 [concrete = constants.%int_98]
 // CHECK:STDOUT:   %.loc7_28.2: %u8.builtin = converted @__global_init.%ToChar.call.loc7, %.loc7_28.1 [concrete = constants.%int_98]
@@ -145,9 +142,9 @@ let c: UInt(8) = ToChar('\u{1E15}');
 // CHECK:STDOUT:     %.loc7_14.2: type = value_of_initializer %UInt.call.loc7 [concrete = constants.%u8.builtin]
 // CHECK:STDOUT:     %.loc7_14.3: type = converted %UInt.call.loc7, %.loc7_14.2 [concrete = constants.%u8.builtin]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %u8.builtin = value_binding b, %.loc7_28.2
+// CHECK:STDOUT:   %b: %u8.builtin = wrapper_binding b, %.loc7_28.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.456 = value_binding_pattern c [concrete = constants.%c.patt.7eb]
+// CHECK:STDOUT:     %b.patt: %pattern_type.456 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_33.1: %u8.builtin = value_of_initializer @__global_init.%ToChar.call.loc8 [concrete = constants.%int_127]
 // CHECK:STDOUT:   %.loc8_33.2: %u8.builtin = converted @__global_init.%ToChar.call.loc8, %.loc8_33.1 [concrete = constants.%int_127]
@@ -158,7 +155,10 @@ let c: UInt(8) = ToChar('\u{1E15}');
 // CHECK:STDOUT:     %.loc8_14.2: type = value_of_initializer %UInt.call.loc8 [concrete = constants.%u8.builtin]
 // CHECK:STDOUT:     %.loc8_14.3: type = converted %UInt.call.loc8, %.loc8_14.2 [concrete = constants.%u8.builtin]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %u8.builtin = value_binding c, %.loc8_33.2
+// CHECK:STDOUT:   %c: %u8.builtin = wrapper_binding c, %.loc8_33.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.456 = value_binding_pattern c [concrete = constants.%c.patt.7eb]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

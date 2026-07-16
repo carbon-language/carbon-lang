@@ -17,7 +17,7 @@ interface Default { fn Op() -> Self; }
 // other operations on the object except for reinitialization are permitted.
 interface UnformedInit {
   // TODO: This should probably be:
-  //   let StructT:! type;
+  //   let StructT: type;
   //   fn Op() -> StructT;
   // and should be able to initialize a subset of the fields. For now we always
   // leave the object uninitialized when it is in an unformed state.
@@ -28,8 +28,8 @@ interface UnformedInit {
 // orphan rule because these builtin types have no associated library of their
 // own.
 impl bool as UnformedInit {}
-impl forall [T:! type] T* as UnformedInit {}
-impl forall [T:! UnformedInit, N:! IntLiteral] array(T, N) as UnformedInit {}
+impl forall [T: type] T* as UnformedInit {}
+impl forall [T: UnformedInit, N: IntLiteral] array(T, N) as UnformedInit {}
 // TODO: Generalize these to apply to tuples and structs containing only
 // `UnformedInit` types.
 impl () as UnformedInit {}
@@ -43,12 +43,12 @@ interface DefaultOrUnformed {
   fn Op() -> Self;
 }
 
-final impl forall [T:! Default] T as DefaultOrUnformed {
+final impl forall [T: Default] T as DefaultOrUnformed {
   fn Op() -> Self {
     return T.(Default.Op)();
   }
 }
 
-impl forall [T:! UnformedInit] T as DefaultOrUnformed {
+impl forall [T: UnformedInit] T as DefaultOrUnformed {
   fn Op() -> Self = "make_uninitialized";
 }

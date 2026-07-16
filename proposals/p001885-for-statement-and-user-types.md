@@ -376,7 +376,7 @@ could be a hashmap index, a string, or pointer to a node, without changing the
 usage for users.
 
 The `ElementType` can be a tuple, such as a `(key, value)` for maps, or a single
-value. See [Future work][#future-work] for other examples.
+value. See [Future work](#future-work) for other examples.
 
 #### R-value containers
 
@@ -542,8 +542,8 @@ class MyIntContainer {
 Mixins are currently in early design stages. This section highlights possible
 uses speculating on the final design. Some may include:
 
--   Improved semantics for views compared to getter methods: no direct side
-    effect from using the view
+-   Improved semantics for views compared to getter methods: no direct side effect
+    from using the view
 -   Facilitate code reuse, compared to reimplementing an interface
 -   Direct access to `self`, limiting needs for pointers and address resolution
 
@@ -624,8 +624,8 @@ author chooses between value and reference).
 For reference, range-based `for` loops in C++ requires:
 
 -   `begin()` and `end()` methods or free functions, and
--   the type returned supports pre-increment `++`, indirection `*`, and
-    inequality `!=` operations
+-   the type returned supports pre-increment `++`, indirection `*`, and inequality
+    `!=` operations
 
 See [range-based for statement](https://eel.is/c++draft/stmt.iter#stmt.ranged)
 for more details.
@@ -799,8 +799,8 @@ This would work similarly to [Python generator functions](#python).
 
 This has the following advantages:
 
--   Removes the need for an `Optional`, and the associated overheads, copies,
-    and unwrapping.
+-   Removes the need for an `Optional`, and the associated overheads, copies, and
+    unwrapping.
 -   No boundary checks needed at the `for` level
 -   Compatible with R-value containers
 
@@ -850,13 +850,13 @@ value, or [inverting control](#inversion-of-control).
 The iterator approach was considered but proved to have key limitations that a
 cursor approach does not have:
 
--   It requires implementing 2 interfaces instead of 1, and is more complex due
-    to having the iteration logic separated from the container itself
+-   It requires implementing 2 interfaces instead of 1, and is more complex due to
+    having the iteration logic separated from the container itself
 -   More difficult to harden or troubleshoot, compared to a cursor that allows
     bounds checking in debug & hardened build modes
 -   Can pose problems with ranges that consumes their input (See Barry Revzin’s
-    "take(5)" presentation from C++Now 2023), when compared to a combined
-    `Next()` approach.
+    "take(5)" presentation from C++Now 2023), when compared to a combined `Next()`
+    approach.
 -   Higher overhead
 -   Proves to be difficult to support for R-values
 

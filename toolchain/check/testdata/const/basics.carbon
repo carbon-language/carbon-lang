@@ -204,7 +204,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:       %ptr.loc6_16: type = ptr_type %const.loc6_9 [concrete = constants.%ptr.77f]
 // CHECK:STDOUT:       %ptr.loc6_17: type = ptr_type %ptr.loc6_16 [concrete = constants.%ptr.0c8]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.0c8 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.0c8 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.0c8 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.0c8 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -224,7 +224,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:       %ptr.loc10_17: type = ptr_type %C.ref.loc10_16 [concrete = constants.%ptr.6b6]
 // CHECK:STDOUT:       %const.loc10_9: type = const_type %ptr.loc10_17 [concrete = constants.%const.0f8]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %const.0f8 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %const.0f8 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.0f8 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %const.0f8 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -309,7 +309,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:       %ptr.loc11_16: type = ptr_type %const.loc11_9 [concrete = constants.%ptr.77f]
 // CHECK:STDOUT:       %ptr.loc11_17: type = ptr_type %ptr.loc11_16 [concrete = constants.%ptr.0c8]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.0c8 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.0c8 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.0c8 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.0c8 = return_slot %return.param
 // CHECK:STDOUT:   }

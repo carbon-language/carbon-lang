@@ -19,6 +19,21 @@ Runs the language server.
 LanguageServerSubcommand::LanguageServerSubcommand()
     : DriverSubcommand(SubcommandInfo) {}
 
+auto LanguageServerSubcommand::BuildOptions(CommandLine::CommandBuilder& b)
+    -> void {
+  b.AddFlag(
+      {
+          .name = "prelude-import",
+          .help = R"""(
+Whether to use the implicit prelude import. Enabled by default.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&prelude_import_);
+      });
+}
+
 auto LanguageServerSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   if (!driver_env.input_stream) {
     CARBON_DIAGNOSTIC(LanguageServerMissingInputStream, Error,
@@ -27,10 +42,10 @@ auto LanguageServerSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return {.success = false};
   }
 
-  bool success =
-      LanguageServer::Run(*driver_env.installation, driver_env.input_stream,
-                          *driver_env.output_stream, *driver_env.error_stream,
-                          driver_env.vlog_stream, driver_env.consumer);
+  bool success = LanguageServer::Run(
+      *driver_env.installation, driver_env.input_stream,
+      *driver_env.output_stream, *driver_env.error_stream,
+      driver_env.vlog_stream, *driver_env.consumer, prelude_import_);
   return {.success = success};
 }
 

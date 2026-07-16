@@ -94,6 +94,16 @@ inline '''
 int n;
 ''';
 
+// Recovery skips to the `;` even when tokens follow the closing `'''` on its
+// line, so the `;` ends the declaration rather than starting an empty one.
+// CHECK:STDERR: fail_inline_cpp_syntax_errors.carbon:[[@LINE+4]]:8: error: expected `Cpp` after `inline` [ExpectedCppAfterInline]
+// CHECK:STDERR: inline '''
+// CHECK:STDERR:        ^~~
+// CHECK:STDERR:
+inline '''
+int n;
+''' + "more";
+
 // CHECK:STDERR: fail_inline_cpp_syntax_errors.carbon:[[@LINE+4]]:11: error: expected string literal after `inline Cpp` [ExpectedStringAfterInlineCpp]
 // CHECK:STDERR: inline Cpp;
 // CHECK:STDERR:           ^
@@ -210,6 +220,8 @@ int n;
 // CHECK:STDOUT: - filename: fail_inline_cpp_syntax_errors.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
+// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
 // CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},

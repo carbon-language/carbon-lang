@@ -98,10 +98,10 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc21_16: ref %Class = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc21_16: ref %Class = ref_binding self, %self.param.loc21_16
+// CHECK:STDOUT:     %self.loc21_16: ref %Class = wrapper_binding self, %self.param.loc21_16
 // CHECK:STDOUT:     %self.param.loc21_28: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc21: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.loc21_28: %i32 = value_binding r#self, %self.param.loc21_28
+// CHECK:STDOUT:     %self.loc21_28: %i32 = wrapper_binding r#self, %self.param.loc21_28
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [concrete = constants.%Class.G] {
 // CHECK:STDOUT:     %self.param_patt.loc25_12: %pattern_type.f15 = value_param_pattern [concrete = constants.%self.param_patt.c01]
@@ -118,10 +118,10 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %.loc25_43.3: Core.Form = init_form %.loc25_43.2 [concrete = constants.%.c11]
 // CHECK:STDOUT:     %self.param.loc25_12: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc25_12: %Class = value_binding self, %self.param.loc25_12
+// CHECK:STDOUT:     %self.loc25_12: %Class = wrapper_binding self, %self.param.loc25_12
 // CHECK:STDOUT:     %self.param.loc25_24: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc25_26: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.loc25_24: %i32 = value_binding r#self, %self.param.loc25_24
+// CHECK:STDOUT:     %self.loc25_24: %i32 = wrapper_binding r#self, %self.param.loc25_24
 // CHECK:STDOUT:     %return.param.loc25: ref %tuple.type.e55 = out_param call_param2
 // CHECK:STDOUT:     %return.loc25: ref %tuple.type.e55 = return_slot %return.param.loc25
 // CHECK:STDOUT:   }
@@ -136,10 +136,10 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc16_12: ref %Class = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc16_12: ref %Class = ref_binding self, %self.param.loc16_12
+// CHECK:STDOUT:     %self.loc16_12: ref %Class = wrapper_binding self, %self.param.loc16_12
 // CHECK:STDOUT:     %self.param.loc16_24: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.loc16_24: %i32 = value_binding r#self, %self.param.loc16_24
+// CHECK:STDOUT:     %self.loc16_24: %i32 = wrapper_binding r#self, %self.param.loc16_24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [concrete = constants.%Class.G] {
 // CHECK:STDOUT:     %self.param_patt.loc25_12: %pattern_type.f15 = value_param_pattern [concrete = constants.%self.param_patt.c01]
@@ -156,10 +156,10 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %.loc17_39.3: Core.Form = init_form %.loc17_39.2 [concrete = constants.%.c11]
 // CHECK:STDOUT:     %self.param.loc17_8: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc17_8: %Class = value_binding self, %self.param.loc17_8
+// CHECK:STDOUT:     %self.loc17_8: %Class = wrapper_binding self, %self.param.loc17_8
 // CHECK:STDOUT:     %self.param.loc17_20: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc17_22: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.loc17_20: %i32 = value_binding r#self, %self.param.loc17_20
+// CHECK:STDOUT:     %self.loc17_20: %i32 = wrapper_binding r#self, %self.param.loc17_20
 // CHECK:STDOUT:     %return.param.loc17: ref %tuple.type.e55 = out_param call_param2
 // CHECK:STDOUT:     %return.loc17: ref %tuple.type.e55 = return_slot %return.param.loc17
 // CHECK:STDOUT:   }

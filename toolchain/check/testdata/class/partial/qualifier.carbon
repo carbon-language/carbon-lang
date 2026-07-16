@@ -156,11 +156,11 @@ library "[[@TEST_NAME]]";
 // TODO: This should be accepted because `T` might be final once we know what it
 // is.
 
-// CHECK:STDERR: fail_todo_partial_template_dependent.carbon:[[@LINE+4]]:28: error: `partial` applied to final type `T` [PartialOnFinal]
-// CHECK:STDERR: fn G[template T:! type](p: partial T*);
-// CHECK:STDERR:                            ^~~~~~~~~
+// CHECK:STDERR: fail_todo_partial_template_dependent.carbon:[[@LINE+4]]:27: error: `partial` applied to final type `T` [PartialOnFinal]
+// CHECK:STDERR: fn G[template T: type](p: partial T*);
+// CHECK:STDERR:                           ^~~~~~~~~
 // CHECK:STDERR:
-fn G[template T:! type](p: partial T*);
+fn G[template T: type](p: partial T*);
 
 // --- fail_partial_generic.carbon
 library "[[@TEST_NAME]]";
@@ -169,11 +169,11 @@ library "[[@TEST_NAME]]";
 // generic type and its requirements, as distinct from the concrete type that
 // might be used here in any specific.
 
-// CHECK:STDERR: fail_partial_generic.carbon:[[@LINE+4]]:19: error: `partial` applied to final type `T` [PartialOnFinal]
-// CHECK:STDERR: fn F[T:! type](p: partial T*);
-// CHECK:STDERR:                   ^~~~~~~~~
+// CHECK:STDERR: fail_partial_generic.carbon:[[@LINE+4]]:18: error: `partial` applied to final type `T` [PartialOnFinal]
+// CHECK:STDERR: fn F[T: type](p: partial T*);
+// CHECK:STDERR:                  ^~~~~~~~~
 // CHECK:STDERR:
-fn F[T:! type](p: partial T*);
+fn F[T: type](p: partial T*);
 
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:
@@ -197,7 +197,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %.loc6_9.2: type = partial_type %C.ref [concrete = constants.%.331]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.331 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %.331 = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -225,7 +225,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %.loc6_9.2: type = partial_type %C.ref [concrete = constants.%.331]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.331 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %.331 = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -253,7 +253,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %.loc6_13.2: type = partial_type %C.ref [concrete = constants.%.331]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: ref %.331 = ref_binding p, %p.param
+// CHECK:STDOUT:     %p: ref %.331 = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -281,7 +281,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %.loc10_9.2: type = partial_type %C.ref [concrete = constants.%.331]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.331 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %.331 = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -309,7 +309,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %.loc13_9.2: type = partial_type %Derived.ref [concrete = constants.%.546]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.546 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %.546 = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -337,7 +337,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %.loc13_9.2: type = partial_type %C.ref [concrete = constants.%.331]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.331 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %.331 = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -371,7 +371,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %.loc10_9.2: type = converted %.loc10_22, constants.%tuple.type.748 [concrete = constants.%tuple.type.748]
 // CHECK:STDOUT:       %.loc10_9.3: type = partial_type %.loc10_9.2 [concrete = constants.%.8dc]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.8dc = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %.8dc = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -401,7 +401,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %struct_type.x: type = struct_type {.x: %C} [concrete = constants.%struct_type.x]
 // CHECK:STDOUT:       %.loc10_9.2: type = partial_type %struct_type.x [concrete = constants.%.91f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.91f = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %.91f = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -431,7 +431,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %.loc10_18: type = partial_type %C.ref [concrete = constants.%.331]
 // CHECK:STDOUT:       %.loc10_9.2: type = partial_type %.loc10_18 [concrete = constants.%.d52]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.d52 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %.d52 = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

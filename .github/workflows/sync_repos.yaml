@@ -32,6 +32,8 @@ jobs:
       # Checkout our main repository.
       - name: Checkout the main repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       # Run the sync script.
       - name: Sync to other repositories

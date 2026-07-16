@@ -243,7 +243,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %Def.type = value_param call_param0
 // CHECK:STDOUT:     %Def.ref: type = name_ref Def, imports.%Test.Def [concrete = constants.%Def.type]
-// CHECK:STDOUT:     %i: %Def.type = value_binding i, %i.param
+// CHECK:STDOUT:     %i: %Def.type = wrapper_binding i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -283,7 +283,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
-// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
+// CHECK:STDOUT:     %i: <error> = wrapper_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -321,7 +321,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:       %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
+// CHECK:STDOUT:     %i: <error> = wrapper_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -360,7 +360,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %ForwardWithDef.type = value_param call_param0
 // CHECK:STDOUT:     %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%Test.ForwardWithDef [concrete = constants.%ForwardWithDef.type]
-// CHECK:STDOUT:     %i: %ForwardWithDef.type = value_binding i, %i.param
+// CHECK:STDOUT:     %i: %ForwardWithDef.type = wrapper_binding i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -400,7 +400,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
-// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
+// CHECK:STDOUT:     %i: <error> = wrapper_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -438,7 +438,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:       %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
+// CHECK:STDOUT:     %i: <error> = wrapper_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -472,7 +472,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
+// CHECK:STDOUT:     %i: <error> = wrapper_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Forward.decl: type = interface_decl @Forward [concrete = constants.%Forward.type] {} {}
 // CHECK:STDOUT: }
@@ -517,7 +517,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
+// CHECK:STDOUT:     %i: <error> = wrapper_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -555,7 +555,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = value_binding i, <error> [concrete = <error>]
+// CHECK:STDOUT:     %i: <error> = wrapper_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

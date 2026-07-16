@@ -96,14 +96,14 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:       %Self.as_type.loc5_9.2: type = facet_access_type %Self.ref.loc5_9 [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc5_9.2: type = converted %Self.ref.loc5_9, %Self.as_type.loc5_9.2 [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Add.WithSelf.Op.%Self.as_type.loc5_9.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:     %self: @Add.WithSelf.Op.%Self.as_type.loc5_9.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %other.param: @Add.WithSelf.Op.%Self.as_type.loc5_9.1 (%Self.as_type) = value_param call_param1
 // CHECK:STDOUT:     %.loc5_22.1: type = splice_block %.loc5_22.2 [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref.loc5_22: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc5_22: type = facet_access_type %Self.ref.loc5_22 [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %.loc5_22.2: type = converted %Self.ref.loc5_22, %Self.as_type.loc5_22 [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %other: @Add.WithSelf.Op.%Self.as_type.loc5_9.1 (%Self.as_type) = value_binding other, %other.param
+// CHECK:STDOUT:     %other: @Add.WithSelf.Op.%Self.as_type.loc5_9.1 (%Self.as_type) = wrapper_binding other, %other.param
 // CHECK:STDOUT:     %return.param: ref @Add.WithSelf.Op.%Self.as_type.loc5_9.1 (%Self.as_type) = out_param call_param2
 // CHECK:STDOUT:     %return: ref @Add.WithSelf.Op.%Self.as_type.loc5_9.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -233,10 +233,10 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:     %.loc12: Core.Form = init_form %C.ref.loc12_21 [concrete = constants.%.a44]
 // CHECK:STDOUT:     %x.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc12_9: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %x: %C = value_binding x, %x.param
+// CHECK:STDOUT:     %x: %C = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %y.param: %C = value_param call_param1
 // CHECK:STDOUT:     %C.ref.loc12_15: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %y: %C = value_binding y, %y.param
+// CHECK:STDOUT:     %y: %C = wrapper_binding y, %y.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -265,10 +265,10 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:     %.loc9_45: Core.Form = init_form %Self.ref.loc9_45 [concrete = constants.%.a44]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc9_16: type = name_ref Self, @C.as.Add.impl.%C.ref [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %other.param: %C = value_param call_param1
 // CHECK:STDOUT:     %Self.ref.loc9_36: type = name_ref Self, @C.as.Add.impl.%C.ref [concrete = constants.%C]
-// CHECK:STDOUT:     %other: %C = value_binding other, %other.param
+// CHECK:STDOUT:     %other: %C = wrapper_binding other, %other.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }

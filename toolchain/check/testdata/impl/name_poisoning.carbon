@@ -18,7 +18,7 @@ interface I {};
 
 namespace N;
 // Use `package.I` and poison `N.I`.
-fn N.F1(x:! I);
+fn N.F1(generic x: I);
 
 class N.C {
   extend impl as I {

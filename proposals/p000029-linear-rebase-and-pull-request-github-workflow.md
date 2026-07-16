@@ -37,16 +37,16 @@ the core motivation.
 
 This achieves two goals:
 
-1. Replaces the term `master`. This term, while only used in isolation in Git,
-   [was used](https://mail.gnome.org/archives/desktop-devel-list/2019-May/msg00066.html)
-   in immediately preceding and related systems as part of extremely problematic
-   "master/slave" terminology. That background associates the term with
-   unacceptable historical and cultural meanings. The intent of those using or
-   adopting the term isn't relevant to this association. The less overtly
-   problematic term being isolated from the rest doesn't erase its history, and
-   doesn't completely avoid painful associations.
+1.  Replaces the term `master`. This term, while only used in isolation in Git,
+    [was used](https://mail.gnome.org/archives/desktop-devel-list/2019-May/msg00066.html)
+    in immediately preceding and related systems as part of extremely problematic
+    "master/slave" terminology. That background associates the term with
+    unacceptable historical and cultural meanings. The intent of those using or
+    adopting the term isn't relevant to this association. The less overtly
+    problematic term being isolated from the rest doesn't erase its history, and
+    doesn't completely avoid painful associations.
 
-2. It directly anchors and reinforces contributors on the trunk-based workflow.
+2.  It directly anchors and reinforces contributors on the trunk-based workflow.
 
 ### Longer discussion of linear history
 

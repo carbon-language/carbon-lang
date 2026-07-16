@@ -1010,26 +1010,47 @@ struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
 inline constexpr RequireImplsBlockId RequireImplsBlockId::Empty =
     RequireImplsBlockId(0);
 
+// The ID of an `Observe`.
+struct ObserveId : public IdBase<ObserveId> {
+  static constexpr llvm::StringLiteral Label = "observe";
+
+  using IdBase::IdBase;
+};
+
+// The ID of a `ObserveId` block.
+struct ObserveBlockId : public IdBase<ObserveBlockId> {
+  static constexpr llvm::StringLiteral Label = "observe_block";
+
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
+  static const ObserveBlockId Empty;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
+};
+
+inline constexpr ObserveBlockId ObserveBlockId::Empty = ObserveBlockId(0);
+
+// The ID of a bundle of arguments with an unspecified type.
+struct RawBundleId : public IdBase<RawBundleId> {
+  static constexpr llvm::StringLiteral Label = "bundle";
+
+  using IdBase::IdBase;
+};
+
 // The ID of a bundle of arguments with type `BundleT`.
 template <typename BundleT>
 struct BundleId : public IdBase<BundleId<BundleT>> {
   static constexpr llvm::StringLiteral Label = "bundle";
 
   using IdBase<BundleId<BundleT>>::IdBase;
-};
 
-// The ID of a bundle of arguments with an unspecified type.
-struct RawBundleId : public IdBase<RawBundleId> {
-  static constexpr llvm::StringLiteral Label = "bundle";
+  explicit BundleId(RawBundleId raw_id)
+      : IdBase<BundleId<BundleT>>(raw_id.index) {}
 
-  template <typename BundleT>
-  explicit(false) RawBundleId(BundleId<BundleT> bundle_id)
-      : IdBase(bundle_id.index) {}
-  using IdBase::IdBase;
-
-  template <typename BundleT>
-  explicit operator BundleId<BundleT>() const {
-    return BundleId<BundleT>(index);
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  explicit(false) operator RawBundleId() const {
+    return RawBundleId(this->index);
   }
 };
 

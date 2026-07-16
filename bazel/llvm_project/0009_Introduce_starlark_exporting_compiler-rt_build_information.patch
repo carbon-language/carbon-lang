@@ -1,18 +1,22 @@
-Commit ID: d3b82534c2546a892a27856672ed95a7db97dba3
-Change ID: zyxuvzwmzsnorloyuupuurxkppkoplnw
-Author   : Chandler Carruth <chandlerc@gmail.com> (2026-02-16 23:17:06)
-Committer: Chandler Carruth <chandlerc@gmail.com> (2026-03-11 07:54:02)
+From 0ee985a794692a0eba510f54657400d814f5d2fa Mon Sep 17 00:00:00 2001
+From: Chandler Carruth <chandlerc@gmail.com>
+Date: Wed, 24 Jun 2026 11:29:41 -0400
+Subject: [PATCH] Improve compiler-rt build structure and export compilation
+ info
 
-    Improve compiler-rt build structure and export compilation info
+This first improves the structure of the compiler-rt BUILD.bazel, fixing
+bugs and exposing more carefully arranged source files.
 
-    This first improves the structure of the compiler-rt BUILD.bazel, fixing
-    bugs and exposing more carefully arranged source files.
-
-    It also exposes compilation info for builtins and CRT files for use in
-    compiling these source files.
+It also exposes compilation info for builtins and CRT files for use in
+compiling these source files.
+---
+ .../compiler-rt/BUILD.bazel                   | 219 +++++++++++++++---
+ .../compiler-rt/compiler-rt.bzl               | 153 ++++++++++++
+ 2 files changed, 336 insertions(+), 36 deletions(-)
+ create mode 100644 utils/bazel/llvm-project-overlay/compiler-rt/compiler-rt.bzl
 
 diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
-index 4ded226174..3b5b8fc787 100644
+index 0c5e0af4cb48..ae4a99d6885c 100644
 --- a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
 +++ b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
 @@ -3,6 +3,7 @@
@@ -23,7 +27,7 @@ index 4ded226174..3b5b8fc787 100644
  
  package(
      default_visibility = ["//visibility:public"],
-@@ -160,9 +161,15 @@
+@@ -188,9 +189,15 @@ filegroup(
      srcs = BUILTINS_CRTEND_SRCS,
  )
  
@@ -40,7 +44,7 @@ index 4ded226174..3b5b8fc787 100644
      "lib/builtins/enable_execute_stack.c",
      "lib/builtins/eprintf.c",
  ]
-@@ -224,11 +231,11 @@
+@@ -252,11 +259,11 @@ filegroup(
      ),
  )
  
@@ -54,7 +58,7 @@ index 4ded226174..3b5b8fc787 100644
  )
  
  BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS = [
-@@ -241,6 +248,28 @@
+@@ -269,6 +276,28 @@ filegroup(
      srcs = glob(BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS),
  )
  
@@ -83,7 +87,7 @@ index 4ded226174..3b5b8fc787 100644
  # Apple-platform specific SME source file.
  filegroup(
      name = "builtins_aarch64_apple_sme_srcs",
-@@ -305,10 +334,13 @@
+@@ -341,11 +370,14 @@ AARCH64_OUTLINE_ATOMICS_FMT = "lib/builtins/aarch64/outline_atomic_{0}{1}_{2}.S"
  
  # Source files for the AArch64 architecture-specific builtins.
  filegroup(
@@ -92,13 +96,14 @@ index 4ded226174..3b5b8fc787 100644
      srcs = [
          "lib/builtins/cpu_model/aarch64.c",
          "lib/builtins/cpu_model/aarch64.h",
+         ":builtins_aarch64_sme_os_srcs",
 +        ":builtins_bf16_srcs",
 +        ":builtins_generic_srcs",
 +        ":builtins_tf_srcs",
      ] + [
          AARCH64_OUTLINE_ATOMICS_FMT.format(pat, size, model)
          for (pat, size, model) in AARCH64_OUTLINE_ATOMICS
-@@ -328,10 +360,20 @@
+@@ -365,10 +397,20 @@ filegroup(
              "lib/builtins/aarch64/lse.S",
              # These files are provided by SME-specific file groups above.
              "lib/builtins/aarch64/*sme*",
@@ -119,7 +124,7 @@ index 4ded226174..3b5b8fc787 100644
  BUILTINS_ARM_VFP_SRCS_PATTERNS = [
      "lib/builtins/arm/*vfp*.S",
      "lib/builtins/arm/*vfp*.c",
-@@ -348,9 +390,19 @@
+@@ -385,9 +427,19 @@ filegroup(
      ),
  )
  
@@ -140,7 +145,7 @@ index 4ded226174..3b5b8fc787 100644
      srcs = glob(
          [
              "lib/builtins/arm/*.S",
-@@ -359,14 +411,52 @@
+@@ -396,14 +448,52 @@ filegroup(
              "lib/builtins/arm/*.h",
          ],
          allow_empty = True,
@@ -154,10 +159,9 @@ index 4ded226174..3b5b8fc787 100644
  )
  
 -# Source files for the PPC architecture-specific builtins.
--filegroup(
+ filegroup(
 -    name = "builtins_ppc_srcs",
 -    srcs = glob(
-+filegroup(
 +    name = "builtins_unfiltered_armv7_srcs",
 +    srcs = [
 +        ":builtins_arm_arch_srcs",
@@ -198,28 +202,20 @@ index 4ded226174..3b5b8fc787 100644
          [
              "lib/builtins/ppc/*.S",
              "lib/builtins/ppc/*.c",
-@@ -377,17 +467,64 @@
+@@ -414,19 +504,66 @@ filegroup(
      ),
  )
  
 -# Source files for the RISC-V architecture-specific builtins.
--filegroup(
--    name = "builtins_riscv_srcs",
--    srcs = glob(
--        [
--            "lib/builtins/riscv/*.S",
--            "lib/builtins/riscv/*.c",
--            "lib/builtins/riscv/*.cpp",
--        ],
--        allow_empty = True,
--    ),
 +make_filtered_builtins_srcs_groups(
 +    name = "builtins_ppc64_srcs",
 +    srcs = [":builtins_unfiltered_ppc64_srcs"],
 +    textual_name = "builtins_ppc64_textual_srcs",
 +)
 +
-+filegroup(
+ filegroup(
+-    name = "builtins_riscv_srcs",
+-    srcs = glob(
 +    name = "builtins_unfiltered_ppc32_srcs",
 +    srcs = [":builtins_generic_srcs"],
 +)
@@ -257,24 +253,26 @@ index 4ded226174..3b5b8fc787 100644
 +    srcs = [
 +        ":builtins_generic_srcs",
 +    ] + glob(
-+        [
-+            "lib/builtins/riscv/*.S",
-+            "lib/builtins/riscv/*.c",
-+            "lib/builtins/riscv/*.cpp",
+         [
+             "lib/builtins/riscv/*.S",
+             "lib/builtins/riscv/*.c",
+             "lib/builtins/riscv/*.cpp",
 +            "lib/builtins/riscv/*.h",
-+        ],
-+        allow_empty = True,
-+    ),
-+)
-+
+         ],
+         allow_empty = True,
+     ),
+ )
+ 
 +make_filtered_builtins_srcs_groups(
 +    name = "builtins_riscv32_srcs",
 +    srcs = [":builtins_unfiltered_riscv32_srcs"],
 +    textual_name = "builtins_riscv32_textual_srcs",
- )
- 
++)
++
  # Source files for the x86 architecture specific builtins (both 32-bit and
-@@ -402,8 +539,14 @@
+ # 64-bit).
+ filegroup(
+@@ -439,8 +576,14 @@ filegroup(
  
  # Source files for the x86-64 architecture specific builtins.
  filegroup(
@@ -291,7 +289,7 @@ index 4ded226174..3b5b8fc787 100644
          [
              "lib/builtins/x86_64/*.S",
              "lib/builtins/x86_64/*.c",
-@@ -411,13 +554,29 @@
+@@ -448,13 +591,29 @@ filegroup(
              "lib/builtins/x86_64/*.h",
          ],
          allow_empty = True,
@@ -323,7 +321,7 @@ index 4ded226174..3b5b8fc787 100644
          [
              "lib/builtins/i386/*.S",
              "lib/builtins/i386/*.c",
-@@ -429,28 +588,16 @@
+@@ -466,28 +625,16 @@ filegroup(
              # This file is used for both i386 and x86_64 and so included in the
              # broader x86 sources.
              "lib/builtins/i386/fp_mode.c",
@@ -362,7 +360,7 @@ index 4ded226174..3b5b8fc787 100644
  )
 diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/compiler-rt.bzl b/utils/bazel/llvm-project-overlay/compiler-rt/compiler-rt.bzl
 new file mode 100644
-index 0000000000..e33ceb6a89
+index 000000000000..e33ceb6a89da
 --- /dev/null
 +++ b/utils/bazel/llvm-project-overlay/compiler-rt/compiler-rt.bzl
 @@ -0,0 +1,153 @@
@@ -519,3 +517,6 @@ index 0000000000..e33ceb6a89
 +        name = textual_name,
 +        srcs = srcs,
 +    )
+-- 
+2.55.0.rc0.799.gd6f94ed593-goog
+

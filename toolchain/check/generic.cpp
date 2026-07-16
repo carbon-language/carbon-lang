@@ -305,11 +305,11 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
   // unattached. This happens for out-of-line redeclarations of members of
   // dependent scopes:
   //
-  //   class A(T:! type) {
+  //   class A(T: type) {
   //     fn F();
   //   }
   //   // Has generic type and constant value, but no generic region.
-  //   fn A(T:! type).F() {}
+  //   fn A(T: type).F() {}
   //
   // TODO: Copy the attached type and constant value from the previous
   // declaration in this case instead of attempting to attach the new
@@ -407,7 +407,7 @@ auto StartGenericDefinition(Context& context, SemIR::GenericId generic_id)
   // have locally-introduced generic parameters to track:
   //
   // fn F() {
-  //   let T:! type = i32;
+  //   let generic T: type = i32;
   //   var x: T;
   // }
   context.generic_region_stack().Push(
@@ -666,9 +666,24 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
     // recursively resolve the same specific.
     specific.decl_block_id = SemIR::InstBlockId::Empty;
 
+    // When resolving a specific for an `impl`, we will rebuild and evaluate any
+    // `LookupImplWitness` instructions in the `impl` declaration. These lookups
+    // should not find the `impl` that contains them or they become cyclical.
+    const auto& generic = context.generics().Get(specific.generic_id);
+    bool is_impl_decl = false;
+    if (auto decl =
+            context.insts().TryGetAs<SemIR::ImplDecl>(generic.decl_id)) {
+      is_impl_decl = true;
+      context.forbidden_impls().push_back(decl->impl_id);
+    }
+
     std::tie(specific.decl_block_id, specific.decl_block_has_error) =
         TryEvalBlockForSpecific(context, loc_id, specific_id,
                                 SemIR::GenericInstIndex::Region::Declaration);
+
+    if (is_impl_decl) {
+      context.forbidden_impls().pop_back();
+    }
   }
 }
 
@@ -887,6 +902,23 @@ auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
 
   auto args_id = context.specifics().GetArgsOrEmpty(specific_id);
   return MakeSpecific(context, loc_id, target_generic_id, args_id);
+}
+
+auto DiagnoseImplsOnNonFacetType(Context& context, SemIR::LocId loc_id)
+    -> void {
+  CARBON_DIAGNOSTIC(
+      ImplsOnNonFacetType, Error,
+      "right argument of `impls` requirement must be a facet type");
+  context.emitter().Emit(loc_id, ImplsOnNonFacetType);
+}
+
+auto GetScrutineeTypeInSpecific(const Context& context,
+                                SemIR::InstId pattern_id,
+                                SemIR::SpecificId specific_id)
+    -> SemIR::TypeId {
+  const auto& sem_ir = context.sem_ir();
+  return ExtractScrutineeType(
+      sem_ir, SemIR::GetTypeOfInstInSpecific(sem_ir, specific_id, pattern_id));
 }
 
 }  // namespace Carbon::Check

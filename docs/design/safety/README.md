@@ -220,7 +220,7 @@ run-time enforcement components of our
 [memory safety model](#memory-safety-model) above. This means, for example, that
 bounds checking is enabled in the release build. There is [evidence] that the
 cost of these hardening steps is low. Following the specific guidance of our top
-priority for [performance _control_], Carbon will provide ways to write unsafe code
+priority for [performance control], Carbon will provide ways to write unsafe code
 that disables the run-time enforcement, enabling the control of any overhead incurred.
 
 [evidence]: https://chandlerc.blog/posts/2024/11/story-time-bounds-checking/

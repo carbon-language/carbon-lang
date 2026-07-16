@@ -10,7 +10,6 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -392,6 +391,8 @@ class NodeStack {
                           Id::KindFor<SemIR::InstId>());
     set_id_if_category_is(Parse::NodeCategory::Expr,
                           Id::KindFor<SemIR::InstId>());
+    set_id_if_category_is(Parse::NodeCategory::ObserveOperator,
+                          Id::KindFor<SemIR::InstId>());
     set_id_if_category_is(
         Parse::NodeCategory::MemberName | Parse::NodeCategory::NonExprName,
         Id::KindFor<SemIR::NameId>());
@@ -415,13 +416,14 @@ class NodeStack {
     switch (node_kind) {
       case Parse::NodeKind::CallExprStart:
       case Parse::NodeKind::IfExprThen:
+      case Parse::NodeKind::MatchFirstDefinitionStart:
+      case Parse::NodeKind::ObserveIntroducer:
       case Parse::NodeKind::RequireIntroducer:
       case Parse::NodeKind::ShortCircuitOperandAnd:
       case Parse::NodeKind::ShortCircuitOperandOr:
       case Parse::NodeKind::StructLiteralField:
         return Id::KindFor<SemIR::InstId>();
       case Parse::NodeKind::ExplicitParamList:
-      case Parse::NodeKind::ForIn:
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:
       case Parse::NodeKind::ImplicitParamList:
@@ -463,8 +465,8 @@ class NodeStack {
       case Parse::NodeKind::LetInitializer:
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::NamedConstraintIntroducer:
-      case Parse::NodeKind::ObserveIntroducer:
       case Parse::NodeKind::RefBindingName:
+      case Parse::NodeKind::RuntimeBindingName:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::StructLiteralStart:
       case Parse::NodeKind::StructTypeLiteralField:
@@ -497,6 +499,7 @@ class NodeStack {
       case Parse::NodeKind::FileEnd:
       case Parse::NodeKind::FileStart:
       case Parse::NodeKind::ForHeader:
+      case Parse::NodeKind::ForIn:
       case Parse::NodeKind::Forall:
       case Parse::NodeKind::FormLiteralKeyword:
       case Parse::NodeKind::FormLiteralOpenParen:
@@ -519,13 +522,12 @@ class NodeStack {
       case Parse::NodeKind::MatchConditionStart:
       case Parse::NodeKind::MatchDefault:
       case Parse::NodeKind::MatchDefaultIntroducer:
+      case Parse::NodeKind::MatchFirstIntroducer:
       case Parse::NodeKind::MatchHandlerStart:
       case Parse::NodeKind::MatchHandler:
       case Parse::NodeKind::MatchIntroducer:
       case Parse::NodeKind::MatchStatementStart:
       case Parse::NodeKind::NamespaceStart:
-      case Parse::NodeKind::ObserveEqualEqual:
-      case Parse::NodeKind::ObserveImpls:
       case Parse::NodeKind::PackageIntroducer:
       case Parse::NodeKind::ParenExprStart:
       case Parse::NodeKind::PatternListComma:

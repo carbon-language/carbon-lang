@@ -27,6 +27,7 @@ fn Run() -> i32 {
   return Cpp.Get();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'var_export.carbon'
 // CHECK:STDOUT: source_filename = "var_export.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -38,50 +39,53 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local noundef i32 @_Z3Getv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %0 = load i32, ptr @_Cx.Main, align 4, !tbaa !7
+// CHECK:STDOUT:   %0 = load i32, ptr @_Cx.Main, align 4, !tbaa !12
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @main() #1 !dbg !11 {
+// CHECK:STDOUT: define i32 @main() #1 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Get.call = call i32 @_Z3Getv(), !dbg !15
-// CHECK:STDOUT:   ret i32 %Get.call, !dbg !16
+// CHECK:STDOUT:   %Get.call = call i32 @_Z3Getv(), !dbg !17
+// CHECK:STDOUT:   ret i32 %Get.call, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define internal void @_C__global_init.Main() #1 !dbg !17 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #1 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   store i32 poison, ptr @_Cx.Main, align 4, !dbg !20
-// CHECK:STDOUT:   ret void, !dbg !21
+// CHECK:STDOUT:   store i32 poison, ptr @_Cx.Main, align 4, !dbg !22
+// CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "var_export.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "var_export.carbon", directory: "")
-// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
-// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !6, line: 13, type: !12, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
-// CHECK:STDOUT: !13 = !{!14}
-// CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !15 = !DILocation(line: 14, column: 10, scope: !11)
-// CHECK:STDOUT: !16 = !DILocation(line: 14, column: 3, scope: !11)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !6, type: !18, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !18 = !DISubroutineType(types: !19)
-// CHECK:STDOUT: !19 = !{null}
-// CHECK:STDOUT: !20 = !DILocation(line: 5, column: 1, scope: !17)
-// CHECK:STDOUT: !21 = !DILocation(line: 0, scope: !17)
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
+// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = !{!9, !9, i64 0}
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !1, line: 13, type: !14, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
+// CHECK:STDOUT: !15 = !{!16}
+// CHECK:STDOUT: !16 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !17 = !DILocation(line: 14, column: 10, scope: !13)
+// CHECK:STDOUT: !18 = !DILocation(line: 14, column: 3, scope: !13)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !1, type: !20, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !20 = !DISubroutineType(types: !21)
+// CHECK:STDOUT: !21 = !{null}
+// CHECK:STDOUT: !22 = !DILocation(line: 5, column: 1, scope: !19)
+// CHECK:STDOUT: !23 = !DILocation(line: 0, scope: !19)
+// CHECK:STDOUT:

@@ -139,9 +139,6 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %struct_type.a.b {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.3e6 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeF64.ref: %MakeF64.type = name_ref MakeF64, file.%MakeF64.decl [concrete = constants.%MakeF64]
 // CHECK:STDOUT:   %MakeF64.call: init %f64.dc1 = call %MakeF64.ref()
 // CHECK:STDOUT:   %MakeI32.ref: %MakeI32.type = name_ref MakeI32, file.%MakeI32.decl [concrete = constants.%MakeI32]
@@ -158,9 +155,9 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %f64.loc19: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:     %struct_type.a.b.loc19: type = struct_type {.a: %i32, .b: %f64.dc1} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %struct_type.a.b = value_binding x, %.loc19_62.6
+// CHECK:STDOUT:   %x: %struct_type.a.b = wrapper_binding x, %.loc19_62.6
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.cc6 = value_binding_pattern y [concrete = constants.%y.patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.3e6 = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %struct_type.a.b = name_ref x, %x
 // CHECK:STDOUT:   %.loc20_31.1: %f64.dc1 = struct_access %x.ref, element1
@@ -172,7 +169,10 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.b.a: type = struct_type {.b: %f64.dc1, .a: %i32} [concrete = constants.%struct_type.b.a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: %struct_type.b.a = value_binding y, %.loc20_31.3
+// CHECK:STDOUT:   %y: %struct_type.b.a = wrapper_binding y, %.loc20_31.3
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %pattern_type.cc6 = value_binding_pattern y [concrete = constants.%y.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.ref: %struct_type.b.a = name_ref y, %y
 // CHECK:STDOUT:   %.loc21_10.1: %i32 = struct_access %y.ref, element1
 // CHECK:STDOUT:   %impl.elem0.loc21_10.1: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

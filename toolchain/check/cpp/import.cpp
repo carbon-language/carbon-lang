@@ -687,7 +687,14 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   static_assert(SemIR::CustomLayoutId::FirstFieldIndex == 2);
 
-  // TODO: Import vptr(s).
+  if (context.ast_context().getASTRecordLayout(clang_def).hasOwnVFPtr()) {
+    // Add a virtual function pointer to the beginning of the layout.
+    layout.push_back(SemIR::ObjectSize::Bytes(0));
+    fields.push_back(
+        {.name_id = SemIR::NameId::Vptr,
+         .type_inst_id = context.types().GetTypeInstId(
+             GetPointerType(context, SemIR::VtableType::TypeInstId))});
+  }
 
   // The kind of base class we've picked so far. These are ordered in increasing
   // preference order.
@@ -896,11 +903,8 @@ static auto GetVirtualFunctionParamPassingMode(clang::QualType type)
   return SemIR::ClangDeclSignature::PassingMode::ByVar;
 }
 
-// Computes the signature to use for the given imported virtual function. Unlike
-// with regular imported functions, we can only use a single signature here, so
-// we pick one conservatively.
-static auto MakeVirtualFunctionSignature(
-    Context& context, const clang::CXXMethodDecl* method_decl)
+auto MakeVirtualFunctionSignature(Context& context,
+                                  const clang::CXXMethodDecl* method_decl)
     -> SemIR::ClangDeclSignatureId {
   SemIR::ClangDeclSignature signature = {
       .kind = SemIR::ClangDeclSignature::Normal,
@@ -1466,7 +1470,7 @@ static auto MakeSelfParamPatternBlockId(
   const auto* method_decl = cast<clang::CXXMethodDecl>(&clang_decl);
 
   // Build a `self` parameter from the object parameter.
-  BeginSubpattern(context);
+  BeginExprRegionForPattern(context);
 
   clang::QualType param_type =
       method_decl->getFunctionObjectParameterReferenceType();
@@ -1476,9 +1480,9 @@ static auto MakeSelfParamPatternBlockId(
   auto param_info = MapParameterType(context, loc_id, param_type, passing_mode);
   auto [type_inst_id, type_id] = param_info.type;
   SemIR::ExprRegionId type_expr_region_id =
-      ConsumeSubpatternExpr(context, type_inst_id);
+      ConsumeExprRegionForPattern(context, type_inst_id);
 
-  EndEmptySubpattern(context);
+  EndEmptyExprRegionForPattern(context);
 
   if (!type_id.has_value()) {
     context.TODO(loc_id,
@@ -1531,8 +1535,8 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
         ClangGetUnqualifiedTypePreserveNonNull(context, orig_param_type);
 
     // Mark the start of a region of insts, needed for the type expression
-    // created later with the call of `ConsumeSubpatternExpr()`.
-    BeginSubpattern(context);
+    // created later with the call of `ConsumeExprRegionForPattern()`.
+    BeginExprRegionForPattern(context);
     auto param_info = MapParameterType(context, loc_id, param_type,
                                        signature.GetPassingMode(i));
     auto [type_inst_id, type_id] = param_info.type;
@@ -1540,8 +1544,8 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // region that allows control flow in the type expression e.g. fn F(x: if C
     // then i32 else i64).
     SemIR::ExprRegionId type_expr_region_id =
-        ConsumeSubpatternExpr(context, type_inst_id);
-    EndEmptySubpattern(context);
+        ConsumeExprRegionForPattern(context, type_inst_id);
+    EndEmptyExprRegionForPattern(context);
 
     if (!type_id.has_value()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
@@ -2352,7 +2356,7 @@ static auto LookupBuiltinName(Context& context, SemIR::LocId loc_id,
   const clang::ASTContext& ast_context = context.ast_context();
 
   // List of types based on
-  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p005448.md#details
+  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p005448-carbon-c-interop-primitive-types.md#details
   auto builtin_type =
       llvm::StringSwitch<clang::QualType>(*name)
           .Case("signed_char", ast_context.SignedCharTy)

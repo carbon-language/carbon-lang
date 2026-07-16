@@ -15,66 +15,57 @@ namespace Carbon::Check {
 // the `SymbolicBinding` instruction.
 //
 // The type of `.Self` must be a `FacetType`, so that it gets wrapped in
-// `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
+// `FacetAccessType` when used in a type position, such as in `U: I(.Self)`.
 // This allows substitution with other facet values without requiring an
 // additional `FacetAccessType` to be inserted.
 auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,
                               SemIR::TypeId self_type_id) -> SemIR::InstId;
-
-enum class SubstPeriodSelfBehaviour {
-  ImplicitOnly,
-  ExplicitOnly,
-  All,
-};
 
 using SubstPeriodSelfRebuildInst =
     llvm::function_ref<auto(SemIR::Inst)->SemIR::InstId>;
 
 // Replace `.Self` references in `const_id` with `period_self_replacement_id`.
 //
-// The `behaviour` specifies if all `.Self` are replaced or just implicit use in
-// designators. The `rebuild` callback can optionally be specified to override
-// how an instruction is re-constructed to form an InstId after replacement. It
-// can return None to fall back to the default of evaluating the inst.
-auto SubstPeriodSelf(
-    Context& context, SemIR::LocId loc_id, SemIR::ConstantId const_id,
-    SemIR::ConstantId period_self_replacement_id,
-    SubstPeriodSelfBehaviour behaviour = SubstPeriodSelfBehaviour::All,
-    SubstPeriodSelfRebuildInst rebuild = nullptr) -> SemIR::ConstantId;
+// The `rebuild` callback can optionally be specified to override how an
+// instruction is re-constructed to form an InstId after replacement. It can
+// return None to fall back to the default of evaluating the inst.
+auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
+                     SemIR::ConstantId const_id,
+                     SemIR::ConstantId period_self_replacement_id,
+                     SubstPeriodSelfRebuildInst rebuild = nullptr)
+    -> SemIR::ConstantId;
 
 // Replace `.Self` references in the specific of the interface or named
 // constraint with `period_self_replacement_id`.
 //
-// The `behaviour` specifies if all `.Self` are replaced or just implicit use in
-// designators. The `rebuild` callback can optionally be specified to override
-// how an instruction is re-constructed to form an InstId after replacement. It
-// can return None to fall back to the default of evaluating the inst.
-auto SubstPeriodSelf(
-    Context& context, SemIR::LocId loc_id, SemIR::SpecificInterface interface,
-    SemIR::ConstantId period_self_replacement_id,
-    SubstPeriodSelfBehaviour behaviour = SubstPeriodSelfBehaviour::All,
-    SubstPeriodSelfRebuildInst rebuild = nullptr) -> SemIR::SpecificInterface;
-auto SubstPeriodSelf(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::SpecificNamedConstraint constraint,
-    SemIR::ConstantId period_self_replacement_id,
-    SubstPeriodSelfBehaviour behaviour = SubstPeriodSelfBehaviour::All,
-    SubstPeriodSelfRebuildInst rebuild = nullptr)
+// The `rebuild` callback can optionally be specified to override how an
+// instruction is re-constructed to form an InstId after replacement. It can
+// return None to fall back to the default of evaluating the inst.
+auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
+                     SemIR::SpecificInterface interface,
+                     SemIR::ConstantId period_self_replacement_id,
+                     SubstPeriodSelfRebuildInst rebuild = nullptr)
+    -> SemIR::SpecificInterface;
+auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
+                     SemIR::SpecificNamedConstraint constraint,
+                     SemIR::ConstantId period_self_replacement_id,
+                     SubstPeriodSelfRebuildInst rebuild = nullptr)
     -> SemIR::SpecificNamedConstraint;
 
 // Replace `.Self` references with the self-type. The `facet_type_inst_id` must
 // be a `FacetType` instruction (or error).
 //
-// The implicit `.Self` in designators is not replaced in rewrite constraints,
-// to allow for rewrite constraint resolution to recognise the designators.
-// Later use of rewrite constraints requires further `.Self` replacement.
+// The `.Self` in the LHS of rewrite constraints is not replaced, to allow for
+// rewrite constraint resolution to recognise the designators and avoid
+// evaluation replacing them with a concrete value. Later use of rewrite
+// constraints requires further `.Self` replacement.
 //
 // Unlike SubstPeriodSelf, which works with constant values and thus canonical
 // instructions, this operation can be done for non-canonical facet types. A new
 // instruction is added for the output FacetType if anything does get replaced,
 // and the original instruction id is preserved otherwise.
 auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
-                                SemIR::TypeInstId self_type_inst_id,
+                                SemIR::InstId self_inst_id,
                                 SemIR::TypeInstId facet_type_inst_id)
     -> SemIR::TypeInstId;
 
@@ -85,20 +76,22 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
 auto IsPeriodSelf(Context& context, SemIR::InstId inst_id,
                   bool canonicalize = true) -> bool;
 
-// Look for ambiguous `.Self` in a `T impls X where ...` statement. The given
-// inst ids are the non-canonical insts for the LHS and RHS of the `impls`
-// inside a `where` expression.
+// Find all `.Self` with their frozen flag set in the EntityName and replace
+// them with a new `.Self` where the frozen flag is disabled. The frozen flag
+// prevents substiting `.Self` while inside the construction of a facet type,
+// and this frees them up to be replaced from outside the facet type, or allows
+// to constant comparison with values from outside the facet type.
 //
-// If the LHS is not `.Self` and RHS contains a nested `where` expression, the
-// value of `.Self` becomes ambiguous on the RHS of the `where` (it could mean
-// either the original value or new value given by the LHS of the `impls`). Note
-// that implicit `.Self` references are never ambiguous, they always refer to
-// the innermost value that `.Self` could refer to.
-//
-// Returns true if an error was diagnosed.
-auto FindAndDiagnoseAmbiguousPeriodSelf(Context& context,
-                                        SemIR::InstId impls_lhs_id,
-                                        SemIR::InstId impls_rhs_id) -> bool;
+// This supports substitution in a canonical or non-canonical instruction.
+auto ThawPeriodSelf(Context& context, SemIR::InstId inst_id) -> SemIR::InstId;
+
+// Find all `.Self` with their frozen flag unset in the EntityName and replace
+// them with a new `.Self` where the frozen flag is enabled. The frozen flag
+// prevents substiting `.Self` while inside the construction of a facet type,
+// but this is used to enable comparison between the instructions and other
+// frozen instructions inside the construction of a facet type.
+auto FreezePeriodSelf(Context& context, SemIR::ConstantId const_id)
+    -> SemIR::ConstantId;
 
 }  // namespace Carbon::Check
 

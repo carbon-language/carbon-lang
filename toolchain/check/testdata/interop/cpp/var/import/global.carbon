@@ -91,7 +91,7 @@ fn MyF() {
 // CHECK:STDOUT:   %pattern_type.635: type = pattern_type %const [concrete]
 // CHECK:STDOUT:   %global_ref.patt: %pattern_type.635 = ref_binding_pattern global_ref [concrete]
 // CHECK:STDOUT:   %global_ref.var_patt: %pattern_type.635 = var_pattern %global_ref.patt [concrete]
-// CHECK:STDOUT:   %global_ref.var: ref %ptr.0a2 = var imports.%global_ref.var_patt [concrete]
+// CHECK:STDOUT:   %global_ref.var: ref %ptr.0a2 = var_storage imports.%global_ref.var_patt [concrete]
 // CHECK:STDOUT:   %addr: %ptr.0a2 = addr_of imports.%global.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -110,13 +110,13 @@ fn MyF() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %global.patt: %pattern_type.bbc = ref_binding_pattern global [concrete = constants.%global.patt]
 // CHECK:STDOUT:   %global.var_patt: %pattern_type.bbc = var_pattern %global.patt [concrete = constants.%global.var_patt]
-// CHECK:STDOUT:   %global.var: ref %C = var %global.var_patt [concrete]
+// CHECK:STDOUT:   %global.var: ref %C = var_storage %global.var_patt [concrete]
 // CHECK:STDOUT:   %global_ptr.patt: %pattern_type.8fa = ref_binding_pattern global_ptr [concrete = constants.%global_ptr.patt]
 // CHECK:STDOUT:   %global_ptr.var_patt: %pattern_type.8fa = var_pattern %global_ptr.patt [concrete = constants.%global_ptr.var_patt]
-// CHECK:STDOUT:   %global_ptr.var: ref %ptr.0a2 = var %global_ptr.var_patt [concrete]
+// CHECK:STDOUT:   %global_ptr.var: ref %ptr.0a2 = var_storage %global_ptr.var_patt [concrete]
 // CHECK:STDOUT:   %global_ref.patt: %pattern_type.635 = ref_binding_pattern global_ref [concrete = constants.%global_ref.patt]
 // CHECK:STDOUT:   %global_ref.var_patt: %pattern_type.635 = var_pattern %global_ref.patt [concrete = constants.%global_ref.var_patt]
-// CHECK:STDOUT:   %global_ref.var: ref %const = var %global_ref.var_patt [concrete]
+// CHECK:STDOUT:   %global_ref.var: ref %const = var_storage %global_ref.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -143,9 +143,6 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %local.patt: %pattern_type.bbc = value_binding_pattern local [concrete = constants.%local.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc7_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %global.ref: ref %C = name_ref global, imports.%global.var [concrete = imports.%global.var]
 // CHECK:STDOUT:   %.loc7_32: %C = acquire_value %global.ref
@@ -153,9 +150,9 @@ fn MyF() {
 // CHECK:STDOUT:     %Cpp.ref.loc7_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %local: %C = value_binding local, %.loc7_32
+// CHECK:STDOUT:   %local: %C = wrapper_binding local, %.loc7_32
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %local_ptr.patt: %pattern_type.8fa = value_binding_pattern local_ptr [concrete = constants.%local_ptr.patt]
+// CHECK:STDOUT:     %local.patt: %pattern_type.bbc = value_binding_pattern local [concrete = constants.%local.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %global_ptr.ref: ref %ptr.0a2 = name_ref global_ptr, imports.%global_ptr.var [concrete = imports.%global_ptr.var]
@@ -165,9 +162,9 @@ fn MyF() {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc8: type = ptr_type %C.ref.loc8 [concrete = constants.%ptr.0a2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %local_ptr: %ptr.0a2 = value_binding local_ptr, %.loc8_37
+// CHECK:STDOUT:   %local_ptr: %ptr.0a2 = wrapper_binding local_ptr, %.loc8_37
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %local_ref.patt: %pattern_type.8fa = value_binding_pattern local_ref [concrete = constants.%local_ref.patt]
+// CHECK:STDOUT:     %local_ptr.patt: %pattern_type.8fa = value_binding_pattern local_ptr [concrete = constants.%local_ptr.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_34: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %global_ref.ref: ref %const = name_ref global_ref, imports.%global_ref.var [concrete = imports.%global_ref.var]
@@ -180,7 +177,10 @@ fn MyF() {
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %C.ref.loc9 [concrete = constants.%ptr.0a2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %local_ref: %ptr.0a2 = value_binding local_ref, %.loc9_37.3
+// CHECK:STDOUT:   %local_ref: %ptr.0a2 = wrapper_binding local_ref, %.loc9_37.3
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %local_ref.patt: %pattern_type.8fa = value_binding_pattern local_ref [concrete = constants.%local_ref.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -218,16 +218,16 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %local.patt: <error> = value_binding_pattern local [concrete = <error>]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc22_44: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %global.ref: <error> = name_ref global, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %Cpp.ref.loc22_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %UnusupportedType.ref: <error> = name_ref UnusupportedType, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %local: <error> = value_binding local, <error> [concrete = <error>]
+// CHECK:STDOUT:   %local: <error> = wrapper_binding local, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %local.patt: <error> = value_binding_pattern local [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

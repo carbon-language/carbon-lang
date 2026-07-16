@@ -14,7 +14,7 @@ class Class {
   fn F() -> ();
 }
 
-// TODO: Use `:!` here once it is available.
+// TODO: Use `generic` here once local generic `let` bindings are supported.
 let T: type = Class;
 
 // The class name is required to be written in the same way as in the class

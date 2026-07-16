@@ -8,6 +8,28 @@
 
 namespace Carbon::Parse {
 
+// Determines the binding context for an explicit `()` parameter list beginning
+// at the current position. A list that is a name qualifier (its matched `)` is
+// immediately followed by `.`) names a compile-time entity, so its parameters
+// use the compile-time-entity context; otherwise the list uses the enclosing
+// declaration's default `decl_context`.
+static auto ExplicitParamListContext(Context& context,
+                                     BindingContext decl_context)
+    -> BindingContext {
+  // A compile-time entity's parameters are compile-time whether or not this
+  // list is a name qualifier, so there is no need to look ahead for the `.`.
+  if (decl_context == BindingContext::CompileTimeEntityParam) {
+    return decl_context;
+  }
+  auto open_paren = *context.position();
+  auto close_paren = context.tokens().GetMatchedClosingToken(open_paren);
+  auto after_close = Lex::TokenIndex(close_paren.index + 1);
+  if (context.tokens().GetKind(after_close) == Lex::TokenKind::Period) {
+    return BindingContext::CompileTimeEntityParam;
+  }
+  return decl_context;
+}
+
 // Adds a leaf node for the name, and updates the state stack for parameter
 // handling.
 static auto HandleName(Context& context, Context::State state,
@@ -21,21 +43,27 @@ static auto HandleName(Context& context, Context::State state,
       context.AddNode(not_before_params_qualifier_kind,
                       context.ConsumeChecked(Lex::TokenKind::Period),
                       state.has_error);
-      context.PushState(StateKind::DeclNameAndParams);
+      // Carry the declaration's binding context across the qualified name so
+      // the final parameter list uses the declaration's default phase.
+      context.PushState(StateKind::DeclNameAndParams, *context.position(),
+                        state.binding_context);
       break;
 
     case Lex::TokenKind::OpenSquareBracket:
       context.AddLeafNode(before_params_kind, name_token);
       state.kind = StateKind::DeclNameAndParamsAfterImplicit;
       context.PushState(state);
-      context.PushState(StateKind::PatternListAsImplicit);
+      context.PushState(StateKind::PatternListAsImplicit, *context.position(),
+                        BindingContext::DeducedParam);
       break;
 
     case Lex::TokenKind::OpenParen:
       context.AddLeafNode(before_params_kind, name_token);
       state.kind = StateKind::DeclNameAndParamsAfterParams;
       context.PushState(state);
-      context.PushState(StateKind::PatternListAsExplicit);
+      context.PushState(
+          StateKind::PatternListAsExplicit, *context.position(),
+          ExplicitParamListContext(context, state.binding_context));
       break;
 
     case Lex::TokenKind::MinusGreater:
@@ -91,7 +119,8 @@ auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
     return;
   }
 
-  context.PushState(StateKind::PatternListAsExplicit);
+  context.PushState(StateKind::PatternListAsExplicit, *context.position(),
+                    ExplicitParamListContext(context, state.binding_context));
 }
 
 auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {
@@ -102,7 +131,8 @@ auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {
                  NodeKind::IdentifierNameMaybeBeforeSignature);
     context.AddNode(NodeKind::IdentifierNameQualifierWithParams, *period,
                     state.has_error);
-    context.PushState(StateKind::DeclNameAndParams);
+    context.PushState(StateKind::DeclNameAndParams, *context.position(),
+                      state.binding_context);
   }
 }
 

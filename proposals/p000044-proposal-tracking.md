@@ -639,15 +639,15 @@ In a workflow where there's always a tracking issue:
 1.  Create the tracking issue, for example #123.
 2.  Create the PR, for example #456, naming the proposal p0123.md after the
     tracking issue.
-    1. Use GitHub features to link #123 and #456.
+    1.  Use GitHub features to link #123 and #456.
 3.  Update the status in p0123.md and labels of #123 when progressing a
     proposal.
 4.  When a decision is made, create a new PR, for example #789, containing the
     decision p0123-decision.md.
-    1. This does not replace the Discourse Forum topic announcing a decision.
-    2. Use GitHub features to link #123 and #789.
-    3. Comments on the decision may go on the decision PR, similar to the
-       proposal PR discussion.
+    1.  This does not replace the Discourse Forum topic announcing a decision.
+    2.  Use GitHub features to link #123 and #789.
+    3.  Comments on the decision may go on the decision PR, similar to the
+        proposal PR discussion.
 5.  Declined/deferred proposals may be committed or not; it doesn't matter.
 
 Advantages:
@@ -667,13 +667,13 @@ may create them for bucketing work, they are non-essential):
 
 1.  Create the PR, for example #456, naming the proposal p0456.md.
 2.  Update the labels of #456 when progressing a proposal.
-    1. Don't bother putting the status in p0456.md: people should rely on the PR
-       labels since it's in the same place.
+    1.  Don't bother putting the status in p0456.md: people should rely on the PR
+        labels since it's in the same place.
 3.  When a decision is made, add it as a comment to #456.
-    1. This does not replace the Discourse Forum topic announcing a decision.
-    2. Comments on the decision should go in Discourse Forums.
-    3. The author is asked to link to the decision in p0456.md before the commit
-       is approved.
+    1.  This does not replace the Discourse Forum topic announcing a decision.
+    2.  Comments on the decision should go in Discourse Forums.
+    3.  The author is asked to link to the decision in p0456.md before the commit
+        is approved.
 4.  If declined/deferred proposals are committed, it would be best to add a
     status in p0456.md before committing.
 
@@ -785,35 +785,35 @@ comments together, as in a review.
 
 [Google Docs](https://support.google.com/docs/answer/65129?co=GENIE.Platform%3DDesktop&hl=en):
 
-1. Follow the link to the doc
-2. Select text to comment on
-3. Click on "+" to add a comment (or use keyboard shortcut)
-4. Enter text
-5. Click "Comment"
+1.  Follow the link to the doc
+2.  Select text to comment on
+3.  Click on "+" to add a comment (or use keyboard shortcut)
+4.  Enter text
+5.  Click "Comment"
 
 [GitHub](https://help.github.com/en/enterprise/2.14/user/articles/commenting-on-a-pull-request):
 
-1. Follow the link to a pull request
-2. Click on "+" next to line to comment on
-3. Enter text
-4. Click "Add single comment"
+1.  Follow the link to a pull request
+2.  Click on "+" next to line to comment on
+3.  Enter text
+4.  Click "Add single comment"
 
 #### Suggesting edits
 
 [Google Docs](https://support.google.com/docs/answer/6033474?co=GENIE.Platform%3DDesktop&hl=en):
 
-1. Follow the link to the doc
-2. Select text to suggest edit on
-3. Type suggested edit
+1.  Follow the link to the doc
+2.  Select text to suggest edit on
+3.  Type suggested edit
 
 [GitHub](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/commenting-on-a-pull-request):
 
-1. Follow the link to a pull request
-2. Click on "+" next to line to comment on
-3. Optionally select multiple lines
-4. Click on the left-most button
-5. Edit quoted text
-6. Click "Add single comment"
+1.  Follow the link to a pull request
+2.  Click on "+" next to line to comment on
+3.  Optionally select multiple lines
+4.  Click on the left-most button
+5.  Edit quoted text
+6.  Click "Add single comment"
 
 ### Google Docs add-ons
 
@@ -934,7 +934,6 @@ etc. In general, the PR-centric model was favored.
     -   Less to learn
     -   Fewer steps in the process
     -   No outdated versions in the old format left behind
-
 -   The technical flow seems on balance better than the Google Docs-based
     workflow. The proposal does a really good job explaining advantages and
     disadvantages. In summary, the Google Docs-centric workflow has a lot of

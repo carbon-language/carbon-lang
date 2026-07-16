@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/choice/generic.carbon
 
 //@dump-sem-ir-begin
-choice Always(T:! type) {
+choice Always(T: type) {
   Sunny
 }
 //@dump-sem-ir-end
@@ -20,7 +20,7 @@ choice Always(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
@@ -41,9 +41,9 @@ choice Always(T:! type) {
 // CHECK:STDOUT:   %Always.decl: %Always.type = class_decl @Always [concrete = constants.%Always.generic] {
 // CHECK:STDOUT:     %T.patt.loc14_16.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc14_19.1: type = splice_block %.loc14_19.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc14_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc14_18.1: type = splice_block %.loc14_18.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc14_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc14_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc14_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -74,7 +74,7 @@ choice Always(T:! type) {
 // CHECK:STDOUT:     %.loc16_1.10: init @Always.%Always (%Always) = converted %.loc16_1.3, %.loc16_1.9 [symbolic = %Always.val (constants.%Always.val)]
 // CHECK:STDOUT:     %.loc16_1.11: ref @Always.%Always (%Always) = temporary %.loc16_1.4, %.loc16_1.10 [symbolic = %.loc16_1.13 (constants.%.4eb)]
 // CHECK:STDOUT:     %.loc16_1.12: @Always.%Always (%Always) = acquire_value %.loc16_1.11 [symbolic = %Always.val (constants.%Always.val)]
-// CHECK:STDOUT:     %Sunny: @Always.%Always (%Always) = value_binding Sunny, %.loc16_1.12
+// CHECK:STDOUT:     %Sunny: @Always.%Always (%Always) = wrapper_binding Sunny, %.loc16_1.12
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

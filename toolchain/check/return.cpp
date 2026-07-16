@@ -9,6 +9,7 @@
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -138,7 +139,7 @@ auto BuildReturnWithNoExpr(Context& context, SemIR::LocId loc_id) -> void {
     diag.Emit();
   }
 
-  AddReturnCleanupBlock(context, loc_id);
+  AddReturnInstWithCleanups(context, loc_id);
 }
 
 auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
@@ -169,8 +170,8 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     diag.Emit();
     expr_id = SemIR::ErrorInst::InstId;
   } else {
-    auto return_form =
-        context.insts().Get(function.GetDeclaredReturnForm(context.sem_ir()));
+    auto return_form_id = function.GetDeclaredReturnForm(context.sem_ir());
+    auto return_form = context.insts().Get(return_form_id);
     CARBON_KIND_SWITCH(return_form) {
       case CARBON_KIND(SemIR::InitForm _): {
         if (!SemIR::InitRepr::ForType(context.sem_ir(), return_type_id)
@@ -210,12 +211,35 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
         expr_id = SemIR::ErrorInst::InstId;
         break;
       }
+      case CARBON_KIND(SemIR::SymbolicBinding _): {
+        auto expr_form_info = SemIR::GetFormInfo(context.sem_ir(), expr_id);
+        if (expr_form_info.kind != SemIR::FormInfo::Dependent) {
+          context.TODO(loc_id,
+                       "support nontrivial conversions between symbolic forms");
+          expr_id = SemIR::ErrorInst::InstId;
+          break;
+        }
+        auto expr_form_const_id = SemIR::GetConstantValueInSpecific(
+            context.sem_ir(), SemIR::SpecificId::None,
+            expr_form_info.form_inst_id);
+        auto declared_form_const_id = SemIR::GetConstantValueInSpecific(
+            context.sem_ir(), SemIR::SpecificId::None, return_form_id);
+        if (expr_form_const_id != declared_form_const_id) {
+          context.TODO(loc_id,
+                       "support nontrivial conversions between symbolic forms");
+          expr_id = SemIR::ErrorInst::InstId;
+          break;
+        }
+        // expr_id's form is identical to the expected form, so we can use it
+        // directly.
+        break;
+      }
       default:
         CARBON_FATAL("Unexpected inst kind: {0}", return_form);
     }
   }
-  AddReturnCleanupBlockWithExpr(context, loc_id,
-                                {.expr_id = expr_id, .dest_id = out_param_id});
+  AddReturnInstWithCleanups(context, loc_id,
+                            {.expr_id = expr_id, .dest_id = out_param_id});
 }
 
 auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
@@ -236,7 +260,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
   // to indicate that this was a `return var`, not a reference return.
   returned_var_id = ConvertToValueExpr(context, returned_var_id);
 
-  AddReturnCleanupBlockWithExpr(
+  AddReturnInstWithCleanups(
       context, node_id,
       {.expr_id = returned_var_id, .dest_id = return_param_id});
 }

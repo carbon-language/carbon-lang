@@ -66,6 +66,13 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                  "Unexpected inst {0} for template constant int", bound_inst);
     return ConstantEvalResult::NewSamePhase(inst);
   }
+
+  auto orig_inst = context.insts().GetAs<SemIR::ArrayType>(inst_id);
+  auto error_loc =
+      context.insts().GetCanonicalLocId(orig_inst.bound_id).has_value()
+          ? orig_inst.bound_id
+          : inst_id;
+
   // TODO: We should check that the size of the resulting array type
   // fits in 64 bits, not just that the bound does. Should we use a
   // 32-bit limit for 32-bit targets?
@@ -74,17 +81,15 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
       bound_val.isNegative()) {
     CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
                       "array bound of {0} is negative", TypedInt);
-    context.emitter().Emit(
-        context.insts().GetAs<SemIR::ArrayType>(inst_id).bound_id,
-        ArrayBoundNegative, {.type = int_bound->type_id, .value = bound_val});
+    context.emitter().Emit(error_loc, ArrayBoundNegative,
+                           {.type = int_bound->type_id, .value = bound_val});
     return ConstantEvalResult::Error;
   }
   if (bound_val.getActiveBits() > 64) {
     CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
                       "array bound of {0} is too large", TypedInt);
-    context.emitter().Emit(
-        context.insts().GetAs<SemIR::ArrayType>(inst_id).bound_id,
-        ArrayBoundTooLarge, {.type = int_bound->type_id, .value = bound_val});
+    context.emitter().Emit(error_loc, ArrayBoundTooLarge,
+                           {.type = int_bound->type_id, .value = bound_val});
     return ConstantEvalResult::Error;
   }
   return ConstantEvalResult::NewSamePhase(inst);
@@ -110,19 +115,14 @@ auto EvalConstantInst(Context& context, SemIR::AliasBinding inst)
       context.constant_values().Get(inst.value_id));
 }
 
-auto EvalConstantInst(Context& context, SemIR::RefBinding inst)
+auto EvalConstantInst(Context& context, SemIR::WrapperBinding inst)
     -> ConstantEvalResult {
   // A reference binding evaluates to the value it's bound to.
-  if (inst.value_id.has_value()) {
+  if (inst.value_id.has_value() && SemIR::IsRefCategory(SemIR::GetExprCategory(
+                                       context.sem_ir(), inst.value_id))) {
     return ConstantEvalResult::Existing(
         context.constant_values().Get(inst.value_id));
   }
-  return ConstantEvalResult::NotConstant;
-}
-
-auto EvalConstantInst(Context& /*context*/, SemIR::ValueBinding /*inst*/)
-    -> ConstantEvalResult {
-  // Non-`:!` value bindings are not constant.
   return ConstantEvalResult::NotConstant;
 }
 
@@ -348,13 +348,13 @@ static auto TryFindValueInRewriteConstraints(
 
     // The LHS of a rewrite can be an arbitrary type. For example:
     // ```
-    //   T:! Z where C impls (Y(.Self) where .Y1 = {})
+    //   T: Z where C impls (Y(.Self) where .Y1 = {})
     // ```
     // The rewrite in the facet type will be `(C as Y(T)).Y1 = {}`.
     //
     // It can also be another ImplWitnessAccess. For example:
     // ```
-    //   T:! Z where .Z1 impls (Y where .Y1 = {})
+    //   T: Z where .Z1 impls (Y where .Y1 = {})
     // ```
     // The rewrite in the facet type will be `((T as Z).Z1 as Y).Y1 = {}`.
     //
@@ -371,7 +371,7 @@ static auto TryFindValueInRewriteConstraints(
     // TODO: Requiring the rewrite to be against `.Self` is actually
     // insufficient. For a facet like
     // ```
-    // T:! type where C impls (Z(.Self) where .Z1 = ())
+    // T: type where C impls (Z(.Self) where .Z1 = ())
     // ```
     // and an access like `C.(Z(T).Z1)`, the root of the access is `C`. If we
     // search `T` for a witness, we'd need the inner-most self facet to be `C`

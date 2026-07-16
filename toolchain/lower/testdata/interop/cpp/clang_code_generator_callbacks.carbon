@@ -70,6 +70,7 @@ void f2() {
 }
 ''';
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'clang_code_generator_callbacks.carbon'
 // CHECK:STDOUT: source_filename = "clang_code_generator_callbacks.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -82,7 +83,7 @@ void f2() {
 // CHECK:STDOUT: @a = external global [10 x i8], align 1
 // CHECK:STDOUT: @b = dso_local global ptr @a, align 8
 // CHECK:STDOUT: @_ZN2t3IiE1iE = linkonce_odr dso_local global i32 0, comdat, align 4
-// CHECK:STDOUT: @_ZTV2t1 = dso_local unnamed_addr constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI2t1, ptr @_ZN2t12f1Ev] }, align 8
+// CHECK:STDOUT: @_ZTV2t1 = dso_local constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI2t1, ptr @_ZN2t12f1Ev] }, align 8
 // CHECK:STDOUT: @_ZTI2t1 = dso_local constant { ptr, ptr } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv117__class_type_infoE, i64 2), ptr @_ZTS2t1 }, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv117__class_type_infoE = external global [0 x ptr]
 // CHECK:STDOUT: @_ZTS2t1 = dso_local constant [4 x i8] c"2t1\00", align 1
@@ -92,7 +93,7 @@ void f2() {
 // CHECK:STDOUT: define dso_local void @_ZN2t12f1Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #0 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !11
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -100,7 +101,7 @@ void f2() {
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local noundef i32 @_Z1fv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %0 = load i32, ptr getelementptr inbounds nuw (i8, ptr @a, i64 12), align 4, !tbaa !14
+// CHECK:STDOUT:   %0 = load i32, ptr getelementptr inbounds nuw (i8, ptr @a, i64 12), align 4, !tbaa !15
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -108,7 +109,7 @@ void f2() {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN2t24funcEv(ptr noundef nonnull align 1 dereferenceable(1) %this) #0 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !16
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !17
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -116,31 +117,34 @@ void f2() {
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local void @_Z2f2v() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   store i32 42, ptr @_ZN2t3IiE1iE, align 4, !tbaa !7
+// CHECK:STDOUT:   store i32 42, ptr @_ZN2t3IiE1iE, align 4, !tbaa !19
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "clang_code_generator_callbacks.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "clang_code_generator_callbacks.carbon", directory: "")
-// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
-// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = !{!12, !12, i64 0}
-// CHECK:STDOUT: !12 = !{!"p1 _ZTS2t1", !13, i64 0}
-// CHECK:STDOUT: !13 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !14 = !{!15, !8, i64 0}
-// CHECK:STDOUT: !15 = !{!"_ZTS1S", !8, i64 0}
-// CHECK:STDOUT: !16 = !{!17, !17, i64 0}
-// CHECK:STDOUT: !17 = !{!"p1 _ZTS2t2", !13, i64 0}
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
+// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = !{!13, !13, i64 0}
+// CHECK:STDOUT: !13 = !{!"p1 _ZTS2t1", !14, i64 0}
+// CHECK:STDOUT: !14 = !{!"any pointer", !10, i64 0}
+// CHECK:STDOUT: !15 = !{!16, !9, i64 0}
+// CHECK:STDOUT: !16 = !{!"_ZTS1S", !9, i64 0}
+// CHECK:STDOUT: !17 = !{!18, !18, i64 0}
+// CHECK:STDOUT: !18 = !{!"p1 _ZTS2t2", !14, i64 0}
+// CHECK:STDOUT: !19 = !{!9, !9, i64 0}
+// CHECK:STDOUT:

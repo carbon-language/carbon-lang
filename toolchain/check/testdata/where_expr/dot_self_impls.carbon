@@ -23,7 +23,7 @@ interface J {
   fn GSelf(self);
 }
 
-fn INotJ[T:! I where .Self impls J](x: T) {
+fn INotJ[T: I where .Self impls J](x: T) {
   // Can access members of `I` using either kind of member access.
   T.FNonInstance();
   T.(I.FNonInstance)();
@@ -39,7 +39,7 @@ fn INotJ[T:! I where .Self impls J](x: T) {
   x.(J.GSelf)();
 }
 
-fn TypeNotJ[T:! type where .Self impls J](x: T) {
+fn TypeNotJ[T: type where .Self impls J](x: T) {
   T.(J.GNonInstance)();
   x.(J.GSelf)();
 }
@@ -55,7 +55,7 @@ interface J {
   fn F() -> {};
 }
 
-fn INotJ(T:! I where .Self impls J) {
+fn INotJ(generic T: I where .Self impls J) {
   // Gets `T.(I.F)`. Doesn't consider `T.(J.F)`, so no ambiguity.
   let unused x: () = T.F();
 }
@@ -71,7 +71,7 @@ interface J {
   fn G();
 }
 
-fn INotJ(T:! I where .Self impls J) {
+fn INotJ(generic T: I where .Self impls J) {
   // CHECK:STDERR: fail_name_lookup_through_where_self_impls.carbon:[[@LINE+4]]:3: error: member name `G` not found in `I` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   T.G();
   // CHECK:STDERR:   ^~~
@@ -86,7 +86,7 @@ interface J {
   fn G();
 }
 
-fn TypeNotJ(T:! type where .Self impls J) {
+fn TypeNotJ(generic T: type where .Self impls J) {
   // CHECK:STDERR: fail_name_lookup_with_type.carbon:[[@LINE+4]]:3: error: member name `G` not found [MemberNameNotFound]
   // CHECK:STDERR:   T.G();
   // CHECK:STDERR:   ^~~
@@ -100,7 +100,7 @@ library "[[@TEST_NAME]]";
 interface A {}
 interface B { fn Bfn(); }
 
-fn F(T:! A & B) {
+fn F(generic T: A & B) {
   // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+4]]:6: error: member name `Bfn` not found in `A` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   T.((A where .Self impls B).Bfn)();
   // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,7 +127,7 @@ interface J {
   fn GSelf(self);
 }
 
-fn INotJ[T:! I where .Self impls J](x: T) {
+fn INotJ[T: I where .Self impls J](x: T) {
   // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+4]]:3: error: member name `GNonInstance` not found in `I` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:   x.GNonInstance();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
@@ -144,9 +144,9 @@ fn INotJ[T:! I where .Self impls J](x: T) {
 // --- compare_equal.carbon
 library "[[@TEST_NAME]]";
 
-class WrapType(T:! type) {}
-fn AssertSame[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-fn Type(T:! type) -> WrapType(T) { return {}; }
+class WrapType(T: type) {}
+fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+fn Type(generic T: type) -> WrapType(T) { return {}; }
 
 interface I;
 interface J;
@@ -162,47 +162,70 @@ fn Test() {
   AssertSame(Type(I & J where .Self impls K), Type(J & I where .Self impls J & K));
   AssertSame(Type(I & J where .Self impls K), Type(J & I where .Self impls K & I & J));
   AssertSame(Type(I where .Self impls J & K), Type(I where .Self impls K & I & J));
-  AssertSame(Type(I where .Self impls J & K),
-             Type(I where .Self impls (J where .Self impls K)));
-  AssertSame(Type(I where .Self impls J & K),
-             Type(I where .Self impls (K where .Self impls J)));
-  AssertSame(Type(I where .Self impls J & K),
-             Type(I where .Self impls (type where .Self impls (J where .Self impls K))));
 }
 
 interface I {}
 interface J {}
 interface K {}
 
-// --- compare_equal_with_associated_constant.carbon
+// --- fail_todo_compare_equal_with_rewrite.carbon
 library "[[@TEST_NAME]]";
 
-class WrapType(T:! type) {}
-fn AssertSame[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-fn Type(T:! type) -> WrapType(T) { return {}; }
+class WrapType(T: type) {}
+fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+fn Type(generic T: type) -> WrapType(T) { return {}; }
 
-interface I { let A:! type; }
-interface J { let A:! type; }
+interface I { let A: type; }
+interface J { let B: type; }
+
+// TODO: The `.Self` implied in `.A` contains all of the extended interfaces,
+// which is different between these facet types at the point where `.A` is
+// written. So the resulting facet types are different. We should drop
+// interfaces from the rewrite constraint's LHS that don't apply so that we get
+// a canonical representation of `.A` that is independent of the current state
+// of `.Self` since `.A = ()` can not be written as, and is thus not equivalent
+// to, `.Self.(I.A) = ()`.
 
 fn Test() {
+  // TODO: This should pass.
+  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSame(Type((I where .A = ()) & J),
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE-19]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   AssertSame(Type((I where .A = ()) & J),
-             Type(I & J where .Self impls (I where .A = ())));
-  AssertSame(Type(I & (J where .A = {})),
-             Type(I & J where .Self impls (J where .A = {})));
+             Type(I & J where .A = ()));
+  // TODO: This should pass.
+  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSame(Type(I & (J where .B = {})),
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE-29]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  AssertSame(Type(I & (J where .B = {})),
+             Type(I & J where .B = {}));
 
-  AssertSame(Type((I where .A = ()) & (J where .A = {})),
-             Type(I & J where .Self impls (I where .A = ())
-                    and .Self impls (J where .A = {})));
-  AssertSame(Type((I where .A = ()) & (J where .A = {})),
-             Type(I & J where .Self impls (I where .A = ()) & (J where .A = {})));
+  // TODO: This should pass.
+  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSame(Type((I where .A = ()) & (J where .B = {})),
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE-40]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  AssertSame(Type((I where .A = ()) & (J where .B = {})),
+             Type(I & J where .A = () and .B = {}));
 }
 
 // --- fail_compare_not_equal.carbon
 library "[[@TEST_NAME]]";
 
-class WrapType(T:! type) {}
-fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-fn Type(T:! type) -> WrapType(T) { return {}; }
+class WrapType(T: type) {}
+fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+fn Type(generic T: type) -> WrapType(T) { return {}; }
 
 interface I {}
 interface J {}
@@ -212,10 +235,29 @@ fn Test() {
   // CHECK:STDERR:   Same(Type(I where .Self impls J), Type(J where .Self impls I));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Same(Type(I where .Self impls J), Type(J where .Self impls I));
+}
+
+// --- todo_fail_compare_not_equal_with_same_type.carbon
+library "[[@TEST_NAME]]";
+
+class WrapType(T: type) {}
+fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
+fn Type(generic T: type) -> WrapType(T) { return {}; }
+
+interface I { let A: type; }
+interface J { let B: type; }
+
+fn Test() {
+  // The first `.A` has a `.Self` of type `I`. The second contains a `.Self` of
+  // type `I & J`. That makes the two constaints `.A == ()` have different
+  // constant values, so these are different facet types.
+  //
+  // TODO: This should fail. We don't store same-type constraints in the facet type yet.
+  Same(Type((I where .A == ()) & J), Type(I & J where .A == ()));
 }
 
 // --- impl_as.carbon
@@ -224,7 +266,7 @@ library "[[@TEST_NAME]]";
 class C {}
 
 interface I {}
-interface J { let T:! type; }
+interface J { let T: type; }
 
 // Interfaces to the right of the `where` don't interfere with the
 // "can only impl a facet type with a single interface" rule. Only
@@ -233,26 +275,27 @@ interface J { let T:! type; }
 impl {.a: C} as I where .Self impls J {}
 impl {.b: C} as J where .Self impls I and .T = () {}
 
-// Rewrite constraints can appear inside the `where .Self impls`.
-impl {.c: C} as J where .Self impls (I & J where .T = ()) {}
-
 // --- impl_with_rewrite_of_interface_not_being_implemented.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let A:! type; }
-interface J { let A:! type; }
+interface I { let A: type; }
+interface J { let A: type; }
 
 class C {}
 
 // Implementation of `C as J`.
 impl C as J where .A = {} {}
 
+// Requirement of implementing J with `.A = A`.
+constraint NeedJ(A: type) {
+  require impls J where .A = A;
+}
+
 // This is an implementation of `I` with `I.A = ()`. The requirement
 // that `C` also impls `J where .A = {}` is an additional constraint
 // that must be satisfied (and is satisfied by the impl above, though
 // that currently isn't checked), but doesn't affect `C as I`.
-impl C as I where .Self impls
-    (J where .A = {} and .Self impls (I where .A = ())) {}
+impl C as I where .A = () and .Self impls NeedJ({}) {}
 
 let x: C.(I.A) = ();
 let y: C.(J.A) = {};

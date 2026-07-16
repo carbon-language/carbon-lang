@@ -312,7 +312,7 @@ auto DeductionContext::Deduce() -> bool {
       param_type_id =
           SemIR::ExtractScrutineeType(context().sem_ir(), param_type_id);
     } else if (context().types().IsFacetType(param_type_id)) {
-      // Given `fn F[G:! Interface](g: G)`, the type of `g` is `G as type`. For
+      // Given `fn F[G: Interface](g: G)`, the type of `g` is `G as type`. For
       // deduction, we want to ignore the `as type`, and check that the argument
       // can convert to the FacetType of the canonical facet value.
       param_id = GetCanonicalFacetOrTypeValue(context(), param_id);
@@ -361,9 +361,9 @@ auto DeductionContext::Deduce() -> bool {
     CARBON_KIND_SWITCH(param_inst) {
       // Deducing a symbolic binding pattern from an argument deduces the
       // binding as having that constant value. For example, deducing
-      // `(T:! type)` against `(i32)` deduces `T` to be `i32`. This only arises
-      // when initializing a generic parameter from an explicitly specified
-      // argument, and in this case, the argument is required to be a
+      // `(generic T: type)` against `(i32)` deduces `T` to be `i32`. This only
+      // arises when initializing a generic parameter from an explicitly
+      // specified argument, and in this case, the argument is required to be a
       // compile-time constant.
       case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
         auto& entity_name = context().entity_names().Get(bind.entity_name_id);
@@ -403,7 +403,7 @@ auto DeductionContext::Deduce() -> bool {
 
       // Deducing a symbolic binding appearing within an expression against a
       // constant value deduces the binding as having that value. For example,
-      // deducing `[T:! type](x: T)` against `("foo")` deduces `T` as `String`.
+      // deducing `[T: type](x: T)` against `("foo")` deduces `T` as `String`.
       case CARBON_KIND(SemIR::SymbolicBinding bind): {
         auto& entity_name = context().entity_names().Get(bind.entity_name_id);
         auto index = entity_name.bind_index();
@@ -543,13 +543,6 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
     // that incorrectly.
     auto binding_type_id = context().insts().Get(binding_id).type_id();
     if (binding_type_id.is_symbolic()) {
-      auto param_type_const_id =
-          SubstConstant(context(), SemIR::LocId(binding_id),
-                        binding_type_id.AsConstantId(), substitutions_);
-      CARBON_CHECK(param_type_const_id.has_value());
-      binding_type_id =
-          context().types().GetTypeIdForTypeConstantId(param_type_const_id);
-
       Diagnostics::AnnotationScope annotate_diagnostics(
           &context().emitter(), [&](auto& builder) {
             if (diagnose_) {
@@ -557,6 +550,25 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
                                     builder);
             }
           });
+
+      {
+        Diagnostics::ContextScope diag_context(
+            &context().emitter(), [&](auto& builder) {
+              CARBON_DIAGNOSTIC(
+                  SubstitutingGenericParamType, Context,
+                  "constructed invalid specific for {0} from argument",
+                  SemIR::TypeId);
+              builder.Context(loc_id_, SubstitutingGenericParamType,
+                              binding_type_id);
+            });
+        auto param_type_const_id =
+            SubstConstant(context(), SemIR::LocId(binding_id),
+                          binding_type_id.AsConstantId(), substitutions_);
+        CARBON_CHECK(param_type_const_id.has_value());
+        binding_type_id =
+            context().types().GetTypeIdForTypeConstantId(param_type_const_id);
+      }
+
       auto converted_arg_id =
           diagnose_ ? ConvertToValueOfType(context(), loc_id_, deduced_arg_id,
                                            binding_type_id)
@@ -635,9 +647,10 @@ auto DeduceGenericCallArguments(
 }
 
 auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
-                         const SemIR::Impl& impl, SemIR::ConstantId self_id,
+                         SemIR::ImplId impl_id, SemIR::ConstantId self_id,
                          SemIR::SpecificId constraint_specific_id)
     -> SemIR::SpecificId {
+  const auto& impl = context.impls().Get(impl_id);
   DeductionContext deduction(&context, loc_id, impl.generic_id,
                              /*enclosing_specific_id=*/SemIR::SpecificId::None,
                              /*diagnose=*/false);

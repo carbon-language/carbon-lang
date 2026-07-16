@@ -104,7 +104,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc21: ref %Base = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Base [concrete = constants.%Base]
-// CHECK:STDOUT:     %self.loc21: ref %Base = ref_binding self, %self.param.loc21
+// CHECK:STDOUT:     %self.loc21: ref %Base = wrapper_binding self, %self.param.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {
@@ -116,7 +116,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Derived.ref [concrete = constants.%ptr.64c]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.64c = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.64c = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -128,7 +128,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc18: ref %Base = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Base [concrete = constants.%Base]
-// CHECK:STDOUT:     %self.loc18: ref %Base = ref_binding self, %self.param.loc18
+// CHECK:STDOUT:     %self.loc18: ref %Base = wrapper_binding self, %self.param.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a [concrete = constants.%complete_type.388]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -175,9 +175,10 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %.loc30_4.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %F.ref: %Base.F.type = name_ref F, @Base.%Base.F.decl [concrete = constants.%Base.F]
 // CHECK:STDOUT:   %Base.F.bound: <bound method> = bound_method %.loc30_4.1, %F.ref
-// CHECK:STDOUT:   %.loc30_4.2: ref %Base = class_element_access %.loc30_4.1, element0
-// CHECK:STDOUT:   %.loc30_4.3: ref %Base = converted %.loc30_4.1, %.loc30_4.2
-// CHECK:STDOUT:   %Base.F.call: init %empty_tuple.type = call %Base.F.bound(%.loc30_4.3)
+// CHECK:STDOUT:   %.loc30_4.2: ref %Base = as_compatible %.loc30_4.1
+// CHECK:STDOUT:   %.loc30_4.3: ref %Base = class_element_access %.loc30_4.2, element0
+// CHECK:STDOUT:   %.loc30_4.4: ref %Base = converted %.loc30_4.1, %.loc30_4.3
+// CHECK:STDOUT:   %Base.F.call: init %empty_tuple.type = call %Base.F.bound(%.loc30_4.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

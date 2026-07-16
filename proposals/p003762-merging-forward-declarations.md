@@ -96,7 +96,7 @@ Example rules for forward declarations in the current design:
 
 -   [High-level](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/README.md#declarations-definitions-and-scopes)
 -   [Classes](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#forward-declaration)
--   [Functions](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/functions.md#function-declarations)
+-   [Functions](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/functions.md#forward-declarationss)
 -   Generics:
     -   [`impl`](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/generics/details.md#forward-impl-declaration)
     -   [`interface`](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/generics/details.md#declaring-interfaces-and-named-constraints)
@@ -192,11 +192,11 @@ declaration, only access modifiers are valid (see
 
 When considering whether a declaration is allowed, we apply the rules:
 
-1. A declaration should always add new information.
-    - No declarations after a definition.
-2. Only one library can declare an entity without `extern`.
-3. Support moving declarations between already-imported `api` files without
-   affecting compilation of client libraries.
+1.  A declaration should always add new information.
+    -   No declarations after a definition.
+2.  Only one library can declare an entity without `extern`.
+3.  Support moving declarations between already-imported `api` files without
+    affecting compilation of client libraries.
 
 #### No forward declarations after declarations
 

@@ -162,7 +162,6 @@ terminology:
 
     We previously referred to a facet type as a type-of-type, but that is no
     longer accurate, as the type of any type is now by definition `type`.
-
 -   A _facet_ is a value of a facet type. For example, `i32 as Hashable` is a
     facet, and `Hashable` is a facet type. Note that all types are facets.
     -   A facet value can be thought of as a tuple of a possibly-symbolic

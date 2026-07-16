@@ -117,13 +117,13 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:     %.loc15_36: Core.Form = init_form %i32 [concrete = constants.%.795]
 // CHECK:STDOUT:     %a.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc15_9: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %a: bool = value_binding a, %a.param
+// CHECK:STDOUT:     %a: bool = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
 // CHECK:STDOUT:     %.loc15_18: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
+// CHECK:STDOUT:     %b: bool = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %c.param: bool = value_param call_param2
 // CHECK:STDOUT:     %.loc15_27: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %c: bool = value_binding c, %c.param
+// CHECK:STDOUT:     %c: bool = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param3
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

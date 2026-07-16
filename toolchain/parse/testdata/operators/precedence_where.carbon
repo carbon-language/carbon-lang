@@ -8,13 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/precedence_where.carbon
 
-fn PostfixStar(T:! I* where .A* == .B*);
+fn PostfixStar(generic T: I* where .A* == .B*);
 
-fn Ampersand(U:! J & K where C & D impls E & F);
+fn Ampersand(generic U: J & K where C & D impls E & F);
 
-fn BinaryPlus(V:! L + M where G & H impls N & O);
+fn BinaryPlus(generic V: L + M where G & H impls N & O);
 
-fn UnaryMinus(W:! -P where -Q impls -R);
+fn UnaryMinus(generic W: -P where -Q impls -R);
 
 // CHECK:STDOUT: - filename: precedence_where.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -23,7 +23,7 @@ fn UnaryMinus(W:! -P where -Q impls -R);
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'PostfixStar'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'I'},
 // CHECK:STDOUT:               {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 3},
@@ -35,14 +35,14 @@ fn UnaryMinus(W:! -P where -Q impls -R);
 // CHECK:STDOUT:               {kind: 'PostfixOperatorStar', text: '*', subtree_size: 3},
 // CHECK:STDOUT:             {kind: 'RequirementEqualEqual', text: '==', subtree_size: 7},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 11},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 14},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 14},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 16},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 19},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Ampersand'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'U'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'J'},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'K'},
 // CHECK:STDOUT:               {kind: 'InfixOperatorAmp', text: '&', subtree_size: 3},
@@ -55,14 +55,14 @@ fn UnaryMinus(W:! -P where -Q impls -R);
 // CHECK:STDOUT:               {kind: 'InfixOperatorAmp', text: '&', subtree_size: 3},
 // CHECK:STDOUT:             {kind: 'RequirementImpls', text: 'impls', subtree_size: 7},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 12},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 15},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 15},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 17},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 20},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'BinaryPlus'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'V'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'L'},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'M'},
 // CHECK:STDOUT:               {kind: 'InfixOperatorPlus', text: '+', subtree_size: 3},
@@ -75,14 +75,14 @@ fn UnaryMinus(W:! -P where -Q impls -R);
 // CHECK:STDOUT:               {kind: 'InfixOperatorAmp', text: '&', subtree_size: 3},
 // CHECK:STDOUT:             {kind: 'RequirementImpls', text: 'impls', subtree_size: 7},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 12},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 15},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 15},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 17},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 20},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'UnaryMinus'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'W'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'P'},
 // CHECK:STDOUT:               {kind: 'PrefixOperatorMinus', text: '-', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 3},
@@ -92,7 +92,7 @@ fn UnaryMinus(W:! -P where -Q impls -R);
 // CHECK:STDOUT:               {kind: 'PrefixOperatorMinus', text: '-', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'RequirementImpls', text: 'impls', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 12},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 12},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 14},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 17},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

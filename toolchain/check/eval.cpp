@@ -3087,8 +3087,7 @@ static auto AddRequirementRewrite(Context& context,
       {.lhs_id = rewrite.lhs_id, .rhs_id = rewrite.rhs_id});
 }
 
-static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
-                                SemIR::RequirementImpls impls,
+static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
                                 SemIR::FacetTypeInfo* info, Phase* phase)
     -> void {
   auto lhs_id = context.constant_values().GetConstantInstId(impls.lhs_id);
@@ -3107,22 +3106,23 @@ static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
   auto facet_type = context.insts().GetAs<SemIR::FacetType>(rhs_id);
   const auto& rhs = context.facet_types().Get(facet_type.facet_type_id);
 
+  // We forbid `where` on the RHS of another `where`, so non-extend constraints
+  // can't be part of a facet type on the RHS of `where ... impls`.
+  CARBON_CHECK(rhs.self_impls_constraints.empty());
+  CARBON_CHECK(rhs.self_impls_named_constraints.empty());
+  CARBON_CHECK(rhs.type_impls_interfaces.empty());
+  CARBON_CHECK(rhs.type_impls_named_constraints.empty());
+  CARBON_CHECK(rhs.rewrite_constraints.empty());
+  CARBON_CHECK(!rhs.other_requirements);
+
   if (IsPeriodSelf(context, lhs_id)) {
     // A facet type with `.Self impls <RHS facet type>`. Whatever the RHS facet
     // type constrains for `.Self` gets forwarded to the output facet type to
     // also constrain `.Self`. Nothing on the RHS of `impls` can extend the
     // resulting facet type.
     llvm::append_range(info->self_impls_constraints, rhs.extend_constraints);
-    llvm::append_range(info->self_impls_constraints,
-                       rhs.self_impls_constraints);
     llvm::append_range(info->self_impls_named_constraints,
                        rhs.extend_named_constraints);
-    llvm::append_range(info->self_impls_named_constraints,
-                       rhs.self_impls_named_constraints);
-    llvm::append_range(info->type_impls_interfaces, rhs.type_impls_interfaces);
-    llvm::append_range(info->type_impls_named_constraints,
-                       rhs.type_impls_named_constraints);
-    llvm::append_range(info->rewrite_constraints, rhs.rewrite_constraints);
   } else {
     auto lhs_facet_or_type = GetCanonicalFacetOrTypeValue(context, lhs_id);
 
@@ -3143,90 +3143,22 @@ static auto AddRequirementImpls(Context& context, SemIR::LocId loc_id,
     llvm::append_range(
         info->type_impls_named_constraints,
         llvm::map_range(rhs.extend_named_constraints, extends_constraint));
-
-    // Impls constraints are written as `T impls X` where `T` is a facet and `X`
-    // is a facet type. The `T` can be `.Self`.
-    //
-    // A value for `.Self` is not known here, so we do not replace them
-    // generally. However in `T impls X where ...` the value of `.Self` on the
-    // RHS of the `where` refers to the `T`. Generally this would make the
-    // `.Self` be ambiguous, but any explicit use of an ambiguous `.Self` is
-    // diagnosed before we get here. So any explicit `.Self` left over are known
-    // to be non-ambiguous and refer to the top level value for `.Self`.
-    //
-    // However, implicit references to `.Self`, via designators, are bound to
-    // the innermost possible value, which makes them bound to the `T` on the
-    // RHS of the nested `where`. We need to replace those implicit `.Self`
-    // references here so that we are left with a facet type where all `.Self`
-    // references are to the same top-level value for `.Self` and can all be
-    // replaced together later.
-
-    auto period_self_replacement_id =
-        context.constant_values().Get(lhs_facet_or_type);
-
-    auto self_impls_interface = [&](SemIR::SpecificInterface si) {
-      return SubstPeriodSelf(context, loc_id, si, period_self_replacement_id,
-                             SubstPeriodSelfBehaviour::ImplicitOnly);
-    };
-    auto self_impls_constraint = [&](SemIR::SpecificNamedConstraint sc) {
-      return SubstPeriodSelf(context, loc_id, sc, period_self_replacement_id,
-                             SubstPeriodSelfBehaviour::ImplicitOnly);
-    };
-    auto type_impls_interface =
-        [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
-        -> SemIR::FacetTypeInfo::TypeImplsInterface {
-      auto self = SubstPeriodSelf(
-          context, loc_id, context.constant_values().Get(impls.self_type),
-          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
-      auto interface = SubstPeriodSelf(
-          context, loc_id, impls.specific_interface, period_self_replacement_id,
-          SubstPeriodSelfBehaviour::ImplicitOnly);
-      return {context.constant_values().GetInstId(self), interface};
-    };
-    auto type_impls_constraint =
-        [&](SemIR::FacetTypeInfo::TypeImplsNamedConstraint impls)
-        -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
-      auto self = SubstPeriodSelf(
-          context, loc_id, context.constant_values().Get(impls.self_type),
-          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
-      auto constraint = SubstPeriodSelf(
-          context, loc_id, impls.specific_named_constraint,
-          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
-      return {context.constant_values().GetInstId(self), constraint};
-    };
-
-    llvm::append_range(
-        info->self_impls_constraints,
-        llvm::map_range(rhs.self_impls_constraints, self_impls_interface));
-    llvm::append_range(info->self_impls_named_constraints,
-                       llvm::map_range(rhs.self_impls_named_constraints,
-                                       self_impls_constraint));
-    llvm::append_range(
-        info->type_impls_interfaces,
-        llvm::map_range(rhs.type_impls_interfaces, type_impls_interface));
-    llvm::append_range(info->type_impls_named_constraints,
-                       llvm::map_range(rhs.type_impls_named_constraints,
-                                       type_impls_constraint));
-
-    auto rewrite_constraint =
-        [&](SemIR::FacetTypeInfo::RewriteConstraint rewrite)
-        -> SemIR::FacetTypeInfo::RewriteConstraint {
-      auto lhs_id = SubstPeriodSelf(
-          context, loc_id, context.constant_values().Get(rewrite.lhs_id),
-          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
-      auto rhs_id = SubstPeriodSelf(
-          context, loc_id, context.constant_values().Get(rewrite.rhs_id),
-          period_self_replacement_id, SubstPeriodSelfBehaviour::ImplicitOnly);
-      return {context.constant_values().GetInstId(lhs_id),
-              context.constant_values().GetInstId(rhs_id)};
-    };
-
-    llvm::append_range(
-        info->rewrite_constraints,
-        llvm::map_range(rhs.rewrite_constraints, rewrite_constraint));
   }
+}
 
-  info->other_requirements |= rhs.other_requirements;
+static auto AddRequirementEquivalent(Context& context,
+                                     SemIR::RequirementEquivalent equiv,
+                                     SemIR::FacetTypeInfo* info, Phase* phase)
+    -> void {
+  auto lhs_id = context.constant_values().GetConstantInstId(equiv.lhs_id);
+  auto rhs_id = context.constant_values().GetConstantInstId(equiv.rhs_id);
+  if (lhs_id == SemIR::ErrorInst::InstId ||
+      rhs_id == SemIR::ErrorInst::InstId) {
+    *phase = Phase::UnknownDueToError;
+    return;
+  }
+  // TODO: Handle equality requirements.
+  info->other_requirements = true;
 }
 
 // Add the constraints from the WhereExpr instruction into a FacetTypeInfo in
@@ -3242,6 +3174,10 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
 
   Phase phase = Phase::Concrete;
   SemIR::FacetTypeInfo info;
+
+  if (inst.type_id() == SemIR::ErrorInst::TypeId) {
+    return SemIR::ErrorInst::ConstantId;
+  }
 
   // Note that these requirement instructions don't have a constant value. That
   // means we have to look for errors inside them, we can't just look to see if
@@ -3264,13 +3200,11 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
         break;
       }
       case CARBON_KIND(SemIR::RequirementImpls impls): {
-        AddRequirementImpls(eval_context.context(), SemIR::LocId(inst_id),
-                            impls, &info, &phase);
+        AddRequirementImpls(eval_context.context(), impls, &info, &phase);
         break;
       }
-      case CARBON_KIND(SemIR::RequirementEquivalent _): {
-        // TODO: Handle equality requirements.
-        info.other_requirements = true;
+      case CARBON_KIND(SemIR::RequirementEquivalent equiv): {
+        AddRequirementEquivalent(eval_context.context(), equiv, &info, &phase);
         break;
       }
       default:
@@ -3449,8 +3383,8 @@ template <typename InstT>
 static auto TryExecTypedInst(FunctionExecContext& eval_context,
                              SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
-  if constexpr (InstT::Kind.expr_category().TryAsFixedCategory() ==
-                SemIR::ExprCategory::NotExpr) {
+  if constexpr (InstT::Kind.expr_category() ==
+                SemIR::InstExprCategory(SemIR::ExprCategory::NotExpr)) {
     // Instructions in this category are assumed to not have a runtime effect.
     // This includes some kinds of declaration.
     return SemIR::ConstantId::None;
@@ -3635,11 +3569,11 @@ auto TryExecTypedInst<SemIR::ValueParam>(FunctionExecContext& eval_context,
 }
 
 template <>
-auto TryExecTypedInst<SemIR::ValueBinding>(FunctionExecContext& eval_context,
-                                           SemIR::InstId inst_id,
-                                           SemIR::Inst inst)
+auto TryExecTypedInst<SemIR::WrapperBinding>(FunctionExecContext& eval_context,
+                                             SemIR::InstId inst_id,
+                                             SemIR::Inst inst)
     -> SemIR::ConstantId {
-  auto value_binding = inst.As<SemIR::ValueBinding>();
+  auto value_binding = inst.As<SemIR::WrapperBinding>();
   auto local_value_id = eval_context.GetConstantValue(value_binding.value_id);
   eval_context.locals().Insert(inst_id, local_value_id);
   return SemIR::ConstantId::None;

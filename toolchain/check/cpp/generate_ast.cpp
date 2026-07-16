@@ -338,6 +338,21 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
       const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
       const clang::DeclContext* original_decl_context) -> bool override;
 
+  auto LoadExternalSpecializations(
+      const clang::Decl* decl,
+      llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool override {
+    const auto* function_template_decl =
+        llvm::dyn_cast<clang::FunctionTemplateDecl>(decl);
+    if (!function_template_decl) {
+      return false;
+    }
+
+    return ExportFunctionSpecializationToCpp(
+        *context_,
+        const_cast<clang::FunctionTemplateDecl*>(function_template_decl),
+        template_args);
+  }
+
   auto CompleteType(clang::TagDecl* tag_decl) -> void override;
 
   auto layoutRecordType(
@@ -367,7 +382,7 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
 
   auto GetOrExportFunctionToCpp(SemIR::InstId target_inst_id,
                                 SemIR::FunctionId function_id)
-      -> clang::FunctionDecl*;
+      -> clang::NamedDecl*;
   // Get a current best-effort location for the current position within C++
   // processing.
   auto GetCurrentCppLocId() -> SemIR::LocId {
@@ -460,19 +475,28 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
 
 auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
     SemIR::InstId target_inst_id, SemIR::FunctionId function_id)
-    -> clang::FunctionDecl* {
+    -> clang::NamedDecl* {
   SemIR::Function& function = context_->functions().Get(function_id);
   if (const auto* clang_decl =
           context_->clang_decls().Lookup(function.first_decl_id())) {
-    return cast<clang::FunctionDecl>(clang_decl->decl());
+    return cast<clang::NamedDecl>(clang_decl->decl());
   }
 
-  auto* clang_function_decl =
+  auto* named_decl =
       ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id), function_id);
-
-  if (!clang_function_decl) {
+  if (!named_decl) {
     return nullptr;
   }
+
+  if (auto* function_template_decl =
+          llvm::dyn_cast<clang::FunctionTemplateDecl>(named_decl)) {
+    context_->clang_decls().Add(
+        {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(function_template_decl),
+         .inst_id = function.first_decl_id()});
+    return function_template_decl;
+  }
+
+  auto* clang_function_decl = llvm::cast<clang::FunctionDecl>(named_decl);
 
   SemIR::ClangDeclSignature thunk_signature;
   thunk_signature.kind = SemIR::ClangDeclSignature::Normal;
@@ -486,7 +510,6 @@ auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
            clang_function_decl,
            context_->clang_decl_signatures().Add(std::move(thunk_signature))),
        .inst_id = function.first_decl_id()});
-
   return clang_function_decl;
 }
 
@@ -523,12 +546,22 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   // Find the Carbon declaration corresponding to this Clang declaration.
   auto* decl = cast<clang::Decl>(
       const_cast<clang::DeclContext*>(decl_context->getPrimaryContext()));
+  if (isa<clang::FunctionDecl>(decl)) {
+    // Functions don't meaningfully have visible decls, but bail out early since
+    // we can't form a `ClangDeclKey` for a function in the abstract.
+    return false;
+  }
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
   auto decl_id = context_->clang_decls().LookupId(key);
-  CARBON_CHECK(
-      decl_id.has_value(),
-      "The DeclContext should already be associated with a Carbon InstId.");
-  auto decl_context_inst_id = context_->clang_decls().Get(decl_id).inst_id;
+  if (!decl_id.has_value()) {
+    return false;
+  }
+  auto clang_decl = context_->clang_decls().Get(decl_id);
+  if (clang_decl.is_imported) {
+    // This is imported from C++, presumably from a Clang AST file, so it's not
+    // our responsibility to provide its name lookup results.
+    return false;
+  }
 
   llvm::SmallVector<Check::LookupScope> lookup_scopes;
 
@@ -536,7 +569,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   // here - completeness should've been checked by clang before this point.
   if (!AppendLookupScopesForConstant(
           *context_, SemIR::LocId::None,
-          context_->constant_values().Get(decl_context_inst_id),
+          context_->constant_values().Get(clang_decl.inst_id),
           SemIR::ConstantId::None, /*extended_scope=*/false, &lookup_scopes)) {
     return false;
   }
@@ -653,6 +686,15 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
 
   // TODO: Import any special member functions that affect class properties.
 
+  // Virtual functions whose definitions we have deferred generating until the
+  // class is complete.
+  struct PendingVirtualFunction {
+    SemIR::LocId loc_id;
+    SemIR::FunctionId function_id;
+    clang::CXXMethodDecl* method_decl;
+  };
+  llvm::SmallVector<PendingVirtualFunction> pending_virtual_functions;
+
   if (class_info.vtable_decl_id.has_value()) {
     auto vtable_inst_block = context_->inst_blocks().Get(
         context_->vtables()
@@ -665,37 +707,42 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
         continue;
       }
 
-      // The Carbon vtable entry for a function override is a thunk, which wraps
-      // the function declaration to expose the signature of the overridden
-      // virtual function. Here we want to generate a C++ method declaration for
-      // the override, so we need to look through the thunk wrapping.
-      const auto [callee_function, function] =
-          [&]() -> std::pair<SemIR::CalleeFunction, const SemIR::Function&> {
-        auto vtable_callee_function =
-            GetCalleeAsFunction(context_->sem_ir(), vtable_entry_id);
-        const SemIR::Function& vtable_function =
-            context_->functions().Get(vtable_callee_function.function_id);
-        if (!vtable_function.thunk_id().has_value()) {
-          return {vtable_callee_function, vtable_function};
-        }
-        auto vtable_thunk =
-            context_->sem_ir().thunks().Get(vtable_function.thunk_id());
-        auto callee_function =
-            GetCalleeAsFunction(context_->sem_ir(), vtable_thunk.callee_id);
-        return {callee_function,
-                context_->functions().Get(callee_function.function_id)};
-      }();
+      const auto callee_function =
+          GetCalleeAsFunction(context_->sem_ir(), vtable_entry_id);
+      const SemIR::Function& function =
+          context_->functions().Get(callee_function.function_id);
 
       // If this is a member of a base class, nothing to do here.
       if (function.parent_scope_id != class_info.scope_id) {
         continue;
       }
-      auto* method_decl = cast<clang::CXXMethodDecl>(GetOrExportFunctionToCpp(
-          vtable_entry_id, callee_function.function_id));
+      auto* method_decl =
+          cast_or_null<clang::CXXMethodDecl>(ExportVirtualFunctionDeclToCpp(
+              *context_, SemIR::LocId(vtable_entry_id), class_decl,
+              callee_function.function_id));
+      if (!method_decl) {
+        continue;
+      }
       context_->clang_sema().AddOverriddenMethods(class_decl, method_decl);
+      context_->clang_decls().Add(
+          {.key = SemIR::ClangDeclKey::ForFunctionDecl(
+               method_decl,
+               MakeVirtualFunctionSignature(*context_, method_decl)),
+           .inst_id = function.first_decl_id()});
+      pending_virtual_functions.push_back(
+          {.loc_id = SemIR::LocId(vtable_entry_id),
+           .function_id = callee_function.function_id,
+           .method_decl = method_decl});
     }
   }
   class_decl->completeDefinition();
+
+  // Now the class is complete, we can define the virtual function thunks.
+  for (auto virtual_fn : pending_virtual_functions) {
+    DefineExportedVirtualFunction(*context_, virtual_fn.loc_id,
+                                  virtual_fn.function_id,
+                                  virtual_fn.method_decl);
+  }
 }
 
 auto CarbonExternalASTSource::layoutRecordType(
@@ -967,8 +1014,7 @@ auto FinishAst(Context& context) -> void {
   // will not remain valid.
   auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
       context.ast_context().getExternalSource());
-  auto& child_sources = multiplex_source->GetSources();
-  llvm::erase_if(child_sources, [](const auto& src) {
+  multiplex_source->EraseIf([](const auto& src) {
     // `CarbonExternalASTSource` inherits from `ReadOnlyASTSource`.
     return llvm::isa<SemIR::ReadOnlyASTSource>(src.get());
   });

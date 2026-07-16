@@ -27,6 +27,7 @@ static auto HandleVar(Context& context, StateKind finish_state_kind,
 
   context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true,
                               /*in_unused_pattern=*/false,
+                              BindingContext::ExplicitParam,
                               PrecedenceGroup::ForTopLevelPattern());
 }
 
@@ -93,12 +94,14 @@ auto HandleVariablePattern(Context& context) -> void {
     context.emitter().Emit(*context.position(), NestedVar);
     state.has_error = true;
   }
-  context.PushState(StateKind::FinishVariablePattern);
+  state.kind = StateKind::FinishVariablePattern;
+  context.PushState(state);
   context.ConsumeChecked(Lex::TokenKind::Var);
 
-  context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true,
-                              state.in_unused_pattern,
-                              state.ambient_precedence);
+  // A `var` binding is always runtime, regardless of the enclosing context.
+  context.PushStateForPattern(
+      StateKind::Pattern, /*in_var_pattern=*/true, state.in_unused_pattern,
+      BindingContext::ExplicitParam, state.ambient_precedence);
 }
 
 auto HandleFinishVariablePattern(Context& context) -> void {

@@ -27,13 +27,13 @@ fn CharOrEOF.EOF() -> Self {
   return (-1 as i32) as CharOrEOF;
 }
 
-impl forall [U:! Core.ImplicitAs(char)] U as Core.ImplicitAs(CharOrEOF) {
+impl forall [U: Core.ImplicitAs(char)] U as Core.ImplicitAs(CharOrEOF) {
   fn Convert(self: char) -> CharOrEOF {
     return ((self as u8) as i32) as CharOrEOF;
   }
 }
 
-impl forall [U:! Core.ImplicitAs(CharOrEOF)]
+impl forall [U: Core.ImplicitAs(CharOrEOF)]
     CharOrEOF as Core.EqWith(U) {
   fn Equal(self, other: CharOrEOF) -> bool {
     return (self as i32) == (other as i32);
@@ -43,7 +43,7 @@ impl forall [U:! Core.ImplicitAs(CharOrEOF)]
   }
 }
 
-impl forall [U:! Core.ImplicitAs(CharOrEOF)]
+impl forall [U: Core.ImplicitAs(CharOrEOF)]
     CharOrEOF as Core.OrderedWith(U) {
   fn Less(self, other: CharOrEOF) -> bool {
     return (self as i32) < (other as i32);
@@ -59,7 +59,7 @@ impl forall [U:! Core.ImplicitAs(CharOrEOF)]
   }
 }
 
-impl forall [U:! Core.ImplicitAs(char)]
+impl forall [U: Core.ImplicitAs(char)]
     CharOrEOF as Core.SubWith(U) where .Result = i32 {
   fn Op(self, other: char) -> i32 {
     return (self as i32) - ((other as u8) as i32);
@@ -105,7 +105,7 @@ fn ConsumeChar(c: char) -> bool {
   return true;
 }
 
-fn ReadInt[N:! Core.IntLiteral](ref p: Core.Int(N)) -> bool {
+fn ReadInt[N: Core.IntLiteral](ref p: Core.Int(N)) -> bool {
   var read_any_digits: bool = false;
   let negative: bool = ConsumeChar('-');
   // TODO: `p = 0;` crashes the toolchain, see
@@ -133,7 +133,7 @@ fn ReadInt[N:! Core.IntLiteral](ref p: Core.Int(N)) -> bool {
   return read_any_digits;
 }
 
-fn PrintIntNoNewline[N:! Core.IntLiteral](n_val: Core.Int(N)) {
+fn PrintIntNoNewline[N: Core.IntLiteral](n_val: Core.Int(N)) {
   // TODO: var pow10: Core.Int(N) = 1; crashes the toolchain.
   var pow10: Core.Int(N) = (1 as i32) as Core.Int(N);
   var n: Core.Int(N) = n_val;
@@ -152,7 +152,7 @@ fn PrintIntNoNewline[N:! Core.IntLiteral](n_val: Core.Int(N)) {
   }
 }
 
-fn PrintInt[N:! Core.IntLiteral](n_val: Core.Int(N)) {
+fn PrintInt[N: Core.IntLiteral](n_val: Core.Int(N)) {
   PrintIntNoNewline(n_val);
   Core.PrintChar('\n');
 }

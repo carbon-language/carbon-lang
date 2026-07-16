@@ -174,7 +174,7 @@ class Derived {
 // CHECK:STDOUT:     %.loc17_35.3: Core.Form = init_form %.loc17_35.2 [concrete = constants.%.c11]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
+// CHECK:STDOUT:     %d: %Derived = wrapper_binding d, %d.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.e55 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.e55 = return_slot %return.param
 // CHECK:STDOUT:   }

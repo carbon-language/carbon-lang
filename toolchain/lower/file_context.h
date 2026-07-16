@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 
-#include "clang/CodeGen/ModuleBuilder.h"
-#include "clang/Lex/PreprocessorOptions.h"
 #include "toolchain/lower/context.h"
 #include "toolchain/lower/specific_coalescer.h"
 #include "toolchain/lower/type.h"
@@ -14,6 +12,11 @@
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
+
+namespace clang {
+class CodeGenerator;
+class FunctionDecl;
+}  // namespace clang
 
 namespace Carbon::Lower {
 
@@ -144,7 +147,7 @@ class FileContext {
       -> llvm::Value*;
 
   auto GetVtable(SemIR::VtableId vtable_id, SemIR::SpecificId specific_id)
-      -> llvm::GlobalVariable* {
+      -> llvm::Constant* {
     if (!specific_id.has_value()) {
       return vtables_.Get(vtable_id);
     }
@@ -252,7 +255,7 @@ class FileContext {
       -> llvm::DISubprogram*;
 
   auto BuildVtable(const SemIR::Vtable& vtable, SemIR::SpecificId specific_id)
-      -> llvm::GlobalVariable*;
+      -> llvm::Constant*;
 
   // Records a specific that was lowered for a generic. These are added one
   // by one while lowering their definitions.
@@ -312,11 +315,9 @@ class FileContext {
 
   SpecificCoalescer coalescer_;
 
-  FixedSizeValueStore<SemIR::VtableId, llvm::GlobalVariable*,
-                      Tag<SemIR::CheckIRId>>
+  FixedSizeValueStore<SemIR::VtableId, llvm::Constant*, Tag<SemIR::CheckIRId>>
       vtables_;
-  FixedSizeValueStore<SemIR::SpecificId, llvm::GlobalVariable*,
-                      Tag<SemIR::CheckIRId>>
+  FixedSizeValueStore<SemIR::SpecificId, llvm::Constant*, Tag<SemIR::CheckIRId>>
       specific_vtables_;
 };
 

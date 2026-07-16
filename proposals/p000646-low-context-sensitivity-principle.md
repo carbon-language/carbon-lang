@@ -33,7 +33,7 @@ that talks about their approach to context dependence.
 ## Proposal
 
 We propose adding
-(`docs/project/principles/low_context_sensitivity.md`)[/docs/project/principles/low_context_sensitivity.md],
+[`docs/project/principles/low_context_sensitivity.md`](/docs/project/principles/low_context_sensitivity.md),
 which has the details.
 
 ## Rationale based on Carbon's goals

@@ -181,7 +181,7 @@ interface I {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %AdaptNotExtend = value_param call_param0
 // CHECK:STDOUT:     %AdaptNotExtend.ref: type = name_ref AdaptNotExtend, file.%AdaptNotExtend.decl [concrete = constants.%AdaptNotExtend]
-// CHECK:STDOUT:     %a: %AdaptNotExtend = value_binding a, %a.param
+// CHECK:STDOUT:     %a: %AdaptNotExtend = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -380,9 +380,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstructorNotExplicit(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.be2 = value_binding_pattern _ [concrete = constants.%_.patt.3ad]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref.loc8: %Source = name_ref s, %s
 // CHECK:STDOUT:   %.loc8_43.1: ref %ConditionallyExplicit.3cd = temporary_storage
 // CHECK:STDOUT:   %.loc8_43.2: ref %Source = value_as_ref %s.ref.loc8
@@ -397,7 +394,10 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ConditionallyExplicitFalse.ref.loc8: type = name_ref ConditionallyExplicitFalse, imports.%ConditionallyExplicit.decl.996 [concrete = constants.%ConditionallyExplicit.3cd]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_: %ConditionallyExplicit.3cd = value_binding _, %.loc8_43.6
+// CHECK:STDOUT:   %_: %ConditionallyExplicit.3cd = wrapper_binding _, %.loc8_43.6
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.be2 = value_binding_pattern _ [concrete = constants.%_.patt.3ad]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref.loc9: %Source = name_ref s, %s
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ConditionallyExplicitFalse.ref.loc9: type = name_ref ConditionallyExplicitFalse, imports.%ConditionallyExplicit.decl.996 [concrete = constants.%ConditionallyExplicit.3cd]
@@ -444,9 +444,6 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConversionNotExplicit(%s.param: %ConditionallyExplicit.3cd) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref.loc21: %ConditionallyExplicit.3cd = name_ref s, %s
 // CHECK:STDOUT:   %.loc21_21.1: ref %Dest = temporary_storage
 // CHECK:STDOUT:   %addr.loc21: %ptr.ca8 = addr_of %.loc21_21.1
@@ -459,7 +456,10 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Dest.ref.loc21: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_: %Dest = value_binding _, %.loc21_21.5
+// CHECK:STDOUT:   %_: %Dest = wrapper_binding _, %.loc21_21.5
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref.loc22: %ConditionallyExplicit.3cd = name_ref s, %s
 // CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Dest.ref.loc22: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest]
@@ -546,24 +546,21 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstructorExplicit(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.04c = value_binding_pattern _ [concrete = constants.%_.patt.d67]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
 // CHECK:STDOUT:   %.loc15_42: %ConditionallyExplicit.9d4 = converted %s.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc15_13: type = splice_block %ConditionallyExplicitTrue.ref [concrete = constants.%ConditionallyExplicit.9d4] {
 // CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ConditionallyExplicitTrue.ref: type = name_ref ConditionallyExplicitTrue, imports.%ConditionallyExplicit.decl.6ab [concrete = constants.%ConditionallyExplicit.9d4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_: %ConditionallyExplicit.9d4 = value_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_: %ConditionallyExplicit.9d4 = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.04c = value_binding_pattern _ [concrete = constants.%_.patt.d67]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConversionExplicit(%s.param: %ConditionallyExplicit.3cd) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %ConditionallyExplicit.3cd = name_ref s, %s
 // CHECK:STDOUT:   %.loc21_21.1: ref %Dest.980 = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.ca8 = addr_of %.loc21_21.1
@@ -576,7 +573,10 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest.980]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_: %Dest.980 = value_binding _, %.loc21_21.5
+// CHECK:STDOUT:   %_: %Dest.980 = wrapper_binding _, %.loc21_21.5
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Dest.Op.bound: <bound method> = bound_method %.loc21_21.4, constants.%Dest.Op
 // CHECK:STDOUT:   %Op.ref: %Dest.cpp_destructor.type = name_ref Op, imports.%Dest.cpp_destructor.decl [concrete = constants.%Dest.cpp_destructor]

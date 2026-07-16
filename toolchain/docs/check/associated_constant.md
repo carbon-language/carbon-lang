@@ -61,9 +61,9 @@ constant declaration handling proceeds as follows:
     `StartAssociatedConstant` is called at the start of an interface-scope `let`
     declaration. This:
 
-    -   Starts a generic declaration region.
-    -   Pushes an instruction block to hold instructions within the declaration
-        of the constant. These form the body of the generic.
+-   Starts a generic declaration region.
+-   Pushes an instruction block to hold instructions within the declaration
+    of the constant. These form the body of the generic.
 
 2.  ```carbon
     let NAME:! TYPE [= INITIALIZER] ;
@@ -91,10 +91,10 @@ constant declaration handling proceeds as follows:
     either because we reached the `=` or because we reached the `;` and there
     was no initializer, `EndAssociatedConstantDeclRegion` is called. This:
 
-    -   Ends the generic declaration region.
-    -   Builds an `AssociatedEntity` object, reserving a slot in the interface's
-        witness table for the constant.
-    -   Adds the associated constant to name lookup.
+-   Ends the generic declaration region.
+-   Builds an `AssociatedEntity` object, reserving a slot in the interface's
+    witness table for the constant.
+-   Adds the associated constant to name lookup.
 
     _Note:_ The pattern might not be valid for an associated constant. In this
     case, we won't have built an `AssociatedConstantDecl` in the previous step.
@@ -116,14 +116,14 @@ constant declaration handling proceeds as follows:
     At the end of the declaration, `FinishAssociatedConstant` is called to
     finalize the declaration. This:
 
-    -   Diagnoses if the pattern handling didn't create an
-        `AssociatedConstantDecl`.
-    -   Finishes handling the initializer, if it's present:
-        -   Converts the initializer to the type of the constant.
-        -   Ends the generic definition region.
-    -   Pops the inst block created by `StartAssociatedConstant` and attaches it
-        to the `AssociatedConstantDecl`.
-    -   Adds the `AssociatedConstantDecl` to the enclosing inst block.
+-   Diagnoses if the pattern handling didn't create an
+    `AssociatedConstantDecl`.
+-   Finishes handling the initializer, if it's present:
+    -   Converts the initializer to the type of the constant.
+    -   Ends the generic definition region.
+-   Pops the inst block created by `StartAssociatedConstant` and attaches it
+    to the `AssociatedConstantDecl`.
+-   Adds the `AssociatedConstantDecl` to the enclosing inst block.
 
 ## Specifying rewrite constraints
 

@@ -452,6 +452,7 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // names here.
   if (context.functions().Get(callee.function_id).special_function_kind !=
           SemIR::Function::SpecialFunctionKind::HasCppThunk &&
+      !override_self_type_id.has_value() &&
       CheckFunctionTypeMatches(
           context, context.functions().Get(callee.function_id),
           context.functions().Get(signature_id), signature_specific_id,

@@ -49,14 +49,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %C.as.SubWith.impl.Op.type: type = fn_type @C.as.SubWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.SubWith.impl.Op: %C.as.SubWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SubWith.facet: %SubWith.type.3b5 = facet_value %C, (%SubWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %SubWith.WithSelf.Op.type.928: type = fn_type @SubWith.WithSelf.Op, @SubWith.WithSelf(%C, %SubWith.facet) [concrete]
+// CHECK:STDOUT:   %SubWith.WithSelf.Op.type.eb1: type = fn_type @SubWith.WithSelf.Op, @SubWith.WithSelf(%C, %SubWith.facet) [concrete]
 // CHECK:STDOUT:   %SubAssignWith.type.bf0: type = facet_type <@SubAssignWith, @SubAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %SubAssignWith.impl_witness: <witness> = impl_witness @C.as.SubAssignWith.impl.%SubAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.SubAssignWith.impl.Op.type: type = fn_type @C.as.SubAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.SubAssignWith.impl.Op: %C.as.SubAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SubAssignWith.facet: %SubAssignWith.type.bf0 = facet_value %C, (%SubAssignWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %SubAssignWith.WithSelf.Op.type.737: type = fn_type @SubAssignWith.WithSelf.Op, @SubAssignWith.WithSelf(%C, %SubAssignWith.facet) [concrete]
-// CHECK:STDOUT:   %.d45: type = fn_type_with_self_type %SubWith.WithSelf.Op.type.928, %SubWith.facet [concrete]
+// CHECK:STDOUT:   %.9fe: type = fn_type_with_self_type %SubWith.WithSelf.Op.type.eb1, %SubWith.facet [concrete]
 // CHECK:STDOUT:   %ptr.00e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %.d38: type = fn_type_with_self_type %SubAssignWith.WithSelf.Op.type.737, %SubAssignWith.facet [concrete]
 // CHECK:STDOUT: }
@@ -65,7 +65,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.d45 = impl_witness_access constants.%SubWith.impl_witness, element1 [concrete = constants.%C.as.SubWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1: %.9fe = impl_witness_access constants.%SubWith.impl_witness, element1 [concrete = constants.%C.as.SubWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.SubWith.impl.Op.call: init %C to %.loc30_26.1 = call %bound_method(%a.ref, %b.ref)
