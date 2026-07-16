@@ -307,9 +307,9 @@ library "[[@TEST_NAME]]";
 
 interface J(T: type) {}
 
-fn F(unused generic T: type where () == J(.Self)) {}
+fn F(generic U: type, unused generic T: type where U == J(.Self)) {}
 
-fn G(unused generic T: type where () == (J(.Self), )) {}
+fn G(generic U: type, unused generic T: type where (U, ) == (J(.Self), )) {}
 
 // --- concrete_access_does_constrain_self.carbon
 library "[[@TEST_NAME]]";

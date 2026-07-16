@@ -221,6 +221,8 @@ static auto FindDesignator(Context& context, SemIR::InstId inst_id) -> bool {
 
       // `.MemberName` is represented as an ImplWitnessAccess through `.Self` so
       // we only need to look for `.Self` here.
+      //
+      // Subst will recurse into operands, so we don't want to canonicalize.
       if (IsPeriodSelf(context(), inst_id, /*canonicalize=*/false)) {
         *found_ = true;
         return FullySubstituted;
