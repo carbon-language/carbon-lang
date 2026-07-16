@@ -13,7 +13,9 @@ auto HandleInitialize(
     const clang::clangd::NoParams& /*client_capabilities*/,
     llvm::function_ref<auto(llvm::Expected<llvm::json::Object>)->void> on_done)
     -> void {
-  llvm::json::Object capabilities{{"documentSymbolProvider", true},
+  llvm::json::Object capabilities{{"documentFormattingProvider", true},
+                                  {"documentRangeFormattingProvider", true},
+                                  {"documentSymbolProvider", true},
                                   {"textDocumentSync", /*Incremental=*/2}};
   llvm::json::Object reply{{"capabilities", std::move(capabilities)}};
   on_done(reply);

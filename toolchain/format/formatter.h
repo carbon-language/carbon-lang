@@ -6,96 +6,141 @@
 #define CARBON_TOOLCHAIN_FORMAT_FORMATTER_H_
 
 #include <cstdint>
+#include <optional>
+#include <string>
+#include <utility>
 
-#include "common/ostream.h"
+#include "llvm/ADT/SmallVector.h"
+#include "toolchain/format/format.h"
+#include "toolchain/format/style.h"
+#include "toolchain/format/token_info.h"
+#include "toolchain/format/whitespace_manager.h"
 #include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/tree.h"
 
 namespace Carbon::Format {
 
 // Implements Format(); see format.h. It's intended to be constructed and
 // `Run()` once, then destructed.
 //
-// TODO: This will probably need to work less linearly in the future, for
-// example to handle smart wrapping of arguments. This is a simple
-// implementation that only handles simple code. Before adding too much more
-// complexity, it should be rewritten.
+// This walks the token stream, using the parse tree to drive spacing decisions.
+// Tokens are buffered into the current unwrapped line; each line is then laid
+// out as a unit, wrapped across physical lines by the solver in
+// `line_wrapper.h` when it exceeds the column limit.
 //
-// TODO: Add retention of blank lines between original code.
+// `Run()` records each token's leading whitespace into a `WhitespaceManager`,
+// then generates the full formatted text from it (running the trailing-comment
+// alignment pass) and records where each token landed. The result is then
+// available either as the whole text (`TakeOutput`) or as a minimal set of
+// edits against the original source (`ComputeReplacements`).
 //
-// TODO: Add support for formatting line ranges (will need flags too).
+// TODO: Drive indentation and line structure from the parse tree rather than
+// from brace nesting.
 class Formatter {
  public:
-  explicit Formatter(const Lex::TokenizedBuffer* tokens, llvm::raw_ostream* out)
-      : tokens_(tokens),
-        out_(out),
-        next_comment_(tokens->comments().begin()),
-        comments_end_(tokens->comments().end()) {}
+  explicit Formatter(const Parse::Tree* tree, const Style& style);
 
-  // See class comments.
+  // Formats into the internal buffer; see class comments. Must be called once
+  // before `TakeOutput` or `ComputeReplacements`.
   auto Run() -> bool;
 
+  // Returns the full formatted text, leaving the formatter empty.
+  auto TakeOutput() -> std::string { return std::move(output_); }
+
+  // Returns the edits that turn the original source into the formatted text:
+  // one per changed run of whitespace/comments between tokens (see `format.h`).
+  // If `lines` is set, only edits touching that 1-based inclusive line range
+  // are returned.
+  auto ComputeReplacements(std::optional<LineRange> lines) const
+      -> llvm::SmallVector<Replacement>;
+
  private:
-  // Tracks the status of the current line of output.
-  enum class LineState : uint8_t {
-    // There is no output for the current line.
-    Empty,
-    // The current line has content (possibly just an indent), and does not need
-    // a separator added.
-    HasSeparator,
-    // The current line has content, and will need a separator, typically a
-    // single space or newline.
-    NeedsSeparator,
-    // The current line has content and is complete; a newline is pending but
-    // has not yet been emitted. We defer the newline so that a trailing comment
-    // can still be attached to this line before it is broken. The newline is
-    // materialized by the next content emitted (see `PrepareForPackedContent`)
-    // or when the file ends.
-    EndOfLine,
-  };
+  // Returns the source byte ranges affected when formatting `lines`: the
+  // requested lines, expanded (to a fixed point) over two layout couplings.
+  // A partially affected unwrapped line is wholly affected, since it re-wraps
+  // as a unit, and a brace whose matching brace is affected is affected too, so
+  // range formatting fixes a dangling brace. See toolchain/docs/format.md.
+  auto AffectedByteRanges(LineRange lines) const
+      -> llvm::SmallVector<std::pair<int32_t, int32_t>>;
 
-  // Marks the current line as complete, so the next content starts a new line.
-  // The newline is deferred rather than emitted immediately, allowing a
-  // trailing comment to be attached first. Does not indent, allowing blank
-  // lines.
-  auto RequireEmptyLine() -> void;
+  // Returns the original source text between `token` and the token before it,
+  // when that gap lies inside a verbatim error region and must be copied to
+  // the output unchanged; returns nullopt when the gap formats normally. See
+  // toolchain/docs/format.md.
+  auto VerbatimGapBefore(Lex::TokenIndex token) const
+      -> std::optional<llvm::StringRef>;
 
-  // Emits the comment at `next_comment_` and advances past it. A trailing
-  // comment is kept on the current line (separated by a space) when there is
-  // still content to attach it to; otherwise the comment is emitted on its own
-  // line.
-  auto EmitComment() -> void;
+  // Lays out the buffered line (if any): decides its line breaks, then records
+  // each token's leading whitespace into the whitespace manager, prefixed by
+  // any blank line the source had before it. Clears the line buffer.
+  auto FlushLine() -> void;
 
-  // Ensures there is a separator before adding new content. May do
-  // `PrepareForPackedContent` or output a separator space, dependent on line
-  // state. Always results in line_state_ being HasSeparator; the caller is
-  // responsible for adjusting state if needed.
-  auto PrepareForSpacedContent() -> void;
+  // Returns the number of blank lines to keep before the content starting at
+  // `next_start_byte`: one if the source had one or more there, else zero,
+  // except none at the start or end of a block. Capped at the style maximum.
+  auto ComputeBlankLines(int next_start_byte, bool is_block_end) -> int;
 
-  // Requires that the current line is indented, but not necessarily a separator
-  // space. May output spaces for `indent_`, dependent on line state. Only
-  // guarantees the line_state_ is not Empty; the caller is responsible for
-  // adjusting state if needed.
-  auto PrepareForPackedContent() -> void;
+  // The leading newline count for the next content: a blank-line allowance plus
+  // the single break that ends the previous line, or zero before the first
+  // content of the file.
+  auto LeadingNewlines(int next_start_byte, bool is_block_end) -> int {
+    return (started_ ? 1 : 0) +
+           ComputeBlankLines(next_start_byte, is_block_end);
+  }
 
   // Returns the next token index.
   static auto NextToken(Lex::TokenIndex token) -> Lex::TokenIndex {
     return *(Lex::TokenIterator(token) + 1);
   }
 
-  // The tokens being formatted.
+  // The parse tree being formatted.
+  const Parse::Tree* tree_;
+
+  // The tokens being formatted, referenced by the parse tree.
   const Lex::TokenizedBuffer* tokens_;
 
-  // The output stream for formatted content.
-  llvm::raw_ostream* out_;
+  // The style controlling layout knobs and penalties.
+  Style style_;
 
-  // The next comment to emit, and one past the last comment.
-  Lex::CommentIterator next_comment_;
-  Lex::CommentIterator comments_end_;
+  // Collects each token's whitespace and generates the formatted text.
+  WhitespaceManager whitespace_;
 
-  // The state of the line currently written to output.
-  LineState line_state_ = LineState::Empty;
+  // The formatted text, populated when `Run()` finishes.
+  std::string output_;
 
-  // The current code indent level, to be added to new lines.
+  // The source-line extent (first and last 1-based line) of each flushed
+  // unwrapped line, in order; used by `AffectedByteRanges` to expand a range to
+  // whole unwrapped lines.
+  llvm::SmallVector<std::pair<int, int>> unwrapped_line_extents_;
+
+  // Where each emitted token landed in the source and the output, in order.
+  llvm::SmallVector<TokenSpan> token_map_;
+
+  // The per-token formatting information (role, width, and the
+  // operator-precedence break and alignment data), indexed by token and
+  // derived from the parse tree. See `TokenInfo`.
+  TokenInfoStore token_infos_;
+
+  // Tokens buffered for the current physical line, not yet rendered.
+  llvm::SmallVector<Lex::TokenIndex> current_line_;
+
+  // The source byte offset just past the last emitted token or comment, used to
+  // find blank lines in the original source. Empty before any output.
+  std::optional<int> last_end_byte_;
+
+  // Whether the last rendered line ended with an opening `{`, so a blank line
+  // at the start of a block is dropped.
+  bool after_open_brace_ = false;
+
+  // Whether any content has been recorded yet, so the first line gets no
+  // leading newline.
+  bool started_ = false;
+
+  // Whether any token at all lies in a verbatim error region, so the per-token
+  // verbatim checks short-circuit on error-free input. See `VerbatimGapBefore`.
+  bool has_verbatim_tokens_ = false;
+
+  // The current code indent level, in spaces, added to new lines.
   int indent_ = 0;
 };
 

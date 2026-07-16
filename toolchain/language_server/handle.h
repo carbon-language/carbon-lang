@@ -32,12 +32,35 @@ auto HandleDocumentSymbol(
         auto(llvm::Expected<std::vector<clang::clangd::DocumentSymbol>>)->void>
         on_done) -> void;
 
+// Formats a whole document, returning the edits that transform it into the
+// formatted result.
+auto HandleFormatting(
+    Context& context, const clang::clangd::DocumentFormattingParams& params,
+    llvm::function_ref<
+        auto(llvm::Expected<std::vector<clang::clangd::TextEdit>>)->void>
+        on_done) -> void;
+
+// Provides information about document symbols.
+auto HandleDocumentSymbol(
+    Context& context, const clang::clangd::DocumentSymbolParams& params,
+    llvm::function_ref<
+        auto(llvm::Expected<std::vector<clang::clangd::DocumentSymbol>>)->void>
+        on_done) -> void;
+
 // Tells the client what features are supported.
 auto HandleInitialize(
     Context& /*context*/,
     const clang::clangd::NoParams& /*client_capabilities*/,
     llvm::function_ref<auto(llvm::Expected<llvm::json::Object>)->void> on_done)
     -> void;
+
+// Formats a range of a document, returning the edits within it.
+auto HandleRangeFormatting(
+    Context& context,
+    const clang::clangd::DocumentRangeFormattingParams& params,
+    llvm::function_ref<
+        auto(llvm::Expected<std::vector<clang::clangd::TextEdit>>)->void>
+        on_done) -> void;
 
 // Prepares LSP for shutdown.
 auto HandleShutdown(

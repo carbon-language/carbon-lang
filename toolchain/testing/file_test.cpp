@@ -241,7 +241,9 @@ auto ToolchainFileTest::GetDefaultArgs() const
   llvm::SmallVector<std::string> args = {"--include-diagnostic-kind"};
 
   if (component_ == "format") {
-    args.insert(args.end(), {"format", "%s"});
+    // Write to stdout so the formatted result is captured (and the testdata
+    // input file is not overwritten by the default in-place behavior).
+    args.insert(args.end(), {"format", "--output=-", "%s"});
     return args;
   } else if (component_ == "language_server") {
     args.insert(args.end(), {"language-server", "--no-prelude-import"});

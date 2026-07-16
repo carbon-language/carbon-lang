@@ -45,6 +45,7 @@ constexpr Kind UntestedKinds[] = {
     Kind::ErrorReadingFile,
     Kind::ErrorStattingFile,
     Kind::FileTooLarge,
+    Kind::FormatOutputFileWriteError,
     Kind::FailureBuildingRuntimes,
     Kind::FailureRunningClang,
     Kind::FailureRunningClangToLink,
