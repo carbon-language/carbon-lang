@@ -355,3 +355,120 @@ final match_first {
 fn F[U: X]() {
   {.y = type} as ().(Z(C(U)).Z1);
 }
+
+// --- fail_non_final_match_first_is_not_final.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) { let Z1: type; }
+interface Y {}
+
+class C(T: type);
+
+impl forall [T: Y] () as Z(C(T)) where .Z1 = {.y: type} {}
+
+match_first {
+  impl forall [T: Y] () as Z(C(T)) where .Z1 = {.y: type};
+}
+
+fn F(generic T: Y) {
+  // This query is not concrete, so the impl will not give a final witness, so
+  // we can't use the rewrite constraint's RHS here.
+  // CHECK:STDERR: fail_non_final_match_first_is_not_final.carbon:[[@LINE+4]]:3: error: `Core.As` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:   {.y = type} as ().(Z(C(T)).Z1);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  {.y = type} as ().(Z(C(T)).Z1);
+}
+
+// --- final_not_overlapping_query_in_match_first.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) { let Z1: type; }
+interface W {}
+
+class C(T: type);
+class D(T: type);
+
+final match_first {
+  // Arbitrary impl at the start of the block that doesn't overlap anything.
+  impl C({}) as W {}
+
+  // A more specific impl comes first.
+  impl forall [T: type] () as Z(C(T)) where .Z1 = {.c: type} {}
+  // Another different but more specific impl comes next.
+  impl forall [T: type] () as Z(D(T)) where .Z1 = {.d: type} {}
+  // A more general impl comes last. While this catches more things, if T
+  // _could_ be specialized as `C(T)` or `D(T)` in the future, we can't use this
+  // impl as final.
+  impl forall [T: type] () as Z(T) where .Z1 = {.t: type} {}
+}
+
+fn F() {
+  // The first matching impl in the match_first is also the most specific
+  // overlapping impl, so it's considered final.
+  {.c = type} as ().(Z(C({})).Z1);
+
+  // The first matching impl in the match_first is also the most specific
+  // overlapping impl, so it's considered final.
+  {.d = type} as ().(Z(D({})).Z1);
+
+  // Since this can't match C(T) or D(T), the first matching impl in the
+  // match_first is also the most specific overlapping impl, so it's considered
+  // final.
+  class E;
+  {.t = type} as ().(Z(E).Z1);
+}
+
+// --- fail_final_overlapping_query_in_match_first.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) { let Z1: type; }
+
+class C(T: type);
+
+final match_first {
+  // A more specific impl comes first.
+  impl forall [T: type] () as Z(C(T)) where .Z1 = {.c: type} {}
+  // A more general impl comes last. While this catches more things, if T
+  // _could_ be specialized as `C(T)` in the future, we can't use this impl as
+  // final.
+  impl forall [T: type] () as Z(T) where .Z1 = {.t: type} {}
+}
+
+fn F(generic T: type) {
+  // Could match C(T) later, but doesn't yet. So it's not considered final.
+  // CHECK:STDERR: fail_final_overlapping_query_in_match_first.carbon:[[@LINE+4]]:3: error: `Core.As` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:   {.t = type} as ().(Z(T).Z1);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  {.t = type} as ().(Z(T).Z1);
+}
+
+// --- fail_final_overlapping_query_in_match_first_reverse_order.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) { let Z1: type; }
+
+class C(T: type);
+
+// The match_first is in the opposite order as the impls are introduced.
+impl forall [T: type] () as Z(T) where .Z1 = {.t: type} {}
+impl forall [T: type] () as Z(C(T)) where .Z1 = {.c: type} {}
+
+final match_first {
+  // A more specific impl comes first.
+  impl forall [T: type] () as Z(C(T)) where .Z1 = {.c: type};
+  // A more general impl comes last. While this catches more things, if T
+  // _could_ be specialized as `C(T)` in the future, we can't use this impl as
+  // final.
+  impl forall [T: type] () as Z(T) where .Z1 = {.t: type};
+}
+
+fn F(generic T: type) {
+  // Could match C(T) later, but doesn't yet. So it's not considered final.
+  // CHECK:STDERR: fail_final_overlapping_query_in_match_first_reverse_order.carbon:[[@LINE+4]]:3: error: `Core.As` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:   {.t = type} as ().(Z(T).Z1);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  {.t = type} as ().(Z(T).Z1);
+}
