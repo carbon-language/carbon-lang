@@ -12,7 +12,7 @@
 
 // Builds on `call_recursive_basic.carbon`.
 
-fn F[T:! type, U:! type](x: T, y: U, count: i32) -> i32 {
+fn F[T: type, U: type](x: T, y: U, count: i32) -> i32 {
   if (count > 2) {
     return count;
   }

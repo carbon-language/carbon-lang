@@ -48,13 +48,13 @@ class B {
   }
 }
 
-interface I(T:! type) {
+interface I(T: type) {
   fn F(self, x: B) -> A;
 }
 
-class C(U:! type) {}
+class C(U: type) {}
 
-impl forall [V:! type] C(V) as I(V) {
+impl forall [V: type] C(V) as I(V) {
   fn F(unused self, _: A) -> B { return {}; }
 }
 
@@ -62,7 +62,7 @@ fn Call(c: C(()), b: B) -> A {
   return c.(I(()).F)(b);
 }
 
-fn CallGeneric[T:! I(())](c: T, b: B) -> A {
+fn CallGeneric[T: I(())](c: T, b: B) -> A {
   return c.F(b);
 }
 

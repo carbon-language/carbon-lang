@@ -15,8 +15,8 @@
 // --- fail_match_with_associated_type.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let T:! type; }
-constraint N(U:! type) {}
+interface I { let T: type; }
+constraint N(U: type) {}
 
 // CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as I where .T = {};

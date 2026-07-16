@@ -45,7 +45,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
 auto LookupMatchesImpl(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
                        SemIR::SpecificInterface query_specific_interface,
-                       SemIR::ImplId target_impl) -> bool;
+                       SemIR::ImplId target_impl_id) -> bool;
 
 // Given a self facet, returns the canonical query self for a LookupImplWitness
 // instruction. The canonicalization looks through `FacetValue` and makes a

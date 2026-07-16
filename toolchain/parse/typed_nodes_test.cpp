@@ -271,7 +271,7 @@ Aggregate [^:]*: success
 
 TEST_F(TypedNodeTest, VerifyExtractTraceClassDecl) {
   auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
-    private abstract class N.C(T:! type);
+    private abstract class N.C(T: type);
   )carbon");
   auto file = tree.ExtractFile();
 

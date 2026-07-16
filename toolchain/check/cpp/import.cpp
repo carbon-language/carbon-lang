@@ -903,11 +903,8 @@ static auto GetVirtualFunctionParamPassingMode(clang::QualType type)
   return SemIR::ClangDeclSignature::PassingMode::ByVar;
 }
 
-// Computes the signature to use for the given imported virtual function. Unlike
-// with regular imported functions, we can only use a single signature here, so
-// we pick one conservatively.
-static auto MakeVirtualFunctionSignature(
-    Context& context, const clang::CXXMethodDecl* method_decl)
+auto MakeVirtualFunctionSignature(Context& context,
+                                  const clang::CXXMethodDecl* method_decl)
     -> SemIR::ClangDeclSignatureId {
   SemIR::ClangDeclSignature signature = {
       .kind = SemIR::ClangDeclSignature::Normal,
@@ -2359,7 +2356,7 @@ static auto LookupBuiltinName(Context& context, SemIR::LocId loc_id,
   const clang::ASTContext& ast_context = context.ast_context();
 
   // List of types based on
-  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p005448.md#details
+  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p005448-carbon-c-interop-primitive-types.md#details
   auto builtin_type =
       llvm::StringSwitch<clang::QualType>(*name)
           .Case("signed_char", ast_context.SignedCharTy)

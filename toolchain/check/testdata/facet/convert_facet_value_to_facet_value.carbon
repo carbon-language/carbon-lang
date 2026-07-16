@@ -20,7 +20,7 @@ class C {}
 impl C as Z {}
 impl C as Y {}
 
-fn G(unused z:! Z) {}
+fn G(unused generic z: Z) {}
 
 fn F() {
   G(C);
@@ -38,8 +38,8 @@ library "[[@TEST_NAME]]";
 interface Z {}
 
 interface Y {}
-impl forall [T:! Y] T as Z {}
+impl forall [T: Y] T as Z {}
 
-fn F(U:! Y) {
+fn F(generic U: Y) {
   U as Z;
 }

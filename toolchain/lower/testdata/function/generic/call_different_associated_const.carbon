@@ -14,12 +14,12 @@
 // Check different functions are still emitted when trying to deduplicate emitted definitons.
 
 interface I {
-  let T:! type;
+  let T: type;
   // TODO: An interface with multiple associated entities is not yet
   // implemented in mangling.
 }
 
-fn G(U:! I) {
+fn G(generic U: I) {
   var _: U.T*;
 }
 
@@ -44,13 +44,13 @@ fn H() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CH.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CG.Main.b78152d23f5a56c7(), !dbg !7
-// CHECK:STDOUT:   call void @_CG.Main.1ba7ae4c6ee83247(), !dbg !8
+// CHECK:STDOUT:   call void @_CG.Main.c7b5696da1f8b34f(), !dbg !7
+// CHECK:STDOUT:   call void @_CG.Main.726001587f235b1b(), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.b78152d23f5a56c7() #0 !dbg !10 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.c7b5696da1f8b34f() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca ptr, align 8, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !11
@@ -59,7 +59,7 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.1ba7ae4c6ee83247() #0 !dbg !13 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.726001587f235b1b() #0 !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca ptr, align 8, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
@@ -89,10 +89,10 @@ fn H() {
 // CHECK:STDOUT: !7 = !DILocation(line: 36, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 37, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 35, column: 1, scope: !4)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.b78152d23f5a56c7", scope: null, file: !1, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.c7b5696da1f8b34f", scope: null, file: !1, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !11 = !DILocation(line: 23, column: 3, scope: !10)
 // CHECK:STDOUT: !12 = !DILocation(line: 22, column: 1, scope: !10)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.1ba7ae4c6ee83247", scope: null, file: !1, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.726001587f235b1b", scope: null, file: !1, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !14 = !DILocation(line: 23, column: 3, scope: !13)
 // CHECK:STDOUT: !15 = !DILocation(line: 22, column: 1, scope: !13)
 // CHECK:STDOUT:

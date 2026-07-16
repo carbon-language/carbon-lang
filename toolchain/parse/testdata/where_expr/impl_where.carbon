@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/where_expr/impl_where.carbon
 
 interface Interface {
-  let T:! type;
+  let T: type;
 }
 
 impl i32 as Interface where .T = () {
@@ -33,7 +33,7 @@ impl f64 as Interface where .T = (type where .Self impls type) {
 // CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
 // CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},

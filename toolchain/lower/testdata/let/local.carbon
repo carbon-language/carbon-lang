@@ -29,7 +29,7 @@ fn F(_: C) {}
 fn CallF() {
   // TODO: Uncomment this once symbolic locals work in check. It's disabled so
   // that we still test lowering of non-symbolic locals.
-  // let c:! C = {};
+  // let generic c: C = {};
   // F(c);
 }
 

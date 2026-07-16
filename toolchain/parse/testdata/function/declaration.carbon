@@ -165,7 +165,7 @@ fn ComplexFormParam(x:? X.Y(Z));
 
 // --- fail_ref_on_form_parameter.carbon
 
-// CHECK:STDERR: fail_ref_on_form_parameter.carbon:[[@LINE+4]]:6: error: expected `:` binding after `ref` [ExpectedRuntimeBindingPatternAfterRef]
+// CHECK:STDERR: fail_ref_on_form_parameter.carbon:[[@LINE+4]]:6: error: `ref` is only allowed on a runtime binding [ExpectedRuntimeBindingPatternAfterRef]
 // CHECK:STDERR: fn F(ref x:? Form);
 // CHECK:STDERR:      ^~~
 // CHECK:STDERR:
@@ -173,7 +173,7 @@ fn F(ref x:? Form);
 
 // --- fail_form_within_var.carbon
 
-// CHECK:STDERR: fail_form_within_var.carbon:[[@LINE+4]]:26: error: found `:?` pattern inside `var` pattern [NonRegularBindingInVarDecl]
+// CHECK:STDERR: fail_form_within_var.carbon:[[@LINE+4]]:26: error: found `:?` binding inside `var` pattern [NonRegularBindingInVarDecl]
 // CHECK:STDERR: fn FormInVar(var x:? Form);
 // CHECK:STDERR:                          ^
 // CHECK:STDERR:
@@ -226,17 +226,19 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 11},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 14},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 16},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: no_params.carbon
@@ -473,12 +475,11 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'RefBindingName', text: 'ref', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Form'},
-// CHECK:STDOUT:         {kind: 'FormBindingPattern', text: ':?', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'FormBindingPattern', text: ':?', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_form_within_var.carbon

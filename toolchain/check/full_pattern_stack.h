@@ -154,32 +154,33 @@ class FullPatternStack {
         {.name_id = name_id, .inst_id = SemIR::InstId::InitTombstone});
   }
 
-  // Records a `VarPattern` inst as part of the current full pattern, so that
-  // its `VarStorage` can be allocated and tracked. This should only be called
-  // when the current full-pattern is a kind that can have an initializer;
-  // otherwise the `VarStorage` should be allocated on demand during pattern
-  // matching.
-  auto AddLocalVarPattern(SemIR::InstId var_pattern_id) -> void {
+  // Information about a `var` pattern.
+  struct VarInfo {
+    // The `VarPattern` inst
+    SemIR::InstId pattern_id;
+    // The corresponding `VarStorage` inst
+    SemIR::InstId storage_id;
+  };
+
+  // Records a `VarPattern` and its associated `VarStorage` as part of the
+  // current full pattern, so that the `VarStorage` can be found during pattern
+  // matching. This should only be called when the current full-pattern is a
+  // kind that can have an initializer, because in that context the `VarStorage`
+  // needs to be emitted early; otherwise the `VarStorage` should be emitted on
+  // demand during pattern matching.
+  auto AddLocalVarPattern(VarInfo var_info) -> void {
     CARBON_CHECK(kind_stack_.back() == Kind::ClassScopeVarDecl ||
                  kind_stack_.back() == Kind::NameBindingDecl);
     CARBON_CHECK(next_var_index_stack_.back() < 0);
-    var_pattern_stack_.AppendToTop(
-        {.pattern_id = var_pattern_id, .storage_id = SemIR::InstId::None});
+    var_pattern_stack_.AppendToTop(var_info);
   }
 
-  // Creates `VarStorage` insts for all `VarPattern` insts recorded by
-  // `AddLocalVarPattern` for the current full-pattern. This must typically
-  // be called before handling the initializer (if any) for the current full-
-  // pattern, in order to preserve the dominance ordering (see the comments
-  // on `Check::Initialize` for details).
-  auto BuildLocalVarStorage(Context& context, bool is_returned_var) -> void;
-
-  // Returns the `VarStorage` inst that was allocated for `pattern_id` by
+  // Returns the `VarStorage` inst that was emitted for `pattern_id` by
   // `BuildLocalVarStorage`.
   //
   // As an optimization, this assumes (and enforces) that it will be called
-  // exactly once for each inst passed to `AddLocalVarPattern`, and in the same
-  // order.
+  // exactly once for each inst pair passed to `AddLocalVarPattern`, and in the
+  // same order.
   auto GetLocalVarStorage(SemIR::InstId var_pattern_id) -> SemIR::InstId {
     CARBON_CHECK(kind_stack_.back() == Kind::ClassScopeVarDecl ||
                  kind_stack_.back() == Kind::NameBindingDecl);
@@ -222,11 +223,6 @@ class FullPatternStack {
 
   // The name bindings introduced by the currently pending full-patterns.
   ArrayStack<BindingInfo> bind_name_stack_;
-
-  struct VarInfo {
-    SemIR::InstId pattern_id;
-    SemIR::InstId storage_id;
-  };
 
   // The `var` patterns introduced by the currently pending full-patterns.
   ArrayStack<VarInfo> var_pattern_stack_;

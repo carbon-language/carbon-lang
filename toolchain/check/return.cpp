@@ -139,7 +139,7 @@ auto BuildReturnWithNoExpr(Context& context, SemIR::LocId loc_id) -> void {
     diag.Emit();
   }
 
-  AddReturnCleanupBlock(context, loc_id);
+  AddReturnInstWithCleanups(context, loc_id);
 }
 
 auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
@@ -238,8 +238,8 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
         CARBON_FATAL("Unexpected inst kind: {0}", return_form);
     }
   }
-  AddReturnCleanupBlockWithExpr(context, loc_id,
-                                {.expr_id = expr_id, .dest_id = out_param_id});
+  AddReturnInstWithCleanups(context, loc_id,
+                            {.expr_id = expr_id, .dest_id = out_param_id});
 }
 
 auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
@@ -260,7 +260,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
   // to indicate that this was a `return var`, not a reference return.
   returned_var_id = ConvertToValueExpr(context, returned_var_id);
 
-  AddReturnCleanupBlockWithExpr(
+  AddReturnInstWithCleanups(
       context, node_id,
       {.expr_id = returned_var_id, .dest_id = return_param_id});
 }

@@ -19,6 +19,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/check/unused.h"
+#include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
@@ -51,21 +52,21 @@ static auto GetLeafBindingPatternInstKind(Parse::NodeKind node_kind,
 }
 
 // Returns true if a parameter is valid in the given `introducer_kind`.
-static auto IsValidParamForIntroducer(Context& context, Parse::NodeId node_id,
+// `is_deduced` is whether this is a deduced (`[...]`) parameter.
+static auto IsValidParamForIntroducer(Context& context, SemIR::LocId loc_id,
                                       SemIR::NameId name_id,
                                       Lex::TokenKind introducer_kind,
-                                      bool is_generic) -> bool {
+                                      bool is_generic, bool is_deduced,
+                                      bool is_var) -> bool {
   switch (introducer_kind) {
     case Lex::TokenKind::Fn: {
       // `self` in the implicit parameter list is diagnosed separately (see
       // `SelfInImplicitParamList`), so skip it here to avoid a redundant
       // diagnostic.
-      if (context.full_pattern_stack().CurrentKind() ==
-              FullPatternStack::Kind::ImplicitParamList &&
-          !(is_generic || name_id == SemIR::NameId::SelfValue)) {
+      if (is_deduced && !(is_generic || name_id == SemIR::NameId::SelfValue)) {
         CARBON_DIAGNOSTIC(ImplictParamMustBeConstant, Error,
                           "implicit parameters of functions must be constant");
-        context.emitter().Emit(node_id, ImplictParamMustBeConstant);
+        context.emitter().Emit(loc_id, ImplictParamMustBeConstant);
         return false;
       }
       // Parameters can have incomplete types in a function declaration, but not
@@ -79,8 +80,7 @@ static auto IsValidParamForIntroducer(Context& context, Parse::NodeId node_id,
         // choice type itself.
 
         // Implicit param lists are prevented during parse.
-        CARBON_CHECK(context.full_pattern_stack().CurrentKind() !=
-                         FullPatternStack::Kind::ImplicitParamList,
+        CARBON_CHECK(!is_deduced,
                      "choice alternative with implicit parameters");
         // Don't fall through to the `Class` logic for choice alternatives.
         return true;
@@ -92,13 +92,20 @@ static auto IsValidParamForIntroducer(Context& context, Parse::NodeId node_id,
       if (name_id == SemIR::NameId::SelfValue) {
         CARBON_DIAGNOSTIC(SelfParameterNotAllowed, Error,
                           "`self` parameter only allowed on functions");
-        context.emitter().Emit(node_id, SelfParameterNotAllowed);
+        context.emitter().Emit(loc_id, SelfParameterNotAllowed);
         return false;
       }
       if (!is_generic) {
         CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
                           "parameters of generic types must be constant");
-        context.emitter().Emit(node_id, GenericParamMustBeConstant);
+        auto builder =
+            context.emitter().Build(loc_id, GenericParamMustBeConstant);
+        if (is_var) {
+          CARBON_DIAGNOSTIC(VarParamIsRuntime, Note,
+                            "`var` parameters are runtime");
+          builder.Note(loc_id, VarParamIsRuntime);
+        }
+        builder.Emit();
         return false;
       }
       return true;
@@ -110,7 +117,7 @@ static auto IsValidParamForIntroducer(Context& context, Parse::NodeId node_id,
 
 namespace {
 // Information about the expression in the type position of a binding pattern,
-// i.e. the position following the `:`/`:?`/`:!` separator. Note that this
+// i.e. the position following the `:` or `:?` separator. Note that this
 // expression may be interpreted as a type or a form, depending on the binding
 // kind.
 struct BindingPatternTypeInfo {
@@ -145,6 +152,25 @@ static auto HandleAnyBindingPatternType(Context& context,
 
   auto [node_id, original_inst_id] = context.node_stack().PopExprWithNodeId();
 
+  // We are leaving the scope of the `.Self`; they should no longer be frozen in
+  // the binding's type.
+  auto thawed_inst_id = ThawPeriodSelf(context, original_inst_id);
+  if (thawed_inst_id != original_inst_id) {
+    // If ThawPeriodSelf changed the instruction, it means there is a `.Self`
+    // reference in the type. Diagnose if the type is not a facet type.
+    auto const_inst_id =
+        context.constant_values().GetConstantInstId(original_inst_id);
+    if (!context.insts().Is<SemIR::FacetType>(const_inst_id) &&
+        const_inst_id != SemIR::ErrorInst::InstId) {
+      CARBON_DIAGNOSTIC(PeriodSelfInNonFacetType, Error,
+                        "`.Self` used in a type that is not a facet type");
+      context.emitter().Emit(node_id, PeriodSelfInNonFacetType);
+      original_inst_id = SemIR::ErrorInst::InstId;
+    } else {
+      original_inst_id = thawed_inst_id;
+    }
+  }
+
   if (node_kind == Parse::FormBindingPattern::Kind) {
     auto as_form = FormExprAsForm(context, node_id, original_inst_id);
     return {.node_id = node_id,
@@ -176,6 +202,10 @@ static auto HandleAnyBindingPattern(
           .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
   // A non-generic template binding is diagnosed by the parser.
   is_template &= is_generic;
+
+  // The name in a runtime binding may be wrapped in `runtime`; discard it.
+  context.node_stack()
+      .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::RuntimeBindingName>();
 
   // The name in a runtime binding may be wrapped in `ref`.
   bool is_ref =
@@ -270,8 +300,8 @@ static auto HandleAnyBindingPattern(
     // TODO: We should re-evaluate the contents of the eval block in a
     // synthesized specific to form these values, in order to propagate the
     // values.
-    return context.TODO(node_id,
-                        "local `let :!` bindings are currently unsupported");
+    return context.TODO(
+        node_id, "local generic `let` bindings are currently unsupported");
   }
 
   // Allocate an instruction of the appropriate kind, linked to the name for
@@ -279,8 +309,11 @@ static auto HandleAnyBindingPattern(
   switch (context.full_pattern_stack().CurrentKind()) {
     case FullPatternStack::Kind::ImplicitParamList:
     case FullPatternStack::Kind::ExplicitParamList: {
+      bool is_deduced = context.full_pattern_stack().CurrentKind() ==
+                        FullPatternStack::Kind::ImplicitParamList;
+      bool is_var = node_kind == Parse::NodeKind::VarBindingPattern;
       if (!IsValidParamForIntroducer(context, node_id, name_id, introducer.kind,
-                                     is_generic)) {
+                                     is_generic, is_deduced, is_var)) {
         if (name_id != SemIR::NameId::Underscore) {
           AddNameToLookup(context, name_id, SemIR::ErrorInst::InstId);
         }
@@ -532,6 +565,12 @@ auto HandleParseNode(Context& context,
 }
 
 auto HandleParseNode(Context& context, Parse::RefBindingNameId node_id)
+    -> bool {
+  context.node_stack().Push(node_id);
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::RuntimeBindingNameId node_id)
     -> bool {
   context.node_stack().Push(node_id);
   return true;

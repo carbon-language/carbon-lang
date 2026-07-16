@@ -16,7 +16,7 @@
 // --- a.carbon
 library "[[@TEST_NAME]]";
 
-class C(T:! Core.Copy & Core.UnformedInit & Core.Destroy) {
+class C(T: Core.Copy & Core.UnformedInit & Core.Destroy) {
   fn GetC(unused self) -> T {
     var value: T;
     return value;
@@ -28,7 +28,7 @@ library "[[@TEST_NAME]]";
 export import library "a";
 
 interface I {
-  let T:! Core.Copy & Core.UnformedInit & Core.Destroy;
+  let T: Core.Copy & Core.UnformedInit & Core.Destroy;
   fn GetI(self) -> C(T);
 }
 
@@ -36,7 +36,7 @@ interface I {
 library "[[@TEST_NAME]]";
 export import library "b";
 
-class D(U:! type) {
+class D(U: type) {
   impl as I where .T = U* {
     fn GetI(unused self) -> C(U*) {
       return {};

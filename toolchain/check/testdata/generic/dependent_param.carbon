@@ -14,8 +14,8 @@
 
 library "[[@TEST_NAME]]";
 
-class Outer(T:! Core.Copy) {
-  class Inner(U:! T) {
+class Outer(T: Core.Copy) {
+  class Inner(U: T) {
     //@dump-sem-ir-begin
     fn Get() -> T { return U; }
     //@dump-sem-ir-end
@@ -142,7 +142,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Inner(@Outer.%T.loc4_14.2: %Copy.type, %U.loc5_16.2: @Inner.%T.as_type.loc5_19.1 (%T.as_type)) {
+// CHECK:STDOUT: generic class @Inner(@Outer.%T.loc4_14.2: %Copy.type, %U.loc5_16.2: @Inner.%T.as_type.loc5_18.1 (%T.as_type)) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -172,7 +172,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Inner.Get(@Outer.%T.loc4_14.2: %Copy.type, @Inner.%U.loc5_16.2: @Inner.%T.as_type.loc5_19.1 (%T.as_type)) {
+// CHECK:STDOUT: generic fn @Inner.Get(@Outer.%T.loc4_14.2: %Copy.type, @Inner.%U.loc5_16.2: @Inner.%T.as_type.loc5_18.1 (%T.as_type)) {
 // CHECK:STDOUT:   %T: %Copy.type = symbolic_binding T, 0 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:   %T.as_type.loc7_17.1: type = facet_access_type %T [symbolic = %T.as_type.loc7_17.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %.loc7_17.2: Core.Form = init_form %T.as_type.loc7_17.1 [symbolic = %.loc7_17.2 (constants.%.1ce700.2)]
@@ -245,7 +245,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%T.f84, constants.%U.7e5) {
 // CHECK:STDOUT:   %T => constants.%T.f84
-// CHECK:STDOUT:   %T.as_type.loc5_19.1 => constants.%T.as_type
+// CHECK:STDOUT:   %T.as_type.loc5_18.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2c66b4.2
 // CHECK:STDOUT:   %U.patt.loc5_16.2 => constants.%U.patt.ed4
 // CHECK:STDOUT:   %U.loc5_16.1 => constants.%U.7e5
@@ -275,7 +275,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%Copy.facet.987, constants.%int_42.ac4) {
 // CHECK:STDOUT:   %T => constants.%Copy.facet.987
-// CHECK:STDOUT:   %T.as_type.loc5_19.1 => constants.%i32
+// CHECK:STDOUT:   %T.as_type.loc5_18.1 => constants.%i32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %U.patt.loc5_16.2 => constants.%U.patt.a76
 // CHECK:STDOUT:   %U.loc5_16.1 => constants.%int_42.ac4

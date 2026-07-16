@@ -37,7 +37,7 @@ library "[[@TEST_NAME]]";
 
 // This test uses many unsupported features, and is expected to change.
 interface I {
-  let U:! type;
+  let U: type;
   // CHECK:STDERR: fail_todo_impl_in_interface_definition_with_associated.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
   // CHECK:STDERR:   default fn F() {
   // CHECK:STDERR:   ^~~~~~~

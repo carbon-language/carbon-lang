@@ -23,7 +23,7 @@ auto DeduceGenericCallArguments(Context& context, SemIR::LocId loc_id,
 // Deduces the impl arguments to use in a use of a parameterized impl. Returns
 // `None` if deduction fails.
 auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
-                         const SemIR::Impl& impl, SemIR::ConstantId self_id,
+                         SemIR::ImplId impl_id, SemIR::ConstantId self_id,
                          SemIR::SpecificId constraint_specific_id)
     -> SemIR::SpecificId;
 

@@ -19,8 +19,8 @@ interface I {
 
   // TODO: An associated constant with an initializer without `default` in an
   // interface should be rejected.
-  let T:! type = (i32, i32);
-  let N:! i32 = 42;
+  let T: type = (i32, i32);
+  let N: i32 = 42;
 }
 
 // CHECK:STDOUT: --- todo_define_not_default.carbon
@@ -122,21 +122,21 @@ interface I {
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, %I.WithSelf.G.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:     %assoc2: %I.assoc_type = assoc_entity element2, @I.WithSelf.%T [concrete = constants.%assoc2]
-// CHECK:STDOUT:     %i32.loc22_19: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc22_24: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc22_27: %tuple.type.24b = tuple_literal (%i32.loc22_19, %i32.loc22_24) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc22_28: type = converted %.loc22_27, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
+// CHECK:STDOUT:     %i32.loc22_18: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc22_23: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc22_26: %tuple.type.24b = tuple_literal (%i32.loc22_18, %i32.loc22_23) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc22_27: type = converted %.loc22_26, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [concrete] {
 // CHECK:STDOUT:     %assoc3: %I.assoc_type = assoc_entity element3, @I.WithSelf.%N [concrete = constants.%assoc3]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
 // CHECK:STDOUT:     %impl.elem0: %.1c5 = impl_witness_access constants.%ImplicitAs.impl_witness.a23, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:     %bound_method.loc23_19.1: <bound method> = bound_method %int_42, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:     %bound_method.loc23_18.1: <bound method> = bound_method %int_42, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc23_19.2: <bound method> = bound_method %int_42, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc23_19.2(%int_42) [concrete = constants.%int_42.ac4]
-// CHECK:STDOUT:     %.loc23_19.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_42.ac4]
-// CHECK:STDOUT:     %.loc23_19.2: %i32 = converted %int_42, %.loc23_19.1 [concrete = constants.%int_42.ac4]
+// CHECK:STDOUT:     %bound_method.loc23_18.2: <bound method> = bound_method %int_42, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc23_18.2(%int_42) [concrete = constants.%int_42.ac4]
+// CHECK:STDOUT:     %.loc23_18.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_42.ac4]
+// CHECK:STDOUT:     %.loc23_18.2: %i32 = converted %int_42, %.loc23_18.1 [concrete = constants.%int_42.ac4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

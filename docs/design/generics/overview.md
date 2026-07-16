@@ -107,7 +107,7 @@ Summary of how Carbon generics work:
 -   _Deduced parameters_ are parameters whose values are determined by the types
     of the explicit arguments. Generic facet parameters are typically deduced.
 -   A function with a generic parameter can have the same function body as an
-    unparameterized one. Functions can freely mix checked, template, and regular
+    unparameterized one. Functions can freely mix checked, template, and runtime
     parameters.
 -   Interfaces can require other interfaces be implemented.
 -   Interfaces can [extend](terminology.md#extending-an-interface) required
@@ -368,11 +368,11 @@ You may also refer to any of the methods of interfaces required by the facet
 type using a
 [qualified member access expression](#accessing-members-of-interfaces).
 
-A function can have a mix of checked, template, and regular parameters. Each
-kind of parameter is defined using a different syntax: a checked parameter is
-uses a symbolic binding pattern, a template parameter uses a template binding
-pattern, and a regular parameter uses a runtime binding pattern. Likewise, it's
-allowed to pass a symbolic or template constant value to a checked or regular
+A function can have a mix of checked, template, and runtime parameters. Each
+kind of parameter is defined using a different syntax: a checked parameter uses
+a checked binding pattern, a template parameter uses a template binding
+pattern, and a runtime parameter uses a runtime binding pattern. Likewise, it's
+allowed to pass a symbolic or template constant value to a checked or runtime
 parameter. _We have decided to support passing a symbolic constant to a template
 parameter, see
 [leads issue #2153: Checked generics calling templates](https://github.com/carbon-language/carbon-lang/issues/2153),

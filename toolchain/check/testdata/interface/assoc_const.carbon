@@ -13,9 +13,9 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/assoc_const.carbon
 
 interface I {
-  let T:! type;
-  let N:! i32;
-  let Empty:! ();
+  let T: type;
+  let N: i32;
+  let Empty: ();
 }
 
 // CHECK:STDOUT: --- assoc_const.carbon

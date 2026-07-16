@@ -64,6 +64,7 @@ auto HandleStatement(Context& context) -> void {
     case Lex::TokenKind::Interface:
     case Lex::TokenKind::Let:
     case Lex::TokenKind::Library:
+    case Lex::TokenKind::MatchFirst:
     case Lex::TokenKind::Namespace:
     case Lex::TokenKind::Observe:
     // We intentionally don't handle Package here, because `package.` can be
@@ -119,6 +120,7 @@ auto HandleStatementForHeader(Context& context) -> void {
   context.PushState(state);
   context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/false,
                               /*in_unused_pattern=*/false,
+                              BindingContext::ExplicitParam,
                               PrecedenceGroup::ForTopLevelPattern());
 }
 

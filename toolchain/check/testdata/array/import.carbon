@@ -31,7 +31,7 @@ fn G(n: i32) -> i32 {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! array(i32, 1);
+  let value: array(i32, 1);
 }
 
 class C {}

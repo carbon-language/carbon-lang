@@ -71,7 +71,7 @@ library "[[@TEST_NAME]]";
 
 eval fn F(x: i32) -> i32 { return x; }
 
-fn G(N:! i32) {
+fn G(generic N: i32) {
   // CHECK:STDERR: fail_todo_dependent_call.carbon:[[@LINE+4]]:17: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:   var unused a: array(i32, F(N)) = (0, 1, 2);
   // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~
@@ -90,7 +90,7 @@ eval fn F(_: i32) -> type {
   return C;
 }
 
-fn UseFGenerically(X:! i32) {
+fn UseFGenerically(generic X: i32) {
   // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+12]]:3: error: member name of type `<dependent type>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:   var unused v: F(X) = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
@@ -164,7 +164,7 @@ class C {}
 eval fn F() -> C { return {}; }
 //@dump-sem-ir-end
 
-fn G(_:! C) {}
+fn G(generic _: C) {}
 
 fn H() {
   //@dump-sem-ir-begin

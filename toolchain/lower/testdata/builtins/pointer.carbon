@@ -11,8 +11,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/builtins/pointer.carbon
 
 fn MakeUnformed(t: type) -> type = "maybe_unformed.make_type";
-fn MakeNull(T:! type) -> MakeUnformed(T*) = "pointer.make_null";
-fn IsNull[T:! type](p: MakeUnformed(T*)) -> bool = "pointer.is_null";
+fn MakeNull(generic T: type) -> MakeUnformed(T*) = "pointer.make_null";
+fn IsNull[T: type](p: MakeUnformed(T*)) -> bool = "pointer.is_null";
 
 class C {}
 

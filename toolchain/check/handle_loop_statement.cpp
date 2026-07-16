@@ -56,9 +56,15 @@ static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
   context.inst_block_stack().Push(loop_body_id);
   context.region_stack().AddToRegion(loop_body_id, node_id);
 
-  // Allow `break` and `continue` in this scope.
+  // Allow `break` and `continue` in this scope. `continue` will destroy
+  // temporaries in the loop header, `break` will not, as the loop exit block
+  // also destroys those temporaries.
   context.break_continue_stack().push_back(
-      {.break_target = loop_exit_id, .continue_target = loop_header_id});
+      {.break_target = loop_exit_id,
+       .break_depth = context.scope_stack().cleanup_scope_depth(),
+       .continue_target = loop_header_id,
+       .continue_depth =
+           context.scope_stack().enclosing_cleanup_scope_depth()});
 }
 
 // Finishes emitting the body for a `while`-like loop. Adds a back-edge to the
@@ -67,13 +73,18 @@ static auto FinishLoopBody(Context& context, Parse::NodeId node_id) -> void {
   auto blocks = context.break_continue_stack().pop_back_val();
 
   // Add the loop backedge.
-  AddInst<SemIR::Branch>(context, node_id,
-                         {.target_id = blocks.continue_target});
+  AddBranchWithCleanups(context, node_id, blocks.continue_target,
+                        blocks.continue_depth);
   context.inst_block_stack().Pop();
 
   // Start emitting the loop exit block.
+  context.scope_stack().DiscardCleanupsSince(blocks.break_depth);
   context.inst_block_stack().Push(blocks.break_target);
   context.region_stack().AddToRegion(blocks.break_target, node_id);
+
+  // Clean up anything created in the loop header and pop the loop scope.
+  AddAndDiscardCleanups(context);
+  context.scope_stack().Pop(/*check_unused=*/true);
 }
 
 // `while`
@@ -81,6 +92,7 @@ static auto FinishLoopBody(Context& context, Parse::NodeId node_id) -> void {
 
 auto HandleParseNode(Context& context, Parse::WhileConditionStartId node_id)
     -> bool {
+  context.scope_stack().PushForSameRegion(ScopeStack::CleanupScopeKind::Owned);
   context.node_stack().Push(node_id, StartLoopHeader(context, node_id));
   return true;
 }
@@ -108,10 +120,12 @@ auto HandleParseNode(Context& context, Parse::WhileStatementId node_id)
 
 auto HandleParseNode(Context& context, Parse::ForHeaderStartId node_id)
     -> bool {
-  // Create a nested scope to hold the cursor variable. This is also the lexical
-  // scope that names in the pattern are added to, although they get rebound on
-  // each loop iteration.
-  context.scope_stack().PushForSameRegion();
+  // Create a scope that will eventually hold the range and cursor of the for
+  // loop.
+  context.scope_stack().PushForSameRegion(ScopeStack::CleanupScopeKind::Owned);
+
+  // Create a scope for any variables introduced in the pattern.
+  context.scope_stack().PushForSameRegion(ScopeStack::CleanupScopeKind::Owned);
 
   // Begin an implicit let declaration context for the pattern.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Let>();
@@ -130,6 +144,11 @@ auto HandleParseNode(Context& context, Parse::ForInId node_id) -> bool {
                                   {.pattern_block_id = pattern_block_id});
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
   context.full_pattern_stack().StartPatternInitializer();
+
+  // Create a temporary scope to hold the range expression and the cursor. This
+  // comes before the pattern in control flow order, but we'll reorder temporary
+  // destruction later.
+  context.scope_stack().PushForSameRegion(ScopeStack::CleanupScopeKind::Owned);
   return true;
 }
 
@@ -182,6 +201,14 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
       {.lhs_id = init_result.storage_id, .rhs_id = init_result.init_id});
   cursor_var_id = init_result.storage_id;
 
+  // Now we're finished with the loop initialization, merge the scope containing
+  // the range expression into its grandparent scope. The parent scope currently
+  // contains the loop variables, whereas the current scope contains the range,
+  // and that's backwards from a control flow and destruction order perspective.
+  // We created the grandparent scope for this purpose when handling the
+  // ForHeaderStart node.
+  context.scope_stack().MergeTopScopeIntoGrandparentAndPop();
+
   // Start emitting the loop header block.
   auto loop_header_id = StartLoopHeader(context, start_node_id);
 
@@ -211,10 +238,6 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   // should be in scope.
   context.full_pattern_stack().EndPatternInitializer();
 
-  // Create storage for var patterns now.
-  context.full_pattern_stack().BuildLocalVarStorage(context,
-                                                    /*is_returned_var=*/false);
-
   // Initialize the pattern from `<element>.Get()`.
   auto element_value_id =
       CallOptionalAccessor(context, node_id, element_id, CoreIdentifier::Get);
@@ -225,6 +248,10 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::ForStatementId node_id) -> bool {
   FinishLoopBody(context, node_id);
+
+  // Pop the scope that the range and cursor live in.
+  AddAndDiscardCleanups(context);
+  context.scope_stack().Pop(/*check_unused=*/true);
   return true;
 }
 
@@ -239,8 +266,8 @@ auto HandleParseNode(Context& context, Parse::BreakStatementStartId node_id)
                       "`break` can only be used in a loop");
     context.emitter().Emit(node_id, BreakOutsideLoop);
   } else {
-    AddInst<SemIR::Branch>(context, node_id,
-                           {.target_id = stack.back().break_target});
+    AddBranchWithCleanups(context, node_id, stack.back().break_target,
+                          stack.back().break_depth);
   }
 
   context.inst_block_stack().Pop();
@@ -264,8 +291,8 @@ auto HandleParseNode(Context& context, Parse::ContinueStatementStartId node_id)
                       "`continue` can only be used in a loop");
     context.emitter().Emit(node_id, ContinueOutsideLoop);
   } else {
-    AddInst<SemIR::Branch>(context, node_id,
-                           {.target_id = stack.back().continue_target});
+    AddBranchWithCleanups(context, node_id, stack.back().continue_target,
+                          stack.back().continue_depth);
   }
 
   context.inst_block_stack().Pop();

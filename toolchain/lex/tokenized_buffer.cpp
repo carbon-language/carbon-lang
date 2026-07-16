@@ -418,6 +418,33 @@ auto TokenizedBuffer::IsTrailingComment(CommentIndex comment_index) const
   return comments_.Get(comment_index).is_trailing;
 }
 
+namespace {
+// The category of a full-line comment, determined by the byte after the `//`
+// introducer. Adjacent full-line comments coalesce only within a category, so
+// a comment's category is well defined by its first line.
+enum class CommentCategory : uint8_t {
+  // Whitespace, or nothing before the end of the line or file.
+  Ordinary,
+  // A `//@...` tooling directive.
+  Directive,
+  // Every other byte; the invalid spellings are lumped into one category.
+  Invalid,
+};
+}  // namespace
+
+// Returns the comment's category; see `CommentCategory`.
+static auto GetCommentCategory(llvm::StringRef source, int32_t comment_start)
+    -> CommentCategory {
+  if (comment_start + 2 >= static_cast<int32_t>(source.size()) ||
+      IsSpace(source[comment_start + 2])) {
+    return CommentCategory::Ordinary;
+  }
+  if (source[comment_start + 2] == '@') {
+    return CommentCategory::Directive;
+  }
+  return CommentCategory::Invalid;
+}
+
 auto TokenizedBuffer::AddComment(int32_t indent, int32_t start, int32_t end,
                                  bool is_trailing) -> void {
   // A comment runs forward from its start, and its length is stored in 31 bits
@@ -425,13 +452,17 @@ auto TokenizedBuffer::AddComment(int32_t indent, int32_t start, int32_t end,
   // in 31 bits because the source size is bounded by `INT32_MAX`.
   CARBON_DCHECK(start <= end);
 
-  // A block of identical full-line comments is coalesced into a single comment.
-  // A trailing comment is always standalone: it never extends a preceding
-  // comment, nor is it extended by a following one.
+  // A block of adjacent full-line comments in the same category is coalesced
+  // into a single comment; transitioning between ordinary comments, `//@...`
+  // directives, and invalid introducers starts a new one. A trailing comment
+  // is always standalone: it never extends a preceding comment, nor is it
+  // extended by a following one.
   if (!is_trailing && comments_.size() > 0) {
     auto& comment = comments_.Get(CommentIndex(comments_.size() - 1));
     if (!comment.is_trailing &&
-        comment.start + comment.length + indent == start) {
+        comment.start + comment.length + indent == start &&
+        GetCommentCategory(source_->text(), comment.start) ==
+            GetCommentCategory(source_->text(), start)) {
       CARBON_DCHECK(comment.start <= end);
       comment.length = end - comment.start;
       return;

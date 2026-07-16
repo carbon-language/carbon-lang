@@ -59,7 +59,8 @@ class Context {
   explicit Context(const InstallPaths* installation,
                    llvm::raw_ostream* vlog_stream,
                    Diagnostics::Consumer* consumer,
-                   clang::clangd::LSPBinder::RawOutgoing* outgoing);
+                   clang::clangd::LSPBinder::RawOutgoing* outgoing,
+                   bool prelude_import);
 
   // Returns the virtual filesystem.
   auto vfs() -> llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem>& {
@@ -86,6 +87,8 @@ class Context {
 
   auto files() -> Map<std::string, File>& { return files_; }
 
+  auto prelude_import() const -> bool { return prelude_import_; }
+
  private:
   const InstallPaths* installation_;
 
@@ -100,6 +103,8 @@ class Context {
 
   // Content of files managed by the language client.
   Map<std::string, File> files_;
+
+  bool prelude_import_;
 };
 
 }  // namespace Carbon::LanguageServer

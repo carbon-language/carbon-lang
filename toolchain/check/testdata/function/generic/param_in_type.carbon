@@ -12,13 +12,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/param_in_type.carbon
 
-fn F(N:! i32, a: array(i32, N)*);
+fn F(generic N: i32, a: array(i32, N)*);
 
 // CHECK:STDOUT: --- param_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -71,58 +71,58 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc15_7.1: %pattern_type.6b6 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc15_7.2 (constants.%N.patt.38a)]
-// CHECK:STDOUT:     %a.param_patt.loc15_16.1: @F.%pattern_type (%pattern_type.5a4) = value_param_pattern [symbolic = %a.param_patt.loc15_16.2 (constants.%a.param_patt)]
-// CHECK:STDOUT:     %a.patt.loc15_16.1: @F.%pattern_type (%pattern_type.5a4) = at_binding_pattern a, %a.param_patt.loc15_16.1 [symbolic = %a.patt.loc15_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %N.patt.loc15_15.1: %pattern_type.6b6 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc15_15.2 (constants.%N.patt.38a)]
+// CHECK:STDOUT:     %a.param_patt.loc15_23.1: @F.%pattern_type (%pattern_type.5a4) = value_param_pattern [symbolic = %a.param_patt.loc15_23.2 (constants.%a.param_patt)]
+// CHECK:STDOUT:     %a.patt.loc15_23.1: @F.%pattern_type (%pattern_type.5a4) = at_binding_pattern a, %a.param_patt.loc15_23.1 [symbolic = %a.patt.loc15_23.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15_10: type = splice_block %i32.loc15_10 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %i32.loc15_10: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc15_17: type = splice_block %i32.loc15_17 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %i32.loc15_17: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc15_7.2: %i32 = symbolic_binding N, 0 [symbolic = %N.loc15_7.1 (constants.%N.37f)]
-// CHECK:STDOUT:     %a.param: @F.%ptr.loc15_31.1 (%ptr) = value_param call_param0
-// CHECK:STDOUT:     %.loc15_31: type = splice_block %ptr.loc15_31.2 [symbolic = %ptr.loc15_31.1 (constants.%ptr)] {
-// CHECK:STDOUT:       %i32.loc15_24: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %N.ref: %i32 = name_ref N, %N.loc15_7.2 [symbolic = %N.loc15_7.1 (constants.%N.37f)]
+// CHECK:STDOUT:     %N.loc15_15.2: %i32 = symbolic_binding N, 0 [symbolic = %N.loc15_15.1 (constants.%N.37f)]
+// CHECK:STDOUT:     %a.param: @F.%ptr.loc15_38.1 (%ptr) = value_param call_param0
+// CHECK:STDOUT:     %.loc15_38: type = splice_block %ptr.loc15_38.2 [symbolic = %ptr.loc15_38.1 (constants.%ptr)] {
+// CHECK:STDOUT:       %i32.loc15_31: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:       %N.ref: %i32 = name_ref N, %N.loc15_15.2 [symbolic = %N.loc15_15.1 (constants.%N.37f)]
 // CHECK:STDOUT:       %impl.elem0: %.b08 = impl_witness_access constants.%ImplicitAs.impl_witness.416, element0 [concrete = constants.%Int.as.ImplicitAs.impl.Convert.69e]
-// CHECK:STDOUT:       %bound_method.loc15_29.2: <bound method> = bound_method %N.ref, %impl.elem0 [symbolic = %Int.as.ImplicitAs.impl.Convert.bound (constants.%Int.as.ImplicitAs.impl.Convert.bound)]
+// CHECK:STDOUT:       %bound_method.loc15_36.2: <bound method> = bound_method %N.ref, %impl.elem0 [symbolic = %Int.as.ImplicitAs.impl.Convert.bound (constants.%Int.as.ImplicitAs.impl.Convert.bound)]
 // CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Int.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:       %bound_method.loc15_29.3: <bound method> = bound_method %N.ref, %specific_fn [symbolic = %bound_method.loc15_29.1 (constants.%bound_method)]
-// CHECK:STDOUT:       %Int.as.ImplicitAs.impl.Convert.call.loc15_29.2: init Core.IntLiteral = call %bound_method.loc15_29.3(%N.ref) [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
-// CHECK:STDOUT:       %.loc15_29.1: Core.IntLiteral = value_of_initializer %Int.as.ImplicitAs.impl.Convert.call.loc15_29.2 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
-// CHECK:STDOUT:       %.loc15_29.2: Core.IntLiteral = converted %N.ref, %.loc15_29.1 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
-// CHECK:STDOUT:       %array_type.loc15_30.2: type = array_type %.loc15_29.2, %i32.loc15_24 [symbolic = %array_type.loc15_30.1 (constants.%array_type)]
-// CHECK:STDOUT:       %ptr.loc15_31.2: type = ptr_type %array_type.loc15_30.2 [symbolic = %ptr.loc15_31.1 (constants.%ptr)]
+// CHECK:STDOUT:       %bound_method.loc15_36.3: <bound method> = bound_method %N.ref, %specific_fn [symbolic = %bound_method.loc15_36.1 (constants.%bound_method)]
+// CHECK:STDOUT:       %Int.as.ImplicitAs.impl.Convert.call.loc15_36.2: init Core.IntLiteral = call %bound_method.loc15_36.3(%N.ref) [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
+// CHECK:STDOUT:       %.loc15_36.1: Core.IntLiteral = value_of_initializer %Int.as.ImplicitAs.impl.Convert.call.loc15_36.2 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
+// CHECK:STDOUT:       %.loc15_36.2: Core.IntLiteral = converted %N.ref, %.loc15_36.1 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
+// CHECK:STDOUT:       %array_type.loc15_37.2: type = array_type %.loc15_36.2, %i32.loc15_31 [symbolic = %array_type.loc15_37.1 (constants.%array_type)]
+// CHECK:STDOUT:       %ptr.loc15_38.2: type = ptr_type %array_type.loc15_37.2 [symbolic = %ptr.loc15_38.1 (constants.%ptr)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%ptr.loc15_31.1 (%ptr) = wrapper_binding a, %a.param
+// CHECK:STDOUT:     %a: @F.%ptr.loc15_38.1 (%ptr) = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%N.loc15_7.2: %i32) {
-// CHECK:STDOUT:   %N.patt.loc15_7.2: %pattern_type.6b6 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc15_7.2 (constants.%N.patt.38a)]
-// CHECK:STDOUT:   %N.loc15_7.1: %i32 = symbolic_binding N, 0 [symbolic = %N.loc15_7.1 (constants.%N.37f)]
-// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %N.loc15_7.1, constants.%Int.as.ImplicitAs.impl.Convert.69e [symbolic = %Int.as.ImplicitAs.impl.Convert.bound (constants.%Int.as.ImplicitAs.impl.Convert.bound)]
-// CHECK:STDOUT:   %bound_method.loc15_29.1: <bound method> = bound_method %N.loc15_7.1, constants.%Int.as.ImplicitAs.impl.Convert.specific_fn [symbolic = %bound_method.loc15_29.1 (constants.%bound_method)]
-// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1: init Core.IntLiteral = call %bound_method.loc15_29.1(%N.loc15_7.1) [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
-// CHECK:STDOUT:   %array_type.loc15_30.1: type = array_type %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1, constants.%i32 [symbolic = %array_type.loc15_30.1 (constants.%array_type)]
-// CHECK:STDOUT:   %ptr.loc15_31.1: type = ptr_type %array_type.loc15_30.1 [symbolic = %ptr.loc15_31.1 (constants.%ptr)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc15_31.1 [symbolic = %pattern_type (constants.%pattern_type.5a4)]
-// CHECK:STDOUT:   %a.param_patt.loc15_16.2: @F.%pattern_type (%pattern_type.5a4) = value_param_pattern [symbolic = %a.param_patt.loc15_16.2 (constants.%a.param_patt)]
-// CHECK:STDOUT:   %a.patt.loc15_16.2: @F.%pattern_type (%pattern_type.5a4) = at_binding_pattern a, %a.param_patt.loc15_16.2 [symbolic = %a.patt.loc15_16.2 (constants.%a.patt)]
+// CHECK:STDOUT: generic fn @F(%N.loc15_15.2: %i32) {
+// CHECK:STDOUT:   %N.patt.loc15_15.2: %pattern_type.6b6 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc15_15.2 (constants.%N.patt.38a)]
+// CHECK:STDOUT:   %N.loc15_15.1: %i32 = symbolic_binding N, 0 [symbolic = %N.loc15_15.1 (constants.%N.37f)]
+// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %N.loc15_15.1, constants.%Int.as.ImplicitAs.impl.Convert.69e [symbolic = %Int.as.ImplicitAs.impl.Convert.bound (constants.%Int.as.ImplicitAs.impl.Convert.bound)]
+// CHECK:STDOUT:   %bound_method.loc15_36.1: <bound method> = bound_method %N.loc15_15.1, constants.%Int.as.ImplicitAs.impl.Convert.specific_fn [symbolic = %bound_method.loc15_36.1 (constants.%bound_method)]
+// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1: init Core.IntLiteral = call %bound_method.loc15_36.1(%N.loc15_15.1) [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
+// CHECK:STDOUT:   %array_type.loc15_37.1: type = array_type %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1, constants.%i32 [symbolic = %array_type.loc15_37.1 (constants.%array_type)]
+// CHECK:STDOUT:   %ptr.loc15_38.1: type = ptr_type %array_type.loc15_37.1 [symbolic = %ptr.loc15_38.1 (constants.%ptr)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc15_38.1 [symbolic = %pattern_type (constants.%pattern_type.5a4)]
+// CHECK:STDOUT:   %a.param_patt.loc15_23.2: @F.%pattern_type (%pattern_type.5a4) = value_param_pattern [symbolic = %a.param_patt.loc15_23.2 (constants.%a.param_patt)]
+// CHECK:STDOUT:   %a.patt.loc15_23.2: @F.%pattern_type (%pattern_type.5a4) = at_binding_pattern a, %a.param_patt.loc15_23.2 [symbolic = %a.patt.loc15_23.2 (constants.%a.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a.param: @F.%ptr.loc15_31.1 (%ptr));
+// CHECK:STDOUT:   fn(%a.param: @F.%ptr.loc15_38.1 (%ptr));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.37f) {
-// CHECK:STDOUT:   %N.patt.loc15_7.2 => constants.%N.patt.38a
-// CHECK:STDOUT:   %N.loc15_7.1 => constants.%N.37f
+// CHECK:STDOUT:   %N.patt.loc15_15.2 => constants.%N.patt.38a
+// CHECK:STDOUT:   %N.loc15_15.1 => constants.%N.37f
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.bound => constants.%Int.as.ImplicitAs.impl.Convert.bound
-// CHECK:STDOUT:   %bound_method.loc15_29.1 => constants.%bound_method
-// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1 => constants.%Int.as.ImplicitAs.impl.Convert.call
-// CHECK:STDOUT:   %array_type.loc15_30.1 => constants.%array_type
-// CHECK:STDOUT:   %ptr.loc15_31.1 => constants.%ptr
+// CHECK:STDOUT:   %bound_method.loc15_36.1 => constants.%bound_method
+// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1 => constants.%Int.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   %array_type.loc15_37.1 => constants.%array_type
+// CHECK:STDOUT:   %ptr.loc15_38.1 => constants.%ptr
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.5a4
-// CHECK:STDOUT:   %a.param_patt.loc15_16.2 => constants.%a.param_patt
-// CHECK:STDOUT:   %a.patt.loc15_16.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.param_patt.loc15_23.2 => constants.%a.param_patt
+// CHECK:STDOUT:   %a.patt.loc15_23.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

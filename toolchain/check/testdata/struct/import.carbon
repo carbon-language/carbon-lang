@@ -18,7 +18,7 @@ var a_ref: {.a: i32} = {.a = 0};
 var b_ref: {.a: {.b: i32, .c: (i32,)}, .d: i32} =
     {.a = {.b = 0, .c = (0,)}, .d = 0};
 
-class C(S:! {.a: i32, .b: i32}) {}
+class C(S: {.a: i32, .b: i32}) {}
 fn F() -> C({.a = 1, .b = 2});
 
 // --- implicit.impl.carbon
@@ -39,8 +39,8 @@ impl package Implicit;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-4]]:1: in import [InImport]
 // CHECK:STDERR: implicit.carbon:8:9: note: initializing generic parameter `S` declared here [InitializingGenericParam]
-// CHECK:STDERR: class C(S:! {.a: i32, .b: i32}) {}
-// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: class C(S: {.a: i32, .b: i32}) {}
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var c_bad: C({.c = 1, .d = 2}) = F();
 
@@ -61,7 +61,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 library "[[@TEST_NAME]]";
 
 interface I {
-  let value:! {.x: i32};
+  let value: {.x: i32};
 }
 
 class C {}

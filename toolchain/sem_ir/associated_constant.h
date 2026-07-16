@@ -14,7 +14,7 @@ namespace Carbon::SemIR {
 // An associated constant entity. For example:
 //
 //   interface I {
-//     let AssocConst:! type;
+//     let AssocConst: type;
 //    }
 //
 // TODO: This overlaps a lot with EntityName and EntityWithParamsBase.
@@ -27,7 +27,7 @@ struct AssociatedConstant : public Printable<AssociatedConstant> {
         << ", default_value_id: " << default_value_id << "}";
   }
 
-  // The following fields are set at the `:!` binding, when the
+  // The following fields are set at the `:` binding, when the
   // `AssociatedConstant` is created.
 
   // The entity's name.

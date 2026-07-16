@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CHECK_UNIT_H_
 #define CARBON_TOOLCHAIN_CHECK_CHECK_UNIT_H_
 
-#include "clang/Frontend/CompilerInvocation.h"
 #include "common/map.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/check.h"
@@ -13,6 +12,10 @@
 #include "toolchain/check/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
+
+namespace clang {
+class CompilerInvocation;
+}
 
 namespace Carbon::Check {
 

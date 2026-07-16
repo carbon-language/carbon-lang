@@ -14,7 +14,7 @@ interface Copy {
   fn Op(self) -> Self;
 }
 
-fn F[T:! Copy & Core.Destroy](a: T) -> T {
+fn F[T: Copy & Core.Destroy](a: T) -> T {
   var _: T = a.(Copy.Op)();
   return a.(Copy.Op)();
 }

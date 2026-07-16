@@ -23,8 +23,8 @@ fn ConvertF64ToIntLiteral(a: f64) -> Core.IntLiteral = "float.convert_int";
 fn Negate(a: f64) -> f64 = "float.negate";
 fn Div(a: f64, b: f64) -> f64 = "float.div";
 
-class Expect[T:! type](N:! T) {}
-fn Test[T:! type](N:! T) -> Expect(N) { return {}; }
+class Expect[T: type](N: T) {}
+fn Test[T: type](generic N: T) -> Expect(N) { return {}; }
 
 // --- identity.carbon
 library "[[@TEST_NAME]]";

@@ -269,6 +269,7 @@ cc_test(
         "//common:raw_string_ostream",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 

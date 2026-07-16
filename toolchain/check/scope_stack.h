@@ -25,10 +25,37 @@ class ScopeStack {
  public:
   explicit ScopeStack(Context& context);
 
+  // The kind of cleanup scope that is associated with a scope. A cleanup scope
+  // contains the destructor calls that are necessary to perform when leaving a
+  // scope.
+  enum class CleanupScopeKind : uint8_t {
+    // This scope is not used for runtime expression evaluation, so should only
+    // contain constants. Any cleanups introduced here can be discarded.
+    // TODO: Is this the behavior we want for such scopes? Should we check that
+    // the cleanups themselves are constant?
+    None,
+    // This scope is associated with a subexpression, not a full-expression, so
+    // its cleanup scope is inherited from the parent scope.
+    Inherited,
+    // This scope is associated with a statement, so it owns a cleanup scope,
+    // and its cleanups must be run or explicitly discarded when exiting this
+    // scope.
+    Owned,
+  };
+
+  // An index for the distance to the bottom of the cleanup stack.
+  struct CleanupScopeDepth : public IndexBase<CleanupScopeDepth> {
+    static constexpr llvm::StringLiteral Label = "cleanup_scope_depth";
+
+    using IndexBase::IndexBase;
+  };
+
   // A scope in which `break` and `continue` can be used.
   struct BreakContinueScope {
     SemIR::InstBlockId break_target;
+    CleanupScopeDepth break_depth;
     SemIR::InstBlockId continue_target;
+    CleanupScopeDepth continue_depth;
   };
 
   // A non-lexical scope in which unqualified lookup may be required.
@@ -59,7 +86,8 @@ class ScopeStack {
   // Pushes a scope which should be in the same region as the current scope.
   // These can be in a function without breaking `return` scoping. For example,
   // this is used by struct literals and code blocks.
-  auto PushForSameRegion() -> void;
+  auto PushForSameRegion(CleanupScopeKind cleanup_scope_kind =
+                             CleanupScopeKind::Inherited) -> void;
 
   // Pushes a function scope.
   auto PushForFunctionBody(SemIR::InstId scope_inst_id) -> void;
@@ -108,6 +136,19 @@ class ScopeStack {
     return !return_scope_stack_.empty() &&
            !return_scope_stack_.back().nested_scope_index.has_value();
   }
+
+  // Merges the innermost scope into its grandparent scope, and pops the
+  // now-empty scope. This is used when handling a `for` statement. Given:
+  //
+  //   for (var a: i32 in MakeTempRange()) {
+  //
+  // we have an outer scope containing `var a: i32` and an inner scope
+  // containing `MakeTempRange()`, and we want them the other way around, so we
+  // create an extra enclosing scope in advance and merge the inner scope into
+  // it.
+  //
+  // Requires that no names were introduced in the innermost scope.
+  auto MergeTopScopeIntoGrandparentAndPop() -> void;
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
@@ -198,12 +239,48 @@ class ScopeStack {
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;
 
-  auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
-    return break_continue_stack_;
+  // Returns whether this is a scope in which cleanups are tracked.
+  auto IsCleanupScope() const -> bool {
+    return Peek().cleanup_scope_kind != CleanupScopeKind::None;
   }
 
-  auto destroy_id_stack() -> ArrayStack<SemIR::InstId>& {
-    return destroy_id_stack_;
+  // Registers a cleanup for `inst_id` within the current cleanup scope.
+  auto PushCleanupFor(SemIR::InstId inst_id) -> void {
+    CARBON_CHECK(IsCleanupScope());
+    destroy_id_stack_.push_back(inst_id);
+  }
+
+  // Returns all values on `destroy_id_stack_` added since `depth`.
+  auto GetCleanupsSince(CleanupScopeDepth depth) const
+      -> llvm::ArrayRef<SemIR::InstId> {
+    return llvm::ArrayRef(destroy_id_stack_).slice(depth.index);
+  }
+
+  // Discards cleanups after the given depth, which must be within the current
+  // scope.
+  auto DiscardCleanupsSince(CleanupScopeDepth depth) -> void {
+    auto enclosing = enclosing_cleanup_scope_depth();
+    CARBON_CHECK(depth >= enclosing);
+    destroy_id_stack_.truncate(depth.index);
+  }
+
+  // Returns the current depth of the cleanup stack.
+  auto cleanup_scope_depth() const -> CleanupScopeDepth {
+    return CleanupScopeDepth(destroy_id_stack_.size());
+  }
+
+  // Returns the depth of the cleanup stack enclosing the current scope.
+  auto enclosing_cleanup_scope_depth() const -> CleanupScopeDepth {
+    return Peek().cleanup_scope_depth;
+  }
+
+  // Returns the depth of the cleanup stack enclosing this function scope.
+  auto function_cleanup_scope_depth() const -> CleanupScopeDepth {
+    return return_scope_stack_.back().cleanup_scope_depth;
+  }
+
+  auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
+    return break_continue_stack_;
   }
 
   auto compile_time_binding_stack() -> ArrayStack<SemIR::InstId>& {
@@ -249,6 +326,12 @@ class ScopeStack {
     // unregistered when the scope ends.
     bool has_returned_var = false;
 
+    // The kind of cleanup scope that is associated with this scope.
+    CleanupScopeKind cleanup_scope_kind = CleanupScopeKind::None;
+
+    // The cleanup scope depth on entry to this scope.
+    CleanupScopeDepth cleanup_scope_depth;
+
     // Whether there are any ids in the `names` set.
     int num_names = 0;
 
@@ -265,6 +348,9 @@ class ScopeStack {
     // The value corresponding to the current `returned var`, if any. Will be
     // set and unset as `returned var`s are declared and go out of scope.
     SemIR::InstId returned_var = SemIR::InstId::None;
+
+    // The cleanup stack depth when entering the function body.
+    CleanupScopeDepth cleanup_scope_depth;
 
     // When a nested scope interrupts a return scope, this is the index of the
     // outermost interrupting scope (the one closest to the function scope).
@@ -283,8 +369,8 @@ class ScopeStack {
   // lexical_lookup_has_load_error is used to limit diagnostics when a given
   // namespace may contain a mix of both successful and failed name imports.
   auto Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
-            SemIR::SpecificId specific_id, bool lexical_lookup_has_load_error)
-      -> void;
+            SemIR::SpecificId specific_id, CleanupScopeKind cleanup_scope_kind,
+            bool lexical_lookup_has_load_error) -> void;
 
   auto Peek(int drop = 0) const -> const ScopeStackEntry& {
     CARBON_DCHECK(drop < static_cast<int>(scope_stack_.size()));
@@ -331,7 +417,7 @@ class ScopeStack {
 
   // A stack of instances to destroy. This only has entries inside of function
   // bodies, where destruction on scope exit is required.
-  ArrayStack<SemIR::InstId> destroy_id_stack_;
+  llvm::SmallVector<SemIR::InstId> destroy_id_stack_;
 
   // Information about non-lexical scopes. This is a subset of the entries and
   // the information in scope_stack_.

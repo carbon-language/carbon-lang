@@ -15,19 +15,19 @@
 // conclude "equivalent" for all the call graph. This is to account for
 // switching to a work-queue from recursion.
 
-fn A[U:! Core.Copy](x: U) -> U {
+fn A[U: Core.Copy](x: U) -> U {
   return x;
 }
 
-fn D[U:! Core.Copy](x: U) -> U {
+fn D[U: Core.Copy](x: U) -> U {
   return x;
 }
 
-fn B[U:! Core.Copy & Core.Destroy](x: U*) {
+fn B[U: Core.Copy & Core.Destroy](x: U*) {
   D(*x);
 }
 
-fn F[T:! Core.Copy & Core.Destroy](x: T*) {
+fn F[T: Core.Copy & Core.Destroy](x: T*) {
   A(i32);
   B(x);
 }

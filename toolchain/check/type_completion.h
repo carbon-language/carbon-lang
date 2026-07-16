@@ -78,8 +78,7 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
 auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
                             SemIR::ConstantId self_const_id,
                             SemIR::TypeInstId facet_type_inst_id,
-                            bool allow_partially_identified,
-                            bool subst_period_self)
+                            bool allow_partially_identified)
     -> SemIR::IdentifiedFacetTypeId;
 
 // Requires the named constraints in the facet type to be complete, so that the

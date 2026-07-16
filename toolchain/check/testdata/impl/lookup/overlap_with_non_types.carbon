@@ -16,7 +16,7 @@ library "[[@TEST_NAME]]";
 
 interface Z {}
 
-class C(B:! bool);
+class C(B: bool);
 
 impl C(true) as Z {}
 impl C(false) as Z {}

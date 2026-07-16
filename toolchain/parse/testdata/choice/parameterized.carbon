@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/choice/parameterized.carbon
 
-choice OptionalElement(T:! type) {
+choice OptionalElement(T: type) {
   Element(value: T),
   None,
 }
@@ -20,9 +20,9 @@ choice OptionalElement(T:! type) {
 // CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'OptionalElement'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'ChoiceDefinitionStart', text: '{', subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Element'},

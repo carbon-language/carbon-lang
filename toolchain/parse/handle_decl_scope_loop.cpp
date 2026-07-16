@@ -129,6 +129,8 @@ static constexpr auto DeclIntroducers = [] {
       StateKind::ImplAfterIntroducer);
   set(Lex::TokenKind::Interface, NodeKind::InterfaceIntroducer,
       StateKind::TypeAfterIntroducerAsInterface);
+  set(Lex::TokenKind::MatchFirst, NodeKind::MatchFirstIntroducer,
+      StateKind::MatchFirst);
   set(Lex::TokenKind::Namespace, NodeKind::NamespaceStart,
       StateKind::Namespace);
   set(Lex::TokenKind::Observe, NodeKind::ObserveIntroducer,
@@ -306,6 +308,11 @@ static auto HandleDecl(Context& context, DeclContextKind decl_context_kind)
     saw_modifier = true;
   }
   if (!TryHandleAsDecl(context, state, saw_modifier, decl_context_kind)) {
+    // TODO: A phase keyword written before the introducer, such as `generic
+    // let` or `template let` where `let` must come first, lands here as an
+    // unrecognized declaration. Detect a phase keyword followed by an
+    // introducer and diagnose the ordering specifically, recovering as if the
+    // introducer came first.
     HandleUnrecognizedDecl(context, state.subtree_start);
   }
 }

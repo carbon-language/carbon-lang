@@ -49,7 +49,7 @@ CheckCondition(bool condition)
 auto CheckFailImpl(
     const char* kind, const char* file, int line, const char* condition_str,
     const char* extra_format,
-    llvm::ArrayRef<llvm::support::detail::format_adapter*> extra_adapters)
+    llvm::ArrayRef<llvm::support::detail::FormatFunctorRef> extra_adapters)
     -> void;
 
 // Allow custom conversion of format values; the default behaviour is to just
@@ -74,21 +74,10 @@ auto ConvertFormatValue(T&& t) -> auto {
   }
 }
 
-// Helper to compute a pointer to the base class of a given LLVM
-// `format_adapter` object. This both handles converting to the base class and
-// allows taking the address of temporaries within arguments to another function
-// call.
-template <typename T>
-auto CheckFailFormatAdapterAddr(T&& adapter)
-    -> llvm::support::detail::format_adapter* {
-  return &adapter;
-}
-
-// Builds one type-erased format adapter per value -- forwarding each value
-// through the conversion machinery. The address of the base classes of each of
-// these are then collected into an init list that can be accessed with an
-// `ArrayRef`. All of this is then passed to the out-of-line rendering function
-// `CheckFailImpl`.
+// Builds one type-erased format functor per value -- forwarding each value
+// through the conversion machinery. References to each of these functors are
+// then collected into an init list that can be accessed with an `ArrayRef`. All
+// of this is then passed to the out-of-line rendering function `CheckFailImpl`.
 //
 // This is templated only on the value types, not on the per-check-site
 // metadata (file, line, etc., which are passed as ordinary arguments), so the
@@ -101,10 +90,9 @@ template <typename... Ts>
 auto CheckFailFormat(const char* kind, const char* file, int line,
                      const char* condition_str, const char* extra_format,
                      Ts&&... values) -> void {
-  CheckFailImpl(
-      kind, file, line, condition_str, extra_format,
-      {CheckFailFormatAdapterAddr(llvm::support::detail::build_format_adapter(
-          ConvertFormatValue(std::forward<Ts>(values))))...});
+  CheckFailImpl(kind, file, line, condition_str, extra_format,
+                {llvm::support::detail::FormatFunctor(
+                    ConvertFormatValue(std::forward<Ts>(values)))...});
 }
 
 // Prints a check failure, including rendering any user-provided message using

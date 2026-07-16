@@ -16,18 +16,18 @@ library "[[@TEST_NAME]]";
 
 interface J {}
 
-class A(T:! type) {}
+class A(T: type) {}
 class B {}
 
-impl forall [T:! type] A(T) as J {}
+impl forall [T: type] A(T) as J {}
 
-impl forall [T:! type where A(.Self) impls J] A(T) as Core.As(T*) {
+impl forall [T: type where A(.Self) impls J] A(T) as Core.As(T*) {
   fn Convert(self) -> T* {
     return self as T*;
   }
 }
 
-fn F[T:! type](x: A(T)) {
+fn F[T: type](x: A(T)) {
   x as T*;
 }
 

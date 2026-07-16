@@ -15,10 +15,10 @@ library "[[@TEST_NAME]]";
 // TODO: This should check. The `T.I1` access should be deferred until we know
 // the value of the `template T`.
 //
-// CHECK:STDERR: fail_todo_template_access_assoc_const.carbon:[[@LINE+4]]:36: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-// CHECK:STDERR: interface I(template T:! type, N:! T.I1) {
-// CHECK:STDERR:                                    ^~~~
+// CHECK:STDERR: fail_todo_template_access_assoc_const.carbon:[[@LINE+4]]:34: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: interface I(template T: type, N: T.I1) {
+// CHECK:STDERR:                                  ^~~~
 // CHECK:STDERR:
-interface I(template T:! type, N:! T.I1) {
-    let I1:! type;
+interface I(template T: type, N: T.I1) {
+    let I1: type;
 }

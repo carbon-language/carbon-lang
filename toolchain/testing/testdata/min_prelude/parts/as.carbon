@@ -14,21 +14,21 @@ export import library "prelude/parts/default";
 export import library "prelude/parts/destroy";
 export import library "prelude/parts/form";
 
-interface UnsafeAs(Dest:! type) {
+interface UnsafeAs(Dest: type) {
   fn Convert(self) -> Dest;
 }
 
-interface As(Dest:! type) {
+interface As(Dest: type) {
   // TODO: extend UnsafeAs(Dest);
   fn Convert(self) -> Dest;
 }
 
-interface ImplicitAs(Dest:! type) {
+interface ImplicitAs(Dest: type) {
   // TODO: extend As(Dest);
   fn Convert(self) -> Dest;
 }
 
-interface BitAndWith(Other:! type) {
+interface BitAndWith(Other: type) {
   fn Op(self, other: Other) -> Self;
 }
 
