@@ -76,6 +76,14 @@ auto GetConstantFacetValueForTypeAndInterface(
     SemIR::SpecificInterface specific_interface, SemIR::InstId witness_id)
     -> SemIR::ConstantId;
 
+// Returns whether the constant value `const_id` contains a facet type
+// instruction with a `where` expression.
+//
+// This search ignores the type_id of insts, and just looks at the `const_id`
+// and its non-type operands recursively. Any use of a symbolic facet may have a
+// type with an arbitrary facet type (including a `where` expression).
+auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_

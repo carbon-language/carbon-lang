@@ -135,6 +135,65 @@ struct BindingPatternTypeInfo {
 };
 }  // namespace
 
+static auto FindInvalidWhere(Context& context, SemIR::InstId first_inst_id)
+    -> SemIR::LocId {
+  llvm::SmallVector<SemIR::InstId> work = {first_inst_id};
+
+  while (!work.empty()) {
+    auto next_id = work.pop_back_val();
+    if (auto where = context.insts().TryGetAs<SemIR::WhereExpr>(next_id)) {
+      // Harder case. We have a `where` but need to look for an invalid `where`
+      // on the LHS of it.
+      for (auto req_id : context.inst_blocks().Get(where->requirements_id)) {
+        if (auto base =
+                context.insts().TryGetAs<SemIR::RequirementBaseFacetType>(
+                    req_id)) {
+          work.push_back(base->base_type_inst_id);
+        }
+      }
+      continue;
+    }
+
+    auto const_next_id = context.constant_values().Get(next_id);
+    if (!const_next_id.is_constant()) {
+      continue;
+    }
+
+    // Other facet types can be formed through evaluation. Having a `where` is
+    // fine, but we have to look for an invalid `where` in specific arguments on
+    // the LHS of it.
+    if (auto facet_type =
+            context.constant_values().TryGetInstAs<SemIR::FacetType>(
+                const_next_id)) {
+      const auto& info = context.facet_types().Get(facet_type->facet_type_id);
+      for (auto extend : info.extend_constraints) {
+        for (auto arg_id : context.inst_blocks().Get(
+                 context.specifics().GetArgsOrEmpty(extend.specific_id))) {
+          if (FindWhere(context, context.constant_values().Get(arg_id))) {
+            return SemIR::LocId(next_id);
+          }
+        }
+      }
+      for (auto extend : info.extend_named_constraints) {
+        for (auto arg_id : context.inst_blocks().Get(
+                 context.specifics().GetArgsOrEmpty(extend.specific_id))) {
+          if (FindWhere(context, context.constant_values().Get(arg_id))) {
+            return SemIR::LocId(next_id);
+          }
+        }
+      }
+      continue;
+    }
+
+    // Simpler case. The top level expression is not a facet type so any `where`
+    // inside it would come from a specific argument, and is invalid.
+    if (FindWhere(context, const_next_id)) {
+      return SemIR::LocId(next_id);
+    }
+  }
+  return SemIR::LocId::None;
+}
+
 // Handle the type position of a binding pattern. For a `self` binding with an
 // omitted type, `self_type_inst_id` is the synthesized `Self` type expression
 // and there is no type expression on the node stack to pop.
@@ -152,8 +211,8 @@ static auto HandleAnyBindingPatternType(Context& context,
 
   auto [node_id, original_inst_id] = context.node_stack().PopExprWithNodeId();
 
-  // We are leaving the scope of the `.Self`; they should no longer be frozen in
-  // the binding's type.
+  // We are leaving the scope of the `.Self`; they should no longer be frozen
+  // in the binding's type.
   auto thawed_inst_id = ThawPeriodSelf(context, original_inst_id);
   if (thawed_inst_id != original_inst_id) {
     // If ThawPeriodSelf changed the instruction, it means there is a `.Self`
@@ -169,6 +228,20 @@ static auto HandleAnyBindingPatternType(Context& context,
     } else {
       original_inst_id = thawed_inst_id;
     }
+  }
+
+  if (auto where_loc_id = FindInvalidWhere(context, original_inst_id);
+      where_loc_id.has_value()) {
+    if (context.constant_values().Get(original_inst_id) !=
+        SemIR::ErrorInst::ConstantId) {
+      CARBON_DIAGNOSTIC(InvalidWhereInsideBinding, Error,
+                        "found `where` expression in binding's type that does "
+                        "not constrain the binding");
+      auto builder =
+          context.emitter().Build(where_loc_id, InvalidWhereInsideBinding);
+      builder.Emit();
+    }
+    original_inst_id = SemIR::ErrorInst::InstId;
   }
 
   if (node_kind == Parse::FormBindingPattern::Kind) {

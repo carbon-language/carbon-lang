@@ -360,3 +360,87 @@ class C;
 // CHECK:STDERR:                 ^~~~~~~
 // CHECK:STDERR:
 fn F(generic _: Z where C == (type where .Self impls type)) {}
+
+// --- fail_where_nested_inside_binding.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) {}
+interface Y {}
+
+// CHECK:STDERR: fail_where_nested_inside_binding.carbon:[[@LINE+4]]:17: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
+// CHECK:STDERR: fn F(generic _: Z(type where .Self impls Y)) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(generic _: Z(type where .Self impls Y)) {}
+
+// --- fail_where_double_nested_inside_binding.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) {}
+interface Y {}
+
+// CHECK:STDERR: fail_where_double_nested_inside_binding.carbon:[[@LINE+4]]:17: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
+// CHECK:STDERR: fn F(generic _: Z(type where .Self impls Y) where .Self impls Y) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(generic _: Z(type where .Self impls Y) where .Self impls Y) {}
+
+// --- fail_where_triple_nested_inside_binding.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) {}
+interface Y {}
+
+// CHECK:STDERR: fail_where_triple_nested_inside_binding.carbon:[[@LINE+4]]:18: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
+// CHECK:STDERR: fn F(generic _: (Z(type where .Self impls Y) where .Self impls Y) where .Self impls Y) {}
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(generic _: (Z(type where .Self impls Y) where .Self impls Y) where .Self impls Y) {}
+
+// --- fail_where_nested_inside_binding_combined.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) {}
+interface Y {}
+
+// CHECK:STDERR: fail_where_nested_inside_binding_combined.carbon:[[@LINE+4]]:17: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
+// CHECK:STDERR: fn F(generic _: Z(type where .Self impls Y) & Y) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(generic _: Z(type where .Self impls Y) & Y) {}
+
+// --- fail_where_double_nested_inside_binding_combined.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) {}
+interface Y {}
+
+// CHECK:STDERR: fail_where_double_nested_inside_binding_combined.carbon:[[@LINE+4]]:17: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
+// CHECK:STDERR: fn F(generic _: (Z(type where .Self impls Y) where .Self impls Y) & Y) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(generic _: (Z(type where .Self impls Y) where .Self impls Y) & Y) {}
+
+// --- fail_where_triple_nested_inside_binding_combined.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) {}
+interface Y {}
+
+// CHECK:STDERR: fail_where_triple_nested_inside_binding_combined.carbon:[[@LINE+4]]:17: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
+// CHECK:STDERR: fn F(generic _: ((Z(type where .Self impls Y) where .Self impls Y) where .Self impls Y) & Y) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(generic _: ((Z(type where .Self impls Y) where .Self impls Y) where .Self impls Y) & Y) {}
+
+// --- fail_where_nested_inside_binding_of_non_facet_type.carbon
+library "[[@TEST_NAME]]";
+
+class C(T: type);
+interface Y {}
+
+// CHECK:STDERR: fail_where_nested_inside_binding_of_non_facet_type.carbon:[[@LINE+4]]:17: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
+// CHECK:STDERR: fn F(generic _: C(type where .Self impls Y)) {}
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(generic _: C(type where .Self impls Y)) {}
