@@ -1085,7 +1085,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case CARBON_KIND(FacetType inst): {
       const auto& facet_type_info =
-          sem_ir().facet_types().Get(inst.facet_type_id);
+          sem_ir().facet_types().Get(inst.facet_type_info_id);
       bool has_where = facet_type_info.other_requirements ||
                        !facet_type_info.self_impls_constraints.empty() ||
                        !facet_type_info.self_impls_named_constraints.empty() ||
@@ -1115,7 +1115,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       if (auto facet_type =
               sem_ir().types().TryGetAs<FacetType>(inst.type_id)) {
         const auto& facet_type_info =
-            sem_ir().facet_types().Get(facet_type->facet_type_id);
+            sem_ir().facet_types().Get(facet_type->facet_type_info_id);
         if (auto single = facet_type_info.TryAsSingleExtend()) {
           CARBON_KIND_SWITCH(*single) {
             case CARBON_KIND(SemIR::SpecificInterface interface): {

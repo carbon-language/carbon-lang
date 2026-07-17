@@ -502,7 +502,7 @@ static auto VerifyQueryFacetTypeConstraints(
   const auto& facet_type_info = context.facet_types().Get(
       context.constant_values()
           .GetInstAs<SemIR::FacetType>(query_facet_type_const_id)
-          .facet_type_id);
+          .facet_type_info_id);
 
   if (!facet_type_info.rewrite_constraints.empty()) {
     auto rebuild = [&](SemIR::Inst new_inst) -> SemIR::InstId {
@@ -1159,7 +1159,7 @@ static auto FacetTypeIsSingleInterface(
     SemIR::SpecificInterface specific_interface) -> bool {
   auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
   const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_id);
+      context.facet_types().Get(facet_type.facet_type_info_id);
   if (auto single = facet_type_info.TryAsSingleExtend()) {
     if (auto* si = std::get_if<SemIR::SpecificInterface>(&*single)) {
       return *si == specific_interface;

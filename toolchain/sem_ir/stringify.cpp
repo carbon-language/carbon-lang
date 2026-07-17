@@ -375,7 +375,7 @@ class Stringifier {
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetType inst) -> void {
-    step_stack_->PushFacetType(inst.facet_type_id);
+    step_stack_->PushFacetType(inst.facet_type_info_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetValue inst) -> void {

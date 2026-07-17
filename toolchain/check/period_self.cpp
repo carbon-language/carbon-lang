@@ -310,7 +310,7 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
   auto orig_facet_type =
       context.insts().GetAs<SemIR::FacetType>(canon_facet_type_inst_id);
   const auto& orig_info =
-      context.facet_types().Get(orig_facet_type.facet_type_id);
+      context.facet_types().Get(orig_facet_type.facet_type_info_id);
 
   auto replace_interface = [&](SemIR::SpecificInterface si) {
     return SubstPeriodSelf(context, loc_id, si, period_self_replacement_id);
@@ -388,7 +388,7 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
   return AddTypeInst<SemIR::FacetType>(
       context, loc_id,
       {.type_id = SemIR::TypeType::TypeId,
-       .facet_type_id = context.facet_types().Add(info)});
+       .facet_type_info_id = context.facet_types().Add(info)});
 }
 
 auto IsPeriodSelf(Context& context, SemIR::InstId inst_id, bool canonicalize)
