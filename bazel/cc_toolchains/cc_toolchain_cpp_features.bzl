@@ -27,6 +27,7 @@ clang_feature = feature(
                 flag_group(flags = [
                     "-no-canonical-prefixes",
                     "-fcolor-diagnostics",
+                    "-fno-exceptions",
                 ]),
                 flag_group(
                     expand_if_available = "sysroot",
