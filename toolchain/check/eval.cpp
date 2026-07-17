@@ -839,11 +839,11 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
 }
 
 static auto GetConstantValue(EvalContext& eval_context,
-                             SemIR::FacetTypeId facet_type_id, Phase* phase)
-    -> SemIR::FacetTypeId {
+                             SemIR::FacetTypeId facet_type_info_id,
+                             Phase* phase) -> SemIR::FacetTypeId {
   SemIR::FacetTypeInfo info = GetConstantFacetTypeInfo(
       eval_context, SemIR::LocId::None,
-      eval_context.facet_types().Get(facet_type_id), phase);
+      eval_context.facet_types().Get(facet_type_info_id), phase);
   return eval_context.facet_types().Add(info);
 }
 
@@ -1004,9 +1004,10 @@ static auto ResolveSpecificDeclForSpecificId(EvalContext& eval_context,
 }
 
 static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
-                                      SemIR::FacetTypeId facet_type_id)
+                                      SemIR::FacetTypeId facet_type_info_id)
     -> void {
-  const auto& info = eval_context.context().facet_types().Get(facet_type_id);
+  const auto& info =
+      eval_context.context().facet_types().Get(facet_type_info_id);
   for (const auto& interface : info.extend_constraints) {
     ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
   }
@@ -2391,22 +2392,25 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
     case SemIR::BuiltinFunctionKind::TypeAnd: {
       CARBON_CHECK(arg_ids.size() == 2);
-      auto lhs_facet_type_id = ArgToFacetTypeId(context, loc_id, arg_ids[0]);
-      auto rhs_facet_type_id = ArgToFacetTypeId(context, loc_id, arg_ids[1]);
+      auto lhs_facet_type_info_id =
+          ArgToFacetTypeId(context, loc_id, arg_ids[0]);
+      auto rhs_facet_type_info_id =
+          ArgToFacetTypeId(context, loc_id, arg_ids[1]);
 
       // Allow errors to be diagnosed for both sides of the operator before
       // returning here if any error occurred on either side.
-      if (!lhs_facet_type_id.has_value() || !rhs_facet_type_id.has_value()) {
+      if (!lhs_facet_type_info_id.has_value() ||
+          !rhs_facet_type_info_id.has_value()) {
         return SemIR::ErrorInst::ConstantId;
       }
       // Reuse one of the argument instructions if nothing has changed.
-      if (lhs_facet_type_id == rhs_facet_type_id) {
+      if (lhs_facet_type_info_id == rhs_facet_type_info_id) {
         return context.types().GetConstantId(
             context.types().GetTypeIdForTypeInstId(arg_ids[0]));
       }
       auto combined_info = SemIR::FacetTypeInfo::Combine(
-          context.facet_types().Get(lhs_facet_type_id),
-          context.facet_types().Get(rhs_facet_type_id));
+          context.facet_types().Get(lhs_facet_type_info_id),
+          context.facet_types().Get(rhs_facet_type_info_id));
       if (!ResolveFacetTypeRewriteConstraints(
               eval_context.context(), loc_id,
               combined_info.rewrite_constraints)) {

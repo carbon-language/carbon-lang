@@ -240,15 +240,15 @@ LLVM_DUMP_METHOD auto Dump(const File& file, EntityNameId entity_name_id)
   return out.TakeStr();
 }
 
-LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
+LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_info_id)
     -> std::string {
   RawStringOstream out;
-  out << facet_type_id;
-  if (!facet_type_id.has_value()) {
+  out << facet_type_info_id;
+  if (!facet_type_info_id.has_value()) {
     return out.TakeStr();
   }
 
-  const auto& facet_type = file.facet_types().Get(facet_type_id);
+  const auto& facet_type = file.facet_types().Get(facet_type_info_id);
   out << ": " << facet_type;
   for (auto impls : facet_type.extend_constraints) {
     out << "\n  - " << DumpInterfaceSummary(file, impls.interface_id);
