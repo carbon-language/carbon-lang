@@ -211,8 +211,8 @@ static auto ValidateRequire(Context& context, SemIR::LocId full_require_loc_id,
   if (auto named_constraint =
           context.insts().TryGetAs<SemIR::NamedConstraintWithSelfDecl>(
               scope_inst_id)) {
-    const auto& constraint_facet_type_info =
-        context.facet_types().Get(constraint_facet_type->facet_type_info_id);
+    const auto& constraint_facet_type_info = context.facet_types().Get(
+        constraint_facet_type->declared_facet_type_id);
     // TODO: Handle other impls named constraints for the
     // RequireImplsReferenceCycle diagnostic.
     if (constraint_facet_type_info.other_requirements) {

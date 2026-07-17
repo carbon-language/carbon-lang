@@ -37,7 +37,7 @@ auto StringifySpecificInterface(const File& sem_ir,
 // Produces a string version of the facet type. This contains the name of the
 // interfaces or named constraints that the facet type names, and any
 // requirements such as rewrites.
-auto StringifyFacetType(const File& sem_ir, FacetTypeId facet_type_info_id)
+auto StringifyFacetType(const File& sem_ir, FacetTypeId declared_facet_type_id)
     -> std::string;
 
 }  // namespace Carbon::SemIR

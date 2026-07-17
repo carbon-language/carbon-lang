@@ -117,7 +117,7 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
                                      const SemIR::FacetType& facet_type,
                                      bool diagnose) -> bool {
   const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_info_id);
+      context.facet_types().Get(facet_type.declared_facet_type_id);
 
   for (auto extends : facet_type_info.extend_constraints) {
     auto interface_id = extends.interface_id;
@@ -967,9 +967,9 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
                               SemIR::TypeInstId facet_type_inst_id,
                               bool allow_partially_identified, bool diagnose)
     -> SemIR::IdentifiedFacetTypeId {
-  auto facet_type_info_id = context.insts()
-                                .GetAs<SemIR::FacetType>(facet_type_inst_id)
-                                .facet_type_info_id;
+  auto declared_facet_type_id = context.insts()
+                                    .GetAs<SemIR::FacetType>(facet_type_inst_id)
+                                    .declared_facet_type_id;
 
   // While partially identified facet types end up in the store of
   // IdentifiedFacetTypes, we don't try to construct a key to look for them
@@ -978,9 +978,9 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
   // set of required impls that it contains, which requires us to do most of the
   // work of identifying the facet type (though we could skip the mapping of
   // constant values into specifics).
-  auto key =
-      SemIR::IdentifiedFacetTypeKey{.facet_type_info_id = facet_type_info_id,
-                                    .self_const_id = initial_self_const_id};
+  auto key = SemIR::IdentifiedFacetTypeKey{
+      .declared_facet_type_id = declared_facet_type_id,
+      .self_const_id = initial_self_const_id};
   if (auto identified_id = context.identified_facet_types().Lookup(key);
       identified_id.has_value()) {
     return identified_id;
@@ -991,8 +991,9 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
         context, loc_id,
         context.constant_values().GetInstId(initial_self_const_id),
         context.types().GetAsTypeInstId(facet_type_inst_id));
-    facet_type_info_id =
-        context.insts().GetAs<SemIR::FacetType>(subst_id).facet_type_info_id;
+    declared_facet_type_id = context.insts()
+                                 .GetAs<SemIR::FacetType>(subst_id)
+                                 .declared_facet_type_id;
   }
 
   struct SelfImplsFacetType {
@@ -1005,7 +1006,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 
   // Work queue.
   llvm::SmallVector<SelfImplsFacetType> work = {
-      {true, initial_self_const_id, facet_type_info_id}};
+      {true, initial_self_const_id, declared_facet_type_id}};
 
   // Outputs for the IdentifiedFacetType.
   bool partially_identified = false;
@@ -1106,12 +1107,12 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
           return SemIR::IdentifiedFacetTypeId::None;
         }
 
-        auto facet_type_info_id =
+        auto declared_facet_type_id =
             context.constant_values()
                 .GetInstAs<SemIR::FacetType>(require_facet_type)
-                .facet_type_info_id;
+                .declared_facet_type_id;
         bool extend = facet_type_extends && require.extend_self;
-        work.push_back({extend, require_self, facet_type_info_id});
+        work.push_back({extend, require_self, declared_facet_type_id});
       }
     }
 
@@ -1163,11 +1164,11 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
           return SemIR::IdentifiedFacetTypeId::None;
         }
 
-        auto facet_type_info_id =
+        auto declared_facet_type_id =
             context.constant_values()
                 .GetInstAs<SemIR::FacetType>(require_facet_type)
-                .facet_type_info_id;
-        work.push_back({false, require_self, facet_type_info_id});
+                .declared_facet_type_id;
+        work.push_back({false, require_self, declared_facet_type_id});
       }
     }
 
@@ -1224,11 +1225,11 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
           return SemIR::IdentifiedFacetTypeId::None;
         }
 
-        auto facet_type_info_id =
+        auto declared_facet_type_id =
             context.constant_values()
                 .GetInstAs<SemIR::FacetType>(require_facet_type)
-                .facet_type_info_id;
-        work.push_back({false, require_self, facet_type_info_id});
+                .declared_facet_type_id;
+        work.push_back({false, require_self, declared_facet_type_id});
       }
     }
   }

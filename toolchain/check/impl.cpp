@@ -420,7 +420,7 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(facet_type_id != SemIR::ErrorInst::TypeId);
   auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
   const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_info_id);
+      context.facet_types().Get(facet_type.declared_facet_type_id);
 
   // An iterator over the rewrite_constraints where the LHS of the rewrite names
   // a member of the `impl.interface`. This filters out rewrites of names
@@ -820,7 +820,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
             context.types().GetTypeIdForTypeConstantId(self_const_id),
             context.constant_values()
                 .GetInstAs<SemIR::FacetType>(facet_type_const_id)
-                .facet_type_info_id);
+                .declared_facet_type_id);
       }
     }
     if (!result.has_value() || result.has_error_value()) {

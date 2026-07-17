@@ -153,7 +153,7 @@ using FacetTypeInfoStore =
     CanonicalValueStore<FacetTypeId, FacetTypeInfo, Tag<CheckIRId>>;
 
 struct IdentifiedFacetTypeKey {
-  FacetTypeId facet_type_info_id;
+  FacetTypeId declared_facet_type_id;
   ConstantId self_const_id;
   // Inside a named constraint, each identification of the `Self` facet type can
   // be unique, as it can be modified by each require declaration seen so far.

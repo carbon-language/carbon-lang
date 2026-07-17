@@ -79,8 +79,8 @@ class StepStack {
   auto PushElementIndex(ElementIndex element_index) -> void {
     steps_.push_back(element_index);
   }
-  auto PushFacetType(FacetTypeId facet_type_info_id) -> void {
-    steps_.push_back(facet_type_info_id);
+  auto PushFacetType(FacetTypeId declared_facet_type_id) -> void {
+    steps_.push_back(declared_facet_type_id);
   }
   auto PushResumeQualfiedNames() -> void {
     steps_.push_back(ResumeQualifiedNames{});
@@ -375,7 +375,7 @@ class Stringifier {
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetType inst) -> void {
-    step_stack_->PushFacetType(inst.facet_type_info_id);
+    step_stack_->PushFacetType(inst.declared_facet_type_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetValue inst) -> void {
@@ -713,9 +713,9 @@ class Stringifier {
     *out_ << "<vtable ptr>";
   }
 
-  auto StringifyFacetType(FacetTypeId facet_type_info_id) -> void {
+  auto StringifyFacetType(FacetTypeId declared_facet_type_id) -> void {
     const FacetTypeInfo& facet_type_info =
-        sem_ir_->facet_types().Get(facet_type_info_id);
+        sem_ir_->facet_types().Get(declared_facet_type_id);
     // Output `where` restrictions.
     bool some_where = false;
     if (facet_type_info.other_requirements) {
@@ -827,8 +827,8 @@ static auto Stringify(const File& sem_ir, StepStack& step_stack)
         out << element_index.index;
         break;
       }
-      case CARBON_KIND(FacetTypeId facet_type_info_id): {
-        stringifier.StringifyFacetType(facet_type_info_id);
+      case CARBON_KIND(FacetTypeId declared_facet_type_id): {
+        stringifier.StringifyFacetType(declared_facet_type_id);
         break;
       }
       case CARBON_KIND(StepStack::StopQualifiedNames _): {
@@ -936,10 +936,10 @@ auto StringifySpecificInterface(const File& sem_ir,
   }
 }
 
-auto StringifyFacetType(const File& sem_ir, FacetTypeId facet_type_info_id)
+auto StringifyFacetType(const File& sem_ir, FacetTypeId declared_facet_type_id)
     -> std::string {
   StepStack step_stack(&sem_ir);
-  step_stack.PushFacetType(facet_type_info_id);
+  step_stack.PushFacetType(declared_facet_type_id);
   return Stringify(sem_ir, step_stack);
 }
 

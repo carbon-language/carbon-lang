@@ -137,9 +137,9 @@ static auto PushOperand(Context& context, Worklist& worklist,
       push_specific(interface.specific_id);
       break;
     }
-    case CARBON_KIND(SemIR::FacetTypeId facet_type_info_id): {
+    case CARBON_KIND(SemIR::FacetTypeId declared_facet_type_id): {
       const auto& facet_type_info =
-          context.facet_types().Get(facet_type_info_id);
+          context.facet_types().Get(declared_facet_type_id);
       for (auto extends : facet_type_info.extend_constraints) {
         push_specific(extends.specific_id);
       }
@@ -248,9 +248,9 @@ static auto PopOperand(Context& context, Worklist& worklist,
           })
           .index;
     }
-    case CARBON_KIND(SemIR::FacetTypeId facet_type_info_id): {
+    case CARBON_KIND(SemIR::FacetTypeId declared_facet_type_id): {
       const auto& old_facet_type_info =
-          context.facet_types().Get(facet_type_info_id);
+          context.facet_types().Get(declared_facet_type_id);
       SemIR::FacetTypeInfo new_facet_type_info = {
           .other_requirements = old_facet_type_info.other_requirements};
       // Since these were added to a stack, we get them back in reverse order.

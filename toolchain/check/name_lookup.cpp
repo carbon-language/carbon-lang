@@ -405,7 +405,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     }
 
     auto facet_type_info =
-        context.facet_types().Get(facet_type->facet_type_info_id);
+        context.facet_types().Get(facet_type->declared_facet_type_id);
     // Name lookup into "extend" constraints but not "self impls" constraints.
     for (const auto& extend : facet_type_info.extend_constraints) {
       auto& interface = context.interfaces().Get(extend.interface_id);

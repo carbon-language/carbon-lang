@@ -28,7 +28,7 @@ auto TypeIterator::Next() -> Step {
       }
       case CARBON_KIND(FacetType facet_type): {
         const auto& info =
-            sem_ir_->facet_types().Get(facet_type.facet_type_info_id);
+            sem_ir_->facet_types().Get(facet_type.declared_facet_type_id);
         for (const auto& extend : info.extend_constraints) {
           Push(SpecificInterface{extend.interface_id, extend.specific_id});
         }

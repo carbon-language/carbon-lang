@@ -120,9 +120,9 @@ static auto FindAssociatedImportIRs(
           add_entity(context.interfaces().Get(interface_id));
           break;
         }
-        case CARBON_KIND(SemIR::FacetTypeId facet_type_info_id): {
+        case CARBON_KIND(SemIR::FacetTypeId declared_facet_type_id): {
           const auto& facet_type_info =
-              context.facet_types().Get(facet_type_info_id);
+              context.facet_types().Get(declared_facet_type_id);
           for (const auto& impl : facet_type_info.extend_constraints) {
             add_entity(context.interfaces().Get(impl.interface_id));
             push_args(impl.specific_id);
@@ -502,7 +502,7 @@ static auto VerifyQueryFacetTypeConstraints(
   const auto& facet_type_info = context.facet_types().Get(
       context.constant_values()
           .GetInstAs<SemIR::FacetType>(query_facet_type_const_id)
-          .facet_type_info_id);
+          .declared_facet_type_id);
 
   if (!facet_type_info.rewrite_constraints.empty()) {
     auto rebuild = [&](SemIR::Inst new_inst) -> SemIR::InstId {
@@ -1159,7 +1159,7 @@ static auto FacetTypeIsSingleInterface(
     SemIR::SpecificInterface specific_interface) -> bool {
   auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
   const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_info_id);
+      context.facet_types().Get(facet_type.declared_facet_type_id);
   if (auto single = facet_type_info.TryAsSingleExtend()) {
     if (auto* si = std::get_if<SemIR::SpecificInterface>(&*single)) {
       return *si == specific_interface;
