@@ -255,9 +255,18 @@ auto HandleBindingPattern(Context& context) -> void {
   // Use the `:` or `:?` for the root node.
   state.token = context.Consume();
 
+  // Add a virtual node before the binding's type expression.
   if (!is_form && resolved_generic) {
-    // Add a virtual node before the compile time binding's type expression.
     context.AddNode(NodeKind::CompileTimeBindingPatternStart, state.token,
+                    state.has_error);
+  } else if (is_form) {
+    context.AddNode(NodeKind::FormBindingPatternStart, state.token,
+                    state.has_error);
+  } else if (state.in_var_pattern) {
+    context.AddNode(NodeKind::VarBindingPatternStart, state.token,
+                    state.has_error);
+  } else {
+    context.AddNode(NodeKind::LetBindingPatternStart, state.token,
                     state.has_error);
   }
 

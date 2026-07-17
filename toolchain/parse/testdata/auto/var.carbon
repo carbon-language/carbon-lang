@@ -14,12 +14,13 @@ var y: auto = false;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
+// CHECK:STDOUT:           {kind: 'VarBindingPatternStart', text: ':', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'AutoTypeLiteral', text: 'auto'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:       {kind: 'BoolLiteralFalse', text: 'false'},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

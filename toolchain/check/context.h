@@ -302,6 +302,8 @@ class Context {
     return where_stack_;
   }
 
+  auto binding_type_where_count() -> int& { return binding_type_where_count_; }
+
   auto forbidden_impls() -> llvm::SmallVector<SemIR::ImplId>& {
     return forbidden_impls_;
   }
@@ -597,6 +599,10 @@ class Context {
   // Tracks information about constraints in the current `where` expression
   // being checked so that they can be used by later constraints.
   llvm::SmallVector<WhereStackEntry> where_stack_;
+
+  // Counts the number of `where` expressions in a binding's type that is
+  // currently being checked.
+  int binding_type_where_count_;
 
   // Impls that cannot be used in impl lookup. This prevents cycles where a
   // `LookupImplWitness` instruction inside the impl decl should not be able to

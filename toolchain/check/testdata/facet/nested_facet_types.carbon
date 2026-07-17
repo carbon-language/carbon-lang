@@ -444,3 +444,40 @@ interface Y {}
 // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(generic _: C(type where .Self impls Y)) {}
+
+// --- fail_where_nested_inside_runtime_let_binding.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) {}
+interface Y {}
+
+// CHECK:STDERR: fail_where_nested_inside_runtime_let_binding.carbon:[[@LINE+4]]:9: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
+// CHECK:STDERR: fn F(_: Z(type where .Self impls Y)) {}
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(_: Z(type where .Self impls Y)) {}
+
+// --- fail_where_nested_inside_form_binding.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) {}
+interface Y {}
+
+// CHECK:STDERR: fail_where_nested_inside_form_binding.carbon:[[@LINE+4]]:10: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
+// CHECK:STDERR: fn F(_:? Z(type where .Self impls Y)) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(_:? Z(type where .Self impls Y)) {}
+
+
+// --- fail_where_nested_inside_var_binding.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) {}
+interface Y {}
+
+// CHECK:STDERR: fail_where_nested_inside_var_binding.carbon:[[@LINE+4]]:13: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
+// CHECK:STDERR: fn F(var _: Z(type where .Self impls Y)) {}
+// CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(var _: Z(type where .Self impls Y)) {}

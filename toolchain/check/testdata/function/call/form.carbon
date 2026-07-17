@@ -84,7 +84,7 @@ fn F(x:? i32);
 // CHECK:STDERR:
 // CHECK:STDERR: fail_form_param_not_form.carbon:[[@LINE+4]]:10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: fn G(ref x:? i32);
-// CHECK:STDERR:          ^~~~~~~
+// CHECK:STDERR:          ^~~
 // CHECK:STDERR:
 fn G(ref x:? i32);
 

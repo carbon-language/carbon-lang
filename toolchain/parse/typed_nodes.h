@@ -396,15 +396,24 @@ struct RuntimeBindingName {
   AnyRuntimeBindingPatternName name;
 };
 
+struct LetBindingPatternStart {
+  static constexpr auto Kind =
+      NodeKind::LetBindingPatternStart.Define({.child_count = 1});
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
+              RefBindingName, RuntimeBindingName>
+      name;
+  // This is a virtual token. The `:` token is owned by the LetBindingPattern
+  // node.
+  Lex::ColonTokenIndex token;
+};
+
 // A binding pattern, such as `name: Type`, that isn't inside a `var` pattern.
 struct LetBindingPattern {
   static constexpr auto Kind = NodeKind::LetBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
-  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
-              RefBindingName, RuntimeBindingName>
-      name;
+  LetBindingPatternStartId introducer;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
@@ -421,14 +430,32 @@ struct SelfBindingPattern {
   NodeIdOneOf<SelfValueName, RefBindingName> name;
 };
 
+struct VarBindingPatternStart {
+  static constexpr auto Kind =
+      NodeKind::VarBindingPatternStart.Define({.child_count = 1});
+  AnyRuntimeBindingPatternName name;
+  // This is a virtual token. The `:` token is owned by the VarBindingPattern
+  // node.
+  Lex::ColonTokenIndex token;
+};
+
 // A binding pattern, such as `name: Type`, that is inside a `var` pattern.
 struct VarBindingPattern {
   static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  AnyRuntimeBindingPatternName name;
+  VarBindingPatternStartId introducer;
   Lex::ColonTokenIndex token;
   AnyExprId type;
+};
+
+struct FormBindingPatternStart {
+  static constexpr auto Kind =
+      NodeKind::FormBindingPatternStart.Define({.child_count = 1});
+  AnyRuntimeBindingPatternName name;
+  // This is a virtual token. The `:` token is owned by the FormBindingPattern
+  // node.
+  Lex::ColonQuestionTokenIndex token;
 };
 
 // A form binding pattern, such as `name:? Form`.
@@ -436,7 +463,7 @@ struct FormBindingPattern {
   static constexpr auto Kind = NodeKind::FormBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  AnyRuntimeBindingPatternName name;
+  FormBindingPatternStartId introducer;
   Lex::ColonQuestionTokenIndex token;
   AnyExprId type;
 };

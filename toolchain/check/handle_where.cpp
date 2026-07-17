@@ -103,6 +103,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // Add a context stack for tracking constraints, that will be used to allow
   // later constraints to read from them eagerly.
   context.where_stack().push_back({.loc_id = node_id});
+  context.binding_type_where_count() += 1;
 
   if (auto self_facet_type = context.types().TryGetAs<SemIR::FacetType>(
           self_with_constraints_type_id)) {
