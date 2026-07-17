@@ -102,7 +102,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.C.Main"(ptr %self) #1 !dbg !13 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.C.Main"(ptr %self) #1 !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %self), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !19

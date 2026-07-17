@@ -120,7 +120,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: declare void @"_COp.Destructible.Main:Destroy.Core"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Destroy.25364816f7046881.Core:Destructible.Main:Destroy.Core"(ptr %self) #0 !dbg !4 {
+// CHECK:STDOUT: define weak_odr void @"_COp:thunk:Destroy.25364816f7046881.Core:Destructible.Main:Destroy.Core"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.Destructible.Main:Destroy.Core"(ptr %self), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !10

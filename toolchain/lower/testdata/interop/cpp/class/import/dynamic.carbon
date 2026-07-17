@@ -95,7 +95,7 @@ fn DoThing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_Cfunc:thunk:Base.Cpp:Derived.Main"(ptr %self) #3 !dbg !26 {
+// CHECK:STDOUT: define weak_odr void @"_Cfunc:thunk:Base.Cpp:Derived.Main"(ptr %self) #3 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Cfunc.Derived.Main(ptr %self), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !29
@@ -129,7 +129,7 @@ fn DoThing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.Derived.Main"(ptr %self) #3 !dbg !39 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.Derived.Main"(ptr %self) #3 !dbg !39 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.8185e3504351afa8:core.Destroy.Core"(ptr %self), !dbg !42
 // CHECK:STDOUT:   ret void, !dbg !42
