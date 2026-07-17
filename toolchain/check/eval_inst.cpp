@@ -665,7 +665,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   //     Subst but could form a specific instead.
   auto const_id = context.constant_values().GetAttached(inst.inst_id);
   if (const_id.has_value() && const_id.is_symbolic()) {
-    auto symbolic_const =
+    const auto& symbolic_const =
         context.constant_values().GetSymbolicConstant(const_id);
     if (symbolic_const.index.has_value() &&
         symbolic_const.index.region() == SemIR::GenericInstIndex::Definition) {
