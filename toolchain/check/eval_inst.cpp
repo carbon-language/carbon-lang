@@ -650,6 +650,19 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   // The SpecificConstant can refer to a constant in the definition region of
   // the generic. This can happen during substitution. If it does, resolve the
   // definition region now.
+  //
+  // TODO: This is somewhat unprincipled; it's not clear this is the right way
+  // to address this problem. We mostly don't need this because eval blocks for
+  // generics contain instructions to cause specifics to be resolved as needed,
+  // but substitution doesn't run those. Other options to consider:
+  //
+  // *   Detect this case in Subst and resolve the specific there instead. This
+  //     could be limited to the case where we are substituting into a
+  //     non-canonical instruction.
+  // *   Move away from using Subst in general, and rely on eval blocks
+  //     containing instructions to resolve specifics as needed. This would
+  //     require us to build more generics, for contexts where we currently use
+  //     Subst but could form a specific instead.
   auto const_id = context.constant_values().GetAttached(inst.inst_id);
   if (const_id.has_value() && const_id.is_symbolic()) {
     auto symbolic_const =
