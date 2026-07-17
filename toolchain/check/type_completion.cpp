@@ -979,7 +979,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
   // work of identifying the facet type (though we could skip the mapping of
   // constant values into specifics).
   auto key =
-      SemIR::IdentifiedFacetTypeKey{.facet_type_id = facet_type_info_id,
+      SemIR::IdentifiedFacetTypeKey{.facet_type_info_id = facet_type_info_id,
                                     .self_const_id = initial_self_const_id};
   if (auto identified_id = context.identified_facet_types().Lookup(key);
       identified_id.has_value()) {
