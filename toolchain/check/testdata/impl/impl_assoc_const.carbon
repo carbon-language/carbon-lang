@@ -403,8 +403,10 @@ fn G() {
 // --- assoc_const_impls_in_decl.carbon
 library "[[@TEST_NAME]]";
 
-interface I { let X: type; }
 interface J {}
+interface I { let X: J; }
+
+impl () as J {}
 
 // Test that we avoid an infinite impl lookup cycle from an LookupImplWitness
 // instruction in the impl declaration. When matching this impl during impl

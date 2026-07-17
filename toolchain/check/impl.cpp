@@ -761,14 +761,58 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
     return;
   }
 
-  const auto& interface = context.interfaces().Get(impl.interface.interface_id);
-  if (!interface.is_complete()) {
-    // This will be diagnosed later. We check for required decls before starting
-    // the definition to avoid inserting these lookups into the definition, as
-    // the lookups can end up looking for the impl being defined, which creates
-    // a cycle.
-    return;
+  // TODO: Check other kinds of constraints too: rewrites into targets other
+  // than `Self.(TargetInterface.__)` and same-type constraints. Consider maybe
+  // building a facet type that just excludes anything about the impl-as target
+  // interface, and then just perform lookup of Self as that facet type, so we
+  // don't have to re-implement all of the validation of impl lookup?
+
+  // The IdentifiedFacetType canonicalizes the self facets, so we do the same
+  // for comparing with it.
+  auto self_const_id = GetCanonicalFacetOrTypeValue(
+      context, context.constant_values().Get(impl.self_id));
+  auto canon_constraint_id =
+      context.constant_values().GetConstantTypeInstId(impl.constraint_id);
+
+  // TODO: Consider a function that just forms the key and returns the ID for an
+  // already-identified facet type? Or plumb through the IdentifiedFacetType?
+  auto identified_id = TryToIdentifyFacetType(
+      context, loc_id, self_const_id, canon_constraint_id,
+      /*allow_partially_identified=*/false);
+  CARBON_CHECK(identified_id.has_value());
+  const auto& identified = context.identified_facet_types().Get(identified_id);
+  for (auto req : identified.required_impls()) {
+    if (req.self_facet_value == self_const_id &&
+        req.specific_interface == identified.impl_as_target_interface()) {
+      // This is what the impl is implementing, so it's not already satisfied.
+      continue;
+    }
+    auto result = LookupImplWitness(
+        context, loc_id, req.self_facet_value,
+        GetInterfaceType(context, req.specific_interface.interface_id,
+                         req.specific_interface.specific_id)
+            .AsConstantId());
+    if (!result.has_value()) {
+      CARBON_DIAGNOSTIC(IdentifiedRequireImplsNotImplemented, Error,
+                        "constraint {0} being implemented requires that {1} "
+                        "implements `{2}`",
+                        SemIR::FacetTypeId, InstIdAsConstant,
+                        SemIR::SpecificInterface);
+      context.emitter().Emit(
+          loc_id, IdentifiedRequireImplsNotImplemented,
+          context.insts()
+              .GetAs<SemIR::FacetType>(canon_constraint_id)
+              .facet_type_id,
+          context.constant_values().GetInstId(req.self_facet_value),
+          req.specific_interface);
+    }
+    if (!result.has_value() || result.has_error_value()) {
+      FillImplWitnessWithErrors(context, impl);
+      return;
+    }
   }
+
+  const auto& interface = context.interfaces().Get(impl.interface.interface_id);
 
   auto require_ids =
       context.require_impls_blocks().Get(interface.require_impls_block_id);
@@ -791,41 +835,34 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
     auto require_specific_id = CopySpecificToGeneric(
         context, SemIR::LocId(require.decl_id), interface_with_self_specific_id,
         require.generic_id);
-    auto self_const_id = GetConstantValueInSpecific(
+    auto req_self_const_id = GetConstantValueInSpecific(
         context.sem_ir(), require_specific_id, require.self_id);
-    auto facet_type_const_id = GetConstantValueInSpecific(
+    auto req_facet_type_const_id = GetConstantValueInSpecific(
         context.sem_ir(), require_specific_id, require.facet_type_inst_id);
-    if (self_const_id == SemIR::ErrorInst::ConstantId ||
-        facet_type_const_id == SemIR::ErrorInst::ConstantId) {
+    if (req_self_const_id == SemIR::ErrorInst::ConstantId ||
+        req_facet_type_const_id == SemIR::ErrorInst::ConstantId) {
       FillImplWitnessWithErrors(context, impl);
-      break;
+      return;
     }
 
-    auto result =
-        LookupImplWitness(context, loc_id, self_const_id, facet_type_const_id);
-    // TODO: If the facet type contains 2 interfaces, and one is not `impl`ed,
-    // it would be nice to diagnose which one was not `impl`ed, but that
-    // requires LookupImplWitness to return a partial result, or take a
-    // diagnostic lambda or something.
+    auto result = LookupImplWitness(context, loc_id, req_self_const_id,
+                                    req_facet_type_const_id);
     if (!result.has_value()) {
-      if (!result.has_error_value() &&
-          facet_type_const_id != SemIR::ErrorInst::ConstantId) {
-        CARBON_DIAGNOSTIC(RequireImplsNotImplemented, Error,
-                          "interface `{0}` being implemented requires that {1} "
-                          "implements {2}",
-                          SemIR::SpecificInterface, SemIR::TypeId,
-                          SemIR::FacetTypeId);
-        context.emitter().Emit(
-            loc_id, RequireImplsNotImplemented, impl.interface,
-            context.types().GetTypeIdForTypeConstantId(self_const_id),
-            context.constant_values()
-                .GetInstAs<SemIR::FacetType>(facet_type_const_id)
-                .facet_type_id);
-      }
+      CARBON_DIAGNOSTIC(InterfaceRequireImplsNotImplemented, Error,
+                        "interface `{0}` being implemented requires that {1} "
+                        "implements {2}",
+                        SemIR::SpecificInterface, SemIR::TypeId,
+                        SemIR::FacetTypeId);
+      context.emitter().Emit(
+          loc_id, InterfaceRequireImplsNotImplemented, impl.interface,
+          context.types().GetTypeIdForTypeConstantId(req_self_const_id),
+          context.constant_values()
+              .GetInstAs<SemIR::FacetType>(req_facet_type_const_id)
+              .facet_type_id);
     }
     if (!result.has_value() || result.has_error_value()) {
       FillImplWitnessWithErrors(context, impl);
-      break;
+      return;
     }
   }
 }
