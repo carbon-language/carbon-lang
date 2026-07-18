@@ -521,7 +521,7 @@ struct Worklist {
     store->AddInteger(block_id.index);
   }
 
-  auto Add(FacetTypeId declared_facet_type_id) -> void {
+  auto Add(DeclaredFacetTypeId declared_facet_type_id) -> void {
     const auto& facet_type =
         sem_ir->declared_facet_types().Get(declared_facet_type_id);
     auto add_constraints = [&](auto constraints) {

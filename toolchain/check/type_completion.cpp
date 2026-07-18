@@ -1001,7 +1001,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
     // the resulting IdentifiedFacetType.
     bool extend;
     SemIR::ConstantId self;
-    SemIR::FacetTypeId facet_type;
+    SemIR::DeclaredFacetTypeId declared_facet_type;
   };
 
   // Work queue.
@@ -1018,7 +1018,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
     bool facet_type_extends = next_impls.extend;
     auto self_const_id = GetCanonicalFacetOrTypeValue(context, next_impls.self);
     const auto& declared_facet_type =
-        context.declared_facet_types().Get(next_impls.facet_type);
+        context.declared_facet_types().Get(next_impls.declared_facet_type);
 
     auto self_and_interface = [&](SemIR::SpecificInterface impls_interface)
         -> SemIR::IdentifiedFacetType::RequiredImpl {

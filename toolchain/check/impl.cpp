@@ -814,7 +814,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
                           "interface `{0}` being implemented requires that {1} "
                           "implements {2}",
                           SemIR::SpecificInterface, SemIR::TypeId,
-                          SemIR::FacetTypeId);
+                          SemIR::DeclaredFacetTypeId);
         context.emitter().Emit(
             loc_id, RequireImplsNotImplemented, impl.interface,
             context.types().GetTypeIdForTypeConstantId(self_const_id),

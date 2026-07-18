@@ -3740,7 +3740,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   ResolveDeclaredFacetType(resolver, import_declared_facet_type,
                            &local_declared_facet_type);
 
-  SemIR::FacetTypeId declared_facet_type_id =
+  SemIR::DeclaredFacetTypeId declared_facet_type_id =
       resolver.local_facet_types().Add(std::move(local_declared_facet_type));
   return ResolveResult::Deduplicated<SemIR::FacetType>(
       resolver, {.type_id = SemIR::TypeType::TypeId,

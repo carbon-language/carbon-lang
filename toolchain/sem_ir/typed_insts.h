@@ -729,7 +729,7 @@ struct FacetType {
        .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
-  FacetTypeId declared_facet_type_id;
+  DeclaredFacetTypeId declared_facet_type_id;
 };
 
 // A facet value is a general value of type FacetType. This consists of a type

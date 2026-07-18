@@ -120,7 +120,7 @@ static auto FindAssociatedImportIRs(
           add_entity(context.interfaces().Get(interface_id));
           break;
         }
-        case CARBON_KIND(SemIR::FacetTypeId declared_facet_type_id): {
+        case CARBON_KIND(SemIR::DeclaredFacetTypeId declared_facet_type_id): {
           const auto& declared_facet_type =
               context.declared_facet_types().Get(declared_facet_type_id);
           for (const auto& impl : declared_facet_type.extend_constraints) {

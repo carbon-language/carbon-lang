@@ -596,13 +596,13 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:   declared_facet_types:
-// CHECK:STDOUT:     facet_type78000000: {}
-// CHECK:STDOUT:     facet_type78000001: {extends interface: interface78000000}
+// CHECK:STDOUT:     declared_facet_type78000000: {}
+// CHECK:STDOUT:     declared_facet_type78000001: {extends interface: interface78000000}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst78000010:    {kind: ImportDecl, arg0: name(Core)}
 // CHECK:STDOUT:     inst78000011:    {kind: Namespace, arg0: name_scope78000001, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst78000012:    {kind: FacetType, arg0: facet_type78000000, type: type(TypeType)}
+// CHECK:STDOUT:     inst78000012:    {kind: FacetType, arg0: declared_facet_type78000000, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000013:    {kind: SymbolicBinding, arg0: entity_name78000000, arg1: inst<none>, type: type(inst78000012)}
 // CHECK:STDOUT:     inst78000014:    {kind: SymbolicBinding, arg0: entity_name78000000, arg1: inst<none>, type: type(inst78000012)}
 // CHECK:STDOUT:     inst78000015:    {kind: TypeLiteral, arg0: inst(TypeType), type: type(TypeType)}
@@ -674,7 +674,7 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst78000057:    {kind: RequireCompleteType, arg0: inst7800001F, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst78000058:    {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name78000003, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000059:    {kind: InterfaceDecl, arg0: interface78000000, arg1: inst_block_empty, type: type(TypeType)}
-// CHECK:STDOUT:     inst7800005A:    {kind: FacetType, arg0: facet_type78000001, type: type(TypeType)}
+// CHECK:STDOUT:     inst7800005A:    {kind: FacetType, arg0: declared_facet_type78000001, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800005B:    {kind: InterfaceWithSelfDecl, arg0: interface78000000}
 // CHECK:STDOUT:     inst7800005C:    {kind: SymbolicBinding, arg0: entity_name78000004, arg1: inst<none>, type: type(inst7800005A)}
 // CHECK:STDOUT:     inst7800005D:    {kind: ImportRefLoaded, arg0: import_ir_inst3, arg1: entity_name<none>, type: type(inst78000084)}

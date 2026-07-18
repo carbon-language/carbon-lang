@@ -96,11 +96,11 @@ fn UseLocalCopy[T: Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:   declared_facet_types:
-// CHECK:STDOUT:     facet_type60000000: {extends interface: interface60000000}
+// CHECK:STDOUT:     declared_facet_type60000000: {extends interface: interface60000000}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst60000010:    {kind: InterfaceDecl, arg0: interface60000000, arg1: inst_block_empty, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000011:    {kind: FacetType, arg0: facet_type60000000, type: type(TypeType)}
+// CHECK:STDOUT:     inst60000011:    {kind: FacetType, arg0: declared_facet_type60000000, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000012:    {kind: SymbolicBinding, arg0: entity_name60000000, arg1: inst<none>, type: type(inst60000011)}
 // CHECK:STDOUT:     inst60000013:    {kind: SymbolicBinding, arg0: entity_name60000000, arg1: inst<none>, type: type(inst60000011)}
 // CHECK:STDOUT:     inst60000014:    {kind: SymbolicBinding, arg0: entity_name60000000, arg1: inst<none>, type: type(inst60000011)}
@@ -340,15 +340,15 @@ fn UseLocalCopy[T: Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       0
 // CHECK:STDOUT:   declared_facet_types:
-// CHECK:STDOUT:     facet_type50000000: {extends interface: interface50000000}
-// CHECK:STDOUT:     facet_type50000001: {}
-// CHECK:STDOUT:     facet_type50000002: {extends interface: interface50000001}
+// CHECK:STDOUT:     declared_facet_type50000000: {extends interface: interface50000000}
+// CHECK:STDOUT:     declared_facet_type50000001: {}
+// CHECK:STDOUT:     declared_facet_type50000002: {extends interface: interface50000001}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000010:    {kind: ImportDecl, arg0: name0}
 // CHECK:STDOUT:     inst50000011:    {kind: Namespace, arg0: name_scope50000001, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000012:    {kind: InterfaceDecl, arg0: interface50000000, arg1: inst_block_empty, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000013:    {kind: FacetType, arg0: facet_type50000000, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000013:    {kind: FacetType, arg0: declared_facet_type50000000, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000014:    {kind: SymbolicBinding, arg0: entity_name50000000, arg1: inst<none>, type: type(inst50000013)}
 // CHECK:STDOUT:     inst50000015:    {kind: SymbolicBinding, arg0: entity_name50000000, arg1: inst<none>, type: type(inst50000013)}
 // CHECK:STDOUT:     inst50000016:    {kind: SymbolicBinding, arg0: entity_name50000000, arg1: inst<none>, type: type(inst50000013)}
@@ -362,13 +362,13 @@ fn UseLocalCopy[T: Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     inst5000001E:    {kind: AssociatedConstantDecl, arg0: assoc_const50000001, arg1: inst_block5000000C, type: type(TypeType)}
 // CHECK:STDOUT:     inst5000001F:    {kind: AssociatedEntity, arg0: element1, arg1: inst5000001E, type: type(inst5000001A)}
 // CHECK:STDOUT:     inst50000020:    {kind: AssociatedEntity, arg0: element1, arg1: inst5000001E, type: type(inst5000001A)}
-// CHECK:STDOUT:     inst50000021:    {kind: FacetType, arg0: facet_type50000001, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000021:    {kind: FacetType, arg0: declared_facet_type50000001, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000022:    {kind: SymbolicBinding, arg0: entity_name50000001, arg1: inst<none>, type: type(inst50000021)}
 // CHECK:STDOUT:     inst50000023:    {kind: SymbolicBinding, arg0: entity_name50000001, arg1: inst<none>, type: type(inst50000021)}
 // CHECK:STDOUT:     inst50000024:    {kind: NameRef, arg0: name0, arg1: inst50000011, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000025:    {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name50000002, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000026:    {kind: InterfaceDecl, arg0: interface50000001, arg1: inst_block_empty, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000027:    {kind: FacetType, arg0: facet_type50000002, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000027:    {kind: FacetType, arg0: declared_facet_type50000002, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000028:    {kind: InterfaceWithSelfDecl, arg0: interface50000001}
 // CHECK:STDOUT:     inst50000029:    {kind: SymbolicBinding, arg0: entity_name50000003, arg1: inst<none>, type: type(inst50000027)}
 // CHECK:STDOUT:     inst5000002A:    {kind: ImportRefLoaded, arg0: import_ir_inst3, arg1: entity_name<none>, type: type(inst5000003D)}

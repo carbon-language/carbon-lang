@@ -51,9 +51,9 @@ class StepStack {
 
   // An individual step in the stack, which stringifies some component of a type
   // name.
-  using Step =
-      std::variant<InstId, llvm::StringRef, NameId, ElementIndex, FacetTypeId,
-                   StopQualifiedNames, ResumeQualifiedNames>;
+  using Step = std::variant<InstId, llvm::StringRef, NameId, ElementIndex,
+                            DeclaredFacetTypeId, StopQualifiedNames,
+                            ResumeQualifiedNames>;
 
   // Support `Push` for a qualified name. e.g., `A.B.C`.
   using QualifiedNameItem = std::pair<NameScopeId, NameId>;
@@ -79,7 +79,7 @@ class StepStack {
   auto PushElementIndex(ElementIndex element_index) -> void {
     steps_.push_back(element_index);
   }
-  auto PushFacetType(FacetTypeId declared_facet_type_id) -> void {
+  auto PushFacetType(DeclaredFacetTypeId declared_facet_type_id) -> void {
     steps_.push_back(declared_facet_type_id);
   }
   auto PushResumeQualfiedNames() -> void {
@@ -713,7 +713,7 @@ class Stringifier {
     *out_ << "<vtable ptr>";
   }
 
-  auto StringifyFacetType(FacetTypeId declared_facet_type_id) -> void {
+  auto StringifyFacetType(DeclaredFacetTypeId declared_facet_type_id) -> void {
     const DeclaredFacetType& declared_facet_type =
         sem_ir_->declared_facet_types().Get(declared_facet_type_id);
     // Output `where` restrictions.
@@ -829,7 +829,7 @@ static auto Stringify(const File& sem_ir, StepStack& step_stack)
         out << element_index.index;
         break;
       }
-      case CARBON_KIND(FacetTypeId declared_facet_type_id): {
+      case CARBON_KIND(DeclaredFacetTypeId declared_facet_type_id): {
         stringifier.StringifyFacetType(declared_facet_type_id);
         break;
       }
@@ -938,7 +938,8 @@ auto StringifySpecificInterface(const File& sem_ir,
   }
 }
 
-auto StringifyFacetType(const File& sem_ir, FacetTypeId declared_facet_type_id)
+auto StringifyDeclaredFacetType(const File& sem_ir,
+                                DeclaredFacetTypeId declared_facet_type_id)
     -> std::string {
   StepStack step_stack(&sem_ir);
   step_stack.PushFacetType(declared_facet_type_id);

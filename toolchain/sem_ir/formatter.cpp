@@ -1548,10 +1548,10 @@ auto Formatter::FormatArg(EntityNameId id) -> void {
   }
 }
 
-auto Formatter::FormatArg(FacetTypeId id) -> void {
+auto Formatter::FormatArg(DeclaredFacetTypeId id) -> void {
   const auto& declared_facet_type = sem_ir_->declared_facet_types().Get(id);
   // Nothing output to indicate that this is a facet type since this is only
-  // used as the argument to a `facet_type` instruction.
+  // used as the argument to a `declared_facet_type` instruction.
   out() << "<";
 
   auto format_specific = [&](SemIR::SpecificId specific_id) {

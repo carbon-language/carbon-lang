@@ -22,7 +22,7 @@ auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
   auto declared_facet_type = SemIR::DeclaredFacetType{};
   declared_facet_type.extend_constraints.push_back({interface_id, specific_id});
   declared_facet_type.Canonicalize();
-  SemIR::FacetTypeId declared_facet_type_id =
+  SemIR::DeclaredFacetTypeId declared_facet_type_id =
       context.declared_facet_types().Add(declared_facet_type);
   return {.type_id = SemIR::TypeType::TypeId,
           .declared_facet_type_id = declared_facet_type_id};
@@ -36,7 +36,7 @@ auto FacetTypeFromNamedConstraint(Context& context,
   declared_facet_type.extend_named_constraints.push_back(
       {named_constraint_id, specific_id});
   declared_facet_type.Canonicalize();
-  SemIR::FacetTypeId declared_facet_type_id =
+  SemIR::DeclaredFacetTypeId declared_facet_type_id =
       context.declared_facet_types().Add(declared_facet_type);
   return {.type_id = SemIR::TypeType::TypeId,
           .declared_facet_type_id = declared_facet_type_id};
@@ -431,7 +431,7 @@ auto ResolveFacetTypeRewriteConstraints(
 }
 
 auto GetEmptyFacetType(Context& context) -> SemIR::TypeId {
-  SemIR::FacetTypeId declared_facet_type_id =
+  SemIR::DeclaredFacetTypeId declared_facet_type_id =
       context.declared_facet_types().Add(SemIR::DeclaredFacetType{});
   auto const_id = EvalOrAddInst<SemIR::FacetType>(
       context, SemIR::LocId::None,

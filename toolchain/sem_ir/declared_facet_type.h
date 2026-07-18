@@ -151,10 +151,10 @@ constexpr DeclaredFacetType::RewriteConstraint
                                                   .rhs_id = InstId::None};
 
 using DeclaredFacetTypeStore =
-    CanonicalValueStore<FacetTypeId, DeclaredFacetType, Tag<CheckIRId>>;
+    CanonicalValueStore<DeclaredFacetTypeId, DeclaredFacetType, Tag<CheckIRId>>;
 
 struct IdentifiedFacetTypeKey {
-  FacetTypeId declared_facet_type_id;
+  DeclaredFacetTypeId declared_facet_type_id;
   ConstantId self_const_id;
   // Inside a named constraint, each identification of the `Self` facet type can
   // be unique, as it can be modified by each require declaration seen so far.
@@ -269,12 +269,14 @@ auto AddCanonicalWitnessesBlock(File& sem_ir,
 }  // namespace Carbon::SemIR
 
 namespace Carbon {
-extern template class CanonicalValueStore<
-    SemIR::FacetTypeId, SemIR::DeclaredFacetType, Tag<SemIR::CheckIRId>>;
+extern template class CanonicalValueStore<SemIR::DeclaredFacetTypeId,
+                                          SemIR::DeclaredFacetType,
+                                          Tag<SemIR::CheckIRId>>;
 extern template class CanonicalValueStore<
     SemIR::IdentifiedFacetTypeId, SemIR::IdentifiedFacetTypeKey,
     Tag<SemIR::CheckIRId>, SemIR::IdentifiedFacetType>;
-extern template class ValueStore<SemIR::FacetTypeId, SemIR::DeclaredFacetType,
+extern template class ValueStore<SemIR::DeclaredFacetTypeId,
+                                 SemIR::DeclaredFacetType,
                                  Tag<SemIR::CheckIRId>>;
 extern template class ValueStore<SemIR::IdentifiedFacetTypeId,
                                  SemIR::IdentifiedFacetType,

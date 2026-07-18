@@ -444,7 +444,7 @@ static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
 static auto MakeFacetTypeResult(
     Context& context, const SemIR::DeclaredFacetType& declared_facet_type,
     Phase phase) -> SemIR::ConstantId {
-  SemIR::FacetTypeId declared_facet_type_id =
+  SemIR::DeclaredFacetTypeId declared_facet_type_id =
       context.declared_facet_types().Add(declared_facet_type);
   return MakeConstantResult(
       context,
@@ -846,8 +846,8 @@ static auto GetConstantDeclaredFacetType(EvalContext& eval_context,
 }
 
 static auto GetConstantValue(EvalContext& eval_context,
-                             SemIR::FacetTypeId declared_facet_type_id,
-                             Phase* phase) -> SemIR::FacetTypeId {
+                             SemIR::DeclaredFacetTypeId declared_facet_type_id,
+                             Phase* phase) -> SemIR::DeclaredFacetTypeId {
   SemIR::DeclaredFacetType declared_facet_type = GetConstantDeclaredFacetType(
       eval_context, SemIR::LocId::None,
       eval_context.declared_facet_types().Get(declared_facet_type_id), phase);
@@ -1010,9 +1010,9 @@ static auto ResolveSpecificDeclForSpecificId(EvalContext& eval_context,
                       specific_id);
 }
 
-static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
-                                      SemIR::FacetTypeId declared_facet_type_id)
-    -> void {
+static auto ResolveSpecificDeclForArg(
+    EvalContext& eval_context,
+    SemIR::DeclaredFacetTypeId declared_facet_type_id) -> void {
   const auto& declared_facet_type =
       eval_context.context().declared_facet_types().Get(declared_facet_type_id);
   for (const auto& interface : declared_facet_type.extend_constraints) {
@@ -2274,9 +2274,10 @@ static auto PerformBuiltinBoolComparison(
                             : lhs != rhs);
 }
 
-// Converts a call argument to a FacetTypeId.
+// Converts a call argument to a DeclaredFacetTypeId.
 static auto ArgToFacetTypeId(Context& context, SemIR::LocId loc_id,
-                             SemIR::InstId arg_id) -> SemIR::FacetTypeId {
+                             SemIR::InstId arg_id)
+    -> SemIR::DeclaredFacetTypeId {
   auto type_arg_id = context.types().GetAsTypeInstId(arg_id);
   if (auto facet_type =
           context.insts().TryGetAs<SemIR::FacetType>(type_arg_id)) {
@@ -2291,7 +2292,7 @@ static auto ArgToFacetTypeId(Context& context, SemIR::LocId loc_id,
   // The `arg_id` instruction has no location in it for some reason.
   context.emitter().Emit(loc_id, FacetTypeRequiredForTypeAndOperator,
                          context.types().GetTypeIdForTypeInstId(type_arg_id));
-  return SemIR::FacetTypeId::None;
+  return SemIR::DeclaredFacetTypeId::None;
 }
 
 // Returns a constant for a call to a builtin function.

@@ -137,7 +137,7 @@ static auto PushOperand(Context& context, Worklist& worklist,
       push_specific(interface.specific_id);
       break;
     }
-    case CARBON_KIND(SemIR::FacetTypeId declared_facet_type_id): {
+    case CARBON_KIND(SemIR::DeclaredFacetTypeId declared_facet_type_id): {
       const auto& declared_facet_type =
           context.declared_facet_types().Get(declared_facet_type_id);
       for (auto extends : declared_facet_type.extend_constraints) {
@@ -248,7 +248,7 @@ static auto PopOperand(Context& context, Worklist& worklist,
           })
           .index;
     }
-    case CARBON_KIND(SemIR::FacetTypeId declared_facet_type_id): {
+    case CARBON_KIND(SemIR::DeclaredFacetTypeId declared_facet_type_id): {
       const auto& old_declared_facet_type =
           context.declared_facet_types().Get(declared_facet_type_id);
       SemIR::DeclaredFacetType new_declared_facet_type = {
