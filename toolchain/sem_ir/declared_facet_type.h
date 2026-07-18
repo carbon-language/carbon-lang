@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEM_IR_FACET_TYPE_INFO_H_
-#define CARBON_TOOLCHAIN_SEM_IR_FACET_TYPE_INFO_H_
+#ifndef CARBON_TOOLCHAIN_SEM_IR_DECLARED_FACET_TYPE_H_
+#define CARBON_TOOLCHAIN_SEM_IR_DECLARED_FACET_TYPE_H_
 
 #include "common/enum_mask_base.h"
 #include "common/hashing.h"
@@ -281,4 +281,4 @@ extern template class ValueStore<SemIR::IdentifiedFacetTypeId,
                                  Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_SEM_IR_FACET_TYPE_INFO_H_
+#endif  // CARBON_TOOLCHAIN_SEM_IR_DECLARED_FACET_TYPE_H_
