@@ -34,8 +34,6 @@ using SingleExtendFacetType =
 //
 // The flattening of the named constraints into interfaces is done by forming
 // the IdentifiedFacetType for a specific Self type.
-//
-// TODO: Rename to DeclaredFacetType.
 struct DeclaredFacetType : Printable<DeclaredFacetType> {
   // Returns a DeclaredFacetType that combines `lhs` and `rhs`. It is not
   // canonicalized, so that it can be further modified by the caller if desired.
