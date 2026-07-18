@@ -16,6 +16,10 @@ let {.s = s: str, .i = i: i32} = {.s = "hello", .i = 1};
 
 let {s: str, i: i32} = {.s = "hello shorthand", .i = 2};
 
+// --- let_struct_mixed.carbon
+
+let {.s = s: str, i: i32} = {.s = "hello mixed", .i = 2};
+
 // --- let_ref_struct.carbon
 
 let {.s = ref s: str, .i = i: i32} = {.s = "hello ref", .i = 3};
@@ -84,6 +88,37 @@ let {ref s: str, i: i32} = {.s = "hello ref shorthand", .i = 4};
 // CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 23},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: let_struct_mixed.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
+// CHECK:STDOUT:         {kind: 'StructPatternStart', text: '{'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
+// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
+// CHECK:STDOUT:             {kind: 'StringTypeLiteral', text: 'str'},
+// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'StructPatternDesignatedField', text: '=', subtree_size: 6},
+// CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'i'},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'StructPattern', text: '}', subtree_size: 12},
+// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
+// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'StringLiteral', text: '"hello mixed"'},
+// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'StructLiteralComma', text: ','},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'i'},
+// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IntLiteral', text: '2'},
+// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 11},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 26},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: let_ref_struct.carbon
