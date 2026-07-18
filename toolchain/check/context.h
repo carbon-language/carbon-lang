@@ -384,7 +384,7 @@ class Context {
   auto associated_constants() -> SemIR::AssociatedConstantStore& {
     return sem_ir().associated_constants();
   }
-  auto facet_types() -> SemIR::FacetTypeInfoStore& {
+  auto facet_types() -> SemIR::DeclaredFacetTypeStore& {
     return sem_ir().facet_types();
   }
   auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {

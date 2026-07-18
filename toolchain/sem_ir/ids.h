@@ -360,7 +360,7 @@ struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
   using IdBase::IdBase;
 };
 
-// The ID of a `FacetTypeInfo`.
+// The ID of a `DeclaredFacetType`.
 struct FacetTypeId : public IdBase<FacetTypeId> {
   static constexpr llvm::StringLiteral Label = "facet_type";
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;

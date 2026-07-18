@@ -36,16 +36,17 @@ using SingleExtendFacetType =
 // the IdentifiedFacetType for a specific Self type.
 //
 // TODO: Rename to DeclaredFacetType.
-struct FacetTypeInfo : Printable<FacetTypeInfo> {
-  // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
+struct DeclaredFacetType : Printable<DeclaredFacetType> {
+  // Returns a DeclaredFacetType that combines `lhs` and `rhs`. It is not
   // canonicalized, so that it can be further modified by the caller if desired.
-  static auto Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
-      -> FacetTypeInfo;
+  static auto Combine(const DeclaredFacetType& lhs,
+                      const DeclaredFacetType& rhs) -> DeclaredFacetType;
 
-  // Returns a FacetTypeInfo that only contains constraints that are extended by
-  // the facet type. It is not canonicalized, so that it can be further modified
-  // by the caller if desired.
-  static auto ExtendedOnly(const FacetTypeInfo& info) -> FacetTypeInfo;
+  // Returns a DeclaredFacetType that only contains constraints that are
+  // extended by the facet type. It is not canonicalized, so that it can be
+  // further modified by the caller if desired.
+  static auto ExtendedOnly(const DeclaredFacetType& declared_facet_type)
+      -> DeclaredFacetType;
 
   // TODO: Need to switch to a processed, canonical form, that can support facet
   // type equality as defined by
@@ -130,8 +131,8 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // by the facet type. If true, `ExtendedOnly()` would be a no-op.
   auto IsExtendedOnly() const -> bool;
 
-  friend auto operator==(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
-      -> bool {
+  friend auto operator==(const DeclaredFacetType& lhs,
+                         const DeclaredFacetType& rhs) -> bool {
     return lhs.extend_constraints == rhs.extend_constraints &&
            lhs.self_impls_constraints == rhs.self_impls_constraints &&
            lhs.extend_named_constraints == rhs.extend_named_constraints &&
@@ -145,12 +146,12 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   }
 };
 
-constexpr FacetTypeInfo::RewriteConstraint
-    FacetTypeInfo::RewriteConstraint::None = {.lhs_id = InstId::None,
-                                              .rhs_id = InstId::None};
+constexpr DeclaredFacetType::RewriteConstraint
+    DeclaredFacetType::RewriteConstraint::None = {.lhs_id = InstId::None,
+                                                  .rhs_id = InstId::None};
 
-using FacetTypeInfoStore =
-    CanonicalValueStore<FacetTypeId, FacetTypeInfo, Tag<CheckIRId>>;
+using DeclaredFacetTypeStore =
+    CanonicalValueStore<FacetTypeId, DeclaredFacetType, Tag<CheckIRId>>;
 
 struct IdentifiedFacetTypeKey {
   FacetTypeId declared_facet_type_id;
@@ -244,7 +245,7 @@ using IdentifiedFacetTypeStore =
                         Tag<CheckIRId>, IdentifiedFacetType>;
 
 // See common/hashing.h.
-inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
+inline auto CarbonHashValue(const DeclaredFacetType& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
   hasher.HashArray(llvm::ArrayRef(value.extend_constraints));
@@ -269,11 +270,11 @@ auto AddCanonicalWitnessesBlock(File& sem_ir,
 
 namespace Carbon {
 extern template class CanonicalValueStore<
-    SemIR::FacetTypeId, SemIR::FacetTypeInfo, Tag<SemIR::CheckIRId>>;
+    SemIR::FacetTypeId, SemIR::DeclaredFacetType, Tag<SemIR::CheckIRId>>;
 extern template class CanonicalValueStore<
     SemIR::IdentifiedFacetTypeId, SemIR::IdentifiedFacetTypeKey,
     Tag<SemIR::CheckIRId>, SemIR::IdentifiedFacetType>;
-extern template class ValueStore<SemIR::FacetTypeId, SemIR::FacetTypeInfo,
+extern template class ValueStore<SemIR::FacetTypeId, SemIR::DeclaredFacetType,
                                  Tag<SemIR::CheckIRId>>;
 extern template class ValueStore<SemIR::IdentifiedFacetTypeId,
                                  SemIR::IdentifiedFacetType,

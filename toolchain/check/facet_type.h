@@ -55,7 +55,7 @@ auto GetImplWitnessAccessWithoutSubstitution(Context& context,
 // value of the facet type should be an error constant.
 auto ResolveFacetTypeRewriteConstraints(
     Context& context, SemIR::LocId loc_id,
-    llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>& rewrites)
+    llvm::SmallVector<SemIR::DeclaredFacetType::RewriteConstraint>& rewrites)
     -> bool;
 
 // Get a FacetType instruction for an empty FacetType. This is the facet

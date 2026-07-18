@@ -240,10 +240,11 @@ auto GetNamedConstraintType(Context& context,
           .declared_facet_type_id);
 }
 
-auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
+auto GetFacetType(Context& context,
+                  const SemIR::DeclaredFacetType& declared_facet_type)
     -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::FacetType>(context,
-                                       context.facet_types().Add(info));
+  return GetTypeImpl<SemIR::FacetType>(
+      context, context.facet_types().Add(declared_facet_type));
 }
 
 auto GetFacetAccessType(Context& context, SemIR::InstId facet_value_inst_id)

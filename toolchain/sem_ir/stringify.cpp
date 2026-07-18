@@ -714,39 +714,41 @@ class Stringifier {
   }
 
   auto StringifyFacetType(FacetTypeId declared_facet_type_id) -> void {
-    const FacetTypeInfo& facet_type_info =
+    const DeclaredFacetType& declared_facet_type =
         sem_ir_->facet_types().Get(declared_facet_type_id);
     // Output `where` restrictions.
     bool some_where = false;
-    if (facet_type_info.other_requirements) {
+    if (declared_facet_type.other_requirements) {
       step_stack_->PushString("...");
       some_where = true;
     }
-    for (auto rewrite : llvm::reverse(facet_type_info.rewrite_constraints)) {
+    for (auto rewrite :
+         llvm::reverse(declared_facet_type.rewrite_constraints)) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
       step_stack_->Push(" ", rewrite.lhs_id, " = ", rewrite.rhs_id);
       some_where = true;
     }
-    if (!facet_type_info.self_impls_constraints.empty() ||
-        !facet_type_info.self_impls_named_constraints.empty()) {
+    if (!declared_facet_type.self_impls_constraints.empty() ||
+        !declared_facet_type.self_impls_named_constraints.empty()) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
       llvm::ListSeparator sep(" & ");
       for (auto impls :
-           llvm::reverse(facet_type_info.self_impls_named_constraints)) {
+           llvm::reverse(declared_facet_type.self_impls_named_constraints)) {
         step_stack_->Push(impls, &sep);
       }
-      for (auto impls : llvm::reverse(facet_type_info.self_impls_constraints)) {
+      for (auto impls :
+           llvm::reverse(declared_facet_type.self_impls_constraints)) {
         step_stack_->Push(impls, &sep);
       }
       step_stack_->PushString(" .Self impls ");
       some_where = true;
     }
     for (const auto& type_impls :
-         llvm::reverse(facet_type_info.type_impls_interfaces)) {
+         llvm::reverse(declared_facet_type.type_impls_interfaces)) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
@@ -755,7 +757,7 @@ class Stringifier {
       some_where = true;
     }
     for (const auto& type_impls :
-         llvm::reverse(facet_type_info.type_impls_named_constraints)) {
+         llvm::reverse(declared_facet_type.type_impls_named_constraints)) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
@@ -768,17 +770,17 @@ class Stringifier {
     }
 
     // Output extend interface and named constraint requirements.
-    if (facet_type_info.extend_constraints.empty() &&
-        facet_type_info.extend_named_constraints.empty()) {
+    if (declared_facet_type.extend_constraints.empty() &&
+        declared_facet_type.extend_named_constraints.empty()) {
       step_stack_->PushString("type");
       return;
     }
     llvm::ListSeparator sep(" & ");
     for (auto extend :
-         llvm::reverse(facet_type_info.extend_named_constraints)) {
+         llvm::reverse(declared_facet_type.extend_named_constraints)) {
       step_stack_->Push(extend, &sep);
     }
-    for (auto extend : llvm::reverse(facet_type_info.extend_constraints)) {
+    for (auto extend : llvm::reverse(declared_facet_type.extend_constraints)) {
       step_stack_->Push(extend, &sep);
     }
   }

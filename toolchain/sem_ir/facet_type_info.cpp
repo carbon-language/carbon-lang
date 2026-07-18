@@ -34,8 +34,9 @@ static auto InterfaceLess(const SpecificInterface& lhs,
 }
 
 // Canonically ordered by the numerical ids.
-static auto RewriteLess(const FacetTypeInfo::RewriteConstraint& lhs,
-                        const FacetTypeInfo::RewriteConstraint& rhs) -> bool {
+static auto RewriteLess(const DeclaredFacetType::RewriteConstraint& lhs,
+                        const DeclaredFacetType::RewriteConstraint& rhs)
+    -> bool {
   return std::tie(lhs.lhs_id.index, lhs.rhs_id.index) <
          std::tie(rhs.lhs_id.index, rhs.rhs_id.index);
 }
@@ -48,9 +49,9 @@ static auto NamedConstraintLess(const SpecificNamedConstraint& lhs,
 }
 
 // Canonically ordered by the numerical ids.
-static auto TypeImplsInterfaceLess(const FacetTypeInfo::TypeImplsInterface& lhs,
-                                   const FacetTypeInfo::TypeImplsInterface& rhs)
-    -> bool {
+static auto TypeImplsInterfaceLess(
+    const DeclaredFacetType::TypeImplsInterface& lhs,
+    const DeclaredFacetType::TypeImplsInterface& rhs) -> bool {
   return std::tie(lhs.self_type.index,
                   lhs.specific_interface.interface_id.index,
                   lhs.specific_interface.specific_id.index) <
@@ -61,8 +62,8 @@ static auto TypeImplsInterfaceLess(const FacetTypeInfo::TypeImplsInterface& lhs,
 
 // Canonically ordered by the numerical ids.
 static auto TypeImplsNamedConstraintLess(
-    const FacetTypeInfo::TypeImplsNamedConstraint& lhs,
-    const FacetTypeInfo::TypeImplsNamedConstraint& rhs) -> bool {
+    const DeclaredFacetType::TypeImplsNamedConstraint& lhs,
+    const DeclaredFacetType::TypeImplsNamedConstraint& rhs) -> bool {
   return std::tie(lhs.self_type.index,
                   lhs.specific_named_constraint.named_constraint_id.index,
                   lhs.specific_named_constraint.specific_id.index) <
@@ -145,35 +146,39 @@ static auto CombineVectors(VecT& vec, const VecT& lhs, const VecT& rhs) {
                      llvm::concat<const typename VecT::value_type>(lhs, rhs));
 }
 
-auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
-    -> FacetTypeInfo {
-  FacetTypeInfo info;
-  CombineVectors(info.extend_constraints, lhs.extend_constraints,
+auto DeclaredFacetType::Combine(const DeclaredFacetType& lhs,
+                                const DeclaredFacetType& rhs)
+    -> DeclaredFacetType {
+  DeclaredFacetType declared_facet_type;
+  CombineVectors(declared_facet_type.extend_constraints, lhs.extend_constraints,
                  rhs.extend_constraints);
-  CombineVectors(info.self_impls_constraints, lhs.self_impls_constraints,
-                 rhs.self_impls_constraints);
-  CombineVectors(info.extend_named_constraints, lhs.extend_named_constraints,
-                 rhs.extend_named_constraints);
-  CombineVectors(info.self_impls_named_constraints,
+  CombineVectors(declared_facet_type.self_impls_constraints,
+                 lhs.self_impls_constraints, rhs.self_impls_constraints);
+  CombineVectors(declared_facet_type.extend_named_constraints,
+                 lhs.extend_named_constraints, rhs.extend_named_constraints);
+  CombineVectors(declared_facet_type.self_impls_named_constraints,
                  lhs.self_impls_named_constraints,
                  rhs.self_impls_named_constraints);
-  CombineVectors(info.type_impls_interfaces, lhs.type_impls_interfaces,
-                 rhs.type_impls_interfaces);
-  CombineVectors(info.type_impls_named_constraints,
+  CombineVectors(declared_facet_type.type_impls_interfaces,
+                 lhs.type_impls_interfaces, rhs.type_impls_interfaces);
+  CombineVectors(declared_facet_type.type_impls_named_constraints,
                  lhs.type_impls_named_constraints,
                  rhs.type_impls_named_constraints);
-  CombineVectors(info.rewrite_constraints, lhs.rewrite_constraints,
-                 rhs.rewrite_constraints);
-  info.other_requirements = lhs.other_requirements || rhs.other_requirements;
-  return info;
+  CombineVectors(declared_facet_type.rewrite_constraints,
+                 lhs.rewrite_constraints, rhs.rewrite_constraints);
+  declared_facet_type.other_requirements =
+      lhs.other_requirements || rhs.other_requirements;
+  return declared_facet_type;
 }
 
-auto FacetTypeInfo::ExtendedOnly(const FacetTypeInfo& info) -> FacetTypeInfo {
-  return {.extend_constraints = info.extend_constraints,
-          .extend_named_constraints = info.extend_named_constraints};
+auto DeclaredFacetType::ExtendedOnly(
+    const DeclaredFacetType& declared_facet_type) -> DeclaredFacetType {
+  return {
+      .extend_constraints = declared_facet_type.extend_constraints,
+      .extend_named_constraints = declared_facet_type.extend_named_constraints};
 }
 
-auto FacetTypeInfo::TryAsSingleExtend() const
+auto DeclaredFacetType::TryAsSingleExtend() const
     -> std::optional<SingleExtendFacetType> {
   if (!IsExtendedOnly()) {
     return std::nullopt;
@@ -187,12 +192,12 @@ auto FacetTypeInfo::TryAsSingleExtend() const
   return std::nullopt;
 }
 
-auto FacetTypeInfo::HasNoConstraints() const -> bool {
+auto DeclaredFacetType::HasNoConstraints() const -> bool {
   return extend_constraints.empty() && extend_named_constraints.empty() &&
          IsExtendedOnly();
 }
 
-auto FacetTypeInfo::IsExtendedOnly() const -> bool {
+auto DeclaredFacetType::IsExtendedOnly() const -> bool {
   return self_impls_constraints.empty() &&
          self_impls_named_constraints.empty() &&
          type_impls_interfaces.empty() &&
@@ -200,7 +205,7 @@ auto FacetTypeInfo::IsExtendedOnly() const -> bool {
          !other_requirements;
 }
 
-auto FacetTypeInfo::Canonicalize() -> void {
+auto DeclaredFacetType::Canonicalize() -> void {
   SortAndDeduplicate(extend_constraints, InterfaceLess);
   SortAndDeduplicate(self_impls_constraints, InterfaceLess);
   SubtractSorted(self_impls_constraints, extend_constraints, InterfaceLess);
@@ -214,7 +219,7 @@ auto FacetTypeInfo::Canonicalize() -> void {
   SortAndDeduplicate(rewrite_constraints, RewriteLess);
 }
 
-auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
+auto DeclaredFacetType::Print(llvm::raw_ostream& out) const -> void {
   out << "{";
   llvm::ListSeparator outer_sep("; ");
 
@@ -392,12 +397,12 @@ auto AddCanonicalWitnessesBlock(File& sem_ir,
 }  // namespace Carbon::SemIR
 
 namespace Carbon {
-template class CanonicalValueStore<SemIR::FacetTypeId, SemIR::FacetTypeInfo,
+template class CanonicalValueStore<SemIR::FacetTypeId, SemIR::DeclaredFacetType,
                                    Tag<SemIR::CheckIRId>>;
 template class CanonicalValueStore<
     SemIR::IdentifiedFacetTypeId, SemIR::IdentifiedFacetTypeKey,
     Tag<SemIR::CheckIRId>, SemIR::IdentifiedFacetType>;
-template class ValueStore<SemIR::FacetTypeId, SemIR::FacetTypeInfo,
+template class ValueStore<SemIR::FacetTypeId, SemIR::DeclaredFacetType,
                           Tag<SemIR::CheckIRId>>;
 template class ValueStore<SemIR::IdentifiedFacetTypeId,
                           SemIR::IdentifiedFacetType, Tag<SemIR::CheckIRId>>;
