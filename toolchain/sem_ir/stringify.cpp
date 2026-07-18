@@ -715,7 +715,7 @@ class Stringifier {
 
   auto StringifyFacetType(FacetTypeId declared_facet_type_id) -> void {
     const DeclaredFacetType& declared_facet_type =
-        sem_ir_->facet_types().Get(declared_facet_type_id);
+        sem_ir_->declared_facet_types().Get(declared_facet_type_id);
     // Output `where` restrictions.
     bool some_where = false;
     if (declared_facet_type.other_requirements) {

@@ -248,7 +248,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId declared_facet_type_id)
     return out.TakeStr();
   }
 
-  const auto& facet_type = file.facet_types().Get(declared_facet_type_id);
+  const auto& facet_type =
+      file.declared_facet_types().Get(declared_facet_type_id);
   out << ": " << facet_type;
   for (auto impls : facet_type.extend_constraints) {
     out << "\n  - " << DumpInterfaceSummary(file, impls.interface_id);

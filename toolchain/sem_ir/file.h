@@ -209,10 +209,11 @@ class File : public Printable<File> {
   auto associated_constants() const -> const AssociatedConstantStore& {
     return associated_constants_;
   }
-  // TODO: Rename these to `declared_facet_types`.
-  auto facet_types() -> DeclaredFacetTypeStore& { return facet_types_; }
-  auto facet_types() const -> const DeclaredFacetTypeStore& {
-    return facet_types_;
+  auto declared_facet_types() -> DeclaredFacetTypeStore& {
+    return declared_facet_types_;
+  }
+  auto declared_facet_types() const -> const DeclaredFacetTypeStore& {
+    return declared_facet_types_;
   }
 
   // If `class_id` is an imported C++ class, appends the Clang mangled name of
@@ -393,8 +394,8 @@ class File : public Printable<File> {
   // Storage for associated constants.
   AssociatedConstantStore associated_constants_;
 
-  // Storage for facet types.
-  DeclaredFacetTypeStore facet_types_;
+  // Storage for declared facet types.
+  DeclaredFacetTypeStore declared_facet_types_;
 
   // Storage for identified facet types.
   IdentifiedFacetTypeStore identified_facet_types_;

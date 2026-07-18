@@ -95,7 +95,7 @@ fn UseLocalCopy[T: Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:   facet_types:
+// CHECK:STDOUT:   declared_facet_types:
 // CHECK:STDOUT:     facet_type60000000: {extends interface: interface60000000}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
@@ -339,7 +339,7 @@ fn UseLocalCopy[T: Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       0
-// CHECK:STDOUT:   facet_types:
+// CHECK:STDOUT:   declared_facet_types:
 // CHECK:STDOUT:     facet_type50000000: {extends interface: interface50000000}
 // CHECK:STDOUT:     facet_type50000001: {}
 // CHECK:STDOUT:     facet_type50000002: {extends interface: interface50000001}

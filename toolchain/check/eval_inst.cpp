@@ -317,7 +317,7 @@ static auto TryFindValueInRewriteConstraints(
   // grouped together, as in ResolveFacetTypeRewriteConstraints(), and limited
   // to just the `ImplWitnessAccess` entries, then a binary search may work
   // here.
-  for (const auto& rewrite : context.facet_types()
+  for (const auto& rewrite : context.declared_facet_types()
                                  .Get(access_self_declared_facet_type_id)
                                  .rewrite_constraints) {
     // Look at each rewrite constraint in the self facet's type. If the LHS is

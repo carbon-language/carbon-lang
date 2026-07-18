@@ -1084,27 +1084,28 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(FacetType inst): {
-      const auto& facet_type_info =
-          sem_ir().facet_types().Get(inst.declared_facet_type_id);
-      bool has_where = facet_type_info.other_requirements ||
-                       !facet_type_info.self_impls_constraints.empty() ||
-                       !facet_type_info.self_impls_named_constraints.empty() ||
-                       !facet_type_info.type_impls_interfaces.empty() ||
-                       !facet_type_info.type_impls_named_constraints.empty() ||
-                       !facet_type_info.rewrite_constraints.empty();
-      if (facet_type_info.extend_constraints.size() == 1 &&
-          facet_type_info.extend_named_constraints.empty()) {
+      const auto& declared_facet_type =
+          sem_ir().declared_facet_types().Get(inst.declared_facet_type_id);
+      bool has_where =
+          declared_facet_type.other_requirements ||
+          !declared_facet_type.self_impls_constraints.empty() ||
+          !declared_facet_type.self_impls_named_constraints.empty() ||
+          !declared_facet_type.type_impls_interfaces.empty() ||
+          !declared_facet_type.type_impls_named_constraints.empty() ||
+          !declared_facet_type.rewrite_constraints.empty();
+      if (declared_facet_type.extend_constraints.size() == 1 &&
+          declared_facet_type.extend_named_constraints.empty()) {
         AddEntityNameAndMaybePush(
-            facet_type_info.extend_constraints.front().interface_id,
+            declared_facet_type.extend_constraints.front().interface_id,
             has_where ? "_where.type" : ".type");
-      } else if (facet_type_info.extend_named_constraints.size() == 1 &&
-                 facet_type_info.extend_constraints.empty()) {
+      } else if (declared_facet_type.extend_named_constraints.size() == 1 &&
+                 declared_facet_type.extend_constraints.empty()) {
         AddEntityNameAndMaybePush(
-            facet_type_info.extend_named_constraints.front()
+            declared_facet_type.extend_named_constraints.front()
                 .named_constraint_id,
             has_where ? "_where.type" : ".type");
-      } else if (facet_type_info.extend_constraints.empty() &&
-                 facet_type_info.extend_named_constraints.empty()) {
+      } else if (declared_facet_type.extend_constraints.empty() &&
+                 declared_facet_type.extend_named_constraints.empty()) {
         AddInstName(has_where ? "type_where" : "type");
       } else {
         AddInstName("facet_type");
@@ -1114,9 +1115,9 @@ auto InstNamer::NamingContext::NameInst() -> void {
     case CARBON_KIND(FacetValue inst): {
       if (auto facet_type =
               sem_ir().types().TryGetAs<FacetType>(inst.type_id)) {
-        const auto& facet_type_info =
-            sem_ir().facet_types().Get(facet_type->declared_facet_type_id);
-        if (auto single = facet_type_info.TryAsSingleExtend()) {
+        const auto& declared_facet_type = sem_ir().declared_facet_types().Get(
+            facet_type->declared_facet_type_id);
+        if (auto single = declared_facet_type.TryAsSingleExtend()) {
           CARBON_KIND_SWITCH(*single) {
             case CARBON_KIND(SemIR::SpecificInterface interface): {
               AddEntityNameAndMaybePush(interface.interface_id, ".facet");
@@ -1130,7 +1131,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
           }
           return;
         }
-        if (facet_type_info.HasNoConstraints()) {
+        if (declared_facet_type.HasNoConstraints()) {
           if (auto class_ty =
                   sem_ir().insts().TryGetAs<ClassType>(inst.type_inst_id)) {
             AddEntityNameAndMaybePush(class_ty->class_id, ".type.facet");

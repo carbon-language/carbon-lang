@@ -180,7 +180,7 @@ class ImportContext {
     return import_ir().entity_names();
   }
   auto import_facet_types() -> const SemIR::DeclaredFacetTypeStore& {
-    return import_ir().facet_types();
+    return import_ir().declared_facet_types();
   }
   auto import_functions() -> const SemIR::FunctionStore& {
     return import_ir().functions();
@@ -265,7 +265,7 @@ class ImportContext {
     return local_ir().entity_names();
   }
   auto local_facet_types() -> SemIR::DeclaredFacetTypeStore& {
-    return local_ir().facet_types();
+    return local_ir().declared_facet_types();
   }
   auto local_functions() -> SemIR::FunctionStore& {
     return local_ir().functions();
@@ -4998,7 +4998,7 @@ auto ImportInterface(Context& context, SemIR::ImportIRId import_ir_id,
   // A non-generic interface will import as a facet type for that single
   // interface.
   if (auto facet_type = local_inst.TryAs<SemIR::FacetType>()) {
-    auto single = context.facet_types()
+    auto single = context.declared_facet_types()
                       .Get(facet_type->declared_facet_type_id)
                       .TryAsSingleExtend();
     CARBON_CHECK(single,

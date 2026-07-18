@@ -595,7 +595,7 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:   facet_types:
+// CHECK:STDOUT:   declared_facet_types:
 // CHECK:STDOUT:     facet_type78000000: {}
 // CHECK:STDOUT:     facet_type78000001: {extends interface: interface78000000}
 // CHECK:STDOUT:   insts:

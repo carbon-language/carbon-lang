@@ -244,7 +244,7 @@ auto GetFacetType(Context& context,
                   const SemIR::DeclaredFacetType& declared_facet_type)
     -> SemIR::TypeId {
   return GetTypeImpl<SemIR::FacetType>(
-      context, context.facet_types().Add(declared_facet_type));
+      context, context.declared_facet_types().Add(declared_facet_type));
 }
 
 auto GetFacetAccessType(Context& context, SemIR::InstId facet_value_inst_id)

@@ -522,7 +522,8 @@ struct Worklist {
   }
 
   auto Add(FacetTypeId declared_facet_type_id) -> void {
-    const auto& facet_type = sem_ir->facet_types().Get(declared_facet_type_id);
+    const auto& facet_type =
+        sem_ir->declared_facet_types().Get(declared_facet_type_id);
     auto add_constraints = [&](auto constraints) {
       store->AddInteger(constraints.size());
       for (auto [first, second] : constraints) {

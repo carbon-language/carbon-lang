@@ -139,7 +139,7 @@ static auto PushOperand(Context& context, Worklist& worklist,
     }
     case CARBON_KIND(SemIR::FacetTypeId declared_facet_type_id): {
       const auto& declared_facet_type =
-          context.facet_types().Get(declared_facet_type_id);
+          context.declared_facet_types().Get(declared_facet_type_id);
       for (auto extends : declared_facet_type.extend_constraints) {
         push_specific(extends.specific_id);
       }
@@ -250,7 +250,7 @@ static auto PopOperand(Context& context, Worklist& worklist,
     }
     case CARBON_KIND(SemIR::FacetTypeId declared_facet_type_id): {
       const auto& old_declared_facet_type =
-          context.facet_types().Get(declared_facet_type_id);
+          context.declared_facet_types().Get(declared_facet_type_id);
       SemIR::DeclaredFacetType new_declared_facet_type = {
           .other_requirements = old_declared_facet_type.other_requirements};
       // Since these were added to a stack, we get them back in reverse order.
@@ -338,7 +338,7 @@ static auto PopOperand(Context& context, Worklist& worklist,
             .specific_id = pop_specific(old_constraint.specific_id)};
       }
       new_declared_facet_type.Canonicalize();
-      return context.facet_types().Add(new_declared_facet_type).index;
+      return context.declared_facet_types().Add(new_declared_facet_type).index;
     }
     default:
       return arg.value();

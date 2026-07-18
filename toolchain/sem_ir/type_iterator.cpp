@@ -27,27 +27,31 @@ auto TypeIterator::Next() -> Step {
         return Step::End();
       }
       case CARBON_KIND(FacetType facet_type): {
-        const auto& info =
-            sem_ir_->facet_types().Get(facet_type.declared_facet_type_id);
-        for (const auto& extend : info.extend_constraints) {
+        const auto& declared_facet_type = sem_ir_->declared_facet_types().Get(
+            facet_type.declared_facet_type_id);
+        for (const auto& extend : declared_facet_type.extend_constraints) {
           Push(SpecificInterface{extend.interface_id, extend.specific_id});
         }
-        for (const auto& extend : info.extend_named_constraints) {
+        for (const auto& extend :
+             declared_facet_type.extend_named_constraints) {
           Push(SpecificNamedConstraint{extend.named_constraint_id,
                                        extend.specific_id});
         }
-        for (const auto& impls : info.self_impls_constraints) {
+        for (const auto& impls : declared_facet_type.self_impls_constraints) {
           Push(SpecificInterface{impls.interface_id, impls.specific_id});
         }
-        for (const auto& impls : info.self_impls_named_constraints) {
+        for (const auto& impls :
+             declared_facet_type.self_impls_named_constraints) {
           Push(SpecificNamedConstraint{impls.named_constraint_id,
                                        impls.specific_id});
         }
-        for (const auto& type_impls : info.type_impls_interfaces) {
+        for (const auto& type_impls :
+             declared_facet_type.type_impls_interfaces) {
           PushInstId(type_impls.self_type);
           Push(type_impls.specific_interface);
         }
-        for (const auto& type_impls : info.type_impls_named_constraints) {
+        for (const auto& type_impls :
+             declared_facet_type.type_impls_named_constraints) {
           PushInstId(type_impls.self_type);
           Push(type_impls.specific_named_constraint);
         }

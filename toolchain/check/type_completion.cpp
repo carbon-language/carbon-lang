@@ -117,7 +117,7 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
                                      const SemIR::FacetType& facet_type,
                                      bool diagnose) -> bool {
   const auto& declared_facet_type =
-      context.facet_types().Get(facet_type.declared_facet_type_id);
+      context.declared_facet_types().Get(facet_type.declared_facet_type_id);
 
   for (auto extends : declared_facet_type.extend_constraints) {
     auto interface_id = extends.interface_id;
@@ -1018,7 +1018,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
     bool facet_type_extends = next_impls.extend;
     auto self_const_id = GetCanonicalFacetOrTypeValue(context, next_impls.self);
     const auto& declared_facet_type =
-        context.facet_types().Get(next_impls.facet_type);
+        context.declared_facet_types().Get(next_impls.facet_type);
 
     auto self_and_interface = [&](SemIR::SpecificInterface impls_interface)
         -> SemIR::IdentifiedFacetType::RequiredImpl {

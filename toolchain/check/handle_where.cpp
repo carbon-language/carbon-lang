@@ -24,7 +24,7 @@ static auto GetExtendedOnlyFacetType(Context& context,
                                      const SemIR::FacetType& facet_type)
     -> SemIR::TypeId {
   const auto& declared_facet_type =
-      context.facet_types().Get(facet_type.declared_facet_type_id);
+      context.declared_facet_types().Get(facet_type.declared_facet_type_id);
   auto stripped_declared_facet_type =
       SemIR::DeclaredFacetType::ExtendedOnly(declared_facet_type);
   stripped_declared_facet_type.Canonicalize();
@@ -108,8 +108,8 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
 
   if (auto self_facet_type = context.types().TryGetAs<SemIR::FacetType>(
           self_with_constraints_type_id)) {
-    const auto& base_declared_facet_type =
-        context.facet_types().Get(self_facet_type->declared_facet_type_id);
+    const auto& base_declared_facet_type = context.declared_facet_types().Get(
+        self_facet_type->declared_facet_type_id);
     // Make rewrite constraints from the self facet type available immediately
     // to expressions in rewrite constraints for this `where` expression.
     //
@@ -363,7 +363,7 @@ static auto FindDesignatorInEveryExtendConstraint(Context& context,
                                                   SemIR::FacetType facet_type)
     -> bool {
   const auto& declared_facet_type =
-      context.facet_types().Get(facet_type.declared_facet_type_id);
+      context.declared_facet_types().Get(facet_type.declared_facet_type_id);
 
   for (const auto& extend : declared_facet_type.extend_constraints) {
     if (!FindDesignatorInSpecific(context, extend.specific_id)) {
@@ -447,7 +447,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
       auto facet_type =
           context.types().GetAs<SemIR::FacetType>(rhs_as_type.type_id);
       const auto& declared_facet_type =
-          context.facet_types().Get(facet_type.declared_facet_type_id);
+          context.declared_facet_types().Get(facet_type.declared_facet_type_id);
       for (const auto& rewrite : declared_facet_type.rewrite_constraints) {
         auto lhs_id = SubstPeriodSelf(
             context, rhs_node, context.constant_values().Get(rewrite.lhs_id),
@@ -493,8 +493,8 @@ static auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool {
 
       if (auto facet_type =
               context().insts().TryGetAs<SemIR::FacetType>(inst_id)) {
-        const auto& declared_facet_type =
-            context().facet_types().Get(facet_type->declared_facet_type_id);
+        const auto& declared_facet_type = context().declared_facet_types().Get(
+            facet_type->declared_facet_type_id);
         if (!declared_facet_type.IsExtendedOnly()) {
           *found_ = true;
           return FullySubstituted;
