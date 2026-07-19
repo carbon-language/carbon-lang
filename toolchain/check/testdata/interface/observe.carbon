@@ -38,9 +38,6 @@ import library "transitive";
 fn F[T: Transitive](t: T) {
   var a: T.A = t.GetA();
 
-  var b: T.B = a;
-  b.InQ();
-
   t.TakesC(a);
 
   (a as T.C).InR();
