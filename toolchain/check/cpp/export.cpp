@@ -422,6 +422,7 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
   auto clang_loc = GetCppLocation(context, loc_id);
 
   const SemIR::Function& function = context.functions().Get(function_id);
+  CARBON_CHECK(!function.generic_id.has_value());
   FunctionInfo callee(context, function_id, function, nullptr);
 
   // Get parameters types.
