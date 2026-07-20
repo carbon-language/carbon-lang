@@ -12,21 +12,23 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Abstract](#abstract)
--   [Problem](#problem)
--   [Background](#background)
--   [Proposal](#proposal)
--   [Details](#details)
-    -   [`Destructor` interface](#destructor-interface)
-        -   [Empty `Destructor.Op()` should be an error](#empty-destructorop-should-be-an-error)
-    -   [`Core.Destroy` interface](#coredestroy-interface)
-    -   [`Core.TrivialDestroy` interface](#coretrivialdestroy-interface)
-    -   [`Core.DynamicDestroy` interface](#coredynamicdestroy-interface)
-    -   [Constraining on `Destructor` should be an error](#constraining-on-destructor-should-be-an-error)
--   [Rationale](#rationale)
--   [Alternatives considered](#alternatives-considered)
-    -   [Replace interface `Core.Destructor` with method `Core.Destroy.Destructor`](#replace-interface-coredestructor-with-method-coredestroydestructor)
--   [Future work](#future-work)
+-   [Regularise Carbon Destructors](#regularise-carbon-destructors)
+    -   [Table of contents](#table-of-contents)
+    -   [Abstract](#abstract)
+    -   [Problem](#problem)
+    -   [Background](#background)
+    -   [Proposal](#proposal)
+    -   [Details](#details)
+        -   [Explicitly destroying an object](#explicitly-destroying-an-object)
+            -   [Naming](#naming)
+    -   [Rationale](#rationale)
+    -   [Alternatives considered](#alternatives-considered)
+        -   [Two public interface model (previous design)](#two-public-interface-model-previous-design)
+            -   [`Destroy` interface](#destroy-interface)
+                -   [Constraining on `Destructor` should be an error](#constraining-on-destructor-should-be-an-error)
+        -   [Replace interface `Core.Destructor` with method `Core.Destroy.Destructor`](#replace-interface-coredestructor-with-method-coredestroydestructor)
+        -   [Alternatives considered from PR #1154](#alternatives-considered-from-pr-1154)
+    -   [Future work](#future-work)
 
 <!-- tocstop -->
 
@@ -69,59 +71,105 @@ formal definition in this proposal.
 
 ## Proposal
 
-This proposal intends to replace the `destroy` method with four interfaces:
+1.  **Redesign destructors to use the [static open extension mechanism].** to
+    resolve the above problem. This redesign is discussed in the details.
+2.  **Add [Object destruction] to [docs/design/values.md]**. The static open
+    extension mechanism unifies the destruction process for all Carbon objects.
+    We describe object destruction in `values.md` to account for objects that
+    aren't classes.
+3.  **Remove [Destructors] in [docs/design/classes.md] with [Object destruction]
+    in [docs/design/values.md].**
+
+## Details
+
+### Explicitly destroying an object
+
+We can expose explicit object destruction either via a function in the prelude,
+or as a method in `Core.Destroy`. How we call this operation will frame how we
+read and discuss code. We should take extra care in choosing the mechanism for
+explicit object destruction since it is both an unsafe and an exceptionally rare
+operation.
+
+-   Using a function frames the scope as the active participant (e.g.
+    `Core.DestroyObject(x)`). `x` is passive, and has destruction rendered unto
+    it by its environment. This communicates that the object exists at the behest
+    of something external.
+-   Using a method frames the object as the active participant (e.g.
+    `x.SelfDestruct()`). `x` appears to initiate its own destruction, and the
+    environment just facilitates that. This communicates that the object is in
+    control of its own destiny.
+
+It is highly likely that the vast majority of cases of explicit object destruction
+are objects destroying subobjects (e.g. a vector class' elements). This motivates
+preferring a function, as subobjects cannot exist without their parent object.
+
+#### Naming
+
+The following names have been considered:
+
+| Name              | Function             | Method                | Preference |
+|-------------------|----------------------|-----------------------|------------|
+| `SelfDestruct`    | `SelfDestruct(x)`    | `x.SelfDestruct()`    | 1          |
+| `DestroyObject`   | `DestroyObject(x)`   | `x.DestroyObject()`   | 2          |
+| `DestroySelf`     | `DestroySelf(x)`     | `x.DestroySelf()`     | 3          |
+| `CompleteDestroy` | `CompleteDestroy(x)` | `x.CompleteDestroy()` | 4          |
+| `ManualDestroy`   | `ManualDestroy(x)`   | `x.ManualDestroy()`   | 5          |
+| `ExplicitDestroy` | `ExplicitDestroy(x)` | `x.ExplicitDestroy()` | 6          |
+
+`ManualDestroy` is not recommended because they make it awkward to reason about
+implict object destruction without some complement (e.g. `AutoDestroy`). The
+toolchain would implicitly call `AutoDestroy`, and users would call `ManualDestroy`.
+This would probably need to show up in stacktraces, which adds to their obfuscation.
+We could potentially do some amount of inlining, but this could cause confusion
+about what is responsible for destroying an object. Similarly for `ExplicitDestroy`.
+
+The remaining options are all appropriate for both situations. As such, we end
+up with a subjective decision.
+
+-   `CompleteDestroy` produces an incomplete phrase.
+-   `DestroySelf` could potentially be mixed up with `Destroy.Destroy(self)`.
+-   `DestroyObject` clearly articulates the operation and user intent. It also
+    renders nicely in other contexts, such as documentation and stacktraces.
+-   `SelfDestruct` has the same benefits as `DestroyObject`. "Self-destruct"
+    additionally refers to an internal mechanism for destroying an entity. That
+    "internal mechanism" `Core.Destroy.Op` for Carbon object tear-down.
+
+## Rationale
+
+The destruction model advances these goals:
+
+-   [Code that is easy to read, understand, and write]: Types implement
+    `Core.Destructor`, but are not able to customise how those types are
+    destroyed.
+-   [Software and language evolution]: This proposal is a successor to
+    [P001154 Destructors]. The language has evolved to a point where we can
+    implement destructors in a way that is consistent with the rest of the
+    design.
+-   [Practical safety and testing mechanisms]: `Core.Destructor` automates
+    resource disposal during deinitialisation. Automated resource disposal helps
+    avoid saftey-related bugs.
+-   [Interoperability with and migration from existing C++ code]: C++ objects
+    require destructors to be destroyed.
+
+## Alternatives considered
+
+### Two public interface model (previous design)
+
+The previous design intended to replace the `destroy` method with four interfaces:
 
 -   **`Destructor`**: a user-implementable interface to describe how a single
     object handles its subobjects at the end of its lifetime. Typically used to
     release resources acquired during its lifetime.
 -   **`Destroy`:** a toolchain-implemented interface to describe how objects are
     destroyed.
--   **`TrivialDestroy`:** a toolchain-implemented interface to describe that an
-    object doesn't call any destructors during its destruction process.
--   **`DynamicDestroy`:** a toolchain-implemented interface so dynamic types can
-    dispatch to the correct `Destroy` implementation (similar to
-    [virtual destructors]).
+-   **`TrivialDestroy`:** as described in the proposed design.
+-   **`DynamicDestroy`:** as described in the proposed design.
 
-## Details
+This design was the product of the conversations surrounding Issues #6124, #6161, and #6464.
+We felt that the design still had too much special-casing, and iterated upon the
+design to reach the current proposal.
 
-### `Destructor` interface
-
-```carbon
-interface Destructor {
-  private fn Op(ref self: partial Self);
-}
-```
-
-`Destructor` describes how an object performs cleanup and resource deallocation.
-`Destructor.Op()` tears down a single object of the class that implements the
-interface. Subobjects and lifetime management are unaffected. Types only need to
-implement `Destructor` when custom destruction logic is required. Types that do
-not implement `Destructor` do not have a destructor.
-
-A type has _trivial destruction_ if, and only if, it does not implement
-`Destructor` and none of its subobjects implement `Destructor`.
-
-#### Empty `Destructor.Op()` should be an error
-
-An empty `Destructor.Op()` definition should be an error. We should allow users
-to "reserve" non-trivial destruction by providing a spelling that communicates
-"no behaviour is intentional" using a clearer syntax.
-
-```carbon
-class C1 {
-  impl as Destructor {
-    // error: `C1.(Destructor.Op)()` defined as an empty method
-    fn Op(self) {}
-  }
-}
-
-class C2 {
-  // potential alternative spelling
-  impl as Destructor = default;
-}
-```
-
-### `Core.Destroy` interface
+#### `Destroy` interface
 
 ```carbon
 interface Destroy {
@@ -148,43 +196,7 @@ Types automatically implement `Destroy` unless they:
 -   have a subobject that cannot be destroyed;
 -   have explicitly opted out of being destructible (see [Future work])
 
-### `Core.TrivialDestroy` interface
-
-```carbon
-interface TrivialDestroy {
-  final fn Op(ref self) = "destroy.trivial.op";
-}
-```
-
-`TrivialDestroy` describes types that have trivial destruction.
-
-The toolchain automatically implements the interface `TrivialDestroy` for all
-types that have trivial destruction. `TrivialDestroy` cannot be explicitly
-implemented.
-
-### `Core.DynamicDestroy` interface
-
-```carbon
-interface DynamicDestroy {
-  final fn Op(ref self) = "destroy.dynamic.op";
-}
-```
-
-`DynamicDestroy` dispatches destruction for objects pointing to dynamic types.
-`DynamicDestroy` can only be implemented by the toolchain, but there is interest
-in relaxing this restriction. The toolchain automatically implements
-`DynamicDestroy` for types that:
-
--   are final and implement `Destroy`, or
--   have a virtual pointer.
-
-`DynamicDestroy.Op` directly calls `Destroy.Op` for final types. Types with a
-virtual pointer are required to add a vtable entry containing `Destroy.Op`.
-`DynamicDestroy.Op` makes a virtual call to this vtable entry for such types.
-
-> [!NOTE] `Core.DynamicDestroy.Op` is a safe function.
-
-### Constraining on `Destructor` should be an error
+##### Constraining on `Destructor` should be an error
 
 Limiting an API to only accept objects that can be destroyed is a helpful
 constraint. Conversely, limiting an API to only accept objects that require some
@@ -204,25 +216,6 @@ constrain their APIs using `Destroy` to restrict the interface to objects that
 can be destroyed. Users should constrain their APIs using `TrivialDestroy` to
 restrict the interface to types that have trivial destruction.
 
-## Rationale
-
-The destruction model advances these goals:
-
--   [Code that is easy to read, understand, and write]: Types implement
-    `Core.Destructor`, but are not able to customise how those types are
-    destroyed.
--   [Software and language evolution]: This proposal is a successor to
-    [P001154 Destructors]. The language has evolved to a point where we can
-    implement destructors in a way that is consistent with the rest of the
-    design.
--   [Practical safety and testing mechanisms]: `Core.Destructor` automates
-    resource disposal during deinitialisation. Automated resource disposal helps
-    avoid saftey-related bugs.
--   [Interoperability with and migration from existing C++ code]: C++ objects
-    require destructors to be destroyed.
-
-## Alternatives considered
-
 ### Replace interface `Core.Destructor` with method `Core.Destroy.Destructor`
 
 The proposed model includes four interfaces. That makes the Carbon destructor
@@ -241,6 +234,21 @@ single interface makes it difficult for generics to permit partial classes.
 Attempts to address this open the possibility to tricking the generic into
 calling `Destroy.Op` for an abstract class. This includes
 `impl partial Self as Destroy` for abstract classes.
+
+### Alternatives considered from [PR #1154]
+
+The following alternatives were removed from [docs/design/classes.md]. They have
+been added here to ensure readers can easily find the alternatives without needing
+to do extensive archaeology.
+
+-   [Types implement destructor interface](/proposals/p001154-destructors.md#types-implement-destructor-interface)
+-   [Prevent virtual function calls in destructors](/proposals/p001154-destructors.md#prevent-virtual-function-calls-in-destructors)
+-   [Allow functions to act as destructors](/proposals/p001154-destructors.md#allow-functions-to-act-as-destructors)
+-   [Allow private destructors](/proposals/p001154-destructors.md#allow-private-destructors)
+-   [Allow multiple conditional destructors](/proposals/p001154-destructors.md#allow-multiple-conditional-destructors)
+-   [Don't distinguish safe and unsafe delete operations](/proposals/p001154-destructors.md#dont-distinguish-safe-and-unsafe-delete-operations)
+-   [Don't allow unsafe delete](/proposals/p001154-destructors.md#dont-allow-unsafe-delete)
+-   [Allow final destructors](/proposals/p001154-destructors.md#allow-final-destructors)
 
 ## Future work
 
@@ -264,8 +272,8 @@ calling `Destroy.Op` for an abstract class. This includes
 [P001154 Destructors]: /proposals/p001154-destructors.md
 
 [destructors]: /docs/design/classes.md#destructors
+[object destruction]: /docs/design/values.md#object-destruction
 [existing destructor design]: https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/classes.md#destructors
-[virtual destructors]: https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors
 [Future work]: #future-work
 
 [Code that is easy to read, understand, and write]: /docs/project/goals.md#code-that-is-easy-to-read-understand-and-write

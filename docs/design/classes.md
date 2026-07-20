@@ -1812,15 +1812,6 @@ Unhandled failure during a destructor call will abort the program.
 
 **Alternatives considered:**
 
--   [Types implement destructor interface](/proposals/p001154-destructors.md#types-implement-destructor-interface)
--   [Prevent virtual function calls in destructors](/proposals/p001154-destructors.md#prevent-virtual-function-calls-in-destructors)
--   [Allow functions to act as destructors](/proposals/p001154-destructors.md#allow-functions-to-act-as-destructors)
--   [Allow private destructors](/proposals/p001154-destructors.md#allow-private-destructors)
--   [Allow multiple conditional destructors](/proposals/p001154-destructors.md#allow-multiple-conditional-destructors)
--   [Don't distinguish safe and unsafe delete operations](/proposals/p001154-destructors.md#dont-distinguish-safe-and-unsafe-delete-operations)
--   [Don't allow unsafe delete](/proposals/p001154-destructors.md#dont-allow-unsafe-delete)
--   [Allow final destructors](/proposals/p001154-destructors.md#allow-final-destructors)
-
 ### Access control
 
 By default, all members of a class are fully publicly accessible. Access can be
