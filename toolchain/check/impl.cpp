@@ -419,15 +419,15 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       context.types().GetTypeIdForTypeInstId(impl.constraint_id);
   CARBON_CHECK(facet_type_id != SemIR::ErrorInst::TypeId);
   auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
-  const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_id);
+  const auto& declared_facet_type =
+      context.declared_facet_types().Get(facet_type.declared_facet_type_id);
 
   // An iterator over the rewrite_constraints where the LHS of the rewrite names
   // a member of the `impl.interface`. This filters out rewrites of names
   // from other interfaces, as they do not set values in the witness table.
   auto rewrites_into_interface_to_witness = llvm::make_filter_range(
-      facet_type_info.rewrite_constraints,
-      [&](const SemIR::FacetTypeInfo::RewriteConstraint& rewrite) {
+      declared_facet_type.rewrite_constraints,
+      [&](const SemIR::DeclaredFacetType::RewriteConstraint& rewrite) {
         auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(
             GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
         return WitnessQueryMatchesInterface(context, loc_id, impl.self_id,
@@ -796,13 +796,13 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
       CARBON_DIAGNOSTIC(IdentifiedRequireImplsNotImplemented, Error,
                         "constraint {0} being implemented requires that {1} "
                         "implements `{2}`",
-                        SemIR::FacetTypeId, InstIdAsConstant,
+                        SemIR::DeclaredFacetTypeId, InstIdAsConstant,
                         SemIR::SpecificInterface);
       context.emitter().Emit(
           loc_id, IdentifiedRequireImplsNotImplemented,
           context.insts()
               .GetAs<SemIR::FacetType>(canon_constraint_id)
-              .facet_type_id,
+              .declared_facet_type_id,
           context.constant_values().GetInstId(req.self_facet_value),
           req.specific_interface);
     }
@@ -852,13 +852,13 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
                         "interface `{0}` being implemented requires that {1} "
                         "implements {2}",
                         SemIR::SpecificInterface, SemIR::TypeId,
-                        SemIR::FacetTypeId);
+                        SemIR::DeclaredFacetTypeId);
       context.emitter().Emit(
           loc_id, InterfaceRequireImplsNotImplemented, impl.interface,
           context.types().GetTypeIdForTypeConstantId(req_self_const_id),
           context.constant_values()
               .GetInstAs<SemIR::FacetType>(req_facet_type_const_id)
-              .facet_type_id);
+              .declared_facet_type_id);
     }
     if (!result.has_value() || result.has_error_value()) {
       FillImplWitnessWithErrors(context, impl);

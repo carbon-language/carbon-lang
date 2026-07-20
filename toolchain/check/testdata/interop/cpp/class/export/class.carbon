@@ -66,9 +66,12 @@ import Cpp;
 class A;
 
 inline Cpp '''
-// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE+4]]:11: error: variable has incomplete type 'Carbon::A' [CppInteropParseError]
-// CHECK:STDERR:    16 | Carbon::A a;
+// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE+7]]:11: error: variable has incomplete type 'Carbon::A' [CppInteropParseError]
+// CHECK:STDERR:    19 | Carbon::A a;
 // CHECK:STDERR:       |           ^
+// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE-6]]:8: note: forward declaration of 'Carbon::A' [CppInteropParseNote]
+// CHECK:STDERR:     9 | class A;
+// CHECK:STDERR:       |        ^
 // CHECK:STDERR:
 Carbon::A a;
 ''';

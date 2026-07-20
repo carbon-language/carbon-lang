@@ -2,10 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// TODO: This library is not part of the design. Either write a matching
-// proposal or remove this.
+package Core library "prelude/range";
 
-package Core library "range";
+import library "prelude/iterate";
+import library "prelude/operators";
+import library "prelude/types/int";
+import library "prelude/types/int_literal";
+import library "prelude/types/optional";
 
 class IntRange(N: IntLiteral) {
   fn Make(start: Int(N), end: Int(N)) -> Self {

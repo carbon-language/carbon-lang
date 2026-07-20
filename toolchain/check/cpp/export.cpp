@@ -156,10 +156,11 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
 
   auto* decl_context =
       ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
-  // TODO: Provide a source location.
+  auto clang_loc =
+      GetCppLocation(context, SemIR::LocId(class_info.first_decl_id()));
   auto* record_decl = clang::CXXRecordDecl::Create(
-      context.ast_context(), clang::TagTypeKind::Class, decl_context,
-      clang::SourceLocation(), clang::SourceLocation(), identifier_info);
+      context.ast_context(), clang::TagTypeKind::Class, decl_context, clang_loc,
+      clang_loc, identifier_info);
   // If this is a member class, set its access.
   if (isa<clang::CXXRecordDecl>(decl_context)) {
     // TODO: Map Carbon access to C++ access.

@@ -318,7 +318,7 @@ _carbon_binary_internal = rule(
         ),
         "srcs": attr.label_list(allow_files = [".carbon"]),
         "_cc_toolchain": attr.label(default = "//toolchain/install:carbon_stage1_cc_toolchain"),
-        "_default_deps": attr.label_list(default = [Label("//core:io"), Label("//core:range")]),
+        "_default_deps": attr.label_list(default = [Label("//core:io")]),
     },
     executable = True,
     fragments = ["cpp"],

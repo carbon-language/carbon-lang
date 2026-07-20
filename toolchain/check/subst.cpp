@@ -137,30 +137,31 @@ static auto PushOperand(Context& context, Worklist& worklist,
       push_specific(interface.specific_id);
       break;
     }
-    case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
-      const auto& facet_type_info = context.facet_types().Get(facet_type_id);
-      for (auto extends : facet_type_info.extend_constraints) {
+    case CARBON_KIND(SemIR::DeclaredFacetTypeId declared_facet_type_id): {
+      const auto& declared_facet_type =
+          context.declared_facet_types().Get(declared_facet_type_id);
+      for (auto extends : declared_facet_type.extend_constraints) {
         push_specific(extends.specific_id);
       }
-      for (auto impls : facet_type_info.self_impls_constraints) {
+      for (auto impls : declared_facet_type.self_impls_constraints) {
         push_specific(impls.specific_id);
       }
-      for (auto extends : facet_type_info.extend_named_constraints) {
+      for (auto extends : declared_facet_type.extend_named_constraints) {
         push_specific(extends.specific_id);
       }
-      for (auto impls : facet_type_info.self_impls_named_constraints) {
+      for (auto impls : declared_facet_type.self_impls_named_constraints) {
         push_specific(impls.specific_id);
       }
-      for (const auto& type_impls : facet_type_info.type_impls_interfaces) {
+      for (const auto& type_impls : declared_facet_type.type_impls_interfaces) {
         worklist.Push(type_impls.self_type);
         push_specific(type_impls.specific_interface.specific_id);
       }
       for (const auto& type_impls :
-           facet_type_info.type_impls_named_constraints) {
+           declared_facet_type.type_impls_named_constraints) {
         worklist.Push(type_impls.self_type);
         push_specific(type_impls.specific_named_constraint.specific_id);
       }
-      for (auto rewrite : facet_type_info.rewrite_constraints) {
+      for (auto rewrite : declared_facet_type.rewrite_constraints) {
         worklist.Push(rewrite.lhs_id);
         worklist.Push(rewrite.rhs_id);
       }
@@ -247,28 +248,28 @@ static auto PopOperand(Context& context, Worklist& worklist,
           })
           .index;
     }
-    case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
-      const auto& old_facet_type_info =
-          context.facet_types().Get(facet_type_id);
-      SemIR::FacetTypeInfo new_facet_type_info = {
-          .other_requirements = old_facet_type_info.other_requirements};
+    case CARBON_KIND(SemIR::DeclaredFacetTypeId declared_facet_type_id): {
+      const auto& old_declared_facet_type =
+          context.declared_facet_types().Get(declared_facet_type_id);
+      SemIR::DeclaredFacetType new_declared_facet_type = {
+          .other_requirements = old_declared_facet_type.other_requirements};
       // Since these were added to a stack, we get them back in reverse order.
-      new_facet_type_info.rewrite_constraints.resize(
-          old_facet_type_info.rewrite_constraints.size(),
-          SemIR::FacetTypeInfo::RewriteConstraint::None);
+      new_declared_facet_type.rewrite_constraints.resize(
+          old_declared_facet_type.rewrite_constraints.size(),
+          SemIR::DeclaredFacetType::RewriteConstraint::None);
       for (auto& new_constraint :
-           llvm::reverse(new_facet_type_info.rewrite_constraints)) {
+           llvm::reverse(new_declared_facet_type.rewrite_constraints)) {
         auto rhs_id = worklist.Pop();
         auto lhs_id = worklist.Pop();
         new_constraint = {.lhs_id = lhs_id, .rhs_id = rhs_id};
       }
-      new_facet_type_info.type_impls_named_constraints.resize(
-          old_facet_type_info.type_impls_named_constraints.size(),
+      new_declared_facet_type.type_impls_named_constraints.resize(
+          old_declared_facet_type.type_impls_named_constraints.size(),
           {SemIR::InstId::None, SemIR::SpecificNamedConstraint::None});
       for (auto [old_type_impls, new_type_impls] :
            llvm::reverse(llvm::zip_equal(
-               old_facet_type_info.type_impls_named_constraints,
-               new_facet_type_info.type_impls_named_constraints))) {
+               old_declared_facet_type.type_impls_named_constraints,
+               new_declared_facet_type.type_impls_named_constraints))) {
         auto specific_id =
             pop_specific(old_type_impls.specific_named_constraint.specific_id);
         auto self_type = worklist.Pop();
@@ -278,12 +279,13 @@ static auto PopOperand(Context& context, Worklist& worklist,
                 old_type_impls.specific_named_constraint.named_constraint_id,
                 specific_id}};
       }
-      new_facet_type_info.type_impls_interfaces.resize(
-          old_facet_type_info.type_impls_interfaces.size(),
+      new_declared_facet_type.type_impls_interfaces.resize(
+          old_declared_facet_type.type_impls_interfaces.size(),
           {SemIR::InstId::None, SemIR::SpecificInterface::None});
-      for (auto [old_type_impls, new_type_impls] : llvm::reverse(
-               llvm::zip_equal(old_facet_type_info.type_impls_interfaces,
-                               new_facet_type_info.type_impls_interfaces))) {
+      for (auto [old_type_impls, new_type_impls] :
+           llvm::reverse(llvm::zip_equal(
+               old_declared_facet_type.type_impls_interfaces,
+               new_declared_facet_type.type_impls_interfaces))) {
         auto specific_id =
             pop_specific(old_type_impls.specific_interface.specific_id);
         auto self_type = worklist.Pop();
@@ -292,49 +294,51 @@ static auto PopOperand(Context& context, Worklist& worklist,
             .specific_interface = {
                 old_type_impls.specific_interface.interface_id, specific_id}};
       }
-      new_facet_type_info.self_impls_named_constraints.resize(
-          old_facet_type_info.self_impls_named_constraints.size(),
+      new_declared_facet_type.self_impls_named_constraints.resize(
+          old_declared_facet_type.self_impls_named_constraints.size(),
           SemIR::SpecificNamedConstraint::None);
       for (auto [old_constraint, new_constraint] :
            llvm::reverse(llvm::zip_equal(
-               old_facet_type_info.self_impls_named_constraints,
-               new_facet_type_info.self_impls_named_constraints))) {
+               old_declared_facet_type.self_impls_named_constraints,
+               new_declared_facet_type.self_impls_named_constraints))) {
         new_constraint = {
             .named_constraint_id = old_constraint.named_constraint_id,
             .specific_id = pop_specific(old_constraint.specific_id)};
       }
-      new_facet_type_info.extend_named_constraints.resize(
-          old_facet_type_info.extend_named_constraints.size(),
+      new_declared_facet_type.extend_named_constraints.resize(
+          old_declared_facet_type.extend_named_constraints.size(),
           SemIR::SpecificNamedConstraint::None);
-      for (auto [old_constraint, new_constraint] : llvm::reverse(
-               llvm::zip_equal(old_facet_type_info.extend_named_constraints,
-                               new_facet_type_info.extend_named_constraints))) {
+      for (auto [old_constraint, new_constraint] :
+           llvm::reverse(llvm::zip_equal(
+               old_declared_facet_type.extend_named_constraints,
+               new_declared_facet_type.extend_named_constraints))) {
         new_constraint = {
             .named_constraint_id = old_constraint.named_constraint_id,
             .specific_id = pop_specific(old_constraint.specific_id)};
       }
-      new_facet_type_info.self_impls_constraints.resize(
-          old_facet_type_info.self_impls_constraints.size(),
+      new_declared_facet_type.self_impls_constraints.resize(
+          old_declared_facet_type.self_impls_constraints.size(),
           SemIR::SpecificInterface::None);
-      for (auto [old_constraint, new_constraint] : llvm::reverse(
-               llvm::zip_equal(old_facet_type_info.self_impls_constraints,
-                               new_facet_type_info.self_impls_constraints))) {
+      for (auto [old_constraint, new_constraint] :
+           llvm::reverse(llvm::zip_equal(
+               old_declared_facet_type.self_impls_constraints,
+               new_declared_facet_type.self_impls_constraints))) {
         new_constraint = {
             .interface_id = old_constraint.interface_id,
             .specific_id = pop_specific(old_constraint.specific_id)};
       }
-      new_facet_type_info.extend_constraints.resize(
-          old_facet_type_info.extend_constraints.size(),
+      new_declared_facet_type.extend_constraints.resize(
+          old_declared_facet_type.extend_constraints.size(),
           SemIR::SpecificInterface::None);
       for (auto [old_constraint, new_constraint] : llvm::reverse(
-               llvm::zip_equal(old_facet_type_info.extend_constraints,
-                               new_facet_type_info.extend_constraints))) {
+               llvm::zip_equal(old_declared_facet_type.extend_constraints,
+                               new_declared_facet_type.extend_constraints))) {
         new_constraint = {
             .interface_id = old_constraint.interface_id,
             .specific_id = pop_specific(old_constraint.specific_id)};
       }
-      new_facet_type_info.Canonicalize();
-      return context.facet_types().Add(new_facet_type_info).index;
+      new_declared_facet_type.Canonicalize();
+      return context.declared_facet_types().Add(new_declared_facet_type).index;
     }
     default:
       return arg.value();

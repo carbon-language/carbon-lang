@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --optimize=size foo.carbon --target=x86_64-unknown-linux-gnu --phase=lower --dump-llvm-ir --exclude-dump-file-prefix=%{core} --include-carbon-core
+// ARGS: compile --optimize=size foo.carbon --target=x86_64-unknown-linux-gnu --phase=lower --dump-llvm-ir --exclude-dump-file-prefix=%{core}
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -11,9 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/optimize/optimize_size.carbon
 
 // --- foo.carbon
-
-import Core library "range";
-
 fn Rand() -> i32;
 
 fn NoInlineWithOz() -> i32 {
@@ -43,9 +40,9 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: ; Function Attrs: minsize nounwind optsize
 // CHECK:STDOUT: define i32 @_CNoInlineWithOz.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Rand.call.loc7_15 = call i32 @_CRand.Main(), !dbg !8
-// CHECK:STDOUT:   %Rand.call.loc7_24 = call i32 @_CRand.Main(), !dbg !9
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %Rand.call.loc7_15, %Rand.call.loc7_24, !dbg !8
+// CHECK:STDOUT:   %Rand.call.loc4_15 = call i32 @_CRand.Main(), !dbg !8
+// CHECK:STDOUT:   %Rand.call.loc4_24 = call i32 @_CRand.Main(), !dbg !9
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %Rand.call.loc4_15, %Rand.call.loc4_24, !dbg !8
 // CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,16 +62,16 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   br label %while.cond, !dbg !21
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond:                                       ; preds = %while.body, %entry
-// CHECK:STDOUT:   %.loc18_10 = load i32, ptr %n.var, align 4, !dbg !22
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp slt i32 %.loc18_10, 65536, !dbg !22
+// CHECK:STDOUT:   %.loc15_10 = load i32, ptr %n.var, align 4, !dbg !22
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp slt i32 %.loc15_10, 65536, !dbg !22
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Less.call, label %while.body, label %while.done, !dbg !21
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
-// CHECK:STDOUT:   %.loc19_10 = load i32, ptr %n.var, align 4, !dbg !23
-// CHECK:STDOUT:   %.loc19_11.array.index = getelementptr inbounds [65536 x i32], ptr %a, i32 0, i32 %.loc19_10, !dbg !24
-// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc19_11.array.index, align 4, !dbg !24
+// CHECK:STDOUT:   %.loc16_10 = load i32, ptr %n.var, align 4, !dbg !23
+// CHECK:STDOUT:   %.loc16_11.array.index = getelementptr inbounds [65536 x i32], ptr %a, i32 0, i32 %.loc16_10, !dbg !24
+// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc16_11.array.index, align 4, !dbg !24
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = mul i32 %Int.as.MulAssignWith.impl.Op.call, 2, !dbg !24
-// CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc19_11.array.index, align 4, !dbg !24
+// CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc16_11.array.index, align 4, !dbg !24
 // CHECK:STDOUT:   call void @"_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8"(ptr %n.var), !dbg !25
 // CHECK:STDOUT:   br label %while.cond, !dbg !26
 // CHECK:STDOUT:
@@ -129,36 +126,36 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !1 = !DIFile(filename: "foo.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "NoInlineWithOz", linkageName: "_CNoInlineWithOz.Main", scope: null, file: !1, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "NoInlineWithOz", linkageName: "_CNoInlineWithOz.Main", scope: null, file: !1, line: 3, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7}
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !8 = !DILocation(line: 7, column: 10, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 7, column: 19, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "CallNoInlineWithOptSize", linkageName: "_CCallNoInlineWithOptSize.Main", scope: null, file: !1, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !12 = !DILocation(line: 12, column: 10, scope: !11)
-// CHECK:STDOUT: !13 = !DILocation(line: 12, column: 3, scope: !11)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "VectorizedWithOptSpeed", linkageName: "_CVectorizedWithOptSpeed.Main", scope: null, file: !1, line: 15, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !18)
+// CHECK:STDOUT: !8 = !DILocation(line: 4, column: 10, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 4, column: 19, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 4, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "CallNoInlineWithOptSize", linkageName: "_CCallNoInlineWithOptSize.Main", scope: null, file: !1, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !12 = !DILocation(line: 9, column: 10, scope: !11)
+// CHECK:STDOUT: !13 = !DILocation(line: 9, column: 3, scope: !11)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "VectorizedWithOptSpeed", linkageName: "_CVectorizedWithOptSpeed.Main", scope: null, file: !1, line: 12, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !18)
 // CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
 // CHECK:STDOUT: !16 = !{null, !17}
 // CHECK:STDOUT: !17 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !18 = !{!19}
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !14, type: !17)
-// CHECK:STDOUT: !20 = !DILocation(line: 17, column: 3, scope: !14)
-// CHECK:STDOUT: !21 = !DILocation(line: 18, column: 9, scope: !14)
-// CHECK:STDOUT: !22 = !DILocation(line: 18, column: 10, scope: !14)
-// CHECK:STDOUT: !23 = !DILocation(line: 19, column: 10, scope: !14)
-// CHECK:STDOUT: !24 = !DILocation(line: 19, column: 5, scope: !14)
-// CHECK:STDOUT: !25 = !DILocation(line: 20, column: 5, scope: !14)
-// CHECK:STDOUT: !26 = !DILocation(line: 18, column: 3, scope: !14)
-// CHECK:STDOUT: !27 = !DILocation(line: 15, column: 1, scope: !14)
-// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !1, line: 17, type: !29, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !31)
+// CHECK:STDOUT: !20 = !DILocation(line: 14, column: 3, scope: !14)
+// CHECK:STDOUT: !21 = !DILocation(line: 15, column: 9, scope: !14)
+// CHECK:STDOUT: !22 = !DILocation(line: 15, column: 10, scope: !14)
+// CHECK:STDOUT: !23 = !DILocation(line: 16, column: 10, scope: !14)
+// CHECK:STDOUT: !24 = !DILocation(line: 16, column: 5, scope: !14)
+// CHECK:STDOUT: !25 = !DILocation(line: 17, column: 5, scope: !14)
+// CHECK:STDOUT: !26 = !DILocation(line: 15, column: 3, scope: !14)
+// CHECK:STDOUT: !27 = !DILocation(line: 12, column: 1, scope: !14)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !1, line: 14, type: !29, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !31)
 // CHECK:STDOUT: !29 = !DISubroutineType(types: !30)
 // CHECK:STDOUT: !30 = !{null, !7}
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !28, type: !7)
-// CHECK:STDOUT: !33 = !DILocation(line: 17, column: 3, scope: !28)
+// CHECK:STDOUT: !33 = !DILocation(line: 14, column: 3, scope: !28)
 // CHECK:STDOUT: !34 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !35, line: 396, type: !29, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !36)
 // CHECK:STDOUT: !35 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !36 = !{!37}
