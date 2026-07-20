@@ -500,6 +500,11 @@ static auto BuildCppFunctionDeclForGenericCarbonFn(
   FunctionInfo callee(context, function_id, function, nullptr);
 
   // Get parameters types.
+  //
+  // TODO: currently this matches the behavior of
+  // BuildCppFunctionDeclForCarbonFn, but for templates the ABI is
+  // irrelevant, and the parameter should instead map to something that will
+  // guide C++ template argument deduction into doing the right thing.
   llvm::SmallVector<clang::QualType> cpp_param_types;
   if (callee.self_param) {
     auto cpp_type = MapToCppThunkParamType(context, callee.self_param->type_id);
@@ -539,7 +544,9 @@ static auto BuildCppFunctionDeclForGenericCarbonFn(
   auto* tinfo = context.ast_context().getTrivialTypeSourceInfo(
       cpp_function_type, clang_loc);
   clang::FunctionDecl* function_decl = clang::FunctionDecl::Create(
-      context.ast_context(), context.ast_context().getTranslationUnitDecl(),
+      context.ast_context(),
+      // TODO: use the context corresponding to the Carbon generic function.
+      context.ast_context().getTranslationUnitDecl(),
       /*StartLoc=*/clang_loc, /*NLoc=*/clang_loc, identifier_info,
       cpp_function_type, tinfo, clang::SC_Extern);
 
