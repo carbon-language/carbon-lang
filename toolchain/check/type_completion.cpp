@@ -20,6 +20,7 @@
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/generic.h"
+#include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/named_constraint.h"
 #include "toolchain/sem_ir/specific_interface.h"
