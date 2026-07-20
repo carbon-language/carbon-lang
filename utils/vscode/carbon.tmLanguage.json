@@ -226,8 +226,8 @@
         },
         {
           "comment": "Matches types in bindings.",
-          "begin": ":!?",
-          "end": "(?=([;{=]|->|in|where))",
+          "begin": ":",
+          "end": "(?=([;{=,]|->|in|where))",
           "patterns": [
             { "include": "#common" },
             { "include": "#variables" },
@@ -346,7 +346,7 @@
         },
         {
           "name": "keyword.control.carbon",
-          "match": "\\b(and|as|impls|in|like|not|or|partial|ref|template|where)\\b"
+          "match": "\\b(and|as|generic|impls|in|like|not|or|partial|ref|runtime|template|unused|where)\\b"
         }
       ]
     },

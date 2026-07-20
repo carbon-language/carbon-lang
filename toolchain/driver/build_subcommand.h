@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_DRIVER_BUILD_SUBCOMMAND_H_
 
 #include "common/command_line.h"
+#include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/compile_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
@@ -17,6 +18,7 @@ namespace Carbon {
 struct BuildSubcommandOptions {
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
+  CodegenOptions codegen_options;
   CompileOptions compile_options;
   LinkOptions link_options;
   bool use_temp_dir;

@@ -36,10 +36,11 @@ interface Bar[].Baz[] {}
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Foo'},
 // CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: interface.carbon
@@ -55,11 +56,12 @@ interface Bar[].Baz[] {}
 // CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Bar'},
 // CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
+// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: qualified.carbon

@@ -8,9 +8,9 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/impl/forall.carbon
 
-impl forall [T:! type] T as Interface;
+impl forall [T: type] T as Interface;
 
-impl forall [T:! type, U:! Interface] U as Interface(T) {
+impl forall [T: type, U: Interface] U as Interface(T) {
 }
 
 // CHECK:STDOUT: - filename: forall.carbon
@@ -19,10 +19,10 @@ impl forall [T:! type, U:! Interface] U as Interface(T) {
 // CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:       {kind: 'Forall', text: 'forall'},
 // CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'T'},
 // CHECK:STDOUT:       {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
@@ -31,15 +31,15 @@ impl forall [T:! type, U:! Interface] U as Interface(T) {
 // CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:         {kind: 'Forall', text: 'forall'},
 // CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
+// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'U'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'U'},
+// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 11},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'U'},
 // CHECK:STDOUT:         {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},

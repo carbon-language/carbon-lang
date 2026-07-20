@@ -391,6 +391,10 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~~~~~~
 //   1. Library
 //
+// match_first ...
+// ^~~~~~~~~
+//   1. MatchFirst
+//
 // namespace ...
 // ^~~~~~~~~
 //   1. Namespace
@@ -921,6 +925,21 @@ CARBON_PARSE_STATE(Import)
 //         ^~~~~
 //   (state done)
 CARBON_PARSE_STATE(Library)
+
+// Handles `match_first` and opens the block.
+//
+// match_first { ...
+// ^~~~~~~~~~~~~
+//   1. DeclScopeLoopAsRegular
+//   2. MatchFirstFinish
+CARBON_PARSE_STATE(MatchFirst)
+
+// Handles closing the `match_first` block.
+//
+// match_first { ... }
+//                   ^
+//   (state done)
+CARBON_PARSE_STATE(MatchFirstFinish)
 
 // Handles `namespace`.
 //

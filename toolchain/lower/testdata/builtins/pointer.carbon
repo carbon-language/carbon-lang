@@ -11,8 +11,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/builtins/pointer.carbon
 
 fn MakeUnformed(t: type) -> type = "maybe_unformed.make_type";
-fn MakeNull(T:! type) -> MakeUnformed(T*) = "pointer.make_null";
-fn IsNull[T:! type](p: MakeUnformed(T*)) -> bool = "pointer.is_null";
+fn MakeNull(generic T: type) -> MakeUnformed(T*) = "pointer.make_null";
+fn IsNull[T: type](p: MakeUnformed(T*)) -> bool = "pointer.is_null";
 
 class C {}
 
@@ -24,6 +24,7 @@ fn Check(p: MakeUnformed(C*)) -> bool {
   return IsNull(p);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'pointer.carbon'
 // CHECK:STDOUT: source_filename = "pointer.carbon"
 // CHECK:STDOUT:
@@ -61,3 +62,4 @@ fn Check(p: MakeUnformed(C*)) -> bool {
 // CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !9, type: !7)
 // CHECK:STDOUT: !14 = !DILocation(line: 24, column: 10, scope: !9)
 // CHECK:STDOUT: !15 = !DILocation(line: 24, column: 3, scope: !9)
+// CHECK:STDOUT:

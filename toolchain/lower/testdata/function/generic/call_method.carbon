@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_method.carbon
 
 class C {
-  fn F[T:! Core.Copy](unused self, x: T) -> T {
+  fn F[T: Core.Copy](unused self, x: T) -> T {
     return x;
   }
 }
@@ -22,6 +22,7 @@ fn CallF() -> i32 {
   return c.F(n);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_method.carbon'
 // CHECK:STDOUT: source_filename = "call_method.carbon"
 // CHECK:STDOUT:
@@ -109,3 +110,4 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !26, type: !22)
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 2, scope: !26, type: !7)
 // CHECK:STDOUT: !32 = !DILocation(line: 15, column: 5, scope: !26)
+// CHECK:STDOUT:

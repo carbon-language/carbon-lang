@@ -17,6 +17,7 @@ fn Select(b: bool) -> i32 {
   return if b then F() else G();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -76,3 +77,4 @@ fn Select(b: bool) -> i32 {
 // CHECK:STDOUT: !18 = !DILocation(line: 17, column: 20, scope: !11)
 // CHECK:STDOUT: !19 = !DILocation(line: 17, column: 29, scope: !11)
 // CHECK:STDOUT: !20 = !DILocation(line: 17, column: 3, scope: !11)
+// CHECK:STDOUT:

@@ -36,10 +36,12 @@ constexpr Kind UntestedKinds[] = {
     Kind::BuildPreludeManifestError,
     Kind::BuildTempDirectoryCreationError,
     Kind::BuildTempDirectoryDeletionError,
+    Kind::CompileCoreManifestError,
     Kind::CompilePreludeManifestError,
     Kind::ConfigFailedToReadDigest,
     Kind::ConfigFailedToSetupTarget,
     Kind::DriverInstallInvalid,
+    Kind::LinkCarbonPreludeBuildFailed,
 
     // These diagnose filesystem issues that are hard to unit test.
     Kind::ErrorReadingFile,

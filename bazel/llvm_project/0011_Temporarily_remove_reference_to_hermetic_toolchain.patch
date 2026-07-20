@@ -1,0 +1,24 @@
+Temporarily undo
+https://github.com/llvm/llvm-project/pull/207295
+Which introduces a dependency on the hermetic llvm
+toolchain. A fix-forward is in progress, at which
+point we can remove this patch.
+---
+--- a/utils/bazel/llvm-project-overlay/llvm/config.bzl
++++ b/utils/bazel/llvm-project-overlay/llvm/config.bzl
+@@ -48,7 +48,6 @@
+ 
+ backtrace_defines = select({
+     "@platforms//os:windows": [],
+-    "@llvm//platforms/config:musl": [],
+     "//conditions:default": [
+         "HAVE_BACKTRACE=1",
+         "BACKTRACE_HEADER=<execinfo.h>",
+@@ -56,7 +55,6 @@
+ })
+ 
+ mallinfo_defines = select({
+-    "@llvm//platforms/config:gnu": ["HAVE_MALLINFO=1"],
+     "//conditions:default": [],
+ })
+ 

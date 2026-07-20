@@ -29,6 +29,18 @@ static auto DumpNameIfValid(const File& file, NameId name_id) -> std::string {
   return out.TakeStr();
 }
 
+static auto DumpNameOfEntityName(const File& file,
+                                 const EntityName& entity_name) -> std::string {
+  RawStringOstream out;
+  out << " `";
+  out << file.names().GetFormatted(entity_name.name_id);
+  if (entity_name.is_frozen_period_self) {
+    out << "[frozen]";
+  }
+  out << "`";
+  return out.TakeStr();
+}
+
 static auto DumpLocSummary(const File& file, LocId loc_id) -> std::string {
   RawStringOstream out;
   // TODO: If the canonical location is None but the original is an InstId,
@@ -223,20 +235,22 @@ LLVM_DUMP_METHOD auto Dump(const File& file, EntityNameId entity_name_id)
   out << entity_name_id;
   if (entity_name_id.has_value()) {
     auto entity_name = file.entity_names().Get(entity_name_id);
-    out << ": " << entity_name << DumpNameIfValid(file, entity_name.name_id);
+    out << ": " << entity_name << DumpNameOfEntityName(file, entity_name);
   }
   return out.TakeStr();
 }
 
-LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
+LLVM_DUMP_METHOD auto Dump(const File& file,
+                           DeclaredFacetTypeId declared_facet_type_id)
     -> std::string {
   RawStringOstream out;
-  out << facet_type_id;
-  if (!facet_type_id.has_value()) {
+  out << declared_facet_type_id;
+  if (!declared_facet_type_id.has_value()) {
     return out.TakeStr();
   }
 
-  const auto& facet_type = file.facet_types().Get(facet_type_id);
+  const auto& facet_type =
+      file.declared_facet_types().Get(declared_facet_type_id);
   out << ": " << facet_type;
   for (auto impls : facet_type.extend_constraints) {
     out << "\n  - " << DumpInterfaceSummary(file, impls.interface_id);
@@ -384,8 +398,7 @@ static auto DumpInstCommonDetails(const File& file, const Inst& inst,
   if (inst.arg0_and_kind().kind() == IdKind::For<EntityNameId>) {
     auto entity_name_id = EntityNameId(inst.arg0());
     out << "\n  - name:"
-        << DumpNameIfValid(file,
-                           file.entity_names().Get(entity_name_id).name_id);
+        << DumpNameOfEntityName(file, file.entity_names().Get(entity_name_id));
   }
 
   if (inst.type_id().has_value()) {
@@ -615,8 +628,9 @@ LLVM_DUMP_METHOD auto MakeSymbolicConstantId(int id) -> ConstantId {
 LLVM_DUMP_METHOD static auto MakeEntityNameId(int id) -> EntityNameId {
   return EntityNameId(id);
 }
-LLVM_DUMP_METHOD static auto MakeFacetTypeId(int id) -> FacetTypeId {
-  return FacetTypeId(id);
+LLVM_DUMP_METHOD static auto MakeDeclaredFacetTypeId(int id)
+    -> DeclaredFacetTypeId {
+  return DeclaredFacetTypeId(id);
 }
 LLVM_DUMP_METHOD static auto MakeFunctionId(int id) -> FunctionId {
   return FunctionId(id);

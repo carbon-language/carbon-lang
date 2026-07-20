@@ -17,6 +17,7 @@ fn And() -> bool {
   return F() and G();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'and.carbon'
 // CHECK:STDOUT: source_filename = "and.carbon"
 // CHECK:STDOUT:
@@ -67,3 +68,4 @@ fn And() -> bool {
 // CHECK:STDOUT: !12 = !DILocation(line: 17, column: 10, scope: !11)
 // CHECK:STDOUT: !13 = !DILocation(line: 17, column: 18, scope: !11)
 // CHECK:STDOUT: !14 = !DILocation(line: 17, column: 3, scope: !11)
+// CHECK:STDOUT:

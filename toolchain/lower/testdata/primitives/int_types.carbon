@@ -45,6 +45,7 @@ fn ImplicitWidenUnsignedToSigned(a: u8) -> i32 { return a; }
 fn ImplicitWidenCustom(a: Core.Int(4)) -> Core.Int(5) { return a; }
 fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'pass_and_return.carbon'
 // CHECK:STDOUT: source_filename = "pass_and_return.carbon"
 // CHECK:STDOUT:
@@ -109,6 +110,8 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: !29 = !{!30}
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !25, type: !28)
 // CHECK:STDOUT: !31 = !DILocation(line: 7, column: 36, scope: !25)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'load_and_store.carbon'
 // CHECK:STDOUT: source_filename = "load_and_store.carbon"
 // CHECK:STDOUT:
@@ -160,73 +163,75 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: !22 = !DILocation(line: 11, column: 25, scope: !15)
 // CHECK:STDOUT: !23 = !DILocation(line: 12, column: 3, scope: !15)
 // CHECK:STDOUT: !24 = !DILocation(line: 13, column: 3, scope: !15)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'convert.carbon'
 // CHECK:STDOUT: source_filename = "convert.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CImplicitWidenSigned.Main(i8 %a) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %From.as_type.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.211c7f442b391488"(i8 %a), !dbg !11
+// CHECK:STDOUT:   %From.as_type.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.538f75cb237ee016"(i8 %a), !dbg !11
 // CHECK:STDOUT:   ret i32 %From.as_type.as.ImplicitAs.impl.Convert.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CImplicitWidenUnsigned.Main(i8 %a) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.dbd6eca082a732b7"(i8 %a), !dbg !19
+// CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.528caab81d685d04"(i8 %a), !dbg !19
 // CHECK:STDOUT:   ret i32 %UInt.as.ImplicitAs.impl.Convert.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CImplicitWidenUnsignedToSigned.Main(i8 %a) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.b26071071fee62b9"(i8 %a), !dbg !25
+// CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.4af4a23d0f7fe878"(i8 %a), !dbg !25
 // CHECK:STDOUT:   ret i32 %UInt.as.ImplicitAs.impl.Convert.call, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i5 @_CImplicitWidenCustom.Main(i4 %a) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %From.as_type.as.ImplicitAs.impl.Convert.call = call i5 @"_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.913488c3cb524db0"(i4 %a), !dbg !33
+// CHECK:STDOUT:   %From.as_type.as.ImplicitAs.impl.Convert.call = call i5 @"_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.8bd6b529c7d2e033"(i4 %a), !dbg !33
 // CHECK:STDOUT:   ret i5 %From.as_type.as.ImplicitAs.impl.Convert.call, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i5 @_CImplicitWidenUnsignedCustom.Main(i4 %a) #0 !dbg !34 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.call = call i5 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.4c1b8e556dc24c05"(i4 %a), !dbg !41
+// CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.call = call i5 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.aae0693703cf1928"(i4 %a), !dbg !41
 // CHECK:STDOUT:   ret i5 %UInt.as.ImplicitAs.impl.Convert.call, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.211c7f442b391488"(i8 %self) #0 !dbg !42 {
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.538f75cb237ee016"(i8 %self) #0 !dbg !42 {
 // CHECK:STDOUT:   %1 = call i8 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.ca1ac10d3fc7c1a8"(i8 %self), !dbg !46
 // CHECK:STDOUT:   %2 = sext i8 %1 to i32, !dbg !47
 // CHECK:STDOUT:   ret i32 %2, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.dbd6eca082a732b7"(i8 %self) #0 !dbg !49 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.d93106ca8c7912cd"(i8 %self), !dbg !53
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.528caab81d685d04"(i8 %self) #0 !dbg !49 {
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.382ddd735ade10eb"(i8 %self), !dbg !53
 // CHECK:STDOUT:   ret i32 %1, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.b26071071fee62b9"(i8 %self) #0 !dbg !55 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1d53f86bcab954ee"(i8 %self), !dbg !58
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.4af4a23d0f7fe878"(i8 %self) #0 !dbg !55 {
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1445989f3533347d"(i8 %self), !dbg !58
 // CHECK:STDOUT:   ret i32 %1, !dbg !59
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i5 @"_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.913488c3cb524db0"(i4 %self) #0 !dbg !60 {
+// CHECK:STDOUT: define linkonce_odr i5 @"_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.8bd6b529c7d2e033"(i4 %self) #0 !dbg !60 {
 // CHECK:STDOUT:   %1 = call i4 @"_CAsInt.Int.9452f4c51951679b.Core:AnyInt.Core.044c7d430ddd4fd6"(i4 %self), !dbg !63
 // CHECK:STDOUT:   %2 = sext i4 %1 to i5, !dbg !64
 // CHECK:STDOUT:   ret i5 %2, !dbg !65
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i5 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.4c1b8e556dc24c05"(i4 %self) #0 !dbg !66 {
-// CHECK:STDOUT:   %1 = call i5 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.cc82cccb0d5a8ccf"(i4 %self), !dbg !69
+// CHECK:STDOUT: define linkonce_odr i5 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.aae0693703cf1928"(i4 %self) #0 !dbg !66 {
+// CHECK:STDOUT:   %1 = call i5 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.2e11ee68a70378cd"(i4 %self), !dbg !69
 // CHECK:STDOUT:   ret i5 %1, !dbg !70
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -236,14 +241,14 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.d93106ca8c7912cd"(i8 %from) #0 !dbg !77 {
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.382ddd735ade10eb"(i8 %from) #0 !dbg !77 {
 // CHECK:STDOUT:   %1 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %from), !dbg !80
 // CHECK:STDOUT:   %2 = zext i8 %1 to i32, !dbg !81
 // CHECK:STDOUT:   ret i32 %2, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1d53f86bcab954ee"(i8 %from) #0 !dbg !83 {
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1445989f3533347d"(i8 %from) #0 !dbg !83 {
 // CHECK:STDOUT:   %1 = call i8 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.ca1ac10d3fc7c1a8"(i8 %from), !dbg !86
 // CHECK:STDOUT:   %2 = zext i8 %1 to i32, !dbg !87
 // CHECK:STDOUT:   ret i32 %2, !dbg !88
@@ -255,7 +260,7 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i5 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.cc82cccb0d5a8ccf"(i4 %from) #0 !dbg !95 {
+// CHECK:STDOUT: define linkonce_odr i5 @"_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.2e11ee68a70378cd"(i4 %from) #0 !dbg !95 {
 // CHECK:STDOUT:   %1 = call i4 @"_CAsUInt.UInt.9452f4c51951679b.Core:AnyUInt.Core.044c7d430ddd4fd6"(i4 %from), !dbg !98
 // CHECK:STDOUT:   %2 = zext i4 %1 to i5, !dbg !99
 // CHECK:STDOUT:   ret i5 %2, !dbg !100
@@ -321,31 +326,31 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: !39 = !{!40}
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !34, type: !38)
 // CHECK:STDOUT: !41 = !DILocation(line: 8, column: 67, scope: !34)
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.211c7f442b391488", scope: null, file: !43, line: 64, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !44)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.538f75cb237ee016", scope: null, file: !43, line: 64, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !44)
 // CHECK:STDOUT: !43 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !44 = !{!45}
 // CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !42, type: !8)
 // CHECK:STDOUT: !46 = !DILocation(line: 66, column: 17, scope: !42)
 // CHECK:STDOUT: !47 = !DILocation(line: 66, column: 12, scope: !42)
 // CHECK:STDOUT: !48 = !DILocation(line: 66, column: 5, scope: !42)
-// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.dbd6eca082a732b7", scope: null, file: !50, line: 88, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !51)
+// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.528caab81d685d04", scope: null, file: !50, line: 88, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !51)
 // CHECK:STDOUT: !50 = !DIFile(filename: "{{.*}}/prelude/types/uint.carbon", directory: "")
 // CHECK:STDOUT: !51 = !{!52}
 // CHECK:STDOUT: !52 = !DILocalVariable(arg: 1, scope: !49, type: !16)
 // CHECK:STDOUT: !53 = !DILocation(line: 89, column: 12, scope: !49)
 // CHECK:STDOUT: !54 = !DILocation(line: 89, column: 5, scope: !49)
-// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.b26071071fee62b9", scope: null, file: !50, line: 88, type: !21, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !56)
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.4af4a23d0f7fe878", scope: null, file: !50, line: 88, type: !21, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !56)
 // CHECK:STDOUT: !56 = !{!57}
 // CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !55, type: !16)
 // CHECK:STDOUT: !58 = !DILocation(line: 89, column: 12, scope: !55)
 // CHECK:STDOUT: !59 = !DILocation(line: 89, column: 5, scope: !55)
-// CHECK:STDOUT: !60 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.913488c3cb524db0", scope: null, file: !43, line: 64, type: !27, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !61)
+// CHECK:STDOUT: !60 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.45e1f8de18643ddf:ImplicitAs.0bc6489996802dd4.Core.8bd6b529c7d2e033", scope: null, file: !43, line: 64, type: !27, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !61)
 // CHECK:STDOUT: !61 = !{!62}
 // CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !60, type: !30)
 // CHECK:STDOUT: !63 = !DILocation(line: 66, column: 17, scope: !60)
 // CHECK:STDOUT: !64 = !DILocation(line: 66, column: 12, scope: !60)
 // CHECK:STDOUT: !65 = !DILocation(line: 66, column: 5, scope: !60)
-// CHECK:STDOUT: !66 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.4c1b8e556dc24c05", scope: null, file: !50, line: 88, type: !35, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !67)
+// CHECK:STDOUT: !66 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.f48df0d8add56b17.Core.aae0693703cf1928", scope: null, file: !50, line: 88, type: !35, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !67)
 // CHECK:STDOUT: !67 = !{!68}
 // CHECK:STDOUT: !68 = !DILocalVariable(arg: 1, scope: !66, type: !38)
 // CHECK:STDOUT: !69 = !DILocation(line: 89, column: 12, scope: !66)
@@ -356,13 +361,13 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: !74 = !{!75}
 // CHECK:STDOUT: !75 = !DILocalVariable(arg: 1, scope: !71, type: !8)
 // CHECK:STDOUT: !76 = !DILocation(line: 59, column: 28, scope: !71)
-// CHECK:STDOUT: !77 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.d93106ca8c7912cd", scope: null, file: !50, line: 72, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !78)
+// CHECK:STDOUT: !77 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.382ddd735ade10eb", scope: null, file: !50, line: 72, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !78)
 // CHECK:STDOUT: !78 = !{!79}
 // CHECK:STDOUT: !79 = !DILocalVariable(arg: 1, scope: !77, type: !16)
 // CHECK:STDOUT: !80 = !DILocation(line: 74, column: 17, scope: !77)
 // CHECK:STDOUT: !81 = !DILocation(line: 74, column: 12, scope: !77)
 // CHECK:STDOUT: !82 = !DILocation(line: 74, column: 5, scope: !77)
-// CHECK:STDOUT: !83 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1d53f86bcab954ee", scope: null, file: !50, line: 80, type: !21, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !84)
+// CHECK:STDOUT: !83 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Int.9452f4c51951679b.Core:FromUInt.94db85caea4a44af.Core.1445989f3533347d", scope: null, file: !50, line: 80, type: !21, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !84)
 // CHECK:STDOUT: !84 = !{!85}
 // CHECK:STDOUT: !85 = !DILocalVariable(arg: 1, scope: !83, type: !16)
 // CHECK:STDOUT: !86 = !DILocation(line: 82, column: 17, scope: !83)
@@ -374,7 +379,7 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: !92 = !{!93}
 // CHECK:STDOUT: !93 = !DILocalVariable(arg: 1, scope: !89, type: !30)
 // CHECK:STDOUT: !94 = !DILocation(line: 59, column: 28, scope: !89)
-// CHECK:STDOUT: !95 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.cc82cccb0d5a8ccf", scope: null, file: !50, line: 72, type: !35, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !96)
+// CHECK:STDOUT: !95 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.UInt.9452f4c51951679b.Core:FromUInt.a1a82301830d1e08.Core.2e11ee68a70378cd", scope: null, file: !50, line: 72, type: !35, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !96)
 // CHECK:STDOUT: !96 = !{!97}
 // CHECK:STDOUT: !97 = !DILocalVariable(arg: 1, scope: !95, type: !38)
 // CHECK:STDOUT: !98 = !DILocation(line: 74, column: 17, scope: !95)
@@ -392,3 +397,4 @@ fn ImplicitWidenUnsignedCustom(a: Core.UInt(4)) -> Core.UInt(5) { return a; }
 // CHECK:STDOUT: !110 = !{!111}
 // CHECK:STDOUT: !111 = !DILocalVariable(arg: 1, scope: !107, type: !38)
 // CHECK:STDOUT: !112 = !DILocation(line: 60, column: 29, scope: !107)
+// CHECK:STDOUT:

@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Support/TypeName.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
@@ -242,6 +243,9 @@ struct Worklist {
   // Add a string to the contents.
   auto AddString(llvm::StringRef string) -> void { store->AddString(string); }
 
+  // Add an integer to the contents.
+  auto AddInteger(uint64_t value) -> void { store->AddInteger(value); }
+
   // Each of the following `Add` functions adds a typed argument to the contents
   // of the current instruction. If we don't yet have a fingerprint for the
   // argument, it instead adds that argument to the worklist instead.
@@ -280,6 +284,9 @@ struct Worklist {
       // also be a compatible change from the perspective of users of a generic.
     } else {
       Add(entity_name.name_id);
+      if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
+        AddInteger(entity_name.is_frozen_period_self);
+      }
     }
     Add(entity_name.parent_scope_id);
 
@@ -321,7 +328,7 @@ struct Worklist {
 
   template <typename T>
   auto AddBlock(llvm::ArrayRef<T> block) -> void {
-    store->AddInteger(block.size());
+    AddInteger(block.size());
     for (auto inner_id : block) {
       Add(inner_id);
     }
@@ -354,9 +361,9 @@ struct Worklist {
       return;
     }
     auto block = sem_ir->custom_layouts().Get(custom_layout_id);
-    store->AddInteger(block.size());
+    AddInteger(block.size());
     for (auto size : block) {
-      store->AddInteger(size.bits());
+      AddInteger(size.bits());
     }
   }
 
@@ -474,8 +481,15 @@ struct Worklist {
     const auto& require = sem_ir->require_impls().Get(require_id);
     Add(sem_ir->constant_values().Get(require.self_id));
     Add(sem_ir->constant_values().Get(require.facet_type_inst_id));
-    store->AddInteger(require.extend_self);
+    AddInteger(require.extend_self);
     Add(require.parent_scope_id);
+  }
+
+  auto Add(ObserveId observe_id) -> void {
+    CARBON_CHECK(observe_id.has_value());
+    const auto& observe = sem_ir->observes().Get(observe_id);
+    Add(observe.operations_id);
+    Add(observe.enclosing_scope_inst_id);
   }
 
   auto Add(AssociatedConstantId assoc_const_id) -> void {
@@ -505,13 +519,14 @@ struct Worklist {
     // we could just number them sequentially, in the order we encounter them,
     // but that would require a persistent cache to ensure we use the same
     // number on subsequent encounters.
-    store->AddInteger(block_id.index);
+    AddInteger(block_id.index);
   }
 
-  auto Add(FacetTypeId facet_type_id) -> void {
-    const auto& facet_type = sem_ir->facet_types().Get(facet_type_id);
+  auto Add(DeclaredFacetTypeId declared_facet_type_id) -> void {
+    const auto& facet_type =
+        sem_ir->declared_facet_types().Get(declared_facet_type_id);
     auto add_constraints = [&](auto constraints) {
-      store->AddInteger(constraints.size());
+      AddInteger(constraints.size());
       for (auto [first, second] : constraints) {
         Add(first);
         Add(second);
@@ -520,7 +535,7 @@ struct Worklist {
     add_constraints(facet_type.extend_constraints);
     add_constraints(facet_type.self_impls_constraints);
     add_constraints(facet_type.rewrite_constraints);
-    store->AddInteger(facet_type.other_requirements);
+    AddInteger(facet_type.other_requirements);
   }
 
   auto Add(GenericId generic_id) -> void {
@@ -541,15 +556,17 @@ struct Worklist {
     Add(specific.args_id);
   }
 
+  auto Add(SpecificInterface specific_interface) -> void {
+    Add(specific_interface.interface_id);
+    Add(specific_interface.specific_id);
+  }
+
   auto Add(SpecificInterfaceId specific_interface_id) -> void {
     if (!specific_interface_id.has_value()) {
       AddInvalid();
       return;
     }
-    const auto& interface =
-        sem_ir->specific_interfaces().Get(specific_interface_id);
-    Add(interface.interface_id);
-    Add(interface.specific_id);
+    Add(sem_ir->specific_interfaces().Get(specific_interface_id));
   }
 
   auto Add(const llvm::APInt& value) -> void { store->AddAPInt(value); }
@@ -564,7 +581,7 @@ struct Worklist {
     const auto& real = sem_ir->reals().Get(real_id);
     Add(real.mantissa);
     Add(real.exponent);
-    store->AddInteger(real.is_decimal);
+    AddInteger(real.is_decimal);
   }
 
   auto Add(PackageNameId package_id) -> void {
@@ -623,7 +640,7 @@ struct Worklist {
                          ElementIndex, FloatKind, IntKind, CallParamIndex>)
   auto Add(T arg) -> void {
     // Index-like ID: just include the value directly.
-    store->AddInteger(arg.index);
+    AddInteger(arg.index);
   }
 
   auto Add(ExprRegionId region_id) -> void {
@@ -637,7 +654,8 @@ struct Worklist {
   template <typename T>
     requires(SameAsOneOf<T, AnyRawId, LocId>)
   auto Add(T /*arg*/) -> void {
-    CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
+    CARBON_FATAL("Unexpected instruction operand kind {0}",
+                 llvm::getTypeName<T>());
   }
 
   auto Add(IdAndKind::InvalidType /*invalid*/) -> void {

@@ -14,6 +14,7 @@ fn Main() -> i32 {
   return 0;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'zero.carbon'
 // CHECK:STDOUT: source_filename = "zero.carbon"
 // CHECK:STDOUT:
@@ -37,3 +38,4 @@ fn Main() -> i32 {
 // CHECK:STDOUT: !6 = !{!7}
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT:

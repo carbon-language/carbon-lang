@@ -19,6 +19,7 @@ fn Run() -> i32 {
   return a;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'nested.carbon'
 // CHECK:STDOUT: source_filename = "nested.carbon"
 // CHECK:STDOUT:
@@ -40,11 +41,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   store i32 %.loc16, ptr %b.var, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc17 = load i32, ptr %b.var, align 4, !dbg !12
 // CHECK:STDOUT:   store i32 %.loc17, ptr %a.var, align 4, !dbg !13
+// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %b.var), !dbg !9
 // CHECK:STDOUT:   br label %while.cond, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %while.cond
 // CHECK:STDOUT:   %.loc19 = load i32, ptr %a.var, align 4, !dbg !15
-// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %b.var), !dbg !9
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %a.var), !dbg !8
 // CHECK:STDOUT:   ret i32 %.loc19, !dbg !16
 // CHECK:STDOUT: }
@@ -91,3 +92,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !20 = !{!21}
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !22 = !DILocation(line: 16, column: 5, scope: !17)
+// CHECK:STDOUT:

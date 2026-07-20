@@ -296,6 +296,10 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %HasQualifiers.ref_this: %HasQualifiers.ref_this.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasQualifiers.plain.type.99c640.2: type = fn_type @HasQualifiers.plain.2 [concrete]
 // CHECK:STDOUT:   %HasQualifiers.plain.cdd9ec.2: %HasQualifiers.plain.type.99c640.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.type: type = fn_type @HasQualifiers.cpp_destructor [concrete]
+// CHECK:STDOUT:   %HasQualifiers.cpp_destructor: %HasQualifiers.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %HasQualifiers.Op.type.83af6e.1: type = fn_type @HasQualifiers.Op.1 [concrete]
+// CHECK:STDOUT:   %HasQualifiers.Op.4dca31.1: %HasQualifiers.Op.type.83af6e.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %HasQualifiers.ref_ref_this.cpp_overload_set.type: type = cpp_overload_set_type @HasQualifiers.ref_ref_this.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %HasQualifiers.ref_ref_this.cpp_overload_set.value: %HasQualifiers.ref_ref_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.ref_ref_this.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ref_ref_this__carbon_thunk.type: type = fn_type @ref_ref_this__carbon_thunk [concrete]
@@ -307,16 +311,12 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %ptr.e71: type = ptr_type %const.ba8 [concrete]
 // CHECK:STDOUT:   %HasQualifiers__carbon_thunk.type: type = fn_type @HasQualifiers__carbon_thunk [concrete]
 // CHECK:STDOUT:   %HasQualifiers__carbon_thunk: %HasQualifiers__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %HasQualifiers.Op.type.83af6e.1: type = fn_type @HasQualifiers.Op.1 [concrete]
-// CHECK:STDOUT:   %HasQualifiers.Op.4dca31.1: %HasQualifiers.Op.type.83af6e.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.d0d: <witness> = custom_witness (%HasQualifiers.Op.4dca31.1), @Copy [concrete]
+// CHECK:STDOUT:   %HasQualifiers.Op.type.83af6e.2: type = fn_type @HasQualifiers.Op.2 [concrete]
+// CHECK:STDOUT:   %HasQualifiers.Op.4dca31.2: %HasQualifiers.Op.type.83af6e.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.d0d: <witness> = custom_witness (%HasQualifiers.Op.4dca31.2), @Copy [concrete]
 // CHECK:STDOUT:   %Copy.facet.11b: %Copy.type = facet_value %HasQualifiers, (%custom_witness.d0d) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.033: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.11b) [concrete]
 // CHECK:STDOUT:   %.703: type = fn_type_with_self_type %Copy.WithSelf.Op.type.033, %Copy.facet.11b [concrete]
-// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.type: type = fn_type @HasQualifiers.cpp_destructor [concrete]
-// CHECK:STDOUT:   %HasQualifiers.cpp_destructor: %HasQualifiers.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %HasQualifiers.Op.type.83af6e.2: type = fn_type @HasQualifiers.Op.2 [concrete]
-// CHECK:STDOUT:   %HasQualifiers.Op.4dca31.2: %HasQualifiers.Op.type.83af6e.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -355,6 +355,11 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.decl: %HasQualifiers.cpp_destructor.type = fn_decl @HasQualifiers.cpp_destructor [concrete = constants.%HasQualifiers.cpp_destructor] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasQualifiers.ref_ref_this.cpp_overload_set.value: %HasQualifiers.ref_ref_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.ref_ref_this.cpp_overload_set [concrete = constants.%HasQualifiers.ref_ref_this.cpp_overload_set.value]
 // CHECK:STDOUT:   %ref_ref_this__carbon_thunk.decl: %ref_ref_this__carbon_thunk.type = fn_decl @ref_ref_this__carbon_thunk [concrete = constants.%ref_ref_this__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
@@ -367,11 +372,6 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasQualifiers__carbon_thunk.decl: %HasQualifiers__carbon_thunk.type = fn_decl @HasQualifiers__carbon_thunk [concrete = constants.%HasQualifiers__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.decl: %HasQualifiers.cpp_destructor.type = fn_decl @HasQualifiers.cpp_destructor [concrete = constants.%HasQualifiers.cpp_destructor] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -422,6 +422,11 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %.loc19_8.2, %plain.ref.loc19
 // CHECK:STDOUT:   %.loc19_8.3: %HasQualifiers = acquire_value %.loc19_8.2
 // CHECK:STDOUT:   %HasQualifiers.plain.call.loc19: init %empty_tuple.type = call imports.%HasQualifiers.plain.decl.3d4ba8.2(%.loc19_8.3)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %HasQualifiers.Op.bound.loc19: <bound method> = bound_method %.loc19_8.2, constants.%HasQualifiers.Op.4dca31.1
+// CHECK:STDOUT:   %Op.ref.loc19: %HasQualifiers.cpp_destructor.type = name_ref Op, imports.%HasQualifiers.cpp_destructor.decl [concrete = constants.%HasQualifiers.cpp_destructor]
+// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.bound.loc19: <bound method> = bound_method %.loc19_8.2, %Op.ref.loc19
+// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.call.loc19: init %empty_tuple.type = call %HasQualifiers.cpp_destructor.bound.loc19(%.loc19_8.2)
 // CHECK:STDOUT:   %Make.ref.loc20: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc20_8.1: ref %HasQualifiers = temporary_storage
 // CHECK:STDOUT:   %Make.call.loc20: init %HasQualifiers to %.loc20_8.1 = call %Make.ref.loc20()
@@ -430,6 +435,10 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %bound_method.loc20: <bound method> = bound_method %.loc20_8.2, %const_this.ref.loc20
 // CHECK:STDOUT:   %.loc20_8.3: %HasQualifiers = acquire_value %.loc20_8.2
 // CHECK:STDOUT:   %const_this__carbon_thunk.call.loc20: init %empty_tuple.type = call imports.%const_this__carbon_thunk.decl(%.loc20_8.3)
+// CHECK:STDOUT:   %HasQualifiers.Op.bound.loc20: <bound method> = bound_method %.loc20_8.2, constants.%HasQualifiers.Op.4dca31.1
+// CHECK:STDOUT:   %Op.ref.loc20: %HasQualifiers.cpp_destructor.type = name_ref Op, imports.%HasQualifiers.cpp_destructor.decl [concrete = constants.%HasQualifiers.cpp_destructor]
+// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.bound.loc20: <bound method> = bound_method %.loc20_8.2, %Op.ref.loc20
+// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.call.loc20: init %empty_tuple.type = call %HasQualifiers.cpp_destructor.bound.loc20(%.loc20_8.2)
 // CHECK:STDOUT:   %Make.ref.loc21: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc21_8.1: ref %HasQualifiers = temporary_storage
 // CHECK:STDOUT:   %Make.call.loc21: init %HasQualifiers to %.loc21_8.1 = call %Make.ref.loc21()
@@ -438,6 +447,10 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %bound_method.loc21: <bound method> = bound_method %.loc21_8.2, %const_ref_this.ref.loc21
 // CHECK:STDOUT:   %.loc21_8.3: %HasQualifiers = acquire_value %.loc21_8.2
 // CHECK:STDOUT:   %const_ref_this__carbon_thunk.call.loc21: init %empty_tuple.type = call imports.%const_ref_this__carbon_thunk.decl(%.loc21_8.3)
+// CHECK:STDOUT:   %HasQualifiers.Op.bound.loc21: <bound method> = bound_method %.loc21_8.2, constants.%HasQualifiers.Op.4dca31.1
+// CHECK:STDOUT:   %Op.ref.loc21: %HasQualifiers.cpp_destructor.type = name_ref Op, imports.%HasQualifiers.cpp_destructor.decl [concrete = constants.%HasQualifiers.cpp_destructor]
+// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.bound.loc21: <bound method> = bound_method %.loc21_8.2, %Op.ref.loc21
+// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.call.loc21: init %empty_tuple.type = call %HasQualifiers.cpp_destructor.bound.loc21(%.loc21_8.2)
 // CHECK:STDOUT:   %Make.ref.loc22: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc22_8.1: ref %HasQualifiers = temporary_storage
 // CHECK:STDOUT:   %Make.call.loc22: init %HasQualifiers to %.loc22_8.1 = call %Make.ref.loc22()
@@ -446,7 +459,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %bound_method.loc22_9: <bound method> = bound_method %.loc22_8.2, %ref_ref_this.ref
 // CHECK:STDOUT:   %.loc22_8.3: %HasQualifiers = acquire_value %.loc22_8.2
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0.loc22: %.703 = impl_witness_access constants.%custom_witness.d0d, element0 [concrete = constants.%HasQualifiers.Op.4dca31.1]
+// CHECK:STDOUT:   %impl.elem0.loc22: %.703 = impl_witness_access constants.%custom_witness.d0d, element0 [concrete = constants.%HasQualifiers.Op.4dca31.2]
 // CHECK:STDOUT:   %bound_method.loc22_8: <bound method> = bound_method %.loc22_8.3, %impl.elem0.loc22
 // CHECK:STDOUT:   %.loc22_8.4: ref %HasQualifiers = temporary_storage
 // CHECK:STDOUT:   %Op.ref.loc22_8.1: %HasQualifiers.HasQualifiers.type = name_ref Op, imports.%HasQualifiers.HasQualifiers.decl [concrete = constants.%HasQualifiers.HasQualifiers]
@@ -460,6 +473,11 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %.loc22_8.8: init %HasQualifiers to %self.var = mark_in_place_init %HasQualifiers__carbon_thunk.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %ref_ref_this__carbon_thunk.call: init %empty_tuple.type = call imports.%ref_ref_this__carbon_thunk.decl(%self.var)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %HasQualifiers.Op.bound.loc22: <bound method> = bound_method %.loc22_8.2, constants.%HasQualifiers.Op.4dca31.1
+// CHECK:STDOUT:   %Op.ref.loc22_8.2: %HasQualifiers.cpp_destructor.type = name_ref Op, imports.%HasQualifiers.cpp_destructor.decl [concrete = constants.%HasQualifiers.cpp_destructor]
+// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.bound.loc22: <bound method> = bound_method %.loc22_8.2, %Op.ref.loc22_8.2
+// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.call.loc22: init %empty_tuple.type = call %HasQualifiers.cpp_destructor.bound.loc22(%.loc22_8.2)
 // CHECK:STDOUT:   %Make.ref.loc23: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc23_8.1: ref %HasQualifiers = temporary_storage
 // CHECK:STDOUT:   %Make.call.loc23: init %HasQualifiers to %.loc23_8.1 = call %Make.ref.loc23()
@@ -468,28 +486,10 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %bound_method.loc23: <bound method> = bound_method %.loc23_8.2, %const_ref_ref_this.ref.loc23
 // CHECK:STDOUT:   %.loc23_8.3: %HasQualifiers = acquire_value %.loc23_8.2
 // CHECK:STDOUT:   %const_ref_ref_this__carbon_thunk.call.loc23: init %empty_tuple.type = call imports.%const_ref_ref_this__carbon_thunk.decl(%.loc23_8.3)
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %HasQualifiers.Op.bound.loc23: <bound method> = bound_method %.loc23_8.2, constants.%HasQualifiers.Op.4dca31.2
+// CHECK:STDOUT:   %HasQualifiers.Op.bound.loc23: <bound method> = bound_method %.loc23_8.2, constants.%HasQualifiers.Op.4dca31.1
 // CHECK:STDOUT:   %Op.ref.loc23: %HasQualifiers.cpp_destructor.type = name_ref Op, imports.%HasQualifiers.cpp_destructor.decl [concrete = constants.%HasQualifiers.cpp_destructor]
 // CHECK:STDOUT:   %HasQualifiers.cpp_destructor.bound.loc23: <bound method> = bound_method %.loc23_8.2, %Op.ref.loc23
 // CHECK:STDOUT:   %HasQualifiers.cpp_destructor.call.loc23: init %empty_tuple.type = call %HasQualifiers.cpp_destructor.bound.loc23(%.loc23_8.2)
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %HasQualifiers.Op.bound.loc22: <bound method> = bound_method %.loc22_8.2, constants.%HasQualifiers.Op.4dca31.2
-// CHECK:STDOUT:   %Op.ref.loc22_8.2: %HasQualifiers.cpp_destructor.type = name_ref Op, imports.%HasQualifiers.cpp_destructor.decl [concrete = constants.%HasQualifiers.cpp_destructor]
-// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.bound.loc22: <bound method> = bound_method %.loc22_8.2, %Op.ref.loc22_8.2
-// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.call.loc22: init %empty_tuple.type = call %HasQualifiers.cpp_destructor.bound.loc22(%.loc22_8.2)
-// CHECK:STDOUT:   %HasQualifiers.Op.bound.loc21: <bound method> = bound_method %.loc21_8.2, constants.%HasQualifiers.Op.4dca31.2
-// CHECK:STDOUT:   %Op.ref.loc21: %HasQualifiers.cpp_destructor.type = name_ref Op, imports.%HasQualifiers.cpp_destructor.decl [concrete = constants.%HasQualifiers.cpp_destructor]
-// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.bound.loc21: <bound method> = bound_method %.loc21_8.2, %Op.ref.loc21
-// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.call.loc21: init %empty_tuple.type = call %HasQualifiers.cpp_destructor.bound.loc21(%.loc21_8.2)
-// CHECK:STDOUT:   %HasQualifiers.Op.bound.loc20: <bound method> = bound_method %.loc20_8.2, constants.%HasQualifiers.Op.4dca31.2
-// CHECK:STDOUT:   %Op.ref.loc20: %HasQualifiers.cpp_destructor.type = name_ref Op, imports.%HasQualifiers.cpp_destructor.decl [concrete = constants.%HasQualifiers.cpp_destructor]
-// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.bound.loc20: <bound method> = bound_method %.loc20_8.2, %Op.ref.loc20
-// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.call.loc20: init %empty_tuple.type = call %HasQualifiers.cpp_destructor.bound.loc20(%.loc20_8.2)
-// CHECK:STDOUT:   %HasQualifiers.Op.bound.loc19: <bound method> = bound_method %.loc19_8.2, constants.%HasQualifiers.Op.4dca31.2
-// CHECK:STDOUT:   %Op.ref.loc19: %HasQualifiers.cpp_destructor.type = name_ref Op, imports.%HasQualifiers.cpp_destructor.decl [concrete = constants.%HasQualifiers.cpp_destructor]
-// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.bound.loc19: <bound method> = bound_method %.loc19_8.2, %Op.ref.loc19
-// CHECK:STDOUT:   %HasQualifiers.cpp_destructor.call.loc19: init %empty_tuple.type = call %HasQualifiers.cpp_destructor.bound.loc19(%.loc19_8.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -560,11 +560,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFNoRefQualifier(%v.param: %NoRefQualifier, %p.param: %ptr.f7d) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = ref_binding_pattern a [concrete = constants.%a.patt.623a16.1]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.6b6 = var_pattern %a.patt [concrete = constants.%a.var_patt.207d5f.1]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %i32 = var_storage %a.var_patt
 // CHECK:STDOUT:   %v.ref: %NoRefQualifier = name_ref v, %v
 // CHECK:STDOUT:   %F.ref.loc8: %NoRefQualifier.F.cpp_overload_set.type = name_ref F, imports.%NoRefQualifier.F.cpp_overload_set.value [concrete = constants.%NoRefQualifier.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %v.ref, %F.ref.loc8
@@ -573,10 +569,10 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: ref %i32 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete = constants.%b.patt.9fb99a.1]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete = constants.%b.var_patt.dede8c.1]
+// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = ref_binding_pattern a [concrete = constants.%a.patt.623a16.1]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.6b6 = var_pattern %a.patt [concrete = constants.%a.var_patt.207d5f.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %ptr.d08 = var %b.var_patt
+// CHECK:STDOUT:   %b.var: ref %ptr.d08 = var_storage %b.var_patt
 // CHECK:STDOUT:   %p.ref: %ptr.f7d = name_ref p, %p
 // CHECK:STDOUT:   %.loc9_25: ref %NoRefQualifier = deref %p.ref
 // CHECK:STDOUT:   %F.ref.loc9: %NoRefQualifier.F.cpp_overload_set.type = name_ref F, imports.%NoRefQualifier.F.cpp_overload_set.value [concrete = constants.%NoRefQualifier.F.cpp_overload_set.value]
@@ -588,6 +584,10 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %i32.loc9 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %ptr.d08 = wrapper_binding b, %b.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete = constants.%b.patt.9fb99a.1]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete = constants.%b.var_patt.dede8c.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound.loc9: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc9: init %empty_tuple.type = call %Destroy.Op.bound.loc9(%b.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc8: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
@@ -606,11 +606,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFWithRefQualifier(%v.param: %WithRefQualifier, %p.param: %ptr.90c) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = ref_binding_pattern a [concrete = constants.%a.patt.623a16.2]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.6b6 = var_pattern %a.patt [concrete = constants.%a.var_patt.207d5f.2]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %i32 = var_storage %a.var_patt
 // CHECK:STDOUT:   %v.ref: %WithRefQualifier = name_ref v, %v
 // CHECK:STDOUT:   %F.ref.loc15: %WithRefQualifier.F.cpp_overload_set.type = name_ref F, imports.%WithRefQualifier.F.cpp_overload_set.value [concrete = constants.%WithRefQualifier.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %v.ref, %F.ref.loc15
@@ -619,10 +615,10 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: ref %i32 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete = constants.%b.patt.9fb99a.2]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete = constants.%b.var_patt.dede8c.2]
+// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = ref_binding_pattern a [concrete = constants.%a.patt.623a16.2]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.6b6 = var_pattern %a.patt [concrete = constants.%a.var_patt.207d5f.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %ptr.d08 = var %b.var_patt
+// CHECK:STDOUT:   %b.var: ref %ptr.d08 = var_storage %b.var_patt
 // CHECK:STDOUT:   %p.ref: %ptr.90c = name_ref p, %p
 // CHECK:STDOUT:   %.loc16_25: ref %WithRefQualifier = deref %p.ref
 // CHECK:STDOUT:   %F.ref.loc16: %WithRefQualifier.F.cpp_overload_set.type = name_ref F, imports.%WithRefQualifier.F.cpp_overload_set.value [concrete = constants.%WithRefQualifier.F.cpp_overload_set.value]
@@ -634,6 +630,10 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:     %ptr.loc16: type = ptr_type %i32.loc16 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %ptr.d08 = wrapper_binding b, %b.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete = constants.%b.patt.9fb99a.2]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete = constants.%b.var_patt.dede8c.2]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound.loc16: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.1
 // CHECK:STDOUT:   %Destroy.Op.call.loc16: init %empty_tuple.type = call %Destroy.Op.bound.loc16(%b.var)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc15: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3

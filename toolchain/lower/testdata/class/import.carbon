@@ -13,7 +13,7 @@
 // --- a.carbon
 
 library "X";
-base class D[T:! type](X:! T) {
+base class D[T: type](X: T) {
 }
 class C {
   fn F();
@@ -27,6 +27,7 @@ fn Run() {
   C.F();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'a.carbon'
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
@@ -39,6 +40,8 @@ fn Run() {
 // CHECK:STDOUT: !1 = !DIFile(filename: "a.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
@@ -66,3 +69,4 @@ fn Run() {
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !8 = !DILocation(line: 4, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 3, column: 1, scope: !4)
+// CHECK:STDOUT:

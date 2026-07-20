@@ -12,11 +12,8 @@ auto Formatter::Run() -> bool {
     return false;
   }
 
-  auto comments = tokens_->comments();
-  auto comment_it = comments.begin();
-
   // If there are no tokens or comments, format as empty.
-  if (tokens_->size() == 0 && comment_it == comments.end()) {
+  if (tokens_->size() == 0 && next_comment_ == comments_end_) {
     *out_ << "\n";
     return true;
   }
@@ -24,15 +21,12 @@ auto Formatter::Run() -> bool {
   for (auto token : tokens_->tokens()) {
     auto token_kind = tokens_->GetKind(token);
 
-    while (comment_it != comments.end() &&
-           tokens_->IsAfterComment(token, *comment_it)) {
-      RequireEmptyLine();
-      PrepareForSpacedContent();
-      // TODO: We do need to adjust the indent of multi-line comments.
-      *out_ << tokens_->GetCommentText(*comment_it);
-      // Comment text includes a terminating newline, so just update the state.
-      line_state_ = LineState::Empty;
-      ++comment_it;
+    // Emit any comments that come before this token in the source. Trailing
+    // comments are attached to the still-open current line; full-line comments
+    // are emitted on their own line.
+    while (next_comment_ != comments_end_ &&
+           tokens_->IsAfterComment(token, *next_comment_)) {
+      EmitComment();
     }
 
     switch (token_kind) {
@@ -67,9 +61,9 @@ auto Formatter::Run() -> bool {
         break;
 
       default:
-        if (token_kind.IsOneOf(
-                {Lex::TokenKind::CloseParen, Lex::TokenKind::Colon,
-                 Lex::TokenKind::ColonExclaim, Lex::TokenKind::Comma})) {
+        if (token_kind.IsOneOf({Lex::TokenKind::CloseParen,
+                                Lex::TokenKind::Colon,
+                                Lex::TokenKind::Comma})) {
           PrepareForPackedContent();
         } else {
           PrepareForSpacedContent();
@@ -81,10 +75,42 @@ auto Formatter::Run() -> bool {
         break;
     }
   }
+
+  // Materialize any newline deferred by the final line.
+  if (line_state_ == LineState::EndOfLine) {
+    *out_ << "\n";
+    line_state_ = LineState::Empty;
+  }
   return true;
 }
 
+auto Formatter::EmitComment() -> void {
+  auto comment = *next_comment_;
+  ++next_comment_;
+
+  if (tokens_->IsTrailingComment(comment) && line_state_ != LineState::Empty) {
+    // Keep the trailing comment on the current line, separated by a space. The
+    // line still has content because its newline was deferred (`EndOfLine`) or
+    // not yet required.
+    *out_ << " " << tokens_->GetCommentText(comment);
+  } else {
+    // A full-line comment (or a trailing comment with nothing left to attach
+    // to) is emitted on its own line.
+    RequireEmptyLine();
+    PrepareForSpacedContent();
+    // TODO: We do need to adjust the indent of multi-line comments.
+    *out_ << tokens_->GetCommentText(comment);
+  }
+  // Comment text includes a terminating newline, so just update the state.
+  line_state_ = LineState::Empty;
+}
+
 auto Formatter::PrepareForPackedContent() -> void {
+  // Materialize a deferred newline before starting to fill a fresh line.
+  if (line_state_ == LineState::EndOfLine) {
+    *out_ << "\n";
+    line_state_ = LineState::Empty;
+  }
   if (line_state_ == LineState::Empty) {
     out_->indent(indent_);
     line_state_ = LineState::HasSeparator;
@@ -92,9 +118,10 @@ auto Formatter::PrepareForPackedContent() -> void {
 }
 
 auto Formatter::RequireEmptyLine() -> void {
+  // Defer the newline so a trailing comment can still attach to this line; it
+  // is materialized by the next content or at end of file.
   if (line_state_ != LineState::Empty) {
-    *out_ << "\n";
-    line_state_ = LineState::Empty;
+    line_state_ = LineState::EndOfLine;
   }
 }
 

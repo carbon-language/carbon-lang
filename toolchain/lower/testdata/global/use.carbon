@@ -17,6 +17,7 @@ fn F() -> i32 {
   return a;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use.carbon'
 // CHECK:STDOUT: source_filename = "use.carbon"
 // CHECK:STDOUT:
@@ -62,3 +63,4 @@ fn F() -> i32 {
 // CHECK:STDOUT: !14 = !DILocation(line: 14, column: 14, scope: !10)
 // CHECK:STDOUT: !15 = !DILocation(line: 14, column: 1, scope: !10)
 // CHECK:STDOUT: !16 = !DILocation(line: 0, scope: !10)
+// CHECK:STDOUT:

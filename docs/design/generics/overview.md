@@ -107,7 +107,7 @@ Summary of how Carbon generics work:
 -   _Deduced parameters_ are parameters whose values are determined by the types
     of the explicit arguments. Generic facet parameters are typically deduced.
 -   A function with a generic parameter can have the same function body as an
-    unparameterized one. Functions can freely mix checked, template, and regular
+    unparameterized one. Functions can freely mix checked, template, and runtime
     parameters.
 -   Interfaces can require other interfaces be implemented.
 -   Interfaces can [extend](terminology.md#extending-an-interface) required
@@ -138,12 +138,12 @@ You might have one generic function that could sort any array with comparable
 elements:
 
 ```
-fn SortVector(T:! Comparable, a: Vector(T)*) { ... }
+fn SortVector(generic T: Comparable, a: Vector(T)*) { ... }
 ```
 
-The syntax above adds a `!` to indicate that the parameter named `T` is
-compile-time. By default compile-time parameters are _checked_, the `template`
-keyword may be added to make it a _template generic_.
+The syntax above uses the `generic` keyword to indicate that the parameter named
+`T` is a _checked generic_ parameter. The `template` keyword may be added instead to
+make it a _template generic_.
 
 Given an `i32` vector `iv`, `SortVector(i32, &iv)` is equivalent to
 `SortInt32Vector(&iv)`. Similarly for a `String` vector `sv`,
@@ -318,7 +318,7 @@ already included in the type of the second argument. To eliminate the argument
 at the call site, use a _deduced parameter_.
 
 ```
-fn SortVectorDeduced[T:! Comparable](a: Vector(T)*) { ... }
+fn SortVectorDeduced[T: Comparable](a: Vector(T)*) { ... }
 ```
 
 The `T` parameter is defined in square brackets before the explicit parameter
@@ -341,7 +341,7 @@ call site.
 
 ```
 // ERROR: can't determine `U` from explicit parameters
-fn Illegal[T:! type, U:! type](x: T) -> U { ... }
+fn Illegal[T: type, U: type](x: T) -> U { ... }
 ```
 
 #### Facet parameters
@@ -350,7 +350,7 @@ A function with a facet parameter can have the same function body as an
 unparameterized one.
 
 ```
-fn PrintIt[T:! Printable](p: T*) {
+fn PrintIt[T: Printable](p: T*) {
   p->Print();
 }
 
@@ -368,11 +368,11 @@ You may also refer to any of the methods of interfaces required by the facet
 type using a
 [qualified member access expression](#accessing-members-of-interfaces).
 
-A function can have a mix of checked, template, and regular parameters. Each
-kind of parameter is defined using a different syntax: a checked parameter is
-uses a symbolic binding pattern, a template parameter uses a template binding
-pattern, and a regular parameter uses a runtime binding pattern. Likewise, it's
-allowed to pass a symbolic or template constant value to a checked or regular
+A function can have a mix of checked, template, and runtime parameters. Each
+kind of parameter is defined using a different syntax: a checked parameter uses
+a checked binding pattern, a template parameter uses a template binding
+pattern, and a runtime parameter uses a runtime binding pattern. Likewise, it's
+allowed to pass a symbolic or template constant value to a checked or runtime
 parameter. _We have decided to support passing a symbolic constant to a template
 parameter, see
 [leads issue #2153: Checked generics calling templates](https://github.com/carbon-language/carbon-lang/issues/2153),
@@ -447,7 +447,7 @@ interface EndOfGame {
   fn Draw(ref self);
 }
 
-fn F[T:! Renderable & EndOfGame](game_state: T*) -> (i32, i32) {
+fn F[T: Renderable & EndOfGame](game_state: T*) -> (i32, i32) {
   game_state->SetWinner(1);
   return game_state->Center();
 }
@@ -457,7 +457,7 @@ Names with conflicts can be accessed using a
 [qualified member access expression](#accessing-members-of-interfaces).
 
 ```
-fn BothDraws[T:! Renderable & EndOfGame](game_state: T*) {
+fn BothDraws[T: Renderable & EndOfGame](game_state: T*) {
   game_state->(Renderable.Draw)();
   game_state->(GameState.Draw)();
 }
@@ -480,7 +480,7 @@ constraint Combined {
   alias SetWinner = EndOfGame.SetWinner;
 }
 
-fn CallItAll[T:! Combined](game_state: T*, int winner) {
+fn CallItAll[T: Combined](game_state: T*, int winner) {
   if (winner > 0) {
     game_state->SetWinner(winner);
   } else {
@@ -514,7 +514,7 @@ class CDCover  {
 it can be passed to this `PrintIt` function:
 
 ```
-fn PrintIt[T:! Printable](p: T*) {
+fn PrintIt[T: Printable](p: T*) {
   p->Print();
 }
 ```
@@ -526,8 +526,8 @@ cast from `T` to `CDCover`.
 
 ### Adapting types
 
-Carbon has a mechanism called [adapting types](terminology.md#adapting-a-type)
-to create new types that are [compatible](terminology.md#compatible-types) with
+Carbon has a mechanism called [adapting types](/docs/design/classes.md#adapters)
+to create new types that are [compatible](/docs/design/classes.md#compatible-types) with
 existing types but with different interface implementations. This could be used
 to add or replace implementations, or define implementations for reuse.
 
@@ -567,7 +567,7 @@ convenient to use. Imagine a `Stack` interface. Different types implementing
 
 ```
 interface Stack {
-  let ElementType:! Movable;
+  let ElementType: Movable;
   fn Push(ref self, value: ElementType);
   fn Pop(ref self) -> ElementType;
   fn IsEmpty(ref self) -> bool;
@@ -582,7 +582,7 @@ can deduce the `ElementType` from the stack type.
 ```
 // ✅ This is allowed, since the type of the stack will determine
 // `ElementType`.
-fn PeekAtTopOfStack[StackType:! Stack](s: StackType*)
+fn PeekAtTopOfStack[StackType: Stack](s: StackType*)
     -> StackType.ElementType;
 ```
 
@@ -595,7 +595,7 @@ those types to be different. An element in a hash map might have type
 `Equatable(Pair(String, i64))`.
 
 ```
-interface Equatable(T:! type) {
+interface Equatable(T: type) {
   fn IsEqual(self, compare_to: T) -> bool;
 }
 ```
@@ -609,14 +609,14 @@ general, unless some other parameter determines `T`.
 ```
 // ✅ This is allowed, since the value of `T` is determined by the
 // `v` parameter.
-fn FindInVector[T:! type, U:! Equatable(T)](v: Vector(T), needle: U)
+fn FindInVector[T: type, U: Equatable(T)](v: Vector(T), needle: U)
     -> Optional(i32);
 
 // ❌ This is forbidden. Since `U` could implement `Equatable`
 // multiple times, there is no way to determine the value for `T`.
 // Contrast with `PeekAtTopOfStack` in the associated constant
 // example.
-fn CompileError[T:! type, U:! Equatable(T)](x: U) -> T;
+fn CompileError[T: type, U: Equatable(T)](x: U) -> T;
 ```
 
 ### Constraints
@@ -624,13 +624,13 @@ fn CompileError[T:! type, U:! Equatable(T)](x: U) -> T;
 Facet types can be further constrained using a `where` clause:
 
 ```
-fn FindFirstPrime[T:! Container where .Element = i32]
+fn FindFirstPrime[T: Container where .Element = i32]
     (c: T, i: i32) -> Optional(i32) {
   // The elements of `c` have type `T.Element`, which is `i32`.
   ...
 }
 
-fn PrintContainer[T:! Container where .Element impls Printable](c: T) {
+fn PrintContainer[T: Container where .Element impls Printable](c: T) {
   // The type of the elements of `c` is not known, but we do know
   // that type satisfies the `Printable` interface.
   ...
@@ -645,7 +645,7 @@ Constraints are also used when implementing an interface to specify the values
 of associated constants.
 
 ```
-class Vector(T:! Movable) {
+class Vector(T: Movable) {
   extend impl as Stack where .ElementType = T { ... }
 }
 ```

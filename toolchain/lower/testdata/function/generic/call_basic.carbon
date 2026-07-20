@@ -16,16 +16,16 @@ class C {
   }
 }
 
-fn F[T:! type](_: T) {
+fn F[T: type](_: T) {
 }
 
-fn H[T:! Core.Copy](x: T) -> T {
+fn H[T: Core.Copy](x: T) -> T {
   return x;
 }
 
 // Simple stress test for single depth of calls with change in types.
 // Check definitions are emitted for each specific.
-fn G[T:! Core.Copy & Core.Destroy](x: T) -> T {
+fn G[T: Core.Copy & Core.Destroy](x: T) -> T {
   H(x);
   H(i32);
   H(G(x));
@@ -55,6 +55,7 @@ fn M() {
   let _: f64 = G(p);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_basic.carbon'
 // CHECK:STDOUT: source_filename = "call_basic.carbon"
 // CHECK:STDOUT:
@@ -136,6 +137,7 @@ fn M() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_6.3.temp), !dbg !51
 // CHECK:STDOUT:   %H.call.loc29 = call i32 @_CH.Main.5bd8d5767580997a(i32 %x), !dbg !51
 // CHECK:STDOUT:   store i32 %H.call.loc29, ptr %.loc29_6.3.temp, align 4, !dbg !51
+// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %.loc29_6.3.temp), !dbg !51
 // CHECK:STDOUT:   %H.call.loc30 = call %type @_CH.Main.ee509b43cf4eb3c5(%type zeroinitializer), !dbg !60
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc31_8.3.temp), !dbg !52
 // CHECK:STDOUT:   %G.call = call i32 @_CG.Main.58016a73bff04416(i32 %x), !dbg !52
@@ -144,6 +146,8 @@ fn M() {
 // CHECK:STDOUT:   %.loc31_8.5 = load i32, ptr %.loc31_8.3.temp, align 4, !dbg !52
 // CHECK:STDOUT:   %H.call.loc31 = call i32 @_CH.Main.5bd8d5767580997a(i32 %.loc31_8.5), !dbg !53
 // CHECK:STDOUT:   store i32 %H.call.loc31, ptr %.loc31_9.3.temp, align 4, !dbg !53
+// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %.loc31_9.3.temp), !dbg !53
+// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %.loc31_8.3.temp), !dbg !52
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %var_f64.var), !dbg !54
 // CHECK:STDOUT:   store double poison, ptr %var_f64.var, align 8, !dbg !54
 // CHECK:STDOUT:   %.loc35_5 = load double, ptr %var_f64.var, align 8, !dbg !61
@@ -166,9 +170,6 @@ fn M() {
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %.loc43_6.3.temp), !dbg !59
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %c.var), !dbg !58
 // CHECK:STDOUT:   call void @"_COp.30d8007fdcc57f83:core.Destroy.Core"(ptr %var_f64.var), !dbg !54
-// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %.loc31_9.3.temp), !dbg !53
-// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %.loc31_8.3.temp), !dbg !52
-// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %.loc29_6.3.temp), !dbg !51
 // CHECK:STDOUT:   ret i32 %x, !dbg !69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -193,6 +194,7 @@ fn M() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_6.3.temp), !dbg !77
 // CHECK:STDOUT:   %H.call.loc29 = call double @_CH.Main.c27b765f2159c9a0(double %x), !dbg !77
 // CHECK:STDOUT:   store double %H.call.loc29, ptr %.loc29_6.3.temp, align 8, !dbg !77
+// CHECK:STDOUT:   call void @"_COp.30d8007fdcc57f83:core.Destroy.Core"(ptr %.loc29_6.3.temp), !dbg !77
 // CHECK:STDOUT:   %H.call.loc30 = call %type @_CH.Main.ee509b43cf4eb3c5(%type zeroinitializer), !dbg !86
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc31_8.3.temp), !dbg !78
 // CHECK:STDOUT:   %G.call = call double @_CG.Main.fa1f0912a5bbe922(double %x), !dbg !78
@@ -201,6 +203,8 @@ fn M() {
 // CHECK:STDOUT:   %.loc31_8.5 = load double, ptr %.loc31_8.3.temp, align 8, !dbg !78
 // CHECK:STDOUT:   %H.call.loc31 = call double @_CH.Main.c27b765f2159c9a0(double %.loc31_8.5), !dbg !79
 // CHECK:STDOUT:   store double %H.call.loc31, ptr %.loc31_9.3.temp, align 8, !dbg !79
+// CHECK:STDOUT:   call void @"_COp.30d8007fdcc57f83:core.Destroy.Core"(ptr %.loc31_9.3.temp), !dbg !79
+// CHECK:STDOUT:   call void @"_COp.30d8007fdcc57f83:core.Destroy.Core"(ptr %.loc31_8.3.temp), !dbg !78
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %var_f64.var), !dbg !80
 // CHECK:STDOUT:   store double poison, ptr %var_f64.var, align 8, !dbg !80
 // CHECK:STDOUT:   %.loc35_5 = load double, ptr %var_f64.var, align 8, !dbg !87
@@ -223,9 +227,6 @@ fn M() {
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %.loc43_6.3.temp), !dbg !85
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %c.var), !dbg !84
 // CHECK:STDOUT:   call void @"_COp.30d8007fdcc57f83:core.Destroy.Core"(ptr %var_f64.var), !dbg !80
-// CHECK:STDOUT:   call void @"_COp.30d8007fdcc57f83:core.Destroy.Core"(ptr %.loc31_9.3.temp), !dbg !79
-// CHECK:STDOUT:   call void @"_COp.30d8007fdcc57f83:core.Destroy.Core"(ptr %.loc31_8.3.temp), !dbg !78
-// CHECK:STDOUT:   call void @"_COp.30d8007fdcc57f83:core.Destroy.Core"(ptr %.loc29_6.3.temp), !dbg !77
 // CHECK:STDOUT:   ret double %x, !dbg !95
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -391,3 +392,4 @@ fn M() {
 // CHECK:STDOUT: !114 = !DILocalVariable(arg: 1, scope: !112, type: !7)
 // CHECK:STDOUT: !115 = !DILocation(line: 23, column: 10, scope: !112)
 // CHECK:STDOUT: !116 = !DILocation(line: 23, column: 3, scope: !112)
+// CHECK:STDOUT:

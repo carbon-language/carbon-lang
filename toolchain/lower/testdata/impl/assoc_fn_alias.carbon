@@ -29,6 +29,7 @@ fn Call(a: A) -> i32 {
   return a.F();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'assoc_fn_alias.carbon'
 // CHECK:STDOUT: source_filename = "assoc_fn_alias.carbon"
 // CHECK:STDOUT:
@@ -70,3 +71,4 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !13, type: !8)
 // CHECK:STDOUT: !16 = !DILocation(line: 29, column: 10, scope: !13)
 // CHECK:STDOUT: !17 = !DILocation(line: 29, column: 3, scope: !13)
+// CHECK:STDOUT:

@@ -16,6 +16,7 @@ fn Main() {
   Foo(1);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'params_one.carbon'
 // CHECK:STDOUT: source_filename = "params_one.carbon"
 // CHECK:STDOUT:
@@ -53,3 +54,4 @@ fn Main() {
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 16, column: 3, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 15, column: 1, scope: !11)
+// CHECK:STDOUT:

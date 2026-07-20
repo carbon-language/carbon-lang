@@ -15,10 +15,10 @@ static auto HandlePatternListElement(Context& context, StateKind pattern_state,
 
   context.PushStateForPattern(finish_state_kind, state.in_var_pattern,
                               state.in_unused_pattern, state.in_struct_pattern,
-                              state.ambient_precedence);
+                              state.binding_context, state.ambient_precedence);
   context.PushStateForPattern(pattern_state, state.in_var_pattern,
                               state.in_unused_pattern, state.in_struct_pattern,
-                              state.ambient_precedence);
+                              state.binding_context, state.ambient_precedence);
 }
 
 auto HandlePatternListElementAsTuple(Context& context) -> void {
@@ -64,7 +64,6 @@ auto HandleStructPatternDesignatedFieldFinish(Context& context) -> void {
 auto HandleStructPatternFieldAfterDesignator(Context& context) -> void {
   auto state = context.PopState();
 
-  if (state.has_error) {
   auto skip_to_recovery_position = [&](bool add_invalid_parse) {
     auto recovery_pos =
         context.FindNextOf({Lex::TokenKind::Equal, Lex::TokenKind::Comma,
@@ -106,7 +105,7 @@ auto HandleStructPatternFieldAfterDesignator(Context& context) -> void {
   context.PushState(state, StateKind::StructPatternDesignatedFieldFinish);
   context.PushStateForPattern(StateKind::Pattern, state.in_var_pattern,
                               state.in_unused_pattern, state.in_struct_pattern,
-                              state.ambient_precedence);
+                              state.binding_context, state.ambient_precedence);
 }
 
 auto HandleStructPatternUnderscore(Context& context) -> void {
@@ -116,7 +115,7 @@ auto HandleStructPatternUnderscore(Context& context) -> void {
           .is_binding_pattern_operator()) {
     context.PushStateForPattern(StateKind::BindingPattern, state.in_var_pattern,
                                 state.in_unused_pattern,
-                                state.in_struct_pattern,
+                                state.in_struct_pattern, state.binding_context,
                                 state.ambient_precedence);
 
     return;
@@ -167,9 +166,10 @@ static auto HandlePatternListElementFinish(Context& context,
   }
 
   if (list_token_kind == Context::ListTokenKind::Comma) {
-    context.PushStateForPattern(
-        param_state_kind, state.in_var_pattern, state.in_unused_pattern,
-        state.in_struct_pattern, state.ambient_precedence);
+    context.PushStateForPattern(param_state_kind, state.in_var_pattern,
+                                state.in_unused_pattern,
+                                state.in_struct_pattern, state.binding_context,
+                                state.ambient_precedence);
   }
 }
 
@@ -226,14 +226,15 @@ static auto HandlePatternList(Context& context, NodeKind node_kind,
 
   context.PushStateForPattern(
       empty ? finish_state_empty : finish_state_nonempty, state.in_var_pattern,
-      state.in_unused_pattern, state.in_struct_pattern,
+      state.in_unused_pattern, state.in_struct_pattern, state.binding_context,
       state.ambient_precedence);
   context.AddLeafNode(node_kind, open_token);
 
   if (!empty) {
-    context.PushStateForPattern(
-        param_state, state.in_var_pattern, state.in_unused_pattern,
-        state.in_struct_pattern, PrecedenceGroup::ForTopLevelExpr());
+    context.PushStateForPattern(param_state, state.in_var_pattern,
+                                state.in_unused_pattern,
+                                state.in_struct_pattern, state.binding_context,
+                                PrecedenceGroup::ForTopLevelExpr());
   }
 }
 

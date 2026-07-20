@@ -56,7 +56,7 @@ fn F(c: C) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-    let X:! type;
+    let X: type;
 }
 
 // CHECK:STDERR: fail_compound_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+4]]:15: error: semantics TODO: `associated value lookup on runtime facet value` [SemanticsTodo]
@@ -69,7 +69,7 @@ fn F(T: Z, v: T.(Z.X));
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
 // TODO: Improve this diagnostic. The problem is that T is a runtime facet
@@ -86,7 +86,7 @@ fn F(T: Z, v: T.X);
 library "[[@TEST_NAME]]";
 
 interface Z {
-    let X:! type;
+    let X: type;
 }
 
 // TODO: We should be able to get the value of `.X` from the `FacetType` of
@@ -102,7 +102,7 @@ fn F(T: Z where .X = (), v: T.(Z.X));
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
 // TODO: We should be able to get the value of `.X` from the `FacetType` of
@@ -141,15 +141,15 @@ fn F(T: Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %i.ref: %C.elem = name_ref i, @C.%.loc6 [concrete = @C.%.loc6]
 // CHECK:STDOUT:   %.loc13_22.1: ref %I.type = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc13_22.2: %I.type = acquire_value %.loc13_22.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %a: %I.type = wrapper_binding a, %.loc13_22.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -166,15 +166,15 @@ fn F(T: Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %ij.ref: %C.elem = name_ref ij, @C.%.loc7 [concrete = @C.%.loc7]
 // CHECK:STDOUT:   %.loc21_22.1: ref %facet_type = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc21_22.2: %facet_type = acquire_value %.loc21_22.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %a: %I.type = wrapper_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

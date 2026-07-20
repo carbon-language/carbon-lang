@@ -23,7 +23,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "header.h";
 
-fn F[T:! type](unused x: T) {
+fn F[T: type](unused x: T) {
   // TODO: This should be treated as being template-dependent on T,
   // and we should perform the call during monomorphization.
   // CHECK:STDERR: fail_todo_generic_call.carbon:[[@LINE+4]]:23: error: semantics TODO: `unsupported type used as template argument` [SemanticsTodo]

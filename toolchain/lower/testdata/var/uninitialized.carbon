@@ -19,6 +19,7 @@ fn Run() {
   var unused f: i32*;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'uninitialized.carbon'
 // CHECK:STDOUT: source_filename = "uninitialized.carbon"
 // CHECK:STDOUT:
@@ -98,3 +99,4 @@ fn Run() {
 // CHECK:STDOUT: !25 = !{!26}
 // CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !22, type: !7)
 // CHECK:STDOUT: !27 = !DILocation(line: 14, column: 3, scope: !22)
+// CHECK:STDOUT:

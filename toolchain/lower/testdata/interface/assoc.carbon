@@ -16,6 +16,7 @@ interface I {
 
 fn F() { I.Assoc; }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'assoc.carbon'
 // CHECK:STDOUT: source_filename = "assoc.carbon"
 // CHECK:STDOUT:
@@ -38,3 +39,4 @@ fn F() { I.Assoc; }
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 17, column: 1, scope: !4)
+// CHECK:STDOUT:

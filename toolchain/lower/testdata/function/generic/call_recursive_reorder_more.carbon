@@ -12,7 +12,7 @@
 
 // Builds on `call_recursive_reorder.carbon`.
 
-fn F[T:! type, U:! type, V:! type](x: T, y: U, z: V, count: i32) -> i32 {
+fn F[T: type, U: type, V: type](x: T, y: U, z: V, count: i32) -> i32 {
   if (count > 2) {
     return count;
   }
@@ -52,6 +52,7 @@ fn M() {
   F(ptr_bool, ptr_bool, ptr_bool, 0);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_reorder_more.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_reorder_more.carbon"
 // CHECK:STDOUT:
@@ -469,3 +470,4 @@ fn M() {
 // CHECK:STDOUT: !182 = !DILocation(line: 19, column: 21, scope: !173)
 // CHECK:STDOUT: !183 = !DILocation(line: 19, column: 10, scope: !173)
 // CHECK:STDOUT: !184 = !DILocation(line: 19, column: 3, scope: !173)
+// CHECK:STDOUT:

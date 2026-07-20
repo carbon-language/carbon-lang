@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_impl_function.carbon
 
 
-interface SomeInterface(T:! type) {
+interface SomeInterface(T: type) {
   fn F(x: T) -> T;
 }
 
@@ -32,7 +32,7 @@ impl ImplsSomeInterface as SomeInterface(i32) {
 // }
 
 
-fn CallGenericMethod(T:! type, U:! SomeInterface(T), x: T) -> T {
+fn CallGenericMethod(generic T: type, generic U: SomeInterface(T), x: T) -> T {
   return U.F(x);
 }
 
@@ -43,6 +43,7 @@ fn G() {
 }
 
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_impl_function.carbon'
 // CHECK:STDOUT: source_filename = "call_impl_function.carbon"
 // CHECK:STDOUT:
@@ -94,3 +95,4 @@ fn G() {
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !20 = !DILocation(line: 36, column: 10, scope: !17)
 // CHECK:STDOUT: !21 = !DILocation(line: 36, column: 3, scope: !17)
+// CHECK:STDOUT:

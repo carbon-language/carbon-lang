@@ -22,7 +22,7 @@ auto ValidateFloatTypeAndSetKind(Context& context, SemIR::LocId loc_id,
 
 // Gets the type to use for an unbound associated entity declared in this
 // interface. For example, this is the type of `I.T` after
-// `interface I { let T:! type; }`. The name of the interface is used for
+// `interface I { let T: type; }`. The name of the interface is used for
 // diagnostics.
 // TODO: Should we use a different type for each such entity, or the same type
 // for all associated entities?
@@ -70,7 +70,7 @@ auto GetFunctionTypeWithSelfType(Context& context,
                                  SemIR::InstId self_id) -> SemIR::TypeId;
 
 // Gets a generic class type, which is the type of a name of a generic class,
-// such as the type of `Vector` given `class Vector(T:! type)`. The returned
+// such as the type of `Vector` given `class Vector(T: type)`. The returned
 // type will be complete.
 auto GetGenericClassType(Context& context, SemIR::ClassId class_id,
                          SemIR::SpecificId enclosing_specific_id)
@@ -78,14 +78,14 @@ auto GetGenericClassType(Context& context, SemIR::ClassId class_id,
 
 // Gets a generic interface type, which is the type of a name of a generic
 // interface, such as the type of `AddWith` given
-// `interface AddWith(T:! type)`. The returned type will be complete.
+// `interface AddWith(T: type)`. The returned type will be complete.
 auto GetGenericInterfaceType(Context& context, SemIR::InterfaceId interface_id,
                              SemIR::SpecificId enclosing_specific_id)
     -> SemIR::TypeId;
 
 // Gets a generic named constraint type, which is the type of a name of a
 // generic named constraint, such as the type of `AddWith` given `constraint
-// AddWith(T:! type)`. The returned type will be complete.
+// AddWith(T: type)`. The returned type will be complete.
 auto GetGenericNamedConstraintType(Context& context,
                                    SemIR::NamedConstraintId named_constraint_id,
                                    SemIR::SpecificId enclosing_specific_id)
@@ -100,8 +100,9 @@ auto GetNamedConstraintType(Context& context,
                             SemIR::NamedConstraintId named_constraint_id,
                             SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
-// Gets the facet type for the given `info`.
-auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
+// Gets the facet type for the given `declared_facet_type`.
+auto GetFacetType(Context& context,
+                  const SemIR::DeclaredFacetType& declared_facet_type)
     -> SemIR::TypeId;
 
 // Gets the type contained within the given facet value.

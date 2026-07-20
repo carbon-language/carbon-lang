@@ -29,11 +29,11 @@ fn F(_: C) {}
 
 fn CallF() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_symbolic.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let c:! C = {};
-  // CHECK:STDERR:       ^~~~~
+  // CHECK:STDERR: fail_todo_symbolic.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
+  // CHECK:STDERR:   let generic c: C = {};
+  // CHECK:STDERR:               ^~~~
   // CHECK:STDERR:
-  let c:! C = {};
+  let generic c: C = {};
   F(c);
   //@dump-sem-ir-end
 }
@@ -65,12 +65,12 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = value_binding_pattern b [concrete = constants.%b.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: %i32 = wrapper_binding b, %a.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc6_10.1: <bound method> = bound_method %b.ref, %impl.elem0

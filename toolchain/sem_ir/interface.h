@@ -40,6 +40,7 @@ struct InterfaceFields {
   // The following members are set at the `}` of the interface definition.
 
   RequireImplsBlockId require_impls_block_id = RequireImplsBlockId::None;
+  ObserveBlockId observe_block_id = ObserveBlockId::None;
   InstBlockId associated_entities_id = InstBlockId::None;
 };
 

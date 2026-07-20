@@ -13,6 +13,7 @@
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/formatter_chunks.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
 namespace Carbon::SemIR {
@@ -185,6 +186,9 @@ class Formatter {
   // Prints the contents of a require impls as a block.
   auto FormatRequireImpls(RequireImplsId id) -> void;
 
+  // Prints the contents of an observe as a block.
+  auto FormatObserve(ObserveId id) -> void;
+
   // Prints a single instruction. This typically formats as:
   //   `FormatInstLhs()` `<ir_name>` `FormatInstRhs()` `<constant>`
   //
@@ -242,6 +246,10 @@ class Formatter {
   // instructions. Starts with a `!requires:` label.
   auto FormatRequireImplsBlock(RequireImplsBlockId block_id) -> void;
 
+  // Format a block of `observe` declarations from their `ObserveId`
+  // instructions. Starts with an `!observes:` label.
+  auto FormatObserveBlock(ObserveBlockId block_id) -> void;
+
   template <typename... Args>
   auto FormatArgs(Args... args) -> void {
     out() << ' ';
@@ -264,7 +272,7 @@ class Formatter {
   auto FormatArg(BoolValue v) -> void { out() << v; }
   auto FormatArg(CharId c) -> void { out() << c; }
   auto FormatArg(EntityNameId id) -> void;
-  auto FormatArg(FacetTypeId id) -> void;
+  auto FormatArg(DeclaredFacetTypeId id) -> void;
   auto FormatArg(FieldId id) -> void;
   auto FormatArg(IntKind k) -> void { k.Print(out()); }
   auto FormatArg(FloatKind k) -> void { k.Print(out()); }

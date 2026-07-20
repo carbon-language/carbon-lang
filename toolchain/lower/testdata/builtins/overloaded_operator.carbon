@@ -14,6 +14,7 @@ fn AddThreeIntegers(a: i32, b: i32, c: i32) -> i32 {
   return a + b + c;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'overloaded_operator.carbon'
 // CHECK:STDOUT: source_filename = "overloaded_operator.carbon"
 // CHECK:STDOUT:
@@ -44,3 +45,4 @@ fn AddThreeIntegers(a: i32, b: i32, c: i32) -> i32 {
 // CHECK:STDOUT: !11 = !DILocalVariable(arg: 3, scope: !4, type: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 14, column: 10, scope: !4)
 // CHECK:STDOUT: !13 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT:

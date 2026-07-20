@@ -16,6 +16,7 @@ fn Run() {
   var _: i32 = F().1;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'return_value_access.carbon'
 // CHECK:STDOUT: source_filename = "return_value_access.carbon"
 // CHECK:STDOUT:
@@ -102,3 +103,4 @@ fn Run() {
 // CHECK:STDOUT: !26 = !{!27}
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !23, type: !7)
 // CHECK:STDOUT: !28 = !DILocation(line: 16, column: 16, scope: !23)
+// CHECK:STDOUT:

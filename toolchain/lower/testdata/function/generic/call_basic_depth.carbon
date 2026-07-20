@@ -13,15 +13,15 @@
 // Builds on `call_basic.carbon`. Checks definitions are emitted with deeper
 // call stack, i.e., when functions can be type checked without looking at the
 // specific calling context.
-fn F[T:! type](_: T) {
+fn F[T: type](_: T) {
 }
 
-fn H[T:! Core.Copy](x: T) -> T {
+fn H[T: Core.Copy](x: T) -> T {
   F(x);
   return x;
 }
 
-fn G[T:! Core.Copy & Core.Destroy](x: T) -> T {
+fn G[T: Core.Copy & Core.Destroy](x: T) -> T {
   H(x);
   F(x);
   return x;
@@ -36,6 +36,7 @@ fn M() -> i32 {
   return m;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_basic_depth.carbon'
 // CHECK:STDOUT: source_filename = "call_basic_depth.carbon"
 // CHECK:STDOUT:
@@ -81,8 +82,8 @@ fn M() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_6.3.temp), !dbg !32
 // CHECK:STDOUT:   %H.call = call i32 @_CH.Main.5bd8d5767580997a(i32 %x), !dbg !32
 // CHECK:STDOUT:   store i32 %H.call, ptr %.loc25_6.3.temp, align 4, !dbg !32
-// CHECK:STDOUT:   call void @_CF.Main.84588f41d61dafba(i32 %x), !dbg !33
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %.loc25_6.3.temp), !dbg !32
+// CHECK:STDOUT:   call void @_CF.Main.84588f41d61dafba(i32 %x), !dbg !33
 // CHECK:STDOUT:   ret i32 %x, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -143,3 +144,4 @@ fn M() -> i32 {
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !35, type: !7)
 // CHECK:STDOUT: !38 = !DILocation(line: 20, column: 3, scope: !35)
 // CHECK:STDOUT: !39 = !DILocation(line: 21, column: 3, scope: !35)
+// CHECK:STDOUT:

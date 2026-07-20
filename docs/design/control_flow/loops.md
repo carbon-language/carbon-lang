@@ -83,8 +83,8 @@ interface:
 
 ```carbon
 interface Iterate {
-  let ElementType:! type;
-  let CursorType:! type;
+  let ElementType: type;
+  let CursorType: type;
   fn NewCursor(self) -> CursorType;
   fn Next(self, ref cursor: CursorType) -> Optional(ElementType);
 }

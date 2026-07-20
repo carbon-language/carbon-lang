@@ -15,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
   fn F();
 }
 
@@ -34,14 +34,14 @@ class C {}
 class D {}
 class E {}
 
-interface I(T:! type) { fn F(self); }
-interface J(T:! type) {}
+interface I(T: type) { fn F(self); }
+interface J(T: type) {}
 
 impl D as J(E) {}
 
 // The type of `T` is not `.Self`-dependent, because `.Self` appears after
 // `where`.
-impl forall [T:! type where D impls J(.Self)] C as I(T) {
+impl forall [T: type where D impls J(.Self)] C as I(T) {
   fn F(unused self) {}
 }
 
@@ -55,6 +55,7 @@ fn G() {
   let unused t: type = type where D impls J(.Self);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -77,6 +78,8 @@ fn G() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'no_period_self_dependence.carbon'
 // CHECK:STDOUT: source_filename = "no_period_self_dependence.carbon"
 // CHECK:STDOUT:
@@ -124,3 +127,4 @@ fn G() {
 // CHECK:STDOUT: !17 = !{!18}
 // CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !16, type: !7)
 // CHECK:STDOUT: !19 = !DILocation(line: 16, column: 3, scope: !16)
+// CHECK:STDOUT:

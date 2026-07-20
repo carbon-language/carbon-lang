@@ -13,6 +13,7 @@
 fn Echo(_: {}) {
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'empty_struct.carbon'
 // CHECK:STDOUT: source_filename = "empty_struct.carbon"
 // CHECK:STDOUT:
@@ -35,3 +36,4 @@ fn Echo(_: {}) {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 13, column: 1, scope: !4)
+// CHECK:STDOUT:

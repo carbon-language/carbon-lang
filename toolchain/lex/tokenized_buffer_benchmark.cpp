@@ -56,7 +56,6 @@ auto GetSymbolTokenTable() -> llvm::ArrayRef<TokenKind> {
     table.insert(table.end(), 8, TokenKind::Colon);
     table.insert(table.end(), 8, TokenKind::Equal);
     table.insert(table.end(), 4, TokenKind::Amp);
-    table.insert(table.end(), 4, TokenKind::ColonExclaim);
     table.insert(table.end(), 4, TokenKind::EqualEqual);
     table.insert(table.end(), 4, TokenKind::ExclaimEqual);
     table.insert(table.end(), 4, TokenKind::MinusGreater);

@@ -232,7 +232,7 @@ import Cpp inline '''
 class Class1;
 ''';
 
-class Generic(x:! Core.Copy) {
+class Generic(x: Core.Copy) {
 }
 
 // CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE+14]]:19: error: argument to C++ call has incomplete type `Cpp.Class1` [IncompleteTypeInCopyWitness]
@@ -242,8 +242,8 @@ class Generic(x:! Core.Copy) {
 // CHECK:STDERR: class Class1;
 // CHECK:STDERR:       ^
 // CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE-9]]:15: note: initializing generic parameter `x` declared here [InitializingGenericParam]
-// CHECK:STDERR: class Generic(x:! Core.Copy) {
-// CHECK:STDERR:               ^~~~~~~~~~~~~
+// CHECK:STDERR: class Generic(x: Core.Copy) {
+// CHECK:STDERR:               ^~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE+4]]:15: warning: binding `p2` unused [UnusedBinding]
 // CHECK:STDERR: fn GenericUse(p2: Generic(Cpp.Class1)) {
@@ -412,14 +412,11 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT:   %foo.patt: %pattern_type = ref_binding_pattern foo [concrete = constants.%foo.patt]
 // CHECK:STDOUT:   %foo.var_patt: %pattern_type = var_pattern %foo.patt [concrete = constants.%foo.var_patt]
-// CHECK:STDOUT:   %foo.var: ref %ptr.227 = var %foo.var_patt [concrete]
+// CHECK:STDOUT:   %foo.var: ref %ptr.227 = var_storage %foo.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete = constants.%bar.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Bar.ref.loc8_33: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:   %foo.ref: ref %ptr.227 = name_ref foo, imports.%foo.var [concrete = imports.%foo.var]
@@ -430,6 +427,9 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc8_22 [concrete = constants.%ptr.227]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar: %ptr.227 = wrapper_binding bar, %.loc8_37
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete = constants.%bar.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -472,9 +472,6 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr.227) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %foo_bar.patt: %pattern_type = value_binding_pattern foo_bar [concrete = constants.%foo_bar.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar.ref: %ptr.227 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc8_37.1: ref %Bar = deref %bar.ref
 // CHECK:STDOUT:   %foo.ref: %Bar.elem = name_ref foo, @Bar.%.1 [concrete = @Bar.%.1]
@@ -486,6 +483,9 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     %ptr.loc8: type = ptr_type %Bar.ref.loc8 [concrete = constants.%ptr.227]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo_bar: %ptr.227 = wrapper_binding foo_bar, %.loc8_37.3
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %foo_bar.patt: %pattern_type = value_binding_pattern foo_bar [concrete = constants.%foo_bar.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

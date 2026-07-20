@@ -43,8 +43,8 @@ fn UInt16ToChar(a: u16) -> u8 = "int.convert_char";
 fn UInt32ToChar(a: u32) -> u8 = "int.convert_char";
 fn UInt64ToChar(a: u64) -> u8 = "int.convert_char";
 
-class Expect[T:! type](N:! T) {}
-fn Test[T:! type](N:! T) -> Expect(N) { return {}; }
+class Expect[T: type](N: T) {}
+fn Test[T: type](generic N: T) -> Expect(N) { return {}; }
 
 // --- runtime_call.carbon
 

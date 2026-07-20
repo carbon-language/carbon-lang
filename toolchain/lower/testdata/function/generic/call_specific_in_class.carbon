@@ -15,17 +15,17 @@
 // generic function for an object, from a generic context.
 // The specifics with a pointer type could be deduplicated here.
 class C {
-  fn Cfn[T:! Core.Copy](unused self, x: T) -> T {
+  fn Cfn[T: Core.Copy](unused self, x: T) -> T {
     return x;
   }
 }
 
-fn G[T:! Core.Copy](x: T) -> T {
+fn G[T: Core.Copy](x: T) -> T {
   var c: C;
   return c.Cfn(x);
 }
 
-fn F[T:! Core.Copy](x: T) -> T {
+fn F[T: Core.Copy](x: T) -> T {
   return G(x);
 }
 
@@ -44,6 +44,7 @@ fn M() {
   F(C);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_specific_in_class.carbon'
 // CHECK:STDOUT: source_filename = "call_specific_in_class.carbon"
 // CHECK:STDOUT:
@@ -324,3 +325,4 @@ fn M() {
 // CHECK:STDOUT: !112 = !DILocalVariable(arg: 1, scope: !110, type: !7)
 // CHECK:STDOUT: !113 = !DILocalVariable(arg: 2, scope: !110, type: !7)
 // CHECK:STDOUT: !114 = !DILocation(line: 19, column: 5, scope: !110)
+// CHECK:STDOUT:

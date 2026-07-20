@@ -166,10 +166,6 @@ fn Class.F(self) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.Make() -> out %return.param: %Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.f15 = ref_binding_pattern s [concrete = constants.%s.patt]
-// CHECK:STDOUT:     %s.var_patt: %pattern_type.f15 = var_pattern %s.patt [concrete = constants.%s.var_patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%Class, (constants.%DefaultOrUnformed.impl_witness.4e8) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc18_25.1: %DefaultOrUnformed.type = converted constants.%Class, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc18_25.1 [concrete = constants.%Class]
@@ -180,6 +176,10 @@ fn Class.F(self) -> i32 {
 // CHECK:STDOUT:   assign %return.param, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   %Self.ref.loc18: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:   %s: ref %Class = wrapper_binding s, %return.param
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %pattern_type.f15 = ref_binding_pattern s [concrete = constants.%s.patt]
+// CHECK:STDOUT:     %s.var_patt: %pattern_type.f15 = var_pattern %s.patt [concrete = constants.%s.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref.loc19_5: ref %Class = name_ref s, %s
 // CHECK:STDOUT:   %s.ref.loc19_16: ref %Class = name_ref s, %s
 // CHECK:STDOUT:   %addr: %ptr.7ee = addr_of %s.ref.loc19_16

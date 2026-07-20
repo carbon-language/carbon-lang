@@ -65,6 +65,7 @@ fn G() {
   let unused x: i32 = F();
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'ref_form_param.carbon'
 // CHECK:STDOUT: source_filename = "ref_form_param.carbon"
 // CHECK:STDOUT:
@@ -113,6 +114,8 @@ fn G() {
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !10, type: !13)
 // CHECK:STDOUT: !16 = !DILocation(line: 6, column: 3, scope: !10)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'var_form_param.carbon'
 // CHECK:STDOUT: source_filename = "var_form_param.carbon"
 // CHECK:STDOUT:
@@ -161,6 +164,8 @@ fn G() {
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !10, type: !13)
 // CHECK:STDOUT: !16 = !DILocation(line: 3, column: 6, scope: !10)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'val_form_param.carbon'
 // CHECK:STDOUT: source_filename = "val_form_param.carbon"
 // CHECK:STDOUT:
@@ -187,6 +192,8 @@ fn G() {
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 6, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 5, column: 1, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'ref_return_form.carbon'
 // CHECK:STDOUT: source_filename = "ref_return_form.carbon"
 // CHECK:STDOUT:
@@ -213,6 +220,8 @@ fn G() {
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 6, column: 27, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 5, column: 1, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'var_return_form.carbon'
 // CHECK:STDOUT: source_filename = "var_return_form.carbon"
 // CHECK:STDOUT:
@@ -261,6 +270,8 @@ fn G() {
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !10, type: !13)
 // CHECK:STDOUT: !16 = !DILocation(line: 6, column: 14, scope: !10)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'val_return_form.carbon'
 // CHECK:STDOUT: source_filename = "val_return_form.carbon"
 // CHECK:STDOUT:
@@ -287,3 +298,4 @@ fn G() {
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 6, column: 23, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 5, column: 1, scope: !4)
+// CHECK:STDOUT:

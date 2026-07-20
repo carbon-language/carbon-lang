@@ -56,7 +56,7 @@ package OwningPackage library "[[@TEST_NAME]]";
 
 import library "owner";
 
-fn Generic(unused T:! type, v1: Vector, v2: Vector) -> Vector {
+fn Generic(unused generic T: type, v1: Vector, v2: Vector) -> Vector {
   return v1 + v2 * (2 as i32);
 }
 
@@ -97,7 +97,7 @@ package OtherPackage library "[[@TEST_NAME]]";
 
 import OwningPackage library "owner";
 
-fn Generic(unused T:! type, v1: OwningPackage.Vector, v2: OwningPackage.Vector) -> OwningPackage.Vector {
+fn Generic(unused generic T: type, v1: OwningPackage.Vector, v2: OwningPackage.Vector) -> OwningPackage.Vector {
   return v1 + v2 * (2 as i32);
 }
 
@@ -113,6 +113,7 @@ fn CallGeneric() {
   Generic((), Make(), Make());
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'owner.carbon'
 // CHECK:STDOUT: source_filename = "owner.carbon"
 // CHECK:STDOUT:
@@ -170,6 +171,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: !22 = !DILocation(line: 15, column: 18, scope: !15)
 // CHECK:STDOUT: !23 = !DILocation(line: 15, column: 12, scope: !15)
 // CHECK:STDOUT: !24 = !DILocation(line: 15, column: 5, scope: !15)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'owner.impl.carbon'
 // CHECK:STDOUT: source_filename = "owner.impl.carbon"
 // CHECK:STDOUT:
@@ -246,6 +249,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: !28 = !{!29}
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !27, type: !7)
 // CHECK:STDOUT: !30 = !DILocation(line: 5, column: 15, scope: !27)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'direct_same_package.carbon'
 // CHECK:STDOUT: source_filename = "direct_same_package.carbon"
 // CHECK:STDOUT:
@@ -322,6 +327,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: !28 = !{!29}
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !27, type: !7)
 // CHECK:STDOUT: !30 = !DILocation(line: 7, column: 15, scope: !27)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic_same_package.carbon'
 // CHECK:STDOUT: source_filename = "generic_same_package.carbon"
 // CHECK:STDOUT:
@@ -376,6 +383,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !18, type: !14)
 // CHECK:STDOUT: !21 = !DILocation(line: 6, column: 15, scope: !18)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'indirect_same_package.carbon'
 // CHECK:STDOUT: source_filename = "indirect_same_package.carbon"
 // CHECK:STDOUT:
@@ -484,6 +493,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: !36 = !DILocation(line: 6, column: 15, scope: !29)
 // CHECK:STDOUT: !37 = !DILocation(line: 6, column: 10, scope: !29)
 // CHECK:STDOUT: !38 = !DILocation(line: 6, column: 3, scope: !29)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'direct_different_package.carbon'
 // CHECK:STDOUT: source_filename = "direct_different_package.carbon"
 // CHECK:STDOUT:
@@ -560,6 +571,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: !28 = !{!29}
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !27, type: !7)
 // CHECK:STDOUT: !30 = !DILocation(line: 7, column: 15, scope: !27)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'indirect_different_package_via_generic_in_same_package.carbon'
 // CHECK:STDOUT: source_filename = "indirect_different_package_via_generic_in_same_package.carbon"
 // CHECK:STDOUT:
@@ -668,6 +681,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: !36 = !DILocation(line: 6, column: 15, scope: !29)
 // CHECK:STDOUT: !37 = !DILocation(line: 6, column: 10, scope: !29)
 // CHECK:STDOUT: !38 = !DILocation(line: 6, column: 3, scope: !29)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic_different_package.carbon'
 // CHECK:STDOUT: source_filename = "generic_different_package.carbon"
 // CHECK:STDOUT:
@@ -722,6 +737,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !18, type: !14)
 // CHECK:STDOUT: !21 = !DILocation(line: 6, column: 15, scope: !18)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'indirect_different_package_via_generic_in_different_package.carbon'
 // CHECK:STDOUT: source_filename = "indirect_different_package_via_generic_in_different_package.carbon"
 // CHECK:STDOUT:
@@ -830,3 +847,4 @@ fn CallGeneric() {
 // CHECK:STDOUT: !36 = !DILocation(line: 6, column: 15, scope: !29)
 // CHECK:STDOUT: !37 = !DILocation(line: 6, column: 10, scope: !29)
 // CHECK:STDOUT: !38 = !DILocation(line: 6, column: 3, scope: !29)
+// CHECK:STDOUT:

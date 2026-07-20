@@ -28,6 +28,7 @@ static auto HandleVar(Context& context, StateKind finish_state_kind,
   context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true,
                               /*in_unused_pattern=*/false,
                               /*in_struct_pattern=*/false,
+                              BindingContext::ExplicitParam,
                               PrecedenceGroup::ForTopLevelPattern());
 }
 
@@ -98,8 +99,10 @@ auto HandleVariablePattern(Context& context) -> void {
   context.PushState(state);
   context.ConsumeChecked(Lex::TokenKind::Var);
 
+  // A `var` binding is always runtime, regardless of the enclosing context.
   context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true,
                               state.in_unused_pattern, state.in_struct_pattern,
+                              BindingContext::ExplicitParam,
                               state.ambient_precedence);
 }
 

@@ -96,16 +96,6 @@ auto AddIdentifierName(Context& context, llvm::StringRef name)
   return SemIR::NameId::ForIdentifier(context.identifiers().Add(name));
 }
 
-// Adds the given source location and an `ImportIRInst` referring to it in
-// `ImportIRId::Cpp`.
-static auto AddImportIRInst(SemIR::File& file,
-                            clang::SourceLocation clang_source_loc)
-    -> SemIR::ImportIRInstId {
-  SemIR::ClangSourceLocId clang_source_loc_id =
-      file.clang_source_locs().Add(clang_source_loc);
-  return file.import_ir_insts().Add(SemIR::ImportIRInst(clang_source_loc_id));
-}
-
 // Adds a namespace for the `Cpp` import and returns its `NameScopeId`.
 static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
                          llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
@@ -128,9 +118,7 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-               llvm::LLVMContext* llvm_context,
-               std::shared_ptr<clang::CompilerInvocation> invocation) -> void {
+               CppDomain* domain) -> void {
   if (imports.empty()) {
     // TODO: Consider always having a (non-null) AST even if there are no Cpp
     // imports.
@@ -147,7 +135,7 @@ auto ImportCpp(Context& context,
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
 
-  if (GenerateAst(context, imports, fs, llvm_context, std::move(invocation))) {
+  if (domain && GenerateAst(context, imports, *domain)) {
     name_scope.set_clang_decl_context_id(
         context.clang_decls().Add(
             {.key = SemIR::ClangDeclKey(
@@ -453,7 +441,12 @@ static auto LookupClangDeclInstId(Context& context, SemIR::ClangDeclKey key)
   const auto& clang_decls = context.clang_decls();
   if (auto context_clang_decl_id = clang_decls.LookupId(key);
       context_clang_decl_id.has_value()) {
-    return clang_decls.Get(context_clang_decl_id).inst_id;
+    const auto& clang_decl = clang_decls.Get(context_clang_decl_id);
+    if (clang_decl.var_storage_inst_id.has_value()) {
+      return clang_decl.var_storage_inst_id;
+    } else {
+      return clang_decls.Get(context_clang_decl_id).inst_id;
+    }
   }
   return SemIR::InstId::None;
 }
@@ -903,11 +896,8 @@ static auto GetVirtualFunctionParamPassingMode(clang::QualType type)
   return SemIR::ClangDeclSignature::PassingMode::ByVar;
 }
 
-// Computes the signature to use for the given imported virtual function. Unlike
-// with regular imported functions, we can only use a single signature here, so
-// we pick one conservatively.
-static auto MakeVirtualFunctionSignature(
-    Context& context, const clang::CXXMethodDecl* method_decl)
+auto MakeVirtualFunctionSignature(Context& context,
+                                  const clang::CXXMethodDecl* method_decl)
     -> SemIR::ClangDeclSignatureId {
   SemIR::ClangDeclSignature signature = {
       .kind = SemIR::ClangDeclSignature::Normal,
@@ -1473,7 +1463,7 @@ static auto MakeSelfParamPatternBlockId(
   const auto* method_decl = cast<clang::CXXMethodDecl>(&clang_decl);
 
   // Build a `self` parameter from the object parameter.
-  BeginSubpattern(context);
+  BeginExprRegionForPattern(context);
 
   clang::QualType param_type =
       method_decl->getFunctionObjectParameterReferenceType();
@@ -1483,9 +1473,9 @@ static auto MakeSelfParamPatternBlockId(
   auto param_info = MapParameterType(context, loc_id, param_type, passing_mode);
   auto [type_inst_id, type_id] = param_info.type;
   SemIR::ExprRegionId type_expr_region_id =
-      ConsumeSubpatternExpr(context, type_inst_id);
+      ConsumeExprRegionForPattern(context, type_inst_id);
 
-  EndEmptySubpattern(context);
+  EndEmptyExprRegionForPattern(context);
 
   if (!type_id.has_value()) {
     context.TODO(loc_id,
@@ -1538,8 +1528,8 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
         ClangGetUnqualifiedTypePreserveNonNull(context, orig_param_type);
 
     // Mark the start of a region of insts, needed for the type expression
-    // created later with the call of `ConsumeSubpatternExpr()`.
-    BeginSubpattern(context);
+    // created later with the call of `ConsumeExprRegionForPattern()`.
+    BeginExprRegionForPattern(context);
     auto param_info = MapParameterType(context, loc_id, param_type,
                                        signature.GetPassingMode(i));
     auto [type_inst_id, type_id] = param_info.type;
@@ -1547,8 +1537,8 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // region that allows control flow in the type expression e.g. fn F(x: if C
     // then i32 else i64).
     SemIR::ExprRegionId type_expr_region_id =
-        ConsumeSubpatternExpr(context, type_inst_id);
-    EndEmptySubpattern(context);
+        ConsumeExprRegionForPattern(context, type_inst_id);
+    EndEmptyExprRegionForPattern(context);
 
     if (!type_id.has_value()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
@@ -2158,10 +2148,10 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   context.imports().push_back(var_storage_inst_id);
 
   // Register the variable so we don't create it again.
-  context.clang_decls().AddVar({.key = SemIR::ClangDeclKey(var_decl),
-                                .inst_id = var_storage_inst_id,
-                                .is_imported = true},
-                               pattern_id);
+  context.clang_decls().Add({.key = SemIR::ClangDeclKey(var_decl),
+                             .inst_id = pattern_id,
+                             .var_storage_inst_id = var_storage_inst_id,
+                             .is_imported = true});
 
   // Inform Clang that the variable has been referenced.
   context.clang_sema().MarkVariableReferenced(GetCppLocation(context, loc_id),
@@ -2359,7 +2349,7 @@ static auto LookupBuiltinName(Context& context, SemIR::LocId loc_id,
   const clang::ASTContext& ast_context = context.ast_context();
 
   // List of types based on
-  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p005448.md#details
+  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p005448-carbon-c-interop-primitive-types.md#details
   auto builtin_type =
       llvm::StringSwitch<clang::QualType>(*name)
           .Case("signed_char", ast_context.SignedCharTy)

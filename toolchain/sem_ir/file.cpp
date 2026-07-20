@@ -50,8 +50,11 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       require_impls_(check_ir_id),
       // 1 reserved id for `RequireImplsBlockId::Empty`.
       require_impls_blocks_(allocator_, check_ir_id, 1),
+      observes_(check_ir_id),
+      // 1 reserved id for `ObserveBlockId::Empty`.
+      observe_blocks_(allocator_, check_ir_id, 1),
       associated_constants_(check_ir_id),
-      facet_types_(check_ir_id),
+      declared_facet_types_(check_ir_id),
       identified_facet_types_(check_ir_id),
       impls_(*this),
       specific_interfaces_(check_ir_id),
@@ -168,7 +171,7 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
           map.Add("specific_interfaces", specific_interfaces_.OutputYaml());
           map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
           map.Add("types", types_.OutputYaml());
-          map.Add("facet_types", facet_types_.OutputYaml());
+          map.Add("declared_facet_types", declared_facet_types_.OutputYaml());
           map.Add("insts",
                   Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                     for (auto [id, inst] : insts_.enumerate()) {

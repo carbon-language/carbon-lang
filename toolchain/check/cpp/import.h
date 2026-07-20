@@ -25,6 +25,8 @@ class VarDecl;
 
 namespace Carbon::Check {
 
+struct CppDomain;
+
 // Returns whether the given function is an object member function. This is true
 // if it's a non-static member function and not a constructor. Object member
 // functions correspond to Carbon functions with a `self` parameter.
@@ -33,12 +35,11 @@ auto IsObjectMemberFunction(const clang::FunctionDecl& decl) -> bool;
 
 // Generates a C++ header that includes the imported cpp files, parses it,
 // generates the AST from it and links `SemIR::File` to it. Reports C++ errors
-// and warnings. If successful, adds a `Cpp` namespace.
+// and warnings. If successful, adds a `Cpp` namespace. `domain` should be
+// non-null unless there was an error initializing Clang.
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-               llvm::LLVMContext* llvm_context,
-               std::shared_ptr<clang::CompilerInvocation> invocation) -> void;
+               CppDomain* domain) -> void;
 
 // Given a clang declaration ID that was previously imported into another file,
 // returns the corresponding clang declaration key in the current context.
@@ -79,10 +80,14 @@ inline auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
       SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature_id));
 }
 
-// Imports a function declaration from Clang to Carbon. If successful, returns
-// the new Carbon function declaration `InstId`. If the declaration was already
-// imported, returns the mapped instruction. All unimported dependencies are
-// imported first.
+// Imports a type from Clang to Carbon. Returns a `TypeExpr` which contains
+// both a `TypeId` and `TypeInstId`. All unimported dependencies are imported
+// first.
+//
+// If a failure is diagnosed, the `TypeId` will be `ErrorInst::TypeId` and
+// the `TypeInstId` will be `ErrorInst::InstId`. Types that are not yet
+// supported may instead return `TypeId::None` and `TypeInstId::None`.
+// Callers should handle both cases.
 auto ImportCppType(Context& context, SemIR::LocId loc_id, clang::QualType type)
     -> TypeExpr;
 
@@ -109,6 +114,13 @@ auto ImportClassDefinitionForClangDecl(Context& context,
                                        SemIR::ClassId class_id,
                                        SemIR::ClangDeclId clang_decl_id)
     -> bool;
+
+// Computes the signature to use for the given imported virtual function. Unlike
+// with regular imported functions, we can only use a single signature here, so
+// we pick one conservatively.
+auto MakeVirtualFunctionSignature(Context& context,
+                                  const clang::CXXMethodDecl* method_decl)
+    -> SemIR::ClangDeclSignatureId;
 
 // Gets the identifier info for a name. Returns `nullptr` if the name is not an
 // identifier name.

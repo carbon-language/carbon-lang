@@ -145,6 +145,7 @@ auto HandleMatchCaseIntroducer(Context& context) -> void {
   context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/false,
                               /*in_unused_pattern=*/false,
                               /*in_struct_pattern=*/false,
+                              BindingContext::ExplicitParam,
                               PrecedenceGroup::ForTopLevelPattern());
 }
 

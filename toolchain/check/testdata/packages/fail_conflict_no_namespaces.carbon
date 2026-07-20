@@ -105,13 +105,13 @@ import library "var";
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Foo.var: ref %i32 = var_storage %Foo.var_patt [concrete]
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %Foo: ref %i32 = wrapper_binding Foo, %Foo.var [concrete = %Foo.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Foo.patt: %pattern_type.6b6 = ref_binding_pattern Foo [concrete = constants.%Foo.patt]
 // CHECK:STDOUT:     %Foo.var_patt: %pattern_type.6b6 = var_pattern %Foo.patt [concrete = constants.%Foo.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.var: ref %i32 = var %Foo.var_patt [concrete]
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %Foo: ref %i32 = wrapper_binding Foo, %Foo.var [concrete = %Foo.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

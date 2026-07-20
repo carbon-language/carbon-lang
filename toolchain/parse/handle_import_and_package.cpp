@@ -221,7 +221,8 @@ auto HandleExportName(Context& context) -> void {
   RestrictExportToApi(context, state);
 
   context.PushState(state, StateKind::ExportNameFinish);
-  context.PushState(StateKind::DeclNameAndParams, state.token);
+  context.PushState(StateKind::DeclNameAndParams, state.token,
+                    BindingContext::CompileTimeEntityParam);
 }
 
 auto HandleExportNameFinish(Context& context) -> void {

@@ -11,6 +11,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/operator.h"
+#include "toolchain/check/scope_stack.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -139,25 +140,18 @@ auto IsCurrentPositionReachable(Context& context) -> bool {
 }
 
 auto MaybeAddCleanupForInst(Context& context, SemIR::InstId inst_id) -> void {
-  if (!context.scope_stack().IsInFunctionScope()) {
-    // Cleanup can only occur in function scopes.
+  if (!context.scope_stack().IsCleanupScope()) {
     return;
   }
 
-  context.scope_stack().destroy_id_stack().AppendToTop(inst_id);
+  context.scope_stack().PushCleanupFor(inst_id);
 }
 
-// Common support for cleanup blocks.
-static auto AddCleanupBlock(Context& context) -> void {
-  auto destroy_ids = context.scope_stack().destroy_id_stack().PeekArray();
-
-  // If there's nothing to destroy, add the final instruction to the current
-  // block.
-  if (destroy_ids.empty()) {
-    return;
-  }
-
-  for (auto destroy_id : llvm::reverse(destroy_ids)) {
+// Adds cleanups for variables added after `depth`.
+static auto AddCleanups(Context& context, ScopeStack::CleanupScopeDepth depth)
+    -> void {
+  for (auto destroy_id :
+       llvm::reverse(context.scope_stack().GetCleanupsSince(depth))) {
     // TODO: This does the `Destroy` lookup and call at every cleanup block.
     // Control flow can lead to the same variable being destroyed by multiple
     // cleanup blocks, so we'll want to avoid this in the future.
@@ -167,9 +161,53 @@ static auto AddCleanupBlock(Context& context) -> void {
   }
 }
 
-auto AddReturnCleanupBlock(Context& context,
-                           SemIR::LocIdAndInst loc_id_and_inst) -> void {
-  AddCleanupBlock(context);
+auto AddAndDiscardTemporaryCleanups(Context& context) -> void {
+  auto depth = context.scope_stack().ambient_cleanup_scope_depth();
+  AddCleanups(context, depth);
+  context.scope_stack().DiscardCleanupsSince(depth);
+}
+
+auto AddAndDiscardScopeCleanups(Context& context) -> void {
+  auto depth = context.scope_stack().enclosing_cleanup_scope_depth();
+  AddCleanups(context, depth);
+  context.scope_stack().DiscardCleanupsSince(depth);
+}
+
+// TODO: When we have multiple branches or returns in the same function, share
+// cleanup instructions rather than duplicating them for each branch or return.
+// We would do this by creating cleanup blocks that hold the relevant cleanups,
+// and chaining between cleanup blocks to allow cleanup instruction reuse. We
+// could either share cleanup blocks only if they end in the same instruction,
+// or generate branches out of the cleanups to the chosen destination.
+//
+// For example:
+//
+//   fn F() {
+//     var a: C;
+//     if (...) {
+//       // Cleanup block 1: destroy a, return
+//       return;
+//     }
+//
+//     var b: C;
+//     if (...) {
+//       // Cleanup block 2: destroy b, reuse cleanup block 1.
+//       return;
+//     }
+//
+//     DoSomethingMore();
+//     // Cleanup block 3: reuse cleanup block 2.
+//   }
+auto AddBranchWithCleanups(Context& context, SemIR::LocId loc_id,
+                           SemIR::InstBlockId target_id,
+                           ScopeStack::CleanupScopeDepth depth) -> void {
+  AddCleanups(context, depth);
+  AddInst<SemIR::Branch>(context, loc_id, {.target_id = target_id});
+}
+
+auto AddReturnInstWithCleanups(Context& context,
+                               SemIR::LocIdAndInst loc_id_and_inst) -> void {
+  AddCleanups(context, context.scope_stack().function_cleanup_scope_depth());
   AddInst(context, loc_id_and_inst);
 }
 

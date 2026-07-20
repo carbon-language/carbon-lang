@@ -360,9 +360,9 @@ struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
   using IdBase::IdBase;
 };
 
-// The ID of a `FacetTypeInfo`.
-struct FacetTypeId : public IdBase<FacetTypeId> {
-  static constexpr llvm::StringLiteral Label = "facet_type";
+// The ID of a `DeclaredFacetType`.
+struct DeclaredFacetTypeId : public IdBase<DeclaredFacetTypeId> {
+  static constexpr llvm::StringLiteral Label = "declared_facet_type";
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   using IdBase::IdBase;
@@ -1009,6 +1009,27 @@ struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
 
 inline constexpr RequireImplsBlockId RequireImplsBlockId::Empty =
     RequireImplsBlockId(0);
+
+// The ID of an `Observe`.
+struct ObserveId : public IdBase<ObserveId> {
+  static constexpr llvm::StringLiteral Label = "observe";
+
+  using IdBase::IdBase;
+};
+
+// The ID of a `ObserveId` block.
+struct ObserveBlockId : public IdBase<ObserveBlockId> {
+  static constexpr llvm::StringLiteral Label = "observe_block";
+
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
+  static const ObserveBlockId Empty;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
+};
+
+inline constexpr ObserveBlockId ObserveBlockId::Empty = ObserveBlockId(0);
 
 // The ID of a bundle of arguments with an unspecified type.
 struct RawBundleId : public IdBase<RawBundleId> {

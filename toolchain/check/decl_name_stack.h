@@ -18,8 +18,8 @@ class Context;
 // Provides support and stacking for qualified declaration name handling.
 //
 // A qualified declaration name will consist of entries, which are `Name`s
-// optionally followed by generic parameter lists, such as `Vector(T:! type)`
-// in `fn Vector(T:! type).Clear();`, but parameter lists aren't supported yet.
+// optionally followed by generic parameter lists, such as `Vector(T: type)`
+// in `fn Vector(T: type).Clear();`, but parameter lists aren't supported yet.
 // Identifiers such as `Clear` will be resolved to a name if possible, for
 // example when declaring things that are in a non-generic type or namespace,
 // and are otherwise marked as an unresolved identifier.
@@ -36,7 +36,7 @@ class Context;
 // appearing later in the declaration name itself. For example, in:
 //
 // ```
-// fn ClassA.ClassB(T:! U).Fn() { var x: V; }
+// fn ClassA.ClassB(T: U).Fn() { var x: V; }
 // ```
 //
 // the lookup for `U` looks in `ClassA`; the lookup for `V` looks first in

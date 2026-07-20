@@ -30,6 +30,7 @@ fn While() {
   }
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'preheader.carbon'
 // CHECK:STDOUT: source_filename = "preheader.carbon"
 // CHECK:STDOUT:
@@ -98,3 +99,4 @@ fn While() {
 // CHECK:STDOUT: !16 = !DILocation(line: 27, column: 5, scope: !4)
 // CHECK:STDOUT: !17 = !DILocation(line: 26, column: 3, scope: !4)
 // CHECK:STDOUT: !18 = !DILocation(line: 21, column: 1, scope: !4)
+// CHECK:STDOUT:

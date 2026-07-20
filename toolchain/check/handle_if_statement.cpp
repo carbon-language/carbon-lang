@@ -20,6 +20,9 @@ auto HandleParseNode(Context& context, Parse::IfConditionId node_id) -> bool {
   auto cond_value_id = context.node_stack().PopExpr();
   cond_value_id = ConvertToBoolValue(context, node_id, cond_value_id);
 
+  // Destroy any temporaries created in the condition.
+  AddAndDiscardTemporaryCleanups(context);
+
   // Create the then block and the else block, and branch to the right one. If
   // there is no `else`, the then block will terminate with a branch to the
   // else block, which will be reused as the resumption block.

@@ -20,6 +20,7 @@ fn F2(index: i64) -> char {
     return c;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'string_indexing.carbon'
 // CHECK:STDOUT: source_filename = "string_indexing.carbon"
 // CHECK:STDOUT:
@@ -64,3 +65,4 @@ fn F2(index: i64) -> char {
 // CHECK:STDOUT: !14 = !DILocalVariable(arg: 1, scope: !9, type: !12)
 // CHECK:STDOUT: !15 = !DILocation(line: 19, column: 19, scope: !9)
 // CHECK:STDOUT: !16 = !DILocation(line: 20, column: 5, scope: !9)
+// CHECK:STDOUT:

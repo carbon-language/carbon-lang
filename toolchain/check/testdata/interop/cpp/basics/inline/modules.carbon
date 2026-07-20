@@ -21,7 +21,7 @@ import Cpp inline '''
 // CHECK:STDERR:    13 | export module Foo;
 // CHECK:STDERR:       |        ^
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: add 'module;' to the start of the file to introduce a global module fragment [CppInteropParseNote]
-// CHECK:STDERR:     1 | # 6 "fail_export_module_in_inline_cpp.carbon"
+// CHECK:STDERR:     1 | ;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR:
 export module Foo;
@@ -37,7 +37,7 @@ import Cpp inline '''
 // CHECK:STDERR:    17 | module Foo;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: add 'module;' to the start of the file to introduce a global module fragment [CppInteropParseNote]
-// CHECK:STDERR:     1 | # 6 "fail_module_in_inline_cpp.carbon"
+// CHECK:STDERR:     1 | ;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_module_in_inline_cpp.carbon:[[@LINE+4]]:8: error: module 'Foo' not found [CppInteropParseError]
@@ -65,7 +65,7 @@ int n;
 // CHECK:STDERR:    25 | module Foo;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: add 'module;' to the start of the file to introduce a global module fragment [CppInteropParseNote]
-// CHECK:STDERR:     1 | # 6 "fail_global_module_in_inline_cpp.carbon"
+// CHECK:STDERR:     1 | ;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+4]]:8: error: module 'Foo' not found [CppInteropParseError]

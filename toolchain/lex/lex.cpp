@@ -951,43 +951,51 @@ auto Lexer::EndDumpSemIRRangeIfIncomplete(const char* diag_loc) -> void {
 auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   CARBON_DCHECK(source_text.substr(position).starts_with("//"));
   int32_t comment_start = position;
-
-  // Any comment must be the only non-whitespace on the line.
   const auto line_info = current_line_info();
-  if (LLVM_UNLIKELY(position != line_info.start + line_info.indent)) {
-    CARBON_DIAGNOSTIC(TrailingComment, Error,
-                      "trailing comments are not permitted");
 
-    emitter_.Emit(source_text.begin() + position, TrailingComment);
+  // A comment is _trailing_ when it follows other content on its line, rather
+  // than being the only non-whitespace on the line. Both kinds of comment are
+  // lexed identically -- they run from `//` to the end of the line -- but we
+  // record the distinction so that tooling can tell a comment annotating the
+  // code on its line apart from one introducing the code below it.
+  //
+  // `line_info.indent` is the width of the line's leading whitespace, so
+  // `line_info.start + line_info.indent` is the line's first non-whitespace
+  // byte.
+  const bool is_trailing = position != line_info.start + line_info.indent;
 
-    // Note that we cannot fall-through here as the logic below doesn't handle
-    // trailing comments. Instead, we treat trailing comments as vertical
-    // whitespace, which already is designed to skip over any erroneous text at
-    // the end of the line.
-    LexVerticalWhitespace(source_text, position);
-    buffer_.AddComment(line_info.indent, comment_start, position);
-    return;
-  }
-
-  // The introducer '//' must be followed by whitespace or EOF.
+  // Check whether the `//` introducer is followed by something valid.
   bool is_valid_after_slashes = true;
   if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
       LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
     llvm::StringRef comment_text = source_text.substr(position);
-    if (comment_text.starts_with("//@include-in-dumps\n")) {
-      buffer_.has_include_in_dumps_ = true;
-      AdvanceToLine(source_text, position, next_line());
-      return;
-    }
-    if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
-      BeginDumpSemIRRange(comment_text.begin());
-      AdvanceToLine(source_text, position, next_line());
-      return;
-    }
-    if (comment_text.starts_with("//@dump-sem-ir-end\n")) {
-      EndDumpSemIRRange(comment_text.begin());
-      AdvanceToLine(source_text, position, next_line());
-      return;
+    // The `//@...` directives are tooling markers that are only meaningful as
+    // full-line comments, so we only recognize them when not trailing.
+    if (!is_trailing) {
+      // A directive is also recorded as a comment: the tokens and comments
+      // together reconstruct the source, so tooling such as the formatter
+      // would otherwise silently drop the directive line.
+      auto add_directive_comment_line = [&] {
+        buffer_.AddComment(line_info.indent, comment_start,
+                           buffer_.line_infos_.Get(next_line()).start,
+                           /*is_trailing=*/false);
+        AdvanceToLine(source_text, position, next_line());
+      };
+      if (comment_text.starts_with("//@include-in-dumps\n")) {
+        buffer_.has_include_in_dumps_ = true;
+        add_directive_comment_line();
+        return;
+      }
+      if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
+        BeginDumpSemIRRange(comment_text.begin());
+        add_directive_comment_line();
+        return;
+      }
+      if (comment_text.starts_with("//@dump-sem-ir-end\n")) {
+        EndDumpSemIRRange(comment_text.begin());
+        add_directive_comment_line();
+        return;
+      }
     }
     CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                       "whitespace is required after '//'");
@@ -1001,14 +1009,33 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   LineIndex line_index = next_line();
   position = buffer_.line_infos_.Get(line_index).start;
 
+  // A trailing comment runs to the end of its line. Unlike a full-line comment,
+  // it can never be part of a block of identical comment lines, so we skip the
+  // block-skipping optimization below and simply advance past this one line. We
+  // also don't optimize for the case of a trailing comment as we expect them to
+  // be relatively rare compared to other comment structures.
+  if (LLVM_UNLIKELY(is_trailing)) {
+    buffer_.AddComment(line_info.indent, comment_start, position,
+                       /*is_trailing=*/true);
+    // Unlike a full-line comment, a trailing comment can directly follow a
+    // token that cleared the leading-whitespace flag (`x;// y`), so restore it
+    // here for the next line's first token.
+    NoteWhitespace();
+    AdvanceToLine(source_text, position, line_index);
+    return;
+  }
+
   // A very common pattern is a long block of comment lines all with the same
-  // indent and comment start. We skip these comment blocks in bulk both for
-  // speed and to reduce redundant diagnostics if each line has the same
-  // erroneous comment start like `//!`.
+  // indent and comment start. We skip these comment blocks in bulk for speed,
+  // and with SIMD support short indents can be scanned extremely quickly; we
+  // expect these to be the dominant cases.
   //
-  // When we have SIMD support this is even more important for speed, as short
-  // indents can be scanned extremely quickly with SIMD and we expect these to
-  // be the dominant cases.
+  // An invalid comment start was already diagnosed above, so its block is
+  // instead skipped line by line below: a run of invalid comment lines lumps
+  // into one block regardless of which invalid byte follows each `//`, keeping
+  // the diagnostic noise to one per run, while a line whose introducer is
+  // valid (whitespace, or a `//@...` directive) ends the run and is lexed on
+  // its own.
   //
   // TODO: We should extend this to 32-byte SIMD on platforms with support.
   constexpr int MaxIndent = 13;
@@ -1023,7 +1050,7 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     next_line_info.indent = indent;
     position = next_line_info.start;
   };
-  if (CARBON_USE_SIMD &&
+  if (CARBON_USE_SIMD && is_valid_after_slashes &&
       position + 16 < static_cast<ssize_t>(source_text.size()) &&
       indent <= MaxIndent) {
     // Load a mask based on the amount of text we want to compare.
@@ -1070,20 +1097,62 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
 #else
 #error "Unsupported SIMD architecture!"
 #endif
-    // TODO: If we finish the loop due to the position approaching the end of
-    // the buffer we may fail to skip the last line in a comment block that
-    // has an invalid initial sequence and thus emit extra diagnostics. We
-    // should really fall through to the generic skipping logic, but the code
-    // organization will need to change significantly to allow that.
   } else {
-    while (position + prefix_size < static_cast<ssize_t>(source_text.size()) &&
-           memcmp(source_text.data() + first_line_start,
-                  source_text.data() + position, prefix_size) == 0) {
+    auto continues_block = [&](ssize_t position) -> bool {
+      // Make sure the source text extends far enough for us to continue the
+      // block.
+      if (position + prefix_size > static_cast<ssize_t>(source_text.size())) {
+        return false;
+      }
+
+      // Check that the prefix matches. Otherwise, the block is done.
+      if (memcmp(source_text.data() + first_line_start,
+                 source_text.data() + position, prefix_size) != 0) {
+        return false;
+      }
+
+      // For something valid after `//`, we're done as we've ensured it was the
+      // _same_ valid suffix in the `memcmp`.
+      if (LLVM_LIKELY(is_valid_after_slashes)) {
+        return true;
+      }
+
+      // Past here, the block is a run of invalid comment lines and the
+      // matched prefix only covers this line's `//`, so examine what follows
+      // those slashes: only another invalid comment line continues the block,
+      // while a valid comment or directive ends it and is lexed on its own.
+
+      // A `//` that ends the source is a valid comment, so it doesn't
+      // continue the block.
+      if (position + prefix_size == static_cast<ssize_t>(source_text.size())) {
+        return false;
+      }
+
+      char after_slashes = source_text[position + prefix_size];
+
+      // Whitespace after the `//` makes this line a valid comment, so it
+      // doesn't continue the block.
+      if (IsSpace(after_slashes)) {
+        return false;
+      }
+
+      // An `@` makes this line a `//@...` directive that must be lexed on its
+      // own to recognize its side effects, so it doesn't continue the block.
+      if (after_slashes == '@') {
+        return false;
+      }
+
+      // Anything else is another invalid comment line continuing the block.
+      return true;
+    };
+
+    // Skip lines that are combined into a comment block.
+    while (continues_block(position)) {
       skip_to_next_line();
     }
   }
 
-  buffer_.AddComment(indent, comment_start, position);
+  buffer_.AddComment(indent, comment_start, position, /*is_trailing=*/false);
   AdvanceToLine(source_text, position, line_index);
 }
 
@@ -1151,7 +1220,6 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
 
   // Capture the position before we step past the token.
   int32_t byte_offset = position;
-  int string_column = byte_offset - current_line_info().start;
   position += literal->text().size();
 
   // Helper for error paths.
@@ -1172,15 +1240,40 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
     return lex_as_error();
   }
 
+  if (literal->has_invalid_introducer()) {
+    // The literal covers only the malformed introducer line, so it spans no
+    // lines and needs no line updates.
+    CARBON_DIAGNOSTIC(MultiLineStringInvalidIntroducer, Error,
+                      "invalid multi-line string literal introducer; a file "
+                      "type indicator may not contain `'`, `#`, or `\"`, and "
+                      "the content must begin on a new line");
+    emitter_.Emit(literal->text().begin(), MultiLineStringInvalidIntroducer);
+    return lex_as_error();
+  }
+
   // Update line and column information.
   if (literal->kind() != StringLiteral::Kind::SingleLine) {
+    // A block string literal's content is indented to match its closing
+    // delimiter: leading whitespace up to the delimiter's column is
+    // indentation, and anything past it is part of the content. Each line the
+    // literal spans is given the closing delimiter's column as its indentation.
+    // The closing line's indentation must be correct because tokens and
+    // comments can follow the closing delimiter and rely on it, for example to
+    // detect a trailing comment. Multi-line literals are rare, so this cold
+    // path need not be fast.
+    LineIndex first_spanned_line(line_index_.index + 1);
     while (next_line_info().start < position) {
       ++line_index_.index;
-      current_line_info().indent = string_column;
     }
-    // Note that we've updated the current line at this point, but
-    // `set_indent_` is already true from above. That remains correct as the
-    // last line of the multi-line literal *also* has its indent set.
+    // The closing delimiter is the first non-whitespace on the closing line, so
+    // its column is that line's leading-whitespace width.
+    LineInfo& closing_line_info = current_line_info();
+    ssize_t indent_end = closing_line_info.start;
+    SkipHorizontalWhitespace(source_text, indent_end);
+    int32_t indent = indent_end - closing_line_info.start;
+    for (int32_t i = first_spanned_line.index; i <= line_index_.index; ++i) {
+      buffer_.line_infos_.Get(LineIndex(i)).indent = indent;
+    }
   }
 
   if (!literal->is_terminated()) {
@@ -1592,8 +1685,11 @@ class Lexer::ErrorRecoveryBuffer {
       for (; old_tokens_it->first < next_offset; ++old_tokens_it) {
         buffer_->token_infos_.Add(old_tokens_it->second);
       }
-      buffer_->AddToken(info);
-      buffer_->recovery_tokens_.set(next_offset.index);
+      // Flag the token just added at its index in the merged list, which
+      // shifts past `next_offset` (the pre-insertion index) once any earlier
+      // insertion has been applied.
+      TokenIndex added = buffer_->AddToken(info);
+      buffer_->recovery_tokens_.set(added.index);
     }
     for (; old_tokens_it != old_tokens_range.end(); ++old_tokens_it) {
       buffer_->token_infos_.Add(old_tokens_it->second);

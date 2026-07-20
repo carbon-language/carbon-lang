@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call.carbon
 
-fn F[T:! type](_: T) {
+fn F[T: type](_: T) {
 }
 
 class C {}
@@ -29,6 +29,7 @@ fn G() {
   F(i32);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call.carbon'
 // CHECK:STDOUT: source_filename = "call.carbon"
 // CHECK:STDOUT:
@@ -188,3 +189,4 @@ fn G() {
 // CHECK:STDOUT: !54 = !{!55}
 // CHECK:STDOUT: !55 = !DILocalVariable(arg: 1, scope: !53, type: !22)
 // CHECK:STDOUT: !56 = !DILocation(line: 13, column: 1, scope: !53)
+// CHECK:STDOUT:

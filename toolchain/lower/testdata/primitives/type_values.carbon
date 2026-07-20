@@ -25,6 +25,7 @@ fn F64() -> type {
   return f64;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'type_values.carbon'
 // CHECK:STDOUT: source_filename = "type_values.carbon"
 // CHECK:STDOUT:
@@ -66,3 +67,4 @@ fn F64() -> type {
 // CHECK:STDOUT: !10 = !DILocation(line: 21, column: 3, scope: !9)
 // CHECK:STDOUT: !11 = distinct !DISubprogram(name: "F64", linkageName: "_CF64.Main", scope: null, file: !1, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DILocation(line: 25, column: 3, scope: !11)
+// CHECK:STDOUT:

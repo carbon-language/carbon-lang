@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEM_IR_FACET_TYPE_INFO_H_
-#define CARBON_TOOLCHAIN_SEM_IR_FACET_TYPE_INFO_H_
+#ifndef CARBON_TOOLCHAIN_SEM_IR_DECLARED_FACET_TYPE_H_
+#define CARBON_TOOLCHAIN_SEM_IR_DECLARED_FACET_TYPE_H_
 
 #include "common/enum_mask_base.h"
 #include "common/hashing.h"
@@ -34,18 +34,17 @@ using SingleExtendFacetType =
 //
 // The flattening of the named constraints into interfaces is done by forming
 // the IdentifiedFacetType for a specific Self type.
-//
-// TODO: Rename to DeclaredFacetType.
-struct FacetTypeInfo : Printable<FacetTypeInfo> {
-  // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
+struct DeclaredFacetType : Printable<DeclaredFacetType> {
+  // Returns a DeclaredFacetType that combines `lhs` and `rhs`. It is not
   // canonicalized, so that it can be further modified by the caller if desired.
-  static auto Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
-      -> FacetTypeInfo;
+  static auto Combine(const DeclaredFacetType& lhs,
+                      const DeclaredFacetType& rhs) -> DeclaredFacetType;
 
-  // Returns a FacetTypeInfo that only contains constraints that are extended by
-  // the facet type. It is not canonicalized, so that it can be further modified
-  // by the caller if desired.
-  static auto ExtendedOnly(const FacetTypeInfo& info) -> FacetTypeInfo;
+  // Returns a DeclaredFacetType that only contains constraints that are
+  // extended by the facet type. It is not canonicalized, so that it can be
+  // further modified by the caller if desired.
+  static auto ExtendedOnly(const DeclaredFacetType& declared_facet_type)
+      -> DeclaredFacetType;
 
   // TODO: Need to switch to a processed, canonical form, that can support facet
   // type equality as defined by
@@ -130,8 +129,8 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // by the facet type. If true, `ExtendedOnly()` would be a no-op.
   auto IsExtendedOnly() const -> bool;
 
-  friend auto operator==(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
-      -> bool {
+  friend auto operator==(const DeclaredFacetType& lhs,
+                         const DeclaredFacetType& rhs) -> bool {
     return lhs.extend_constraints == rhs.extend_constraints &&
            lhs.self_impls_constraints == rhs.self_impls_constraints &&
            lhs.extend_named_constraints == rhs.extend_named_constraints &&
@@ -145,106 +144,15 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   }
 };
 
-constexpr FacetTypeInfo::RewriteConstraint
-    FacetTypeInfo::RewriteConstraint::None = {.lhs_id = InstId::None,
-                                              .rhs_id = InstId::None};
+constexpr DeclaredFacetType::RewriteConstraint
+    DeclaredFacetType::RewriteConstraint::None = {.lhs_id = InstId::None,
+                                                  .rhs_id = InstId::None};
 
-using FacetTypeInfoStore =
-    CanonicalValueStore<FacetTypeId, FacetTypeInfo, Tag<CheckIRId>>;
-
-struct IdentifiedFacetTypeKey {
-  FacetTypeId facet_type_id;
-  ConstantId self_const_id;
-  // Inside a named constraint, each identification of the `Self` facet type can
-  // be unique, as it can be modified by each require declaration seen so far.
-  // Uses -1 for identifying a facet type with a self-type from outside the
-  // definition of an named constraint.
-  int32_t num_require_impls = -1;
-
-  friend auto operator==(const IdentifiedFacetTypeKey& lhs,
-                         const IdentifiedFacetTypeKey& rhs) -> bool = default;
-};
-
-// The IdentifiedFacetType represents all of the interfaces required by a facet
-// type against a given Self type, and any other types it constrains. The order
-// of the interfaces is fixed for a given facet type, and can thus be used as a
-// key for storing and finding witnesses or other data associated with a facet
-// type.
-struct IdentifiedFacetType {
-  // A requirement that `self_facet_value` implements the `specific_interface`.
-  struct RequiredImpl {
-    ConstantId self_facet_value;
-    SpecificInterface specific_interface;
-
-    friend auto operator==(const RequiredImpl& lhs, const RequiredImpl& rhs)
-        -> bool = default;
-  };
-
-  IdentifiedFacetType(IdentifiedFacetTypeKey key, bool partially_identified,
-                      llvm::ArrayRef<RequiredImpl> extends,
-                      llvm::ArrayRef<RequiredImpl> self_impls);
-
-  // The order here defines the order of impl witnesses for this facet type.
-  auto required_impls() const -> llvm::ArrayRef<RequiredImpl> {
-    return required_impls_;
-  }
-
-  // Can this be used to the right of an `as` in an `impl` declaration?
-  auto is_valid_impl_as_target() const -> bool {
-    return interface_id_.has_value();
-  }
-
-  // The interface to implement when this facet type is used in an `impl`
-  // declaration.
-  auto impl_as_target_interface() const -> SpecificInterface {
-    if (is_valid_impl_as_target()) {
-      return {.interface_id = interface_id_, .specific_id = specific_id_};
-    } else {
-      return SpecificInterface::None;
-    }
-  }
-
-  auto num_interfaces_to_impl() const -> int {
-    if (is_valid_impl_as_target()) {
-      return 1;
-    } else {
-      return num_interface_to_impl_;
-    }
-  }
-
-  auto partially_identified() const -> bool {
-    return key_.num_require_impls >= 0;
-  }
-
-  auto GetAsKey() const -> IdentifiedFacetTypeKey { return key_; }
-
- private:
-  IdentifiedFacetTypeKey key_;
-
-  // Requirements that a facet value implements an interface, mentioned
-  // explicitly in the facet type expression or transitively through a named
-  // constraint. Sorted and deduplicated.
-  llvm::SmallVector<RequiredImpl> required_impls_;
-
-  // The single interface from `required_impls` to implement if this is
-  // the facet type to the right of an `impl`...`as`, or `None` if no such
-  // single interface.
-  InterfaceId interface_id_ = InterfaceId::None;
-  union {
-    // If `interface_id` is `None`, the number of interfaces to report in a
-    // diagnostic about why this facet type can't be implemented.
-    int num_interface_to_impl_ = 0;
-    // If `interface_id` is not `None`, the specific for that interface.
-    SpecificId specific_id_;
-  };
-};
-
-using IdentifiedFacetTypeStore =
-    CanonicalValueStore<IdentifiedFacetTypeId, IdentifiedFacetTypeKey,
-                        Tag<CheckIRId>, IdentifiedFacetType>;
+using DeclaredFacetTypeStore =
+    CanonicalValueStore<DeclaredFacetTypeId, DeclaredFacetType, Tag<CheckIRId>>;
 
 // See common/hashing.h.
-inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
+inline auto CarbonHashValue(const DeclaredFacetType& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
   hasher.HashArray(llvm::ArrayRef(value.extend_constraints));
@@ -256,28 +164,15 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
   return static_cast<HashCode>(hasher);
 }
 
-// Given an array of witnesses, sorts them to match the ordering of the specific
-// interfaces in the IdentifiedFacetType that produced the witness set, which is
-// the canonical witness order, and returns the resulting block ID. This assumes
-// witnesses have already been deduplicated, and do not contain errors, because
-// it's mainly for imports.
-auto AddCanonicalWitnessesBlock(File& sem_ir,
-                                llvm::SmallVector<InstId>& witnesses)
-    -> InstBlockId;
-
 }  // namespace Carbon::SemIR
 
 namespace Carbon {
-extern template class CanonicalValueStore<
-    SemIR::FacetTypeId, SemIR::FacetTypeInfo, Tag<SemIR::CheckIRId>>;
-extern template class CanonicalValueStore<
-    SemIR::IdentifiedFacetTypeId, SemIR::IdentifiedFacetTypeKey,
-    Tag<SemIR::CheckIRId>, SemIR::IdentifiedFacetType>;
-extern template class ValueStore<SemIR::FacetTypeId, SemIR::FacetTypeInfo,
-                                 Tag<SemIR::CheckIRId>>;
-extern template class ValueStore<SemIR::IdentifiedFacetTypeId,
-                                 SemIR::IdentifiedFacetType,
+extern template class CanonicalValueStore<SemIR::DeclaredFacetTypeId,
+                                          SemIR::DeclaredFacetType,
+                                          Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::DeclaredFacetTypeId,
+                                 SemIR::DeclaredFacetType,
                                  Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_SEM_IR_FACET_TYPE_INFO_H_
+#endif  // CARBON_TOOLCHAIN_SEM_IR_DECLARED_FACET_TYPE_H_

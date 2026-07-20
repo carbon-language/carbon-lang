@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-class C(T:! type) {
+class C(T: type) {
   // Core.Int(123) is required to be complete here.
   fn F() -> Core.Int(123) {
     return 123;
@@ -26,7 +26,7 @@ class C(T:! type) {
   }
 }
 
-fn G(T:! type, t: T) {
+fn G(generic T: type, t: T) {
   // Core.Int(123) is also required to be complete here. But because it's not
   // dependent, we don't require it to be complete when forming a specific for G.
   ({} as C(T)).F();
@@ -51,7 +51,7 @@ fn I() {
 
 library "[[@TEST_NAME]]";
 
-base class C(T:! type) {
+base class C(T: type) {
   // Require Core.Int(11) and Core.Int(12) to be complete.
   virtual fn F(unused self) -> Core.Int(11) { return 11; }
   virtual fn G(unused self, unused t: T) -> Core.Int(12) { return 12; }
@@ -74,7 +74,7 @@ library "[[@TEST_NAME]]";
 
 import library "require_completion_in_vtable";
 
-fn F(T:! type, t: T) {
+fn F(generic T: type, t: T) {
   var c: C(T) = {};
   c.F();
   c.G(t);
@@ -92,6 +92,7 @@ fn CallF() {
   F(C, {} as C);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'require_completion_in_call.carbon'
 // CHECK:STDOUT: source_filename = "require_completion_in_call.carbon"
 // CHECK:STDOUT:
@@ -102,6 +103,8 @@ fn CallF() {
 // CHECK:STDOUT: !1 = !DIFile(filename: "require_completion_in_call.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_without_completion_in_call.carbon'
 // CHECK:STDOUT: source_filename = "use_without_completion_in_call.carbon"
 // CHECK:STDOUT:
@@ -126,10 +129,10 @@ fn CallF() {
 // CHECK:STDOUT:   %temp1 = alloca {}, align 1, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !18
 // CHECK:STDOUT:   %1 = call i123 @_CF.C.Main.e43630e9a6c38c3f(), !dbg !20
+// CHECK:STDOUT:   call void @"_COp.493fde38be547afd:core.Destroy.Core"(ptr @C.val.eeb), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp1), !dbg !19
 // CHECK:STDOUT:   %2 = call i456 @_CG.C.Main.e43630e9a6c38c3f(), !dbg !21
 // CHECK:STDOUT:   call void @"_COp.493fde38be547afd:core.Destroy.Core"(ptr @C.val.eeb), !dbg !19
-// CHECK:STDOUT:   call void @"_COp.493fde38be547afd:core.Destroy.Core"(ptr @C.val.eeb), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,14 +167,14 @@ fn CallF() {
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 9, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Op", linkageName: "_COp.493fde38be547afd:core.Destroy.Core", scope: null, file: !10, line: 22, type: !11, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !14)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Op", linkageName: "_COp.493fde38be547afd:core.Destroy.Core", scope: null, file: !10, line: 19, type: !11, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !14)
 // CHECK:STDOUT: !10 = !DIFile(filename: "require_completion_in_call.carbon", directory: "")
 // CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
 // CHECK:STDOUT: !12 = !{null, !13}
 // CHECK:STDOUT: !13 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !9, type: !13)
-// CHECK:STDOUT: !16 = !DILocation(line: 22, column: 4, scope: !9)
+// CHECK:STDOUT: !16 = !DILocation(line: 19, column: 4, scope: !9)
 // CHECK:STDOUT: !17 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.e43630e9a6c38c3f", scope: null, file: !10, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !18 = !DILocation(line: 19, column: 4, scope: !17)
 // CHECK:STDOUT: !19 = !DILocation(line: 22, column: 4, scope: !17)
@@ -188,6 +191,8 @@ fn CallF() {
 // CHECK:STDOUT: !30 = !{!31}
 // CHECK:STDOUT: !31 = !DIBasicType(name: "int", size: 456, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !32 = !DILocation(line: 12, column: 5, scope: !28)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'require_completion_in_vtable.carbon'
 // CHECK:STDOUT: source_filename = "require_completion_in_vtable.carbon"
 // CHECK:STDOUT:
@@ -198,6 +203,8 @@ fn CallF() {
 // CHECK:STDOUT: !1 = !DIFile(filename: "require_completion_in_vtable.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_without_completion_in_vtable.carbon'
 // CHECK:STDOUT: source_filename = "use_without_completion_in_vtable.carbon"
 // CHECK:STDOUT:
@@ -231,6 +238,8 @@ fn CallF() {
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 9, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 0, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'require_completion_in_virtual_call.carbon'
 // CHECK:STDOUT: source_filename = "require_completion_in_virtual_call.carbon"
 // CHECK:STDOUT:
@@ -256,6 +265,8 @@ fn CallF() {
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_without_completion_in_virtual_call.carbon'
 // CHECK:STDOUT: source_filename = "use_without_completion_in_virtual_call.carbon"
 // CHECK:STDOUT:
@@ -387,3 +398,4 @@ fn CallF() {
 // CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !42, type: !13)
 // CHECK:STDOUT: !48 = !DILocalVariable(arg: 2, scope: !42, type: !13)
 // CHECK:STDOUT: !49 = !DILocation(line: 7, column: 60, scope: !42)
+// CHECK:STDOUT:

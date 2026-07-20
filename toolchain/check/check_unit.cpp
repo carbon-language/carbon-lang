@@ -9,6 +9,7 @@
 #include <tuple>
 #include <utility>
 
+#include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Sema/Sema.h"
 #include "common/growing_range.h"
 #include "common/pretty_stack_trace_function.h"
@@ -60,16 +61,10 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
 CheckUnit::CheckUnit(
     UnitAndImports* unit_and_imports,
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    llvm::LLVMContext* llvm_context,
-    std::shared_ptr<clang::CompilerInvocation> clang_invocation,
     llvm::raw_ostream* vlog_stream, bool mangle_string_fingerprint)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
           unit_and_imports->unit->sem_ir->check_ir_id())),
-      fs_(std::move(fs)),
-      llvm_context_(llvm_context),
-      clang_invocation_(std::move(clang_invocation)),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
       context_(&emitter_, tree_and_subtrees_getter_,
@@ -164,10 +159,8 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   CARBON_CHECK(context_.scope_stack().PeekIndex() == ScopeIndex::Package);
   ImportOtherPackages(namespace_type_id);
 
-  const auto& cpp_imports = unit_and_imports_->cpp_imports;
-  if (!cpp_imports.empty()) {
-    ImportCpp(context_, cpp_imports, fs_, llvm_context_, clang_invocation_);
-  }
+  ImportCpp(context_, unit_and_imports_->cpp_imports,
+            unit_and_imports_->cpp_domain.get());
 }
 
 auto CheckUnit::CollectDirectImports(

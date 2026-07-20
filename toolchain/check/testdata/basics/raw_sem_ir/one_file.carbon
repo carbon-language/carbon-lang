@@ -13,7 +13,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/raw_sem_ir/one_file.carbon
 
-fn Foo[T:! type](p: T*) -> (T*, ()) {
+fn Foo[T: type](p: T*) -> (T*, ()) {
   return (p, ());
 }
 
@@ -341,7 +341,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     name_scope7800000C: {inst: inst7800011B, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:     name_scope7800000D: {inst: inst78000177, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name78000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
+// CHECK:STDOUT:     entity_name78000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, is_frozen_period_self: 1}, form: inst<none>}
 // CHECK:STDOUT:     entity_name78000001: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
 // CHECK:STDOUT:     entity_name78000002: {name: name2, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
 // CHECK:STDOUT:     entity_name78000003: {name: name3, parent_scope: name_scope78000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
@@ -415,7 +415,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     function78000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block78000010, call_params_id: inst_block78000011, return_type_inst_id: inst78000036, return_form_inst_id: inst78000038, return_pattern_id: inst78000040, body: [inst_block78000018]}
 // CHECK:STDOUT:     function78000001: {name: name4, parent_scope: name_scope78000003, call_param_patterns_id: inst_block7800001E, return_type_inst_id: inst78000072, return_form_inst_id: inst78000073, return_pattern_id: inst78000074}
 // CHECK:STDOUT:     function78000002: {name: name4, parent_scope: name_scope78000004, call_param_patterns_id: inst_block78000029, return_type_inst_id: inst780000A3, return_form_inst_id: inst780000A4, return_pattern_id: inst780000A5}
-// CHECK:STDOUT:     function78000003: {name: name4, parent_scope: name_scope78000009, call_param_patterns_id: inst_block7800003F, return_type_inst_id: inst78000101, return_form_inst_id: inst78000102, return_pattern_id: inst78000103}
+// CHECK:STDOUT:     function78000003: {name: name4, parent_scope: name_scope78000009, call_param_patterns_id: inst_block7800003F, return_type_inst_id: inst78000101, return_form_inst_id: inst78000102, return_pattern_id: inst78000103, builtin: primitive_copy}
 // CHECK:STDOUT:     function78000004: {name: name4, parent_scope: name_scope7800000C, call_param_patterns_id: inst_block7800004C, return_type_inst_id: inst78000136, return_form_inst_id: inst78000137, return_pattern_id: inst78000138}
 // CHECK:STDOUT:     function78000005: {name: name4, parent_scope: name_scope7800000D, call_param_patterns_id: inst_block78000068, return_type_inst_id: inst78000192, return_form_inst_id: inst78000193, return_pattern_id: inst78000194}
 // CHECK:STDOUT:   classes:         {}
@@ -595,14 +595,14 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:   facet_types:
-// CHECK:STDOUT:     facet_type78000000: {}
-// CHECK:STDOUT:     facet_type78000001: {extends interface: interface78000000}
+// CHECK:STDOUT:   declared_facet_types:
+// CHECK:STDOUT:     declared_facet_type78000000: {}
+// CHECK:STDOUT:     declared_facet_type78000001: {extends interface: interface78000000}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst78000010:    {kind: ImportDecl, arg0: name(Core)}
 // CHECK:STDOUT:     inst78000011:    {kind: Namespace, arg0: name_scope78000001, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst78000012:    {kind: FacetType, arg0: facet_type78000000, type: type(TypeType)}
+// CHECK:STDOUT:     inst78000012:    {kind: FacetType, arg0: declared_facet_type78000000, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000013:    {kind: SymbolicBinding, arg0: entity_name78000000, arg1: inst<none>, type: type(inst78000012)}
 // CHECK:STDOUT:     inst78000014:    {kind: SymbolicBinding, arg0: entity_name78000000, arg1: inst<none>, type: type(inst78000012)}
 // CHECK:STDOUT:     inst78000015:    {kind: TypeLiteral, arg0: inst(TypeType), type: type(TypeType)}
@@ -674,7 +674,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst78000057:    {kind: RequireCompleteType, arg0: inst7800001F, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst78000058:    {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name78000003, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000059:    {kind: InterfaceDecl, arg0: interface78000000, arg1: inst_block_empty, type: type(TypeType)}
-// CHECK:STDOUT:     inst7800005A:    {kind: FacetType, arg0: facet_type78000001, type: type(TypeType)}
+// CHECK:STDOUT:     inst7800005A:    {kind: FacetType, arg0: declared_facet_type78000001, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800005B:    {kind: InterfaceWithSelfDecl, arg0: interface78000000}
 // CHECK:STDOUT:     inst7800005C:    {kind: SymbolicBinding, arg0: entity_name78000004, arg1: inst<none>, type: type(inst7800005A)}
 // CHECK:STDOUT:     inst7800005D:    {kind: ImportRefLoaded, arg0: import_ir_inst3, arg1: entity_name<none>, type: type(inst78000084)}

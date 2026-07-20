@@ -308,8 +308,10 @@ auto CompilationUnit::RunOptimize(
 auto CompilationUnit::PostLower() -> void {
   CARBON_CHECK(module_, "Must call RunLower first");
   if (options_->dump_llvm_ir && IncludeInDumps()) {
+    *driver_env_->output_stream << "; ---\n";
     module_->print(*driver_env_->output_stream, /*AAW=*/nullptr,
                    /*ShouldPreserveUseListOrder=*/true);
+    *driver_env_->output_stream << "\n";
   }
 }
 
@@ -479,9 +481,27 @@ auto CompileDriver::Initialize(
     }
   }
 
+  // Append the Core library files on request.
+  llvm::SmallVector<std::string> core_library;
+  if (options_->include_carbon_core && !options_->custom_core &&
+      options_->phase >= CompileOptions::Phase::Check) {
+    if (auto find = driver_env.installation->ReadCarbonCoreManifest();
+        !find.ok()) {
+      CARBON_DIAGNOSTIC(CompileCoreManifestError, Error, "{0}", std::string);
+      driver_env.emitter.Emit(CompileCoreManifestError,
+                              PrintToString(find.error()));
+      return false;
+    } else {
+      // Note we also compile any .impl files, as we will need to include them
+      // in the subsequent link step.
+      core_library = std::move(*find);
+    }
+  }
+
   // Prepare CompilationUnits before building scope exit handlers.
   int unit_index = -1;
-  int total_unit_count = prelude.size() + options_->input_filenames.size();
+  int total_unit_count =
+      prelude.size() + core_library.size() + options_->input_filenames.size();
   auto unit_builder = [&](llvm::StringRef filename) {
     ++unit_index;
     return std::make_unique<CompilationUnit>(
@@ -489,6 +509,7 @@ auto CompileDriver::Initialize(
         driver_env.consumer, filename, map_input(filename), target);
   };
   llvm::append_range(units_, llvm::map_range(prelude, unit_builder));
+  llvm::append_range(units_, llvm::map_range(core_library, unit_builder));
   input_filenames_index_ = units_.size();
   llvm::append_range(units_,
                      llvm::map_range(options_->input_filenames, unit_builder));
@@ -587,6 +608,7 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
   options.vlog_stream = driver_env.vlog_stream;
   options.fuzzing = driver_env.fuzzing;
   options.mangle_string_fingerprint = options_->mangle_string_fingerprint;
+  options.share_cpp_ast = options_->share_cpp_ast;
   if (options.vlog_stream || options_->dump_sem_ir || options_->dump_cpp_ast ||
       options_->dump_raw_sem_ir) {
     options.include_in_dumps = &cache_->include_in_dumps();

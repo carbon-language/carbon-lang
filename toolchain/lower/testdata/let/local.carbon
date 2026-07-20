@@ -29,10 +29,11 @@ fn F(_: C) {}
 fn CallF() {
   // TODO: Uncomment this once symbolic locals work in check. It's disabled so
   // that we still test lowering of non-symbolic locals.
-  // let c:! C = {};
+  // let generic c: C = {};
   // F(c);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'local.carbon'
 // CHECK:STDOUT: source_filename = "local.carbon"
 // CHECK:STDOUT:
@@ -56,6 +57,8 @@ fn CallF() {
 // CHECK:STDOUT: !6 = !{!7}
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !8 = !DILocation(line: 6, column: 3, scope: !4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'symbolic.carbon'
 // CHECK:STDOUT: source_filename = "symbolic.carbon"
 // CHECK:STDOUT:
@@ -91,3 +94,4 @@ fn CallF() {
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
 // CHECK:STDOUT: !14 = !DILocation(line: 7, column: 1, scope: !11)
+// CHECK:STDOUT:

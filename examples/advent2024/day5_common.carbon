@@ -6,8 +6,6 @@
 
 library "day5_common";
 
-import Core library "range";
-
 import library "io_utils";
 
 fn PageMask(page: i32) -> Core.UInt(100) {

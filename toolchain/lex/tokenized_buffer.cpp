@@ -413,16 +413,64 @@ auto TokenizedBuffer::GetCommentText(CommentIndex comment_index) const
   return source_->text().substr(comment_data.start, comment_data.length);
 }
 
-auto TokenizedBuffer::AddComment(int32_t indent, int32_t start, int32_t end)
-    -> void {
-  if (comments_.size() > 0) {
+auto TokenizedBuffer::IsTrailingComment(CommentIndex comment_index) const
+    -> bool {
+  return comments_.Get(comment_index).is_trailing;
+}
+
+namespace {
+// The category of a full-line comment, determined by the byte after the `//`
+// introducer. Adjacent full-line comments coalesce only within a category, so
+// a comment's category is well defined by its first line.
+enum class CommentCategory : uint8_t {
+  // Whitespace, or nothing before the end of the line or file.
+  Ordinary,
+  // A `//@...` tooling directive.
+  Directive,
+  // Every other byte; the invalid spellings are lumped into one category.
+  Invalid,
+};
+}  // namespace
+
+// Returns the comment's category; see `CommentCategory`.
+static auto GetCommentCategory(llvm::StringRef source, int32_t comment_start)
+    -> CommentCategory {
+  if (comment_start + 2 >= static_cast<int32_t>(source.size()) ||
+      IsSpace(source[comment_start + 2])) {
+    return CommentCategory::Ordinary;
+  }
+  if (source[comment_start + 2] == '@') {
+    return CommentCategory::Directive;
+  }
+  return CommentCategory::Invalid;
+}
+
+auto TokenizedBuffer::AddComment(int32_t indent, int32_t start, int32_t end,
+                                 bool is_trailing) -> void {
+  // A comment runs forward from its start, and its length is stored in 31 bits
+  // (the high bit holds `is_trailing`). A non-negative byte offset always fits
+  // in 31 bits because the source size is bounded by `INT32_MAX`.
+  CARBON_DCHECK(start <= end);
+
+  // A block of adjacent full-line comments in the same category is coalesced
+  // into a single comment; transitioning between ordinary comments, `//@...`
+  // directives, and invalid introducers starts a new one. A trailing comment
+  // is always standalone: it never extends a preceding comment, nor is it
+  // extended by a following one.
+  if (!is_trailing && comments_.size() > 0) {
     auto& comment = comments_.Get(CommentIndex(comments_.size() - 1));
-    if (comment.start + comment.length + indent == start) {
+    if (!comment.is_trailing &&
+        comment.start + comment.length + indent == start &&
+        GetCommentCategory(source_->text(), comment.start) ==
+            GetCommentCategory(source_->text(), start)) {
+      CARBON_DCHECK(comment.start <= end);
       comment.length = end - comment.start;
       return;
     }
   }
-  comments_.Add({.start = start, .length = end - start});
+  comments_.Add({.start = start,
+                 .length = static_cast<uint32_t>(end - start),
+                 .is_trailing = is_trailing});
 }
 
 auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
