@@ -314,7 +314,8 @@ struct FunctionInfo {
                         clang::DeclContext* decl_context)
       : function_id(function_id),
         function(function),
-        decl_context(decl_context) {
+        decl_context(decl_context),
+        return_type_id(function.GetDeclaredReturnType(context.sem_ir())) {
     auto function_params =
         context.inst_blocks().Get(function.call_param_patterns_id);
     const auto& ranges = function.call_param_ranges;
@@ -366,6 +367,9 @@ struct FunctionInfo {
   // and whether the parameter is a reference.
   llvm::SmallVector<Param> explicit_params;
 
+  // Return type of the function.
+  SemIR::TypeId return_type_id;
+
   // For methods, the type of `self` and whether it is a reference. If
   // the function does not have a `self` parameter, this is `nullopt`.
   std::optional<Param> self_param;
@@ -406,8 +410,15 @@ static auto BuildFunctionInfo(Context& context, SemIR::LocId loc_id,
 }
 
 // Create a `clang::FunctionDecl` for the given Carbon function. This
-// can be used to call the Carbon function from C++. The Carbon
-// function's ABI must be compatible with C++.
+// can be used to call the Carbon function from C++.
+//
+// The Carbon function's ABI must be compatible with C++, unless it is a
+// generic function.
+//
+// For generic functions, the `clang::FunctionDecl` created here is only used
+// as a function template decl. Only specializations of this function
+// template decl are called directly, so the ABI of the function template
+// decl itself is irrelevant.
 //
 // The resulting decl is used to allow a generated C++ function to call
 // a generated Carbon function.
@@ -439,8 +450,15 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
     cpp_param_types.push_back(cpp_type);
   }
 
-  CARBON_CHECK(function.return_type_inst_id == SemIR::TypeInstId::None);
-  auto cpp_return_type = context.ast_context().VoidTy;
+  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
+  clang::QualType cpp_return_type = context.ast_context().VoidTy;
+  if (return_type_id.has_value()) {
+    cpp_return_type = MapToCppType(context, return_type_id);
+    if (cpp_return_type.isNull()) {
+      context.TODO(loc_id, "failed to map Carbon return type to C++");
+      return nullptr;
+    }
+  }
 
   auto cpp_function_type = context.ast_context().getFunctionType(
       cpp_return_type, cpp_param_types,
@@ -533,9 +551,8 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
   // Get the C++ return type (this corresponds to the return type of the
   // target Carbon function).
   clang::QualType cpp_return_type = context.ast_context().VoidTy;
-  auto return_type_id = target.function.GetDeclaredReturnType(context.sem_ir());
-  if (return_type_id != SemIR::TypeId::None) {
-    cpp_return_type = MapToCppType(context, return_type_id);
+  if (target.return_type_id != SemIR::TypeId::None) {
+    cpp_return_type = MapToCppType(context, target.return_type_id);
     if (cpp_return_type.isNull()) {
       context.TODO(loc_id, "failed to map Carbon return type to C++ type");
       return nullptr;
@@ -758,10 +775,8 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
   for (const auto& param : target.explicit_params) {
     thunk_param_type_ids.push_back(param.type_id);
   }
-  auto callee_return_type_id =
-      target.function.GetDeclaredReturnType(context.sem_ir());
-  if (callee_return_type_id != SemIR::TypeId::None) {
-    thunk_param_type_ids.push_back(callee_return_type_id);
+  if (target.return_type_id != SemIR::TypeId::None) {
+    thunk_param_type_ids.push_back(target.return_type_id);
   }
 
   auto carbon_thunk_function_id =
@@ -921,16 +936,16 @@ auto ExportFunctionSpecializationToCpp(
         context.insts().Get(binding_const_inst_id).type_id()));
   }
 
-  // Create a specific, and use that to convert from parameters with
-  // symbolic types to concrete types.
+  // Create a specific, and use that to convert return type and
+  // parameters with symbolic types to concrete types.
   auto specific_id = MakeSpecific(context, loc_id, target.function.generic_id,
                                   specific_arg_ids);
+  target.return_type_id =
+      target.function.GetDeclaredReturnType(context.sem_ir(), specific_id);
   for (auto& param : target.explicit_params) {
     param.type_id =
         GetScrutineeTypeInSpecific(context, param.pattern_inst_id, specific_id);
   }
-
-  // TODO: handle generic return type.
 
   // Build the thunks. Mark the C++ thunk as a template specialization.
   auto* function_decl =
