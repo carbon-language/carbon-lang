@@ -1643,9 +1643,6 @@ class Lexer::ErrorRecoveryBuffer {
     CARBON_CHECK(
         insert_before.index < static_cast<int>(buffer_->token_infos_.size()),
         "Cannot insert after the end of file token.");
-    CARBON_CHECK(
-        new_tokens_.empty() || new_tokens_.back().first <= insert_before,
-        "Insertions performed out of order.");
 
     // If the `insert_before` token has leading whitespace, mark the
     // inserted token as also having leading whitespace. This avoids changing
@@ -1674,6 +1671,10 @@ class Lexer::ErrorRecoveryBuffer {
 
   // Merge the recovery tokens into the token list of the tokenized buffer.
   auto Apply() -> void {
+    llvm::stable_sort(new_tokens_, [](const auto& a, const auto& b) {
+      return a.first < b.first;
+    });
+
     ValueStore<TokenIndex, TokenInfo> old_tokens =
         std::exchange(buffer_->token_infos_, {});
     int new_size = old_tokens.size() + new_tokens_.size();
@@ -1734,18 +1735,17 @@ class Lexer::ErrorRecoveryBuffer {
   bool any_error_tokens_ = false;
 };
 
-// Issue an UnmatchedOpening diagnostic.
-static auto DiagnoseUnmatchedOpening(Diagnostics::Emitter<TokenIndex>& emitter,
-                                     TokenIndex opening_token) -> void {
-  CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
-                    "opening symbol without a corresponding closing symbol");
-  emitter.Emit(opening_token, UnmatchedOpening);
-}
-
 // If brackets didn't pair or nest properly, find a set of places to insert
 // brackets to fix the nesting, issue suitable diagnostics, and update the
 // token list to describe the fixes.
 auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
+  CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
+                    "opening symbol without a corresponding closing symbol");
+  CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
+                    "closing symbol without a corresponding opening symbol");
+  CARBON_DIAGNOSTIC(PossiblyMissingBracketHere, Note,
+                    "possibly missing `{0}` here", Lex::TokenKind);
+
   ErrorRecoveryBuffer fixes(&buffer_);
 
   llvm::SmallVector<MismatchedBracketToken> input_tokens;
@@ -1783,15 +1783,14 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
       case TokenKind::Interface:
       case TokenKind::Impl:
       case TokenKind::Choice:
-      case TokenKind::Var:
-      case TokenKind::Let:
       case TokenKind::If:
-      case TokenKind::Else:
       case TokenKind::While:
       case TokenKind::For:
       case TokenKind::Match:
-      case TokenKind::Return:
         bracket_kind = BracketTokenKind::StatementIntroducer;
+        break;
+      case TokenKind::FileEnd:
+        bracket_kind = BracketTokenKind::FileEnd;
         break;
       default:
         bracket_kind = BracketTokenKind::Other;
@@ -1799,7 +1798,8 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
     }
 
     auto line = buffer_.GetLine(token);
-    int32_t line_indent = buffer_.GetIndentColumnNumber(line);
+    int32_t line_indent =
+        (kind == TokenKind::FileEnd) ? 0 : buffer_.GetIndentColumnNumber(line);
     int32_t column = buffer_.GetColumnNumber(token);
 
     auto next_it = std::next(it);
@@ -1844,21 +1844,21 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
   auto corrections = FixMismatchedBrackets(input_tokens);
 
   for (const auto& correction : corrections) {
-    if (correction.diagnostic_kind == BracketDiagnosticKind::UnmatchedOpening) {
-      DiagnoseUnmatchedOpening(token_emitter_,
-                               correction.diagnostic_token_index);
-    } else {
-      CARBON_DIAGNOSTIC(
-          UnmatchedClosing, Error,
-          "closing symbol without a corresponding opening symbol");
-      token_emitter_.Emit(correction.diagnostic_token_index, UnmatchedClosing);
-    }
+    auto builder = token_emitter_.Build(
+        correction.diagnostic_token_index,
+        correction.diagnostic_kind == BracketDiagnosticKind::UnmatchedOpening
+            ? UnmatchedOpening
+            : UnmatchedClosing);
 
     if (correction.fix_action == BracketFixAction::InsertBefore) {
+      builder.Note(correction.fix_token_index, PossiblyMissingBracketHere,
+                   correction.fix_token_kind);
       fixes.InsertBefore(correction.fix_token_index, correction.fix_token_kind);
     } else if (correction.fix_action == BracketFixAction::ReplaceWithError) {
       fixes.ReplaceWithError(correction.fix_token_index);
     }
+
+    builder.Emit();
   }
 
   buffer_.has_errors_ = true;

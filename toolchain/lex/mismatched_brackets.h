@@ -24,6 +24,7 @@ enum class BracketTokenKind : int8_t {
   CloseSquareBracket,
   Semi,
   StatementIntroducer,  // fn, class, var, if, while, etc.
+  FileEnd,
   Other,
 };
 

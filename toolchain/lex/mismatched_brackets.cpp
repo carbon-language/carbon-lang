@@ -6,6 +6,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
+#include <optional>
 #include <queue>
 
 #include "common/check.h"
@@ -33,12 +35,12 @@ constexpr int32_t CostSemiInParen = 100;
 constexpr int32_t CostScopeInParen = 100;
 
 constexpr int32_t CostInsertScopeBraceAfterHeader = 25;
-constexpr int32_t CostInsertScopeBraceIndented = 40;
+constexpr int32_t CostInsertScopeBraceIndented = 120;
 constexpr int32_t CostInsertScopeBraceTopLevel = 200;
 constexpr int32_t CostInsertCloseBrace = 25;
-constexpr int32_t CostInsertParenOrBracket = 160;
-constexpr int32_t CostReplaceWithError = 150;
-constexpr int32_t CostUnclosedOpenerAtEnd = 150;
+constexpr int32_t CostInsertParenOrBracket = 20;
+constexpr int32_t CostReplaceWithError = 50;
+constexpr int32_t CostUnclosedOpenerAtEnd = 25;
 
 // Internal representation of an item after clean subrange collapsing.
 struct Item {
@@ -48,7 +50,6 @@ struct Item {
   bool contains_scope_brace = false;
   MismatchedBracketToken token;
   int32_t effective_header_indent = 0;
-  bool is_continuation = false;
   bool is_first_on_line = false;
   bool follows_statement_header = false;
 };
@@ -62,6 +63,87 @@ struct OpenBracketInfo {
   bool is_synthetic;
   TokenIndex insertion_token_index = TokenIndex::None;
 };
+
+// Computes the associated line indentation for a token by scanning backwards,
+// skipping matched parens/brackets, looking for a statement introducer.
+auto ComputeAssociatedLineIndent(llvm::ArrayRef<MismatchedBracketToken> tokens,
+                                 llvm::ArrayRef<int32_t> match_partner,
+                                 int32_t token_index) -> int32_t {
+  if (token_index < 0 || token_index >= static_cast<int32_t>(tokens.size())) {
+    return 0;
+  }
+  if (tokens[token_index].kind == BracketTokenKind::FileEnd) {
+    return 0;
+  }
+
+  int32_t earliest_indent = tokens[token_index].line_indent;
+
+  for (int32_t j = token_index - 1; j >= 0; --j) {
+    auto kind = tokens[j].kind;
+
+    if (IsClosingBracket(kind) && match_partner[j] != -1 &&
+        match_partner[j] < j) {
+      j = match_partner[j];
+      earliest_indent = tokens[j].line_indent;
+      continue;
+    }
+
+    if (kind == BracketTokenKind::Semi ||
+        kind == BracketTokenKind::OpenCurlyBrace ||
+        kind == BracketTokenKind::CloseCurlyBrace || IsOpeningBracket(kind)) {
+      break;
+    }
+
+    earliest_indent = tokens[j].line_indent;
+
+    if (kind == BracketTokenKind::StatementIntroducer) {
+      return tokens[j].line_indent;
+    }
+  }
+
+  return earliest_indent;
+}
+
+// Determines if a token directly follows a statement/declaration header.
+auto ComputeFollowsStatementHeader(
+    llvm::ArrayRef<MismatchedBracketToken> tokens,
+    llvm::ArrayRef<int32_t> match_partner, int32_t token_index) -> bool {
+  if (token_index <= 0 || token_index >= static_cast<int32_t>(tokens.size())) {
+    return false;
+  }
+  auto curr_kind = tokens[token_index].kind;
+  if (curr_kind == BracketTokenKind::Semi ||
+      curr_kind == BracketTokenKind::OpenCurlyBrace ||
+      curr_kind == BracketTokenKind::CloseCurlyBrace ||
+      curr_kind == BracketTokenKind::FileEnd) {
+    return false;
+  }
+
+  bool saw_closing_bracket = false;
+
+  for (int32_t j = token_index - 1; j >= 0; --j) {
+    auto kind = tokens[j].kind;
+
+    if (IsClosingBracket(kind) && match_partner[j] != -1 &&
+        match_partner[j] < j) {
+      saw_closing_bracket = true;
+      j = match_partner[j];
+      continue;
+    }
+
+    if (kind == BracketTokenKind::Semi ||
+        kind == BracketTokenKind::OpenCurlyBrace ||
+        kind == BracketTokenKind::CloseCurlyBrace || IsOpeningBracket(kind)) {
+      return false;
+    }
+
+    if (kind == BracketTokenKind::StatementIntroducer) {
+      return saw_closing_bracket;
+    }
+  }
+
+  return false;
+}
 
 // Compactly pack item index and stack into a 64-bit integer for DenseMap.
 static auto PackState(int32_t item_index, llvm::ArrayRef<OpenBracketInfo> stack)
@@ -102,10 +184,28 @@ auto SolveNaive(llvm::ArrayRef<Item> items,
       continue;
     }
     auto kind = item.token.kind;
+    if (kind == BracketTokenKind::Semi ||
+        kind == BracketTokenKind::StatementIntroducer ||
+        kind == BracketTokenKind::OpenCurlyBrace ||
+        kind == BracketTokenKind::FileEnd) {
+      while (!open_stack.empty() &&
+             (open_stack.back().token.kind == BracketTokenKind::OpenParen ||
+              open_stack.back().token.kind ==
+                  BracketTokenKind::OpenSquareBracket)) {
+        auto open = open_stack.pop_back_val();
+        corrections.push_back({
+            .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
+            .diagnostic_token_index = open.token.token_index,
+            .fix_action = BracketFixAction::InsertBefore,
+            .fix_token_index = item.token.token_index,
+            .fix_token_kind = ToTokenKind(MatchingClosingKind(open.token.kind)),
+        });
+      }
+    }
+
     if (IsOpeningBracket(kind)) {
       open_stack.push_back(item);
     } else if (IsClosingBracket(kind)) {
-      // Look back at most 16 unclosed opening brackets on the stack.
       auto search_range = llvm::reverse(open_stack);
       size_t lookback = 0;
       auto match_it = search_range.end();
@@ -140,37 +240,22 @@ auto SolveNaive(llvm::ArrayRef<Item> items,
       }
     }
   }
-  for (const auto& open : open_stack) {
+
+  TokenIndex eof_index =
+      items.empty() ? TokenIndex::None : items.back().token.token_index;
+  for (const auto& open : llvm::reverse(open_stack)) {
     corrections.push_back({
         .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
         .diagnostic_token_index = open.token.token_index,
-        .fix_action = BracketFixAction::ReplaceWithError,
-        .fix_token_index = open.token.token_index,
-        .fix_token_kind = ToTokenKind(open.token.kind),
+        .fix_action = BracketFixAction::InsertBefore,
+        .fix_token_index = eof_index,
+        .fix_token_kind = ToTokenKind(MatchingClosingKind(open.token.kind)),
     });
   }
 }
 
-// Reconstructs corrections from the goal node back to root.
-auto ReconstructPath(llvm::ArrayRef<SearchNode> nodes, int32_t goal_index,
-                     llvm::SmallVectorImpl<BracketCorrection>& corrections)
-    -> void {
-  llvm::SmallVector<int32_t> path;
-  for (int32_t curr = goal_index; curr != -1;
-       curr = nodes[curr].parent_node_index) {
-    path.push_back(curr);
-  }
-  std::reverse(path.begin(), path.end());
-
-  for (int32_t idx : path) {
-    const auto& node = nodes[idx];
-    if (node.has_correction) {
-      corrections.push_back(node.correction);
-    }
-  }
-}
-
-// Solve a damaged region using Dijkstra shortest-path search.
+// Solve a damaged region using Dijkstra shortest-path search with tie
+// detection.
 auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                           llvm::SmallVectorImpl<BracketCorrection>& corrections)
     -> void {
@@ -182,13 +267,11 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
   llvm::SmallVector<SearchNode> nodes;
   nodes.reserve(MaxSearchExpansions);
 
-  // Min-heap ordered by cost.
   using QueueElem = std::pair<int32_t /*cost*/, int32_t /*node_index*/>;
   std::priority_queue<QueueElem, std::vector<QueueElem>, std::greater<>> queue;
 
   llvm::DenseMap<uint64_t, int32_t> visited_min_cost;
 
-  // Root node at item 0 with empty stack.
   nodes.push_back(SearchNode{
       .item_index = 0,
       .stack = {},
@@ -199,15 +282,25 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
   visited_min_cost[PackState(0, {})] = 0;
 
   int32_t expansion_count = 0;
-  int32_t best_goal_node = -1;
+  int32_t min_goal_cost = std::numeric_limits<int32_t>::max();
+  llvm::SmallVector<int32_t> goal_node_indices;
+  TokenIndex eof_index =
+      items.empty() ? TokenIndex::None : items.back().token.token_index;
 
   while (!queue.empty()) {
     auto [cost, node_idx] = queue.top();
     queue.pop();
 
+    if (cost > min_goal_cost) {
+      break;
+    }
+
     if (++expansion_count > MaxSearchExpansions) {
-      SolveNaive(items, corrections);
-      return;
+      if (goal_node_indices.empty()) {
+        SolveNaive(items, corrections);
+        return;
+      }
+      break;
     }
 
     const SearchNode current = nodes[node_idx];
@@ -217,11 +310,16 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
       continue;
     }
 
-    // Check if we reached the end of items in this region.
     if (current.item_index == static_cast<int32_t>(items.size())) {
       if (current.stack.empty()) {
-        best_goal_node = node_idx;
-        break;
+        if (cost < min_goal_cost) {
+          min_goal_cost = cost;
+          goal_node_indices.clear();
+        }
+        if (cost == min_goal_cost) {
+          goal_node_indices.push_back(node_idx);
+        }
+        continue;
       }
 
       int32_t finish_cost = current.cost;
@@ -239,17 +337,24 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                       .diagnostic_kind =
                           BracketDiagnosticKind::UnmatchedOpening,
                       .diagnostic_token_index = entry.token_index,
-                      .fix_action = BracketFixAction::ReplaceWithError,
-                      .fix_token_index = entry.token_index,
-                      .fix_token_kind = ToTokenKind(entry.kind)},
+                      .fix_action = BracketFixAction::InsertBefore,
+                      .fix_token_index = eof_index,
+                      .fix_token_kind =
+                          ToTokenKind(MatchingClosingKind(entry.kind))},
               .has_correction = true,
           });
           parent = static_cast<int32_t>(nodes.size() - 1);
         }
       }
 
-      best_goal_node = parent;
-      break;
+      if (finish_cost < min_goal_cost) {
+        min_goal_cost = finish_cost;
+        goal_node_indices.clear();
+      }
+      if (finish_cost == min_goal_cost) {
+        goal_node_indices.push_back(parent);
+      }
+      continue;
     }
 
     const auto& item = items[current.item_index];
@@ -259,13 +364,18 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                            int32_t add_cost, BracketCorrection correction = {},
                            bool has_correction = false) {
       int32_t next_cost = current.cost + add_cost;
+      if (next_cost > min_goal_cost) {
+        return;
+      }
       uint64_t key = PackState(next_item_idx, next_stack);
 
       auto it = visited_min_cost.find(key);
-      if (it != visited_min_cost.end() && it->second <= next_cost) {
+      if (it != visited_min_cost.end() && it->second < next_cost) {
         return;
       }
-      visited_min_cost[key] = next_cost;
+      if (it == visited_min_cost.end() || next_cost < it->second) {
+        visited_min_cost[key] = next_cost;
+      }
 
       auto new_idx = static_cast<int32_t>(nodes.size());
       nodes.push_back(SearchNode{
@@ -295,7 +405,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
 
     if (kind == BracketTokenKind::Semi ||
         kind == BracketTokenKind::StatementIntroducer ||
-        kind == BracketTokenKind::Other) {
+        kind == BracketTokenKind::FileEnd || kind == BracketTokenKind::Other) {
       int32_t penalty = CostBaselineMatch;
       if (kind == BracketTokenKind::Semi && !current.stack.empty() &&
           (current.stack.back().kind == BracketTokenKind::OpenParen ||
@@ -313,9 +423,36 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
       // Transition 1: Normal advance past non-bracket token.
       try_enqueue(current.item_index + 1, current.stack, penalty);
 
+      // Transition 1b: Synthesize missing `)` or `]` before Semi, Introducer,
+      // or FileEnd.
+      if (!current.stack.empty() &&
+          (current.stack.back().kind == BracketTokenKind::OpenParen ||
+           current.stack.back().kind == BracketTokenKind::OpenSquareBracket) &&
+          (kind == BracketTokenKind::Semi ||
+           kind == BracketTokenKind::StatementIntroducer ||
+           kind == BracketTokenKind::FileEnd)) {
+        auto next_stack = current.stack;
+        auto popped = next_stack.pop_back_val();
+        BracketCorrection correction;
+        bool has_corr = false;
+        if (!popped.is_synthetic) {
+          correction = BracketCorrection{
+              .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
+              .diagnostic_token_index = popped.token_index,
+              .fix_action = BracketFixAction::InsertBefore,
+              .fix_token_index = item.token.token_index,
+              .fix_token_kind = ToTokenKind(MatchingClosingKind(popped.kind)),
+          };
+          has_corr = true;
+        }
+        try_enqueue(current.item_index, std::move(next_stack),
+                    CostInsertParenOrBracket, correction, has_corr);
+      }
+
       // Transition 2: Candidate synthetic insertion of `{` before this token.
       if ((item.is_first_on_line || item.follows_statement_header ||
            kind == BracketTokenKind::StatementIntroducer) &&
+          kind != BracketTokenKind::FileEnd &&
           current.stack.size() < MaxSearchStackDepth) {
         int32_t insert_cost = CostInsertScopeBraceTopLevel;
         if (item.follows_statement_header) {
@@ -339,7 +476,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
       // Transition 3: Candidate synthetic insertion of `}` before this token.
       if (!current.stack.empty() &&
           current.stack.back().kind == BracketTokenKind::OpenCurlyBrace &&
-          item.is_first_on_line &&
+          (item.is_first_on_line || kind == BracketTokenKind::FileEnd) &&
           item.token.line_indent <=
               current.stack.back().effective_header_indent) {
         auto next_stack = current.stack;
@@ -363,6 +500,28 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
     }
 
     if (IsOpeningBracket(kind)) {
+      // Transition C0: Synthesize missing `)` or `]` before `{`.
+      if (kind == BracketTokenKind::OpenCurlyBrace && !current.stack.empty() &&
+          (current.stack.back().kind == BracketTokenKind::OpenParen ||
+           current.stack.back().kind == BracketTokenKind::OpenSquareBracket)) {
+        auto next_stack = current.stack;
+        auto popped = next_stack.pop_back_val();
+        BracketCorrection correction;
+        bool has_corr = false;
+        if (!popped.is_synthetic) {
+          correction = BracketCorrection{
+              .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
+              .diagnostic_token_index = popped.token_index,
+              .fix_action = BracketFixAction::InsertBefore,
+              .fix_token_index = item.token.token_index,
+              .fix_token_kind = ToTokenKind(MatchingClosingKind(popped.kind)),
+          };
+          has_corr = true;
+        }
+        try_enqueue(current.item_index, std::move(next_stack),
+                    CostInsertParenOrBracket, correction, has_corr);
+      }
+
       // Transition C1: Push opening bracket to stack.
       if (current.stack.size() < MaxSearchStackDepth) {
         auto next_stack = current.stack;
@@ -479,10 +638,73 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
     }
   }
 
-  if (best_goal_node != -1) {
-    ReconstructPath(nodes, best_goal_node, corrections);
-  } else {
+  if (goal_node_indices.empty()) {
     SolveNaive(items, corrections);
+    return;
+  }
+
+  // Reconstruct all optimal paths to detect ties.
+  llvm::SmallVector<llvm::SmallVector<BracketCorrection>> all_paths;
+  for (int32_t goal_idx : goal_node_indices) {
+    llvm::SmallVector<BracketCorrection> path;
+    for (int32_t curr = goal_idx; curr != -1;
+         curr = nodes[curr].parent_node_index) {
+      if (nodes[curr].has_correction) {
+        path.push_back(nodes[curr].correction);
+      }
+    }
+    std::reverse(path.begin(), path.end());
+    all_paths.push_back(std::move(path));
+  }
+
+  llvm::SmallVector<TokenIndex> diag_tokens;
+  for (const auto& path : all_paths) {
+    for (const auto& corr : path) {
+      if (std::find(diag_tokens.begin(), diag_tokens.end(),
+                    corr.diagnostic_token_index) == diag_tokens.end()) {
+        diag_tokens.push_back(corr.diagnostic_token_index);
+      }
+    }
+  }
+
+  for (TokenIndex diag_token : diag_tokens) {
+    std::optional<BracketCorrection> first_corr;
+    bool is_tied = false;
+
+    for (const auto& path : all_paths) {
+      const auto* it =
+          std::find_if(path.begin(), path.end(), [&](const auto& c) {
+            return c.diagnostic_token_index == diag_token;
+          });
+      if (it == path.end()) {
+        is_tied = true;
+        break;
+      }
+      if (!first_corr) {
+        first_corr = *it;
+      } else {
+        if (first_corr->diagnostic_kind != it->diagnostic_kind ||
+            first_corr->fix_action != it->fix_action ||
+            first_corr->fix_token_index != it->fix_token_index ||
+            first_corr->fix_token_kind != it->fix_token_kind) {
+          is_tied = true;
+          break;
+        }
+      }
+    }
+
+    if (!is_tied && first_corr) {
+      corrections.push_back(*first_corr);
+    } else if (first_corr) {
+      // In the case of a tie, give no suggestion note.
+      corrections.push_back(BracketCorrection{
+          .diagnostic_kind = first_corr->diagnostic_kind,
+          .diagnostic_token_index = diag_token,
+          .fix_action = BracketFixAction::ReplaceWithError,
+          .fix_token_index = diag_token,
+          .fix_token_kind = first_corr->fix_token_kind,
+      });
+    }
   }
 }
 
@@ -497,41 +719,7 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
 
   auto num_tokens = static_cast<int32_t>(tokens.size());
 
-  // 1. Pre-pass: Compute statement introducers and effective header
-  // indentations.
-  llvm::SmallVector<int32_t> effective_header_indent(num_tokens, 0);
-  llvm::SmallVector<bool> is_continuation(num_tokens, false);
-  llvm::SmallVector<bool> is_first_on_line(num_tokens, false);
-  llvm::SmallVector<bool> follows_statement_header(num_tokens, false);
-
-  int32_t stmt_start_line = tokens[0].line;
-  int32_t stmt_start_indent = tokens[0].line_indent;
-  bool prev_was_header_close = false;
-
-  for (int32_t i = 0; i < num_tokens; ++i) {
-    is_first_on_line[i] = (i == 0 || tokens[i].line != tokens[i - 1].line);
-    follows_statement_header[i] = prev_was_header_close;
-
-    if (i > 0) {
-      auto prev_kind = tokens[i - 1].kind;
-      if (prev_kind == BracketTokenKind::Semi ||
-          prev_kind == BracketTokenKind::CloseCurlyBrace ||
-          prev_kind == BracketTokenKind::OpenCurlyBrace ||
-          (tokens[i].kind == BracketTokenKind::StatementIntroducer &&
-           tokens[i].line != tokens[i - 1].line)) {
-        stmt_start_line = tokens[i].line;
-        stmt_start_indent = tokens[i].line_indent;
-      }
-    }
-    effective_header_indent[i] = stmt_start_indent;
-    is_continuation[i] = (tokens[i].line != stmt_start_line);
-
-    prev_was_header_close =
-        (tokens[i].kind == BracketTokenKind::CloseParen ||
-         tokens[i].kind == BracketTokenKind::CloseSquareBracket);
-  }
-
-  // 2. Clean subrange collapsing.
+  // 1. Initial pass to find clean matched bracket pairs.
   llvm::SmallVector<int32_t> open_stack;
   llvm::SmallVector<int32_t> match_partner(num_tokens, -1);
   llvm::SmallVector<bool> is_clean_range(num_tokens, false);
@@ -546,36 +734,54 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
         int32_t open_idx = open_stack.pop_back_val();
         match_partner[open_idx] = i;
         match_partner[i] = open_idx;
-
-        bool clean = true;
-        if (tokens[open_idx].kind == BracketTokenKind::OpenCurlyBrace) {
-          if (!tokens[open_idx].is_struct_brace &&
-              tokens[open_idx].line != tokens[i].line &&
-              (!tokens[open_idx].is_at_end_of_line ||
-               effective_header_indent[open_idx] != tokens[i].line_indent)) {
-            clean = false;
-          }
-        } else {
-          // For () and [], check if there are top-level semicolons or scopes.
-          for (int32_t j = open_idx + 1; j < i; ++j) {
-            if (tokens[j].kind == BracketTokenKind::Semi ||
-                tokens[j].kind == BracketTokenKind::OpenCurlyBrace) {
-              clean = false;
-              break;
-            }
-          }
-        }
-
-        if (clean) {
-          is_clean_range[open_idx] = true;
-        }
       } else {
         open_stack.clear();
       }
     }
   }
 
-  // 3. Build item sequence.
+  // 2. Pre-pass: Compute associated indentation, first-on-line, and header
+  // follows using backward scan.
+  llvm::SmallVector<int32_t> effective_header_indent(num_tokens, 0);
+  llvm::SmallVector<bool> is_first_on_line(num_tokens, false);
+  llvm::SmallVector<bool> follows_statement_header(num_tokens, false);
+
+  for (int32_t i = 0; i < num_tokens; ++i) {
+    is_first_on_line[i] = (i == 0 || tokens[i].line != tokens[i - 1].line);
+    effective_header_indent[i] =
+        ComputeAssociatedLineIndent(tokens, match_partner, i);
+    follows_statement_header[i] =
+        ComputeFollowsStatementHeader(tokens, match_partner, i);
+  }
+
+  // 3. Mark clean subranges for collapsing.
+  for (int32_t i = 0; i < num_tokens; ++i) {
+    if (match_partner[i] != -1 && match_partner[i] > i) {
+      int32_t close_idx = match_partner[i];
+      bool clean = true;
+      if (tokens[i].kind == BracketTokenKind::OpenCurlyBrace) {
+        if (!tokens[i].is_struct_brace &&
+            tokens[i].line != tokens[close_idx].line &&
+            (!tokens[i].is_at_end_of_line ||
+             effective_header_indent[i] != tokens[close_idx].line_indent)) {
+          clean = false;
+        }
+      } else {
+        for (int32_t j = i + 1; j < close_idx; ++j) {
+          if (tokens[j].kind == BracketTokenKind::Semi ||
+              tokens[j].kind == BracketTokenKind::OpenCurlyBrace) {
+            clean = false;
+            break;
+          }
+        }
+      }
+      if (clean) {
+        is_clean_range[i] = true;
+      }
+    }
+  }
+
+  // 4. Build item sequence.
   llvm::SmallVector<Item> items;
   for (int32_t i = 0; i < num_tokens;) {
     if (is_clean_range[i] && match_partner[i] != -1) {
@@ -594,7 +800,6 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
           .contains_scope_brace = has_scope,
           .token = tokens[i],
           .effective_header_indent = effective_header_indent[i],
-          .is_continuation = is_continuation[i],
           .is_first_on_line = is_first_on_line[i],
           .follows_statement_header = follows_statement_header[i],
       });
@@ -609,7 +814,6 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
                tokens[i].kind == BracketTokenKind::CloseCurlyBrace),
           .token = tokens[i],
           .effective_header_indent = effective_header_indent[i],
-          .is_continuation = is_continuation[i],
           .is_first_on_line = is_first_on_line[i],
           .follows_statement_header = follows_statement_header[i],
       });
@@ -617,7 +821,7 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
     }
   }
 
-  // 4. Partition items into damaged regions and solve.
+  // 5. Partition items into damaged regions and solve.
   llvm::SmallVector<int32_t> region_boundaries;
   region_boundaries.push_back(0);
 
@@ -633,8 +837,6 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
       }
     }
 
-    // Partition before a top-level statement introducer when stack is empty,
-    // or after a clean top-level block containing scope braces.
     if (region_stack.empty()) {
       if (items[i].is_collapsed_block && items[i].contains_scope_brace) {
         region_boundaries.push_back(i + 1);
@@ -673,6 +875,14 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
       SolveRegionCostBased(slice, corrections);
     }
   }
+
+  llvm::stable_sort(
+      corrections, [](const BracketCorrection& a, const BracketCorrection& b) {
+        if (a.diagnostic_token_index != b.diagnostic_token_index) {
+          return a.diagnostic_token_index < b.diagnostic_token_index;
+        }
+        return a.fix_token_index < b.fix_token_index;
+      });
 
   return corrections;
 }

@@ -12,12 +12,15 @@
 
 // --- fail_file1.carbon
 
-// CHECK:STDERR: fail_file1.carbon:[[@LINE+4]]:24: error: opening symbol without a corresponding closing symbol
+// CHECK:STDERR: fail_file1.carbon:[[@LINE+3]]:24: error: opening symbol without a corresponding closing symbol
 // CHECK:STDERR: fn run(String program) {
 // CHECK:STDERR:                        ^
-// CHECK:STDERR:
 fn run(String program) {
   return True;
+// CHECK:STDERR: fail_file1.carbon:[[@LINE+4]]:1: note: possibly missing `}` here
+// CHECK:STDERR:
+// CHECK:STDERR: ^
+// CHECK:STDERR:
 
 // --- fail_file2.carbon
 
