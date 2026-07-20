@@ -410,15 +410,8 @@ static auto BuildFunctionInfo(Context& context, SemIR::LocId loc_id,
 }
 
 // Create a `clang::FunctionDecl` for the given Carbon function. This
-// can be used to call the Carbon function from C++.
-//
-// The Carbon function's ABI must be compatible with C++, unless it is a
-// generic function.
-//
-// For generic functions, the `clang::FunctionDecl` created here is only used
-// as a function template decl. Only specializations of this function
-// template decl are called directly, so the ABI of the function template
-// decl itself is irrelevant.
+// can be used to call the Carbon function from C++. The Carbon
+// function's ABI must be compatible with C++.
 //
 // The resulting decl is used to allow a generated C++ function to call
 // a generated Carbon function.
@@ -429,6 +422,80 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
   auto clang_loc = GetCppLocation(context, loc_id);
 
   const SemIR::Function& function = context.functions().Get(function_id);
+  FunctionInfo callee(context, function_id, function, nullptr);
+
+  // Get parameters types.
+  llvm::SmallVector<clang::QualType> cpp_param_types;
+  if (callee.self_param) {
+    auto cpp_type = MapToCppThunkParamType(context, callee.self_param->type_id);
+    if (cpp_type.isNull()) {
+      context.TODO(loc_id, "failed to map Carbon self type to C++");
+      return nullptr;
+    }
+    cpp_param_types.push_back(cpp_type);
+  }
+  for (auto param : callee.explicit_params) {
+    auto cpp_type = MapToCppThunkParamType(context, param.type_id);
+    if (cpp_type.isNull()) {
+      context.TODO(loc_id, "failed to map Carbon type to C++");
+      return nullptr;
+    }
+    cpp_param_types.push_back(cpp_type);
+  }
+
+  CARBON_CHECK(function.return_type_inst_id == SemIR::TypeInstId::None);
+  auto cpp_return_type = context.ast_context().VoidTy;
+
+  auto cpp_function_type = context.ast_context().getFunctionType(
+      cpp_return_type, cpp_param_types,
+      clang::FunctionProtoType::ExtProtoInfo());
+
+  auto* identifier_info = GetClangIdentifierInfo(context, function.name_id);
+  CARBON_CHECK(identifier_info, "function with non-identifier name {0}",
+               function.name_id);
+
+  auto* tinfo = context.ast_context().getTrivialTypeSourceInfo(
+      cpp_function_type, clang_loc);
+  clang::FunctionDecl* function_decl = clang::FunctionDecl::Create(
+      context.ast_context(), context.ast_context().getTranslationUnitDecl(),
+      /*StartLoc=*/clang_loc, /*NLoc=*/clang_loc, identifier_info,
+      cpp_function_type, tinfo, clang::SC_Extern);
+
+  // Build parameter decls.
+  llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
+  for (auto [i, type] : llvm::enumerate(cpp_param_types)) {
+    auto* param_tinfo =
+        context.ast_context().getTrivialTypeSourceInfo(type, clang_loc);
+    clang::ParmVarDecl* param = clang::ParmVarDecl::Create(
+        context.ast_context(), function_decl, /*StartLoc=*/clang_loc,
+        /*IdLoc=*/clang_loc, /*Id=*/nullptr, type, param_tinfo, clang::SC_None,
+        /*DefArg=*/nullptr);
+    param_var_decls.push_back(param);
+  }
+  function_decl->setParams(param_var_decls);
+
+  // Mangle the function name and attach it to the `FunctionDecl`.
+  SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
+                   context.mangle_string_fingerprint());
+  std::string mangled_name = m.Mangle(function_id, SemIR::SpecificId::None);
+  function_decl->addAttr(
+      clang::AsmLabelAttr::Create(context.ast_context(), mangled_name));
+
+  return function_decl;
+}
+
+// Create a `clang::FunctionDecl` for the given generic Carbon function.
+//
+// The `clang::FunctionDecl` created here is only used as a function template
+// decl. Only specializations of this function template decl are called
+// directly, so the ABI of this function decl is irrelevant.
+static auto BuildCppFunctionDeclForGenericCarbonFn(
+    Context& context, SemIR::LocId loc_id, SemIR::FunctionId function_id)
+    -> clang::FunctionDecl* {
+  auto clang_loc = GetCppLocation(context, loc_id);
+
+  const SemIR::Function& function = context.functions().Get(function_id);
+  CARBON_CHECK(function.generic_id.has_value());
   FunctionInfo callee(context, function_id, function, nullptr);
 
   // Get parameters types.
@@ -1021,8 +1088,8 @@ static auto ExportGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
       /*RAngleLoc=*/clang_loc,
       /*RequiresClause=*/nullptr);
 
-  auto* function_decl =
-      BuildCppFunctionDeclForCarbonFn(context, loc_id, callee.function_id);
+  auto* function_decl = BuildCppFunctionDeclForGenericCarbonFn(
+      context, loc_id, callee.function_id);
   if (!function_decl) {
     return nullptr;
   }
