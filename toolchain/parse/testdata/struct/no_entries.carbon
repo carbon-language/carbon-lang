@@ -15,7 +15,7 @@ var y: {} = {};
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:           {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:           {kind: 'StructLiteral', text: '}', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 5},

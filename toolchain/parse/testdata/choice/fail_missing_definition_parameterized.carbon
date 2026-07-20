@@ -21,7 +21,7 @@ choice MissingDefinition(T: type);
 // CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'MissingDefinition'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':'},
+// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
 // CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},

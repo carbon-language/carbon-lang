@@ -396,9 +396,9 @@ struct RuntimeBindingName {
   AnyRuntimeBindingPatternName name;
 };
 
-struct BindingPatternStart {
+struct BindingPatternTypeStart {
   static constexpr auto Kind =
-      NodeKind::BindingPatternStart.Define({.child_count = 0});
+      NodeKind::BindingPatternTypeStart.Define({.child_count = 0});
   // This is a virtual token. The `:` or `:?` token is owned by the enclosing
   // BindingPattern node.
   Lex::TokenIndex token;
@@ -413,7 +413,7 @@ struct LetBindingPattern {
   NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
               RefBindingName, RuntimeBindingName>
       name;
-  BindingPatternStartId introducer;
+  BindingPatternTypeStartId introducer;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
@@ -436,7 +436,7 @@ struct VarBindingPattern {
       {.category = NodeCategory::Pattern, .child_count = 3});
 
   AnyRuntimeBindingPatternName name;
-  BindingPatternStartId introducer;
+  BindingPatternTypeStartId introducer;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
@@ -447,7 +447,7 @@ struct FormBindingPattern {
       {.category = NodeCategory::Pattern, .child_count = 3});
 
   AnyRuntimeBindingPatternName name;
-  BindingPatternStartId introducer;
+  BindingPatternTypeStartId introducer;
   Lex::ColonQuestionTokenIndex token;
   AnyExprId type;
 };
@@ -461,9 +461,9 @@ struct TemplateBindingName {
   AnyRuntimeBindingPatternName name;
 };
 
-struct CompileTimeBindingPatternStart {
+struct CompileTimeBindingPatternTypeStart {
   static constexpr auto Kind =
-      NodeKind::CompileTimeBindingPatternStart.Define({.child_count = 0});
+      NodeKind::CompileTimeBindingPatternTypeStart.Define({.child_count = 0});
   // This is a virtual token. The `:` token is owned by the
   // CompileTimeBindingPattern node.
   Lex::ColonTokenIndex token;
@@ -480,7 +480,7 @@ struct CompileTimeBindingPattern {
   NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
               TemplateBindingName>
       name;
-  CompileTimeBindingPatternStartId introducer;
+  CompileTimeBindingPatternTypeStartId introducer;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };

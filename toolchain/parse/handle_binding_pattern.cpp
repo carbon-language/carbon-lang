@@ -163,7 +163,7 @@ auto HandleBindingPattern(Context& context) -> void {
       return;
     }
     on_error(/*expected_name=*/false);
-    // Add a substitute for the identifier name and virtual start nodes.
+    // Add a substitute for the identifier name and virtual type-start nodes.
     context.AddInvalidParse(*context.position());
     context.AddInvalidParse(*context.position());
     context.PushState(state, StateKind::BindingPatternFinishAsRegular);
@@ -258,11 +258,11 @@ auto HandleBindingPattern(Context& context) -> void {
 
   // Add a virtual node before the binding's type expression.
   if (!is_form && resolved_generic) {
-    context.AddLeafNode(NodeKind::CompileTimeBindingPatternStart, state.token,
-                    state.has_error);
+    context.AddLeafNode(NodeKind::CompileTimeBindingPatternTypeStart,
+                        state.token, state.has_error);
   } else {
-    context.AddLeafNode(NodeKind::BindingPatternStart, state.token,
-                    state.has_error);
+    context.AddLeafNode(NodeKind::BindingPatternTypeStart, state.token,
+                        state.has_error);
   }
 
   context.PushState(state);

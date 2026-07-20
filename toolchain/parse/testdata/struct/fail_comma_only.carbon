@@ -19,7 +19,7 @@ var x: {,} = {};
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ',', has_error: yes},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ',', has_error: yes},

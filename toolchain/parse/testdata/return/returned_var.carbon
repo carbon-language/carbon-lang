@@ -26,7 +26,7 @@ fn F() -> str {
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'ReturnedModifier', text: 'returned'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
-// CHECK:STDOUT:             {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'StringTypeLiteral', text: 'str'},
 // CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 5},

@@ -15,7 +15,7 @@ var z: {.n: i32,} = {.n = 4,};
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'z'},
-// CHECK:STDOUT:           {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'StructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'n'},
 // CHECK:STDOUT:               {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},

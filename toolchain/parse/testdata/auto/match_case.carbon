@@ -32,7 +32,7 @@ fn f() -> bool {
 // CHECK:STDOUT:         {kind: 'MatchStatementStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:               {kind: 'MatchCaseIntroducer', text: 'case'},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:                 {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:                 {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:                 {kind: 'AutoTypeLiteral', text: 'auto'},
 // CHECK:STDOUT:               {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:                 {kind: 'MatchCaseGuardIntroducer', text: 'if'},

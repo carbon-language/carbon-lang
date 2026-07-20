@@ -19,7 +19,7 @@ var x: i32 = {.7 = 8};
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},

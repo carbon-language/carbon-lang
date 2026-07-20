@@ -28,7 +28,7 @@ fn foo() {
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'ForHeaderStart', text: '('},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:                 {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:                 {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:                 {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:               {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:             {kind: 'VariablePattern', text: 'var', subtree_size: 5},

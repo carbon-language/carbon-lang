@@ -29,7 +29,7 @@ interface Foo {
 // CHECK:STDOUT:             {kind: 'UnusedPattern', text: 'unused', subtree_size: 3},
 // CHECK:STDOUT:             {kind: 'PatternListComma', text: ','},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:               {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:               {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:               {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 10},

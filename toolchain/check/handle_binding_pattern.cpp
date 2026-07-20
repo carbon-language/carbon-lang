@@ -534,7 +534,7 @@ static auto HandleAnyBindingPattern(
 }
 
 auto HandleParseNode(Context& context,
-                     Parse::BindingPatternStartId /*node_id*/) -> bool {
+                     Parse::BindingPatternTypeStartId /*node_id*/) -> bool {
   context.binding_type_where_counts().push_back(0);
   return true;
 }
@@ -576,7 +576,8 @@ auto HandleParseNode(Context& context, Parse::FormBindingPatternId node_id)
 }
 
 auto HandleParseNode(Context& context,
-                     Parse::CompileTimeBindingPatternStartId node_id) -> bool {
+                     Parse::CompileTimeBindingPatternTypeStartId node_id)
+    -> bool {
   // Make a scope to contain the `.Self` facet value for use in the type of the
   // compile time binding. This is popped when handling the
   // CompileTimeBindingPatternId.
@@ -589,7 +590,7 @@ auto HandleParseNode(Context& context,
 auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternId node_id) -> bool {
   // Pop the `.Self` facet value name introduced by the
-  // CompileTimeBindingPatternStart.
+  // CompileTimeBindingPatternTypeStart.
   context.scope_stack().Pop(/*check_unused=*/true);
   auto where_count = context.binding_type_where_counts().pop_back_val();
 

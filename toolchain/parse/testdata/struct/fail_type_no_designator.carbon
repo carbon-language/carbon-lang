@@ -19,7 +19,7 @@ var x: {i32} = {};
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: 'i32', has_error: yes},
 // CHECK:STDOUT:           {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 3},

@@ -39,7 +39,7 @@ let generic : bool = true;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: ':', has_error: yes},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPatternStart', text: ':', has_error: yes},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPatternTypeStart', text: ':', has_error: yes},
 // CHECK:STDOUT:         {kind: 'BoolTypeLiteral', text: 'bool'},
 // CHECK:STDOUT:       {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},

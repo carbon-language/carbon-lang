@@ -20,7 +20,7 @@ var ref x: i32 = 0;
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:           {kind: 'RefBindingName', text: 'ref', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'BindingPatternStart', text: ':', has_error: yes},
+// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':', has_error: yes},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 6},

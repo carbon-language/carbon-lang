@@ -15,7 +15,7 @@ var x: array(i32, 10);
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'ArrayExprKeyword', text: 'array'},
 // CHECK:STDOUT:             {kind: 'ArrayExprOpenParen', text: '('},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},

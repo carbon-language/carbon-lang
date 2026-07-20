@@ -24,7 +24,7 @@ fn F(p: i32*) {
 // CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'p'},
-// CHECK:STDOUT:             {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 5},

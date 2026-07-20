@@ -27,7 +27,7 @@ impl i32 as Interface {
 // CHECK:STDOUT:           {kind: 'SelfBindingPattern', text: 'self', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:             {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 9},

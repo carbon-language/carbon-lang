@@ -15,7 +15,7 @@ var x: Core.Foo = Core.Bar;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'CoreNameExpr', text: 'Core'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
 // CHECK:STDOUT:           {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},

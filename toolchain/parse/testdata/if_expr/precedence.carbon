@@ -19,7 +19,7 @@ fn F(b: bool) -> bool {
 // CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:             {kind: 'BindingPatternStart', text: ':'},
+// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
 // CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},

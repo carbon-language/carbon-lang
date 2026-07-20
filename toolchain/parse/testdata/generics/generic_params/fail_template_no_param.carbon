@@ -67,7 +67,7 @@ fn E(generic template: i32);
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'E'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'template'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':'},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 6},

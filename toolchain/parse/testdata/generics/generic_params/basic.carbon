@@ -17,7 +17,7 @@ fn foo(generic a: i32);
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':'},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
