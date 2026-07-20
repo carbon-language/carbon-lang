@@ -37,7 +37,7 @@ def _impl(ctx):
         features = clang_cc_toolchain_features(
             target_os = ctx.attr.target_os,
             target_cpu = ctx.attr.target_cpu,
-            project_features = carbon_project_features(clang_version_for_cache),
+            project_features = carbon_project_features(clang_version_for_cache, toolchain_internals = True),
             extra_cpp_features = [libcxx_feature(llvm_bindir, clang_bindir)],
         ),
         action_configs = llvm_action_configs(llvm_bindir, clang_bindir),

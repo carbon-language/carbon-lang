@@ -75,18 +75,14 @@ def _get_pkg_relative_path(file):
 def _toolchain_files_impl(ctx):
     prefix = ctx.attr.prefix
     outputs = []
-    excludes = []
-    for ex in ctx.files.exclude:
-        excludes.append(_get_pkg_relative_path(ex))
     for src in ctx.files.srcs:
         rel_path = _get_pkg_relative_path(src)
-        if not rel_path in excludes:
-            rel_path = _removeprefix_or_fail(rel_path, ctx.attr.remove_prefix)
-            if rel_path in ctx.attr.renames:
-                rel_path = ctx.attr.renames[rel_path]
-            out = ctx.actions.declare_file("{0}{1}".format(prefix, rel_path))
-            ctx.actions.symlink(output = out, target_file = src)
-            outputs.append(out)
+        rel_path = _removeprefix_or_fail(rel_path, ctx.attr.remove_prefix)
+        if rel_path in ctx.attr.renames:
+            rel_path = ctx.attr.renames[rel_path]
+        out = ctx.actions.declare_file("{0}{1}".format(prefix, rel_path))
+        ctx.actions.symlink(output = out, target_file = src)
+        outputs.append(out)
 
     return [DefaultInfo(files = depset(outputs))]
 
@@ -94,7 +90,6 @@ toolchain_files = rule(
     doc = "Arranges files into a directory structure by symlinking them with prefix removal and renames.",
     implementation = _toolchain_files_impl,
     attrs = {
-        "exclude": attr.label_list(allow_files = True),
         "prefix": attr.string(default = ""),
         "remove_prefix": attr.string(default = ""),
         "renames": attr.string_dict(default = {}),

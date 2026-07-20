@@ -250,12 +250,6 @@ toolchain_files(
 toolchain_files(
     name = "libcxxabi_srcs",
     srcs = ["@llvm-project//libcxxabi:libcxxabi_srcs"],
-    exclude = [
-        # We build with -fno-exceptions. So we use cxa_noexception.cpp, and
-        # exclude these.
-        "src/cxa_exception.cpp",
-        "src/cxa_personality.cpp",
-    ],
     prefix = "runtimes/libcxxabi/src/",
     remove_prefix = "src/",
 )

@@ -66,7 +66,6 @@ clang_feature = feature(
             # Flags specific to compiling C++ sources.
             actions = ACTION_NAME_GROUPS.all_cpp_compile_actions,
             flag_groups = [flag_group(flags = [
-                "-fno-exceptions",
                 "-std=c++20",
             ])],
         ),
