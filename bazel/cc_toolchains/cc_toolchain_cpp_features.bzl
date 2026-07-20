@@ -27,7 +27,6 @@ clang_feature = feature(
                 flag_group(flags = [
                     "-no-canonical-prefixes",
                     "-fcolor-diagnostics",
-                    "-fno-exceptions",
                 ]),
                 flag_group(
                     expand_if_available = "sysroot",
@@ -67,6 +66,7 @@ clang_feature = feature(
             # Flags specific to compiling C++ sources.
             actions = ACTION_NAME_GROUPS.all_cpp_compile_actions,
             flag_groups = [flag_group(flags = [
+                "-fno-exceptions",
                 "-std=c++20",
             ])],
         ),
