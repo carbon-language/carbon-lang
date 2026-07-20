@@ -8,3 +8,8 @@ interface IndexWith(SubscriptType: type) {
   let ElementType: type;
   fn At(self, subscript: SubscriptType) -> ElementType;
 }
+
+interface IndirectIndexWith(SubscriptType: type) {
+  let ElementType: type;
+  fn Addr[me: Self](subscript: SubscriptType) -> ElementType*;
+}

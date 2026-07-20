@@ -616,6 +616,31 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
 
+    case SemIR::BuiltinFunctionKind::PointerOffset: {
+      auto* ptr = context.GetValue(arg_ids[0]);
+      llvm::Value* offset;
+      auto offset_type = context.GetTypeIdOfInst(arg_ids[1]);
+      if (offset_type.file->types().GetTypeInstId(offset_type.type_id) ==
+          SemIR::IntLiteralType::TypeInstId) {
+        auto value = context.sem_ir().insts().GetAs<SemIR::IntValue>(
+            context.sem_ir().constant_values().GetConstantInstId(arg_ids[1]));
+        const auto& apint_value = context.sem_ir().ints().Get(value.int_id);
+        offset = llvm::ConstantInt::get(context.llvm_context(), apint_value);
+      } else {
+        offset = context.GetValue(arg_ids[1]);
+      }
+      auto* pointee_type =
+          context.GetType(context.GetTypeIdOfInst(arg_ids[0]).GetPointeeType());
+      if (!pointee_type->isSized()) {
+        context.SetLocal(inst_id, llvm::PoisonValue::get(ptr->getType()));
+        return;
+      }
+      context.SetLocal(inst_id,
+                       context.builder().CreateInBoundsGEP(
+                           pointee_type, ptr, offset, "pointer.offset"));
+      return;
+    }
+
     case SemIR::BuiltinFunctionKind::CppStdInitializerListMake: {
       // TODO: We assume that the initializer list uses an in-place initializing
       // representation, but we don't enforce that when type-checking the

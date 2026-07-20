@@ -80,3 +80,19 @@ impl forall [T: CppRange where .ValueType impls Copy]
     return Optional(ElementType).None();
   }
 }
+
+private fn PointerOffset[T: type](p: T*, offset: u64) -> T* = "pointer.offset";
+
+impl forall [T: Copy & Destroy]
+    Slice(T) as Iterate
+    where .ElementType = T and .CursorType = u64 {
+  fn NewCursor(unused self) -> u64 { return 0; }
+  fn Next(self, cursor: u64*) -> Optional(T) {
+    if (*cursor < self.Size()) {
+      ++*cursor;
+      return Optional(T).Some(*PointerOffset(self.Ptr(), *cursor - 1));
+    } else {
+      return Optional(T).None();
+    }
+  }
+}

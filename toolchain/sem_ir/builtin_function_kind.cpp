@@ -832,6 +832,12 @@ constexpr BuiltinInfo PointerUnsafeConvert = {
     "pointer.unsafe_convert",
     ValidateSignature<auto(PointerTo<AnyType>)->PointerTo<AnyType>>};
 
+// "pointer.offset": adds an integer offset to a pointer.
+constexpr BuiltinInfo PointerOffset = {
+    "pointer.offset",
+    ValidateSignature<auto(TypeParam<0, PointerTo<AnyType>>, AnyInt)
+                          ->TypeParam<0, PointerTo<AnyType>>>};
+
 // "type.and": facet type combination.
 constexpr BuiltinInfo TypeAnd = {"type.and",
                                  ValidateSignature<auto(Type, Type)->Type>};

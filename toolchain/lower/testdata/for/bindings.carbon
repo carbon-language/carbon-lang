@@ -39,6 +39,8 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_COp.1155b488c23b5086:core.Destroy.Core"(ptr)
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_COp.830bbdcf8982aa42:core.Destroy.Core"(ptr)
+// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Main(i32, ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
