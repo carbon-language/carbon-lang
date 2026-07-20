@@ -77,12 +77,14 @@ Carbon::A a;
 ''';
 
 // --- fail_todo_monomorphization_failure.carbon
-// CHECK:STDERR: fail_todo_monomorphization_failure.carbon: error: semantics TODO: `interop with specific class` [SemanticsTodo]
-// CHECK:STDERR:
 library "[[@TEST_NAME]]";
 
 import Cpp;
 
+// CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+4]]:1: error: semantics TODO: `interop with specific class` [SemanticsTodo]
+// CHECK:STDERR: class B(N: i32) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 class B(N: i32) {
   var a: array(i8, N);
 }
@@ -97,7 +99,7 @@ inline Cpp '''
 // CHECK:STDERR: ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+4]]:9: error: no type named 'T' in namespace 'Carbon' [CppInteropParseError]
-// CHECK:STDERR:    24 | Carbon::T t;
+// CHECK:STDERR:    26 | Carbon::T t;
 // CHECK:STDERR:       | ~~~~~~~~^
 // CHECK:STDERR:
 Carbon::T t;

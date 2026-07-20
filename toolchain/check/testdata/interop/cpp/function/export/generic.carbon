@@ -87,11 +87,13 @@ void G() {
 ''';
 
 // --- fail_todo_enclosing_generic.carbon
-// CHECK:STDERR: fail_todo_enclosing_generic.carbon: error: semantics TODO: `interop with specific class` [SemanticsTodo]
-// CHECK:STDERR:
 library "[[@TEST_NAME]]";
 import Cpp;
 
+// CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+4]]:1: error: semantics TODO: `interop with specific class` [SemanticsTodo]
+// CHECK:STDERR: class A(T: type) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 class A(T: type) {
   fn F[U: type](x: T, y: U);
 }
@@ -107,7 +109,7 @@ void f() {
   // CHECK:STDERR:           ^
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+4]]:11: error: no type named 'B' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    24 |   Carbon::B b;
+  // CHECK:STDERR:    26 |   Carbon::B b;
   // CHECK:STDERR:       |   ~~~~~~~~^
   // CHECK:STDERR:
   Carbon::B b;
