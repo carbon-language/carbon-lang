@@ -26,7 +26,12 @@ auto HandleMatchFirst(Context& context) -> void {
 
 auto HandleMatchFirstFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(NodeKind::MatchFirst, context.Consume(), state.has_error);
+  if (auto closing_token = context.ConsumeIf(Lex::TokenKind::CloseCurlyBrace)) {
+    context.AddNode(NodeKind::MatchFirst, *closing_token, state.has_error);
+  } else {
+    // Recover from error by just moving on.
+    context.AddNode(NodeKind::MatchFirst, state.token, state.has_error);
+  }
 }
 
 }  // namespace Carbon::Parse
