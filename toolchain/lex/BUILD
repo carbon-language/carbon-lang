@@ -188,6 +188,7 @@ cc_library(
         ":character_set",
         ":dump",
         ":helpers",
+        ":mismatched_brackets",
         ":numeric_literal",
         ":string_literal",
         ":token_index",
@@ -201,6 +202,44 @@ cc_library(
         "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:format_providers",
         "//toolchain/source:source_buffer",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "mismatched_brackets",
+    srcs = ["mismatched_brackets.cpp"],
+    hdrs = ["mismatched_brackets.h"],
+    deps = [
+        ":token_index",
+        ":token_kind",
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "mismatched_brackets_test",
+    size = "small",
+    srcs = ["mismatched_brackets_test.cpp"],
+    deps = [
+        ":mismatched_brackets",
+        ":token_index",
+        ":token_kind",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_fuzz_test(
+    name = "mismatched_brackets_fuzzer",
+    size = "small",
+    srcs = ["mismatched_brackets_fuzzer.cpp"],
+    corpus = glob(["fuzzer_corpus/mismatched_brackets/*"]),
+    deps = [
+        ":mismatched_brackets",
+        "//common:check",
+        "//testing/fuzzing:libfuzzer_header",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -19,6 +19,7 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
+#include "toolchain/lex/mismatched_brackets.h"
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"
 #include "toolchain/lex/token_index.h"
@@ -1747,73 +1748,124 @@ static auto DiagnoseUnmatchedOpening(Diagnostics::Emitter<TokenIndex>& emitter,
 auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
   ErrorRecoveryBuffer fixes(&buffer_);
 
-  // Look for mismatched brackets and decide where to add tokens to fix them.
-  //
-  // TODO: For now, we use a greedy algorithm for this. We could do better by
-  // taking indentation into account. For example:
-  //
-  //     1  fn F() {
-  //     2    if (thing1)
-  //     3      thing2;
-  //     4    }
-  //     5  }
-  //
-  // Here, we'll match the `{` on line 1 with the `}` on line 4, and then
-  // report that the `}` on line 5 is unmatched. Instead, we should notice that
-  // line 1 matches better with line 5 due to indentation, and work out that
-  // the missing `{` was on line 2, also based on indentation.
-  open_groups_.clear();
-  for (auto token : buffer_.tokens()) {
+  llvm::SmallVector<MismatchedBracketToken> input_tokens;
+  input_tokens.reserve(buffer_.token_infos_.size());
+
+  for (auto it = buffer_.tokens().begin(); it != buffer_.tokens().end(); ++it) {
+    TokenIndex token = *it;
     auto kind = buffer_.GetKind(token);
-    if (kind.is_opening_symbol()) {
-      open_groups_.push_back(token);
-      continue;
+
+    BracketTokenKind bracket_kind;
+    switch (kind) {
+      case TokenKind::OpenParen:
+        bracket_kind = BracketTokenKind::OpenParen;
+        break;
+      case TokenKind::OpenCurlyBrace:
+        bracket_kind = BracketTokenKind::OpenCurlyBrace;
+        break;
+      case TokenKind::OpenSquareBracket:
+        bracket_kind = BracketTokenKind::OpenSquareBracket;
+        break;
+      case TokenKind::CloseParen:
+        bracket_kind = BracketTokenKind::CloseParen;
+        break;
+      case TokenKind::CloseCurlyBrace:
+        bracket_kind = BracketTokenKind::CloseCurlyBrace;
+        break;
+      case TokenKind::CloseSquareBracket:
+        bracket_kind = BracketTokenKind::CloseSquareBracket;
+        break;
+      case TokenKind::Semi:
+        bracket_kind = BracketTokenKind::Semi;
+        break;
+      case TokenKind::Fn:
+      case TokenKind::Class:
+      case TokenKind::Interface:
+      case TokenKind::Impl:
+      case TokenKind::Choice:
+      case TokenKind::Var:
+      case TokenKind::Let:
+      case TokenKind::If:
+      case TokenKind::Else:
+      case TokenKind::While:
+      case TokenKind::For:
+      case TokenKind::Match:
+      case TokenKind::Return:
+        bracket_kind = BracketTokenKind::StatementIntroducer;
+        break;
+      default:
+        bracket_kind = BracketTokenKind::Other;
+        break;
     }
 
-    if (!kind.is_closing_symbol()) {
-      continue;
+    auto line = buffer_.GetLine(token);
+    int32_t line_indent = buffer_.GetIndentColumnNumber(line);
+    int32_t column = buffer_.GetColumnNumber(token);
+
+    auto next_it = std::next(it);
+    bool is_at_end_of_line = (next_it == buffer_.tokens().end() ||
+                              buffer_.GetLine(*next_it) != line);
+
+    bool is_struct_brace = false;
+    if (kind == TokenKind::OpenCurlyBrace) {
+      if (next_it != buffer_.tokens().end()) {
+        auto next_kind = buffer_.GetKind(*next_it);
+        if (next_kind == TokenKind::Period ||
+            next_kind == TokenKind::CloseCurlyBrace) {
+          is_struct_brace = true;
+        } else {
+          auto next2_it = std::next(next_it);
+          if (next2_it != buffer_.tokens().end()) {
+            if (buffer_.GetKind(*next2_it) == TokenKind::Colon) {
+              is_struct_brace = true;
+            } else {
+              auto next3_it = std::next(next2_it);
+              if (next3_it != buffer_.tokens().end() &&
+                  buffer_.GetKind(*next3_it) == TokenKind::Colon) {
+                is_struct_brace = true;
+              }
+            }
+          }
+        }
+      }
     }
 
-    // Find the innermost matching opening symbol.
-    auto opening_it = llvm::find_if(
-        llvm::reverse(open_groups_), [&](TokenIndex opening_token) {
-          return buffer_.token_infos_.Get(opening_token)
-                     .kind()
-                     .closing_symbol() == kind;
-        });
-    if (opening_it == open_groups_.rend()) {
+    input_tokens.push_back(MismatchedBracketToken{
+        .token_index = token,
+        .kind = bracket_kind,
+        .line = line.index,
+        .line_indent = line_indent,
+        .column = column,
+        .is_at_end_of_line = is_at_end_of_line,
+        .is_struct_brace = is_struct_brace,
+    });
+  }
+
+  auto corrections = FixMismatchedBrackets(input_tokens);
+
+  for (const auto& correction : corrections) {
+    if (correction.diagnostic_kind == BracketDiagnosticKind::UnmatchedOpening) {
+      DiagnoseUnmatchedOpening(token_emitter_,
+                               correction.diagnostic_token_index);
+    } else {
       CARBON_DIAGNOSTIC(
           UnmatchedClosing, Error,
           "closing symbol without a corresponding opening symbol");
-      token_emitter_.Emit(token, UnmatchedClosing);
-      fixes.ReplaceWithError(token);
-      continue;
+      token_emitter_.Emit(correction.diagnostic_token_index, UnmatchedClosing);
     }
 
-    // All intermediate open tokens have no matching close token.
-    for (auto it = open_groups_.rbegin(); it != opening_it; ++it) {
-      DiagnoseUnmatchedOpening(token_emitter_, *it);
-
-      // Add a closing bracket for the unclosed group here.
-      //
-      // TODO: Indicate in the diagnostic that we did this, perhaps by
-      // annotating the snippet.
-      auto opening_kind = buffer_.GetKind(*it);
-      fixes.InsertBefore(token, opening_kind.closing_symbol());
+    if (correction.fix_action == BracketFixAction::InsertBefore) {
+      fixes.InsertBefore(correction.fix_token_index, correction.fix_token_kind);
+    } else if (correction.fix_action == BracketFixAction::ReplaceWithError) {
+      fixes.ReplaceWithError(correction.fix_token_index);
     }
-
-    open_groups_.erase(opening_it.base() - 1, open_groups_.end());
   }
 
-  // Diagnose any remaining unmatched opening symbols.
-  for (auto token : open_groups_) {
-    // We don't have a good location to insert a close bracket. Convert the
-    // opening token from a bracket to an error.
-    DiagnoseUnmatchedOpening(token_emitter_, token);
-    fixes.ReplaceWithError(token);
-  }
+  buffer_.has_errors_ = true;
 
-  CARBON_CHECK(!fixes.empty(), "Didn't find anything to fix");
+  if (fixes.empty()) {
+    return;
+  }
   fixes.Apply();
   fixes.FixTokenCrossReferences();
 }

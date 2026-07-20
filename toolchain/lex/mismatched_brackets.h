@@ -1,0 +1,146 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#ifndef CARBON_TOOLCHAIN_LEX_MISMATCHED_BRACKETS_H_
+#define CARBON_TOOLCHAIN_LEX_MISMATCHED_BRACKETS_H_
+
+#include <cstdint>
+
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
+#include "toolchain/lex/token_index.h"
+#include "toolchain/lex/token_kind.h"
+
+namespace Carbon::Lex {
+
+// Represents a category of token significant for bracket matching recovery.
+enum class BracketTokenKind : int8_t {
+  OpenParen,
+  CloseParen,
+  OpenCurlyBrace,
+  CloseCurlyBrace,
+  OpenSquareBracket,
+  CloseSquareBracket,
+  Semi,
+  StatementIntroducer,  // fn, class, var, if, while, etc.
+  Other,
+};
+
+// Returns true if the token kind is an opening bracket.
+constexpr auto IsOpeningBracket(BracketTokenKind kind) -> bool {
+  return kind == BracketTokenKind::OpenParen ||
+         kind == BracketTokenKind::OpenCurlyBrace ||
+         kind == BracketTokenKind::OpenSquareBracket;
+}
+
+// Returns true if the token kind is a closing bracket.
+constexpr auto IsClosingBracket(BracketTokenKind kind) -> bool {
+  return kind == BracketTokenKind::CloseParen ||
+         kind == BracketTokenKind::CloseCurlyBrace ||
+         kind == BracketTokenKind::CloseSquareBracket;
+}
+
+// Returns the matching closing bracket kind for an opening bracket.
+constexpr auto MatchingClosingKind(BracketTokenKind kind) -> BracketTokenKind {
+  switch (kind) {
+    case BracketTokenKind::OpenParen:
+      return BracketTokenKind::CloseParen;
+    case BracketTokenKind::OpenCurlyBrace:
+      return BracketTokenKind::CloseCurlyBrace;
+    case BracketTokenKind::OpenSquareBracket:
+      return BracketTokenKind::CloseSquareBracket;
+    default:
+      return BracketTokenKind::Other;
+  }
+}
+
+// Returns the matching opening bracket kind for a closing bracket.
+constexpr auto MatchingOpeningKind(BracketTokenKind kind) -> BracketTokenKind {
+  switch (kind) {
+    case BracketTokenKind::CloseParen:
+      return BracketTokenKind::OpenParen;
+    case BracketTokenKind::CloseCurlyBrace:
+      return BracketTokenKind::OpenCurlyBrace;
+    case BracketTokenKind::CloseSquareBracket:
+      return BracketTokenKind::OpenSquareBracket;
+    default:
+      return BracketTokenKind::Other;
+  }
+}
+
+// Converts a BracketTokenKind to standard TokenKind.
+constexpr auto ToTokenKind(BracketTokenKind kind) -> TokenKind {
+  switch (kind) {
+    case BracketTokenKind::OpenParen:
+      return TokenKind::OpenParen;
+    case BracketTokenKind::CloseParen:
+      return TokenKind::CloseParen;
+    case BracketTokenKind::OpenCurlyBrace:
+      return TokenKind::OpenCurlyBrace;
+    case BracketTokenKind::CloseCurlyBrace:
+      return TokenKind::CloseCurlyBrace;
+    case BracketTokenKind::OpenSquareBracket:
+      return TokenKind::OpenSquareBracket;
+    case BracketTokenKind::CloseSquareBracket:
+      return TokenKind::CloseSquareBracket;
+    case BracketTokenKind::Semi:
+      return TokenKind::Semi;
+    default:
+      return TokenKind::Error;
+  }
+}
+
+// Lightweight token description passed into the bracket matching algorithm.
+struct MismatchedBracketToken {
+  TokenIndex token_index = TokenIndex::None;
+  BracketTokenKind kind;
+  int32_t line;
+  int32_t line_indent;
+  int32_t column;
+
+  // Whether this token is the last non-comment token on its line.
+  bool is_at_end_of_line = false;
+
+  // For OpenCurlyBrace, whether it has struct-like cues (e.g. followed by '.',
+  // '}', or ':').
+  bool is_struct_brace = false;
+};
+
+// An action to fix mismatched brackets in the token stream.
+enum class BracketFixAction : int8_t {
+  // Insert a missing bracket before the specified token.
+  InsertBefore,
+
+  // Replace an unmatched bracket with an error token.
+  ReplaceWithError,
+};
+
+// A diagnostic to issue for an unmatched or repaired bracket.
+enum class BracketDiagnosticKind : int8_t {
+  UnmatchedOpening,
+  UnmatchedClosing,
+};
+
+// Represents a single correction made to recover from a mismatched bracket,
+// pairing the diagnostic to report with the token-stream fix to apply.
+struct BracketCorrection {
+  // The diagnostic to report for this bracket error.
+  BracketDiagnosticKind diagnostic_kind;
+  TokenIndex diagnostic_token_index = TokenIndex::None;
+
+  // The fix action to apply to the token stream.
+  BracketFixAction fix_action;
+  TokenIndex fix_token_index = TokenIndex::None;
+  TokenKind fix_token_kind;
+};
+
+// Analyzes the input token stream, finds the optimal set of bracket insertions
+// and error replacements based on indentation and structural cues, and returns
+// the corresponding list of corrections.
+auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
+    -> llvm::SmallVector<BracketCorrection>;
+
+}  // namespace Carbon::Lex
+
+#endif  // CARBON_TOOLCHAIN_LEX_MISMATCHED_BRACKETS_H_
