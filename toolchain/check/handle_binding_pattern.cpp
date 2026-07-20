@@ -195,17 +195,20 @@ static auto FindInvalidWhere(Context& context, SemIR::InstId first_inst_id)
   return SemIR::LocId::None;
 }
 
+// Either the node kind of the pattern type's start node, or the type of Self
+// for a `self` binding with an omitted type.
+using TypeStartOrSelfType = std::variant<Parse::NodeKind, SemIR::InstId>;
+
 // Handle the type position of a binding pattern. For a `self` binding with an
 // omitted type, `self_type_inst_id` is the synthesized `Self` type expression
 // and there is no type expression on the node stack to pop.
-static auto HandleAnyBindingPatternType(Context& context,
-                                        Parse::NodeId binding_node_id,
-                                        Parse::NodeKind node_kind,
-                                        SemIR::InstId self_type_inst_id,
-                                        bool is_generic, int where_count)
+static auto HandleAnyBindingPatternType(
+    Context& context, Parse::NodeId binding_node_id, Parse::NodeKind node_kind,
+    TypeStartOrSelfType type_start_or_self_type, bool is_generic)
     -> BindingPatternTypeInfo {
-  if (self_type_inst_id.has_value()) {
-    auto as_type = ExprAsType(context, binding_node_id, self_type_inst_id);
+  if (auto* self_type_inst_id =
+          std::get_if<SemIR::InstId>(&type_start_or_self_type)) {
+    auto as_type = ExprAsType(context, binding_node_id, *self_type_inst_id);
     return {.node_id = binding_node_id,
             .inst_id = as_type.inst_id,
             .type_component_id = as_type.type_id};
@@ -234,7 +237,32 @@ static auto HandleAnyBindingPatternType(Context& context,
     }
   }
 
-  if (where_count) {
+  // Determine how many `where` expressions are present in the binding's type.
+  auto before_where_count = 0;
+  switch (std::get<Parse::NodeKind>(type_start_or_self_type)) {
+    case Parse::NodeKind::BindingPatternTypeStart:
+      before_where_count = context.node_stack()
+                               .Pop<Parse::NodeKind::BindingPatternTypeStart>()
+                               .index;
+      break;
+    case Parse::NodeKind::CompileTimeBindingPatternTypeStart:
+      before_where_count =
+          context.node_stack()
+              .Pop<Parse::NodeKind::CompileTimeBindingPatternTypeStart>()
+              .index;
+      break;
+    default:
+      CARBON_FATAL("unexpected node kind {0}",
+                   std::get<Parse::NodeKind>(type_start_or_self_type));
+  }
+  auto where_count = context.binding_type_where_count() - before_where_count;
+  // Drop the `where` count back to where it was when the binding started. This
+  // avoids counting the `where` expressions in this type as also being part of
+  // an enclosing binding's type.
+  context.binding_type_where_count() = before_where_count;
+  --context.binding_check_count();
+
+  if (where_count > 0) {
     if (auto where_loc_id = FindInvalidWhere(context, original_inst_id);
         where_loc_id.has_value()) {
       if (context.constant_values().Get(original_inst_id) !=
@@ -265,13 +293,13 @@ static auto HandleAnyBindingPatternType(Context& context,
 }
 
 // TODO: make this function shorter by factoring pieces out.
-static auto HandleAnyBindingPattern(
-    Context& context, Parse::NodeId node_id, Parse::NodeKind node_kind,
-    int where_count, SemIR::InstId self_type_inst_id = SemIR::InstId::None)
+static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
+                                    Parse::NodeKind node_kind,
+                                    TypeStartOrSelfType type_start_or_self_type)
     -> bool {
   bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern;
   auto type_expr = HandleAnyBindingPatternType(
-      context, node_id, node_kind, self_type_inst_id, is_generic, where_count);
+      context, node_id, node_kind, type_start_or_self_type, is_generic);
 
   SemIR::ExprRegionId type_expr_region_id =
       ConsumeExprRegionForPattern(context, type_expr.inst_id);
@@ -534,17 +562,19 @@ static auto HandleAnyBindingPattern(
   return true;
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::BindingPatternTypeStartId /*node_id*/) -> bool {
-  context.binding_type_where_counts().push_back(0);
+auto HandleParseNode(Context& context, Parse::BindingPatternTypeStartId node_id)
+    -> bool {
+  ++context.binding_check_count();
+  context.node_stack().Push(
+      node_id, SemIR::ElementIndex(context.binding_type_where_count()));
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::LetBindingPatternId node_id)
     -> bool {
-  auto where_count = context.binding_type_where_counts().pop_back_val();
-  return HandleAnyBindingPattern(
-      context, node_id, Parse::NodeKind::LetBindingPattern, where_count);
+  return HandleAnyBindingPattern(context, node_id,
+                                 Parse::NodeKind::LetBindingPattern,
+                                 Parse::NodeKind::BindingPatternTypeStart);
 }
 
 auto HandleParseNode(Context& context, Parse::SelfBindingPatternId node_id)
@@ -557,23 +587,22 @@ auto HandleParseNode(Context& context, Parse::SelfBindingPatternId node_id)
   auto self_type_inst_id = BuildNameRef(
       context, node_id, SemIR::NameId::SelfType,
       self_type.scope_result.target_inst_id(), self_type.specific_id);
-  return HandleAnyBindingPattern(context, node_id,
-                                 Parse::NodeKind::LetBindingPattern,
-                                 /*where_count=*/0, self_type_inst_id);
+  return HandleAnyBindingPattern(
+      context, node_id, Parse::NodeKind::LetBindingPattern, self_type_inst_id);
 }
 
 auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
     -> bool {
-  auto where_count = context.binding_type_where_counts().pop_back_val();
-  return HandleAnyBindingPattern(
-      context, node_id, Parse::NodeKind::VarBindingPattern, where_count);
+  return HandleAnyBindingPattern(context, node_id,
+                                 Parse::NodeKind::VarBindingPattern,
+                                 Parse::NodeKind::BindingPatternTypeStart);
 }
 
 auto HandleParseNode(Context& context, Parse::FormBindingPatternId node_id)
     -> bool {
-  auto where_count = context.binding_type_where_counts().pop_back_val();
-  return HandleAnyBindingPattern(
-      context, node_id, Parse::NodeKind::FormBindingPattern, where_count);
+  return HandleAnyBindingPattern(context, node_id,
+                                 Parse::NodeKind::FormBindingPattern,
+                                 Parse::NodeKind::BindingPatternTypeStart);
 }
 
 auto HandleParseNode(Context& context,
@@ -584,7 +613,9 @@ auto HandleParseNode(Context& context,
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
   MakePeriodSelfFacetValue(context, node_id, GetEmptyFacetType(context));
-  context.binding_type_where_counts().push_back(0);
+  ++context.binding_check_count();
+  context.node_stack().Push(
+      node_id, SemIR::ElementIndex(context.binding_type_where_count()));
   return true;
 }
 
@@ -593,7 +624,6 @@ auto HandleParseNode(Context& context,
   // Pop the `.Self` facet value name introduced by the
   // CompileTimeBindingPatternTypeStart.
   context.scope_stack().Pop(/*check_unused=*/true);
-  auto where_count = context.binding_type_where_counts().pop_back_val();
 
   auto node_kind = Parse::NodeKind::CompileTimeBindingPattern;
   const DeclIntroducerState& introducer =
@@ -618,7 +648,9 @@ auto HandleParseNode(Context& context,
     }
   }
 
-  return HandleAnyBindingPattern(context, node_id, node_kind, where_count);
+  return HandleAnyBindingPattern(
+      context, node_id, node_kind,
+      Parse::NodeKind::CompileTimeBindingPatternTypeStart);
 }
 
 auto HandleParseNode(Context& context,

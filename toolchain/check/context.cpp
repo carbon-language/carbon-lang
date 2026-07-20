@@ -74,7 +74,9 @@ auto Context::VerifyOnFinish() const -> void {
   vtable_stack_.VerifyOnFinish();
   region_stack_.VerifyOnFinish();
   CARBON_CHECK(impl_lookup_stack_.empty());
-  CARBON_CHECK(binding_type_where_counts_.empty());
+  CARBON_CHECK(binding_check_count_ == 0, "{0}", binding_check_count_);
+  CARBON_CHECK(binding_type_where_count_ == 0, "{0}",
+               binding_type_where_count_);
   CARBON_CHECK(return_form_expr_ == std::nullopt);
 
 #ifndef NDEBUG
