@@ -9,8 +9,8 @@
 
 #include "common/map.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
-#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {

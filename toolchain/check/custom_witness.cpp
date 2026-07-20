@@ -188,8 +188,9 @@ static auto CanDestroyType(
   // For facet values, look if the FacetType provides the same.
   if (auto facet_type =
           context.types().TryGetAs<SemIR::FacetType>(inst.type_id())) {
-    const auto& info = context.facet_types().Get(facet_type->facet_type_id);
-    for (auto interface : info.extend_constraints) {
+    const auto& declared_facet_type =
+        context.declared_facet_types().Get(facet_type->declared_facet_type_id);
+    for (auto interface : declared_facet_type.extend_constraints) {
       if (interface.interface_id == destroy_interface_id) {
         return DestroyFormat::Trivial;
       }
