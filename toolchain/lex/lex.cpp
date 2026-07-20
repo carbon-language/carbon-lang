@@ -1631,33 +1631,21 @@ class Lexer::ErrorRecoveryBuffer {
   explicit ErrorRecoveryBuffer(TokenizedBuffer* buffer) : buffer_(buffer) {}
 
   auto empty() const -> bool {
-    return new_tokens_.empty() && !any_error_tokens_;
+    return insertions_.empty() && !any_error_tokens_;
   }
 
-  // Insert a recovery token of kind `kind` before `insert_before`. Note that we
-  // currently require insertions to be specified in source order, but this
-  // restriction would be easy to relax.
+  // Insert a recovery token of kind `kind` before `insert_before`. Multiple
+  // insertions before the same token are applied in reverse of the order they
+  // were requested (LIFO).
   auto InsertBefore(TokenIndex insert_before, TokenKind kind) -> void {
-    CARBON_CHECK(insert_before.index > 0,
-                 "Cannot insert before the start of file token.");
-    CARBON_CHECK(
-        insert_before.index < static_cast<int>(buffer_->token_infos_.size()),
-        "Cannot insert after the end of file token.");
+    AddInsertion(insert_before, kind, /*is_after=*/false);
+  }
 
-    // If the `insert_before` token has leading whitespace, mark the
-    // inserted token as also having leading whitespace. This avoids changing
-    // whether the prior tokens had leading or trailing whitespace when
-    // inserting.
-    bool insert_leading_space = buffer_->HasLeadingWhitespace(insert_before);
-
-    // Find the end of the token before the target token, and add the new token
-    // there.
-    TokenIndex insert_after(insert_before.index - 1);
-    const auto& prev_info = buffer_->token_infos_.Get(insert_after);
-    int32_t byte_offset =
-        prev_info.byte_offset() + buffer_->GetTokenText(insert_after).size();
-    new_tokens_.push_back(
-        {insert_before, TokenInfo(kind, insert_leading_space, byte_offset)});
+  // Insert a recovery token of kind `kind` after `insert_after`. Multiple
+  // insertions after the same token are applied in the order they were
+  // requested (FIFO).
+  auto InsertAfter(TokenIndex insert_after, TokenKind kind) -> void {
+    AddInsertion(insert_after, kind, /*is_after=*/true);
   }
 
   // Replace the given token with an error token. We do this immediately,
@@ -1671,30 +1659,67 @@ class Lexer::ErrorRecoveryBuffer {
 
   // Merge the recovery tokens into the token list of the tokenized buffer.
   auto Apply() -> void {
-    llvm::stable_sort(new_tokens_, [](const auto& a, const auto& b) {
-      return a.first < b.first;
+    llvm::stable_sort(insertions_, [](const Insertion& a, const Insertion& b) {
+      TokenIndex a_target =
+          a.is_after ? TokenIndex(a.anchor.index + 1) : a.anchor;
+      TokenIndex b_target =
+          b.is_after ? TokenIndex(b.anchor.index + 1) : b.anchor;
+      if (a_target != b_target) {
+        return a_target < b_target;
+      }
+      if (a.is_after != b.is_after) {
+        return a.is_after;
+      }
+      bool a_is_closing = a.info.kind().is_closing_symbol();
+      bool b_is_closing = b.info.kind().is_closing_symbol();
+      if (a_is_closing != b_is_closing) {
+        return a_is_closing;
+      }
+      if (a.is_after) {
+        return a.order < b.order;
+      } else {
+        return a.order > b.order;
+      }
     });
 
     ValueStore<TokenIndex, TokenInfo> old_tokens =
         std::exchange(buffer_->token_infos_, {});
-    int new_size = old_tokens.size() + new_tokens_.size();
+    int new_size = old_tokens.size() + insertions_.size();
     buffer_->token_infos_.Reserve(new_size);
     buffer_->recovery_tokens_.resize(new_size);
 
-    auto old_tokens_range = old_tokens.enumerate();
-    auto old_tokens_it = old_tokens_range.begin();
-    for (auto [next_offset, info] : new_tokens_) {
-      for (; old_tokens_it->first < next_offset; ++old_tokens_it) {
-        buffer_->token_infos_.Add(old_tokens_it->second);
+    size_t ins_idx = 0;
+    for (TokenIndex old_idx(0);
+         old_idx.index < static_cast<int>(old_tokens.size()); ++old_idx.index) {
+      bool has_insertions =
+          (ins_idx < insertions_.size() &&
+           (insertions_[ins_idx].is_after
+                ? TokenIndex(insertions_[ins_idx].anchor.index + 1)
+                : insertions_[ins_idx].anchor) == old_idx);
+
+      if (has_insertions) {
+        bool orig_leading_space = old_tokens.Get(old_idx).has_leading_space();
+        bool is_first = true;
+        while (ins_idx < insertions_.size()) {
+          TokenIndex target =
+              insertions_[ins_idx].is_after
+                  ? TokenIndex(insertions_[ins_idx].anchor.index + 1)
+                  : insertions_[ins_idx].anchor;
+          if (target != old_idx) {
+            break;
+          }
+          TokenInfo info = insertions_[ins_idx].info.WithLeadingSpace(
+              is_first ? orig_leading_space : false);
+          is_first = false;
+          TokenIndex added = buffer_->AddToken(info);
+          buffer_->recovery_tokens_.set(added.index);
+          ++ins_idx;
+        }
+        buffer_->token_infos_.Add(
+            old_tokens.Get(old_idx).WithLeadingSpace(false));
+      } else {
+        buffer_->token_infos_.Add(old_tokens.Get(old_idx));
       }
-      // Flag the token just added at its index in the merged list, which
-      // shifts past `next_offset` (the pre-insertion index) once any earlier
-      // insertion has been applied.
-      TokenIndex added = buffer_->AddToken(info);
-      buffer_->recovery_tokens_.set(added.index);
-    }
-    for (; old_tokens_it != old_tokens_range.end(); ++old_tokens_it) {
-      buffer_->token_infos_.Add(old_tokens_it->second);
     }
   }
 
@@ -1724,14 +1749,52 @@ class Lexer::ErrorRecoveryBuffer {
   }
 
  private:
+  struct Insertion {
+    TokenIndex anchor;
+    bool is_after;
+    int order;
+    TokenInfo info;
+  };
+
+  auto AddInsertion(TokenIndex anchor, TokenKind kind, bool is_after) -> void {
+    CARBON_CHECK(anchor.index >= 0, "Invalid anchor token index.");
+    CARBON_CHECK(anchor.index < static_cast<int>(buffer_->token_infos_.size()),
+                 "Cannot insert past the end of file token.");
+    if (!is_after) {
+      CARBON_CHECK(anchor.index > 0,
+                   "Cannot insert before the start of file token.");
+    }
+
+    bool insert_leading_space = false;
+    int32_t byte_offset = 0;
+
+    if (!is_after) {
+      insert_leading_space = buffer_->HasLeadingWhitespace(anchor);
+      TokenIndex insert_after_idx(anchor.index - 1);
+      const auto& prev_info = buffer_->token_infos_.Get(insert_after_idx);
+      byte_offset = prev_info.byte_offset() +
+                    buffer_->GetTokenText(insert_after_idx).size();
+    } else {
+      const auto& anchor_info = buffer_->token_infos_.Get(anchor);
+      byte_offset =
+          anchor_info.byte_offset() + buffer_->GetTokenText(anchor).size();
+      TokenIndex next_tok(anchor.index + 1);
+      if (next_tok.index < static_cast<int>(buffer_->token_infos_.size())) {
+        insert_leading_space = buffer_->HasLeadingWhitespace(next_tok);
+      }
+    }
+
+    int order = static_cast<int>(insertions_.size());
+    insertions_.push_back({
+        .anchor = anchor,
+        .is_after = is_after,
+        .order = order,
+        .info = TokenInfo(kind, insert_leading_space, byte_offset),
+    });
+  }
+
   TokenizedBuffer* buffer_;
-
-  // A list of tokens to insert into the token stream to fix mismatched
-  // brackets. The first element in each pair is the original token index to
-  // insert the new token before.
-  llvm::SmallVector<std::pair<TokenIndex, TokenInfo>> new_tokens_;
-
-  // Whether we have changed any tokens into error tokens.
+  llvm::SmallVector<Insertion> insertions_;
   bool any_error_tokens_ = false;
 };
 
@@ -1851,9 +1914,17 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
             : UnmatchedClosing);
 
     if (correction.fix_action == BracketFixAction::InsertBefore) {
-      builder.Note(correction.fix_token_index, PossiblyMissingBracketHere,
-                   correction.fix_token_kind);
+      if (!correction.is_tied) {
+        builder.Note(correction.fix_token_index, PossiblyMissingBracketHere,
+                     correction.fix_token_kind);
+      }
       fixes.InsertBefore(correction.fix_token_index, correction.fix_token_kind);
+    } else if (correction.fix_action == BracketFixAction::InsertAfter) {
+      if (!correction.is_tied) {
+        builder.Note(correction.fix_token_index, PossiblyMissingBracketHere,
+                     correction.fix_token_kind);
+      }
+      fixes.InsertAfter(correction.fix_token_index, correction.fix_token_kind);
     } else if (correction.fix_action == BracketFixAction::ReplaceWithError) {
       fixes.ReplaceWithError(correction.fix_token_index);
     }

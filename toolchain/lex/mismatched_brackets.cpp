@@ -34,12 +34,13 @@ constexpr int32_t CostDedentInsideScope = 40;
 constexpr int32_t CostSemiInParen = 100;
 constexpr int32_t CostScopeInParen = 100;
 
-constexpr int32_t CostInsertScopeBraceAfterHeader = 25;
+constexpr int32_t CostInsertScopeBraceAfterHeader = 15;
 constexpr int32_t CostInsertScopeBraceIndented = 120;
 constexpr int32_t CostInsertScopeBraceTopLevel = 200;
 constexpr int32_t CostInsertCloseBrace = 25;
-constexpr int32_t CostInsertParenOrBracket = 20;
-constexpr int32_t CostReplaceWithError = 50;
+constexpr int32_t CostInsertParenOrBracket = 40;
+constexpr int32_t CostReplaceUnmatchedClosing = 30;
+constexpr int32_t CostReplaceUnmatchedOpening = 100;
 constexpr int32_t CostUnclosedOpenerAtEnd = 25;
 
 // Internal representation of an item after clean subrange collapsing.
@@ -176,7 +177,7 @@ struct SearchNode {
 };
 
 // Solve a damaged region using the simple greedy fallback algorithm.
-auto SolveNaive(llvm::ArrayRef<Item> items,
+auto SolveNaive(llvm::ArrayRef<Item> items, TokenIndex region_end_token,
                 llvm::SmallVectorImpl<BracketCorrection>& corrections) -> void {
   llvm::SmallVector<Item> open_stack;
   for (const auto& item : items) {
@@ -241,14 +242,12 @@ auto SolveNaive(llvm::ArrayRef<Item> items,
     }
   }
 
-  TokenIndex eof_index =
-      items.empty() ? TokenIndex::None : items.back().token.token_index;
   for (const auto& open : llvm::reverse(open_stack)) {
     corrections.push_back({
         .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
         .diagnostic_token_index = open.token.token_index,
         .fix_action = BracketFixAction::InsertBefore,
-        .fix_token_index = eof_index,
+        .fix_token_index = region_end_token,
         .fix_token_kind = ToTokenKind(MatchingClosingKind(open.token.kind)),
     });
   }
@@ -257,10 +256,11 @@ auto SolveNaive(llvm::ArrayRef<Item> items,
 // Solve a damaged region using Dijkstra shortest-path search with tie
 // detection.
 auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
+                          TokenIndex region_end_token,
                           llvm::SmallVectorImpl<BracketCorrection>& corrections)
     -> void {
   if (items.size() > static_cast<size_t>(MaxRegionItemsForSearch)) {
-    SolveNaive(items, corrections);
+    SolveNaive(items, region_end_token, corrections);
     return;
   }
 
@@ -284,8 +284,6 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
   int32_t expansion_count = 0;
   int32_t min_goal_cost = std::numeric_limits<int32_t>::max();
   llvm::SmallVector<int32_t> goal_node_indices;
-  TokenIndex eof_index =
-      items.empty() ? TokenIndex::None : items.back().token.token_index;
 
   while (!queue.empty()) {
     auto [cost, node_idx] = queue.top();
@@ -297,7 +295,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
 
     if (++expansion_count > MaxSearchExpansions) {
       if (goal_node_indices.empty()) {
-        SolveNaive(items, corrections);
+        SolveNaive(items, region_end_token, corrections);
         return;
       }
       break;
@@ -338,7 +336,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                           BracketDiagnosticKind::UnmatchedOpening,
                       .diagnostic_token_index = entry.token_index,
                       .fix_action = BracketFixAction::InsertBefore,
-                      .fix_token_index = eof_index,
+                      .fix_token_index = region_end_token,
                       .fix_token_kind =
                           ToTokenKind(MatchingClosingKind(entry.kind))},
               .has_correction = true,
@@ -546,7 +544,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
 
       // Transition C2: Replace unmatched opening bracket with Error.
       try_enqueue(
-          current.item_index + 1, current.stack, CostReplaceWithError,
+          current.item_index + 1, current.stack, CostReplaceUnmatchedOpening,
           BracketCorrection{
               .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
               .diagnostic_token_index = item.token.token_index,
@@ -626,7 +624,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
 
       // Transition D4: Replace unmatched closing bracket with Error.
       try_enqueue(
-          current.item_index + 1, current.stack, CostReplaceWithError,
+          current.item_index + 1, current.stack, CostReplaceUnmatchedClosing,
           BracketCorrection{
               .diagnostic_kind = BracketDiagnosticKind::UnmatchedClosing,
               .diagnostic_token_index = item.token.token_index,
@@ -639,11 +637,21 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
   }
 
   if (goal_node_indices.empty()) {
-    SolveNaive(items, corrections);
+    SolveNaive(items, region_end_token, corrections);
     return;
   }
 
-  // Reconstruct all optimal paths to detect ties.
+  // 1. Reconstruct baseline path from the first optimal goal.
+  llvm::SmallVector<BracketCorrection> baseline_path;
+  for (int32_t curr = goal_node_indices.front(); curr != -1;
+       curr = nodes[curr].parent_node_index) {
+    if (nodes[curr].has_correction) {
+      baseline_path.push_back(nodes[curr].correction);
+    }
+  }
+  std::reverse(baseline_path.begin(), baseline_path.end());
+
+  // 2. Reconstruct all optimal paths to detect ties.
   llvm::SmallVector<llvm::SmallVector<BracketCorrection>> all_paths;
   for (int32_t goal_idx : goal_node_indices) {
     llvm::SmallVector<BracketCorrection> path;
@@ -657,54 +665,24 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
     all_paths.push_back(std::move(path));
   }
 
-  llvm::SmallVector<TokenIndex> diag_tokens;
-  for (const auto& path : all_paths) {
-    for (const auto& corr : path) {
-      if (std::find(diag_tokens.begin(), diag_tokens.end(),
-                    corr.diagnostic_token_index) == diag_tokens.end()) {
-        diag_tokens.push_back(corr.diagnostic_token_index);
-      }
-    }
-  }
-
-  for (TokenIndex diag_token : diag_tokens) {
-    std::optional<BracketCorrection> first_corr;
+  // 3. Mark corrections as tied if optimal paths disagree.
+  for (auto& corr : baseline_path) {
     bool is_tied = false;
-
     for (const auto& path : all_paths) {
       const auto* it =
           std::find_if(path.begin(), path.end(), [&](const auto& c) {
-            return c.diagnostic_token_index == diag_token;
+            return c.diagnostic_token_index == corr.diagnostic_token_index;
           });
-      if (it == path.end()) {
+      if (it == path.end() || it->diagnostic_kind != corr.diagnostic_kind ||
+          it->fix_action != corr.fix_action ||
+          it->fix_token_index != corr.fix_token_index ||
+          it->fix_token_kind != corr.fix_token_kind) {
         is_tied = true;
         break;
       }
-      if (!first_corr) {
-        first_corr = *it;
-      } else {
-        if (first_corr->diagnostic_kind != it->diagnostic_kind ||
-            first_corr->fix_action != it->fix_action ||
-            first_corr->fix_token_index != it->fix_token_index ||
-            first_corr->fix_token_kind != it->fix_token_kind) {
-          is_tied = true;
-          break;
-        }
-      }
     }
-
-    if (!is_tied && first_corr) {
-      corrections.push_back(*first_corr);
-    } else if (first_corr) {
-      // In the case of a tie, give no suggestion note.
-      corrections.push_back(BracketCorrection{
-          .diagnostic_kind = first_corr->diagnostic_kind,
-          .diagnostic_token_index = diag_token,
-          .fix_action = BracketFixAction::ReplaceWithError,
-          .fix_token_index = diag_token,
-          .fix_token_kind = first_corr->fix_token_kind,
-      });
-    }
+    corr.is_tied = is_tied;
+    corrections.push_back(corr);
   }
 }
 
@@ -871,8 +849,11 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
     }
 
     if (has_error) {
+      TokenIndex region_end_token = (end < static_cast<int32_t>(items.size()))
+                                        ? items[end].token.token_index
+                                        : tokens.back().token_index;
       auto slice = llvm::ArrayRef<Item>(items).slice(start, end - start);
-      SolveRegionCostBased(slice, corrections);
+      SolveRegionCostBased(slice, region_end_token, corrections);
     }
   }
 

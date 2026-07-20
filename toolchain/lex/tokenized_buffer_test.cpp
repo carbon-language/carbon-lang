@@ -683,13 +683,17 @@ TEST_F(LexerTest, Whitespace) {
                   // (
                   true,
                   // inserted )
-                  true,
+                  false,
                   // }
                   true,
-                  // error {
+                  // {
                   false,
-                  // error (
-                  true,
+                  // (
+                  false,
+                  // inserted )
+                  false,
+                  // inserted }
+                  false,
                   // EOF
                   false};
   int pos = 0;

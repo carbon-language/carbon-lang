@@ -113,6 +113,9 @@ enum class BracketFixAction : int8_t {
   // Insert a missing bracket before the specified token.
   InsertBefore,
 
+  // Insert a missing bracket after the specified token.
+  InsertAfter,
+
   // Replace an unmatched bracket with an error token.
   ReplaceWithError,
 };
@@ -134,6 +137,9 @@ struct BracketCorrection {
   BracketFixAction fix_action;
   TokenIndex fix_token_index = TokenIndex::None;
   TokenKind fix_token_kind;
+
+  // Set to true if multiple optimal paths tie/disagree on the repair.
+  bool is_tied = false;
 };
 
 // Analyzes the input token stream, finds the optimal set of bracket insertions

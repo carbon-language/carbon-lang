@@ -231,6 +231,28 @@ cc_test(
     ],
 )
 
+cc_binary(
+    name = "mismatched_brackets_eval",
+    testonly = 1,
+    srcs = ["mismatched_brackets_eval.cpp"],
+    deps = [
+        ":lex",
+        ":mismatched_brackets",
+        ":token_kind",
+        ":tokenized_buffer",
+        "//common:bazel_working_dir",
+        "//common:check",
+        "//common:command_line",
+        "//common:init_llvm",
+        "//common:ostream",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/diagnostics:emitter",
+        "//toolchain/diagnostics:null_diagnostics",
+        "//toolchain/source:source_buffer",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_fuzz_test(
     name = "mismatched_brackets_fuzzer",
     size = "small",
