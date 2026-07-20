@@ -45,15 +45,15 @@ class Class {
 // CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: fn Class.F(unused self) {}
 // CHECK:STDERR:                   ^~~~
-// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE-8]]:8: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE-8]]:12: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:   fn F(self: Self);
-// CHECK:STDERR:        ^~~~~
+// CHECK:STDERR:            ^
 // CHECK:STDERR:
 fn Class.F(unused self) {}
 
-// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE+7]]:23: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: fn Class.G(unused self: Self) {}
-// CHECK:STDERR:                   ^~~~~
+// CHECK:STDERR:                       ^
 // CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE-16]]:8: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:   fn G(self);
 // CHECK:STDERR:        ^~~~

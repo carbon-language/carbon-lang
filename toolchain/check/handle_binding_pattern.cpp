@@ -534,14 +534,14 @@ static auto HandleAnyBindingPattern(
 }
 
 auto HandleParseNode(Context& context,
-                     Parse::LetBindingPatternStartId /*node_id*/) -> bool {
-  context.binding_type_where_count() = 0;
+                     Parse::BindingPatternStartId /*node_id*/) -> bool {
+  context.binding_type_where_counts().push_back(0);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::LetBindingPatternId node_id)
     -> bool {
-  auto where_count = context.binding_type_where_count();
+  auto where_count = context.binding_type_where_counts().pop_back_val();
   return HandleAnyBindingPattern(
       context, node_id, Parse::NodeKind::LetBindingPattern, where_count);
 }
@@ -561,28 +561,16 @@ auto HandleParseNode(Context& context, Parse::SelfBindingPatternId node_id)
                                  /*where_count=*/0, self_type_inst_id);
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::VarBindingPatternStartId /*node_id*/) -> bool {
-  context.binding_type_where_count() = 0;
-  return true;
-}
-
 auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
     -> bool {
-  auto where_count = context.binding_type_where_count();
+  auto where_count = context.binding_type_where_counts().pop_back_val();
   return HandleAnyBindingPattern(
       context, node_id, Parse::NodeKind::VarBindingPattern, where_count);
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::FormBindingPatternStartId /*node_id*/) -> bool {
-  context.binding_type_where_count() = 0;
-  return true;
-}
-
 auto HandleParseNode(Context& context, Parse::FormBindingPatternId node_id)
     -> bool {
-  auto where_count = context.binding_type_where_count();
+  auto where_count = context.binding_type_where_counts().pop_back_val();
   return HandleAnyBindingPattern(
       context, node_id, Parse::NodeKind::FormBindingPattern, where_count);
 }
@@ -594,7 +582,7 @@ auto HandleParseNode(Context& context,
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
   MakePeriodSelfFacetValue(context, node_id, GetEmptyFacetType(context));
-  context.binding_type_where_count() = 0;
+  context.binding_type_where_counts().push_back(0);
   return true;
 }
 
@@ -603,7 +591,7 @@ auto HandleParseNode(Context& context,
   // Pop the `.Self` facet value name introduced by the
   // CompileTimeBindingPatternStart.
   context.scope_stack().Pop(/*check_unused=*/true);
-  auto where_count = context.binding_type_where_count();
+  auto where_count = context.binding_type_where_counts().pop_back_val();
 
   auto node_kind = Parse::NodeKind::CompileTimeBindingPattern;
   const DeclIntroducerState& introducer =

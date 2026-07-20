@@ -18,8 +18,8 @@ var x: {."hello": i32, .y: i32} = {};
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'VarBindingPatternStart', text: ':', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:           {kind: 'BindingPatternStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'StructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: '"hello"', has_error: yes},
 // CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},

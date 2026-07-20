@@ -18,8 +18,8 @@ fn F() -> if true then i32 else i32* {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'n'},
-// CHECK:STDOUT:           {kind: 'VarBindingPatternStart', text: ':', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'n'},
+// CHECK:STDOUT:           {kind: 'BindingPatternStart', text: ':'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},

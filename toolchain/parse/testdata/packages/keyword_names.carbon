@@ -20,8 +20,8 @@ var x: Cpp;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'VarBindingPatternStart', text: ':', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:           {kind: 'BindingPatternStart', text: ':'},
 // CHECK:STDOUT:           {kind: 'CoreNameExpr', text: 'Core'},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},
@@ -32,8 +32,8 @@ var x: Cpp;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'VarBindingPatternStart', text: ':', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:           {kind: 'BindingPatternStart', text: ':'},
 // CHECK:STDOUT:           {kind: 'CppNameExpr', text: 'Cpp'},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},

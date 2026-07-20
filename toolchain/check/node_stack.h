@@ -488,6 +488,7 @@ class NodeStack {
       case Parse::NodeKind::ArrayExprOpenParen:
       case Parse::NodeKind::BaseColon:
       case Parse::NodeKind::BaseIntroducer:
+      case Parse::NodeKind::BindingPatternStart:
       case Parse::NodeKind::BreakStatementStart:
       case Parse::NodeKind::ChoiceAlternativeListComma:
       case Parse::NodeKind::CodeBlock:
@@ -501,7 +502,6 @@ class NodeStack {
       case Parse::NodeKind::ForHeader:
       case Parse::NodeKind::ForIn:
       case Parse::NodeKind::Forall:
-      case Parse::NodeKind::FormBindingPatternStart:
       case Parse::NodeKind::FormLiteralKeyword:
       case Parse::NodeKind::FormLiteralOpenParen:
       case Parse::NodeKind::IdentifierNameQualifierWithParams:
@@ -511,7 +511,6 @@ class NodeStack {
       case Parse::NodeKind::ImportIntroducer:
       case Parse::NodeKind::IndexExprStart:
       case Parse::NodeKind::InvalidParseStart:
-      case Parse::NodeKind::LetBindingPatternStart:
       case Parse::NodeKind::LibraryIntroducer:
       case Parse::NodeKind::LibrarySpecifier:
       case Parse::NodeKind::InlineImportSpecifier:
@@ -544,7 +543,6 @@ class NodeStack {
       case Parse::NodeKind::TerseBodyArrow:
       case Parse::NodeKind::TupleLiteralComma:
       case Parse::NodeKind::WhileCondition:
-      case Parse::NodeKind::VarBindingPatternStart:
         return Id::Kind::Invalid;
       default:
         // In this case, the kind must be determinable from the category, or we

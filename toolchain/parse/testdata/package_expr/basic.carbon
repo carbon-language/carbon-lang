@@ -14,8 +14,8 @@ var x: package.Foo = package.Bar;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'VarBindingPatternStart', text: ':', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:           {kind: 'BindingPatternStart', text: ':'},
 // CHECK:STDOUT:             {kind: 'PackageExpr', text: 'package'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
 // CHECK:STDOUT:           {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
