@@ -729,8 +729,7 @@ struct FacetType {
        .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
-  // TODO: Rename this to facet_type_info_id.
-  FacetTypeId facet_type_id;
+  DeclaredFacetTypeId declared_facet_type_id;
 };
 
 // A facet value is a general value of type FacetType. This consists of a type
@@ -1833,6 +1832,7 @@ struct SpecificConstant {
   static constexpr auto Kind = InstKind::SpecificConstant.Define<Parse::NodeId>(
       {.ir_name = "specific_constant",
        .expr_category = ComputedExprCategory::SameAsFirstOperand,
+       .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
        .is_lowered = false});
 
   TypeId type_id;

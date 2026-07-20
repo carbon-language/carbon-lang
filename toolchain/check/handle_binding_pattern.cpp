@@ -165,8 +165,9 @@ static auto FindInvalidWhere(Context& context, SemIR::InstId first_inst_id)
     if (auto facet_type =
             context.constant_values().TryGetInstAs<SemIR::FacetType>(
                 const_next_id)) {
-      const auto& info = context.facet_types().Get(facet_type->facet_type_id);
-      for (auto extend : info.extend_constraints) {
+      const auto& decl_facet_type = context.declared_facet_types().Get(
+          facet_type->declared_facet_type_id);
+      for (auto extend : decl_facet_type.extend_constraints) {
         for (auto arg_id : context.inst_blocks().Get(
                  context.specifics().GetArgsOrEmpty(extend.specific_id))) {
           if (FindWhere(context, context.constant_values().Get(arg_id))) {
@@ -174,7 +175,7 @@ static auto FindInvalidWhere(Context& context, SemIR::InstId first_inst_id)
           }
         }
       }
-      for (auto extend : info.extend_named_constraints) {
+      for (auto extend : decl_facet_type.extend_named_constraints) {
         for (auto arg_id : context.inst_blocks().Get(
                  context.specifics().GetArgsOrEmpty(extend.specific_id))) {
           if (FindWhere(context, context.constant_values().Get(arg_id))) {

@@ -134,10 +134,16 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0: %ImplicitAs.assoc_type = assoc_entity element0, @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.decl [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.Destroy = import_ref Core//prelude/parts/destroy, Destroy, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Destroy = imports.%Core.Destroy
 // CHECK:STDOUT:     .ImplicitAs = %ImplicitAs.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.0ff = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %Dest.patt.loc3_26.1: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_26.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {

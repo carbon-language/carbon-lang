@@ -458,13 +458,25 @@ auto CheckParseTrees(
 
     // Add the prelude import. It's added to explicit_import_map so that it can
     // conflict with an explicit import of the prelude.
+    // We add the prelude to every Carbon unit except for the prelude itself.
     if (options.prelude_import &&
-        !(packaging && packaging->names.package_id == PackageNameId::Core)) {
+        (!packaging || packaging->names.package_id != PackageNameId::Core ||
+         packaging->names.library_id == StringLiteralValueId::None ||
+         !unit_info.unit->value_stores->string_literal_values()
+              .Get(packaging->names.library_id)
+              .starts_with("prelude"))) {
       auto prelude_id =
           unit_info.unit->value_stores->string_literal_values().Add("prelude");
+      // Adding the prelude to the non-prelude parts of Core requires different
+      // semantics because it is not valid to mention the name of the package
+      // for a library import from the same package.
+      auto package_id =
+          (packaging && packaging->names.package_id == PackageNameId::Core)
+              ? PackageNameId::None
+              : PackageNameId::Core;
       TrackImport(api_map, &explicit_import_map, unit_info,
                   {.node_id = Parse::NoneNodeId(),
-                   .package_id = PackageNameId::Core,
+                   .package_id = package_id,
                    .library_id = prelude_id},
                   options.fuzzing);
     }

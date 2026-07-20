@@ -228,11 +228,13 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   driver_env.vlog_stream =
       static_cast<llvm::raw_pwrite_stream*>(context.vlog_stream());
 
-  options_ = CompileOptions();
-  options_.codegen_options->target = options_.codegen_options->host;
+  codegen_options_ = CodegenOptions();
+  options_ = CompileOptions(&codegen_options_);
+  codegen_options_.target = codegen_options_.host;
   options_.phase = CompileOptions::Phase::Check;
   options_.prelude_import = context.prelude_import();
   options_.input_filenames.push_back(filename());
+  options_.FixupFlags();
 
   compile_driver_ = std::make_unique<CompileDriver>(&options_);
   auto map_input = [](llvm::StringRef) -> std::string { return ""; };
@@ -240,7 +242,10 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
     context.PublishDiagnostics(consumer.params());
     return;
   }
-  compile_driver_->Compile(driver_env);
+  if (!compile_driver_->Compile(driver_env).success) {
+    context.PublishDiagnostics(consumer.params());
+    return;
+  }
 
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing

@@ -116,7 +116,9 @@ class InProcessCompiler {
 
   auto RunCompile(llvm::StringRef file_name, Phase phase) -> bool {
     if constexpr (L == Lang::Carbon) {
-      return driver_->RunCommand({"compile", PhaseFlag(phase), file_name})
+      return driver_
+          ->RunCommand({"compile", PhaseFlag(phase), "--no-include-carbon-core",
+                        file_name})
           .success;
     }
 
@@ -204,7 +206,8 @@ class SubprocessCompiler {
 
     if constexpr (L == Lang::Carbon) {
       program = carbon_path_;
-      args = {"carbon", "compile", PhaseFlag(phase), file_name};
+      args = {"carbon", "compile", PhaseFlag(phase), "--no-include-carbon-core",
+              file_name};
     } else {
       program = clang_path_;
       args = {"clang++", "--driver-mode=g++"};

@@ -404,9 +404,10 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       }
     }
 
-    auto facet_type_info = context.facet_types().Get(facet_type->facet_type_id);
+    auto declared_facet_type =
+        context.declared_facet_types().Get(facet_type->declared_facet_type_id);
     // Name lookup into "extend" constraints but not "self impls" constraints.
-    for (const auto& extend : facet_type_info.extend_constraints) {
+    for (const auto& extend : declared_facet_type.extend_constraints) {
       auto& interface = context.interfaces().Get(extend.interface_id);
 
       // We need to build the inner interface-with-self specific. To do that
@@ -421,7 +422,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                          .specific_id = interface_with_self_specific_id,
                          .self_const_id = self_type_const_id});
     }
-    for (const auto& extend : facet_type_info.extend_named_constraints) {
+    for (const auto& extend : declared_facet_type.extend_named_constraints) {
       auto& constraint =
           context.named_constraints().Get(extend.named_constraint_id);
 

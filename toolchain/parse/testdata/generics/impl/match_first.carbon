@@ -20,6 +20,14 @@ match_first {}
 // CHECK:STDERR:
 match_first;
 
+// --- fail_eof.carbon
+
+match_first
+// CHECK:STDERR: fail_eof.carbon:[[@LINE+4]]:1: error: expected `{` after `match_first` [ExpectedCurlyBraceAfter]
+// CHECK:STDERR:
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+
 // --- with_impls.carbon
 
 match_first {
@@ -47,7 +55,16 @@ impl forall [T: J] T as Interface {
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'MatchFirstIntroducer', text: 'match_first'},
 // CHECK:STDOUT:       {kind: 'MatchFirstDefinitionStart', text: 'match_first', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'MatchFirst', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'MatchFirst', text: 'match_first', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'EmptyDecl', text: ';'},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_eof.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:         {kind: 'MatchFirstIntroducer', text: 'match_first'},
+// CHECK:STDOUT:       {kind: 'MatchFirstDefinitionStart', text: 'match_first', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'MatchFirst', text: 'match_first', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: with_impls.carbon

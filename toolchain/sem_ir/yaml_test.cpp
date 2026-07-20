@@ -74,7 +74,7 @@ TEST(SemIRTest, Yaml) {
       Pair("specific_interfaces", Yaml::Mapping(SizeIs(0))),
       Pair("struct_type_fields", Yaml::Mapping(SizeIs(1))),
       Pair("types", Yaml::Mapping(Each(type_builtin))),
-      Pair("facet_types", Yaml::Mapping(SizeIs(0))),
+      Pair("declared_facet_types", Yaml::Mapping(SizeIs(0))),
       Pair("insts",
            Yaml::Mapping(AllOf(
                Each(Key(inst_id)),

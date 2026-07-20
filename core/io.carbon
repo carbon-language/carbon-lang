@@ -7,24 +7,15 @@
 
 package Core library "io";
 
-import library "prelude";
-
 // TODO: Support printing other types.
 // TODO: Consider rewriting using native support once library support exists.
 fn Print(x: i32) = "print.int";
 fn PrintChar(x: char) -> i32 = "print.char";
 
-fn PrintStr(msg: str) {
-  let size: i64 = msg.Size() as i64;
-  var i: i64 = 0;
-  while (i < size) {
-    PrintChar(msg[i]);
-    ++i;
-  }
-}
+fn PrintStr(msg: str);
 
 // TODO: Return an `Optional(char)` instead of `i32`.
 fn ReadChar() -> i32 = "read.char";
 
 // TODO: Change this to a global constant once they are fully supported.
-fn EOF() -> i32 { return -1; }
+fn EOF() -> i32;

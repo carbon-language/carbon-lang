@@ -1993,14 +1993,14 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.243: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Optional.0c8, %ImplicitAs.facet.424) [concrete]
 // CHECK:STDOUT:   %.954: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.243, %ImplicitAs.facet.424 [concrete]
 // CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %U.as_type.as.ImplicitAs.impl.Convert.593, @U.as_type.as.ImplicitAs.impl.Convert.2(%OptionalStorage.facet.0d5, %OptionalAs.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc11_14.3 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.9f1 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   %Indirect.cpp_overload_set.type: type = cpp_overload_set_type @Indirect.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Indirect.cpp_overload_set.value: %Indirect.cpp_overload_set.type = cpp_overload_set_value @Indirect.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Indirect__carbon_thunk.type: type = fn_type @Indirect__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Indirect__carbon_thunk: %Indirect__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.a94: ref %S = temporary invalid, %S.val [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc13_65.3 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -2048,6 +2048,7 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.cf7 = impl_witness_table (%Core.import_ref.eb9), @U.as_type.as.ImplicitAs.impl.167 [concrete]
 // CHECK:STDOUT:   %Core.import_ref.017d8: @T.as_type.as.OptionalAs.impl.%T.as_type.as.OptionalAs.impl.Convert.type (%T.as_type.as.OptionalAs.impl.Convert.type.774) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OptionalAs.impl.%T.as_type.as.OptionalAs.impl.Convert (constants.%T.as_type.as.OptionalAs.impl.Convert.5f9)]
 // CHECK:STDOUT:   %OptionalAs.impl_witness_table.efa = impl_witness_table (%Core.import_ref.017d8), @T.as_type.as.OptionalAs.impl [concrete]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Indirect.cpp_overload_set.value: %Indirect.cpp_overload_set.type = cpp_overload_set_value @Indirect.cpp_overload_set [concrete = constants.%Indirect.cpp_overload_set.value]
 // CHECK:STDOUT:   %Indirect__carbon_thunk.decl: %Indirect__carbon_thunk.type = fn_decl @Indirect__carbon_thunk [concrete = constants.%Indirect__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
@@ -2057,7 +2058,6 @@ fn F() {
 // CHECK:STDOUT:     %Optional: type = class_type @Optional, @Optional(constants.%OptionalStorage.facet.0d5) [concrete = constants.%Optional.0c8]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -2090,6 +2090,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_14.3: ref %Optional.0c8 = temporary %.loc11_14.2, %.loc11_14.1
 // CHECK:STDOUT:   %.loc11_14.4: %Optional.0c8 = acquire_value %.loc11_14.3
 // CHECK:STDOUT:   %Direct.call: init %Optional.0c8 = call imports.%Direct.decl(%.loc11_14.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc11: <bound method> = bound_method %.loc11_14.3, constants.%Destroy.Op.1a2547.4
+// CHECK:STDOUT:   %Destroy.Op.call.loc11: init %empty_tuple.type = call %Destroy.Op.bound.loc11(%.loc11_14.3)
 // CHECK:STDOUT:   %Cpp.ref.loc13_41: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Indirect.ref: %Indirect.cpp_overload_set.type = name_ref Indirect, imports.%Indirect.cpp_overload_set.value [concrete = constants.%Indirect.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc13_55.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -2122,24 +2124,22 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.bound.loc13: <bound method> = bound_method %.loc13_65.2, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call.loc13: init %empty_tuple.type = call %Destroy.Op.bound.loc13(%.loc13_65.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc11: <bound method> = bound_method %.loc11_14.3, constants.%Destroy.Op.1a2547.4
-// CHECK:STDOUT:   %Destroy.Op.call.loc11: init %empty_tuple.type = call %Destroy.Op.bound.loc11(%.loc11_14.3)
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%s.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc13_65.1(%self.param: ref %.08a0) {
+// CHECK:STDOUT: fn @Destroy.Op.loc11_14.1(%self.param: ref %.08a0) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc13_65.2(%self.param: ref %MaybeUnformed.9f2) {
+// CHECK:STDOUT: fn @Destroy.Op.loc11_14.2(%self.param: ref %MaybeUnformed.9f2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc13_65.3(%self.param: ref %Optional.0c8) {
+// CHECK:STDOUT: fn @Destroy.Op.loc11_14.3(%self.param: ref %Optional.0c8) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
