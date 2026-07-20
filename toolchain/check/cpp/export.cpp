@@ -409,6 +409,49 @@ static auto BuildFunctionInfo(Context& context, SemIR::LocId loc_id,
   return FunctionInfo(context, callee_function_id, callee, decl_context);
 }
 
+// Create a `clang::FunctionDecl` with the given parameter types and
+// return type.
+//
+// The function's name will match the one referenced by `function_name_id`,
+// and the function will be added to the given `decl_context`.
+static auto BuildCppFunctionDecl(Context& context,
+                                 clang::DeclContext* decl_context,
+                                 SemIR::LocId loc_id,
+                                 SemIR::NameId function_name_id,
+                                 clang::ArrayRef<clang::QualType> param_types,
+                                 clang::QualType return_type) {
+  auto clang_loc = GetCppLocation(context, loc_id);
+
+  auto cpp_function_type = context.ast_context().getFunctionType(
+      return_type, param_types, clang::FunctionProtoType::ExtProtoInfo());
+
+  auto* identifier_info = GetClangIdentifierInfo(context, function_name_id);
+  CARBON_CHECK(identifier_info, "function with non-identifier name {0}",
+               function_name_id);
+
+  auto* tinfo = context.ast_context().getTrivialTypeSourceInfo(
+      cpp_function_type, clang_loc);
+  clang::FunctionDecl* function_decl = clang::FunctionDecl::Create(
+      context.ast_context(), decl_context,
+      /*StartLoc=*/clang_loc, /*NLoc=*/clang_loc, identifier_info,
+      cpp_function_type, tinfo, clang::SC_Extern);
+
+  // Build parameter decls.
+  llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
+  for (auto [i, type] : llvm::enumerate(param_types)) {
+    auto* param_tinfo =
+        context.ast_context().getTrivialTypeSourceInfo(type, clang_loc);
+    clang::ParmVarDecl* param = clang::ParmVarDecl::Create(
+        context.ast_context(), function_decl, /*StartLoc=*/clang_loc,
+        /*IdLoc=*/clang_loc, /*Id=*/nullptr, type, param_tinfo, clang::SC_None,
+        /*DefArg=*/nullptr);
+    param_var_decls.push_back(param);
+  }
+  function_decl->setParams(param_var_decls);
+
+  return function_decl;
+}
+
 // Create a `clang::FunctionDecl` for the given Carbon function. This
 // can be used to call the Carbon function from C++. The Carbon
 // function's ABI must be compatible with C++.
@@ -419,8 +462,6 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
                                             SemIR::LocId loc_id,
                                             SemIR::FunctionId function_id)
     -> clang::FunctionDecl* {
-  auto clang_loc = GetCppLocation(context, loc_id);
-
   const SemIR::Function& function = context.functions().Get(function_id);
   CARBON_CHECK(!function.generic_id.has_value());
   FunctionInfo callee(context, function_id, function, nullptr);
@@ -447,33 +488,9 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
   CARBON_CHECK(function.return_type_inst_id == SemIR::TypeInstId::None);
   auto cpp_return_type = context.ast_context().VoidTy;
 
-  auto cpp_function_type = context.ast_context().getFunctionType(
-      cpp_return_type, cpp_param_types,
-      clang::FunctionProtoType::ExtProtoInfo());
-
-  auto* identifier_info = GetClangIdentifierInfo(context, function.name_id);
-  CARBON_CHECK(identifier_info, "function with non-identifier name {0}",
-               function.name_id);
-
-  auto* tinfo = context.ast_context().getTrivialTypeSourceInfo(
-      cpp_function_type, clang_loc);
-  clang::FunctionDecl* function_decl = clang::FunctionDecl::Create(
-      context.ast_context(), context.ast_context().getTranslationUnitDecl(),
-      /*StartLoc=*/clang_loc, /*NLoc=*/clang_loc, identifier_info,
-      cpp_function_type, tinfo, clang::SC_Extern);
-
-  // Build parameter decls.
-  llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
-  for (auto [i, type] : llvm::enumerate(cpp_param_types)) {
-    auto* param_tinfo =
-        context.ast_context().getTrivialTypeSourceInfo(type, clang_loc);
-    clang::ParmVarDecl* param = clang::ParmVarDecl::Create(
-        context.ast_context(), function_decl, /*StartLoc=*/clang_loc,
-        /*IdLoc=*/clang_loc, /*Id=*/nullptr, type, param_tinfo, clang::SC_None,
-        /*DefArg=*/nullptr);
-    param_var_decls.push_back(param);
-  }
-  function_decl->setParams(param_var_decls);
+  auto* function_decl = BuildCppFunctionDecl(
+      context, context.ast_context().getTranslationUnitDecl(), loc_id,
+      function.name_id, cpp_param_types, cpp_return_type);
 
   // Mangle the function name and attach it to the `FunctionDecl`.
   SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
@@ -493,8 +510,6 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
 static auto BuildCppFunctionDeclForGenericCarbonFn(
     Context& context, SemIR::LocId loc_id, SemIR::FunctionId function_id)
     -> clang::FunctionDecl* {
-  auto clang_loc = GetCppLocation(context, loc_id);
-
   const SemIR::Function& function = context.functions().Get(function_id);
   CARBON_CHECK(function.generic_id.has_value());
   FunctionInfo callee(context, function_id, function, nullptr);
@@ -533,37 +548,12 @@ static auto BuildCppFunctionDeclForGenericCarbonFn(
     }
   }
 
-  auto cpp_function_type = context.ast_context().getFunctionType(
-      cpp_return_type, cpp_param_types,
-      clang::FunctionProtoType::ExtProtoInfo());
-
-  auto* identifier_info = GetClangIdentifierInfo(context, function.name_id);
-  CARBON_CHECK(identifier_info, "function with non-identifier name {0}",
-               function.name_id);
-
-  auto* tinfo = context.ast_context().getTrivialTypeSourceInfo(
-      cpp_function_type, clang_loc);
-  clang::FunctionDecl* function_decl = clang::FunctionDecl::Create(
-      context.ast_context(),
-      // TODO: use the context corresponding to the Carbon generic function.
-      context.ast_context().getTranslationUnitDecl(),
-      /*StartLoc=*/clang_loc, /*NLoc=*/clang_loc, identifier_info,
-      cpp_function_type, tinfo, clang::SC_Extern);
-
-  // Build parameter decls.
-  llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
-  for (auto [i, type] : llvm::enumerate(cpp_param_types)) {
-    auto* param_tinfo =
-        context.ast_context().getTrivialTypeSourceInfo(type, clang_loc);
-    clang::ParmVarDecl* param = clang::ParmVarDecl::Create(
-        context.ast_context(), function_decl, /*StartLoc=*/clang_loc,
-        /*IdLoc=*/clang_loc, /*Id=*/nullptr, type, param_tinfo, clang::SC_None,
-        /*DefArg=*/nullptr);
-    param_var_decls.push_back(param);
-  }
-  function_decl->setParams(param_var_decls);
-
-  return function_decl;
+  return BuildCppFunctionDecl(context,
+                              // TODO: provide the decl context corresponding to
+                              // the Carbon generic function.
+                              context.ast_context().getTranslationUnitDecl(),
+                              loc_id, function.name_id, cpp_param_types,
+                              cpp_return_type);
 }
 
 // Returns whether the given Carbon parameter should be passed as a C++ const
