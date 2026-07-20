@@ -127,11 +127,11 @@ auto HandleBindingPattern(Context& context) -> void {
   } else if (auto underscore = context.ConsumeIf(Lex::TokenKind::Underscore)) {
     if (state.in_struct_pattern) {
       CARBON_DIAGNOSTIC(
-          UnnamedBindingInStructPattern, Error,
-          "Unnamed binding found in struct pattern. Use `.field = "
+          AnonymousBindingInStructPattern, Error,
+          "Anonymous binding found in struct pattern. Use `.field = "
           "_: field_type` or `unused field: field_type`");
       context.emitter().Emit(*context.position(),
-                             UnnamedBindingInStructPattern);
+                             AnonymousBindingInStructPattern);
       state.has_error = true;
     }
     context.AddLeafNode(NodeKind::UnderscoreName, *underscore);

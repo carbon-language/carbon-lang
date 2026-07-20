@@ -42,7 +42,7 @@ let {.x = y: i32, _} = {.x = 1, .m = 2};
 
 // --- struct_pattern_unnamed.carbon
 // TODO: should be allowed in the presence of a designator
-// CHECK:STDERR: struct_pattern_unnamed.carbon:[[@LINE+4]]:12: error: Unnamed binding found in struct pattern. Use `.field = _: field_type` or `unused field: field_type` [UnnamedBindingInStructPattern]
+// CHECK:STDERR: struct_pattern_unnamed.carbon:[[@LINE+4]]:12: error: Anonymous binding found in struct pattern. Use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
 // CHECK:STDERR: let {.x = _: i32} = {.x = 1};
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
@@ -276,17 +276,17 @@ let{x: i32, {y: i32, z: i32}} = ();
 
 // --- fail_struct_pattern_unused_shorthand.carbon
 
-// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+4]]:7: error: Unnamed binding found in struct pattern. Use `.field = _: field_type` or `unused field: field_type` [UnnamedBindingInStructPattern]
+// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+4]]:7: error: Anonymous binding found in struct pattern. Use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
 // CHECK:STDERR: var {_: i32} = ();
 // CHECK:STDERR:       ^
 // CHECK:STDERR:
 var {_: i32} = ();
-// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+4]]:11: error: Unnamed binding found in struct pattern. Use `.field = _: field_type` or `unused field: field_type` [UnnamedBindingInStructPattern]
+// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+4]]:11: error: Anonymous binding found in struct pattern. Use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
 // CHECK:STDERR: let {ref _: i32} = ();
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
 let {ref _: i32} = ();
-// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+4]]:11: error: Unnamed binding found in struct pattern. Use `.field = _: field_type` or `unused field: field_type` [UnnamedBindingInStructPattern]
+// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+4]]:11: error: Anonymous binding found in struct pattern. Use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
 // CHECK:STDERR: let {var _: i32} = ();
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
