@@ -103,7 +103,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // Add a context stack for tracking constraints, that will be used to allow
   // later constraints to read from them eagerly.
   context.where_stack().push_back({.loc_id = node_id});
-  // Track the occurence of `where` inside a binding's type.
+  // Track the occurrence of `where` inside a binding's type.
   if (!context.binding_type_where_counts().empty()) {
     ++context.binding_type_where_counts().back();
   }

@@ -302,7 +302,9 @@ class Context {
     return where_stack_;
   }
 
-  auto binding_type_where_counts() -> llvm::SmallVector<int>& { return binding_type_where_counts_; }
+  auto binding_type_where_counts() -> llvm::SmallVector<int>& {
+    return binding_type_where_counts_;
+  }
 
   auto forbidden_impls() -> llvm::SmallVector<SemIR::ImplId>& {
     return forbidden_impls_;

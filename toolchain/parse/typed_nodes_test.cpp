@@ -134,8 +134,8 @@ TEST_F(TypedNodeTest, For) {
   auto for_var_binding =
       tree.ExtractAs<VarBindingPattern>(for_var_pattern->inner);
   ASSERT_TRUE(for_var_binding.has_value());
-  auto for_var_name = tree.ExtractAs<IdentifierNameNotBeforeSignature>(
-      for_var_binding->name);
+  auto for_var_name =
+      tree.ExtractAs<IdentifierNameNotBeforeSignature>(for_var_binding->name);
   ASSERT_TRUE(for_var_name.has_value());
 }
 
