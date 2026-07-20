@@ -97,16 +97,8 @@ class A {
   fn F();
 }
 
-// CHECK:STDERR: method_alias.carbon:[[@LINE+4]]:7: error: semantics TODO: `interop with non-identifier package name` [SemanticsTodo]
-// CHECK:STDERR: alias G = A.F;
-// CHECK:STDERR:       ^
-// CHECK:STDERR:
 alias G = A.F;
 
 inline Cpp '''
-// CHECK:STDERR: method_alias.carbon:[[@LINE+4]]:23: error: no member named 'G' in namespace 'Carbon' [CppInteropParseError]
-// CHECK:STDERR:    19 | void call() { Carbon::G(); }
-// CHECK:STDERR:       |                       ^
-// CHECK:STDERR:
 void call() { Carbon::G(); }
 ''';

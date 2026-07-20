@@ -155,6 +155,12 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
     auto clang_decl_id = context.clang_decls().Add(
         {.key = key, .inst_id = name_scope.inst_id()});
     name_scope.set_clang_decl_context_id(clang_decl_id, /*is_cpp_scope=*/false);
+
+    // Complete the type here to avoid hitting a clang assert later when
+    // adding methods.
+    if (auto* record_decl = llvm::dyn_cast<clang::RecordDecl>(decl_context)) {
+      context.ast_context().getExternalSource()->CompleteType(record_decl);
+    }
   }
 
   return decl_context;
