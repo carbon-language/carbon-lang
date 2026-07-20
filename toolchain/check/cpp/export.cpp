@@ -458,9 +458,8 @@ static auto BuildCppFunctionDecl(Context& context,
 //
 // The resulting decl is used to allow a generated C++ function to call
 // a generated Carbon function.
-static auto BuildCppFunctionDeclForCarbonFn(Context& context,
-                                            SemIR::LocId loc_id,
-                                            SemIR::FunctionId function_id)
+static auto BuildCppFunctionDeclForNonGenericCarbonFn(
+    Context& context, SemIR::LocId loc_id, SemIR::FunctionId function_id)
     -> clang::FunctionDecl* {
   const SemIR::Function& function = context.functions().Get(function_id);
   CARBON_CHECK(!function.generic_id.has_value());
@@ -517,7 +516,7 @@ static auto BuildCppFunctionDeclForGenericCarbonFn(
   // Get parameters types.
   //
   // TODO: currently this matches the behavior of
-  // BuildCppFunctionDeclForCarbonFn, but for templates the ABI is
+  // BuildCppFunctionDeclForNonGenericCarbonFn, but for templates the ABI is
   // irrelevant, and the parameter should instead map to something that will
   // guide C++ template argument deduction into doing the right thing.
   llvm::SmallVector<clang::QualType> cpp_param_types;
@@ -885,7 +884,7 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
       BuildCarbonToCarbonThunk(context, loc_id, target, extra_name);
 
   // Create a `clang::FunctionDecl` that can be used to call the Carbon thunk.
-  auto* carbon_function_decl = BuildCppFunctionDeclForCarbonFn(
+  auto* carbon_function_decl = BuildCppFunctionDeclForNonGenericCarbonFn(
       context, loc_id, carbon_thunk_function_id);
   if (!carbon_function_decl) {
     return;
@@ -1187,8 +1186,8 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
   // TODO: Once we support exporting specific classes, export the specific
   // destructor here rather than a generic one.
   auto thunk_function_id = BuildDestroyThunk(context, loc_id, class_info);
-  auto* cpp_function_decl =
-      BuildCppFunctionDeclForCarbonFn(context, loc_id, thunk_function_id);
+  auto* cpp_function_decl = BuildCppFunctionDeclForNonGenericCarbonFn(
+      context, loc_id, thunk_function_id);
   if (!cpp_function_decl) {
     return nullptr;
   }
