@@ -77,15 +77,13 @@ be grown.
 
 ## Proposal
 
-We propose to introduce the `Core.Slice(T)` type in the `Core` prelude.
-This type is a non-owning view of contiguous memory.
+We propose to introduce the `Core.Slice(T)` type in the `Core` prelude, alongside
+a `slice` keyword that maps to `Core.Slice` (such that `slice(T)` evaluates to
+`Core.Slice(T)`, similar to `str` mapping to `Core.String`).
 
 This follows the [All APIs are library APIs principle](/docs/project/principles/library_apis_only.md)
-by defining the type in the standard library.
-
-We do not propose a shorthand syntax (like `[T]`) in this proposal, leaving that
-to future language design work. The focus here is establishing the core library
-type.
+by defining the underlying type in the standard library while providing a
+primitive keyword alias.
 
 ## Details
 
@@ -140,17 +138,17 @@ impl forall [T:! type] Slice(T) as UnformedInit {}
 ```carbon
 import Core;
 
-fn PrintSlice(s: Core.Slice(i32)) {
+fn PrintSlice(s: slice(i32)) {
   // Access elements by way of indexing:
   var elem: i32 = s[0];
 
   // Sub-slicing using Range:
-  var sub: Core.Slice(i32) = s.Range(1, 3);
+  var sub: slice(i32) = s.Range(1, 3);
 }
 
 fn Main() -> i32 {
   var data: array(i32, 5) = (1, 2, 3, 4, 5);
-  var s: Core.Slice(i32) = Core.Slice(i32).Make(&data[0], 5);
+  var s: slice(i32) = slice(i32).Make(&data[0], 5);
   PrintSlice(s);
   return 0;
 }
