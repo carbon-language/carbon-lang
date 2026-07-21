@@ -30,6 +30,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Identified facet types](#identified-facet-types)
 -   [Named constraints](#named-constraints)
     -   [Rewrites and same-type constraints in a named constraint](#rewrites-and-same-type-constraints-in-a-named-constraint)
+    -   [Constraints that don't depend on `.Self`](#constraints-that-dont-depend-on-self)
     -   [Subtyping between facet types](#subtyping-between-facet-types)
 -   [Combining interfaces by anding facet types](#combining-interfaces-by-anding-facet-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
@@ -1121,15 +1122,17 @@ But otherwise, any rewrite constraint in the
 [treated as a same-type constraint](appendix-rewrite-constraints.md#combining-constraints-with-require-and-impls)
 instead.
 
+### Constraints that don't depend on `.Self`
+
 > **TODO:** Link to section explaining when identifying a facet type happens when
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md)
 > is applied to these docs.
 
-When identifying a facet type, a rewrite or same-type constraint must depend on
-`.Self` in some way in order to be found in future impl lookups involving the
-facet being constrained. Thus, if there is no dependency on `.Self` the rewrite
-or same-type constraint must be shown to be satisfied immediately for the
-identify to complete successfully.
+When identifying a facet type, we collect all constraints found in the facet
+type and named constraints. Each constraint must depend on `.Self` in some way
+in order to be found in future impl lookups involving the facet being
+constrained. Thus, if there is no dependency on `.Self` in a constraint, it must
+be satisfied immediately for the identify to complete successfully.
 
 ```carbon
 constraint N(T: type) {

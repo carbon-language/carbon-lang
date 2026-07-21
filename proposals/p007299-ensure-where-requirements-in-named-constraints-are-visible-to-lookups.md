@@ -63,9 +63,8 @@ components of the involved types to avoid a global search.
 
 When identifying a facet type, collect all rewrite and same-type constraints
 found while also collecting `impls` constraints from the facet type and any
-named constraints it depends on. Require that any rewrite or same-type
-constraint which does not depend on `.Self` is satisfied immediately, in order
-to identify the facet type.
+named constraints it depends on. Require that any constraint which does not
+depend on `.Self` is satisfied immediately, in order to identify the facet type.
 
 During identify, rewrite constraints are collected as rewrite constraints when
 they are part of the top-level facet type being identified, or come from an
@@ -73,13 +72,13 @@ uninterrupted chain of `extend requires` statements. Otherwise, rewrite
 constraints that come from a `requires` statement are collected as same-type
 constraints.
 
-Rewrite and same-type constraints that do not depend on `.Self` must be
-immediately satisfied by performing an impl lookup with that constraint as a
-condition. In the following example, the identified facet type of `T` contains a
-rewrite `C.(Z(U).Z1) = {}` and the same-type constraint `C.(Z(U).Z2) == ()`. So
-an impl lookup for `C as Z(U) where .Z1 = {} and .Z2 == ()` must be satisfied to
-identify the type of `T`. In this example, the lookup succeeds by finding a
-witness with the required constraints in the facet type of `U`.
+Constraints that do not depend on `.Self` must be immediately satisfied by
+performing an impl lookup with that constraint as a condition. In the following
+example, the identified facet type of `T` contains a rewrite `C.(Z(U).Z1) = {}`
+and the same-type constraint `C.(Z(U).Z2) == ()`. So an impl lookup for `C as
+Z(U) where .Z1 = {} and .Z2 == ()` must be satisfied to identify the type of
+`T`. In this example, the lookup succeeds by finding a witness with the required
+constraints in the facet type of `U`.
 
 ```carbon
 interface Z(V: type) {
@@ -95,11 +94,29 @@ fn F(U: type where C impls Z(.Self) where .Z1 = {} and .Z2 == (),
      T: type where C impls N(.Self, U));
 ```
 
+It is also possible to find an `impls` constraint that does not depend on
+`.Self` in the identified facet type, through a named constraint.
+
+```carbon
+interface Z {}
+constraint A(T: type) {
+  require T impls Z;
+}
+
+// The identified facet type requires `.Self impls Z`, which is then
+// symbolically provided by the facet type of `U`.
+fn F(U: A(.Self)) {}
+
+// The identified facet type requires `i32 impls Z`, which must be
+// immediately satisfied.
+fn G(U: A(i32)) {}
+```
+
 ## Rationale
 
 We now ensure that constraints introduced by a `requires` clause in a named
-constraint are either visible for lookups, or a redundant with existing rules.
-This avoids a global search for the rewritten value, which advances our
+constraint are either visible for lookups, or are redundant with existing rules.
+This avoids a global search for the constraint, which advances our
 [low context-sensitivity principle](/docs/project/principles/low_context_sensitivity.md).
 
 ## Alternatives considered
