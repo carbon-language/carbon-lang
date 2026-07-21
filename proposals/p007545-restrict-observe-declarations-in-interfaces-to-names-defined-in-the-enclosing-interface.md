@@ -53,12 +53,66 @@ context-sensitivity goals by allowing actions at a distance.
 
 ## Proposal
 
-TODO: Briefly and at a high level, how do you propose to solve the problem? Why
-will that in fact solve it?
+Only allow referencing names brought into scope by the enclosing `interface`
+in `observe` declarations. This solves the coherence issues by ensuring an
+interface can only observe its own associated types and parameters,
+preventing actions at a distance.
 
 ## Details
 
-TODO: Fully explain the details of the proposed solution.
+Referring to `.Self`, generic parameters, and associated constants defined in
+the enclosing type is allowed.
+
+```carbon
+interface I(T:! P) {
+    let A: Q where .Self == T;
+    let B: R where .Self == A;
+    let C: S where .Self == B;
+
+    // Allowed, all names are associated constants defined in the enclosing
+    // interface.
+    observe A == B == C;
+
+    // Allowed, both `T` and `A` are brought to scope by `I`, and `A`
+    // implements `Q`.
+    observe T == A impls Q;
+}
+```
+
+An associated constant may implement an interface that defines its own
+associated constants. Let's assume that the interface `Q` from the example
+above defines three associated constants `X`, `Y` and `Z`.
+
+In a function we can refer to these names in `observe` declarations.
+
+```carbon
+fn F[T: type, U: I(T)]() {
+    observe U.A == U.B impls R;
+}
+```
+
+This is allowed since the observation is made about the facet `U` rather than
+the interface `I` itself.
+
+Extending this logic to interfaces, an associated constant acts as a localized
+binding. Therefore, we can refer to names accessed through associated
+constants and generic parameters defined by the enclosing interface without
+affecting global reasoning.
+
+```carbon
+interface I(T:! P) {
+    let A: Q where .Self == T;
+    let B: R where .Self == A;
+    let C: S where .Self == B;
+
+    // Allowed, observation is made about `A`, and does not affect the
+    // interface `Q` itself.
+    observe A.X == A.Y == A.Z;
+
+    // Not allowed, `Q` is not brought to scope by `I`.
+    observe Q.X == Q.Y == Q.Z;
+}
+```
 
 ## Rationale
 
