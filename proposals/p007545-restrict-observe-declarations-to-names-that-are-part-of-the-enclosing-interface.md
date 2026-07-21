@@ -32,7 +32,7 @@ of the enclosing `interface`.
 ## Problem
 
 Currently, the design does not state the scope of names an `observe`
-declaration within an interface can reference to. This allows `observe`
+declaration within an interface can reference. This allows `observe`
 declarations to be defined for types unrelated to the enclosing `interface`.
 
 For example, this is currently syntactically possible:
@@ -118,10 +118,11 @@ interface I(T:! P) {
 
 ## Rationale
 
-By restricting `observe` declarations to names brought into scope by way of generic
-parameters, `.Self`, and associated constants, we guarantee that an interface's
-requirements and constraints remain entirely self-contained. This preserves
-[coherence][1] and aligns with the [low context-sensitivity principle][2].
+By restricting `observe` declarations to names brought into scope by way of
+generic parameters, `.Self`, and associated constants, we guarantee that an
+interface's requirements and constraints remain entirely self-contained. This
+preserves [coherence][1] and aligns with the
+[low context-sensitivity principle][2].
 
 [1]: https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/generics/goals.md#coherence
 [2]: https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/principles/low_context_sensitivity.md
