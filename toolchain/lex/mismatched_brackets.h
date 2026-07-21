@@ -106,6 +106,9 @@ struct MismatchedBracketToken {
   // For OpenCurlyBrace, whether it has struct-like cues (e.g. followed by '.',
   // '}', or ':').
   bool is_struct_brace = false;
+
+  // Byte offset of this token in source.
+  int32_t byte_offset = 0;
 };
 
 // An action to fix mismatched brackets in the token stream.
@@ -137,9 +140,13 @@ struct BracketCorrection {
   BracketFixAction fix_action;
   TokenIndex fix_token_index = TokenIndex::None;
   TokenKind fix_token_kind;
+  int32_t fix_byte_offset = -1;
 
   // Set to true if multiple optimal paths tie/disagree on the repair.
   bool is_tied = false;
+
+  // Source transition/origin for diagnostics and evaluation.
+  const char* origin = "";
 };
 
 // Analyzes the input token stream, finds the optimal set of bracket insertions

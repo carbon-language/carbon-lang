@@ -591,11 +591,14 @@ TEST_F(LexerTest, MatchingGroups) {
 TEST_F(LexerTest, MismatchedGroups) {
   auto& buffer1 = compile_helper_.GetTokenizedBuffer("{");
   EXPECT_TRUE(buffer1.has_errors());
-  EXPECT_THAT(buffer1, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                           {.kind = TokenKind::FileStart},
-                           {.kind = TokenKind::Error, .text = "{"},
-                           {.kind = TokenKind::FileEnd},
-                       }));
+  EXPECT_THAT(
+      buffer1,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::FileStart},
+          {.kind = TokenKind::OpenCurlyBrace, .column = 1},
+          {.kind = TokenKind::CloseCurlyBrace, .column = 2, .recovery = true},
+          {.kind = TokenKind::FileEnd},
+      }));
 
   auto& buffer2 = compile_helper_.GetTokenizedBuffer("}");
   EXPECT_TRUE(buffer2.has_errors());
@@ -688,10 +691,8 @@ TEST_F(LexerTest, Whitespace) {
                   true,
                   // {
                   false,
-                  // (
-                  false,
-                  // inserted )
-                  false,
+                  // error (
+                  true,
                   // inserted }
                   false,
                   // EOF

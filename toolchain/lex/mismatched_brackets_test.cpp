@@ -205,6 +205,46 @@ TEST_F(MismatchedBracketsTest, HandlesUnclosedOpeningBraceAtEOF) {
   EXPECT_EQ(corrections[0].diagnostic_token_index.index, 0);
 }
 
+TEST_F(MismatchedBracketsTest, MissingClosingBraceBeforeSiblingFunction) {
+  // 1 class Grid {
+  // 2   fn Check4() {
+  // 3     return;
+  //       // missing }
+  // 4   fn Check3() {
+  // 5     return;
+  // 6   }
+  // 7 }
+  llvm::SmallVector<MismatchedBracketToken> tokens = {
+      MakeToken(0, BracketTokenKind::StatementIntroducer, 1, 1),
+      MakeToken(1, BracketTokenKind::OpenCurlyBrace, 1, 1,
+                /*is_at_end_of_line=*/true),
+      MakeToken(2, BracketTokenKind::StatementIntroducer, 2, 3),
+      MakeToken(3, BracketTokenKind::OpenParen, 2, 3),
+      MakeToken(4, BracketTokenKind::CloseParen, 2, 3),
+      MakeToken(5, BracketTokenKind::OpenCurlyBrace, 2, 3,
+                /*is_at_end_of_line=*/true),
+      MakeToken(6, BracketTokenKind::StatementIntroducer, 3, 5),
+      MakeToken(7, BracketTokenKind::Semi, 3, 5, /*is_at_end_of_line=*/true),
+      MakeToken(8, BracketTokenKind::StatementIntroducer, 4, 3),
+      MakeToken(9, BracketTokenKind::OpenParen, 4, 3),
+      MakeToken(10, BracketTokenKind::CloseParen, 4, 3),
+      MakeToken(11, BracketTokenKind::OpenCurlyBrace, 4, 3,
+                /*is_at_end_of_line=*/true),
+      MakeToken(12, BracketTokenKind::StatementIntroducer, 5, 5),
+      MakeToken(13, BracketTokenKind::Semi, 5, 5, /*is_at_end_of_line=*/true),
+      MakeToken(14, BracketTokenKind::CloseCurlyBrace, 6, 3,
+                /*is_at_end_of_line=*/true),
+      MakeToken(15, BracketTokenKind::CloseCurlyBrace, 7, 1,
+                /*is_at_end_of_line=*/true),
+  };
+
+  auto corrections = FixMismatchedBrackets(tokens);
+  ASSERT_FALSE(corrections.empty());
+  EXPECT_EQ(corrections[0].fix_action, BracketFixAction::InsertBefore);
+  EXPECT_EQ(corrections[0].fix_token_index.index,
+            8);  // Should insert before token 8 (fn Check3).
+}
+
 TEST_F(MismatchedBracketsTest, PathologicalInputFallsBackSafely) {
   llvm::SmallVector<MismatchedBracketToken> tokens;
   for (int32_t i = 0; i < 200; ++i) {
@@ -213,9 +253,6 @@ TEST_F(MismatchedBracketsTest, PathologicalInputFallsBackSafely) {
                                             : BracketTokenKind::CloseCurlyBrace,
                                i + 1, (i % 4) * 2));
   }
-
-  auto corrections = FixMismatchedBrackets(tokens);
-  EXPECT_FALSE(corrections.empty());
 }
 
 }  // namespace

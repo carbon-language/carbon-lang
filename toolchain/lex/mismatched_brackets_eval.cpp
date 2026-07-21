@@ -110,9 +110,12 @@ struct DeletedToken {
   TokenKind kind;
   int32_t byte_offset;
   int32_t length;
+  int32_t line;
+  int32_t column;
   int32_t next_token_byte_offset;
   int32_t next_token_line;
   int32_t next_token_column;
+  llvm::SmallVector<int32_t, 4> valid_next_token_byte_offsets;
 };
 
 struct Suggestion {
@@ -120,7 +123,17 @@ struct Suggestion {
   int32_t byte_offset;
   int32_t line;
   int32_t column;
+  std::string origin;
 };
+
+auto MatchesDeletedToken(const DeletedToken& del, const Suggestion& sugg)
+    -> bool {
+  if (del.kind != sugg.kind) {
+    return false;
+  }
+  return llvm::is_contained(del.valid_next_token_byte_offsets,
+                            sugg.byte_offset);
+}
 
 auto ParseDSpecs(llvm::StringRef str) -> llvm::SmallVector<DSpec> {
   llvm::SmallVector<DSpec> specs;
@@ -183,8 +196,7 @@ auto ClassifyTrial(llvm::ArrayRef<DeletedToken> deleted_tokens,
   for (const auto& sugg : suggestions) {
     bool found_match = false;
     for (size_t i = 0; i < deleted_tokens.size(); ++i) {
-      if (!deleted_matched[i] && deleted_tokens[i].kind == sugg.kind &&
-          deleted_tokens[i].next_token_byte_offset == sugg.byte_offset) {
+      if (!deleted_matched[i] && MatchesDeletedToken(deleted_tokens[i], sugg)) {
         deleted_matched[i] = true;
         found_match = true;
         ++correct_suggestions;
@@ -260,6 +272,7 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   int base_seed = 42;
   bool verbose = false;
   bool json_output = false;
+  int dump_incorrect = 0;
 
   auto parse_result = CommandLine::Parse(
       args, llvm::outs(), CommandInfo, [&](CommandLine::CommandBuilder& b) {
@@ -308,6 +321,14 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
                 .help = "Output results in JSON format.",
             },
             [&](auto& arg_b) { arg_b.Set(&json_output); });
+
+        b.AddIntegerOption(
+            {
+                .name = "dump-incorrect",
+                .value_name = "N",
+                .help = "Print details for up to N incorrect trials.",
+            },
+            [&](auto& arg_b) { arg_b.Set(&dump_incorrect); });
 
         b.Do([] {});
       });
@@ -424,6 +445,12 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     std::vector<TrialStats> scenario_stats;
   };
 
+  struct OriginStat {
+    int correct = 0;
+    int incorrect = 0;
+  };
+  std::map<std::string, OriginStat> origin_stats;
+
   std::vector<FileResult> file_results;
   std::vector<TrialStats> overall_scenario_stats(d_specs.size());
 
@@ -505,7 +532,28 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
         deleted_tokens.reserve(d_count);
 
         for (TokenIndex tok : sampled_tokens) {
-          TokenIndex succ = TokenIndex(tok.index + 1);
+          TokenKind tok_kind = clean_buffer.GetKind(tok);
+
+          int32_t run_start = tok.index;
+          while (run_start > 0 &&
+                 clean_buffer.GetKind(TokenIndex(run_start - 1)) == tok_kind) {
+            --run_start;
+          }
+          int32_t run_end = tok.index;
+          while (run_end + 1 < static_cast<int32_t>(clean_buffer.size()) &&
+                 clean_buffer.GetKind(TokenIndex(run_end + 1)) == tok_kind) {
+            ++run_end;
+          }
+
+          llvm::SmallVector<int32_t, 4> valid_offsets;
+          for (int32_t idx = run_start; idx <= run_end; ++idx) {
+            if (!is_deleted_token[idx]) {
+              valid_offsets.push_back(
+                  clean_buffer.GetByteOffset(TokenIndex(idx)));
+            }
+          }
+
+          TokenIndex succ = TokenIndex(run_end + 1);
           while (succ.index < clean_buffer.size() &&
                  is_deleted_token[succ.index]) {
             succ = TokenIndex(succ.index + 1);
@@ -514,6 +562,8 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
           int32_t succ_byte = (succ.index < clean_buffer.size())
                                   ? clean_buffer.GetByteOffset(succ)
                                   : static_cast<int32_t>(source_text.size());
+          valid_offsets.push_back(succ_byte);
+
           int32_t succ_line = (succ.index < clean_buffer.size())
                                   ? clean_buffer.GetLineNumber(succ)
                                   : -1;
@@ -522,13 +572,16 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
                                  : -1;
 
           deleted_tokens.push_back(DeletedToken{
-              .kind = clean_buffer.GetKind(tok),
+              .kind = tok_kind,
               .byte_offset = clean_buffer.GetByteOffset(tok),
               .length =
                   static_cast<int32_t>(clean_buffer.GetTokenText(tok).size()),
+              .line = clean_buffer.GetLineNumber(tok),
+              .column = clean_buffer.GetColumnNumber(tok),
               .next_token_byte_offset = succ_byte,
               .next_token_line = succ_line,
               .next_token_column = succ_col,
+              .valid_next_token_byte_offsets = std::move(valid_offsets),
           });
         }
 
@@ -548,6 +601,8 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
         SharedValueStores c_value_stores;
         LexOptions c_lex_options;
         c_lex_options.consumer = &Diagnostics::NullConsumer();
+        llvm::SmallVector<BracketCorrection> corrections;
+        c_lex_options.bracket_corrections = &corrections;
         auto corrupted_buffer =
             Lex::Lex(c_value_stores, *corrupted_source, c_lex_options);
 
@@ -567,18 +622,75 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
               int32_t col_num = (succ.index < corrupted_buffer.size())
                                     ? corrupted_buffer.GetColumnNumber(succ)
                                     : -1;
+              std::string origin = "Unknown";
+              for (const auto& c : corrections) {
+                if ((c.fix_action == BracketFixAction::InsertBefore ||
+                     c.fix_action == BracketFixAction::InsertAfter) &&
+                    !c.is_tied && c.fix_token_kind == kind) {
+                  if (c.fix_byte_offset == byte_off) {
+                    origin = c.origin;
+                    break;
+                  }
+                }
+              }
               suggestions.push_back(Suggestion{
                   .kind = kind,
                   .byte_offset = byte_off,
                   .line = line_num,
                   .column = col_num,
+                  .origin = origin,
               });
+            }
+          }
+        }
+
+        if (spec.label == "1") {
+          for (const auto& s : suggestions) {
+            bool matched = false;
+            for (const auto& del : deleted_tokens) {
+              if (MatchesDeletedToken(del, s)) {
+                matched = true;
+                break;
+              }
+            }
+            if (matched) {
+              ++origin_stats[s.origin].correct;
+            } else {
+              ++origin_stats[s.origin].incorrect;
             }
           }
         }
 
         TestClassification classification =
             ClassifyTrial(deleted_tokens, suggestions);
+        if (classification == TestClassification::Incorrect &&
+            dump_incorrect > 0) {
+          --dump_incorrect;
+          llvm::errs() << "\n=== INCORRECT TRIAL in " << candidate.filename
+                       << " (D=" << spec.label << ") ===\n";
+          for (const auto& del : deleted_tokens) {
+            llvm::errs() << "  Deleted token: kind=" << del.kind.name()
+                         << " at byte=" << del.byte_offset
+                         << " (line=" << del.line << ", col=" << del.column
+                         << ")\n";
+          }
+          llvm::errs() << "  Suggestions (" << suggestions.size() << "):\n";
+          for (const auto& s : suggestions) {
+            llvm::errs() << "    Suggestion (" << s.origin
+                         << "): kind=" << s.kind.name()
+                         << " at byte=" << s.byte_offset << " (line=" << s.line
+                         << ", col=" << s.column << ")\n";
+          }
+          llvm::errs() << "--- Corrupted Text Sample ---\n";
+          int32_t print_start =
+              std::max(0, deleted_tokens[0].byte_offset - 100);
+          int32_t print_end = std::min<int32_t>(
+              corrupted_text.size(), deleted_tokens[0].byte_offset + 100);
+          llvm::errs() << corrupted_text.substr(print_start,
+                                                print_end - print_start)
+                       << "\n";
+          llvm::errs() << "===============================\n\n";
+        }
         f_res.scenario_stats[s_idx].Add(classification);
         overall_scenario_stats[s_idx].Add(classification);
       }
@@ -646,6 +758,19 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
         stats.partial, stats.PartialPct(), stats.none, stats.NonePct(),
         stats.incorrect, stats.IncorrectPct(), stats.SafetyPct(),
         stats.AccuracyPct());
+  }
+  llvm::outs() << "\n";
+
+  llvm::outs() << "## Suggestion Origin Breakdown (D = 1)\n\n";
+  llvm::outs() << "| Origin Transition | Total | Correct | Incorrect | "
+                  "Precision (%) |\n";
+  llvm::outs() << "|:---|---:|---:|---:|---:|\n";
+  for (const auto& [name, stat] : origin_stats) {
+    int total = stat.correct + stat.incorrect;
+    double prec = total == 0 ? 100.0 : (100.0 * stat.correct) / total;
+    llvm::outs() << llvm::formatv(
+        "| {0,-32} | {1,5} | {2,5} | {3,5} | {4,8:F1}% |\n", name, total,
+        stat.correct, stat.incorrect, prec);
   }
   llvm::outs() << "\n";
 

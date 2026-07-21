@@ -10,14 +10,11 @@
 
 fn f() -> i32 {
   match (true) {
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+11]]:21: error: expected `(` after `if` [ExpectedMatchCaseGuardOpenParen]
+    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+8]]:21: error: expected `(` after `if` [ExpectedMatchCaseGuardOpenParen]
     // CHECK:STDERR:     case x: bool if false) => { return 1; }
     // CHECK:STDERR:                     ^~~~~
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+7]]:26: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
-    // CHECK:STDERR:     case x: bool if false) => { return 1; }
-    // CHECK:STDERR:                          ^
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+4]]:26: note: possibly missing `(` here [PossiblyMissingBracketHere]
+    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+4]]:26: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
     // CHECK:STDERR:     case x: bool if false) => { return 1; }
     // CHECK:STDERR:                          ^
     // CHECK:STDERR:

@@ -28,20 +28,19 @@ constexpr size_t MaxSearchStackDepth = 8;
 
 // Cost penalties for bracket recovery.
 constexpr int32_t CostBaselineMatch = 0;
-constexpr int32_t CostIndentMismatchMultiplier = 10;
+constexpr int32_t CostIndentMismatchMultiplier = 20;
+constexpr int32_t CostIndentMismatchBase = 30;
 constexpr int32_t CostScopeNotAtEol = 30;
 constexpr int32_t CostDedentInsideScope = 40;
 constexpr int32_t CostSemiInParen = 100;
 constexpr int32_t CostScopeInParen = 100;
 
-constexpr int32_t CostInsertScopeBraceAfterHeader = 15;
-constexpr int32_t CostInsertScopeBraceIndented = 120;
-constexpr int32_t CostInsertScopeBraceTopLevel = 200;
+constexpr int32_t CostInsertScopeBraceBeforeIntroducer = 20;
 constexpr int32_t CostInsertCloseBrace = 25;
 constexpr int32_t CostInsertParenOrBracket = 40;
 constexpr int32_t CostReplaceUnmatchedClosing = 30;
 constexpr int32_t CostReplaceUnmatchedOpening = 100;
-constexpr int32_t CostUnclosedOpenerAtEnd = 25;
+constexpr int32_t CostUnclosedOpenerAtEnd = 200;
 
 // Internal representation of an item after clean subrange collapsing.
 struct Item {
@@ -53,16 +52,24 @@ struct Item {
   int32_t effective_header_indent = 0;
   bool is_first_on_line = false;
   bool follows_statement_header = false;
+  bool header_has_open_curly_brace = false;
+  bool is_before_statement_introducer = false;
 };
 
 // Represents an unclosed opening bracket on the search stack.
 struct OpenBracketInfo {
   TokenIndex token_index = TokenIndex::None;
   BracketTokenKind kind;
+  int32_t line = -1;
   int32_t effective_header_indent;
   int32_t expected_body_indent;
   bool is_synthetic;
+  bool is_at_end_of_line = false;
+  bool is_struct_brace = false;
   TokenIndex insertion_token_index = TokenIndex::None;
+  bool is_insert_after = false;
+  int32_t byte_offset = 0;
+  int32_t insertion_byte_offset = 0;
 };
 
 // Computes the associated line indentation for a token by scanning backwards,
@@ -91,7 +98,7 @@ auto ComputeAssociatedLineIndent(llvm::ArrayRef<MismatchedBracketToken> tokens,
 
     if (kind == BracketTokenKind::Semi ||
         kind == BracketTokenKind::OpenCurlyBrace ||
-        kind == BracketTokenKind::CloseCurlyBrace || IsOpeningBracket(kind)) {
+        kind == BracketTokenKind::CloseCurlyBrace) {
       break;
     }
 
@@ -105,7 +112,7 @@ auto ComputeAssociatedLineIndent(llvm::ArrayRef<MismatchedBracketToken> tokens,
   return earliest_indent;
 }
 
-// Determines if a token directly follows a statement/declaration header.
+// Determines if a token follows a statement/declaration header.
 auto ComputeFollowsStatementHeader(
     llvm::ArrayRef<MismatchedBracketToken> tokens,
     llvm::ArrayRef<int32_t> match_partner, int32_t token_index) -> bool {
@@ -115,34 +122,68 @@ auto ComputeFollowsStatementHeader(
   auto curr_kind = tokens[token_index].kind;
   if (curr_kind == BracketTokenKind::Semi ||
       curr_kind == BracketTokenKind::OpenCurlyBrace ||
-      curr_kind == BracketTokenKind::CloseCurlyBrace ||
+      IsClosingBracket(curr_kind) ||
       curr_kind == BracketTokenKind::FileEnd) {
     return false;
   }
-
-  bool saw_closing_bracket = false;
+  if (curr_kind == BracketTokenKind::Other &&
+      tokens[token_index].line == tokens[token_index - 1].line) {
+    return false;
+  }
+  if (curr_kind == BracketTokenKind::StatementIntroducer &&
+      tokens[token_index].line == tokens[token_index - 1].line &&
+      tokens[token_index - 1].kind == BracketTokenKind::StatementIntroducer) {
+    return false;
+  }
 
   for (int32_t j = token_index - 1; j >= 0; --j) {
     auto kind = tokens[j].kind;
-
-    if (IsClosingBracket(kind) && match_partner[j] != -1 &&
-        match_partner[j] < j) {
-      saw_closing_bracket = true;
+    if ((kind == BracketTokenKind::CloseParen ||
+         kind == BracketTokenKind::CloseSquareBracket) &&
+        match_partner[j] != -1 && match_partner[j] < j) {
       j = match_partner[j];
       continue;
     }
-
     if (kind == BracketTokenKind::Semi ||
         kind == BracketTokenKind::OpenCurlyBrace ||
-        kind == BracketTokenKind::CloseCurlyBrace || IsOpeningBracket(kind)) {
+        kind == BracketTokenKind::CloseCurlyBrace ||
+        kind == BracketTokenKind::OpenParen ||
+        kind == BracketTokenKind::OpenSquareBracket) {
       return false;
     }
-
     if (kind == BracketTokenKind::StatementIntroducer) {
-      return saw_closing_bracket;
+      return true;
     }
   }
+  return false;
+}
 
+// Determines if the statement/declaration header starting at token_index
+// contains an OpenCurlyBrace.
+auto ComputeHeaderHasOpenCurlyBrace(
+    llvm::ArrayRef<MismatchedBracketToken> tokens,
+    llvm::ArrayRef<int32_t> match_partner, int32_t token_index) -> bool {
+  if (token_index <= 0 || token_index >= static_cast<int32_t>(tokens.size())) {
+    return false;
+  }
+  for (int32_t j = token_index; j < static_cast<int32_t>(tokens.size()); ++j) {
+    auto kind = tokens[j].kind;
+    if (kind == BracketTokenKind::OpenCurlyBrace) {
+      return true;
+    }
+    if ((kind == BracketTokenKind::OpenParen ||
+         kind == BracketTokenKind::OpenSquareBracket) &&
+        match_partner[j] != -1 && match_partner[j] > j) {
+      j = match_partner[j];
+      continue;
+    }
+    if (kind == BracketTokenKind::Semi ||
+        kind == BracketTokenKind::CloseCurlyBrace ||
+        kind == BracketTokenKind::FileEnd ||
+        kind == BracketTokenKind::StatementIntroducer) {
+      return false;
+    }
+  }
   return false;
 }
 
@@ -150,7 +191,7 @@ auto ComputeFollowsStatementHeader(
 static auto PackState(int32_t item_index, llvm::ArrayRef<OpenBracketInfo> stack)
     -> uint64_t {
   uint64_t key = static_cast<uint16_t>(item_index);
-  uint32_t depth = std::min<uint32_t>(stack.size(), 6);
+  uint32_t depth = std::min<uint32_t>(stack.size(), 5);
   key |= (static_cast<uint64_t>(depth) << 16);
 
   uint64_t stack_bits = 0;
@@ -159,8 +200,9 @@ static auto PackState(int32_t item_index, llvm::ArrayRef<OpenBracketInfo> stack)
     uint64_t ind =
         (static_cast<uint64_t>(stack[i].effective_header_indent / 2) & 0x7);
     uint64_t synth = stack[i].is_synthetic ? 1 : 0;
-    uint64_t entry = (k << 4) | (ind << 1) | synth;
-    stack_bits |= (entry << (i * 7));
+    uint64_t is_struct = stack[i].is_struct_brace ? 1 : 0;
+    uint64_t entry = (k << 5) | (ind << 2) | (synth << 1) | is_struct;
+    stack_bits |= (entry << (i * 8));
   }
   key |= (stack_bits << 20);
   return key;
@@ -177,7 +219,7 @@ struct SearchNode {
 };
 
 // Solve a damaged region using the simple greedy fallback algorithm.
-auto SolveNaive(llvm::ArrayRef<Item> items, TokenIndex region_end_token,
+auto SolveNaive(llvm::ArrayRef<Item> items, TokenIndex /*region_end_token*/,
                 llvm::SmallVectorImpl<BracketCorrection>& corrections) -> void {
   llvm::SmallVector<Item> open_stack;
   for (const auto& item : items) {
@@ -197,9 +239,10 @@ auto SolveNaive(llvm::ArrayRef<Item> items, TokenIndex region_end_token,
         corrections.push_back({
             .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
             .diagnostic_token_index = open.token.token_index,
-            .fix_action = BracketFixAction::InsertBefore,
-            .fix_token_index = item.token.token_index,
-            .fix_token_kind = ToTokenKind(MatchingClosingKind(open.token.kind)),
+            .fix_action = BracketFixAction::ReplaceWithError,
+            .fix_token_index = open.token.token_index,
+            .fix_token_kind = ToTokenKind(open.token.kind),
+            .origin = "Naive_UnclosedParenBracket",
         });
       }
     }
@@ -225,16 +268,17 @@ auto SolveNaive(llvm::ArrayRef<Item> items, TokenIndex region_end_token,
             .fix_action = BracketFixAction::ReplaceWithError,
             .fix_token_index = item.token.token_index,
             .fix_token_kind = ToTokenKind(kind),
+            .origin = "Naive_UnmatchedClosing",
         });
       } else {
         for (auto it = search_range.begin(); it != match_it; ++it) {
           corrections.push_back({
               .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
               .diagnostic_token_index = it->token.token_index,
-              .fix_action = BracketFixAction::InsertBefore,
-              .fix_token_index = item.token.token_index,
-              .fix_token_kind =
-                  ToTokenKind(MatchingClosingKind(it->token.kind)),
+              .fix_action = BracketFixAction::ReplaceWithError,
+              .fix_token_index = it->token.token_index,
+              .fix_token_kind = ToTokenKind(it->token.kind),
+              .origin = "Naive_PoppedOpener",
           });
         }
         open_stack.erase(match_it.base() - 1, open_stack.end());
@@ -246,9 +290,10 @@ auto SolveNaive(llvm::ArrayRef<Item> items, TokenIndex region_end_token,
     corrections.push_back({
         .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
         .diagnostic_token_index = open.token.token_index,
-        .fix_action = BracketFixAction::InsertBefore,
-        .fix_token_index = region_end_token,
-        .fix_token_kind = ToTokenKind(MatchingClosingKind(open.token.kind)),
+        .fix_action = BracketFixAction::ReplaceWithError,
+        .fix_token_index = open.token.token_index,
+        .fix_token_kind = ToTokenKind(open.token.kind),
+        .origin = "Naive_UnclosedAtEnd",
     });
   }
 }
@@ -335,8 +380,8 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                       .diagnostic_kind =
                           BracketDiagnosticKind::UnmatchedOpening,
                       .diagnostic_token_index = entry.token_index,
-                      .fix_action = BracketFixAction::InsertBefore,
-                      .fix_token_index = region_end_token,
+                      .fix_action = BracketFixAction::ReplaceWithError,
+                      .fix_token_index = entry.token_index,
                       .fix_token_kind =
                           ToTokenKind(MatchingClosingKind(entry.kind))},
               .has_correction = true,
@@ -387,19 +432,143 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
       queue.push({next_cost, new_idx});
     };
 
+    auto kind = item.token.kind;
+
+    auto try_synthesize_closer_before_item = [&]() {
+      if (kind != BracketTokenKind::FileEnd && !current.stack.empty() &&
+          (current.stack.back().kind == BracketTokenKind::OpenParen ||
+           current.stack.back().kind == BracketTokenKind::OpenSquareBracket ||
+           (current.stack.back().kind == BracketTokenKind::OpenCurlyBrace &&
+            current.stack.back().is_struct_brace))) {
+        if (IsClosingBracket(kind)) {
+          return;
+        }
+        auto popped = current.stack.back();
+        if (!popped.is_synthetic) {
+          if (popped.line != item.token.line &&
+              item.token.line_indent < popped.effective_header_indent) {
+            return;
+          }
+          if (kind == BracketTokenKind::OpenCurlyBrace &&
+              item.follows_statement_header) {
+            return;
+          }
+        }
+        auto next_stack = current.stack;
+        next_stack.pop_back();
+        auto closer_kind = MatchingClosingKind(popped.kind);
+        BracketCorrection correction;
+        bool has_corr = false;
+        if (!popped.is_synthetic) {
+          correction = BracketCorrection{
+              .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
+              .diagnostic_token_index = popped.token_index,
+              .fix_action = BracketFixAction::InsertBefore,
+              .fix_token_index = item.token.token_index,
+              .fix_token_kind = ToTokenKind(closer_kind),
+              .fix_byte_offset = item.token.byte_offset,
+              .origin = "T_SynthesizeCloserBeforeItem",
+          };
+          has_corr = true;
+        }
+        try_enqueue(current.item_index, std::move(next_stack),
+                    CostInsertCloseBrace, correction, has_corr);
+      }
+    };
+
+    auto try_synthesize_dedent_close_brace = [&]() {
+      if (kind != BracketTokenKind::FileEnd &&
+          kind != BracketTokenKind::CloseCurlyBrace && !current.stack.empty() &&
+          current.stack.back().kind == BracketTokenKind::OpenCurlyBrace &&
+          !current.stack.back().is_struct_brace && item.is_first_on_line &&
+          item.token.line_indent > 1 &&
+          item.token.line_indent < current.stack.back().expected_body_indent) {
+        auto next_stack = current.stack;
+        auto popped = next_stack.pop_back_val();
+        bool is_dedent_transition = true;
+        if (current.item_index > 0) {
+          const auto& prev_item = items[current.item_index - 1];
+          if (prev_item.token.kind == BracketTokenKind::CloseCurlyBrace ||
+              prev_item.token.line_indent <= item.token.line_indent) {
+            is_dedent_transition = false;
+          }
+        }
+        bool valid_dedent_scope =
+            !popped.is_struct_brace && popped.is_at_end_of_line &&
+            item.token.line_indent > 1 &&
+            (item.token.line_indent < popped.expected_body_indent) &&
+            is_dedent_transition &&
+            (next_stack.empty() ||
+             (kind != BracketTokenKind::FileEnd &&
+              next_stack.back().kind == BracketTokenKind::OpenCurlyBrace &&
+              item.token.line_indent >=
+                  next_stack.back().effective_header_indent));
+        if (!valid_dedent_scope) {
+          return;
+        }
+
+        BracketCorrection correction;
+        bool has_corr = false;
+        if (!popped.is_synthetic) {
+          correction = BracketCorrection{
+              .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
+              .diagnostic_token_index = popped.token_index,
+              .fix_action = BracketFixAction::InsertBefore,
+              .fix_token_index = item.token.token_index,
+              .fix_token_kind = ToTokenKind(BracketTokenKind::CloseCurlyBrace),
+              .fix_byte_offset = item.token.byte_offset,
+              .origin = "T3_DedentCloseBrace",
+          };
+          has_corr = true;
+        }
+        try_enqueue(current.item_index, std::move(next_stack),
+                    CostInsertCloseBrace, correction, has_corr);
+      }
+    };
+
+    auto try_synthesize_statement_scope_brace = [&]() {
+      if (item.follows_statement_header &&
+          !item.header_has_open_curly_brace &&
+          kind != BracketTokenKind::FileEnd &&
+          current.stack.size() < MaxSearchStackDepth) {
+        int32_t insert_cost = item.is_before_statement_introducer
+                                  ? CostInsertScopeBraceBeforeIntroducer
+                                  : CostInsertCloseBrace;
+        auto next_stack = current.stack;
+        next_stack.push_back(OpenBracketInfo{
+            .token_index = TokenIndex::None,
+            .kind = BracketTokenKind::OpenCurlyBrace,
+            .line = item.token.line,
+            .effective_header_indent = item.effective_header_indent,
+            .expected_body_indent = item.effective_header_indent + 2,
+            .is_synthetic = true,
+            .insertion_token_index = item.token.token_index,
+            .byte_offset = item.token.byte_offset,
+            .insertion_byte_offset = item.token.byte_offset,
+        });
+        try_enqueue(current.item_index, std::move(next_stack), insert_cost);
+      }
+    };
+
     if (item.is_collapsed_block) {
       int32_t penalty = CostBaselineMatch;
       if (!current.stack.empty() &&
           (current.stack.back().kind == BracketTokenKind::OpenParen ||
-           current.stack.back().kind == BracketTokenKind::OpenSquareBracket) &&
+           current.stack.back().kind == BracketTokenKind::OpenSquareBracket ||
+           current.stack.back().is_struct_brace) &&
           item.contains_scope_brace) {
         penalty += CostScopeInParen;
       }
+      if (!current.stack.empty() &&
+          current.stack.back().kind == BracketTokenKind::OpenCurlyBrace &&
+          item.token.line_indent <=
+              current.stack.back().effective_header_indent) {
+        penalty += CostDedentInsideScope;
+      }
       try_enqueue(current.item_index + 1, current.stack, penalty);
+      try_synthesize_closer_before_item();
       continue;
     }
-
-    auto kind = item.token.kind;
 
     if (kind == BracketTokenKind::Semi ||
         kind == BracketTokenKind::StatementIntroducer ||
@@ -407,118 +576,36 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
       int32_t penalty = CostBaselineMatch;
       if (kind == BracketTokenKind::Semi && !current.stack.empty() &&
           (current.stack.back().kind == BracketTokenKind::OpenParen ||
-           current.stack.back().kind == BracketTokenKind::OpenSquareBracket)) {
+           current.stack.back().kind == BracketTokenKind::OpenSquareBracket ||
+           current.stack.back().is_struct_brace)) {
         penalty += CostSemiInParen;
       }
-
       if (!current.stack.empty() &&
           current.stack.back().kind == BracketTokenKind::OpenCurlyBrace &&
-          item.token.line_indent < current.stack.back().expected_body_indent &&
-          item.token.line_indent > 0) {
+          item.is_first_on_line &&
+          item.token.line_indent <=
+              current.stack.back().effective_header_indent) {
         penalty += CostDedentInsideScope;
       }
 
       // Transition 1: Normal advance past non-bracket token.
       try_enqueue(current.item_index + 1, current.stack, penalty);
 
-      // Transition 1b: Synthesize missing `)` or `]` before Semi, Introducer,
-      // or FileEnd.
-      if (!current.stack.empty() &&
-          (current.stack.back().kind == BracketTokenKind::OpenParen ||
-           current.stack.back().kind == BracketTokenKind::OpenSquareBracket) &&
-          (kind == BracketTokenKind::Semi ||
-           kind == BracketTokenKind::StatementIntroducer ||
-           kind == BracketTokenKind::FileEnd)) {
-        auto next_stack = current.stack;
-        auto popped = next_stack.pop_back_val();
-        BracketCorrection correction;
-        bool has_corr = false;
-        if (!popped.is_synthetic) {
-          correction = BracketCorrection{
-              .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
-              .diagnostic_token_index = popped.token_index,
-              .fix_action = BracketFixAction::InsertBefore,
-              .fix_token_index = item.token.token_index,
-              .fix_token_kind = ToTokenKind(MatchingClosingKind(popped.kind)),
-          };
-          has_corr = true;
-        }
-        try_enqueue(current.item_index, std::move(next_stack),
-                    CostInsertParenOrBracket, correction, has_corr);
-      }
+      // Transition 1b: Candidate synthetic closer before this item.
+      try_synthesize_closer_before_item();
 
-      // Transition 2: Candidate synthetic insertion of `{` before this token.
-      if ((item.is_first_on_line || item.follows_statement_header ||
-           kind == BracketTokenKind::StatementIntroducer) &&
-          kind != BracketTokenKind::FileEnd &&
-          current.stack.size() < MaxSearchStackDepth) {
-        int32_t insert_cost = CostInsertScopeBraceTopLevel;
-        if (item.follows_statement_header) {
-          insert_cost = CostInsertScopeBraceAfterHeader;
-        } else if (item.token.line_indent > item.effective_header_indent) {
-          insert_cost = CostInsertScopeBraceIndented;
-        }
-
-        auto next_stack = current.stack;
-        next_stack.push_back(OpenBracketInfo{
-            .token_index = TokenIndex::None,
-            .kind = BracketTokenKind::OpenCurlyBrace,
-            .effective_header_indent = item.effective_header_indent,
-            .expected_body_indent = item.effective_header_indent + 2,
-            .is_synthetic = true,
-            .insertion_token_index = item.token.token_index,
-        });
-        try_enqueue(current.item_index, std::move(next_stack), insert_cost);
-      }
+      // Transition 2: Candidate synthetic insertion of `{` after a statement
+      // header.
+      try_synthesize_statement_scope_brace();
 
       // Transition 3: Candidate synthetic insertion of `}` before this token.
-      if (!current.stack.empty() &&
-          current.stack.back().kind == BracketTokenKind::OpenCurlyBrace &&
-          (item.is_first_on_line || kind == BracketTokenKind::FileEnd) &&
-          item.token.line_indent <=
-              current.stack.back().effective_header_indent) {
-        auto next_stack = current.stack;
-        auto popped = next_stack.pop_back_val();
-        BracketCorrection correction;
-        bool has_corr = false;
-        if (!popped.is_synthetic) {
-          correction = BracketCorrection{
-              .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
-              .diagnostic_token_index = popped.token_index,
-              .fix_action = BracketFixAction::InsertBefore,
-              .fix_token_index = item.token.token_index,
-              .fix_token_kind = TokenKind::CloseCurlyBrace,
-          };
-          has_corr = true;
-        }
-        try_enqueue(current.item_index, std::move(next_stack),
-                    CostInsertCloseBrace, correction, has_corr);
-      }
+      try_synthesize_dedent_close_brace();
       continue;
     }
 
     if (IsOpeningBracket(kind)) {
-      // Transition C0: Synthesize missing `)` or `]` before `{`.
-      if (kind == BracketTokenKind::OpenCurlyBrace && !current.stack.empty() &&
-          (current.stack.back().kind == BracketTokenKind::OpenParen ||
-           current.stack.back().kind == BracketTokenKind::OpenSquareBracket)) {
-        auto next_stack = current.stack;
-        auto popped = next_stack.pop_back_val();
-        BracketCorrection correction;
-        bool has_corr = false;
-        if (!popped.is_synthetic) {
-          correction = BracketCorrection{
-              .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
-              .diagnostic_token_index = popped.token_index,
-              .fix_action = BracketFixAction::InsertBefore,
-              .fix_token_index = item.token.token_index,
-              .fix_token_kind = ToTokenKind(MatchingClosingKind(popped.kind)),
-          };
-          has_corr = true;
-        }
-        try_enqueue(current.item_index, std::move(next_stack),
-                    CostInsertParenOrBracket, correction, has_corr);
-      }
+      // Transition C0: Candidate synthetic closer before `{`.
+      try_synthesize_closer_before_item();
 
       // Transition C1: Push opening bracket to stack.
       if (current.stack.size() < MaxSearchStackDepth) {
@@ -529,15 +616,21 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                                   : header_indent + 2;
         int32_t penalty = CostBaselineMatch;
         if (kind == BracketTokenKind::OpenCurlyBrace &&
-            !item.token.is_at_end_of_line && !item.token.is_struct_brace) {
+            !item.token.is_at_end_of_line && !item.token.is_struct_brace &&
+            item.follows_statement_header) {
           penalty += CostScopeNotAtEol;
         }
         next_stack.push_back(OpenBracketInfo{
             .token_index = item.token.token_index,
             .kind = kind,
+            .line = item.token.line,
             .effective_header_indent = header_indent,
             .expected_body_indent = body_indent,
             .is_synthetic = false,
+            .is_at_end_of_line = item.token.is_at_end_of_line,
+            .is_struct_brace = item.token.is_struct_brace,
+            .byte_offset = item.token.byte_offset,
+            .insertion_byte_offset = item.token.byte_offset,
         });
         try_enqueue(current.item_index + 1, std::move(next_stack), penalty);
       }
@@ -550,7 +643,9 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
               .diagnostic_token_index = item.token.token_index,
               .fix_action = BracketFixAction::ReplaceWithError,
               .fix_token_index = item.token.token_index,
-              .fix_token_kind = ToTokenKind(kind)},
+              .fix_token_kind = ToTokenKind(kind),
+              .fix_byte_offset = item.token.byte_offset,
+              .origin = "TC2_ReplaceOpeningError"},
           /*has_correction=*/true);
       continue;
     }
@@ -559,67 +654,106 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
       // Transition D1: Match with stack top.
       if (!current.stack.empty() &&
           current.stack.back().kind == MatchingOpeningKind(kind)) {
-        auto next_stack = current.stack;
-        auto popped = next_stack.pop_back_val();
-        int32_t penalty = CostBaselineMatch;
+        bool allow_match = true;
         if (kind == BracketTokenKind::CloseCurlyBrace) {
-          penalty += std::abs(popped.effective_header_indent -
-                              item.token.line_indent) *
-                     CostIndentMismatchMultiplier;
+          if (item.token.line_indent <
+              current.stack.back().effective_header_indent) {
+            allow_match = false;
+          }
+          if (current.stack.back().is_struct_brace && item.is_first_on_line &&
+              current.stack.size() >= 2 &&
+              item.token.line_indent <=
+                  current.stack[current.stack.size() - 2]
+                      .effective_header_indent) {
+            allow_match = false;
+          }
         }
-        BracketCorrection correction;
-        bool has_corr = false;
-        if (popped.is_synthetic) {
-          correction = BracketCorrection{
-              .diagnostic_kind = BracketDiagnosticKind::UnmatchedClosing,
-              .diagnostic_token_index = item.token.token_index,
-              .fix_action = BracketFixAction::InsertBefore,
-              .fix_token_index = popped.insertion_token_index,
-              .fix_token_kind = ToTokenKind(popped.kind),
-          };
-          has_corr = true;
+        if (allow_match) {
+          auto next_stack = current.stack;
+          auto popped = next_stack.pop_back_val();
+          int32_t penalty = CostBaselineMatch;
+          if (kind == BracketTokenKind::CloseCurlyBrace) {
+            if (popped.effective_header_indent != item.token.line_indent) {
+              penalty += CostIndentMismatchBase +
+                         std::abs(popped.effective_header_indent -
+                                  item.token.line_indent) *
+                             CostIndentMismatchMultiplier;
+            }
+          }
+          BracketCorrection correction;
+          bool has_corr = false;
+          if (popped.is_synthetic) {
+            correction = BracketCorrection{
+                .diagnostic_kind = BracketDiagnosticKind::UnmatchedClosing,
+                .diagnostic_token_index = item.token.token_index,
+                .fix_action = popped.is_insert_after
+                                  ? BracketFixAction::InsertAfter
+                                  : BracketFixAction::InsertBefore,
+                .fix_token_index = popped.insertion_token_index,
+                .fix_token_kind = ToTokenKind(popped.kind),
+                .fix_byte_offset = popped.insertion_byte_offset,
+                .origin = "TD1_SyntheticOpenerMatched",
+            };
+            has_corr = true;
+          }
+          try_enqueue(current.item_index + 1, std::move(next_stack), penalty,
+                      correction, has_corr);
         }
-        try_enqueue(current.item_index + 1, std::move(next_stack), penalty,
-                    correction, has_corr);
       }
 
       // Transition D2: Synthesize missing opener before this closing bracket.
       if (current.stack.empty() ||
           current.stack.back().kind != MatchingOpeningKind(kind)) {
         auto opener_kind = MatchingOpeningKind(kind);
-        int32_t opener_cost = (kind == BracketTokenKind::CloseCurlyBrace)
-                                  ? CostInsertScopeBraceTopLevel
-                                  : CostInsertParenOrBracket;
+        int32_t opener_cost = CostInsertParenOrBracket;
         try_enqueue(
             current.item_index + 1, current.stack, opener_cost,
             BracketCorrection{
                 .diagnostic_kind = BracketDiagnosticKind::UnmatchedClosing,
                 .diagnostic_token_index = item.token.token_index,
-                .fix_action = BracketFixAction::InsertBefore,
+                .fix_action = BracketFixAction::ReplaceWithError,
                 .fix_token_index = item.token.token_index,
-                .fix_token_kind = ToTokenKind(opener_kind)},
+                .fix_token_kind = ToTokenKind(opener_kind),
+                .fix_byte_offset = item.token.byte_offset,
+                .origin = "TD2_MissingOpenerBeforeCloser"},
             /*has_correction=*/true);
       }
 
-      // Transition D3: Synthesize closer before this token to close stack top.
-      if (!current.stack.empty()) {
-        auto next_stack = current.stack;
-        auto popped = next_stack.pop_back_val();
-        auto closer_kind = MatchingClosingKind(popped.kind);
-        BracketCorrection correction;
-        bool has_corr = false;
-        if (!popped.is_synthetic) {
-          correction = BracketCorrection{
-              .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
-              .diagnostic_token_index = popped.token_index,
-              .fix_action = BracketFixAction::InsertBefore,
-              .fix_token_index = item.token.token_index,
-              .fix_token_kind = ToTokenKind(closer_kind),
-          };
-          has_corr = true;
+      // Transition D3: Synthesize closer before this token to close stack top
+      // when this closer does not match stack top.
+      if (!current.stack.empty() &&
+          current.stack.back().kind != MatchingOpeningKind(kind)) {
+        auto popped = current.stack.back();
+        bool valid_mismatch_close = true;
+        if (popped.kind == BracketTokenKind::OpenCurlyBrace ||
+            kind == BracketTokenKind::CloseCurlyBrace) {
+          valid_mismatch_close = false;
+        } else if (!popped.is_synthetic) {
+          if (popped.line != item.token.line) {
+            valid_mismatch_close = false;
+          }
         }
-        try_enqueue(current.item_index, std::move(next_stack),
-                    CostInsertCloseBrace, correction, has_corr);
+        if (valid_mismatch_close) {
+          auto next_stack = current.stack;
+          next_stack.pop_back();
+          auto closer_kind = MatchingClosingKind(popped.kind);
+          BracketCorrection correction;
+          bool has_corr = false;
+          if (!popped.is_synthetic) {
+            correction = BracketCorrection{
+                .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
+                .diagnostic_token_index = popped.token_index,
+                .fix_action = BracketFixAction::InsertBefore,
+                .fix_token_index = item.token.token_index,
+                .fix_token_kind = ToTokenKind(closer_kind),
+                .fix_byte_offset = item.token.byte_offset,
+                .origin = "TD3_CloserMismatchClosesStackTop",
+            };
+            has_corr = true;
+          }
+          try_enqueue(current.item_index, std::move(next_stack),
+                      CostInsertCloseBrace, correction, has_corr);
+        }
       }
 
       // Transition D4: Replace unmatched closing bracket with Error.
@@ -630,7 +764,9 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
               .diagnostic_token_index = item.token.token_index,
               .fix_action = BracketFixAction::ReplaceWithError,
               .fix_token_index = item.token.token_index,
-              .fix_token_kind = ToTokenKind(kind)},
+              .fix_token_kind = ToTokenKind(kind),
+              .fix_byte_offset = item.token.byte_offset,
+              .origin = "TD4_ReplaceClosingError"},
           /*has_correction=*/true);
       continue;
     }
@@ -709,12 +845,43 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
     } else if (IsClosingBracket(kind)) {
       if (!open_stack.empty() &&
           MatchingClosingKind(tokens[open_stack.back()].kind) == kind) {
-        int32_t open_idx = open_stack.pop_back_val();
-        match_partner[open_idx] = i;
-        match_partner[i] = open_idx;
+        if (kind == BracketTokenKind::CloseCurlyBrace) {
+          int32_t match_idx = -1;
+          for (int32_t s = static_cast<int32_t>(open_stack.size()) - 1; s >= 0;
+               --s) {
+            int32_t cand = open_stack[s];
+            if (tokens[cand].kind != BracketTokenKind::OpenCurlyBrace) {
+              break;
+            }
+            if (tokens[cand].line == tokens[i].line ||
+                tokens[cand].is_struct_brace ||
+                tokens[cand].line_indent == tokens[i].line_indent) {
+              match_idx = s;
+              break;
+            }
+          }
+          if (match_idx != -1) {
+            int32_t open_idx = open_stack[match_idx];
+            open_stack.erase(open_stack.begin() + match_idx);
+            match_partner[open_idx] = i;
+            match_partner[i] = open_idx;
+          }
+        } else {
+          int32_t open_idx = open_stack.pop_back_val();
+          match_partner[open_idx] = i;
+          match_partner[i] = open_idx;
+        }
       } else {
         open_stack.clear();
       }
+    }
+  }
+
+  // Identify unmatched openers.
+  llvm::SmallVector<bool> is_unmatched_opener(num_tokens, false);
+  for (int32_t i = 0; i < num_tokens; ++i) {
+    if (IsOpeningBracket(tokens[i].kind) && match_partner[i] == -1) {
+      is_unmatched_opener[i] = true;
     }
   }
 
@@ -723,6 +890,8 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
   llvm::SmallVector<int32_t> effective_header_indent(num_tokens, 0);
   llvm::SmallVector<bool> is_first_on_line(num_tokens, false);
   llvm::SmallVector<bool> follows_statement_header(num_tokens, false);
+  llvm::SmallVector<bool> header_has_open_curly_brace(num_tokens, false);
+  llvm::SmallVector<bool> is_before_statement_introducer(num_tokens, false);
 
   for (int32_t i = 0; i < num_tokens; ++i) {
     is_first_on_line[i] = (i == 0 || tokens[i].line != tokens[i - 1].line);
@@ -730,29 +899,76 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
         ComputeAssociatedLineIndent(tokens, match_partner, i);
     follows_statement_header[i] =
         ComputeFollowsStatementHeader(tokens, match_partner, i);
+    if (follows_statement_header[i]) {
+      header_has_open_curly_brace[i] =
+          ComputeHeaderHasOpenCurlyBrace(tokens, match_partner, i);
+    }
+    if (tokens[i].kind == BracketTokenKind::StatementIntroducer && i > 0) {
+      auto prev_kind = tokens[i - 1].kind;
+      if (prev_kind != BracketTokenKind::StatementIntroducer &&
+          prev_kind != BracketTokenKind::OpenCurlyBrace) {
+        is_before_statement_introducer[i] = true;
+      }
+    }
   }
 
-  // 3. Mark clean subranges for collapsing.
-  for (int32_t i = 0; i < num_tokens; ++i) {
+  // 3. Mark clean subranges for safe collapsing (processed in reverse order
+  // so inner ranges are evaluated before enclosing outer ranges).
+  for (int32_t i = num_tokens - 1; i >= 0; --i) {
+    auto kind = tokens[i].kind;
     if (match_partner[i] != -1 && match_partner[i] > i) {
       int32_t close_idx = match_partner[i];
       bool clean = true;
-      if (tokens[i].kind == BracketTokenKind::OpenCurlyBrace) {
-        if (!tokens[i].is_struct_brace &&
-            tokens[i].line != tokens[close_idx].line &&
-            (!tokens[i].is_at_end_of_line ||
-             effective_header_indent[i] != tokens[close_idx].line_indent)) {
-          clean = false;
+
+      if (kind == BracketTokenKind::OpenCurlyBrace) {
+        if (tokens[i].line != tokens[close_idx].line) {
+          if (!tokens[i].is_struct_brace &&
+              (!tokens[i].is_at_end_of_line ||
+               effective_header_indent[i] != tokens[close_idx].line_indent)) {
+            clean = false;
+          } else if (tokens[i].is_struct_brace &&
+                     tokens[close_idx].line_indent <
+                         effective_header_indent[i]) {
+            clean = false;
+          }
         }
       } else {
-        for (int32_t j = i + 1; j < close_idx; ++j) {
-          if (tokens[j].kind == BracketTokenKind::Semi ||
-              tokens[j].kind == BracketTokenKind::OpenCurlyBrace) {
+        // For parens/brackets, check if an unclosed opener of the same kind
+        // precedes i in the active scope.
+        for (int32_t u = 0; u < i; ++u) {
+          if (is_unmatched_opener[u] && tokens[u].kind == kind) {
             clean = false;
             break;
           }
         }
       }
+
+      if (clean) {
+        for (int32_t j = i + 1; j < close_idx; ++j) {
+          if (match_partner[j] != -1 &&
+              (match_partner[j] < i || match_partner[j] > close_idx)) {
+            clean = false;
+            break;
+          }
+          if (match_partner[j] == -1 && (IsOpeningBracket(tokens[j].kind) ||
+                                         IsClosingBracket(tokens[j].kind))) {
+            clean = false;
+            break;
+          }
+          if (IsOpeningBracket(tokens[j].kind) && !is_clean_range[j]) {
+            clean = false;
+            break;
+          }
+          if (kind == BracketTokenKind::OpenCurlyBrace &&
+              !tokens[i].is_struct_brace && is_first_on_line[j] &&
+              tokens[j].line != tokens[close_idx].line &&
+              tokens[j].line_indent <= effective_header_indent[i]) {
+            clean = false;
+            break;
+          }
+        }
+      }
+
       if (clean) {
         is_clean_range[i] = true;
       }
@@ -780,6 +996,8 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
           .effective_header_indent = effective_header_indent[i],
           .is_first_on_line = is_first_on_line[i],
           .follows_statement_header = follows_statement_header[i],
+          .header_has_open_curly_brace = header_has_open_curly_brace[i],
+          .is_before_statement_introducer = is_before_statement_introducer[i],
       });
       i = close_idx + 1;
     } else {
@@ -794,6 +1012,8 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
           .effective_header_indent = effective_header_indent[i],
           .is_first_on_line = is_first_on_line[i],
           .follows_statement_header = follows_statement_header[i],
+          .header_has_open_curly_brace = header_has_open_curly_brace[i],
+          .is_before_statement_introducer = is_before_statement_introducer[i],
       });
       ++i;
     }

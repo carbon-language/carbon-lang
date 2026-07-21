@@ -83,9 +83,10 @@ class [[clang::internal_linkage]] Lexer {
     bool formed_token_;
   };
 
-  Lexer(SharedValueStores& value_stores, SourceBuffer& source,
-        Diagnostics::Consumer& consumer)
-      : buffer_(value_stores, source),
+  Lexer(const LexOptions& options, SharedValueStores& value_stores,
+        SourceBuffer& source, Diagnostics::Consumer& consumer)
+      : options_(options),
+        buffer_(value_stores, source),
         consumer_(consumer),
         emitter_(&consumer_, &buffer_),
         token_emitter_(&consumer_, &buffer_) {}
@@ -227,6 +228,8 @@ class [[clang::internal_linkage]] Lexer {
 
   // Handles `//@dump-sem-ir-end` for a `DumpSemIRRange`.
   auto EndDumpSemIRRange(const char* diag_loc) -> void;
+
+  LexOptions options_;
 
   TokenizedBuffer buffer_;
 
@@ -1798,25 +1801,14 @@ class Lexer::ErrorRecoveryBuffer {
   bool any_error_tokens_ = false;
 };
 
-// If brackets didn't pair or nest properly, find a set of places to insert
-// brackets to fix the nesting, issue suitable diagnostics, and update the
-// token list to describe the fixes.
-auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
-  CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
-                    "opening symbol without a corresponding closing symbol");
-  CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
-                    "closing symbol without a corresponding opening symbol");
-  CARBON_DIAGNOSTIC(PossiblyMissingBracketHere, Note,
-                    "possibly missing `{0}` here", Lex::TokenKind);
-
-  ErrorRecoveryBuffer fixes(&buffer_);
-
+static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
+    -> llvm::SmallVector<MismatchedBracketToken> {
   llvm::SmallVector<MismatchedBracketToken> input_tokens;
-  input_tokens.reserve(buffer_.token_infos_.size());
+  input_tokens.reserve(buffer.size());
 
-  for (auto it = buffer_.tokens().begin(); it != buffer_.tokens().end(); ++it) {
+  for (auto it = buffer.tokens().begin(); it != buffer.tokens().end(); ++it) {
     TokenIndex token = *it;
-    auto kind = buffer_.GetKind(token);
+    auto kind = buffer.GetKind(token);
 
     BracketTokenKind bracket_kind;
     switch (kind) {
@@ -1841,15 +1833,31 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
       case TokenKind::Semi:
         bracket_kind = BracketTokenKind::Semi;
         break;
-      case TokenKind::Fn:
-      case TokenKind::Class:
-      case TokenKind::Interface:
-      case TokenKind::Impl:
-      case TokenKind::Choice:
-      case TokenKind::If:
-      case TokenKind::While:
+#define CARBON_DECL_INTRODUCER_TOKEN(kind, name) case TokenKind::kind:
+#include "toolchain/lex/token_kind.def"
+      case TokenKind::Abstract:
+      case TokenKind::Case:
+      case TokenKind::Continue:
+      case TokenKind::Default:
+      case TokenKind::Else:
+      case TokenKind::Eval:
+      case TokenKind::Extend:
+      case TokenKind::Final:
       case TokenKind::For:
+      case TokenKind::Friend:
+      case TokenKind::If:
+      case TokenKind::Inline:
       case TokenKind::Match:
+      case TokenKind::MustEval:
+      case TokenKind::Observe:
+      case TokenKind::Override:
+      case TokenKind::Private:
+      case TokenKind::Protected:
+      case TokenKind::Return:
+      case TokenKind::Returned:
+      case TokenKind::Static:
+      case TokenKind::Virtual:
+      case TokenKind::While:
         bracket_kind = BracketTokenKind::StatementIntroducer;
         break;
       case TokenKind::FileEnd:
@@ -1860,34 +1868,39 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
         break;
     }
 
-    auto line = buffer_.GetLine(token);
+    auto line = buffer.GetLine(token);
     int32_t line_indent =
-        (kind == TokenKind::FileEnd) ? 0 : buffer_.GetIndentColumnNumber(line);
-    int32_t column = buffer_.GetColumnNumber(token);
+        (kind == TokenKind::FileEnd) ? 0 : buffer.GetIndentColumnNumber(line);
+    int32_t column = buffer.GetColumnNumber(token);
+
+    bool is_first_on_line =
+        (input_tokens.empty() || input_tokens.back().line != line.index);
+    if (bracket_kind == BracketTokenKind::Other && !is_first_on_line) {
+      bool is_structural =
+          (kind == TokenKind::Equal || kind == TokenKind::MinusGreater ||
+           kind == TokenKind::As || kind == TokenKind::Forall);
+      if (!is_structural) {
+        continue;
+      }
+    }
 
     auto next_it = std::next(it);
-    bool is_at_end_of_line = (next_it == buffer_.tokens().end() ||
-                              buffer_.GetLine(*next_it) != line);
+    bool is_at_end_of_line =
+        (next_it == buffer.tokens().end() || buffer.GetLine(*next_it) != line);
 
     bool is_struct_brace = false;
     if (kind == TokenKind::OpenCurlyBrace) {
-      if (next_it != buffer_.tokens().end()) {
-        auto next_kind = buffer_.GetKind(*next_it);
+      if (next_it != buffer.tokens().end()) {
+        auto next_kind = buffer.GetKind(*next_it);
         if (next_kind == TokenKind::Period ||
             next_kind == TokenKind::CloseCurlyBrace) {
           is_struct_brace = true;
-        } else {
+        } else if (next_kind == TokenKind::Identifier ||
+                   next_kind == TokenKind::StringLiteral) {
           auto next2_it = std::next(next_it);
-          if (next2_it != buffer_.tokens().end()) {
-            if (buffer_.GetKind(*next2_it) == TokenKind::Colon) {
-              is_struct_brace = true;
-            } else {
-              auto next3_it = std::next(next2_it);
-              if (next3_it != buffer_.tokens().end() &&
-                  buffer_.GetKind(*next3_it) == TokenKind::Colon) {
-                is_struct_brace = true;
-              }
-            }
+          if (next2_it != buffer.tokens().end() &&
+              buffer.GetKind(*next2_it) == TokenKind::Colon) {
+            is_struct_brace = true;
           }
         }
       }
@@ -1901,12 +1914,33 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
         .column = column,
         .is_at_end_of_line = is_at_end_of_line,
         .is_struct_brace = is_struct_brace,
+        .byte_offset = buffer.GetByteOffset(token),
     });
   }
 
+  return input_tokens;
+}
+
+// If brackets didn't pair or nest properly, find a set of places to insert
+// brackets to fix the nesting, issue suitable diagnostics, and update the
+// token list to describe the fixes.
+auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
+  ErrorRecoveryBuffer fixes(&buffer_);
+  auto input_tokens = CollectMismatchedBracketTokens(buffer_);
   auto corrections = FixMismatchedBrackets(input_tokens);
 
+  if (options_.bracket_corrections) {
+    *options_.bracket_corrections = corrections;
+  }
+
   for (const auto& correction : corrections) {
+  CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
+                    "opening symbol without a corresponding closing symbol");
+  CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
+                    "closing symbol without a corresponding opening symbol");
+  CARBON_DIAGNOSTIC(PossiblyMissingBracketHere, Note,
+                    "possibly missing `{0}` here", Lex::TokenKind);
+
     auto builder = token_emitter_.Build(
         correction.diagnostic_token_index,
         correction.diagnostic_kind == BracketDiagnosticKind::UnmatchedOpening
@@ -1917,14 +1951,20 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
       if (!correction.is_tied) {
         builder.Note(correction.fix_token_index, PossiblyMissingBracketHere,
                      correction.fix_token_kind);
+        fixes.InsertBefore(correction.fix_token_index,
+                           correction.fix_token_kind);
+      } else {
+        fixes.ReplaceWithError(correction.diagnostic_token_index);
       }
-      fixes.InsertBefore(correction.fix_token_index, correction.fix_token_kind);
     } else if (correction.fix_action == BracketFixAction::InsertAfter) {
       if (!correction.is_tied) {
         builder.Note(correction.fix_token_index, PossiblyMissingBracketHere,
                      correction.fix_token_kind);
+        fixes.InsertAfter(correction.fix_token_index,
+                          correction.fix_token_kind);
+      } else {
+        fixes.ReplaceWithError(correction.diagnostic_token_index);
       }
-      fixes.InsertAfter(correction.fix_token_index, correction.fix_token_kind);
     } else if (correction.fix_action == BracketFixAction::ReplaceWithError) {
       fixes.ReplaceWithError(correction.fix_token_index);
     }
@@ -1945,7 +1985,7 @@ auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
          LexOptions options) -> TokenizedBuffer {
   auto* consumer =
       options.consumer ? options.consumer : &Diagnostics::ConsoleConsumer();
-  auto tokens = Lexer(value_stores, source, *consumer).Lex();
+  auto tokens = Lexer(options, value_stores, source, *consumer).Lex();
 
   if (options.vlog_stream || options.dump_stream) {
     // Flush diagnostics before printing.

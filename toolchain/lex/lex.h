@@ -7,6 +7,7 @@
 
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/lex/mismatched_brackets.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/source/source_buffer.h"
 
@@ -27,6 +28,9 @@ struct LexOptions {
 
   // When dumping, whether to omit `FileStart` and `FileEnd` in output.
   bool omit_file_boundary_tokens = false;
+
+  // If set, populated with bracket corrections.
+  llvm::SmallVector<BracketCorrection>* bracket_corrections = nullptr;
 };
 
 // Lexes a buffer of source code into a tokenized buffer.
