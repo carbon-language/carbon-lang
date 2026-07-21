@@ -47,8 +47,9 @@ context-sensitivity goals by allowing actions at a distance.
 
 ## Background
 
-TODO: Is there any background that readers should consider to fully understand
-this problem and your approach to solving it?
+-   [Observe declarations](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/generics/details.md#observe-declarations)
+-   [Coherence](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/generics/goals.md#coherence)
+-   [Low context-sensitivity principle](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/principles/low_context_sensitivity.md)
 
 ## Proposal
 
