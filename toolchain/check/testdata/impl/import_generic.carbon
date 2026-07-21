@@ -349,10 +349,10 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.9f1 [symbolic]
 // CHECK:STDOUT:   %J.type.80f: type = facet_type <@J, @J(%empty_struct_type)> [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness @C.as.J.impl.%J.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Self.043: %J.type.80f = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %complete_type.7da: <witness> = complete_type_witness %I.type.81d [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C.type.facet: %type = facet_value %C, () [concrete]
-// CHECK:STDOUT:   %complete_type.7da: <witness> = complete_type_witness %I.type.81d [concrete]
-// CHECK:STDOUT:   %Self.043: %J.type.80f = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %J.facet: %J.type.80f = facet_value %C, (%J.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -521,6 +521,13 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self.043
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @J.WithSelf(constants.%empty_struct_type, constants.%Self.9f1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%empty_struct_type
+// CHECK:STDOUT:   %I.type => constants.%I.type.81d
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.7da
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.WithSelf(constants.%empty_struct_type, constants.%C.type.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%empty_struct_type
@@ -534,13 +541,6 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %Self => constants.%C.type.facet
 // CHECK:STDOUT:   %Self.as_type => constants.%C
 // CHECK:STDOUT:   %I.type => constants.%I.type.81d
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @J.WithSelf(constants.%empty_struct_type, constants.%Self.9f1) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T => constants.%empty_struct_type
-// CHECK:STDOUT:   %I.type => constants.%I.type.81d
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.7da
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.WithSelf(constants.%empty_struct_type, constants.%J.facet) {
