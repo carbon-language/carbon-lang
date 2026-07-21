@@ -26,7 +26,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Abstract
 
 This proposal restricts `observe` declarations in an `interface` to only
-reference names that are part of the enclosing `interface`.
+reference `.Self`, generic parameters, and associated constants that are part
+of the enclosing `interface`.
 
 ## Problem
 
