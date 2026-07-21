@@ -1,4 +1,4 @@
-# TODO
+# Restrict observe declarations in interfaces to names defined in the enclosing interface
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -6,13 +6,12 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-[Pull request](https://github.com/carbon-language/carbon-lang/pull/####)
+[Pull request](https://github.com/carbon-language/carbon-lang/pull/7545)
 
 <!-- toc -->
 
 ## Table of contents
 
--   [TODO: Initial proposal setup](#todo-initial-proposal-setup)
 -   [Abstract](#abstract)
 -   [Problem](#problem)
 -   [Background](#background)
@@ -23,31 +22,28 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## TODO: Initial proposal setup
-
-> TIP: Run `./new_proposal.py "TITLE"` to do new proposal setup.
-
-1.  Copy this template to `new.md`, and create a commit.
-2.  Create a GitHub pull request, to get a pull request number.
-    -   Add the `proposal draft` label to the pull request.
-3.  Rename `new.md` to `/proposals/p####.md`, where `####` should be the pull
-    request number.
-4.  Update the title of the proposal (the `TODO` on line 1).
-5.  Update the link to the pull request (the `####` on line 11).
-6.  Delete this section.
-
-TODOs indicate where content should be updated for a proposal. See
-[Carbon Governance and Evolution](/docs/project/evolution.md) for more details.
-
 ## Abstract
 
-TODO: Describe, in a succinct paragraph, the gist of this document. This
-paragraph should be reproduced verbatim in the PR summary.
+This proposal restricts `observe` declarations in an `interface` to only
+reference names that are part of the enclosing `interface`.
 
 ## Problem
 
-TODO: What problem are you trying to solve? How important is that problem? Who
-is impacted by it?
+Currently, the design does not state the scope of names an `observe`
+declaration within an interface can reference to. This allows `observe`
+declarations to be defined for types unrelated to the enclosing `interface`.
+
+For example, this is currently syntactically possible:
+
+```carbon
+interface I1 {
+    observe I2.A == I2.B == I2.C;
+}
+```
+
+This creates coherence issues since a developer could get a different view of
+types before and after an unrelated import. And violates Carbon's low
+context-sensitivity goals by allowing actions at a distance.
 
 ## Background
 
