@@ -1115,9 +1115,10 @@ class ImplementsS {
 
 A `require` statement may include rewrite or same-type constraints. In the case
 of `extend require`, the rewrites are
-[preserved as such](/docs/design/generics/appendix-rewrite-constraints.md#combining-constraints-with-extend).
-But otherwise, any rewrite constraint the identified facet type of the `require` is
-[treated as a same-type constraint](/docs/design/generics/appendix-rewrite-constraints.md#combining-constraints-with-require-and-impls)
+[preserved as such](appendix-rewrite-constraints.md#combining-constraints-with-extend).
+But otherwise, any rewrite constraint in the
+[identified facet type](#identified-facet-types) of the `require` is
+[treated as a same-type constraint](appendix-rewrite-constraints.md#combining-constraints-with-require-and-impls)
 instead.
 
 > **TODO:** Link to section explaining when identifying a facet type happens when
