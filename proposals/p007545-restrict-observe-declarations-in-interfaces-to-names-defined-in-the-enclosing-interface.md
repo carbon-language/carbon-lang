@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
+    -   [Allow observe declarations to reference global names](#allow-observe-declarations-to-reference-global-names)
 
 <!-- tocstop -->
 
@@ -116,23 +117,24 @@ interface I(T:! P) {
 
 ## Rationale
 
-TODO: How does this proposal effectively advance Carbon's goals? Rather than
-re-stating the full motivation, this should connect that motivation back to
-Carbon's stated goals and principles. This may evolve during review. Use links
-to appropriate sections of [`/docs/project/goals.md`](/docs/project/goals.md),
-and/or to documents in [`/docs/project/principles`](/docs/project/principles).
-For example:
+By restricting `observe` declarations to names brought into scope by way of generic
+parameters, `.Self`, and associated constants, we guarantee that an interface's
+requirements and constraints remain entirely self-contained. This preserves
+[coherence][1] and aligns with the [low context-sensitivity principle][2].
 
--   [Community and culture](/docs/project/goals.md#community-and-culture)
--   [Language tools and ecosystem](/docs/project/goals.md#language-tools-and-ecosystem)
--   [Performance-critical software](/docs/project/goals.md#performance-critical-software)
--   [Software and language evolution](/docs/project/goals.md#software-and-language-evolution)
--   [Code that is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write)
--   [Practical safety and testing mechanisms](/docs/project/goals.md#practical-safety-and-testing-mechanisms)
--   [Fast and scalable development](/docs/project/goals.md#fast-and-scalable-development)
--   [Modern OS platforms, hardware architectures, and environments](/docs/project/goals.md#modern-os-platforms-hardware-architectures-and-environments)
--   [Interoperability with and migration from existing C++ code](/docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code)
+[1]: https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/generics/goals.md#coherence
+[2]: https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/principles/low_context_sensitivity.md
 
 ## Alternatives considered
 
-TODO: What alternative solutions have you considered?
+### Allow observe declarations to reference global names
+
+We considered allowing `observe` declarations to reference arbitrary global
+names, such as an external interface that is not strictly bound to the current
+interface's scope.
+
+This approach was rejected because it directly violates the principle of low
+context-sensitivity. If an interface is permitted to observe external, unbound
+types, its semantics become dependent on non-local information. A structural
+change in a distant part of the codebase could silently alter the interface's
+meaning or break coherence.
