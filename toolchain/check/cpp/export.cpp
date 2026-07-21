@@ -129,15 +129,16 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
       return nullptr;
     }
 
-    auto inst = context.insts().Get(name_scope.inst_id());
-    if (inst.Is<SemIR::Namespace>()) {
+    auto const_inst_id =
+        context.constant_values().GetConstantInstId(name_scope.inst_id());
+    if (context.insts().Is<SemIR::Namespace>(const_inst_id)) {
       // TODO: Provide a source location.
       auto* namespace_decl = clang::NamespaceDecl::Create(
           context.ast_context(), decl_context, false, clang::SourceLocation(),
           clang::SourceLocation(), identifier_info, nullptr, false);
       decl_context->addHiddenDecl(namespace_decl);
       decl_context = namespace_decl;
-    } else if (inst.Is<SemIR::ClassDecl>()) {
+    } else if (context.insts().Is<SemIR::ClassDecl>(const_inst_id)) {
       // TODO: Provide a source location.
       // TODO: This duplicates work done by ExportClassToCpp. Factor out the
       // shared code!
