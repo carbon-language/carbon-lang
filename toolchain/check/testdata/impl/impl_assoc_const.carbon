@@ -403,8 +403,8 @@ fn G() {
 // --- assoc_const_impls_in_decl.carbon
 library "[[@TEST_NAME]]";
 
+interface I { let X: type; }
 interface J {}
-interface I { let X: J; }
 
 impl () as J {}
 
@@ -415,7 +415,7 @@ impl () as J {}
 // `.X`. If that lookup found this impl (since it's a final impl, eval can find
 // it), we would deduce and produce an infinite cycle. Instructions inside the
 // impl decl should not be able to find the impl.
-final impl forall [T: type] T as I where .X impls J and .X = () {}
+final impl forall [T: type] T as I where .X = () and .X impls J {}
 
 fn F(unused generic T: I where .X = ()) {}
 fn G() {
