@@ -34,7 +34,7 @@ environment, through a single compiler invocation. And it enables minimization
 tools to mechanically move a single compilation unit into a single file, and
 then work to minimize within that file.
 
-The reason this works is largely historical, as #include performs a textual
+The reason this works is largely historical, as `#include` performs a textual
 inclusion. But it can be at least partially maintained without textual includes
 as well.
 
