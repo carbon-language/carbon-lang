@@ -1,4 +1,4 @@
-# Restrict observe declarations in interfaces to names defined in the enclosing interface
+# Restrict observe declarations to names that are part of the enclosing interface
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
