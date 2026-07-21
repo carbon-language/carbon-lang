@@ -130,17 +130,18 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
   return decl_context;
 }
 
-auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
-                      SemIR::ClassType class_type) -> clang::TagDecl* {
+auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
+    -> clang::TagDecl* {
   // TODO: A lot of logic in this function is shared with ExportNameScopeToCpp.
   // This should be refactored.
+
+  const auto& class_info = context.classes().Get(class_type.class_id);
+  SemIR::LocId loc_id(class_info.first_decl_id());
 
   if (class_type.specific_id.has_value()) {
     context.TODO(loc_id, "interop with specific class");
     return nullptr;
   }
-
-  const auto& class_info = context.classes().Get(class_type.class_id);
 
   // If this class was produced by importing a C++ declaration or has
   // already been exported to C++, return the corresponding Clang declaration.
@@ -156,8 +157,7 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
 
   auto* decl_context =
       ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
-  auto clang_loc =
-      GetCppLocation(context, SemIR::LocId(class_info.first_decl_id()));
+  auto clang_loc = GetCppLocation(context, loc_id);
   auto* record_decl = clang::CXXRecordDecl::Create(
       context.ast_context(), clang::TagTypeKind::Class, decl_context, clang_loc,
       clang_loc, identifier_info);
