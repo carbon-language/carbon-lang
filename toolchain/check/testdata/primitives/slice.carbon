@@ -58,13 +58,21 @@ fn TestRange(s: Core.Slice(i32), start: u64, count: u64) -> Core.Slice(i32) {
   //@dump-sem-ir-end
 }
 
+fn TestKeyword(s: slice(i32)) -> slice(i32) {
+  //@dump-sem-ir-begin
+  return s;
+  //@dump-sem-ir-end
+}
+
+
+
 // --- fail_todo_index.carbon
 
 // According to p002274, this should work via a blanket impl of `IndexWith`
 // for all types implementing `IndirectIndexWith`
 fn TestIndex(s: Core.Slice(i32), i: u64) -> i32 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_index.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.IndexWith(u64)` in type `Core.Slice(i32)` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_index.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.IndexWith(u64)` in type `Core.Slice(i32)` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return s[i];
   // CHECK:STDERR:          ^~~~
   // CHECK:STDERR:
@@ -563,7 +571,19 @@ fn TestIndex(s: Core.Slice(i32), i: u64) -> i32 {
 // CHECK:STDOUT:   return %Slice.Range.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_index.carbon
+// CHECK:STDOUT: fn @TestKeyword(%s.param: %Slice.c12) -> out %return.param: %Slice.c12 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %s.ref: %Slice.c12 = name_ref s, %s
+// CHECK:STDOUT:   %impl.elem0: %.606 = impl_witness_access constants.%Copy.impl_witness.137, element0 [concrete = constants.%Slice.as.Copy.impl.Op.789]
+// CHECK:STDOUT:   %bound_method.loc50_10.1: <bound method> = bound_method %s.ref, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Slice.as.Copy.impl.Op(constants.%i32) [concrete = constants.%Slice.as.Copy.impl.Op.specific_fn.e5e]
+// CHECK:STDOUT:   %bound_method.loc50_10.2: <bound method> = bound_method %s.ref, %specific_fn
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Slice.as.Copy.impl.Op.call: init %Slice.c12 to %.loc48_43.1 = call %bound_method.loc50_10.2(%s.ref)
+// CHECK:STDOUT:   return %Slice.as.Copy.impl.Op.call to %return.param
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_index.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
