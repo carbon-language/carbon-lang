@@ -48,6 +48,46 @@ static auto GetClangDeclContextForScope(Context& context,
   return cast<clang::DeclContext>(decl);
 }
 
+// Exports a Carbon class into C++ as a class in the given `decl_context`.
+//
+// This does not check for an existing export of the class, nor does it add
+// the class to `clang_decls()`.
+//
+// Returns nullptr if the class could not be exported and an error was
+// diagnosed.
+static auto ExportClassToCppInDeclContext(Context& context,
+                                          clang::DeclContext* decl_context,
+                                          SemIR::ClassType class_type)
+    -> clang::TagDecl* {
+  const auto& class_info = context.classes().Get(class_type.class_id);
+  SemIR::LocId loc_id(class_info.first_decl_id());
+
+  if (class_type.specific_id.has_value()) {
+    context.TODO(loc_id, "interop with specific class");
+    return nullptr;
+  }
+
+  auto* identifier_info = GetClangIdentifierInfo(context, class_info.name_id);
+  CARBON_CHECK(identifier_info, "non-identifier class name {0}",
+               class_info.name_id);
+
+  auto clang_loc = GetCppLocation(context, loc_id);
+  auto* record_decl = clang::CXXRecordDecl::Create(
+      context.ast_context(), clang::TagTypeKind::Class, decl_context, clang_loc,
+      clang_loc, identifier_info);
+  // If this is a member class, set its access.
+  if (isa<clang::CXXRecordDecl>(decl_context)) {
+    // TODO: Map Carbon access to C++ access.
+    record_decl->setAccess(clang::AS_public);
+  }
+
+  decl_context->addHiddenDecl(record_decl);
+  record_decl->setHasExternalLexicalStorage();
+  record_decl->setHasExternalVisibleStorage();
+
+  return record_decl;
+}
+
 auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
                           SemIR::NameScopeId name_scope_id)
     -> clang::DeclContext* {
@@ -80,39 +120,29 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
     name_scope_id = name_scope_ids_to_create.pop_back_val();
 
     auto& name_scope = context.name_scopes().Get(name_scope_id);
-    auto* identifier_info =
-        GetClangIdentifierInfo(context, name_scope.name_id());
-    if (!identifier_info) {
-      // TODO: Handle keyword package names like `Cpp` and `Core`. These can
-      // be named from C++ via an alias.
-      context.TODO(loc_id, "interop with non-identifier package name");
-      return nullptr;
-    }
 
-    auto inst = context.insts().Get(name_scope.inst_id());
-    if (inst.Is<SemIR::Namespace>()) {
+    auto const_inst_id =
+        context.constant_values().GetConstantInstId(name_scope.inst_id());
+    if (context.insts().Is<SemIR::Namespace>(const_inst_id)) {
+      auto* identifier_info =
+          GetClangIdentifierInfo(context, name_scope.name_id());
+      if (!identifier_info) {
+        // TODO: Handle keyword package names like `Cpp` and `Core`. These can
+        // be named from C++ via an alias.
+        context.TODO(loc_id, "interop with non-identifier package name");
+        return nullptr;
+      }
+
       // TODO: Provide a source location.
       auto* namespace_decl = clang::NamespaceDecl::Create(
           context.ast_context(), decl_context, false, clang::SourceLocation(),
           clang::SourceLocation(), identifier_info, nullptr, false);
       decl_context->addHiddenDecl(namespace_decl);
       decl_context = namespace_decl;
-    } else if (inst.Is<SemIR::ClassDecl>()) {
-      // TODO: Provide a source location.
-      // TODO: This duplicates work done by ExportClassToCpp. Factor out the
-      // shared code!
-      auto* record_decl = clang::CXXRecordDecl::Create(
-          context.ast_context(), clang::TagTypeKind::Class, decl_context,
-          clang::SourceLocation(), clang::SourceLocation(), identifier_info);
-      // If this is a member class, set its access.
-      if (isa<clang::CXXRecordDecl>(decl_context)) {
-        // TODO: Map Carbon access to C++ access.
-        record_decl->setAccess(clang::AS_public);
-      }
-
-      decl_context->addHiddenDecl(record_decl);
-      decl_context = record_decl;
-      decl_context->setHasExternalLexicalStorage();
+    } else if (auto class_type =
+                   context.insts().TryGetAs<SemIR::ClassType>(const_inst_id)) {
+      decl_context =
+          ExportClassToCppInDeclContext(context, decl_context, *class_type);
     } else {
       context.TODO(loc_id, "non-class non-namespace name scope");
       return nullptr;
@@ -125,6 +155,12 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
     auto clang_decl_id = context.clang_decls().Add(
         {.key = key, .inst_id = name_scope.inst_id()});
     name_scope.set_clang_decl_context_id(clang_decl_id, /*is_cpp_scope=*/false);
+
+    // Complete the type here to avoid hitting a clang assert later when
+    // adding methods.
+    if (auto* record_decl = llvm::dyn_cast<clang::RecordDecl>(decl_context)) {
+      context.ast_context().getExternalSource()->CompleteType(record_decl);
+    }
   }
 
   return decl_context;
@@ -132,9 +168,6 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 
 auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
     -> clang::TagDecl* {
-  // TODO: A lot of logic in this function is shared with ExportNameScopeToCpp.
-  // This should be refactored.
-
   const auto& class_info = context.classes().Get(class_type.class_id);
   SemIR::LocId loc_id(class_info.first_decl_id());
 
@@ -151,25 +184,10 @@ auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
     return cast<clang::TagDecl>(clang_decl->decl());
   }
 
-  auto* identifier_info = GetClangIdentifierInfo(context, class_info.name_id);
-  CARBON_CHECK(identifier_info, "non-identifier class name {0}",
-               class_info.name_id);
-
   auto* decl_context =
       ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
-  auto clang_loc = GetCppLocation(context, loc_id);
-  auto* record_decl = clang::CXXRecordDecl::Create(
-      context.ast_context(), clang::TagTypeKind::Class, decl_context, clang_loc,
-      clang_loc, identifier_info);
-  // If this is a member class, set its access.
-  if (isa<clang::CXXRecordDecl>(decl_context)) {
-    // TODO: Map Carbon access to C++ access.
-    record_decl->setAccess(clang::AS_public);
-  }
-
-  decl_context->addHiddenDecl(record_decl);
-  record_decl->setHasExternalLexicalStorage();
-  record_decl->setHasExternalVisibleStorage();
+  auto* record_decl =
+      ExportClassToCppInDeclContext(context, decl_context, class_type);
 
   auto key =
       SemIR::ClangDeclKey::ForNonFunctionDecl(cast<clang::Decl>(record_decl));

@@ -88,3 +88,17 @@ void F() {
   Carbon::C().M();
 }
 ''';
+
+// --- method_alias.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class A {
+  fn F();
+}
+
+alias G = A.F;
+
+inline Cpp '''
+void call() { Carbon::G(); }
+''';
