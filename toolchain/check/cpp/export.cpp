@@ -138,22 +138,10 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
           clang::SourceLocation(), identifier_info, nullptr, false);
       decl_context->addHiddenDecl(namespace_decl);
       decl_context = namespace_decl;
-    } else if (context.insts().Is<SemIR::ClassDecl>(const_inst_id)) {
-      // TODO: Provide a source location.
-      // TODO: This duplicates work done by ExportClassToCpp. Factor out the
-      // shared code!
-      auto* record_decl = clang::CXXRecordDecl::Create(
-          context.ast_context(), clang::TagTypeKind::Class, decl_context,
-          clang::SourceLocation(), clang::SourceLocation(), identifier_info);
-      // If this is a member class, set its access.
-      if (isa<clang::CXXRecordDecl>(decl_context)) {
-        // TODO: Map Carbon access to C++ access.
-        record_decl->setAccess(clang::AS_public);
-      }
-
-      decl_context->addHiddenDecl(record_decl);
-      decl_context = record_decl;
-      decl_context->setHasExternalLexicalStorage();
+    } else if (auto class_type =
+                   context.insts().TryGetAs<SemIR::ClassType>(const_inst_id)) {
+      decl_context =
+          ExportClassToCppInDeclContext(context, decl_context, *class_type);
     } else {
       context.TODO(loc_id, "non-class non-namespace name scope");
       return nullptr;
@@ -173,9 +161,6 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 
 auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
     -> clang::TagDecl* {
-  // TODO: A lot of logic in this function is shared with ExportNameScopeToCpp.
-  // This should be refactored.
-
   const auto& class_info = context.classes().Get(class_type.class_id);
   SemIR::LocId loc_id(class_info.first_decl_id());
 
