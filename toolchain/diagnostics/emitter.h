@@ -14,6 +14,7 @@
 #include "llvm/ADT/Any.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/TypeName.h"
 #include "toolchain/diagnostics/consumer.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/kind.h"
@@ -530,7 +531,7 @@ auto Emitter<LocT>::MakeAny(Arg arg) -> llvm::Any {
   using Storage = Internal::DiagnosticTypeForArg<Arg>::StorageType;
   CARBON_CHECK(llvm::any_cast<Storage>(&converted),
                "Failed to convert argument of type {0} to its storage type {1}",
-               typeid(Arg).name(), typeid(Storage).name());
+               llvm::getTypeName<Arg>(), llvm::getTypeName<Storage>());
   return converted;
 }
 

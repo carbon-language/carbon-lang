@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Support/TypeName.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
@@ -651,7 +652,8 @@ struct Worklist {
   template <typename T>
     requires(SameAsOneOf<T, AnyRawId, LocId>)
   auto Add(T /*arg*/) -> void {
-    CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
+    CARBON_FATAL("Unexpected instruction operand kind {0}",
+                 llvm::getTypeName<T>());
   }
 
   auto Add(IdAndKind::InvalidType /*invalid*/) -> void {
