@@ -22,9 +22,10 @@ fn F(template x:? Form);
 // CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':?', has_error: yes},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Form'},
-// CHECK:STDOUT:         {kind: 'FormBindingPattern', text: ':?', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:         {kind: 'FormBindingPattern', text: ':?', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

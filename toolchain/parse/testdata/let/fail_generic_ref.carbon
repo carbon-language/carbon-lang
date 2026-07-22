@@ -18,8 +18,8 @@ let generic ref X: i32 = 0;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'X'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPatternStart', text: ':', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'X'},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPatternTypeStart', text: ':', has_error: yes},
 // CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},

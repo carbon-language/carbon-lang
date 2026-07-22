@@ -396,15 +396,24 @@ struct RuntimeBindingName {
   AnyRuntimeBindingPatternName name;
 };
 
+struct BindingPatternTypeStart {
+  static constexpr auto Kind =
+      NodeKind::BindingPatternTypeStart.Define({.child_count = 0});
+  // This is a virtual token. The `:` or `:?` token is owned by the enclosing
+  // BindingPattern node.
+  Lex::TokenIndex token;
+};
+
 // A binding pattern, such as `name: Type`, that isn't inside a `var` pattern.
 struct LetBindingPattern {
   static constexpr auto Kind = NodeKind::LetBindingPattern.Define(
-      {.category = NodeCategory::Pattern, .child_count = 2});
+      {.category = NodeCategory::Pattern, .child_count = 3});
 
   // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
   NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
               RefBindingName, RuntimeBindingName>
       name;
+  BindingPatternTypeStartId introducer;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
@@ -424,9 +433,10 @@ struct SelfBindingPattern {
 // A binding pattern, such as `name: Type`, that is inside a `var` pattern.
 struct VarBindingPattern {
   static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
-      {.category = NodeCategory::Pattern, .child_count = 2});
+      {.category = NodeCategory::Pattern, .child_count = 3});
 
   AnyRuntimeBindingPatternName name;
+  BindingPatternTypeStartId introducer;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
@@ -434,9 +444,10 @@ struct VarBindingPattern {
 // A form binding pattern, such as `name:? Form`.
 struct FormBindingPattern {
   static constexpr auto Kind = NodeKind::FormBindingPattern.Define(
-      {.category = NodeCategory::Pattern, .child_count = 2});
+      {.category = NodeCategory::Pattern, .child_count = 3});
 
   AnyRuntimeBindingPatternName name;
+  BindingPatternTypeStartId introducer;
   Lex::ColonQuestionTokenIndex token;
   AnyExprId type;
 };
@@ -450,13 +461,9 @@ struct TemplateBindingName {
   AnyRuntimeBindingPatternName name;
 };
 
-struct CompileTimeBindingPatternStart {
+struct CompileTimeBindingPatternTypeStart {
   static constexpr auto Kind =
-      NodeKind::CompileTimeBindingPatternStart.Define({.child_count = 1});
-  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
-  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
-              TemplateBindingName>
-      name;
+      NodeKind::CompileTimeBindingPatternTypeStart.Define({.child_count = 0});
   // This is a virtual token. The `:` token is owned by the
   // CompileTimeBindingPattern node.
   Lex::ColonTokenIndex token;
@@ -467,9 +474,13 @@ struct CompileTimeBindingPatternStart {
 // or an explicit parameter marked `generic`/`template`).
 struct CompileTimeBindingPattern {
   static constexpr auto Kind = NodeKind::CompileTimeBindingPattern.Define(
-      {.category = NodeCategory::Pattern, .child_count = 2});
+      {.category = NodeCategory::Pattern, .child_count = 3});
 
-  CompileTimeBindingPatternStartId introducer;
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
+              TemplateBindingName>
+      name;
+  CompileTimeBindingPatternTypeStartId introducer;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };

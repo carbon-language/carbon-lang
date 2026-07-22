@@ -105,6 +105,8 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // Add a context stack for tracking constraints, that will be used to allow
   // later constraints to read from them eagerly.
   context.where_stack().push_back({.loc_id = node_id});
+  // Track the occurrence of `where` inside a binding's type.
+  ++context.binding_type_where_count();
 
   if (auto self_facet_type = context.types().TryGetAs<SemIR::FacetType>(
           self_with_constraints_type_id)) {
@@ -463,66 +465,6 @@ auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
     -> bool {
   // Nothing to do.
   return true;
-}
-
-// Returns whether the constant value `const_id` contains a facet type
-// instruction with a `where` expression.
-//
-// This search ignores the type_id of insts, and just looks at the `const_id`
-// and its non-type operands recursively. Any use of a symbolic facet may have a
-// type with an arbitrary facet type (including a `where` expression). But we
-// are looking for a nested `where` that is part of the current `WhereExpr`
-// being checked.
-static auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool {
-  class FindWhereCallbacks : public SubstInstCallbacks {
-   public:
-    FindWhereCallbacks(Context* context, bool* found)
-        : SubstInstCallbacks(context), found_(found) {}
-
-    auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
-      if (*found_ || inst_id == SemIR::TypeType::TypeInstId ||
-          inst_id == SemIR::ErrorInst::InstId) {
-        return FullySubstituted;
-      }
-
-      // Facet types can contain many references to the same value. Only search
-      // a given constant one time to avoid exponential costs.
-      if (!searched_.Insert(inst_id).is_inserted()) {
-        return FullySubstituted;
-      }
-
-      if (auto facet_type =
-              context().insts().TryGetAs<SemIR::FacetType>(inst_id)) {
-        const auto& declared_facet_type = context().declared_facet_types().Get(
-            facet_type->declared_facet_type_id);
-        if (!declared_facet_type.IsExtendedOnly()) {
-          *found_ = true;
-          return FullySubstituted;
-        }
-      }
-
-      return SubstOperandsSkipType;
-    }
-
-    auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst /*new_inst*/)
-        -> SemIR::InstId override {
-      CARBON_FATAL("unexpected rebuild of inst {0}",
-                   context().insts().Get(orig_inst_id));
-    }
-
-   private:
-    bool* found_;
-    Set<SemIR::InstId> searched_;
-  };
-
-  if (!const_id.is_constant()) {
-    return false;
-  }
-
-  bool found = false;
-  FindWhereCallbacks callbacks(&context, &found);
-  SubstInst(context, context.constant_values().GetInstId(const_id), callbacks);
-  return found;
 }
 
 // There are two ways to nest `where` expressions, this diagnoses a `where`

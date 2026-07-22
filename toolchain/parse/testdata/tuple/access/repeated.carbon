@@ -15,8 +15,9 @@ let x: i32 = tuple.0.1.2;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:         {kind: 'BindingPatternTypeStart', text: ':'},
 // CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'tuple'},
 // CHECK:STDOUT:             {kind: 'IntLiteral', text: '0'},
@@ -25,6 +26,6 @@ let x: i32 = tuple.0.1.2;
 // CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '2'},
 // CHECK:STDOUT:       {kind: 'MemberAccessExpr', text: '.', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 13},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 14},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
