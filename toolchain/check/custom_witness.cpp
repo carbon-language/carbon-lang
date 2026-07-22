@@ -185,6 +185,7 @@ static auto CanDestroyType(
     // The value's type is a facet (whose type is a facet type). We don't
     // provide a custom witness for symbolic values of type facet. The witness
     // will be found from impl lookup.
+    CARBON_CHECK(query_self_const_id.is_symbolic());
     return DestroyFormat::NoDestroy;
   }
 
