@@ -218,6 +218,9 @@ class Emitter {
   // but that would be highly unusual.
   auto CheckHasContext() -> void { CARBON_CHECK(!context_fns_.empty()); }
 
+  // Returns the consumer for this emitter.
+  auto consumer() const -> Consumer& { return *consumer_; }
+
  protected:
   // Callback type used to report context messages from ConvertLoc.
   // Note that the first parameter type is Loc rather than

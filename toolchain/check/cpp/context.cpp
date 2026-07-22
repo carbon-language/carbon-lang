@@ -18,6 +18,11 @@ CppContext::CppContext(clang::CompilerInstance& instance,
 
 CppContext::~CppContext() = default;
 
+auto CppContext::set_diagnostic_listener(
+    std::unique_ptr<CppDiagnosticListener> listener) -> void {
+  diagnostic_listener_ = std::move(listener);
+}
+
 auto CppContext::clang_mangle_context() -> clang::MangleContext& {
   if (!clang_mangle_context_) {
     clang_mangle_context_.reset(ast_context().createMangleContext());

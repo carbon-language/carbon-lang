@@ -9,6 +9,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/Basic/DiagnosticParse.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -30,6 +31,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/cpp/access.h"
+#include "toolchain/check/cpp/diagnostic_listener.h"
 #include "toolchain/check/cpp/export.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
@@ -117,48 +119,165 @@ static auto AddImportIRInst(SemIR::File& file,
   return file.import_ir_insts().Add(SemIR::ImportIRInst(clang_source_loc_id));
 }
 
-namespace {
+class CarbonClangDiagnosticConsumer;
+
+// Returns the diagnostic to use for a given Clang diagnostic level.
+static auto GetDiagnostic(clang::DiagnosticsEngine::Level level)
+    -> const Diagnostics::DiagnosticBase<std::string>& {
+  switch (level) {
+    case clang::DiagnosticsEngine::Ignored: {
+      CARBON_FATAL("Emitting an ignored diagnostic");
+      break;
+    }
+    case clang::DiagnosticsEngine::Note: {
+      CARBON_DIAGNOSTIC(CppInteropParseNote, Note, "{0}", std::string);
+      return CppInteropParseNote;
+    }
+    case clang::DiagnosticsEngine::Remark:
+    case clang::DiagnosticsEngine::Warning: {
+      // TODO: Add a distinct Remark level to Carbon diagnostics, and stop
+      // mapping remarks to warnings.
+      CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "{0}", std::string);
+      return CppInteropParseWarning;
+    }
+    case clang::DiagnosticsEngine::Error:
+    case clang::DiagnosticsEngine::Fatal: {
+      CARBON_DIAGNOSTIC(CppInteropParseError, Error, "{0}", std::string);
+      return CppInteropParseError;
+    }
+  }
+}
+
+// A listener that emits Clang diagnostics directly to a provided Carbon
+// Diagnostics::Consumer when no Carbon Context is active.
+class FallbackDiagnosticListener : public CppDiagnosticListener {
+ public:
+  explicit FallbackDiagnosticListener(CarbonClangDiagnosticConsumer& consumer,
+                                      Diagnostics::Consumer& next_consumer)
+      : CppDiagnosticListener(consumer), next_consumer_(&next_consumer) {}
+
+  ~FallbackDiagnosticListener() override { Flush(); }
+
+  auto HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
+                        const clang::Diagnostic& /*info*/,
+                        llvm::StringRef message, llvm::StringRef snippet)
+      -> void override {
+    if (diag_level != clang::DiagnosticsEngine::Note &&
+        !diagnostic_infos_.empty()) {
+      Flush();
+    }
+    diagnostic_infos_.push_back({.level = diag_level,
+                                 .message = message.str(),
+                                 .snippet = snippet.str()});
+  }
+
+  auto Flush() -> void override {
+    if (diagnostic_infos_.empty()) {
+      return;
+    }
+    Diagnostics::NoLocEmitter emitter(next_consumer_);
+    for (size_t i = 0; i != diagnostic_infos_.size(); ++i) {
+      const DiagnosticInfo& info = diagnostic_infos_[i];
+      auto builder =
+          emitter.Build(nullptr, GetDiagnostic(info.level), info.message);
+      builder.OverrideSnippet(info.snippet);
+      for (; i + 1 < diagnostic_infos_.size() &&
+             diagnostic_infos_[i + 1].level == clang::DiagnosticsEngine::Note;
+           ++i) {
+        const DiagnosticInfo& note_info = diagnostic_infos_[i + 1];
+        builder.Note(nullptr, GetDiagnostic(note_info.level), note_info.message)
+            .OverrideSnippet(note_info.snippet);
+      }
+      builder.Emit();
+    }
+    diagnostic_infos_.clear();
+  }
+
+ private:
+  struct DiagnosticInfo {
+    clang::DiagnosticsEngine::Level level;
+    std::string message;
+    std::string snippet;
+  };
+
+  Diagnostics::Consumer* next_consumer_;
+  llvm::SmallVector<DiagnosticInfo> diagnostic_infos_;
+};
+
+// A listener that converts Clang diagnostics to Carbon diagnostics using a
+// Carbon Context.
+class ContextDiagnosticListener : public CppDiagnosticListener {
+ public:
+  explicit ContextDiagnosticListener(CarbonClangDiagnosticConsumer& consumer,
+                                     Context& context)
+      : CppDiagnosticListener(consumer), context_(&context) {}
+
+  ~ContextDiagnosticListener() override { Flush(); }
+
+  auto HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
+                        const clang::Diagnostic& info, llvm::StringRef message,
+                        llvm::StringRef snippet) -> void override;
+
+  auto Flush() -> void override;
+
+ private:
+  struct DiagnosticInfo {
+    clang::DiagnosticsEngine::Level level;
+    SemIR::ImportIRInstId import_ir_inst_id;
+    std::string message;
+    std::string snippet;
+  };
+
+  Context* context_;
+  llvm::SmallVector<DiagnosticInfo> diagnostic_infos_;
+};
 
 // Used to convert Clang diagnostics to Carbon diagnostics.
 //
 // Handling of Clang notes is a little subtle: as far as Clang is concerned,
 // notes are separate diagnostics, not connected to the error or warning that
 // precedes them. But in Carbon's diagnostics system, notes are part of the
-// enclosing diagnostic. To handle this, we buffer Clang diagnostics until we
-// reach a point where we know we're not in the middle of a diagnostic, and then
-// emit a diagnostic along with all of its notes. This is triggered when adding
-// or removing a Carbon context note, which could otherwise get attached to the
-// wrong C++ diagnostics, and at the end of the Carbon program.
+// enclosing diagnostic. To handle this, listeners buffer Clang diagnostics
+// until we reach a point where we know we're not in the middle of a diagnostic,
+// and then emit a diagnostic along with all of its notes.
 class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
  public:
-  // Creates an instance with the location that triggers calling Clang. The
-  // `context` is not stored here, and the diagnostics consumer is expected to
-  // outlive it.
   explicit CarbonClangDiagnosticConsumer(
-      Context& context, std::shared_ptr<clang::CompilerInvocation> invocation)
-      : sem_ir_(&context.sem_ir()),
-        emitter_(&context.emitter()),
-        invocation_(std::move(invocation)) {
-    emitter_->AddFlushFn([this] { EmitDiagnostics(); });
-  }
+      Diagnostics::Consumer& consumer,
+      std::shared_ptr<clang::CompilerInvocation> invocation)
+      : fallback_listener_(*this, consumer),
+        invocation_(std::move(invocation)) {}
 
   ~CarbonClangDiagnosticConsumer() override {
-    // Do not inspect `emitter_` here; it's typically destroyed before the
-    // consumer is.
-    // TODO: If Clang produces diagnostics after check finishes, they'll get
-    // added to the list of pending diagnostics and never emitted.
-    CARBON_CHECK(diagnostic_infos_.empty(),
-                 "Missing flush before destroying diagnostic consumer");
+    Flush();
+    CARBON_CHECK(listeners_.size() == 1,
+                 "Diagnostic listeners were not properly popped");
   }
 
-  // Generates a Carbon warning for each Clang warning and a Carbon error for
-  // each Clang error or fatal.
+  // Pushes a listener onto the stack. Diagnostics will be forwarded to the
+  // innermost listener.
+  auto PushListener(CppDiagnosticListener* listener) -> void {
+    CARBON_CHECK(listener);
+    listeners_.push_back(listener);
+  }
+
+  // Pops a listener from the stack.
+  auto PopListener(CppDiagnosticListener* listener) -> void {
+    CARBON_CHECK(!listeners_.empty() && listeners_.back() == listener,
+                 "Popping unexpected diagnostic listener");
+    listeners_.pop_back();
+  }
+
+  // Flushes the innermost listener.
+  auto Flush() -> void {
+    if (!listeners_.empty()) {
+      listeners_.back()->Flush();
+    }
+  }
+
   auto HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
                         const clang::Diagnostic& info) -> void override {
     DiagnosticConsumer::HandleDiagnostic(diag_level, info);
-
-    SemIR::ImportIRInstId clang_import_ir_inst_id =
-        AddImportIRInst(*sem_ir_, info.getLocation());
 
     llvm::SmallString<256> message;
     info.FormatDiagnostic(message);
@@ -179,66 +298,9 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
               diag_level, message, info.getRanges(), info.getFixItHints());
     }
 
-    diagnostic_infos_.push_back({.level = diag_level,
-                                 .import_ir_inst_id = clang_import_ir_inst_id,
-                                 .message = message.str().str(),
-                                 .snippet = snippet_stream.TakeStr()});
-  }
-
-  // Returns the diagnostic to use for a given Clang diagnostic level.
-  static auto GetDiagnostic(clang::DiagnosticsEngine::Level level)
-      -> const Diagnostics::DiagnosticBase<std::string>& {
-    switch (level) {
-      case clang::DiagnosticsEngine::Ignored: {
-        CARBON_FATAL("Emitting an ignored diagnostic");
-        break;
-      }
-      case clang::DiagnosticsEngine::Note: {
-        CARBON_DIAGNOSTIC(CppInteropParseNote, Note, "{0}", std::string);
-        return CppInteropParseNote;
-      }
-      case clang::DiagnosticsEngine::Remark:
-      case clang::DiagnosticsEngine::Warning: {
-        // TODO: Add a distinct Remark level to Carbon diagnostics, and stop
-        // mapping remarks to warnings.
-        CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "{0}", std::string);
-        return CppInteropParseWarning;
-      }
-      case clang::DiagnosticsEngine::Error:
-      case clang::DiagnosticsEngine::Fatal: {
-        CARBON_DIAGNOSTIC(CppInteropParseError, Error, "{0}", std::string);
-        return CppInteropParseError;
-      }
-    }
-  }
-
-  // Outputs Carbon diagnostics based on the collected Clang diagnostics. Must
-  // be called after the AST is set in the context.
-  auto EmitDiagnostics() -> void {
-    CARBON_CHECK(
-        sem_ir_->cpp_file(),
-        "Attempted to emit C++ diagnostics before the C++ file is set");
-
-    for (size_t i = 0; i != diagnostic_infos_.size(); ++i) {
-      const ClangDiagnosticInfo& info = diagnostic_infos_[i];
-      auto builder = emitter_->Build(SemIR::LocId(info.import_ir_inst_id),
-                                     GetDiagnostic(info.level), info.message);
-      builder.OverrideSnippet(info.snippet);
-      for (; i + 1 < diagnostic_infos_.size() &&
-             diagnostic_infos_[i + 1].level == clang::DiagnosticsEngine::Note;
-           ++i) {
-        const ClangDiagnosticInfo& note_info = diagnostic_infos_[i + 1];
-        builder
-            .Note(SemIR::LocId(note_info.import_ir_inst_id),
-                  GetDiagnostic(note_info.level), note_info.message)
-            .OverrideSnippet(note_info.snippet);
-      }
-      // TODO: This will apply all current Carbon annotation functions. We
-      // should instead track how Clang's context notes and Carbon's annotation
-      // functions are interleaved, and interleave the notes in the same order.
-      builder.Emit();
-    }
-    diagnostic_infos_.clear();
+    CARBON_CHECK(!listeners_.empty(), "No diagnostic listeners registered");
+    listeners_.back()->HandleDiagnostic(diag_level, info, message.str(),
+                                        snippet_stream.TakeStr());
   }
 
  private:
@@ -273,37 +335,64 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     // clang::TextDiagnostic in case it wants to do any setup / teardown work.
   };
 
-  // Information on a Clang diagnostic that can be converted to a Carbon
-  // diagnostic.
-  struct ClangDiagnosticInfo {
-    // The Clang diagnostic level.
-    clang::DiagnosticsEngine::Level level;
-
-    // The ID of the ImportIR instruction referring to the Clang source
-    // location.
-    SemIR::ImportIRInstId import_ir_inst_id;
-
-    // The Clang diagnostic textual message.
-    std::string message;
-
-    // The code snippet produced by clang.
-    std::string snippet;
-  };
-
-  // The Carbon file that this C++ compilation is attached to.
-  SemIR::File* sem_ir_;
-
-  // The diagnostic emitter that we're emitting diagnostics into.
-  DiagnosticEmitterBase* emitter_;
-
-  // The compiler invocation that is producing the diagnostics.
+  llvm::SmallVector<CppDiagnosticListener*, 2> listeners_;
+  FallbackDiagnosticListener fallback_listener_;
   std::shared_ptr<clang::CompilerInvocation> invocation_;
-
-  // Collects the information for all Clang diagnostics to be converted to
-  // Carbon diagnostics after the context has been initialized with the Clang
-  // AST.
-  llvm::SmallVector<ClangDiagnosticInfo> diagnostic_infos_;
 };
+
+CppDiagnosticListener::CppDiagnosticListener(
+    CarbonClangDiagnosticConsumer& consumer)
+    : consumer_(&consumer) {
+  consumer_->PushListener(this);
+}
+
+CppDiagnosticListener::~CppDiagnosticListener() {
+  consumer_->PopListener(this);
+}
+
+auto ContextDiagnosticListener::HandleDiagnostic(
+    clang::DiagnosticsEngine::Level diag_level, const clang::Diagnostic& info,
+    llvm::StringRef message, llvm::StringRef snippet) -> void {
+  SemIR::ImportIRInstId clang_import_ir_inst_id =
+      AddImportIRInst(context_->sem_ir(), info.getLocation());
+
+  diagnostic_infos_.push_back({.level = diag_level,
+                               .import_ir_inst_id = clang_import_ir_inst_id,
+                               .message = message.str(),
+                               .snippet = snippet.str()});
+}
+
+auto ContextDiagnosticListener::Flush() -> void {
+  if (diagnostic_infos_.empty()) {
+    return;
+  }
+  CARBON_CHECK(context_->sem_ir().cpp_file(),
+               "Attempted to emit C++ diagnostics before the C++ file is set");
+
+  for (size_t i = 0; i != diagnostic_infos_.size(); ++i) {
+    const DiagnosticInfo& info = diagnostic_infos_[i];
+    auto builder =
+        context_->emitter().Build(SemIR::LocId(info.import_ir_inst_id),
+                                  GetDiagnostic(info.level), info.message);
+    builder.OverrideSnippet(info.snippet);
+    for (; i + 1 < diagnostic_infos_.size() &&
+           diagnostic_infos_[i + 1].level == clang::DiagnosticsEngine::Note;
+         ++i) {
+      const DiagnosticInfo& note_info = diagnostic_infos_[i + 1];
+      builder
+          .Note(SemIR::LocId(note_info.import_ir_inst_id),
+                GetDiagnostic(note_info.level), note_info.message)
+          .OverrideSnippet(note_info.snippet);
+    }
+    // TODO: This will apply all current Carbon annotation functions. We
+    // should instead track how Clang's context notes and Carbon's annotation
+    // functions are interleaved, and interleave the notes in the same order.
+    builder.Emit();
+  }
+  diagnostic_infos_.clear();
+}
+
+namespace {
 
 // A wrapper around a clang::CompilerInvocation that allows us to make a shallow
 // copy of most of the invocation and only make a deep copy of the parts that we
@@ -802,7 +891,11 @@ namespace {
 // from a set of Cpp imports.
 class GenerateASTAction : public clang::ASTFrontendAction {
  public:
-  explicit GenerateASTAction(Context& context) : context_(&context) {}
+  explicit GenerateASTAction(
+      Context& context,
+      std::unique_ptr<CppDiagnosticListener> diagnostic_listener)
+      : context_(&context),
+        diagnostic_listener_(std::move(diagnostic_listener)) {}
 
  protected:
   auto CreateASTConsumer(clang::CompilerInstance& clang_instance,
@@ -847,8 +940,10 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     clang_instance.getPreprocessor().EnterMainSourceFile();
     parser.Initialize();
 
-    context_->set_cpp_context(
-        std::make_unique<CppContext>(clang_instance, std::move(parser_ptr)));
+    auto cpp_context =
+        std::make_unique<CppContext>(clang_instance, std::move(parser_ptr));
+    cpp_context->set_diagnostic_listener(std::move(diagnostic_listener_));
+    context_->set_cpp_context(std::move(cpp_context));
 
     if (auto* source = clang_instance.getASTContext().getExternalSource()) {
       source->StartTranslationUnit(&clang_instance.getASTConsumer());
@@ -861,6 +956,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
 
  private:
   Context* context_;
+  std::unique_ptr<CppDiagnosticListener> diagnostic_listener_;
 };
 
 }  // namespace
@@ -880,11 +976,15 @@ auto GenerateAst(Context& context,
   // Ask Clang to not leak memory.
   invocation->getFrontendOpts().DisableFree = false;
 
+  auto* diagnostic_consumer = new CarbonClangDiagnosticConsumer(
+      context.emitter().consumer(), invocation);
+  context.emitter().AddFlushFn(
+      [diagnostic_consumer] { diagnostic_consumer->Flush(); });
+
   // Build a diagnostics engine.
   llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(
       clang::CompilerInstance::createDiagnostics(
-          *fs, invocation->getDiagnosticOpts(),
-          new CarbonClangDiagnosticConsumer(context, invocation),
+          *fs, invocation->getDiagnosticOpts(), diagnostic_consumer,
           /*ShouldOwnClient=*/true));
 
   // Extract the input from the frontend invocation and make sure it makes
@@ -925,7 +1025,8 @@ auto GenerateAst(Context& context,
     return false;
   }
 
-  GenerateASTAction action(context);
+  GenerateASTAction action(context, std::make_unique<ContextDiagnosticListener>(
+                                        *diagnostic_consumer, context));
   if (!action.BeginSourceFile(clang_instance, inputs[0])) {
     return false;
   }

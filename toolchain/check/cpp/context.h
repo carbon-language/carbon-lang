@@ -10,6 +10,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/check/cpp/diagnostic_listener.h"
 
 namespace clang {
 class ASTContext;
@@ -50,6 +51,12 @@ class CppContext {
     placement_new_decl_ = decl;
   }
 
+  auto diagnostic_listener() -> CppDiagnosticListener* {
+    return diagnostic_listener_.get();
+  }
+  auto set_diagnostic_listener(std::unique_ptr<CppDiagnosticListener> listener)
+      -> void;
+
  private:
   // The Clang AST context.
   clang::ASTContext* ast_context_;
@@ -69,6 +76,9 @@ class CppContext {
 
   // The cached placement new function declaration.
   clang::FunctionDecl* placement_new_decl_ = nullptr;
+
+  // Listener for Clang diagnostics while checking this Carbon context.
+  std::unique_ptr<CppDiagnosticListener> diagnostic_listener_;
 };
 
 }  // namespace Carbon::Check
