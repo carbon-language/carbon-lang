@@ -372,7 +372,7 @@ Carbon focused talks from the community:
     [transcript](https://docs.google.com/document/d/1JB9H3KzVixAPC5WIytS4AMyrvjwzC7TXqp596veLT34/edit?usp=sharing),
     [slides](https://chandlerc.blog/slides/2026-memory-safety-deep-3/))
 -   Benchmarking and optimizing the Carbon compiler, NDC {Toronto} (May 5-8)
--   Carbon: graduating from the experiment, NDC {Toronto} (May 5-8)
+-   Carbon: graduating from the experiment, NDC {Toronto} (May 5-8) ([video](https://www.youtube.com/watch?v=WJl4ftb5Fxg))
 
 ### 2025
 
