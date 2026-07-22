@@ -34,7 +34,6 @@ load(
 load("@llvm-project//libcxx:libcxx_library.bzl", "libcxx_and_abi_copts")
 load("@llvm-project//libunwind:libunwind_library.bzl", "libunwind_copts")
 load("@rules_python//python:defs.bzl", "py_test")
-load("//bazel/carbon_rules:defs.bzl", "carbon_prelude")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load(
     "//bazel/cc_toolchains:carbon_bootstrapping.bzl",
@@ -47,7 +46,7 @@ load(
     "//toolchain/base:runtimes_build_info.bzl",
     "generate_runtimes_build_vars",
 )
-load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_runtimes_config")
+load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_prelude", "carbon_runtimes_config")
 load("bazel/make_include_copts.bzl", "make_include_copts")
 load(
     "install_filegroups.bzl",

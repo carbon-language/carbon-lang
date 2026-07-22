@@ -177,24 +177,14 @@ static auto CanDestroyType(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> DestroyFormat {
-  auto query_specific_interface =
-      context.specific_interfaces().Get(query_specific_interface_id);
-  auto destroy_interface_id = query_specific_interface.interface_id;
-
   auto inst_id = context.constant_values().GetInstId(
       GetCanonicalFacetOrTypeValue(context, query_self_const_id));
   auto inst = context.insts().Get(inst_id);
 
-  // For facet values, look if the FacetType provides the same.
-  if (auto facet_type =
-          context.types().TryGetAs<SemIR::FacetType>(inst.type_id())) {
-    const auto& declared_facet_type =
-        context.declared_facet_types().Get(facet_type->declared_facet_type_id);
-    for (auto interface : declared_facet_type.extend_constraints) {
-      if (interface.interface_id == destroy_interface_id) {
-        return DestroyFormat::Trivial;
-      }
-    }
+  if (context.types().Is<SemIR::FacetType>(inst.type_id())) {
+    // The value's type is a facet (whose type is a facet type). We don't
+    // provide a custom witness for symbolic values of type facet. The witness
+    // will be found from impl lookup.
     return DestroyFormat::NoDestroy;
   }
 
