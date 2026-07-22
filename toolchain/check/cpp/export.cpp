@@ -120,18 +120,19 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
     name_scope_id = name_scope_ids_to_create.pop_back_val();
 
     auto& name_scope = context.name_scopes().Get(name_scope_id);
-    auto* identifier_info =
-        GetClangIdentifierInfo(context, name_scope.name_id());
-    if (!identifier_info) {
-      // TODO: Handle keyword package names like `Cpp` and `Core`. These can
-      // be named from C++ via an alias.
-      context.TODO(loc_id, "interop with non-identifier package name");
-      return nullptr;
-    }
 
     auto const_inst_id =
         context.constant_values().GetConstantInstId(name_scope.inst_id());
     if (context.insts().Is<SemIR::Namespace>(const_inst_id)) {
+      auto* identifier_info =
+          GetClangIdentifierInfo(context, name_scope.name_id());
+      if (!identifier_info) {
+        // TODO: Handle keyword package names like `Cpp` and `Core`. These can
+        // be named from C++ via an alias.
+        context.TODO(loc_id, "interop with non-identifier package name");
+        return nullptr;
+      }
+
       // TODO: Provide a source location.
       auto* namespace_decl = clang::NamespaceDecl::Create(
           context.ast_context(), decl_context, false, clang::SourceLocation(),
