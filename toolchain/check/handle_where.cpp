@@ -106,9 +106,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // later constraints to read from them eagerly.
   context.where_stack().push_back({.loc_id = node_id});
   // Track the occurrence of `where` inside a binding's type.
-  if (context.binding_check_count() > 0) {
-    ++context.binding_type_where_count();
-  }
+  ++context.binding_type_where_count();
 
   if (auto self_facet_type = context.types().TryGetAs<SemIR::FacetType>(
           self_with_constraints_type_id)) {

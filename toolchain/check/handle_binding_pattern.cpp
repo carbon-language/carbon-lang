@@ -256,12 +256,6 @@ static auto HandleAnyBindingPatternType(
                    std::get<Parse::NodeKind>(type_start_or_self_type));
   }
   auto where_count = context.binding_type_where_count() - before_where_count;
-  // Drop the `where` count back to where it was when the binding started. This
-  // avoids counting the `where` expressions in this type as also being part of
-  // an enclosing binding's type.
-  context.binding_type_where_count() = before_where_count;
-  --context.binding_check_count();
-
   if (where_count > 0) {
     if (auto where_loc_id = FindInvalidWhere(context, original_inst_id);
         where_loc_id.has_value()) {
@@ -564,7 +558,6 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
 auto HandleParseNode(Context& context, Parse::BindingPatternTypeStartId node_id)
     -> bool {
-  ++context.binding_check_count();
   context.node_stack().Push(
       node_id, SemIR::ElementIndex(context.binding_type_where_count()));
   return true;
@@ -613,7 +606,6 @@ auto HandleParseNode(Context& context,
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
   MakePeriodSelfFacetValue(context, node_id, GetEmptyFacetType(context));
-  ++context.binding_check_count();
   context.node_stack().Push(
       node_id, SemIR::ElementIndex(context.binding_type_where_count()));
   return true;
