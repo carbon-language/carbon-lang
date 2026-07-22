@@ -23,6 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Allow ambiguous `.Self` but disambiguate based on context](#allow-ambiguous-self-but-disambiguate-based-on-context)
     -   [Disallow use of ambiguous `.Self` through name lookup](#disallow-use-of-ambiguous-self-through-name-lookup)
     -   [Disallow nested `where` syntactically but allow it from eval](#disallow-nested-where-syntactically-but-allow-it-from-eval)
+    -   [Limit rejecting `where` in a generic argument to the type of `generic` bindings](#limit-rejecting-where-in-a-generic-argument-to-the-type-of-generic-bindings)
 
 <!-- tocstop -->
 
@@ -113,7 +114,8 @@ appearing inside the non-extend constraints of another facet type.
 In addition, we generally disallow a `where` expression appearing in a generic
 argument. Given the above, this only needs to be enforced on the left-hand-side
 of a `where` expression, and `.Self` is only introduced before `where` in the
-type of a generic binding.
+type of a generic binding. However we extend the rule to all bindings to make
+them consistent in which types they accept or reject.
 
 ```carbon
 // Allowed, no nested `where`.
@@ -152,11 +154,14 @@ fn F(generic T: Z where .Self impls GetYWithRewrite());
 // Accepted, `where` on the left-hand-side of another where.
 fn F(generic T: (Z where .Self impls Y) where .Self impls X);
 
-// Rejected, `where` appears in a generic argument.
+// Rejected, `where` appears in a generic argument in a generic binding.
 fn F(generic T: Z(Y where .Self impls X));
 
-// Rejected, `where` appears in a generic argument.
+// Rejected, `where` appears in a generic argument in a generic binding.
 fn F(generic T: Z(Y where .Self impls X) where .Self impls X);
+
+// Rejected, `where` appears in a generic argument in a runtime binding.
+fn F(T: Z(Y where .Self impls X));
 ```
 
 Prior to this proposal, ambiguous `.Self` was already disallowed, but we
@@ -215,6 +220,12 @@ constraint N {
     require impls Y where .Self impls X;
 }
 fn F(generic T: Z(N) where .Self impls X);
+
+// Now accepted, the `where` in `N` is no longer in a generic argument.
+constraint N {
+    require impls Y where .Self impls X;
+}
+fn F(T: Z(N));
 ```
 
 This leads to a recommended best practice: Only use `where` expressions in
@@ -447,3 +458,11 @@ passing `.Self` as an argument, and thus allow aliases to evaluate to a
 `.Self`-dependent facet type. To avoid churn on this rule, we just designed it
 to also handle parameterized aliases, and ban nesting a `where` on the
 right-hand-side of another `where` in all cases, even through evaluation.
+
+### Limit rejecting `where` in a generic argument to the type of `generic` bindings
+
+Only `generic` bindings introduce a `.Self`. So in a `runtime` binding, writing
+a `where` expression in a generic argument can't introduce an ambiguous `.Self`.
+However it creates an inconsistency to allow it. By changing the binding from
+`runtime` to `generic`, the type may become rejected. We choose to have a
+consistent rule that works for all bindings.
