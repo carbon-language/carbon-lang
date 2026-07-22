@@ -119,6 +119,10 @@ constraint are either visible for lookups, or are redundant with existing rules.
 This avoids a global search for the constraint, which advances our
 [low context-sensitivity principle](/docs/project/principles/low_context_sensitivity.md).
 
+Bounding the search allows for a faster and simpler toolchain, which aligns with
+the project goal for
+[fast and scalable development](/docs/project/goals.md#fast-and-scalable-development).
+
 ## Alternatives considered
 
 ### Diagnosing constraints without a connection to the top-level `.Self` from a `require`
