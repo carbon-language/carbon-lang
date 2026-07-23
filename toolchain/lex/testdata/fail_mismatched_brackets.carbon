@@ -215,13 +215,10 @@ fn F() {
 // CHECK:STDOUT:   - { index:  2, kind:      "Identifier", line: {{ *}}[[@LINE-2]], column:  4, indent: 1, spelling: "F", identifier: 0, has_leading_space: true }
 // CHECK:STDOUT:   - { index:  3, kind:       "OpenParen", line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: "(", closing_token: 4 }
 // CHECK:STDOUT:   - { index:  4, kind:      "CloseParen", line: {{ *}}[[@LINE-4]], column:  6, indent: 1, spelling: ")", opening_token: 3 }
-// CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column:  8, indent: 1, spelling: "{", closing_token: 18, has_leading_space: true }
-  // CHECK:STDERR: fail_mismatched_kinds.carbon:[[@LINE+11]]:16: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+// CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column:  8, indent: 1, spelling: "{", closing_token: 17, has_leading_space: true }
+  // CHECK:STDERR: fail_mismatched_kinds.carbon:[[@LINE+8]]:16: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: i32 = (1 + 2};
   // CHECK:STDERR:                ^
-  // CHECK:STDERR: fail_mismatched_kinds.carbon:[[@LINE+8]]:23: note: possibly missing `)` here [PossiblyMissingBracketHere]
-  // CHECK:STDERR:   var x: i32 = (1 + 2};
-  // CHECK:STDERR:                       ^
   // CHECK:STDERR:
   // CHECK:STDERR: fail_mismatched_kinds.carbon:[[@LINE+4]]:22: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
   // CHECK:STDERR:   var x: i32 = (1 + 2};
@@ -233,36 +230,39 @@ fn F() {
   // CHECK:STDOUT:   - { index:  8, kind:           "Colon", line: {{ *}}[[@LINE-3]], column:  8, indent: 3, spelling: ":" }
   // CHECK:STDOUT:   - { index:  9, kind:  "IntTypeLiteral", line: {{ *}}[[@LINE-4]], column: 10, indent: 3, spelling: "i32", has_leading_space: true }
   // CHECK:STDOUT:   - { index: 10, kind:           "Equal", line: {{ *}}[[@LINE-5]], column: 14, indent: 3, spelling: "=", has_leading_space: true }
-  // CHECK:STDOUT:   - { index: 11, kind:       "OpenParen", line: {{ *}}[[@LINE-6]], column: 16, indent: 3, spelling: "(", closing_token: 16, has_leading_space: true }
+  // CHECK:STDOUT:   - { index: 11, kind:           "Error", line: {{ *}}[[@LINE-6]], column: 16, indent: 3, spelling: "(", has_leading_space: true }
   // CHECK:STDOUT:   - { index: 12, kind:      "IntLiteral", line: {{ *}}[[@LINE-7]], column: 17, indent: 3, spelling: "1", value: "1" }
   // CHECK:STDOUT:   - { index: 13, kind:            "Plus", line: {{ *}}[[@LINE-8]], column: 19, indent: 3, spelling: "+", has_leading_space: true }
   // CHECK:STDOUT:   - { index: 14, kind:      "IntLiteral", line: {{ *}}[[@LINE-9]], column: 21, indent: 3, spelling: "2", value: "2", has_leading_space: true }
   // CHECK:STDOUT:   - { index: 15, kind:           "Error", line: {{ *}}[[@LINE-10]], column: 22, indent: 3, spelling: "}" }
-  // CHECK:STDOUT:   - { index: 16, kind:      "CloseParen", line: {{ *}}[[@LINE-11]], column: 23, indent: 3, spelling: ")", opening_token: 11, recovery: true }
-  // CHECK:STDOUT:   - { index: 17, kind:            "Semi", line: {{ *}}[[@LINE-12]], column: 23, indent: 3, spelling: ";" }
+  // CHECK:STDOUT:   - { index: 16, kind:            "Semi", line: {{ *}}[[@LINE-11]], column: 23, indent: 3, spelling: ";" }
 }
-// CHECK:STDOUT:   - { index: 18, kind: "CloseCurlyBrace", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "}", opening_token: 5, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 17, kind: "CloseCurlyBrace", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "}", opening_token: 5, has_leading_space: true }
 
 // --- fail_unclosed_at_eof.carbon
 // CHECK:STDOUT: - filename: fail_unclosed_at_eof.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_unclosed_at_eof.carbon:[[@LINE+4]]:8: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+// CHECK:STDERR: fail_unclosed_at_eof.carbon:[[@LINE+3]]:8: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
 // CHECK:STDERR: fn F() {
 // CHECK:STDERR:        ^
-// CHECK:STDERR:
 fn F() {
-// CHECK:STDOUT:   - { index:  1, kind:             "Fn", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "fn", has_leading_space: true }
-// CHECK:STDOUT:   - { index:  2, kind:     "Identifier", line: {{ *}}[[@LINE-2]], column:  4, indent: 1, spelling: "F", identifier: 0, has_leading_space: true }
-// CHECK:STDOUT:   - { index:  3, kind:      "OpenParen", line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: "(", closing_token: 4 }
-// CHECK:STDOUT:   - { index:  4, kind:     "CloseParen", line: {{ *}}[[@LINE-4]], column:  6, indent: 1, spelling: ")", opening_token: 3 }
-// CHECK:STDOUT:   - { index:  5, kind:          "Error", line: {{ *}}[[@LINE-5]], column:  8, indent: 1, spelling: "{", has_leading_space: true }
+// CHECK:STDOUT:   - { index:  1, kind:              "Fn", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "fn", has_leading_space: true }
+// CHECK:STDOUT:   - { index:  2, kind:      "Identifier", line: {{ *}}[[@LINE-2]], column:  4, indent: 1, spelling: "F", identifier: 0, has_leading_space: true }
+// CHECK:STDOUT:   - { index:  3, kind:       "OpenParen", line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: "(", closing_token: 4 }
+// CHECK:STDOUT:   - { index:  4, kind:      "CloseParen", line: {{ *}}[[@LINE-4]], column:  6, indent: 1, spelling: ")", opening_token: 3 }
+// CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column:  8, indent: 1, spelling: "{", closing_token: 13, has_leading_space: true }
   var x: i32 = 1;
-  // CHECK:STDOUT:   - { index:  6, kind:            "Var", line: {{ *}}[[@LINE-1]], column:  3, indent: 3, spelling: "var", has_leading_space: true }
-  // CHECK:STDOUT:   - { index:  7, kind:     "Identifier", line: {{ *}}[[@LINE-2]], column:  7, indent: 3, spelling: "x", identifier: 1, has_leading_space: true }
-  // CHECK:STDOUT:   - { index:  8, kind:          "Colon", line: {{ *}}[[@LINE-3]], column:  8, indent: 3, spelling: ":" }
-  // CHECK:STDOUT:   - { index:  9, kind: "IntTypeLiteral", line: {{ *}}[[@LINE-4]], column: 10, indent: 3, spelling: "i32", has_leading_space: true }
-  // CHECK:STDOUT:   - { index: 10, kind:          "Equal", line: {{ *}}[[@LINE-5]], column: 14, indent: 3, spelling: "=", has_leading_space: true }
-  // CHECK:STDOUT:   - { index: 11, kind:     "IntLiteral", line: {{ *}}[[@LINE-6]], column: 16, indent: 3, spelling: "1", value: "1", has_leading_space: true }
-  // CHECK:STDOUT:   - { index: 12, kind:           "Semi", line: {{ *}}[[@LINE-7]], column: 17, indent: 3, spelling: ";" }
+  // CHECK:STDOUT:   - { index:  6, kind:             "Var", line: {{ *}}[[@LINE-1]], column:  3, indent: 3, spelling: "var", has_leading_space: true }
+  // CHECK:STDOUT:   - { index:  7, kind:      "Identifier", line: {{ *}}[[@LINE-2]], column:  7, indent: 3, spelling: "x", identifier: 1, has_leading_space: true }
+  // CHECK:STDOUT:   - { index:  8, kind:           "Colon", line: {{ *}}[[@LINE-3]], column:  8, indent: 3, spelling: ":" }
+  // CHECK:STDOUT:   - { index:  9, kind:  "IntTypeLiteral", line: {{ *}}[[@LINE-4]], column: 10, indent: 3, spelling: "i32", has_leading_space: true }
+  // CHECK:STDOUT:   - { index: 10, kind:           "Equal", line: {{ *}}[[@LINE-5]], column: 14, indent: 3, spelling: "=", has_leading_space: true }
+  // CHECK:STDOUT:   - { index: 11, kind:      "IntLiteral", line: {{ *}}[[@LINE-6]], column: 16, indent: 3, spelling: "1", value: "1", has_leading_space: true }
+  // CHECK:STDOUT:   - { index: 12, kind:            "Semi", line: {{ *}}[[@LINE-7]], column: 17, indent: 3, spelling: ";" }
+  // CHECK:STDOUT:   - { index: 13, kind: "CloseCurlyBrace", line: {{ *}}[[@LINE-8]], column: 18, indent: 3, spelling: "}", opening_token: 5, has_leading_space: true, recovery: true }
+// CHECK:STDERR: fail_unclosed_at_eof.carbon:[[@LINE+4]]:1: note: possibly missing `}` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:
+// CHECK:STDERR: ^
+// CHECK:STDERR:
 

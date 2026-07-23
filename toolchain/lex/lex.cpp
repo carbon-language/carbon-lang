@@ -1895,8 +1895,7 @@ static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
         if (next_kind == TokenKind::Period ||
             next_kind == TokenKind::CloseCurlyBrace) {
           is_struct_brace = true;
-        } else if (next_kind == TokenKind::Identifier ||
-                   next_kind == TokenKind::StringLiteral) {
+        } else if (next_kind == TokenKind::Identifier) {
           auto next2_it = std::next(next_it);
           if (next2_it != buffer.tokens().end() &&
               buffer.GetKind(*next2_it) == TokenKind::Colon) {

@@ -621,9 +621,10 @@ TEST_F(LexerTest, MismatchedGroups) {
           {.kind = TokenKind::FileEnd},
       }));
 
-  // Two recovery tokens inserted at the same point: each must be flagged at
-  // its own merged index, not the pre-insertion index of the token it was
-  // inserted before.
+  
+  // `{((}` results in a tie between `{()()}` and `{(())}`, so the first paren
+  // is replaced with an error token. But the second `)` definitely gets added
+  // before the `}`.
   auto& buffer3b = compile_helper_.GetTokenizedBuffer("{((}");
   EXPECT_TRUE(buffer3b.has_errors());
   EXPECT_THAT(
@@ -631,9 +632,8 @@ TEST_F(LexerTest, MismatchedGroups) {
       HasTokens(llvm::ArrayRef<ExpectedToken>{
           {.kind = TokenKind::FileStart},
           {.kind = TokenKind::OpenCurlyBrace, .column = 1},
-          {.kind = TokenKind::OpenParen, .column = 2},
+          {.kind = TokenKind::Error, .column = 2},
           {.kind = TokenKind::OpenParen, .column = 3},
-          {.kind = TokenKind::CloseParen, .column = 4, .recovery = true},
           {.kind = TokenKind::CloseParen, .column = 4, .recovery = true},
           {.kind = TokenKind::CloseCurlyBrace, .column = 4},
           {.kind = TokenKind::FileEnd},
