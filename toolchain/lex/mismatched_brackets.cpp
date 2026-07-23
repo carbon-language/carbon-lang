@@ -20,8 +20,8 @@ namespace {
 // naive greedy recovery.
 constexpr int32_t MaxRegionItemsForSearch = 40;
 
-// Maximum number of state expansions in Dijkstra search before falling back.
-constexpr int32_t MaxSearchExpansions = 500;
+// Layered beam search width limit.
+constexpr size_t MaxBeamWidth = 64;
 
 // Maximum stack depth allowed during search before capping.
 constexpr size_t MaxSearchStackDepth = 8;
@@ -70,6 +70,21 @@ struct OpenBracketInfo {
   bool is_insert_after = false;
   int32_t byte_offset = 0;
   int32_t insertion_byte_offset = 0;
+
+  friend auto operator==(const OpenBracketInfo& a,
+                         const OpenBracketInfo& b) -> bool {
+    return a.token_index == b.token_index && a.kind == b.kind &&
+           a.line == b.line &&
+           a.effective_header_indent == b.effective_header_indent &&
+           a.expected_body_indent == b.expected_body_indent &&
+           a.is_synthetic == b.is_synthetic &&
+           a.is_at_end_of_line == b.is_at_end_of_line &&
+           a.is_struct_brace == b.is_struct_brace &&
+           a.insertion_token_index == b.insertion_token_index &&
+           a.is_insert_after == b.is_insert_after &&
+           a.byte_offset == b.byte_offset &&
+           a.insertion_byte_offset == b.insertion_byte_offset;
+  }
 };
 
 // Computes the associated line indentation for a token by scanning backwards,
@@ -187,35 +202,18 @@ auto ComputeHeaderHasOpenCurlyBrace(
   return false;
 }
 
-// Compactly pack item index and stack into a 64-bit integer for DenseMap.
-static auto PackState(int32_t item_index, llvm::ArrayRef<OpenBracketInfo> stack)
-    -> uint64_t {
-  uint64_t key = static_cast<uint16_t>(item_index);
-  uint32_t depth = std::min<uint32_t>(stack.size(), 5);
-  key |= (static_cast<uint64_t>(depth) << 16);
-
-  uint64_t stack_bits = 0;
-  for (uint32_t i = 0; i < depth; ++i) {
-    uint64_t k = static_cast<uint64_t>(stack[i].kind) & 0x7;
-    uint64_t ind =
-        (static_cast<uint64_t>(stack[i].effective_header_indent / 2) & 0x7);
-    uint64_t synth = stack[i].is_synthetic ? 1 : 0;
-    uint64_t is_struct = stack[i].is_struct_brace ? 1 : 0;
-    uint64_t entry = (k << 5) | (ind << 2) | (synth << 1) | is_struct;
-    stack_bits |= (entry << (i * 8));
-  }
-  key |= (stack_bits << 20);
-  return key;
-}
-
-// Node in the search tree.
-struct SearchNode {
-  int32_t item_index;
-  llvm::SmallVector<OpenBracketInfo, 4> stack;
-  int32_t cost;
+struct ParentEdge {
   int32_t parent_node_index;
   BracketCorrection correction;
   bool has_correction = false;
+};
+
+// Node in the beam search tree.
+struct BeamNode {
+  int32_t item_index;
+  llvm::SmallVector<OpenBracketInfo, 4> stack;
+  int32_t cost;
+  llvm::SmallVector<ParentEdge, 2> parent_edges;
 };
 
 // Solve a damaged region using the simple greedy fallback algorithm.
@@ -309,130 +307,111 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
     return;
   }
 
-  llvm::SmallVector<SearchNode> nodes;
-  nodes.reserve(MaxSearchExpansions);
+  llvm::SmallVector<BeamNode, 0> arena;
+  arena.reserve(256);
 
-  using QueueElem = std::pair<int32_t /*cost*/, int32_t /*node_index*/>;
-  std::priority_queue<QueueElem, std::vector<QueueElem>, std::greater<>> queue;
+  int32_t min_goal_cost = std::numeric_limits<int32_t>::max();
 
-  llvm::DenseMap<uint64_t, int32_t> visited_min_cost;
+  auto try_add_to_layer =
+      [&](llvm::SmallVectorImpl<int32_t>& layer_indices,
+          int32_t next_item_idx,
+          llvm::SmallVector<OpenBracketInfo, 4> next_stack,
+          int32_t next_cost,
+          ParentEdge edge,
+          llvm::SmallVectorImpl<int32_t>* worklist = nullptr) {
+        if (next_cost > min_goal_cost) {
+          return;
+        }
+        for (int32_t idx : layer_indices) {
+          auto& exist_node = arena[idx];
+          if (exist_node.stack == next_stack) {
+            if (next_cost < exist_node.cost) {
+              exist_node.cost = next_cost;
+              exist_node.parent_edges.clear();
+              exist_node.parent_edges.push_back(edge);
+              if (worklist) {
+                worklist->push_back(idx);
+              }
+            } else if (next_cost == exist_node.cost) {
+              bool duplicate = false;
+              for (const auto& exist_edge : exist_node.parent_edges) {
+                if (exist_edge.parent_node_index == edge.parent_node_index &&
+                    exist_edge.has_correction == edge.has_correction &&
+                    (!edge.has_correction ||
+                     (exist_edge.correction.diagnostic_token_index ==
+                          edge.correction.diagnostic_token_index &&
+                      exist_edge.correction.fix_action ==
+                          edge.correction.fix_action &&
+                      exist_edge.correction.fix_token_index ==
+                          edge.correction.fix_token_index &&
+                      exist_edge.correction.fix_token_kind ==
+                          edge.correction.fix_token_kind))) {
+                  duplicate = true;
+                  break;
+                }
+              }
+              if (!duplicate) {
+                exist_node.parent_edges.push_back(edge);
+              }
+            }
+            return;
+          }
+        }
+        int32_t new_idx = static_cast<int32_t>(arena.size());
+        arena.push_back(BeamNode{
+            .item_index = next_item_idx,
+            .stack = std::move(next_stack),
+            .cost = next_cost,
+            .parent_edges = {edge},
+        });
+        layer_indices.push_back(new_idx);
+        if (worklist) {
+          worklist->push_back(new_idx);
+        }
+      };
 
-  nodes.push_back(SearchNode{
+  arena.push_back(BeamNode{
       .item_index = 0,
       .stack = {},
       .cost = 0,
-      .parent_node_index = -1,
+      .parent_edges = {},
   });
-  queue.push({0, 0});
-  visited_min_cost[PackState(0, {})] = 0;
+  llvm::SmallVector<int32_t> current_layer = {0};
 
-  int32_t expansion_count = 0;
-  int32_t min_goal_cost = std::numeric_limits<int32_t>::max();
-  llvm::SmallVector<int32_t> goal_node_indices;
+  for (int32_t i = 0; i < static_cast<int32_t>(items.size()); ++i) {
+    llvm::SmallVector<int32_t> worklist = current_layer;
+    size_t worklist_head = 0;
+    llvm::SmallVector<int32_t> next_layer;
 
-  while (!queue.empty()) {
-    auto [cost, node_idx] = queue.top();
-    queue.pop();
-
-    if (cost > min_goal_cost) {
-      break;
-    }
-
-    if (++expansion_count > MaxSearchExpansions) {
-      if (goal_node_indices.empty()) {
-        SolveNaive(items, region_end_token, corrections);
-        return;
-      }
-      break;
-    }
-
-    const SearchNode current = nodes[node_idx];
-    uint64_t state_key = PackState(current.item_index, current.stack);
-    auto visited_it = visited_min_cost.find(state_key);
-    if (visited_it != visited_min_cost.end() && cost > visited_it->second) {
-      continue;
-    }
-
-    if (current.item_index == static_cast<int32_t>(items.size())) {
-      if (current.stack.empty()) {
-        if (cost < min_goal_cost) {
-          min_goal_cost = cost;
-          goal_node_indices.clear();
-        }
-        if (cost == min_goal_cost) {
-          goal_node_indices.push_back(node_idx);
-        }
+    while (worklist_head < worklist.size()) {
+      int32_t node_idx = worklist[worklist_head++];
+      const BeamNode current = arena[node_idx];
+      if (current.cost > min_goal_cost) {
         continue;
       }
 
-      int32_t finish_cost = current.cost;
-      int32_t parent = node_idx;
-      for (const auto& entry : llvm::reverse(current.stack)) {
-        if (!entry.is_synthetic) {
-          finish_cost += CostUnclosedOpenerAtEnd;
-          nodes.push_back(SearchNode{
-              .item_index = static_cast<int32_t>(items.size()),
-              .stack = {},
-              .cost = finish_cost,
-              .parent_node_index = parent,
-              .correction =
-                  BracketCorrection{
-                      .diagnostic_kind =
-                          BracketDiagnosticKind::UnmatchedOpening,
-                      .diagnostic_token_index = entry.token_index,
-                      .fix_action = BracketFixAction::ReplaceWithError,
-                      .fix_token_index = entry.token_index,
-                      .fix_token_kind =
-                          ToTokenKind(MatchingClosingKind(entry.kind))},
-              .has_correction = true,
-          });
-          parent = static_cast<int32_t>(nodes.size() - 1);
+      const auto& item = items[current.item_index];
+
+      auto try_enqueue = [&](int32_t next_item_idx,
+                             llvm::SmallVector<OpenBracketInfo, 4> next_stack,
+                             int32_t add_cost, BracketCorrection correction = {},
+                             bool has_correction = false) {
+        int32_t next_cost = current.cost + add_cost;
+        ParentEdge edge{
+            .parent_node_index = node_idx,
+            .correction = correction,
+            .has_correction = has_correction,
+        };
+        if (next_item_idx == current.item_index) {
+          try_add_to_layer(current_layer, next_item_idx, std::move(next_stack),
+                           next_cost, edge, &worklist);
+        } else {
+          try_add_to_layer(next_layer, next_item_idx, std::move(next_stack),
+                           next_cost, edge, nullptr);
         }
-      }
+      };
 
-      if (finish_cost < min_goal_cost) {
-        min_goal_cost = finish_cost;
-        goal_node_indices.clear();
-      }
-      if (finish_cost == min_goal_cost) {
-        goal_node_indices.push_back(parent);
-      }
-      continue;
-    }
-
-    const auto& item = items[current.item_index];
-
-    auto try_enqueue = [&](int32_t next_item_idx,
-                           llvm::SmallVector<OpenBracketInfo, 4> next_stack,
-                           int32_t add_cost, BracketCorrection correction = {},
-                           bool has_correction = false) {
-      int32_t next_cost = current.cost + add_cost;
-      if (next_cost > min_goal_cost) {
-        return;
-      }
-      uint64_t key = PackState(next_item_idx, next_stack);
-
-      auto it = visited_min_cost.find(key);
-      if (it != visited_min_cost.end() && it->second < next_cost) {
-        return;
-      }
-      if (it == visited_min_cost.end() || next_cost < it->second) {
-        visited_min_cost[key] = next_cost;
-      }
-
-      auto new_idx = static_cast<int32_t>(nodes.size());
-      nodes.push_back(SearchNode{
-          .item_index = next_item_idx,
-          .stack = std::move(next_stack),
-          .cost = next_cost,
-          .parent_node_index = node_idx,
-          .correction = correction,
-          .has_correction = has_correction,
-      });
-      queue.push({next_cost, new_idx});
-    };
-
-    auto kind = item.token.kind;
+      auto kind = item.token.kind;
 
     auto try_synthesize_closer_before_item = [&]() {
       if (kind != BracketTokenKind::FileEnd && !current.stack.empty() &&
@@ -725,13 +704,14 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
           current.stack.back().kind != MatchingOpeningKind(kind)) {
         auto popped = current.stack.back();
         bool valid_mismatch_close = true;
-        if (popped.kind == BracketTokenKind::OpenCurlyBrace ||
-            kind == BracketTokenKind::CloseCurlyBrace) {
-          valid_mismatch_close = false;
-        } else if (!popped.is_synthetic) {
+        if (!popped.is_synthetic) {
           if (popped.line != item.token.line) {
             valid_mismatch_close = false;
           }
+        }
+        if (popped.kind == BracketTokenKind::OpenCurlyBrace ||
+            kind == BracketTokenKind::CloseCurlyBrace) {
+          valid_mismatch_close = false;
         }
         if (valid_mismatch_close) {
           auto next_stack = current.stack;
@@ -772,36 +752,112 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
     }
   }
 
+    if (next_layer.size() > MaxBeamWidth) {
+      llvm::stable_sort(
+          next_layer, [&](const int32_t& a_idx, const int32_t& b_idx) -> bool {
+            return arena[a_idx].cost < arena[b_idx].cost;
+          });
+      next_layer.resize(MaxBeamWidth);
+    }
+    current_layer = std::move(next_layer);
+  }
+
+  llvm::SmallVector<int32_t> goal_node_indices;
+
+  for (int32_t node_idx : current_layer) {
+    const BeamNode current = arena[node_idx];
+    if (current.cost > min_goal_cost) {
+      continue;
+    }
+    if (current.stack.empty()) {
+      if (current.cost < min_goal_cost) {
+        min_goal_cost = current.cost;
+        goal_node_indices.clear();
+      }
+      if (current.cost == min_goal_cost) {
+        goal_node_indices.push_back(node_idx);
+      }
+      continue;
+    }
+
+    int32_t finish_cost = current.cost;
+    int32_t parent = node_idx;
+    for (const auto& entry : llvm::reverse(current.stack)) {
+      if (!entry.is_synthetic) {
+        finish_cost += CostUnclosedOpenerAtEnd;
+        int32_t new_idx = static_cast<int32_t>(arena.size());
+        arena.push_back(BeamNode{
+            .item_index = static_cast<int32_t>(items.size()),
+            .stack = {},
+            .cost = finish_cost,
+            .parent_edges = {{
+                .parent_node_index = parent,
+                .correction =
+                    BracketCorrection{
+                        .diagnostic_kind =
+                            BracketDiagnosticKind::UnmatchedOpening,
+                        .diagnostic_token_index = entry.token_index,
+                        .fix_action = BracketFixAction::InsertBefore,
+                        .fix_token_index = region_end_token,
+                        .fix_token_kind =
+                            ToTokenKind(MatchingClosingKind(entry.kind))},
+                .has_correction = true,
+            }},
+        });
+        parent = new_idx;
+      }
+    }
+
+    if (finish_cost < min_goal_cost) {
+      min_goal_cost = finish_cost;
+      goal_node_indices.clear();
+    }
+    if (finish_cost == min_goal_cost) {
+      goal_node_indices.push_back(parent);
+    }
+  }
+
   if (goal_node_indices.empty()) {
     SolveNaive(items, region_end_token, corrections);
     return;
   }
 
-  // 1. Reconstruct baseline path from the first optimal goal.
-  llvm::SmallVector<BracketCorrection> baseline_path;
-  for (int32_t curr = goal_node_indices.front(); curr != -1;
-       curr = nodes[curr].parent_node_index) {
-    if (nodes[curr].has_correction) {
-      baseline_path.push_back(nodes[curr].correction);
-    }
-  }
-  std::reverse(baseline_path.begin(), baseline_path.end());
-
-  // 2. Reconstruct all optimal paths to detect ties.
   llvm::SmallVector<llvm::SmallVector<BracketCorrection>> all_paths;
-  for (int32_t goal_idx : goal_node_indices) {
-    llvm::SmallVector<BracketCorrection> path;
-    for (int32_t curr = goal_idx; curr != -1;
-         curr = nodes[curr].parent_node_index) {
-      if (nodes[curr].has_correction) {
-        path.push_back(nodes[curr].correction);
+  llvm::SmallVector<BracketCorrection> current_path;
+
+  auto dfs = [&](auto& self, int32_t node_idx) -> void {
+    if (all_paths.size() >= 100) {
+      return;
+    }
+    const auto& node = arena[node_idx];
+    if (node.parent_edges.empty()) {
+      auto path = current_path;
+      std::reverse(path.begin(), path.end());
+      all_paths.push_back(std::move(path));
+      return;
+    }
+    for (const auto& edge : node.parent_edges) {
+      if (edge.has_correction) {
+        current_path.push_back(edge.correction);
+      }
+      self(self, edge.parent_node_index);
+      if (edge.has_correction) {
+        current_path.pop_back();
       }
     }
-    std::reverse(path.begin(), path.end());
-    all_paths.push_back(std::move(path));
+  };
+
+  for (int32_t goal_idx : goal_node_indices) {
+    dfs(dfs, goal_idx);
   }
 
-  // 3. Mark corrections as tied if optimal paths disagree.
+  if (all_paths.empty()) {
+    SolveNaive(items, region_end_token, corrections);
+    return;
+  }
+
+  llvm::SmallVector<BracketCorrection> baseline_path = all_paths.front();
+
   for (auto& corr : baseline_path) {
     bool is_tied = false;
     for (const auto& path : all_paths) {
