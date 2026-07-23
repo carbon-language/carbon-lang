@@ -21,11 +21,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Details](#details)
         -   [Explicitly destroying an object](#explicitly-destroying-an-object)
             -   [Naming](#naming)
+        -   [Trivial destruction](#trivial-destruction)
     -   [Rationale](#rationale)
     -   [Alternatives considered](#alternatives-considered)
         -   [Two public interface model (previous design)](#two-public-interface-model-previous-design)
-            -   [`Destroy` interface](#destroy-interface)
-                -   [Constraining on `Destructor` should be an error](#constraining-on-destructor-should-be-an-error)
         -   [Replace interface `Core.Destructor` with method `Core.Destroy.Destructor`](#replace-interface-coredestructor-with-method-coredestroydestructor)
         -   [Alternatives considered from PR #1154](#alternatives-considered-from-pr-1154)
     -   [Future work](#future-work)
@@ -34,7 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Abstract
 
-Describe the relationship between `Destroy` and `class` types.
+Redesign the Carbon destruction process to use interfaces.
 
 ## Problem
 
@@ -134,6 +133,32 @@ up with a subjective decision.
     additionally refers to an internal mechanism for destroying an entity. That
     "internal mechanism" `Core.Destroy.Op` for Carbon object tear-down.
 
+### Trivial destruction
+
+From the [existing destructor design]:
+
+> **Future work:** Allow or require destructors to be declared as taking
+> `partial Self` in order to prove no use of virtual methods.
+> 
+> Types satisfy the [`TrivialDestructor`] facet type if:
+> 
+> -   the class declaration does not define a destructor or the class defines the
+>     destructor with an empty body `{ }`,
+> -   all data members implement `TrivialDestructor`, and
+> -   all base classes implement `TrivialDestructor`.
+> 
+> For example, a [struct type] implements `TrivialDestructor` if all its members
+> do.
+> 
+> `TrivialDestructor` implies that their destructor does nothing, which may be
+> used to generate optimized specializations.
+> 
+> There is no provision for handling failure in a destructor. All operations that
+> could potentially fail must be performed before the destructor is called.
+> Unhandled failure during a destructor call will abort the program.
+
+This is resolved in the [Trivial destruction section of the new design].
+
 ## Rationale
 
 The destruction model advances these goals:
@@ -169,53 +194,6 @@ This design was the product of the conversations surrounding Issues #6124, #6161
 We felt that the design still had too much special-casing, and iterated upon the
 design to reach the current proposal.
 
-#### `Destroy` interface
-
-```carbon
-interface Destroy {
-  unsafe final fn Op(ref self) = "destroy.op";
-}
-```
-
-`Destroy` destroys complete objects---including subobjects---and ends their
-lifetimes. Classes cannot customise `Destroy`: it is exclusively implemented by
-the compiler. Types requiring control over how subobjects are destroyed must use
-a raw storage type for subobjects. `Destroy` behaves uniformly for all
-destroyable types:
-
-1.  Remove qualifiers from the `Self` type.
-2.  Call `self.(Core.Destructor.Op)()`, if `Self.Destructor` is implemented.
-3.  Call `Destroy.Op()` on each subobject. The `.base` subobject has a `partial`
-    type during this step.
-
-> [!WARNING] `Core.Destroy.Op` is unsafe.
-
-Types automatically implement `Destroy` unless they:
-
--   are abstract and not partial;
--   have a subobject that cannot be destroyed;
--   have explicitly opted out of being destructible (see [Future work])
-
-##### Constraining on `Destructor` should be an error
-
-Limiting an API to only accept objects that can be destroyed is a helpful
-constraint. Conversely, limiting an API to only accept objects that require some
-amount of custom clean-up during the destroy operation is an over-constraint.
-
-It is easy to mix up `Destructor` and `Destroy`. Users must implement
-`Destructor` for their class types to have a destructor. Only the toolchain is
-allowed to implement `Destroy`. Worse: Carbon and C++ differ on what these terms
-mean when considered independently, but agree on their combined meaning. Carbon
-class types that do not implement `Destructor` have no destructor, but they can
-be destroyed. C++ class types that do not explicitly define a destructor will
-have an implicit destructor synthesised by the compiler. C++ class types that do
-not have a destructor cannot be destroyed.
-
-Constraining on `Destructor` is considered to always be a mistake. Users should
-constrain their APIs using `Destroy` to restrict the interface to objects that
-can be destroyed. Users should constrain their APIs using `TrivialDestroy` to
-restrict the interface to types that have trivial destruction.
-
 ### Replace interface `Core.Destructor` with method `Core.Destroy.Destructor`
 
 The proposed model includes four interfaces. That makes the Carbon destructor
@@ -238,7 +216,7 @@ calling `Destroy.Op` for an abstract class. This includes
 ### Alternatives considered from [PR #1154]
 
 The following alternatives were removed from [docs/design/classes.md]. They have
-been added here to ensure readers can easily find the alternatives without needing
+been copied here to ensure readers can easily find the alternatives without needing
 to do extensive archaeology.
 
 -   [Types implement destructor interface](/proposals/p001154-destructors.md#types-implement-destructor-interface)
@@ -252,6 +230,7 @@ to do extensive archaeology.
 
 ## Future work
 
+-   Allow or require destructors to be declared as taking `(var self: Self)`.
 -   Identify an alternative name for `Destructor` (see [Issue #7508]).
 -   Add an opt-out from implementing `Destroy`.
 -   Describe why `Destructor.Op` is unsafe.
@@ -259,24 +238,25 @@ to do extensive archaeology.
         safe. These should be codified in the detailed description.
 -   Unify with copy and move semantics.
 -   Explore how types with virtual pointers can:
-    -   opt out from `DynamicDestroy`.
-    -   manually implement `DynamicDestroy`.
+    -   opt out from `DynamicDestroy`
+    -   manually implement `DynamicDestroy`
 
-<!-- Links -->
-
+<!-- # Links -->
+[destructors]: /docs/design/classes.md#destructors
 [PR #1154]: https://github.com/carbon-language/carbon-lang/pull/1154
 [Issue #6124]: https://github.com/carbon-language/carbon-lang/issues/6124
 [Issue #6161]: https://github.com/carbon-language/carbon-lang/issues/6161
 [Issue #6464]: https://github.com/carbon-language/carbon-lang/issues/6464
 [Issue #7508]: https://github.com/carbon-language/carbon-lang/issues/7508
-[P001154 Destructors]: /proposals/p001154-destructors.md
 
-[destructors]: /docs/design/classes.md#destructors
-[object destruction]: /docs/design/values.md#object-destruction
 [existing destructor design]: https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/classes.md#destructors
-[Future work]: #future-work
+[object destruction]: /docs/design/values.md#object-destruction
+[`TrivialDestructor`]: https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/generics/details.md#destructor-constraints
+[struct type]: https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/classes.md#struct-types
+[trivial destruction section of the new design]: /docs/design/values.md#trivial-destruction
 
 [Code that is easy to read, understand, and write]: /docs/project/goals.md#code-that-is-easy-to-read-understand-and-write
 [Software and language evolution]: /docs/project/goals.md#software-and-language-evolution
 [Practical safety and testing mechanisms]: /docs/project/goals.md#practical-safety-and-testing-mechanisms
 [Interoperability with and migration from existing C++ code]: /docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code
+[P001154 Destructors]: /proposals/p001154-destructors.md

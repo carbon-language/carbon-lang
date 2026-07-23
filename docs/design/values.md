@@ -10,48 +10,51 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Values, objects, and expressions](#values-objects-and-expressions)
-    -   [Expression categories](#expression-categories)
-        -   [Value acquisition](#value-acquisition)
-        -   [Direct initialization](#direct-initialization)
-        -   [Copy initialization](#copy-initialization)
-        -   [Temporary materialization](#temporary-materialization)
--   [Object destruction](#object-destruction)
-    -   [`Core.Destroy.Op` method](#coredestroyop-method)
-    -   [`Core.SelfDestruct`](#coreselfdestruct)
-    -   [`Core.DestroySubobjects`](#coredestroysubobjects)
-    -   [Trivial destruction](#trivial-destruction)
-    -   [Dynamic destruction](#dynamic-destruction)
--   [Binding patterns and local variables with `let` and `var`](#binding-patterns-and-local-variables-with-let-and-var)
-    -   [Local variables](#local-variables)
-    -   [Consuming function parameters](#consuming-function-parameters)
--   [Reference expressions](#reference-expressions)
-    -   [Entire reference expressions](#entire-reference-expressions)
-    -   [Durable reference expressions](#durable-reference-expressions)
-    -   [Ephemeral reference expressions](#ephemeral-reference-expressions)
--   [Value expressions](#value-expressions)
-    -   [Comparison to C++ parameters](#comparison-to-c-parameters)
-    -   [Polymorphic types](#polymorphic-types)
-    -   [Interop with C++ `const &` and `const` methods](#interop-with-c-const--and-const-methods)
-    -   [Escape hatches for value addresses in Carbon](#escape-hatches-for-value-addresses-in-carbon)
--   [Initializing expressions](#initializing-expressions)
-    -   [Function calls and returns](#function-calls-and-returns)
-        -   [Deferred initialization from values and references](#deferred-initialization-from-values-and-references)
-        -   [Declared `returned` variable](#declared-returned-variable)
--   [Extended types](#extended-types)
-    -   [Initializing results](#initializing-results)
-    -   [Extended type conversions](#extended-type-conversions)
-        -   [Type conversions](#type-conversions)
-        -   [Category conversions](#category-conversions)
--   [Pointers](#pointers)
-    -   [Reference types](#reference-types)
-    -   [Pointer syntax](#pointer-syntax)
-    -   [Dereferencing customization](#dereferencing-customization)
--   [`const`-qualified types](#const-qualified-types)
--   [Lifetime overloading](#lifetime-overloading)
--   [Value representation and customization](#value-representation-and-customization)
--   [Alternatives considered](#alternatives-considered)
--   [References](#references)
+-   [Values, variables, and pointers](#values-variables-and-pointers)
+    -   [Table of contents](#table-of-contents)
+    -   [Values, objects, and expressions](#values-objects-and-expressions)
+        -   [Expression categories](#expression-categories)
+            -   [Value acquisition](#value-acquisition)
+            -   [Direct initialization](#direct-initialization)
+            -   [Copy initialization](#copy-initialization)
+            -   [Temporary materialization](#temporary-materialization)
+    -   [Object destruction](#object-destruction)
+        -   [`Core.Destroy.Op` method](#coredestroyop-method)
+        -   [`Core.SelfDestruct`](#coreselfdestruct)
+        -   [`Core.DestroySubobjects`](#coredestroysubobjects)
+        -   [Trivial destruction](#trivial-destruction)
+        -   [Dynamic destruction](#dynamic-destruction)
+        -   [Proposals](#proposals)
+    -   [Binding patterns and local variables with `let` and `var`](#binding-patterns-and-local-variables-with-let-and-var)
+        -   [Local variables](#local-variables)
+        -   [Consuming function parameters](#consuming-function-parameters)
+    -   [Reference expressions](#reference-expressions)
+        -   [Entire reference expressions](#entire-reference-expressions)
+        -   [Durable reference expressions](#durable-reference-expressions)
+        -   [Ephemeral reference expressions](#ephemeral-reference-expressions)
+    -   [Value expressions](#value-expressions)
+        -   [Comparison to C++ parameters](#comparison-to-c-parameters)
+        -   [Polymorphic types](#polymorphic-types)
+        -   [Interop with C++ `const &` and `const` methods](#interop-with-c-const--and-const-methods)
+        -   [Escape hatches for value addresses in Carbon](#escape-hatches-for-value-addresses-in-carbon)
+    -   [Initializing expressions](#initializing-expressions)
+        -   [Function calls and returns](#function-calls-and-returns)
+            -   [Deferred initialization from values and references](#deferred-initialization-from-values-and-references)
+            -   [Declared `returned` variable](#declared-returned-variable)
+    -   [Extended types](#extended-types)
+        -   [Initializing results](#initializing-results)
+        -   [Extended type conversions](#extended-type-conversions)
+            -   [Type conversions](#type-conversions)
+            -   [Category conversions](#category-conversions)
+    -   [Pointers](#pointers)
+        -   [Reference types](#reference-types)
+        -   [Pointer syntax](#pointer-syntax)
+        -   [Dereferencing customization](#dereferencing-customization)
+    -   [`const`-qualified types](#const-qualified-types)
+    -   [Lifetime overloading](#lifetime-overloading)
+    -   [Value representation and customization](#value-representation-and-customization)
+    -   [Alternatives considered](#alternatives-considered)
+    -   [References](#references)
 
 <!-- tocstop -->
 
@@ -234,8 +237,9 @@ class Vector(T) {
 ### `Core.SelfDestruct`
 
 `SelfDestruct` destroys a complete object, including all subobjects, and ends
-their lifetimes. `SelfDestruct(x)` calls first `x.(Core.Destroy.Op)`, then calls
-`x.(Core.DestroySubobjects.Op)`.
+their lifetimes. `SelfDestruct(x)` potentially calls `x.(Core.Destroy.Op)`, then
+calls `x.(Core.DestroySubobjects.Op)`. `SelfDestruct` only calls `Destroy.Op` if
+`Self` manually implements `Destroy`.
 
 The behavior for `SelfDestruct` cannot be customized. Types requiring control
 over how their subobjects are destroyed must use a raw storage type for their
@@ -308,7 +312,20 @@ Manually calling `Core.SelfDestruct` is unsafe.
 
 ### `Core.DestroySubobjects`
 
-The interface `DestroySubobjects` is a toolchain-implemented
+The interface `DestroySubobjects` is a toolchain-implemented interface that
+`Core.SelfDestruct` calls to destroy an object's subobjects. Types automatically
+implement `DestroySubobjects` unless they:
+
+-   are abstract and not partial; or
+-   have a subobject that cannot be destroyed; or
+-   have explicitly opted out from being destructible (see
+    [Future work](/proposals/p007362-regularise-carbon-destructors.md)).
+
+`DestroySubobjects.Op` behaves uniformly for all types:
+
+1.  Remove qualifiers from the `Self` type.
+2.  Calls `Core.SelfDestruct` for each subobject in `self` in reverse
+    declaration order.
 
 ### Trivial destruction
 
@@ -356,6 +373,14 @@ to manually implement `DynamicDestroy`.
 > [!NOTE]
 `Core.DynamicDestroy.Op` is a safe function.
 
+### Proposals
+
+-   Implements: [P007362]
+-   Supersedes: [P001154]
+
+<!-- Links for object destruction -->
+[p001154]: https://github.com/carbon-language/carbon-lang/pull/1154
+[p007362]: https://github.com/carbon-language/carbon-lang/pull/7362
 [virtual destructors]: https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors
 
 ## Binding patterns and local variables with `let` and `var`

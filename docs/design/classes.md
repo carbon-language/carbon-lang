@@ -10,79 +10,80 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Overview](#overview)
--   [Use cases](#use-cases)
-    -   [Data classes](#data-classes)
-    -   [Encapsulated types](#encapsulated-types)
-        -   [Without inheritance](#without-inheritance)
-        -   [With inheritance and subtyping](#with-inheritance-and-subtyping)
-            -   [Polymorphic types](#polymorphic-types)
-                -   [Interface as base class](#interface-as-base-class)
-            -   [Non-polymorphic inheritance](#non-polymorphic-inheritance)
-            -   [Interop with C++ multiple inheritance](#interop-with-c-multiple-inheritance)
-    -   [Mixins](#mixins)
--   [Background](#background)
--   [Members](#members)
-    -   [Data members have an order](#data-members-have-an-order)
--   [Struct types](#struct-types)
-    -   [Literals](#literals)
-    -   [Type expression](#type-expression)
-    -   [Assignment and initialization](#assignment-and-initialization)
-    -   [Operations performed field-wise](#operations-performed-field-wise)
--   [Nominal class types](#nominal-class-types)
-    -   [Member variables](#member-variables)
-        -   [Fields](#fields)
-        -   [Static member variables](#static-member-variables)
-        -   [Initializers](#initializers)
-        -   [Syntax](#syntax)
-    -   [Forward declaration](#forward-declaration)
-    -   [`Self`](#self)
-    -   [Construction](#construction)
-        -   [Assignment](#assignment)
-    -   [Member functions](#member-functions)
-        -   [Non-methods](#non-methods)
-        -   [Methods](#methods)
-        -   [Deferred member function definitions](#deferred-member-function-definitions)
-        -   [Name lookup in classes](#name-lookup-in-classes)
-    -   [Nominal data classes](#nominal-data-classes)
-    -   [Member type](#member-type)
-    -   [Let](#let)
-    -   [Alias](#alias)
-    -   [Inheritance](#inheritance)
-        -   [Virtual methods](#virtual-methods)
-            -   [Virtual modifier keywords](#virtual-modifier-keywords)
-        -   [Subtyping](#subtyping)
-        -   [`Self` refers to the current type](#self-refers-to-the-current-type)
-        -   [Constructors](#constructors)
-            -   [Partial class type](#partial-class-type)
-            -   [Usage](#usage)
-        -   [Assignment with inheritance](#assignment-with-inheritance)
-    -   [Destructors](#destructors)
-    -   [Access control](#access-control)
-        -   [Private access](#private-access)
-        -   [Protected access](#protected-access)
-        -   [Friends](#friends)
-        -   [Test friendship](#test-friendship)
-        -   [Access control for construction](#access-control-for-construction)
-    -   [Operator overloading](#operator-overloading)
--   [Future work](#future-work)
-    -   [Struct literal shortcut](#struct-literal-shortcut)
-    -   [Optional named parameters](#optional-named-parameters)
-        -   [Field defaults for struct types](#field-defaults-for-struct-types)
-        -   [Destructuring in pattern matching](#destructuring-in-pattern-matching)
-        -   [Discussion](#discussion)
-    -   [Inheritance](#inheritance-1)
-        -   [C++ abstract base classes interoperating with object-safe interfaces](#c-abstract-base-classes-interoperating-with-object-safe-interfaces)
-        -   [Overloaded member functions](#overloaded-member-functions)
-        -   [Interop with C++ inheritance](#interop-with-c-inheritance)
-            -   [Virtual base classes](#virtual-base-classes)
-    -   [Mixins](#mixins-1)
-    -   [Memory layout](#memory-layout)
-    -   [No `static` variables](#no-static-variables)
-    -   [Computed properties](#computed-properties)
-    -   [Interfaces implemented for data classes](#interfaces-implemented-for-data-classes)
--   [Alternatives considered](#alternatives-considered)
--   [References](#references)
+-   [Classes](#classes)
+    -   [Table of contents](#table-of-contents)
+    -   [Overview](#overview)
+    -   [Use cases](#use-cases)
+        -   [Data classes](#data-classes)
+        -   [Encapsulated types](#encapsulated-types)
+            -   [Without inheritance](#without-inheritance)
+            -   [With inheritance and subtyping](#with-inheritance-and-subtyping)
+                -   [Polymorphic types](#polymorphic-types)
+                    -   [Interface as base class](#interface-as-base-class)
+                -   [Non-polymorphic inheritance](#non-polymorphic-inheritance)
+                -   [Interop with C++ multiple inheritance](#interop-with-c-multiple-inheritance)
+        -   [Mixins](#mixins)
+    -   [Background](#background)
+    -   [Members](#members)
+        -   [Data members have an order](#data-members-have-an-order)
+    -   [Struct types](#struct-types)
+        -   [Literals](#literals)
+        -   [Type expression](#type-expression)
+        -   [Assignment and initialization](#assignment-and-initialization)
+        -   [Operations performed field-wise](#operations-performed-field-wise)
+    -   [Nominal class types](#nominal-class-types)
+        -   [Member variables](#member-variables)
+            -   [Fields](#fields)
+            -   [Static member variables](#static-member-variables)
+            -   [Initializers](#initializers)
+            -   [Syntax](#syntax)
+        -   [Forward declaration](#forward-declaration)
+        -   [`Self`](#self)
+        -   [Construction](#construction)
+            -   [Assignment](#assignment)
+        -   [Member functions](#member-functions)
+            -   [Non-methods](#non-methods)
+            -   [Methods](#methods)
+            -   [Deferred member function definitions](#deferred-member-function-definitions)
+            -   [Name lookup in classes](#name-lookup-in-classes)
+        -   [Nominal data classes](#nominal-data-classes)
+        -   [Member type](#member-type)
+        -   [Let](#let)
+        -   [Alias](#alias)
+        -   [Inheritance](#inheritance)
+            -   [Virtual methods](#virtual-methods)
+                -   [Virtual modifier keywords](#virtual-modifier-keywords)
+            -   [Subtyping](#subtyping)
+            -   [`Self` refers to the current type](#self-refers-to-the-current-type)
+            -   [Constructors](#constructors)
+                -   [Partial class type](#partial-class-type)
+                -   [Usage](#usage)
+            -   [Assignment with inheritance](#assignment-with-inheritance)
+        -   [Access control](#access-control)
+            -   [Private access](#private-access)
+            -   [Protected access](#protected-access)
+            -   [Friends](#friends)
+            -   [Test friendship](#test-friendship)
+            -   [Access control for construction](#access-control-for-construction)
+        -   [Operator overloading](#operator-overloading)
+    -   [Future work](#future-work)
+        -   [Struct literal shortcut](#struct-literal-shortcut)
+        -   [Optional named parameters](#optional-named-parameters)
+            -   [Field defaults for struct types](#field-defaults-for-struct-types)
+            -   [Destructuring in pattern matching](#destructuring-in-pattern-matching)
+            -   [Discussion](#discussion)
+        -   [Inheritance](#inheritance-1)
+            -   [C++ abstract base classes interoperating with object-safe interfaces](#c-abstract-base-classes-interoperating-with-object-safe-interfaces)
+            -   [Overloaded member functions](#overloaded-member-functions)
+            -   [Interop with C++ inheritance](#interop-with-c-inheritance)
+                -   [Virtual base classes](#virtual-base-classes)
+        -   [Mixins](#mixins-1)
+        -   [Memory layout](#memory-layout)
+        -   [No `static` variables](#no-static-variables)
+        -   [Computed properties](#computed-properties)
+        -   [Interfaces implemented for data classes](#interfaces-implemented-for-data-classes)
+    -   [Alternatives considered](#alternatives-considered)
+    -   [References](#references)
 
 <!-- tocstop -->
 
@@ -1647,170 +1648,6 @@ implement it for final types. However, following the
 [maxim that Carbon should "focus on encouraging appropriate usage of features rather than restricting misuse"](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write),
 we allow users to also implement assignment on extensible classes, even though
 it can lead to [slicing](https://en.wikipedia.org/wiki/Object_slicing).
-
-### Destructors
-
-Every non-abstract type is _destructible_, meaning has a defined destructor
-method called when the lifetime of a value of that type ends, such as when a
-variable goes out of scope. The destructor for a class may be customized using
-the `destroy` method:
-
-```carbon
-class MyClass {
-  fn destroy(self) { ... }
-}
-```
-
-or:
-
-```carbon
-class MyClass {
-  // Can modify `self` in the body.
-  fn destroy(ref self) { ... }
-}
-```
-
-If a class has no `destroy` method, it gets the default destructor, which is
-equivalent to `fn destroy(self) { }`.
-
-The destructor for a class is run before the destructors of its data members.
-The data members are destroyed in reverse order of declaration. Derived classes
-are destroyed before their base classes, so the order of operations is:
-
--   derived class' destructor runs,
--   the data members of the derived class are destroyed, in reverse order of
-    declaration,
--   the immediate base class' destructor runs,
--   the data members of the immediate base class are destroyed, in reverse order
-    of declaration,
--   and so on.
-
-Destructors may be declared in class scope and then defined out-of-line:
-
-```carbon
-class MyClass {
-  fn destroy(ref self);
-}
-fn MyClass.destroy(ref self) { ... }
-```
-
-It is illegal to delete an instance of a derived class through a pointer to one
-of its base classes unless it has a
-[virtual destructor](https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors).
-An abstract or base class' destructor may be declared virtual using the
-`virtual` introducer, in which case any derived class destructor declaration
-must be `override`:
-
-```carbon
-base class MyBaseClass {
-  virtual fn destroy(ref self) { ... }
-}
-
-class MyDerivedClass {
-  extend base: MyBaseClass;
-  override fn destroy(ref self) { ... }
-}
-```
-
-The properties of a type, whether type is abstract, base, or final, and whether
-the destructor is virtual or non-virtual, determines which
-[facet types](/docs/design/generics/terminology.md#facet-type) it satisfies.
-
--   Non-abstract classes are `Concrete`. This means you can create local and
-    member variables of this type. `Concrete` types have destructors that are
-    called when the local variable goes out of scope or the containing object of
-    the member variable is destroyed.
--   Final classes and classes with a virtual destructor are `Deletable`. These
-    may be safely deleted through a pointer.
--   Classes that are `Concrete`, `Deletable`, or both are `Destructible`. These
-    are types that may be deleted through a pointer, but it might not be safe.
-    The concerning situation is when you have a pointer to a base class without
-    a virtual destructor. It is unsafe to delete that pointer when it is
-    actually pointing to a derived class.
-
-**Note:** The names `Deletable` and `Destructible` are
-[**placeholders**](/proposals/p001154-destructors.md#type-of-type-naming) since
-they do not conform to the decision on
-[question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
-
-| Class    | Destructor  | `Concrete` | `Deletable` | `Destructible` |
-| -------- | ----------- | ---------- | ----------- | -------------- |
-| abstract | non-virtual | no         | no          | no             |
-| abstract | virtual     | no         | yes         | yes            |
-| base     | non-virtual | yes        | no          | yes            |
-| base     | virtual     | yes        | yes         | yes            |
-| final    | any         | yes        | yes         | yes            |
-
-The compiler automatically determines which of these
-[facet types](/docs/design/generics/terminology.md#facet-type) a given type
-satisfies. It is illegal to directly implement `Concrete`, `Deletable`, or
-`Destructible`. For more about these constraints, see
-["destructor constraints" in the detailed generics design](/docs/design/generics/details.md#destructor-constraints).
-
-A pointer to `Deletable` types may be passed to the `Delete` method of the
-`Allocator` [interface](/docs/design/generics/terminology.md#interface). To
-deallocate a pointer to a base class without a virtual destructor, which may
-only be done when it is not actually pointing to a value with a derived type,
-call the `UnsafeDelete` method instead. Note that you may not call
-`UnsafeDelete` on abstract types without virtual destructors, it requires
-`Destructible`.
-
-```
-interface Allocator {
-  // ...
-  fn Delete[T: Deletable](ref self, p: T*);
-  fn UnsafeDelete[T: Destructible](ref self, p: T*);
-}
-```
-
-To pass a pointer to a base class without a virtual destructor to a
-checked-generic function expecting a `Deletable` type, use the
-`UnsafeAllowDelete`
-[type adapter](/docs/design/generics/details.md#adapting-types).
-
-```
-class UnsafeAllowDelete(T: Concrete) {
-  extend adapt T;
-  impl as Deletable {}
-}
-
-// Example usage:
-fn RequiresDeletable[T: Deletable](p: T*);
-var x: MyExtensible;
-RequiresDeletable(&x as UnsafeAllowDelete(MyExtensible)*);
-```
-
-If a virtual method is transitively called from inside a destructor, the
-implementation from the current class is used, not any overrides from derived
-classes. It will abort the execution of the program if that method is abstract
-and not implemented in the current class.
-
-**Future work:** Allow or require destructors to be declared as taking
-`partial Self` in order to prove no use of virtual methods.
-
-Types satisfy the
-[`TrivialDestructor`](/docs/design/generics/details.md#destructor-constraints)
-facet type if:
-
--   the class declaration does not define a destructor or the class defines the
-    destructor with an empty body `{ }`,
--   all data members implement `TrivialDestructor`, and
--   all base classes implement `TrivialDestructor`.
-
-For example, a [struct type](#struct-types) implements `TrivialDestructor` if
-all its members do.
-
-`TrivialDestructor` implies that their destructor does nothing, which may be
-used to generate optimized specializations.
-
-There is no provision for handling failure in a destructor. All operations that
-could potentially fail must be performed before the destructor is called.
-Unhandled failure during a destructor call will abort the program.
-
-**Future work:** Allow or require destructors to be declared as taking
-`(var self: Self)`.
-
-**Alternatives considered:**
 
 ### Access control
 
