@@ -57,7 +57,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [Partial class type](#partial-class-type)
             -   [Usage](#usage)
         -   [Assignment with inheritance](#assignment-with-inheritance)
-    -   [Adapters](#adapters)
+    -   [Compatible types](#compatible-types)
+        -   [Adapters](#adapters)
     -   [Destructors](#destructors)
     -   [Access control](#access-control)
         -   [Private access](#private-access)
@@ -82,7 +83,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [No `static` variables](#no-static-variables)
     -   [Computed properties](#computed-properties)
     -   [Interfaces implemented for data classes](#interfaces-implemented-for-data-classes)
-    -   [Adapters with stricter invariants](#adapters-with-stricter-invariants)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -1650,12 +1650,30 @@ implement it for final types. However, following the
 we allow users to also implement assignment on extensible classes, even though
 it can lead to [slicing](https://en.wikipedia.org/wiki/Object_slicing).
 
-### Adapters
+### Compatible types
 
-An adapter creates a new type
-[compatible with](/docs/design/generics/terminology.md#compatible-types) an
-existing type, but with a different API. Adapters are defined by using the
-`adapt` keyword inside a `class` definition:
+Two types are compatible if they have the same notional set of values and
+represent those values in the same way, even if they expose different APIs. The
+representation of a type describes how the values of that type are represented
+as a sequence of bits in memory. The set of values of a type includes properties
+that the compiler can't directly see, such as invariants that the type
+maintains.
+
+We can't just say two types are compatible based on structural reasons. Instead,
+we have specific constructs that create compatible types from existing types in
+ways that encourage preserving the programmer's intended semantics and
+invariants, such as implementing the API of the new type by calling (public)
+methods of the original API, instead of accessing any private implementation
+details.
+
+Casting a value between compatible types is safe without any dynamic checks or
+danger of [object slicing](https://en.wikipedia.org/wiki/Object_slicing).
+
+#### Adapters
+
+An adapter creates a new type compatible with an existing type, but with a
+different API. Adapters are defined by using the `adapt` keyword inside a
+`class` definition:
 
 ```carbon
 class Song {
@@ -1699,17 +1717,33 @@ interfaces that are implemented for the adapted type, as well as applications of
 [Adapting types](/docs/design/generics/details.md#adapting-types) in the generics
 design.
 
-**Comparison with other languages:** This matches the Rust idiom called
+**Comparison with other languages:** This is similar to the Rust idiom called
 "newtype", which is used to implement traits on types while avoiding
 [coherence](/docs/design/generics/terminology.md#coherence) problems, see
 [here](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types)
 and
 [here](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial).
 Rust's mechanism doesn't directly support reusing implementations, though some
-of that is provided by macros defined in libraries. Haskell has a
-[`newtype` feature](https://wiki.haskell.org/Newtype) as well. Haskell's feature
-doesn't directly support reusing implementations either, but the most popular
-compiler provides it as
+of that is provided by macros defined in libraries.
+
+Rust also uses the newtype idiom to create types with additional invariants or
+other information encoded in the type
+([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
+[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
+[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html)).
+This is used to record in the type system that some data has passed validation
+checks, like `ValidDate` with the same data layout as `Date`. Or to record the
+units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
+versus `Meters`.
+
+> **Future work:** We should have some way of restricting the casts between a type
+> and an adapter to address this use case. One possibility would be to add the
+> keyword `private` before `adapt`, so you might write
+> `extend private adapt Date;`.
+
+Haskell has a [`newtype` feature](https://wiki.haskell.org/Newtype) as well.
+Haskell's feature doesn't directly support reusing implementations either, but
+the most popular compiler provides it as
 [an extension](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/newtype_deriving.html).
 
 ### Destructors
@@ -2355,21 +2389,6 @@ comparable to `{.x = 3.14, .y = 2}`. The trick is how to declare the criteria
 that "`T` is comparable to `U` if they have the same field names in the same
 order, and for every field `x`, the type of `T.x` implements `ComparableTo` for
 the type of `U.x`."
-
-### Adapters with stricter invariants
-
-Rust also uses the newtype idiom to create types with
-additional invariants or other information encoded in the type
-([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
-[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
-[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html)).
-This is used to record in the type system that some data has passed validation
-checks, like `ValidDate` with the same data layout as `Date`. Or to record the
-units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
-versus `Meters`. We should have some way of restricting the casts between a type
-and an adapter to address this use case. One possibility would be to add the
-keyword `private` before `adapt`, so you might write
-`extend private adapt Date;`.
 
 ## Alternatives considered
 

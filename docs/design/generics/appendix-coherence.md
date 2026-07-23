@@ -46,7 +46,7 @@ These last two cases are highlighted as concerns in Rust in
 Since Carbon is bundling interface implementations into types, for the
 convenience and expressiveness that provides, we satisfy those use cases by
 giving the user control over the type of a value. This means having facilities
-for defining new [compatible types](terminology.md#compatible-types) with
+for defining new [compatible types](../classes.md#compatible-types) with
 different interface implementations, and casting between those types as needed.
 
 ## The "Hashtable Problem"

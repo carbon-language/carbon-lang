@@ -153,7 +153,7 @@ Lossy conversions between `iN` or `uN` and `iM` or `uM` are not supported with
 The following conversion is supported by `as`:
 
 -   `T` -> `U` if `T` is
-    [compatible](../generics/terminology.md#compatible-types) with `U`.
+    [compatible](../classes.md#compatible-types) with `U`.
 
 **Future work:** We may need a mechanism to restrict which conversions between
 adapters are permitted and which code can perform them. Some of the conversions

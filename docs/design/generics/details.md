@@ -1799,9 +1799,8 @@ be detected in function overloading.
 Since interfaces may only be implemented for a type once, and we limit where
 implementations may be added to a type, there is a need to allow the user to
 switch the type of a value to access different interface implementations. Carbon
-therefore provides [adapters](/docs/design/classes.md#adapters) (or
-[adapter types](terminology.md#adapting-a-type)) as a way to create new types
-[compatible with](terminology.md#compatible-types) existing types with different
+therefore provides [adapters](../classes.md#adapters) as a way to create new types
+[compatible with](../classes.md#compatible-types) existing types with different
 APIs, in particular with different interface implementations:
 
 ```carbon
@@ -3942,7 +3941,7 @@ Given a type `U`, define the facet type `CompatibleWith(U)` as follows:
 
 > `CompatibleWith(U)` is a facet type whose values are facets `T` such that
 > `T as type` and `U as type` are
-> [compatible types](terminology.md#compatible-types). That is values of `T` and
+> [compatible types](../classes.md#compatible-types). That is values of `T` and
 > `U` as types can be cast back and forth without any change in representation
 > (for example `T` is an [adapter](#adapting-types) for `U`).
 
