@@ -57,6 +57,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [Partial class type](#partial-class-type)
             -   [Usage](#usage)
         -   [Assignment with inheritance](#assignment-with-inheritance)
+    -   [Adapters](#adapters)
     -   [Destructors](#destructors)
     -   [Access control](#access-control)
         -   [Private access](#private-access)
@@ -81,6 +82,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [No `static` variables](#no-static-variables)
     -   [Computed properties](#computed-properties)
     -   [Interfaces implemented for data classes](#interfaces-implemented-for-data-classes)
+    -   [Adapters with stricter invariants](#adapters-with-stricter-invariants)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -1648,6 +1650,68 @@ implement it for final types. However, following the
 we allow users to also implement assignment on extensible classes, even though
 it can lead to [slicing](https://en.wikipedia.org/wiki/Object_slicing).
 
+### Adapters
+
+An adapter creates a new type
+[compatible with](/docs/design/generics/terminology.md#compatible-types) an
+existing type, but with a different API. Adapters are defined by using the
+`adapt` keyword inside a `class` definition:
+
+```carbon
+class Song {
+  fn Title(self) -> String;
+}
+class SongByTitle {
+  adapt Song;
+}
+```
+
+The rules for adapters are:
+
+-   You can add any declaration that you could add to a class except for
+    declarations that would change the representation of the type. This means
+    you can add methods, functions, interface implementations, and aliases, but
+    not fields, base classes, or virtual functions. The specific implementations
+    of virtual functions are part of the type representation, and so no virtual
+    functions may be overridden in an adapter either.
+-   The adapted type is compatible with the original type, and that relationship
+    is an equivalence class, so `Song`, `SongByTitle`, and any other adapters of
+    `Song` end up compatible with each other.
+-   Since adapted types are compatible with the original type, you may
+    explicitly cast between them, but there is no implicit conversion between
+    these types.
+
+Inside an adapter, the `Self` type matches the adapter. Members of the original
+type may be accessed by a cast:
+
+```carbon
+class SongByTitle {
+  adapt Song;
+  fn Less(self, rhs: Self) -> bool {
+    return (self as Song).Title() < (rhs as Song).Title();
+  }
+}
+```
+
+An adapter can also preserve the API and interface implementations of the original
+type using `extend adapt`. For details on how an extending adapter implements
+interfaces that are implemented for the adapted type, as well as applications of adapters to generics, see
+[Adapting types](/docs/design/generics/details.md#adapting-types) in the generics
+design.
+
+**Comparison with other languages:** This matches the Rust idiom called
+"newtype", which is used to implement traits on types while avoiding
+[coherence](/docs/design/generics/terminology.md#coherence) problems, see
+[here](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types)
+and
+[here](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial).
+Rust's mechanism doesn't directly support reusing implementations, though some
+of that is provided by macros defined in libraries. Haskell has a
+[`newtype` feature](https://wiki.haskell.org/Newtype) as well. Haskell's feature
+doesn't directly support reusing implementations either, but the most popular
+compiler provides it as
+[an extension](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/newtype_deriving.html).
+
 ### Destructors
 
 Every non-abstract type is _destructible_, meaning has a defined destructor
@@ -1765,8 +1829,7 @@ interface Allocator {
 
 To pass a pointer to a base class without a virtual destructor to a
 checked-generic function expecting a `Deletable` type, use the
-`UnsafeAllowDelete`
-[type adapter](/docs/design/generics/details.md#adapting-types).
+`UnsafeAllowDelete` [type adapter](#adapters).
 
 ```
 class UnsafeAllowDelete(T: Concrete) {
@@ -2293,6 +2356,21 @@ that "`T` is comparable to `U` if they have the same field names in the same
 order, and for every field `x`, the type of `T.x` implements `ComparableTo` for
 the type of `U.x`."
 
+### Adapters with stricter invariants
+
+Rust also uses the newtype idiom to create types with
+additional invariants or other information encoded in the type
+([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
+[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
+[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html)).
+This is used to record in the type system that some data has passed validation
+checks, like `ValidDate` with the same data layout as `Date`. Or to record the
+units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
+versus `Meters`. We should have some way of restricting the casts between a type
+and an adapter to address this use case. One possibility would be to add the
+keyword `private` before `adapt`, so you might write
+`extend private adapt Date;`.
+
 ## Alternatives considered
 
 -   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
@@ -2322,6 +2400,10 @@ the type of `U.x`."
     -   [Specifying linkage as part of the access modifier](/proposals/p000722-nominal-classes-and-methods.md#specifying-linkage-as-part-of-the-access-modifier)
     -   [Nominal data class](/proposals/p000722-nominal-classes-and-methods.md#nominal-data-class)
     -   [Let constants](/proposals/p000722-nominal-classes-and-methods.md#let-constants)
+
+-   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+
+    -   [`adaptor` instead of `adapter`](/proposals/p000731-generics-details-2-adapters-associated-types-parameterized-interfaces.md#adaptor-instead-of-adapter)
 
 -   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
 
@@ -2376,6 +2458,8 @@ the type of `U.x`."
 
     -   [Use `extends` instead of `extend`](/proposals/p002760-consistent-class-and-interface-syntax.md#use-extends-instead-of-extend)
     -   [List base class in class declaration](/proposals/p002760-consistent-class-and-interface-syntax.md#list-base-class-in-class-declaration)
+    -   [Continue to use `adapter` or `adaptor` instead of `adapt`](/proposals/p002760-consistent-class-and-interface-syntax.md#continue-to-use-adapter-or-adaptor-instead-of-adapt)
+    -   [Use some other syntax for extending adapters](/proposals/p002760-consistent-class-and-interface-syntax.md#use-some-other-syntax-for-extending-adapters)
 
 -   [#5017: Destructor syntax](https://github.com/carbon-language/carbon-lang/pull/5017)
 
@@ -2401,6 +2485,7 @@ the type of `U.x`."
 -   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
 -   [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
 -   [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
+-   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
 -   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
 -   [#875: Principle: Information accumulation](https://github.com/carbon-language/carbon-lang/pull/875)
 -   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)

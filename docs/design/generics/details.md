@@ -45,7 +45,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Use case: Defining an impl for use by other types](#use-case-defining-an-impl-for-use-by-other-types)
     -   [Use case: Private impl](#use-case-private-impl)
     -   [Use case: Accessing interface names](#use-case-accessing-interface-names)
-    -   [Future work: Adapter with stricter invariants](#future-work-adapter-with-stricter-invariants)
 -   [Associated constants](#associated-constants)
     -   [Associated functions](#associated-functions)
 -   [Associated facets](#associated-facets)
@@ -1800,10 +1799,10 @@ be detected in function overloading.
 Since interfaces may only be implemented for a type once, and we limit where
 implementations may be added to a type, there is a need to allow the user to
 switch the type of a value to access different interface implementations. Carbon
-therefore provides a way to create new types
+therefore provides [adapters](/docs/design/classes.md#adapters) (or
+[adapter types](terminology.md#adapting-a-type)) as a way to create new types
 [compatible with](terminology.md#compatible-types) existing types with different
-APIs, in particular with different interface implementations, by
-[adapting](terminology.md#adapting-a-type) them:
+APIs, in particular with different interface implementations:
 
 ```carbon
 interface Printable {
@@ -1835,60 +1834,11 @@ class FormattedSongByTitle {
 This allows developers to provide implementations of new interfaces (as in
 `SongByTitle`), provide different implementations of the same interface (as in
 `FormattedSong`), or mix and match implementations from other compatible types
-(as in `FormattedSongByTitle`). The rules are:
+(as in `FormattedSongByTitle`).
 
--   You can add any declaration that you could add to a class except for
-    declarations that would change the representation of the type. This means
-    you can add methods, functions, interface implementations, and aliases, but
-    not fields, base classes, or virtual functions. The specific implementations
-    of virtual functions are part of the type representation, and so no virtual
-    functions may be overridden in an adapter either.
--   The adapted type is compatible with the original type, and that relationship
-    is an equivalence class, so all of `Song`, `SongByTitle`, `FormattedSong`,
-    and `FormattedSongByTitle` end up compatible with each other.
--   Since adapted types are compatible with the original type, you may
-    explicitly cast between them, but there is no implicit conversion between
-    these types.
-
-Inside an adapter, the `Self` type matches the adapter. Members of the original
-type may be accessed either by a cast:
-
-```carbon
-class SongByTitle {
-  adapt Song;
-  extend impl as Ordered {
-    fn Less(self, rhs: Self) -> bool {
-      return (self as Song).Title() < (rhs as Song).Title();
-    }
-  }
-}
-```
-
-or using a qualified member access expression:
-
-```carbon
-class SongByTitle {
-  adapt Song;
-  extend impl as Ordered {
-    fn Less(self, rhs: Self) -> bool {
-      return self.(Song.Title)() < rhs.(Song.Title)();
-    }
-  }
-}
-```
-
-**Comparison with other languages:** This matches the Rust idiom called
-"newtype", which is used to implement traits on types while avoiding
-[coherence](terminology.md#coherence) problems, see
-[here](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types)
-and
-[here](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial).
-Rust's mechanism doesn't directly support reusing implementations, though some
-of that is provided by macros defined in libraries. Haskell has a
-[`newtype` feature](https://wiki.haskell.org/Newtype) as well. Haskell's feature
-doesn't directly support reusing implementations either, but the most popular
-compiler provides it as
-[an extension](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/newtype_deriving.html).
+For the definition of adapters, including what declarations can be added to an
+adapter, compatibility rules, member access, and casting between adapted types,
+see [adapters in the class design](/docs/design/classes.md#adapters).
 
 ### Adapter compatibility
 
@@ -2215,21 +2165,6 @@ fn Render(w: Window) {
   ...
 }
 ```
-
-### Future work: Adapter with stricter invariants
-
-**Future work:** Rust also uses the newtype idiom to create types with
-additional invariants or other information encoded in the type
-([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
-[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
-[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html)).
-This is used to record in the type system that some data has passed validation
-checks, like `ValidDate` with the same data layout as `Date`. Or to record the
-units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
-versus `Meters`. We should have some way of restricting the casts between a type
-and an adapter to address this use case. One possibility would be to add the
-keyword `private` before `adapt`, so you might write
-`extend private adapt Date;`.
 
 ## Associated constants
 
