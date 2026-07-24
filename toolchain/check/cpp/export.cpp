@@ -58,12 +58,12 @@ static auto GetClangDeclContextForScope(Context& context,
 // diagnosed.
 static auto ExportClassToCppInDeclContext(Context& context,
                                           clang::DeclContext* decl_context,
-                                          SemIR::ClassType class_type)
+                                          const SemIR::Class& class_info,
+                                          const SemIR::SpecificId specific_id)
     -> clang::TagDecl* {
-  const auto& class_info = context.classes().Get(class_type.class_id);
   SemIR::LocId loc_id(class_info.first_decl_id());
 
-  if (class_type.specific_id.has_value()) {
+  if (specific_id.has_value()) {
     context.TODO(loc_id, "interop with specific class");
     return nullptr;
   }
@@ -142,8 +142,9 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
       decl_context = namespace_decl;
     } else if (auto class_type =
                    context.insts().TryGetAs<SemIR::ClassType>(const_inst_id)) {
-      decl_context =
-          ExportClassToCppInDeclContext(context, decl_context, *class_type);
+      const auto& class_info = context.classes().Get(class_type->class_id);
+      decl_context = ExportClassToCppInDeclContext(
+          context, decl_context, class_info, class_type->specific_id);
     } else {
       context.TODO(loc_id, "non-class non-namespace name scope");
       return nullptr;
@@ -187,8 +188,8 @@ auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
 
   auto* decl_context =
       ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
-  auto* record_decl =
-      ExportClassToCppInDeclContext(context, decl_context, class_type);
+  auto* record_decl = ExportClassToCppInDeclContext(
+      context, decl_context, class_info, class_type.specific_id);
 
   auto key =
       SemIR::ClangDeclKey::ForNonFunctionDecl(cast<clang::Decl>(record_decl));
