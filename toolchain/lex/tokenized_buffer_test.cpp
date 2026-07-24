@@ -621,7 +621,6 @@ TEST_F(LexerTest, MismatchedGroups) {
           {.kind = TokenKind::FileEnd},
       }));
 
-  
   // `{((}` results in a tie between `{()()}` and `{(())}`, so the first paren
   // is replaced with an error token. But the second `)` definitely gets added
   // before the `}`.

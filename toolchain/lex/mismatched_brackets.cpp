@@ -74,8 +74,8 @@ struct OpenBracketInfo {
   int32_t byte_offset = 0;
   int32_t insertion_byte_offset = 0;
 
-  friend auto operator==(const OpenBracketInfo& a,
-                         const OpenBracketInfo& b) -> bool {
+  friend auto operator==(const OpenBracketInfo& a, const OpenBracketInfo& b)
+      -> bool {
     return a.token_index == b.token_index && a.kind == b.kind &&
            a.line == b.line &&
            a.effective_header_indent == b.effective_header_indent &&
@@ -173,8 +173,7 @@ auto ComputeFollowsStatementHeader(
   auto curr_kind = tokens[token_index].kind;
   if (curr_kind == BracketTokenKind::Semi ||
       curr_kind == BracketTokenKind::OpenCurlyBrace ||
-      IsClosingBracket(curr_kind) ||
-      curr_kind == BracketTokenKind::FileEnd) {
+      IsClosingBracket(curr_kind) || curr_kind == BracketTokenKind::FileEnd) {
     return false;
   }
   if (curr_kind == BracketTokenKind::Other &&
@@ -335,10 +334,11 @@ auto SolveNaive(llvm::ArrayRef<Item> items, TokenIndex /*region_end_token*/,
 auto HashStack(llvm::ArrayRef<OpenBracketInfo> stack) -> uint64_t {
   uint64_t h = stack.size();
   for (const auto& info : stack) {
-    uint64_t k = (static_cast<uint64_t>(info.token_index.index) << 32) ^
-                 (static_cast<uint64_t>(info.insertion_token_index.index) << 8) ^
-                 static_cast<uint64_t>(info.kind) ^
-                 (static_cast<uint64_t>(info.expected_body_indent) << 16);
+    uint64_t k =
+        (static_cast<uint64_t>(info.token_index.index) << 32) ^
+        (static_cast<uint64_t>(info.insertion_token_index.index) << 8) ^
+        static_cast<uint64_t>(info.kind) ^
+        (static_cast<uint64_t>(info.expected_body_indent) << 16);
     h ^= k + 0x9e3779b9 + (h << 6) + (h >> 2);
   }
   return h;
@@ -362,12 +362,9 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
 
   auto try_add_to_layer =
       [&](llvm::SmallVectorImpl<int32_t>& layer_indices,
-          llvm::DenseMap<uint64_t, int32_t>& layer_map,
-          int32_t next_item_idx,
-          llvm::SmallVector<OpenBracketInfo, 4> next_stack,
-          int32_t next_cost,
-          ParentEdge edge,
-          llvm::SmallVectorImpl<int32_t>* worklist = nullptr) {
+          llvm::DenseMap<uint64_t, int32_t>& layer_map, int32_t next_item_idx,
+          llvm::SmallVector<OpenBracketInfo, 4> next_stack, int32_t next_cost,
+          ParentEdge edge, llvm::SmallVectorImpl<int32_t>* worklist = nullptr) {
         if (next_cost > min_goal_cost) {
           return;
         }
@@ -580,8 +577,8 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
       }
 
       // Phase 1b: Epsilon Openers / Pushes.
-      // Iterate only over the states present after Phase 1a (original + popped),
-      // without chaining synthetic openers onto newly pushed openers.
+      // Iterate only over the states present after Phase 1a (original +
+      // popped), without chaining synthetic openers onto newly pushed openers.
       size_t num_states_after_1a = current_layer.size();
       for (size_t idx = 0; idx < num_states_after_1a; ++idx) {
         int32_t node_idx = current_layer[idx];
@@ -600,16 +597,15 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                   .has_correction = false,
               };
               try_add_to_layer(current_layer, layer_map, i,
-                               std::move(next_stack), next_cost, edge,
-                               nullptr);
+                               std::move(next_stack), next_cost, edge, nullptr);
             };
 
         if (current.stack.size() < MaxSearchStackDepth) {
           // Push synthetic '{'
           {
-            bool is_discounted =
-                item.follows_statement_header &&
-                !item.header_has_open_curly_brace && !IsOpeningBracket(kind);
+            bool is_discounted = item.follows_statement_header &&
+                                 !item.header_has_open_curly_brace &&
+                                 !IsOpeningBracket(kind);
             int32_t base_cost = item.is_before_statement_introducer
                                     ? CostInsertScopeBraceBeforeIntroducer
                                     : CostInsertCloseBrace;
@@ -679,7 +675,8 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
       }
     }
 
-    // Step 2: Advance moves from layer `i` to layer `i + 1` (consuming token `i`).
+    // Step 2: Advance moves from layer `i` to layer `i + 1` (consuming token
+    // `i`).
     llvm::SmallVector<int32_t> next_layer;
 
     for (int32_t node_idx : current_layer) {
@@ -817,7 +814,8 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
           }
         }
 
-        // Advance without matching/popping (replace unmatched closer with Error token).
+        // Advance without matching/popping (replace unmatched closer with Error
+        // token).
         try_enqueue_advance(
             current.stack, CostReplaceUnmatchedClosing,
             BracketCorrection{
@@ -842,8 +840,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
       }
       if (!current.stack.empty() &&
           current.stack.back().kind == BracketTokenKind::OpenCurlyBrace &&
-          !current.stack.back().is_struct_brace &&
-          item.is_first_on_line &&
+          !current.stack.back().is_struct_brace && item.is_first_on_line &&
           item.token.line_indent <=
               current.stack.back().effective_header_indent) {
         penalty += CostDedentInsideScope;

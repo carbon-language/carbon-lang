@@ -1933,12 +1933,12 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
   }
 
   for (const auto& correction : corrections) {
-  CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
-                    "opening symbol without a corresponding closing symbol");
-  CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
-                    "closing symbol without a corresponding opening symbol");
-  CARBON_DIAGNOSTIC(PossiblyMissingBracketHere, Note,
-                    "possibly missing `{0}` here", Lex::TokenKind);
+    CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
+                      "opening symbol without a corresponding closing symbol");
+    CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
+                      "closing symbol without a corresponding opening symbol");
+    CARBON_DIAGNOSTIC(PossiblyMissingBracketHere, Note,
+                      "possibly missing `{0}` here", Lex::TokenKind);
 
     auto builder = token_emitter_.Build(
         correction.diagnostic_token_index,

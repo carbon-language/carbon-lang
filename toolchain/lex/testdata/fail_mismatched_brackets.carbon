@@ -265,4 +265,3 @@ fn F() {
 // CHECK:STDERR:
 // CHECK:STDERR: ^
 // CHECK:STDERR:
-
