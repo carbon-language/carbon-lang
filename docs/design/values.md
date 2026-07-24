@@ -182,21 +182,21 @@ destructible subobjects.
 
 ```carbon
 private interface SubobjectDestroy {
-    private fn Op(ref self) = "destroy.subobjects.op";
+  private fn Op(ref self) = "destroy.subobjects.op";
 }
 
 interface Destroy {
-    require impls SubobjectDestroy;
-    private fn Op(ref self: partial Self) = "destroy.op";
+  require impls SubobjectDestroy;
+  private fn Op(ref self: partial Self) = "destroy.op";
 }
 
 final impl forall [T: Destroy] partial T as Destroy {
-    alias Op = T.Op;
+  alias Op = T.Op;
 }
 
 unsafe fn SelfDestruct[T: Destroy](ref x: T) {
-    x.Op();
-    x.(SubobjectDestroy.Op)();
+  x.Op();
+  x.(SubobjectDestroy.Op)();
 }
 ```
 
@@ -216,19 +216,19 @@ storage needs to release those resources during destruction:
 
 ```carbon
 class Vector(T) {
-    private var data: T*;
-    private var size: i64;
-    private var capacity: i64;
+  private var data: T*;
+  private var size: i64;
+  private var capacity: i64;
 
-    fn StartWithSize(n: i64) -> Vector(T) {
-        return Vector(T){Cpp.std.malloc(n as u64), n, capacity};
-    }
+  fn StartWithSize(n: i64) -> Vector(T) {
+    return Vector(T){Cpp.std.malloc(n as u64), n, capacity};
+  }
 
-    impl Destroy {
-        private fn Op(ref self) {
-            Cpp.std.free(self.data);
-        }
+  impl Destroy {
+    private fn Op(ref self) {
+      Cpp.std.free(self.data);
     }
+  }
 }
 ```
 
@@ -250,25 +250,25 @@ snippet below:
 ```carbon
 // What the user writes
 fn F() {
-    var v: Vector(i32) = RandomVector();
-    if (v.Len() == 56) {
-        var exaggerated_length: i64 = v.Len() * 2;
-        v.Push(exaggerated_length);
-    }
+  var v: Vector(i32) = RandomVector();
+  if (v.Len() == 56) {
+    var exaggerated_length: i64 = v.Len() * 2;
+    v.Push(exaggerated_length);
+  }
 }
 ```
 
 ```carbon
 // How the toolchain sees what the user wrote.
 fn F() {
-    var v: Vector(i32) = RandomVector();
-    if (v.Len() == 56) {
-        var exaggerated_length: i64 = v.Len() * 2;
-        v.Push(exaggerated_length);
-        Core.SelfDestruct(exaggerated_length);
-    }
+  var v: Vector(i32) = RandomVector();
+  if (v.Len() == 56) {
+    var exaggerated_length: i64 = v.Len() * 2;
+    v.Push(exaggerated_length);
+    Core.SelfDestruct(exaggerated_length);
+  }
 
-    Core.SelfDestruct(v);
+  Core.SelfDestruct(v);
 }
 ```
 
@@ -281,25 +281,25 @@ rewrite the above vector implementation to account for this:
 // TODO: change to use a raw storage type, and perform correct explicit object
 // creation.
 class Vector(T: Destroy) {
-    private var data: T*;
-    private var size: i64;
-    private var capacity: i64;
+  private var data: T*;
+  private var size: i64;
+  private var capacity: i64;
 
-    fn StartWithSize(n: i64) -> Vector(T) {
-        let data: T* = Cpp.std.malloc(n as u64);
-        Core.Create(T*).DefaultInitializeRange(data, n);
-        return Vector(i32){data, n, n};
+  fn StartWithSize(n: i64) -> Vector(T) {
+    let data: T* = Cpp.std.malloc(n as u64);
+    Core.Create(T*).DefaultInitializeRange(data, n);
+    return Vector(i32){data, n, n};
+  }
+
+  impl Destroy {
+    private fn Op(ref self) {
+      for (i: i64 in Range(0, size)) {
+        self[i].SelfDestruct();
+      }
+
+      Cpp.std.free(self.data);
     }
-
-    impl Destroy {
-        private fn Op(ref self) {
-            for (i: i64 in Range(0, size)) {
-                self[i].SelfDestruct();
-            }
-
-            Cpp.std.free(self.data);
-        }
-    }
+  }
 }
 ```
 
@@ -352,7 +352,7 @@ The interface `Core.DynamicDestroy` represents types that have dynamic destructi
 
 ```carbon
 interface DynamicDestroy {
-    final fn Op(ref self) = "destroy.dynamic.op";
+  final fn Op(ref self) = "destroy.dynamic.op";
 }
 ```
 
