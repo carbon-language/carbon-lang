@@ -223,8 +223,6 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   auto name_context = context.decl_name_stack().FinishImplName();
   CARBON_CHECK(name_context.state == DeclNameStack::NameContext::State::Empty);
 
-  // TODO: Check for an orphan `impl`.
-
   // Add the impl declaration.
   auto impl_decl_id =
       AddPlaceholderInst(context, node_id,
