@@ -18,7 +18,8 @@ static auto CalculateCppFieldOffsets(
   const auto& class_scope = sem_ir.name_scopes().Get(class_info.scope_id);
 
   auto class_layout = SemIR::ObjectLayout::Empty();
-  for (const auto& struct_field : class_info.GetStructTypeFields(sem_ir)) {
+  for (const auto& struct_field :
+       class_info.GetStructTypeFields(sem_ir, SemIR::SpecificId::None)) {
     auto field_type_id =
         sem_ir.types().GetTypeIdForTypeInstId(struct_field.type_inst_id);
     auto field_layout =
