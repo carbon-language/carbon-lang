@@ -23,7 +23,16 @@ enum class BracketTokenKind : int8_t {
   OpenSquareBracket,
   CloseSquareBracket,
   Semi,
+  Comma,
+  Period,
   StatementIntroducer,  // fn, class, var, if, while, etc.
+
+  // A token that is a complete primary expression on its own: an identifier, a
+  // literal, `self`, a type keyword, and so on. A leaf token never directly
+  // follows another leaf token or a close paren or close square bracket, so
+  // such an adjacent pair is evidence that a bracket is missing between them.
+  Leaf,
+
   FileEnd,
   Other,
 };
@@ -106,6 +115,52 @@ struct MismatchedBracketToken {
   // For OpenCurlyBrace, whether it has struct-like cues (e.g. followed by '.',
   // '}', or ':').
   bool is_struct_brace = false;
+
+  // Whether the immediately preceding token in the source (ignoring comments)
+  // is "value-ending": a leaf, `)`, or `]`. A leaf token whose predecessor is
+  // value-ending is an illegal adjacency in a well-formed program, and is a
+  // strong cue that an opening bracket is missing right before this token.
+  bool prev_is_value_ending = false;
+
+  // For StatementIntroducer, whether this is a keyword that must be directly
+  // followed by an opening bracket: `if`, `while`, `for`, `match` (which
+  // require `(`), or `forall` (which requires `[`).
+  bool is_paren_keyword = false;
+
+  // For StatementIntroducer, whether this is the `else` keyword, which
+  // normally directly follows a `}` on the same line.
+  bool is_else_keyword = false;
+
+  // For Other, whether this is a statement-structuring operator (`=`, `->`,
+  // `as`) that usually appears outside parens and square brackets, so is a
+  // cue that an unclosed paren or square bracket should be closed before it.
+  bool is_structural_op = false;
+
+  // For Other, whether this is specifically an `=`, which can also directly
+  // follow a `]` (`a[i] = v;`), unlike the other structural operators.
+  bool is_assignment_op = false;
+
+  // For Other, whether this is specifically an `as`, which commonly appears
+  // inside parens as a cast (`(x as T)`), unlike the other structural
+  // operators.
+  bool is_as_op = false;
+
+  // For Other, whether this is a comparison or logical operator (`==`, `<`,
+  // `and`, ...), which is unlikely to appear inside square brackets.
+  bool is_comparison_op = false;
+
+  // For Other, whether this is a binding modifier keyword (`ref`, `unused`,
+  // `template`), which, like a leaf, cannot directly follow a value-ending
+  // token.
+  bool is_modifier_keyword = false;
+
+  // Whether this token has whitespace (or a comment) directly before it.
+  bool has_leading_space = false;
+
+  // Whether this token is mid-line with two or more bytes of whitespace
+  // before it. Formatted code separates mid-line tokens by at most one
+  // space, so a wide gap suggests something was deleted in it.
+  bool has_wide_leading_space = false;
 
   // Byte offset of this token in source.
   int32_t byte_offset = 0;

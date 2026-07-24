@@ -10,13 +10,12 @@
 
 fn f() -> i32 {
   match (true) {
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+8]]:21: error: expected `(` after `if` [ExpectedMatchCaseGuardOpenParen]
-    // CHECK:STDERR:     case x: bool if false) => { return 1; }
-    // CHECK:STDERR:                     ^~~~~
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+4]]:26: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
+    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+7]]:26: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
     // CHECK:STDERR:     case x: bool if false) => { return 1; }
     // CHECK:STDERR:                          ^
+    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+4]]:21: note: possibly missing `(` here [PossiblyMissingBracketHere]
+    // CHECK:STDERR:     case x: bool if false) => { return 1; }
+    // CHECK:STDERR:                     ^~~~~
     // CHECK:STDERR:
     case x: bool if false) => { return 1; }
   }
@@ -43,16 +42,19 @@ fn f() -> i32 {
 // CHECK:STDOUT:                 {kind: 'BoolTypeLiteral', text: 'bool'},
 // CHECK:STDOUT:               {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:                 {kind: 'MatchCaseGuardIntroducer', text: 'if'},
-// CHECK:STDOUT:                 {kind: 'MatchCaseGuardStart', text: 'false', has_error: yes},
-// CHECK:STDOUT:                 {kind: 'InvalidParse', text: 'false', has_error: yes},
-// CHECK:STDOUT:               {kind: 'MatchCaseGuard', text: 'false', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:             {kind: 'MatchCase', text: 'false', has_error: yes, subtree_size: 9},
-// CHECK:STDOUT:           {kind: 'MatchHandlerStart', text: 'false', has_error: yes, subtree_size: 10},
-// CHECK:STDOUT:         {kind: 'MatchHandler', text: 'false', has_error: yes, subtree_size: 11},
-// CHECK:STDOUT:       {kind: 'MatchStatement', text: '}', subtree_size: 17},
+// CHECK:STDOUT:                 {kind: 'MatchCaseGuardStart', text: '('},
+// CHECK:STDOUT:                 {kind: 'BoolLiteralFalse', text: 'false'},
+// CHECK:STDOUT:               {kind: 'MatchCaseGuard', text: ')', subtree_size: 4},
+// CHECK:STDOUT:             {kind: 'MatchCase', text: '=>', subtree_size: 9},
+// CHECK:STDOUT:           {kind: 'MatchHandlerStart', text: '{', subtree_size: 10},
+// CHECK:STDOUT:             {kind: 'ReturnStatementStart', text: 'return'},
+// CHECK:STDOUT:             {kind: 'IntLiteral', text: '1'},
+// CHECK:STDOUT:           {kind: 'ReturnStatement', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'MatchHandler', text: '}', subtree_size: 14},
+// CHECK:STDOUT:       {kind: 'MatchStatement', text: '}', subtree_size: 20},
 // CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
 // CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 28},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 31},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

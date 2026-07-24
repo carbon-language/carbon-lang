@@ -19,16 +19,19 @@ fn F() {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
   (a[1) + 1;
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+18]]:15: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+21]]:15: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
   // CHECK:STDERR:               ^
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+15]]:16: note: possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+18]]:16: note: possibly missing `)` here [PossiblyMissingBracketHere]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+11]]:26: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+14]]:26: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
   // CHECK:STDERR:                          ^
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+11]]:28: note: possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
+  // CHECK:STDERR:                            ^
   // CHECK:STDERR:
   // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+7]]:27: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
@@ -89,12 +92,15 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 10},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:           {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: '(', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: '=', has_error: yes},
-// CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 19},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 53},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
+// CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'ParenExprStart', text: '('},
+// CHECK:STDOUT:                 {kind: 'TupleLiteralStart', text: '('},
+// CHECK:STDOUT:               {kind: 'TupleLiteral', text: ')', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'ParenExpr', text: ')', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'StructLiteralField', text: '=', subtree_size: 7},
+// CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 9},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 22},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 56},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

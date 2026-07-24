@@ -621,9 +621,7 @@ TEST_F(LexerTest, MismatchedGroups) {
           {.kind = TokenKind::FileEnd},
       }));
 
-  // `{((}` results in a tie between `{()()}` and `{(())}`, so the first paren
-  // is replaced with an error token. But the second `)` definitely gets added
-  // before the `}`.
+  // `{((}` is recovered by closing both parens before the `}`, i.e. `{(())}`.
   auto& buffer3b = compile_helper_.GetTokenizedBuffer("{((}");
   EXPECT_TRUE(buffer3b.has_errors());
   EXPECT_THAT(
@@ -631,8 +629,9 @@ TEST_F(LexerTest, MismatchedGroups) {
       HasTokens(llvm::ArrayRef<ExpectedToken>{
           {.kind = TokenKind::FileStart},
           {.kind = TokenKind::OpenCurlyBrace, .column = 1},
-          {.kind = TokenKind::Error, .column = 2},
+          {.kind = TokenKind::OpenParen, .column = 2},
           {.kind = TokenKind::OpenParen, .column = 3},
+          {.kind = TokenKind::CloseParen, .column = 4, .recovery = true},
           {.kind = TokenKind::CloseParen, .column = 4, .recovery = true},
           {.kind = TokenKind::CloseCurlyBrace, .column = 4},
           {.kind = TokenKind::FileEnd},
@@ -674,9 +673,12 @@ TEST_F(LexerTest, MismatchedGroups) {
 }
 
 TEST_F(LexerTest, Whitespace) {
+  // The trailing `{(` is recovered by inserting `)` and `}` at end of file,
+  // giving `{()} {()}`.
   auto& buffer = compile_helper_.GetTokenizedBuffer("{( } {(");
 
-  // Whether there should be whitespace before/after each token.
+  // Whether there should be whitespace at each boundary, from before the
+  // first token to after the last.
   bool space[] = {false,
                   // start-of-file
                   true,
@@ -690,8 +692,10 @@ TEST_F(LexerTest, Whitespace) {
                   true,
                   // {
                   false,
-                  // error (
+                  // (
                   true,
+                  // inserted )
+                  false,
                   // inserted }
                   false,
                   // EOF

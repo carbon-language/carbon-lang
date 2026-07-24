@@ -8,7 +8,6 @@
 #include <cmath>
 #include <limits>
 #include <optional>
-#include <queue>
 
 #include "common/check.h"
 #include "llvm/ADT/DenseMap.h"
@@ -18,32 +17,155 @@ namespace Carbon::Lex {
 namespace {
 
 // Maximum number of collapsed items in a damaged region before falling back to
-// naive greedy recovery.
-constexpr int32_t MaxRegionItemsForSearch = 40;
+// naive greedy recovery. The beam search below is linear in the region size,
+// so this is mostly a defense against pathological inputs.
+constexpr int32_t MaxRegionItemsForSearch = 1500;
 
 // Layered beam search width limit.
 constexpr size_t MaxBeamWidth = 64;
 
 // Maximum stack depth allowed during search before capping.
-constexpr size_t MaxSearchStackDepth = 8;
+constexpr size_t MaxSearchStackDepth = 12;
 
-// Cost penalties for bracket recovery.
-constexpr int32_t CostBaselineMatch = 0;
-constexpr int32_t CostIndentMismatchMultiplier = 20;
-constexpr int32_t CostIndentMismatchBase = 30;
-constexpr int32_t CostScopeNotAtEol = 30;
-constexpr int32_t CostDedentInsideScope = 40;
+// The cost model. All costs are relative; the search finds the cheapest way
+// to make the whole region well-bracketed, and the resulting insertions and
+// replacements become the suggested corrections. When several cheapest ways
+// exist, corrections they disagree about are marked tied and downgraded to
+// error replacements, so it's important that the intended repair for a common
+// mistake is *strictly* cheaper than the alternatives.
+//
+// Costs of replacing a real bracket with an error token. These are the
+// "give up on this bracket" fallbacks; a good targeted repair should beat
+// them, and a dubious one should lose to them.
+constexpr int32_t CostReplaceClosing = 30;
+constexpr int32_t CostReplaceOpening = 100;
+
+// Costs of inserting a synthetic closing bracket in front of the current
+// token, keyed by how strongly the context suggests the group ends here.
+// An empty group: the opener is the immediately preceding token.
+constexpr int32_t CostCloseEmptyGroup = 8;
+// Closing a paren/square bracket just before a `;`.
+constexpr int32_t CostCloseParenBeforeSemi = 6;
+// Closing a group because the current closer matches an outer open group.
+constexpr int32_t CostCloseCascade = 6;
+// Closing a paren/square bracket just before a scope `{`.
+constexpr int32_t CostCloseParenBeforeBrace = 8;
+// Closing a paren/square bracket just before `=`, `->`, or `as`.
+constexpr int32_t CostCloseParenBeforeStructuralOp = 8;
+// Closing a paren/square bracket before a mid-line `.` that has whitespace
+// before it: member access is normally written without spaces. Priced below
+// CostSpacedPeriodInParen so that closing here beats closing earlier and
+// leaving the spaced `.` unexplained.
+constexpr int32_t CostCloseParenBeforeSpacedPeriod = 6;
+// Closing a `[` at the start of a continuation line: `[` groups rarely span
+// lines except in wrapped declaration headers.
+constexpr int32_t CostCloseSquareAtContinuation = 10;
+// Closing a `[` at an illegal leaf adjacency, which the `]` repairs.
+constexpr int32_t CostCloseSquareAtLeafAdjacency = 4;
+// Closing a group at a wide mid-line whitespace gap, which suggests the
+// closer was deleted in the gap.
+constexpr int32_t CostCloseAtWideGap = 6;
+// Closing a struct brace at a dedent.
+constexpr int32_t CostCloseStructAtDedent = 12;
+// Closing a scope brace at a dedent back to the header's indentation.
+constexpr int32_t CostCloseScopeAtDedent = 6;
+// Closing a scope brace before a first-on-line `else`, which normally
+// directly follows a `}` on the same line. Priced below
+// CostCloseScopeAtDedent so this wins over closing the else block early.
+constexpr int32_t CostCloseScopeBeforeElse = 4;
+// Closing anything at the end of the file or region.
+constexpr int32_t CostCloseAtEnd = 12;
+constexpr int32_t CostCloseParenAtEnd = 22;
+constexpr int32_t CostCloseStructAtEnd = 20;
+// Closing with no supporting context cue.
+constexpr int32_t CostCloseParenBaseline = 40;
+constexpr int32_t CostCloseScopeBaseline = 45;
+
+// Costs of inserting a synthetic opening bracket in front of the current
+// token.
+// After `if`, `while`, `for`, `match` (for `(`) or `forall` (for `[`), which
+// require a bracket to follow.
+constexpr int32_t CostOpenAfterParenKeyword = 3;
+// Before a leaf token that directly follows a value-ending token; this
+// adjacency is illegal, and an opener here fixes it.
+constexpr int32_t CostOpenAtLeafAdjacency = 3;
+// An empty `()` after a value-ending token (a zero-argument call).
+constexpr int32_t CostOpenEmptyParens = 5;
+// An empty `[]` after a value-ending token; rarer than empty parens.
+constexpr int32_t CostOpenEmptySquares = 12;
+// An empty `()` directly after a `)`, calling a just-computed value; only
+// applies when the target closer is spaced.
+constexpr int32_t CostOpenEmptyParensAfterClose = 8;
+// A `(` or `[` before a mid-line leaf with whitespace before it that directly
+// follows an unspaced `.`: member access is written without spaces.
+constexpr int32_t CostOpenAfterPeriodGap = 4;
+// A `(` or `[` anywhere else an expression could start.
+constexpr int32_t CostOpenParenBaseline = 35;
+// A scope `{` between an unbraced declaration/statement header and its body.
+constexpr int32_t CostOpenScopeAfterHeader = 8;
+// A struct `{` before a `.` designator that isn't a member access.
+constexpr int32_t CostOpenStructBeforeDesignator = 5;
+// An empty `{}` just before an unmatched `}`. Priced above
+// CostOpenScopeAfterHeader: when a single-line body lost its `{`, inserting
+// it before the body is better than making empty braces at the `}`.
+constexpr int32_t CostOpenStructEmptyBraces = 10;
+// A brace anywhere else.
+constexpr int32_t CostOpenBraceBaseline = 60;
+
+// Penalties for advancing over a token in a context where it doesn't belong.
+// These make "close the group before this token" win over "swallow this
+// token into the group".
+// `;` inside parens, square brackets, or a struct brace.
 constexpr int32_t CostSemiInParen = 100;
-constexpr int32_t CostScopeInParen = 100;
+// `,` at statement level (directly in a scope brace or at the top level).
+constexpr int32_t CostCommaAtStatementLevel = 50;
+// `,` directly following an open paren/square bracket that is still open.
+constexpr int32_t CostCommaAfterOpen = 50;
+// A statement introducer keyword inside parens or a struct brace.
+constexpr int32_t CostIntroducerInParen = 60;
+// A leaf token directly following a value-ending token (illegal adjacency).
+constexpr int32_t CostLeafAdjacency = 60;
+// `=`, `->`, or `as` inside parens or square brackets. These *can* occur
+// there (default arguments, function types, casts), so this is mild; it
+// serves to prefer the earliest sensible close point.
+constexpr int32_t CostStructuralOpInParen = 10;
+// An `as` inside parens is usually a legitimate cast; keep only a nominal
+// preference for closing before it.
+constexpr int32_t CostAsOpInParen = 1;
+// A mid-line `.` with whitespace before it inside parens or square brackets;
+// member access is normally written without spaces, so a bracket was likely
+// deleted before it.
+constexpr int32_t CostSpacedPeriodInParen = 10;
+// A spaced `(` or `[` directly following a value-ending token; calls and
+// indexing are written without spaces, so a bracket was likely deleted in
+// between.
+constexpr int32_t CostSpacedOpenAfterValue = 10;
+// A comparison or logical operator inside square brackets.
+constexpr int32_t CostComparisonInSquare = 8;
+// A `,` with whitespace before it inside parens or square brackets;
+// formatted code has no space before a comma.
+constexpr int32_t CostSpacedCommaInParen = 8;
+// An operator with a wide mid-line whitespace gap before it that no repair
+// on this path explains.
+constexpr int32_t CostWideGapUnexplained = 10;
+// A spaced `)` or `]` directly following a value that no repair on this path
+// explains; formatted code has no space before closers.
+constexpr int32_t CostSpacedCloserUnexplained = 8;
+// A scope `{` opening inside parens or a struct brace (a lambda; rare).
+constexpr int32_t CostScopeBraceInParen = 40;
+// A struct `{` opening inside parens (a struct literal argument; common).
+constexpr int32_t CostStructBraceInParen = 5;
+// A line that dedents to at-or-before the indentation of the enclosing brace
+// header while the brace is still open.
+constexpr int32_t CostDedentInScope = 40;
+// A line that dedents to at-or-before the indentation of an enclosing open
+// paren's line.
+constexpr int32_t CostDedentInParen = 25;
 
-constexpr int32_t CostInsertScopeBraceBeforeIntroducer = 20;
-constexpr int32_t CostInsertCloseBrace = 25;
-constexpr int32_t CostReplaceUnmatchedClosing = 30;
-constexpr int32_t CostInsertParenOrBracket = 40;
-constexpr int32_t CostUnclosedOpenerAtEnd = 50;
-constexpr int32_t CostUnclosedParenAtEnd = 200;
-constexpr int32_t CostHighBaselinePenalty = 80;
-constexpr int32_t CostReplaceUnmatchedOpening = 100;
+// Penalty for matching a scope `}` whose indentation doesn't match its
+// opener's header, when they're on different lines.
+constexpr int32_t CostBraceIndentMismatchBase = 30;
+constexpr int32_t CostBraceIndentMismatchPerColumn = 20;
 
 // Internal representation of an item after clean subrange collapsing.
 struct Item {
@@ -56,36 +178,52 @@ struct Item {
   bool is_first_on_line = false;
   bool follows_statement_header = false;
   bool header_has_open_curly_brace = false;
-  bool is_before_statement_introducer = false;
+  // Kind and flags of the token immediately preceding this item in the input.
+  BracketTokenKind prev_kind = BracketTokenKind::Other;
+  bool prev_is_paren_keyword = false;
+  bool prev_is_structural_op = false;
+  bool prev_is_assignment_op = false;
+  bool prev_has_leading_space = false;
 };
 
 // Represents an unclosed opening bracket on the search stack.
 struct OpenBracketInfo {
+  // The real opener token, or None for a synthetic opener.
   TokenIndex token_index = TokenIndex::None;
+  // Index of the real opener in the input token array, or -1 if synthetic.
+  int32_t token_pos = -1;
   BracketTokenKind kind;
   int32_t line = -1;
-  int32_t effective_header_indent;
-  int32_t expected_body_indent;
-  bool is_synthetic;
+  // Indentation of the line containing the opener.
+  int32_t line_indent = 0;
+  // Indentation of the start of the statement or declaration containing the
+  // opener.
+  int32_t effective_header_indent = 0;
+  int32_t expected_body_indent = 0;
+  bool is_synthetic = false;
   bool is_at_end_of_line = false;
   bool is_struct_brace = false;
+  // Whether this is a paren/square bracket directly following a value-ending
+  // token (a call or index), rather than following a keyword like `if`.
+  // Derived from the opener token, so not part of equality.
+  bool is_call_paren = false;
+  // For a synthetic opener, where it would be inserted.
   TokenIndex insertion_token_index = TokenIndex::None;
-  bool is_insert_after = false;
-  int32_t byte_offset = 0;
   int32_t insertion_byte_offset = 0;
+  // For a synthetic opener, the rule that proposed it, for diagnostics.
+  const char* origin = "";
 
   friend auto operator==(const OpenBracketInfo& a, const OpenBracketInfo& b)
       -> bool {
-    return a.token_index == b.token_index && a.kind == b.kind &&
-           a.line == b.line &&
+    return a.token_index == b.token_index && a.token_pos == b.token_pos &&
+           a.kind == b.kind && a.line == b.line &&
+           a.line_indent == b.line_indent &&
            a.effective_header_indent == b.effective_header_indent &&
            a.expected_body_indent == b.expected_body_indent &&
            a.is_synthetic == b.is_synthetic &&
            a.is_at_end_of_line == b.is_at_end_of_line &&
            a.is_struct_brace == b.is_struct_brace &&
            a.insertion_token_index == b.insertion_token_index &&
-           a.is_insert_after == b.is_insert_after &&
-           a.byte_offset == b.byte_offset &&
            a.insertion_byte_offset == b.insertion_byte_offset;
   }
 };
@@ -121,6 +259,13 @@ auto GetOuterStatementIntroducerIndent(
       }
     }
     break;
+  }
+  // A first-on-line `else` normally directly follows a deleted `}` whose
+  // indentation the statement really starts at: `} else {` puts `else` two
+  // columns past the brace.
+  if (tokens[j].is_else_keyword &&
+      (j == 0 || tokens[j].line != tokens[j - 1].line)) {
+    result_indent = std::max(1, result_indent - 2);
   }
   return result_indent;
 }
@@ -163,7 +308,11 @@ auto ComputeAssociatedLineIndent(llvm::ArrayRef<MismatchedBracketToken> tokens,
   return earliest_indent;
 }
 
-// Determines if a token follows a statement/declaration header.
+// Determines if a token follows a statement/declaration header, so that a
+// scope `{` could naturally be inserted directly before it. Only tokens that
+// could start a body are considered: the first token on a line, a statement
+// introducer (e.g. `return` in `if (c) return;`), or a token directly
+// following a `)`/`]` that ends a header.
 auto ComputeFollowsStatementHeader(
     llvm::ArrayRef<MismatchedBracketToken> tokens,
     llvm::ArrayRef<int32_t> match_partner, int32_t token_index) -> bool {
@@ -176,8 +325,23 @@ auto ComputeFollowsStatementHeader(
       IsClosingBracket(curr_kind) || curr_kind == BracketTokenKind::FileEnd) {
     return false;
   }
-  if (curr_kind == BracketTokenKind::Other &&
-      tokens[token_index].line == tokens[token_index - 1].line) {
+  // Only tokens that could start a body are considered: the first token on a
+  // line, a statement introducer (`if (c) return;`), or a token directly
+  // after a `)` ending a header. (Not after `]`: declaration headers always
+  // continue after implicit parameter lists and `forall` clauses.)
+  bool is_first_on_line =
+      tokens[token_index].line != tokens[token_index - 1].line;
+  auto prev_kind = tokens[token_index - 1].kind;
+  if (!is_first_on_line &&
+      curr_kind != BracketTokenKind::StatementIntroducer &&
+      prev_kind != BracketTokenKind::CloseParen) {
+    return false;
+  }
+  // A body can't start with an operator like `as` or `==`, or with a `.`
+  // designator (a `where`-clause continuation line).
+  if (tokens[token_index].is_structural_op ||
+      tokens[token_index].is_comparison_op ||
+      curr_kind == BracketTokenKind::Period) {
     return false;
   }
   for (int32_t j = token_index - 1; j >= 0; --j) {
@@ -197,8 +361,21 @@ auto ComputeFollowsStatementHeader(
     }
     if (kind == BracketTokenKind::StatementIntroducer) {
       if (curr_kind == BracketTokenKind::StatementIntroducer) {
-        if (tokens[token_index].line == tokens[j].line ||
-            tokens[token_index].line_indent <= tokens[j].line_indent) {
+        if (tokens[token_index].line == tokens[j].line) {
+          // On the same line, a chain of adjacent introducers (`private fn`)
+          // is a single header; but with other tokens in between, this is a
+          // body after a single-line header (`if (c) return x;`).
+          bool all_introducers = true;
+          for (int32_t k = j + 1; k < token_index; ++k) {
+            if (tokens[k].kind != BracketTokenKind::StatementIntroducer) {
+              all_introducers = false;
+              break;
+            }
+          }
+          if (all_introducers) {
+            return false;
+          }
+        } else if (tokens[token_index].line_indent <= tokens[j].line_indent) {
           return false;
         }
       }
@@ -248,11 +425,15 @@ struct BeamNode {
   int32_t item_index;
   llvm::SmallVector<OpenBracketInfo, 4> stack;
   int32_t cost;
+  // The kind of synthetic closer inserted directly before the current item,
+  // or Other if none; an inserted closer repairs illegal adjacency with the
+  // preceding token.
+  BracketTokenKind closer_inserted = BracketTokenKind::Other;
   llvm::SmallVector<ParentEdge, 2> parent_edges;
 };
 
 // Solve a damaged region using the simple greedy fallback algorithm.
-auto SolveNaive(llvm::ArrayRef<Item> items, TokenIndex /*region_end_token*/,
+auto SolveNaive(llvm::ArrayRef<Item> items,
                 llvm::SmallVectorImpl<BracketCorrection>& corrections) -> void {
   llvm::SmallVector<Item> open_stack;
   for (const auto& item : items) {
@@ -334,24 +515,344 @@ auto SolveNaive(llvm::ArrayRef<Item> items, TokenIndex /*region_end_token*/,
 auto HashStack(llvm::ArrayRef<OpenBracketInfo> stack) -> uint64_t {
   uint64_t h = stack.size();
   for (const auto& info : stack) {
-    uint64_t k =
-        (static_cast<uint64_t>(info.token_index.index) << 32) ^
-        (static_cast<uint64_t>(info.insertion_token_index.index) << 8) ^
-        static_cast<uint64_t>(info.kind) ^
-        (static_cast<uint64_t>(info.expected_body_indent) << 16);
+    uint64_t k = (static_cast<uint64_t>(info.token_index.index) << 32) ^
+                 (static_cast<uint64_t>(info.insertion_token_index.index)
+                  << 8) ^
+                 static_cast<uint64_t>(info.kind) ^
+                 (static_cast<uint64_t>(info.is_struct_brace) << 7) ^
+                 (static_cast<uint64_t>(info.expected_body_indent) << 16);
     h ^= k + 0x9e3779b9 + (h << 6) + (h >> 2);
   }
   return h;
 }
 
-// Solve a damaged region using Dijkstra shortest-path search with tie
-// detection.
+// Classification of the top of the bracket stack.
+enum class TopKind : int8_t {
+  None,
+  Paren,        // `(` or `[`
+  StructBrace,  // `{` with struct cues
+  ScopeBrace,   // `{` without struct cues
+};
+
+auto GetTopKind(llvm::ArrayRef<OpenBracketInfo> stack) -> TopKind {
+  if (stack.empty()) {
+    return TopKind::None;
+  }
+  const auto& top = stack.back();
+  if (top.kind == BracketTokenKind::OpenCurlyBrace) {
+    return top.is_struct_brace ? TopKind::StructBrace : TopKind::ScopeBrace;
+  }
+  return TopKind::Paren;
+}
+
+// Returns true if `kind`'s matching opener appears in `stack` below the top.
+auto MatchesDeeperOpener(llvm::ArrayRef<OpenBracketInfo> stack,
+                         BracketTokenKind closing_kind) -> bool {
+  if (!IsClosingBracket(closing_kind) || stack.size() < 2) {
+    return false;
+  }
+  auto req = MatchingOpeningKind(closing_kind);
+  for (size_t s = 0; s + 1 < stack.size(); ++s) {
+    if (stack[s].kind == req) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Computes the cost of inserting a synthetic closer for `top` directly before
+// `item`, or nullopt if this insertion isn't worth exploring. Sets `origin` to
+// the rule that fired.
+auto ClassifyCloserInsertion(const OpenBracketInfo& top, const Item& item,
+                             llvm::ArrayRef<OpenBracketInfo> stack,
+                             const char*& origin) -> std::optional<int32_t> {
+  auto t_kind = item.token.kind;
+
+  bool cascade = MatchesDeeperOpener(stack, t_kind);
+  // For whitespace cues, `]` and `}` also end values even though they're not
+  // "value-ending" for adjacency purposes.
+  bool prev_is_value_like =
+      item.token.prev_is_value_ending ||
+      item.prev_kind == BracketTokenKind::CloseSquareBracket ||
+      item.prev_kind == BracketTokenKind::CloseCurlyBrace;
+
+  if (top.kind == BracketTokenKind::OpenParen ||
+      top.kind == BracketTokenKind::OpenSquareBracket) {
+    // An empty group: the opener is directly followed by a `,`, which can't
+    // start group content, so the group's closer must have been directly
+    // after the opener (e.g. `f(x(), y)` becoming `f(x(, y)`); or by a
+    // spaced `.`, which as group content would be written unspaced
+    // (`f(.a = 1)`).
+    if (top.token_pos >= 0 && top.token_pos == item.token_start_index - 1 &&
+        (t_kind == BracketTokenKind::Comma ||
+         (t_kind == BracketTokenKind::Period &&
+          item.token.has_leading_space))) {
+      origin = "Close_EmptyGroup";
+      return CostCloseEmptyGroup;
+    }
+    if (t_kind == BracketTokenKind::Semi) {
+      origin = "Close_ParenBeforeSemi";
+      return CostCloseParenBeforeSemi;
+    }
+    if (cascade) {
+      origin = "Close_ParenCascade";
+      return CostCloseCascade;
+    }
+    // A `{` starting a block means the paren should have closed: `if (c) {`,
+    // `while (c) {`. A struct-literal `{...}` can legitimately sit inside a
+    // *call* paren (`f({.x = 1})`), but not inside a keyword or grouping paren
+    // (whose `{` — even an empty `{}` misread as a struct — is a block).
+    if (t_kind == BracketTokenKind::OpenCurlyBrace &&
+        (!item.token.is_struct_brace || !top.is_call_paren)) {
+      origin = "Close_ParenBeforeBrace";
+      return CostCloseParenBeforeBrace;
+    }
+    // `=` can directly follow both `)` and `]`, but `->` and `as` only
+    // plausibly follow `)`. An unspaced structural operator is not a cue:
+    // formatted code spaces these operators, and an unspaced `->` is a
+    // pointer member access (`p->x`).
+    if (item.token.is_structural_op && item.token.has_leading_space &&
+        (top.kind == BracketTokenKind::OpenParen ||
+         item.token.is_assignment_op)) {
+      origin = "Close_ParenBeforeStructuralOp";
+      return CostCloseParenBeforeStructuralOp;
+    }
+    // A leaf directly following a value-ending token is illegal, and a `]`
+    // between them fixes the adjacency (unlike `)`, `]` can be directly
+    // followed by a leaf, as in `impl forall [...] T as ...`).
+    if (top.kind == BracketTokenKind::OpenSquareBracket &&
+        t_kind == BracketTokenKind::Leaf && item.token.prev_is_value_ending) {
+      origin = "Close_SquareAtLeafAdjacency";
+      return CostCloseSquareAtLeafAdjacency;
+    }
+    // A `.` with whitespace before it mid-line suggests a closer was deleted
+    // right before it: member access is written without spaces, `x.y`.
+    if (t_kind == BracketTokenKind::Period && !item.is_first_on_line &&
+        item.token.has_leading_space && prev_is_value_like) {
+      origin = "Close_ParenBeforeSpacedPeriod";
+      return CostCloseParenBeforeSpacedPeriod;
+    }
+    // Similarly, a `(` or `[` with whitespace before it directly following a
+    // value-ending token: calls and indexing are written without spaces.
+    if ((t_kind == BracketTokenKind::OpenParen ||
+         t_kind == BracketTokenKind::OpenSquareBracket) &&
+        !item.is_first_on_line && item.token.has_leading_space &&
+        prev_is_value_like) {
+      origin = "Close_ParenBeforeSpacedOpen";
+      return CostCloseParenBeforeSpacedPeriod;
+    }
+    // A comparison or logical operator is unlikely inside square brackets or
+    // call/index argument lists (but common in `if (...)` etc.).
+    if (item.token.is_comparison_op &&
+        (top.kind == BracketTokenKind::OpenSquareBracket ||
+         top.is_call_paren)) {
+      origin = "Close_ParenBeforeComparison";
+      return CostCloseParenBeforeStructuralOp;
+    }
+    // A `,` with whitespace before it: formatted code has no space before a
+    // comma, so a closer was likely deleted in the gap.
+    if (t_kind == BracketTokenKind::Comma && !item.is_first_on_line &&
+        item.token.has_leading_space && prev_is_value_like) {
+      origin = "Close_BeforeSpacedComma";
+      return CostCloseParenBeforeSemi;
+    }
+    // Likewise a `)` or `]` with whitespace before it: formatted code has no
+    // space before closers either.
+    if ((t_kind == BracketTokenKind::CloseParen ||
+         t_kind == BracketTokenKind::CloseSquareBracket) &&
+        !item.is_first_on_line && item.token.has_leading_space &&
+        prev_is_value_like) {
+      origin = "Close_BeforeSpacedCloser";
+      return CostCloseParenBeforeSemi;
+    }
+    if (t_kind == BracketTokenKind::FileEnd) {
+      origin = "Close_ParenAtFileEnd";
+      return CostCloseAtEnd;
+    }
+    // A wide whitespace gap mid-line suggests a deleted token in the gap.
+    if (!item.is_first_on_line && item.token.has_wide_leading_space) {
+      origin = "Close_ParenAtWideGap";
+      return CostCloseAtWideGap;
+    }
+    // A `[` group rarely spans lines except in wrapped declaration headers
+    // (`impl forall [...]` etc.), where the line break follows the `]`.
+    if (top.kind == BracketTokenKind::OpenSquareBracket &&
+        item.is_first_on_line && item.token.line != top.line) {
+      origin = "Close_SquareAtContinuation";
+      return CostCloseSquareAtContinuation;
+    }
+    // No positive cue that a `(`/`[` closes here. Closing before a bare
+    // dedent, statement introducer, or arbitrary token was never a correct
+    // guess in practice (it just closes too early), so decline: the search
+    // will close at a real cue, at the region end, or, failing both, replace
+    // the unmatched opener with an error token.
+    return std::nullopt;
+  }
+
+  if (top.is_struct_brace) {
+    if (t_kind == BracketTokenKind::Semi) {
+      origin = "Close_StructBeforeSemi";
+      return CostCloseParenBeforeSemi;
+    }
+    if (cascade) {
+      origin = "Close_StructCascade";
+      return CostCloseCascade;
+    }
+    if (!item.is_first_on_line && item.token.has_wide_leading_space) {
+      origin = "Close_StructAtWideGap";
+      return CostCloseAtWideGap;
+    }
+    if (t_kind == BracketTokenKind::FileEnd) {
+      origin = "Close_StructAtFileEnd";
+      return CostCloseAtEnd;
+    }
+    if (item.is_first_on_line &&
+        item.token.line_indent <= top.effective_header_indent) {
+      origin = "Close_StructAtDedent";
+      return CostCloseStructAtDedent;
+    }
+    origin = "Close_StructBaseline";
+    return CostCloseParenBaseline;
+  }
+
+  // Scope brace.
+  if (item.is_first_on_line &&
+      item.token.line_indent <= top.effective_header_indent) {
+    origin = "Close_ScopeAtDedent";
+    return CostCloseScopeAtDedent;
+  }
+  // A first-on-line `else` normally directly follows a `}` on the same line,
+  // so one was likely deleted before it.
+  if (item.token.is_else_keyword && item.is_first_on_line) {
+    origin = "Close_ScopeBeforeElse";
+    return CostCloseScopeBeforeElse;
+  }
+  if (cascade) {
+    origin = "Close_ScopeCascade";
+    return CostCloseCascade;
+  }
+  if (t_kind == BracketTokenKind::FileEnd) {
+    origin = "Close_ScopeAtFileEnd";
+    return CostCloseAtEnd;
+  }
+  origin = "Close_ScopeBaseline";
+  return CostCloseScopeBaseline;
+}
+
+// Computes the cost of inserting a synthetic opener of kind `kind` directly
+// before `item`. `prev_item` is the preceding item, if any. Sets `origin` to
+// the rule that fired.
+auto ClassifyOpenerInsertion(BracketTokenKind kind, const Item& item,
+                             const Item* prev_item, const char*& origin)
+    -> int32_t {
+  auto t_kind = item.token.kind;
+
+  if (kind == BracketTokenKind::OpenParen ||
+      kind == BracketTokenKind::OpenSquareBracket) {
+    // `if`/`while`/`for`/`match` (statement introducers) require a following
+    // `(`; `forall` (an Other token) requires a following `[`.
+    if (item.prev_is_paren_keyword && !IsOpeningBracket(t_kind) &&
+        kind == (item.prev_kind == BracketTokenKind::StatementIntroducer
+                     ? BracketTokenKind::OpenParen
+                     : BracketTokenKind::OpenSquareBracket)) {
+      origin = "Open_AfterParenKeyword";
+      return CostOpenAfterParenKeyword;
+    }
+    // A leaf or binding modifier directly following a value-ending token is
+    // illegal; an opener here fixes the adjacency.
+    if ((t_kind == BracketTokenKind::Leaf ||
+         item.token.is_modifier_keyword) &&
+        item.token.prev_is_value_ending) {
+      origin = "Open_AtLeafAdjacency";
+      return CostOpenAtLeafAdjacency;
+    }
+    // A `.` with whitespace before it directly following a value-ending
+    // token: likely a designator argument that lost its `(`, as in
+    // `ImplicitAs(.Self)`.
+    if (t_kind == BracketTokenKind::Period && !item.is_first_on_line &&
+        item.token.has_leading_space && item.token.prev_is_value_ending &&
+        kind == BracketTokenKind::OpenParen) {
+      origin = "Open_BeforeSpacedPeriod";
+      return CostCloseParenBeforeSpacedPeriod;
+    }
+    // A mid-line leaf with whitespace before it directly following an
+    // unspaced `.`: member access is written without spaces, `x.y`, so a
+    // bracket was likely deleted in the gap.
+    if (t_kind == BracketTokenKind::Leaf && !item.is_first_on_line &&
+        item.token.has_leading_space &&
+        item.prev_kind == BracketTokenKind::Period &&
+        !item.prev_has_leading_space) {
+      origin = "Open_AfterPeriodGap";
+      return CostOpenAfterPeriodGap;
+    }
+    // A mid-line leaf with whitespace before it directly following an
+    // opener: formatted code has no space after `(` or `[`, so a bracket was
+    // likely deleted in the gap.
+    if (t_kind == BracketTokenKind::Leaf && !item.is_first_on_line &&
+        item.token.has_leading_space &&
+        (item.prev_kind == BracketTokenKind::OpenParen ||
+         item.prev_kind == BracketTokenKind::OpenSquareBracket)) {
+      origin = "Open_AfterOpenGap";
+      return CostOpenAfterPeriodGap;
+    }
+    // A wide whitespace gap before a token that could start a group suggests
+    // an opener was deleted in the gap.
+    if (!item.is_first_on_line && item.token.has_wide_leading_space &&
+        (t_kind == BracketTokenKind::Leaf ||
+         t_kind == BracketTokenKind::Period || IsOpeningBracket(t_kind) ||
+         item.token.is_modifier_keyword)) {
+      origin = "Open_AtWideGap";
+      return CostCloseAtWideGap;
+    }
+    // An empty group directly after a name: `Op()`. Only applies after a
+    // leaf (a call of a just-computed value, `f(x)()`, is much rarer than a
+    // call of a name), and not when the name is a type after `as` or `->`,
+    // where a parenthesized group is more plausible than an empty call.
+    if (prev_item != nullptr &&
+        prev_item->token.kind == BracketTokenKind::Leaf &&
+        item.token.has_leading_space &&
+        !(prev_item->prev_is_structural_op &&
+          !prev_item->prev_is_assignment_op)) {
+      if (t_kind == BracketTokenKind::CloseParen &&
+          kind == BracketTokenKind::OpenParen) {
+        origin = "Open_EmptyParens";
+        return CostOpenEmptyParens;
+      }
+      if (t_kind == BracketTokenKind::CloseSquareBracket &&
+          kind == BracketTokenKind::OpenSquareBracket) {
+        origin = "Open_EmptySquares";
+        return CostOpenEmptySquares;
+      }
+    }
+    // An empty call of a just-computed value: `T.(Default.Op)()`. Only
+    // trusted when the `)` is spaced, marking the deletion gap. `prev_kind`
+    // is the last token of the previous item, so this fires after a collapsed
+    // `(...)` block too.
+    if (item.prev_kind == BracketTokenKind::CloseParen &&
+        t_kind == BracketTokenKind::CloseParen &&
+        kind == BracketTokenKind::OpenParen && item.token.has_leading_space &&
+        !item.is_first_on_line) {
+      origin = "Open_EmptyParensAfterClose";
+      return CostOpenEmptyParensAfterClose;
+    }
+    origin = "Open_ParenBaseline";
+    return CostOpenParenBaseline;
+  }
+
+  // Scope or struct `{`.
+  origin = "Open_BraceBaseline";
+  return CostOpenBraceBaseline;
+}
+
+// Solve a damaged region using layered beam search with tie detection.
+// `region_end_token` and `region_end_byte` identify the token directly after
+// the region, where any still-unclosed brackets are closed.
 auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
-                          TokenIndex region_end_token,
+                          TokenIndex region_end_token, int32_t region_end_byte,
                           llvm::SmallVectorImpl<BracketCorrection>& corrections)
     -> void {
   if (items.size() > static_cast<size_t>(MaxRegionItemsForSearch)) {
-    SolveNaive(items, region_end_token, corrections);
+    SolveNaive(items, corrections);
     return;
   }
 
@@ -363,81 +864,60 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
   auto try_add_to_layer =
       [&](llvm::SmallVectorImpl<int32_t>& layer_indices,
           llvm::DenseMap<uint64_t, int32_t>& layer_map, int32_t next_item_idx,
-          llvm::SmallVector<OpenBracketInfo, 4> next_stack, int32_t next_cost,
-          ParentEdge edge, llvm::SmallVectorImpl<int32_t>* worklist = nullptr) {
+          llvm::SmallVector<OpenBracketInfo, 4> next_stack,
+          BracketTokenKind closer_inserted, int32_t next_cost, ParentEdge edge,
+          llvm::SmallVectorImpl<int32_t>* worklist = nullptr) {
         if (next_cost > min_goal_cost) {
           return;
         }
-        uint64_t stack_hash = HashStack(next_stack);
-        auto map_it = layer_map.find(stack_hash);
-        if (map_it != layer_map.end()) {
-          int32_t idx = map_it->second;
+        auto edges_equal = [](const ParentEdge& a, const ParentEdge& b) {
+          return a.parent_node_index == b.parent_node_index &&
+                 a.has_correction == b.has_correction &&
+                 (!a.has_correction ||
+                  (a.correction.diagnostic_token_index ==
+                       b.correction.diagnostic_token_index &&
+                   a.correction.fix_action == b.correction.fix_action &&
+                   a.correction.fix_token_index ==
+                       b.correction.fix_token_index &&
+                   a.correction.fix_token_kind == b.correction.fix_token_kind));
+        };
+        auto merge_into = [&](int32_t idx) {
           auto& exist_node = arena[idx];
-          if (exist_node.stack == next_stack) {
-            if (next_cost < exist_node.cost) {
-              exist_node.cost = next_cost;
-              exist_node.parent_edges.clear();
-              exist_node.parent_edges.push_back(edge);
-              if (worklist) {
-                worklist->push_back(idx);
-              }
-            } else if (next_cost == exist_node.cost) {
-              bool duplicate = false;
-              for (const auto& exist_edge : exist_node.parent_edges) {
-                if (exist_edge.parent_node_index == edge.parent_node_index &&
-                    exist_edge.has_correction == edge.has_correction &&
-                    (!edge.has_correction ||
-                     (exist_edge.correction.diagnostic_token_index ==
-                          edge.correction.diagnostic_token_index &&
-                      exist_edge.correction.fix_action ==
-                          edge.correction.fix_action &&
-                      exist_edge.correction.fix_token_index ==
-                          edge.correction.fix_token_index &&
-                      exist_edge.correction.fix_token_kind ==
-                          edge.correction.fix_token_kind))) {
-                  duplicate = true;
-                  break;
-                }
-              }
-              if (!duplicate) {
-                exist_node.parent_edges.push_back(edge);
+          if (next_cost < exist_node.cost) {
+            exist_node.cost = next_cost;
+            exist_node.parent_edges.clear();
+            exist_node.parent_edges.push_back(edge);
+            if (worklist) {
+              worklist->push_back(idx);
+            }
+          } else if (next_cost == exist_node.cost) {
+            bool duplicate = false;
+            for (const auto& exist_edge : exist_node.parent_edges) {
+              if (edges_equal(exist_edge, edge)) {
+                duplicate = true;
+                break;
               }
             }
+            if (!duplicate) {
+              exist_node.parent_edges.push_back(edge);
+            }
+          }
+        };
+        uint64_t stack_hash =
+            HashStack(next_stack) ^
+            (static_cast<uint64_t>(closer_inserted) * 0x5bd1e995);
+        auto map_it = layer_map.find(stack_hash);
+        if (map_it != layer_map.end()) {
+          if (arena[map_it->second].stack == next_stack &&
+              arena[map_it->second].closer_inserted == closer_inserted) {
+            merge_into(map_it->second);
             return;
           }
-          // On hash collision, fall through to linear scan over layer_indices.
+          // On hash collision, fall back to a linear scan over the layer.
           for (int32_t idx : layer_indices) {
-            auto& exist_node = arena[idx];
-            if (exist_node.stack == next_stack) {
-              if (next_cost < exist_node.cost) {
-                exist_node.cost = next_cost;
-                exist_node.parent_edges.clear();
-                exist_node.parent_edges.push_back(edge);
-                if (worklist) {
-                  worklist->push_back(idx);
-                }
-              } else if (next_cost == exist_node.cost) {
-                bool duplicate = false;
-                for (const auto& exist_edge : exist_node.parent_edges) {
-                  if (exist_edge.parent_node_index == edge.parent_node_index &&
-                      exist_edge.has_correction == edge.has_correction &&
-                      (!edge.has_correction ||
-                       (exist_edge.correction.diagnostic_token_index ==
-                            edge.correction.diagnostic_token_index &&
-                        exist_edge.correction.fix_action ==
-                            edge.correction.fix_action &&
-                        exist_edge.correction.fix_token_index ==
-                            edge.correction.fix_token_index &&
-                        exist_edge.correction.fix_token_kind ==
-                            edge.correction.fix_token_kind))) {
-                    duplicate = true;
-                    break;
-                  }
-                }
-                if (!duplicate) {
-                  exist_node.parent_edges.push_back(edge);
-                }
-              }
+            if (arena[idx].stack == next_stack &&
+                arena[idx].closer_inserted == closer_inserted) {
+              merge_into(idx);
               return;
             }
           }
@@ -447,6 +927,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
             .item_index = next_item_idx,
             .stack = std::move(next_stack),
             .cost = next_cost,
+            .closer_inserted = closer_inserted,
             .parent_edges = {edge},
         });
         layer_indices.push_back(new_idx);
@@ -469,11 +950,16 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
     const auto& item = items[i];
     auto kind = item.token.kind;
 
-    // Step 1: Epsilon moves within layer `i` (without advancing `i`).
+    // Step 1: Epsilon moves within layer `i` (insertions before token `i`).
     if (kind != BracketTokenKind::FileEnd) {
       for (int32_t idx : current_layer) {
-        layer_map[HashStack(arena[idx].stack)] = idx;
+        layer_map[HashStack(arena[idx].stack) ^
+                  (static_cast<uint64_t>(arena[idx].closer_inserted) *
+                   0x5bd1e995)] = idx;
       }
+
+      // Phase 1a: Synthetic closers. Uses a worklist so that several groups
+      // can be closed at the same point.
       llvm::SmallVector<int32_t> worklist = current_layer;
       size_t worklist_head = 0;
 
@@ -483,184 +969,145 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
         if (current.cost > min_goal_cost) {
           continue;
         }
-
-        auto try_enqueue_epsilon =
-            [&](llvm::SmallVector<OpenBracketInfo, 4> next_stack,
-                int32_t add_cost, BracketCorrection correction = {},
-                bool has_correction = false) {
-              int32_t next_cost = current.cost + add_cost;
-              ParentEdge edge{
-                  .parent_node_index = node_idx,
-                  .correction = correction,
-                  .has_correction = has_correction,
-              };
-              try_add_to_layer(current_layer, layer_map, i,
-                               std::move(next_stack), next_cost, edge,
-                               &worklist);
-            };
-
-        // 1a. Insert Closer (pop top of stack by synthesizing matching closer
-        // before token i).
-        if (!current.stack.empty()) {
-          auto popped = current.stack.back();
-          if (kind != MatchingClosingKind(popped.kind) &&
-              !(popped.is_synthetic &&
-                popped.insertion_token_index == item.token.token_index)) {
-            bool is_discounted = false;
-            const char* origin_name = "Epsilon_InsertCloser";
-            if (popped.kind == BracketTokenKind::OpenCurlyBrace &&
-                !popped.is_struct_brace && item.is_first_on_line &&
-                item.token.line_indent < popped.expected_body_indent) {
-              bool is_dedent_transition = true;
-              if (i > 0) {
-                const auto& prev_item = items[i - 1];
-                if (prev_item.token.kind == BracketTokenKind::CloseCurlyBrace ||
-                    prev_item.token.line_indent <= item.token.line_indent) {
-                  is_dedent_transition = false;
-                }
-              }
-              if (is_dedent_transition) {
-                is_discounted = true;
-                origin_name = "T3_DedentCloseBrace";
-              }
-            }
-            if (IsClosingBracket(kind)) {
-              auto req_opener = MatchingOpeningKind(kind);
-              for (size_t s = 0; s + 1 < current.stack.size(); ++s) {
-                if (current.stack[s].kind == req_opener) {
-                  is_discounted = true;
-                  origin_name = "TD3_CloserMismatchClosesStackTop";
-                  break;
-                }
-              }
-            }
-            if (!is_discounted &&
-                (popped.kind == BracketTokenKind::OpenParen ||
-                 popped.kind == BracketTokenKind::OpenSquareBracket ||
-                 (popped.kind == BracketTokenKind::OpenCurlyBrace &&
-                  popped.is_struct_brace))) {
-              if (popped.line == item.token.line ||
-                  item.token.line_indent >= popped.effective_header_indent) {
-                is_discounted = true;
-                origin_name = "T_SynthesizeCloserBeforeItem";
-              }
-            }
-
-            if (!is_discounted) {
-              continue;
-            }
-
-            int32_t eps_cost = CostInsertCloseBrace +
-                               (is_discounted ? 0 : CostHighBaselinePenalty);
-
-            auto next_stack = current.stack;
-            next_stack.pop_back();
-            auto closer_kind = MatchingClosingKind(popped.kind);
-            BracketCorrection correction;
-            bool has_corr = false;
-            if (!popped.is_synthetic) {
-              correction = BracketCorrection{
-                  .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
-                  .diagnostic_token_index = popped.token_index,
-                  .fix_action = BracketFixAction::InsertBefore,
-                  .fix_token_index = item.token.token_index,
-                  .fix_token_kind = ToTokenKind(closer_kind),
-                  .fix_byte_offset = item.token.byte_offset,
-                  .origin = origin_name,
-              };
-              has_corr = true;
-            }
-            try_enqueue_epsilon(std::move(next_stack), eps_cost, correction,
-                                has_corr);
+        if (current.stack.empty()) {
+          continue;
+        }
+        const auto& top = current.stack.back();
+        // Synthetic openers exist only to consume real closers; closing one
+        // synthetically would insert a pointless empty pair.
+        if (top.is_synthetic) {
+          continue;
+        }
+        // If the current token is the matching closer and would be allowed
+        // to match directly, matching is strictly better than synthesizing a
+        // duplicate closer in front of it — unless the closer has suspicious
+        // whitespace before it suggesting a closer was deleted in the gap.
+        if (kind == MatchingClosingKind(top.kind)) {
+          bool direct_match_ok = true;
+          if (kind == BracketTokenKind::CloseCurlyBrace &&
+              !top.is_struct_brace && item.token.line != top.line &&
+              item.token.line_indent < top.effective_header_indent) {
+            direct_match_ok = false;
+          }
+          bool spaced_suspicious =
+              kind != BracketTokenKind::CloseCurlyBrace &&
+              !item.is_first_on_line && item.token.has_leading_space &&
+              (item.token.prev_is_value_ending ||
+               item.prev_kind == BracketTokenKind::CloseSquareBracket ||
+               item.prev_kind == BracketTokenKind::CloseCurlyBrace);
+          if (direct_match_ok && !spaced_suspicious) {
+            continue;
           }
         }
+        const char* origin = "";
+        auto eps_cost =
+            ClassifyCloserInsertion(top, item, current.stack, origin);
+        if (!eps_cost) {
+          continue;
+        }
+
+        auto next_stack = current.stack;
+        auto popped = next_stack.pop_back_val();
+        auto closer_kind = MatchingClosingKind(popped.kind);
+        ParentEdge edge{
+            .parent_node_index = node_idx,
+            .correction =
+                BracketCorrection{
+                    .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
+                    .diagnostic_token_index = popped.token_index,
+                    .fix_action = BracketFixAction::InsertBefore,
+                    .fix_token_index = item.token.token_index,
+                    .fix_token_kind = ToTokenKind(closer_kind),
+                    .fix_byte_offset = item.token.byte_offset,
+                    .origin = origin,
+                },
+            .has_correction = true,
+        };
+        try_add_to_layer(current_layer, layer_map, i, std::move(next_stack),
+                         closer_kind, current.cost + *eps_cost, edge,
+                         &worklist);
       }
 
-      // Phase 1b: Epsilon Openers / Pushes.
-      // Iterate only over the states present after Phase 1a (original +
-      // popped), without chaining synthetic openers onto newly pushed openers.
+      // Phase 1b: Synthetic openers. Iterate only over the states present
+      // after Phase 1a, without chaining synthetic openers onto each other.
       size_t num_states_after_1a = current_layer.size();
       for (size_t idx = 0; idx < num_states_after_1a; ++idx) {
         int32_t node_idx = current_layer[idx];
         const BeamNode current = arena[node_idx];
-        if (current.cost > min_goal_cost) {
+        if (current.cost > min_goal_cost ||
+            current.stack.size() >= MaxSearchStackDepth) {
           continue;
         }
 
-        auto try_enqueue_epsilon_opener =
-            [&](llvm::SmallVector<OpenBracketInfo, 4> next_stack,
-                int32_t add_cost) {
-              int32_t next_cost = current.cost + add_cost;
-              ParentEdge edge{
-                  .parent_node_index = node_idx,
-                  .correction = {},
-                  .has_correction = false,
-              };
-              try_add_to_layer(current_layer, layer_map, i,
-                               std::move(next_stack), next_cost, edge, nullptr);
-            };
+        auto push_synthetic = [&](BracketTokenKind open_kind,
+                                  bool is_struct_brace, int32_t add_cost,
+                                  const char* origin) {
+          auto next_stack = current.stack;
+          next_stack.push_back(OpenBracketInfo{
+              .token_index = TokenIndex::None,
+              .token_pos = -1,
+              .kind = open_kind,
+              .line = item.token.line,
+              .line_indent = item.token.line_indent,
+              .effective_header_indent = item.effective_header_indent,
+              .expected_body_indent = item.effective_header_indent + 2,
+              .is_synthetic = true,
+              .is_struct_brace = is_struct_brace,
+              .insertion_token_index = item.token.token_index,
+              .insertion_byte_offset = item.token.byte_offset,
+              .origin = origin,
+          });
+          ParentEdge edge{
+              .parent_node_index = node_idx,
+              .correction = {},
+              .has_correction = false,
+          };
+          try_add_to_layer(current_layer, layer_map, i, std::move(next_stack),
+                           current.closer_inserted, current.cost + add_cost,
+                           edge, nullptr);
+        };
 
-        if (current.stack.size() < MaxSearchStackDepth) {
-          // Push synthetic '{'
-          {
-            bool is_discounted = item.follows_statement_header &&
-                                 !item.header_has_open_curly_brace &&
-                                 !IsOpeningBracket(kind);
-            int32_t base_cost = item.is_before_statement_introducer
-                                    ? CostInsertScopeBraceBeforeIntroducer
-                                    : CostInsertCloseBrace;
-            int32_t eps_cost =
-                base_cost + (is_discounted ? 0 : CostHighBaselinePenalty);
-            auto next_stack = current.stack;
-            next_stack.push_back(OpenBracketInfo{
-                .token_index = TokenIndex::None,
-                .kind = BracketTokenKind::OpenCurlyBrace,
-                .line = item.token.line,
-                .effective_header_indent = item.effective_header_indent,
-                .expected_body_indent = item.effective_header_indent + 2,
-                .is_synthetic = true,
-                .insertion_token_index = item.token.token_index,
-                .byte_offset = item.token.byte_offset,
-                .insertion_byte_offset = item.token.byte_offset,
-            });
-            try_enqueue_epsilon_opener(std::move(next_stack), eps_cost);
-          }
-          // Push synthetic '('
-          {
-            int32_t eps_cost =
-                CostInsertParenOrBracket + CostHighBaselinePenalty;
-            auto next_stack = current.stack;
-            next_stack.push_back(OpenBracketInfo{
-                .token_index = TokenIndex::None,
-                .kind = BracketTokenKind::OpenParen,
-                .line = item.token.line,
-                .effective_header_indent = item.effective_header_indent,
-                .expected_body_indent = item.effective_header_indent + 2,
-                .is_synthetic = true,
-                .insertion_token_index = item.token.token_index,
-                .byte_offset = item.token.byte_offset,
-                .insertion_byte_offset = item.token.byte_offset,
-            });
-            try_enqueue_epsilon_opener(std::move(next_stack), eps_cost);
-          }
-          // Push synthetic '['
-          {
-            int32_t eps_cost =
-                CostInsertParenOrBracket + CostHighBaselinePenalty;
-            auto next_stack = current.stack;
-            next_stack.push_back(OpenBracketInfo{
-                .token_index = TokenIndex::None,
-                .kind = BracketTokenKind::OpenSquareBracket,
-                .line = item.token.line,
-                .effective_header_indent = item.effective_header_indent,
-                .expected_body_indent = item.effective_header_indent + 2,
-                .is_synthetic = true,
-                .insertion_token_index = item.token.token_index,
-                .byte_offset = item.token.byte_offset,
-                .insertion_byte_offset = item.token.byte_offset,
-            });
-            try_enqueue_epsilon_opener(std::move(next_stack), eps_cost);
-          }
+        // Synthetic `(` and `[`.
+        const Item* prev_item = i > 0 ? &items[i - 1] : nullptr;
+        {
+          const char* origin = "";
+          int32_t cost = ClassifyOpenerInsertion(BracketTokenKind::OpenParen,
+                                                 item, prev_item, origin);
+          push_synthetic(BracketTokenKind::OpenParen, false, cost, origin);
+        }
+        {
+          const char* origin = "";
+          int32_t cost = ClassifyOpenerInsertion(
+              BracketTokenKind::OpenSquareBracket, item, prev_item, origin);
+          push_synthetic(BracketTokenKind::OpenSquareBracket, false, cost,
+                         origin);
+        }
+        // Synthetic scope `{` between an unbraced header and its body.
+        if (item.follows_statement_header &&
+            !item.header_has_open_curly_brace && !IsOpeningBracket(kind)) {
+          push_synthetic(BracketTokenKind::OpenCurlyBrace, false,
+                         CostOpenScopeAfterHeader, "Open_ScopeAfterHeader");
+        } else if (!IsOpeningBracket(kind)) {
+          push_synthetic(BracketTokenKind::OpenCurlyBrace, false,
+                         CostOpenBraceBaseline, "Open_ScopeBaseline");
+        }
+        // Synthetic struct `{`.
+        if (kind == BracketTokenKind::Period &&
+            !item.token.prev_is_value_ending) {
+          push_synthetic(BracketTokenKind::OpenCurlyBrace, true,
+                         CostOpenStructBeforeDesignator,
+                         "Open_StructBeforeDesignator");
+        } else if (kind == BracketTokenKind::CloseCurlyBrace &&
+                   !item.is_first_on_line &&
+                   (item.token.prev_is_value_ending ||
+                    item.prev_kind == BracketTokenKind::CloseCurlyBrace ||
+                    item.prev_kind == BracketTokenKind::CloseSquareBracket ||
+                    item.prev_kind == BracketTokenKind::Comma)) {
+          // A struct literal `{...}` that lost its `{`, leaving content
+          // directly before the `}`. Requires real content before the `}`, so
+          // a stray `}` is reported as an error instead.
+          push_synthetic(BracketTokenKind::OpenCurlyBrace, true,
+                         CostOpenStructEmptyBraces, "Open_StructEmptyBraces");
         }
       }
 
@@ -689,31 +1136,50 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
           [&](llvm::SmallVector<OpenBracketInfo, 4> next_stack,
               int32_t add_cost, BracketCorrection correction = {},
               bool has_correction = false) {
-            int32_t next_cost = current.cost + add_cost;
             ParentEdge edge{
                 .parent_node_index = node_idx,
                 .correction = correction,
                 .has_correction = has_correction,
             };
             try_add_to_layer(next_layer, layer_map, i + 1,
-                             std::move(next_stack), next_cost, edge, nullptr);
+                             std::move(next_stack), BracketTokenKind::Other,
+                             current.cost + add_cost, edge, nullptr);
           };
 
-      if (item.is_collapsed_block) {
-        int32_t penalty = CostBaselineMatch;
-        if (!current.stack.empty() &&
-            (current.stack.back().kind == BracketTokenKind::OpenParen ||
-             current.stack.back().kind == BracketTokenKind::OpenSquareBracket ||
-             current.stack.back().is_struct_brace) &&
-            item.contains_scope_brace) {
-          penalty += CostScopeInParen;
+      auto top_kind = GetTopKind(current.stack);
+      bool top_paren_like =
+          top_kind == TopKind::Paren || top_kind == TopKind::StructBrace;
+      // For whitespace cues, `]` and `}` also end values.
+      bool prev_is_value_like =
+          item.token.prev_is_value_ending ||
+          item.prev_kind == BracketTokenKind::CloseSquareBracket ||
+          item.prev_kind == BracketTokenKind::CloseCurlyBrace;
+
+      // Common contextual penalties for the token being in a context where it
+      // doesn't belong.
+      auto context_penalty = [&]() -> int32_t {
+        int32_t penalty = 0;
+        const OpenBracketInfo* top =
+            current.stack.empty() ? nullptr : &current.stack.back();
+        // A line that dedents out of the enclosing group. FileEnd is not
+        // content, so it doesn't count as a dedent.
+        if (top != nullptr && item.is_first_on_line &&
+            kind != BracketTokenKind::FileEnd) {
+          if (top->kind == BracketTokenKind::OpenCurlyBrace) {
+            if (item.token.line_indent <= top->effective_header_indent) {
+              penalty += CostDedentInScope;
+            }
+          } else if (item.token.line_indent <= top->line_indent) {
+            penalty += CostDedentInParen;
+          }
         }
-        if (!current.stack.empty() &&
-            current.stack.back().kind == BracketTokenKind::OpenCurlyBrace &&
-            !current.stack.back().is_struct_brace &&
-            item.token.line_indent <=
-                current.stack.back().effective_header_indent) {
-          penalty += CostDedentInsideScope;
+        return penalty;
+      };
+
+      if (item.is_collapsed_block) {
+        int32_t penalty = context_penalty();
+        if (top_paren_like && item.contains_scope_brace) {
+          penalty += CostScopeBraceInParen;
         }
         try_enqueue_advance(current.stack, penalty);
         continue;
@@ -727,22 +1193,32 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
           int32_t body_indent = item.token.is_struct_brace
                                     ? item.token.line_indent
                                     : header_indent + 2;
-          int32_t penalty = CostBaselineMatch;
-          if (kind == BracketTokenKind::OpenCurlyBrace &&
-              !item.token.is_at_end_of_line && !item.token.is_struct_brace &&
-              item.follows_statement_header) {
-            penalty += CostScopeNotAtEol;
+          int32_t penalty = context_penalty();
+          if (kind == BracketTokenKind::OpenCurlyBrace && top_paren_like) {
+            penalty += item.token.is_struct_brace ? CostStructBraceInParen
+                                                  : CostScopeBraceInParen;
+          }
+          // A spaced `(` or `[` directly after a value-ending token is
+          // illegal-looking (calls and indexing are written without spaces),
+          // unless a closer was just inserted between them.
+          if (kind != BracketTokenKind::OpenCurlyBrace &&
+              !item.is_first_on_line && item.token.has_leading_space &&
+              prev_is_value_like &&
+              current.closer_inserted == BracketTokenKind::Other) {
+            penalty += CostSpacedOpenAfterValue;
           }
           next_stack.push_back(OpenBracketInfo{
               .token_index = item.token.token_index,
+              .token_pos = item.token_start_index,
               .kind = kind,
               .line = item.token.line,
+              .line_indent = item.token.line_indent,
               .effective_header_indent = header_indent,
               .expected_body_indent = body_indent,
               .is_synthetic = false,
               .is_at_end_of_line = item.token.is_at_end_of_line,
               .is_struct_brace = item.token.is_struct_brace,
-              .byte_offset = item.token.byte_offset,
+              .is_call_paren = item.token.prev_is_value_ending,
               .insertion_byte_offset = item.token.byte_offset,
           });
           try_enqueue_advance(std::move(next_stack), penalty);
@@ -750,7 +1226,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
 
         // Advance without pushing (replace unmatched opener with Error token).
         try_enqueue_advance(
-            current.stack, CostReplaceUnmatchedOpening,
+            current.stack, CostReplaceOpening,
             BracketCorrection{
                 .diagnostic_kind = BracketDiagnosticKind::UnmatchedOpening,
                 .diagnostic_token_index = item.token.token_index,
@@ -758,7 +1234,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                 .fix_token_index = item.token.token_index,
                 .fix_token_kind = ToTokenKind(kind),
                 .fix_byte_offset = item.token.byte_offset,
-                .origin = "Advance_ReplaceOpeningError"},
+                .origin = "Adv_ReplaceOpener"},
             /*has_correction=*/true);
         continue;
       }
@@ -767,31 +1243,36 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
         // If matches top(stack): advance and pop stack.
         if (!current.stack.empty() &&
             current.stack.back().kind == MatchingOpeningKind(kind)) {
+          const auto& top = current.stack.back();
           bool allow_match = true;
-          if (kind == BracketTokenKind::CloseCurlyBrace) {
-            if (item.token.line_indent <
-                current.stack.back().effective_header_indent) {
+          int32_t penalty = 0;
+          if (kind == BracketTokenKind::CloseCurlyBrace &&
+              !top.is_struct_brace && item.token.line != top.line) {
+            // A multi-line scope close must not be dedented past its header,
+            // and pays for indentation disagreement with its header.
+            if (item.token.line_indent < top.effective_header_indent) {
               allow_match = false;
-            }
-            if (current.stack.back().is_struct_brace && item.is_first_on_line &&
-                current.stack.size() >= 2 &&
-                item.token.line_indent <=
-                    current.stack[current.stack.size() - 2]
-                        .effective_header_indent) {
-              allow_match = false;
+            } else if (item.is_first_on_line &&
+                       item.token.line_indent != top.effective_header_indent) {
+              penalty +=
+                  CostBraceIndentMismatchBase +
+                  CostBraceIndentMismatchPerColumn *
+                      std::abs(top.effective_header_indent -
+                               item.token.line_indent);
             }
           }
           if (allow_match) {
             auto next_stack = current.stack;
             auto popped = next_stack.pop_back_val();
-            int32_t penalty = CostBaselineMatch;
-            if (kind == BracketTokenKind::CloseCurlyBrace) {
-              if (popped.effective_header_indent != item.token.line_indent) {
-                penalty += CostIndentMismatchBase +
-                           std::abs(popped.effective_header_indent -
-                                    item.token.line_indent) *
-                               CostIndentMismatchMultiplier;
-              }
+            // A spaced `)` or `]` suggests a deleted token in the gap; only
+            // waived if this path inserted a bracket there.
+            if (kind != BracketTokenKind::CloseCurlyBrace &&
+                !item.is_first_on_line && item.token.has_leading_space &&
+                prev_is_value_like &&
+                current.closer_inserted == BracketTokenKind::Other &&
+                !(popped.is_synthetic &&
+                  popped.insertion_token_index == item.token.token_index)) {
+              penalty += CostSpacedCloserUnexplained;
             }
             BracketCorrection correction;
             bool has_corr = false;
@@ -799,13 +1280,11 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
               correction = BracketCorrection{
                   .diagnostic_kind = BracketDiagnosticKind::UnmatchedClosing,
                   .diagnostic_token_index = item.token.token_index,
-                  .fix_action = popped.is_insert_after
-                                    ? BracketFixAction::InsertAfter
-                                    : BracketFixAction::InsertBefore,
+                  .fix_action = BracketFixAction::InsertBefore,
                   .fix_token_index = popped.insertion_token_index,
                   .fix_token_kind = ToTokenKind(popped.kind),
                   .fix_byte_offset = popped.insertion_byte_offset,
-                  .origin = "TD1_SyntheticOpenerMatched",
+                  .origin = popped.origin,
               };
               has_corr = true;
             }
@@ -814,10 +1293,10 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
           }
         }
 
-        // Advance without matching/popping (replace unmatched closer with Error
-        // token).
+        // Advance without matching/popping (replace unmatched closer with
+        // Error token).
         try_enqueue_advance(
-            current.stack, CostReplaceUnmatchedClosing,
+            current.stack, CostReplaceClosing,
             BracketCorrection{
                 .diagnostic_kind = BracketDiagnosticKind::UnmatchedClosing,
                 .diagnostic_token_index = item.token.token_index,
@@ -825,25 +1304,116 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                 .fix_token_index = item.token.token_index,
                 .fix_token_kind = ToTokenKind(kind),
                 .fix_byte_offset = item.token.byte_offset,
-                .origin = "Advance_ReplaceClosingError"},
+                .origin = "Adv_ReplaceCloser"},
             /*has_correction=*/true);
         continue;
       }
 
-      // Non-bracket token (Semi, StatementIntroducer, FileEnd, Other).
-      int32_t penalty = CostBaselineMatch;
-      if (kind == BracketTokenKind::Semi && !current.stack.empty() &&
-          (current.stack.back().kind == BracketTokenKind::OpenParen ||
-           current.stack.back().kind == BracketTokenKind::OpenSquareBracket ||
-           current.stack.back().is_struct_brace)) {
-        penalty += CostSemiInParen;
-      }
-      if (!current.stack.empty() &&
-          current.stack.back().kind == BracketTokenKind::OpenCurlyBrace &&
-          !current.stack.back().is_struct_brace && item.is_first_on_line &&
-          item.token.line_indent <=
-              current.stack.back().effective_header_indent) {
-        penalty += CostDedentInsideScope;
+      // Non-bracket token.
+      int32_t penalty = context_penalty();
+      switch (kind) {
+        case BracketTokenKind::Semi:
+          if (top_paren_like) {
+            penalty += CostSemiInParen;
+          }
+          break;
+        case BracketTokenKind::Comma:
+          if (top_kind == TopKind::None || top_kind == TopKind::ScopeBrace) {
+            penalty += CostCommaAtStatementLevel;
+          } else if (!current.stack.empty() &&
+                     current.stack.back().token_pos ==
+                         item.token_start_index - 1) {
+            // A `,` directly following a still-open `(`/`[` is illegal.
+            penalty += CostCommaAfterOpen;
+          } else if (!item.is_first_on_line &&
+                     item.token.has_leading_space && prev_is_value_like &&
+                     current.closer_inserted == BracketTokenKind::Other) {
+            // Formatted code has no space before a `,`; a bracket was likely
+            // deleted in the gap.
+            penalty += CostSpacedCommaInParen;
+          }
+          break;
+        case BracketTokenKind::StatementIntroducer:
+          if (top_paren_like) {
+            penalty += CostIntroducerInParen;
+          }
+          break;
+        case BracketTokenKind::Leaf:
+          if (item.token.prev_is_value_ending) {
+            // A leaf directly following a value-ending token is illegal,
+            // unless we just inserted an opener between them, or a `]` or `}`
+            // (which, unlike `)`, are not value-ending).
+            bool opener_just_inserted =
+                !current.stack.empty() && current.stack.back().is_synthetic &&
+                current.stack.back().insertion_token_index ==
+                    item.token.token_index;
+            bool closer_fixes_adjacency =
+                current.closer_inserted ==
+                    BracketTokenKind::CloseSquareBracket ||
+                current.closer_inserted == BracketTokenKind::CloseCurlyBrace;
+            if (!opener_just_inserted && !closer_fixes_adjacency) {
+              penalty += CostLeafAdjacency;
+            }
+          }
+          break;
+        case BracketTokenKind::Other:
+          if (item.token.is_structural_op && item.token.has_leading_space &&
+              top_kind == TopKind::Paren) {
+            // Casts `(x as T)` are common inside parens; the other
+            // structural operators are much rarer there.
+            penalty += item.token.is_as_op ? CostAsOpInParen
+                                           : CostStructuralOpInParen;
+          }
+          if (item.token.is_comparison_op && !current.stack.empty() &&
+              (current.stack.back().kind ==
+                   BracketTokenKind::OpenSquareBracket ||
+               (top_kind == TopKind::Paren &&
+                current.stack.back().is_call_paren))) {
+            penalty += CostComparisonInSquare;
+          }
+          if (!item.is_first_on_line && item.token.has_wide_leading_space &&
+              current.closer_inserted == BracketTokenKind::Other &&
+              !(!current.stack.empty() &&
+                current.stack.back().is_synthetic &&
+                current.stack.back().insertion_token_index ==
+                    item.token.token_index)) {
+            // A wide whitespace gap mid-line suggests a deleted bracket that
+            // this path hasn't repaired.
+            penalty += CostWideGapUnexplained;
+          }
+          if (item.token.is_modifier_keyword &&
+              item.token.prev_is_value_ending) {
+            // Like a leaf, a binding modifier keyword can't directly follow a
+            // value-ending token.
+            bool opener_just_inserted =
+                !current.stack.empty() && current.stack.back().is_synthetic &&
+                current.stack.back().insertion_token_index ==
+                    item.token.token_index;
+            bool closer_fixes_adjacency =
+                current.closer_inserted ==
+                    BracketTokenKind::CloseSquareBracket ||
+                current.closer_inserted == BracketTokenKind::CloseCurlyBrace;
+            if (!opener_just_inserted && !closer_fixes_adjacency) {
+              penalty += CostLeafAdjacency;
+            }
+          }
+          break;
+        case BracketTokenKind::Period:
+          // A mid-line `.` with whitespace before it suggests a deleted
+          // bracket; prefer closing an open group before it, or opening one.
+          // If we just inserted a bracket here, the gap is explained.
+          if (!item.is_first_on_line && item.token.has_leading_space &&
+              (prev_is_value_like || IsOpeningBracket(item.prev_kind)) &&
+              current.closer_inserted == BracketTokenKind::Other &&
+              !(!current.stack.empty() &&
+                current.stack.back().is_synthetic &&
+                current.stack.back().insertion_token_index ==
+                    item.token.token_index)) {
+            penalty += CostSpacedPeriodInParen;
+          }
+          break;
+        default:
+          break;
       }
       try_enqueue_advance(current.stack, penalty);
     }
@@ -860,6 +1430,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
     current_layer = std::move(next_layer);
   }
 
+  // Finish: close any remaining real open brackets at the region end.
   llvm::SmallVector<int32_t> goal_node_indices;
 
   for (int32_t node_idx : current_layer) {
@@ -867,45 +1438,49 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
     if (current.cost > min_goal_cost) {
       continue;
     }
-    if (current.stack.empty()) {
-      if (current.cost < min_goal_cost) {
-        min_goal_cost = current.cost;
-        goal_node_indices.clear();
+    // A synthetic opener that never matched a real closer is a meaningless
+    // insertion; reject such states rather than dropping it silently.
+    bool has_unmatched_synthetic = false;
+    for (const auto& entry : current.stack) {
+      if (entry.is_synthetic) {
+        has_unmatched_synthetic = true;
+        break;
       }
-      if (current.cost == min_goal_cost) {
-        goal_node_indices.push_back(node_idx);
-      }
+    }
+    if (has_unmatched_synthetic) {
       continue;
     }
-
     int32_t finish_cost = current.cost;
     int32_t parent = node_idx;
     for (const auto& entry : llvm::reverse(current.stack)) {
-      if (!entry.is_synthetic) {
-        finish_cost += (entry.kind == BracketTokenKind::OpenCurlyBrace
-                            ? CostUnclosedOpenerAtEnd
-                            : CostUnclosedParenAtEnd);
-        int32_t new_idx = static_cast<int32_t>(arena.size());
-        arena.push_back(BeamNode{
-            .item_index = static_cast<int32_t>(items.size()),
-            .stack = {},
-            .cost = finish_cost,
-            .parent_edges = {{
-                .parent_node_index = parent,
-                .correction =
-                    BracketCorrection{
-                        .diagnostic_kind =
-                            BracketDiagnosticKind::UnmatchedOpening,
-                        .diagnostic_token_index = entry.token_index,
-                        .fix_action = BracketFixAction::InsertBefore,
-                        .fix_token_index = region_end_token,
-                        .fix_token_kind =
-                            ToTokenKind(MatchingClosingKind(entry.kind))},
-                .has_correction = true,
-            }},
-        });
-        parent = new_idx;
+      if (entry.kind == BracketTokenKind::OpenCurlyBrace) {
+        finish_cost +=
+            entry.is_struct_brace ? CostCloseStructAtEnd : CostCloseAtEnd;
+      } else {
+        finish_cost += CostCloseParenAtEnd;
       }
+      int32_t new_idx = static_cast<int32_t>(arena.size());
+      arena.push_back(BeamNode{
+          .item_index = static_cast<int32_t>(items.size()),
+          .stack = {},
+          .cost = finish_cost,
+          .parent_edges = {{
+              .parent_node_index = parent,
+              .correction =
+                  BracketCorrection{
+                      .diagnostic_kind = BracketDiagnosticKind::
+                          UnmatchedOpening,
+                      .diagnostic_token_index = entry.token_index,
+                      .fix_action = BracketFixAction::InsertBefore,
+                      .fix_token_index = region_end_token,
+                      .fix_token_kind =
+                          ToTokenKind(MatchingClosingKind(entry.kind)),
+                      .fix_byte_offset = region_end_byte,
+                      .origin = "Close_RegionEnd"},
+              .has_correction = true,
+          }},
+      });
+      parent = new_idx;
     }
 
     if (finish_cost < min_goal_cost) {
@@ -918,7 +1493,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
   }
 
   if (goal_node_indices.empty()) {
-    SolveNaive(items, region_end_token, corrections);
+    SolveNaive(items, corrections);
     return;
   }
 
@@ -952,28 +1527,73 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
   }
 
   if (all_paths.empty()) {
-    SolveNaive(items, region_end_token, corrections);
+    SolveNaive(items, corrections);
     return;
   }
 
   llvm::SmallVector<BracketCorrection> baseline_path = all_paths.front();
 
-  for (auto& corr : baseline_path) {
-    bool is_tied = false;
-    for (const auto& path : all_paths) {
-      const auto* it =
-          std::find_if(path.begin(), path.end(), [&](const auto& c) {
-            return c.diagnostic_token_index == corr.diagnostic_token_index;
-          });
-      if (it == path.end() || it->diagnostic_kind != corr.diagnostic_kind ||
-          it->fix_action != corr.fix_action ||
-          it->fix_token_index != corr.fix_token_index ||
-          it->fix_token_kind != corr.fix_token_kind) {
-        is_tied = true;
-        break;
+  // Two insertions of the same bracket kind are equivalent if every token
+  // between their insertion points is that same kind: inserting a `)` on
+  // either side of an existing `)` produces the same token sequence.
+  llvm::DenseMap<int32_t, int32_t> token_to_item;
+  for (auto [idx, region_item] : llvm::enumerate(items)) {
+    token_to_item[region_item.token.token_index.index] =
+        static_cast<int32_t>(idx);
+  }
+  token_to_item[region_end_token.index] = static_cast<int32_t>(items.size());
+  // Compares only the fixes, not the diagnosed brackets: two paths that
+  // blame different brackets but repair the token stream identically don't
+  // disagree about the repair.
+  auto corrections_equivalent = [&](const BracketCorrection& a,
+                                    const BracketCorrection& b) -> bool {
+    if (a.fix_action != b.fix_action ||
+        a.fix_token_kind != b.fix_token_kind) {
+      return false;
+    }
+    if (a.fix_token_index == b.fix_token_index) {
+      return true;
+    }
+    if (a.fix_action != BracketFixAction::InsertBefore) {
+      return false;
+    }
+    auto a_it = token_to_item.find(a.fix_token_index.index);
+    auto b_it = token_to_item.find(b.fix_token_index.index);
+    if (a_it == token_to_item.end() || b_it == token_to_item.end()) {
+      return false;
+    }
+    auto [lo, hi] = std::minmax(a_it->second, b_it->second);
+    for (int32_t p = lo; p < hi; ++p) {
+      if (items[p].is_collapsed_block ||
+          ToTokenKind(items[p].token.kind) != a.fix_token_kind) {
+        return false;
       }
     }
-    corr.is_tied = is_tied;
+    return true;
+  };
+
+  // Match each baseline correction against an equivalent one in every other
+  // optimal path; corrections with no counterpart in some path are tied.
+  llvm::SmallVector<bool> tied(baseline_path.size(), false);
+  for (const auto& path : all_paths) {
+    llvm::SmallVector<bool> used(path.size(), false);
+    for (auto [corr_idx, corr] : llvm::enumerate(baseline_path)) {
+      bool found = false;
+      for (auto [path_idx, path_corr] : llvm::enumerate(path)) {
+        if (!used[path_idx] && corrections_equivalent(path_corr, corr)) {
+          used[path_idx] = true;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        tied[corr_idx] = true;
+      }
+    }
+  }
+
+  for (auto [corr_idx, corr] : llvm::enumerate(baseline_path)) {
+    corr.is_tied = tied[corr_idx];
     corrections.push_back(corr);
   }
 }
@@ -989,7 +1609,11 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
 
   auto num_tokens = static_cast<int32_t>(tokens.size());
 
-  // 1. Initial pass to find clean matched bracket pairs.
+  // 1. Initial pass to find matched bracket pairs. A closer that doesn't match
+  // the top of the stack pops through to a plausible match if one exists
+  // (leaving the popped brackets unmatched), and is otherwise left unmatched
+  // without disturbing the stack. `}` matches a `{` only when they're on the
+  // same line, the `{` is a struct brace, or their line indentation agrees.
   llvm::SmallVector<int32_t> open_stack;
   llvm::SmallVector<int32_t> match_partner(num_tokens, -1);
   llvm::SmallVector<bool> is_clean_range(num_tokens, false);
@@ -999,55 +1623,85 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
     if (IsOpeningBracket(kind)) {
       open_stack.push_back(i);
     } else if (IsClosingBracket(kind)) {
-      if (!open_stack.empty() &&
-          MatchingClosingKind(tokens[open_stack.back()].kind) == kind) {
-        if (kind == BracketTokenKind::CloseCurlyBrace) {
-          int32_t match_idx = -1;
-          for (int32_t s = static_cast<int32_t>(open_stack.size()) - 1; s >= 0;
-               --s) {
-            int32_t cand = open_stack[s];
-            if (tokens[cand].kind != BracketTokenKind::OpenCurlyBrace) {
-              break;
-            }
-            if (tokens[cand].line == tokens[i].line ||
-                tokens[cand].is_struct_brace ||
-                tokens[cand].line_indent == tokens[i].line_indent) {
-              match_idx = s;
-              break;
-            }
+      int32_t match_s = -1;
+      if (kind == BracketTokenKind::CloseCurlyBrace) {
+        for (int32_t s = static_cast<int32_t>(open_stack.size()) - 1; s >= 0;
+             --s) {
+          int32_t cand = open_stack[s];
+          if (tokens[cand].kind != BracketTokenKind::OpenCurlyBrace) {
+            continue;
           }
-          if (match_idx != -1) {
-            int32_t open_idx = open_stack[match_idx];
-            open_stack.erase(open_stack.begin() + match_idx);
-            match_partner[open_idx] = i;
-            match_partner[i] = open_idx;
+          if (tokens[cand].line == tokens[i].line ||
+              tokens[cand].is_struct_brace ||
+              tokens[cand].line_indent == tokens[i].line_indent) {
+            match_s = s;
+            break;
           }
-        } else {
-          int32_t open_idx = open_stack.pop_back_val();
-          match_partner[open_idx] = i;
-          match_partner[i] = open_idx;
         }
       } else {
-        open_stack.clear();
+        auto req = MatchingOpeningKind(kind);
+        for (int32_t s = static_cast<int32_t>(open_stack.size()) - 1; s >= 0;
+             --s) {
+          if (tokens[open_stack[s]].kind == req) {
+            match_s = s;
+            break;
+          }
+        }
+      }
+      if (match_s != -1) {
+        int32_t open_idx = open_stack[match_s];
+        match_partner[open_idx] = i;
+        match_partner[i] = open_idx;
+        open_stack.resize(match_s);
       }
     }
   }
 
-  // Identify unmatched openers.
-  llvm::SmallVector<bool> is_unmatched_opener(num_tokens, false);
+  // 2. Pre-pass: compute per-token segment ids (segments are separated by
+  // `;`, `{`, and `}`), associated indentation, and header relationships.
+  llvm::SmallVector<int32_t> seg_id(num_tokens, 0);
+  llvm::SmallVector<int32_t> seg_first(num_tokens, 0);
+  for (int32_t i = 1; i < num_tokens; ++i) {
+    auto prev_kind = tokens[i - 1].kind;
+    bool new_seg = prev_kind == BracketTokenKind::Semi ||
+                   prev_kind == BracketTokenKind::OpenCurlyBrace ||
+                   prev_kind == BracketTokenKind::CloseCurlyBrace;
+    seg_id[i] = seg_id[i - 1] + (new_seg ? 1 : 0);
+    seg_first[i] = new_seg ? i : seg_first[i - 1];
+  }
+
+  // Sorted lists of unmatched openers and closers, by kind, for the
+  // cleanliness checks below.
+  llvm::SmallVector<int32_t> unmatched_open_parens;
+  llvm::SmallVector<int32_t> unmatched_open_squares;
+  llvm::SmallVector<int32_t> unmatched_close_parens;
+  llvm::SmallVector<int32_t> unmatched_close_squares;
   for (int32_t i = 0; i < num_tokens; ++i) {
-    if (IsOpeningBracket(tokens[i].kind) && match_partner[i] == -1) {
-      is_unmatched_opener[i] = true;
+    if (match_partner[i] != -1) {
+      continue;
+    }
+    switch (tokens[i].kind) {
+      case BracketTokenKind::OpenParen:
+        unmatched_open_parens.push_back(i);
+        break;
+      case BracketTokenKind::OpenSquareBracket:
+        unmatched_open_squares.push_back(i);
+        break;
+      case BracketTokenKind::CloseParen:
+        unmatched_close_parens.push_back(i);
+        break;
+      case BracketTokenKind::CloseSquareBracket:
+        unmatched_close_squares.push_back(i);
+        break;
+      default:
+        break;
     }
   }
 
-  // 2. Pre-pass: Compute associated indentation, first-on-line, and header
-  // follows using backward scan.
   llvm::SmallVector<int32_t> effective_header_indent(num_tokens, 0);
   llvm::SmallVector<bool> is_first_on_line(num_tokens, false);
   llvm::SmallVector<bool> follows_statement_header(num_tokens, false);
   llvm::SmallVector<bool> header_has_open_curly_brace(num_tokens, false);
-  llvm::SmallVector<bool> is_before_statement_introducer(num_tokens, false);
 
   for (int32_t i = 0; i < num_tokens; ++i) {
     is_first_on_line[i] = (i == 0 || tokens[i].line != tokens[i - 1].line);
@@ -1059,150 +1713,189 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
       header_has_open_curly_brace[i] =
           ComputeHeaderHasOpenCurlyBrace(tokens, match_partner, i);
     }
-    if (tokens[i].kind == BracketTokenKind::StatementIntroducer && i > 0) {
-      auto prev_kind = tokens[i - 1].kind;
-      if (prev_kind != BracketTokenKind::OpenCurlyBrace) {
-        if (prev_kind != BracketTokenKind::StatementIntroducer ||
-            (tokens[i].line != tokens[i - 1].line &&
-             tokens[i].line_indent > tokens[i - 1].line_indent)) {
-          is_before_statement_introducer[i] = true;
-        }
-      }
-    }
   }
+
+  // Returns true if `list` contains an element in [lo, hi].
+  auto contains_in_range = [](llvm::ArrayRef<int32_t> list, int32_t lo,
+                              int32_t hi) {
+    const auto* it = std::lower_bound(list.begin(), list.end(), lo);
+    return it != list.end() && *it <= hi;
+  };
 
   // 3. Mark clean subranges for safe collapsing (processed in reverse order
   // so inner ranges are evaluated before enclosing outer ranges).
   for (int32_t i = num_tokens - 1; i >= 0; --i) {
     auto kind = tokens[i].kind;
-    if (match_partner[i] != -1 && match_partner[i] > i) {
-      int32_t close_idx = match_partner[i];
-      bool clean = true;
+    if (match_partner[i] == -1 || match_partner[i] <= i) {
+      continue;
+    }
+    int32_t close_idx = match_partner[i];
+    bool clean = true;
 
-      if (kind == BracketTokenKind::OpenCurlyBrace) {
-        if (tokens[i].line != tokens[close_idx].line) {
-          if (!tokens[i].is_struct_brace &&
-              (!tokens[i].is_at_end_of_line ||
-               effective_header_indent[i] != tokens[close_idx].line_indent)) {
-            clean = false;
-          } else if (tokens[i].is_struct_brace &&
-                     tokens[close_idx].line_indent <
-                         effective_header_indent[i]) {
-            clean = false;
-          }
-        }
-      } else {
-        // For parens/brackets, check if an unclosed opener of the same kind
-        // precedes i in the active scope.
-        for (int32_t u = 0; u < i; ++u) {
-          if (is_unmatched_opener[u] && tokens[u].kind == kind) {
-            clean = false;
-            break;
-          }
+    if (kind == BracketTokenKind::OpenCurlyBrace) {
+      if (tokens[i].line != tokens[close_idx].line) {
+        if (!tokens[i].is_struct_brace &&
+            (!tokens[i].is_at_end_of_line ||
+             effective_header_indent[i] != tokens[close_idx].line_indent)) {
+          clean = false;
+        } else if (tokens[i].is_struct_brace &&
+                   tokens[close_idx].line_indent <
+                       effective_header_indent[i]) {
+          clean = false;
         }
       }
-
+      // A `;` directly inside a struct brace, or a `,` directly inside a
+      // scope brace, is illegal; the brace pairing has likely captured too
+      // much.
       if (clean) {
+        auto bad_kind = tokens[i].is_struct_brace ? BracketTokenKind::Semi
+                                                  : BracketTokenKind::Comma;
+        int32_t depth = 0;
         for (int32_t j = i + 1; j < close_idx; ++j) {
-          if (match_partner[j] != -1 &&
-              (match_partner[j] < i || match_partner[j] > close_idx)) {
-            clean = false;
-            break;
-          }
-          if (match_partner[j] == -1 && (IsOpeningBracket(tokens[j].kind) ||
-                                         IsClosingBracket(tokens[j].kind))) {
-            clean = false;
-            break;
-          }
-          if (IsOpeningBracket(tokens[j].kind) && !is_clean_range[j]) {
-            clean = false;
-            break;
-          }
-          if (kind == BracketTokenKind::OpenCurlyBrace &&
-              !tokens[i].is_struct_brace && is_first_on_line[j] &&
-              tokens[j].line != tokens[close_idx].line &&
-              tokens[j].line_indent <= effective_header_indent[i]) {
+          if (IsOpeningBracket(tokens[j].kind)) {
+            ++depth;
+          } else if (IsClosingBracket(tokens[j].kind)) {
+            --depth;
+          } else if (tokens[j].kind == bad_kind && depth == 0) {
             clean = false;
             break;
           }
         }
       }
-
-      if (clean) {
-        is_clean_range[i] = true;
+    } else {
+      // For parens/brackets, an unmatched opener of the same kind earlier in
+      // the same statement segment could really own our closer, and an
+      // unmatched closer of the same kind later in the same segment could
+      // really own our opener; both make the pairing suspect.
+      const auto& unmatched_openers =
+          kind == BracketTokenKind::OpenParen ? unmatched_open_parens
+                                              : unmatched_open_squares;
+      const auto& unmatched_closers =
+          kind == BracketTokenKind::OpenParen ? unmatched_close_parens
+                                              : unmatched_close_squares;
+      if (contains_in_range(unmatched_openers, seg_first[i], i - 1)) {
+        clean = false;
       }
+      // Find the end of close_idx's segment: scan is bounded by the next
+      // segment boundary, so just check for any unmatched closer after
+      // close_idx in the same segment.
+      if (clean && !unmatched_closers.empty()) {
+        const auto* it = std::upper_bound(unmatched_closers.begin(),
+                                          unmatched_closers.end(), close_idx);
+        if (it != unmatched_closers.end() &&
+            seg_id[*it] == seg_id[close_idx]) {
+          clean = false;
+        }
+      }
+    }
+
+    // Note: an illegal leaf adjacency inside a *matched* pair is treated as
+    // invalid user code, not a bracket error; the pair is still trusted and
+    // collapsed. The adjacency cue only guides where to insert brackets in
+    // regions that are already unbalanced.
+
+    if (clean) {
+      for (int32_t j = i + 1; j < close_idx; ++j) {
+        if (match_partner[j] != -1 &&
+            (match_partner[j] < i || match_partner[j] > close_idx)) {
+          clean = false;
+          break;
+        }
+        if (match_partner[j] == -1 && (IsOpeningBracket(tokens[j].kind) ||
+                                       IsClosingBracket(tokens[j].kind))) {
+          clean = false;
+          break;
+        }
+        if (IsOpeningBracket(tokens[j].kind) && !is_clean_range[j]) {
+          clean = false;
+          break;
+        }
+        if (kind == BracketTokenKind::OpenCurlyBrace &&
+            !tokens[i].is_struct_brace && is_first_on_line[j] &&
+            tokens[j].line != tokens[close_idx].line &&
+            tokens[j].line_indent <= effective_header_indent[i]) {
+          clean = false;
+          break;
+        }
+      }
+    }
+
+    if (clean) {
+      is_clean_range[i] = true;
     }
   }
 
   // 4. Build item sequence.
   llvm::SmallVector<Item> items;
+  auto make_item = [&](int32_t start, int32_t end, bool collapsed,
+                       bool has_scope) {
+    items.push_back(Item{
+        .token_start_index = start,
+        .token_end_index = end,
+        .is_collapsed_block = collapsed,
+        .contains_scope_brace = has_scope,
+        .token = tokens[start],
+        .effective_header_indent = effective_header_indent[start],
+        .is_first_on_line = is_first_on_line[start],
+        .follows_statement_header = follows_statement_header[start],
+        .header_has_open_curly_brace = header_has_open_curly_brace[start],
+        .prev_kind =
+            start > 0 ? tokens[start - 1].kind : BracketTokenKind::Other,
+        .prev_is_paren_keyword =
+            start > 0 && tokens[start - 1].is_paren_keyword,
+        .prev_is_structural_op =
+            start > 0 && tokens[start - 1].is_structural_op,
+        .prev_is_assignment_op =
+            start > 0 && tokens[start - 1].is_assignment_op,
+        .prev_has_leading_space =
+            start > 0 && tokens[start - 1].has_leading_space,
+    });
+  };
   for (int32_t i = 0; i < num_tokens;) {
     if (is_clean_range[i] && match_partner[i] != -1) {
       int32_t close_idx = match_partner[i];
       bool has_scope = false;
       for (int32_t j = i; j <= close_idx; ++j) {
-        if (tokens[j].kind == BracketTokenKind::OpenCurlyBrace) {
+        if (tokens[j].kind == BracketTokenKind::OpenCurlyBrace &&
+            !tokens[j].is_struct_brace) {
           has_scope = true;
           break;
         }
       }
-      items.push_back(Item{
-          .token_start_index = i,
-          .token_end_index = close_idx,
-          .is_collapsed_block = true,
-          .contains_scope_brace = has_scope,
-          .token = tokens[i],
-          .effective_header_indent = effective_header_indent[i],
-          .is_first_on_line = is_first_on_line[i],
-          .follows_statement_header = follows_statement_header[i],
-          .header_has_open_curly_brace = header_has_open_curly_brace[i],
-          .is_before_statement_introducer = is_before_statement_introducer[i],
-      });
+      make_item(i, close_idx, /*collapsed=*/true, has_scope);
       i = close_idx + 1;
     } else {
-      items.push_back(Item{
-          .token_start_index = i,
-          .token_end_index = i,
-          .is_collapsed_block = false,
-          .contains_scope_brace =
-              (tokens[i].kind == BracketTokenKind::OpenCurlyBrace ||
-               tokens[i].kind == BracketTokenKind::CloseCurlyBrace),
-          .token = tokens[i],
-          .effective_header_indent = effective_header_indent[i],
-          .is_first_on_line = is_first_on_line[i],
-          .follows_statement_header = follows_statement_header[i],
-          .header_has_open_curly_brace = header_has_open_curly_brace[i],
-          .is_before_statement_introducer = is_before_statement_introducer[i],
-      });
+      make_item(i, i, /*collapsed=*/false,
+                tokens[i].kind == BracketTokenKind::OpenCurlyBrace ||
+                    tokens[i].kind == BracketTokenKind::CloseCurlyBrace);
       ++i;
     }
   }
 
-  // 5. Partition items into damaged regions and solve.
+  // 5. Partition items into regions and solve each damaged region. A region
+  // ends at a top-level declaration boundary: a statement introducer at zero
+  // indentation whose predecessor ended a statement. This bounds how far a
+  // single mistake can smear, and gives unclosed brackets a natural place to
+  // be closed (the region end).
   llvm::SmallVector<int32_t> region_boundaries;
   region_boundaries.push_back(0);
 
-  llvm::SmallVector<BracketTokenKind> region_stack;
   for (int32_t i = 0; i < static_cast<int32_t>(items.size()); ++i) {
-    if (!items[i].is_collapsed_block) {
-      auto k = items[i].token.kind;
-      if (IsOpeningBracket(k)) {
-        region_stack.push_back(k);
-      } else if (IsClosingBracket(k) && !region_stack.empty() &&
-                 MatchingClosingKind(region_stack.back()) == k) {
-        region_stack.pop_back();
-      }
-    }
-
-    if (region_stack.empty()) {
-      if (items[i].is_collapsed_block && items[i].contains_scope_brace) {
-        region_boundaries.push_back(i + 1);
-      } else if (i > 0 &&
-                 items[i].token.kind == BracketTokenKind::StatementIntroducer &&
-                 items[i].token.line_indent == 0) {
+    const auto& item = items[i];
+    // Note: line_indent is a 1-based column number, so top-level tokens have
+    // line_indent 1.
+    if (i > 0 && !item.is_collapsed_block &&
+        item.token.kind == BracketTokenKind::StatementIntroducer &&
+        !item.token.is_else_keyword && item.token.line_indent <= 1 &&
+        item.is_first_on_line) {
+      auto prev_end_kind = tokens[items[i - 1].token_end_index].kind;
+      if ((prev_end_kind == BracketTokenKind::Semi ||
+           prev_end_kind == BracketTokenKind::CloseCurlyBrace) &&
+          region_boundaries.back() != i) {
         region_boundaries.push_back(i);
       }
     }
+
   }
   if (region_boundaries.back() != static_cast<int32_t>(items.size())) {
     region_boundaries.push_back(static_cast<int32_t>(items.size()));
@@ -1230,8 +1923,12 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
       TokenIndex region_end_token = (end < static_cast<int32_t>(items.size()))
                                         ? items[end].token.token_index
                                         : tokens.back().token_index;
+      int32_t region_end_byte = (end < static_cast<int32_t>(items.size()))
+                                    ? items[end].token.byte_offset
+                                    : tokens.back().byte_offset;
       auto slice = llvm::ArrayRef<Item>(items).slice(start, end - start);
-      SolveRegionCostBased(slice, region_end_token, corrections);
+      SolveRegionCostBased(slice, region_end_token, region_end_byte,
+                           corrections);
     }
   }
 

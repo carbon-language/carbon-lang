@@ -53,13 +53,12 @@ fn foo bar;
 
 // --- fail_missing_implicit_close.carbon
 
-// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+8]]:7: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+7]]:7: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
 // CHECK:STDERR: fn Div[();
 // CHECK:STDERR:       ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+4]]:7: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+4]]:10: note: possibly missing `]` here [PossiblyMissingBracketHere]
 // CHECK:STDERR: fn Div[();
-// CHECK:STDERR:       ^
+// CHECK:STDERR:          ^
 // CHECK:STDERR:
 fn Div[();
 
@@ -324,8 +323,12 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Div'},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Div'},
+// CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_missing_name.carbon

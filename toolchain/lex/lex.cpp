@@ -1801,15 +1801,79 @@ class Lexer::ErrorRecoveryBuffer {
   bool any_error_tokens_ = false;
 };
 
+// Returns true if the token kind forms a complete primary expression on its
+// own: an identifier, a literal, `self`, a type keyword, and so on.
+static auto IsLeafTokenKind(TokenKind kind) -> bool {
+  switch (kind) {
+    case TokenKind::Identifier:
+    case TokenKind::IntLiteral:
+    case TokenKind::RealLiteral:
+    case TokenKind::StringLiteral:
+    case TokenKind::CharLiteral:
+    case TokenKind::IntTypeLiteral:
+    case TokenKind::UnsignedIntTypeLiteral:
+    case TokenKind::FloatTypeLiteral:
+    case TokenKind::True:
+    case TokenKind::False:
+    case TokenKind::SelfValueIdentifier:
+    case TokenKind::SelfTypeIdentifier:
+    case TokenKind::Underscore:
+    case TokenKind::Bool:
+    case TokenKind::Type:
+    case TokenKind::Auto:
+    case TokenKind::Array:
+    case TokenKind::Str:
+    case TokenKind::Char:
+    case TokenKind::Core:
+    case TokenKind::Cpp:
+      return true;
+    default:
+      return false;
+  }
+}
+
+// Returns true if the token kind is "value-ending": it can be the final token
+// of a primary expression. A leaf immediately following a value-ending token is
+// an illegal adjacency in a well-formed program. Note that `]` is not included:
+// a type can directly follow `]` in declarations such as
+// `impl forall [T: Copy] T as ...`.
+static auto IsValueEndingTokenKind(TokenKind kind) -> bool {
+  return IsLeafTokenKind(kind) || kind == TokenKind::CloseParen;
+}
+
 static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
     -> llvm::SmallVector<MismatchedBracketToken> {
   llvm::SmallVector<MismatchedBracketToken> input_tokens;
   input_tokens.reserve(buffer.size());
 
+  // Whether the previous token in the full stream (ignoring comments, which
+  // are not tokens) is value-ending, and where it ended.
+  bool prev_is_value_ending = false;
+  int32_t prev_end_byte = -1;
+  int32_t prev_line_index = -1;
+
   for (auto it = buffer.tokens().begin(); it != buffer.tokens().end(); ++it) {
     TokenIndex token = *it;
     auto kind = buffer.GetKind(token);
+    bool this_prev_is_value_ending = prev_is_value_ending;
+    prev_is_value_ending = IsValueEndingTokenKind(kind);
 
+    int32_t byte_offset = buffer.GetByteOffset(token);
+    auto token_line = buffer.GetLine(token);
+    bool has_wide_leading_space = prev_end_byte >= 0 &&
+                                  token_line.index == prev_line_index &&
+                                  byte_offset - prev_end_byte >= 2;
+    prev_end_byte =
+        byte_offset + static_cast<int32_t>(buffer.GetTokenText(token).size());
+    prev_line_index = token_line.index;
+
+    bool is_paren_keyword = false;
+    bool is_else_keyword = false;
+    bool is_structural_op = false;
+    bool is_assignment_op = false;
+    bool is_as_op = false;
+    bool is_comparison_op = false;
+    bool is_modifier_keyword = false;
     BracketTokenKind bracket_kind;
     switch (kind) {
       case TokenKind::OpenParen:
@@ -1833,21 +1897,42 @@ static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
       case TokenKind::Semi:
         bracket_kind = BracketTokenKind::Semi;
         break;
+      case TokenKind::Comma:
+        bracket_kind = BracketTokenKind::Comma;
+        break;
+      case TokenKind::Period:
+        bracket_kind = BracketTokenKind::Period;
+        break;
+      case TokenKind::If:
+      case TokenKind::While:
+      case TokenKind::For:
+      case TokenKind::Match:
+        bracket_kind = BracketTokenKind::StatementIntroducer;
+        is_paren_keyword = true;
+        break;
+      case TokenKind::Else: {
+        bracket_kind = BracketTokenKind::StatementIntroducer;
+        // Only a statement `else` (followed by `{` or `if`) normally follows
+        // a `}`; a ternary `if..then..else` is followed by an expression.
+        auto else_next = std::next(it);
+        if (else_next != buffer.tokens().end()) {
+          auto next_kind = buffer.GetKind(*else_next);
+          is_else_keyword = next_kind == TokenKind::OpenCurlyBrace ||
+                            next_kind == TokenKind::If;
+        }
+        break;
+      }
 #define CARBON_DECL_INTRODUCER_TOKEN(kind, name) case TokenKind::kind:
 #include "toolchain/lex/token_kind.def"
       case TokenKind::Abstract:
       case TokenKind::Case:
       case TokenKind::Continue:
       case TokenKind::Default:
-      case TokenKind::Else:
       case TokenKind::Eval:
       case TokenKind::Extend:
       case TokenKind::Final:
-      case TokenKind::For:
       case TokenKind::Friend:
-      case TokenKind::If:
       case TokenKind::Inline:
-      case TokenKind::Match:
       case TokenKind::MustEval:
       case TokenKind::Observe:
       case TokenKind::Override:
@@ -1857,32 +1942,52 @@ static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
       case TokenKind::Returned:
       case TokenKind::Static:
       case TokenKind::Virtual:
-      case TokenKind::While:
         bracket_kind = BracketTokenKind::StatementIntroducer;
+        break;
+      case TokenKind::Forall:
+        bracket_kind = BracketTokenKind::Other;
+        is_paren_keyword = true;
+        break;
+      case TokenKind::Equal:
+      case TokenKind::MinusGreater:
+      case TokenKind::As:
+      case TokenKind::Where:
+        bracket_kind = BracketTokenKind::Other;
+        is_structural_op = true;
+        is_assignment_op = kind == TokenKind::Equal;
+        is_as_op = kind == TokenKind::As;
+        break;
+      case TokenKind::Ref:
+      case TokenKind::Unused:
+      case TokenKind::Template:
+      case TokenKind::Const:
+        bracket_kind = BracketTokenKind::Other;
+        is_modifier_keyword = true;
+        break;
+      case TokenKind::EqualEqual:
+      case TokenKind::ExclaimEqual:
+      case TokenKind::Less:
+      case TokenKind::LessEqual:
+      case TokenKind::Greater:
+      case TokenKind::GreaterEqual:
+      case TokenKind::And:
+      case TokenKind::Or:
+        bracket_kind = BracketTokenKind::Other;
+        is_comparison_op = true;
         break;
       case TokenKind::FileEnd:
         bracket_kind = BracketTokenKind::FileEnd;
         break;
       default:
-        bracket_kind = BracketTokenKind::Other;
+        bracket_kind = IsLeafTokenKind(kind) ? BracketTokenKind::Leaf
+                                             : BracketTokenKind::Other;
         break;
     }
 
-    auto line = buffer.GetLine(token);
+    auto line = token_line;
     int32_t line_indent =
         (kind == TokenKind::FileEnd) ? 0 : buffer.GetIndentColumnNumber(line);
     int32_t column = buffer.GetColumnNumber(token);
-
-    bool is_first_on_line =
-        (input_tokens.empty() || input_tokens.back().line != line.index);
-    if (bracket_kind == BracketTokenKind::Other && !is_first_on_line) {
-      bool is_structural =
-          (kind == TokenKind::Equal || kind == TokenKind::MinusGreater ||
-           kind == TokenKind::As || kind == TokenKind::Forall);
-      if (!is_structural) {
-        continue;
-      }
-    }
 
     auto next_it = std::next(it);
     bool is_at_end_of_line =
@@ -1913,7 +2018,17 @@ static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
         .column = column,
         .is_at_end_of_line = is_at_end_of_line,
         .is_struct_brace = is_struct_brace,
-        .byte_offset = buffer.GetByteOffset(token),
+        .prev_is_value_ending = this_prev_is_value_ending,
+        .is_paren_keyword = is_paren_keyword,
+        .is_else_keyword = is_else_keyword,
+        .is_structural_op = is_structural_op,
+        .is_assignment_op = is_assignment_op,
+        .is_as_op = is_as_op,
+        .is_comparison_op = is_comparison_op,
+        .is_modifier_keyword = is_modifier_keyword,
+        .has_leading_space = buffer.HasLeadingWhitespace(token),
+        .has_wide_leading_space = has_wide_leading_space,
+        .byte_offset = byte_offset,
     });
   }
 

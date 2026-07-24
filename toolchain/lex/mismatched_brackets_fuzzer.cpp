@@ -47,6 +47,11 @@ auto VerifyBracketBalance(llvm::ArrayRef<MismatchedBracketToken> tokens,
     }
   }
 
+  // This must match `ErrorRecoveryBuffer::Apply` in lex.cpp, which is how the
+  // corrections are actually applied to the token stream. In particular, at a
+  // shared insertion point, closing brackets are inserted before opening
+  // brackets, so that closing an outer group and opening a new one land in
+  // the correct order.
   llvm::stable_sort(insertions, [](const Insertion& a, const Insertion& b) {
     TokenIndex a_target =
         a.is_after ? TokenIndex(a.anchor.index + 1) : a.anchor;
@@ -57,6 +62,11 @@ auto VerifyBracketBalance(llvm::ArrayRef<MismatchedBracketToken> tokens,
     }
     if (a.is_after != b.is_after) {
       return a.is_after;
+    }
+    bool a_is_closing = a.kind.is_closing_symbol();
+    bool b_is_closing = b.kind.is_closing_symbol();
+    if (a_is_closing != b_is_closing) {
+      return a_is_closing;
     }
     if (a.is_after) {
       return a.order < b.order;

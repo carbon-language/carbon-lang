@@ -273,6 +273,7 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   bool verbose = false;
   bool json_output = false;
   int dump_incorrect = 0;
+  int dump_none = 0;
 
   auto parse_result = CommandLine::Parse(
       args, llvm::outs(), CommandInfo, [&](CommandLine::CommandBuilder& b) {
@@ -329,6 +330,14 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
                 .help = "Print details for up to N incorrect trials.",
             },
             [&](auto& arg_b) { arg_b.Set(&dump_incorrect); });
+
+        b.AddIntegerOption(
+            {
+                .name = "dump-none",
+                .value_name = "N",
+                .help = "Print details for up to N trials classified None.",
+            },
+            [&](auto& arg_b) { arg_b.Set(&dump_none); });
 
         b.Do([] {});
       });
@@ -663,11 +672,25 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
         TestClassification classification =
             ClassifyTrial(deleted_tokens, suggestions);
+        bool do_dump = false;
+        const char* dump_label = "";
         if (classification == TestClassification::Incorrect &&
             dump_incorrect > 0) {
           --dump_incorrect;
-          llvm::errs() << "\n=== INCORRECT TRIAL in " << candidate.filename
-                       << " (D=" << spec.label << ") ===\n";
+          do_dump = true;
+          dump_label = "INCORRECT";
+        } else if ((classification == TestClassification::None ||
+                    classification == TestClassification::Partial) &&
+                   dump_none > 0) {
+          --dump_none;
+          do_dump = true;
+          dump_label = classification == TestClassification::None ? "NONE"
+                                                                  : "PARTIAL";
+        }
+        if (do_dump) {
+          llvm::errs() << "\n=== " << dump_label << " TRIAL in "
+                       << candidate.filename << " (D=" << spec.label
+                       << ") ===\n";
           for (const auto& del : deleted_tokens) {
             llvm::errs() << "  Deleted token: kind=" << del.kind.name()
                          << " at byte=" << del.byte_offset
@@ -680,6 +703,20 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
                          << "): kind=" << s.kind.name()
                          << " at byte=" << s.byte_offset << " (line=" << s.line
                          << ", col=" << s.column << ")\n";
+          }
+          llvm::errs() << "  Raw corrections (" << corrections.size() << "):\n";
+          for (const auto& c : corrections) {
+            llvm::errs() << "    "
+                         << (c.fix_action == BracketFixAction::InsertBefore
+                                 ? "InsertBefore"
+                             : c.fix_action == BracketFixAction::InsertAfter
+                                 ? "InsertAfter"
+                                 : "ReplaceWithError")
+                         << " kind=" << c.fix_token_kind.name()
+                         << " tok=" << c.fix_token_index.index
+                         << " byte=" << c.fix_byte_offset
+                         << (c.is_tied ? " TIED" : "") << " origin=" << c.origin
+                         << "\n";
           }
           llvm::errs() << "--- Corrupted Text Sample ---\n";
           int32_t print_start =
