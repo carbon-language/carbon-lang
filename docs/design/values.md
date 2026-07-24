@@ -176,7 +176,7 @@ result as a value afterward.
 
 ## Object destruction
 
-Objects whose types that implement the `Core.Destroy` interface are _destructible_.
+Objects whose types implement the `Core.Destroy` interface are _destructible_.
 `Core.Destroy` provides a default implementation for all types that only contain
 destructible subobjects.
 
