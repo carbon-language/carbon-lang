@@ -257,8 +257,6 @@ fn F() {
         var exaggerated_length: i64 = v.Len() * 2;
         v.Push(exaggerated_length);
     }
-
-    return v.Len();
 }
 ```
 
@@ -367,7 +365,7 @@ to manually implement `DynamicDestroy`.
 
 -   For final types: `DynamicDestroy.Op` calls `Destroy.Op` directly.
 -   For types with a virtual pointer: `DynamicDestroy.Op` makes a virtual call
-    to the `Destroy.Op` entry in the type's vtable.
+    to the `SubobjectDestroy` entry in the type's vtable.
 
 > [!NOTE]
 `Core.DynamicDestroy.Op` is a safe function.
