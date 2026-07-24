@@ -476,7 +476,7 @@ members of the interface as named members of the type. This means that the
 members of the interface are available by way of both
 [simple member access and qualified member access expressions](#member-access).
 See
-[how `extend` affects member access](../expressions/member_access.md#extend).
+[how `extend` affects member access](/docs/design/expressions/member_access.md#extend).
 
 If a type implements an interface without extending, the members of the
 interface may only be accessed using
@@ -551,14 +551,14 @@ make it clear that the data representation of the value is not changing, just
 its type as reflected in the API available to manipulate the value.
 
 Casting is indicated explicitly by way of some syntax in the source code. You
-might use a cast to switch between [type adaptations](../classes.md#adapters), or to
+might use a cast to switch between [type adaptations](/docs/design/classes.md#adapters), or to
 be explicit where an implicit conversion would otherwise occur. For now, we are
 saying "`x as y`" is the provisional syntax in Carbon for casting the value `x`
 to the type `y`. Note that outside of generics, the term "casting" includes any
 explicit type change, including those that change the data representation.
 
 In contexts where an expression of one type is provided and a different type is
-required, an [implicit conversion](../expressions/implicit_conversions.md) is
+required, an [implicit conversion](/docs/design/expressions/implicit_conversions.md) is
 performed if it is considered safe to do so. Such an implicit conversion, if
 permitted, always has the same meaning as an explicit cast.
 
@@ -625,7 +625,7 @@ An interface can be extended by defining an interface that includes the full API
 of another interface, plus some additional API. Types implementing the extended
 interface should automatically be considered to have implemented the narrower
 interface. See
-[how `extend` affects member access](../expressions/member_access.md#extend).
+[how `extend` affects member access](/docs/design/expressions/member_access.md#extend).
 
 ## Dynamic-dispatch witness table
 
@@ -824,7 +824,7 @@ express, for example:
     element type.
 -   An interface may define an associated facet that needs to be constrained to
     implement some interfaces.
--   This type must be [compatible](../classes.md#compatible-types) with another type. You
+-   This type must be [compatible](/docs/design/classes.md#compatible-types) with another type. You
     might use this to define alternate implementations of a single interfaces,
     such as sorting order, for a single type.
 

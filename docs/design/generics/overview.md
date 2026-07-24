@@ -526,8 +526,8 @@ cast from `T` to `CDCover`.
 
 ### Adapting types
 
-Carbon has a mechanism called [adapting types](../classes.md#adapters)
-to create new types that are [compatible](../classes.md#compatible-types) with
+Carbon has a mechanism called [adapting types](/docs/design/classes.md#adapters)
+to create new types that are [compatible](/docs/design/classes.md#compatible-types) with
 existing types but with different interface implementations. This could be used
 to add or replace implementations, or define implementations for reuse.
 

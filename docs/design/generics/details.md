@@ -316,7 +316,7 @@ Assert(p1.Add(p1) == p2);
 ```
 
 For more on how `extend` affects member access, see
-[member access](../expressions/member_access.md#extend).
+[member access](/docs/design/expressions/member_access.md#extend).
 
 Without `extend`, those methods may only be accessed with
 [qualified member names and compound member access](#qualified-member-names-and-compound-member-access):
@@ -1432,7 +1432,7 @@ fn DoHashAndEquals[T: Hashable](x: T) {
 > interface doesn't impl the interfaces it extends, as adopted in
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
 > Should link to
-> [`extend` in member access](../expressions/member_access.md#extend).
+> [`extend` in member access](/docs/design/expressions/member_access.md#extend).
 
 When implementing an interface, we allow implementing the aliased names as well.
 In the case of `Hashable` above, this includes all the members of `Equatable`,
@@ -1799,8 +1799,8 @@ be detected in function overloading.
 Since interfaces may only be implemented for a type once, and we limit where
 implementations may be added to a type, there is a need to allow the user to
 switch the type of a value to access different interface implementations. Carbon
-therefore provides [adapters](../classes.md#adapters) as a way to create new types
-[compatible with](../classes.md#compatible-types) existing types with different
+therefore provides [adapters](/docs/design/classes.md#adapters) as a way to create new types
+[compatible with](/docs/design/classes.md#compatible-types) existing types with different
 APIs, in particular with different interface implementations:
 
 ```carbon
@@ -1901,7 +1901,7 @@ the API of the original type. The two most common cases expected are adding and
 replacing an interface implementation. Users would indicate that an adapter
 starts from the original type's existing API by using the `extend` keyword
 before `adapt`, which
-[extends member access to lookup names in the adapted class](../expressions/member_access.md#extend)
+[extends member access to lookup names in the adapted class](/docs/design/expressions/member_access.md#extend)
 along with `impl` lookup:
 
 ```carbon
@@ -2675,7 +2675,7 @@ member of another. The `where` operator is not associative, so a type expression
 using multiple must use round parens `(`...`)` to specify grouping.
 
 The scope of a facet type formed by a `where` declaration
-[extends](../expressions/member_access.md#extend) the scope of its first
+[extends](/docs/design/expressions/member_access.md#extend) the scope of its first
 operand, and the resulting facet type is complete if that scope it extends is
 complete.
 
@@ -3941,7 +3941,7 @@ Given a type `U`, define the facet type `CompatibleWith(U)` as follows:
 
 > `CompatibleWith(U)` is a facet type whose values are facets `T` such that
 > `T as type` and `U as type` are
-> [compatible types](../classes.md#compatible-types). That is values of `T` and
+> [compatible types](/docs/design/classes.md#compatible-types). That is values of `T` and
 > `U` as types can be cast back and forth without any change in representation
 > (for example `T` is an [adapter](#adapting-types) for `U`).
 
@@ -5409,7 +5409,7 @@ An incomplete `C` cannot be used in the following contexts:
 -   ❌ `interface `...` { extend require impls C; }` or
     `constraint `...` { extend require impls C; }`
     -   An `extend` declaration requires the target scope to be complete. See
-        [`extend` in member access](../expressions/member_access.md#extend).
+        [`extend` in member access](/docs/design/expressions/member_access.md#extend).
 -   ❌ `T: C` ... `T impls A` where `T` is a checked binding, and `A` is an
     interface or named constraint different from `C`
     -   Need to see the definition of `C` to see if it implies `A`.

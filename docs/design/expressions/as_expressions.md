@@ -153,7 +153,7 @@ Lossy conversions between `iN` or `uN` and `iM` or `uM` are not supported with
 The following conversion is supported by `as`:
 
 -   `T` -> `U` if `T` is
-    [compatible](../classes.md#compatible-types) with `U`.
+    [compatible](/docs/design/classes.md#compatible-types) with `U`.
 
 **Future work:** We may need a mechanism to restrict which conversions between
 adapters are permitted and which code can perform them. Some of the conversions
@@ -162,7 +162,7 @@ permitted by this rule may only be allowed in certain contexts.
 ## Extensibility
 
 Explicit casts can be defined for user-defined types such as
-[classes](../classes.md) by implementing the `As` interface:
+[classes](/docs/design/classes.md) by implementing the `As` interface:
 
 ```
 interface As(Dest: type) {
