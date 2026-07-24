@@ -513,8 +513,8 @@ static auto BuildCppFunctionDecl(Context& context,
         cpp_function_type, tinfo,
         clang::ExplicitSpecifier{nullptr,
                                  clang::ExplicitSpecKind::ResolvedTrue},
-        /*bool UsesFPIntrin=*/false,
-        /*bool isInline=*/false, /*bool isImplicitlyDeclared=*/false,
+        /*UsesFPIntrin=*/false,
+        /*isInline=*/false, /*isImplicitlyDeclared=*/false,
         clang::ConstexprSpecKind::Unspecified);
   } else {
     function_decl = clang::FunctionDecl::Create(
@@ -704,8 +704,8 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
   // Get the C++ return type (this corresponds to the return type of the
   // target Carbon function).
   clang::QualType cpp_return_type = context.ast_context().VoidTy;
-  if (!target.export_as_constructor) {
-    if (target.return_type_id != SemIR::TypeId::None) {
+  if (!target.export_as_constructor &&
+      (target.return_type_id != SemIR::TypeId::None)) {
       cpp_return_type = MapToCppType(context, target.return_type_id);
       if (cpp_return_type.isNull()) {
         context.TODO(loc_id, "failed to map Carbon return type to C++ type");
