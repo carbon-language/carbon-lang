@@ -35,13 +35,11 @@ auto IsObjectMemberFunction(const clang::FunctionDecl& decl) -> bool;
 
 // Generates a C++ header that includes the imported cpp files, parses it,
 // generates the AST from it and links `SemIR::File` to it. Reports C++ errors
-// and warnings. If successful, adds a `Cpp` namespace.
+// and warnings. If successful, adds a `Cpp` namespace. `domain` should be
+// non-null unless there was an error initializing Clang.
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-               llvm::LLVMContext* llvm_context,
-               std::shared_ptr<clang::CompilerInvocation> invocation,
-               std::shared_ptr<CppDomain>* shared_domain = nullptr) -> void;
+               CppDomain* domain) -> void;
 
 // Given a clang declaration ID that was previously imported into another file,
 // returns the corresponding clang declaration key in the current context.

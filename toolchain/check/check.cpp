@@ -498,19 +498,41 @@ auto CheckParseTrees(
     }
   }
 
-  // Shared C++ domain used across files when compiling with a single
-  // ASTContext.
-  std::shared_ptr<CppDomain> shared_cpp_domain;
+  // C++ domains used across files. When compiling with a single ASTContext
+  // (`options.share_cpp_ast`), there is only a single shared domain.
+  llvm::SmallVector<std::shared_ptr<CppDomain>> cpp_domains;
+  if (options.share_cpp_ast) {
+    // TODO: Remove dependence on properties of the first unit here.
+    auto shared_cpp_domain = InitializeCppDomain(
+        *unit_infos.front().unit->consumer,
+        unit_infos.front().unit->sem_ir->filename(), fs,
+        unit_infos.front().unit->llvm_context, clang_invocation);
+    if (shared_cpp_domain) {
+      cpp_domains.push_back(shared_cpp_domain);
+      for (auto& target_info : unit_infos) {
+        target_info.cpp_domain = shared_cpp_domain;
+      }
+    }
+  } else {
+    for (auto& unit_info : unit_infos) {
+      auto cpp_domain = InitializeCppDomain(
+          *unit_info.unit->consumer, unit_info.unit->sem_ir->filename(), fs,
+          unit_info.unit->llvm_context, clang_invocation);
+      if (!cpp_domain) {
+        break;
+      }
+      unit_info.cpp_domain = cpp_domain;
+      cpp_domains.push_back(cpp_domain);
+    }
+  }
 
   // Check everything with no dependencies. Earlier entries with dependencies
   // will be checked as soon as all their dependencies have been checked.
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, &tree_and_subtrees_getters, fs,
-              unit_info->unit->llvm_context, clang_invocation,
-              options.vlog_stream, options.mangle_string_fingerprint,
-              options.share_cpp_ast ? &shared_cpp_domain : nullptr)
+    CheckUnit(unit_info, &tree_and_subtrees_getters, options.vlog_stream,
+              options.mangle_string_fingerprint)
         .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
@@ -558,19 +580,16 @@ auto CheckParseTrees(
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, &tree_and_subtrees_getters, fs,
-                  unit_info.unit->llvm_context, clang_invocation,
-                  options.vlog_stream, options.mangle_string_fingerprint,
-                  options.share_cpp_ast ? &shared_cpp_domain : nullptr)
+        CheckUnit(&unit_info, &tree_and_subtrees_getters, options.vlog_stream,
+                  options.mangle_string_fingerprint)
             .Run();
       }
     }
   }
 
-  // Finalize C++ AST compilation at the end of checking all files.
-  if (options.share_cpp_ast && shared_cpp_domain &&
-      shared_cpp_domain->clang_instance) {
-    shared_cpp_domain->clang_instance->getSema().ActOnEndOfTranslationUnit();
+  // Finalize all C++ domains at the end of checking.
+  for (const auto& domain : cpp_domains) {
+    FinalizeCppDomain(*domain);
   }
 
   MaybeDumpSemIR(units, tree_and_subtrees_getters, options);

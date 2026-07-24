@@ -643,8 +643,9 @@ namespace {
 // from a set of Cpp imports.
 class GenerateASTAction : public clang::ASTFrontendAction {
  public:
-  explicit GenerateASTAction(Context& context, llvm::LLVMContext* llvm_context)
-      : context_(&context), llvm_context_(llvm_context) {}
+  explicit GenerateASTAction(llvm::StringRef filename,
+                             llvm::LLVMContext* llvm_context)
+      : filename_(filename), llvm_context_(llvm_context) {}
 
   auto code_generator() const -> clang::CodeGenerator* {
     return code_generator_;
@@ -661,7 +662,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     }
     auto code_generator =
         std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
-            clang_instance.getDiagnostics(), context_->sem_ir().filename(),
+            clang_instance.getDiagnostics(), filename_,
             clang_instance.getVirtualFileSystemPtr(),
             clang_instance.getHeaderSearchOpts(),
             clang_instance.getPreprocessorOpts(),
@@ -703,7 +704,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
   }
 
  private:
-  Context* context_;
+  std::string filename_;
   llvm::LLVMContext* llvm_context_;
   clang::CodeGenerator* code_generator_ = nullptr;
   std::shared_ptr<clang::Parser> parser_;
@@ -715,14 +716,13 @@ class GenerateASTAction : public clang::ASTFrontendAction {
 // creating a diagnostics engine, and parsing a dummy main file containing a
 // semicolon. Returns the initialized state, or null on failure.
 auto InitializeCppDomain(
-    Context& context, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    Diagnostics::Consumer& consumer, llvm::StringRef filename,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::LLVMContext* llvm_context,
-    std::shared_ptr<clang::CompilerInvocation> base_invocation,
-    bool share_cpp_ast) -> std::shared_ptr<CppDomain> {
+    std::shared_ptr<clang::CompilerInvocation> base_invocation)
+    -> std::shared_ptr<CppDomain> {
   std::shared_ptr<clang::CompilerInstance> clang_instance;
   llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags;
-  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
-                                                    [](auto& /*builder*/) {});
 
   // Build a new invocation.
   auto invocation =
@@ -734,14 +734,14 @@ auto InitializeCppDomain(
   // Build a diagnostics engine.
   diags = clang::CompilerInstance::createDiagnostics(
       *fs, invocation->getDiagnosticOpts(),
-      MakeDiagnosticConsumer(context.emitter().consumer(), invocation)
-          .release(),
+      MakeDiagnosticConsumer(consumer, invocation).release(),
       /*ShouldOwnClient=*/true);
 
   // Ensure any diagnostics emitted in this function are flushed before we
   // return.
-  auto on_exit =
-      llvm::scope_exit([&]() { FlushDiagnosticConsumer(*diags->getClient()); });
+  auto on_exit = llvm::scope_exit([&]() {
+    FlushDiagnosticConsumer(*diags->getClient());
+  });
 
   // Extract the input from the frontend invocation and make sure it makes
   // sense.
@@ -770,7 +770,7 @@ auto InitializeCppDomain(
     return nullptr;
   }
 
-  GenerateASTAction action(context, llvm_context);
+  GenerateASTAction action(filename, llvm_context);
   if (!action.BeginSourceFile(*clang_instance, inputs[0])) {
     return nullptr;
   }
@@ -797,9 +797,8 @@ auto InitializeCppDomain(
 
   if (llvm::Error error = action.Execute()) {
     // `Execute` currently never fails, but its contract allows it to.
-    context.TODO(SemIR::LocId::None, "failed to execute clang action: " +
-                                         llvm::toString(std::move(error)));
-    return nullptr;
+    CARBON_FATAL("Failed to execute clang action: {0}",
+                 llvm::toString(std::move(error)));
   }
 
   auto parser = action.parser();
@@ -809,8 +808,7 @@ auto InitializeCppDomain(
       CppDomain{.clang_instance = std::move(clang_instance),
                 .parser = std::move(parser),
                 .code_generator = action.code_generator(),
-                .llvm_context = llvm_context,
-                .share_cpp_ast = share_cpp_ast});
+                .llvm_context = llvm_context});
 }
 
 auto GenerateAst(Context& context,
@@ -830,8 +828,8 @@ auto GenerateAst(Context& context,
   auto parser = domain.parser;
 
   // Set up CppFile for the current SemIR::File.
-  auto cpp_file = std::make_unique<SemIR::CppFile>(
-      clang_instance, domain.llvm_context, domain.share_cpp_ast);
+  auto cpp_file =
+      std::make_unique<SemIR::CppFile>(clang_instance, domain.llvm_context);
   if (domain.code_generator) {
     cpp_file->SetCodeGenerator(domain.code_generator);
   }
@@ -886,15 +884,13 @@ auto FinishAst(Context& context) -> void {
     return;
   }
 
-  if (context.sem_ir().cpp_file() &&
-      context.sem_ir().cpp_file()->share_cpp_ast()) {
-    // TODO: Clang doesn't let us ActOnEndOfTranslationUnit more than once. But
-    // at least trigger any delayed template instantiations now.
-    context.cpp_context()->sema().ActOnEndOfTranslationUnitFragment(
-        clang::TUFragmentKind::Normal);
-  } else {
-    context.cpp_context()->sema().ActOnEndOfTranslationUnit();
-  }
+  // Finalize the per-Context AST fragment. The final ActOnEndOfTranslationUnit
+  // call for the CppDomain is performed in FinalizeCppDomain once all files
+  // sharing the domain have been checked.
+  context.cpp_context()->sema().ActOnEndOfTranslationUnitFragment(
+      clang::TUFragmentKind::Normal);
+  FlushDiagnosticConsumer(
+      *context.cpp_context()->sema().getDiagnostics().getClient());
   context.emitter().Flush();
 
   // Remove the `CarbonExternalASTSource` installed in `GenerateAst` and
@@ -912,6 +908,14 @@ auto FinishAst(Context& context) -> void {
 
   // We don't call FrontendAction::EndSourceFile, because that destroys the AST.
   context.set_cpp_context(nullptr);
+}
+
+auto FinalizeCppDomain(CppDomain& domain) -> void {
+  if (domain.clang_instance) {
+    domain.clang_instance->getSema().ActOnEndOfTranslationUnit();
+    FlushDiagnosticConsumer(
+        *domain.clang_instance->getDiagnostics().getClient());
+  }
 }
 
 }  // namespace Carbon::Check

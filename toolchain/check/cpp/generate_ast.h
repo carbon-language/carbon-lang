@@ -23,6 +23,10 @@ class ExternalSemaSource;
 class CodeGenerator;
 }  // namespace clang
 
+namespace Carbon::Diagnostics {
+class Consumer;
+}  // namespace Carbon::Diagnostics
+
 namespace Carbon::Check {
 
 // Clang state used when compiling C++ code. May be shared across files when
@@ -32,17 +36,17 @@ struct CppDomain {
   std::shared_ptr<clang::Parser> parser;
   clang::CodeGenerator* code_generator = nullptr;
   llvm::LLVMContext* llvm_context = nullptr;
-  bool share_cpp_ast = false;
 };
 
 // Initializes the Clang state by building a new compiler invocation,
 // creating a diagnostics engine, and parsing a dummy main file containing a
 // semicolon. Returns the initialized state, or null on failure.
 auto InitializeCppDomain(
-    Context& context, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    Diagnostics::Consumer& consumer, llvm::StringRef filename,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::LLVMContext* llvm_context,
-    std::shared_ptr<clang::CompilerInvocation> base_invocation,
-    bool share_cpp_ast) -> std::shared_ptr<CppDomain>;
+    std::shared_ptr<clang::CompilerInvocation> base_invocation)
+    -> std::shared_ptr<CppDomain>;
 
 // Generates a Clang AST for the given C++ imports and sets it as the context's
 // `cpp_context` and the SemIR's `cpp_file`. Returns a bool that represents
@@ -59,6 +63,9 @@ auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
 // Finishes AST generation for the given checking context. Performs end of file
 // steps such as template instantiation and warning on unused declarations.
 auto FinishAst(Context& context) -> void;
+
+// Finalizes a C++ domain at the end of checking all files.
+auto FinalizeCppDomain(CppDomain& domain) -> void;
 
 }  // namespace Carbon::Check
 

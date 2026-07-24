@@ -29,7 +29,7 @@ namespace Carbon::SemIR {
 class CppFile {
  public:
   explicit CppFile(std::shared_ptr<clang::CompilerInstance> clang,
-                   llvm::LLVMContext* llvm_context, bool share_cpp_ast);
+                   llvm::LLVMContext* llvm_context);
   ~CppFile();
 
   // Access to compilation options.
@@ -63,15 +63,12 @@ class CppFile {
     return code_generator_;
   }
 
-  auto share_cpp_ast() const -> bool { return share_cpp_ast_; }
-
  private:
   std::shared_ptr<clang::CompilerInstance> clang_;
   llvm::LLVMContext* llvm_context_;
   clang::CodeGenerator* code_generator_ = nullptr;
   // Created by `CreateMangleContext()` once the AST context is available.
   std::unique_ptr<clang::MangleContext> mangle_context_;
-  bool share_cpp_ast_;
 };
 
 }  // namespace Carbon::SemIR
