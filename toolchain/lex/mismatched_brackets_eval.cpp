@@ -134,11 +134,6 @@ auto MatchesDeletedToken(const DeletedToken& del, const Suggestion& sugg)
   if (del.kind != sugg.kind) {
     return false;
   }
-  // An empty offset list means position doesn't matter (used by truncation,
-  // where every missing bracket closes at EOF and only the kinds matter).
-  if (del.valid_next_token_byte_offsets.empty()) {
-    return true;
-  }
   return llvm::is_contained(del.valid_next_token_byte_offsets,
                             sugg.byte_offset);
 }
@@ -417,9 +412,10 @@ auto MakeTruncateCase(const TokenizedBuffer& buffer, llvm::StringRef source_text
         .next_token_byte_offset = eof,
         .next_token_line = -1,
         .next_token_column = -1,
-        // Position-independent: any placement that closes this bracket at EOF
-        // is equivalent.
-        .valid_next_token_byte_offsets = {},
+        // Every open bracket must close at EOF: the surviving token each
+        // closer precedes is the FileEnd token. (The real FileEnd offset,
+        // which excludes trailing whitespace, is added after lexing.)
+        .valid_next_token_byte_offsets = {eof},
     });
   }
   return CorruptedCase{.text = std::move(corrupted),
@@ -774,6 +770,18 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   std::map<std::string, OriginStat> origin_stats;
   int merged_skips = 0;
 
+  // For incorrect trials: how far (in tokens, signed; + = closed later /
+  // swallowing following code) is the wrong close from the correct anchor,
+  // bucketed by the deleted bracket's kind.
+  struct DistStat {
+    int later = 0;
+    int earlier = 0;
+    int no_close = 0;
+    std::map<int, int> token_dist_hist;
+    std::map<int, int> line_dist_hist;
+  };
+  std::map<std::string, DistStat> dist_by_kind;
+
   std::vector<FileResult> file_results;
   std::vector<TrialStats> overall_scenario_stats(d_specs.size());
 
@@ -921,7 +929,16 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
           if (corrupted_buffer.IsRecoveryToken(t)) {
             auto kind = corrupted_buffer.GetKind(t);
             if (kind.is_opening_symbol() || kind.is_closing_symbol()) {
+              // Structure-equality: a fix is identified by the first *surviving*
+              // token it precedes, not its raw offset. Skip other inserted
+              // (recovery) tokens so a cascade of closers all point at the same
+              // real anchor, and closing among trailing whitespace or a deleted
+              // span still resolves to the token that structurally follows.
               TokenIndex succ = TokenIndex(t.index + 1);
+              while (succ.index < corrupted_buffer.size() &&
+                     corrupted_buffer.IsRecoveryToken(succ)) {
+                succ = TokenIndex(succ.index + 1);
+              }
               int32_t byte_off =
                   (succ.index < corrupted_buffer.size())
                       ? corrupted_buffer.GetByteOffset(succ)
@@ -974,6 +991,56 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
         TestClassification classification =
             ClassifyTrial(deleted_tokens, suggestions);
+
+        // Measure how far off each unmatched expected close is.
+        if (classification == TestClassification::Incorrect) {
+          llvm::DenseMap<int32_t, int32_t> off_to_tok;
+          for (TokenIndex t : corrupted_buffer.tokens()) {
+            off_to_tok[corrupted_buffer.GetByteOffset(t)] = t.index;
+          }
+          int32_t eof_idx = corrupted_buffer.size() - 1;
+          auto to_tok = [&](int32_t off) -> int32_t {
+            auto it = off_to_tok.find(off);
+            return it != off_to_tok.end() ? it->second : eof_idx;
+          };
+          for (const auto& del : deleted_tokens) {
+            bool matched = false;
+            for (const auto& s : suggestions) {
+              if (MatchesDeletedToken(del, s)) {
+                matched = true;
+                break;
+              }
+            }
+            if (matched) {
+              continue;
+            }
+            auto& stat = dist_by_kind[del.kind.name().str()];
+            // Find the nearest same-kind close.
+            int32_t exp_tok = to_tok(del.next_token_byte_offset);
+            const Suggestion* best = nullptr;
+            for (const auto& s : suggestions) {
+              if (s.kind != del.kind) {
+                continue;
+              }
+              if (best == nullptr ||
+                  std::abs(to_tok(s.byte_offset) - exp_tok) <
+                      std::abs(to_tok(best->byte_offset) - exp_tok)) {
+                best = &s;
+              }
+            }
+            if (best == nullptr) {
+              ++stat.no_close;
+              continue;
+            }
+            int32_t token_dist = to_tok(best->byte_offset) - exp_tok;
+            (token_dist > 0 ? stat.later : stat.earlier)++;
+            ++stat.token_dist_hist[token_dist];
+            ++stat.line_dist_hist[best->line -
+                                  corrupted_buffer.GetLineNumber(
+                                      TokenIndex(std::min(exp_tok, eof_idx)))];
+          }
+        }
+
         bool do_dump = false;
         const char* dump_label = "";
         if (classification == TestClassification::Incorrect &&
@@ -1140,6 +1207,46 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
       }
       llvm::outs() << "\n";
     }
+  }
+
+  if (!dist_by_kind.empty()) {
+    llvm::outs() << "## Wrong-Close Distance (incorrect trials)\n\n";
+    llvm::outs() << "Signed token distance from the correct anchor to the "
+                    "nearest same-kind close (+ = closed later / swallowing).\n\n";
+    llvm::outs() << "| Deleted kind | Wrong | Later | Earlier | No close | "
+                    "Median | P90 | Max |\n";
+    llvm::outs() << "|:---|---:|---:|---:|---:|---:|---:|---:|\n";
+    for (const auto& [kind, stat] : dist_by_kind) {
+      int total = stat.later + stat.earlier + stat.no_close;
+      // Median token distance.
+      int median = 0;
+      int seen = 0;
+      int half = (stat.later + stat.earlier) / 2;
+      for (const auto& [d, c] : stat.token_dist_hist) {
+        seen += c;
+        if (seen > half) {
+          median = d;
+          break;
+        }
+      }
+      // 90th percentile and max token distance.
+      int p90 = 0;
+      int ninety = (stat.later + stat.earlier) * 9 / 10;
+      seen = 0;
+      int max_dist = 0;
+      for (const auto& [d, c] : stat.token_dist_hist) {
+        seen += c;
+        if (seen <= ninety) {
+          p90 = d;
+        }
+        max_dist = std::max(max_dist, std::abs(d));
+      }
+      llvm::outs() << llvm::formatv(
+          "| {0,-18} | {1,5} | {2,5} | {3,7} | {4,8} | {5,6} | {6,4} | {7,4} |\n",
+          kind, total, stat.later, stat.earlier, stat.no_close, median, p90,
+          max_dist);
+    }
+    llvm::outs() << "\n";
   }
 
   llvm::outs() << "## Metric Definitions\n\n";

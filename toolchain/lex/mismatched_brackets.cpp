@@ -60,6 +60,10 @@ constexpr int32_t CostCloseParenBeforeSpacedPeriod = 6;
 // Closing a `[` at the start of a continuation line: `[` groups rarely span
 // lines except in wrapped declaration headers.
 constexpr int32_t CostCloseSquareAtContinuation = 10;
+// Bound: closing a header/grouping `[` or a struct brace before a block `{`
+// it can't contain. Priced above the precise cues (so they win) but below
+// closing at the region end, so an unclosed group can't swallow a whole block.
+constexpr int32_t CostCloseBeforeBlock = 14;
 // Closing a `[` at an illegal leaf adjacency, which the `]` repairs.
 constexpr int32_t CostCloseSquareAtLeafAdjacency = 4;
 // Closing a group at a wide mid-line whitespace gap, which suggests the
@@ -645,13 +649,15 @@ auto ClassifyCloserInsertion(const OpenBracketInfo& top, const Item& item,
 
   if (top.kind == BracketTokenKind::OpenParen ||
       top.kind == BracketTokenKind::OpenSquareBracket) {
-    // An empty group: the opener is directly followed by a `,`, which can't
-    // start group content, so the group's closer must have been directly
-    // after the opener (e.g. `f(x(), y)` becoming `f(x(, y)`); or by a
-    // spaced `.`, which as group content would be written unspaced
-    // (`f(.a = 1)`).
+    // An empty group: the opener is directly followed by a token that can't
+    // start group content, so the group's closer must have been right after
+    // the opener. Such a token is a `,` (`f(x(), y)` becoming `f(x(, y)`); a
+    // binary connector like `as`/`->`/`==`, which needs a left operand
+    // (`f() as T` becoming `f( as T`); or a spaced `.`, which as group content
+    // would be written unspaced (`f(.a = 1)`).
     if (top.token_pos >= 0 && top.token_pos == item.token_start_index - 1 &&
-        (t_kind == BracketTokenKind::Comma ||
+        (t_kind == BracketTokenKind::Comma || item.token.is_structural_op ||
+         item.token.is_comparison_op ||
          (t_kind == BracketTokenKind::Period &&
           item.token.has_leading_space))) {
       origin = "Close_EmptyGroup";
@@ -668,8 +674,12 @@ auto ClassifyCloserInsertion(const OpenBracketInfo& top, const Item& item,
     // A `{` starting a block means the paren should have closed: `if (c) {`,
     // `while (c) {`. A struct-literal `{...}` can legitimately sit inside a
     // *call* paren (`f({.x = 1})`), but not inside a keyword or grouping paren
-    // (whose `{` — even an empty `{}` misread as a struct — is a block).
+    // (whose `{` — even an empty `{}` misread as a struct — is a block). This
+    // is not a cue for `[`: a `]` is essentially never immediately followed by
+    // `{` (only in `fn [captures] {...}`, which is unimplemented), so a `[`
+    // should close at an earlier cue, or not here at all.
     if (t_kind == BracketTokenKind::OpenCurlyBrace &&
+        top.kind == BracketTokenKind::OpenParen &&
         (!item.token.is_struct_brace || !top.is_call_paren)) {
       origin = "Close_ParenBeforeBrace";
       return CostCloseParenBeforeBrace;
@@ -748,6 +758,16 @@ auto ClassifyCloserInsertion(const OpenBracketInfo& top, const Item& item,
       origin = "Close_SquareAtContinuation";
       return CostCloseSquareAtContinuation;
     }
+    // A block `{` can't be content of a header/grouping `[` (only an index
+    // `arr[...]` could hold a lambda block, but a `[` after a keyword can't):
+    // the `]` must close before it. A last-resort bound, below the precise
+    // cues above, that stops the `[` from swallowing the block.
+    if (t_kind == BracketTokenKind::OpenCurlyBrace &&
+        !item.token.is_struct_brace &&
+        top.kind == BracketTokenKind::OpenSquareBracket && !top.is_call_paren) {
+      origin = "Close_SquareBeforeBlock";
+      return CostCloseBeforeBlock;
+    }
     // No positive cue that a `(`/`[` closes here. Closing before a bare
     // dedent, statement introducer, or arbitrary token was never a correct
     // guess in practice (it just closes too early), so decline: the search
@@ -764,6 +784,14 @@ auto ClassifyCloserInsertion(const OpenBracketInfo& top, const Item& item,
     if (cascade) {
       origin = "Close_StructCascade";
       return CostCloseCascade;
+    }
+    // A block `{` can't be content of a struct literal/type `{...}` (a struct
+    // field is `.name = value`, and a bare `{` isn't a value here): the struct
+    // must close before it, as in `-> {.x: i32} { body }`.
+    if (t_kind == BracketTokenKind::OpenCurlyBrace &&
+        !item.token.is_struct_brace) {
+      origin = "Close_StructBeforeBlock";
+      return CostCloseBeforeBlock;
     }
     if (!item.is_first_on_line && item.token.has_wide_leading_space) {
       origin = "Close_StructAtWideGap";
