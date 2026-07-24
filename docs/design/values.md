@@ -17,7 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Copy initialization](#copy-initialization)
         -   [Temporary materialization](#temporary-materialization)
 -   [Object destruction](#object-destruction)
-    -   [`Core.Destroy.Op` method](#coredestroyop-method)
+    -   [`Core.Destroy`](#coredestroy)
     -   [`Core.SelfDestruct`](#coreselfdestruct)
     -   [`Core.SubobjectDestroy`](#coresubobjectdestroy)
     -   [Trivial destruction](#trivial-destruction)
@@ -176,15 +176,31 @@ result as a value afterward.
 
 ## Object destruction
 
-Objects whose types implement the `Core.Destroy` interface are _destructible_.
-`Core.Destroy` provides a default implementation for all types that only contain
-destructible subobjects.
+An object will eventually be destroyed provided its type implements [`Core.Destroy`](#coredestroy).
+The toolchain provides a default implementation for most types. Users may provide
+an alternative implementation if necessary. Similarly, the toolchain automatically
+destroys objects by default. Users may---under very rare circumstances---manually
+destroy objects by calling [`Core.SelfDestruct`](#coreselfdestruct).
+
+Carbon also provides [support for detecting whether destroying an object results
+contains computation](#trivial-destruction), and [support for dispatching to a
+dynamic type's `Core.Destroy` implementation](#dynamic-destruction).
+
+The following subsections describe five core entities:
+
+1.  [`Core.Destroy`](#coredestroy)
+2.  [`Core.SelfDestruct`](#coreselfdestruct)
+3.  [`Core.SubobjectDestroy`](#coresubobjectdestroy)
+4.  [`Core.TrivialDestroy`](#trivial-destruction)
+5.  [`Core.DynamicDestroy`](#dynamic-destruction)
+
+### `Core.Destroy`
+
+The interface `Core.Destroy` describes how a type is destroyed. An object is
+_destructible_ if its type implements `Core.Destroy`, and all of its subobjects
+are also destructible.
 
 ```carbon
-private interface SubobjectDestroy {
-  private fn Op(ref self) = "destroy.subobjects.op";
-}
-
 interface Destroy {
   require impls SubobjectDestroy;
   private fn Op(ref self: partial Self) = "destroy.op";
@@ -193,26 +209,18 @@ interface Destroy {
 final impl forall [T: Destroy] partial T as Destroy {
   alias Op = T.Op;
 }
-
-unsafe fn SelfDestruct[T: Destroy](ref x: T) {
-  x.Op();
-  x.(SubobjectDestroy.Op)();
-}
 ```
-
-We describe `Destroy.Op`, then `Core.SelfDestruct`, then `Core.SubobjectDestroy`.
-
-### `Core.Destroy.Op` method
 
 `Destroy.Op` describes how an object performs clean-up and resource deallocation.
 The operation tears down a single object that implements the interface. Subobjects
-and lifetime management are unaffected. Only `Destroy.SelfDestruct` is allowed to
+and lifetime management are unaffected. Only `Core.SelfDestruct` is allowed to
 call `Destroy.Op`.
 
-The toolchain provides the default implementation for `Destroy.Op` as a built-in
-operation. Types only need to manually implement `Core.Destroy` if they have a
-need for custom destruction rules. For example, a vector type that acquires
-storage needs to release those resources during destruction:
+The toolchain implements `Destroy.Op` as a built-in operation for all types that
+use the default implementiation for `Destroy`. This built-in does no work. Types
+only need to manually implement `Core.Destroy` if they have a need for custom
+destruction rules. For example, a vector type that acquires storage needs to
+release those resources during destruction:
 
 ```carbon
 class Vector(T) {
@@ -233,6 +241,13 @@ class Vector(T) {
 ```
 
 ### `Core.SelfDestruct`
+
+```carbon
+unsafe fn SelfDestruct[T: Destroy](ref x: T) {
+  x.Op();
+  x.(SubobjectDestroy.Op)();
+}
+```
 
 `SelfDestruct` destroys a complete object, including all subobjects, and ends
 their lifetimes. `SelfDestruct(x)` potentially calls `x.(Core.Destroy.Op)`, then
@@ -317,6 +332,12 @@ implement `SubobjectDestroy` unless they:
 -   have explicitly opted out from being destructible (see
     [Future work](/proposals/p007362-regularise-carbon-destructors.md#future-work)).
 
+```carbon
+private interface SubobjectDestroy {
+  private fn Op(ref self: Self) = "destroy.subobjects.op";
+}
+```
+
 `SubobjectDestroy.Op` behaves uniformly for all types:
 
 1.  Remove qualifiers from the `Self` type.
@@ -326,17 +347,19 @@ implement `SubobjectDestroy` unless they:
 ### Trivial destruction
 
 A type has _trivial destruction_ if, and only if, the type and all of its
-subobjects use the default implementation for `Core.Destroy`. The interface
-`Core.TrivialDestroy` represents types that have trivial destruction.
+subobjects use the default implementation for `Core.Destroy`. Types with trivial
+destruction do not need to call `SelfDestruct` at the end of their lifetime. The
+toolchain does not call `SelfDestruct` in this case.
+
+The interface `TrivialDestroy` represents types that have trivial destruction.
 
 ```carbon
 interface TrivialDestroy {
 }
 ```
 
-`TrivialDestroy.Op` is defined by the toolchain. Types that have trivial
-destruction automatically implement this interface. It is a compile-time error
-to manually implement `TrivialDestroy`.
+Types with trivial destruction automatically implement this interface. Users must
+not manually implement `TrivialDestroy`.
 
 ### Dynamic destruction
 
@@ -372,7 +395,7 @@ to manually implement `DynamicDestroy`.
 ### Proposals
 
 -   Implements: [P007362]
--   Supersedes: [P001154]
+-   Replaces: [P001154]
 
 <!-- Links for object destruction -->
 [p001154]: https://github.com/carbon-language/carbon-lang/pull/1154
