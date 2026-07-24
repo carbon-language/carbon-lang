@@ -345,7 +345,8 @@ to manually implement `TrivialDestroy`.
 A type has _dynamic destruction_ if it:
 
 -   is final and implements `Core.Destroy`, or
--   has a virtual pointer.
+-   is not imported from C++ and has a virtual pointer, or
+-   is imported from C++ and has a virtual destructor.
 
 Dynamic destruction dispatches destruction to the object that is being pointed
 to. Dynamic destruction is the Carbon analogue for C++ [virtual destructors].
