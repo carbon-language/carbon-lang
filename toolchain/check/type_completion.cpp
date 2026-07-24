@@ -968,6 +968,10 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
                               SemIR::TypeInstId facet_type_inst_id,
                               bool allow_partially_identified, bool diagnose)
     -> SemIR::IdentifiedFacetTypeId {
+  if (facet_type_inst_id == SemIR::ErrorInst::InstId) {
+    return SemIR::IdentifiedFacetTypeId::None;
+  }
+
   auto declared_facet_type_id = context.insts()
                                     .GetAs<SemIR::FacetType>(facet_type_inst_id)
                                     .declared_facet_type_id;

@@ -26,6 +26,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/deferred_impl_witness.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
@@ -177,6 +178,10 @@ class ImportContext {
   auto import_constant_values() -> const SemIR::ConstantValueStore& {
     return import_ir().constant_values();
   }
+  auto import_deferred_impl_witnesses()
+      -> const SemIR::DeferredImplWitnessStore& {
+    return import_ir().deferred_impl_witnesses();
+  }
   auto import_entity_names() -> const SemIR::EntityNameStore& {
     return import_ir().entity_names();
   }
@@ -261,6 +266,9 @@ class ImportContext {
   auto local_vtables() -> SemIR::VtableStore& { return local_ir().vtables(); }
   auto local_constant_values() -> SemIR::ConstantValueStore& {
     return local_ir().constant_values();
+  }
+  auto local_deferred_impl_witnesses() -> SemIR::DeferredImplWitnessStore& {
+    return local_ir().deferred_impl_witnesses();
   }
   auto local_entity_names() -> SemIR::EntityNameStore& {
     return local_ir().entity_names();
@@ -3801,6 +3809,36 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::ImplSelfWitness inst) -> ResolveResult {
+  CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
+               SemIR::WitnessType::TypeInstId);
+
+  auto period_self = GetLocalConstantInstId(resolver, inst.period_self);
+
+  const auto& import_deferred =
+      resolver.import_deferred_impl_witnesses().Get(inst.deferred_id);
+  auto specific_interface_data = GetLocalSpecificInterfaceData(
+      resolver, import_deferred.specific_interface);
+  auto impl_witness =
+      GetLocalConstantInstId(resolver, import_deferred.impl_witness);
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto specific_interface = GetLocalSpecificInterface(
+      resolver, import_deferred.specific_interface, specific_interface_data);
+  auto deferred_id = resolver.local_deferred_impl_witnesses().Add(
+      {.specific_interface = specific_interface, .impl_witness = impl_witness});
+
+  return ResolveResult::Deduplicated<SemIR::ImplSelfWitness>(
+      resolver, {.type_id = GetSingletonType(resolver.local_context(),
+                                             SemIR::WitnessType::TypeInstId),
+                 .period_self = period_self,
+                 .deferred_id = deferred_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImplWitness inst) -> ResolveResult {
   CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
                SemIR::WitnessType::TypeInstId);
@@ -4476,6 +4514,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::GenericNamedConstraintType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::ImplSelfWitness inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImplWitness inst): {

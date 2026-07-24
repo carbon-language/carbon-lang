@@ -25,6 +25,7 @@
 #include "toolchain/sem_ir/cpp_file.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
+#include "toolchain/sem_ir/deferred_impl_witness.h"
 #include "toolchain/sem_ir/entity_name.h"
 #include "toolchain/sem_ir/field.h"
 #include "toolchain/sem_ir/function.h"
@@ -216,6 +217,12 @@ class File : public Printable<File> {
   auto declared_facet_types() const -> const DeclaredFacetTypeStore& {
     return declared_facet_types_;
   }
+  auto deferred_impl_witnesses() -> DeferredImplWitnessStore& {
+    return deferred_impl_witnesses_;
+  }
+  auto deferred_impl_witnesses() const -> const DeferredImplWitnessStore& {
+    return deferred_impl_witnesses_;
+  }
 
   // If `class_id` is an imported C++ class, appends the Clang mangled name of
   // its type to `out` and returns true. Otherwise returns false and leaves
@@ -397,6 +404,9 @@ class File : public Printable<File> {
 
   // Storage for declared facet types.
   DeclaredFacetTypeStore declared_facet_types_;
+
+  // Storage for deferred ImplWitnesses.
+  DeferredImplWitnessStore deferred_impl_witnesses_;
 
   // Storage for identified facet types.
   IdentifiedFacetTypeStore identified_facet_types_;

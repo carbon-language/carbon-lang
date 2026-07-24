@@ -720,10 +720,6 @@ static auto CollectCandidateImplsForQuery(
       continue;
     }
 
-    if (llvm::is_contained(context.forbidden_impls(), id)) {
-      continue;
-    }
-
     // When the impl's interface_id matches, but the interface is generic, the
     // impl may or may not match based on restrictions in the generic
     // parameters of the impl.
@@ -975,6 +971,40 @@ static auto FindNonFinalWitness(
   return false;
 }
 
+// Returns a witness if the query is a lookup into an impl that is itself being
+// declared still. The result is a witness for that impl even though it does not
+// yet exist.
+static auto GetImplSelfWitnessInsideImplDecl(
+    Context& context, SemIR::LocId loc_id,
+    const SemIR::IdentifiedFacetType::RequiredImpl& req_impl) -> SemIR::InstId {
+  if (context.declaring_impl_decls().empty()) {
+    return SemIR::InstId::None;
+  }
+  if (req_impl.specific_interface != context.declaring_impl_decls().back()) {
+    return SemIR::InstId::None;
+  }
+  if (!IsPeriodSelf(context, context.constant_values().GetInstId(
+                                 req_impl.self_facet_value))) {
+    return SemIR::InstId::None;
+  }
+
+  // We are inside an impl decl, and doing a lookup into the impl being
+  // constructed.
+  auto deferred_id = context.deferred_impl_witnesses().Add({
+      .specific_interface = req_impl.specific_interface,
+      // This is filled in, and the DeferredImplWitnessId replaced, once the
+      // impl decl is complete.
+      .impl_witness = SemIR::InstId::None,
+  });
+  auto const_id = EvalOrAddInst<SemIR::ImplSelfWitness>(
+      context, loc_id,
+      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+       .period_self =
+           context.constant_values().GetInstId(req_impl.self_facet_value),
+       .deferred_id = deferred_id});
+  return context.constant_values().GetInstId(const_id);
+}
+
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
                        SemIR::ConstantId query_facet_type_const_id,
@@ -1034,11 +1064,21 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   // order of the interfaces in `req_impls`.
   llvm::SmallVector<SemIR::InstId> result_witness_ids;
   for (const auto& req_impl : req_impls) {
+    // If the lookup comes from inside an impl decl and is for that impl, get a
+    // witness for that impl even though it does not yet exist.
+    auto result_witness_id =
+        GetImplSelfWitnessInsideImplDecl(context, loc_id, req_impl);
+    if (result_witness_id.has_value()) {
+      // Found a final witness from inside an impl being declared, for itself.
+      result_witness_ids.push_back(result_witness_id);
+      continue;
+    }
+
     // If the self facet contains a final witness for the required interface, we
     // use that and avoid any further work. This is strictly an optimization,
     // since that same final witness should be found by evaluating a
     // LookupImplWitness instruction for the required self+interface pair.
-    auto result_witness_id = FindFinalWitnessFromFacetValue(
+    result_witness_id = FindFinalWitnessFromFacetValue(
         context, witness_sources, req_impl.self_facet_value,
         req_impl.specific_interface);
     if (result_witness_id.has_value()) {
@@ -1324,6 +1364,25 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
                                        lookup_result.witness_id);
   }
   return lookup_result.witness_id;
+}
+
+auto MakeWitnessWithoutLookup(
+    Context& context, SemIR::LocId loc_id,
+    const SemIR::IdentifiedFacetType::RequiredImpl& req_impl) -> SemIR::InstId {
+  auto witness_inst_id =
+      GetImplSelfWitnessInsideImplDecl(context, loc_id, req_impl);
+  if (witness_inst_id.has_value()) {
+    return witness_inst_id;
+  }
+
+  auto witness_const_id = EvalOrAddInst<SemIR::LookupImplWitness>(
+      context, loc_id,
+      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+       .query_self_inst_id =
+           context.constant_values().GetInstId(req_impl.self_facet_value),
+       .query_specific_interface_id =
+           context.specific_interfaces().Add(req_impl.specific_interface)});
+  return context.constant_values().GetInstId(witness_const_id);
 }
 
 auto LookupMatchesImpl(Context& context, SemIR::LocId loc_id,

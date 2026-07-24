@@ -328,7 +328,7 @@ struct Worklist {
 
   template <typename T>
   auto AddBlock(llvm::ArrayRef<T> block) -> void {
-    store->AddInteger(block.size());
+    AddInteger(block.size());
     for (auto inner_id : block) {
       Add(inner_id);
     }
@@ -361,10 +361,20 @@ struct Worklist {
       return;
     }
     auto block = sem_ir->custom_layouts().Get(custom_layout_id);
-    store->AddInteger(block.size());
+    AddInteger(block.size());
     for (auto size : block) {
-      store->AddInteger(size.bits());
+      AddInteger(size.bits());
     }
+  }
+
+  auto Add(DeferredImplWitnessId deferred_id) -> void {
+    if (!deferred_id.has_value()) {
+      AddInvalid();
+      return;
+    }
+    const auto& deferred = sem_ir->deferred_impl_witnesses().Get(deferred_id);
+    Add(deferred.specific_interface);
+    Add(deferred.impl_witness);
   }
 
   auto AddPackage(NameScopeId name_scope_id) -> void {
@@ -481,7 +491,7 @@ struct Worklist {
     const auto& require = sem_ir->require_impls().Get(require_id);
     Add(sem_ir->constant_values().Get(require.self_id));
     Add(sem_ir->constant_values().Get(require.facet_type_inst_id));
-    store->AddInteger(require.extend_self);
+    AddInteger(require.extend_self);
     Add(require.parent_scope_id);
   }
 
@@ -519,14 +529,14 @@ struct Worklist {
     // we could just number them sequentially, in the order we encounter them,
     // but that would require a persistent cache to ensure we use the same
     // number on subsequent encounters.
-    store->AddInteger(block_id.index);
+    AddInteger(block_id.index);
   }
 
   auto Add(DeclaredFacetTypeId declared_facet_type_id) -> void {
     const auto& facet_type =
         sem_ir->declared_facet_types().Get(declared_facet_type_id);
     auto add_constraints = [&](auto constraints) {
-      store->AddInteger(constraints.size());
+      AddInteger(constraints.size());
       for (auto [first, second] : constraints) {
         Add(first);
         Add(second);
@@ -535,7 +545,7 @@ struct Worklist {
     add_constraints(facet_type.extend_constraints);
     add_constraints(facet_type.self_impls_constraints);
     add_constraints(facet_type.rewrite_constraints);
-    store->AddInteger(facet_type.other_requirements);
+    AddInteger(facet_type.other_requirements);
   }
 
   auto Add(GenericId generic_id) -> void {
@@ -556,15 +566,17 @@ struct Worklist {
     Add(specific.args_id);
   }
 
+  auto Add(SpecificInterface specific_interface) -> void {
+    Add(specific_interface.interface_id);
+    Add(specific_interface.specific_id);
+  }
+
   auto Add(SpecificInterfaceId specific_interface_id) -> void {
     if (!specific_interface_id.has_value()) {
       AddInvalid();
       return;
     }
-    const auto& interface =
-        sem_ir->specific_interfaces().Get(specific_interface_id);
-    Add(interface.interface_id);
-    Add(interface.specific_id);
+    Add(sem_ir->specific_interfaces().Get(specific_interface_id));
   }
 
   auto Add(const llvm::APInt& value) -> void { store->AddAPInt(value); }
@@ -579,7 +591,7 @@ struct Worklist {
     const auto& real = sem_ir->reals().Get(real_id);
     Add(real.mantissa);
     Add(real.exponent);
-    store->AddInteger(real.is_decimal);
+    AddInteger(real.is_decimal);
   }
 
   auto Add(PackageNameId package_id) -> void {
@@ -638,7 +650,7 @@ struct Worklist {
                          ElementIndex, FloatKind, IntKind, CallParamIndex>)
   auto Add(T arg) -> void {
     // Index-like ID: just include the value directly.
-    store->AddInteger(arg.index);
+    AddInteger(arg.index);
   }
 
   auto Add(ExprRegionId region_id) -> void {

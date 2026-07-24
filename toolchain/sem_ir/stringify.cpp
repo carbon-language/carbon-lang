@@ -17,6 +17,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -476,9 +477,19 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, ImplWitnessAccess inst) -> void {
     auto witness_inst_id =
         sem_ir_->constant_values().GetConstantInstId(inst.witness_id);
-    auto lookup = sem_ir_->insts().GetAs<LookupImplWitness>(witness_inst_id);
-    auto specific_interface =
-        sem_ir_->specific_interfaces().Get(lookup.query_specific_interface_id);
+
+    auto specific_interface = SemIR::SpecificInterface::None;
+    if (auto self_witness =
+            sem_ir_->insts().TryGetAs<ImplSelfWitness>(witness_inst_id)) {
+      const auto& deferred =
+          sem_ir_->deferred_impl_witnesses().Get(self_witness->deferred_id);
+      specific_interface = deferred.specific_interface;
+    } else {
+      auto lookup = sem_ir_->insts().GetAs<LookupImplWitness>(witness_inst_id);
+      specific_interface = sem_ir_->specific_interfaces().Get(
+          lookup.query_specific_interface_id);
+    }
+
     const auto& interface =
         sem_ir_->interfaces().Get(specific_interface.interface_id);
     if (!interface.associated_entities_id.has_value()) {
@@ -514,16 +525,28 @@ class Stringifier {
       step_stack_->Push(".(");
     }
 
-    if (auto lookup =
-            sem_ir_->insts().TryGetAs<LookupImplWitness>(witness_inst_id)) {
-      bool period_self = false;
+    if (auto self_witness =
+            sem_ir_->insts().TryGetAs<ImplSelfWitness>(witness_inst_id)) {
+      bool is_period_self = false;
+      if (auto sym_name = sem_ir_->insts().TryGetAs<SymbolicBinding>(
+              self_witness->period_self)) {
+        auto name_id =
+            sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
+        is_period_self = (name_id == NameId::PeriodSelf);
+      }
+      if (!is_period_self) {
+        step_stack_->PushInstId(self_witness->period_self);
+      }
+    } else if (auto lookup = sem_ir_->insts().TryGetAs<LookupImplWitness>(
+                   witness_inst_id)) {
+      bool is_period_self = false;
       if (auto sym_name = sem_ir_->insts().TryGetAs<SymbolicBinding>(
               lookup->query_self_inst_id)) {
         auto name_id =
             sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
-        period_self = (name_id == NameId::PeriodSelf);
+        is_period_self = (name_id == NameId::PeriodSelf);
       }
-      if (!period_self) {
+      if (!is_period_self) {
         step_stack_->PushInstId(lookup->query_self_inst_id);
       }
     } else {

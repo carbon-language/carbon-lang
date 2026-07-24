@@ -8,6 +8,7 @@
 #include <variant>
 
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -38,6 +39,19 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
                        SemIR::ConstantId query_facet_type_const_id,
                        bool diagnose = true) -> SemIR::InstBlockIdOrError;
+
+// Construct a witness for a requirement from an IdentifiedFacetType that some
+// facet implements some interface.
+//
+// This does not actually perform lookup, so can't be used in most cases. This
+// can only be used when we have already guaranteed that the facet does
+// implement the interface, but don't have a witness. Which is indeed a strange
+// scenario. One such case is when replacing `.Self` with a facet, as the
+// replacement must already be known to implement the type of `.Self` so we can
+// construct a witness for it.
+auto MakeWitnessWithoutLookup(
+    Context& context, SemIR::LocId loc_id,
+    const SemIR::IdentifiedFacetType::RequiredImpl& req_impl) -> SemIR::InstId;
 
 // Returns whether the query matches against the given impl. This is like a
 // `LookupImplWitness` operation but for a single interface, and against only

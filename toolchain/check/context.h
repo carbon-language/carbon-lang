@@ -32,6 +32,7 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
+#include "toolchain/sem_ir/deferred_impl_witness.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
@@ -307,8 +308,8 @@ class Context {
     return binding_type_where_count_;
   }
 
-  auto forbidden_impls() -> llvm::SmallVector<SemIR::ImplId>& {
-    return forbidden_impls_;
+  auto declaring_impl_decls() -> llvm::SmallVector<SemIR::SpecificInterface>& {
+    return declaring_impl_decls_;
   }
 
   // Data about a form expression.
@@ -394,6 +395,9 @@ class Context {
   }
   auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();
+  }
+  auto deferred_impl_witnesses() -> SemIR::DeferredImplWitnessStore& {
+    return sem_ir().deferred_impl_witnesses();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto specific_interfaces() -> SemIR::SpecificInterfaceStore& {
@@ -607,10 +611,11 @@ class Context {
   // currently being checked.
   int32_t binding_type_where_count_ = 0;
 
-  // Impls that cannot be used in impl lookup. This prevents cycles where a
-  // `LookupImplWitness` instruction inside the impl decl should not be able to
-  // find the containing impl decl.
-  llvm::SmallVector<SemIR::ImplId> forbidden_impls_;
+  // Track impl declarations that are underway. If we're declaring an impl for
+  // interface `I`, an impl lookup query for `.Self as I` should find that impl
+  // being declared (even though it does not yet exist). Since there can only be
+  // one `.Self` in scope, only the back of the vector needs to be consulted.
+  llvm::SmallVector<SemIR::SpecificInterface> declaring_impl_decls_;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;

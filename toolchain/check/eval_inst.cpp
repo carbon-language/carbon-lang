@@ -439,7 +439,19 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::ImplWitnessAccess inst) -> ConstantEvalResult {
   CARBON_DIAGNOSTIC(ImplAccessMemberBeforeSet, Error,
                     "accessing member from impl before it has a defined value");
-  CARBON_KIND_SWITCH(context.insts().Get(inst.witness_id)) {
+
+  // Redirect through ImplSelfWitness to the ImplWitness.
+  auto witness_id = inst.witness_id;
+  if (auto self_witness =
+          context.insts().TryGetAs<SemIR::ImplSelfWitness>(witness_id)) {
+    const auto& deferred =
+        context.deferred_impl_witnesses().Get(self_witness->deferred_id);
+    if (deferred.impl_witness.has_value()) {
+      witness_id = deferred.impl_witness;
+    }
+  }
+
+  CARBON_KIND_SWITCH(context.insts().Get(witness_id)) {
     case CARBON_KIND(SemIR::ImplWitness witness): {
       // This is PerformAggregateAccess followed by GetConstantValueInSpecific.
       auto witness_table = context.insts().GetAs<SemIR::ImplWitnessTable>(

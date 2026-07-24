@@ -58,6 +58,10 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
   // consistent to imagine that it does. This also gives us a scope for implicit
   // parameters.
   context.decl_name_stack().PushScopeAndStartName();
+
+  // The value in here, if any, is populated by the `where` expression that
+  // introduces a `.Self` in the impl's constraint facet type.
+  context.declaring_impl_decls().push_back(SemIR::SpecificInterface::None);
   return true;
 }
 
@@ -233,19 +237,6 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
   }
 
-  // The identified facet type will also replace `.Self` references in the
-  // specific interface, but we want to store the full facet type not just the
-  // identified one. So we have to replace `.Self` references explicitly here in
-  // the constraint.
-  //
-  // We do this after `CheckConstraintIsFacetType()` which has ensured the
-  // constraint is in fact a FacetType. We do this before identifying the facet
-  // type in `CheckConstraintIsInterface()` so that the identified facet type is
-  // for the substituted facet type instruction that will be stored in the Impl.
-  // This ensures the impl bucket finds the identified facet type.
-  constraint_type_inst_id = SubstPeriodSelfInFacetType(
-      context, constraint_node, self_type_inst_id, constraint_type_inst_id);
-
   // This requires that the facet type is identified, and returns the single
   // interface from the identified facet type. It returns None if an error was
   // diagnosed.
@@ -403,6 +394,7 @@ auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {
   auto& impl = context.impls().Get(impl_id);
 
   context.decl_name_stack().PopScope();
+  context.declaring_impl_decls().pop_back();
 
   // Impl definitions are required in the same file as the declaration. We skip
   // this requirement if we've already issued an invalid redeclaration error, or
@@ -433,6 +425,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   CheckRequireDeclsSatisfied(context, node_id, impl);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
+  context.declaring_impl_decls().pop_back();
 
   // TODO: Handle the case where there's control flow in the impl body. For
   // example:

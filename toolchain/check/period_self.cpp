@@ -9,6 +9,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
@@ -192,16 +193,7 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
     llvm::SmallVector<SemIR::InstId> witnesses;
     witnesses.reserve(required_impls.size());
     for (const auto& req : required_impls) {
-      witnesses.push_back(context().constant_values().GetInstId(
-          EvalOrAddInst<SemIR::LookupImplWitness>(
-              context(), loc_id_,
-              {.type_id =
-                   GetSingletonType(context(), SemIR::WitnessType::TypeInstId),
-               .query_self_inst_id =
-                   context().constant_values().GetInstId(req.self_facet_value),
-               .query_specific_interface_id =
-                   context().specific_interfaces().Add(
-                       req.specific_interface)})));
+      witnesses.push_back(MakeWitnessWithoutLookup(context(), loc_id_, req));
     }
     return context().constant_values().GetInstId(
         EvalOrAddInst<SemIR::FacetValue>(
