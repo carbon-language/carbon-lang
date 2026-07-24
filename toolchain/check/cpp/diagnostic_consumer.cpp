@@ -152,7 +152,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
         invocation_(std::move(invocation)) {}
 
   ~CarbonClangDiagnosticConsumer() override {
-    Flush();
+    CARBON_CHECK(diagnostic_infos_.empty(), "Missing flush before destruction");
     CARBON_CHECK(listeners_.size() == 1,
                  "Diagnostic listeners were not properly popped");
   }
@@ -160,12 +160,16 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   // Pushes a listener onto the stack. Diagnostics will be forwarded to the
   // innermost listener.
   auto PushListener(CppDiagnosticListener* listener) -> void {
+    CARBON_CHECK(diagnostic_infos_.empty(),
+                 "Missing flush before pushing listener");
     CARBON_CHECK(listener);
     listeners_.push_back(listener);
   }
 
   // Pops a listener from the stack.
   auto PopListener(CppDiagnosticListener* listener) -> void {
+    CARBON_CHECK(diagnostic_infos_.empty(),
+                 "Missing flush before popping listener");
     CARBON_CHECK(!listeners_.empty() && listeners_.back() == listener,
                  "Popping unexpected diagnostic listener");
     listeners_.pop_back();
