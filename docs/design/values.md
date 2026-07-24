@@ -319,7 +319,7 @@ implement `SubobjectDestroy` unless they:
 -   are abstract and not partial; or
 -   have a subobject that cannot be destroyed; or
 -   have explicitly opted out from being destructible (see
-    [Future work](/proposals/p007362-regularise-carbon-destructors.md)).
+    [Future work](/proposals/p007362-regularise-carbon-destructors.md#future-work)).
 
 `SubobjectDestroy.Op` behaves uniformly for all types:
 
@@ -335,7 +335,6 @@ subobjects use the default implementation for `Core.Destroy`. The interface
 
 ```carbon
 interface TrivialDestroy {
-    final fn Op(ref self) = "destroy.trivial.op";
 }
 ```
 
