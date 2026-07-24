@@ -93,7 +93,7 @@ class OneArg {
 inline Cpp '''
 void f() {
   // CHECK:STDERR: fail_factory_returns_by_ref.carbon:[[@LINE+13]]:18: error: no matching constructor for initialization of 'Carbon::OneArg' [CppInteropParseError]
-  // CHECK:STDERR:    23 |   Carbon::OneArg a(42);
+  // CHECK:STDERR:    24 |   Carbon::OneArg a(42);
   // CHECK:STDERR:       |                  ^ ~~
   // CHECK:STDERR: fail_factory_returns_by_ref.carbon:[[@LINE-9]]:14: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const OneArg' for 1st argument [CppInteropParseNote]
   // CHECK:STDERR:     5 | class OneArg {
