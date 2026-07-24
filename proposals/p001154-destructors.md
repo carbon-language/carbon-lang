@@ -70,10 +70,10 @@ from that time considered options for making deleting extensible classes safer.
 
 This proposal adds two sections to the design:
 
--   ["Destructors"](/docs/design/classes.md#destructors) to the
-    [classes design](/docs/design/classes.md), and
--   ["Destructor constraint"](/docs/design/generics/details.md#destructor-constraints)
-    to the [detailed generics design](/docs/design/generics/details.md).
+-   ["Destructors"](https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/classes.md#destructors) to the
+    [classes design](https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/classes.md), and
+-   ["Destructor constraint"](https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/generics/details.md#destructor-constraints)
+    to the [detailed generics design](https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/generics/details.md).
 
 ## Rationale based on Carbon's goals
 

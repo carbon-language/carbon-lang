@@ -1573,9 +1573,9 @@ implementation strategy is used to be a predictable and customizable property of
 the type of a value.
 
 A type can optionally control its value representation using a custom syntax
-similar to customizing its [destructor](/docs/design/classes.md#destructors).
-This syntax sets the representation to some type uses a keyword `value_rep` and
-can appear where a member declaration would be valid within the type:
+similar to customizing its [destructor](#object-destruction). This syntax sets
+the representation to some type uses a keyword `value_rep` and can appear where
+a member declaration would be valid within the type:
 
 ```carbon
 class SomeType {

@@ -2028,7 +2028,7 @@ type, use `UnsafeDelete`.
 
 > References:
 >
-> -   [Classes: Destructors](classes.md#destructors)
+> -   [Classes: Destructors](values.md#object-destruction)
 > -   Proposal
 >     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
 

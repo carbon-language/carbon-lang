@@ -114,7 +114,7 @@ The following names have been considered:
 | `ExplicitDestroy` | `ExplicitDestroy(x)` | `x.ExplicitDestroy()` | 6          |
 
 `ManualDestroy` is not recommended because they make it awkward to reason about
-implict object destruction without some complement (for example `AutoDestroy`). The
+implicit object destruction without some complement (for example `AutoDestroy`). The
 toolchain would implicitly call `AutoDestroy`, and users would call `ManualDestroy`.
 This would probably need to show up in stacktraces, which adds to their obfuscation.
 We could potentially do some amount of inlining, but this could cause confusion
@@ -240,7 +240,7 @@ to do extensive archaeology.
     -   manually implement `DynamicDestroy`
 
 <!-- # Links -->
-[destructors]: /docs/design/classes.md#destructors
+[destructors]: https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/classes.md#destructors
 [PR #1154]: https://github.com/carbon-language/carbon-lang/pull/1154
 [Issue #6124]: https://github.com/carbon-language/carbon-lang/issues/6124
 [Issue #6161]: https://github.com/carbon-language/carbon-lang/issues/6161
