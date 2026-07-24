@@ -25,23 +25,31 @@ class CodeGenerator;
 
 namespace Carbon::Check {
 
-// Shared Clang state used across files when compiling with a single ASTContext.
-struct SharedClangState {
+// Clang state used when compiling C++ code. May be shared across files when
+// compiling with a single ASTContext.
+struct CppDomain {
   std::shared_ptr<clang::CompilerInstance> clang_instance;
   std::shared_ptr<clang::Parser> parser;
   clang::CodeGenerator* code_generator = nullptr;
+  llvm::LLVMContext* llvm_context = nullptr;
+  bool share_cpp_ast = false;
 };
+
+// Initializes the Clang state by building a new compiler invocation,
+// creating a diagnostics engine, and parsing a dummy main file containing a
+// semicolon. Returns the initialized state, or null on failure.
+auto InitializeCppDomain(
+    Context& context, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::LLVMContext* llvm_context,
+    std::shared_ptr<clang::CompilerInvocation> base_invocation,
+    bool share_cpp_ast) -> std::shared_ptr<CppDomain>;
 
 // Generates a Clang AST for the given C++ imports and sets it as the context's
 // `cpp_context` and the SemIR's `cpp_file`. Returns a bool that represents
 // whether compilation was successful.
 auto GenerateAst(Context& context,
                  llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                 llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                 llvm::LLVMContext* llvm_context,
-                 std::shared_ptr<clang::CompilerInvocation> base_invocation,
-                 std::shared_ptr<SharedClangState>* shared_state = nullptr)
-    -> bool;
+                 CppDomain& domain) -> bool;
 
 // Injects C++ code from `inline Cpp` into the active Clang AST context.
 // Returns a bool representing whether parsing was successful.

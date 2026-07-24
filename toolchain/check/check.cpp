@@ -498,9 +498,9 @@ auto CheckParseTrees(
     }
   }
 
-  // Shared Clang state used across files when compiling with a single
+  // Shared C++ domain used across files when compiling with a single
   // ASTContext.
-  std::shared_ptr<SharedClangState> shared_clang_state;
+  std::shared_ptr<CppDomain> shared_cpp_domain;
 
   // Check everything with no dependencies. Earlier entries with dependencies
   // will be checked as soon as all their dependencies have been checked.
@@ -510,7 +510,7 @@ auto CheckParseTrees(
     CheckUnit(unit_info, &tree_and_subtrees_getters, fs,
               unit_info->unit->llvm_context, clang_invocation,
               options.vlog_stream, options.mangle_string_fingerprint,
-              options.share_cpp_ast ? &shared_clang_state : nullptr)
+              options.share_cpp_ast ? &shared_cpp_domain : nullptr)
         .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
@@ -561,16 +561,16 @@ auto CheckParseTrees(
         CheckUnit(&unit_info, &tree_and_subtrees_getters, fs,
                   unit_info.unit->llvm_context, clang_invocation,
                   options.vlog_stream, options.mangle_string_fingerprint,
-                  options.share_cpp_ast ? &shared_clang_state : nullptr)
+                  options.share_cpp_ast ? &shared_cpp_domain : nullptr)
             .Run();
       }
     }
   }
 
   // Finalize C++ AST compilation at the end of checking all files.
-  if (options.share_cpp_ast && shared_clang_state &&
-      shared_clang_state->clang_instance) {
-    shared_clang_state->clang_instance->getSema().ActOnEndOfTranslationUnit();
+  if (options.share_cpp_ast && shared_cpp_domain &&
+      shared_cpp_domain->clang_instance) {
+    shared_cpp_domain->clang_instance->getSema().ActOnEndOfTranslationUnit();
   }
 
   MaybeDumpSemIR(units, tree_and_subtrees_getters, options);

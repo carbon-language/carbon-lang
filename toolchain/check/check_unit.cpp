@@ -65,14 +65,14 @@ CheckUnit::CheckUnit(
     llvm::LLVMContext* llvm_context,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation,
     llvm::raw_ostream* vlog_stream, bool mangle_string_fingerprint,
-    std::shared_ptr<SharedClangState>* shared_state)
+    std::shared_ptr<CppDomain>* shared_domain)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
           unit_and_imports->unit->sem_ir->check_ir_id())),
       fs_(std::move(fs)),
       llvm_context_(llvm_context),
       clang_invocation_(std::move(clang_invocation)),
-      shared_state_(shared_state),
+      shared_domain_(shared_domain),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
       context_(&emitter_, tree_and_subtrees_getter_,
@@ -170,7 +170,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   const auto& cpp_imports = unit_and_imports_->cpp_imports;
   if (!cpp_imports.empty()) {
     ImportCpp(context_, cpp_imports, fs_, llvm_context_, clang_invocation_,
-              shared_state_);
+              shared_domain_);
   }
 }
 

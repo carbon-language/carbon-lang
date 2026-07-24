@@ -711,14 +711,14 @@ class GenerateASTAction : public clang::ASTFrontendAction {
 
 }  // namespace
 
-// Initializes the shared Clang state by building a new compiler invocation,
+// Initializes the Clang state by building a new compiler invocation,
 // creating a diagnostics engine, and parsing a dummy main file containing a
 // semicolon. Returns the initialized state, or null on failure.
-static auto InitializeSharedClangState(
+auto InitializeCppDomain(
     Context& context, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::LLVMContext* llvm_context,
     std::shared_ptr<clang::CompilerInvocation> base_invocation,
-    bool share_cpp_ast) -> std::shared_ptr<SharedClangState> {
+    bool share_cpp_ast) -> std::shared_ptr<CppDomain> {
   std::shared_ptr<clang::CompilerInstance> clang_instance;
   llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags;
   Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
@@ -734,13 +734,14 @@ static auto InitializeSharedClangState(
   // Build a diagnostics engine.
   diags = clang::CompilerInstance::createDiagnostics(
       *fs, invocation->getDiagnosticOpts(),
-      MakeDiagnosticConsumer(context.emitter().consumer(), invocation).release(),
+      MakeDiagnosticConsumer(context.emitter().consumer(), invocation)
+          .release(),
       /*ShouldOwnClient=*/true);
 
-  // Ensure any diagnostics emitted in this function are flushed before we return.
-  auto on_exit = llvm::scope_exit([&]() {
-    FlushDiagnosticConsumer(*diags->getClient());
-  });
+  // Ensure any diagnostics emitted in this function are flushed before we
+  // return.
+  auto on_exit =
+      llvm::scope_exit([&]() { FlushDiagnosticConsumer(*diags->getClient()); });
 
   // Extract the input from the frontend invocation and make sure it makes
   // sense.
@@ -760,11 +761,6 @@ static auto InitializeSharedClangState(
                                                     empty_buffer.release());
 
   clang_instance = std::make_shared<clang::CompilerInstance>(invocation);
-
-  // Set CppFile early so that diagnostics can be flushed if we fail or succeed
-  // after this point.
-  context.sem_ir().set_cpp_file(std::make_unique<SemIR::CppFile>(
-      clang_instance, llvm_context, share_cpp_ast));
 
   clang_instance->setDiagnostics(diags);
   clang_instance->setVirtualFileSystem(fs);
@@ -809,19 +805,17 @@ static auto InitializeSharedClangState(
   auto parser = action.parser();
   CARBON_CHECK(parser);
 
-  return std::make_shared<SharedClangState>(
-      SharedClangState{.clang_instance = std::move(clang_instance),
-                       .parser = std::move(parser),
-                       .code_generator = action.code_generator()});
+  return std::make_shared<CppDomain>(
+      CppDomain{.clang_instance = std::move(clang_instance),
+                .parser = std::move(parser),
+                .code_generator = action.code_generator(),
+                .llvm_context = llvm_context,
+                .share_cpp_ast = share_cpp_ast});
 }
 
 auto GenerateAst(Context& context,
                  llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                 llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                 llvm::LLVMContext* llvm_context,
-                 std::shared_ptr<clang::CompilerInvocation> base_invocation,
-                 std::shared_ptr<SharedClangState>* shared_clang_state)
-    -> bool {
+                 CppDomain& domain) -> bool {
   CARBON_CHECK(!context.cpp_context());
   CARBON_CHECK(!context.sem_ir().cpp_file());
 
@@ -832,28 +826,14 @@ auto GenerateAst(Context& context,
   Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
                                                     [](auto& /*builder*/) {});
 
-  std::shared_ptr<SharedClangState> clang_state =
-      shared_clang_state ? *shared_clang_state : nullptr;
-  if (!clang_state) {
-    clang_state = InitializeSharedClangState(
-        context, fs, llvm_context, base_invocation,
-        /*share_cpp_ast=*/shared_clang_state != nullptr);
-    if (!clang_state) {
-      return false;
-    }
-    if (shared_clang_state) {
-      *shared_clang_state = clang_state;
-    }
-  }
-
-  auto clang_instance = clang_state->clang_instance;
-  auto parser = clang_state->parser;
+  auto clang_instance = domain.clang_instance;
+  auto parser = domain.parser;
 
   // Set up CppFile for the current SemIR::File.
   auto cpp_file = std::make_unique<SemIR::CppFile>(
-      clang_instance, llvm_context, shared_clang_state != nullptr);
-  if (clang_state->code_generator) {
-    cpp_file->SetCodeGenerator(clang_state->code_generator);
+      clang_instance, domain.llvm_context, domain.share_cpp_ast);
+  if (domain.code_generator) {
+    cpp_file->SetCodeGenerator(domain.code_generator);
   }
   context.sem_ir().set_cpp_file(std::move(cpp_file));
 

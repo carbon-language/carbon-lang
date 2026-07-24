@@ -20,7 +20,7 @@ class CompilerInvocation;
 namespace Carbon::Check {
 
 struct UnitAndImports;
-struct SharedClangState;
+struct CppDomain;
 
 // A file's imports corresponding to a single package, for
 // `UnitAndImports::package_imports`.
@@ -134,7 +134,7 @@ class CheckUnit {
       llvm::LLVMContext* llvm_context,
       std::shared_ptr<clang::CompilerInvocation> clang_invocation,
       llvm::raw_ostream* vlog_stream, bool mangle_string_fingerprint = false,
-      std::shared_ptr<SharedClangState>* shared_state = nullptr);
+      std::shared_ptr<CppDomain>* shared_domain = nullptr);
 
   // Produces and checks the IR for the provided unit.
   auto Run() -> void;
@@ -197,7 +197,7 @@ class CheckUnit {
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
   llvm::LLVMContext* llvm_context_;
   std::shared_ptr<clang::CompilerInvocation> clang_invocation_;
-  std::shared_ptr<SharedClangState>* shared_state_;
+  std::shared_ptr<CppDomain>* shared_domain_;
 
   DiagnosticEmitter emitter_;
   Context context_;
