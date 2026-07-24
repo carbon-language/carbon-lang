@@ -12,22 +12,20 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Regularise Carbon Destructors](#regularise-carbon-destructors)
-    -   [Table of contents](#table-of-contents)
-    -   [Abstract](#abstract)
-    -   [Problem](#problem)
-    -   [Background](#background)
-    -   [Proposal](#proposal)
-    -   [Details](#details)
-        -   [Explicitly destroying an object](#explicitly-destroying-an-object)
-            -   [Naming](#naming)
-        -   [Trivial destruction](#trivial-destruction)
-    -   [Rationale](#rationale)
-    -   [Alternatives considered](#alternatives-considered)
-        -   [Two public interface model (previous design)](#two-public-interface-model-previous-design)
-        -   [Replace interface `Core.Destructor` with method `Core.Destroy.Destructor`](#replace-interface-coredestructor-with-method-coredestroydestructor)
-        -   [Alternatives considered from PR #1154](#alternatives-considered-from-pr-1154)
-    -   [Future work](#future-work)
+-   [Abstract](#abstract)
+-   [Problem](#problem)
+-   [Background](#background)
+-   [Proposal](#proposal)
+-   [Details](#details)
+    -   [Explicitly destroying an object](#explicitly-destroying-an-object)
+        -   [Naming](#naming)
+    -   [Trivial destruction](#trivial-destruction)
+-   [Rationale](#rationale)
+-   [Alternatives considered](#alternatives-considered)
+    -   [Two public interface model (previous design)](#two-public-interface-model-previous-design)
+    -   [Replace interface `Core.Destructor` with method `Core.Destroy.Destructor`](#replace-interface-coredestructor-with-method-coredestroydestructor)
+    -   [Alternatives considered from PR #1154](#alternatives-considered-from-pr-1154)
+-   [Future work](#future-work)
 
 <!-- tocstop -->
 
@@ -83,23 +81,23 @@ formal definition in this proposal.
 
 ### Explicitly destroying an object
 
-We can expose explicit object destruction either via a function in the prelude,
+We can expose explicit object destruction either by way of a function in the prelude,
 or as a method in `Core.Destroy`. How we call this operation will frame how we
 read and discuss code. We should take extra care in choosing the mechanism for
 explicit object destruction since it is both an unsafe and an exceptionally rare
 operation.
 
--   Using a function frames the scope as the active participant (e.g.
+-   Using a function frames the scope as the active participant (for example
     `Core.DestroyObject(x)`). `x` is passive, and has destruction rendered unto
     it by its environment. This communicates that the object exists at the behest
     of something external.
--   Using a method frames the object as the active participant (e.g.
+-   Using a method frames the object as the active participant (for example
     `x.SelfDestruct()`). `x` appears to initiate its own destruction, and the
     environment just facilitates that. This communicates that the object is in
     control of its own destiny.
 
 It is highly likely that the vast majority of cases of explicit object destruction
-are objects destroying subobjects (e.g. a vector class' elements). This motivates
+are objects destroying subobjects (for example a vector class' elements). This motivates
 preferring a function, as subobjects cannot exist without their parent object.
 
 #### Naming
@@ -116,7 +114,7 @@ The following names have been considered:
 | `ExplicitDestroy` | `ExplicitDestroy(x)` | `x.ExplicitDestroy()` | 6          |
 
 `ManualDestroy` is not recommended because they make it awkward to reason about
-implict object destruction without some complement (e.g. `AutoDestroy`). The
+implict object destruction without some complement (for example `AutoDestroy`). The
 toolchain would implicitly call `AutoDestroy`, and users would call `ManualDestroy`.
 This would probably need to show up in stacktraces, which adds to their obfuscation.
 We could potentially do some amount of inlining, but this could cause confusion
@@ -139,20 +137,20 @@ From the [existing destructor design]:
 
 > **Future work:** Allow or require destructors to be declared as taking
 > `partial Self` in order to prove no use of virtual methods.
-> 
+>
 > Types satisfy the [`TrivialDestructor`] facet type if:
-> 
+>
 > -   the class declaration does not define a destructor or the class defines the
 >     destructor with an empty body `{ }`,
 > -   all data members implement `TrivialDestructor`, and
 > -   all base classes implement `TrivialDestructor`.
-> 
+>
 > For example, a [struct type] implements `TrivialDestructor` if all its members
 > do.
-> 
+>
 > `TrivialDestructor` implies that their destructor does nothing, which may be
 > used to generate optimized specializations.
-> 
+>
 > There is no provision for handling failure in a destructor. All operations that
 > could potentially fail must be performed before the destructor is called.
 > Unhandled failure during a destructor call will abort the program.
