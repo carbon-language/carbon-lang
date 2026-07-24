@@ -96,16 +96,6 @@ auto AddIdentifierName(Context& context, llvm::StringRef name)
   return SemIR::NameId::ForIdentifier(context.identifiers().Add(name));
 }
 
-// Adds the given source location and an `ImportIRInst` referring to it in
-// `ImportIRId::Cpp`.
-static auto AddImportIRInst(SemIR::File& file,
-                            clang::SourceLocation clang_source_loc)
-    -> SemIR::ImportIRInstId {
-  SemIR::ClangSourceLocId clang_source_loc_id =
-      file.clang_source_locs().Add(clang_source_loc);
-  return file.import_ir_insts().Add(SemIR::ImportIRInst(clang_source_loc_id));
-}
-
 // Adds a namespace for the `Cpp` import and returns its `NameScopeId`.
 static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
                          llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
