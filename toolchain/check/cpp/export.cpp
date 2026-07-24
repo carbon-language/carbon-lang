@@ -442,42 +442,39 @@ static auto BuildFunctionInfo(Context& context, SemIR::LocId loc_id,
   }
 
   bool export_as_constructor = false;
-  {
-    const auto& parent_scope =
-        context.name_scopes().Get(callee.parent_scope_id);
-    if (auto class_decl = context.insts().TryGetAs<SemIR::ClassDecl>(
-            parent_scope.inst_id())) {
-      auto& class_info = context.classes().Get(class_decl->class_id);
-      if (class_info.name_id == callee.name_id) {
-        // If the function's name matches the name of the enclosing class,
-        // we can't export it as an ordinary function, so from this point on
-        // if we can't export it as a constructor we can't export it at all.
-        //
-        // TODO: figure out a way to provide good diagnostics in this situation.
-        // Ideally we'd only diagnose if the user actually tries to call it,
-        // because it's perfectly valid as Carbon code, but it's not clear how
-        // to do that.
-        //
-        // TODO: some impl functions should also be exported as constructors
-        // (e.g. `Core.Copy.Op`). Figure out how to avoid colliding with those
-        // here.
-        if (callee.self_param_id != SemIR::InstId::None) {
-          return std::nullopt;
-        }
-        if (!context.insts().Is<SemIR::InitForm>(
-                callee.GetDeclaredReturnForm(context.sem_ir()))) {
-          return std::nullopt;
-        }
-        auto class_type_id = GetClassType(context, class_decl->class_id,
-                                          SemIR::SpecificId::None);
-        auto return_type_id =
-            context.types().GetTypeIdForTypeInstId(callee.return_type_inst_id);
-        if (class_type_id != return_type_id) {
-          return std::nullopt;
-        }
-        // TODO figure out how to deal with explicit generic parameters.
-        export_as_constructor = true;
+  const auto& parent_scope = context.name_scopes().Get(callee.parent_scope_id);
+  if (auto class_decl =
+          context.insts().TryGetAs<SemIR::ClassDecl>(parent_scope.inst_id())) {
+    auto& class_info = context.classes().Get(class_decl->class_id);
+    if (class_info.name_id == callee.name_id) {
+      // If the function's name matches the name of the enclosing class,
+      // we can't export it as an ordinary function, so from this point on
+      // if we can't export it as a constructor we can't export it at all.
+      //
+      // TODO: figure out a way to provide good diagnostics in this situation.
+      // Ideally we'd only diagnose if the user actually tries to call it,
+      // because it's perfectly valid as Carbon code, but it's not clear how
+      // to do that.
+      //
+      // TODO: some impl functions should also be exported as constructors
+      // (e.g. `Core.Copy.Op`). Figure out how to avoid colliding with those
+      // here.
+      if (callee.self_param_id != SemIR::InstId::None) {
+        return std::nullopt;
       }
+      if (!context.insts().Is<SemIR::InitForm>(
+              callee.GetDeclaredReturnForm(context.sem_ir()))) {
+        return std::nullopt;
+      }
+      auto class_type_id =
+          GetClassType(context, class_decl->class_id, SemIR::SpecificId::None);
+      auto return_type_id =
+          context.types().GetTypeIdForTypeInstId(callee.return_type_inst_id);
+      if (class_type_id != return_type_id) {
+        return std::nullopt;
+      }
+      // TODO figure out how to deal with explicit generic parameters.
+      export_as_constructor = true;
     }
   }
 
@@ -706,16 +703,15 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
   clang::QualType cpp_return_type = context.ast_context().VoidTy;
   if (!target.export_as_constructor &&
       (target.return_type_id != SemIR::TypeId::None)) {
-      cpp_return_type = MapToCppType(context, target.return_type_id);
-      if (cpp_return_type.isNull()) {
-        context.TODO(loc_id, "failed to map Carbon return type to C++ type");
-        return nullptr;
-      }
-      if (cpp_return_type->isArrayType()) {
-        // C++ doesn't support returning arrays by value.
-        context.TODO(loc_id, "array return type");
-        return nullptr;
-      }
+    cpp_return_type = MapToCppType(context, target.return_type_id);
+    if (cpp_return_type.isNull()) {
+      context.TODO(loc_id, "failed to map Carbon return type to C++ type");
+      return nullptr;
+    }
+    if (cpp_return_type->isArrayType()) {
+      // C++ doesn't support returning arrays by value.
+      context.TODO(loc_id, "array return type");
+      return nullptr;
     }
   }
 
