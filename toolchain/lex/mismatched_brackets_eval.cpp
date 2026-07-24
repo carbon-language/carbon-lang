@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <numeric>
+#include <optional>
 #include <random>
 #include <string>
 #include <utility>
@@ -18,6 +19,8 @@
 #include "common/init_llvm.h"
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
@@ -131,6 +134,11 @@ auto MatchesDeletedToken(const DeletedToken& del, const Suggestion& sugg)
   if (del.kind != sugg.kind) {
     return false;
   }
+  // An empty offset list means position doesn't matter (used by truncation,
+  // where every missing bracket closes at EOF and only the kinds matter).
+  if (del.valid_next_token_byte_offsets.empty()) {
+    return true;
+  }
   return llvm::is_contained(del.valid_next_token_byte_offsets,
                             sugg.byte_offset);
 }
@@ -217,6 +225,273 @@ auto ClassifyTrial(llvm::ArrayRef<DeletedToken> deleted_tokens,
   return TestClassification::None;
 }
 
+// How a clean file is corrupted for a trial. See `--mode` help for details.
+enum class CorruptionMode {
+  // Blank each deleted bracket with a space (byte offsets preserved).
+  Blank,
+  // Delete each bracket character, closing the gap (no leftover space). More
+  // realistic, and doesn't leave the whitespace artifacts the algorithm can
+  // key on.
+  DeleteGap,
+  // Truncate the file at a random token (models incomplete, in-development
+  // code); recovery should close all still-open brackets at the new EOF.
+  Truncate,
+  // Delete from a random statement/element boundary inside one bracketed
+  // region through that region's closing bracket (models typing new code
+  // inside an existing class/scope, whose tail and close aren't there yet);
+  // recovery must infer where the region should have ended.
+  TruncateRegion,
+};
+
+// A corrupted source plus the ground-truth insertions recovery should make.
+struct CorruptedCase {
+  std::string text;
+  std::vector<DeletedToken> expected;
+};
+
+// Remaps a byte offset from original to corrupted coordinates, given sorted,
+// disjoint deleted ranges [begin, end). An offset inside a deleted range maps
+// to where the gap closes.
+auto RemapOffset(int32_t off,
+                 llvm::ArrayRef<std::pair<int32_t, int32_t>> deleted)
+    -> int32_t {
+  int32_t shift = 0;
+  for (auto [begin, end] : deleted) {
+    if (end <= off) {
+      shift += end - begin;
+    } else if (begin <= off) {
+      return begin - shift;
+    } else {
+      break;
+    }
+  }
+  return off - shift;
+}
+
+// Returns `text` with the given sorted, disjoint byte ranges removed.
+auto RemoveRanges(llvm::StringRef text,
+                  llvm::ArrayRef<std::pair<int32_t, int32_t>> ranges)
+    -> std::string {
+  std::string out;
+  int32_t pos = 0;
+  for (auto [begin, end] : ranges) {
+    out += text.substr(pos, begin - pos);
+    pos = end;
+  }
+  out += text.substr(pos);
+  return out;
+}
+
+// Builds a trial that deletes one endpoint of each of `d_count` random clean
+// pairs, either blanking them or closing the gap.
+auto MakeDeletionCase(const TokenizedBuffer& buffer, llvm::StringRef source_text,
+                      llvm::ArrayRef<BracketPair> pairs, int d_count,
+                      bool close_gap, std::mt19937_64& rng)
+    -> std::optional<CorruptedCase> {
+  std::vector<int> pair_indices(pairs.size());
+  std::iota(pair_indices.begin(), pair_indices.end(), 0);
+  std::shuffle(pair_indices.begin(), pair_indices.end(), rng);
+  pair_indices.resize(d_count);
+
+  std::vector<bool> is_deleted(buffer.size(), false);
+  std::vector<TokenIndex> sampled;
+  sampled.reserve(d_count);
+  for (int p_idx : pair_indices) {
+    const auto& pair = pairs[p_idx];
+    TokenIndex tok = (rng() % 2 == 0) ? pair.open_token : pair.close_token;
+    is_deleted[tok.index] = true;
+    sampled.push_back(tok);
+  }
+
+  std::vector<DeletedToken> deleted;
+  deleted.reserve(d_count);
+  for (TokenIndex tok : sampled) {
+    TokenKind tok_kind = buffer.GetKind(tok);
+
+    int32_t run_start = tok.index;
+    while (run_start > 0 &&
+           buffer.GetKind(TokenIndex(run_start - 1)) == tok_kind) {
+      --run_start;
+    }
+    int32_t run_end = tok.index;
+    while (run_end + 1 < static_cast<int32_t>(buffer.size()) &&
+           buffer.GetKind(TokenIndex(run_end + 1)) == tok_kind) {
+      ++run_end;
+    }
+
+    llvm::SmallVector<int32_t, 4> valid_offsets;
+    for (int32_t idx = run_start; idx <= run_end; ++idx) {
+      if (!is_deleted[idx]) {
+        valid_offsets.push_back(buffer.GetByteOffset(TokenIndex(idx)));
+      }
+    }
+    TokenIndex succ = TokenIndex(run_end + 1);
+    while (succ.index < buffer.size() && is_deleted[succ.index]) {
+      succ = TokenIndex(succ.index + 1);
+    }
+    int32_t succ_byte = (succ.index < buffer.size())
+                            ? buffer.GetByteOffset(succ)
+                            : static_cast<int32_t>(source_text.size());
+    valid_offsets.push_back(succ_byte);
+
+    deleted.push_back(DeletedToken{
+        .kind = tok_kind,
+        .byte_offset = buffer.GetByteOffset(tok),
+        .length = static_cast<int32_t>(buffer.GetTokenText(tok).size()),
+        .line = buffer.GetLineNumber(tok),
+        .column = buffer.GetColumnNumber(tok),
+        .next_token_byte_offset = succ_byte,
+        .next_token_line = (succ.index < buffer.size())
+                               ? buffer.GetLineNumber(succ)
+                               : -1,
+        .next_token_column = (succ.index < buffer.size())
+                                 ? buffer.GetColumnNumber(succ)
+                                 : -1,
+        .valid_next_token_byte_offsets = std::move(valid_offsets),
+    });
+  }
+
+  if (!close_gap) {
+    std::string corrupted = source_text.str();
+    for (const auto& del : deleted) {
+      for (int i = 0; i < del.length; ++i) {
+        corrupted[del.byte_offset + i] = ' ';
+      }
+    }
+    return CorruptedCase{.text = std::move(corrupted),
+                         .expected = std::move(deleted)};
+  }
+
+  llvm::SmallVector<std::pair<int32_t, int32_t>> ranges;
+  for (TokenIndex tok : sampled) {
+    int32_t off = buffer.GetByteOffset(tok);
+    ranges.push_back(
+        {off, off + static_cast<int32_t>(buffer.GetTokenText(tok).size())});
+  }
+  llvm::sort(ranges);
+  std::string corrupted = RemoveRanges(source_text, ranges);
+  for (auto& del : deleted) {
+    del.byte_offset = RemapOffset(del.byte_offset, ranges);
+    del.next_token_byte_offset = RemapOffset(del.next_token_byte_offset, ranges);
+    for (auto& off : del.valid_next_token_byte_offsets) {
+      off = RemapOffset(off, ranges);
+    }
+  }
+  return CorruptedCase{.text = std::move(corrupted),
+                       .expected = std::move(deleted)};
+}
+
+// Builds a trial that truncates the file at a random token boundary; recovery
+// should close every bracket still open there, at the new EOF.
+auto MakeTruncateCase(const TokenizedBuffer& buffer, llvm::StringRef source_text,
+                      std::mt19937_64& rng) -> std::optional<CorruptedCase> {
+  int32_t size = buffer.size();
+  if (size <= 2) {
+    return std::nullopt;
+  }
+  // Cut before a random token in (FileStart, FileEnd), keeping [0, cut).
+  int32_t cut = 1 + static_cast<int32_t>(rng() % (size - 2));
+  int32_t cut_byte = buffer.GetByteOffset(TokenIndex(cut));
+  std::string corrupted = source_text.substr(0, cut_byte).str();
+
+  llvm::SmallVector<TokenKind> stack;
+  for (int32_t i = 0; i < cut; ++i) {
+    auto kind = buffer.GetKind(TokenIndex(i));
+    if (kind.is_opening_symbol()) {
+      stack.push_back(kind);
+    } else if (kind.is_closing_symbol() && !stack.empty() &&
+               stack.back().closing_symbol() == kind) {
+      stack.pop_back();
+    }
+  }
+
+  int32_t eof = static_cast<int32_t>(corrupted.size());
+  std::vector<DeletedToken> expected;
+  for (TokenKind open_kind : llvm::reverse(stack)) {
+    expected.push_back(DeletedToken{
+        .kind = open_kind.closing_symbol(),
+        .byte_offset = eof,
+        .length = 1,
+        .line = -1,
+        .column = -1,
+        .next_token_byte_offset = eof,
+        .next_token_line = -1,
+        .next_token_column = -1,
+        // Position-independent: any placement that closes this bracket at EOF
+        // is equivalent.
+        .valid_next_token_byte_offsets = {},
+    });
+  }
+  return CorruptedCase{.text = std::move(corrupted),
+                       .expected = std::move(expected)};
+}
+
+// Builds a trial that deletes from a region-top-level boundary inside a random
+// pair through that pair's closing bracket. Recovery must reinsert the one
+// closing bracket at the join, where the region should have ended.
+auto MakeTruncateRegionCase(const TokenizedBuffer& buffer,
+                            llvm::StringRef source_text,
+                            llvm::ArrayRef<BracketPair> pairs,
+                            std::mt19937_64& rng)
+    -> std::optional<CorruptedCase> {
+  if (pairs.empty()) {
+    return std::nullopt;
+  }
+  const auto& pair = pairs[rng() % pairs.size()];
+  int32_t open = pair.open_token.index;
+  int32_t close = pair.close_token.index;
+
+  // Collect cut points at the region's own nesting level (not inside a nested
+  // pair), so that deleting through the close orphans only this one bracket.
+  llvm::SmallVector<int32_t> candidates;
+  int32_t depth = 0;
+  for (int32_t i = open + 1; i <= close; ++i) {
+    if (depth == 0) {
+      candidates.push_back(i);
+    }
+    if (i < close) {
+      auto kind = buffer.GetKind(TokenIndex(i));
+      if (kind.is_opening_symbol()) {
+        ++depth;
+      } else if (kind.is_closing_symbol()) {
+        --depth;
+      }
+    }
+  }
+  if (candidates.empty()) {
+    return std::nullopt;
+  }
+  int32_t cut = candidates[rng() % candidates.size()];
+
+  int32_t del_begin = buffer.GetByteOffset(TokenIndex(cut));
+  int32_t del_end =
+      buffer.GetByteOffset(pair.close_token) +
+      static_cast<int32_t>(buffer.GetTokenText(pair.close_token).size());
+  llvm::SmallVector<std::pair<int32_t, int32_t>> ranges = {{del_begin, del_end}};
+  std::string corrupted = RemoveRanges(source_text, ranges);
+
+  int32_t succ = close + 1;
+  int32_t succ_byte = (succ < buffer.size())
+                          ? buffer.GetByteOffset(TokenIndex(succ))
+                          : static_cast<int32_t>(source_text.size());
+  int32_t succ_corrupted = RemapOffset(succ_byte, ranges);
+
+  TokenKind close_kind = buffer.GetKind(pair.open_token).closing_symbol();
+  std::vector<DeletedToken> expected = {DeletedToken{
+      .kind = close_kind,
+      .byte_offset = del_begin,
+      .length = 1,
+      .line = buffer.GetLineNumber(pair.close_token),
+      .column = buffer.GetColumnNumber(pair.close_token),
+      .next_token_byte_offset = succ_corrupted,
+      .next_token_line = -1,
+      .next_token_column = -1,
+      .valid_next_token_byte_offsets = {succ_corrupted},
+  }};
+  return CorruptedCase{.text = std::move(corrupted),
+                       .expected = std::move(expected)};
+}
+
 auto CollectCarbonFiles(llvm::ArrayRef<llvm::StringRef> input_paths)
     -> llvm::SmallVector<std::string> {
   llvm::SmallVector<std::string> files;
@@ -268,6 +543,7 @@ recovers deleted subsets of brackets across Carbon source files.
 auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   llvm::SmallVector<llvm::StringRef> input_files;
   llvm::StringRef d_values_str = "1,2,5,10%,25%";
+  llvm::StringRef mode_str = "blank";
   int total_trials = 1000;
   int base_seed = 42;
   bool verbose = false;
@@ -289,9 +565,25 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
                 .name = "d-values",
                 .value_name = "LIST",
                 .help =
-                    "Comma-separated deletion levels (e.g. '1,2,5,10%,25%').",
+                    "Comma-separated deletion levels (e.g. '1,2,5,10%,25%'). "
+                    "Ignored by the truncate modes.",
             },
             [&](auto& arg_b) { arg_b.Set(&d_values_str); });
+
+        b.AddStringOption(
+            {
+                .name = "mode",
+                .value_name = "MODE",
+                .help =
+                    "How to corrupt each file: 'blank' (replace brackets with "
+                    "spaces; the default), 'gap' (delete bracket characters, "
+                    "closing the gap), 'truncate' (cut the file at a random "
+                    "token; recovery should close all open brackets at EOF), "
+                    "or 'truncate-region' (delete from inside a random pair "
+                    "through its close, as when typing new code in an existing "
+                    "class).",
+            },
+            [&](auto& arg_b) { arg_b.Set(&mode_str); });
 
         b.AddIntegerOption(
             {
@@ -353,6 +645,27 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   if (d_specs.empty()) {
     llvm::errs() << "error: No valid D deletion specifications provided.\n";
     return false;
+  }
+
+  CorruptionMode mode = CorruptionMode::Blank;
+  if (mode_str == "blank") {
+    mode = CorruptionMode::Blank;
+  } else if (mode_str == "gap") {
+    mode = CorruptionMode::DeleteGap;
+  } else if (mode_str == "truncate") {
+    mode = CorruptionMode::Truncate;
+  } else if (mode_str == "truncate-region") {
+    mode = CorruptionMode::TruncateRegion;
+  } else {
+    llvm::errs() << "error: Unknown --mode '" << mode_str << "'.\n";
+    return false;
+  }
+  // The truncate modes don't delete a set number of brackets, so collapse the
+  // D configurations to a single pass.
+  if (mode == CorruptionMode::Truncate ||
+      mode == CorruptionMode::TruncateRegion) {
+    d_specs.resize(1);
+    d_specs[0].label = mode_str.str();
   }
 
   auto files = CollectCarbonFiles(input_files);
@@ -459,6 +772,7 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     int incorrect = 0;
   };
   std::map<std::string, OriginStat> origin_stats;
+  int merged_skips = 0;
 
   std::vector<FileResult> file_results;
   std::vector<TrialStats> overall_scenario_stats(d_specs.size());
@@ -520,86 +834,28 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
         std::mt19937_64 rng(trial_seed);
 
-        std::vector<int> pair_indices(clean_pairs.size());
-        std::iota(pair_indices.begin(), pair_indices.end(), 0);
-        std::shuffle(pair_indices.begin(), pair_indices.end(), rng);
-        pair_indices.resize(d_count);
-
-        std::vector<bool> is_deleted_token(clean_buffer.size(), false);
-        std::vector<TokenIndex> sampled_tokens;
-        sampled_tokens.reserve(d_count);
-
-        for (int p_idx : pair_indices) {
-          const auto& pair = clean_pairs[p_idx];
-          TokenIndex tok =
-              (rng() % 2 == 0) ? pair.open_token : pair.close_token;
-          is_deleted_token[tok.index] = true;
-          sampled_tokens.push_back(tok);
+        std::optional<CorruptedCase> corrupted_case;
+        switch (mode) {
+          case CorruptionMode::Blank:
+          case CorruptionMode::DeleteGap:
+            corrupted_case = MakeDeletionCase(
+                clean_buffer, source_text, clean_pairs, d_count,
+                /*close_gap=*/mode == CorruptionMode::DeleteGap, rng);
+            break;
+          case CorruptionMode::Truncate:
+            corrupted_case = MakeTruncateCase(clean_buffer, source_text, rng);
+            break;
+          case CorruptionMode::TruncateRegion:
+            corrupted_case = MakeTruncateRegionCase(clean_buffer, source_text,
+                                                    clean_pairs, rng);
+            break;
         }
-
-        std::vector<DeletedToken> deleted_tokens;
-        deleted_tokens.reserve(d_count);
-
-        for (TokenIndex tok : sampled_tokens) {
-          TokenKind tok_kind = clean_buffer.GetKind(tok);
-
-          int32_t run_start = tok.index;
-          while (run_start > 0 &&
-                 clean_buffer.GetKind(TokenIndex(run_start - 1)) == tok_kind) {
-            --run_start;
-          }
-          int32_t run_end = tok.index;
-          while (run_end + 1 < static_cast<int32_t>(clean_buffer.size()) &&
-                 clean_buffer.GetKind(TokenIndex(run_end + 1)) == tok_kind) {
-            ++run_end;
-          }
-
-          llvm::SmallVector<int32_t, 4> valid_offsets;
-          for (int32_t idx = run_start; idx <= run_end; ++idx) {
-            if (!is_deleted_token[idx]) {
-              valid_offsets.push_back(
-                  clean_buffer.GetByteOffset(TokenIndex(idx)));
-            }
-          }
-
-          TokenIndex succ = TokenIndex(run_end + 1);
-          while (succ.index < clean_buffer.size() &&
-                 is_deleted_token[succ.index]) {
-            succ = TokenIndex(succ.index + 1);
-          }
-
-          int32_t succ_byte = (succ.index < clean_buffer.size())
-                                  ? clean_buffer.GetByteOffset(succ)
-                                  : static_cast<int32_t>(source_text.size());
-          valid_offsets.push_back(succ_byte);
-
-          int32_t succ_line = (succ.index < clean_buffer.size())
-                                  ? clean_buffer.GetLineNumber(succ)
-                                  : -1;
-          int32_t succ_col = (succ.index < clean_buffer.size())
-                                 ? clean_buffer.GetColumnNumber(succ)
-                                 : -1;
-
-          deleted_tokens.push_back(DeletedToken{
-              .kind = tok_kind,
-              .byte_offset = clean_buffer.GetByteOffset(tok),
-              .length =
-                  static_cast<int32_t>(clean_buffer.GetTokenText(tok).size()),
-              .line = clean_buffer.GetLineNumber(tok),
-              .column = clean_buffer.GetColumnNumber(tok),
-              .next_token_byte_offset = succ_byte,
-              .next_token_line = succ_line,
-              .next_token_column = succ_col,
-              .valid_next_token_byte_offsets = std::move(valid_offsets),
-          });
+        if (!corrupted_case) {
+          continue;
         }
-
-        std::string corrupted_text = source_text.str();
-        for (const auto& del : deleted_tokens) {
-          for (int i = 0; i < del.length; ++i) {
-            corrupted_text[del.byte_offset + i] = ' ';
-          }
-        }
+        std::string corrupted_text = std::move(corrupted_case->text);
+        std::vector<DeletedToken> deleted_tokens =
+            std::move(corrupted_case->expected);
 
         auto corrupted_source = SourceBuffer::MakeFromStringCopy(
             candidate.filename, corrupted_text, Diagnostics::NullConsumer());
@@ -614,6 +870,51 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
         c_lex_options.bracket_corrections = &corrections;
         auto corrupted_buffer =
             Lex::Lex(c_value_stores, *corrupted_source, c_lex_options);
+
+        // Ground-truth "at EOF" offsets are computed as the corrupted text
+        // size, but recovery inserts before the FileEnd token, whose offset
+        // excludes trailing whitespace. Accept the real FileEnd offset too.
+        if (mode == CorruptionMode::Truncate ||
+            mode == CorruptionMode::TruncateRegion) {
+          int32_t eof = corrupted_buffer.GetByteOffset(
+              TokenIndex(corrupted_buffer.size() - 1));
+          int32_t text_size = static_cast<int32_t>(corrupted_text.size());
+          for (auto& del : deleted_tokens) {
+            if (llvm::is_contained(del.valid_next_token_byte_offsets,
+                                   text_size)) {
+              del.valid_next_token_byte_offsets.push_back(eof);
+            }
+          }
+        }
+
+        // Closing the gap can fuse two tokens into one (e.g. `f(x)` -> `fx)`),
+        // which both is unrealistic and leaves no boundary to reinsert the
+        // bracket at. Detect this by checking each ground-truth insertion still
+        // has a real token boundary to land on, and skip the trial if not.
+        if (mode == CorruptionMode::DeleteGap ||
+            mode == CorruptionMode::TruncateRegion) {
+          llvm::DenseSet<int32_t> token_offsets;
+          for (TokenIndex t : corrupted_buffer.tokens()) {
+            if (!corrupted_buffer.IsRecoveryToken(t)) {
+              token_offsets.insert(corrupted_buffer.GetByteOffset(t));
+            }
+          }
+          token_offsets.insert(static_cast<int32_t>(corrupted_text.size()));
+          bool merged = false;
+          for (const auto& del : deleted_tokens) {
+            if (llvm::none_of(del.valid_next_token_byte_offsets,
+                              [&](int32_t off) {
+                                return token_offsets.contains(off);
+                              })) {
+              merged = true;
+              break;
+            }
+          }
+          if (merged) {
+            ++merged_skips;
+            continue;
+          }
+        }
 
         llvm::SmallVector<Suggestion> suggestions;
         for (TokenIndex t : corrupted_buffer.tokens()) {
@@ -653,7 +954,8 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
           }
         }
 
-        if (spec.label == "1") {
+        if (spec.label == "1" || mode == CorruptionMode::Truncate ||
+            mode == CorruptionMode::TruncateRegion) {
           for (const auto& s : suggestions) {
             bool matched = false;
             for (const auto& del : deleted_tokens) {
@@ -774,11 +1076,17 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
   // Markdown Report Output
   llvm::outs() << "# Bracket Recovery Measurement Report\n\n";
+  llvm::outs() << "- **Corruption mode**: " << mode_str << "\n";
   llvm::outs() << "- **Files tested**: " << valid_files.size() << " files ("
                << total_clean_pairs << " clean matched bracket pairs)\n";
   llvm::outs() << "- **Total trials per configuration**: " << total_trials
                << "\n";
-  llvm::outs() << "- **Random seed**: " << base_seed << "\n\n";
+  llvm::outs() << "- **Random seed**: " << base_seed << "\n";
+  if (merged_skips > 0) {
+    llvm::outs() << "- **Trials skipped (token fusion)**: " << merged_skips
+                 << "\n";
+  }
+  llvm::outs() << "\n";
 
   llvm::outs() << "## Overall Performance by Deletion Level (D)\n\n";
   llvm::outs() << "| Deletion Level (D) | Total Trials | Correct | Partial | "
