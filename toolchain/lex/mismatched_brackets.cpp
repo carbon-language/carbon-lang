@@ -22,7 +22,7 @@ namespace {
 constexpr int32_t MaxRegionItemsForSearch = 1500;
 
 // Layered beam search width limit.
-constexpr size_t MaxBeamWidth = 64;
+constexpr size_t MaxBeamWidth = 16;
 
 // Maximum stack depth allowed during search before capping.
 constexpr size_t MaxSearchStackDepth = 12;
@@ -428,6 +428,21 @@ struct BeamNode {
   llvm::SmallVector<ParentEdge, 2> parent_edges;
 };
 
+// The parts of a BeamNode the search reads while expanding it. Snapshotting
+// just these (rather than copying the whole node, whose `parent_edges` the
+// expansion never reads) avoids copying that vector per node. A copy — not a
+// reference — is needed because expanding a node pushes new nodes into the
+// arena, which may reallocate.
+struct SearchState {
+  llvm::SmallVector<OpenBracketInfo, 4> stack;
+  int32_t cost;
+  BracketTokenKind closer_inserted;
+};
+
+auto Snapshot(const BeamNode& node) -> SearchState {
+  return {node.stack, node.cost, node.closer_inserted};
+}
+
 // A correction that replaces a bracket token with an error token (the "give
 // up on this bracket" repair).
 auto ReplaceWithError(const MismatchedBracketToken& token,
@@ -563,7 +578,7 @@ auto GetTopKind(llvm::ArrayRef<OpenBracketInfo> stack) -> TopKind {
 
 // Penalty for a token that dedents out of the group it's nominally inside.
 // FileEnd is not content, so it never counts as a dedent.
-auto ContextPenalty(const BeamNode& node, const Item& item) -> int32_t {
+auto ContextPenalty(const SearchState& node, const Item& item) -> int32_t {
   if (node.stack.empty() || !item.is_first_on_line ||
       item.token.kind == BracketTokenKind::FileEnd) {
     return 0;
@@ -1118,7 +1133,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
 
       while (worklist_head < worklist.size()) {
         int32_t node_idx = worklist[worklist_head++];
-        const BeamNode current = arena[node_idx];
+        const SearchState current = Snapshot(arena[node_idx]);
         if (current.cost > min_goal_cost) {
           continue;
         }
@@ -1184,7 +1199,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
       size_t num_states_after_1a = current_layer.size();
       for (size_t idx = 0; idx < num_states_after_1a; ++idx) {
         int32_t node_idx = current_layer[idx];
-        const BeamNode current = arena[node_idx];
+        const SearchState current = Snapshot(arena[node_idx]);
         if (current.cost > min_goal_cost ||
             current.stack.size() >= MaxSearchStackDepth) {
           continue;
@@ -1270,7 +1285,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
     llvm::SmallVector<int32_t> next_layer;
 
     for (int32_t node_idx : current_layer) {
-      const BeamNode current = arena[node_idx];
+      const SearchState current = Snapshot(arena[node_idx]);
       if (current.cost > min_goal_cost) {
         continue;
       }
@@ -1506,7 +1521,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
   llvm::SmallVector<int32_t> goal_node_indices;
 
   for (int32_t node_idx : current_layer) {
-    const BeamNode current = arena[node_idx];
+    const SearchState current = Snapshot(arena[node_idx]);
     if (current.cost > min_goal_cost) {
       continue;
     }
@@ -1882,18 +1897,31 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
       continue;
     }
 
-    bool has_error = false;
-    for (int32_t i = start; i < end; ++i) {
-      if (!items[i].is_collapsed_block) {
-        auto k = items[i].token.kind;
-        if (IsOpeningBracket(k) || IsClosingBracket(k)) {
-          has_error = true;
-          break;
+    // A region needs solving only if its loose (non-collapsed) brackets don't
+    // already form a balanced, well-nested sequence. A balanced region has no
+    // unmatched bracket, so the search would simply match everything and emit
+    // no corrections; skipping it avoids running the beam search over the many
+    // regions whose matched pairs merely weren't collapsed.
+    bool balanced = true;
+    llvm::SmallVector<BracketTokenKind> open_kinds;
+    for (int32_t i = start; i < end && balanced; ++i) {
+      if (items[i].is_collapsed_block) {
+        continue;
+      }
+      auto k = items[i].token.kind;
+      if (IsOpeningBracket(k)) {
+        open_kinds.push_back(k);
+      } else if (IsClosingBracket(k)) {
+        if (open_kinds.empty() || MatchingClosingKind(open_kinds.back()) != k) {
+          balanced = false;
+        } else {
+          open_kinds.pop_back();
         }
       }
     }
+    balanced = balanced && open_kinds.empty();
 
-    if (has_error) {
+    if (!balanced) {
       TokenIndex region_end_token = (end < static_cast<int32_t>(items.size()))
                                         ? items[end].token.token_index
                                         : tokens.back().token_index;
