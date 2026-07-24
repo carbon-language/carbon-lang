@@ -14,8 +14,8 @@ namespace {
 
 // Provides command-line options common to both `compile` and `link`
 // subcommands.
-auto BuildSharedOptions(CommandLine::CommandBuilder& b, CompileOptions* options)
-    -> void {
+auto BuildSharedOptions(CommandLine::CommandBuilder& b, CompileOptions* options,
+                        CodegenOptions* cg_options) -> void {
   b.AddStringPositionalArg(
       {
           .name = "FILE",
@@ -82,7 +82,8 @@ Selects the amount of optimization to perform.
   // Include the common code generation options at this point to render it
   // after the more common options above, but before the more unusual options
   // below.
-  options->codegen_options->Build(b);
+  cg_options->Build(b);
+  options->codegen_options = cg_options;
 
   b.AddFlag(
       {
@@ -121,9 +122,10 @@ Whether to use the implicit prelude import. Enabled by default.
 
 }  // namespace
 
-auto CompileOptions::BuildForCompileSubcommand(CommandLine::CommandBuilder& b)
+auto CompileOptions::BuildForCompileSubcommand(CommandLine::CommandBuilder& b,
+                                               CodegenOptions* cg_options)
     -> void {
-  BuildSharedOptions(b, this);
+  BuildSharedOptions(b, this, cg_options);
 
   b.AddOneOfOption(
       {
@@ -386,11 +388,34 @@ Use the string form of the fingerprint from mangling instead of the hash form.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&mangle_string_fingerprint); });
+  b.AddFlag(
+      {
+          .name = "include-carbon-core",
+          .help = R"""(
+Automatically include the Core libraries files in the compilation.
+
+Note this refers to the Core libraries files other than the prelude, the
+inclusion of which is currently controlled by the `prelude_import` flag. If
+the `prelude_import` flag is set to false, this is also silently set to false.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&include_carbon_core);
+      });
 }
 
-auto CompileOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b)
+auto CompileOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b,
+                                             CodegenOptions* cg_options)
     -> void {
-  BuildSharedOptions(b, this);
+  include_carbon_core = true;
+  BuildSharedOptions(b, this, cg_options);
+}
+
+auto CompileOptions::FixupFlags() -> void {
+  if (!prelude_import) {
+    include_carbon_core = false;
+  }
 }
 
 auto CompileOptions::ValidatePhase(Diagnostics::NoLocEmitter& emitter) const

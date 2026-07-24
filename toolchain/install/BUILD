@@ -46,7 +46,7 @@ load(
     "//toolchain/base:runtimes_build_info.bzl",
     "generate_runtimes_build_vars",
 )
-load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_runtimes_config")
+load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_prelude", "carbon_runtimes_config")
 load("bazel/make_include_copts.bzl", "make_include_copts")
 load(
     "install_filegroups.bzl",
@@ -144,6 +144,12 @@ toolchain_llvm_binaries(
 toolchain_files(
     name = "core",
     srcs = ["//core:prelude"],
+    prefix = "core/",
+)
+
+toolchain_files(
+    name = "core_library",
+    srcs = ["//core:core_library"],
     prefix = "core/",
 )
 
@@ -367,6 +373,7 @@ filegroup(
         ":builtins_all_srcs",
         ":clang_hdrs",
         ":core",
+        ":core_library",
         ":install_marker",
         ":installed_bazel_files",
         ":libc_internal_libcxx_hdrs",
@@ -483,6 +490,15 @@ filegroup(
     output_group = "archive",
 )
 
+carbon_prelude(
+    name = "carbon_prelude",
+    srcs = [":core"],
+    target_compatible_with = select({
+        ":is_runtimes_build": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
 cc_library(
     name = "libunwind",
     srcs = [":libunwind_srcs"],
@@ -576,6 +592,7 @@ filegroup(
 carbon_runtimes_config(
     name = "runtimes_cfg",
     builtins_archive = ":builtins_archive",
+    carbon_prelude_prebuilt = ":carbon_prelude",
     clang_hdrs_prefix = "llvm/lib/clang/{0}/include/".format(LLVM_VERSION_MAJOR),
     crt_copts = crt_copts + [
         # Disable all sanitizers for CRT objects.

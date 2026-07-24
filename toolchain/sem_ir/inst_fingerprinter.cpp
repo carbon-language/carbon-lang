@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Support/TypeName.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
@@ -521,8 +522,9 @@ struct Worklist {
     store->AddInteger(block_id.index);
   }
 
-  auto Add(FacetTypeId facet_type_id) -> void {
-    const auto& facet_type = sem_ir->facet_types().Get(facet_type_id);
+  auto Add(DeclaredFacetTypeId declared_facet_type_id) -> void {
+    const auto& facet_type =
+        sem_ir->declared_facet_types().Get(declared_facet_type_id);
     auto add_constraints = [&](auto constraints) {
       store->AddInteger(constraints.size());
       for (auto [first, second] : constraints) {
@@ -650,7 +652,8 @@ struct Worklist {
   template <typename T>
     requires(SameAsOneOf<T, AnyRawId, LocId>)
   auto Add(T /*arg*/) -> void {
-    CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
+    CARBON_FATAL("Unexpected instruction operand kind {0}",
+                 llvm::getTypeName<T>());
   }
 
   auto Add(IdAndKind::InvalidType /*invalid*/) -> void {

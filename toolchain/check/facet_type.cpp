@@ -19,22 +19,27 @@ namespace Carbon::Check {
 
 auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType {
-  auto info = SemIR::FacetTypeInfo{};
-  info.extend_constraints.push_back({interface_id, specific_id});
-  info.Canonicalize();
-  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
-  return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
+  auto declared_facet_type = SemIR::DeclaredFacetType{};
+  declared_facet_type.extend_constraints.push_back({interface_id, specific_id});
+  declared_facet_type.Canonicalize();
+  SemIR::DeclaredFacetTypeId declared_facet_type_id =
+      context.declared_facet_types().Add(declared_facet_type);
+  return {.type_id = SemIR::TypeType::TypeId,
+          .declared_facet_type_id = declared_facet_type_id};
 }
 
 auto FacetTypeFromNamedConstraint(Context& context,
                                   SemIR::NamedConstraintId named_constraint_id,
                                   SemIR::SpecificId specific_id)
     -> SemIR::FacetType {
-  auto info = SemIR::FacetTypeInfo{};
-  info.extend_named_constraints.push_back({named_constraint_id, specific_id});
-  info.Canonicalize();
-  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
-  return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
+  auto declared_facet_type = SemIR::DeclaredFacetType{};
+  declared_facet_type.extend_named_constraints.push_back(
+      {named_constraint_id, specific_id});
+  declared_facet_type.Canonicalize();
+  SemIR::DeclaredFacetTypeId declared_facet_type_id =
+      context.declared_facet_types().Add(declared_facet_type);
+  return {.type_id = SemIR::TypeType::TypeId,
+          .declared_facet_type_id = declared_facet_type_id};
 }
 
 auto GetImplWitnessAccessWithoutSubstitution(Context& context,
@@ -314,7 +319,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
 
 auto ResolveFacetTypeRewriteConstraints(
     Context& context, SemIR::LocId loc_id,
-    llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>& rewrites)
+    llvm::SmallVector<SemIR::DeclaredFacetType::RewriteConstraint>& rewrites)
     -> bool {
   if (rewrites.empty()) {
     return true;
@@ -426,11 +431,12 @@ auto ResolveFacetTypeRewriteConstraints(
 }
 
 auto GetEmptyFacetType(Context& context) -> SemIR::TypeId {
-  SemIR::FacetTypeId facet_type_id =
-      context.facet_types().Add(SemIR::FacetTypeInfo{});
+  SemIR::DeclaredFacetTypeId declared_facet_type_id =
+      context.declared_facet_types().Add(SemIR::DeclaredFacetType{});
   auto const_id = EvalOrAddInst<SemIR::FacetType>(
       context, SemIR::LocId::None,
-      {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id});
+      {.type_id = SemIR::TypeType::TypeId,
+       .declared_facet_type_id = declared_facet_type_id});
   return context.types().GetTypeIdForTypeConstantId(const_id);
 }
 
@@ -466,6 +472,58 @@ auto GetConstantFacetValueForTypeAndInterface(
        .type_inst_id = type_inst_id,
        .witnesses_block_id = witnesses_block_id});
   return self_value_const_id;
+}
+
+auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool {
+  class FindWhereCallbacks : public SubstInstCallbacks {
+   public:
+    FindWhereCallbacks(Context* context, bool* found)
+        : SubstInstCallbacks(context), found_(found) {}
+
+    auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+      if (*found_ || inst_id == SemIR::TypeType::TypeInstId ||
+          inst_id == SemIR::ErrorInst::InstId) {
+        return FullySubstituted;
+      }
+
+      // Facet types can contain many references to the same value. Only search
+      // a given constant one time to avoid exponential costs.
+      if (!searched_.Insert(inst_id).is_inserted()) {
+        return FullySubstituted;
+      }
+
+      if (auto facet_type =
+              context().insts().TryGetAs<SemIR::FacetType>(inst_id)) {
+        const auto& declared_facet_type = context().declared_facet_types().Get(
+            facet_type->declared_facet_type_id);
+        if (!declared_facet_type.IsExtendedOnly()) {
+          *found_ = true;
+          return FullySubstituted;
+        }
+      }
+
+      return SubstOperandsSkipType;
+    }
+
+    auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst /*new_inst*/)
+        -> SemIR::InstId override {
+      CARBON_FATAL("unexpected rebuild of inst {0}",
+                   context().insts().Get(orig_inst_id));
+    }
+
+   private:
+    bool* found_;
+    Set<SemIR::InstId> searched_;
+  };
+
+  if (!const_id.is_constant()) {
+    return false;
+  }
+
+  bool found = false;
+  FindWhereCallbacks callbacks(&context, &found);
+  SubstInst(context, context.constant_values().GetInstId(const_id), callbacks);
+  return found;
 }
 
 }  // namespace Carbon::Check

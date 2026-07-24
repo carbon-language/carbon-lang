@@ -574,10 +574,21 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     return false;
   }
 
-  auto* identifier = decl_name.getAsIdentifierInfo();
-  if (!identifier) {
-    // Only supporting identifiers for now.
-    return false;
+  clang::IdentifierInfo* identifier = nullptr;
+  switch (decl_name.getNameKind()) {
+    case clang::DeclarationName::Identifier: {
+      identifier = decl_name.getAsIdentifierInfo();
+      break;
+    }
+    case clang::DeclarationName::CXXConstructorName: {
+      // The Carbon counterpart of a constructor is a function whose name
+      // matches the class name.
+      identifier =
+          llvm::cast<clang::CXXRecordDecl>(decl_context)->getIdentifier();
+      break;
+    }
+    default:
+      return false;
   }
 
   auto name_id = AddIdentifierName(*context_, identifier->getName());

@@ -347,11 +347,12 @@ auto FileContext::HandleReferencedSpecificFunction(
 auto FileContext::GetOrCreateLLVMFunction(
     const FunctionTypeInfo& function_type_info, SemIR::FunctionId function_id,
     SemIR::SpecificId specific_id) -> llvm::Function* {
+  const auto& function = sem_ir().functions().Get(function_id);
+
   // If this is a C++ function, tell Clang that we referenced it.
   // The global_ctor function can't be a C++ function (but doesn't have any
   // decl_id so it doesn't fall out naturally from the handling below)
   if (function_id != sem_ir().global_ctor_id()) {
-    const auto& function = sem_ir().functions().Get(function_id);
     if (const auto* clang_decl =
             sem_ir().clang_decls().Lookup(function.first_decl_id())) {
       if (clang_decl->is_imported) {
@@ -386,21 +387,8 @@ auto FileContext::GetOrCreateLLVMFunction(
                                      function_type_info.type);
   }
 
-  // TODO: For an imported inline function, consider generating an
-  // `available_externally` definition.
-  auto linkage = llvm::Function::ExternalLinkage;
-  if (function_id == sem_ir().global_ctor_id()) {
-    // The global constructor name would collide with global constructors for
-    // other files in the same package, so use an internal linkage symbol.
-    linkage = llvm::Function::InternalLinkage;
-  } else if (specific_id.has_value()) {
-    // Specific functions are allowed to be duplicated across files.
-    // TODO: CoreWitness should have the same behavior; see its use of
-    // WeakODRLinkage in BuildFunctionDefinition.
-    linkage = llvm::Function::LinkOnceODRLinkage;
-  }
-
-  auto* llvm_function = llvm::Function::Create(function_type_info.type, linkage,
+  auto* llvm_function = llvm::Function::Create(function_type_info.type,
+                                               llvm::Function::ExternalLinkage,
                                                mangled_name, llvm_module());
   CARBON_CHECK(llvm_function->getName() == mangled_name,
                "Mangled name collision: {0}", mangled_name);
@@ -550,13 +538,6 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
                "Attempting to emit definition of inexact function: {0}",
                *function_info->llvm_function);
 
-  // TODO: Build CoreWitness functions when they're called instead of when
-  // they're defined. That should allow LinkOnceODRLinkage.
-  if (declaration_function.special_function_kind ==
-      SemIR::Function::SpecialFunctionKind::CoreWitness) {
-    function_info->llvm_function->setLinkage(llvm::Function::WeakODRLinkage);
-  }
-
   const auto& body_block_ids = definition_function.body_block_ids;
   CARBON_DCHECK(!body_block_ids.empty(),
                 "No function body blocks found during lowering.");
@@ -568,6 +549,26 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     // can deduplicate specifics from different files.
     AddLoweredSpecificForGeneric(declaration_function.generic_id, specific_id);
   }
+
+  // Set the linkage for the definition.
+  auto linkage = llvm::Function::ExternalLinkage;
+  if (function_id == sem_ir().global_ctor_id()) {
+    // The global constructor name would collide with global constructors for
+    // other files in the same package, so use an internal linkage symbol.
+    linkage = llvm::Function::InternalLinkage;
+  } else if (specific_id.has_value()) {
+    // Specific functions are emitted in each file they are referenced in.
+    linkage = llvm::Function::LinkOnceODRLinkage;
+  } else if (declaration_function.special_function_kind ==
+                 SemIR::Function::SpecialFunctionKind::CoreWitness ||
+             declaration_function.special_function_kind ==
+                 SemIR::Function::SpecialFunctionKind::Thunk) {
+    // TODO: Emit CoreWitness functions and thunks in files where they're called
+    // instead of in files where they're defined. That should allow
+    // LinkOnceODRLinkage.
+    linkage = llvm::Function::WeakODRLinkage;
+  }
+  function_info->llvm_function->setLinkage(linkage);
 
   // Set attributes on the function definition.
   {

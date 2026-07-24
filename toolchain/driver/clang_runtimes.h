@@ -105,8 +105,7 @@ class ClangRuntimesBuilderBase::ArchiveBuilder {
   //
   // - The `builder` must outlive this object.
   // - `archive_path` is the _relative_ path of the archive file within the
-  // built
-  //   runtimes directory.
+  //   built runtimes directory.
   // - `src_files` is a list of the _absolute_ file paths to build into the
   //   archive.
   // - `cflags` are the compile flags that should be used for all the compiles

@@ -146,7 +146,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CEqual:thunk:EqWith.ffb401eeee8c4872.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !30 {
+// CHECK:STDOUT: define weak_odr i1 @"_CEqual:thunk:EqWith.ffb401eeee8c4872.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !36
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !36
@@ -156,7 +156,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CNotEqual:thunk:EqWith.ffb401eeee8c4872.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !37 {
+// CHECK:STDOUT: define weak_odr i1 @"_CNotEqual:thunk:EqWith.ffb401eeee8c4872.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !37 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !41
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !41
@@ -412,7 +412,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CLess:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !30 {
+// CHECK:STDOUT: define weak_odr i1 @"_CLess:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !36
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !36
@@ -422,7 +422,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CLessOrEquivalent:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !37 {
+// CHECK:STDOUT: define weak_odr i1 @"_CLessOrEquivalent:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !37 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !41
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !41
@@ -432,7 +432,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CGreater:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !42 {
+// CHECK:STDOUT: define weak_odr i1 @"_CGreater:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !42 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !46
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !46
@@ -442,7 +442,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !47 {
+// CHECK:STDOUT: define weak_odr i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !47 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !51
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !51

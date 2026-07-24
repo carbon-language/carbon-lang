@@ -271,8 +271,14 @@ interface J { let T: type; }
 // Interfaces to the right of the `where` don't interfere with the
 // "can only impl a facet type with a single interface" rule. Only
 // the interface being implemented needs to have all of its
-// associated constants set
+// associated constants set.
+impl {.a: C} as I where .Self impls J;
+impl {.b: C} as J where .Self impls I and .T = ();
+
+// The requirements after `where` must be met before we define the above impls.
+impl {.a: C} as J where .T = () {}
 impl {.a: C} as I where .Self impls J {}
+impl {.b: C} as I {}
 impl {.b: C} as J where .Self impls I and .T = () {}
 
 // --- impl_with_rewrite_of_interface_not_being_implemented.carbon

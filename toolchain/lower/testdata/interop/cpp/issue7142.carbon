@@ -64,7 +64,7 @@ void f() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #2 !dbg !21 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #2 !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.68011419f123494e:core.Destroy.Core"(ptr %self), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !24

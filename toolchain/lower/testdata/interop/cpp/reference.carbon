@@ -177,7 +177,7 @@ fn GetRefs() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !30 {
+// CHECK:STDOUT: define weak_odr void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %return), !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !34
@@ -368,7 +368,7 @@ fn GetRefs() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !30 {
+// CHECK:STDOUT: define weak_odr void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %return), !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !34

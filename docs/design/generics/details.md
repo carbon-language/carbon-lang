@@ -10,131 +10,131 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Generics: Details](#generics-details)
-    -   [Table of contents](#table-of-contents)
-    -   [Overview](#overview)
-    -   [Interfaces](#interfaces)
-    -   [Implementing interfaces](#implementing-interfaces)
-        -   [Inline `impl`](#inline-impl)
-        -   [`extend impl`](#extend-impl)
-        -   [Out-of-line `impl`](#out-of-line-impl)
-            -   [Defining an `impl` in another library than the type](#defining-an-impl-in-another-library-than-the-type)
-        -   [Forward `impl` declaration](#forward-impl-declaration)
-        -   [Implementing multiple interfaces](#implementing-multiple-interfaces)
-        -   [Avoiding name collisions](#avoiding-name-collisions)
-        -   [Qualified member names and compound member access](#qualified-member-names-and-compound-member-access)
-        -   [Access](#access)
-    -   [Checked-generic functions](#checked-generic-functions)
-        -   [Checked facet bindings](#checked-facet-bindings)
-        -   [Return type](#return-type)
-    -   [Interfaces recap](#interfaces-recap)
-    -   [Facet types](#facet-types)
-        -   [Identified facet types](#identified-facet-types)
-    -   [Named constraints](#named-constraints)
-        -   [Subtyping between facet types](#subtyping-between-facet-types)
-    -   [Combining interfaces by anding facet types](#combining-interfaces-by-anding-facet-types)
-    -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
-        -   [Interface extension](#interface-extension)
-            -   [`extend require` with named constraints](#extend-require-with-named-constraints)
-            -   [Diamond dependency issue](#diamond-dependency-issue)
-        -   [Use case: detecting unreachable matches](#use-case-detecting-unreachable-matches)
-    -   [Adapting types](#adapting-types)
-        -   [Adapter compatibility](#adapter-compatibility)
-        -   [Extending adapter](#extending-adapter)
-        -   [Use case: Using independent libraries together](#use-case-using-independent-libraries-together)
-        -   [Use case: Defining an impl for use by other types](#use-case-defining-an-impl-for-use-by-other-types)
-        -   [Use case: Private impl](#use-case-private-impl)
-        -   [Use case: Accessing interface names](#use-case-accessing-interface-names)
-        -   [Future work: Adapter with stricter invariants](#future-work-adapter-with-stricter-invariants)
-    -   [Associated constants](#associated-constants)
-        -   [Associated functions](#associated-functions)
-    -   [Associated facets](#associated-facets)
-    -   [Parameterized interfaces](#parameterized-interfaces)
-        -   [Parameterized named constraints](#parameterized-named-constraints)
-    -   [Where constraints](#where-constraints)
-        -   [Kinds of `where` constraints](#kinds-of-where-constraints)
-            -   [Recursive constraints](#recursive-constraints)
-            -   [Rewrite constraints](#rewrite-constraints)
-            -   [Same-type constraints](#same-type-constraints)
-                -   [Implementation of same-type `ImplicitAs`](#implementation-of-same-type-implicitas)
-                -   [Manual type equality](#manual-type-equality)
-                -   [Observe declarations](#observe-declarations)
-            -   [Implements constraints](#implements-constraints)
-                -   [Implied constraints](#implied-constraints)
-            -   [Combining constraints](#combining-constraints)
-        -   [Satisfying both facet types](#satisfying-both-facet-types)
-        -   [Constraints must use a designator](#constraints-must-use-a-designator)
-        -   [Referencing names in the interface being defined](#referencing-names-in-the-interface-being-defined)
-        -   [Constraint examples and use cases](#constraint-examples-and-use-cases)
-            -   [Parameterized type implements interface](#parameterized-type-implements-interface)
-            -   [Another type implements parameterized interface](#another-type-implements-parameterized-interface)
-            -   [Must be legal type argument constraints](#must-be-legal-type-argument-constraints)
-        -   [Named constraint constants](#named-constraint-constants)
-    -   [Other constraints as facet types](#other-constraints-as-facet-types)
-        -   [Is a derived class](#is-a-derived-class)
-        -   [Type compatible with another type](#type-compatible-with-another-type)
-            -   [Same implementation restriction](#same-implementation-restriction)
-            -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
-            -   [Example: Creating an impl out of other implementations](#example-creating-an-impl-out-of-other-implementations)
-        -   [Sized types and facet types](#sized-types-and-facet-types)
-    -   [Compile-time `let`](#compile-time-let)
-    -   [Parameterized impl declarations](#parameterized-impl-declarations)
-        -   [Impl for a parameterized type](#impl-for-a-parameterized-type)
-        -   [Conditional conformance](#conditional-conformance)
-        -   [Blanket impl declarations](#blanket-impl-declarations)
-            -   [Difference between a blanket impl and a named constraint](#difference-between-a-blanket-impl-and-a-named-constraint)
-        -   [Wildcard impl declarations](#wildcard-impl-declarations)
-        -   [Combinations](#combinations)
-        -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
-            -   [Type structure of an impl declaration](#type-structure-of-an-impl-declaration)
-            -   [Orphan rule](#orphan-rule)
-            -   [Overlap rule](#overlap-rule)
-            -   [Prioritization rule](#prioritization-rule)
-            -   [Acyclic rule](#acyclic-rule)
-            -   [Termination rule](#termination-rule)
-                -   [Non-facet arguments](#non-facet-arguments)
-        -   [`final` impl declarations](#final-impl-declarations)
-            -   [Libraries that can contain a `final` impl](#libraries-that-can-contain-a-final-impl)
-        -   [Comparison to Rust](#comparison-to-rust)
-    -   [Forward declarations and cyclic references](#forward-declarations-and-cyclic-references)
-        -   [Declaring interfaces and named constraints](#declaring-interfaces-and-named-constraints)
-        -   [Declaring implementations](#declaring-implementations)
-        -   [Matching and agreeing](#matching-and-agreeing)
-        -   [Declaration examples](#declaration-examples)
-        -   [Example of declaring interfaces with cyclic references](#example-of-declaring-interfaces-with-cyclic-references)
-        -   [Interfaces with parameters constrained by the same interface](#interfaces-with-parameters-constrained-by-the-same-interface)
-    -   [Interface members with definitions](#interface-members-with-definitions)
-        -   [Interface defaults](#interface-defaults)
-        -   [`final` members](#final-members)
-    -   [Interface requiring other interfaces revisited](#interface-requiring-other-interfaces-revisited)
-        -   [Requirements with `where` constraints](#requirements-with-where-constraints)
-    -   [Observing a type implements an interface](#observing-a-type-implements-an-interface)
-        -   [Observing interface requirements](#observing-interface-requirements)
-        -   [Observing blanket impl declarations](#observing-blanket-impl-declarations)
-        -   [Observing equal to a type implementing an interface](#observing-equal-to-a-type-implementing-an-interface)
-    -   [Operator overloading](#operator-overloading)
-        -   [Binary operators](#binary-operators)
-        -   [`like` operator for implicit conversions](#like-operator-for-implicit-conversions)
-    -   [Parameterized types](#parameterized-types)
-        -   [Generic methods](#generic-methods)
-        -   [Conditional methods](#conditional-methods)
-        -   [Specialization](#specialization)
-    -   [Future work](#future-work)
-        -   [Dynamic types](#dynamic-types)
-            -   [Runtime type parameters](#runtime-type-parameters)
-            -   [Runtime type fields](#runtime-type-fields)
-        -   [Abstract return types](#abstract-return-types)
-        -   [Evolution](#evolution)
-        -   [Testing](#testing)
-        -   [Impl with state](#impl-with-state)
-        -   [Generic associated facets and higher-ranked facets](#generic-associated-facets-and-higher-ranked-facets)
-            -   [Generic associated facets](#generic-associated-facets)
-            -   [Higher-ranked types](#higher-ranked-types)
-        -   [Field requirements](#field-requirements)
-        -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
-        -   [Variadic arguments](#variadic-arguments)
-        -   [Value constraints for template parameters](#value-constraints-for-template-parameters)
-    -   [References](#references)
+-   [Overview](#overview)
+-   [Interfaces](#interfaces)
+-   [Implementing interfaces](#implementing-interfaces)
+    -   [Inline `impl`](#inline-impl)
+    -   [`extend impl`](#extend-impl)
+    -   [Out-of-line `impl`](#out-of-line-impl)
+        -   [Defining an `impl` in another library than the type](#defining-an-impl-in-another-library-than-the-type)
+    -   [Forward `impl` declaration](#forward-impl-declaration)
+    -   [Implementing multiple interfaces](#implementing-multiple-interfaces)
+    -   [Avoiding name collisions](#avoiding-name-collisions)
+    -   [Qualified member names and compound member access](#qualified-member-names-and-compound-member-access)
+    -   [Access](#access)
+-   [Checked-generic functions](#checked-generic-functions)
+    -   [Checked facet bindings](#checked-facet-bindings)
+    -   [Return type](#return-type)
+-   [Interfaces recap](#interfaces-recap)
+-   [Facet types](#facet-types)
+    -   [Identified facet types](#identified-facet-types)
+-   [Named constraints](#named-constraints)
+    -   [Rewrites and same-type constraints in a named constraint](#rewrites-and-same-type-constraints-in-a-named-constraint)
+    -   [Constraints that don't depend on `.Self`](#constraints-that-dont-depend-on-self)
+    -   [Subtyping between facet types](#subtyping-between-facet-types)
+-   [Combining interfaces by anding facet types](#combining-interfaces-by-anding-facet-types)
+-   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
+    -   [Interface extension](#interface-extension)
+        -   [`extend require` with named constraints](#extend-require-with-named-constraints)
+        -   [Diamond dependency issue](#diamond-dependency-issue)
+    -   [Use case: detecting unreachable matches](#use-case-detecting-unreachable-matches)
+-   [Adapting types](#adapting-types)
+    -   [Adapter compatibility](#adapter-compatibility)
+    -   [Extending adapter](#extending-adapter)
+    -   [Use case: Using independent libraries together](#use-case-using-independent-libraries-together)
+    -   [Use case: Defining an impl for use by other types](#use-case-defining-an-impl-for-use-by-other-types)
+    -   [Use case: Private impl](#use-case-private-impl)
+    -   [Use case: Accessing interface names](#use-case-accessing-interface-names)
+    -   [Future work: Adapter with stricter invariants](#future-work-adapter-with-stricter-invariants)
+-   [Associated constants](#associated-constants)
+    -   [Associated functions](#associated-functions)
+-   [Associated facets](#associated-facets)
+-   [Parameterized interfaces](#parameterized-interfaces)
+    -   [Parameterized named constraints](#parameterized-named-constraints)
+-   [Where constraints](#where-constraints)
+    -   [Kinds of `where` constraints](#kinds-of-where-constraints)
+        -   [Recursive constraints](#recursive-constraints)
+        -   [Rewrite constraints](#rewrite-constraints)
+        -   [Same-type constraints](#same-type-constraints)
+            -   [Implementation of same-type `ImplicitAs`](#implementation-of-same-type-implicitas)
+            -   [Manual type equality](#manual-type-equality)
+            -   [Observe declarations](#observe-declarations)
+        -   [Implements constraints](#implements-constraints)
+            -   [Implied constraints](#implied-constraints)
+        -   [Combining constraints](#combining-constraints)
+    -   [Satisfying both facet types](#satisfying-both-facet-types)
+    -   [Constraints must use a designator](#constraints-must-use-a-designator)
+    -   [Referencing names in the interface being defined](#referencing-names-in-the-interface-being-defined)
+    -   [Constraint examples and use cases](#constraint-examples-and-use-cases)
+        -   [Parameterized type implements interface](#parameterized-type-implements-interface)
+        -   [Another type implements parameterized interface](#another-type-implements-parameterized-interface)
+        -   [Must be legal type argument constraints](#must-be-legal-type-argument-constraints)
+    -   [Named constraint constants](#named-constraint-constants)
+-   [Other constraints as facet types](#other-constraints-as-facet-types)
+    -   [Is a derived class](#is-a-derived-class)
+    -   [Type compatible with another type](#type-compatible-with-another-type)
+        -   [Same implementation restriction](#same-implementation-restriction)
+        -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
+        -   [Example: Creating an impl out of other implementations](#example-creating-an-impl-out-of-other-implementations)
+    -   [Sized types and facet types](#sized-types-and-facet-types)
+-   [Compile-time `let`](#compile-time-let)
+-   [Parameterized impl declarations](#parameterized-impl-declarations)
+    -   [Impl for a parameterized type](#impl-for-a-parameterized-type)
+    -   [Conditional conformance](#conditional-conformance)
+    -   [Blanket impl declarations](#blanket-impl-declarations)
+        -   [Difference between a blanket impl and a named constraint](#difference-between-a-blanket-impl-and-a-named-constraint)
+    -   [Wildcard impl declarations](#wildcard-impl-declarations)
+    -   [Combinations](#combinations)
+    -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
+        -   [Type structure of an impl declaration](#type-structure-of-an-impl-declaration)
+        -   [Orphan rule](#orphan-rule)
+        -   [Overlap rule](#overlap-rule)
+        -   [Prioritization rule](#prioritization-rule)
+        -   [Acyclic rule](#acyclic-rule)
+        -   [Termination rule](#termination-rule)
+            -   [Non-facet arguments](#non-facet-arguments)
+    -   [`final` impl declarations](#final-impl-declarations)
+        -   [Libraries that can contain a `final` impl](#libraries-that-can-contain-a-final-impl)
+    -   [Comparison to Rust](#comparison-to-rust)
+-   [Forward declarations and cyclic references](#forward-declarations-and-cyclic-references)
+    -   [Declaring interfaces and named constraints](#declaring-interfaces-and-named-constraints)
+    -   [Declaring implementations](#declaring-implementations)
+    -   [Matching and agreeing](#matching-and-agreeing)
+    -   [Declaration examples](#declaration-examples)
+    -   [Example of declaring interfaces with cyclic references](#example-of-declaring-interfaces-with-cyclic-references)
+    -   [Interfaces with parameters constrained by the same interface](#interfaces-with-parameters-constrained-by-the-same-interface)
+-   [Interface members with definitions](#interface-members-with-definitions)
+    -   [Interface defaults](#interface-defaults)
+    -   [`final` members](#final-members)
+-   [Interface requiring other interfaces revisited](#interface-requiring-other-interfaces-revisited)
+    -   [Requirements with `where` constraints](#requirements-with-where-constraints)
+-   [Observing a type implements an interface](#observing-a-type-implements-an-interface)
+    -   [Observing interface requirements](#observing-interface-requirements)
+    -   [Observing blanket impl declarations](#observing-blanket-impl-declarations)
+    -   [Observing equal to a type implementing an interface](#observing-equal-to-a-type-implementing-an-interface)
+-   [Operator overloading](#operator-overloading)
+    -   [Binary operators](#binary-operators)
+    -   [`like` operator for implicit conversions](#like-operator-for-implicit-conversions)
+-   [Parameterized types](#parameterized-types)
+    -   [Generic methods](#generic-methods)
+    -   [Conditional methods](#conditional-methods)
+    -   [Specialization](#specialization)
+-   [Future work](#future-work)
+    -   [Dynamic types](#dynamic-types)
+        -   [Runtime type parameters](#runtime-type-parameters)
+        -   [Runtime type fields](#runtime-type-fields)
+    -   [Abstract return types](#abstract-return-types)
+    -   [Evolution](#evolution)
+    -   [Testing](#testing)
+    -   [Impl with state](#impl-with-state)
+    -   [Generic associated facets and higher-ranked facets](#generic-associated-facets-and-higher-ranked-facets)
+        -   [Generic associated facets](#generic-associated-facets)
+        -   [Higher-ranked types](#higher-ranked-types)
+    -   [Field requirements](#field-requirements)
+    -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
+    -   [Variadic arguments](#variadic-arguments)
+    -   [Value constraints for template parameters](#value-constraints-for-template-parameters)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -1109,6 +1109,75 @@ class ImplementsS {
   Y { ... }
   Z { ... }
 }
+```
+
+### Rewrites and same-type constraints in a named constraint
+
+A `require` statement may include rewrite or same-type constraints. In the case
+of `extend require`, the rewrites are
+[preserved as such](appendix-rewrite-constraints.md#combining-constraints-with-extend).
+But otherwise, any rewrite constraint in the
+[identified facet type](#identified-facet-types) of the `require` is
+[treated as a same-type constraint](appendix-rewrite-constraints.md#combining-constraints-with-require-and-impls)
+instead.
+
+### Constraints that don't depend on `.Self`
+
+> **TODO:** Link to section explaining when identifying a facet type happens when
+> [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md)
+> is applied to these docs.
+
+When identifying a facet type, we collect all constraints found in the facet
+type and named constraints. Each constraint must depend on `.Self` in some way
+in order to be found in future impl lookups involving the facet being
+constrained. Thus, if there is no dependency on `.Self` in a constraint, it must
+be satisfied immediately for the identify to complete successfully.
+
+```carbon
+constraint N(T: type) {
+  require impls Z where .Z1 = {};
+}
+```
+
+When the above named constraint is identified as part of a facet type as
+`C impls N(.Self)`, the resulting requirement `Z where .Z1 = {}` is only
+constraining `C`, and not `.Self` from the top-level top-level facet type. So we
+require that `C impls (Z where .Z1 = {})` is already true in order to successfully
+identify.
+
+```carbon
+interface Z(V: type) {
+  let Z1: type;
+  let Z2: type;
+}
+
+constraint M(T2: type, U2: type) {
+  extend require impls Z(U2) where .Z1 = {} and .Z2 == ();
+}
+
+interface Y {
+  fn YY();
+}
+
+class C;
+
+fn F(U: Y where C impls Z(.Self) where .Z1 = {} and .Z2 == (),
+     T: Y where C impls M(.Self, U)) {
+  // Member access into `T` causes its type to be identified, which succeeds.
+  // The identified facet type requires
+  // `C impls Z(U) where .Z1 = {} and .Z2 == ()` which is true from the facet
+  // type of `U`.
+  T.YY();
+}
+
+fn G(U: Y where C impls Z(.Self),
+     T: Y where C impls M(.Self, U));
+  // ❌ Error: The type of `T` can not be identified.
+  // Member access into `T` causes its type to be identified, which fails.
+  // The identified facet type requires
+  // `C impls Z(U) where .Z1 = {} and .Z2 == ()` which we don't know to be
+  // true here.
+  T.YY();
 ```
 
 ### Subtyping between facet types

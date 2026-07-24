@@ -62,10 +62,12 @@ import Cpp;
 class Final {}
 
 inline Cpp '''
-// CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+5]]:12: error: base 'Final' is marked 'final' [CppInteropParseError]
-// CHECK:STDERR:    13 | struct A : Carbon::Final {};
+// CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+7]]:12: error: base 'Final' is marked 'final' [CppInteropParseError]
+// CHECK:STDERR:    15 | struct A : Carbon::Final {};
 // CHECK:STDERR:       |            ^
-// CHECK:STDERR: note: 'Final' declared here [CppInteropParseNote]
+// CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE-6]]:13: note: 'Final' declared here [CppInteropParseNote]
+// CHECK:STDERR:     5 | class Final {}
+// CHECK:STDERR:       |             ^
 // CHECK:STDERR:
 struct A : Carbon::Final {};
 ''';
@@ -91,10 +93,12 @@ abstract class Abstract {
 }
 
 inline Cpp '''
-// CHECK:STDERR: fail_abstract.carbon:[[@LINE+5]]:18: error: variable type 'Carbon::Abstract' is an abstract class [CppInteropParseError]
-// CHECK:STDERR:    26 | Carbon::Abstract x;
+// CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:18: error: variable type 'Carbon::Abstract' is an abstract class [CppInteropParseError]
+// CHECK:STDERR:    28 | Carbon::Abstract x;
 // CHECK:STDERR:       |                  ^
-// CHECK:STDERR: note: unimplemented pure virtual method '~Abstract' in 'Abstract' [CppInteropParseNote]
+// CHECK:STDERR: fail_abstract.carbon:[[@LINE-8]]:25: note: unimplemented pure virtual method '~Abstract' in 'Abstract' [CppInteropParseNote]
+// CHECK:STDERR:    16 | abstract class Abstract {
+// CHECK:STDERR:       |                         ^
 // CHECK:STDERR:
 Carbon::Abstract x;
 ''';

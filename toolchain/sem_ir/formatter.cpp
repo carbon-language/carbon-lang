@@ -11,6 +11,7 @@
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Support/TypeName.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
@@ -1086,7 +1087,7 @@ auto Formatter::FormatInstArgAndKind(IdAndKind arg_and_kind) -> void {
     } else if constexpr (std::is_same_v<IdT, IdAndKind::NoneType>) {
       // Do nothing
     } else {
-      CARBON_FATAL("Missing FormatArg for {0}", typeid(IdT).name());
+      CARBON_FATAL("Missing FormatArg for {0}", llvm::getTypeName<IdT>());
     }
   });
 }
@@ -1548,10 +1549,10 @@ auto Formatter::FormatArg(EntityNameId id) -> void {
   }
 }
 
-auto Formatter::FormatArg(FacetTypeId id) -> void {
-  const auto& info = sem_ir_->facet_types().Get(id);
+auto Formatter::FormatArg(DeclaredFacetTypeId id) -> void {
+  const auto& declared_facet_type = sem_ir_->declared_facet_types().Get(id);
   // Nothing output to indicate that this is a facet type since this is only
-  // used as the argument to a `facet_type` instruction.
+  // used as the argument to a `declared_facet_type` instruction.
   out() << "<";
 
   auto format_specific = [&](SemIR::SpecificId specific_id) {
@@ -1562,42 +1563,44 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
   };
 
   llvm::ListSeparator sep(" & ");
-  if (info.extend_constraints.empty() &&
-      info.extend_named_constraints.empty()) {
+  if (declared_facet_type.extend_constraints.empty() &&
+      declared_facet_type.extend_named_constraints.empty()) {
     out() << "type";
   } else {
-    for (auto extend : info.extend_constraints) {
+    for (auto extend : declared_facet_type.extend_constraints) {
       out() << sep;
       FormatName(extend.interface_id);
       format_specific(extend.specific_id);
     }
-    for (auto extend : info.extend_named_constraints) {
+    for (auto extend : declared_facet_type.extend_named_constraints) {
       out() << sep;
       FormatName(extend.named_constraint_id);
       format_specific(extend.specific_id);
     }
   }
 
-  if (info.other_requirements || !info.self_impls_constraints.empty() ||
-      !info.type_impls_interfaces.empty() ||
-      !info.type_impls_named_constraints.empty() ||
-      !info.rewrite_constraints.empty()) {
+  if (declared_facet_type.other_requirements ||
+      !declared_facet_type.self_impls_constraints.empty() ||
+      !declared_facet_type.type_impls_interfaces.empty() ||
+      !declared_facet_type.type_impls_named_constraints.empty() ||
+      !declared_facet_type.rewrite_constraints.empty()) {
     out() << " where ";
     llvm::ListSeparator and_sep(" and ");
-    int num_self_impls = info.self_impls_constraints.size() +
-                         info.self_impls_named_constraints.size();
+    int num_self_impls =
+        declared_facet_type.self_impls_constraints.size() +
+        declared_facet_type.self_impls_named_constraints.size();
     if (num_self_impls > 0) {
       out() << and_sep << ".Self impls ";
       llvm::ListSeparator amp_sep(" & ");
       if (num_self_impls > 1) {
         out() << "(";
       }
-      for (auto self_impls : info.self_impls_constraints) {
+      for (auto self_impls : declared_facet_type.self_impls_constraints) {
         out() << amp_sep;
         FormatName(self_impls.interface_id);
         format_specific(self_impls.specific_id);
       }
-      for (auto self_impls : info.self_impls_named_constraints) {
+      for (auto self_impls : declared_facet_type.self_impls_named_constraints) {
         out() << amp_sep;
         FormatName(self_impls.named_constraint_id);
         format_specific(self_impls.specific_id);
@@ -1606,27 +1609,28 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
         out() << ")";
       }
     }
-    for (const auto& type_impls : info.type_impls_interfaces) {
+    for (const auto& type_impls : declared_facet_type.type_impls_interfaces) {
       out() << and_sep;
       FormatName(type_impls.self_type);
       out() << " impls ";
       FormatName(type_impls.specific_interface.interface_id);
       format_specific(type_impls.specific_interface.specific_id);
     }
-    for (const auto& type_impls : info.type_impls_named_constraints) {
+    for (const auto& type_impls :
+         declared_facet_type.type_impls_named_constraints) {
       out() << and_sep;
       FormatName(type_impls.self_type);
       out() << " impls ";
       FormatName(type_impls.specific_named_constraint.named_constraint_id);
       format_specific(type_impls.specific_named_constraint.specific_id);
     }
-    for (auto rewrite : info.rewrite_constraints) {
+    for (auto rewrite : declared_facet_type.rewrite_constraints) {
       out() << and_sep;
       FormatArg(rewrite.lhs_id);
       out() << " = ";
       FormatArg(rewrite.rhs_id);
     }
-    if (info.other_requirements) {
+    if (declared_facet_type.other_requirements) {
       out() << and_sep << "TODO";
     }
   }

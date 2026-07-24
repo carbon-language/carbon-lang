@@ -182,7 +182,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #5 !dbg !28 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #5 !dbg !28 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.68011419f123494e:core.Destroy.Core"(ptr %self), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !31
@@ -195,7 +195,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.B.Main"(ptr %self) #5 !dbg !36 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.B.Main"(ptr %self) #5 !dbg !36 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %self), !dbg !39
 // CHECK:STDOUT:   ret void, !dbg !39
